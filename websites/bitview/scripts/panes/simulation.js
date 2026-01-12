@@ -18,15 +18,15 @@ import {
   numberToUSNumber,
 } from "../utils/format.js";
 import { serdeDate, serdeOptDate, serdeOptNumber } from "../utils/serde.js";
+import signals from "../signals.js";
+import { createChartElement } from "../chart/index.js";
+import { resources } from "../resources.js";
 
 /**
  * @param {Object} args
  * @param {Colors} args.colors
- * @param {CreateChartElement} args.createChartElement
- * @param {Signals} args.signals
- * @param {Resources} args.resources
  */
-export function init({ colors, createChartElement, signals, resources }) {
+export function init({ colors }) {
   /**
    * @typedef {Object} Frequency
    * @property {string} name

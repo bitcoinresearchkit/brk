@@ -47,27 +47,26 @@ impl Indexer {
         let indexed_path = outputs_dir.join("indexed");
 
         let try_import = || -> Result<Self> {
-            let (vecs, stores) = thread::scope(|s| -> Result<_> {
-                let vecs = s.spawn(|| -> Result<_> {
-                    let i = Instant::now();
-                    let vecs = Vecs::forced_import(&indexed_path, VERSION)?;
-                    info!("Imported vecs in {:?}", i.elapsed());
-                    Ok(vecs)
-                });
+            let i = Instant::now();
+            let vecs = Vecs::forced_import(&indexed_path, VERSION)?;
+            info!("Imported vecs in {:?}", i.elapsed());
 
-                let i = Instant::now();
-                let stores = Stores::forced_import(&indexed_path, VERSION)?;
-                info!("Imported stores in {:?}", i.elapsed());
-
-                Ok((vecs.join().unwrap()?, stores))
-            })?;
+            let i = Instant::now();
+            let stores = Stores::forced_import(&indexed_path, VERSION)?;
+            info!("Imported stores in {:?}", i.elapsed());
 
             Ok(Self { vecs, stores })
         };
 
         match try_import() {
             Ok(result) => Ok(result),
-            Err(err) if can_retry => {
+            Err(err) if err.is_lock_error() => {
+                // Lock errors are transient - another process has the database open.
+                // Don't delete data, just return the error.
+                Err(err)
+            }
+            Err(err) if can_retry && err.is_data_error() => {
+                // Data corruption or version mismatch - safe to delete and retry
                 info!("{err:?}, deleting {indexed_path:?} and retrying");
                 fs::remove_dir_all(&indexed_path)?;
                 Self::forced_import_inner(outputs_dir, false)

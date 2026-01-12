@@ -6,14 +6,7 @@ import { tableElement } from "../utils/elements.js";
 import { serdeMetrics, serdeString } from "../utils/serde.js";
 import { resetParams } from "../utils/url.js";
 
-/**
- * @param {Object} args
- * @param {Signals} args.signals
- * @param {Option} args.option
- * @param {Resources} args.resources
- * @param {BrkClient} args.brk
- */
-export function init({ signals, option, resources, brk }) {
+export function init() {
   tableElement.innerHTML = "wip, will hopefuly be back soon, sorry !";
 
   // const parent = tableElement;

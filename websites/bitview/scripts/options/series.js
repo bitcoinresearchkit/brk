@@ -178,7 +178,7 @@ export function fromBitcoin(colors, pattern, title, color) {
 /**
  * Create series from a SizePattern ({ sum, cumulative, average, min, max, percentiles })
  * @param {Colors} colors
- * @param {SizePattern} pattern
+ * @param {AnyStatsPattern} pattern
  * @param {string} title
  * @param {Color} [color]
  * @returns {AnyFetchedSeriesBlueprint[]}
@@ -241,7 +241,7 @@ export function fromBlockSize(colors, pattern, title, color) {
 /**
  * Create series from a SizePattern ({ average, sum, cumulative, min, max, percentiles })
  * @param {Colors} colors
- * @param {SizePattern} pattern
+ * @param {AnyStatsPattern} pattern
  * @param {string} title
  * @param {Unit} unit
  * @returns {AnyFetchedSeriesBlueprint[]}

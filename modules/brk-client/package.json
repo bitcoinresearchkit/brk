@@ -2,6 +2,10 @@
   "bugs": {
     "url": "https://github.com/bitcoinresearchkit/brk/issues"
   },
+  "scripts": {
+    "test": "node tests/basic.js",
+    "test:tree": "node tests/tree.js"
+  },
   "description": "BRK JavaScript client",
   "engines": {
     "node": ">=18"

@@ -8,6 +8,9 @@ import { ios, canShare } from "../../utils/env.js";
 import { serdeChartableIndex, serdeOptNumber } from "../../utils/serde.js";
 import { throttle } from "../../utils/timing.js";
 import { Unit } from "../../utils/units.js";
+import signals from "../../signals.js";
+import { createChartElement } from "../../chart/index.js";
+import { webSockets } from "../../utils/ws.js";
 
 const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
@@ -22,20 +25,12 @@ const CANDLE = "candle";
 /**
  * @param {Object} args
  * @param {Colors} args.colors
- * @param {CreateChartElement} args.createChartElement
  * @param {Accessor<ChartOption>} args.option
- * @param {Signals} args.signals
- * @param {WebSockets} args.webSockets
- * @param {Resources} args.resources
  * @param {BrkClient} args.brk
  */
 export function init({
   colors,
-  createChartElement,
   option,
-  signals,
-  webSockets,
-  resources,
   brk,
 }) {
   chartElement.append(createShadow("left"));
@@ -44,10 +39,7 @@ export function init({
   const { headerElement, headingElement } = createHeader();
   chartElement.append(headerElement);
 
-  const { index, fieldset } = createIndexSelector({
-    option,
-    signals,
-  });
+  const { index, fieldset } = createIndexSelector(option);
 
   const TIMERANGE_LS_KEY = signals.createMemo(
     () => `chart-timerange-${index()}`,
@@ -77,7 +69,6 @@ export function init({
     signals,
     colors,
     id: "charts",
-    resources,
     brk,
     index,
     timeScaleSetCallback: (unknownTimeScaleCallback) => {
@@ -525,11 +516,9 @@ export function init({
 }
 
 /**
- * @param {Object} args
- * @param {Accessor<ChartOption>} args.option
- * @param {Signals} args.signals
+ * @param {Accessor<ChartOption>} option
  */
-function createIndexSelector({ option, signals }) {
+function createIndexSelector(option) {
   const choices_ = /** @satisfies {ChartableIndexName[]} */ ([
     "timestamp",
     "date",

@@ -195,143 +195,138 @@ class _EndpointConfig:
 
 
 class RangeBuilder(Generic[T]):
-    """Final builder with range fully specified. Can only call json() or csv()."""
+    """Builder with range specified."""
 
     def __init__(self, config: _EndpointConfig):
         self._config = config
 
-    def json(self) -> MetricData[T]:
-        """Execute the query and return parsed JSON data."""
+    def fetch(self) -> MetricData[T]:
+        """Fetch the range as parsed JSON."""
         return self._config.get_json()
 
-    def csv(self) -> str:
-        """Execute the query and return CSV data as a string."""
+    def fetch_csv(self) -> str:
+        """Fetch the range as CSV string."""
         return self._config.get_csv()
 
 
-class FromBuilder(Generic[T]):
-    """Builder after calling from(start). Can chain with take() or to()."""
+class SingleItemBuilder(Generic[T]):
+    """Builder for single item access."""
+
+    def __init__(self, config: _EndpointConfig):
+        self._config = config
+
+    def fetch(self) -> MetricData[T]:
+        """Fetch the single item."""
+        return self._config.get_json()
+
+    def fetch_csv(self) -> str:
+        """Fetch as CSV."""
+        return self._config.get_csv()
+
+
+class SkippedBuilder(Generic[T]):
+    """Builder after calling skip(n). Chain with take() to specify count."""
 
     def __init__(self, config: _EndpointConfig):
         self._config = config
 
     def take(self, n: int) -> RangeBuilder[T]:
-        """Take n items from the start position."""
+        """Take n items after the skipped position."""
         start = self._config.start or 0
         return RangeBuilder(_EndpointConfig(
             self._config.client, self._config.name, self._config.index,
             start, start + n
         ))
 
-    def to(self, end: int) -> RangeBuilder[T]:
-        """Set the end position."""
-        return RangeBuilder(_EndpointConfig(
-            self._config.client, self._config.name, self._config.index,
-            self._config.start, end
-        ))
-
-    def json(self) -> MetricData[T]:
-        """Execute the query and return parsed JSON data (from start to end of data)."""
+    def fetch(self) -> MetricData[T]:
+        """Fetch from skipped position to end."""
         return self._config.get_json()
 
-    def csv(self) -> str:
-        """Execute the query and return CSV data as a string."""
-        return self._config.get_csv()
-
-
-class ToBuilder(Generic[T]):
-    """Builder after calling to(end). Can chain with take_last() or from()."""
-
-    def __init__(self, config: _EndpointConfig):
-        self._config = config
-
-    def take_last(self, n: int) -> RangeBuilder[T]:
-        """Take last n items before the end position."""
-        end = self._config.end or 0
-        return RangeBuilder(_EndpointConfig(
-            self._config.client, self._config.name, self._config.index,
-            end - n, end
-        ))
-
-    def from_(self, start: int) -> RangeBuilder[T]:
-        """Set the start position."""
-        return RangeBuilder(_EndpointConfig(
-            self._config.client, self._config.name, self._config.index,
-            start, self._config.end
-        ))
-
-    def json(self) -> MetricData[T]:
-        """Execute the query and return parsed JSON data (from start of data to end)."""
-        return self._config.get_json()
-
-    def csv(self) -> str:
-        """Execute the query and return CSV data as a string."""
+    def fetch_csv(self) -> str:
+        """Fetch as CSV."""
         return self._config.get_csv()
 
 
 class MetricEndpointBuilder(Generic[T]):
-    """Initial builder for metric endpoint queries.
+    """Builder for metric endpoint queries.
 
-    Use method chaining to specify the data range, then call json() or csv() to execute.
+    Use method chaining to specify the data range, then call fetch() or fetch_csv() to execute.
 
     Examples:
-        # Get all data
-        endpoint.json()
+        # Fetch all data
+        data = endpoint.fetch()
 
-        # Get last 10 points
-        endpoint.last(10).json()
+        # Single item access
+        data = endpoint[5].fetch()
 
-        # Get range [100, 200)
-        endpoint.range(100, 200).json()
+        # Slice syntax (Python-native)
+        data = endpoint[:10].fetch()      # First 10
+        data = endpoint[-5:].fetch()      # Last 5
+        data = endpoint[100:110].fetch()  # Range
 
-        # Get 10 points starting from position 100
-        endpoint.from_(100).take(10).json()
+        # Convenience methods (pandas-style)
+        data = endpoint.head().fetch()    # First 10 (default)
+        data = endpoint.head(20).fetch()  # First 20
+        data = endpoint.tail(5).fetch()   # Last 5
+
+        # Iterator-style chaining
+        data = endpoint.skip(100).take(10).fetch()
     """
 
     def __init__(self, client: BrkClientBase, name: str, index: Index):
         self._config = _EndpointConfig(client, name, index)
 
-    def first(self, n: int) -> RangeBuilder[T]:
-        """Fetch the first n data points."""
+    @overload
+    def __getitem__(self, key: int) -> SingleItemBuilder[T]: ...
+    @overload
+    def __getitem__(self, key: slice) -> RangeBuilder[T]: ...
+
+    def __getitem__(self, key: Union[int, slice]) -> Union[SingleItemBuilder[T], RangeBuilder[T]]:
+        """Access single item or slice.
+
+        Examples:
+            endpoint[5]        # Single item at index 5
+            endpoint[:10]      # First 10
+            endpoint[-5:]      # Last 5
+            endpoint[100:110]  # Range 100-109
+        """
+        if isinstance(key, int):
+            return SingleItemBuilder(_EndpointConfig(
+                self._config.client, self._config.name, self._config.index,
+                key, key + 1
+            ))
+        return RangeBuilder(_EndpointConfig(
+            self._config.client, self._config.name, self._config.index,
+            key.start, key.stop
+        ))
+
+    def head(self, n: int = 10) -> RangeBuilder[T]:
+        """Get the first n items (pandas-style)."""
         return RangeBuilder(_EndpointConfig(
             self._config.client, self._config.name, self._config.index,
             None, n
         ))
 
-    def last(self, n: int) -> RangeBuilder[T]:
-        """Fetch the last n data points."""
+    def tail(self, n: int = 10) -> RangeBuilder[T]:
+        """Get the last n items (pandas-style)."""
         return RangeBuilder(_EndpointConfig(
             self._config.client, self._config.name, self._config.index,
             -n, None
         ))
 
-    def range(self, start: int, end: int) -> RangeBuilder[T]:
-        """Set an explicit range [start, end)."""
-        return RangeBuilder(_EndpointConfig(
+    def skip(self, n: int) -> SkippedBuilder[T]:
+        """Skip the first n items. Chain with take() to get a range."""
+        return SkippedBuilder(_EndpointConfig(
             self._config.client, self._config.name, self._config.index,
-            start, end
+            n, None
         ))
 
-    def from_(self, start: int) -> FromBuilder[T]:
-        """Set the start position. Chain with take() or to()."""
-        return FromBuilder(_EndpointConfig(
-            self._config.client, self._config.name, self._config.index,
-            start, None
-        ))
-
-    def to(self, end: int) -> ToBuilder[T]:
-        """Set the end position. Chain with take_last() or from_()."""
-        return ToBuilder(_EndpointConfig(
-            self._config.client, self._config.name, self._config.index,
-            None, end
-        ))
-
-    def json(self) -> MetricData[T]:
-        """Execute the query and return parsed JSON data (all data)."""
+    def fetch(self) -> MetricData[T]:
+        """Fetch all data as parsed JSON."""
         return self._config.get_json()
 
-    def csv(self) -> str:
-        """Execute the query and return CSV data as a string (all data)."""
+    def fetch_csv(self) -> str:
+        """Fetch all data as CSV string."""
         return self._config.get_csv()
 
     def path(self) -> str:

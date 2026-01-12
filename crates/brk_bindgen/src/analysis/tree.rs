@@ -7,7 +7,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use brk_types::{Index, TreeNode, extract_json_type};
 
-use crate::{IndexSetPattern, PatternField, analysis::names::analyze_pattern_level, child_type_name};
+use crate::{IndexSetPattern, PatternField, analysis::names::{analyze_pattern_level, CommonDenominator}, child_type_name};
 
 /// Get the first leaf name from a tree node.
 pub fn get_first_leaf_name(node: &TreeNode) -> Option<String> {
@@ -124,16 +124,81 @@ fn collect_indexes_from_tree(
     }
 }
 
+/// Result of analyzing a pattern instance's base.
+#[derive(Debug, Clone)]
+pub struct PatternBaseResult {
+    /// The computed base name for the pattern.
+    pub base: String,
+    /// Whether an outlier child was excluded to find the pattern.
+    /// If true, pattern factory should not be used.
+    pub has_outlier: bool,
+}
+
+impl PatternBaseResult {
+    /// Returns true if an inline type should be generated instead of using a pattern factory.
+    ///
+    /// This is the case when:
+    /// - The child fields don't match a parameterizable pattern, OR
+    /// - An outlier was detected during pattern analysis
+    pub fn should_inline(&self, is_parameterizable: bool) -> bool {
+        !is_parameterizable || self.has_outlier
+    }
+}
+
 /// Get the metric base for a pattern instance by analyzing direct children.
 ///
 /// Uses field names and first leaf names from direct children to determine
 /// the common base via `analyze_pattern_level`.
-pub fn get_pattern_instance_base(node: &TreeNode) -> String {
+///
+/// If the initial analysis fails to find a common pattern, it tries excluding
+/// each child one at a time to detect outliers (e.g., a mismatched "base" field
+/// from indexer/computed tree merging).
+///
+/// Returns both the base and whether an outlier was detected.
+pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
     let child_names = get_direct_children_for_analysis(node);
     if child_names.is_empty() {
-        return String::new();
+        return PatternBaseResult {
+            base: String::new(),
+            has_outlier: false,
+        };
     }
-    analyze_pattern_level(&child_names).base
+
+    let analysis = analyze_pattern_level(&child_names);
+
+    // If we found a common pattern, use it
+    if !matches!(analysis.common, CommonDenominator::None) {
+        return PatternBaseResult {
+            base: analysis.base,
+            has_outlier: false,
+        };
+    }
+
+    // If no common pattern found, try excluding each child one at a time
+    // to detect if there's a single outlier breaking the pattern.
+    if child_names.len() > 2 {
+        for i in 0..child_names.len() {
+            let filtered: Vec<_> = child_names
+                .iter()
+                .enumerate()
+                .filter(|(j, _)| *j != i)
+                .map(|(_, v)| v.clone())
+                .collect();
+
+            let filtered_analysis = analyze_pattern_level(&filtered);
+            if !matches!(filtered_analysis.common, CommonDenominator::None) {
+                return PatternBaseResult {
+                    base: filtered_analysis.base,
+                    has_outlier: true,
+                };
+            }
+        }
+    }
+
+    PatternBaseResult {
+        base: analysis.base,
+        has_outlier: false,
+    }
 }
 
 /// Get (field_name, shortest_leaf_name) pairs for direct children of a branch node.
@@ -216,4 +281,94 @@ pub fn get_fields_with_child_info(
             )
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use brk_types::{MetricLeaf, MetricLeafWithSchema, TreeNode};
+    use std::collections::BTreeMap;
+
+    fn make_leaf(name: &str) -> TreeNode {
+        let leaf = MetricLeaf {
+            name: name.to_string(),
+            kind: "TestType".to_string(),
+            indexes: BTreeSet::new(),
+        };
+        TreeNode::Leaf(MetricLeafWithSchema::new(leaf, serde_json::json!({})))
+    }
+
+    fn make_branch(children: Vec<(&str, TreeNode)>) -> TreeNode {
+        let map: BTreeMap<String, TreeNode> = children
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
+        TreeNode::Branch(map)
+    }
+
+    #[test]
+    fn test_get_pattern_instance_base_with_base_field() {
+        // Simulates vbytes tree: has base field with block_vbytes leaf
+        let tree = make_branch(vec![
+            ("base", make_branch(vec![("dateindex", make_leaf("block_vbytes"))])),
+            ("average", make_branch(vec![("dateindex", make_leaf("block_vbytes_average"))])),
+            ("sum", make_branch(vec![("dateindex", make_leaf("block_vbytes_sum"))])),
+        ]);
+
+        let result = get_pattern_instance_base(&tree);
+        assert_eq!(result.base, "block_vbytes");
+        assert!(!result.has_outlier);
+    }
+
+    #[test]
+    fn test_get_pattern_instance_base_without_base_field() {
+        // Simulates weight tree: NO base field, only suffixed metrics
+        let tree = make_branch(vec![
+            ("average", make_branch(vec![("dateindex", make_leaf("block_weight_average"))])),
+            ("sum", make_branch(vec![("dateindex", make_leaf("block_weight_sum"))])),
+            ("cumulative", make_branch(vec![("dateindex", make_leaf("block_weight_cumulative"))])),
+            ("max", make_branch(vec![("dateindex", make_leaf("block_weight_max"))])),
+            ("min", make_branch(vec![("dateindex", make_leaf("block_weight_min"))])),
+        ]);
+
+        let result = get_pattern_instance_base(&tree);
+        assert_eq!(result.base, "block_weight");
+        assert!(!result.has_outlier);
+    }
+
+    #[test]
+    fn test_get_pattern_instance_base_with_duplicate_base_field() {
+        // What if there's a "base" field that points to the same leaf as "average"?
+        // This could happen if the tree generation creates a base field that shares leaves with average
+        let tree = make_branch(vec![
+            ("base", make_branch(vec![("dateindex", make_leaf("block_weight_average"))])),
+            ("average", make_branch(vec![("dateindex", make_leaf("block_weight_average"))])),
+            ("sum", make_branch(vec![("dateindex", make_leaf("block_weight_sum"))])),
+        ]);
+
+        let result = get_pattern_instance_base(&tree);
+        // Common prefix among all children is "block_weight_"
+        assert_eq!(result.base, "block_weight");
+        assert!(!result.has_outlier);
+    }
+
+    #[test]
+    fn test_get_pattern_instance_base_with_mismatched_base_name() {
+        // Simulates the actual bug: indexed tree's "base" field has name "weight"
+        // but computed tree's derived metrics use "block_weight_*" prefix.
+        // After tree merge, we get a base field with mismatched naming.
+        let tree = make_branch(vec![
+            ("base", make_leaf("weight")), // Outlier - doesn't match pattern
+            ("average", make_leaf("block_weight_average")),
+            ("sum", make_leaf("block_weight_sum")),
+            ("cumulative", make_leaf("block_weight_cumulative")),
+            ("max", make_leaf("block_weight_max")),
+            ("min", make_leaf("block_weight_min")),
+        ]);
+
+        let result = get_pattern_instance_base(&tree);
+        // Should detect "weight" as outlier and find common prefix from others
+        assert_eq!(result.base, "block_weight");
+        assert!(result.has_outlier); // Pattern factory should NOT be used
+    }
 }

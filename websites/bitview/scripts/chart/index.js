@@ -19,6 +19,7 @@ import { throttle } from "../utils/timing.js";
 import { serdeBool } from "../utils/serde.js";
 import { stringToId } from "../utils/format.js";
 import { style } from "../utils/elements.js";
+import { resources } from "../resources.js";
 
 /**
  * @typedef {Object} Valued
@@ -70,20 +71,18 @@ const lineWidth = /** @type {any} */ (1.5);
  * @param {HTMLElement} args.parent
  * @param {Signals} args.signals
  * @param {Colors} args.colors
- * @param {Resources} args.resources
  * @param {BrkClient} args.brk
  * @param {Accessor<ChartableIndex>} args.index
  * @param {((unknownTimeScaleCallback: VoidFunction) => void)} [args.timeScaleSetCallback]
  * @param {true} [args.fitContent]
  * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
  */
-function createChartElement({
+export function createChartElement({
   parent,
   signals,
   colors,
   id: chartId,
   index,
-  resources,
   brk,
   timeScaleSetCallback,
   fitContent,
@@ -1076,5 +1075,3 @@ function numberToUSFormat(value, digits, options) {
  * @typedef {typeof createChartElement} CreateChartElement
  * @typedef {ReturnType<createChartElement>} Chart
  */
-
-export default { createChartElement };

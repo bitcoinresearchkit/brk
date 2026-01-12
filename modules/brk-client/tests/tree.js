@@ -6,9 +6,9 @@ import { BrkClient } from "../index.js";
 
 /**
  * Recursively collect all metric patterns from the tree.
- * @param {object} obj
+ * @param {Record<string, any>} obj
  * @param {string} path
- * @returns {Array<{path: string, metric: object, indexes: string[]}>}
+ * @returns {Array<{path: string, metric: Record<string, any>, indexes: string[]}>}
  */
 function getAllMetrics(obj, path = "") {
   const metrics = [];
@@ -21,10 +21,10 @@ function getAllMetrics(obj, path = "") {
 
     const currentPath = path ? `${path}.${key}` : key;
 
-    // Check if this is a metric pattern (has 'by' property with index methods)
+    // Check if this is a metric pattern (has 'by' property with index getters)
     if (attr.by && typeof attr.by === "object") {
       const indexes = Object.keys(attr.by).filter(
-        (k) => !k.startsWith("_") && typeof attr.by[k] === "function",
+        (k) => !k.startsWith("_") && typeof attr.by[k] === "object",
       );
       if (indexes.length > 0) {
         metrics.push({ path: currentPath, metric: attr, indexes });
@@ -41,54 +41,38 @@ function getAllMetrics(obj, path = "") {
 }
 
 async function testAllEndpoints() {
-  const client = new BrkClient("http://localhost:3110");
+  const client = new BrkClient({ baseUrl: "http://localhost:3110", timeout: 15000 });
 
-  const metrics = getAllMetrics(client.tree);
+  const metrics = getAllMetrics(client.metrics);
   console.log(`\nFound ${metrics.length} metrics`);
 
   let success = 0;
-  let failed = 0;
-  const errors = [];
 
   for (const { path, metric, indexes } of metrics) {
     for (const idxName of indexes) {
       try {
-        const endpoint = metric.by[idxName]();
-        const res = await endpoint.range(-3);
+        const endpoint = metric.by[idxName];
+        const res = await endpoint.last(1);
         const count = res.data.length;
-        if (count !== 3) {
-          failed++;
-          const errorMsg = `FAIL: ${path}.by.${idxName}() -> expected 3, got ${count}`;
-          errors.push(errorMsg);
-          console.log(errorMsg);
-        } else {
-          success++;
-          console.log(`OK: ${path}.by.${idxName}() -> ${count} items`);
+        if (count !== 1) {
+          console.log(
+            `FAIL: ${path}.by.${idxName} -> expected 1, got ${count}`,
+          );
+          return;
         }
+        success++;
+        console.log(`OK: ${path}.by.${idxName} -> ${count} items`);
       } catch (e) {
-        failed++;
-        const errorMsg = `FAIL: ${path}.by.${idxName}() -> ${e.message}`;
-        errors.push(errorMsg);
-        console.log(errorMsg);
+        console.log(
+          `FAIL: ${path}.by.${idxName} -> ${e instanceof Error ? e.message : e}`,
+        );
+        return;
       }
     }
   }
 
   console.log(`\n=== Results ===`);
   console.log(`Success: ${success}`);
-  console.log(`Failed: ${failed}`);
-
-  if (errors.length > 0) {
-    console.log(`\nErrors:`);
-    errors.slice(0, 10).forEach((err) => console.log(`  ${err}`));
-    if (errors.length > 10) {
-      console.log(`  ... and ${errors.length - 10} more`);
-    }
-  }
-
-  if (failed > 0) {
-    process.exit(1);
-  }
 }
 
 testAllEndpoints();

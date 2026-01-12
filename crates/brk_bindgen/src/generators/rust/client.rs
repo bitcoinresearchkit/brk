@@ -12,6 +12,7 @@ pub fn generate_imports(output: &mut String) {
     writeln!(
         output,
         r#"use std::sync::Arc;
+use std::ops::{{Bound, RangeBounds}};
 use serde::de::DeserializeOwned;
 pub use brk_cohort::*;
 pub use brk_types::*;
@@ -193,21 +194,30 @@ impl EndpointConfig {{
 
 /// Initial builder for metric endpoint queries.
 ///
-/// Use method chaining to specify the data range, then call `json()` or `csv()` to execute.
+/// Use method chaining to specify the data range, then call `fetch()` or `fetch_csv()` to execute.
 ///
 /// # Examples
 /// ```ignore
-/// // Get all data
-/// endpoint.json()?;
+/// // Fetch all data
+/// let data = endpoint.fetch()?;
 ///
-/// // Get last 10 points
-/// endpoint.last(10).json()?;
+/// // Get single item at index 5
+/// let data = endpoint.get(5).fetch()?;
+///
+/// // Get first 10 using range
+/// let data = endpoint.range(..10).fetch()?;
 ///
 /// // Get range [100, 200)
-/// endpoint.range(100, 200).json()?;
+/// let data = endpoint.range(100..200).fetch()?;
 ///
-/// // Get 10 points starting from position 100
-/// endpoint.from(100).take(10).json()?;
+/// // Get first 10 (convenience)
+/// let data = endpoint.take(10).fetch()?;
+///
+/// // Get last 10
+/// let data = endpoint.last(10).fetch()?;
+///
+/// // Iterator-style chaining
+/// let data = endpoint.skip(100).take(10).fetch()?;
 /// ```
 pub struct MetricEndpointBuilder<T> {{
     config: EndpointConfig,
@@ -219,44 +229,59 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T> {{
         Self {{ config: EndpointConfig::new(client, name, index), _marker: std::marker::PhantomData }}
     }}
 
-    /// Fetch the first n data points.
-    pub fn first(mut self, n: u64) -> RangeBuilder<T> {{
-        self.config.end = Some(n as i64);
+    /// Select a specific index position.
+    pub fn get(mut self, index: usize) -> SingleItemBuilder<T> {{
+        self.config.start = Some(index as i64);
+        self.config.end = Some(index as i64 + 1);
+        SingleItemBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
+    }}
+
+    /// Select a range using Rust range syntax.
+    ///
+    /// # Examples
+    /// ```ignore
+    /// endpoint.range(..10)      // first 10
+    /// endpoint.range(100..110)  // indices 100-109
+    /// endpoint.range(100..)     // from 100 to end
+    /// ```
+    pub fn range<R: RangeBounds<usize>>(mut self, range: R) -> RangeBuilder<T> {{
+        self.config.start = match range.start_bound() {{
+            Bound::Included(&n) => Some(n as i64),
+            Bound::Excluded(&n) => Some(n as i64 + 1),
+            Bound::Unbounded => None,
+        }};
+        self.config.end = match range.end_bound() {{
+            Bound::Included(&n) => Some(n as i64 + 1),
+            Bound::Excluded(&n) => Some(n as i64),
+            Bound::Unbounded => None,
+        }};
         RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
     }}
 
-    /// Fetch the last n data points.
-    pub fn last(mut self, n: u64) -> RangeBuilder<T> {{
+    /// Take the first n items.
+    pub fn take(self, n: usize) -> RangeBuilder<T> {{
+        self.range(..n)
+    }}
+
+    /// Take the last n items.
+    pub fn last(mut self, n: usize) -> RangeBuilder<T> {{
         self.config.start = Some(-(n as i64));
         RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
     }}
 
-    /// Set an explicit range [start, end).
-    pub fn range(mut self, start: i64, end: i64) -> RangeBuilder<T> {{
-        self.config.start = Some(start);
-        self.config.end = Some(end);
-        RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
+    /// Skip the first n items. Chain with `take(n)` to get a range.
+    pub fn skip(mut self, n: usize) -> SkippedBuilder<T> {{
+        self.config.start = Some(n as i64);
+        SkippedBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
     }}
 
-    /// Set the start position. Chain with `take(n)` or `to(end)`.
-    pub fn from(mut self, start: i64) -> FromBuilder<T> {{
-        self.config.start = Some(start);
-        FromBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
-    }}
-
-    /// Set the end position. Chain with `takeLast(n)` or `from(start)`.
-    pub fn to(mut self, end: i64) -> ToBuilder<T> {{
-        self.config.end = Some(end);
-        ToBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
-    }}
-
-    /// Execute the query and return parsed JSON data (all data).
-    pub fn json(self) -> Result<MetricData<T>> {{
+    /// Fetch all data as parsed JSON.
+    pub fn fetch(self) -> Result<MetricData<T>> {{
         self.config.get_json(None)
     }}
 
-    /// Execute the query and return CSV data as a string (all data).
-    pub fn csv(self) -> Result<String> {{
+    /// Fetch all data as CSV string.
+    pub fn fetch_csv(self) -> Result<String> {{
         self.config.get_text(Some("csv"))
     }}
 
@@ -266,82 +291,63 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T> {{
     }}
 }}
 
-/// Builder after calling `from(start)`. Can chain with `take(n)` or `to(end)`.
-pub struct FromBuilder<T> {{
+/// Builder for single item access.
+pub struct SingleItemBuilder<T> {{
     config: EndpointConfig,
     _marker: std::marker::PhantomData<T>,
 }}
 
-impl<T: DeserializeOwned> FromBuilder<T> {{
-    /// Take n items from the start position.
-    pub fn take(mut self, n: u64) -> RangeBuilder<T> {{
+impl<T: DeserializeOwned> SingleItemBuilder<T> {{
+    /// Fetch the single item.
+    pub fn fetch(self) -> Result<MetricData<T>> {{
+        self.config.get_json(None)
+    }}
+
+    /// Fetch the single item as CSV.
+    pub fn fetch_csv(self) -> Result<String> {{
+        self.config.get_text(Some("csv"))
+    }}
+}}
+
+/// Builder after calling `skip(n)`. Chain with `take(n)` to specify count.
+pub struct SkippedBuilder<T> {{
+    config: EndpointConfig,
+    _marker: std::marker::PhantomData<T>,
+}}
+
+impl<T: DeserializeOwned> SkippedBuilder<T> {{
+    /// Take n items after the skipped position.
+    pub fn take(mut self, n: usize) -> RangeBuilder<T> {{
         let start = self.config.start.unwrap_or(0);
         self.config.end = Some(start + n as i64);
         RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
     }}
 
-    /// Set the end position.
-    pub fn to(mut self, end: i64) -> RangeBuilder<T> {{
-        self.config.end = Some(end);
-        RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
-    }}
-
-    /// Execute the query and return parsed JSON data (from start to end of data).
-    pub fn json(self) -> Result<MetricData<T>> {{
+    /// Fetch from the skipped position to the end.
+    pub fn fetch(self) -> Result<MetricData<T>> {{
         self.config.get_json(None)
     }}
 
-    /// Execute the query and return CSV data as a string.
-    pub fn csv(self) -> Result<String> {{
+    /// Fetch from the skipped position to the end as CSV.
+    pub fn fetch_csv(self) -> Result<String> {{
         self.config.get_text(Some("csv"))
     }}
 }}
 
-/// Builder after calling `to(end)`. Can chain with `takeLast(n)` or `from(start)`.
-pub struct ToBuilder<T> {{
-    config: EndpointConfig,
-    _marker: std::marker::PhantomData<T>,
-}}
-
-impl<T: DeserializeOwned> ToBuilder<T> {{
-    /// Take last n items before the end position.
-    pub fn take_last(mut self, n: u64) -> RangeBuilder<T> {{
-        let end = self.config.end.unwrap_or(0);
-        self.config.start = Some(end - n as i64);
-        RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
-    }}
-
-    /// Set the start position.
-    pub fn from(mut self, start: i64) -> RangeBuilder<T> {{
-        self.config.start = Some(start);
-        RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
-    }}
-
-    /// Execute the query and return parsed JSON data (from start of data to end).
-    pub fn json(self) -> Result<MetricData<T>> {{
-        self.config.get_json(None)
-    }}
-
-    /// Execute the query and return CSV data as a string.
-    pub fn csv(self) -> Result<String> {{
-        self.config.get_text(Some("csv"))
-    }}
-}}
-
-/// Final builder with range fully specified. Can only call `json()` or `csv()`.
+/// Builder with range fully specified.
 pub struct RangeBuilder<T> {{
     config: EndpointConfig,
     _marker: std::marker::PhantomData<T>,
 }}
 
 impl<T: DeserializeOwned> RangeBuilder<T> {{
-    /// Execute the query and return parsed JSON data.
-    pub fn json(self) -> Result<MetricData<T>> {{
+    /// Fetch the range as parsed JSON.
+    pub fn fetch(self) -> Result<MetricData<T>> {{
         self.config.get_json(None)
     }}
 
-    /// Execute the query and return CSV data as a string.
-    pub fn csv(self) -> Result<String> {{
+    /// Fetch the range as CSV string.
+    pub fn fetch_csv(self) -> Result<String> {{
         self.config.get_text(Some("csv"))
     }}
 }}

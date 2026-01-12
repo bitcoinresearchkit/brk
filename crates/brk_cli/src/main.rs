@@ -17,6 +17,7 @@ use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
 use brk_server::{Server, VERSION};
+use importmap::ImportMap;
 use tracing::info;
 use vecdb::Exit;
 
@@ -85,25 +86,28 @@ pub fn run() -> color_eyre::Result<()> {
     let data_path = config.brkdir();
 
     let future = async move {
-        let bundle_path = if website.is_some() {
-            // Try to find local dev directories - check cwd and parent directories
-            let find_dev_dirs = || -> Option<(PathBuf, PathBuf)> {
-                let mut dir = std::env::current_dir().ok()?;
-                loop {
-                    let websites = dir.join("websites");
-                    let modules = dir.join("modules");
-                    if websites.exists() && modules.exists() {
-                        return Some((websites, modules));
-                    }
-                    // Stop at workspace root (crates/ indicates we're there)
-                    if dir.join("crates").exists() {
-                        return None;
-                    }
-                    dir = dir.parent()?.to_path_buf();
+        // Try to find local dev directories - check cwd and parent directories
+        let find_dev_dirs = || -> Option<(PathBuf, PathBuf)> {
+            let mut dir = std::env::current_dir().ok()?;
+            loop {
+                let websites = dir.join("websites");
+                let modules = dir.join("modules");
+                if websites.exists() && modules.exists() {
+                    return Some((websites, modules));
                 }
-            };
+                // Stop at workspace root (crates/ indicates we're there)
+                if dir.join("crates").exists() {
+                    return None;
+                }
+                dir = dir.parent()?.to_path_buf();
+            }
+        };
 
-            let websites_path = if let Some((websites, _modules)) = find_dev_dirs() {
+        let dev_dirs = find_dev_dirs();
+        let is_dev = dev_dirs.is_some();
+
+        let bundle_path = if website.is_some() {
+            let websites_path = if let Some((websites, _modules)) = dev_dirs {
                 websites
             } else {
                 let downloaded_brk_path = downloads_path.join(format!("brk-{VERSION}"));
@@ -133,19 +137,28 @@ pub fn run() -> color_eyre::Result<()> {
             None
         };
 
-        // Generate import map for cache busting
+        // Generate import map for cache busting (disabled in dev mode)
         if let Some(ref path) = bundle_path {
-            match importmap::ImportMap::scan(path, "") {
-                Ok(map) => {
-                    let html_path = path.join("index.html");
-                    if let Ok(html) = fs::read_to_string(&html_path)
-                        && let Some(updated) = map.update_html(&html)
-                    {
-                        let _ = fs::write(&html_path, updated);
-                        info!("Updated importmap in index.html");
+            let map = if is_dev {
+                ImportMap::empty()
+            } else {
+                match ImportMap::scan(path, "") {
+                    Ok(map) => map,
+                    Err(e) => {
+                        tracing::error!("Failed to generate importmap: {e}");
+                        ImportMap::empty()
                     }
                 }
-                Err(e) => tracing::error!("Failed to generate importmap: {e}"),
+            };
+
+            let html_path = path.join("index.html");
+            if let Ok(html) = fs::read_to_string(&html_path)
+                && let Some(updated) = map.update_html(&html)
+            {
+                let _ = fs::write(&html_path, updated);
+                if !is_dev {
+                    info!("Updated importmap in index.html");
+                }
             }
         }
 

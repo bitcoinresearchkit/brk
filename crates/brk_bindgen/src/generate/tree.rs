@@ -4,16 +4,35 @@ use std::collections::{HashMap, HashSet};
 
 use brk_types::TreeNode;
 
-use crate::{ClientMetadata, PatternField, get_fields_with_child_info};
+use crate::{
+    ClientMetadata, PatternBaseResult, PatternField, child_type_name, get_fields_with_child_info,
+    get_pattern_instance_base,
+};
+
+/// Pre-computed context for a single child node.
+pub struct ChildContext<'a> {
+    /// The child's field name in the tree.
+    pub name: &'a str,
+    /// The child node.
+    pub node: &'a TreeNode,
+    /// The field info for this child.
+    pub field: PatternField,
+    /// Child fields if this is a branch (for pattern lookup).
+    pub child_fields: Option<Vec<PatternField>>,
+    /// Pattern analysis result.
+    pub base_result: PatternBaseResult,
+    /// Whether this is a leaf node.
+    pub is_leaf: bool,
+    /// Whether to use an inline type instead of a pattern factory (only meaningful for branches).
+    pub should_inline: bool,
+    /// The type name to use for inline branches.
+    pub inline_type_name: String,
+}
 
 /// Context for generating a tree node, returned by `prepare_tree_node`.
 pub struct TreeNodeContext<'a> {
-    /// The children of the branch node.
-    pub children: &'a std::collections::BTreeMap<String, TreeNode>,
-    /// Fields with optional child field info for generic pattern lookup.
-    pub fields_with_child_info: Vec<(PatternField, Option<Vec<PatternField>>)>,
-    /// Just the fields (for pattern lookup).
-    pub fields: Vec<PatternField>,
+    /// Pre-computed context for each child.
+    pub children: Vec<ChildContext<'a>>,
 }
 
 /// Prepare a tree node for generation.
@@ -26,20 +45,22 @@ pub fn prepare_tree_node<'a>(
     metadata: &ClientMetadata,
     generated: &mut HashSet<String>,
 ) -> Option<TreeNodeContext<'a>> {
-    let TreeNode::Branch(children) = node else {
+    let TreeNode::Branch(branch_children) = node else {
         return None;
     };
 
-    let fields_with_child_info = get_fields_with_child_info(children, name, pattern_lookup);
+    let fields_with_child_info = get_fields_with_child_info(branch_children, name, pattern_lookup);
     let fields: Vec<PatternField> = fields_with_child_info
         .iter()
         .map(|(f, _)| f.clone())
         .collect();
 
-    // Skip if this matches a parameterizable pattern
+    // Skip if this matches a parameterizable pattern AND has no outlier
+    let base_result = get_pattern_instance_base(node);
     if let Some(pattern_name) = pattern_lookup.get(&fields)
         && pattern_name != name
         && metadata.is_parameterizable(pattern_name)
+        && !base_result.has_outlier
     {
         return None;
     }
@@ -50,9 +71,38 @@ pub fn prepare_tree_node<'a>(
     }
     generated.insert(name.to_string());
 
-    Some(TreeNodeContext {
-        children,
-        fields_with_child_info,
-        fields,
-    })
+    // Build child contexts with pre-computed decisions
+    let children: Vec<ChildContext<'a>> = branch_children
+        .iter()
+        .zip(fields_with_child_info)
+        .map(|((child_name, child_node), (field, child_fields))| {
+            let is_leaf = matches!(child_node, TreeNode::Leaf(_));
+            let base_result = get_pattern_instance_base(child_node);
+            let is_parameterizable = child_fields
+                .as_ref()
+                .is_some_and(|cf| metadata.is_parameterizable_fields(cf));
+            // should_inline is only meaningful for branches
+            let should_inline = !is_leaf && base_result.should_inline(is_parameterizable);
+
+            // Inline type name (only used when should_inline is true)
+            let inline_type_name = if should_inline {
+                child_type_name(name, child_name)
+            } else {
+                String::new()
+            };
+
+            ChildContext {
+                name: child_name,
+                node: child_node,
+                field,
+                child_fields,
+                base_result,
+                is_leaf,
+                should_inline,
+                inline_type_name,
+            }
+        })
+        .collect();
+
+    Some(TreeNodeContext { children })
 }

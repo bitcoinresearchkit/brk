@@ -6,7 +6,7 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, Endpoint, GenericSyntax, JavaScriptSyntax, PatternField, child_type_name,
+    ClientMetadata, Endpoint, GenericSyntax, JavaScriptSyntax, PatternField,
     generate_leaf_field, get_first_leaf_name, get_node_fields, get_pattern_instance_base,
     infer_accumulated_name, prepare_tree_node, to_camel_case,
 };
@@ -45,43 +45,41 @@ fn generate_tree_typedef(
     writeln!(output, "/**").unwrap();
     writeln!(output, " * @typedef {{Object}} {}", name).unwrap();
 
-    for ((field, child_fields), (child_name, _)) in
-        ctx.fields_with_child_info.iter().zip(ctx.children.iter())
-    {
-        let js_type = metadata.resolve_tree_field_type(
-            field,
-            child_fields.as_deref(),
-            name,
-            child_name,
-            GenericSyntax::JAVASCRIPT,
-        );
+    for child in &ctx.children {
+        let js_type = if child.should_inline {
+            child.inline_type_name.clone()
+        } else {
+            metadata.resolve_tree_field_type(
+                &child.field,
+                child.child_fields.as_deref(),
+                name,
+                child.name,
+                GenericSyntax::JAVASCRIPT,
+            )
+        };
 
         writeln!(
             output,
             " * @property {{{}}} {}",
             js_type,
-            to_camel_case(&field.name)
+            to_camel_case(&child.field.name)
         )
         .unwrap();
     }
 
     writeln!(output, " */\n").unwrap();
 
-    for (child_name, child_node) in ctx.children {
-        if let TreeNode::Branch(grandchildren) = child_node {
-            let child_fields = get_node_fields(grandchildren, pattern_lookup);
-            // Generate typedef if no pattern match OR pattern is not parameterizable
-            if !metadata.is_parameterizable_fields(&child_fields) {
-                let child_type = child_type_name(name, child_name);
-                generate_tree_typedef(
-                    output,
-                    &child_type,
-                    child_node,
-                    pattern_lookup,
-                    metadata,
-                    generated,
-                );
-            }
+    // Generate child typedefs
+    for child in &ctx.children {
+        if child.should_inline {
+            generate_tree_typedef(
+                output,
+                &child.inline_type_name,
+                child.node,
+                pattern_lookup,
+                metadata,
+                generated,
+            );
         }
     }
 }
@@ -182,12 +180,14 @@ fn generate_tree_initializer(
                         .get(&child_fields)
                         .filter(|name| metadata.is_parameterizable(name));
 
-                    if let Some(pattern_name) = pattern_name {
-                        let arg = get_pattern_instance_base(child_node);
+                    let base_result = get_pattern_instance_base(child_node);
+
+                    // Use pattern factory only if no outlier was detected
+                    if let Some(pattern_name) = pattern_name.filter(|_| !base_result.has_outlier) {
                         writeln!(
                             output,
                             "{}{}: create{}(this, '{}'),",
-                            indent_str, field_name, pattern_name, arg
+                            indent_str, field_name, pattern_name, base_result.base
                         )
                         .unwrap();
                     } else {

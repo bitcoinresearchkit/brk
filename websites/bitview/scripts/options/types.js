@@ -238,8 +238,8 @@
  * @property {HistogramSeriesFn} histogram
  * @property {(pattern: BlockCountPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockCount
  * @property {(pattern: FullnessPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBitcoin
- * @property {(pattern: SizePattern, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockSize
- * @property {(pattern: SizePattern, title: string, unit: Unit) => AnyFetchedSeriesBlueprint[]} fromSizePattern
+ * @property {(pattern: AnyStatsPattern, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockSize
+ * @property {(pattern: AnyStatsPattern, title: string, unit: Unit) => AnyFetchedSeriesBlueprint[]} fromSizePattern
  * @property {(pattern: FullnessPattern<any>, title: string, unit: Unit) => AnyFetchedSeriesBlueprint[]} fromFullnessPattern
  * @property {(pattern: FeeRatePattern<any>, title: string, unit: Unit) => AnyFetchedSeriesBlueprint[]} fromFeeRatePattern
  * @property {(pattern: CoinbasePattern, title: string) => AnyFetchedSeriesBlueprint[]} fromCoinbasePattern

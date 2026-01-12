@@ -26,7 +26,7 @@ pub fn generate_python_client(
     writeln!(output, "# Do not edit manually\n").unwrap();
     writeln!(
         output,
-        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol"
+        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol, overload"
     )
     .unwrap();
     writeln!(output, "from http.client import HTTPSConnection, HTTPConnection").unwrap();

@@ -41,7 +41,7 @@ def test_all_endpoints():
     """Test fetching last 3 values from all metric endpoints."""
     client = BrkClient("http://localhost:3110")
 
-    metrics = get_all_metrics(client.tree)
+    metrics = get_all_metrics(client.metrics)
     print(f"\nFound {len(metrics)} metrics")
 
     success = 0
@@ -53,7 +53,8 @@ def test_all_endpoints():
             try:
                 by = metric.by
                 endpoint = getattr(by, idx_name)()
-                res = endpoint.range(-3)
+                # Use the new idiomatic API: tail(3).fetch() or [-3:].fetch()
+                res = endpoint.tail(3).fetch()
                 count = len(res["data"])
                 if count != 3:
                     failed += 1

@@ -458,4 +458,33 @@ mod tests {
             Some(&FieldNamePosition::Append("_cumulative".to_string()))
         );
     }
+
+    #[test]
+    fn test_analyze_pattern_level_no_base_field() {
+        // When there's no base field (like block_weight which has no block_weight metric),
+        // only suffixed metrics like block_weight_average, block_weight_sum, etc.
+        // Base should still be "block_weight"
+        let children = vec![
+            ("average".to_string(), "block_weight_average".to_string()),
+            ("sum".to_string(), "block_weight_sum".to_string()),
+            (
+                "cumulative".to_string(),
+                "block_weight_cumulative".to_string(),
+            ),
+            ("max".to_string(), "block_weight_max".to_string()),
+            ("min".to_string(), "block_weight_min".to_string()),
+        ];
+        let analysis = analyze_pattern_level(&children);
+
+        assert!(matches!(analysis.common, CommonDenominator::Prefix(_)));
+        assert_eq!(analysis.base, "block_weight");
+        assert_eq!(
+            analysis.field_positions.get("average"),
+            Some(&FieldNamePosition::Append("_average".to_string()))
+        );
+        assert_eq!(
+            analysis.field_positions.get("sum"),
+            Some(&FieldNamePosition::Append("_sum".to_string()))
+        );
+    }
 }

@@ -63,57 +63,65 @@ class BrkError extends Error {{
  * @property {{number}} end - End index (exclusive)
  * @property {{T[]}} data - The metric data
  */
-/** @typedef {{MetricData<unknown>}} AnyMetricData */
+/** @typedef {{MetricData<any>}} AnyMetricData */
 
 /**
+ * Thenable interface for await support.
+ * @template T
+ * @typedef {{(onfulfilled?: (value: MetricData<T>) => MetricData<T>, onrejected?: (reason: Error) => never) => Promise<MetricData<T>>}} Thenable
+ */
+
+/**
+ * Metric endpoint builder. Callable (returns itself) so both .by.dateindex and .by.dateindex() work.
  * @template T
  * @typedef {{Object}} MetricEndpointBuilder
- * @property {{(n: number) => RangeBuilder<T>}} first - Fetch first n data points
- * @property {{(n: number) => RangeBuilder<T>}} last - Fetch last n data points
- * @property {{(start: number, end: number) => RangeBuilder<T>}} range - Set explicit range [start, end)
- * @property {{(start: number) => FromBuilder<T>}} from - Set start position, chain with take() or to()
- * @property {{(end: number) => ToBuilder<T>}} to - Set end position, chain with takeLast() or from()
- * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} json - Execute and return JSON (all data)
- * @property {{() => Promise<string>}} csv - Execute and return CSV (all data)
+ * @property {{(index: number) => SingleItemBuilder<T>}} get - Get single item at index
+ * @property {{(start?: number, end?: number) => RangeBuilder<T>}} slice - Slice like Array.slice
+ * @property {{(n: number) => RangeBuilder<T>}} first - Get first n items
+ * @property {{(n: number) => RangeBuilder<T>}} last - Get last n items
+ * @property {{(n: number) => SkippedBuilder<T>}} skip - Skip first n items, chain with take()
+ * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} fetch - Fetch all data
+ * @property {{() => Promise<string>}} fetchCsv - Fetch all data as CSV
+ * @property {{Thenable<T>}} then - Thenable (await endpoint)
  * @property {{string}} path - The endpoint path
  */
-/** @typedef {{MetricEndpointBuilder<unknown>}} AnyMetricEndpointBuilder */
+/** @typedef {{MetricEndpointBuilder<any>}} AnyMetricEndpointBuilder */
 
 /**
  * @template T
- * @typedef {{Object}} FromBuilder
- * @property {{(n: number) => RangeBuilder<T>}} take - Take n items from start position
- * @property {{(end: number) => RangeBuilder<T>}} to - Set end position
- * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} json - Execute and return JSON
- * @property {{() => Promise<string>}} csv - Execute and return CSV
+ * @typedef {{Object}} SingleItemBuilder
+ * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} fetch - Fetch the item
+ * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
+ * @property {{Thenable<T>}} then - Thenable
  */
 
 /**
  * @template T
- * @typedef {{Object}} ToBuilder
- * @property {{(n: number) => RangeBuilder<T>}} takeLast - Take last n items before end position
- * @property {{(start: number) => RangeBuilder<T>}} from - Set start position
- * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} json - Execute and return JSON
- * @property {{() => Promise<string>}} csv - Execute and return CSV
+ * @typedef {{Object}} SkippedBuilder
+ * @property {{(n: number) => RangeBuilder<T>}} take - Take n items after skipped position
+ * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} fetch - Fetch from skipped position to end
+ * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
+ * @property {{Thenable<T>}} then - Thenable
  */
 
 /**
  * @template T
  * @typedef {{Object}} RangeBuilder
- * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} json - Execute and return JSON
- * @property {{() => Promise<string>}} csv - Execute and return CSV
+ * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} fetch - Fetch the range
+ * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
+ * @property {{Thenable<T>}} then - Thenable
  */
 
 /**
  * @template T
  * @typedef {{Object}} MetricPattern
  * @property {{string}} name - The metric name
- * @property {{Partial<Record<Index, MetricEndpointBuilder<T>>>}} by - Index endpoints (lazy getters)
+ * @property {{Readonly<Partial<Record<Index, MetricEndpointBuilder<T>>>>}} by - Index endpoints as lazy getters. Access via .by.dateindex or .by['dateindex']
  * @property {{() => Index[]}} indexes - Get the list of available indexes
  * @property {{(index: Index) => MetricEndpointBuilder<T>|undefined}} get - Get an endpoint for a specific index
  */
 
-/** @typedef {{MetricPattern<unknown>}} AnyMetricPattern */
+/** @typedef {{MetricPattern<any>}} AnyMetricPattern */
 
 /**
  * Create a metric endpoint builder with typestate pattern.
@@ -147,50 +155,46 @@ function _endpoint(client, name, index) {{
    * @returns {{RangeBuilder<T>}}
    */
   const rangeBuilder = (start, end) => ({{
-    json(/** @type {{((value: MetricData<T>) => void) | undefined}} */ onUpdate) {{
-      return client.getJson(buildPath(start, end), onUpdate);
-    }},
-    csv() {{ return client.getText(buildPath(start, end, 'csv')); }},
+    fetch(onUpdate) {{ return client.getJson(buildPath(start, end), onUpdate); }},
+    fetchCsv() {{ return client.getText(buildPath(start, end, 'csv')); }},
+    then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
+  }});
+
+  /**
+   * @param {{number}} index
+   * @returns {{SingleItemBuilder<T>}}
+   */
+  const singleItemBuilder = (index) => ({{
+    fetch(onUpdate) {{ return client.getJson(buildPath(index, index + 1), onUpdate); }},
+    fetchCsv() {{ return client.getText(buildPath(index, index + 1, 'csv')); }},
+    then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
   }});
 
   /**
    * @param {{number}} start
-   * @returns {{FromBuilder<T>}}
+   * @returns {{SkippedBuilder<T>}}
    */
-  const fromBuilder = (start) => ({{
-    take(/** @type {{number}} */ n) {{ return rangeBuilder(start, start + n); }},
-    to(/** @type {{number}} */ end) {{ return rangeBuilder(start, end); }},
-    json(/** @type {{((value: MetricData<T>) => void) | undefined}} */ onUpdate) {{
-      return client.getJson(buildPath(start, undefined), onUpdate);
-    }},
-    csv() {{ return client.getText(buildPath(start, undefined, 'csv')); }},
+  const skippedBuilder = (start) => ({{
+    take(n) {{ return rangeBuilder(start, start + n); }},
+    fetch(onUpdate) {{ return client.getJson(buildPath(start, undefined), onUpdate); }},
+    fetchCsv() {{ return client.getText(buildPath(start, undefined, 'csv')); }},
+    then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
   }});
 
-  /**
-   * @param {{number}} end
-   * @returns {{ToBuilder<T>}}
-   */
-  const toBuilder = (end) => ({{
-    takeLast(/** @type {{number}} */ n) {{ return rangeBuilder(end - n, end); }},
-    from(/** @type {{number}} */ start) {{ return rangeBuilder(start, end); }},
-    json(/** @type {{((value: MetricData<T>) => void) | undefined}} */ onUpdate) {{
-      return client.getJson(buildPath(undefined, end), onUpdate);
-    }},
-    csv() {{ return client.getText(buildPath(undefined, end, 'csv')); }},
-  }});
-
-  return {{
-    first(/** @type {{number}} */ n) {{ return rangeBuilder(undefined, n); }},
-    last(/** @type {{number}} */ n) {{ return rangeBuilder(-n, undefined); }},
-    range(/** @type {{number}} */ start, /** @type {{number}} */ end) {{ return rangeBuilder(start, end); }},
-    from(/** @type {{number}} */ start) {{ return fromBuilder(start); }},
-    to(/** @type {{number}} */ end) {{ return toBuilder(end); }},
-    json(/** @type {{((value: MetricData<T>) => void) | undefined}} */ onUpdate) {{
-      return client.getJson(buildPath(), onUpdate);
-    }},
-    csv() {{ return client.getText(buildPath(undefined, undefined, 'csv')); }},
+  /** @type {{MetricEndpointBuilder<T>}} */
+  const endpoint = {{
+    get(index) {{ return singleItemBuilder(index); }},
+    slice(start, end) {{ return rangeBuilder(start, end); }},
+    first(n) {{ return rangeBuilder(undefined, n); }},
+    last(n) {{ return rangeBuilder(-n, undefined); }},
+    skip(n) {{ return skippedBuilder(n); }},
+    fetch(onUpdate) {{ return client.getJson(buildPath(), onUpdate); }},
+    fetchCsv() {{ return client.getText(buildPath(undefined, undefined, 'csv')); }},
+    then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
     get path() {{ return p; }},
   }};
+
+  return endpoint;
 }}
 
 /**
@@ -235,7 +239,7 @@ class BrkClientBase {{
     const cachedJson = cachedRes ? await cachedRes.json() : null;
 
     if (cachedJson) onUpdate?.(cachedJson);
-    if (!globalThis.navigator?.onLine) {{
+    if (globalThis.navigator?.onLine === false) {{
       if (cachedJson) return cachedJson;
       throw new BrkError('Offline and no cached data available');
     }}
@@ -305,7 +309,11 @@ pub fn generate_static_constants(output: &mut String) {
     fn instance_const_camel<T: Serialize>(output: &mut String, name: &str, value: &T) {
         let json_value: Value = serde_json::to_value(value).unwrap();
         let camel_value = camel_case_top_level_keys(json_value);
-        write_static_const(output, name, &serde_json::to_string_pretty(&camel_value).unwrap());
+        write_static_const(
+            output,
+            name,
+            &serde_json::to_string_pretty(&camel_value).unwrap(),
+        );
     }
 
     instance_const_camel(output, "TERM_NAMES", &TERM_NAMES);
@@ -336,13 +344,25 @@ fn camel_case_top_level_keys(value: Value) -> Value {
 fn indent_json_const(json: &str) -> String {
     json.lines()
         .enumerate()
-        .map(|(i, line)| if i == 0 { line.to_string() } else { format!("  {}", line) })
+        .map(|(i, line)| {
+            if i == 0 {
+                line.to_string()
+            } else {
+                format!("  {}", line)
+            }
+        })
         .collect::<Vec<_>>()
         .join("\n")
 }
 
 fn write_static_const(output: &mut String, name: &str, json: &str) {
-    writeln!(output, "  {} = /** @type {{const}} */ ({});\n", name, indent_json_const(json)).unwrap();
+    writeln!(
+        output,
+        "  {} = /** @type {{const}} */ ({});\n",
+        name,
+        indent_json_const(json)
+    )
+    .unwrap();
 }
 
 /// Generate index accessor factory functions.
@@ -354,14 +374,30 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
     writeln!(output, "// Index accessor factory functions\n").unwrap();
 
     for pattern in patterns {
+        // Use 'readonly' to indicate these are getters (lazy evaluation)
         let by_fields: Vec<String> = pattern
             .indexes
             .iter()
-            .map(|idx| format!("{}: MetricEndpointBuilder<T>", idx.serialize_long()))
+            .map(|idx| {
+                format!(
+                    "readonly {}: MetricEndpointBuilder<T>",
+                    idx.serialize_long()
+                )
+            })
             .collect();
         let by_type = format!("{{ {} }}", by_fields.join(", "));
 
         writeln!(output, "/**").unwrap();
+        writeln!(
+            output,
+            " * Metric pattern with index endpoints as lazy getters."
+        )
+        .unwrap();
+        writeln!(
+            output,
+            " * Access via property (.by.dateindex) or bracket notation (.by['dateindex'])."
+        )
+        .unwrap();
         writeln!(output, " * @template T").unwrap();
         writeln!(
             output,
@@ -385,7 +421,11 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
 
         for (i, index) in pattern.indexes.iter().enumerate() {
             let index_name = index.serialize_long();
-            let comma = if i < pattern.indexes.len() - 1 { "," } else { "" };
+            let comma = if i < pattern.indexes.len() - 1 {
+                ","
+            } else {
+                ""
+            };
             writeln!(
                 output,
                 "      get {}() {{ return _endpoint(client, name, '{}'); }}{}",
@@ -438,8 +478,12 @@ pub fn generate_structural_patterns(
         }
         writeln!(output, " * @typedef {{Object}} {}", pattern.name).unwrap();
         for field in &pattern.fields {
-            let js_type =
-                metadata.field_type_annotation(field, pattern.is_generic, None, GenericSyntax::JAVASCRIPT);
+            let js_type = metadata.field_type_annotation(
+                field,
+                pattern.is_generic,
+                None,
+                GenericSyntax::JAVASCRIPT,
+            );
             writeln!(
                 output,
                 " * @property {{{}}} {}",
@@ -469,8 +513,17 @@ pub fn generate_structural_patterns(
         writeln!(output, " * @returns {{{}}}", return_type).unwrap();
         writeln!(output, " */").unwrap();
 
-        let param_name = if is_parameterizable { "acc" } else { "basePath" };
-        writeln!(output, "function create{}(client, {}) {{", pattern.name, param_name).unwrap();
+        let param_name = if is_parameterizable {
+            "acc"
+        } else {
+            "basePath"
+        };
+        writeln!(
+            output,
+            "function create{}(client, {}) {{",
+            pattern.name, param_name
+        )
+        .unwrap();
         writeln!(output, "  return {{").unwrap();
 
         let syntax = JavaScriptSyntax;

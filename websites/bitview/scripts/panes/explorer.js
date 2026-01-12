@@ -1,25 +1,7 @@
 import { randomFromArray } from "../utils/array.js";
 import { explorerElement } from "../utils/elements.js";
 
-/**
- * @param {Object} args
- * @param {Colors} args.colors
- * @param {CreateChartElement} args.createChartElement
- * @param {Accessor<ChartOption>} args.option
- * @param {Signals} args.signals
- * @param {WebSockets} args.webSockets
- * @param {Resources} args.resources
- * @param {BrkClient} args.brk
- */
-export function init({
-  colors: _colors,
-  createChartElement: _createChartElement,
-  option: _option,
-  signals: _signals,
-  webSockets: _webSockets,
-  resources: _resources,
-  brk: _brk,
-}) {
+export function init() {
   const chain = window.document.createElement("div");
   chain.id = "chain";
   explorerElement.append(chain);

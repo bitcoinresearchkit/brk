@@ -6,7 +6,7 @@
  * @import { Signal, Signals, Accessor } from "./signals.js";
  *
  * @import * as Brk from "./modules/brk-client/index.js"
- * @import { BrkClient} from "./modules/brk-client/index.js"
+ * @import { BrkClient, Index, Metric, MetricData } from "./modules/brk-client/index.js"
  *
  * @import { Resources, MetricResource } from './resources.js'
  *
@@ -28,13 +28,81 @@
 // import uFuzzy = require("./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts");
 
 /**
- * @typedef {typeof import("./lazy")["default"]} Modules
  * @typedef {[number, number, number, number]} OHLCTuple
+ *
+ * Brk type aliases
+ * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts} UtxoCohortTree
+ * @typedef {Brk.MetricsTree_Distribution_AddressCohorts} AddressCohortTree
+ * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_All} AllUtxoPattern
+ * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_Term_Short} ShortTermPattern
+ * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_Term_Long} LongTermPattern
+ * @typedef {Brk._10yPattern} MaxAgePattern
+ * @typedef {Brk._10yTo12yPattern} AgeRangePattern
+ * @typedef {Brk._0satsPattern2} UtxoAmountPattern
+ * @typedef {Brk._0satsPattern} AddressAmountPattern
+ * @typedef {Brk._100btcPattern} BasicUtxoPattern
+ * @typedef {Brk._0satsPattern2} EpochPattern
+ * @typedef {Brk.Ratio1ySdPattern} Ratio1ySdPattern
+ * @typedef {Brk.Dollars} Dollars
+ * @typedef {Brk.Price111dSmaPattern} EmaRatioPattern
+ * @typedef {Brk.CoinbasePattern} CoinbasePattern
+ * @typedef {Brk.ActivePriceRatioPattern} ActivePriceRatioPattern
+ * @typedef {Brk.UnclaimedRewardsPattern} ValuePattern
+ * @typedef {Brk.AnyMetricPattern} AnyMetricPattern
+ * @typedef {Brk.AnyMetricEndpointBuilder} AnyMetricEndpoint
+ * @typedef {Brk.AnyMetricData} AnyMetricData
+ * @typedef {Brk.AddrCountPattern} AddrCountPattern
+ * @typedef {Brk.MetricsTree_Blocks_Interval} IntervalPattern
+ * @typedef {Brk.MetricsTree_Supply_Circulating} SupplyPattern
+ * @typedef {Brk.RelativePattern} GlobalRelativePattern
+ * @typedef {Brk.RelativePattern2} OwnRelativePattern
+ * @typedef {Brk.RelativePattern5} FullRelativePattern
+ * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_All_Relative} AllRelativePattern
+ */
+
+/**
+ * @template T
+ * @typedef {Brk.BlockCountPattern<T>} BlockCountPattern
+ */
+/**
+ * @template T
+ * @typedef {Brk.FullnessPattern<T>} FullnessPattern
+ */
+/**
+ * @template T
+ * @typedef {Brk.FeeRatePattern<T>} FeeRatePattern
+ */
+/**
+ * @template T
+ * @typedef {Brk.MetricEndpointBuilder<T>} MetricEndpoint
+ */
+/**
+ * @template T
+ * @typedef {Brk.DollarsPattern<T>} SizePattern
+ */
+/**
+ * @template T
+ * @typedef {Brk.CountPattern2<T>} CountStatsPattern
+ */
+/**
+ * @typedef {Brk.MetricsTree_Blocks_Size} BlockSizePattern
+ */
+/**
+ * Stats pattern union - accepts both CountStatsPattern and BlockSizePattern
+ * @typedef {CountStatsPattern<any> | BlockSizePattern} AnyStatsPattern
+ */
+
+/**
  *
  * @typedef {InstanceType<typeof BrkClient>["INDEXES"]} Indexes
  * @typedef {Indexes[number]} IndexName
  * @typedef {InstanceType<typeof BrkClient>["POOL_ID_TO_POOL_NAME"]} PoolIdToPoolName
  * @typedef {keyof PoolIdToPoolName} PoolId
+ *
+ * Tree branch types
+ * @typedef {Brk.MetricsTree_Market} Market
+ * @typedef {Brk.MetricsTree_Market_MovingAverage} MarketMovingAverage
+ * @typedef {Brk.MetricsTree_Market_Dca} MarketDca
  *
  * Pattern unions by cohort type
  * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} UtxoCohortPattern
@@ -42,9 +110,9 @@
  * @typedef {UtxoCohortPattern | AddressCohortPattern} CohortPattern
  *
  * Relative pattern capability types
- * @typedef {RelativePattern | RelativePattern5} RelativeWithMarketCap
- * @typedef {RelativePattern2 | RelativePattern5} RelativeWithOwnMarketCap
- * @typedef {RelativePattern2 | RelativePattern5 | AllRelativePattern} RelativeWithOwnPnl
+ * @typedef {GlobalRelativePattern | FullRelativePattern} RelativeWithMarketCap
+ * @typedef {OwnRelativePattern | FullRelativePattern} RelativeWithOwnMarketCap
+ * @typedef {OwnRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithOwnPnl
  *
  * Capability-based pattern groupings (patterns that have specific properties)
  * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} PatternWithRealizedPrice

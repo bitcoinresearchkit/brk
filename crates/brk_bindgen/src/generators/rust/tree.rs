@@ -6,9 +6,8 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, GenericSyntax, LanguageSyntax, PatternField, RustSyntax, child_type_name,
-    generate_leaf_field, generate_tree_node_field, get_node_fields, get_pattern_instance_base,
-    prepare_tree_node, to_snake_case,
+    ClientMetadata, GenericSyntax, LanguageSyntax, PatternField, RustSyntax,
+    generate_leaf_field, generate_tree_node_field, prepare_tree_node, to_snake_case,
 };
 
 /// Generate tree structs.
@@ -39,25 +38,29 @@ fn generate_tree_node(
         return;
     };
 
+    // Generate struct definition
     writeln!(output, "/// Metrics tree node.").unwrap();
     writeln!(output, "pub struct {} {{", name).unwrap();
 
-    for ((field, child_fields), (child_name, _)) in
-        ctx.fields_with_child_info.iter().zip(ctx.children.iter())
-    {
-        let field_name = to_snake_case(&field.name);
-        let type_annotation = metadata.resolve_tree_field_type(
-            field,
-            child_fields.as_deref(),
-            name,
-            child_name,
-            GenericSyntax::RUST,
-        );
+    for child in &ctx.children {
+        let field_name = to_snake_case(child.name);
+        let type_annotation = if child.should_inline {
+            child.inline_type_name.clone()
+        } else {
+            metadata.resolve_tree_field_type(
+                &child.field,
+                child.child_fields.as_deref(),
+                name,
+                child.name,
+                GenericSyntax::RUST,
+            )
+        };
         writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
     }
 
     writeln!(output, "}}\n").unwrap();
 
+    // Generate impl block
     writeln!(output, "impl {} {{", name).unwrap();
     writeln!(
         output,
@@ -67,53 +70,40 @@ fn generate_tree_node(
     writeln!(output, "        Self {{").unwrap();
 
     let syntax = RustSyntax;
-    for ((field_info, child_fields), (child_name, child_node)) in
-        ctx.fields_with_child_info.iter().zip(ctx.children.iter())
-    {
-        let field_name = to_snake_case(&field_info.name);
+    for child in &ctx.children {
+        let field_name = to_snake_case(child.name);
 
-        // Check if this is a pattern type and if it's parameterizable
-        let is_parameterizable = child_fields
-            .as_ref()
-            .is_some_and(|cf| metadata.is_parameterizable_fields(cf));
-
-        if metadata.is_pattern_type(&field_info.rust_type) && is_parameterizable {
-            // Parameterizable pattern: use pattern constructor with metric base
-            let pattern_base = get_pattern_instance_base(child_node);
-            generate_tree_node_field(
-                output,
-                &syntax,
-                field_info,
-                metadata,
-                "            ",
-                child_name,
-                Some(&pattern_base),
-            );
-        } else if child_fields.is_some() {
-            // Non-parameterizable pattern or regular branch: use inline struct
-            let child_struct = child_type_name(name, child_name);
-            let path_expr = syntax.path_expr("base_path", &format!("_{}", child_name));
+        if child.is_leaf {
+            if let TreeNode::Leaf(leaf) = child.node {
+                generate_leaf_field(
+                    output,
+                    &syntax,
+                    "client.clone()",
+                    child.name,
+                    leaf,
+                    metadata,
+                    "            ",
+                );
+            }
+        } else if child.should_inline {
+            // Inline struct
+            let path_expr = syntax.path_expr("base_path", &format!("_{}", child.name));
             writeln!(
                 output,
                 "            {}: {}::new(client.clone(), {}),",
-                field_name, child_struct, path_expr
+                field_name, child.inline_type_name, path_expr
             )
             .unwrap();
-        } else if let TreeNode::Leaf(leaf) = child_node {
-            // Leaf field - use shared helper
-            generate_leaf_field(
+        } else {
+            // Use pattern constructor
+            generate_tree_node_field(
                 output,
                 &syntax,
-                "client.clone()",
-                child_name,
-                leaf,
+                &child.field,
                 metadata,
                 "            ",
-            );
-        } else {
-            panic!(
-                "Field '{}' is a leaf with no TreeNode::Leaf. This shouldn't happen.",
-                field_info.name
+                child.name,
+                Some(&child.base_result.base),
             );
         }
     }
@@ -122,21 +112,17 @@ fn generate_tree_node(
     writeln!(output, "    }}").unwrap();
     writeln!(output, "}}\n").unwrap();
 
-    for (child_name, child_node) in ctx.children {
-        if let TreeNode::Branch(grandchildren) = child_node {
-            let child_fields = get_node_fields(grandchildren, pattern_lookup);
-            // Generate child struct if no pattern match OR pattern is not parameterizable
-            if !metadata.is_parameterizable_fields(&child_fields) {
-                let child_struct = child_type_name(name, child_name);
-                generate_tree_node(
-                    output,
-                    &child_struct,
-                    child_node,
-                    pattern_lookup,
-                    metadata,
-                    generated,
-                );
-            }
+    // Generate child structs
+    for child in &ctx.children {
+        if child.should_inline {
+            generate_tree_node(
+                output,
+                &child.inline_type_name,
+                child.node,
+                pattern_lookup,
+                metadata,
+                generated,
+            );
         }
     }
 }

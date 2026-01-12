@@ -137,6 +137,18 @@ pub enum Error {
 
 
 impl Error {
+    /// Returns true if this error is due to a file lock (another process has the database open).
+    /// Lock errors are transient and should not trigger data deletion.
+    pub fn is_lock_error(&self) -> bool {
+        matches!(self, Error::VecDB(e) if e.is_lock_error())
+    }
+
+    /// Returns true if this error indicates data corruption or version incompatibility.
+    /// These errors may require resetting/deleting the data to recover.
+    pub fn is_data_error(&self) -> bool {
+        matches!(self, Error::VecDB(e) if e.is_data_error())
+    }
+
     /// Returns true if this network/fetch error indicates a permanent/blocking condition
     /// that won't be resolved by retrying (e.g., DNS failure, connection refused, blocked endpoint).
     /// Returns false for transient errors worth retrying (timeouts, rate limits, server errors).
