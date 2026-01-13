@@ -6,7 +6,7 @@ use vecdb::{Database, IterableCloneableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedHeightDerivedFull, LazyFromHeightFull, WeightToFullness},
+    internal::{ComputedHeightDerivedFull, LazyFromHeightTransformDistribution, WeightToFullness},
 };
 
 impl Vecs {
@@ -24,7 +24,7 @@ impl Vecs {
             indexes,
         )?;
 
-        let fullness = LazyFromHeightFull::from_derived::<WeightToFullness>(
+        let fullness = LazyFromHeightTransformDistribution::from_derived::<WeightToFullness>(
             "block_fullness",
             version,
             indexer.vecs.blocks.weight.boxed_clone(),

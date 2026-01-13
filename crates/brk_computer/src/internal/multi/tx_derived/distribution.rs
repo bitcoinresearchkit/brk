@@ -16,7 +16,7 @@ use vecdb::{CollectableVec, Database, Exit, IterableCloneableVec};
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        ComputedVecValue, LazyDateDerivedDistribution, Distribution, LazyDistribution, MinMaxAverage,
+        ComputedVecValue, Distribution, LazyDateDerivedSpread, LazySpread, MinMaxAverage,
         NumericValue,
     },
 };
@@ -28,12 +28,12 @@ where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
     pub height: Distribution<Height, T>,
-    pub difficultyepoch: LazyDistribution<DifficultyEpoch, T, Height, DifficultyEpoch>,
+    pub difficultyepoch: LazySpread<DifficultyEpoch, T, Height, DifficultyEpoch>,
     pub dateindex: MinMaxAverage<DateIndex, T>,
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub dates: LazyDateDerivedDistribution<T>,
+    pub dates: LazyDateDerivedSpread<T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -53,7 +53,7 @@ where
         let v = version + VERSION;
 
         let difficultyepoch =
-            LazyDistribution::<DifficultyEpoch, T, Height, DifficultyEpoch>::from_distribution(
+            LazySpread::<DifficultyEpoch, T, Height, DifficultyEpoch>::from_distribution(
                 name,
                 v,
                 height.boxed_average(),
@@ -62,7 +62,7 @@ where
                 indexes.difficultyepoch.identity.boxed_clone(),
             );
 
-        let dates = LazyDateDerivedDistribution::from_sources(
+        let dates = LazyDateDerivedSpread::from_sources(
             name,
             v,
             dateindex.boxed_average(),

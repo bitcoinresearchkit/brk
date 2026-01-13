@@ -13,7 +13,8 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let height_to_timestamp_fixed = EagerVec::forced_import(db, "timestamp_fixed", version)?;
+        let height_to_timestamp_monotonic =
+            EagerVec::forced_import(db, "timestamp_monotonic", version)?;
 
         Ok(Self {
             date: LazyVecFrom1::init(
@@ -24,13 +25,13 @@ impl Vecs {
                     timestamp_iter.get_at(height.to_usize()).map(Date::from)
                 },
             ),
-            date_fixed: LazyVecFrom1::init(
-                "date_fixed",
+            date_monotonic: LazyVecFrom1::init(
+                "date_monotonic",
                 version,
-                height_to_timestamp_fixed.boxed_clone(),
+                height_to_timestamp_monotonic.boxed_clone(),
                 |height: Height, timestamp_iter| timestamp_iter.get(height).map(Date::from),
             ),
-            timestamp_fixed: height_to_timestamp_fixed,
+            timestamp_monotonic: height_to_timestamp_monotonic,
             timestamp: ComputedHeightDerivedFirst::forced_import(
                 db,
                 "timestamp",

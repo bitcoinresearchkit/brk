@@ -8,7 +8,7 @@ use crate::internal::ComputedHeightDerivedFirst;
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     pub date: LazyVecFrom1<Height, Date, Height, Timestamp>,
-    pub date_fixed: LazyVecFrom1<Height, Date, Height, Timestamp>,
-    pub timestamp_fixed: EagerVec<PcoVec<Height, Timestamp>>,
+    pub date_monotonic: LazyVecFrom1<Height, Date, Height, Timestamp>,
+    pub timestamp_monotonic: EagerVec<PcoVec<Height, Timestamp>>,
     pub timestamp: ComputedHeightDerivedFirst<Timestamp>,
 }

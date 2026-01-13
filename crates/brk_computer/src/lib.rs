@@ -266,7 +266,7 @@ impl Computer {
     ) -> Result<()> {
         let compute_start = Instant::now();
 
-        // Compute blocks.time early (height_to_date, height_to_timestamp_fixed, height_to_date_fixed)
+        // Compute blocks.time early (height_to_date, height_to_timestamp_monotonic, height_to_date_monotonic)
         // These are needed by indexes::block to compute height_to_dateindex
         info!("Computing blocks.time (early)...");
         let i = Instant::now();

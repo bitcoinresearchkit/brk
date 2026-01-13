@@ -10,9 +10,7 @@ use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec}
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{
-        ComputedVecValue, LazyDateDerivedDistribution, Distribution, LazyDistribution, NumericValue,
-    },
+    internal::{ComputedVecValue, Distribution, LazyDateDerivedSpread, LazySpread, NumericValue},
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -24,8 +22,8 @@ where
     pub dateindex: Distribution<DateIndex, T>,
     #[deref]
     #[deref_mut]
-    pub dates: LazyDateDerivedDistribution<T>,
-    pub difficultyepoch: LazyDistribution<DifficultyEpoch, T, Height, DifficultyEpoch>,
+    pub dates: LazyDateDerivedSpread<T>,
+    pub difficultyepoch: LazySpread<DifficultyEpoch, T, Height, DifficultyEpoch>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -44,7 +42,7 @@ where
         let dateindex = Distribution::forced_import(db, name, version + VERSION)?;
         let v = version + VERSION;
 
-        let dates = LazyDateDerivedDistribution::from_sources(
+        let dates = LazyDateDerivedSpread::from_sources(
             name,
             v,
             dateindex.boxed_average(),
@@ -53,7 +51,7 @@ where
             indexes,
         );
 
-        let difficultyepoch = LazyDistribution::from_distribution(
+        let difficultyepoch = LazySpread::from_distribution(
             name,
             v,
             height_source.boxed_clone(),

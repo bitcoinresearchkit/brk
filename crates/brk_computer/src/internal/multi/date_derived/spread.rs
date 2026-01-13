@@ -7,27 +7,27 @@ use brk_types::{
 use schemars::JsonSchema;
 use vecdb::{IterableBoxedVec, IterableCloneableVec};
 
-use crate::{indexes, internal::LazyDistribution};
+use crate::{indexes, internal::LazySpread};
 
 use crate::internal::ComputedVecValue;
 
 #[derive(Clone, Traversable)]
 #[traversable(merge)]
-pub struct LazyDateDerivedDistribution<T>
+pub struct LazyDateDerivedSpread<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    pub weekindex: LazyDistribution<WeekIndex, T, DateIndex, WeekIndex>,
-    pub monthindex: LazyDistribution<MonthIndex, T, DateIndex, MonthIndex>,
-    pub quarterindex: LazyDistribution<QuarterIndex, T, DateIndex, QuarterIndex>,
-    pub semesterindex: LazyDistribution<SemesterIndex, T, DateIndex, SemesterIndex>,
-    pub yearindex: LazyDistribution<YearIndex, T, DateIndex, YearIndex>,
-    pub decadeindex: LazyDistribution<DecadeIndex, T, DateIndex, DecadeIndex>,
+    pub weekindex: LazySpread<WeekIndex, T, DateIndex, WeekIndex>,
+    pub monthindex: LazySpread<MonthIndex, T, DateIndex, MonthIndex>,
+    pub quarterindex: LazySpread<QuarterIndex, T, DateIndex, QuarterIndex>,
+    pub semesterindex: LazySpread<SemesterIndex, T, DateIndex, SemesterIndex>,
+    pub yearindex: LazySpread<YearIndex, T, DateIndex, YearIndex>,
+    pub decadeindex: LazySpread<DecadeIndex, T, DateIndex, DecadeIndex>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> LazyDateDerivedDistribution<T>
+impl<T> LazyDateDerivedSpread<T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
 {
@@ -44,8 +44,12 @@ where
 
         macro_rules! period {
             ($idx:ident) => {
-                LazyDistribution::from_distribution(
-                    name, v, average_source.clone(), min_source.clone(), max_source.clone(),
+                LazySpread::from_distribution(
+                    name,
+                    v,
+                    average_source.clone(),
+                    min_source.clone(),
+                    max_source.clone(),
                     indexes.$idx.identity.boxed_clone(),
                 )
             };

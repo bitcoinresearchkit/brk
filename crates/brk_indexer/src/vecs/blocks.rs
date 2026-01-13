@@ -25,7 +25,7 @@ impl BlocksVecs {
             difficulty = PcoVec::forced_import(db, "difficulty", version),
             timestamp = PcoVec::forced_import(db, "timestamp", version),
             total_size = PcoVec::forced_import(db, "total_size", version),
-            weight = PcoVec::forced_import(db, "weight", version),
+            weight = PcoVec::forced_import(db, "block_weight", version),
         };
         Ok(Self {
             blockhash,

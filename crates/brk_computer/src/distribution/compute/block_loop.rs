@@ -67,8 +67,8 @@ pub fn process_blocks(
     let height_to_output_count = &outputs.count.total_count.height.sum_cum.sum.0;
     let height_to_input_count = &inputs.count.height.sum_cum.sum.0;
     // From blocks:
-    let height_to_timestamp = &blocks.time.timestamp_fixed;
-    let height_to_date = &blocks.time.date_fixed;
+    let height_to_timestamp = &blocks.time.timestamp_monotonic;
+    let height_to_date = &blocks.time.date_monotonic;
     let dateindex_to_first_height = &indexes.dateindex.first_height;
     let dateindex_to_height_count = &indexes.dateindex.height_count;
     let txindex_to_output_count = &indexes.txindex.output_count;

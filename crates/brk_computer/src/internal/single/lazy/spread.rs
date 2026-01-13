@@ -11,7 +11,7 @@ use crate::internal::ComputedVecValue;
 const VERSION: Version = Version::ZERO;
 
 #[derive(Clone, Traversable)]
-pub struct LazyDistribution<I, T, S1I, S2T>
+pub struct LazySpread<I, T, S1I, S2T>
 where
     I: VecIndex,
     T: ComputedVecValue + JsonSchema,
@@ -26,7 +26,7 @@ where
     pub max: LazyMax<I, T, S1I, S2T>,
 }
 
-impl<I, T, S1I, S2T> LazyDistribution<I, T, S1I, S2T>
+impl<I, T, S1I, S2T> LazySpread<I, T, S1I, S2T>
 where
     I: VecIndex,
     T: ComputedVecValue + JsonSchema + 'static,

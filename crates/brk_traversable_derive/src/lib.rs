@@ -264,7 +264,10 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
         .filter(|i| matches!(i.attr, FieldAttr::Normal))
         .map(|info| {
             let field_name = info.name;
-            let field_name_str = field_name.to_string();
+            let field_name_str = {
+                let s = field_name.to_string();
+                s.strip_prefix('_').map(String::from).unwrap_or(s)
+            };
 
             // Determine outer key and inner wrap key based on which attrs are present
             // When both wrap and rename are present: wrap is outer container, rename is inner key

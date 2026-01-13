@@ -221,7 +221,7 @@ impl Vecs {
             (Height::ZERO, vec![])
         } else {
             // Recover chain_state from stored values
-            let height_to_timestamp = &blocks.time.timestamp_fixed;
+            let height_to_timestamp = &blocks.time.timestamp_monotonic;
             let height_to_price = price.map(|p| &p.usd.split.close.height);
 
             let mut height_to_timestamp_iter = height_to_timestamp.into_iter();

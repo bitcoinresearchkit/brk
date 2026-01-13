@@ -797,9 +797,10 @@
  * @property {string|boolean} [cache] - Enable browser cache with default name (true), custom name (string), or disable (false). No effect in Node.js. Default: true
  */
 
-const _isBrowser = typeof window !== 'undefined' && 'caches' in window;
-const _runIdle = (/** @type {VoidFunction} */ fn) => (globalThis.requestIdleCallback ?? setTimeout)(fn);
-const _defaultCacheName = '__BRK_CLIENT__';
+const _isBrowser = typeof window !== "undefined" && "caches" in window;
+const _runIdle = (/** @type {VoidFunction} */ fn) =>
+  (globalThis.requestIdleCallback ?? setTimeout)(fn);
+const _defaultCacheName = "__BRK_CLIENT__";
 
 /**
  * @param {string|boolean|undefined} cache
@@ -807,7 +808,7 @@ const _defaultCacheName = '__BRK_CLIENT__';
  */
 const _openCache = (cache) => {
   if (!_isBrowser || cache === false) return Promise.resolve(null);
-  const name = typeof cache === 'string' ? cache : _defaultCacheName;
+  const name = typeof cache === "string" ? cache : _defaultCacheName;
   return caches.open(name).catch(() => null);
 };
 
@@ -821,7 +822,7 @@ class BrkError extends Error {
    */
   constructor(message, status) {
     super(message);
-    this.name = 'BrkError';
+    this.name = "BrkError";
     this.status = status;
   }
 }
@@ -913,9 +914,9 @@ function _endpoint(client, name, index) {
    */
   const buildPath = (start, end, format) => {
     const params = new URLSearchParams();
-    if (start !== undefined) params.set('start', String(start));
-    if (end !== undefined) params.set('end', String(end));
-    if (format) params.set('format', format);
+    if (start !== undefined) params.set("start", String(start));
+    if (end !== undefined) params.set("end", String(end));
+    if (format) params.set("format", format);
     const query = params.toString();
     return query ? `${p}?${query}` : p;
   };
@@ -926,9 +927,15 @@ function _endpoint(client, name, index) {
    * @returns {RangeBuilder<T>}
    */
   const rangeBuilder = (start, end) => ({
-    fetch(onUpdate) { return client.getJson(buildPath(start, end), onUpdate); },
-    fetchCsv() { return client.getText(buildPath(start, end, 'csv')); },
-    then(resolve, reject) { return this.fetch().then(resolve, reject); },
+    fetch(onUpdate) {
+      return client.getJson(buildPath(start, end), onUpdate);
+    },
+    fetchCsv() {
+      return client.getText(buildPath(start, end, "csv"));
+    },
+    then(resolve, reject) {
+      return this.fetch().then(resolve, reject);
+    },
   });
 
   /**
@@ -936,9 +943,15 @@ function _endpoint(client, name, index) {
    * @returns {SingleItemBuilder<T>}
    */
   const singleItemBuilder = (index) => ({
-    fetch(onUpdate) { return client.getJson(buildPath(index, index + 1), onUpdate); },
-    fetchCsv() { return client.getText(buildPath(index, index + 1, 'csv')); },
-    then(resolve, reject) { return this.fetch().then(resolve, reject); },
+    fetch(onUpdate) {
+      return client.getJson(buildPath(index, index + 1), onUpdate);
+    },
+    fetchCsv() {
+      return client.getText(buildPath(index, index + 1, "csv"));
+    },
+    then(resolve, reject) {
+      return this.fetch().then(resolve, reject);
+    },
   });
 
   /**
@@ -946,23 +959,49 @@ function _endpoint(client, name, index) {
    * @returns {SkippedBuilder<T>}
    */
   const skippedBuilder = (start) => ({
-    take(n) { return rangeBuilder(start, start + n); },
-    fetch(onUpdate) { return client.getJson(buildPath(start, undefined), onUpdate); },
-    fetchCsv() { return client.getText(buildPath(start, undefined, 'csv')); },
-    then(resolve, reject) { return this.fetch().then(resolve, reject); },
+    take(n) {
+      return rangeBuilder(start, start + n);
+    },
+    fetch(onUpdate) {
+      return client.getJson(buildPath(start, undefined), onUpdate);
+    },
+    fetchCsv() {
+      return client.getText(buildPath(start, undefined, "csv"));
+    },
+    then(resolve, reject) {
+      return this.fetch().then(resolve, reject);
+    },
   });
 
   /** @type {MetricEndpointBuilder<T>} */
   const endpoint = {
-    get(index) { return singleItemBuilder(index); },
-    slice(start, end) { return rangeBuilder(start, end); },
-    first(n) { return rangeBuilder(undefined, n); },
-    last(n) { return rangeBuilder(-n, undefined); },
-    skip(n) { return skippedBuilder(n); },
-    fetch(onUpdate) { return client.getJson(buildPath(), onUpdate); },
-    fetchCsv() { return client.getText(buildPath(undefined, undefined, 'csv')); },
-    then(resolve, reject) { return this.fetch().then(resolve, reject); },
-    get path() { return p; },
+    get(index) {
+      return singleItemBuilder(index);
+    },
+    slice(start, end) {
+      return rangeBuilder(start, end);
+    },
+    first(n) {
+      return rangeBuilder(undefined, n);
+    },
+    last(n) {
+      return rangeBuilder(-n, undefined);
+    },
+    skip(n) {
+      return skippedBuilder(n);
+    },
+    fetch(onUpdate) {
+      return client.getJson(buildPath(), onUpdate);
+    },
+    fetchCsv() {
+      return client.getText(buildPath(undefined, undefined, "csv"));
+    },
+    then(resolve, reject) {
+      return this.fetch().then(resolve, reject);
+    },
+    get path() {
+      return p;
+    },
   };
 
   return endpoint;
@@ -976,7 +1015,7 @@ class BrkClientBase {
    * @param {BrkClientOptions|string} options
    */
   constructor(options) {
-    const isString = typeof options === 'string';
+    const isString = typeof options === "string";
     this.baseUrl = isString ? options : options.baseUrl;
     this.timeout = isString ? 5000 : (options.timeout ?? 5000);
     /** @type {Promise<Cache | null>} */
@@ -988,7 +1027,9 @@ class BrkClientBase {
    * @returns {Promise<Response>}
    */
   async get(path) {
-    const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    const base = this.baseUrl.endsWith("/")
+      ? this.baseUrl.slice(0, -1)
+      : this.baseUrl;
     const url = `${base}${path}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(this.timeout) });
     if (!res.ok) throw new BrkError(`HTTP ${res.status}`, res.status);
@@ -1003,7 +1044,9 @@ class BrkClientBase {
    * @returns {Promise<T>}
    */
   async getJson(path, onUpdate) {
-    const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    const base = this.baseUrl.endsWith("/")
+      ? this.baseUrl.slice(0, -1)
+      : this.baseUrl;
     const url = `${base}${path}`;
     const cache = await this._cachePromise;
     const cachedRes = await cache?.match(url);
@@ -1012,12 +1055,13 @@ class BrkClientBase {
     if (cachedJson) onUpdate?.(cachedJson);
     if (globalThis.navigator?.onLine === false) {
       if (cachedJson) return cachedJson;
-      throw new BrkError('Offline and no cached data available');
+      throw new BrkError("Offline and no cached data available");
     }
 
     try {
       const res = await this.get(path);
-      if (cachedRes?.headers.get('ETag') === res.headers.get('ETag')) return cachedJson;
+      if (cachedRes?.headers.get("ETag") === res.headers.get("ETag"))
+        return cachedJson;
 
       const cloned = res.clone();
       const json = await res.json();
@@ -1047,8 +1091,7 @@ class BrkClientBase {
  * @param {string} s - Metric suffix
  * @returns {string}
  */
-const _m = (acc, s) => acc ? `${acc}_${s}` : s;
-
+const _m = (acc, s) => (acc ? `${acc}_${s}` : s);
 
 // Index accessor factory functions
 
@@ -1070,24 +1113,52 @@ function createMetricPattern1(client, name) {
   return {
     name,
     by: {
-      get dateindex() { return _endpoint(client, name, 'dateindex'); },
-      get decadeindex() { return _endpoint(client, name, 'decadeindex'); },
-      get difficultyepoch() { return _endpoint(client, name, 'difficultyepoch'); },
-      get height() { return _endpoint(client, name, 'height'); },
-      get monthindex() { return _endpoint(client, name, 'monthindex'); },
-      get quarterindex() { return _endpoint(client, name, 'quarterindex'); },
-      get semesterindex() { return _endpoint(client, name, 'semesterindex'); },
-      get weekindex() { return _endpoint(client, name, 'weekindex'); },
-      get yearindex() { return _endpoint(client, name, 'yearindex'); }
+      get dateindex() {
+        return _endpoint(client, name, "dateindex");
+      },
+      get decadeindex() {
+        return _endpoint(client, name, "decadeindex");
+      },
+      get difficultyepoch() {
+        return _endpoint(client, name, "difficultyepoch");
+      },
+      get height() {
+        return _endpoint(client, name, "height");
+      },
+      get monthindex() {
+        return _endpoint(client, name, "monthindex");
+      },
+      get quarterindex() {
+        return _endpoint(client, name, "quarterindex");
+      },
+      get semesterindex() {
+        return _endpoint(client, name, "semesterindex");
+      },
+      get weekindex() {
+        return _endpoint(client, name, "weekindex");
+      },
+      get yearindex() {
+        return _endpoint(client, name, "yearindex");
+      },
     },
     indexes() {
-      return ['dateindex', 'decadeindex', 'difficultyepoch', 'height', 'monthindex', 'quarterindex', 'semesterindex', 'weekindex', 'yearindex'];
+      return [
+        "dateindex",
+        "decadeindex",
+        "difficultyepoch",
+        "height",
+        "monthindex",
+        "quarterindex",
+        "semesterindex",
+        "weekindex",
+        "yearindex",
+      ];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1109,23 +1180,48 @@ function createMetricPattern2(client, name) {
   return {
     name,
     by: {
-      get dateindex() { return _endpoint(client, name, 'dateindex'); },
-      get decadeindex() { return _endpoint(client, name, 'decadeindex'); },
-      get difficultyepoch() { return _endpoint(client, name, 'difficultyepoch'); },
-      get monthindex() { return _endpoint(client, name, 'monthindex'); },
-      get quarterindex() { return _endpoint(client, name, 'quarterindex'); },
-      get semesterindex() { return _endpoint(client, name, 'semesterindex'); },
-      get weekindex() { return _endpoint(client, name, 'weekindex'); },
-      get yearindex() { return _endpoint(client, name, 'yearindex'); }
+      get dateindex() {
+        return _endpoint(client, name, "dateindex");
+      },
+      get decadeindex() {
+        return _endpoint(client, name, "decadeindex");
+      },
+      get difficultyepoch() {
+        return _endpoint(client, name, "difficultyepoch");
+      },
+      get monthindex() {
+        return _endpoint(client, name, "monthindex");
+      },
+      get quarterindex() {
+        return _endpoint(client, name, "quarterindex");
+      },
+      get semesterindex() {
+        return _endpoint(client, name, "semesterindex");
+      },
+      get weekindex() {
+        return _endpoint(client, name, "weekindex");
+      },
+      get yearindex() {
+        return _endpoint(client, name, "yearindex");
+      },
     },
     indexes() {
-      return ['dateindex', 'decadeindex', 'difficultyepoch', 'monthindex', 'quarterindex', 'semesterindex', 'weekindex', 'yearindex'];
+      return [
+        "dateindex",
+        "decadeindex",
+        "difficultyepoch",
+        "monthindex",
+        "quarterindex",
+        "semesterindex",
+        "weekindex",
+        "yearindex",
+      ];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1147,23 +1243,48 @@ function createMetricPattern3(client, name) {
   return {
     name,
     by: {
-      get dateindex() { return _endpoint(client, name, 'dateindex'); },
-      get decadeindex() { return _endpoint(client, name, 'decadeindex'); },
-      get height() { return _endpoint(client, name, 'height'); },
-      get monthindex() { return _endpoint(client, name, 'monthindex'); },
-      get quarterindex() { return _endpoint(client, name, 'quarterindex'); },
-      get semesterindex() { return _endpoint(client, name, 'semesterindex'); },
-      get weekindex() { return _endpoint(client, name, 'weekindex'); },
-      get yearindex() { return _endpoint(client, name, 'yearindex'); }
+      get dateindex() {
+        return _endpoint(client, name, "dateindex");
+      },
+      get decadeindex() {
+        return _endpoint(client, name, "decadeindex");
+      },
+      get height() {
+        return _endpoint(client, name, "height");
+      },
+      get monthindex() {
+        return _endpoint(client, name, "monthindex");
+      },
+      get quarterindex() {
+        return _endpoint(client, name, "quarterindex");
+      },
+      get semesterindex() {
+        return _endpoint(client, name, "semesterindex");
+      },
+      get weekindex() {
+        return _endpoint(client, name, "weekindex");
+      },
+      get yearindex() {
+        return _endpoint(client, name, "yearindex");
+      },
     },
     indexes() {
-      return ['dateindex', 'decadeindex', 'height', 'monthindex', 'quarterindex', 'semesterindex', 'weekindex', 'yearindex'];
+      return [
+        "dateindex",
+        "decadeindex",
+        "height",
+        "monthindex",
+        "quarterindex",
+        "semesterindex",
+        "weekindex",
+        "yearindex",
+      ];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1185,22 +1306,44 @@ function createMetricPattern4(client, name) {
   return {
     name,
     by: {
-      get dateindex() { return _endpoint(client, name, 'dateindex'); },
-      get decadeindex() { return _endpoint(client, name, 'decadeindex'); },
-      get monthindex() { return _endpoint(client, name, 'monthindex'); },
-      get quarterindex() { return _endpoint(client, name, 'quarterindex'); },
-      get semesterindex() { return _endpoint(client, name, 'semesterindex'); },
-      get weekindex() { return _endpoint(client, name, 'weekindex'); },
-      get yearindex() { return _endpoint(client, name, 'yearindex'); }
+      get dateindex() {
+        return _endpoint(client, name, "dateindex");
+      },
+      get decadeindex() {
+        return _endpoint(client, name, "decadeindex");
+      },
+      get monthindex() {
+        return _endpoint(client, name, "monthindex");
+      },
+      get quarterindex() {
+        return _endpoint(client, name, "quarterindex");
+      },
+      get semesterindex() {
+        return _endpoint(client, name, "semesterindex");
+      },
+      get weekindex() {
+        return _endpoint(client, name, "weekindex");
+      },
+      get yearindex() {
+        return _endpoint(client, name, "yearindex");
+      },
     },
     indexes() {
-      return ['dateindex', 'decadeindex', 'monthindex', 'quarterindex', 'semesterindex', 'weekindex', 'yearindex'];
+      return [
+        "dateindex",
+        "decadeindex",
+        "monthindex",
+        "quarterindex",
+        "semesterindex",
+        "weekindex",
+        "yearindex",
+      ];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1222,17 +1365,21 @@ function createMetricPattern5(client, name) {
   return {
     name,
     by: {
-      get dateindex() { return _endpoint(client, name, 'dateindex'); },
-      get height() { return _endpoint(client, name, 'height'); }
+      get dateindex() {
+        return _endpoint(client, name, "dateindex");
+      },
+      get height() {
+        return _endpoint(client, name, "height");
+      },
     },
     indexes() {
-      return ['dateindex', 'height'];
+      return ["dateindex", "height"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1254,16 +1401,18 @@ function createMetricPattern6(client, name) {
   return {
     name,
     by: {
-      get dateindex() { return _endpoint(client, name, 'dateindex'); }
+      get dateindex() {
+        return _endpoint(client, name, "dateindex");
+      },
     },
     indexes() {
-      return ['dateindex'];
+      return ["dateindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1285,16 +1434,18 @@ function createMetricPattern7(client, name) {
   return {
     name,
     by: {
-      get decadeindex() { return _endpoint(client, name, 'decadeindex'); }
+      get decadeindex() {
+        return _endpoint(client, name, "decadeindex");
+      },
     },
     indexes() {
-      return ['decadeindex'];
+      return ["decadeindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1316,16 +1467,18 @@ function createMetricPattern8(client, name) {
   return {
     name,
     by: {
-      get difficultyepoch() { return _endpoint(client, name, 'difficultyepoch'); }
+      get difficultyepoch() {
+        return _endpoint(client, name, "difficultyepoch");
+      },
     },
     indexes() {
-      return ['difficultyepoch'];
+      return ["difficultyepoch"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1347,16 +1500,18 @@ function createMetricPattern9(client, name) {
   return {
     name,
     by: {
-      get emptyoutputindex() { return _endpoint(client, name, 'emptyoutputindex'); }
+      get emptyoutputindex() {
+        return _endpoint(client, name, "emptyoutputindex");
+      },
     },
     indexes() {
-      return ['emptyoutputindex'];
+      return ["emptyoutputindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1378,16 +1533,18 @@ function createMetricPattern10(client, name) {
   return {
     name,
     by: {
-      get halvingepoch() { return _endpoint(client, name, 'halvingepoch'); }
+      get halvingepoch() {
+        return _endpoint(client, name, "halvingepoch");
+      },
     },
     indexes() {
-      return ['halvingepoch'];
+      return ["halvingepoch"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1409,16 +1566,18 @@ function createMetricPattern11(client, name) {
   return {
     name,
     by: {
-      get height() { return _endpoint(client, name, 'height'); }
+      get height() {
+        return _endpoint(client, name, "height");
+      },
     },
     indexes() {
-      return ['height'];
+      return ["height"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1440,16 +1599,18 @@ function createMetricPattern12(client, name) {
   return {
     name,
     by: {
-      get txinindex() { return _endpoint(client, name, 'txinindex'); }
+      get txinindex() {
+        return _endpoint(client, name, "txinindex");
+      },
     },
     indexes() {
-      return ['txinindex'];
+      return ["txinindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1471,16 +1632,18 @@ function createMetricPattern13(client, name) {
   return {
     name,
     by: {
-      get monthindex() { return _endpoint(client, name, 'monthindex'); }
+      get monthindex() {
+        return _endpoint(client, name, "monthindex");
+      },
     },
     indexes() {
-      return ['monthindex'];
+      return ["monthindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1502,16 +1665,18 @@ function createMetricPattern14(client, name) {
   return {
     name,
     by: {
-      get opreturnindex() { return _endpoint(client, name, 'opreturnindex'); }
+      get opreturnindex() {
+        return _endpoint(client, name, "opreturnindex");
+      },
     },
     indexes() {
-      return ['opreturnindex'];
+      return ["opreturnindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1533,16 +1698,18 @@ function createMetricPattern15(client, name) {
   return {
     name,
     by: {
-      get txoutindex() { return _endpoint(client, name, 'txoutindex'); }
+      get txoutindex() {
+        return _endpoint(client, name, "txoutindex");
+      },
     },
     indexes() {
-      return ['txoutindex'];
+      return ["txoutindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1564,16 +1731,18 @@ function createMetricPattern16(client, name) {
   return {
     name,
     by: {
-      get p2aaddressindex() { return _endpoint(client, name, 'p2aaddressindex'); }
+      get p2aaddressindex() {
+        return _endpoint(client, name, "p2aaddressindex");
+      },
     },
     indexes() {
-      return ['p2aaddressindex'];
+      return ["p2aaddressindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1595,16 +1764,18 @@ function createMetricPattern17(client, name) {
   return {
     name,
     by: {
-      get p2msoutputindex() { return _endpoint(client, name, 'p2msoutputindex'); }
+      get p2msoutputindex() {
+        return _endpoint(client, name, "p2msoutputindex");
+      },
     },
     indexes() {
-      return ['p2msoutputindex'];
+      return ["p2msoutputindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1626,16 +1797,18 @@ function createMetricPattern18(client, name) {
   return {
     name,
     by: {
-      get p2pk33addressindex() { return _endpoint(client, name, 'p2pk33addressindex'); }
+      get p2pk33addressindex() {
+        return _endpoint(client, name, "p2pk33addressindex");
+      },
     },
     indexes() {
-      return ['p2pk33addressindex'];
+      return ["p2pk33addressindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1657,16 +1830,18 @@ function createMetricPattern19(client, name) {
   return {
     name,
     by: {
-      get p2pk65addressindex() { return _endpoint(client, name, 'p2pk65addressindex'); }
+      get p2pk65addressindex() {
+        return _endpoint(client, name, "p2pk65addressindex");
+      },
     },
     indexes() {
-      return ['p2pk65addressindex'];
+      return ["p2pk65addressindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1688,16 +1863,18 @@ function createMetricPattern20(client, name) {
   return {
     name,
     by: {
-      get p2pkhaddressindex() { return _endpoint(client, name, 'p2pkhaddressindex'); }
+      get p2pkhaddressindex() {
+        return _endpoint(client, name, "p2pkhaddressindex");
+      },
     },
     indexes() {
-      return ['p2pkhaddressindex'];
+      return ["p2pkhaddressindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1719,16 +1896,18 @@ function createMetricPattern21(client, name) {
   return {
     name,
     by: {
-      get p2shaddressindex() { return _endpoint(client, name, 'p2shaddressindex'); }
+      get p2shaddressindex() {
+        return _endpoint(client, name, "p2shaddressindex");
+      },
     },
     indexes() {
-      return ['p2shaddressindex'];
+      return ["p2shaddressindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1750,16 +1929,18 @@ function createMetricPattern22(client, name) {
   return {
     name,
     by: {
-      get p2traddressindex() { return _endpoint(client, name, 'p2traddressindex'); }
+      get p2traddressindex() {
+        return _endpoint(client, name, "p2traddressindex");
+      },
     },
     indexes() {
-      return ['p2traddressindex'];
+      return ["p2traddressindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1781,16 +1962,18 @@ function createMetricPattern23(client, name) {
   return {
     name,
     by: {
-      get p2wpkhaddressindex() { return _endpoint(client, name, 'p2wpkhaddressindex'); }
+      get p2wpkhaddressindex() {
+        return _endpoint(client, name, "p2wpkhaddressindex");
+      },
     },
     indexes() {
-      return ['p2wpkhaddressindex'];
+      return ["p2wpkhaddressindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1812,16 +1995,18 @@ function createMetricPattern24(client, name) {
   return {
     name,
     by: {
-      get p2wshaddressindex() { return _endpoint(client, name, 'p2wshaddressindex'); }
+      get p2wshaddressindex() {
+        return _endpoint(client, name, "p2wshaddressindex");
+      },
     },
     indexes() {
-      return ['p2wshaddressindex'];
+      return ["p2wshaddressindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1843,16 +2028,18 @@ function createMetricPattern25(client, name) {
   return {
     name,
     by: {
-      get quarterindex() { return _endpoint(client, name, 'quarterindex'); }
+      get quarterindex() {
+        return _endpoint(client, name, "quarterindex");
+      },
     },
     indexes() {
-      return ['quarterindex'];
+      return ["quarterindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1874,16 +2061,18 @@ function createMetricPattern26(client, name) {
   return {
     name,
     by: {
-      get semesterindex() { return _endpoint(client, name, 'semesterindex'); }
+      get semesterindex() {
+        return _endpoint(client, name, "semesterindex");
+      },
     },
     indexes() {
-      return ['semesterindex'];
+      return ["semesterindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1905,16 +2094,18 @@ function createMetricPattern27(client, name) {
   return {
     name,
     by: {
-      get txindex() { return _endpoint(client, name, 'txindex'); }
+      get txindex() {
+        return _endpoint(client, name, "txindex");
+      },
     },
     indexes() {
-      return ['txindex'];
+      return ["txindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1936,16 +2127,18 @@ function createMetricPattern28(client, name) {
   return {
     name,
     by: {
-      get unknownoutputindex() { return _endpoint(client, name, 'unknownoutputindex'); }
+      get unknownoutputindex() {
+        return _endpoint(client, name, "unknownoutputindex");
+      },
     },
     indexes() {
-      return ['unknownoutputindex'];
+      return ["unknownoutputindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1967,16 +2160,18 @@ function createMetricPattern29(client, name) {
   return {
     name,
     by: {
-      get weekindex() { return _endpoint(client, name, 'weekindex'); }
+      get weekindex() {
+        return _endpoint(client, name, "weekindex");
+      },
     },
     indexes() {
-      return ['weekindex'];
+      return ["weekindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -1998,16 +2193,18 @@ function createMetricPattern30(client, name) {
   return {
     name,
     by: {
-      get yearindex() { return _endpoint(client, name, 'yearindex'); }
+      get yearindex() {
+        return _endpoint(client, name, "yearindex");
+      },
     },
     indexes() {
-      return ['yearindex'];
+      return ["yearindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -2029,16 +2226,18 @@ function createMetricPattern31(client, name) {
   return {
     name,
     by: {
-      get loadedaddressindex() { return _endpoint(client, name, 'loadedaddressindex'); }
+      get loadedaddressindex() {
+        return _endpoint(client, name, "loadedaddressindex");
+      },
     },
     indexes() {
-      return ['loadedaddressindex'];
+      return ["loadedaddressindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -2060,16 +2259,18 @@ function createMetricPattern32(client, name) {
   return {
     name,
     by: {
-      get emptyaddressindex() { return _endpoint(client, name, 'emptyaddressindex'); }
+      get emptyaddressindex() {
+        return _endpoint(client, name, "emptyaddressindex");
+      },
     },
     indexes() {
-      return ['emptyaddressindex'];
+      return ["emptyaddressindex"];
     },
     get(index) {
       if (this.indexes().includes(index)) {
         return _endpoint(client, name, index);
       }
-    }
+    },
   };
 }
 
@@ -2083,7 +2284,7 @@ function createMetricPattern32(client, name) {
  * @property {MetricPattern1<Dollars>} adjustedValueCreated
  * @property {MetricPattern1<Dollars>} adjustedValueDestroyed
  * @property {MetricPattern4<StoredF32>} mvrv
- * @property {BitcoinPattern<Dollars>} negRealizedLoss
+ * @property {BitcoinPattern2<Dollars>} negRealizedLoss
  * @property {BlockCountPattern<Dollars>} netRealizedPnl
  * @property {MetricPattern4<Dollars>} netRealizedPnlCumulative30dDelta
  * @property {MetricPattern4<StoredF32>} netRealizedPnlCumulative30dDeltaRelToMarketCap
@@ -2119,38 +2320,98 @@ function createMetricPattern32(client, name) {
  */
 function createRealizedPattern3(client, acc) {
   return {
-    adjustedSopr: createMetricPattern6(client, _m(acc, 'adjusted_sopr')),
-    adjustedSopr30dEma: createMetricPattern6(client, _m(acc, 'adjusted_sopr_30d_ema')),
-    adjustedSopr7dEma: createMetricPattern6(client, _m(acc, 'adjusted_sopr_7d_ema')),
-    adjustedValueCreated: createMetricPattern1(client, _m(acc, 'adjusted_value_created')),
-    adjustedValueDestroyed: createMetricPattern1(client, _m(acc, 'adjusted_value_destroyed')),
-    mvrv: createMetricPattern4(client, _m(acc, 'mvrv')),
-    negRealizedLoss: createBitcoinPattern(client, _m(acc, 'neg_realized_loss')),
-    netRealizedPnl: createBlockCountPattern(client, _m(acc, 'net_realized_pnl')),
-    netRealizedPnlCumulative30dDelta: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta')),
-    netRealizedPnlCumulative30dDeltaRelToMarketCap: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta_rel_to_market_cap')),
-    netRealizedPnlCumulative30dDeltaRelToRealizedCap: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap')),
-    netRealizedPnlRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'net_realized_pnl_rel_to_realized_cap')),
-    realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
-    realizedCap30dDelta: createMetricPattern4(client, _m(acc, 'realized_cap_30d_delta')),
-    realizedCapRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'realized_cap_rel_to_own_market_cap')),
-    realizedLoss: createBlockCountPattern(client, _m(acc, 'realized_loss')),
-    realizedLossRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'realized_loss_rel_to_realized_cap')),
-    realizedPrice: createMetricPattern1(client, _m(acc, 'realized_price')),
-    realizedPriceExtra: createActivePriceRatioPattern(client, _m(acc, 'realized_price_ratio')),
-    realizedProfit: createBlockCountPattern(client, _m(acc, 'realized_profit')),
-    realizedProfitRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'realized_profit_rel_to_realized_cap')),
-    realizedProfitToLossRatio: createMetricPattern6(client, _m(acc, 'realized_profit_to_loss_ratio')),
-    realizedValue: createMetricPattern1(client, _m(acc, 'realized_value')),
-    sellSideRiskRatio: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio')),
-    sellSideRiskRatio30dEma: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio_30d_ema')),
-    sellSideRiskRatio7dEma: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio_7d_ema')),
-    sopr: createMetricPattern6(client, _m(acc, 'sopr')),
-    sopr30dEma: createMetricPattern6(client, _m(acc, 'sopr_30d_ema')),
-    sopr7dEma: createMetricPattern6(client, _m(acc, 'sopr_7d_ema')),
-    totalRealizedPnl: createMetricPattern1(client, _m(acc, 'total_realized_pnl')),
-    valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
-    valueDestroyed: createMetricPattern1(client, _m(acc, 'value_destroyed')),
+    adjustedSopr: createMetricPattern6(client, _m(acc, "adjusted_sopr")),
+    adjustedSopr30dEma: createMetricPattern6(
+      client,
+      _m(acc, "adjusted_sopr_30d_ema"),
+    ),
+    adjustedSopr7dEma: createMetricPattern6(
+      client,
+      _m(acc, "adjusted_sopr_7d_ema"),
+    ),
+    adjustedValueCreated: createMetricPattern1(
+      client,
+      _m(acc, "adjusted_value_created"),
+    ),
+    adjustedValueDestroyed: createMetricPattern1(
+      client,
+      _m(acc, "adjusted_value_destroyed"),
+    ),
+    mvrv: createMetricPattern4(client, _m(acc, "mvrv")),
+    negRealizedLoss: createBitcoinPattern2(
+      client,
+      _m(acc, "neg_realized_loss"),
+    ),
+    netRealizedPnl: createBlockCountPattern(
+      client,
+      _m(acc, "net_realized_pnl"),
+    ),
+    netRealizedPnlCumulative30dDelta: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta"),
+    ),
+    netRealizedPnlCumulative30dDeltaRelToMarketCap: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta_rel_to_market_cap"),
+    ),
+    netRealizedPnlCumulative30dDeltaRelToRealizedCap: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap"),
+    ),
+    netRealizedPnlRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "net_realized_pnl_rel_to_realized_cap"),
+    ),
+    realizedCap: createMetricPattern1(client, _m(acc, "realized_cap")),
+    realizedCap30dDelta: createMetricPattern4(
+      client,
+      _m(acc, "realized_cap_30d_delta"),
+    ),
+    realizedCapRelToOwnMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "realized_cap_rel_to_own_market_cap"),
+    ),
+    realizedLoss: createBlockCountPattern(client, _m(acc, "realized_loss")),
+    realizedLossRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "realized_loss_rel_to_realized_cap"),
+    ),
+    realizedPrice: createMetricPattern1(client, _m(acc, "realized_price")),
+    realizedPriceExtra: createActivePriceRatioPattern(
+      client,
+      _m(acc, "realized_price_ratio"),
+    ),
+    realizedProfit: createBlockCountPattern(client, _m(acc, "realized_profit")),
+    realizedProfitRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "realized_profit_rel_to_realized_cap"),
+    ),
+    realizedProfitToLossRatio: createMetricPattern6(
+      client,
+      _m(acc, "realized_profit_to_loss_ratio"),
+    ),
+    realizedValue: createMetricPattern1(client, _m(acc, "realized_value")),
+    sellSideRiskRatio: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio"),
+    ),
+    sellSideRiskRatio30dEma: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio_30d_ema"),
+    ),
+    sellSideRiskRatio7dEma: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio_7d_ema"),
+    ),
+    sopr: createMetricPattern6(client, _m(acc, "sopr")),
+    sopr30dEma: createMetricPattern6(client, _m(acc, "sopr_30d_ema")),
+    sopr7dEma: createMetricPattern6(client, _m(acc, "sopr_7d_ema")),
+    totalRealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "total_realized_pnl"),
+    ),
+    valueCreated: createMetricPattern1(client, _m(acc, "value_created")),
+    valueDestroyed: createMetricPattern1(client, _m(acc, "value_destroyed")),
   };
 }
 
@@ -2162,7 +2423,7 @@ function createRealizedPattern3(client, acc) {
  * @property {MetricPattern1<Dollars>} adjustedValueCreated
  * @property {MetricPattern1<Dollars>} adjustedValueDestroyed
  * @property {MetricPattern4<StoredF32>} mvrv
- * @property {BitcoinPattern<Dollars>} negRealizedLoss
+ * @property {BitcoinPattern2<Dollars>} negRealizedLoss
  * @property {BlockCountPattern<Dollars>} netRealizedPnl
  * @property {MetricPattern4<Dollars>} netRealizedPnlCumulative30dDelta
  * @property {MetricPattern4<StoredF32>} netRealizedPnlCumulative30dDeltaRelToMarketCap
@@ -2196,36 +2457,90 @@ function createRealizedPattern3(client, acc) {
  */
 function createRealizedPattern4(client, acc) {
   return {
-    adjustedSopr: createMetricPattern6(client, _m(acc, 'adjusted_sopr')),
-    adjustedSopr30dEma: createMetricPattern6(client, _m(acc, 'adjusted_sopr_30d_ema')),
-    adjustedSopr7dEma: createMetricPattern6(client, _m(acc, 'adjusted_sopr_7d_ema')),
-    adjustedValueCreated: createMetricPattern1(client, _m(acc, 'adjusted_value_created')),
-    adjustedValueDestroyed: createMetricPattern1(client, _m(acc, 'adjusted_value_destroyed')),
-    mvrv: createMetricPattern4(client, _m(acc, 'mvrv')),
-    negRealizedLoss: createBitcoinPattern(client, _m(acc, 'neg_realized_loss')),
-    netRealizedPnl: createBlockCountPattern(client, _m(acc, 'net_realized_pnl')),
-    netRealizedPnlCumulative30dDelta: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta')),
-    netRealizedPnlCumulative30dDeltaRelToMarketCap: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta_rel_to_market_cap')),
-    netRealizedPnlCumulative30dDeltaRelToRealizedCap: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap')),
-    netRealizedPnlRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'net_realized_pnl_rel_to_realized_cap')),
-    realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
-    realizedCap30dDelta: createMetricPattern4(client, _m(acc, 'realized_cap_30d_delta')),
-    realizedLoss: createBlockCountPattern(client, _m(acc, 'realized_loss')),
-    realizedLossRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'realized_loss_rel_to_realized_cap')),
-    realizedPrice: createMetricPattern1(client, _m(acc, 'realized_price')),
-    realizedPriceExtra: createRealizedPriceExtraPattern(client, _m(acc, 'realized_price')),
-    realizedProfit: createBlockCountPattern(client, _m(acc, 'realized_profit')),
-    realizedProfitRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'realized_profit_rel_to_realized_cap')),
-    realizedValue: createMetricPattern1(client, _m(acc, 'realized_value')),
-    sellSideRiskRatio: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio')),
-    sellSideRiskRatio30dEma: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio_30d_ema')),
-    sellSideRiskRatio7dEma: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio_7d_ema')),
-    sopr: createMetricPattern6(client, _m(acc, 'sopr')),
-    sopr30dEma: createMetricPattern6(client, _m(acc, 'sopr_30d_ema')),
-    sopr7dEma: createMetricPattern6(client, _m(acc, 'sopr_7d_ema')),
-    totalRealizedPnl: createMetricPattern1(client, _m(acc, 'total_realized_pnl')),
-    valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
-    valueDestroyed: createMetricPattern1(client, _m(acc, 'value_destroyed')),
+    adjustedSopr: createMetricPattern6(client, _m(acc, "adjusted_sopr")),
+    adjustedSopr30dEma: createMetricPattern6(
+      client,
+      _m(acc, "adjusted_sopr_30d_ema"),
+    ),
+    adjustedSopr7dEma: createMetricPattern6(
+      client,
+      _m(acc, "adjusted_sopr_7d_ema"),
+    ),
+    adjustedValueCreated: createMetricPattern1(
+      client,
+      _m(acc, "adjusted_value_created"),
+    ),
+    adjustedValueDestroyed: createMetricPattern1(
+      client,
+      _m(acc, "adjusted_value_destroyed"),
+    ),
+    mvrv: createMetricPattern4(client, _m(acc, "mvrv")),
+    negRealizedLoss: createBitcoinPattern2(
+      client,
+      _m(acc, "neg_realized_loss"),
+    ),
+    netRealizedPnl: createBlockCountPattern(
+      client,
+      _m(acc, "net_realized_pnl"),
+    ),
+    netRealizedPnlCumulative30dDelta: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta"),
+    ),
+    netRealizedPnlCumulative30dDeltaRelToMarketCap: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta_rel_to_market_cap"),
+    ),
+    netRealizedPnlCumulative30dDeltaRelToRealizedCap: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap"),
+    ),
+    netRealizedPnlRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "net_realized_pnl_rel_to_realized_cap"),
+    ),
+    realizedCap: createMetricPattern1(client, _m(acc, "realized_cap")),
+    realizedCap30dDelta: createMetricPattern4(
+      client,
+      _m(acc, "realized_cap_30d_delta"),
+    ),
+    realizedLoss: createBlockCountPattern(client, _m(acc, "realized_loss")),
+    realizedLossRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "realized_loss_rel_to_realized_cap"),
+    ),
+    realizedPrice: createMetricPattern1(client, _m(acc, "realized_price")),
+    realizedPriceExtra: createRealizedPriceExtraPattern(
+      client,
+      _m(acc, "realized_price"),
+    ),
+    realizedProfit: createBlockCountPattern(client, _m(acc, "realized_profit")),
+    realizedProfitRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "realized_profit_rel_to_realized_cap"),
+    ),
+    realizedValue: createMetricPattern1(client, _m(acc, "realized_value")),
+    sellSideRiskRatio: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio"),
+    ),
+    sellSideRiskRatio30dEma: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio_30d_ema"),
+    ),
+    sellSideRiskRatio7dEma: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio_7d_ema"),
+    ),
+    sopr: createMetricPattern6(client, _m(acc, "sopr")),
+    sopr30dEma: createMetricPattern6(client, _m(acc, "sopr_30d_ema")),
+    sopr7dEma: createMetricPattern6(client, _m(acc, "sopr_7d_ema")),
+    totalRealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "total_realized_pnl"),
+    ),
+    valueCreated: createMetricPattern1(client, _m(acc, "value_created")),
+    valueDestroyed: createMetricPattern1(client, _m(acc, "value_destroyed")),
   };
 }
 
@@ -2269,41 +2584,41 @@ function createRealizedPattern4(client, acc) {
  */
 function createRatio1ySdPattern(client, acc) {
   return {
-    _0sdUsd: createMetricPattern4(client, _m(acc, '0sd_usd')),
-    m05sd: createMetricPattern4(client, _m(acc, 'm0_5sd')),
-    m05sdUsd: createMetricPattern4(client, _m(acc, 'm0_5sd_usd')),
-    m15sd: createMetricPattern4(client, _m(acc, 'm1_5sd')),
-    m15sdUsd: createMetricPattern4(client, _m(acc, 'm1_5sd_usd')),
-    m1sd: createMetricPattern4(client, _m(acc, 'm1sd')),
-    m1sdUsd: createMetricPattern4(client, _m(acc, 'm1sd_usd')),
-    m25sd: createMetricPattern4(client, _m(acc, 'm2_5sd')),
-    m25sdUsd: createMetricPattern4(client, _m(acc, 'm2_5sd_usd')),
-    m2sd: createMetricPattern4(client, _m(acc, 'm2sd')),
-    m2sdUsd: createMetricPattern4(client, _m(acc, 'm2sd_usd')),
-    m3sd: createMetricPattern4(client, _m(acc, 'm3sd')),
-    m3sdUsd: createMetricPattern4(client, _m(acc, 'm3sd_usd')),
-    p05sd: createMetricPattern4(client, _m(acc, 'p0_5sd')),
-    p05sdUsd: createMetricPattern4(client, _m(acc, 'p0_5sd_usd')),
-    p15sd: createMetricPattern4(client, _m(acc, 'p1_5sd')),
-    p15sdUsd: createMetricPattern4(client, _m(acc, 'p1_5sd_usd')),
-    p1sd: createMetricPattern4(client, _m(acc, 'p1sd')),
-    p1sdUsd: createMetricPattern4(client, _m(acc, 'p1sd_usd')),
-    p25sd: createMetricPattern4(client, _m(acc, 'p2_5sd')),
-    p25sdUsd: createMetricPattern4(client, _m(acc, 'p2_5sd_usd')),
-    p2sd: createMetricPattern4(client, _m(acc, 'p2sd')),
-    p2sdUsd: createMetricPattern4(client, _m(acc, 'p2sd_usd')),
-    p3sd: createMetricPattern4(client, _m(acc, 'p3sd')),
-    p3sdUsd: createMetricPattern4(client, _m(acc, 'p3sd_usd')),
-    sd: createMetricPattern4(client, _m(acc, 'sd')),
-    sma: createMetricPattern4(client, _m(acc, 'sma')),
-    zscore: createMetricPattern4(client, _m(acc, 'zscore')),
+    _0sdUsd: createMetricPattern4(client, _m(acc, "0sd_usd")),
+    m05sd: createMetricPattern4(client, _m(acc, "m0_5sd")),
+    m05sdUsd: createMetricPattern4(client, _m(acc, "m0_5sd_usd")),
+    m15sd: createMetricPattern4(client, _m(acc, "m1_5sd")),
+    m15sdUsd: createMetricPattern4(client, _m(acc, "m1_5sd_usd")),
+    m1sd: createMetricPattern4(client, _m(acc, "m1sd")),
+    m1sdUsd: createMetricPattern4(client, _m(acc, "m1sd_usd")),
+    m25sd: createMetricPattern4(client, _m(acc, "m2_5sd")),
+    m25sdUsd: createMetricPattern4(client, _m(acc, "m2_5sd_usd")),
+    m2sd: createMetricPattern4(client, _m(acc, "m2sd")),
+    m2sdUsd: createMetricPattern4(client, _m(acc, "m2sd_usd")),
+    m3sd: createMetricPattern4(client, _m(acc, "m3sd")),
+    m3sdUsd: createMetricPattern4(client, _m(acc, "m3sd_usd")),
+    p05sd: createMetricPattern4(client, _m(acc, "p0_5sd")),
+    p05sdUsd: createMetricPattern4(client, _m(acc, "p0_5sd_usd")),
+    p15sd: createMetricPattern4(client, _m(acc, "p1_5sd")),
+    p15sdUsd: createMetricPattern4(client, _m(acc, "p1_5sd_usd")),
+    p1sd: createMetricPattern4(client, _m(acc, "p1sd")),
+    p1sdUsd: createMetricPattern4(client, _m(acc, "p1sd_usd")),
+    p25sd: createMetricPattern4(client, _m(acc, "p2_5sd")),
+    p25sdUsd: createMetricPattern4(client, _m(acc, "p2_5sd_usd")),
+    p2sd: createMetricPattern4(client, _m(acc, "p2sd")),
+    p2sdUsd: createMetricPattern4(client, _m(acc, "p2sd_usd")),
+    p3sd: createMetricPattern4(client, _m(acc, "p3sd")),
+    p3sdUsd: createMetricPattern4(client, _m(acc, "p3sd_usd")),
+    sd: createMetricPattern4(client, _m(acc, "sd")),
+    sma: createMetricPattern4(client, _m(acc, "sma")),
+    zscore: createMetricPattern4(client, _m(acc, "zscore")),
   };
 }
 
 /**
  * @typedef {Object} RealizedPattern2
  * @property {MetricPattern4<StoredF32>} mvrv
- * @property {BitcoinPattern<Dollars>} negRealizedLoss
+ * @property {BitcoinPattern2<Dollars>} negRealizedLoss
  * @property {BlockCountPattern<Dollars>} netRealizedPnl
  * @property {MetricPattern4<Dollars>} netRealizedPnlCumulative30dDelta
  * @property {MetricPattern4<StoredF32>} netRealizedPnlCumulative30dDeltaRelToMarketCap
@@ -2339,40 +2654,88 @@ function createRatio1ySdPattern(client, acc) {
  */
 function createRealizedPattern2(client, acc) {
   return {
-    mvrv: createMetricPattern4(client, _m(acc, 'mvrv')),
-    negRealizedLoss: createBitcoinPattern(client, _m(acc, 'neg_realized_loss')),
-    netRealizedPnl: createBlockCountPattern(client, _m(acc, 'net_realized_pnl')),
-    netRealizedPnlCumulative30dDelta: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta')),
-    netRealizedPnlCumulative30dDeltaRelToMarketCap: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta_rel_to_market_cap')),
-    netRealizedPnlCumulative30dDeltaRelToRealizedCap: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap')),
-    netRealizedPnlRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'net_realized_pnl_rel_to_realized_cap')),
-    realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
-    realizedCap30dDelta: createMetricPattern4(client, _m(acc, 'realized_cap_30d_delta')),
-    realizedCapRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'realized_cap_rel_to_own_market_cap')),
-    realizedLoss: createBlockCountPattern(client, _m(acc, 'realized_loss')),
-    realizedLossRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'realized_loss_rel_to_realized_cap')),
-    realizedPrice: createMetricPattern1(client, _m(acc, 'realized_price')),
-    realizedPriceExtra: createActivePriceRatioPattern(client, _m(acc, 'realized_price_ratio')),
-    realizedProfit: createBlockCountPattern(client, _m(acc, 'realized_profit')),
-    realizedProfitRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'realized_profit_rel_to_realized_cap')),
-    realizedProfitToLossRatio: createMetricPattern6(client, _m(acc, 'realized_profit_to_loss_ratio')),
-    realizedValue: createMetricPattern1(client, _m(acc, 'realized_value')),
-    sellSideRiskRatio: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio')),
-    sellSideRiskRatio30dEma: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio_30d_ema')),
-    sellSideRiskRatio7dEma: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio_7d_ema')),
-    sopr: createMetricPattern6(client, _m(acc, 'sopr')),
-    sopr30dEma: createMetricPattern6(client, _m(acc, 'sopr_30d_ema')),
-    sopr7dEma: createMetricPattern6(client, _m(acc, 'sopr_7d_ema')),
-    totalRealizedPnl: createMetricPattern1(client, _m(acc, 'total_realized_pnl')),
-    valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
-    valueDestroyed: createMetricPattern1(client, _m(acc, 'value_destroyed')),
+    mvrv: createMetricPattern4(client, _m(acc, "mvrv")),
+    negRealizedLoss: createBitcoinPattern2(
+      client,
+      _m(acc, "neg_realized_loss"),
+    ),
+    netRealizedPnl: createBlockCountPattern(
+      client,
+      _m(acc, "net_realized_pnl"),
+    ),
+    netRealizedPnlCumulative30dDelta: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta"),
+    ),
+    netRealizedPnlCumulative30dDeltaRelToMarketCap: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta_rel_to_market_cap"),
+    ),
+    netRealizedPnlCumulative30dDeltaRelToRealizedCap: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap"),
+    ),
+    netRealizedPnlRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "net_realized_pnl_rel_to_realized_cap"),
+    ),
+    realizedCap: createMetricPattern1(client, _m(acc, "realized_cap")),
+    realizedCap30dDelta: createMetricPattern4(
+      client,
+      _m(acc, "realized_cap_30d_delta"),
+    ),
+    realizedCapRelToOwnMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "realized_cap_rel_to_own_market_cap"),
+    ),
+    realizedLoss: createBlockCountPattern(client, _m(acc, "realized_loss")),
+    realizedLossRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "realized_loss_rel_to_realized_cap"),
+    ),
+    realizedPrice: createMetricPattern1(client, _m(acc, "realized_price")),
+    realizedPriceExtra: createActivePriceRatioPattern(
+      client,
+      _m(acc, "realized_price_ratio"),
+    ),
+    realizedProfit: createBlockCountPattern(client, _m(acc, "realized_profit")),
+    realizedProfitRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "realized_profit_rel_to_realized_cap"),
+    ),
+    realizedProfitToLossRatio: createMetricPattern6(
+      client,
+      _m(acc, "realized_profit_to_loss_ratio"),
+    ),
+    realizedValue: createMetricPattern1(client, _m(acc, "realized_value")),
+    sellSideRiskRatio: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio"),
+    ),
+    sellSideRiskRatio30dEma: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio_30d_ema"),
+    ),
+    sellSideRiskRatio7dEma: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio_7d_ema"),
+    ),
+    sopr: createMetricPattern6(client, _m(acc, "sopr")),
+    sopr30dEma: createMetricPattern6(client, _m(acc, "sopr_30d_ema")),
+    sopr7dEma: createMetricPattern6(client, _m(acc, "sopr_7d_ema")),
+    totalRealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "total_realized_pnl"),
+    ),
+    valueCreated: createMetricPattern1(client, _m(acc, "value_created")),
+    valueDestroyed: createMetricPattern1(client, _m(acc, "value_destroyed")),
   };
 }
 
 /**
  * @typedef {Object} RealizedPattern
  * @property {MetricPattern4<StoredF32>} mvrv
- * @property {BitcoinPattern<Dollars>} negRealizedLoss
+ * @property {BitcoinPattern2<Dollars>} negRealizedLoss
  * @property {BlockCountPattern<Dollars>} netRealizedPnl
  * @property {MetricPattern4<Dollars>} netRealizedPnlCumulative30dDelta
  * @property {MetricPattern4<StoredF32>} netRealizedPnlCumulative30dDeltaRelToMarketCap
@@ -2406,31 +2769,73 @@ function createRealizedPattern2(client, acc) {
  */
 function createRealizedPattern(client, acc) {
   return {
-    mvrv: createMetricPattern4(client, _m(acc, 'mvrv')),
-    negRealizedLoss: createBitcoinPattern(client, _m(acc, 'neg_realized_loss')),
-    netRealizedPnl: createBlockCountPattern(client, _m(acc, 'net_realized_pnl')),
-    netRealizedPnlCumulative30dDelta: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta')),
-    netRealizedPnlCumulative30dDeltaRelToMarketCap: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta_rel_to_market_cap')),
-    netRealizedPnlCumulative30dDeltaRelToRealizedCap: createMetricPattern4(client, _m(acc, 'net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap')),
-    netRealizedPnlRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'net_realized_pnl_rel_to_realized_cap')),
-    realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
-    realizedCap30dDelta: createMetricPattern4(client, _m(acc, 'realized_cap_30d_delta')),
-    realizedLoss: createBlockCountPattern(client, _m(acc, 'realized_loss')),
-    realizedLossRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'realized_loss_rel_to_realized_cap')),
-    realizedPrice: createMetricPattern1(client, _m(acc, 'realized_price')),
-    realizedPriceExtra: createRealizedPriceExtraPattern(client, _m(acc, 'realized_price')),
-    realizedProfit: createBlockCountPattern(client, _m(acc, 'realized_profit')),
-    realizedProfitRelToRealizedCap: createBlockCountPattern(client, _m(acc, 'realized_profit_rel_to_realized_cap')),
-    realizedValue: createMetricPattern1(client, _m(acc, 'realized_value')),
-    sellSideRiskRatio: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio')),
-    sellSideRiskRatio30dEma: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio_30d_ema')),
-    sellSideRiskRatio7dEma: createMetricPattern6(client, _m(acc, 'sell_side_risk_ratio_7d_ema')),
-    sopr: createMetricPattern6(client, _m(acc, 'sopr')),
-    sopr30dEma: createMetricPattern6(client, _m(acc, 'sopr_30d_ema')),
-    sopr7dEma: createMetricPattern6(client, _m(acc, 'sopr_7d_ema')),
-    totalRealizedPnl: createMetricPattern1(client, _m(acc, 'total_realized_pnl')),
-    valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
-    valueDestroyed: createMetricPattern1(client, _m(acc, 'value_destroyed')),
+    mvrv: createMetricPattern4(client, _m(acc, "mvrv")),
+    negRealizedLoss: createBitcoinPattern2(
+      client,
+      _m(acc, "neg_realized_loss"),
+    ),
+    netRealizedPnl: createBlockCountPattern(
+      client,
+      _m(acc, "net_realized_pnl"),
+    ),
+    netRealizedPnlCumulative30dDelta: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta"),
+    ),
+    netRealizedPnlCumulative30dDeltaRelToMarketCap: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta_rel_to_market_cap"),
+    ),
+    netRealizedPnlCumulative30dDeltaRelToRealizedCap: createMetricPattern4(
+      client,
+      _m(acc, "net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap"),
+    ),
+    netRealizedPnlRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "net_realized_pnl_rel_to_realized_cap"),
+    ),
+    realizedCap: createMetricPattern1(client, _m(acc, "realized_cap")),
+    realizedCap30dDelta: createMetricPattern4(
+      client,
+      _m(acc, "realized_cap_30d_delta"),
+    ),
+    realizedLoss: createBlockCountPattern(client, _m(acc, "realized_loss")),
+    realizedLossRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "realized_loss_rel_to_realized_cap"),
+    ),
+    realizedPrice: createMetricPattern1(client, _m(acc, "realized_price")),
+    realizedPriceExtra: createRealizedPriceExtraPattern(
+      client,
+      _m(acc, "realized_price"),
+    ),
+    realizedProfit: createBlockCountPattern(client, _m(acc, "realized_profit")),
+    realizedProfitRelToRealizedCap: createBlockCountPattern(
+      client,
+      _m(acc, "realized_profit_rel_to_realized_cap"),
+    ),
+    realizedValue: createMetricPattern1(client, _m(acc, "realized_value")),
+    sellSideRiskRatio: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio"),
+    ),
+    sellSideRiskRatio30dEma: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio_30d_ema"),
+    ),
+    sellSideRiskRatio7dEma: createMetricPattern6(
+      client,
+      _m(acc, "sell_side_risk_ratio_7d_ema"),
+    ),
+    sopr: createMetricPattern6(client, _m(acc, "sopr")),
+    sopr30dEma: createMetricPattern6(client, _m(acc, "sopr_30d_ema")),
+    sopr7dEma: createMetricPattern6(client, _m(acc, "sopr_7d_ema")),
+    totalRealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "total_realized_pnl"),
+    ),
+    valueCreated: createMetricPattern1(client, _m(acc, "value_created")),
+    valueDestroyed: createMetricPattern1(client, _m(acc, "value_destroyed")),
   };
 }
 
@@ -2467,25 +2872,78 @@ function createRealizedPattern(client, acc) {
 function createPrice111dSmaPattern(client, acc) {
   return {
     price: createMetricPattern4(client, acc),
-    ratio: createMetricPattern4(client, _m(acc, 'ratio')),
-    ratio1mSma: createMetricPattern4(client, _m(acc, 'ratio_1m_sma')),
-    ratio1wSma: createMetricPattern4(client, _m(acc, 'ratio_1w_sma')),
-    ratio1ySd: createRatio1ySdPattern(client, _m(acc, 'ratio_1y')),
-    ratio2ySd: createRatio1ySdPattern(client, _m(acc, 'ratio_2y')),
-    ratio4ySd: createRatio1ySdPattern(client, _m(acc, 'ratio_4y')),
-    ratioPct1: createMetricPattern4(client, _m(acc, 'ratio_pct1')),
-    ratioPct1Usd: createMetricPattern4(client, _m(acc, 'ratio_pct1_usd')),
-    ratioPct2: createMetricPattern4(client, _m(acc, 'ratio_pct2')),
-    ratioPct2Usd: createMetricPattern4(client, _m(acc, 'ratio_pct2_usd')),
-    ratioPct5: createMetricPattern4(client, _m(acc, 'ratio_pct5')),
-    ratioPct5Usd: createMetricPattern4(client, _m(acc, 'ratio_pct5_usd')),
-    ratioPct95: createMetricPattern4(client, _m(acc, 'ratio_pct95')),
-    ratioPct95Usd: createMetricPattern4(client, _m(acc, 'ratio_pct95_usd')),
-    ratioPct98: createMetricPattern4(client, _m(acc, 'ratio_pct98')),
-    ratioPct98Usd: createMetricPattern4(client, _m(acc, 'ratio_pct98_usd')),
-    ratioPct99: createMetricPattern4(client, _m(acc, 'ratio_pct99')),
-    ratioPct99Usd: createMetricPattern4(client, _m(acc, 'ratio_pct99_usd')),
-    ratioSd: createRatio1ySdPattern(client, _m(acc, 'ratio')),
+    ratio: createMetricPattern4(client, _m(acc, "ratio")),
+    ratio1mSma: createMetricPattern4(client, _m(acc, "ratio_1m_sma")),
+    ratio1wSma: createMetricPattern4(client, _m(acc, "ratio_1w_sma")),
+    ratio1ySd: createRatio1ySdPattern(client, _m(acc, "ratio_1y")),
+    ratio2ySd: createRatio1ySdPattern(client, _m(acc, "ratio_2y")),
+    ratio4ySd: createRatio1ySdPattern(client, _m(acc, "ratio_4y")),
+    ratioPct1: createMetricPattern4(client, _m(acc, "ratio_pct1")),
+    ratioPct1Usd: createMetricPattern4(client, _m(acc, "ratio_pct1_usd")),
+    ratioPct2: createMetricPattern4(client, _m(acc, "ratio_pct2")),
+    ratioPct2Usd: createMetricPattern4(client, _m(acc, "ratio_pct2_usd")),
+    ratioPct5: createMetricPattern4(client, _m(acc, "ratio_pct5")),
+    ratioPct5Usd: createMetricPattern4(client, _m(acc, "ratio_pct5_usd")),
+    ratioPct95: createMetricPattern4(client, _m(acc, "ratio_pct95")),
+    ratioPct95Usd: createMetricPattern4(client, _m(acc, "ratio_pct95_usd")),
+    ratioPct98: createMetricPattern4(client, _m(acc, "ratio_pct98")),
+    ratioPct98Usd: createMetricPattern4(client, _m(acc, "ratio_pct98_usd")),
+    ratioPct99: createMetricPattern4(client, _m(acc, "ratio_pct99")),
+    ratioPct99Usd: createMetricPattern4(client, _m(acc, "ratio_pct99_usd")),
+    ratioSd: createRatio1ySdPattern(client, _m(acc, "ratio")),
+  };
+}
+
+/**
+ * @typedef {Object} PercentilesPattern
+ * @property {MetricPattern4<Dollars>} costBasisPct05
+ * @property {MetricPattern4<Dollars>} costBasisPct10
+ * @property {MetricPattern4<Dollars>} costBasisPct15
+ * @property {MetricPattern4<Dollars>} costBasisPct20
+ * @property {MetricPattern4<Dollars>} costBasisPct25
+ * @property {MetricPattern4<Dollars>} costBasisPct30
+ * @property {MetricPattern4<Dollars>} costBasisPct35
+ * @property {MetricPattern4<Dollars>} costBasisPct40
+ * @property {MetricPattern4<Dollars>} costBasisPct45
+ * @property {MetricPattern4<Dollars>} costBasisPct50
+ * @property {MetricPattern4<Dollars>} costBasisPct55
+ * @property {MetricPattern4<Dollars>} costBasisPct60
+ * @property {MetricPattern4<Dollars>} costBasisPct65
+ * @property {MetricPattern4<Dollars>} costBasisPct70
+ * @property {MetricPattern4<Dollars>} costBasisPct75
+ * @property {MetricPattern4<Dollars>} costBasisPct80
+ * @property {MetricPattern4<Dollars>} costBasisPct85
+ * @property {MetricPattern4<Dollars>} costBasisPct90
+ * @property {MetricPattern4<Dollars>} costBasisPct95
+ */
+
+/**
+ * Create a PercentilesPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {PercentilesPattern}
+ */
+function createPercentilesPattern(client, acc) {
+  return {
+    costBasisPct05: createMetricPattern4(client, _m(acc, "pct05")),
+    costBasisPct10: createMetricPattern4(client, _m(acc, "pct10")),
+    costBasisPct15: createMetricPattern4(client, _m(acc, "pct15")),
+    costBasisPct20: createMetricPattern4(client, _m(acc, "pct20")),
+    costBasisPct25: createMetricPattern4(client, _m(acc, "pct25")),
+    costBasisPct30: createMetricPattern4(client, _m(acc, "pct30")),
+    costBasisPct35: createMetricPattern4(client, _m(acc, "pct35")),
+    costBasisPct40: createMetricPattern4(client, _m(acc, "pct40")),
+    costBasisPct45: createMetricPattern4(client, _m(acc, "pct45")),
+    costBasisPct50: createMetricPattern4(client, _m(acc, "pct50")),
+    costBasisPct55: createMetricPattern4(client, _m(acc, "pct55")),
+    costBasisPct60: createMetricPattern4(client, _m(acc, "pct60")),
+    costBasisPct65: createMetricPattern4(client, _m(acc, "pct65")),
+    costBasisPct70: createMetricPattern4(client, _m(acc, "pct70")),
+    costBasisPct75: createMetricPattern4(client, _m(acc, "pct75")),
+    costBasisPct80: createMetricPattern4(client, _m(acc, "pct80")),
+    costBasisPct85: createMetricPattern4(client, _m(acc, "pct85")),
+    costBasisPct90: createMetricPattern4(client, _m(acc, "pct90")),
+    costBasisPct95: createMetricPattern4(client, _m(acc, "pct95")),
   };
 }
 
@@ -2521,77 +2979,24 @@ function createPrice111dSmaPattern(client, acc) {
 function createActivePriceRatioPattern(client, acc) {
   return {
     ratio: createMetricPattern4(client, acc),
-    ratio1mSma: createMetricPattern4(client, _m(acc, '1m_sma')),
-    ratio1wSma: createMetricPattern4(client, _m(acc, '1w_sma')),
-    ratio1ySd: createRatio1ySdPattern(client, _m(acc, '1y')),
-    ratio2ySd: createRatio1ySdPattern(client, _m(acc, '2y')),
-    ratio4ySd: createRatio1ySdPattern(client, _m(acc, '4y')),
-    ratioPct1: createMetricPattern4(client, _m(acc, 'pct1')),
-    ratioPct1Usd: createMetricPattern4(client, _m(acc, 'pct1_usd')),
-    ratioPct2: createMetricPattern4(client, _m(acc, 'pct2')),
-    ratioPct2Usd: createMetricPattern4(client, _m(acc, 'pct2_usd')),
-    ratioPct5: createMetricPattern4(client, _m(acc, 'pct5')),
-    ratioPct5Usd: createMetricPattern4(client, _m(acc, 'pct5_usd')),
-    ratioPct95: createMetricPattern4(client, _m(acc, 'pct95')),
-    ratioPct95Usd: createMetricPattern4(client, _m(acc, 'pct95_usd')),
-    ratioPct98: createMetricPattern4(client, _m(acc, 'pct98')),
-    ratioPct98Usd: createMetricPattern4(client, _m(acc, 'pct98_usd')),
-    ratioPct99: createMetricPattern4(client, _m(acc, 'pct99')),
-    ratioPct99Usd: createMetricPattern4(client, _m(acc, 'pct99_usd')),
+    ratio1mSma: createMetricPattern4(client, _m(acc, "1m_sma")),
+    ratio1wSma: createMetricPattern4(client, _m(acc, "1w_sma")),
+    ratio1ySd: createRatio1ySdPattern(client, _m(acc, "1y")),
+    ratio2ySd: createRatio1ySdPattern(client, _m(acc, "2y")),
+    ratio4ySd: createRatio1ySdPattern(client, _m(acc, "4y")),
+    ratioPct1: createMetricPattern4(client, _m(acc, "pct1")),
+    ratioPct1Usd: createMetricPattern4(client, _m(acc, "pct1_usd")),
+    ratioPct2: createMetricPattern4(client, _m(acc, "pct2")),
+    ratioPct2Usd: createMetricPattern4(client, _m(acc, "pct2_usd")),
+    ratioPct5: createMetricPattern4(client, _m(acc, "pct5")),
+    ratioPct5Usd: createMetricPattern4(client, _m(acc, "pct5_usd")),
+    ratioPct95: createMetricPattern4(client, _m(acc, "pct95")),
+    ratioPct95Usd: createMetricPattern4(client, _m(acc, "pct95_usd")),
+    ratioPct98: createMetricPattern4(client, _m(acc, "pct98")),
+    ratioPct98Usd: createMetricPattern4(client, _m(acc, "pct98_usd")),
+    ratioPct99: createMetricPattern4(client, _m(acc, "pct99")),
+    ratioPct99Usd: createMetricPattern4(client, _m(acc, "pct99_usd")),
     ratioSd: createRatio1ySdPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} PercentilesPattern
- * @property {MetricPattern4<Dollars>} costBasisPct05
- * @property {MetricPattern4<Dollars>} costBasisPct10
- * @property {MetricPattern4<Dollars>} costBasisPct15
- * @property {MetricPattern4<Dollars>} costBasisPct20
- * @property {MetricPattern4<Dollars>} costBasisPct25
- * @property {MetricPattern4<Dollars>} costBasisPct30
- * @property {MetricPattern4<Dollars>} costBasisPct35
- * @property {MetricPattern4<Dollars>} costBasisPct40
- * @property {MetricPattern4<Dollars>} costBasisPct45
- * @property {MetricPattern4<Dollars>} costBasisPct50
- * @property {MetricPattern4<Dollars>} costBasisPct55
- * @property {MetricPattern4<Dollars>} costBasisPct60
- * @property {MetricPattern4<Dollars>} costBasisPct65
- * @property {MetricPattern4<Dollars>} costBasisPct70
- * @property {MetricPattern4<Dollars>} costBasisPct75
- * @property {MetricPattern4<Dollars>} costBasisPct80
- * @property {MetricPattern4<Dollars>} costBasisPct85
- * @property {MetricPattern4<Dollars>} costBasisPct90
- * @property {MetricPattern4<Dollars>} costBasisPct95
- */
-
-/**
- * Create a PercentilesPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {PercentilesPattern}
- */
-function createPercentilesPattern(client, acc) {
-  return {
-    costBasisPct05: createMetricPattern4(client, _m(acc, 'pct05')),
-    costBasisPct10: createMetricPattern4(client, _m(acc, 'pct10')),
-    costBasisPct15: createMetricPattern4(client, _m(acc, 'pct15')),
-    costBasisPct20: createMetricPattern4(client, _m(acc, 'pct20')),
-    costBasisPct25: createMetricPattern4(client, _m(acc, 'pct25')),
-    costBasisPct30: createMetricPattern4(client, _m(acc, 'pct30')),
-    costBasisPct35: createMetricPattern4(client, _m(acc, 'pct35')),
-    costBasisPct40: createMetricPattern4(client, _m(acc, 'pct40')),
-    costBasisPct45: createMetricPattern4(client, _m(acc, 'pct45')),
-    costBasisPct50: createMetricPattern4(client, _m(acc, 'pct50')),
-    costBasisPct55: createMetricPattern4(client, _m(acc, 'pct55')),
-    costBasisPct60: createMetricPattern4(client, _m(acc, 'pct60')),
-    costBasisPct65: createMetricPattern4(client, _m(acc, 'pct65')),
-    costBasisPct70: createMetricPattern4(client, _m(acc, 'pct70')),
-    costBasisPct75: createMetricPattern4(client, _m(acc, 'pct75')),
-    costBasisPct80: createMetricPattern4(client, _m(acc, 'pct80')),
-    costBasisPct85: createMetricPattern4(client, _m(acc, 'pct85')),
-    costBasisPct90: createMetricPattern4(client, _m(acc, 'pct90')),
-    costBasisPct95: createMetricPattern4(client, _m(acc, 'pct95')),
   };
 }
 
@@ -2625,24 +3030,75 @@ function createPercentilesPattern(client, acc) {
  */
 function createRelativePattern5(client, acc) {
   return {
-    negUnrealizedLossRelToMarketCap: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss_rel_to_market_cap')),
-    negUnrealizedLossRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss_rel_to_own_market_cap')),
-    negUnrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss_rel_to_own_total_unrealized_pnl')),
-    netUnrealizedPnlRelToMarketCap: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl_rel_to_market_cap')),
-    netUnrealizedPnlRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl_rel_to_own_market_cap')),
-    netUnrealizedPnlRelToOwnTotalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl_rel_to_own_total_unrealized_pnl')),
-    nupl: createMetricPattern1(client, _m(acc, 'nupl')),
-    supplyInLossRelToCirculatingSupply: createMetricPattern1(client, _m(acc, 'supply_in_loss_rel_to_circulating_supply')),
-    supplyInLossRelToOwnSupply: createMetricPattern1(client, _m(acc, 'supply_in_loss_rel_to_own_supply')),
-    supplyInProfitRelToCirculatingSupply: createMetricPattern1(client, _m(acc, 'supply_in_profit_rel_to_circulating_supply')),
-    supplyInProfitRelToOwnSupply: createMetricPattern1(client, _m(acc, 'supply_in_profit_rel_to_own_supply')),
-    supplyRelToCirculatingSupply: createMetricPattern4(client, _m(acc, 'supply_rel_to_circulating_supply')),
-    unrealizedLossRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_market_cap')),
-    unrealizedLossRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_own_market_cap')),
-    unrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_own_total_unrealized_pnl')),
-    unrealizedProfitRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_market_cap')),
-    unrealizedProfitRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_own_market_cap')),
-    unrealizedProfitRelToOwnTotalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_own_total_unrealized_pnl')),
+    negUnrealizedLossRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "neg_unrealized_loss_rel_to_market_cap"),
+    ),
+    negUnrealizedLossRelToOwnMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "neg_unrealized_loss_rel_to_own_market_cap"),
+    ),
+    negUnrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
+    ),
+    netUnrealizedPnlRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "net_unrealized_pnl_rel_to_market_cap"),
+    ),
+    netUnrealizedPnlRelToOwnMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "net_unrealized_pnl_rel_to_own_market_cap"),
+    ),
+    netUnrealizedPnlRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
+    ),
+    nupl: createMetricPattern1(client, _m(acc, "nupl")),
+    supplyInLossRelToCirculatingSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_loss_rel_to_circulating_supply"),
+    ),
+    supplyInLossRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_loss_rel_to_own_supply"),
+    ),
+    supplyInProfitRelToCirculatingSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_profit_rel_to_circulating_supply"),
+    ),
+    supplyInProfitRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_profit_rel_to_own_supply"),
+    ),
+    supplyRelToCirculatingSupply: createMetricPattern4(
+      client,
+      _m(acc, "supply_rel_to_circulating_supply"),
+    ),
+    unrealizedLossRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_loss_rel_to_market_cap"),
+    ),
+    unrealizedLossRelToOwnMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_loss_rel_to_own_market_cap"),
+    ),
+    unrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_loss_rel_to_own_total_unrealized_pnl"),
+    ),
+    unrealizedProfitRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_profit_rel_to_market_cap"),
+    ),
+    unrealizedProfitRelToOwnMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_profit_rel_to_own_market_cap"),
+    ),
+    unrealizedProfitRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_profit_rel_to_own_total_unrealized_pnl"),
+    ),
   };
 }
 
@@ -2672,20 +3128,20 @@ function createRelativePattern5(client, acc) {
  */
 function createAaopoolPattern(client, acc) {
   return {
-    _1mBlocksMined: createMetricPattern1(client, _m(acc, '1m_blocks_mined')),
-    _1mDominance: createMetricPattern1(client, _m(acc, '1m_dominance')),
-    _1wBlocksMined: createMetricPattern1(client, _m(acc, '1w_blocks_mined')),
-    _1wDominance: createMetricPattern1(client, _m(acc, '1w_dominance')),
-    _1yBlocksMined: createMetricPattern1(client, _m(acc, '1y_blocks_mined')),
-    _1yDominance: createMetricPattern1(client, _m(acc, '1y_dominance')),
-    _24hBlocksMined: createMetricPattern1(client, _m(acc, '24h_blocks_mined')),
-    _24hDominance: createMetricPattern1(client, _m(acc, '24h_dominance')),
-    blocksMined: createBlockCountPattern(client, _m(acc, 'blocks_mined')),
-    coinbase: createCoinbasePattern2(client, _m(acc, 'coinbase')),
-    daysSinceBlock: createMetricPattern4(client, _m(acc, 'days_since_block')),
-    dominance: createMetricPattern1(client, _m(acc, 'dominance')),
-    fee: createUnclaimedRewardsPattern(client, _m(acc, 'fee')),
-    subsidy: createUnclaimedRewardsPattern(client, _m(acc, 'subsidy')),
+    _1mBlocksMined: createMetricPattern1(client, _m(acc, "1m_blocks_mined")),
+    _1mDominance: createMetricPattern1(client, _m(acc, "1m_dominance")),
+    _1wBlocksMined: createMetricPattern1(client, _m(acc, "1w_blocks_mined")),
+    _1wDominance: createMetricPattern1(client, _m(acc, "1w_dominance")),
+    _1yBlocksMined: createMetricPattern1(client, _m(acc, "1y_blocks_mined")),
+    _1yDominance: createMetricPattern1(client, _m(acc, "1y_dominance")),
+    _24hBlocksMined: createMetricPattern1(client, _m(acc, "24h_blocks_mined")),
+    _24hDominance: createMetricPattern1(client, _m(acc, "24h_dominance")),
+    blocksMined: createBlockCountPattern(client, _m(acc, "blocks_mined")),
+    coinbase: createCoinbasePattern2(client, _m(acc, "coinbase")),
+    daysSinceBlock: createMetricPattern4(client, _m(acc, "days_since_block")),
+    dominance: createMetricPattern1(client, _m(acc, "dominance")),
+    fee: createUnclaimedRewardsPattern(client, _m(acc, "fee")),
+    subsidy: createUnclaimedRewardsPattern(client, _m(acc, "subsidy")),
   };
 }
 
@@ -2756,18 +3212,18 @@ function createPriceAgoPattern(client, basePath) {
  */
 function createPeriodLumpSumStackPattern(client, acc) {
   return {
-    _10y: create_2015Pattern(client, (acc ? `10y_${acc}` : '10y')),
-    _1m: create_2015Pattern(client, (acc ? `1m_${acc}` : '1m')),
-    _1w: create_2015Pattern(client, (acc ? `1w_${acc}` : '1w')),
-    _1y: create_2015Pattern(client, (acc ? `1y_${acc}` : '1y')),
-    _2y: create_2015Pattern(client, (acc ? `2y_${acc}` : '2y')),
-    _3m: create_2015Pattern(client, (acc ? `3m_${acc}` : '3m')),
-    _3y: create_2015Pattern(client, (acc ? `3y_${acc}` : '3y')),
-    _4y: create_2015Pattern(client, (acc ? `4y_${acc}` : '4y')),
-    _5y: create_2015Pattern(client, (acc ? `5y_${acc}` : '5y')),
-    _6m: create_2015Pattern(client, (acc ? `6m_${acc}` : '6m')),
-    _6y: create_2015Pattern(client, (acc ? `6y_${acc}` : '6y')),
-    _8y: create_2015Pattern(client, (acc ? `8y_${acc}` : '8y')),
+    _10y: create_2015Pattern(client, acc ? `10y_${acc}` : "10y"),
+    _1m: create_2015Pattern(client, acc ? `1m_${acc}` : "1m"),
+    _1w: create_2015Pattern(client, acc ? `1w_${acc}` : "1w"),
+    _1y: create_2015Pattern(client, acc ? `1y_${acc}` : "1y"),
+    _2y: create_2015Pattern(client, acc ? `2y_${acc}` : "2y"),
+    _3m: create_2015Pattern(client, acc ? `3m_${acc}` : "3m"),
+    _3y: create_2015Pattern(client, acc ? `3y_${acc}` : "3y"),
+    _4y: create_2015Pattern(client, acc ? `4y_${acc}` : "4y"),
+    _5y: create_2015Pattern(client, acc ? `5y_${acc}` : "5y"),
+    _6m: create_2015Pattern(client, acc ? `6m_${acc}` : "6m"),
+    _6y: create_2015Pattern(client, acc ? `6y_${acc}` : "6y"),
+    _8y: create_2015Pattern(client, acc ? `8y_${acc}` : "8y"),
   };
 }
 
@@ -2797,57 +3253,55 @@ function createPeriodLumpSumStackPattern(client, acc) {
  */
 function createPeriodAveragePricePattern(client, acc) {
   return {
-    _10y: createMetricPattern4(client, (acc ? `10y_${acc}` : '10y')),
-    _1m: createMetricPattern4(client, (acc ? `1m_${acc}` : '1m')),
-    _1w: createMetricPattern4(client, (acc ? `1w_${acc}` : '1w')),
-    _1y: createMetricPattern4(client, (acc ? `1y_${acc}` : '1y')),
-    _2y: createMetricPattern4(client, (acc ? `2y_${acc}` : '2y')),
-    _3m: createMetricPattern4(client, (acc ? `3m_${acc}` : '3m')),
-    _3y: createMetricPattern4(client, (acc ? `3y_${acc}` : '3y')),
-    _4y: createMetricPattern4(client, (acc ? `4y_${acc}` : '4y')),
-    _5y: createMetricPattern4(client, (acc ? `5y_${acc}` : '5y')),
-    _6m: createMetricPattern4(client, (acc ? `6m_${acc}` : '6m')),
-    _6y: createMetricPattern4(client, (acc ? `6y_${acc}` : '6y')),
-    _8y: createMetricPattern4(client, (acc ? `8y_${acc}` : '8y')),
+    _10y: createMetricPattern4(client, acc ? `10y_${acc}` : "10y"),
+    _1m: createMetricPattern4(client, acc ? `1m_${acc}` : "1m"),
+    _1w: createMetricPattern4(client, acc ? `1w_${acc}` : "1w"),
+    _1y: createMetricPattern4(client, acc ? `1y_${acc}` : "1y"),
+    _2y: createMetricPattern4(client, acc ? `2y_${acc}` : "2y"),
+    _3m: createMetricPattern4(client, acc ? `3m_${acc}` : "3m"),
+    _3y: createMetricPattern4(client, acc ? `3y_${acc}` : "3y"),
+    _4y: createMetricPattern4(client, acc ? `4y_${acc}` : "4y"),
+    _5y: createMetricPattern4(client, acc ? `5y_${acc}` : "5y"),
+    _6m: createMetricPattern4(client, acc ? `6m_${acc}` : "6m"),
+    _6y: createMetricPattern4(client, acc ? `6y_${acc}` : "6y"),
+    _8y: createMetricPattern4(client, acc ? `8y_${acc}` : "8y"),
   };
 }
 
 /**
- * @template T
- * @typedef {Object} FullnessPattern
- * @property {MetricPattern2<T>} average
- * @property {MetricPattern11<T>} base
- * @property {MetricPattern2<T>} cumulative
- * @property {MetricPattern2<T>} max
- * @property {MetricPattern6<T>} median
- * @property {MetricPattern2<T>} min
- * @property {MetricPattern6<T>} pct10
- * @property {MetricPattern6<T>} pct25
- * @property {MetricPattern6<T>} pct75
- * @property {MetricPattern6<T>} pct90
- * @property {MetricPattern2<T>} sum
+ * @typedef {Object} BitcoinPattern
+ * @property {MetricPattern2<Bitcoin>} average
+ * @property {MetricPattern11<Bitcoin>} base
+ * @property {MetricPattern2<Bitcoin>} cumulative
+ * @property {MetricPattern2<Bitcoin>} max
+ * @property {MetricPattern6<Bitcoin>} median
+ * @property {MetricPattern2<Bitcoin>} min
+ * @property {MetricPattern6<Bitcoin>} pct10
+ * @property {MetricPattern6<Bitcoin>} pct25
+ * @property {MetricPattern6<Bitcoin>} pct75
+ * @property {MetricPattern6<Bitcoin>} pct90
+ * @property {MetricPattern2<Bitcoin>} sum
  */
 
 /**
- * Create a FullnessPattern pattern node
- * @template T
+ * Create a BitcoinPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {FullnessPattern<T>}
+ * @returns {BitcoinPattern}
  */
-function createFullnessPattern(client, acc) {
+function createBitcoinPattern(client, acc) {
   return {
-    average: createMetricPattern2(client, _m(acc, 'average')),
+    average: createMetricPattern2(client, _m(acc, "average")),
     base: createMetricPattern11(client, acc),
-    cumulative: createMetricPattern2(client, _m(acc, 'cumulative')),
-    max: createMetricPattern2(client, _m(acc, 'max')),
-    median: createMetricPattern6(client, _m(acc, 'median')),
-    min: createMetricPattern2(client, _m(acc, 'min')),
-    pct10: createMetricPattern6(client, _m(acc, 'pct10')),
-    pct25: createMetricPattern6(client, _m(acc, 'pct25')),
-    pct75: createMetricPattern6(client, _m(acc, 'pct75')),
-    pct90: createMetricPattern6(client, _m(acc, 'pct90')),
-    sum: createMetricPattern2(client, _m(acc, 'sum')),
+    cumulative: createMetricPattern2(client, _m(acc, "cumulative")),
+    max: createMetricPattern2(client, _m(acc, "max")),
+    median: createMetricPattern6(client, _m(acc, "median")),
+    min: createMetricPattern2(client, _m(acc, "min")),
+    pct10: createMetricPattern6(client, _m(acc, "pct10")),
+    pct25: createMetricPattern6(client, _m(acc, "pct25")),
+    pct75: createMetricPattern6(client, _m(acc, "pct75")),
+    pct90: createMetricPattern6(client, _m(acc, "pct90")),
+    sum: createMetricPattern2(client, _m(acc, "sum")),
   };
 }
 
@@ -2915,17 +3369,17 @@ function createClassAveragePricePattern(client, basePath) {
  */
 function createDollarsPattern(client, acc) {
   return {
-    average: createMetricPattern2(client, _m(acc, 'average')),
+    average: createMetricPattern2(client, _m(acc, "average")),
     base: createMetricPattern11(client, acc),
-    cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
-    max: createMetricPattern2(client, _m(acc, 'max')),
-    median: createMetricPattern6(client, _m(acc, 'median')),
-    min: createMetricPattern2(client, _m(acc, 'min')),
-    pct10: createMetricPattern6(client, _m(acc, 'pct10')),
-    pct25: createMetricPattern6(client, _m(acc, 'pct25')),
-    pct75: createMetricPattern6(client, _m(acc, 'pct75')),
-    pct90: createMetricPattern6(client, _m(acc, 'pct90')),
-    sum: createMetricPattern2(client, _m(acc, 'sum')),
+    cumulative: createMetricPattern1(client, _m(acc, "cumulative")),
+    max: createMetricPattern2(client, _m(acc, "max")),
+    median: createMetricPattern6(client, _m(acc, "median")),
+    min: createMetricPattern2(client, _m(acc, "min")),
+    pct10: createMetricPattern6(client, _m(acc, "pct10")),
+    pct25: createMetricPattern6(client, _m(acc, "pct25")),
+    pct75: createMetricPattern6(client, _m(acc, "pct75")),
+    pct90: createMetricPattern6(client, _m(acc, "pct90")),
+    sum: createMetricPattern2(client, _m(acc, "sum")),
   };
 }
 
@@ -2951,16 +3405,43 @@ function createDollarsPattern(client, acc) {
  */
 function createRelativePattern(client, acc) {
   return {
-    negUnrealizedLossRelToMarketCap: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss_rel_to_market_cap')),
-    netUnrealizedPnlRelToMarketCap: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl_rel_to_market_cap')),
-    nupl: createMetricPattern1(client, _m(acc, 'nupl')),
-    supplyInLossRelToCirculatingSupply: createMetricPattern1(client, _m(acc, 'supply_in_loss_rel_to_circulating_supply')),
-    supplyInLossRelToOwnSupply: createMetricPattern1(client, _m(acc, 'supply_in_loss_rel_to_own_supply')),
-    supplyInProfitRelToCirculatingSupply: createMetricPattern1(client, _m(acc, 'supply_in_profit_rel_to_circulating_supply')),
-    supplyInProfitRelToOwnSupply: createMetricPattern1(client, _m(acc, 'supply_in_profit_rel_to_own_supply')),
-    supplyRelToCirculatingSupply: createMetricPattern4(client, _m(acc, 'supply_rel_to_circulating_supply')),
-    unrealizedLossRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_market_cap')),
-    unrealizedProfitRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_market_cap')),
+    negUnrealizedLossRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "neg_unrealized_loss_rel_to_market_cap"),
+    ),
+    netUnrealizedPnlRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "net_unrealized_pnl_rel_to_market_cap"),
+    ),
+    nupl: createMetricPattern1(client, _m(acc, "nupl")),
+    supplyInLossRelToCirculatingSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_loss_rel_to_circulating_supply"),
+    ),
+    supplyInLossRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_loss_rel_to_own_supply"),
+    ),
+    supplyInProfitRelToCirculatingSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_profit_rel_to_circulating_supply"),
+    ),
+    supplyInProfitRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_profit_rel_to_own_supply"),
+    ),
+    supplyRelToCirculatingSupply: createMetricPattern4(
+      client,
+      _m(acc, "supply_rel_to_circulating_supply"),
+    ),
+    unrealizedLossRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_loss_rel_to_market_cap"),
+    ),
+    unrealizedProfitRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_profit_rel_to_market_cap"),
+    ),
   };
 }
 
@@ -2986,16 +3467,46 @@ function createRelativePattern(client, acc) {
  */
 function createRelativePattern2(client, acc) {
   return {
-    negUnrealizedLossRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss_rel_to_own_market_cap')),
-    negUnrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss_rel_to_own_total_unrealized_pnl')),
-    netUnrealizedPnlRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl_rel_to_own_market_cap')),
-    netUnrealizedPnlRelToOwnTotalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl_rel_to_own_total_unrealized_pnl')),
-    supplyInLossRelToOwnSupply: createMetricPattern1(client, _m(acc, 'supply_in_loss_rel_to_own_supply')),
-    supplyInProfitRelToOwnSupply: createMetricPattern1(client, _m(acc, 'supply_in_profit_rel_to_own_supply')),
-    unrealizedLossRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_own_market_cap')),
-    unrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_own_total_unrealized_pnl')),
-    unrealizedProfitRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_own_market_cap')),
-    unrealizedProfitRelToOwnTotalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_own_total_unrealized_pnl')),
+    negUnrealizedLossRelToOwnMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "neg_unrealized_loss_rel_to_own_market_cap"),
+    ),
+    negUnrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
+    ),
+    netUnrealizedPnlRelToOwnMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "net_unrealized_pnl_rel_to_own_market_cap"),
+    ),
+    netUnrealizedPnlRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
+    ),
+    supplyInLossRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_loss_rel_to_own_supply"),
+    ),
+    supplyInProfitRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_profit_rel_to_own_supply"),
+    ),
+    unrealizedLossRelToOwnMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_loss_rel_to_own_market_cap"),
+    ),
+    unrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_loss_rel_to_own_total_unrealized_pnl"),
+    ),
+    unrealizedProfitRelToOwnMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_profit_rel_to_own_market_cap"),
+    ),
+    unrealizedProfitRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_profit_rel_to_own_total_unrealized_pnl"),
+    ),
   };
 }
 
@@ -3023,16 +3534,16 @@ function createRelativePattern2(client, acc) {
  */
 function createCountPattern2(client, acc) {
   return {
-    average: createMetricPattern1(client, _m(acc, 'average')),
-    cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
-    max: createMetricPattern1(client, _m(acc, 'max')),
-    median: createMetricPattern11(client, _m(acc, 'median')),
-    min: createMetricPattern1(client, _m(acc, 'min')),
-    pct10: createMetricPattern11(client, _m(acc, 'pct10')),
-    pct25: createMetricPattern11(client, _m(acc, 'pct25')),
-    pct75: createMetricPattern11(client, _m(acc, 'pct75')),
-    pct90: createMetricPattern11(client, _m(acc, 'pct90')),
-    sum: createMetricPattern1(client, _m(acc, 'sum')),
+    average: createMetricPattern1(client, _m(acc, "average")),
+    cumulative: createMetricPattern1(client, _m(acc, "cumulative")),
+    max: createMetricPattern1(client, _m(acc, "max")),
+    median: createMetricPattern11(client, _m(acc, "median")),
+    min: createMetricPattern1(client, _m(acc, "min")),
+    pct10: createMetricPattern11(client, _m(acc, "pct10")),
+    pct25: createMetricPattern11(client, _m(acc, "pct25")),
+    pct75: createMetricPattern11(client, _m(acc, "pct75")),
+    pct90: createMetricPattern11(client, _m(acc, "pct90")),
+    sum: createMetricPattern1(client, _m(acc, "sum")),
   };
 }
 
@@ -3071,6 +3582,41 @@ function createAddrCountPattern(client, basePath) {
 
 /**
  * @template T
+ * @typedef {Object} FullnessPattern
+ * @property {MetricPattern2<T>} average
+ * @property {MetricPattern11<T>} base
+ * @property {MetricPattern2<T>} max
+ * @property {MetricPattern6<T>} median
+ * @property {MetricPattern2<T>} min
+ * @property {MetricPattern6<T>} pct10
+ * @property {MetricPattern6<T>} pct25
+ * @property {MetricPattern6<T>} pct75
+ * @property {MetricPattern6<T>} pct90
+ */
+
+/**
+ * Create a FullnessPattern pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {FullnessPattern<T>}
+ */
+function createFullnessPattern(client, acc) {
+  return {
+    average: createMetricPattern2(client, _m(acc, "average")),
+    base: createMetricPattern11(client, acc),
+    max: createMetricPattern2(client, _m(acc, "max")),
+    median: createMetricPattern6(client, _m(acc, "median")),
+    min: createMetricPattern2(client, _m(acc, "min")),
+    pct10: createMetricPattern6(client, _m(acc, "pct10")),
+    pct25: createMetricPattern6(client, _m(acc, "pct25")),
+    pct75: createMetricPattern6(client, _m(acc, "pct75")),
+    pct90: createMetricPattern6(client, _m(acc, "pct90")),
+  };
+}
+
+/**
+ * @template T
  * @typedef {Object} FeeRatePattern
  * @property {MetricPattern1<T>} average
  * @property {MetricPattern1<T>} max
@@ -3092,14 +3638,14 @@ function createAddrCountPattern(client, basePath) {
  */
 function createFeeRatePattern(client, acc) {
   return {
-    average: createMetricPattern1(client, _m(acc, 'average')),
-    max: createMetricPattern1(client, _m(acc, 'max')),
-    median: createMetricPattern11(client, _m(acc, 'median')),
-    min: createMetricPattern1(client, _m(acc, 'min')),
-    pct10: createMetricPattern11(client, _m(acc, 'pct10')),
-    pct25: createMetricPattern11(client, _m(acc, 'pct25')),
-    pct75: createMetricPattern11(client, _m(acc, 'pct75')),
-    pct90: createMetricPattern11(client, _m(acc, 'pct90')),
+    average: createMetricPattern1(client, _m(acc, "average")),
+    max: createMetricPattern1(client, _m(acc, "max")),
+    median: createMetricPattern11(client, _m(acc, "median")),
+    min: createMetricPattern1(client, _m(acc, "min")),
+    pct10: createMetricPattern11(client, _m(acc, "pct10")),
+    pct25: createMetricPattern11(client, _m(acc, "pct25")),
+    pct75: createMetricPattern11(client, _m(acc, "pct75")),
+    pct90: createMetricPattern11(client, _m(acc, "pct90")),
     txindex: createMetricPattern27(client, acc),
   };
 }
@@ -3125,12 +3671,41 @@ function createFeeRatePattern(client, acc) {
 function create_0satsPattern(client, acc) {
   return {
     activity: createActivityPattern2(client, acc),
-    addrCount: createMetricPattern1(client, _m(acc, 'addr_count')),
+    addrCount: createMetricPattern1(client, _m(acc, "addr_count")),
     costBasis: createCostBasisPattern(client, acc),
     outputs: createOutputsPattern(client, acc),
     realized: createRealizedPattern(client, acc),
     relative: createRelativePattern(client, acc),
-    supply: createSupplyPattern2(client, _m(acc, 'supply')),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
+    unrealized: createUnrealizedPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} _100btcPattern
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a _100btcPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_100btcPattern}
+ */
+function create_100btcPattern(client, acc) {
+  return {
+    activity: createActivityPattern2(client, acc),
+    costBasis: createCostBasisPattern(client, acc),
+    outputs: createOutputsPattern(client, acc),
+    realized: createRealizedPattern(client, acc),
+    relative: createRelativePattern(client, acc),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
     unrealized: createUnrealizedPattern(client, acc),
   };
 }
@@ -3159,7 +3734,7 @@ function create_10yPattern(client, acc) {
     outputs: createOutputsPattern(client, acc),
     realized: createRealizedPattern4(client, acc),
     relative: createRelativePattern(client, acc),
-    supply: createSupplyPattern2(client, _m(acc, 'supply')),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
     unrealized: createUnrealizedPattern(client, acc),
   };
 }
@@ -3188,65 +3763,7 @@ function create_10yTo12yPattern(client, acc) {
     outputs: createOutputsPattern(client, acc),
     realized: createRealizedPattern2(client, acc),
     relative: createRelativePattern2(client, acc),
-    supply: createSupplyPattern2(client, _m(acc, 'supply')),
-    unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} PeriodCagrPattern
- * @property {MetricPattern4<StoredF32>} _10y
- * @property {MetricPattern4<StoredF32>} _2y
- * @property {MetricPattern4<StoredF32>} _3y
- * @property {MetricPattern4<StoredF32>} _4y
- * @property {MetricPattern4<StoredF32>} _5y
- * @property {MetricPattern4<StoredF32>} _6y
- * @property {MetricPattern4<StoredF32>} _8y
- */
-
-/**
- * Create a PeriodCagrPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {PeriodCagrPattern}
- */
-function createPeriodCagrPattern(client, acc) {
-  return {
-    _10y: createMetricPattern4(client, (acc ? `10y_${acc}` : '10y')),
-    _2y: createMetricPattern4(client, (acc ? `2y_${acc}` : '2y')),
-    _3y: createMetricPattern4(client, (acc ? `3y_${acc}` : '3y')),
-    _4y: createMetricPattern4(client, (acc ? `4y_${acc}` : '4y')),
-    _5y: createMetricPattern4(client, (acc ? `5y_${acc}` : '5y')),
-    _6y: createMetricPattern4(client, (acc ? `6y_${acc}` : '6y')),
-    _8y: createMetricPattern4(client, (acc ? `8y_${acc}` : '8y')),
-  };
-}
-
-/**
- * @typedef {Object} _100btcPattern
- * @property {ActivityPattern2} activity
- * @property {CostBasisPattern} costBasis
- * @property {OutputsPattern} outputs
- * @property {RealizedPattern} realized
- * @property {RelativePattern} relative
- * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
- */
-
-/**
- * Create a _100btcPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_100btcPattern}
- */
-function create_100btcPattern(client, acc) {
-  return {
-    activity: createActivityPattern2(client, acc),
-    costBasis: createCostBasisPattern(client, acc),
-    outputs: createOutputsPattern(client, acc),
-    realized: createRealizedPattern(client, acc),
-    relative: createRelativePattern(client, acc),
-    supply: createSupplyPattern2(client, _m(acc, 'supply')),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
     unrealized: createUnrealizedPattern(client, acc),
   };
 }
@@ -3274,8 +3791,8 @@ function create_0satsPattern2(client, acc) {
     costBasis: createCostBasisPattern(client, acc),
     outputs: createOutputsPattern(client, acc),
     realized: createRealizedPattern(client, acc),
-    relative: createRelativePattern4(client, _m(acc, 'supply_in')),
-    supply: createSupplyPattern2(client, _m(acc, 'supply')),
+    relative: createRelativePattern4(client, _m(acc, "supply_in")),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
     unrealized: createUnrealizedPattern(client, acc),
   };
 }
@@ -3299,13 +3816,57 @@ function create_0satsPattern2(client, acc) {
  */
 function createUnrealizedPattern(client, acc) {
   return {
-    negUnrealizedLoss: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss')),
-    netUnrealizedPnl: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl')),
-    supplyInLoss: createActiveSupplyPattern(client, _m(acc, 'supply_in_loss')),
-    supplyInProfit: createActiveSupplyPattern(client, _m(acc, 'supply_in_profit')),
-    totalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'total_unrealized_pnl')),
-    unrealizedLoss: createMetricPattern1(client, _m(acc, 'unrealized_loss')),
-    unrealizedProfit: createMetricPattern1(client, _m(acc, 'unrealized_profit')),
+    negUnrealizedLoss: createMetricPattern1(
+      client,
+      _m(acc, "neg_unrealized_loss"),
+    ),
+    netUnrealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "net_unrealized_pnl"),
+    ),
+    supplyInLoss: createActiveSupplyPattern(client, _m(acc, "supply_in_loss")),
+    supplyInProfit: createActiveSupplyPattern(
+      client,
+      _m(acc, "supply_in_profit"),
+    ),
+    totalUnrealizedPnl: createMetricPattern1(
+      client,
+      _m(acc, "total_unrealized_pnl"),
+    ),
+    unrealizedLoss: createMetricPattern1(client, _m(acc, "unrealized_loss")),
+    unrealizedProfit: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_profit"),
+    ),
+  };
+}
+
+/**
+ * @typedef {Object} PeriodCagrPattern
+ * @property {MetricPattern4<StoredF32>} _10y
+ * @property {MetricPattern4<StoredF32>} _2y
+ * @property {MetricPattern4<StoredF32>} _3y
+ * @property {MetricPattern4<StoredF32>} _4y
+ * @property {MetricPattern4<StoredF32>} _5y
+ * @property {MetricPattern4<StoredF32>} _6y
+ * @property {MetricPattern4<StoredF32>} _8y
+ */
+
+/**
+ * Create a PeriodCagrPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {PeriodCagrPattern}
+ */
+function createPeriodCagrPattern(client, acc) {
+  return {
+    _10y: createMetricPattern4(client, acc ? `10y_${acc}` : "10y"),
+    _2y: createMetricPattern4(client, acc ? `2y_${acc}` : "2y"),
+    _3y: createMetricPattern4(client, acc ? `3y_${acc}` : "3y"),
+    _4y: createMetricPattern4(client, acc ? `4y_${acc}` : "4y"),
+    _5y: createMetricPattern4(client, acc ? `5y_${acc}` : "5y"),
+    _6y: createMetricPattern4(client, acc ? `6y_${acc}` : "6y"),
+    _8y: createMetricPattern4(client, acc ? `8y_${acc}` : "8y"),
   };
 }
 
@@ -3326,11 +3887,23 @@ function createUnrealizedPattern(client, acc) {
  */
 function createActivityPattern2(client, acc) {
   return {
-    coinblocksDestroyed: createBlockCountPattern(client, _m(acc, 'coinblocks_destroyed')),
-    coindaysDestroyed: createBlockCountPattern(client, _m(acc, 'coindays_destroyed')),
-    satblocksDestroyed: createMetricPattern11(client, _m(acc, 'satblocks_destroyed')),
-    satdaysDestroyed: createMetricPattern11(client, _m(acc, 'satdays_destroyed')),
-    sent: createUnclaimedRewardsPattern(client, _m(acc, 'sent')),
+    coinblocksDestroyed: createBlockCountPattern(
+      client,
+      _m(acc, "coinblocks_destroyed"),
+    ),
+    coindaysDestroyed: createBlockCountPattern(
+      client,
+      _m(acc, "coindays_destroyed"),
+    ),
+    satblocksDestroyed: createMetricPattern11(
+      client,
+      _m(acc, "satblocks_destroyed"),
+    ),
+    satdaysDestroyed: createMetricPattern11(
+      client,
+      _m(acc, "satdays_destroyed"),
+    ),
+    sent: createUnclaimedRewardsPattern(client, _m(acc, "sent")),
   };
 }
 
@@ -3352,52 +3925,94 @@ function createActivityPattern2(client, acc) {
  */
 function createSplitPattern2(client, acc) {
   return {
-    close: createMetricPattern1(client, _m(acc, 'close')),
-    high: createMetricPattern1(client, _m(acc, 'high')),
-    low: createMetricPattern1(client, _m(acc, 'low')),
-    open: createMetricPattern1(client, _m(acc, 'open')),
+    close: createMetricPattern1(client, _m(acc, "close")),
+    high: createMetricPattern1(client, _m(acc, "high")),
+    low: createMetricPattern1(client, _m(acc, "low")),
+    open: createMetricPattern1(client, _m(acc, "open")),
   };
 }
 
 /**
- * @typedef {Object} ActiveSupplyPattern
- * @property {MetricPattern1<Bitcoin>} bitcoin
- * @property {MetricPattern1<Dollars>} dollars
- * @property {MetricPattern1<Sats>} sats
+ * @typedef {Object} UnclaimedRewardsPattern
+ * @property {BitcoinPattern2<Bitcoin>} bitcoin
+ * @property {BlockCountPattern<Dollars>} dollars
+ * @property {BlockCountPattern<Sats>} sats
  */
 
 /**
- * Create a ActiveSupplyPattern pattern node
+ * Create a UnclaimedRewardsPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {ActiveSupplyPattern}
+ * @returns {UnclaimedRewardsPattern}
  */
-function createActiveSupplyPattern(client, acc) {
+function createUnclaimedRewardsPattern(client, acc) {
   return {
-    bitcoin: createMetricPattern1(client, _m(acc, 'btc')),
-    dollars: createMetricPattern1(client, _m(acc, 'usd')),
-    sats: createMetricPattern1(client, acc),
+    bitcoin: createBitcoinPattern2(client, _m(acc, "btc")),
+    dollars: createBlockCountPattern(client, _m(acc, "usd")),
+    sats: createBlockCountPattern(client, acc),
   };
 }
 
 /**
- * @typedef {Object} _2015Pattern
- * @property {MetricPattern4<Bitcoin>} bitcoin
- * @property {MetricPattern4<Dollars>} dollars
- * @property {MetricPattern4<Sats>} sats
+ * @typedef {Object} SegwitAdoptionPattern
+ * @property {MetricPattern11<StoredF32>} base
+ * @property {MetricPattern2<StoredF32>} cumulative
+ * @property {MetricPattern2<StoredF32>} sum
  */
 
 /**
- * Create a _2015Pattern pattern node
+ * Create a SegwitAdoptionPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {_2015Pattern}
+ * @returns {SegwitAdoptionPattern}
  */
-function create_2015Pattern(client, acc) {
+function createSegwitAdoptionPattern(client, acc) {
   return {
-    bitcoin: createMetricPattern4(client, _m(acc, 'btc')),
-    dollars: createMetricPattern4(client, _m(acc, 'usd')),
-    sats: createMetricPattern4(client, acc),
+    base: createMetricPattern11(client, acc),
+    cumulative: createMetricPattern2(client, _m(acc, "cumulative")),
+    sum: createMetricPattern2(client, _m(acc, "sum")),
+  };
+}
+
+/**
+ * @typedef {Object} CoinbasePattern
+ * @property {BitcoinPattern} bitcoin
+ * @property {DollarsPattern<Dollars>} dollars
+ * @property {DollarsPattern<Sats>} sats
+ */
+
+/**
+ * Create a CoinbasePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CoinbasePattern}
+ */
+function createCoinbasePattern(client, acc) {
+  return {
+    bitcoin: createBitcoinPattern(client, _m(acc, "btc")),
+    dollars: createDollarsPattern(client, _m(acc, "usd")),
+    sats: createDollarsPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} CoinbasePattern2
+ * @property {BlockCountPattern<Bitcoin>} bitcoin
+ * @property {BlockCountPattern<Dollars>} dollars
+ * @property {BlockCountPattern<Sats>} sats
+ */
+
+/**
+ * Create a CoinbasePattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CoinbasePattern2}
+ */
+function createCoinbasePattern2(client, acc) {
+  return {
+    bitcoin: createBlockCountPattern(client, _m(acc, "btc")),
+    dollars: createBlockCountPattern(client, _m(acc, "usd")),
+    sats: createBlockCountPattern(client, acc),
   };
 }
 
@@ -3423,124 +4038,44 @@ function createCostBasisPattern2(client, basePath) {
 }
 
 /**
- * @typedef {Object} SegwitAdoptionPattern
- * @property {MetricPattern11<StoredF32>} base
- * @property {MetricPattern2<StoredF32>} cumulative
- * @property {MetricPattern2<StoredF32>} sum
+ * @typedef {Object} _2015Pattern
+ * @property {MetricPattern4<Bitcoin>} bitcoin
+ * @property {MetricPattern4<Dollars>} dollars
+ * @property {MetricPattern4<Sats>} sats
  */
 
 /**
- * Create a SegwitAdoptionPattern pattern node
+ * Create a _2015Pattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {SegwitAdoptionPattern}
+ * @returns {_2015Pattern}
  */
-function createSegwitAdoptionPattern(client, acc) {
+function create_2015Pattern(client, acc) {
   return {
-    base: createMetricPattern11(client, acc),
-    cumulative: createMetricPattern2(client, _m(acc, 'cumulative')),
-    sum: createMetricPattern2(client, _m(acc, 'sum')),
+    bitcoin: createMetricPattern4(client, _m(acc, "btc")),
+    dollars: createMetricPattern4(client, _m(acc, "usd")),
+    sats: createMetricPattern4(client, acc),
   };
 }
 
 /**
- * @typedef {Object} CoinbasePattern2
- * @property {BlockCountPattern<Bitcoin>} bitcoin
- * @property {BlockCountPattern<Dollars>} dollars
- * @property {BlockCountPattern<Sats>} sats
+ * @typedef {Object} ActiveSupplyPattern
+ * @property {MetricPattern1<Bitcoin>} bitcoin
+ * @property {MetricPattern1<Dollars>} dollars
+ * @property {MetricPattern1<Sats>} sats
  */
 
 /**
- * Create a CoinbasePattern2 pattern node
+ * Create a ActiveSupplyPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {CoinbasePattern2}
+ * @returns {ActiveSupplyPattern}
  */
-function createCoinbasePattern2(client, acc) {
+function createActiveSupplyPattern(client, acc) {
   return {
-    bitcoin: createBlockCountPattern(client, _m(acc, 'btc')),
-    dollars: createBlockCountPattern(client, _m(acc, 'usd')),
-    sats: createBlockCountPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} CoinbasePattern
- * @property {FullnessPattern<Bitcoin>} bitcoin
- * @property {DollarsPattern<Dollars>} dollars
- * @property {DollarsPattern<Sats>} sats
- */
-
-/**
- * Create a CoinbasePattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CoinbasePattern}
- */
-function createCoinbasePattern(client, acc) {
-  return {
-    bitcoin: createFullnessPattern(client, _m(acc, 'btc')),
-    dollars: createDollarsPattern(client, _m(acc, 'usd')),
-    sats: createDollarsPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} UnclaimedRewardsPattern
- * @property {BitcoinPattern<Bitcoin>} bitcoin
- * @property {BlockCountPattern<Dollars>} dollars
- * @property {BlockCountPattern<Sats>} sats
- */
-
-/**
- * Create a UnclaimedRewardsPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {UnclaimedRewardsPattern}
- */
-function createUnclaimedRewardsPattern(client, acc) {
-  return {
-    bitcoin: createBitcoinPattern(client, _m(acc, 'btc')),
-    dollars: createBlockCountPattern(client, _m(acc, 'usd')),
-    sats: createBlockCountPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} CostBasisPattern
- * @property {MetricPattern1<Dollars>} max
- * @property {MetricPattern1<Dollars>} min
- */
-
-/**
- * Create a CostBasisPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CostBasisPattern}
- */
-function createCostBasisPattern(client, acc) {
-  return {
-    max: createMetricPattern1(client, _m(acc, 'max_cost_basis')),
-    min: createMetricPattern1(client, _m(acc, 'min_cost_basis')),
-  };
-}
-
-/**
- * @typedef {Object} _1dReturns1mSdPattern
- * @property {MetricPattern4<StoredF32>} sd
- * @property {MetricPattern4<StoredF32>} sma
- */
-
-/**
- * Create a _1dReturns1mSdPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_1dReturns1mSdPattern}
- */
-function create_1dReturns1mSdPattern(client, acc) {
-  return {
-    sd: createMetricPattern4(client, _m(acc, 'sd')),
-    sma: createMetricPattern4(client, _m(acc, 'sma')),
+    bitcoin: createMetricPattern1(client, _m(acc, "btc")),
+    dollars: createMetricPattern1(client, _m(acc, "usd")),
+    sats: createMetricPattern1(client, acc),
   };
 }
 
@@ -3558,8 +4093,46 @@ function create_1dReturns1mSdPattern(client, acc) {
  */
 function createSupplyPattern2(client, acc) {
   return {
-    halved: createActiveSupplyPattern(client, _m(acc, 'half')),
+    halved: createActiveSupplyPattern(client, _m(acc, "halved")),
     total: createActiveSupplyPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} _1dReturns1mSdPattern
+ * @property {MetricPattern4<StoredF32>} sd
+ * @property {MetricPattern4<StoredF32>} sma
+ */
+
+/**
+ * Create a _1dReturns1mSdPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_1dReturns1mSdPattern}
+ */
+function create_1dReturns1mSdPattern(client, acc) {
+  return {
+    sd: createMetricPattern4(client, _m(acc, "sd")),
+    sma: createMetricPattern4(client, _m(acc, "sma")),
+  };
+}
+
+/**
+ * @typedef {Object} CostBasisPattern
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ */
+
+/**
+ * Create a CostBasisPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CostBasisPattern}
+ */
+function createCostBasisPattern(client, acc) {
+  return {
+    max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
+    min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
   };
 }
 
@@ -3577,8 +4150,14 @@ function createSupplyPattern2(client, acc) {
  */
 function createRelativePattern4(client, acc) {
   return {
-    supplyInLossRelToOwnSupply: createMetricPattern1(client, _m(acc, 'loss_rel_to_own_supply')),
-    supplyInProfitRelToOwnSupply: createMetricPattern1(client, _m(acc, 'profit_rel_to_own_supply')),
+    supplyInLossRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "loss_rel_to_own_supply"),
+    ),
+    supplyInProfitRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "profit_rel_to_own_supply"),
+    ),
   };
 }
 
@@ -3605,6 +4184,27 @@ function createSatsPattern(client, basePath) {
 
 /**
  * @template T
+ * @typedef {Object} BitcoinPattern2
+ * @property {MetricPattern2<T>} cumulative
+ * @property {MetricPattern1<T>} sum
+ */
+
+/**
+ * Create a BitcoinPattern2 pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {BitcoinPattern2<T>}
+ */
+function createBitcoinPattern2(client, acc) {
+  return {
+    cumulative: createMetricPattern2(client, _m(acc, "cumulative")),
+    sum: createMetricPattern1(client, acc),
+  };
+}
+
+/**
+ * @template T
  * @typedef {Object} BlockCountPattern
  * @property {MetricPattern1<T>} cumulative
  * @property {MetricPattern1<T>} sum
@@ -3619,28 +4219,7 @@ function createSatsPattern(client, basePath) {
  */
 function createBlockCountPattern(client, acc) {
   return {
-    cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
-    sum: createMetricPattern1(client, acc),
-  };
-}
-
-/**
- * @template T
- * @typedef {Object} BitcoinPattern
- * @property {MetricPattern2<T>} cumulative
- * @property {MetricPattern1<T>} sum
- */
-
-/**
- * Create a BitcoinPattern pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {BitcoinPattern<T>}
- */
-function createBitcoinPattern(client, acc) {
-  return {
-    cumulative: createMetricPattern2(client, _m(acc, 'cumulative')),
+    cumulative: createMetricPattern1(client, _m(acc, "cumulative")),
     sum: createMetricPattern1(client, acc),
   };
 }
@@ -3658,7 +4237,7 @@ function createBitcoinPattern(client, acc) {
  */
 function createOutputsPattern(client, acc) {
   return {
-    utxoCount: createMetricPattern1(client, _m(acc, 'utxo_count')),
+    utxoCount: createMetricPattern1(client, _m(acc, "utxo_count")),
   };
 }
 
@@ -3675,7 +4254,7 @@ function createOutputsPattern(client, acc) {
  */
 function createRealizedPriceExtraPattern(client, acc) {
   return {
-    ratio: createMetricPattern4(client, _m(acc, 'ratio')),
+    ratio: createMetricPattern4(client, _m(acc, "ratio")),
   };
 }
 
@@ -3727,7 +4306,7 @@ function createRealizedPriceExtraPattern(client, acc) {
  * @property {MetricsTree_Blocks_Difficulty} difficulty
  * @property {FullnessPattern<StoredF32>} fullness
  * @property {MetricsTree_Blocks_Halving} halving
- * @property {MetricsTree_Blocks_Interval} interval
+ * @property {FullnessPattern<Timestamp>} interval
  * @property {MetricsTree_Blocks_Mining} mining
  * @property {MetricsTree_Blocks_Rewards} rewards
  * @property {MetricsTree_Blocks_Size} size
@@ -3766,19 +4345,6 @@ function createRealizedPriceExtraPattern(client, acc) {
  * @property {MetricPattern1<StoredU32>} blocksBeforeNextHalving
  * @property {MetricPattern1<StoredF32>} daysBeforeNextHalving
  * @property {MetricPattern4<HalvingEpoch>} epoch
- */
-
-/**
- * @typedef {Object} MetricsTree_Blocks_Interval
- * @property {MetricPattern2<Timestamp>} average
- * @property {MetricPattern11<Timestamp>} base
- * @property {MetricPattern2<Timestamp>} max
- * @property {MetricPattern6<Timestamp>} median
- * @property {MetricPattern2<Timestamp>} min
- * @property {MetricPattern6<Timestamp>} pct10
- * @property {MetricPattern6<Timestamp>} pct25
- * @property {MetricPattern6<Timestamp>} pct75
- * @property {MetricPattern6<Timestamp>} pct90
  */
 
 /**
@@ -5177,868 +5743,868 @@ class BrkClient extends BrkClientBase {
     "weekindex",
     "yearindex",
     "loadedaddressindex",
-    "emptyaddressindex"
+    "emptyaddressindex",
   ]);
 
   POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
-    "unknown": "Unknown",
-    "blockfills": "BlockFills",
-    "ultimuspool": "ULTIMUSPOOL",
-    "terrapool": "Terra Pool",
-    "luxor": "Luxor",
-    "onethash": "1THash",
-    "btccom": "BTC.com",
-    "bitfarms": "Bitfarms",
-    "huobipool": "Huobi.pool",
-    "wayicn": "WAYI.CN",
-    "canoepool": "CanoePool",
-    "btctop": "BTC.TOP",
-    "bitcoincom": "Bitcoin.com",
-    "pool175btc": "175btc",
-    "gbminers": "GBMiners",
-    "axbt": "A-XBT",
-    "asicminer": "ASICMiner",
-    "bitminter": "BitMinter",
-    "bitcoinrussia": "BitcoinRussia",
-    "btcserv": "BTCServ",
-    "simplecoinus": "simplecoin.us",
-    "btcguild": "BTC Guild",
-    "eligius": "Eligius",
-    "ozcoin": "OzCoin",
-    "eclipsemc": "EclipseMC",
-    "maxbtc": "MaxBTC",
-    "triplemining": "TripleMining",
-    "coinlab": "CoinLab",
-    "pool50btc": "50BTC",
-    "ghashio": "GHash.IO",
-    "stminingcorp": "ST Mining Corp",
-    "bitparking": "Bitparking",
-    "mmpool": "mmpool",
-    "polmine": "Polmine",
-    "kncminer": "KnCMiner",
-    "bitalo": "Bitalo",
-    "f2pool": "F2Pool",
-    "hhtt": "HHTT",
-    "megabigpower": "MegaBigPower",
-    "mtred": "Mt Red",
-    "nmcbit": "NMCbit",
-    "yourbtcnet": "Yourbtc.net",
-    "givemecoins": "Give Me Coins",
-    "braiinspool": "Braiins Pool",
-    "antpool": "AntPool",
-    "multicoinco": "MultiCoin.co",
-    "bcpoolio": "bcpool.io",
-    "cointerra": "Cointerra",
-    "kanopool": "KanoPool",
-    "solock": "Solo CK",
-    "ckpool": "CKPool",
-    "nicehash": "NiceHash",
-    "bitclub": "BitClub",
-    "bitcoinaffiliatenetwork": "Bitcoin Affiliate Network",
-    "btcc": "BTCC",
-    "bwpool": "BWPool",
-    "exxbw": "EXX&BW",
-    "bitsolo": "Bitsolo",
-    "bitfury": "BitFury",
-    "twentyoneinc": "21 Inc.",
-    "digitalbtc": "digitalBTC",
-    "eightbaochi": "8baochi",
-    "mybtccoinpool": "myBTCcoin Pool",
-    "tbdice": "TBDice",
-    "hashpool": "HASHPOOL",
-    "nexious": "Nexious",
-    "bravomining": "Bravo Mining",
-    "hotpool": "HotPool",
-    "okexpool": "OKExPool",
-    "bcmonster": "BCMonster",
-    "onehash": "1Hash",
-    "bixin": "Bixin",
-    "tatmaspool": "TATMAS Pool",
-    "viabtc": "ViaBTC",
-    "connectbtc": "ConnectBTC",
-    "batpool": "BATPOOL",
-    "waterhole": "Waterhole",
-    "dcexploration": "DCExploration",
-    "dcex": "DCEX",
-    "btpool": "BTPOOL",
-    "fiftyeightcoin": "58COIN",
-    "bitcoinindia": "Bitcoin India",
-    "shawnp0wers": "shawnp0wers",
-    "phashio": "PHash.IO",
-    "rigpool": "RigPool",
-    "haozhuzhu": "HAOZHUZHU",
-    "sevenpool": "7pool",
-    "miningkings": "MiningKings",
-    "hashbx": "HashBX",
-    "dpool": "DPOOL",
-    "rawpool": "Rawpool",
-    "haominer": "haominer",
-    "helix": "Helix",
-    "bitcoinukraine": "Bitcoin-Ukraine",
-    "poolin": "Poolin",
-    "secretsuperstar": "SecretSuperstar",
-    "tigerpoolnet": "tigerpool.net",
-    "sigmapoolcom": "Sigmapool.com",
-    "okpooltop": "okpool.top",
-    "hummerpool": "Hummerpool",
-    "tangpool": "Tangpool",
-    "bytepool": "BytePool",
-    "spiderpool": "SpiderPool",
-    "novablock": "NovaBlock",
-    "miningcity": "MiningCity",
-    "binancepool": "Binance Pool",
-    "minerium": "Minerium",
-    "lubiancom": "Lubian.com",
-    "okkong": "OKKONG",
-    "aaopool": "AAO Pool",
-    "emcdpool": "EMCDPool",
-    "foundryusa": "Foundry USA",
-    "sbicrypto": "SBI Crypto",
-    "arkpool": "ArkPool",
-    "purebtccom": "PureBTC.COM",
-    "marapool": "MARA Pool",
-    "kucoinpool": "KuCoinPool",
-    "entrustcharitypool": "Entrust Charity Pool",
-    "okminer": "OKMINER",
-    "titan": "Titan",
-    "pegapool": "PEGA Pool",
-    "btcnuggets": "BTC Nuggets",
-    "cloudhashing": "CloudHashing",
-    "digitalxmintsy": "digitalX Mintsy",
-    "telco214": "Telco 214",
-    "btcpoolparty": "BTC Pool Party",
-    "multipool": "Multipool",
-    "transactioncoinmining": "transactioncoinmining",
-    "btcdig": "BTCDig",
-    "trickysbtcpool": "Tricky's BTC Pool",
-    "btcmp": "BTCMP",
-    "eobot": "Eobot",
-    "unomp": "UNOMP",
-    "patels": "Patels",
-    "gogreenlight": "GoGreenLight",
-    "ekanembtc": "EkanemBTC",
-    "canoe": "CANOE",
-    "tiger": "tiger",
-    "onem1x": "1M1X",
-    "zulupool": "Zulupool",
-    "secpool": "SECPOOL",
-    "ocean": "OCEAN",
-    "whitepool": "WhitePool",
-    "wk057": "wk057",
-    "futurebitapollosolo": "FutureBit Apollo Solo",
-    "carbonnegative": "Carbon Negative",
-    "portlandhodl": "Portland.HODL",
-    "phoenix": "Phoenix",
-    "neopool": "Neopool",
-    "maxipool": "MaxiPool",
-    "bitfufupool": "BitFuFuPool",
-    "luckypool": "luckyPool",
-    "miningdutch": "Mining-Dutch",
-    "publicpool": "Public Pool",
-    "miningsquared": "Mining Squared",
-    "innopolistech": "Innopolis Tech",
-    "btclab": "BTCLab",
-    "parasite": "Parasite"
+    unknown: "Unknown",
+    blockfills: "BlockFills",
+    ultimuspool: "ULTIMUSPOOL",
+    terrapool: "Terra Pool",
+    luxor: "Luxor",
+    onethash: "1THash",
+    btccom: "BTC.com",
+    bitfarms: "Bitfarms",
+    huobipool: "Huobi.pool",
+    wayicn: "WAYI.CN",
+    canoepool: "CanoePool",
+    btctop: "BTC.TOP",
+    bitcoincom: "Bitcoin.com",
+    pool175btc: "175btc",
+    gbminers: "GBMiners",
+    axbt: "A-XBT",
+    asicminer: "ASICMiner",
+    bitminter: "BitMinter",
+    bitcoinrussia: "BitcoinRussia",
+    btcserv: "BTCServ",
+    simplecoinus: "simplecoin.us",
+    btcguild: "BTC Guild",
+    eligius: "Eligius",
+    ozcoin: "OzCoin",
+    eclipsemc: "EclipseMC",
+    maxbtc: "MaxBTC",
+    triplemining: "TripleMining",
+    coinlab: "CoinLab",
+    pool50btc: "50BTC",
+    ghashio: "GHash.IO",
+    stminingcorp: "ST Mining Corp",
+    bitparking: "Bitparking",
+    mmpool: "mmpool",
+    polmine: "Polmine",
+    kncminer: "KnCMiner",
+    bitalo: "Bitalo",
+    f2pool: "F2Pool",
+    hhtt: "HHTT",
+    megabigpower: "MegaBigPower",
+    mtred: "Mt Red",
+    nmcbit: "NMCbit",
+    yourbtcnet: "Yourbtc.net",
+    givemecoins: "Give Me Coins",
+    braiinspool: "Braiins Pool",
+    antpool: "AntPool",
+    multicoinco: "MultiCoin.co",
+    bcpoolio: "bcpool.io",
+    cointerra: "Cointerra",
+    kanopool: "KanoPool",
+    solock: "Solo CK",
+    ckpool: "CKPool",
+    nicehash: "NiceHash",
+    bitclub: "BitClub",
+    bitcoinaffiliatenetwork: "Bitcoin Affiliate Network",
+    btcc: "BTCC",
+    bwpool: "BWPool",
+    exxbw: "EXX&BW",
+    bitsolo: "Bitsolo",
+    bitfury: "BitFury",
+    twentyoneinc: "21 Inc.",
+    digitalbtc: "digitalBTC",
+    eightbaochi: "8baochi",
+    mybtccoinpool: "myBTCcoin Pool",
+    tbdice: "TBDice",
+    hashpool: "HASHPOOL",
+    nexious: "Nexious",
+    bravomining: "Bravo Mining",
+    hotpool: "HotPool",
+    okexpool: "OKExPool",
+    bcmonster: "BCMonster",
+    onehash: "1Hash",
+    bixin: "Bixin",
+    tatmaspool: "TATMAS Pool",
+    viabtc: "ViaBTC",
+    connectbtc: "ConnectBTC",
+    batpool: "BATPOOL",
+    waterhole: "Waterhole",
+    dcexploration: "DCExploration",
+    dcex: "DCEX",
+    btpool: "BTPOOL",
+    fiftyeightcoin: "58COIN",
+    bitcoinindia: "Bitcoin India",
+    shawnp0wers: "shawnp0wers",
+    phashio: "PHash.IO",
+    rigpool: "RigPool",
+    haozhuzhu: "HAOZHUZHU",
+    sevenpool: "7pool",
+    miningkings: "MiningKings",
+    hashbx: "HashBX",
+    dpool: "DPOOL",
+    rawpool: "Rawpool",
+    haominer: "haominer",
+    helix: "Helix",
+    bitcoinukraine: "Bitcoin-Ukraine",
+    poolin: "Poolin",
+    secretsuperstar: "SecretSuperstar",
+    tigerpoolnet: "tigerpool.net",
+    sigmapoolcom: "Sigmapool.com",
+    okpooltop: "okpool.top",
+    hummerpool: "Hummerpool",
+    tangpool: "Tangpool",
+    bytepool: "BytePool",
+    spiderpool: "SpiderPool",
+    novablock: "NovaBlock",
+    miningcity: "MiningCity",
+    binancepool: "Binance Pool",
+    minerium: "Minerium",
+    lubiancom: "Lubian.com",
+    okkong: "OKKONG",
+    aaopool: "AAO Pool",
+    emcdpool: "EMCDPool",
+    foundryusa: "Foundry USA",
+    sbicrypto: "SBI Crypto",
+    arkpool: "ArkPool",
+    purebtccom: "PureBTC.COM",
+    marapool: "MARA Pool",
+    kucoinpool: "KuCoinPool",
+    entrustcharitypool: "Entrust Charity Pool",
+    okminer: "OKMINER",
+    titan: "Titan",
+    pegapool: "PEGA Pool",
+    btcnuggets: "BTC Nuggets",
+    cloudhashing: "CloudHashing",
+    digitalxmintsy: "digitalX Mintsy",
+    telco214: "Telco 214",
+    btcpoolparty: "BTC Pool Party",
+    multipool: "Multipool",
+    transactioncoinmining: "transactioncoinmining",
+    btcdig: "BTCDig",
+    trickysbtcpool: "Tricky's BTC Pool",
+    btcmp: "BTCMP",
+    eobot: "Eobot",
+    unomp: "UNOMP",
+    patels: "Patels",
+    gogreenlight: "GoGreenLight",
+    ekanembtc: "EkanemBTC",
+    canoe: "CANOE",
+    tiger: "tiger",
+    onem1x: "1M1X",
+    zulupool: "Zulupool",
+    secpool: "SECPOOL",
+    ocean: "OCEAN",
+    whitepool: "WhitePool",
+    wk057: "wk057",
+    futurebitapollosolo: "FutureBit Apollo Solo",
+    carbonnegative: "Carbon Negative",
+    portlandhodl: "Portland.HODL",
+    phoenix: "Phoenix",
+    neopool: "Neopool",
+    maxipool: "MaxiPool",
+    bitfufupool: "BitFuFuPool",
+    luckypool: "luckyPool",
+    miningdutch: "Mining-Dutch",
+    publicpool: "Public Pool",
+    miningsquared: "Mining Squared",
+    innopolistech: "Innopolis Tech",
+    btclab: "BTCLab",
+    parasite: "Parasite",
   });
 
   TERM_NAMES = /** @type {const} */ ({
-    "short": {
-      "id": "sth",
-      "short": "STH",
-      "long": "Short Term Holders"
+    short: {
+      id: "sth",
+      short: "STH",
+      long: "Short Term Holders",
     },
-    "long": {
-      "id": "lth",
-      "short": "LTH",
-      "long": "Long Term Holders"
-    }
+    long: {
+      id: "lth",
+      short: "LTH",
+      long: "Long Term Holders",
+    },
   });
 
   EPOCH_NAMES = /** @type {const} */ ({
-    "_0": {
-      "id": "epoch_0",
-      "short": "Epoch 0",
-      "long": "Epoch 0"
+    _0: {
+      id: "epoch_0",
+      short: "Epoch 0",
+      long: "Epoch 0",
     },
-    "_1": {
-      "id": "epoch_1",
-      "short": "Epoch 1",
-      "long": "Epoch 1"
+    _1: {
+      id: "epoch_1",
+      short: "Epoch 1",
+      long: "Epoch 1",
     },
-    "_2": {
-      "id": "epoch_2",
-      "short": "Epoch 2",
-      "long": "Epoch 2"
+    _2: {
+      id: "epoch_2",
+      short: "Epoch 2",
+      long: "Epoch 2",
     },
-    "_3": {
-      "id": "epoch_3",
-      "short": "Epoch 3",
-      "long": "Epoch 3"
+    _3: {
+      id: "epoch_3",
+      short: "Epoch 3",
+      long: "Epoch 3",
     },
-    "_4": {
-      "id": "epoch_4",
-      "short": "Epoch 4",
-      "long": "Epoch 4"
-    }
+    _4: {
+      id: "epoch_4",
+      short: "Epoch 4",
+      long: "Epoch 4",
+    },
   });
 
   YEAR_NAMES = /** @type {const} */ ({
-    "_2009": {
-      "id": "year_2009",
-      "short": "2009",
-      "long": "Year 2009"
+    _2009: {
+      id: "year_2009",
+      short: "2009",
+      long: "Year 2009",
     },
-    "_2010": {
-      "id": "year_2010",
-      "short": "2010",
-      "long": "Year 2010"
+    _2010: {
+      id: "year_2010",
+      short: "2010",
+      long: "Year 2010",
     },
-    "_2011": {
-      "id": "year_2011",
-      "short": "2011",
-      "long": "Year 2011"
+    _2011: {
+      id: "year_2011",
+      short: "2011",
+      long: "Year 2011",
     },
-    "_2012": {
-      "id": "year_2012",
-      "short": "2012",
-      "long": "Year 2012"
+    _2012: {
+      id: "year_2012",
+      short: "2012",
+      long: "Year 2012",
     },
-    "_2013": {
-      "id": "year_2013",
-      "short": "2013",
-      "long": "Year 2013"
+    _2013: {
+      id: "year_2013",
+      short: "2013",
+      long: "Year 2013",
     },
-    "_2014": {
-      "id": "year_2014",
-      "short": "2014",
-      "long": "Year 2014"
+    _2014: {
+      id: "year_2014",
+      short: "2014",
+      long: "Year 2014",
     },
-    "_2015": {
-      "id": "year_2015",
-      "short": "2015",
-      "long": "Year 2015"
+    _2015: {
+      id: "year_2015",
+      short: "2015",
+      long: "Year 2015",
     },
-    "_2016": {
-      "id": "year_2016",
-      "short": "2016",
-      "long": "Year 2016"
+    _2016: {
+      id: "year_2016",
+      short: "2016",
+      long: "Year 2016",
     },
-    "_2017": {
-      "id": "year_2017",
-      "short": "2017",
-      "long": "Year 2017"
+    _2017: {
+      id: "year_2017",
+      short: "2017",
+      long: "Year 2017",
     },
-    "_2018": {
-      "id": "year_2018",
-      "short": "2018",
-      "long": "Year 2018"
+    _2018: {
+      id: "year_2018",
+      short: "2018",
+      long: "Year 2018",
     },
-    "_2019": {
-      "id": "year_2019",
-      "short": "2019",
-      "long": "Year 2019"
+    _2019: {
+      id: "year_2019",
+      short: "2019",
+      long: "Year 2019",
     },
-    "_2020": {
-      "id": "year_2020",
-      "short": "2020",
-      "long": "Year 2020"
+    _2020: {
+      id: "year_2020",
+      short: "2020",
+      long: "Year 2020",
     },
-    "_2021": {
-      "id": "year_2021",
-      "short": "2021",
-      "long": "Year 2021"
+    _2021: {
+      id: "year_2021",
+      short: "2021",
+      long: "Year 2021",
     },
-    "_2022": {
-      "id": "year_2022",
-      "short": "2022",
-      "long": "Year 2022"
+    _2022: {
+      id: "year_2022",
+      short: "2022",
+      long: "Year 2022",
     },
-    "_2023": {
-      "id": "year_2023",
-      "short": "2023",
-      "long": "Year 2023"
+    _2023: {
+      id: "year_2023",
+      short: "2023",
+      long: "Year 2023",
     },
-    "_2024": {
-      "id": "year_2024",
-      "short": "2024",
-      "long": "Year 2024"
+    _2024: {
+      id: "year_2024",
+      short: "2024",
+      long: "Year 2024",
     },
-    "_2025": {
-      "id": "year_2025",
-      "short": "2025",
-      "long": "Year 2025"
+    _2025: {
+      id: "year_2025",
+      short: "2025",
+      long: "Year 2025",
     },
-    "_2026": {
-      "id": "year_2026",
-      "short": "2026",
-      "long": "Year 2026"
-    }
+    _2026: {
+      id: "year_2026",
+      short: "2026",
+      long: "Year 2026",
+    },
   });
 
   SPENDABLE_TYPE_NAMES = /** @type {const} */ ({
-    "p2pk65": {
-      "id": "p2pk65",
-      "short": "P2PK65",
-      "long": "Pay to Public Key (65 bytes)"
+    p2pk65: {
+      id: "p2pk65",
+      short: "P2PK65",
+      long: "Pay to Public Key (65 bytes)",
     },
-    "p2pk33": {
-      "id": "p2pk33",
-      "short": "P2PK33",
-      "long": "Pay to Public Key (33 bytes)"
+    p2pk33: {
+      id: "p2pk33",
+      short: "P2PK33",
+      long: "Pay to Public Key (33 bytes)",
     },
-    "p2pkh": {
-      "id": "p2pkh",
-      "short": "P2PKH",
-      "long": "Pay to Public Key Hash"
+    p2pkh: {
+      id: "p2pkh",
+      short: "P2PKH",
+      long: "Pay to Public Key Hash",
     },
-    "p2ms": {
-      "id": "p2ms",
-      "short": "P2MS",
-      "long": "Pay to Multisig"
+    p2ms: {
+      id: "p2ms",
+      short: "P2MS",
+      long: "Pay to Multisig",
     },
-    "p2sh": {
-      "id": "p2sh",
-      "short": "P2SH",
-      "long": "Pay to Script Hash"
+    p2sh: {
+      id: "p2sh",
+      short: "P2SH",
+      long: "Pay to Script Hash",
     },
-    "p2wpkh": {
-      "id": "p2wpkh",
-      "short": "P2WPKH",
-      "long": "Pay to Witness Public Key Hash"
+    p2wpkh: {
+      id: "p2wpkh",
+      short: "P2WPKH",
+      long: "Pay to Witness Public Key Hash",
     },
-    "p2wsh": {
-      "id": "p2wsh",
-      "short": "P2WSH",
-      "long": "Pay to Witness Script Hash"
+    p2wsh: {
+      id: "p2wsh",
+      short: "P2WSH",
+      long: "Pay to Witness Script Hash",
     },
-    "p2tr": {
-      "id": "p2tr",
-      "short": "P2TR",
-      "long": "Pay to Taproot"
+    p2tr: {
+      id: "p2tr",
+      short: "P2TR",
+      long: "Pay to Taproot",
     },
-    "p2a": {
-      "id": "p2a",
-      "short": "P2A",
-      "long": "Pay to Anchor"
+    p2a: {
+      id: "p2a",
+      short: "P2A",
+      long: "Pay to Anchor",
     },
-    "unknown": {
-      "id": "unknown_outputs",
-      "short": "Unknown",
-      "long": "Unknown Output Type"
+    unknown: {
+      id: "unknown_outputs",
+      short: "Unknown",
+      long: "Unknown Output Type",
     },
-    "empty": {
-      "id": "empty_outputs",
-      "short": "Empty",
-      "long": "Empty Output"
-    }
+    empty: {
+      id: "empty_outputs",
+      short: "Empty",
+      long: "Empty Output",
+    },
   });
 
   AGE_RANGE_NAMES = /** @type {const} */ ({
-    "upTo1h": {
-      "id": "up_to_1h_old",
-      "short": "<1h",
-      "long": "Up to 1 Hour Old"
+    upTo1h: {
+      id: "up_to_1h_old",
+      short: "<1h",
+      long: "Up to 1 Hour Old",
     },
-    "_1hTo1d": {
-      "id": "at_least_1h_up_to_1d_old",
-      "short": "1h-1d",
-      "long": "1 Hour to 1 Day Old"
+    _1hTo1d: {
+      id: "at_least_1h_up_to_1d_old",
+      short: "1h-1d",
+      long: "1 Hour to 1 Day Old",
     },
-    "_1dTo1w": {
-      "id": "at_least_1d_up_to_1w_old",
-      "short": "1d-1w",
-      "long": "1 Day to 1 Week Old"
+    _1dTo1w: {
+      id: "at_least_1d_up_to_1w_old",
+      short: "1d-1w",
+      long: "1 Day to 1 Week Old",
     },
-    "_1wTo1m": {
-      "id": "at_least_1w_up_to_1m_old",
-      "short": "1w-1m",
-      "long": "1 Week to 1 Month Old"
+    _1wTo1m: {
+      id: "at_least_1w_up_to_1m_old",
+      short: "1w-1m",
+      long: "1 Week to 1 Month Old",
     },
-    "_1mTo2m": {
-      "id": "at_least_1m_up_to_2m_old",
-      "short": "1m-2m",
-      "long": "1 to 2 Months Old"
+    _1mTo2m: {
+      id: "at_least_1m_up_to_2m_old",
+      short: "1m-2m",
+      long: "1 to 2 Months Old",
     },
-    "_2mTo3m": {
-      "id": "at_least_2m_up_to_3m_old",
-      "short": "2m-3m",
-      "long": "2 to 3 Months Old"
+    _2mTo3m: {
+      id: "at_least_2m_up_to_3m_old",
+      short: "2m-3m",
+      long: "2 to 3 Months Old",
     },
-    "_3mTo4m": {
-      "id": "at_least_3m_up_to_4m_old",
-      "short": "3m-4m",
-      "long": "3 to 4 Months Old"
+    _3mTo4m: {
+      id: "at_least_3m_up_to_4m_old",
+      short: "3m-4m",
+      long: "3 to 4 Months Old",
     },
-    "_4mTo5m": {
-      "id": "at_least_4m_up_to_5m_old",
-      "short": "4m-5m",
-      "long": "4 to 5 Months Old"
+    _4mTo5m: {
+      id: "at_least_4m_up_to_5m_old",
+      short: "4m-5m",
+      long: "4 to 5 Months Old",
     },
-    "_5mTo6m": {
-      "id": "at_least_5m_up_to_6m_old",
-      "short": "5m-6m",
-      "long": "5 to 6 Months Old"
+    _5mTo6m: {
+      id: "at_least_5m_up_to_6m_old",
+      short: "5m-6m",
+      long: "5 to 6 Months Old",
     },
-    "_6mTo1y": {
-      "id": "at_least_6m_up_to_1y_old",
-      "short": "6m-1y",
-      "long": "6 Months to 1 Year Old"
+    _6mTo1y: {
+      id: "at_least_6m_up_to_1y_old",
+      short: "6m-1y",
+      long: "6 Months to 1 Year Old",
     },
-    "_1yTo2y": {
-      "id": "at_least_1y_up_to_2y_old",
-      "short": "1y-2y",
-      "long": "1 to 2 Years Old"
+    _1yTo2y: {
+      id: "at_least_1y_up_to_2y_old",
+      short: "1y-2y",
+      long: "1 to 2 Years Old",
     },
-    "_2yTo3y": {
-      "id": "at_least_2y_up_to_3y_old",
-      "short": "2y-3y",
-      "long": "2 to 3 Years Old"
+    _2yTo3y: {
+      id: "at_least_2y_up_to_3y_old",
+      short: "2y-3y",
+      long: "2 to 3 Years Old",
     },
-    "_3yTo4y": {
-      "id": "at_least_3y_up_to_4y_old",
-      "short": "3y-4y",
-      "long": "3 to 4 Years Old"
+    _3yTo4y: {
+      id: "at_least_3y_up_to_4y_old",
+      short: "3y-4y",
+      long: "3 to 4 Years Old",
     },
-    "_4yTo5y": {
-      "id": "at_least_4y_up_to_5y_old",
-      "short": "4y-5y",
-      "long": "4 to 5 Years Old"
+    _4yTo5y: {
+      id: "at_least_4y_up_to_5y_old",
+      short: "4y-5y",
+      long: "4 to 5 Years Old",
     },
-    "_5yTo6y": {
-      "id": "at_least_5y_up_to_6y_old",
-      "short": "5y-6y",
-      "long": "5 to 6 Years Old"
+    _5yTo6y: {
+      id: "at_least_5y_up_to_6y_old",
+      short: "5y-6y",
+      long: "5 to 6 Years Old",
     },
-    "_6yTo7y": {
-      "id": "at_least_6y_up_to_7y_old",
-      "short": "6y-7y",
-      "long": "6 to 7 Years Old"
+    _6yTo7y: {
+      id: "at_least_6y_up_to_7y_old",
+      short: "6y-7y",
+      long: "6 to 7 Years Old",
     },
-    "_7yTo8y": {
-      "id": "at_least_7y_up_to_8y_old",
-      "short": "7y-8y",
-      "long": "7 to 8 Years Old"
+    _7yTo8y: {
+      id: "at_least_7y_up_to_8y_old",
+      short: "7y-8y",
+      long: "7 to 8 Years Old",
     },
-    "_8yTo10y": {
-      "id": "at_least_8y_up_to_10y_old",
-      "short": "8y-10y",
-      "long": "8 to 10 Years Old"
+    _8yTo10y: {
+      id: "at_least_8y_up_to_10y_old",
+      short: "8y-10y",
+      long: "8 to 10 Years Old",
     },
-    "_10yTo12y": {
-      "id": "at_least_10y_up_to_12y_old",
-      "short": "10y-12y",
-      "long": "10 to 12 Years Old"
+    _10yTo12y: {
+      id: "at_least_10y_up_to_12y_old",
+      short: "10y-12y",
+      long: "10 to 12 Years Old",
     },
-    "_12yTo15y": {
-      "id": "at_least_12y_up_to_15y_old",
-      "short": "12y-15y",
-      "long": "12 to 15 Years Old"
+    _12yTo15y: {
+      id: "at_least_12y_up_to_15y_old",
+      short: "12y-15y",
+      long: "12 to 15 Years Old",
     },
-    "from15y": {
-      "id": "at_least_15y_old",
-      "short": "15y+",
-      "long": "15+ Years Old"
-    }
+    from15y: {
+      id: "at_least_15y_old",
+      short: "15y+",
+      long: "15+ Years Old",
+    },
   });
 
   MAX_AGE_NAMES = /** @type {const} */ ({
-    "_1w": {
-      "id": "up_to_1w_old",
-      "short": "<1w",
-      "long": "Up to 1 Week Old"
+    _1w: {
+      id: "up_to_1w_old",
+      short: "<1w",
+      long: "Up to 1 Week Old",
     },
-    "_1m": {
-      "id": "up_to_1m_old",
-      "short": "<1m",
-      "long": "Up to 1 Month Old"
+    _1m: {
+      id: "up_to_1m_old",
+      short: "<1m",
+      long: "Up to 1 Month Old",
     },
-    "_2m": {
-      "id": "up_to_2m_old",
-      "short": "<2m",
-      "long": "Up to 2 Months Old"
+    _2m: {
+      id: "up_to_2m_old",
+      short: "<2m",
+      long: "Up to 2 Months Old",
     },
-    "_3m": {
-      "id": "up_to_3m_old",
-      "short": "<3m",
-      "long": "Up to 3 Months Old"
+    _3m: {
+      id: "up_to_3m_old",
+      short: "<3m",
+      long: "Up to 3 Months Old",
     },
-    "_4m": {
-      "id": "up_to_4m_old",
-      "short": "<4m",
-      "long": "Up to 4 Months Old"
+    _4m: {
+      id: "up_to_4m_old",
+      short: "<4m",
+      long: "Up to 4 Months Old",
     },
-    "_5m": {
-      "id": "up_to_5m_old",
-      "short": "<5m",
-      "long": "Up to 5 Months Old"
+    _5m: {
+      id: "up_to_5m_old",
+      short: "<5m",
+      long: "Up to 5 Months Old",
     },
-    "_6m": {
-      "id": "up_to_6m_old",
-      "short": "<6m",
-      "long": "Up to 6 Months Old"
+    _6m: {
+      id: "up_to_6m_old",
+      short: "<6m",
+      long: "Up to 6 Months Old",
     },
-    "_1y": {
-      "id": "up_to_1y_old",
-      "short": "<1y",
-      "long": "Up to 1 Year Old"
+    _1y: {
+      id: "up_to_1y_old",
+      short: "<1y",
+      long: "Up to 1 Year Old",
     },
-    "_2y": {
-      "id": "up_to_2y_old",
-      "short": "<2y",
-      "long": "Up to 2 Years Old"
+    _2y: {
+      id: "up_to_2y_old",
+      short: "<2y",
+      long: "Up to 2 Years Old",
     },
-    "_3y": {
-      "id": "up_to_3y_old",
-      "short": "<3y",
-      "long": "Up to 3 Years Old"
+    _3y: {
+      id: "up_to_3y_old",
+      short: "<3y",
+      long: "Up to 3 Years Old",
     },
-    "_4y": {
-      "id": "up_to_4y_old",
-      "short": "<4y",
-      "long": "Up to 4 Years Old"
+    _4y: {
+      id: "up_to_4y_old",
+      short: "<4y",
+      long: "Up to 4 Years Old",
     },
-    "_5y": {
-      "id": "up_to_5y_old",
-      "short": "<5y",
-      "long": "Up to 5 Years Old"
+    _5y: {
+      id: "up_to_5y_old",
+      short: "<5y",
+      long: "Up to 5 Years Old",
     },
-    "_6y": {
-      "id": "up_to_6y_old",
-      "short": "<6y",
-      "long": "Up to 6 Years Old"
+    _6y: {
+      id: "up_to_6y_old",
+      short: "<6y",
+      long: "Up to 6 Years Old",
     },
-    "_7y": {
-      "id": "up_to_7y_old",
-      "short": "<7y",
-      "long": "Up to 7 Years Old"
+    _7y: {
+      id: "up_to_7y_old",
+      short: "<7y",
+      long: "Up to 7 Years Old",
     },
-    "_8y": {
-      "id": "up_to_8y_old",
-      "short": "<8y",
-      "long": "Up to 8 Years Old"
+    _8y: {
+      id: "up_to_8y_old",
+      short: "<8y",
+      long: "Up to 8 Years Old",
     },
-    "_10y": {
-      "id": "up_to_10y_old",
-      "short": "<10y",
-      "long": "Up to 10 Years Old"
+    _10y: {
+      id: "up_to_10y_old",
+      short: "<10y",
+      long: "Up to 10 Years Old",
     },
-    "_12y": {
-      "id": "up_to_12y_old",
-      "short": "<12y",
-      "long": "Up to 12 Years Old"
+    _12y: {
+      id: "up_to_12y_old",
+      short: "<12y",
+      long: "Up to 12 Years Old",
     },
-    "_15y": {
-      "id": "up_to_15y_old",
-      "short": "<15y",
-      "long": "Up to 15 Years Old"
-    }
+    _15y: {
+      id: "up_to_15y_old",
+      short: "<15y",
+      long: "Up to 15 Years Old",
+    },
   });
 
   MIN_AGE_NAMES = /** @type {const} */ ({
-    "_1d": {
-      "id": "at_least_1d_old",
-      "short": "1d+",
-      "long": "At Least 1 Day Old"
+    _1d: {
+      id: "at_least_1d_old",
+      short: "1d+",
+      long: "At Least 1 Day Old",
     },
-    "_1w": {
-      "id": "at_least_1w_old",
-      "short": "1w+",
-      "long": "At Least 1 Week Old"
+    _1w: {
+      id: "at_least_1w_old",
+      short: "1w+",
+      long: "At Least 1 Week Old",
     },
-    "_1m": {
-      "id": "at_least_1m_old",
-      "short": "1m+",
-      "long": "At Least 1 Month Old"
+    _1m: {
+      id: "at_least_1m_old",
+      short: "1m+",
+      long: "At Least 1 Month Old",
     },
-    "_2m": {
-      "id": "at_least_2m_old",
-      "short": "2m+",
-      "long": "At Least 2 Months Old"
+    _2m: {
+      id: "at_least_2m_old",
+      short: "2m+",
+      long: "At Least 2 Months Old",
     },
-    "_3m": {
-      "id": "at_least_3m_old",
-      "short": "3m+",
-      "long": "At Least 3 Months Old"
+    _3m: {
+      id: "at_least_3m_old",
+      short: "3m+",
+      long: "At Least 3 Months Old",
     },
-    "_4m": {
-      "id": "at_least_4m_old",
-      "short": "4m+",
-      "long": "At Least 4 Months Old"
+    _4m: {
+      id: "at_least_4m_old",
+      short: "4m+",
+      long: "At Least 4 Months Old",
     },
-    "_5m": {
-      "id": "at_least_5m_old",
-      "short": "5m+",
-      "long": "At Least 5 Months Old"
+    _5m: {
+      id: "at_least_5m_old",
+      short: "5m+",
+      long: "At Least 5 Months Old",
     },
-    "_6m": {
-      "id": "at_least_6m_old",
-      "short": "6m+",
-      "long": "At Least 6 Months Old"
+    _6m: {
+      id: "at_least_6m_old",
+      short: "6m+",
+      long: "At Least 6 Months Old",
     },
-    "_1y": {
-      "id": "at_least_1y_old",
-      "short": "1y+",
-      "long": "At Least 1 Year Old"
+    _1y: {
+      id: "at_least_1y_old",
+      short: "1y+",
+      long: "At Least 1 Year Old",
     },
-    "_2y": {
-      "id": "at_least_2y_old",
-      "short": "2y+",
-      "long": "At Least 2 Years Old"
+    _2y: {
+      id: "at_least_2y_old",
+      short: "2y+",
+      long: "At Least 2 Years Old",
     },
-    "_3y": {
-      "id": "at_least_3y_old",
-      "short": "3y+",
-      "long": "At Least 3 Years Old"
+    _3y: {
+      id: "at_least_3y_old",
+      short: "3y+",
+      long: "At Least 3 Years Old",
     },
-    "_4y": {
-      "id": "at_least_4y_old",
-      "short": "4y+",
-      "long": "At Least 4 Years Old"
+    _4y: {
+      id: "at_least_4y_old",
+      short: "4y+",
+      long: "At Least 4 Years Old",
     },
-    "_5y": {
-      "id": "at_least_5y_old",
-      "short": "5y+",
-      "long": "At Least 5 Years Old"
+    _5y: {
+      id: "at_least_5y_old",
+      short: "5y+",
+      long: "At Least 5 Years Old",
     },
-    "_6y": {
-      "id": "at_least_6y_old",
-      "short": "6y+",
-      "long": "At Least 6 Years Old"
+    _6y: {
+      id: "at_least_6y_old",
+      short: "6y+",
+      long: "At Least 6 Years Old",
     },
-    "_7y": {
-      "id": "at_least_7y_old",
-      "short": "7y+",
-      "long": "At Least 7 Years Old"
+    _7y: {
+      id: "at_least_7y_old",
+      short: "7y+",
+      long: "At Least 7 Years Old",
     },
-    "_8y": {
-      "id": "at_least_8y_old",
-      "short": "8y+",
-      "long": "At Least 8 Years Old"
+    _8y: {
+      id: "at_least_8y_old",
+      short: "8y+",
+      long: "At Least 8 Years Old",
     },
-    "_10y": {
-      "id": "at_least_10y_old",
-      "short": "10y+",
-      "long": "At Least 10 Years Old"
+    _10y: {
+      id: "at_least_10y_old",
+      short: "10y+",
+      long: "At Least 10 Years Old",
     },
-    "_12y": {
-      "id": "at_least_12y_old",
-      "short": "12y+",
-      "long": "At Least 12 Years Old"
-    }
+    _12y: {
+      id: "at_least_12y_old",
+      short: "12y+",
+      long: "At Least 12 Years Old",
+    },
   });
 
   AMOUNT_RANGE_NAMES = /** @type {const} */ ({
-    "_0sats": {
-      "id": "with_0sats",
-      "short": "0 sats",
-      "long": "0 Sats"
+    _0sats: {
+      id: "with_0sats",
+      short: "0 sats",
+      long: "0 Sats",
     },
-    "_1satTo10sats": {
-      "id": "above_1sat_under_10sats",
-      "short": "1-10 sats",
-      "long": "1 to 10 Sats"
+    _1satTo10sats: {
+      id: "above_1sat_under_10sats",
+      short: "1-10 sats",
+      long: "1 to 10 Sats",
     },
-    "_10satsTo100sats": {
-      "id": "above_10sats_under_100sats",
-      "short": "10-100 sats",
-      "long": "10 to 100 Sats"
+    _10satsTo100sats: {
+      id: "above_10sats_under_100sats",
+      short: "10-100 sats",
+      long: "10 to 100 Sats",
     },
-    "_100satsTo1kSats": {
-      "id": "above_100sats_under_1k_sats",
-      "short": "100-1k sats",
-      "long": "100 to 1K Sats"
+    _100satsTo1kSats: {
+      id: "above_100sats_under_1k_sats",
+      short: "100-1k sats",
+      long: "100 to 1K Sats",
     },
-    "_1kSatsTo10kSats": {
-      "id": "above_1k_sats_under_10k_sats",
-      "short": "1k-10k sats",
-      "long": "1K to 10K Sats"
+    _1kSatsTo10kSats: {
+      id: "above_1k_sats_under_10k_sats",
+      short: "1k-10k sats",
+      long: "1K to 10K Sats",
     },
-    "_10kSatsTo100kSats": {
-      "id": "above_10k_sats_under_100k_sats",
-      "short": "10k-100k sats",
-      "long": "10K to 100K Sats"
+    _10kSatsTo100kSats: {
+      id: "above_10k_sats_under_100k_sats",
+      short: "10k-100k sats",
+      long: "10K to 100K Sats",
     },
-    "_100kSatsTo1mSats": {
-      "id": "above_100k_sats_under_1m_sats",
-      "short": "100k-1M sats",
-      "long": "100K to 1M Sats"
+    _100kSatsTo1mSats: {
+      id: "above_100k_sats_under_1m_sats",
+      short: "100k-1M sats",
+      long: "100K to 1M Sats",
     },
-    "_1mSatsTo10mSats": {
-      "id": "above_1m_sats_under_10m_sats",
-      "short": "1M-10M sats",
-      "long": "1M to 10M Sats"
+    _1mSatsTo10mSats: {
+      id: "above_1m_sats_under_10m_sats",
+      short: "1M-10M sats",
+      long: "1M to 10M Sats",
     },
-    "_10mSatsTo1btc": {
-      "id": "above_10m_sats_under_1btc",
-      "short": "0.1-1 BTC",
-      "long": "0.1 to 1 BTC"
+    _10mSatsTo1btc: {
+      id: "above_10m_sats_under_1btc",
+      short: "0.1-1 BTC",
+      long: "0.1 to 1 BTC",
     },
-    "_1btcTo10btc": {
-      "id": "above_1btc_under_10btc",
-      "short": "1-10 BTC",
-      "long": "1 to 10 BTC"
+    _1btcTo10btc: {
+      id: "above_1btc_under_10btc",
+      short: "1-10 BTC",
+      long: "1 to 10 BTC",
     },
-    "_10btcTo100btc": {
-      "id": "above_10btc_under_100btc",
-      "short": "10-100 BTC",
-      "long": "10 to 100 BTC"
+    _10btcTo100btc: {
+      id: "above_10btc_under_100btc",
+      short: "10-100 BTC",
+      long: "10 to 100 BTC",
     },
-    "_100btcTo1kBtc": {
-      "id": "above_100btc_under_1k_btc",
-      "short": "100-1k BTC",
-      "long": "100 to 1K BTC"
+    _100btcTo1kBtc: {
+      id: "above_100btc_under_1k_btc",
+      short: "100-1k BTC",
+      long: "100 to 1K BTC",
     },
-    "_1kBtcTo10kBtc": {
-      "id": "above_1k_btc_under_10k_btc",
-      "short": "1k-10k BTC",
-      "long": "1K to 10K BTC"
+    _1kBtcTo10kBtc: {
+      id: "above_1k_btc_under_10k_btc",
+      short: "1k-10k BTC",
+      long: "1K to 10K BTC",
     },
-    "_10kBtcTo100kBtc": {
-      "id": "above_10k_btc_under_100k_btc",
-      "short": "10k-100k BTC",
-      "long": "10K to 100K BTC"
+    _10kBtcTo100kBtc: {
+      id: "above_10k_btc_under_100k_btc",
+      short: "10k-100k BTC",
+      long: "10K to 100K BTC",
     },
-    "_100kBtcOrMore": {
-      "id": "above_100k_btc",
-      "short": "100k+ BTC",
-      "long": "100K+ BTC"
-    }
+    _100kBtcOrMore: {
+      id: "above_100k_btc",
+      short: "100k+ BTC",
+      long: "100K+ BTC",
+    },
   });
 
   GE_AMOUNT_NAMES = /** @type {const} */ ({
-    "_1sat": {
-      "id": "above_1sat",
-      "short": "1+ sats",
-      "long": "Above 1 Sat"
+    _1sat: {
+      id: "above_1sat",
+      short: "1+ sats",
+      long: "Above 1 Sat",
     },
-    "_10sats": {
-      "id": "above_10sats",
-      "short": "10+ sats",
-      "long": "Above 10 Sats"
+    _10sats: {
+      id: "above_10sats",
+      short: "10+ sats",
+      long: "Above 10 Sats",
     },
-    "_100sats": {
-      "id": "above_100sats",
-      "short": "100+ sats",
-      "long": "Above 100 Sats"
+    _100sats: {
+      id: "above_100sats",
+      short: "100+ sats",
+      long: "Above 100 Sats",
     },
-    "_1kSats": {
-      "id": "above_1k_sats",
-      "short": "1k+ sats",
-      "long": "Above 1K Sats"
+    _1kSats: {
+      id: "above_1k_sats",
+      short: "1k+ sats",
+      long: "Above 1K Sats",
     },
-    "_10kSats": {
-      "id": "above_10k_sats",
-      "short": "10k+ sats",
-      "long": "Above 10K Sats"
+    _10kSats: {
+      id: "above_10k_sats",
+      short: "10k+ sats",
+      long: "Above 10K Sats",
     },
-    "_100kSats": {
-      "id": "above_100k_sats",
-      "short": "100k+ sats",
-      "long": "Above 100K Sats"
+    _100kSats: {
+      id: "above_100k_sats",
+      short: "100k+ sats",
+      long: "Above 100K Sats",
     },
-    "_1mSats": {
-      "id": "above_1m_sats",
-      "short": "1M+ sats",
-      "long": "Above 1M Sats"
+    _1mSats: {
+      id: "above_1m_sats",
+      short: "1M+ sats",
+      long: "Above 1M Sats",
     },
-    "_10mSats": {
-      "id": "above_10m_sats",
-      "short": "0.1+ BTC",
-      "long": "Above 0.1 BTC"
+    _10mSats: {
+      id: "above_10m_sats",
+      short: "0.1+ BTC",
+      long: "Above 0.1 BTC",
     },
-    "_1btc": {
-      "id": "above_1btc",
-      "short": "1+ BTC",
-      "long": "Above 1 BTC"
+    _1btc: {
+      id: "above_1btc",
+      short: "1+ BTC",
+      long: "Above 1 BTC",
     },
-    "_10btc": {
-      "id": "above_10btc",
-      "short": "10+ BTC",
-      "long": "Above 10 BTC"
+    _10btc: {
+      id: "above_10btc",
+      short: "10+ BTC",
+      long: "Above 10 BTC",
     },
-    "_100btc": {
-      "id": "above_100btc",
-      "short": "100+ BTC",
-      "long": "Above 100 BTC"
+    _100btc: {
+      id: "above_100btc",
+      short: "100+ BTC",
+      long: "Above 100 BTC",
     },
-    "_1kBtc": {
-      "id": "above_1k_btc",
-      "short": "1k+ BTC",
-      "long": "Above 1K BTC"
+    _1kBtc: {
+      id: "above_1k_btc",
+      short: "1k+ BTC",
+      long: "Above 1K BTC",
     },
-    "_10kBtc": {
-      "id": "above_10k_btc",
-      "short": "10k+ BTC",
-      "long": "Above 10K BTC"
-    }
+    _10kBtc: {
+      id: "above_10k_btc",
+      short: "10k+ BTC",
+      long: "Above 10K BTC",
+    },
   });
 
   LT_AMOUNT_NAMES = /** @type {const} */ ({
-    "_10sats": {
-      "id": "under_10sats",
-      "short": "<10 sats",
-      "long": "Under 10 Sats"
+    _10sats: {
+      id: "under_10sats",
+      short: "<10 sats",
+      long: "Under 10 Sats",
     },
-    "_100sats": {
-      "id": "under_100sats",
-      "short": "<100 sats",
-      "long": "Under 100 Sats"
+    _100sats: {
+      id: "under_100sats",
+      short: "<100 sats",
+      long: "Under 100 Sats",
     },
-    "_1kSats": {
-      "id": "under_1k_sats",
-      "short": "<1k sats",
-      "long": "Under 1K Sats"
+    _1kSats: {
+      id: "under_1k_sats",
+      short: "<1k sats",
+      long: "Under 1K Sats",
     },
-    "_10kSats": {
-      "id": "under_10k_sats",
-      "short": "<10k sats",
-      "long": "Under 10K Sats"
+    _10kSats: {
+      id: "under_10k_sats",
+      short: "<10k sats",
+      long: "Under 10K Sats",
     },
-    "_100kSats": {
-      "id": "under_100k_sats",
-      "short": "<100k sats",
-      "long": "Under 100K Sats"
+    _100kSats: {
+      id: "under_100k_sats",
+      short: "<100k sats",
+      long: "Under 100K Sats",
     },
-    "_1mSats": {
-      "id": "under_1m_sats",
-      "short": "<1M sats",
-      "long": "Under 1M Sats"
+    _1mSats: {
+      id: "under_1m_sats",
+      short: "<1M sats",
+      long: "Under 1M Sats",
     },
-    "_10mSats": {
-      "id": "under_10m_sats",
-      "short": "<0.1 BTC",
-      "long": "Under 0.1 BTC"
+    _10mSats: {
+      id: "under_10m_sats",
+      short: "<0.1 BTC",
+      long: "Under 0.1 BTC",
     },
-    "_1btc": {
-      "id": "under_1btc",
-      "short": "<1 BTC",
-      "long": "Under 1 BTC"
+    _1btc: {
+      id: "under_1btc",
+      short: "<1 BTC",
+      long: "Under 1 BTC",
     },
-    "_10btc": {
-      "id": "under_10btc",
-      "short": "<10 BTC",
-      "long": "Under 10 BTC"
+    _10btc: {
+      id: "under_10btc",
+      short: "<10 BTC",
+      long: "Under 10 BTC",
     },
-    "_100btc": {
-      "id": "under_100btc",
-      "short": "<100 BTC",
-      "long": "Under 100 BTC"
+    _100btc: {
+      id: "under_100btc",
+      short: "<100 BTC",
+      long: "Under 100 BTC",
     },
-    "_1kBtc": {
-      "id": "under_1k_btc",
-      "short": "<1k BTC",
-      "long": "Under 1K BTC"
+    _1kBtc: {
+      id: "under_1k_btc",
+      short: "<1k BTC",
+      long: "Under 1K BTC",
     },
-    "_10kBtc": {
-      "id": "under_10k_btc",
-      "short": "<10k BTC",
-      "long": "Under 10K BTC"
+    _10kBtc: {
+      id: "under_10k_btc",
+      short: "<10k BTC",
+      long: "Under 10K BTC",
     },
-    "_100kBtc": {
-      "id": "under_100k_btc",
-      "short": "<100k BTC",
-      "long": "Under 100K BTC"
-    }
+    _100kBtc: {
+      id: "under_100k_btc",
+      short: "<100k BTC",
+      long: "Under 100K BTC",
+    },
   });
 
   /**
@@ -6047,7 +6613,7 @@ class BrkClient extends BrkClientBase {
   constructor(options) {
     super(options);
     /** @type {MetricsTree} */
-    this.metrics = this._buildTree('');
+    this.metrics = this._buildTree("");
   }
 
   /**
@@ -6058,1104 +6624,1430 @@ class BrkClient extends BrkClientBase {
   _buildTree(basePath) {
     return {
       addresses: {
-        firstP2aaddressindex: createMetricPattern11(this, 'first_p2aaddressindex'),
-        firstP2pk33addressindex: createMetricPattern11(this, 'first_p2pk33addressindex'),
-        firstP2pk65addressindex: createMetricPattern11(this, 'first_p2pk65addressindex'),
-        firstP2pkhaddressindex: createMetricPattern11(this, 'first_p2pkhaddressindex'),
-        firstP2shaddressindex: createMetricPattern11(this, 'first_p2shaddressindex'),
-        firstP2traddressindex: createMetricPattern11(this, 'first_p2traddressindex'),
-        firstP2wpkhaddressindex: createMetricPattern11(this, 'first_p2wpkhaddressindex'),
-        firstP2wshaddressindex: createMetricPattern11(this, 'first_p2wshaddressindex'),
-        p2abytes: createMetricPattern16(this, 'p2abytes'),
-        p2pk33bytes: createMetricPattern18(this, 'p2pk33bytes'),
-        p2pk65bytes: createMetricPattern19(this, 'p2pk65bytes'),
-        p2pkhbytes: createMetricPattern20(this, 'p2pkhbytes'),
-        p2shbytes: createMetricPattern21(this, 'p2shbytes'),
-        p2trbytes: createMetricPattern22(this, 'p2trbytes'),
-        p2wpkhbytes: createMetricPattern23(this, 'p2wpkhbytes'),
-        p2wshbytes: createMetricPattern24(this, 'p2wshbytes'),
+        firstP2aaddressindex: createMetricPattern11(
+          this,
+          "first_p2aaddressindex",
+        ),
+        firstP2pk33addressindex: createMetricPattern11(
+          this,
+          "first_p2pk33addressindex",
+        ),
+        firstP2pk65addressindex: createMetricPattern11(
+          this,
+          "first_p2pk65addressindex",
+        ),
+        firstP2pkhaddressindex: createMetricPattern11(
+          this,
+          "first_p2pkhaddressindex",
+        ),
+        firstP2shaddressindex: createMetricPattern11(
+          this,
+          "first_p2shaddressindex",
+        ),
+        firstP2traddressindex: createMetricPattern11(
+          this,
+          "first_p2traddressindex",
+        ),
+        firstP2wpkhaddressindex: createMetricPattern11(
+          this,
+          "first_p2wpkhaddressindex",
+        ),
+        firstP2wshaddressindex: createMetricPattern11(
+          this,
+          "first_p2wshaddressindex",
+        ),
+        p2abytes: createMetricPattern16(this, "p2abytes"),
+        p2pk33bytes: createMetricPattern18(this, "p2pk33bytes"),
+        p2pk65bytes: createMetricPattern19(this, "p2pk65bytes"),
+        p2pkhbytes: createMetricPattern20(this, "p2pkhbytes"),
+        p2shbytes: createMetricPattern21(this, "p2shbytes"),
+        p2trbytes: createMetricPattern22(this, "p2trbytes"),
+        p2wpkhbytes: createMetricPattern23(this, "p2wpkhbytes"),
+        p2wshbytes: createMetricPattern24(this, "p2wshbytes"),
       },
       blocks: {
-        blockhash: createMetricPattern11(this, 'blockhash'),
+        blockhash: createMetricPattern11(this, "blockhash"),
         count: {
-          _1mBlockCount: createMetricPattern1(this, '1m_block_count'),
-          _1mStart: createMetricPattern11(this, '1m_start'),
-          _1wBlockCount: createMetricPattern1(this, '1w_block_count'),
-          _1wStart: createMetricPattern11(this, '1w_start'),
-          _1yBlockCount: createMetricPattern1(this, '1y_block_count'),
-          _1yStart: createMetricPattern11(this, '1y_start'),
-          _24hBlockCount: createMetricPattern1(this, '24h_block_count'),
-          _24hStart: createMetricPattern11(this, '24h_start'),
-          blockCount: createBlockCountPattern(this, 'block_count'),
-          blockCountTarget: createMetricPattern4(this, 'block_count_target'),
+          _1mBlockCount: createMetricPattern1(this, "1m_block_count"),
+          _1mStart: createMetricPattern11(this, "1m_start"),
+          _1wBlockCount: createMetricPattern1(this, "1w_block_count"),
+          _1wStart: createMetricPattern11(this, "1w_start"),
+          _1yBlockCount: createMetricPattern1(this, "1y_block_count"),
+          _1yStart: createMetricPattern11(this, "1y_start"),
+          _24hBlockCount: createMetricPattern1(this, "24h_block_count"),
+          _24hStart: createMetricPattern11(this, "24h_start"),
+          blockCount: createBlockCountPattern(this, "block_count"),
+          blockCountTarget: createMetricPattern4(this, "block_count_target"),
         },
         difficulty: {
-          adjustment: createMetricPattern1(this, 'difficulty_adjustment'),
-          asHash: createMetricPattern1(this, 'difficulty_as_hash'),
-          blocksBeforeNextAdjustment: createMetricPattern1(this, 'blocks_before_next_difficulty_adjustment'),
-          daysBeforeNextAdjustment: createMetricPattern1(this, 'days_before_next_difficulty_adjustment'),
-          epoch: createMetricPattern4(this, 'difficultyepoch'),
-          raw: createMetricPattern1(this, 'difficulty'),
+          adjustment: createMetricPattern1(this, "difficulty_adjustment"),
+          asHash: createMetricPattern1(this, "difficulty_as_hash"),
+          blocksBeforeNextAdjustment: createMetricPattern1(
+            this,
+            "blocks_before_next_difficulty_adjustment",
+          ),
+          daysBeforeNextAdjustment: createMetricPattern1(
+            this,
+            "days_before_next_difficulty_adjustment",
+          ),
+          epoch: createMetricPattern4(this, "difficultyepoch"),
+          raw: createMetricPattern1(this, "difficulty"),
         },
-        fullness: createFullnessPattern(this, 'block_fullness'),
+        fullness: createFullnessPattern(this, "block_fullness"),
         halving: {
-          blocksBeforeNextHalving: createMetricPattern1(this, 'blocks_before_next_halving'),
-          daysBeforeNextHalving: createMetricPattern1(this, 'days_before_next_halving'),
-          epoch: createMetricPattern4(this, 'halvingepoch'),
+          blocksBeforeNextHalving: createMetricPattern1(
+            this,
+            "blocks_before_next_halving",
+          ),
+          daysBeforeNextHalving: createMetricPattern1(
+            this,
+            "days_before_next_halving",
+          ),
+          epoch: createMetricPattern4(this, "halvingepoch"),
         },
-        interval: {
-          average: createMetricPattern2(this, 'block_interval_average'),
-          base: createMetricPattern11(this, 'block_interval'),
-          max: createMetricPattern2(this, 'block_interval_max'),
-          median: createMetricPattern6(this, 'block_interval_median'),
-          min: createMetricPattern2(this, 'block_interval_min'),
-          pct10: createMetricPattern6(this, 'block_interval_pct10'),
-          pct25: createMetricPattern6(this, 'block_interval_pct25'),
-          pct75: createMetricPattern6(this, 'block_interval_pct75'),
-          pct90: createMetricPattern6(this, 'block_interval_pct90'),
-        },
+        interval: createFullnessPattern(this, "block_interval"),
         mining: {
-          hashPricePhs: createMetricPattern1(this, 'hash_price_phs'),
-          hashPricePhsMin: createMetricPattern1(this, 'hash_price_phs_min'),
-          hashPriceRebound: createMetricPattern1(this, 'hash_price_rebound'),
-          hashPriceThs: createMetricPattern1(this, 'hash_price_ths'),
-          hashPriceThsMin: createMetricPattern1(this, 'hash_price_ths_min'),
-          hashRate: createMetricPattern1(this, 'hash_rate'),
-          hashRate1mSma: createMetricPattern4(this, 'hash_rate_1m_sma'),
-          hashRate1wSma: createMetricPattern4(this, 'hash_rate_1w_sma'),
-          hashRate1ySma: createMetricPattern4(this, 'hash_rate_1y_sma'),
-          hashRate2mSma: createMetricPattern4(this, 'hash_rate_2m_sma'),
-          hashValuePhs: createMetricPattern1(this, 'hash_value_phs'),
-          hashValuePhsMin: createMetricPattern1(this, 'hash_value_phs_min'),
-          hashValueRebound: createMetricPattern1(this, 'hash_value_rebound'),
-          hashValueThs: createMetricPattern1(this, 'hash_value_ths'),
-          hashValueThsMin: createMetricPattern1(this, 'hash_value_ths_min'),
+          hashPricePhs: createMetricPattern1(this, "hash_price_phs"),
+          hashPricePhsMin: createMetricPattern1(this, "hash_price_phs_min"),
+          hashPriceRebound: createMetricPattern1(this, "hash_price_rebound"),
+          hashPriceThs: createMetricPattern1(this, "hash_price_ths"),
+          hashPriceThsMin: createMetricPattern1(this, "hash_price_ths_min"),
+          hashRate: createMetricPattern1(this, "hash_rate"),
+          hashRate1mSma: createMetricPattern4(this, "hash_rate_1m_sma"),
+          hashRate1wSma: createMetricPattern4(this, "hash_rate_1w_sma"),
+          hashRate1ySma: createMetricPattern4(this, "hash_rate_1y_sma"),
+          hashRate2mSma: createMetricPattern4(this, "hash_rate_2m_sma"),
+          hashValuePhs: createMetricPattern1(this, "hash_value_phs"),
+          hashValuePhsMin: createMetricPattern1(this, "hash_value_phs_min"),
+          hashValueRebound: createMetricPattern1(this, "hash_value_rebound"),
+          hashValueThs: createMetricPattern1(this, "hash_value_ths"),
+          hashValueThsMin: createMetricPattern1(this, "hash_value_ths_min"),
         },
         rewards: {
           _24hCoinbaseSum: {
-            bitcoin: createMetricPattern11(this, '24h_coinbase_sum_btc'),
-            dollars: createMetricPattern11(this, '24h_coinbase_sum_usd'),
-            sats: createMetricPattern11(this, '24h_coinbase_sum'),
+            bitcoin: createMetricPattern11(this, "24h_coinbase_sum_btc"),
+            dollars: createMetricPattern11(this, "24h_coinbase_sum_usd"),
+            sats: createMetricPattern11(this, "24h_coinbase_sum"),
           },
-          coinbase: createCoinbasePattern(this, 'coinbase'),
-          feeDominance: createMetricPattern6(this, 'fee_dominance'),
-          subsidy: createCoinbasePattern(this, 'subsidy'),
-          subsidyDominance: createMetricPattern6(this, 'subsidy_dominance'),
-          subsidyUsd1ySma: createMetricPattern4(this, 'subsidy_usd_1y_sma'),
-          unclaimedRewards: createUnclaimedRewardsPattern(this, 'unclaimed_rewards'),
+          coinbase: createCoinbasePattern(this, "coinbase"),
+          feeDominance: createMetricPattern6(this, "fee_dominance"),
+          subsidy: createCoinbasePattern(this, "subsidy"),
+          subsidyDominance: createMetricPattern6(this, "subsidy_dominance"),
+          subsidyUsd1ySma: createMetricPattern4(this, "subsidy_usd_1y_sma"),
+          unclaimedRewards: createUnclaimedRewardsPattern(
+            this,
+            "unclaimed_rewards",
+          ),
         },
         size: {
-          average: createMetricPattern2(this, 'block_size_average'),
-          cumulative: createMetricPattern1(this, 'block_size_cumulative'),
-          max: createMetricPattern2(this, 'block_size_max'),
-          median: createMetricPattern6(this, 'block_size_median'),
-          min: createMetricPattern2(this, 'block_size_min'),
-          pct10: createMetricPattern6(this, 'block_size_pct10'),
-          pct25: createMetricPattern6(this, 'block_size_pct25'),
-          pct75: createMetricPattern6(this, 'block_size_pct75'),
-          pct90: createMetricPattern6(this, 'block_size_pct90'),
-          sum: createMetricPattern2(this, 'block_size_sum'),
+          average: createMetricPattern2(this, "block_size_average"),
+          cumulative: createMetricPattern1(this, "block_size_cumulative"),
+          max: createMetricPattern2(this, "block_size_max"),
+          median: createMetricPattern6(this, "block_size_median"),
+          min: createMetricPattern2(this, "block_size_min"),
+          pct10: createMetricPattern6(this, "block_size_pct10"),
+          pct25: createMetricPattern6(this, "block_size_pct25"),
+          pct75: createMetricPattern6(this, "block_size_pct75"),
+          pct90: createMetricPattern6(this, "block_size_pct90"),
+          sum: createMetricPattern2(this, "block_size_sum"),
         },
         time: {
-          date: createMetricPattern11(this, 'date'),
-          dateFixed: createMetricPattern11(this, 'date_fixed'),
-          timestamp: createMetricPattern1(this, 'timestamp'),
-          timestampFixed: createMetricPattern11(this, 'timestamp_fixed'),
+          date: createMetricPattern11(this, "date"),
+          dateFixed: createMetricPattern11(this, "date_monotonic"),
+          timestamp: createMetricPattern1(this, "timestamp"),
+          timestampFixed: createMetricPattern11(this, "timestamp_monotonic"),
         },
-        totalSize: createMetricPattern11(this, 'total_size'),
-        vbytes: createDollarsPattern(this, 'block_vbytes'),
+        totalSize: createMetricPattern11(this, "total_size"),
+        vbytes: createDollarsPattern(this, "block_vbytes"),
         weight: {
-          average: createMetricPattern2(this, 'block_weight_average'),
-          base: createMetricPattern11(this, 'weight'),
-          cumulative: createMetricPattern1(this, 'block_weight_cumulative'),
-          max: createMetricPattern2(this, 'block_weight_max'),
-          median: createMetricPattern6(this, 'block_weight_median'),
-          min: createMetricPattern2(this, 'block_weight_min'),
-          pct10: createMetricPattern6(this, 'block_weight_pct10'),
-          pct25: createMetricPattern6(this, 'block_weight_pct25'),
-          pct75: createMetricPattern6(this, 'block_weight_pct75'),
-          pct90: createMetricPattern6(this, 'block_weight_pct90'),
-          sum: createMetricPattern2(this, 'block_weight_sum'),
+          average: createMetricPattern2(this, "block_weight_average"),
+          base: createMetricPattern11(this, "weight"),
+          cumulative: createMetricPattern1(this, "block_weight_cumulative"),
+          max: createMetricPattern2(this, "block_weight_max"),
+          median: createMetricPattern6(this, "block_weight_median"),
+          min: createMetricPattern2(this, "block_weight_min"),
+          pct10: createMetricPattern6(this, "block_weight_pct10"),
+          pct25: createMetricPattern6(this, "block_weight_pct25"),
+          pct75: createMetricPattern6(this, "block_weight_pct75"),
+          pct90: createMetricPattern6(this, "block_weight_pct90"),
+          sum: createMetricPattern2(this, "block_weight_sum"),
         },
       },
       cointime: {
         activity: {
-          activityToVaultednessRatio: createMetricPattern1(this, 'activity_to_vaultedness_ratio'),
-          coinblocksCreated: createBlockCountPattern(this, 'coinblocks_created'),
-          coinblocksStored: createBlockCountPattern(this, 'coinblocks_stored'),
-          liveliness: createMetricPattern1(this, 'liveliness'),
-          vaultedness: createMetricPattern1(this, 'vaultedness'),
+          activityToVaultednessRatio: createMetricPattern1(
+            this,
+            "activity_to_vaultedness_ratio",
+          ),
+          coinblocksCreated: createBlockCountPattern(
+            this,
+            "coinblocks_created",
+          ),
+          coinblocksStored: createBlockCountPattern(this, "coinblocks_stored"),
+          liveliness: createMetricPattern1(this, "liveliness"),
+          vaultedness: createMetricPattern1(this, "vaultedness"),
         },
         adjusted: {
-          cointimeAdjInflationRate: createMetricPattern4(this, 'cointime_adj_inflation_rate'),
-          cointimeAdjTxBtcVelocity: createMetricPattern4(this, 'cointime_adj_tx_btc_velocity'),
-          cointimeAdjTxUsdVelocity: createMetricPattern4(this, 'cointime_adj_tx_usd_velocity'),
+          cointimeAdjInflationRate: createMetricPattern4(
+            this,
+            "cointime_adj_inflation_rate",
+          ),
+          cointimeAdjTxBtcVelocity: createMetricPattern4(
+            this,
+            "cointime_adj_tx_btc_velocity",
+          ),
+          cointimeAdjTxUsdVelocity: createMetricPattern4(
+            this,
+            "cointime_adj_tx_usd_velocity",
+          ),
         },
         cap: {
-          activeCap: createMetricPattern1(this, 'active_cap'),
-          cointimeCap: createMetricPattern1(this, 'cointime_cap'),
-          investorCap: createMetricPattern1(this, 'investor_cap'),
-          thermoCap: createMetricPattern1(this, 'thermo_cap'),
-          vaultedCap: createMetricPattern1(this, 'vaulted_cap'),
+          activeCap: createMetricPattern1(this, "active_cap"),
+          cointimeCap: createMetricPattern1(this, "cointime_cap"),
+          investorCap: createMetricPattern1(this, "investor_cap"),
+          thermoCap: createMetricPattern1(this, "thermo_cap"),
+          vaultedCap: createMetricPattern1(this, "vaulted_cap"),
         },
         pricing: {
-          activePrice: createMetricPattern1(this, 'active_price'),
-          activePriceRatio: createActivePriceRatioPattern(this, 'active_price_ratio'),
-          cointimePrice: createMetricPattern1(this, 'cointime_price'),
-          cointimePriceRatio: createActivePriceRatioPattern(this, 'cointime_price_ratio'),
-          trueMarketMean: createMetricPattern1(this, 'true_market_mean'),
-          trueMarketMeanRatio: createActivePriceRatioPattern(this, 'true_market_mean_ratio'),
-          vaultedPrice: createMetricPattern1(this, 'vaulted_price'),
-          vaultedPriceRatio: createActivePriceRatioPattern(this, 'vaulted_price_ratio'),
+          activePrice: createMetricPattern1(this, "active_price"),
+          activePriceRatio: createActivePriceRatioPattern(
+            this,
+            "active_price_ratio",
+          ),
+          cointimePrice: createMetricPattern1(this, "cointime_price"),
+          cointimePriceRatio: createActivePriceRatioPattern(
+            this,
+            "cointime_price_ratio",
+          ),
+          trueMarketMean: createMetricPattern1(this, "true_market_mean"),
+          trueMarketMeanRatio: createActivePriceRatioPattern(
+            this,
+            "true_market_mean_ratio",
+          ),
+          vaultedPrice: createMetricPattern1(this, "vaulted_price"),
+          vaultedPriceRatio: createActivePriceRatioPattern(
+            this,
+            "vaulted_price_ratio",
+          ),
         },
         supply: {
-          activeSupply: createActiveSupplyPattern(this, 'active_supply'),
-          vaultedSupply: createActiveSupplyPattern(this, 'vaulted_supply'),
+          activeSupply: createActiveSupplyPattern(this, "active_supply"),
+          vaultedSupply: createActiveSupplyPattern(this, "vaulted_supply"),
         },
         value: {
-          cointimeValueCreated: createBlockCountPattern(this, 'cointime_value_created'),
-          cointimeValueDestroyed: createBlockCountPattern(this, 'cointime_value_destroyed'),
-          cointimeValueStored: createBlockCountPattern(this, 'cointime_value_stored'),
+          cointimeValueCreated: createBlockCountPattern(
+            this,
+            "cointime_value_created",
+          ),
+          cointimeValueDestroyed: createBlockCountPattern(
+            this,
+            "cointime_value_destroyed",
+          ),
+          cointimeValueStored: createBlockCountPattern(
+            this,
+            "cointime_value_stored",
+          ),
         },
       },
       constants: {
-        constant0: createMetricPattern1(this, 'constant_0'),
-        constant1: createMetricPattern1(this, 'constant_1'),
-        constant100: createMetricPattern1(this, 'constant_100'),
-        constant2: createMetricPattern1(this, 'constant_2'),
-        constant20: createMetricPattern1(this, 'constant_20'),
-        constant3: createMetricPattern1(this, 'constant_3'),
-        constant30: createMetricPattern1(this, 'constant_30'),
-        constant382: createMetricPattern1(this, 'constant_38_2'),
-        constant4: createMetricPattern1(this, 'constant_4'),
-        constant50: createMetricPattern1(this, 'constant_50'),
-        constant600: createMetricPattern1(this, 'constant_600'),
-        constant618: createMetricPattern1(this, 'constant_61_8'),
-        constant70: createMetricPattern1(this, 'constant_70'),
-        constant80: createMetricPattern1(this, 'constant_80'),
-        constantMinus1: createMetricPattern1(this, 'constant_minus_1'),
-        constantMinus2: createMetricPattern1(this, 'constant_minus_2'),
-        constantMinus3: createMetricPattern1(this, 'constant_minus_3'),
-        constantMinus4: createMetricPattern1(this, 'constant_minus_4'),
+        constant0: createMetricPattern1(this, "constant_0"),
+        constant1: createMetricPattern1(this, "constant_1"),
+        constant100: createMetricPattern1(this, "constant_100"),
+        constant2: createMetricPattern1(this, "constant_2"),
+        constant20: createMetricPattern1(this, "constant_20"),
+        constant3: createMetricPattern1(this, "constant_3"),
+        constant30: createMetricPattern1(this, "constant_30"),
+        constant382: createMetricPattern1(this, "constant_38_2"),
+        constant4: createMetricPattern1(this, "constant_4"),
+        constant50: createMetricPattern1(this, "constant_50"),
+        constant600: createMetricPattern1(this, "constant_600"),
+        constant618: createMetricPattern1(this, "constant_61_8"),
+        constant70: createMetricPattern1(this, "constant_70"),
+        constant80: createMetricPattern1(this, "constant_80"),
+        constantMinus1: createMetricPattern1(this, "constant_minus_1"),
+        constantMinus2: createMetricPattern1(this, "constant_minus_2"),
+        constantMinus3: createMetricPattern1(this, "constant_minus_3"),
+        constantMinus4: createMetricPattern1(this, "constant_minus_4"),
       },
       distribution: {
         addrCount: {
-          all: createMetricPattern1(this, 'addr_count'),
-          p2a: createMetricPattern1(this, 'p2a_addr_count'),
-          p2pk33: createMetricPattern1(this, 'p2pk33_addr_count'),
-          p2pk65: createMetricPattern1(this, 'p2pk65_addr_count'),
-          p2pkh: createMetricPattern1(this, 'p2pkh_addr_count'),
-          p2sh: createMetricPattern1(this, 'p2sh_addr_count'),
-          p2tr: createMetricPattern1(this, 'p2tr_addr_count'),
-          p2wpkh: createMetricPattern1(this, 'p2wpkh_addr_count'),
-          p2wsh: createMetricPattern1(this, 'p2wsh_addr_count'),
+          all: createMetricPattern1(this, "addr_count"),
+          p2a: createMetricPattern1(this, "p2a_addr_count"),
+          p2pk33: createMetricPattern1(this, "p2pk33_addr_count"),
+          p2pk65: createMetricPattern1(this, "p2pk65_addr_count"),
+          p2pkh: createMetricPattern1(this, "p2pkh_addr_count"),
+          p2sh: createMetricPattern1(this, "p2sh_addr_count"),
+          p2tr: createMetricPattern1(this, "p2tr_addr_count"),
+          p2wpkh: createMetricPattern1(this, "p2wpkh_addr_count"),
+          p2wsh: createMetricPattern1(this, "p2wsh_addr_count"),
         },
         addressCohorts: {
           amountRange: {
-            _0sats: create_0satsPattern(this, 'addrs_with_0sats'),
-            _100btcTo1kBtc: create_0satsPattern(this, 'addrs_above_100btc_under_1k_btc'),
-            _100kBtcOrMore: create_0satsPattern(this, 'addrs_above_100k_btc'),
-            _100kSatsTo1mSats: create_0satsPattern(this, 'addrs_above_100k_sats_under_1m_sats'),
-            _100satsTo1kSats: create_0satsPattern(this, 'addrs_above_100sats_under_1k_sats'),
-            _10btcTo100btc: create_0satsPattern(this, 'addrs_above_10btc_under_100btc'),
-            _10kBtcTo100kBtc: create_0satsPattern(this, 'addrs_above_10k_btc_under_100k_btc'),
-            _10kSatsTo100kSats: create_0satsPattern(this, 'addrs_above_10k_sats_under_100k_sats'),
-            _10mSatsTo1btc: create_0satsPattern(this, 'addrs_above_10m_sats_under_1btc'),
-            _10satsTo100sats: create_0satsPattern(this, 'addrs_above_10sats_under_100sats'),
-            _1btcTo10btc: create_0satsPattern(this, 'addrs_above_1btc_under_10btc'),
-            _1kBtcTo10kBtc: create_0satsPattern(this, 'addrs_above_1k_btc_under_10k_btc'),
-            _1kSatsTo10kSats: create_0satsPattern(this, 'addrs_above_1k_sats_under_10k_sats'),
-            _1mSatsTo10mSats: create_0satsPattern(this, 'addrs_above_1m_sats_under_10m_sats'),
-            _1satTo10sats: create_0satsPattern(this, 'addrs_above_1sat_under_10sats'),
+            _0sats: create_0satsPattern(this, "addrs_with_0sats"),
+            _100btcTo1kBtc: create_0satsPattern(
+              this,
+              "addrs_above_100btc_under_1k_btc",
+            ),
+            _100kBtcOrMore: create_0satsPattern(this, "addrs_above_100k_btc"),
+            _100kSatsTo1mSats: create_0satsPattern(
+              this,
+              "addrs_above_100k_sats_under_1m_sats",
+            ),
+            _100satsTo1kSats: create_0satsPattern(
+              this,
+              "addrs_above_100sats_under_1k_sats",
+            ),
+            _10btcTo100btc: create_0satsPattern(
+              this,
+              "addrs_above_10btc_under_100btc",
+            ),
+            _10kBtcTo100kBtc: create_0satsPattern(
+              this,
+              "addrs_above_10k_btc_under_100k_btc",
+            ),
+            _10kSatsTo100kSats: create_0satsPattern(
+              this,
+              "addrs_above_10k_sats_under_100k_sats",
+            ),
+            _10mSatsTo1btc: create_0satsPattern(
+              this,
+              "addrs_above_10m_sats_under_1btc",
+            ),
+            _10satsTo100sats: create_0satsPattern(
+              this,
+              "addrs_above_10sats_under_100sats",
+            ),
+            _1btcTo10btc: create_0satsPattern(
+              this,
+              "addrs_above_1btc_under_10btc",
+            ),
+            _1kBtcTo10kBtc: create_0satsPattern(
+              this,
+              "addrs_above_1k_btc_under_10k_btc",
+            ),
+            _1kSatsTo10kSats: create_0satsPattern(
+              this,
+              "addrs_above_1k_sats_under_10k_sats",
+            ),
+            _1mSatsTo10mSats: create_0satsPattern(
+              this,
+              "addrs_above_1m_sats_under_10m_sats",
+            ),
+            _1satTo10sats: create_0satsPattern(
+              this,
+              "addrs_above_1sat_under_10sats",
+            ),
           },
           geAmount: {
-            _100btc: create_0satsPattern(this, 'addrs_above_100btc'),
-            _100kSats: create_0satsPattern(this, 'addrs_above_100k_sats'),
-            _100sats: create_0satsPattern(this, 'addrs_above_100sats'),
-            _10btc: create_0satsPattern(this, 'addrs_above_10btc'),
-            _10kBtc: create_0satsPattern(this, 'addrs_above_10k_btc'),
-            _10kSats: create_0satsPattern(this, 'addrs_above_10k_sats'),
-            _10mSats: create_0satsPattern(this, 'addrs_above_10m_sats'),
-            _10sats: create_0satsPattern(this, 'addrs_above_10sats'),
-            _1btc: create_0satsPattern(this, 'addrs_above_1btc'),
-            _1kBtc: create_0satsPattern(this, 'addrs_above_1k_btc'),
-            _1kSats: create_0satsPattern(this, 'addrs_above_1k_sats'),
-            _1mSats: create_0satsPattern(this, 'addrs_above_1m_sats'),
-            _1sat: create_0satsPattern(this, 'addrs_above_1sat'),
+            _100btc: create_0satsPattern(this, "addrs_above_100btc"),
+            _100kSats: create_0satsPattern(this, "addrs_above_100k_sats"),
+            _100sats: create_0satsPattern(this, "addrs_above_100sats"),
+            _10btc: create_0satsPattern(this, "addrs_above_10btc"),
+            _10kBtc: create_0satsPattern(this, "addrs_above_10k_btc"),
+            _10kSats: create_0satsPattern(this, "addrs_above_10k_sats"),
+            _10mSats: create_0satsPattern(this, "addrs_above_10m_sats"),
+            _10sats: create_0satsPattern(this, "addrs_above_10sats"),
+            _1btc: create_0satsPattern(this, "addrs_above_1btc"),
+            _1kBtc: create_0satsPattern(this, "addrs_above_1k_btc"),
+            _1kSats: create_0satsPattern(this, "addrs_above_1k_sats"),
+            _1mSats: create_0satsPattern(this, "addrs_above_1m_sats"),
+            _1sat: create_0satsPattern(this, "addrs_above_1sat"),
           },
           ltAmount: {
-            _100btc: create_0satsPattern(this, 'addrs_under_100btc'),
-            _100kBtc: create_0satsPattern(this, 'addrs_under_100k_btc'),
-            _100kSats: create_0satsPattern(this, 'addrs_under_100k_sats'),
-            _100sats: create_0satsPattern(this, 'addrs_under_100sats'),
-            _10btc: create_0satsPattern(this, 'addrs_under_10btc'),
-            _10kBtc: create_0satsPattern(this, 'addrs_under_10k_btc'),
-            _10kSats: create_0satsPattern(this, 'addrs_under_10k_sats'),
-            _10mSats: create_0satsPattern(this, 'addrs_under_10m_sats'),
-            _10sats: create_0satsPattern(this, 'addrs_under_10sats'),
-            _1btc: create_0satsPattern(this, 'addrs_under_1btc'),
-            _1kBtc: create_0satsPattern(this, 'addrs_under_1k_btc'),
-            _1kSats: create_0satsPattern(this, 'addrs_under_1k_sats'),
-            _1mSats: create_0satsPattern(this, 'addrs_under_1m_sats'),
+            _100btc: create_0satsPattern(this, "addrs_under_100btc"),
+            _100kBtc: create_0satsPattern(this, "addrs_under_100k_btc"),
+            _100kSats: create_0satsPattern(this, "addrs_under_100k_sats"),
+            _100sats: create_0satsPattern(this, "addrs_under_100sats"),
+            _10btc: create_0satsPattern(this, "addrs_under_10btc"),
+            _10kBtc: create_0satsPattern(this, "addrs_under_10k_btc"),
+            _10kSats: create_0satsPattern(this, "addrs_under_10k_sats"),
+            _10mSats: create_0satsPattern(this, "addrs_under_10m_sats"),
+            _10sats: create_0satsPattern(this, "addrs_under_10sats"),
+            _1btc: create_0satsPattern(this, "addrs_under_1btc"),
+            _1kBtc: create_0satsPattern(this, "addrs_under_1k_btc"),
+            _1kSats: create_0satsPattern(this, "addrs_under_1k_sats"),
+            _1mSats: create_0satsPattern(this, "addrs_under_1m_sats"),
           },
         },
         addressesData: {
-          empty: createMetricPattern32(this, 'emptyaddressdata'),
-          loaded: createMetricPattern31(this, 'loadedaddressdata'),
+          empty: createMetricPattern32(this, "emptyaddressdata"),
+          loaded: createMetricPattern31(this, "loadedaddressdata"),
         },
         anyAddressIndexes: {
-          p2a: createMetricPattern16(this, 'anyaddressindex'),
-          p2pk33: createMetricPattern18(this, 'anyaddressindex'),
-          p2pk65: createMetricPattern19(this, 'anyaddressindex'),
-          p2pkh: createMetricPattern20(this, 'anyaddressindex'),
-          p2sh: createMetricPattern21(this, 'anyaddressindex'),
-          p2tr: createMetricPattern22(this, 'anyaddressindex'),
-          p2wpkh: createMetricPattern23(this, 'anyaddressindex'),
-          p2wsh: createMetricPattern24(this, 'anyaddressindex'),
+          p2a: createMetricPattern16(this, "anyaddressindex"),
+          p2pk33: createMetricPattern18(this, "anyaddressindex"),
+          p2pk65: createMetricPattern19(this, "anyaddressindex"),
+          p2pkh: createMetricPattern20(this, "anyaddressindex"),
+          p2sh: createMetricPattern21(this, "anyaddressindex"),
+          p2tr: createMetricPattern22(this, "anyaddressindex"),
+          p2wpkh: createMetricPattern23(this, "anyaddressindex"),
+          p2wsh: createMetricPattern24(this, "anyaddressindex"),
         },
-        chainState: createMetricPattern11(this, 'chain'),
+        chainState: createMetricPattern11(this, "chain"),
         emptyAddrCount: {
-          all: createMetricPattern1(this, 'empty_addr_count'),
-          p2a: createMetricPattern1(this, 'p2a_empty_addr_count'),
-          p2pk33: createMetricPattern1(this, 'p2pk33_empty_addr_count'),
-          p2pk65: createMetricPattern1(this, 'p2pk65_empty_addr_count'),
-          p2pkh: createMetricPattern1(this, 'p2pkh_empty_addr_count'),
-          p2sh: createMetricPattern1(this, 'p2sh_empty_addr_count'),
-          p2tr: createMetricPattern1(this, 'p2tr_empty_addr_count'),
-          p2wpkh: createMetricPattern1(this, 'p2wpkh_empty_addr_count'),
-          p2wsh: createMetricPattern1(this, 'p2wsh_empty_addr_count'),
+          all: createMetricPattern1(this, "empty_addr_count"),
+          p2a: createMetricPattern1(this, "p2a_empty_addr_count"),
+          p2pk33: createMetricPattern1(this, "p2pk33_empty_addr_count"),
+          p2pk65: createMetricPattern1(this, "p2pk65_empty_addr_count"),
+          p2pkh: createMetricPattern1(this, "p2pkh_empty_addr_count"),
+          p2sh: createMetricPattern1(this, "p2sh_empty_addr_count"),
+          p2tr: createMetricPattern1(this, "p2tr_empty_addr_count"),
+          p2wpkh: createMetricPattern1(this, "p2wpkh_empty_addr_count"),
+          p2wsh: createMetricPattern1(this, "p2wsh_empty_addr_count"),
         },
-        emptyaddressindex: createMetricPattern32(this, 'emptyaddressindex'),
-        loadedaddressindex: createMetricPattern31(this, 'loadedaddressindex'),
+        emptyaddressindex: createMetricPattern32(this, "emptyaddressindex"),
+        loadedaddressindex: createMetricPattern31(this, "loadedaddressindex"),
         utxoCohorts: {
           ageRange: {
-            _10yTo12y: create_10yTo12yPattern(this, 'utxos_at_least_10y_up_to_12y_old'),
-            _12yTo15y: create_10yTo12yPattern(this, 'utxos_at_least_12y_up_to_15y_old'),
-            _1dTo1w: create_10yTo12yPattern(this, 'utxos_at_least_1d_up_to_1w_old'),
-            _1hTo1d: create_10yTo12yPattern(this, 'utxos_at_least_1h_up_to_1d_old'),
-            _1mTo2m: create_10yTo12yPattern(this, 'utxos_at_least_1m_up_to_2m_old'),
-            _1wTo1m: create_10yTo12yPattern(this, 'utxos_at_least_1w_up_to_1m_old'),
-            _1yTo2y: create_10yTo12yPattern(this, 'utxos_at_least_1y_up_to_2y_old'),
-            _2mTo3m: create_10yTo12yPattern(this, 'utxos_at_least_2m_up_to_3m_old'),
-            _2yTo3y: create_10yTo12yPattern(this, 'utxos_at_least_2y_up_to_3y_old'),
-            _3mTo4m: create_10yTo12yPattern(this, 'utxos_at_least_3m_up_to_4m_old'),
-            _3yTo4y: create_10yTo12yPattern(this, 'utxos_at_least_3y_up_to_4y_old'),
-            _4mTo5m: create_10yTo12yPattern(this, 'utxos_at_least_4m_up_to_5m_old'),
-            _4yTo5y: create_10yTo12yPattern(this, 'utxos_at_least_4y_up_to_5y_old'),
-            _5mTo6m: create_10yTo12yPattern(this, 'utxos_at_least_5m_up_to_6m_old'),
-            _5yTo6y: create_10yTo12yPattern(this, 'utxos_at_least_5y_up_to_6y_old'),
-            _6mTo1y: create_10yTo12yPattern(this, 'utxos_at_least_6m_up_to_1y_old'),
-            _6yTo7y: create_10yTo12yPattern(this, 'utxos_at_least_6y_up_to_7y_old'),
-            _7yTo8y: create_10yTo12yPattern(this, 'utxos_at_least_7y_up_to_8y_old'),
-            _8yTo10y: create_10yTo12yPattern(this, 'utxos_at_least_8y_up_to_10y_old'),
-            from15y: create_10yTo12yPattern(this, 'utxos_at_least_15y_old'),
-            upTo1h: create_10yTo12yPattern(this, 'utxos_up_to_1h_old'),
+            _10yTo12y: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_10y_up_to_12y_old",
+            ),
+            _12yTo15y: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_12y_up_to_15y_old",
+            ),
+            _1dTo1w: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_1d_up_to_1w_old",
+            ),
+            _1hTo1d: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_1h_up_to_1d_old",
+            ),
+            _1mTo2m: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_1m_up_to_2m_old",
+            ),
+            _1wTo1m: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_1w_up_to_1m_old",
+            ),
+            _1yTo2y: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_1y_up_to_2y_old",
+            ),
+            _2mTo3m: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_2m_up_to_3m_old",
+            ),
+            _2yTo3y: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_2y_up_to_3y_old",
+            ),
+            _3mTo4m: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_3m_up_to_4m_old",
+            ),
+            _3yTo4y: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_3y_up_to_4y_old",
+            ),
+            _4mTo5m: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_4m_up_to_5m_old",
+            ),
+            _4yTo5y: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_4y_up_to_5y_old",
+            ),
+            _5mTo6m: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_5m_up_to_6m_old",
+            ),
+            _5yTo6y: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_5y_up_to_6y_old",
+            ),
+            _6mTo1y: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_6m_up_to_1y_old",
+            ),
+            _6yTo7y: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_6y_up_to_7y_old",
+            ),
+            _7yTo8y: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_7y_up_to_8y_old",
+            ),
+            _8yTo10y: create_10yTo12yPattern(
+              this,
+              "utxos_at_least_8y_up_to_10y_old",
+            ),
+            from15y: create_10yTo12yPattern(this, "utxos_at_least_15y_old"),
+            upTo1h: create_10yTo12yPattern(this, "utxos_up_to_1h_old"),
           },
           all: {
             activity: {
-              coinblocksDestroyed: createBlockCountPattern(this, 'coinblocks_destroyed'),
-              coindaysDestroyed: createBlockCountPattern(this, 'coindays_destroyed'),
-              satblocksDestroyed: createMetricPattern11(this, 'satblocks_destroyed'),
-              satdaysDestroyed: createMetricPattern11(this, 'satdays_destroyed'),
-              sent: createUnclaimedRewardsPattern(this, 'sent'),
+              coinblocksDestroyed: createBlockCountPattern(
+                this,
+                "coinblocks_destroyed",
+              ),
+              coindaysDestroyed: createBlockCountPattern(
+                this,
+                "coindays_destroyed",
+              ),
+              satblocksDestroyed: createMetricPattern11(
+                this,
+                "satblocks_destroyed",
+              ),
+              satdaysDestroyed: createMetricPattern11(
+                this,
+                "satdays_destroyed",
+              ),
+              sent: createUnclaimedRewardsPattern(this, "sent"),
             },
             costBasis: {
-              max: createMetricPattern1(this, 'max_cost_basis'),
-              min: createMetricPattern1(this, 'min_cost_basis'),
-              percentiles: createPercentilesPattern(this, 'cost_basis'),
+              max: createMetricPattern1(this, "max_cost_basis"),
+              min: createMetricPattern1(this, "min_cost_basis"),
+              percentiles: createPercentilesPattern(this, "cost_basis"),
             },
-            outputs: createOutputsPattern(this, 'utxo_count'),
-            realized: createRealizedPattern3(this, 'adjusted_sopr'),
+            outputs: createOutputsPattern(this, "utxo_count"),
+            realized: createRealizedPattern3(this, "adjusted_sopr"),
             relative: {
-              negUnrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(this, 'neg_unrealized_loss_rel_to_own_total_unrealized_pnl'),
-              netUnrealizedPnlRelToOwnTotalUnrealizedPnl: createMetricPattern1(this, 'net_unrealized_pnl_rel_to_own_total_unrealized_pnl'),
-              supplyInLossRelToOwnSupply: createMetricPattern1(this, 'supply_in_loss_rel_to_own_supply'),
-              supplyInProfitRelToOwnSupply: createMetricPattern1(this, 'supply_in_profit_rel_to_own_supply'),
-              unrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(this, 'unrealized_loss_rel_to_own_total_unrealized_pnl'),
-              unrealizedProfitRelToOwnTotalUnrealizedPnl: createMetricPattern1(this, 'unrealized_profit_rel_to_own_total_unrealized_pnl'),
+              negUnrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+                this,
+                "neg_unrealized_loss_rel_to_own_total_unrealized_pnl",
+              ),
+              netUnrealizedPnlRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+                this,
+                "net_unrealized_pnl_rel_to_own_total_unrealized_pnl",
+              ),
+              supplyInLossRelToOwnSupply: createMetricPattern1(
+                this,
+                "supply_in_loss_rel_to_own_supply",
+              ),
+              supplyInProfitRelToOwnSupply: createMetricPattern1(
+                this,
+                "supply_in_profit_rel_to_own_supply",
+              ),
+              unrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+                this,
+                "unrealized_loss_rel_to_own_total_unrealized_pnl",
+              ),
+              unrealizedProfitRelToOwnTotalUnrealizedPnl: createMetricPattern1(
+                this,
+                "unrealized_profit_rel_to_own_total_unrealized_pnl",
+              ),
             },
-            supply: createSupplyPattern2(this, 'supply'),
-            unrealized: createUnrealizedPattern(this, ''),
+            supply: createSupplyPattern2(this, "supply"),
+            unrealized: createUnrealizedPattern(this, ""),
           },
           amountRange: {
-            _0sats: create_0satsPattern2(this, 'utxos_with_0sats'),
-            _100btcTo1kBtc: create_0satsPattern2(this, 'utxos_above_100btc_under_1k_btc'),
-            _100kBtcOrMore: create_0satsPattern2(this, 'utxos_above_100k_btc'),
-            _100kSatsTo1mSats: create_0satsPattern2(this, 'utxos_above_100k_sats_under_1m_sats'),
-            _100satsTo1kSats: create_0satsPattern2(this, 'utxos_above_100sats_under_1k_sats'),
-            _10btcTo100btc: create_0satsPattern2(this, 'utxos_above_10btc_under_100btc'),
-            _10kBtcTo100kBtc: create_0satsPattern2(this, 'utxos_above_10k_btc_under_100k_btc'),
-            _10kSatsTo100kSats: create_0satsPattern2(this, 'utxos_above_10k_sats_under_100k_sats'),
-            _10mSatsTo1btc: create_0satsPattern2(this, 'utxos_above_10m_sats_under_1btc'),
-            _10satsTo100sats: create_0satsPattern2(this, 'utxos_above_10sats_under_100sats'),
-            _1btcTo10btc: create_0satsPattern2(this, 'utxos_above_1btc_under_10btc'),
-            _1kBtcTo10kBtc: create_0satsPattern2(this, 'utxos_above_1k_btc_under_10k_btc'),
-            _1kSatsTo10kSats: create_0satsPattern2(this, 'utxos_above_1k_sats_under_10k_sats'),
-            _1mSatsTo10mSats: create_0satsPattern2(this, 'utxos_above_1m_sats_under_10m_sats'),
-            _1satTo10sats: create_0satsPattern2(this, 'utxos_above_1sat_under_10sats'),
+            _0sats: create_0satsPattern2(this, "utxos_with_0sats"),
+            _100btcTo1kBtc: create_0satsPattern2(
+              this,
+              "utxos_above_100btc_under_1k_btc",
+            ),
+            _100kBtcOrMore: create_0satsPattern2(this, "utxos_above_100k_btc"),
+            _100kSatsTo1mSats: create_0satsPattern2(
+              this,
+              "utxos_above_100k_sats_under_1m_sats",
+            ),
+            _100satsTo1kSats: create_0satsPattern2(
+              this,
+              "utxos_above_100sats_under_1k_sats",
+            ),
+            _10btcTo100btc: create_0satsPattern2(
+              this,
+              "utxos_above_10btc_under_100btc",
+            ),
+            _10kBtcTo100kBtc: create_0satsPattern2(
+              this,
+              "utxos_above_10k_btc_under_100k_btc",
+            ),
+            _10kSatsTo100kSats: create_0satsPattern2(
+              this,
+              "utxos_above_10k_sats_under_100k_sats",
+            ),
+            _10mSatsTo1btc: create_0satsPattern2(
+              this,
+              "utxos_above_10m_sats_under_1btc",
+            ),
+            _10satsTo100sats: create_0satsPattern2(
+              this,
+              "utxos_above_10sats_under_100sats",
+            ),
+            _1btcTo10btc: create_0satsPattern2(
+              this,
+              "utxos_above_1btc_under_10btc",
+            ),
+            _1kBtcTo10kBtc: create_0satsPattern2(
+              this,
+              "utxos_above_1k_btc_under_10k_btc",
+            ),
+            _1kSatsTo10kSats: create_0satsPattern2(
+              this,
+              "utxos_above_1k_sats_under_10k_sats",
+            ),
+            _1mSatsTo10mSats: create_0satsPattern2(
+              this,
+              "utxos_above_1m_sats_under_10m_sats",
+            ),
+            _1satTo10sats: create_0satsPattern2(
+              this,
+              "utxos_above_1sat_under_10sats",
+            ),
           },
           epoch: {
-            _0: create_0satsPattern2(this, 'epoch_0'),
-            _1: create_0satsPattern2(this, 'epoch_1'),
-            _2: create_0satsPattern2(this, 'epoch_2'),
-            _3: create_0satsPattern2(this, 'epoch_3'),
-            _4: create_0satsPattern2(this, 'epoch_4'),
+            _0: create_0satsPattern2(this, "epoch_0"),
+            _1: create_0satsPattern2(this, "epoch_1"),
+            _2: create_0satsPattern2(this, "epoch_2"),
+            _3: create_0satsPattern2(this, "epoch_3"),
+            _4: create_0satsPattern2(this, "epoch_4"),
           },
           geAmount: {
-            _100btc: create_100btcPattern(this, 'utxos_above_100btc'),
-            _100kSats: create_100btcPattern(this, 'utxos_above_100k_sats'),
-            _100sats: create_100btcPattern(this, 'utxos_above_100sats'),
-            _10btc: create_100btcPattern(this, 'utxos_above_10btc'),
-            _10kBtc: create_100btcPattern(this, 'utxos_above_10k_btc'),
-            _10kSats: create_100btcPattern(this, 'utxos_above_10k_sats'),
-            _10mSats: create_100btcPattern(this, 'utxos_above_10m_sats'),
-            _10sats: create_100btcPattern(this, 'utxos_above_10sats'),
-            _1btc: create_100btcPattern(this, 'utxos_above_1btc'),
-            _1kBtc: create_100btcPattern(this, 'utxos_above_1k_btc'),
-            _1kSats: create_100btcPattern(this, 'utxos_above_1k_sats'),
-            _1mSats: create_100btcPattern(this, 'utxos_above_1m_sats'),
-            _1sat: create_100btcPattern(this, 'utxos_above_1sat'),
+            _100btc: create_100btcPattern(this, "utxos_above_100btc"),
+            _100kSats: create_100btcPattern(this, "utxos_above_100k_sats"),
+            _100sats: create_100btcPattern(this, "utxos_above_100sats"),
+            _10btc: create_100btcPattern(this, "utxos_above_10btc"),
+            _10kBtc: create_100btcPattern(this, "utxos_above_10k_btc"),
+            _10kSats: create_100btcPattern(this, "utxos_above_10k_sats"),
+            _10mSats: create_100btcPattern(this, "utxos_above_10m_sats"),
+            _10sats: create_100btcPattern(this, "utxos_above_10sats"),
+            _1btc: create_100btcPattern(this, "utxos_above_1btc"),
+            _1kBtc: create_100btcPattern(this, "utxos_above_1k_btc"),
+            _1kSats: create_100btcPattern(this, "utxos_above_1k_sats"),
+            _1mSats: create_100btcPattern(this, "utxos_above_1m_sats"),
+            _1sat: create_100btcPattern(this, "utxos_above_1sat"),
           },
           ltAmount: {
-            _100btc: create_100btcPattern(this, 'utxos_under_100btc'),
-            _100kBtc: create_100btcPattern(this, 'utxos_under_100k_btc'),
-            _100kSats: create_100btcPattern(this, 'utxos_under_100k_sats'),
-            _100sats: create_100btcPattern(this, 'utxos_under_100sats'),
-            _10btc: create_100btcPattern(this, 'utxos_under_10btc'),
-            _10kBtc: create_100btcPattern(this, 'utxos_under_10k_btc'),
-            _10kSats: create_100btcPattern(this, 'utxos_under_10k_sats'),
-            _10mSats: create_100btcPattern(this, 'utxos_under_10m_sats'),
-            _10sats: create_100btcPattern(this, 'utxos_under_10sats'),
-            _1btc: create_100btcPattern(this, 'utxos_under_1btc'),
-            _1kBtc: create_100btcPattern(this, 'utxos_under_1k_btc'),
-            _1kSats: create_100btcPattern(this, 'utxos_under_1k_sats'),
-            _1mSats: create_100btcPattern(this, 'utxos_under_1m_sats'),
+            _100btc: create_100btcPattern(this, "utxos_under_100btc"),
+            _100kBtc: create_100btcPattern(this, "utxos_under_100k_btc"),
+            _100kSats: create_100btcPattern(this, "utxos_under_100k_sats"),
+            _100sats: create_100btcPattern(this, "utxos_under_100sats"),
+            _10btc: create_100btcPattern(this, "utxos_under_10btc"),
+            _10kBtc: create_100btcPattern(this, "utxos_under_10k_btc"),
+            _10kSats: create_100btcPattern(this, "utxos_under_10k_sats"),
+            _10mSats: create_100btcPattern(this, "utxos_under_10m_sats"),
+            _10sats: create_100btcPattern(this, "utxos_under_10sats"),
+            _1btc: create_100btcPattern(this, "utxos_under_1btc"),
+            _1kBtc: create_100btcPattern(this, "utxos_under_1k_btc"),
+            _1kSats: create_100btcPattern(this, "utxos_under_1k_sats"),
+            _1mSats: create_100btcPattern(this, "utxos_under_1m_sats"),
           },
           maxAge: {
-            _10y: create_10yPattern(this, 'utxos_up_to_10y_old'),
-            _12y: create_10yPattern(this, 'utxos_up_to_12y_old'),
-            _15y: create_10yPattern(this, 'utxos_up_to_15y_old'),
-            _1m: create_10yPattern(this, 'utxos_up_to_1m_old'),
-            _1w: create_10yPattern(this, 'utxos_up_to_1w_old'),
-            _1y: create_10yPattern(this, 'utxos_up_to_1y_old'),
-            _2m: create_10yPattern(this, 'utxos_up_to_2m_old'),
-            _2y: create_10yPattern(this, 'utxos_up_to_2y_old'),
-            _3m: create_10yPattern(this, 'utxos_up_to_3m_old'),
-            _3y: create_10yPattern(this, 'utxos_up_to_3y_old'),
-            _4m: create_10yPattern(this, 'utxos_up_to_4m_old'),
-            _4y: create_10yPattern(this, 'utxos_up_to_4y_old'),
-            _5m: create_10yPattern(this, 'utxos_up_to_5m_old'),
-            _5y: create_10yPattern(this, 'utxos_up_to_5y_old'),
-            _6m: create_10yPattern(this, 'utxos_up_to_6m_old'),
-            _6y: create_10yPattern(this, 'utxos_up_to_6y_old'),
-            _7y: create_10yPattern(this, 'utxos_up_to_7y_old'),
-            _8y: create_10yPattern(this, 'utxos_up_to_8y_old'),
+            _10y: create_10yPattern(this, "utxos_up_to_10y_old"),
+            _12y: create_10yPattern(this, "utxos_up_to_12y_old"),
+            _15y: create_10yPattern(this, "utxos_up_to_15y_old"),
+            _1m: create_10yPattern(this, "utxos_up_to_1m_old"),
+            _1w: create_10yPattern(this, "utxos_up_to_1w_old"),
+            _1y: create_10yPattern(this, "utxos_up_to_1y_old"),
+            _2m: create_10yPattern(this, "utxos_up_to_2m_old"),
+            _2y: create_10yPattern(this, "utxos_up_to_2y_old"),
+            _3m: create_10yPattern(this, "utxos_up_to_3m_old"),
+            _3y: create_10yPattern(this, "utxos_up_to_3y_old"),
+            _4m: create_10yPattern(this, "utxos_up_to_4m_old"),
+            _4y: create_10yPattern(this, "utxos_up_to_4y_old"),
+            _5m: create_10yPattern(this, "utxos_up_to_5m_old"),
+            _5y: create_10yPattern(this, "utxos_up_to_5y_old"),
+            _6m: create_10yPattern(this, "utxos_up_to_6m_old"),
+            _6y: create_10yPattern(this, "utxos_up_to_6y_old"),
+            _7y: create_10yPattern(this, "utxos_up_to_7y_old"),
+            _8y: create_10yPattern(this, "utxos_up_to_8y_old"),
           },
           minAge: {
-            _10y: create_100btcPattern(this, 'utxos_at_least_10y_old'),
-            _12y: create_100btcPattern(this, 'utxos_at_least_12y_old'),
-            _1d: create_100btcPattern(this, 'utxos_at_least_1d_old'),
-            _1m: create_100btcPattern(this, 'utxos_at_least_1m_old'),
-            _1w: create_100btcPattern(this, 'utxos_at_least_1w_old'),
-            _1y: create_100btcPattern(this, 'utxos_at_least_1y_old'),
-            _2m: create_100btcPattern(this, 'utxos_at_least_2m_old'),
-            _2y: create_100btcPattern(this, 'utxos_at_least_2y_old'),
-            _3m: create_100btcPattern(this, 'utxos_at_least_3m_old'),
-            _3y: create_100btcPattern(this, 'utxos_at_least_3y_old'),
-            _4m: create_100btcPattern(this, 'utxos_at_least_4m_old'),
-            _4y: create_100btcPattern(this, 'utxos_at_least_4y_old'),
-            _5m: create_100btcPattern(this, 'utxos_at_least_5m_old'),
-            _5y: create_100btcPattern(this, 'utxos_at_least_5y_old'),
-            _6m: create_100btcPattern(this, 'utxos_at_least_6m_old'),
-            _6y: create_100btcPattern(this, 'utxos_at_least_6y_old'),
-            _7y: create_100btcPattern(this, 'utxos_at_least_7y_old'),
-            _8y: create_100btcPattern(this, 'utxos_at_least_8y_old'),
+            _10y: create_100btcPattern(this, "utxos_at_least_10y_old"),
+            _12y: create_100btcPattern(this, "utxos_at_least_12y_old"),
+            _1d: create_100btcPattern(this, "utxos_at_least_1d_old"),
+            _1m: create_100btcPattern(this, "utxos_at_least_1m_old"),
+            _1w: create_100btcPattern(this, "utxos_at_least_1w_old"),
+            _1y: create_100btcPattern(this, "utxos_at_least_1y_old"),
+            _2m: create_100btcPattern(this, "utxos_at_least_2m_old"),
+            _2y: create_100btcPattern(this, "utxos_at_least_2y_old"),
+            _3m: create_100btcPattern(this, "utxos_at_least_3m_old"),
+            _3y: create_100btcPattern(this, "utxos_at_least_3y_old"),
+            _4m: create_100btcPattern(this, "utxos_at_least_4m_old"),
+            _4y: create_100btcPattern(this, "utxos_at_least_4y_old"),
+            _5m: create_100btcPattern(this, "utxos_at_least_5m_old"),
+            _5y: create_100btcPattern(this, "utxos_at_least_5y_old"),
+            _6m: create_100btcPattern(this, "utxos_at_least_6m_old"),
+            _6y: create_100btcPattern(this, "utxos_at_least_6y_old"),
+            _7y: create_100btcPattern(this, "utxos_at_least_7y_old"),
+            _8y: create_100btcPattern(this, "utxos_at_least_8y_old"),
           },
           term: {
             long: {
-              activity: createActivityPattern2(this, 'lth'),
+              activity: createActivityPattern2(this, "lth"),
               costBasis: {
-                max: createMetricPattern1(this, 'lth_max_cost_basis'),
-                min: createMetricPattern1(this, 'lth_min_cost_basis'),
-                percentiles: createPercentilesPattern(this, 'lth_cost_basis'),
+                max: createMetricPattern1(this, "lth_max_cost_basis"),
+                min: createMetricPattern1(this, "lth_min_cost_basis"),
+                percentiles: createPercentilesPattern(this, "lth_cost_basis"),
               },
-              outputs: createOutputsPattern(this, 'lth'),
-              realized: createRealizedPattern2(this, 'lth'),
-              relative: createRelativePattern5(this, 'lth'),
-              supply: createSupplyPattern2(this, 'lth_supply'),
-              unrealized: createUnrealizedPattern(this, 'lth'),
+              outputs: createOutputsPattern(this, "lth"),
+              realized: createRealizedPattern2(this, "lth"),
+              relative: createRelativePattern5(this, "lth"),
+              supply: createSupplyPattern2(this, "lth_supply"),
+              unrealized: createUnrealizedPattern(this, "lth"),
             },
             short: {
-              activity: createActivityPattern2(this, 'sth'),
+              activity: createActivityPattern2(this, "sth"),
               costBasis: {
-                max: createMetricPattern1(this, 'sth_max_cost_basis'),
-                min: createMetricPattern1(this, 'sth_min_cost_basis'),
-                percentiles: createPercentilesPattern(this, 'sth_cost_basis'),
+                max: createMetricPattern1(this, "sth_max_cost_basis"),
+                min: createMetricPattern1(this, "sth_min_cost_basis"),
+                percentiles: createPercentilesPattern(this, "sth_cost_basis"),
               },
-              outputs: createOutputsPattern(this, 'sth'),
-              realized: createRealizedPattern3(this, 'sth'),
-              relative: createRelativePattern5(this, 'sth'),
-              supply: createSupplyPattern2(this, 'sth_supply'),
-              unrealized: createUnrealizedPattern(this, 'sth'),
+              outputs: createOutputsPattern(this, "sth"),
+              realized: createRealizedPattern3(this, "sth"),
+              relative: createRelativePattern5(this, "sth"),
+              supply: createSupplyPattern2(this, "sth_supply"),
+              unrealized: createUnrealizedPattern(this, "sth"),
             },
           },
           type: {
-            empty: create_0satsPattern2(this, 'empty_outputs'),
-            p2a: create_0satsPattern2(this, 'p2a'),
-            p2ms: create_0satsPattern2(this, 'p2ms'),
-            p2pk33: create_0satsPattern2(this, 'p2pk33'),
-            p2pk65: create_0satsPattern2(this, 'p2pk65'),
-            p2pkh: create_0satsPattern2(this, 'p2pkh'),
-            p2sh: create_0satsPattern2(this, 'p2sh'),
-            p2tr: create_0satsPattern2(this, 'p2tr'),
-            p2wpkh: create_0satsPattern2(this, 'p2wpkh'),
-            p2wsh: create_0satsPattern2(this, 'p2wsh'),
-            unknown: create_0satsPattern2(this, 'unknown_outputs'),
+            empty: create_0satsPattern2(this, "empty_outputs"),
+            p2a: create_0satsPattern2(this, "p2a"),
+            p2ms: create_0satsPattern2(this, "p2ms"),
+            p2pk33: create_0satsPattern2(this, "p2pk33"),
+            p2pk65: create_0satsPattern2(this, "p2pk65"),
+            p2pkh: create_0satsPattern2(this, "p2pkh"),
+            p2sh: create_0satsPattern2(this, "p2sh"),
+            p2tr: create_0satsPattern2(this, "p2tr"),
+            p2wpkh: create_0satsPattern2(this, "p2wpkh"),
+            p2wsh: create_0satsPattern2(this, "p2wsh"),
+            unknown: create_0satsPattern2(this, "unknown_outputs"),
           },
           year: {
-            _2009: create_0satsPattern2(this, 'year_2009'),
-            _2010: create_0satsPattern2(this, 'year_2010'),
-            _2011: create_0satsPattern2(this, 'year_2011'),
-            _2012: create_0satsPattern2(this, 'year_2012'),
-            _2013: create_0satsPattern2(this, 'year_2013'),
-            _2014: create_0satsPattern2(this, 'year_2014'),
-            _2015: create_0satsPattern2(this, 'year_2015'),
-            _2016: create_0satsPattern2(this, 'year_2016'),
-            _2017: create_0satsPattern2(this, 'year_2017'),
-            _2018: create_0satsPattern2(this, 'year_2018'),
-            _2019: create_0satsPattern2(this, 'year_2019'),
-            _2020: create_0satsPattern2(this, 'year_2020'),
-            _2021: create_0satsPattern2(this, 'year_2021'),
-            _2022: create_0satsPattern2(this, 'year_2022'),
-            _2023: create_0satsPattern2(this, 'year_2023'),
-            _2024: create_0satsPattern2(this, 'year_2024'),
-            _2025: create_0satsPattern2(this, 'year_2025'),
-            _2026: create_0satsPattern2(this, 'year_2026'),
+            _2009: create_0satsPattern2(this, "year_2009"),
+            _2010: create_0satsPattern2(this, "year_2010"),
+            _2011: create_0satsPattern2(this, "year_2011"),
+            _2012: create_0satsPattern2(this, "year_2012"),
+            _2013: create_0satsPattern2(this, "year_2013"),
+            _2014: create_0satsPattern2(this, "year_2014"),
+            _2015: create_0satsPattern2(this, "year_2015"),
+            _2016: create_0satsPattern2(this, "year_2016"),
+            _2017: create_0satsPattern2(this, "year_2017"),
+            _2018: create_0satsPattern2(this, "year_2018"),
+            _2019: create_0satsPattern2(this, "year_2019"),
+            _2020: create_0satsPattern2(this, "year_2020"),
+            _2021: create_0satsPattern2(this, "year_2021"),
+            _2022: create_0satsPattern2(this, "year_2022"),
+            _2023: create_0satsPattern2(this, "year_2023"),
+            _2024: create_0satsPattern2(this, "year_2024"),
+            _2025: create_0satsPattern2(this, "year_2025"),
+            _2026: create_0satsPattern2(this, "year_2026"),
           },
         },
       },
       indexes: {
         address: {
           empty: {
-            identity: createMetricPattern9(this, 'emptyoutputindex'),
+            identity: createMetricPattern9(this, "emptyoutputindex"),
           },
           opreturn: {
-            identity: createMetricPattern14(this, 'opreturnindex'),
+            identity: createMetricPattern14(this, "opreturnindex"),
           },
           p2a: {
-            identity: createMetricPattern16(this, 'p2aaddressindex'),
+            identity: createMetricPattern16(this, "p2aaddressindex"),
           },
           p2ms: {
-            identity: createMetricPattern17(this, 'p2msoutputindex'),
+            identity: createMetricPattern17(this, "p2msoutputindex"),
           },
           p2pk33: {
-            identity: createMetricPattern18(this, 'p2pk33addressindex'),
+            identity: createMetricPattern18(this, "p2pk33addressindex"),
           },
           p2pk65: {
-            identity: createMetricPattern19(this, 'p2pk65addressindex'),
+            identity: createMetricPattern19(this, "p2pk65addressindex"),
           },
           p2pkh: {
-            identity: createMetricPattern20(this, 'p2pkhaddressindex'),
+            identity: createMetricPattern20(this, "p2pkhaddressindex"),
           },
           p2sh: {
-            identity: createMetricPattern21(this, 'p2shaddressindex'),
+            identity: createMetricPattern21(this, "p2shaddressindex"),
           },
           p2tr: {
-            identity: createMetricPattern22(this, 'p2traddressindex'),
+            identity: createMetricPattern22(this, "p2traddressindex"),
           },
           p2wpkh: {
-            identity: createMetricPattern23(this, 'p2wpkhaddressindex'),
+            identity: createMetricPattern23(this, "p2wpkhaddressindex"),
           },
           p2wsh: {
-            identity: createMetricPattern24(this, 'p2wshaddressindex'),
+            identity: createMetricPattern24(this, "p2wshaddressindex"),
           },
           unknown: {
-            identity: createMetricPattern28(this, 'unknownoutputindex'),
+            identity: createMetricPattern28(this, "unknownoutputindex"),
           },
         },
         dateindex: {
-          date: createMetricPattern6(this, 'dateindex_date'),
-          firstHeight: createMetricPattern6(this, 'dateindex_first_height'),
-          heightCount: createMetricPattern6(this, 'dateindex_height_count'),
-          identity: createMetricPattern6(this, 'dateindex'),
-          monthindex: createMetricPattern6(this, 'dateindex_monthindex'),
-          weekindex: createMetricPattern6(this, 'dateindex_weekindex'),
+          date: createMetricPattern6(this, "dateindex_date"),
+          firstHeight: createMetricPattern6(this, "dateindex_first_height"),
+          heightCount: createMetricPattern6(this, "dateindex_height_count"),
+          identity: createMetricPattern6(this, "dateindex"),
+          monthindex: createMetricPattern6(this, "dateindex_monthindex"),
+          weekindex: createMetricPattern6(this, "dateindex_weekindex"),
         },
         decadeindex: {
-          firstYearindex: createMetricPattern7(this, 'decadeindex_first_yearindex'),
-          identity: createMetricPattern7(this, 'decadeindex'),
-          yearindexCount: createMetricPattern7(this, 'decadeindex_yearindex_count'),
+          firstYearindex: createMetricPattern7(
+            this,
+            "decadeindex_first_yearindex",
+          ),
+          identity: createMetricPattern7(this, "decadeindex"),
+          yearindexCount: createMetricPattern7(
+            this,
+            "decadeindex_yearindex_count",
+          ),
         },
         difficultyepoch: {
-          firstHeight: createMetricPattern8(this, 'difficultyepoch_first_height'),
-          heightCount: createMetricPattern8(this, 'difficultyepoch_height_count'),
-          identity: createMetricPattern8(this, 'difficultyepoch'),
+          firstHeight: createMetricPattern8(
+            this,
+            "difficultyepoch_first_height",
+          ),
+          heightCount: createMetricPattern8(
+            this,
+            "difficultyepoch_height_count",
+          ),
+          identity: createMetricPattern8(this, "difficultyepoch"),
         },
         halvingepoch: {
-          firstHeight: createMetricPattern10(this, 'halvingepoch_first_height'),
-          identity: createMetricPattern10(this, 'halvingepoch'),
+          firstHeight: createMetricPattern10(this, "halvingepoch_first_height"),
+          identity: createMetricPattern10(this, "halvingepoch"),
         },
         height: {
-          dateindex: createMetricPattern11(this, 'height_dateindex'),
-          difficultyepoch: createMetricPattern11(this, 'height_difficultyepoch'),
-          halvingepoch: createMetricPattern11(this, 'height_halvingepoch'),
-          identity: createMetricPattern11(this, 'height'),
-          txindexCount: createMetricPattern11(this, 'height_txindex_count'),
+          dateindex: createMetricPattern11(this, "height_dateindex"),
+          difficultyepoch: createMetricPattern11(
+            this,
+            "height_difficultyepoch",
+          ),
+          halvingepoch: createMetricPattern11(this, "height_halvingepoch"),
+          identity: createMetricPattern11(this, "height"),
+          txindexCount: createMetricPattern11(this, "height_txindex_count"),
         },
         monthindex: {
-          dateindexCount: createMetricPattern13(this, 'monthindex_dateindex_count'),
-          firstDateindex: createMetricPattern13(this, 'monthindex_first_dateindex'),
-          identity: createMetricPattern13(this, 'monthindex'),
-          quarterindex: createMetricPattern13(this, 'monthindex_quarterindex'),
-          semesterindex: createMetricPattern13(this, 'monthindex_semesterindex'),
-          yearindex: createMetricPattern13(this, 'monthindex_yearindex'),
+          dateindexCount: createMetricPattern13(
+            this,
+            "monthindex_dateindex_count",
+          ),
+          firstDateindex: createMetricPattern13(
+            this,
+            "monthindex_first_dateindex",
+          ),
+          identity: createMetricPattern13(this, "monthindex"),
+          quarterindex: createMetricPattern13(this, "monthindex_quarterindex"),
+          semesterindex: createMetricPattern13(
+            this,
+            "monthindex_semesterindex",
+          ),
+          yearindex: createMetricPattern13(this, "monthindex_yearindex"),
         },
         quarterindex: {
-          firstMonthindex: createMetricPattern25(this, 'quarterindex_first_monthindex'),
-          identity: createMetricPattern25(this, 'quarterindex'),
-          monthindexCount: createMetricPattern25(this, 'quarterindex_monthindex_count'),
+          firstMonthindex: createMetricPattern25(
+            this,
+            "quarterindex_first_monthindex",
+          ),
+          identity: createMetricPattern25(this, "quarterindex"),
+          monthindexCount: createMetricPattern25(
+            this,
+            "quarterindex_monthindex_count",
+          ),
         },
         semesterindex: {
-          firstMonthindex: createMetricPattern26(this, 'semesterindex_first_monthindex'),
-          identity: createMetricPattern26(this, 'semesterindex'),
-          monthindexCount: createMetricPattern26(this, 'semesterindex_monthindex_count'),
+          firstMonthindex: createMetricPattern26(
+            this,
+            "semesterindex_first_monthindex",
+          ),
+          identity: createMetricPattern26(this, "semesterindex"),
+          monthindexCount: createMetricPattern26(
+            this,
+            "semesterindex_monthindex_count",
+          ),
         },
         txindex: {
-          identity: createMetricPattern27(this, 'txindex'),
-          inputCount: createMetricPattern27(this, 'txindex_input_count'),
-          outputCount: createMetricPattern27(this, 'txindex_output_count'),
+          identity: createMetricPattern27(this, "txindex"),
+          inputCount: createMetricPattern27(this, "txindex_input_count"),
+          outputCount: createMetricPattern27(this, "txindex_output_count"),
         },
         txinindex: {
-          identity: createMetricPattern12(this, 'txinindex'),
+          identity: createMetricPattern12(this, "txinindex"),
         },
         txoutindex: {
-          identity: createMetricPattern15(this, 'txoutindex'),
+          identity: createMetricPattern15(this, "txoutindex"),
         },
         weekindex: {
-          dateindexCount: createMetricPattern29(this, 'weekindex_dateindex_count'),
-          firstDateindex: createMetricPattern29(this, 'weekindex_first_dateindex'),
-          identity: createMetricPattern29(this, 'weekindex'),
+          dateindexCount: createMetricPattern29(
+            this,
+            "weekindex_dateindex_count",
+          ),
+          firstDateindex: createMetricPattern29(
+            this,
+            "weekindex_first_dateindex",
+          ),
+          identity: createMetricPattern29(this, "weekindex"),
         },
         yearindex: {
-          decadeindex: createMetricPattern30(this, 'yearindex_decadeindex'),
-          firstMonthindex: createMetricPattern30(this, 'yearindex_first_monthindex'),
-          identity: createMetricPattern30(this, 'yearindex'),
-          monthindexCount: createMetricPattern30(this, 'yearindex_monthindex_count'),
+          decadeindex: createMetricPattern30(this, "yearindex_decadeindex"),
+          firstMonthindex: createMetricPattern30(
+            this,
+            "yearindex_first_monthindex",
+          ),
+          identity: createMetricPattern30(this, "yearindex"),
+          monthindexCount: createMetricPattern30(
+            this,
+            "yearindex_monthindex_count",
+          ),
         },
       },
       inputs: {
-        count: createCountPattern2(this, 'input_count'),
-        firstTxinindex: createMetricPattern11(this, 'first_txinindex'),
-        outpoint: createMetricPattern12(this, 'outpoint'),
-        outputtype: createMetricPattern12(this, 'outputtype'),
+        count: createCountPattern2(this, "input_count"),
+        firstTxinindex: createMetricPattern11(this, "first_txinindex"),
+        outpoint: createMetricPattern12(this, "outpoint"),
+        outputtype: createMetricPattern12(this, "outputtype"),
         spent: {
-          txoutindex: createMetricPattern12(this, 'txoutindex'),
-          value: createMetricPattern12(this, 'value'),
+          txoutindex: createMetricPattern12(this, "txoutindex"),
+          value: createMetricPattern12(this, "value"),
         },
-        txindex: createMetricPattern12(this, 'txindex'),
-        typeindex: createMetricPattern12(this, 'typeindex'),
-        witnessSize: createMetricPattern12(this, 'witness_size'),
+        txindex: createMetricPattern12(this, "txindex"),
+        typeindex: createMetricPattern12(this, "typeindex"),
+        witnessSize: createMetricPattern12(this, "witness_size"),
       },
       market: {
         ath: {
-          daysSincePriceAth: createMetricPattern4(this, 'days_since_price_ath'),
-          maxDaysBetweenPriceAths: createMetricPattern4(this, 'max_days_between_price_aths'),
-          maxYearsBetweenPriceAths: createMetricPattern4(this, 'max_years_between_price_aths'),
-          priceAth: createMetricPattern1(this, 'price_ath'),
-          priceDrawdown: createMetricPattern3(this, 'price_drawdown'),
-          yearsSincePriceAth: createMetricPattern4(this, 'years_since_price_ath'),
+          daysSincePriceAth: createMetricPattern4(this, "days_since_price_ath"),
+          maxDaysBetweenPriceAths: createMetricPattern4(
+            this,
+            "max_days_between_price_aths",
+          ),
+          maxYearsBetweenPriceAths: createMetricPattern4(
+            this,
+            "max_years_between_price_aths",
+          ),
+          priceAth: createMetricPattern1(this, "price_ath"),
+          priceDrawdown: createMetricPattern3(this, "price_drawdown"),
+          yearsSincePriceAth: createMetricPattern4(
+            this,
+            "years_since_price_ath",
+          ),
         },
         dca: {
           classAveragePrice: {
-            _2015: createMetricPattern4(this, 'dca_class_2015_average_price'),
-            _2016: createMetricPattern4(this, 'dca_class_2016_average_price'),
-            _2017: createMetricPattern4(this, 'dca_class_2017_average_price'),
-            _2018: createMetricPattern4(this, 'dca_class_2018_average_price'),
-            _2019: createMetricPattern4(this, 'dca_class_2019_average_price'),
-            _2020: createMetricPattern4(this, 'dca_class_2020_average_price'),
-            _2021: createMetricPattern4(this, 'dca_class_2021_average_price'),
-            _2022: createMetricPattern4(this, 'dca_class_2022_average_price'),
-            _2023: createMetricPattern4(this, 'dca_class_2023_average_price'),
-            _2024: createMetricPattern4(this, 'dca_class_2024_average_price'),
-            _2025: createMetricPattern4(this, 'dca_class_2025_average_price'),
+            _2015: createMetricPattern4(this, "dca_class_2015_average_price"),
+            _2016: createMetricPattern4(this, "dca_class_2016_average_price"),
+            _2017: createMetricPattern4(this, "dca_class_2017_average_price"),
+            _2018: createMetricPattern4(this, "dca_class_2018_average_price"),
+            _2019: createMetricPattern4(this, "dca_class_2019_average_price"),
+            _2020: createMetricPattern4(this, "dca_class_2020_average_price"),
+            _2021: createMetricPattern4(this, "dca_class_2021_average_price"),
+            _2022: createMetricPattern4(this, "dca_class_2022_average_price"),
+            _2023: createMetricPattern4(this, "dca_class_2023_average_price"),
+            _2024: createMetricPattern4(this, "dca_class_2024_average_price"),
+            _2025: createMetricPattern4(this, "dca_class_2025_average_price"),
           },
           classReturns: {
-            _2015: createMetricPattern4(this, 'dca_class_2015_returns'),
-            _2016: createMetricPattern4(this, 'dca_class_2016_returns'),
-            _2017: createMetricPattern4(this, 'dca_class_2017_returns'),
-            _2018: createMetricPattern4(this, 'dca_class_2018_returns'),
-            _2019: createMetricPattern4(this, 'dca_class_2019_returns'),
-            _2020: createMetricPattern4(this, 'dca_class_2020_returns'),
-            _2021: createMetricPattern4(this, 'dca_class_2021_returns'),
-            _2022: createMetricPattern4(this, 'dca_class_2022_returns'),
-            _2023: createMetricPattern4(this, 'dca_class_2023_returns'),
-            _2024: createMetricPattern4(this, 'dca_class_2024_returns'),
-            _2025: createMetricPattern4(this, 'dca_class_2025_returns'),
+            _2015: createMetricPattern4(this, "dca_class_2015_returns"),
+            _2016: createMetricPattern4(this, "dca_class_2016_returns"),
+            _2017: createMetricPattern4(this, "dca_class_2017_returns"),
+            _2018: createMetricPattern4(this, "dca_class_2018_returns"),
+            _2019: createMetricPattern4(this, "dca_class_2019_returns"),
+            _2020: createMetricPattern4(this, "dca_class_2020_returns"),
+            _2021: createMetricPattern4(this, "dca_class_2021_returns"),
+            _2022: createMetricPattern4(this, "dca_class_2022_returns"),
+            _2023: createMetricPattern4(this, "dca_class_2023_returns"),
+            _2024: createMetricPattern4(this, "dca_class_2024_returns"),
+            _2025: createMetricPattern4(this, "dca_class_2025_returns"),
           },
           classStack: {
-            _2015: create_2015Pattern(this, 'dca_class_2015_stack'),
-            _2016: create_2015Pattern(this, 'dca_class_2016_stack'),
-            _2017: create_2015Pattern(this, 'dca_class_2017_stack'),
-            _2018: create_2015Pattern(this, 'dca_class_2018_stack'),
-            _2019: create_2015Pattern(this, 'dca_class_2019_stack'),
-            _2020: create_2015Pattern(this, 'dca_class_2020_stack'),
-            _2021: create_2015Pattern(this, 'dca_class_2021_stack'),
-            _2022: create_2015Pattern(this, 'dca_class_2022_stack'),
-            _2023: create_2015Pattern(this, 'dca_class_2023_stack'),
-            _2024: create_2015Pattern(this, 'dca_class_2024_stack'),
-            _2025: create_2015Pattern(this, 'dca_class_2025_stack'),
+            _2015: create_2015Pattern(this, "dca_class_2015_stack"),
+            _2016: create_2015Pattern(this, "dca_class_2016_stack"),
+            _2017: create_2015Pattern(this, "dca_class_2017_stack"),
+            _2018: create_2015Pattern(this, "dca_class_2018_stack"),
+            _2019: create_2015Pattern(this, "dca_class_2019_stack"),
+            _2020: create_2015Pattern(this, "dca_class_2020_stack"),
+            _2021: create_2015Pattern(this, "dca_class_2021_stack"),
+            _2022: create_2015Pattern(this, "dca_class_2022_stack"),
+            _2023: create_2015Pattern(this, "dca_class_2023_stack"),
+            _2024: create_2015Pattern(this, "dca_class_2024_stack"),
+            _2025: create_2015Pattern(this, "dca_class_2025_stack"),
           },
-          periodAveragePrice: createPeriodAveragePricePattern(this, 'dca_average_price'),
-          periodCagr: createPeriodCagrPattern(this, 'dca_cagr'),
-          periodLumpSumStack: createPeriodLumpSumStackPattern(this, 'lump_sum_stack'),
-          periodReturns: createPeriodAveragePricePattern(this, 'dca_returns'),
-          periodStack: createPeriodLumpSumStackPattern(this, 'dca_stack'),
+          periodAveragePrice: createPeriodAveragePricePattern(
+            this,
+            "dca_average_price",
+          ),
+          periodCagr: createPeriodCagrPattern(this, "dca_cagr"),
+          periodLumpSumStack: createPeriodLumpSumStackPattern(
+            this,
+            "lump_sum_stack",
+          ),
+          periodReturns: createPeriodAveragePricePattern(this, "dca_returns"),
+          periodStack: createPeriodLumpSumStackPattern(this, "dca_stack"),
         },
         indicators: {
-          gini: createMetricPattern6(this, 'gini'),
-          macdHistogram: createMetricPattern6(this, 'macd_histogram'),
-          macdLine: createMetricPattern6(this, 'macd_line'),
-          macdSignal: createMetricPattern6(this, 'macd_signal'),
-          nvt: createMetricPattern4(this, 'nvt'),
-          piCycle: createMetricPattern6(this, 'pi_cycle'),
-          puellMultiple: createMetricPattern4(this, 'puell_multiple'),
-          rsi14d: createMetricPattern6(this, 'rsi_14d'),
-          rsi14dMax: createMetricPattern6(this, 'rsi_14d_max'),
-          rsi14dMin: createMetricPattern6(this, 'rsi_14d_min'),
-          rsiAverageGain14d: createMetricPattern6(this, 'rsi_average_gain_14d'),
-          rsiAverageLoss14d: createMetricPattern6(this, 'rsi_average_loss_14d'),
-          rsiGains: createMetricPattern6(this, 'rsi_gains'),
-          rsiLosses: createMetricPattern6(this, 'rsi_losses'),
-          stochD: createMetricPattern6(this, 'stoch_d'),
-          stochK: createMetricPattern6(this, 'stoch_k'),
-          stochRsi: createMetricPattern6(this, 'stoch_rsi'),
-          stochRsiD: createMetricPattern6(this, 'stoch_rsi_d'),
-          stochRsiK: createMetricPattern6(this, 'stoch_rsi_k'),
+          gini: createMetricPattern6(this, "gini"),
+          macdHistogram: createMetricPattern6(this, "macd_histogram"),
+          macdLine: createMetricPattern6(this, "macd_line"),
+          macdSignal: createMetricPattern6(this, "macd_signal"),
+          nvt: createMetricPattern4(this, "nvt"),
+          piCycle: createMetricPattern6(this, "pi_cycle"),
+          puellMultiple: createMetricPattern4(this, "puell_multiple"),
+          rsi14d: createMetricPattern6(this, "rsi_14d"),
+          rsi14dMax: createMetricPattern6(this, "rsi_14d_max"),
+          rsi14dMin: createMetricPattern6(this, "rsi_14d_min"),
+          rsiAverageGain14d: createMetricPattern6(this, "rsi_average_gain_14d"),
+          rsiAverageLoss14d: createMetricPattern6(this, "rsi_average_loss_14d"),
+          rsiGains: createMetricPattern6(this, "rsi_gains"),
+          rsiLosses: createMetricPattern6(this, "rsi_losses"),
+          stochD: createMetricPattern6(this, "stoch_d"),
+          stochK: createMetricPattern6(this, "stoch_k"),
+          stochRsi: createMetricPattern6(this, "stoch_rsi"),
+          stochRsiD: createMetricPattern6(this, "stoch_rsi_d"),
+          stochRsiK: createMetricPattern6(this, "stoch_rsi_k"),
         },
         lookback: {
           priceAgo: {
-            _10y: createMetricPattern4(this, 'price_10y_ago'),
-            _1d: createMetricPattern4(this, 'price_1d_ago'),
-            _1m: createMetricPattern4(this, 'price_1m_ago'),
-            _1w: createMetricPattern4(this, 'price_1w_ago'),
-            _1y: createMetricPattern4(this, 'price_1y_ago'),
-            _2y: createMetricPattern4(this, 'price_2y_ago'),
-            _3m: createMetricPattern4(this, 'price_3m_ago'),
-            _3y: createMetricPattern4(this, 'price_3y_ago'),
-            _4y: createMetricPattern4(this, 'price_4y_ago'),
-            _5y: createMetricPattern4(this, 'price_5y_ago'),
-            _6m: createMetricPattern4(this, 'price_6m_ago'),
-            _6y: createMetricPattern4(this, 'price_6y_ago'),
-            _8y: createMetricPattern4(this, 'price_8y_ago'),
+            _10y: createMetricPattern4(this, "price_10y_ago"),
+            _1d: createMetricPattern4(this, "price_1d_ago"),
+            _1m: createMetricPattern4(this, "price_1m_ago"),
+            _1w: createMetricPattern4(this, "price_1w_ago"),
+            _1y: createMetricPattern4(this, "price_1y_ago"),
+            _2y: createMetricPattern4(this, "price_2y_ago"),
+            _3m: createMetricPattern4(this, "price_3m_ago"),
+            _3y: createMetricPattern4(this, "price_3y_ago"),
+            _4y: createMetricPattern4(this, "price_4y_ago"),
+            _5y: createMetricPattern4(this, "price_5y_ago"),
+            _6m: createMetricPattern4(this, "price_6m_ago"),
+            _6y: createMetricPattern4(this, "price_6y_ago"),
+            _8y: createMetricPattern4(this, "price_8y_ago"),
           },
         },
         movingAverage: {
-          price111dSma: createPrice111dSmaPattern(this, 'price_111d_sma'),
-          price12dEma: createPrice111dSmaPattern(this, 'price_12d_ema'),
-          price13dEma: createPrice111dSmaPattern(this, 'price_13d_ema'),
-          price13dSma: createPrice111dSmaPattern(this, 'price_13d_sma'),
-          price144dEma: createPrice111dSmaPattern(this, 'price_144d_ema'),
-          price144dSma: createPrice111dSmaPattern(this, 'price_144d_sma'),
-          price1mEma: createPrice111dSmaPattern(this, 'price_1m_ema'),
-          price1mSma: createPrice111dSmaPattern(this, 'price_1m_sma'),
-          price1wEma: createPrice111dSmaPattern(this, 'price_1w_ema'),
-          price1wSma: createPrice111dSmaPattern(this, 'price_1w_sma'),
-          price1yEma: createPrice111dSmaPattern(this, 'price_1y_ema'),
-          price1ySma: createPrice111dSmaPattern(this, 'price_1y_sma'),
-          price200dEma: createPrice111dSmaPattern(this, 'price_200d_ema'),
-          price200dSma: createPrice111dSmaPattern(this, 'price_200d_sma'),
-          price200dSmaX08: createMetricPattern4(this, 'price_200d_sma_x0_8'),
-          price200dSmaX24: createMetricPattern4(this, 'price_200d_sma_x2_4'),
-          price200wEma: createPrice111dSmaPattern(this, 'price_200w_ema'),
-          price200wSma: createPrice111dSmaPattern(this, 'price_200w_sma'),
-          price21dEma: createPrice111dSmaPattern(this, 'price_21d_ema'),
-          price21dSma: createPrice111dSmaPattern(this, 'price_21d_sma'),
-          price26dEma: createPrice111dSmaPattern(this, 'price_26d_ema'),
-          price2yEma: createPrice111dSmaPattern(this, 'price_2y_ema'),
-          price2ySma: createPrice111dSmaPattern(this, 'price_2y_sma'),
-          price34dEma: createPrice111dSmaPattern(this, 'price_34d_ema'),
-          price34dSma: createPrice111dSmaPattern(this, 'price_34d_sma'),
-          price350dSma: createPrice111dSmaPattern(this, 'price_350d_sma'),
-          price350dSmaX2: createMetricPattern4(this, 'price_350d_sma_x2'),
-          price4yEma: createPrice111dSmaPattern(this, 'price_4y_ema'),
-          price4ySma: createPrice111dSmaPattern(this, 'price_4y_sma'),
-          price55dEma: createPrice111dSmaPattern(this, 'price_55d_ema'),
-          price55dSma: createPrice111dSmaPattern(this, 'price_55d_sma'),
-          price89dEma: createPrice111dSmaPattern(this, 'price_89d_ema'),
-          price89dSma: createPrice111dSmaPattern(this, 'price_89d_sma'),
-          price8dEma: createPrice111dSmaPattern(this, 'price_8d_ema'),
-          price8dSma: createPrice111dSmaPattern(this, 'price_8d_sma'),
+          price111dSma: createPrice111dSmaPattern(this, "price_111d_sma"),
+          price12dEma: createPrice111dSmaPattern(this, "price_12d_ema"),
+          price13dEma: createPrice111dSmaPattern(this, "price_13d_ema"),
+          price13dSma: createPrice111dSmaPattern(this, "price_13d_sma"),
+          price144dEma: createPrice111dSmaPattern(this, "price_144d_ema"),
+          price144dSma: createPrice111dSmaPattern(this, "price_144d_sma"),
+          price1mEma: createPrice111dSmaPattern(this, "price_1m_ema"),
+          price1mSma: createPrice111dSmaPattern(this, "price_1m_sma"),
+          price1wEma: createPrice111dSmaPattern(this, "price_1w_ema"),
+          price1wSma: createPrice111dSmaPattern(this, "price_1w_sma"),
+          price1yEma: createPrice111dSmaPattern(this, "price_1y_ema"),
+          price1ySma: createPrice111dSmaPattern(this, "price_1y_sma"),
+          price200dEma: createPrice111dSmaPattern(this, "price_200d_ema"),
+          price200dSma: createPrice111dSmaPattern(this, "price_200d_sma"),
+          price200dSmaX08: createMetricPattern4(this, "price_200d_sma_x0_8"),
+          price200dSmaX24: createMetricPattern4(this, "price_200d_sma_x2_4"),
+          price200wEma: createPrice111dSmaPattern(this, "price_200w_ema"),
+          price200wSma: createPrice111dSmaPattern(this, "price_200w_sma"),
+          price21dEma: createPrice111dSmaPattern(this, "price_21d_ema"),
+          price21dSma: createPrice111dSmaPattern(this, "price_21d_sma"),
+          price26dEma: createPrice111dSmaPattern(this, "price_26d_ema"),
+          price2yEma: createPrice111dSmaPattern(this, "price_2y_ema"),
+          price2ySma: createPrice111dSmaPattern(this, "price_2y_sma"),
+          price34dEma: createPrice111dSmaPattern(this, "price_34d_ema"),
+          price34dSma: createPrice111dSmaPattern(this, "price_34d_sma"),
+          price350dSma: createPrice111dSmaPattern(this, "price_350d_sma"),
+          price350dSmaX2: createMetricPattern4(this, "price_350d_sma_x2"),
+          price4yEma: createPrice111dSmaPattern(this, "price_4y_ema"),
+          price4ySma: createPrice111dSmaPattern(this, "price_4y_sma"),
+          price55dEma: createPrice111dSmaPattern(this, "price_55d_ema"),
+          price55dSma: createPrice111dSmaPattern(this, "price_55d_sma"),
+          price89dEma: createPrice111dSmaPattern(this, "price_89d_ema"),
+          price89dSma: createPrice111dSmaPattern(this, "price_89d_sma"),
+          price8dEma: createPrice111dSmaPattern(this, "price_8d_ema"),
+          price8dSma: createPrice111dSmaPattern(this, "price_8d_sma"),
         },
         range: {
-          price1mMax: createMetricPattern4(this, 'price_1m_max'),
-          price1mMin: createMetricPattern4(this, 'price_1m_min'),
-          price1wMax: createMetricPattern4(this, 'price_1w_max'),
-          price1wMin: createMetricPattern4(this, 'price_1w_min'),
-          price1yMax: createMetricPattern4(this, 'price_1y_max'),
-          price1yMin: createMetricPattern4(this, 'price_1y_min'),
-          price2wChoppinessIndex: createMetricPattern4(this, 'price_2w_choppiness_index'),
-          price2wMax: createMetricPattern4(this, 'price_2w_max'),
-          price2wMin: createMetricPattern4(this, 'price_2w_min'),
-          priceTrueRange: createMetricPattern6(this, 'price_true_range'),
-          priceTrueRange2wSum: createMetricPattern6(this, 'price_true_range_2w_sum'),
+          price1mMax: createMetricPattern4(this, "price_1m_max"),
+          price1mMin: createMetricPattern4(this, "price_1m_min"),
+          price1wMax: createMetricPattern4(this, "price_1w_max"),
+          price1wMin: createMetricPattern4(this, "price_1w_min"),
+          price1yMax: createMetricPattern4(this, "price_1y_max"),
+          price1yMin: createMetricPattern4(this, "price_1y_min"),
+          price2wChoppinessIndex: createMetricPattern4(
+            this,
+            "price_2w_choppiness_index",
+          ),
+          price2wMax: createMetricPattern4(this, "price_2w_max"),
+          price2wMin: createMetricPattern4(this, "price_2w_min"),
+          priceTrueRange: createMetricPattern6(this, "price_true_range"),
+          priceTrueRange2wSum: createMetricPattern6(
+            this,
+            "price_true_range_2w_sum",
+          ),
         },
         returns: {
-          _1dReturns1mSd: create_1dReturns1mSdPattern(this, '1d_returns_1m_sd'),
-          _1dReturns1wSd: create_1dReturns1mSdPattern(this, '1d_returns_1w_sd'),
-          _1dReturns1ySd: create_1dReturns1mSdPattern(this, '1d_returns_1y_sd'),
-          cagr: createPeriodCagrPattern(this, 'cagr'),
-          downside1mSd: create_1dReturns1mSdPattern(this, 'downside_1m_sd'),
-          downside1wSd: create_1dReturns1mSdPattern(this, 'downside_1w_sd'),
-          downside1ySd: create_1dReturns1mSdPattern(this, 'downside_1y_sd'),
-          downsideReturns: createMetricPattern6(this, 'downside_returns'),
+          _1dReturns1mSd: create_1dReturns1mSdPattern(this, "1d_returns_1m_sd"),
+          _1dReturns1wSd: create_1dReturns1mSdPattern(this, "1d_returns_1w_sd"),
+          _1dReturns1ySd: create_1dReturns1mSdPattern(this, "1d_returns_1y_sd"),
+          cagr: createPeriodCagrPattern(this, "cagr"),
+          downside1mSd: create_1dReturns1mSdPattern(this, "downside_1m_sd"),
+          downside1wSd: create_1dReturns1mSdPattern(this, "downside_1w_sd"),
+          downside1ySd: create_1dReturns1mSdPattern(this, "downside_1y_sd"),
+          downsideReturns: createMetricPattern6(this, "downside_returns"),
           priceReturns: {
-            _10y: createMetricPattern4(this, '10y_price_returns'),
-            _1d: createMetricPattern4(this, '1d_price_returns'),
-            _1m: createMetricPattern4(this, '1m_price_returns'),
-            _1w: createMetricPattern4(this, '1w_price_returns'),
-            _1y: createMetricPattern4(this, '1y_price_returns'),
-            _2y: createMetricPattern4(this, '2y_price_returns'),
-            _3m: createMetricPattern4(this, '3m_price_returns'),
-            _3y: createMetricPattern4(this, '3y_price_returns'),
-            _4y: createMetricPattern4(this, '4y_price_returns'),
-            _5y: createMetricPattern4(this, '5y_price_returns'),
-            _6m: createMetricPattern4(this, '6m_price_returns'),
-            _6y: createMetricPattern4(this, '6y_price_returns'),
-            _8y: createMetricPattern4(this, '8y_price_returns'),
+            _10y: createMetricPattern4(this, "10y_price_returns"),
+            _1d: createMetricPattern4(this, "1d_price_returns"),
+            _1m: createMetricPattern4(this, "1m_price_returns"),
+            _1w: createMetricPattern4(this, "1w_price_returns"),
+            _1y: createMetricPattern4(this, "1y_price_returns"),
+            _2y: createMetricPattern4(this, "2y_price_returns"),
+            _3m: createMetricPattern4(this, "3m_price_returns"),
+            _3y: createMetricPattern4(this, "3y_price_returns"),
+            _4y: createMetricPattern4(this, "4y_price_returns"),
+            _5y: createMetricPattern4(this, "5y_price_returns"),
+            _6m: createMetricPattern4(this, "6m_price_returns"),
+            _6y: createMetricPattern4(this, "6y_price_returns"),
+            _8y: createMetricPattern4(this, "8y_price_returns"),
           },
         },
         volatility: {
-          price1mVolatility: createMetricPattern4(this, 'price_1m_volatility'),
-          price1wVolatility: createMetricPattern4(this, 'price_1w_volatility'),
-          price1yVolatility: createMetricPattern4(this, 'price_1y_volatility'),
-          sharpe1m: createMetricPattern6(this, 'sharpe_1m'),
-          sharpe1w: createMetricPattern6(this, 'sharpe_1w'),
-          sharpe1y: createMetricPattern6(this, 'sharpe_1y'),
-          sortino1m: createMetricPattern6(this, 'sortino_1m'),
-          sortino1w: createMetricPattern6(this, 'sortino_1w'),
-          sortino1y: createMetricPattern6(this, 'sortino_1y'),
+          price1mVolatility: createMetricPattern4(this, "price_1m_volatility"),
+          price1wVolatility: createMetricPattern4(this, "price_1w_volatility"),
+          price1yVolatility: createMetricPattern4(this, "price_1y_volatility"),
+          sharpe1m: createMetricPattern6(this, "sharpe_1m"),
+          sharpe1w: createMetricPattern6(this, "sharpe_1w"),
+          sharpe1y: createMetricPattern6(this, "sharpe_1y"),
+          sortino1m: createMetricPattern6(this, "sortino_1m"),
+          sortino1w: createMetricPattern6(this, "sortino_1w"),
+          sortino1y: createMetricPattern6(this, "sortino_1y"),
         },
       },
       outputs: {
         count: {
-          totalCount: createCountPattern2(this, 'output_count'),
-          utxoCount: createMetricPattern1(this, 'exact_utxo_count'),
+          totalCount: createCountPattern2(this, "output_count"),
+          utxoCount: createMetricPattern1(this, "exact_utxo_count"),
         },
-        firstTxoutindex: createMetricPattern11(this, 'first_txoutindex'),
-        outputtype: createMetricPattern15(this, 'outputtype'),
+        firstTxoutindex: createMetricPattern11(this, "first_txoutindex"),
+        outputtype: createMetricPattern15(this, "outputtype"),
         spent: {
-          txinindex: createMetricPattern15(this, 'txinindex'),
+          txinindex: createMetricPattern15(this, "txinindex"),
         },
-        txindex: createMetricPattern15(this, 'txindex'),
-        typeindex: createMetricPattern15(this, 'typeindex'),
-        value: createMetricPattern15(this, 'value'),
+        txindex: createMetricPattern15(this, "txindex"),
+        typeindex: createMetricPattern15(this, "typeindex"),
+        value: createMetricPattern15(this, "value"),
       },
       pools: {
-        heightToPool: createMetricPattern11(this, 'pool'),
+        heightToPool: createMetricPattern11(this, "pool"),
         vecs: {
-          aaopool: createAaopoolPattern(this, 'aaopool'),
-          antpool: createAaopoolPattern(this, 'antpool'),
-          arkpool: createAaopoolPattern(this, 'arkpool'),
-          asicminer: createAaopoolPattern(this, 'asicminer'),
-          axbt: createAaopoolPattern(this, 'axbt'),
-          batpool: createAaopoolPattern(this, 'batpool'),
-          bcmonster: createAaopoolPattern(this, 'bcmonster'),
-          bcpoolio: createAaopoolPattern(this, 'bcpoolio'),
-          binancepool: createAaopoolPattern(this, 'binancepool'),
-          bitalo: createAaopoolPattern(this, 'bitalo'),
-          bitclub: createAaopoolPattern(this, 'bitclub'),
-          bitcoinaffiliatenetwork: createAaopoolPattern(this, 'bitcoinaffiliatenetwork'),
-          bitcoincom: createAaopoolPattern(this, 'bitcoincom'),
-          bitcoinindia: createAaopoolPattern(this, 'bitcoinindia'),
-          bitcoinrussia: createAaopoolPattern(this, 'bitcoinrussia'),
-          bitcoinukraine: createAaopoolPattern(this, 'bitcoinukraine'),
-          bitfarms: createAaopoolPattern(this, 'bitfarms'),
-          bitfufupool: createAaopoolPattern(this, 'bitfufupool'),
-          bitfury: createAaopoolPattern(this, 'bitfury'),
-          bitminter: createAaopoolPattern(this, 'bitminter'),
-          bitparking: createAaopoolPattern(this, 'bitparking'),
-          bitsolo: createAaopoolPattern(this, 'bitsolo'),
-          bixin: createAaopoolPattern(this, 'bixin'),
-          blockfills: createAaopoolPattern(this, 'blockfills'),
-          braiinspool: createAaopoolPattern(this, 'braiinspool'),
-          bravomining: createAaopoolPattern(this, 'bravomining'),
-          btcc: createAaopoolPattern(this, 'btcc'),
-          btccom: createAaopoolPattern(this, 'btccom'),
-          btcdig: createAaopoolPattern(this, 'btcdig'),
-          btcguild: createAaopoolPattern(this, 'btcguild'),
-          btclab: createAaopoolPattern(this, 'btclab'),
-          btcmp: createAaopoolPattern(this, 'btcmp'),
-          btcnuggets: createAaopoolPattern(this, 'btcnuggets'),
-          btcpoolparty: createAaopoolPattern(this, 'btcpoolparty'),
-          btcserv: createAaopoolPattern(this, 'btcserv'),
-          btctop: createAaopoolPattern(this, 'btctop'),
-          btpool: createAaopoolPattern(this, 'btpool'),
-          bwpool: createAaopoolPattern(this, 'bwpool'),
-          bytepool: createAaopoolPattern(this, 'bytepool'),
-          canoe: createAaopoolPattern(this, 'canoe'),
-          canoepool: createAaopoolPattern(this, 'canoepool'),
-          carbonnegative: createAaopoolPattern(this, 'carbonnegative'),
-          ckpool: createAaopoolPattern(this, 'ckpool'),
-          cloudhashing: createAaopoolPattern(this, 'cloudhashing'),
-          coinlab: createAaopoolPattern(this, 'coinlab'),
-          cointerra: createAaopoolPattern(this, 'cointerra'),
-          connectbtc: createAaopoolPattern(this, 'connectbtc'),
-          dcex: createAaopoolPattern(this, 'dcex'),
-          dcexploration: createAaopoolPattern(this, 'dcexploration'),
-          digitalbtc: createAaopoolPattern(this, 'digitalbtc'),
-          digitalxmintsy: createAaopoolPattern(this, 'digitalxmintsy'),
-          dpool: createAaopoolPattern(this, 'dpool'),
-          eclipsemc: createAaopoolPattern(this, 'eclipsemc'),
-          eightbaochi: createAaopoolPattern(this, 'eightbaochi'),
-          ekanembtc: createAaopoolPattern(this, 'ekanembtc'),
-          eligius: createAaopoolPattern(this, 'eligius'),
-          emcdpool: createAaopoolPattern(this, 'emcdpool'),
-          entrustcharitypool: createAaopoolPattern(this, 'entrustcharitypool'),
-          eobot: createAaopoolPattern(this, 'eobot'),
-          exxbw: createAaopoolPattern(this, 'exxbw'),
-          f2pool: createAaopoolPattern(this, 'f2pool'),
-          fiftyeightcoin: createAaopoolPattern(this, 'fiftyeightcoin'),
-          foundryusa: createAaopoolPattern(this, 'foundryusa'),
-          futurebitapollosolo: createAaopoolPattern(this, 'futurebitapollosolo'),
-          gbminers: createAaopoolPattern(this, 'gbminers'),
-          ghashio: createAaopoolPattern(this, 'ghashio'),
-          givemecoins: createAaopoolPattern(this, 'givemecoins'),
-          gogreenlight: createAaopoolPattern(this, 'gogreenlight'),
-          haominer: createAaopoolPattern(this, 'haominer'),
-          haozhuzhu: createAaopoolPattern(this, 'haozhuzhu'),
-          hashbx: createAaopoolPattern(this, 'hashbx'),
-          hashpool: createAaopoolPattern(this, 'hashpool'),
-          helix: createAaopoolPattern(this, 'helix'),
-          hhtt: createAaopoolPattern(this, 'hhtt'),
-          hotpool: createAaopoolPattern(this, 'hotpool'),
-          hummerpool: createAaopoolPattern(this, 'hummerpool'),
-          huobipool: createAaopoolPattern(this, 'huobipool'),
-          innopolistech: createAaopoolPattern(this, 'innopolistech'),
-          kanopool: createAaopoolPattern(this, 'kanopool'),
-          kncminer: createAaopoolPattern(this, 'kncminer'),
-          kucoinpool: createAaopoolPattern(this, 'kucoinpool'),
-          lubiancom: createAaopoolPattern(this, 'lubiancom'),
-          luckypool: createAaopoolPattern(this, 'luckypool'),
-          luxor: createAaopoolPattern(this, 'luxor'),
-          marapool: createAaopoolPattern(this, 'marapool'),
-          maxbtc: createAaopoolPattern(this, 'maxbtc'),
-          maxipool: createAaopoolPattern(this, 'maxipool'),
-          megabigpower: createAaopoolPattern(this, 'megabigpower'),
-          minerium: createAaopoolPattern(this, 'minerium'),
-          miningcity: createAaopoolPattern(this, 'miningcity'),
-          miningdutch: createAaopoolPattern(this, 'miningdutch'),
-          miningkings: createAaopoolPattern(this, 'miningkings'),
-          miningsquared: createAaopoolPattern(this, 'miningsquared'),
-          mmpool: createAaopoolPattern(this, 'mmpool'),
-          mtred: createAaopoolPattern(this, 'mtred'),
-          multicoinco: createAaopoolPattern(this, 'multicoinco'),
-          multipool: createAaopoolPattern(this, 'multipool'),
-          mybtccoinpool: createAaopoolPattern(this, 'mybtccoinpool'),
-          neopool: createAaopoolPattern(this, 'neopool'),
-          nexious: createAaopoolPattern(this, 'nexious'),
-          nicehash: createAaopoolPattern(this, 'nicehash'),
-          nmcbit: createAaopoolPattern(this, 'nmcbit'),
-          novablock: createAaopoolPattern(this, 'novablock'),
-          ocean: createAaopoolPattern(this, 'ocean'),
-          okexpool: createAaopoolPattern(this, 'okexpool'),
-          okkong: createAaopoolPattern(this, 'okkong'),
-          okminer: createAaopoolPattern(this, 'okminer'),
-          okpooltop: createAaopoolPattern(this, 'okpooltop'),
-          onehash: createAaopoolPattern(this, 'onehash'),
-          onem1x: createAaopoolPattern(this, 'onem1x'),
-          onethash: createAaopoolPattern(this, 'onethash'),
-          ozcoin: createAaopoolPattern(this, 'ozcoin'),
-          parasite: createAaopoolPattern(this, 'parasite'),
-          patels: createAaopoolPattern(this, 'patels'),
-          pegapool: createAaopoolPattern(this, 'pegapool'),
-          phashio: createAaopoolPattern(this, 'phashio'),
-          phoenix: createAaopoolPattern(this, 'phoenix'),
-          polmine: createAaopoolPattern(this, 'polmine'),
-          pool175btc: createAaopoolPattern(this, 'pool175btc'),
-          pool50btc: createAaopoolPattern(this, 'pool50btc'),
-          poolin: createAaopoolPattern(this, 'poolin'),
-          portlandhodl: createAaopoolPattern(this, 'portlandhodl'),
-          publicpool: createAaopoolPattern(this, 'publicpool'),
-          purebtccom: createAaopoolPattern(this, 'purebtccom'),
-          rawpool: createAaopoolPattern(this, 'rawpool'),
-          rigpool: createAaopoolPattern(this, 'rigpool'),
-          sbicrypto: createAaopoolPattern(this, 'sbicrypto'),
-          secpool: createAaopoolPattern(this, 'secpool'),
-          secretsuperstar: createAaopoolPattern(this, 'secretsuperstar'),
-          sevenpool: createAaopoolPattern(this, 'sevenpool'),
-          shawnp0wers: createAaopoolPattern(this, 'shawnp0wers'),
-          sigmapoolcom: createAaopoolPattern(this, 'sigmapoolcom'),
-          simplecoinus: createAaopoolPattern(this, 'simplecoinus'),
-          solock: createAaopoolPattern(this, 'solock'),
-          spiderpool: createAaopoolPattern(this, 'spiderpool'),
-          stminingcorp: createAaopoolPattern(this, 'stminingcorp'),
-          tangpool: createAaopoolPattern(this, 'tangpool'),
-          tatmaspool: createAaopoolPattern(this, 'tatmaspool'),
-          tbdice: createAaopoolPattern(this, 'tbdice'),
-          telco214: createAaopoolPattern(this, 'telco214'),
-          terrapool: createAaopoolPattern(this, 'terrapool'),
-          tiger: createAaopoolPattern(this, 'tiger'),
-          tigerpoolnet: createAaopoolPattern(this, 'tigerpoolnet'),
-          titan: createAaopoolPattern(this, 'titan'),
-          transactioncoinmining: createAaopoolPattern(this, 'transactioncoinmining'),
-          trickysbtcpool: createAaopoolPattern(this, 'trickysbtcpool'),
-          triplemining: createAaopoolPattern(this, 'triplemining'),
-          twentyoneinc: createAaopoolPattern(this, 'twentyoneinc'),
-          ultimuspool: createAaopoolPattern(this, 'ultimuspool'),
-          unknown: createAaopoolPattern(this, 'unknown'),
-          unomp: createAaopoolPattern(this, 'unomp'),
-          viabtc: createAaopoolPattern(this, 'viabtc'),
-          waterhole: createAaopoolPattern(this, 'waterhole'),
-          wayicn: createAaopoolPattern(this, 'wayicn'),
-          whitepool: createAaopoolPattern(this, 'whitepool'),
-          wk057: createAaopoolPattern(this, 'wk057'),
-          yourbtcnet: createAaopoolPattern(this, 'yourbtcnet'),
-          zulupool: createAaopoolPattern(this, 'zulupool'),
+          aaopool: createAaopoolPattern(this, "aaopool"),
+          antpool: createAaopoolPattern(this, "antpool"),
+          arkpool: createAaopoolPattern(this, "arkpool"),
+          asicminer: createAaopoolPattern(this, "asicminer"),
+          axbt: createAaopoolPattern(this, "axbt"),
+          batpool: createAaopoolPattern(this, "batpool"),
+          bcmonster: createAaopoolPattern(this, "bcmonster"),
+          bcpoolio: createAaopoolPattern(this, "bcpoolio"),
+          binancepool: createAaopoolPattern(this, "binancepool"),
+          bitalo: createAaopoolPattern(this, "bitalo"),
+          bitclub: createAaopoolPattern(this, "bitclub"),
+          bitcoinaffiliatenetwork: createAaopoolPattern(
+            this,
+            "bitcoinaffiliatenetwork",
+          ),
+          bitcoincom: createAaopoolPattern(this, "bitcoincom"),
+          bitcoinindia: createAaopoolPattern(this, "bitcoinindia"),
+          bitcoinrussia: createAaopoolPattern(this, "bitcoinrussia"),
+          bitcoinukraine: createAaopoolPattern(this, "bitcoinukraine"),
+          bitfarms: createAaopoolPattern(this, "bitfarms"),
+          bitfufupool: createAaopoolPattern(this, "bitfufupool"),
+          bitfury: createAaopoolPattern(this, "bitfury"),
+          bitminter: createAaopoolPattern(this, "bitminter"),
+          bitparking: createAaopoolPattern(this, "bitparking"),
+          bitsolo: createAaopoolPattern(this, "bitsolo"),
+          bixin: createAaopoolPattern(this, "bixin"),
+          blockfills: createAaopoolPattern(this, "blockfills"),
+          braiinspool: createAaopoolPattern(this, "braiinspool"),
+          bravomining: createAaopoolPattern(this, "bravomining"),
+          btcc: createAaopoolPattern(this, "btcc"),
+          btccom: createAaopoolPattern(this, "btccom"),
+          btcdig: createAaopoolPattern(this, "btcdig"),
+          btcguild: createAaopoolPattern(this, "btcguild"),
+          btclab: createAaopoolPattern(this, "btclab"),
+          btcmp: createAaopoolPattern(this, "btcmp"),
+          btcnuggets: createAaopoolPattern(this, "btcnuggets"),
+          btcpoolparty: createAaopoolPattern(this, "btcpoolparty"),
+          btcserv: createAaopoolPattern(this, "btcserv"),
+          btctop: createAaopoolPattern(this, "btctop"),
+          btpool: createAaopoolPattern(this, "btpool"),
+          bwpool: createAaopoolPattern(this, "bwpool"),
+          bytepool: createAaopoolPattern(this, "bytepool"),
+          canoe: createAaopoolPattern(this, "canoe"),
+          canoepool: createAaopoolPattern(this, "canoepool"),
+          carbonnegative: createAaopoolPattern(this, "carbonnegative"),
+          ckpool: createAaopoolPattern(this, "ckpool"),
+          cloudhashing: createAaopoolPattern(this, "cloudhashing"),
+          coinlab: createAaopoolPattern(this, "coinlab"),
+          cointerra: createAaopoolPattern(this, "cointerra"),
+          connectbtc: createAaopoolPattern(this, "connectbtc"),
+          dcex: createAaopoolPattern(this, "dcex"),
+          dcexploration: createAaopoolPattern(this, "dcexploration"),
+          digitalbtc: createAaopoolPattern(this, "digitalbtc"),
+          digitalxmintsy: createAaopoolPattern(this, "digitalxmintsy"),
+          dpool: createAaopoolPattern(this, "dpool"),
+          eclipsemc: createAaopoolPattern(this, "eclipsemc"),
+          eightbaochi: createAaopoolPattern(this, "eightbaochi"),
+          ekanembtc: createAaopoolPattern(this, "ekanembtc"),
+          eligius: createAaopoolPattern(this, "eligius"),
+          emcdpool: createAaopoolPattern(this, "emcdpool"),
+          entrustcharitypool: createAaopoolPattern(this, "entrustcharitypool"),
+          eobot: createAaopoolPattern(this, "eobot"),
+          exxbw: createAaopoolPattern(this, "exxbw"),
+          f2pool: createAaopoolPattern(this, "f2pool"),
+          fiftyeightcoin: createAaopoolPattern(this, "fiftyeightcoin"),
+          foundryusa: createAaopoolPattern(this, "foundryusa"),
+          futurebitapollosolo: createAaopoolPattern(
+            this,
+            "futurebitapollosolo",
+          ),
+          gbminers: createAaopoolPattern(this, "gbminers"),
+          ghashio: createAaopoolPattern(this, "ghashio"),
+          givemecoins: createAaopoolPattern(this, "givemecoins"),
+          gogreenlight: createAaopoolPattern(this, "gogreenlight"),
+          haominer: createAaopoolPattern(this, "haominer"),
+          haozhuzhu: createAaopoolPattern(this, "haozhuzhu"),
+          hashbx: createAaopoolPattern(this, "hashbx"),
+          hashpool: createAaopoolPattern(this, "hashpool"),
+          helix: createAaopoolPattern(this, "helix"),
+          hhtt: createAaopoolPattern(this, "hhtt"),
+          hotpool: createAaopoolPattern(this, "hotpool"),
+          hummerpool: createAaopoolPattern(this, "hummerpool"),
+          huobipool: createAaopoolPattern(this, "huobipool"),
+          innopolistech: createAaopoolPattern(this, "innopolistech"),
+          kanopool: createAaopoolPattern(this, "kanopool"),
+          kncminer: createAaopoolPattern(this, "kncminer"),
+          kucoinpool: createAaopoolPattern(this, "kucoinpool"),
+          lubiancom: createAaopoolPattern(this, "lubiancom"),
+          luckypool: createAaopoolPattern(this, "luckypool"),
+          luxor: createAaopoolPattern(this, "luxor"),
+          marapool: createAaopoolPattern(this, "marapool"),
+          maxbtc: createAaopoolPattern(this, "maxbtc"),
+          maxipool: createAaopoolPattern(this, "maxipool"),
+          megabigpower: createAaopoolPattern(this, "megabigpower"),
+          minerium: createAaopoolPattern(this, "minerium"),
+          miningcity: createAaopoolPattern(this, "miningcity"),
+          miningdutch: createAaopoolPattern(this, "miningdutch"),
+          miningkings: createAaopoolPattern(this, "miningkings"),
+          miningsquared: createAaopoolPattern(this, "miningsquared"),
+          mmpool: createAaopoolPattern(this, "mmpool"),
+          mtred: createAaopoolPattern(this, "mtred"),
+          multicoinco: createAaopoolPattern(this, "multicoinco"),
+          multipool: createAaopoolPattern(this, "multipool"),
+          mybtccoinpool: createAaopoolPattern(this, "mybtccoinpool"),
+          neopool: createAaopoolPattern(this, "neopool"),
+          nexious: createAaopoolPattern(this, "nexious"),
+          nicehash: createAaopoolPattern(this, "nicehash"),
+          nmcbit: createAaopoolPattern(this, "nmcbit"),
+          novablock: createAaopoolPattern(this, "novablock"),
+          ocean: createAaopoolPattern(this, "ocean"),
+          okexpool: createAaopoolPattern(this, "okexpool"),
+          okkong: createAaopoolPattern(this, "okkong"),
+          okminer: createAaopoolPattern(this, "okminer"),
+          okpooltop: createAaopoolPattern(this, "okpooltop"),
+          onehash: createAaopoolPattern(this, "onehash"),
+          onem1x: createAaopoolPattern(this, "onem1x"),
+          onethash: createAaopoolPattern(this, "onethash"),
+          ozcoin: createAaopoolPattern(this, "ozcoin"),
+          parasite: createAaopoolPattern(this, "parasite"),
+          patels: createAaopoolPattern(this, "patels"),
+          pegapool: createAaopoolPattern(this, "pegapool"),
+          phashio: createAaopoolPattern(this, "phashio"),
+          phoenix: createAaopoolPattern(this, "phoenix"),
+          polmine: createAaopoolPattern(this, "polmine"),
+          pool175btc: createAaopoolPattern(this, "pool175btc"),
+          pool50btc: createAaopoolPattern(this, "pool50btc"),
+          poolin: createAaopoolPattern(this, "poolin"),
+          portlandhodl: createAaopoolPattern(this, "portlandhodl"),
+          publicpool: createAaopoolPattern(this, "publicpool"),
+          purebtccom: createAaopoolPattern(this, "purebtccom"),
+          rawpool: createAaopoolPattern(this, "rawpool"),
+          rigpool: createAaopoolPattern(this, "rigpool"),
+          sbicrypto: createAaopoolPattern(this, "sbicrypto"),
+          secpool: createAaopoolPattern(this, "secpool"),
+          secretsuperstar: createAaopoolPattern(this, "secretsuperstar"),
+          sevenpool: createAaopoolPattern(this, "sevenpool"),
+          shawnp0wers: createAaopoolPattern(this, "shawnp0wers"),
+          sigmapoolcom: createAaopoolPattern(this, "sigmapoolcom"),
+          simplecoinus: createAaopoolPattern(this, "simplecoinus"),
+          solock: createAaopoolPattern(this, "solock"),
+          spiderpool: createAaopoolPattern(this, "spiderpool"),
+          stminingcorp: createAaopoolPattern(this, "stminingcorp"),
+          tangpool: createAaopoolPattern(this, "tangpool"),
+          tatmaspool: createAaopoolPattern(this, "tatmaspool"),
+          tbdice: createAaopoolPattern(this, "tbdice"),
+          telco214: createAaopoolPattern(this, "telco214"),
+          terrapool: createAaopoolPattern(this, "terrapool"),
+          tiger: createAaopoolPattern(this, "tiger"),
+          tigerpoolnet: createAaopoolPattern(this, "tigerpoolnet"),
+          titan: createAaopoolPattern(this, "titan"),
+          transactioncoinmining: createAaopoolPattern(
+            this,
+            "transactioncoinmining",
+          ),
+          trickysbtcpool: createAaopoolPattern(this, "trickysbtcpool"),
+          triplemining: createAaopoolPattern(this, "triplemining"),
+          twentyoneinc: createAaopoolPattern(this, "twentyoneinc"),
+          ultimuspool: createAaopoolPattern(this, "ultimuspool"),
+          unknown: createAaopoolPattern(this, "unknown"),
+          unomp: createAaopoolPattern(this, "unomp"),
+          viabtc: createAaopoolPattern(this, "viabtc"),
+          waterhole: createAaopoolPattern(this, "waterhole"),
+          wayicn: createAaopoolPattern(this, "wayicn"),
+          whitepool: createAaopoolPattern(this, "whitepool"),
+          wk057: createAaopoolPattern(this, "wk057"),
+          yourbtcnet: createAaopoolPattern(this, "yourbtcnet"),
+          zulupool: createAaopoolPattern(this, "zulupool"),
         },
       },
       positions: {
-        blockPosition: createMetricPattern11(this, 'position'),
-        txPosition: createMetricPattern27(this, 'position'),
+        blockPosition: createMetricPattern11(this, "position"),
+        txPosition: createMetricPattern27(this, "position"),
       },
       price: {
         cents: {
-          ohlc: createMetricPattern5(this, 'ohlc_cents'),
+          ohlc: createMetricPattern5(this, "ohlc_cents"),
           split: {
-            close: createMetricPattern5(this, 'price_close_cents'),
-            high: createMetricPattern5(this, 'price_high_cents'),
-            low: createMetricPattern5(this, 'price_low_cents'),
-            open: createMetricPattern5(this, 'price_open_cents'),
+            close: createMetricPattern5(this, "price_close_cents"),
+            high: createMetricPattern5(this, "price_high_cents"),
+            low: createMetricPattern5(this, "price_low_cents"),
+            open: createMetricPattern5(this, "price_open_cents"),
           },
         },
         sats: {
-          ohlc: createMetricPattern1(this, 'price_ohlc_sats'),
-          split: createSplitPattern2(this, 'price_sats'),
+          ohlc: createMetricPattern1(this, "price_ohlc_sats"),
+          split: createSplitPattern2(this, "price_sats"),
         },
         usd: {
-          ohlc: createMetricPattern1(this, 'price_ohlc'),
-          split: createSplitPattern2(this, 'price'),
+          ohlc: createMetricPattern1(this, "price_ohlc"),
+          split: createSplitPattern2(this, "price"),
         },
       },
       scripts: {
         count: {
-          emptyoutput: createDollarsPattern(this, 'emptyoutput_count'),
-          opreturn: createDollarsPattern(this, 'opreturn_count'),
-          p2a: createDollarsPattern(this, 'p2a_count'),
-          p2ms: createDollarsPattern(this, 'p2ms_count'),
-          p2pk33: createDollarsPattern(this, 'p2pk33_count'),
-          p2pk65: createDollarsPattern(this, 'p2pk65_count'),
-          p2pkh: createDollarsPattern(this, 'p2pkh_count'),
-          p2sh: createDollarsPattern(this, 'p2sh_count'),
-          p2tr: createDollarsPattern(this, 'p2tr_count'),
-          p2wpkh: createDollarsPattern(this, 'p2wpkh_count'),
-          p2wsh: createDollarsPattern(this, 'p2wsh_count'),
-          segwit: createDollarsPattern(this, 'segwit_count'),
-          segwitAdoption: createSegwitAdoptionPattern(this, 'segwit_adoption'),
-          taprootAdoption: createSegwitAdoptionPattern(this, 'taproot_adoption'),
-          unknownoutput: createDollarsPattern(this, 'unknownoutput_count'),
+          emptyoutput: createDollarsPattern(this, "emptyoutput_count"),
+          opreturn: createDollarsPattern(this, "opreturn_count"),
+          p2a: createDollarsPattern(this, "p2a_count"),
+          p2ms: createDollarsPattern(this, "p2ms_count"),
+          p2pk33: createDollarsPattern(this, "p2pk33_count"),
+          p2pk65: createDollarsPattern(this, "p2pk65_count"),
+          p2pkh: createDollarsPattern(this, "p2pkh_count"),
+          p2sh: createDollarsPattern(this, "p2sh_count"),
+          p2tr: createDollarsPattern(this, "p2tr_count"),
+          p2wpkh: createDollarsPattern(this, "p2wpkh_count"),
+          p2wsh: createDollarsPattern(this, "p2wsh_count"),
+          segwit: createDollarsPattern(this, "segwit_count"),
+          segwitAdoption: createSegwitAdoptionPattern(this, "segwit_adoption"),
+          taprootAdoption: createSegwitAdoptionPattern(
+            this,
+            "taproot_adoption",
+          ),
+          unknownoutput: createDollarsPattern(this, "unknownoutput_count"),
         },
-        emptyToTxindex: createMetricPattern9(this, 'txindex'),
-        firstEmptyoutputindex: createMetricPattern11(this, 'first_emptyoutputindex'),
-        firstOpreturnindex: createMetricPattern11(this, 'first_opreturnindex'),
-        firstP2msoutputindex: createMetricPattern11(this, 'first_p2msoutputindex'),
-        firstUnknownoutputindex: createMetricPattern11(this, 'first_unknownoutputindex'),
-        opreturnToTxindex: createMetricPattern14(this, 'txindex'),
-        p2msToTxindex: createMetricPattern17(this, 'txindex'),
-        unknownToTxindex: createMetricPattern28(this, 'txindex'),
+        emptyToTxindex: createMetricPattern9(this, "txindex"),
+        firstEmptyoutputindex: createMetricPattern11(
+          this,
+          "first_emptyoutputindex",
+        ),
+        firstOpreturnindex: createMetricPattern11(this, "first_opreturnindex"),
+        firstP2msoutputindex: createMetricPattern11(
+          this,
+          "first_p2msoutputindex",
+        ),
+        firstUnknownoutputindex: createMetricPattern11(
+          this,
+          "first_unknownoutputindex",
+        ),
+        opreturnToTxindex: createMetricPattern14(this, "txindex"),
+        p2msToTxindex: createMetricPattern17(this, "txindex"),
+        unknownToTxindex: createMetricPattern28(this, "txindex"),
         value: {
-          opreturn: createCoinbasePattern(this, 'opreturn_value'),
+          opreturn: createCoinbasePattern(this, "opreturn_value"),
         },
       },
       supply: {
         burned: {
-          opreturn: createUnclaimedRewardsPattern(this, 'opreturn_supply'),
-          unspendable: createUnclaimedRewardsPattern(this, 'unspendable_supply'),
+          opreturn: createUnclaimedRewardsPattern(this, "opreturn_supply"),
+          unspendable: createUnclaimedRewardsPattern(
+            this,
+            "unspendable_supply",
+          ),
         },
         circulating: {
-          bitcoin: createMetricPattern3(this, 'circulating_supply_btc'),
-          dollars: createMetricPattern3(this, 'circulating_supply_usd'),
-          sats: createMetricPattern3(this, 'circulating_supply'),
+          bitcoin: createMetricPattern3(this, "circulating_supply_btc"),
+          dollars: createMetricPattern3(this, "circulating_supply_usd"),
+          sats: createMetricPattern3(this, "circulating_supply"),
         },
-        inflation: createMetricPattern4(this, 'inflation_rate'),
-        marketCap: createMetricPattern1(this, 'market_cap'),
+        inflation: createMetricPattern4(this, "inflation_rate"),
+        marketCap: createMetricPattern1(this, "market_cap"),
         velocity: {
-          btc: createMetricPattern4(this, 'btc_velocity'),
-          usd: createMetricPattern4(this, 'usd_velocity'),
+          btc: createMetricPattern4(this, "btc_velocity"),
+          usd: createMetricPattern4(this, "usd_velocity"),
         },
       },
       transactions: {
-        baseSize: createMetricPattern27(this, 'base_size'),
+        baseSize: createMetricPattern27(this, "base_size"),
         count: {
-          isCoinbase: createMetricPattern27(this, 'is_coinbase'),
-          txCount: createDollarsPattern(this, 'tx_count'),
+          isCoinbase: createMetricPattern27(this, "is_coinbase"),
+          txCount: createDollarsPattern(this, "tx_count"),
         },
         fees: {
           fee: {
-            bitcoin: createCountPattern2(this, 'fee_btc'),
+            bitcoin: createCountPattern2(this, "fee_btc"),
             dollars: {
-              average: createMetricPattern1(this, 'fee_usd_average'),
-              cumulative: createMetricPattern2(this, 'fee_usd_cumulative'),
-              heightCumulative: createMetricPattern11(this, 'fee_usd_cumulative'),
-              max: createMetricPattern1(this, 'fee_usd_max'),
-              median: createMetricPattern11(this, 'fee_usd_median'),
-              min: createMetricPattern1(this, 'fee_usd_min'),
-              pct10: createMetricPattern11(this, 'fee_usd_pct10'),
-              pct25: createMetricPattern11(this, 'fee_usd_pct25'),
-              pct75: createMetricPattern11(this, 'fee_usd_pct75'),
-              pct90: createMetricPattern11(this, 'fee_usd_pct90'),
-              sum: createMetricPattern1(this, 'fee_usd_sum'),
+              average: createMetricPattern1(this, "fee_usd_average"),
+              cumulative: createMetricPattern2(this, "fee_usd_cumulative"),
+              heightCumulative: createMetricPattern11(
+                this,
+                "fee_usd_cumulative",
+              ),
+              max: createMetricPattern1(this, "fee_usd_max"),
+              median: createMetricPattern11(this, "fee_usd_median"),
+              min: createMetricPattern1(this, "fee_usd_min"),
+              pct10: createMetricPattern11(this, "fee_usd_pct10"),
+              pct25: createMetricPattern11(this, "fee_usd_pct25"),
+              pct75: createMetricPattern11(this, "fee_usd_pct75"),
+              pct90: createMetricPattern11(this, "fee_usd_pct90"),
+              sum: createMetricPattern1(this, "fee_usd_sum"),
             },
-            sats: createCountPattern2(this, 'fee'),
-            txindex: createMetricPattern27(this, 'fee'),
+            sats: createCountPattern2(this, "fee"),
+            txindex: createMetricPattern27(this, "fee"),
           },
-          feeRate: createFeeRatePattern(this, 'fee_rate'),
-          inputValue: createMetricPattern27(this, 'input_value'),
-          outputValue: createMetricPattern27(this, 'output_value'),
+          feeRate: createFeeRatePattern(this, "fee_rate"),
+          inputValue: createMetricPattern27(this, "input_value"),
+          outputValue: createMetricPattern27(this, "output_value"),
         },
-        firstTxindex: createMetricPattern11(this, 'first_txindex'),
-        firstTxinindex: createMetricPattern27(this, 'first_txinindex'),
-        firstTxoutindex: createMetricPattern27(this, 'first_txoutindex'),
-        height: createMetricPattern27(this, 'height'),
-        isExplicitlyRbf: createMetricPattern27(this, 'is_explicitly_rbf'),
-        rawlocktime: createMetricPattern27(this, 'rawlocktime'),
+        firstTxindex: createMetricPattern11(this, "first_txindex"),
+        firstTxinindex: createMetricPattern27(this, "first_txinindex"),
+        firstTxoutindex: createMetricPattern27(this, "first_txoutindex"),
+        height: createMetricPattern27(this, "height"),
+        isExplicitlyRbf: createMetricPattern27(this, "is_explicitly_rbf"),
+        rawlocktime: createMetricPattern27(this, "rawlocktime"),
         size: {
           vsize: {
-            average: createMetricPattern1(this, 'tx_vsize_average'),
-            max: createMetricPattern1(this, 'tx_vsize_max'),
-            median: createMetricPattern11(this, 'tx_vsize_median'),
-            min: createMetricPattern1(this, 'tx_vsize_min'),
-            pct10: createMetricPattern11(this, 'tx_vsize_pct10'),
-            pct25: createMetricPattern11(this, 'tx_vsize_pct25'),
-            pct75: createMetricPattern11(this, 'tx_vsize_pct75'),
-            pct90: createMetricPattern11(this, 'tx_vsize_pct90'),
-            txindex: createMetricPattern27(this, 'vsize'),
+            average: createMetricPattern1(this, "tx_vsize_average"),
+            max: createMetricPattern1(this, "tx_vsize_max"),
+            median: createMetricPattern11(this, "tx_vsize_median"),
+            min: createMetricPattern1(this, "tx_vsize_min"),
+            pct10: createMetricPattern11(this, "tx_vsize_pct10"),
+            pct25: createMetricPattern11(this, "tx_vsize_pct25"),
+            pct75: createMetricPattern11(this, "tx_vsize_pct75"),
+            pct90: createMetricPattern11(this, "tx_vsize_pct90"),
+            txindex: createMetricPattern27(this, "vsize"),
           },
           weight: {
-            average: createMetricPattern1(this, 'tx_weight_average'),
-            max: createMetricPattern1(this, 'tx_weight_max'),
-            median: createMetricPattern11(this, 'tx_weight_median'),
-            min: createMetricPattern1(this, 'tx_weight_min'),
-            pct10: createMetricPattern11(this, 'tx_weight_pct10'),
-            pct25: createMetricPattern11(this, 'tx_weight_pct25'),
-            pct75: createMetricPattern11(this, 'tx_weight_pct75'),
-            pct90: createMetricPattern11(this, 'tx_weight_pct90'),
-            txindex: createMetricPattern27(this, 'weight'),
+            average: createMetricPattern1(this, "tx_weight_average"),
+            max: createMetricPattern1(this, "tx_weight_max"),
+            median: createMetricPattern11(this, "tx_weight_median"),
+            min: createMetricPattern1(this, "tx_weight_min"),
+            pct10: createMetricPattern11(this, "tx_weight_pct10"),
+            pct25: createMetricPattern11(this, "tx_weight_pct25"),
+            pct75: createMetricPattern11(this, "tx_weight_pct75"),
+            pct90: createMetricPattern11(this, "tx_weight_pct90"),
+            txindex: createMetricPattern27(this, "weight"),
           },
         },
-        totalSize: createMetricPattern27(this, 'total_size'),
-        txid: createMetricPattern27(this, 'txid'),
-        txversion: createMetricPattern27(this, 'txversion'),
+        totalSize: createMetricPattern27(this, "total_size"),
+        txid: createMetricPattern27(this, "txid"),
+        txversion: createMetricPattern27(this, "txversion"),
         versions: {
-          v1: createBlockCountPattern(this, 'tx_v1'),
-          v2: createBlockCountPattern(this, 'tx_v2'),
-          v3: createBlockCountPattern(this, 'tx_v3'),
+          v1: createBlockCountPattern(this, "tx_v1"),
+          v2: createBlockCountPattern(this, "tx_v2"),
+          v3: createBlockCountPattern(this, "tx_v3"),
         },
         volume: {
-          annualizedVolume: create_2015Pattern(this, 'annualized_volume'),
-          inputsPerSec: createMetricPattern4(this, 'inputs_per_sec'),
-          outputsPerSec: createMetricPattern4(this, 'outputs_per_sec'),
-          sentSum: createActiveSupplyPattern(this, 'sent_sum'),
-          txPerSec: createMetricPattern4(this, 'tx_per_sec'),
+          annualizedVolume: create_2015Pattern(this, "annualized_volume"),
+          inputsPerSec: createMetricPattern4(this, "inputs_per_sec"),
+          outputsPerSec: createMetricPattern4(this, "outputs_per_sec"),
+          sentSum: createActiveSupplyPattern(this, "sent_sum"),
+          txPerSec: createMetricPattern4(this, "tx_per_sec"),
         },
       },
     };
@@ -7207,10 +8099,10 @@ class BrkClient extends BrkClientBase {
    */
   async getAddressTxs(address, after_txid, limit) {
     const params = new URLSearchParams();
-    if (after_txid !== undefined) params.set('after_txid', String(after_txid));
-    if (limit !== undefined) params.set('limit', String(limit));
+    if (after_txid !== undefined) params.set("after_txid", String(after_txid));
+    if (limit !== undefined) params.set("limit", String(limit));
     const query = params.toString();
-    const path = `/api/address/${address}/txs${query ? '?' + query : ''}`;
+    const path = `/api/address/${address}/txs${query ? "?" + query : ""}`;
     return this.getJson(path);
   }
 
@@ -7230,10 +8122,10 @@ class BrkClient extends BrkClientBase {
    */
   async getAddressConfirmedTxs(address, after_txid, limit) {
     const params = new URLSearchParams();
-    if (after_txid !== undefined) params.set('after_txid', String(after_txid));
-    if (limit !== undefined) params.set('limit', String(limit));
+    if (after_txid !== undefined) params.set("after_txid", String(after_txid));
+    if (limit !== undefined) params.set("limit", String(limit));
     const query = params.toString();
-    const path = `/api/address/${address}/txs/chain${query ? '?' + query : ''}`;
+    const path = `/api/address/${address}/txs/chain${query ? "?" + query : ""}`;
     return this.getJson(path);
   }
 
@@ -7472,13 +8364,13 @@ class BrkClient extends BrkClientBase {
    */
   async getMetric(metric, index, start, end, limit, format) {
     const params = new URLSearchParams();
-    if (start !== undefined) params.set('start', String(start));
-    if (end !== undefined) params.set('end', String(end));
-    if (limit !== undefined) params.set('limit', String(limit));
-    if (format !== undefined) params.set('format', String(format));
+    if (start !== undefined) params.set("start", String(start));
+    if (end !== undefined) params.set("end", String(end));
+    if (limit !== undefined) params.set("limit", String(limit));
+    if (format !== undefined) params.set("format", String(format));
     const query = params.toString();
-    const path = `/api/metric/${metric}/${index}${query ? '?' + query : ''}`;
-    if (format === 'csv') {
+    const path = `/api/metric/${metric}/${index}${query ? "?" + query : ""}`;
+    if (format === "csv") {
       return this.getText(path);
     }
     return this.getJson(path);
@@ -7513,15 +8405,15 @@ class BrkClient extends BrkClientBase {
    */
   async getMetrics(metrics, index, start, end, limit, format) {
     const params = new URLSearchParams();
-    params.set('metrics', String(metrics));
-    params.set('index', String(index));
-    if (start !== undefined) params.set('start', String(start));
-    if (end !== undefined) params.set('end', String(end));
-    if (limit !== undefined) params.set('limit', String(limit));
-    if (format !== undefined) params.set('format', String(format));
+    params.set("metrics", String(metrics));
+    params.set("index", String(index));
+    if (start !== undefined) params.set("start", String(start));
+    if (end !== undefined) params.set("end", String(end));
+    if (limit !== undefined) params.set("limit", String(limit));
+    if (format !== undefined) params.set("format", String(format));
     const query = params.toString();
-    const path = `/api/metrics/bulk${query ? '?' + query : ''}`;
-    if (format === 'csv') {
+    const path = `/api/metrics/bulk${query ? "?" + query : ""}`;
+    if (format === "csv") {
       return this.getText(path);
     }
     return this.getJson(path);
@@ -7563,9 +8455,9 @@ class BrkClient extends BrkClientBase {
    */
   async listMetrics(page) {
     const params = new URLSearchParams();
-    if (page !== undefined) params.set('page', String(page));
+    if (page !== undefined) params.set("page", String(page));
     const query = params.toString();
-    const path = `/api/metrics/list${query ? '?' + query : ''}`;
+    const path = `/api/metrics/list${query ? "?" + query : ""}`;
     return this.getJson(path);
   }
 
@@ -7582,9 +8474,9 @@ class BrkClient extends BrkClientBase {
    */
   async searchMetrics(metric, limit) {
     const params = new URLSearchParams();
-    if (limit !== undefined) params.set('limit', String(limit));
+    if (limit !== undefined) params.set("limit", String(limit));
     const query = params.toString();
-    const path = `/api/metrics/search/${metric}${query ? '?' + query : ''}`;
+    const path = `/api/metrics/search/${metric}${query ? "?" + query : ""}`;
     return this.getJson(path);
   }
 
@@ -7976,7 +8868,6 @@ class BrkClient extends BrkClientBase {
   async getVersion() {
     return this.getJson(`/version`);
   }
-
 }
 
 export { BrkClient, BrkError };

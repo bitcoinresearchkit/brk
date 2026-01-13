@@ -77,11 +77,11 @@ impl Vecs {
     where
         F: FnOnce(&mut Self) -> &mut EagerVec<PcoVec<Height, Height>>,
     {
-        let mut iter = time.timestamp_fixed.into_iter();
+        let mut iter = time.timestamp_monotonic.into_iter();
         let mut prev = Height::ZERO;
         Ok(get_field(self).compute_transform(
             starting_indexes.height,
-            &time.timestamp_fixed,
+            &time.timestamp_monotonic,
             |(h, t, ..)| {
                 while t.difference_in_days_between(iter.get_unwrap(prev)) >= days {
                     prev.increment();

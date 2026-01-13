@@ -19,7 +19,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Indexes, MonthIndex, Version, WeekIndex};
-use vecdb::{Database, Exit, TypedVecIterator, PAGE_SIZE};
+use vecdb::{Database, Exit, PAGE_SIZE, TypedVecIterator};
 
 use crate::blocks;
 
@@ -150,7 +150,7 @@ impl Vecs {
 
         let decremented_starting_height = starting_indexes.height.decremented().unwrap_or_default();
 
-        // DateIndex (uses blocks_time.date_fixed computed in blocks::time::compute_early)
+        // DateIndex (uses blocks_time.date_monotonic computed in blocks::time::compute_early)
         let starting_dateindex = self
             .height
             .dateindex
@@ -160,7 +160,7 @@ impl Vecs {
 
         self.height.dateindex.compute_transform(
             starting_indexes.height,
-            &blocks_time.date_fixed,
+            &blocks_time.date_monotonic,
             |(h, d, ..)| (h, DateIndex::try_from(d).unwrap()),
             exit,
         )?;
@@ -202,12 +202,14 @@ impl Vecs {
             exit,
         )?;
 
-        self.difficultyepoch.height_count.compute_count_from_indexes(
-            starting_difficultyepoch,
-            &self.difficultyepoch.first_height,
-            &blocks_time.date,
-            exit,
-        )?;
+        self.difficultyepoch
+            .height_count
+            .compute_count_from_indexes(
+                starting_difficultyepoch,
+                &self.difficultyepoch.first_height,
+                &blocks_time.date,
+                exit,
+            )?;
 
         // Halving epoch
         let starting_halvingepoch = self
@@ -355,12 +357,14 @@ impl Vecs {
             exit,
         )?;
 
-        self.quarterindex.monthindex_count.compute_count_from_indexes(
-            starting_quarterindex,
-            &self.quarterindex.first_monthindex,
-            &self.monthindex.identity,
-            exit,
-        )?;
+        self.quarterindex
+            .monthindex_count
+            .compute_count_from_indexes(
+                starting_quarterindex,
+                &self.quarterindex.first_monthindex,
+                &self.monthindex.identity,
+                exit,
+            )?;
 
         // Semester
         let starting_semesterindex = self
@@ -388,12 +392,14 @@ impl Vecs {
             exit,
         )?;
 
-        self.semesterindex.monthindex_count.compute_count_from_indexes(
-            starting_semesterindex,
-            &self.semesterindex.first_monthindex,
-            &self.monthindex.identity,
-            exit,
-        )?;
+        self.semesterindex
+            .monthindex_count
+            .compute_count_from_indexes(
+                starting_semesterindex,
+                &self.semesterindex.first_monthindex,
+                &self.monthindex.identity,
+                exit,
+            )?;
 
         // Year
         let starting_yearindex = self
@@ -454,12 +460,14 @@ impl Vecs {
             exit,
         )?;
 
-        self.decadeindex.yearindex_count.compute_count_from_indexes(
-            starting_decadeindex,
-            &self.decadeindex.first_yearindex,
-            &self.yearindex.identity,
-            exit,
-        )?;
+        self.decadeindex
+            .yearindex_count
+            .compute_count_from_indexes(
+                starting_decadeindex,
+                &self.decadeindex.first_yearindex,
+                &self.yearindex.identity,
+                exit,
+            )?;
 
         Ok(ComputeIndexes::new(
             starting_indexes,

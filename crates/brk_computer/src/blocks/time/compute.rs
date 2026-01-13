@@ -15,24 +15,24 @@ impl Vecs {
         starting_height: brk_types::Height,
         exit: &Exit,
     ) -> Result<()> {
-        let mut prev_timestamp_fixed = None;
-        self.timestamp_fixed.compute_transform(
+        let mut prev_timestamp_monotonic = None;
+        self.timestamp_monotonic.compute_transform(
             starting_height,
             &indexer.vecs.blocks.timestamp,
-            |(h, timestamp, height_to_timestamp_fixed_iter)| {
-                if prev_timestamp_fixed.is_none()
+            |(h, timestamp, height_to_timestamp_monotonic_iter)| {
+                if prev_timestamp_monotonic.is_none()
                     && let Some(prev_h) = h.decremented()
                 {
-                    prev_timestamp_fixed.replace(
-                        height_to_timestamp_fixed_iter
+                    prev_timestamp_monotonic.replace(
+                        height_to_timestamp_monotonic_iter
                             .into_iter()
                             .get_unwrap(prev_h),
                     );
                 }
-                let timestamp_fixed =
-                    prev_timestamp_fixed.map_or(timestamp, |prev_d| prev_d.max(timestamp));
-                prev_timestamp_fixed.replace(timestamp_fixed);
-                (h, timestamp_fixed)
+                let timestamp_monotonic =
+                    prev_timestamp_monotonic.map_or(timestamp, |prev_d| prev_d.max(timestamp));
+                prev_timestamp_monotonic.replace(timestamp_monotonic);
+                (h, timestamp_monotonic)
             },
             exit,
         )?;

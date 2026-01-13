@@ -9,8 +9,8 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec};
 use crate::{
     indexes,
     internal::{
-        HalfClosePriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyBinaryValueFromHeightLast,
-        ValueFromHeightLast,
+        HalfClosePriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin,
+        LazyBinaryValueFromHeightLast, ValueFromHeightLast,
     },
 };
 
@@ -34,16 +34,16 @@ impl SupplyMetrics {
             cfg.price,
         )?;
 
-        let supply_half = LazyBinaryValueFromHeightLast::from_block_source::<
+        let supply_halved = LazyBinaryValueFromHeightLast::from_block_source::<
             HalveSats,
             HalveSatsToBitcoin,
             HalfClosePriceTimesSats,
             HalveDollars,
-        >(&cfg.name("supply_half"), &supply, cfg.price, cfg.version);
+        >(&cfg.name("supply_halved"), &supply, cfg.price, cfg.version);
 
         Ok(Self {
             total: supply,
-            halved: supply_half,
+            halved: supply_halved,
         })
     }
 
