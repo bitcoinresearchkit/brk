@@ -80,39 +80,6 @@ pub trait LanguageSyntax {
     /// - Rust: `<T>` with default `_`
     fn generic_syntax(&self) -> GenericSyntax;
 
-    /// Generate a struct/class header.
-    ///
-    /// # Arguments
-    /// * `name` - The type name
-    /// * `generic_params` - Generic parameters (e.g., "<T>" or "[T]"), empty if none
-    /// * `doc` - Optional documentation string
-    fn struct_header(&self, name: &str, generic_params: &str, doc: Option<&str>) -> String;
-
-    /// Generate a struct/class footer.
-    fn struct_footer(&self) -> String;
-
-    /// Generate a constructor/init method header.
-    ///
-    /// # Arguments
-    /// * `params` - Constructor parameters (language-specific format)
-    fn constructor_header(&self, params: &str) -> String;
-
-    /// Generate a constructor/init method footer.
-    fn constructor_footer(&self) -> String;
-
-    /// Generate a field declaration (for struct body, not init).
-    ///
-    /// # Arguments
-    /// * `indent` - The indentation string
-    /// * `name` - The field name
-    /// * `type_ann` - The type annotation
-    fn field_declaration(&self, indent: &str, name: &str, type_ann: &str) -> String;
-
-    /// Format an index field name from an Index.
-    ///
-    /// E.g., `by_date_height`, `by_date`, etc.
-    fn index_field_name(&self, index_name: &str) -> String;
-
     /// Format a string literal.
     ///
     /// - Python/JavaScript: `'value'` (single quotes)

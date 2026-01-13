@@ -47,35 +47,6 @@ impl LanguageSyntax for PythonSyntax {
         GenericSyntax::PYTHON
     }
 
-    fn struct_header(&self, name: &str, generic_params: &str, doc: Option<&str>) -> String {
-        let mut result = format!("class {}{}:\n", name, generic_params);
-        if let Some(doc) = doc {
-            result.push_str(&format!("    \"\"\"{}\"\"\"\n", doc));
-        }
-        result
-    }
-
-    fn struct_footer(&self) -> String {
-        String::new()
-    }
-
-    fn constructor_header(&self, params: &str) -> String {
-        format!("    def __init__(self{}) -> None:\n", params)
-    }
-
-    fn constructor_footer(&self) -> String {
-        String::new()
-    }
-
-    fn field_declaration(&self, _indent: &str, _name: &str, _type_ann: &str) -> String {
-        // Python uses __init__ for field declarations, so this is a no-op
-        String::new()
-    }
-
-    fn index_field_name(&self, index_name: &str) -> String {
-        to_snake_case(index_name)
-    }
-
     fn string_literal(&self, value: &str) -> String {
         format!("'{}'", value)
     }

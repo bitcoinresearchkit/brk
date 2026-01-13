@@ -21,8 +21,6 @@ pub struct Endpoint {
     pub summary: Option<String>,
     /// Detailed description
     pub description: Option<String>,
-    /// Tags for grouping
-    pub tags: Vec<String>,
     /// Path parameters
     pub path_params: Vec<Parameter>,
     /// Query parameters
@@ -200,7 +198,6 @@ fn extract_endpoint(path: &str, method: &str, operation: &Operation) -> Option<E
         operation_id: operation.operation_id.clone(),
         summary: operation.summary.clone(),
         description: operation.description.clone(),
-        tags: operation.tags.clone(),
         path_params,
         query_params,
         response_type,

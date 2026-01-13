@@ -48,35 +48,6 @@ impl LanguageSyntax for RustSyntax {
         GenericSyntax::RUST
     }
 
-    fn struct_header(&self, name: &str, generic_params: &str, doc: Option<&str>) -> String {
-        let mut result = String::new();
-        if let Some(doc) = doc {
-            result.push_str(&format!("/// {}\n", doc));
-        }
-        result.push_str(&format!("pub struct {}{} {{\n", name, generic_params));
-        result
-    }
-
-    fn struct_footer(&self) -> String {
-        "}\n".to_string()
-    }
-
-    fn constructor_header(&self, params: &str) -> String {
-        format!("    pub fn new({}) -> Self {{\n        Self {{\n", params)
-    }
-
-    fn constructor_footer(&self) -> String {
-        "        }\n    }\n".to_string()
-    }
-
-    fn field_declaration(&self, indent: &str, name: &str, type_ann: &str) -> String {
-        format!("{}pub {}: {},\n", indent, name, type_ann)
-    }
-
-    fn index_field_name(&self, index_name: &str) -> String {
-        format!("by_{}", to_snake_case(index_name))
-    }
-
     fn string_literal(&self, value: &str) -> String {
         format!("\"{}\".to_string()", value)
     }

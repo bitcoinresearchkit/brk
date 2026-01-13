@@ -1,6 +1,6 @@
 //! JavaScript language syntax implementation.
 
-use crate::{GenericSyntax, LanguageSyntax, to_camel_case, to_pascal_case};
+use crate::{GenericSyntax, LanguageSyntax, to_camel_case};
 
 /// JavaScript-specific code generation syntax.
 pub struct JavaScriptSyntax;
@@ -50,41 +50,6 @@ impl LanguageSyntax for JavaScriptSyntax {
 
     fn generic_syntax(&self) -> GenericSyntax {
         GenericSyntax::JAVASCRIPT
-    }
-
-    fn struct_header(&self, name: &str, generic_params: &str, doc: Option<&str>) -> String {
-        let mut result = String::new();
-        if let Some(doc) = doc {
-            result.push_str(&format!("/** {} */\n", doc));
-        }
-        // JavaScript uses factory functions that return object literals
-        result.push_str(&format!(
-            "function create{}{}(client, basePath) {{\n  return {{\n",
-            name, generic_params
-        ));
-        result
-    }
-
-    fn struct_footer(&self) -> String {
-        "  };\n}\n".to_string()
-    }
-
-    fn constructor_header(&self, _params: &str) -> String {
-        // JavaScript factory functions don't have a separate constructor
-        String::new()
-    }
-
-    fn constructor_footer(&self) -> String {
-        String::new()
-    }
-
-    fn field_declaration(&self, indent: &str, _name: &str, type_ann: &str) -> String {
-        // JSDoc property declaration
-        format!("{}/** @type {{{}}} */\n", indent, type_ann)
-    }
-
-    fn index_field_name(&self, index_name: &str) -> String {
-        format!("by{}", to_pascal_case(index_name))
     }
 
     fn string_literal(&self, value: &str) -> String {

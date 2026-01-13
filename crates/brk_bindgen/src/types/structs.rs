@@ -29,11 +29,6 @@ pub struct StructuralPattern {
 }
 
 impl StructuralPattern {
-    /// Returns true if this pattern contains any leaf fields.
-    pub fn contains_leaves(&self) -> bool {
-        self.fields.iter().any(|f| f.is_leaf())
-    }
-
     /// Returns true if this pattern can be parameterized with an accumulator.
     pub fn is_parameterizable(&self) -> bool {
         self.mode.is_some()
@@ -51,11 +46,6 @@ impl StructuralPattern {
     /// Returns true if this pattern is in suffix mode.
     pub fn is_suffix_mode(&self) -> bool {
         matches!(&self.mode, Some(PatternMode::Suffix { .. }))
-    }
-
-    /// Returns true if this pattern is in prefix mode.
-    pub fn is_prefix_mode(&self) -> bool {
-        matches!(&self.mode, Some(PatternMode::Prefix { .. }))
     }
 }
 

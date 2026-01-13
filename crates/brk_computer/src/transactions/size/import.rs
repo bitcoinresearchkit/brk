@@ -14,7 +14,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let txindex_to_weight = LazyVecFrom2::init(
-            "weight",
+            "tx_weight",
             version,
             indexer.vecs.transactions.base_size.boxed_clone(),
             indexer.vecs.transactions.total_size.boxed_clone(),
@@ -28,7 +28,7 @@ impl Vecs {
         );
 
         let txindex_to_vsize = LazyVecFrom2::init(
-            "vsize",
+            "tx_vsize",
             version,
             indexer.vecs.transactions.base_size.boxed_clone(),
             indexer.vecs.transactions.total_size.boxed_clone(),

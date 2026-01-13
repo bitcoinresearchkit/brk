@@ -33,14 +33,6 @@ fn get_shortest_leaf_name(node: &TreeNode) -> Option<String> {
     }
 }
 
-/// Get all leaf names from a tree node.
-pub fn get_all_leaf_names(node: &TreeNode) -> Vec<String> {
-    match node {
-        TreeNode::Leaf(leaf) => vec![leaf.name().to_string()],
-        TreeNode::Branch(children) => children.values().flat_map(get_all_leaf_names).collect(),
-    }
-}
-
 /// Get the field signature for a branch node's children.
 pub fn get_node_fields(
     children: &BTreeMap<String, TreeNode>,
@@ -78,11 +70,9 @@ pub fn get_node_fields(
 }
 
 /// Detect index patterns (sets of indexes that appear together on metrics).
-pub fn detect_index_patterns(tree: &TreeNode) -> (BTreeSet<Index>, Vec<IndexSetPattern>) {
-    let mut used_indexes: BTreeSet<Index> = BTreeSet::new();
+pub fn detect_index_patterns(tree: &TreeNode) -> Vec<IndexSetPattern> {
     let mut unique_index_sets: BTreeSet<BTreeSet<Index>> = BTreeSet::new();
-
-    collect_indexes_from_tree(tree, &mut used_indexes, &mut unique_index_sets);
+    collect_index_sets_from_tree(tree, &mut unique_index_sets);
 
     // Sort by count (descending) then by first index name for deterministic ordering
     let mut sorted_sets: Vec<_> = unique_index_sets
@@ -96,31 +86,27 @@ pub fn detect_index_patterns(tree: &TreeNode) -> (BTreeSet<Index>, Vec<IndexSetP
     });
 
     // Assign unique sequential names
-    let patterns: Vec<IndexSetPattern> = sorted_sets
+    sorted_sets
         .into_iter()
         .enumerate()
         .map(|(i, indexes)| IndexSetPattern {
             name: format!("MetricPattern{}", i + 1),
             indexes,
         })
-        .collect();
-
-    (used_indexes, patterns)
+        .collect()
 }
 
-fn collect_indexes_from_tree(
+fn collect_index_sets_from_tree(
     node: &TreeNode,
-    used_indexes: &mut BTreeSet<Index>,
     unique_index_sets: &mut BTreeSet<BTreeSet<Index>>,
 ) {
     match node {
         TreeNode::Leaf(leaf) => {
-            used_indexes.extend(leaf.indexes().iter().cloned());
             unique_index_sets.insert(leaf.indexes().clone());
         }
         TreeNode::Branch(children) => {
             for child in children.values() {
-                collect_indexes_from_tree(child, used_indexes, unique_index_sets);
+                collect_index_sets_from_tree(child, unique_index_sets);
             }
         }
     }
@@ -134,17 +120,6 @@ pub struct PatternBaseResult {
     /// Whether an outlier child was excluded to find the pattern.
     /// If true, pattern factory should not be used.
     pub has_outlier: bool,
-}
-
-impl PatternBaseResult {
-    /// Returns true if an inline type should be generated instead of using a pattern factory.
-    ///
-    /// This is the case when:
-    /// - The child fields don't match a parameterizable pattern, OR
-    /// - An outlier was detected during pattern analysis
-    pub fn should_inline(&self, is_parameterizable: bool) -> bool {
-        !is_parameterizable || self.has_outlier
-    }
 }
 
 /// Get the metric base for a pattern instance by analyzing direct children.

@@ -30,13 +30,15 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         // Validate versions
-        self.price
+        self.price_cents
             .validate_computed_version_or_reset(indexer.vecs.outputs.value.version())?;
-        self.ohlc
+        self.ohlc_cents
             .validate_computed_version_or_reset(indexes.dateindex.date.version())?;
 
         let last_height = Height::from(indexer.vecs.blocks.timestamp.len());
-        let start_height = starting_indexes.height.min(Height::from(self.price.len()));
+        let start_height = starting_indexes
+            .height
+            .min(Height::from(self.price_cents.len()));
 
         if start_height >= last_height {
             return Ok(());
@@ -78,7 +80,7 @@ impl Vecs {
 
         // Previous price for fallback (default ~$100,000)
         let mut prev_price = if start_height > Height::ZERO {
-            self.price
+            self.price_cents
                 .iter()?
                 .get(start_height.decremented().unwrap())
                 .unwrap_or(Cents::from(10_000_000i64))
@@ -271,14 +273,14 @@ impl Vecs {
 
             prev_price = price_cents;
 
-            self.price
+            self.price_cents
                 .truncate_push_at(height.to_usize(), price_cents)?;
         }
 
         // Write height prices
         {
             let _lock = exit.lock();
-            self.price.write()?;
+            self.price_cents.write()?;
         }
 
         info!("Oracle price computation: 100%");
@@ -299,14 +301,14 @@ impl Vecs {
         let last_dateindex = DateIndex::from(indexes.dateindex.date.len());
         let start_dateindex = starting_indexes
             .dateindex
-            .min(DateIndex::from(self.ohlc.len()));
+            .min(DateIndex::from(self.ohlc_cents.len()));
 
         if start_dateindex >= last_dateindex {
             return Ok(());
         }
 
-        let last_height = Height::from(self.price.len());
-        let mut height_to_price_iter = self.price.iter()?;
+        let last_height = Height::from(self.price_cents.len());
+        let mut height_to_price_iter = self.price_cents.iter()?;
         let mut dateindex_to_first_height_iter = indexes.dateindex.first_height.iter();
         let mut height_count_iter = indexes.dateindex.height_count.iter();
 
@@ -359,7 +361,7 @@ impl Vecs {
             } else {
                 // No prices for this day, use previous
                 if dateindex > DateIndex::from(0usize) {
-                    self.ohlc
+                    self.ohlc_cents
                         .iter()?
                         .get(dateindex.decremented().unwrap())
                         .unwrap_or_default()
@@ -368,7 +370,8 @@ impl Vecs {
                 }
             };
 
-            self.ohlc.truncate_push_at(dateindex.to_usize(), ohlc)?;
+            self.ohlc_cents
+                .truncate_push_at(dateindex.to_usize(), ohlc)?;
             self.tx_count
                 .truncate_push_at(dateindex.to_usize(), StoredU32::from(tx_count))?;
         }
@@ -376,7 +379,7 @@ impl Vecs {
         // Write daily data
         {
             let _lock = exit.lock();
-            self.ohlc.write()?;
+            self.ohlc_cents.write()?;
             self.tx_count.write()?;
         }
 

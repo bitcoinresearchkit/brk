@@ -15,8 +15,6 @@ pub struct ClientMetadata {
     pub catalog: brk_types::TreeNode,
     /// Structural patterns - tree node shapes that repeat
     pub structural_patterns: Vec<StructuralPattern>,
-    /// All indexes used across the catalog
-    pub used_indexes: BTreeSet<Index>,
     /// Index set patterns - sets of indexes that appear together on metrics
     pub index_set_patterns: Vec<IndexSetPattern>,
     /// Maps concrete field signatures to pattern names
@@ -35,12 +33,11 @@ impl ClientMetadata {
     pub fn from_catalog(catalog: brk_types::TreeNode) -> Self {
         let (structural_patterns, concrete_to_pattern, concrete_to_type_param) =
             analysis::detect_structural_patterns(&catalog);
-        let (used_indexes, index_set_patterns) = analysis::detect_index_patterns(&catalog);
+        let index_set_patterns = analysis::detect_index_patterns(&catalog);
 
         ClientMetadata {
             catalog,
             structural_patterns,
-            used_indexes,
             index_set_patterns,
             concrete_to_pattern,
             concrete_to_type_param,
@@ -98,20 +95,6 @@ impl ClientMetadata {
             || self.structural_patterns.iter().any(|p| p.fields == fields)
     }
 
-    /// Check if child fields match a parameterizable pattern.
-    /// Returns true only if the fields match a pattern AND that pattern is parameterizable.
-    pub fn is_parameterizable_fields(&self, fields: &[PatternField]) -> bool {
-        self.concrete_to_pattern
-            .get(fields)
-            .or_else(|| {
-                self.structural_patterns
-                    .iter()
-                    .find(|p| p.fields == fields)
-                    .map(|p| &p.name)
-            })
-            .is_some_and(|name| self.is_parameterizable(name))
-    }
-
     /// Resolve the type name for a tree field.
     /// If the field matches ANY pattern (parameterizable or not), returns pattern type.
     /// Otherwise returns the inline type name (parent_child format).
@@ -146,11 +129,6 @@ impl ClientMetadata {
             lookup.insert(p.fields.clone(), p.name.clone());
         }
         lookup
-    }
-
-    /// Check if a field should use a shared index accessor.
-    pub fn field_uses_accessor(&self, field: &PatternField) -> bool {
-        self.find_index_set_pattern(&field.indexes).is_some()
     }
 
     /// Generate type annotation for a field with language-specific syntax.

@@ -7,11 +7,11 @@ use vecdb::{BytesVec, PcoVec};
 pub struct Vecs {
     /// Per-block price estimate in cents
     /// This enables OHLC derivation for any time period
-    pub price: PcoVec<Height, Cents>,
+    pub price_cents: PcoVec<Height, Cents>,
 
     /// Daily OHLC derived from height_to_price
     /// Uses BytesVec because OHLCCents is a complex type
-    pub ohlc: BytesVec<DateIndex, OHLCCents>,
+    pub ohlc_cents: BytesVec<DateIndex, OHLCCents>,
 
     /// Number of qualifying transactions per day (for confidence)
     pub tx_count: PcoVec<DateIndex, StoredU32>,

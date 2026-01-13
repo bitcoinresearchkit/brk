@@ -80,26 +80,6 @@ pub fn generate_parameterized_field<S: LanguageSyntax>(
     writeln!(output, "{}", syntax.field_init(indent, &field_name, &type_ann, &value)).unwrap();
 }
 
-/// Generate a tree-path field using the language syntax.
-///
-/// This is the fallback for non-parameterizable patterns where fields
-/// use a base path that's extended with the field name.
-pub fn generate_tree_path_field<S: LanguageSyntax>(
-    output: &mut String,
-    syntax: &S,
-    field: &PatternField,
-    pattern: &StructuralPattern,
-    metadata: &ClientMetadata,
-    indent: &str,
-) {
-    let field_name = syntax.field_name(&field.name);
-    let type_ann = metadata.field_type_annotation(field, false, None, syntax.generic_syntax());
-    let path_expr = compute_path_expr(syntax, pattern, field, "base_path");
-    let value = compute_field_value(syntax, field, metadata, &path_expr);
-
-    writeln!(output, "{}", syntax.field_init(indent, &field_name, &type_ann, &value)).unwrap();
-}
-
 /// Generate a tree node field with a specific child node for pattern instance base detection.
 ///
 /// This is used when generating tree nodes where we need to detect the pattern instance

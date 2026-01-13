@@ -270,12 +270,53 @@ fn test_parameterizable_patterns_have_mode() {
 }
 
 #[test]
+fn test_fee_rate_pattern_relatives() {
+    let catalog = load_catalog();
+    let (patterns, _, _) = brk_bindgen::detect_structural_patterns(&catalog);
+
+    let fee_rate_pattern = patterns
+        .iter()
+        .find(|p| p.name == "FeeRatePattern")
+        .expect("FeeRatePattern should exist");
+
+    println!("FeeRatePattern mode:");
+    if let Some(mode) = &fee_rate_pattern.mode {
+        match mode {
+            brk_bindgen::PatternMode::Suffix { relatives } => {
+                println!("  Suffix mode:");
+                for (field, relative) in relatives {
+                    println!("    {} -> '{}'", field, relative);
+                }
+            }
+            brk_bindgen::PatternMode::Prefix { prefixes } => {
+                println!("  Prefix mode:");
+                for (field, prefix) in prefixes {
+                    println!("    {} -> '{}'", field, prefix);
+                }
+            }
+        }
+    } else {
+        println!("  No mode (not parameterizable)");
+    }
+
+    // Check that relatives are correct - should be "average", "max", etc.
+    // NOT "tx_weight_average", "tx_weight_max", etc.
+    if let Some(brk_bindgen::PatternMode::Suffix { relatives }) = &fee_rate_pattern.mode {
+        assert_eq!(
+            relatives.get("average"),
+            Some(&"average".to_string()),
+            "average relative should be 'average', not 'tx_weight_average'"
+        );
+    }
+}
+
+#[test]
 fn test_index_patterns() {
     let catalog = load_catalog();
 
-    let (used_indexes, index_patterns) = brk_bindgen::detect_index_patterns(&catalog);
+    let index_patterns = brk_bindgen::detect_index_patterns(&catalog);
 
-    println!("Used indexes: {:?}", used_indexes);
+    // println!("Used indexes: {:?}", used_indexes);
     println!("Index set patterns: {}", index_patterns.len());
 
     for pattern in &index_patterns {
