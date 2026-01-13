@@ -122,10 +122,7 @@ impl Traversable for CostBasisPercentiles {
             PERCENTILES
                 .iter()
                 .zip(self.vecs.iter())
-                .filter_map(|(p, v)| {
-                    v.as_ref()
-                        .map(|v| (format!("cost_basis_pct{p:02}"), v.to_tree_node()))
-                })
+                .filter_map(|(p, v)| v.as_ref().map(|v| (format!("pct{p:02}"), v.to_tree_node())))
                 .collect(),
         )
     }
