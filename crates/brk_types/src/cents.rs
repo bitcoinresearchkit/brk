@@ -23,6 +23,8 @@ use super::Dollars;
 pub struct Cents(i64);
 
 impl Cents {
+    pub const ZERO: Self = Self(0);
+
     pub const fn mint(value: i64) -> Self {
         Self(value)
     }

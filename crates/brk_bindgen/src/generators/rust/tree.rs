@@ -86,7 +86,7 @@ fn generate_tree_node(
                 );
             }
         } else if child.should_inline {
-            // Inline struct
+            // Inline struct type - only for nodes that don't match any pattern
             let path_expr = syntax.path_expr("base_path", &format!("_{}", child.name));
             writeln!(
                 output,
@@ -95,7 +95,9 @@ fn generate_tree_node(
             )
             .unwrap();
         } else {
-            // Use pattern constructor
+            // Pattern type - use ::new() constructor
+            // All patterns have ::new(), parameterizable ones use detected mode,
+            // non-parameterizable ones use field name fallback
             generate_tree_node_field(
                 output,
                 &syntax,

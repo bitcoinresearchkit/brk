@@ -7,7 +7,9 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use brk_types::{Index, TreeNode, extract_json_type};
 
-use crate::{IndexSetPattern, PatternField, analysis::names::{analyze_pattern_level, CommonDenominator}, child_type_name};
+use crate::{IndexSetPattern, PatternField, child_type_name};
+
+use super::{find_common_prefix, find_common_suffix};
 
 /// Get the first leaf name from a tree node.
 pub fn get_first_leaf_name(node: &TreeNode) -> Option<String> {
@@ -147,8 +149,7 @@ impl PatternBaseResult {
 
 /// Get the metric base for a pattern instance by analyzing direct children.
 ///
-/// Uses field names and first leaf names from direct children to determine
-/// the common base via `analyze_pattern_level`.
+/// Uses the shortest leaf names from direct children to find common prefix/suffix.
 ///
 /// If the initial analysis fails to find a common pattern, it tries excluding
 /// each child one at a time to detect outliers (e.g., a mismatched "base" field
@@ -164,18 +165,12 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
         };
     }
 
-    let analysis = analyze_pattern_level(&child_names);
-
-    // If we found a common pattern, use it
-    if !matches!(analysis.common, CommonDenominator::None) {
-        return PatternBaseResult {
-            base: analysis.base,
-            has_outlier: false,
-        };
+    // Try to find common base from leaf names
+    if let Some((base, has_outlier)) = try_find_base(&child_names, false) {
+        return PatternBaseResult { base, has_outlier };
     }
 
-    // If no common pattern found, try excluding each child one at a time
-    // to detect if there's a single outlier breaking the pattern.
+    // If no common pattern found and we have enough children, try excluding outliers
     if child_names.len() > 2 {
         for i in 0..child_names.len() {
             let filtered: Vec<_> = child_names
@@ -185,20 +180,41 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
                 .map(|(_, v)| v.clone())
                 .collect();
 
-            let filtered_analysis = analyze_pattern_level(&filtered);
-            if !matches!(filtered_analysis.common, CommonDenominator::None) {
+            if let Some((base, _)) = try_find_base(&filtered, true) {
                 return PatternBaseResult {
-                    base: filtered_analysis.base,
+                    base,
                     has_outlier: true,
                 };
             }
         }
     }
 
+    // Fallback: no common prefix/suffix found - this is a root-level pattern
+    // Return empty base so metric names are used directly
     PatternBaseResult {
-        base: analysis.base,
+        base: String::new(),
         has_outlier: false,
     }
+}
+
+/// Try to find a common base from child names using prefix/suffix detection.
+/// Returns Some((base, has_outlier)) if found.
+fn try_find_base(child_names: &[(String, String)], is_outlier_attempt: bool) -> Option<(String, bool)> {
+    let leaf_names: Vec<&str> = child_names.iter().map(|(_, n)| n.as_str()).collect();
+
+    // Try common prefix first (suffix mode)
+    if let Some(prefix) = find_common_prefix(&leaf_names) {
+        let base = prefix.trim_end_matches('_').to_string();
+        return Some((base, is_outlier_attempt));
+    }
+
+    // Try common suffix (prefix mode)
+    if let Some(suffix) = find_common_suffix(&leaf_names) {
+        let base = suffix.trim_start_matches('_').to_string();
+        return Some((base, is_outlier_attempt));
+    }
+
+    None
 }
 
 /// Get (field_name, shortest_leaf_name) pairs for direct children of a branch node.
@@ -370,5 +386,52 @@ mod tests {
         // Should detect "weight" as outlier and find common prefix from others
         assert_eq!(result.base, "block_weight");
         assert!(result.has_outlier); // Pattern factory should NOT be used
+    }
+
+    #[test]
+    fn test_get_pattern_instance_base_root_level_no_common_pattern() {
+        // Simulates root-level pattern with metrics that have no common prefix/suffix.
+        // These names have no shared prefix or suffix, even when excluding any one.
+        // In this case, we should return empty base so metric names are used directly.
+        let tree = make_branch(vec![
+            ("alpha", make_leaf("foo_metric")),
+            ("beta", make_leaf("bar_value")),
+            ("gamma", make_leaf("baz_count")),
+        ]);
+
+        let result = get_pattern_instance_base(&tree);
+        // No common prefix or suffix - return empty base
+        assert_eq!(result.base, "");
+        assert!(!result.has_outlier);
+    }
+
+    #[test]
+    fn test_get_pattern_instance_base_two_children_no_pattern() {
+        // Two children with no common pattern - should still return empty base
+        let tree = make_branch(vec![
+            ("foo", make_leaf("alpha")),
+            ("bar", make_leaf("beta")),
+        ]);
+
+        let result = get_pattern_instance_base(&tree);
+        assert_eq!(result.base, "");
+        assert!(!result.has_outlier);
+    }
+
+    #[test]
+    fn test_get_pattern_instance_base_with_outlier_excluded() {
+        // Simulates the realized pattern: adjusted_sopr, sopr, asopr.
+        // When "asopr" is excluded as outlier, "adjusted_sopr" and "sopr" share suffix "_sopr".
+        // The outlier detection should find base="sopr" with has_outlier=true.
+        let tree = make_branch(vec![
+            ("adjustedSopr", make_leaf("adjusted_sopr")),
+            ("sopr", make_leaf("sopr")),
+            ("asopr", make_leaf("asopr")),
+        ]);
+
+        let result = get_pattern_instance_base(&tree);
+        // Outlier detected - pattern base found by excluding "asopr"
+        assert_eq!(result.base, "sopr");
+        assert!(result.has_outlier); // Pattern factory should NOT be used (inline instead)
     }
 }

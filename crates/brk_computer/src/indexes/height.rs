@@ -18,9 +18,9 @@ impl Vecs {
         Ok(Self {
             identity: EagerVec::forced_import(db, "height", version)?,
             dateindex: EagerVec::forced_import(db, "height_dateindex", version)?,
-            difficultyepoch: EagerVec::forced_import(db, "height_difficultyepoch", version)?,
-            halvingepoch: EagerVec::forced_import(db, "height_halvingepoch", version)?,
-            txindex_count: EagerVec::forced_import(db, "height_txindex_count", version)?,
+            difficultyepoch: EagerVec::forced_import(db, "difficultyepoch", version)?,
+            halvingepoch: EagerVec::forced_import(db, "halvingepoch", version)?,
+            txindex_count: EagerVec::forced_import(db, "txindex_count", version)?,
         })
     }
 }

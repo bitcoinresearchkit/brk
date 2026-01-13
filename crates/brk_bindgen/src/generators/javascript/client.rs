@@ -12,7 +12,7 @@ use serde_json::Value;
 
 use crate::{
     ClientMetadata, GenericSyntax, IndexSetPattern, JavaScriptSyntax, StructuralPattern, VERSION,
-    generate_parameterized_field, generate_tree_path_field, to_camel_case,
+    generate_parameterized_field, to_camel_case,
 };
 
 /// Generate the base BrkClient class with HTTP functionality.
@@ -186,7 +186,7 @@ function _endpoint(client, name, index) {{
     get(index) {{ return singleItemBuilder(index); }},
     slice(start, end) {{ return rangeBuilder(start, end); }},
     first(n) {{ return rangeBuilder(undefined, n); }},
-    last(n) {{ return rangeBuilder(-n, undefined); }},
+    last(n) {{ return n === 0 ? rangeBuilder(undefined, 0) : rangeBuilder(-n, undefined); }},
     skip(n) {{ return skippedBuilder(n); }},
     fetch(onUpdate) {{ return client.getJson(buildPath(), onUpdate); }},
     fetchCsv() {{ return client.getText(buildPath(undefined, undefined, 'csv')); }},
@@ -220,7 +220,7 @@ class BrkClientBase {{
     const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
     const url = `${{base}}${{path}}`;
     const res = await fetch(url, {{ signal: AbortSignal.timeout(this.timeout) }});
-    if (!res.ok) throw new BrkError(`HTTP ${{res.status}}`, res.status);
+    if (!res.ok) throw new BrkError(`HTTP ${{res.status}}: ${{url}}`, res.status);
     return res;
   }}
 
@@ -271,12 +271,20 @@ class BrkClientBase {{
 }}
 
 /**
- * Build metric name with optional prefix.
+ * Build metric name with suffix.
  * @param {{string}} acc - Accumulated prefix
  * @param {{string}} s - Metric suffix
  * @returns {{string}}
  */
-const _m = (acc, s) => acc ? `${{acc}}_${{s}}` : s;
+const _m = (acc, s) => s ? (acc ? `${{acc}}_${{s}}` : s) : acc;
+
+/**
+ * Build metric name with prefix.
+ * @param {{string}} prefix - Prefix to prepend
+ * @param {{string}} acc - Accumulated name
+ * @returns {{string}}
+ */
+const _p = (prefix, acc) => acc ? `${{prefix}}_${{acc}}` : prefix;
 
 "#
     )
@@ -470,8 +478,7 @@ pub fn generate_structural_patterns(
     writeln!(output, "// Reusable structural pattern factories\n").unwrap();
 
     for pattern in patterns {
-        let is_parameterizable = pattern.is_parameterizable();
-
+        // Generate typedef
         writeln!(output, "/**").unwrap();
         if pattern.is_generic {
             writeln!(output, " * @template T").unwrap();
@@ -494,17 +501,14 @@ pub fn generate_structural_patterns(
         }
         writeln!(output, " */\n").unwrap();
 
+        // Generate factory function for ALL patterns
         writeln!(output, "/**").unwrap();
         writeln!(output, " * Create a {} pattern node", pattern.name).unwrap();
         if pattern.is_generic {
             writeln!(output, " * @template T").unwrap();
         }
         writeln!(output, " * @param {{BrkClientBase}} client").unwrap();
-        if is_parameterizable {
-            writeln!(output, " * @param {{string}} acc - Accumulated metric name").unwrap();
-        } else {
-            writeln!(output, " * @param {{string}} basePath").unwrap();
-        }
+        writeln!(output, " * @param {{string}} acc - Accumulated metric name").unwrap();
         let return_type = if pattern.is_generic {
             format!("{}<T>", pattern.name)
         } else {
@@ -513,26 +517,12 @@ pub fn generate_structural_patterns(
         writeln!(output, " * @returns {{{}}}", return_type).unwrap();
         writeln!(output, " */").unwrap();
 
-        let param_name = if is_parameterizable {
-            "acc"
-        } else {
-            "basePath"
-        };
-        writeln!(
-            output,
-            "function create{}(client, {}) {{",
-            pattern.name, param_name
-        )
-        .unwrap();
+        writeln!(output, "function create{}(client, acc) {{", pattern.name).unwrap();
         writeln!(output, "  return {{").unwrap();
 
         let syntax = JavaScriptSyntax;
         for field in &pattern.fields {
-            if is_parameterizable {
-                generate_parameterized_field(output, &syntax, field, pattern, metadata, "    ");
-            } else {
-                generate_tree_path_field(output, &syntax, field, metadata, "    ");
-            }
+            generate_parameterized_field(output, &syntax, field, pattern, metadata, "    ");
         }
 
         writeln!(output, "  }};").unwrap();

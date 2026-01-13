@@ -2,9 +2,9 @@
 //!
 //! This module generates a Rust client with full type safety for the BRK API.
 
-mod api;
-mod client;
-mod tree;
+pub mod api;
+pub mod client;
+pub mod tree;
 mod types;
 
 use std::{fmt::Write, fs, io, path::Path};

@@ -28,7 +28,11 @@ pub struct ClientMetadata {
 impl ClientMetadata {
     /// Extract metadata from brk_query::Vecs.
     pub fn from_vecs(vecs: &Vecs) -> Self {
-        let catalog = vecs.catalog().clone();
+        Self::from_catalog(vecs.catalog().clone())
+    }
+
+    /// Extract metadata from a catalog TreeNode directly.
+    pub fn from_catalog(catalog: brk_types::TreeNode) -> Self {
         let (structural_patterns, concrete_to_pattern, concrete_to_type_param) =
             analysis::detect_structural_patterns(&catalog);
         let (used_indexes, index_set_patterns) = analysis::detect_index_patterns(&catalog);
@@ -65,9 +69,33 @@ impl ClientMetadata {
         self.find_pattern(name).is_some_and(|p| p.is_generic)
     }
 
-    /// Check if a pattern by name is parameterizable.
+    /// Check if a pattern by name is fully parameterizable.
+    /// A pattern is parameterizable if it has a mode AND all its branch fields
+    /// are also parameterizable (or not patterns at all).
     pub fn is_parameterizable(&self, name: &str) -> bool {
-        self.find_pattern(name).is_some_and(|p| p.is_parameterizable())
+        self.find_pattern(name).is_some_and(|p| {
+            if !p.is_parameterizable() {
+                return false;
+            }
+            // Check all branch fields have parameterizable types (or are not patterns)
+            p.fields.iter().all(|f| {
+                if f.is_branch() {
+                    self.structural_patterns
+                        .iter()
+                        .find(|pat| pat.name == f.rust_type)
+                        .is_none_or(|pat| pat.is_parameterizable())
+                } else {
+                    true
+                }
+            })
+        })
+    }
+
+    /// Check if child fields match ANY pattern (parameterizable or not).
+    /// Used for type annotations - we want to reuse pattern types for all patterns.
+    pub fn matches_pattern(&self, fields: &[PatternField]) -> bool {
+        self.concrete_to_pattern.contains_key(fields)
+            || self.structural_patterns.iter().any(|p| p.fields == fields)
     }
 
     /// Check if child fields match a parameterizable pattern.
@@ -84,8 +112,8 @@ impl ClientMetadata {
             .is_some_and(|name| self.is_parameterizable(name))
     }
 
-    /// Resolve the type name for a tree field, considering parameterizability.
-    /// If the field matches a parameterizable pattern, returns type annotation.
+    /// Resolve the type name for a tree field.
+    /// If the field matches ANY pattern (parameterizable or not), returns pattern type.
     /// Otherwise returns the inline type name (parent_child format).
     pub fn resolve_tree_field_type(
         &self,
@@ -96,7 +124,8 @@ impl ClientMetadata {
         syntax: GenericSyntax,
     ) -> String {
         match child_fields {
-            Some(cf) if self.is_parameterizable_fields(cf) => {
+            // Use pattern type for ANY matching pattern (parameterizable or not)
+            Some(cf) if self.matches_pattern(cf) => {
                 let generic_value_type = self.get_type_param(cf).map(String::as_str);
                 self.field_type_annotation(field, false, generic_value_type, syntax)
             }

@@ -18,8 +18,8 @@ use std::path::Path;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Indexes, MonthIndex, Version, WeekIndex};
-use vecdb::{Database, Exit, PAGE_SIZE, TypedVecIterator};
+use brk_types::{Date, DateIndex, Indexes, MonthIndex, Version, WeekIndex};
+use vecdb::{Database, Exit, IterableVec, PAGE_SIZE, TypedVecIterator};
 
 use crate::blocks;
 
@@ -160,7 +160,7 @@ impl Vecs {
 
         self.height.dateindex.compute_transform(
             starting_indexes.height,
-            &blocks_time.date_monotonic,
+            &blocks_time.date,
             |(h, d, ..)| (h, DateIndex::try_from(d).unwrap()),
             exit,
         )?;
@@ -250,9 +250,10 @@ impl Vecs {
             exit,
         )?;
 
-        self.dateindex.date.compute_from_index(
+        self.dateindex.date.compute_transform(
             starting_dateindex,
-            &self.dateindex.first_height,
+            &self.dateindex.identity,
+            |(di, ..)| (di, Date::from(di)),
             exit,
         )?;
 
@@ -290,6 +291,13 @@ impl Vecs {
             exit,
         )?;
 
+        self.weekindex.date.compute_transform(
+            starting_weekindex,
+            &self.weekindex.first_dateindex,
+            |(wi, first_di, ..)| (wi, Date::from(first_di)),
+            exit,
+        )?;
+
         self.weekindex.dateindex_count.compute_count_from_indexes(
             starting_weekindex,
             &self.weekindex.first_dateindex,
@@ -324,6 +332,13 @@ impl Vecs {
             exit,
         )?;
 
+        self.monthindex.date.compute_transform(
+            starting_monthindex,
+            &self.monthindex.first_dateindex,
+            |(mi, first_di, ..)| (mi, Date::from(first_di)),
+            exit,
+        )?;
+
         self.monthindex.dateindex_count.compute_count_from_indexes(
             starting_monthindex,
             &self.monthindex.first_dateindex,
@@ -354,6 +369,17 @@ impl Vecs {
         self.quarterindex.identity.compute_from_index(
             starting_quarterindex,
             &self.quarterindex.first_monthindex,
+            exit,
+        )?;
+
+        let monthindex_first_dateindex = &self.monthindex.first_dateindex;
+        self.quarterindex.date.compute_transform(
+            starting_quarterindex,
+            &self.quarterindex.first_monthindex,
+            |(qi, first_mi, _)| {
+                let first_di = monthindex_first_dateindex.iter().get_unwrap(first_mi);
+                (qi, Date::from(first_di))
+            },
             exit,
         )?;
 
@@ -392,6 +418,17 @@ impl Vecs {
             exit,
         )?;
 
+        let monthindex_first_dateindex = &self.monthindex.first_dateindex;
+        self.semesterindex.date.compute_transform(
+            starting_semesterindex,
+            &self.semesterindex.first_monthindex,
+            |(si, first_mi, _)| {
+                let first_di = monthindex_first_dateindex.iter().get_unwrap(first_mi);
+                (si, Date::from(first_di))
+            },
+            exit,
+        )?;
+
         self.semesterindex
             .monthindex_count
             .compute_count_from_indexes(
@@ -427,6 +464,17 @@ impl Vecs {
             exit,
         )?;
 
+        let monthindex_first_dateindex = &self.monthindex.first_dateindex;
+        self.yearindex.date.compute_transform(
+            starting_yearindex,
+            &self.yearindex.first_monthindex,
+            |(yi, first_mi, _)| {
+                let first_di = monthindex_first_dateindex.iter().get_unwrap(first_mi);
+                (yi, Date::from(first_di))
+            },
+            exit,
+        )?;
+
         self.yearindex.monthindex_count.compute_count_from_indexes(
             starting_yearindex,
             &self.yearindex.first_monthindex,
@@ -457,6 +505,19 @@ impl Vecs {
         self.decadeindex.identity.compute_from_index(
             starting_decadeindex,
             &self.decadeindex.first_yearindex,
+            exit,
+        )?;
+
+        let yearindex_first_monthindex = &self.yearindex.first_monthindex;
+        let monthindex_first_dateindex = &self.monthindex.first_dateindex;
+        self.decadeindex.date.compute_transform(
+            starting_decadeindex,
+            &self.decadeindex.first_yearindex,
+            |(di, first_yi, _)| {
+                let first_mi = yearindex_first_monthindex.iter().get_unwrap(first_yi);
+                let first_di = monthindex_first_dateindex.iter().get_unwrap(first_mi);
+                (di, Date::from(first_di))
+            },
             exit,
         )?;
 

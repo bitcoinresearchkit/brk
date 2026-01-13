@@ -21,8 +21,8 @@ impl Vecs {
                 indexer.vecs.transactions.txid.boxed_clone(),
                 |index, _| Some(index),
             ),
-            input_count: EagerVec::forced_import(db, "txindex_input_count", version)?,
-            output_count: EagerVec::forced_import(db, "txindex_output_count", version)?,
+            input_count: EagerVec::forced_import(db, "input_count", version)?,
+            output_count: EagerVec::forced_import(db, "output_count", version)?,
         })
     }
 }

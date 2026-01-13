@@ -20,6 +20,46 @@ fn path_suffix(name: &str) -> String {
     }
 }
 
+/// Compute path expression from pattern mode and field part.
+fn compute_path_expr<S: LanguageSyntax>(
+    syntax: &S,
+    pattern: &StructuralPattern,
+    field: &PatternField,
+    base_var: &str,
+) -> String {
+    match pattern.get_field_part(&field.name) {
+        Some(part) => {
+            if pattern.is_suffix_mode() {
+                syntax.suffix_expr(base_var, part)
+            } else {
+                syntax.prefix_expr(part, base_var)
+            }
+        }
+        None => syntax.path_expr(base_var, &path_suffix(&field.name)),
+    }
+}
+
+/// Compute field value from path expression.
+fn compute_field_value<S: LanguageSyntax>(
+    syntax: &S,
+    field: &PatternField,
+    metadata: &ClientMetadata,
+    path_expr: &str,
+) -> String {
+    if metadata.is_pattern_type(&field.rust_type) {
+        syntax.constructor(&field.rust_type, path_expr)
+    } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
+        syntax.constructor(&accessor.name, path_expr)
+    } else if field.is_branch() {
+        syntax.constructor(&field.rust_type, path_expr)
+    } else {
+        panic!(
+            "Field '{}' has no matching pattern or index accessor. All metrics must be indexed.",
+            field.name
+        )
+    }
+}
+
 /// Generate a parameterized field using the language syntax.
 ///
 /// This is used for pattern instances where fields use an accumulated
@@ -34,26 +74,8 @@ pub fn generate_parameterized_field<S: LanguageSyntax>(
 ) {
     let field_name = syntax.field_name(&field.name);
     let type_ann = metadata.field_type_annotation(field, pattern.is_generic, None, syntax.generic_syntax());
-
-    // Compute path expression from field position
-    let path_expr = pattern
-        .get_field_position(&field.name)
-        .map(|pos| syntax.position_expr(pos, "acc"))
-        .unwrap_or_else(|| syntax.path_expr("acc", &path_suffix(&field.name)));
-
-    let value = if metadata.is_pattern_type(&field.rust_type) {
-        syntax.constructor(&field.rust_type, &path_expr)
-    } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
-        syntax.constructor(&accessor.name, &path_expr)
-    } else if field.is_branch() {
-        // Non-pattern branch - instantiate the nested struct
-        syntax.constructor(&field.rust_type, &path_expr)
-    } else {
-        panic!(
-            "Field '{}' has no matching pattern or index accessor. All metrics must be indexed.",
-            field.name
-        )
-    };
+    let path_expr = compute_path_expr(syntax, pattern, field, "acc");
+    let value = compute_field_value(syntax, field, metadata, &path_expr);
 
     writeln!(output, "{}", syntax.field_init(indent, &field_name, &type_ann, &value)).unwrap();
 }
@@ -66,26 +88,14 @@ pub fn generate_tree_path_field<S: LanguageSyntax>(
     output: &mut String,
     syntax: &S,
     field: &PatternField,
+    pattern: &StructuralPattern,
     metadata: &ClientMetadata,
     indent: &str,
 ) {
     let field_name = syntax.field_name(&field.name);
     let type_ann = metadata.field_type_annotation(field, false, None, syntax.generic_syntax());
-    let path_expr = syntax.path_expr("base_path", &path_suffix(&field.name));
-
-    let value = if metadata.is_pattern_type(&field.rust_type) {
-        syntax.constructor(&field.rust_type, &path_expr)
-    } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
-        syntax.constructor(&accessor.name, &path_expr)
-    } else if field.is_branch() {
-        // Non-pattern branch - instantiate the nested struct
-        syntax.constructor(&field.rust_type, &path_expr)
-    } else {
-        panic!(
-            "Field '{}' has no matching pattern or index accessor. All metrics must be indexed.",
-            field.name
-        )
-    };
+    let path_expr = compute_path_expr(syntax, pattern, field, "base_path");
+    let value = compute_field_value(syntax, field, metadata, &path_expr);
 
     writeln!(output, "{}", syntax.field_init(indent, &field_name, &type_ann, &value)).unwrap();
 }

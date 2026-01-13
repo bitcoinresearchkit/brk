@@ -1,1 +1,5 @@
 clients/
+/*.json
+/*.js
+/*.rs
+/*.py

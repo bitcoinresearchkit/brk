@@ -1,6 +1,6 @@
 //! Rust language syntax implementation.
 
-use crate::{FieldNamePosition, GenericSyntax, LanguageSyntax, to_snake_case};
+use crate::{GenericSyntax, LanguageSyntax, to_snake_case};
 
 /// Rust-specific code generation syntax.
 pub struct RustSyntax;
@@ -14,30 +14,24 @@ impl LanguageSyntax for RustSyntax {
         format!("format!(\"{{{}}}{}\")", base_var, suffix)
     }
 
-    fn position_expr(&self, pos: &FieldNamePosition, _base_var: &str) -> String {
-        match pos {
-            FieldNamePosition::Append(s) => {
-                // Use helper _m(&acc, suffix) to build metric name
-                if let Some(suffix) = s.strip_prefix('_') {
-                    format!("_m(&acc, \"{}\")", suffix)
-                } else {
-                    format!("format!(\"{{acc}}{}\")", s)
-                }
-            }
-            FieldNamePosition::Prepend(s) => {
-                // Handle empty acc case for prepend
-                if let Some(prefix) = s.strip_suffix('_') {
-                    format!(
-                        "if acc.is_empty() {{ \"{prefix}\".to_string() }} else {{ format!(\"{s}{{acc}}\") }}",
-                        prefix = prefix,
-                        s = s
-                    )
-                } else {
-                    format!("format!(\"{}{{acc}}\")", s)
-                }
-            }
-            FieldNamePosition::Identity => "acc.clone()".to_string(),
-            FieldNamePosition::SetBase(base) => format!("\"{}\".to_string()", base),
+    fn suffix_expr(&self, acc_var: &str, relative: &str) -> String {
+        if relative.is_empty() {
+            // Identity: just return acc
+            format!("{}.clone()", acc_var)
+        } else {
+            // _m(&acc, relative) -> if acc.is_empty() { relative } else { format!("{acc}_{relative}") }
+            format!("_m(&{}, \"{}\")", acc_var, relative)
+        }
+    }
+
+    fn prefix_expr(&self, prefix: &str, acc_var: &str) -> String {
+        if prefix.is_empty() {
+            // Identity: just return acc
+            format!("{}.clone()", acc_var)
+        } else {
+            // _p(prefix, &acc) -> if acc.is_empty() { prefix_base } else { format!("{prefix}{acc}") }
+            let prefix_base = prefix.trim_end_matches('_');
+            format!("_p(\"{}\", &{})", prefix_base, acc_var)
         }
     }
 

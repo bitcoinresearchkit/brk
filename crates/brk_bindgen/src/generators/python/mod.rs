@@ -2,10 +2,10 @@
 //!
 //! This module generates a Python client with type hints for the BRK API.
 
-mod api;
-mod client;
-mod tree;
-mod types;
+pub mod api;
+pub mod client;
+pub mod tree;
+pub mod types;
 
 use std::{fmt::Write, fs, io, path::Path};
 

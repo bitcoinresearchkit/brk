@@ -18,11 +18,11 @@ impl Vecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
         Ok(Self {
             identity: EagerVec::forced_import(db, "dateindex", version)?,
-            date: EagerVec::forced_import(db, "dateindex_date", version)?,
-            first_height: EagerVec::forced_import(db, "dateindex_first_height", version)?,
-            height_count: EagerVec::forced_import(db, "dateindex_height_count", version)?,
-            weekindex: EagerVec::forced_import(db, "dateindex_weekindex", version)?,
-            monthindex: EagerVec::forced_import(db, "dateindex_monthindex", version)?,
+            date: EagerVec::forced_import(db, "date", version + Version::ONE)?,
+            first_height: EagerVec::forced_import(db, "first_height", version)?,
+            height_count: EagerVec::forced_import(db, "height_count", version)?,
+            weekindex: EagerVec::forced_import(db, "weekindex", version)?,
+            monthindex: EagerVec::forced_import(db, "monthindex", version)?,
         })
     }
 }

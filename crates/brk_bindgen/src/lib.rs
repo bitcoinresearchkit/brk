@@ -58,7 +58,7 @@ mod types;
 pub use analysis::*;
 pub use backends::*;
 pub use generate::*;
-pub use generators::{generate_javascript_client, generate_python_client, generate_rust_client};
+pub use generators::*;
 pub use openapi::*;
 pub use syntax::*;
 pub use types::*;

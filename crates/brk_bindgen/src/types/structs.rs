@@ -1,10 +1,10 @@
 //! Structural pattern and field types.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::BTreeSet;
 
 use brk_types::Index;
 
-use super::FieldNamePosition;
+use super::PatternMode;
 
 /// A pattern of indexes that appear together on multiple metrics.
 #[derive(Debug, Clone)]
@@ -22,8 +22,8 @@ pub struct StructuralPattern {
     pub name: String,
     /// Ordered list of child fields
     pub fields: Vec<PatternField>,
-    /// How each field modifies the accumulated name
-    pub field_positions: HashMap<String, FieldNamePosition>,
+    /// How fields construct metric names from acc (None = not parameterizable)
+    pub mode: Option<PatternMode>,
     /// If true, all leaf fields use a type parameter T
     pub is_generic: bool,
 }
@@ -34,18 +34,28 @@ impl StructuralPattern {
         self.fields.iter().any(|f| f.is_leaf())
     }
 
-    /// Returns true if all leaf fields have consistent name transformations.
+    /// Returns true if this pattern can be parameterized with an accumulator.
     pub fn is_parameterizable(&self) -> bool {
-        !self.field_positions.is_empty()
-            && self
-                .fields
-                .iter()
-                .all(|f| f.is_branch() || self.field_positions.contains_key(&f.name))
+        self.mode.is_some()
     }
 
-    /// Get the field position for a given field name.
-    pub fn get_field_position(&self, field_name: &str) -> Option<&FieldNamePosition> {
-        self.field_positions.get(field_name)
+    /// Get the field part (relative name or prefix) for a given field.
+    pub fn get_field_part(&self, field_name: &str) -> Option<&str> {
+        match &self.mode {
+            Some(PatternMode::Suffix { relatives }) => relatives.get(field_name).map(|s| s.as_str()),
+            Some(PatternMode::Prefix { prefixes }) => prefixes.get(field_name).map(|s| s.as_str()),
+            None => None,
+        }
+    }
+
+    /// Returns true if this pattern is in suffix mode.
+    pub fn is_suffix_mode(&self) -> bool {
+        matches!(&self.mode, Some(PatternMode::Suffix { .. }))
+    }
+
+    /// Returns true if this pattern is in prefix mode.
+    pub fn is_prefix_mode(&self) -> bool {
+        matches!(&self.mode, Some(PatternMode::Prefix { .. }))
     }
 }
 

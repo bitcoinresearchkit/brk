@@ -290,7 +290,7 @@ impl Computer {
 
             info!("Computing prices...");
             let i = Instant::now();
-            price.compute(&starting_indexes, exit)?;
+            price.compute(indexer, &self.indexes, &starting_indexes, exit)?;
             info!("Computed prices in {:?}", i.elapsed());
         }
 

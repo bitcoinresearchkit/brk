@@ -4,7 +4,7 @@ use std::fmt::Write;
 
 use crate::{
     ClientMetadata, GenericSyntax, IndexSetPattern, RustSyntax, StructuralPattern,
-    generate_parameterized_field, generate_tree_path_field, index_to_field_name, to_snake_case,
+    generate_parameterized_field, index_to_field_name, to_snake_case,
 };
 
 /// Generate import statements.
@@ -116,10 +116,18 @@ impl BrkClientBase {{
     }}
 }}
 
-/// Build metric name with optional prefix.
+/// Build metric name with suffix.
 #[inline]
 fn _m(acc: &str, s: &str) -> String {{
-    if acc.is_empty() {{ s.to_string() }} else {{ format!("{{acc}}_{{s}}") }}
+    if s.is_empty() {{ acc.to_string() }}
+    else if acc.is_empty() {{ s.to_string() }}
+    else {{ format!("{{acc}}_{{s}}") }}
+}}
+
+/// Build metric name with prefix.
+#[inline]
+fn _p(prefix: &str, acc: &str) -> String {{
+    if acc.is_empty() {{ prefix.to_string() }} else {{ format!("{{prefix}}_{{acc}}") }}
 }}
 
 "#
@@ -265,7 +273,11 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T> {{
 
     /// Take the last n items.
     pub fn last(mut self, n: usize) -> RangeBuilder<T> {{
-        self.config.start = Some(-(n as i64));
+        if n == 0 {{
+            self.config.end = Some(0);
+        }} else {{
+            self.config.start = Some(-(n as i64));
+        }}
         RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
     }}
 
@@ -399,7 +411,6 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         )
         .unwrap();
         writeln!(output, "pub struct {}<T> {{", pattern.name).unwrap();
-        writeln!(output, "    client: Arc<BrkClientBase>,").unwrap();
         writeln!(output, "    name: Arc<str>,").unwrap();
         writeln!(output, "    pub by: {}<T>,", by_name).unwrap();
         writeln!(output, "}}\n").unwrap();
@@ -413,13 +424,8 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         .unwrap();
         writeln!(output, "        let name: Arc<str> = name.into();").unwrap();
         writeln!(output, "        Self {{").unwrap();
-        writeln!(output, "            client: client.clone(),").unwrap();
         writeln!(output, "            name: name.clone(),").unwrap();
-        writeln!(output, "            by: {} {{", by_name).unwrap();
-        writeln!(output, "                client,").unwrap();
-        writeln!(output, "                name,").unwrap();
-        writeln!(output, "                _marker: std::marker::PhantomData,").unwrap();
-        writeln!(output, "            }}").unwrap();
+        writeln!(output, "            by: {} {{ client, name, _marker: std::marker::PhantomData }}", by_name).unwrap();
         writeln!(output, "        }}").unwrap();
         writeln!(output, "    }}").unwrap();
         writeln!(output).unwrap();
@@ -472,9 +478,9 @@ pub fn generate_pattern_structs(
     writeln!(output, "// Reusable pattern structs\n").unwrap();
 
     for pattern in patterns {
-        let is_parameterizable = pattern.is_parameterizable();
         let generic_params = if pattern.is_generic { "<T>" } else { "" };
 
+        // Generate struct definition
         writeln!(output, "/// Pattern struct for repeated tree structure.").unwrap();
         writeln!(output, "pub struct {}{} {{", pattern.name, generic_params).unwrap();
 
@@ -487,7 +493,7 @@ pub fn generate_pattern_structs(
 
         writeln!(output, "}}\n").unwrap();
 
-        // Generate impl block with constructor
+        // Generate impl block with constructor for ALL patterns
         let impl_generic = if pattern.is_generic {
             "<T: DeserializeOwned>"
         } else {
@@ -500,33 +506,21 @@ pub fn generate_pattern_structs(
         )
         .unwrap();
 
-        if is_parameterizable {
-            writeln!(
-                output,
-                "    /// Create a new pattern node with accumulated metric name."
-            )
-            .unwrap();
-            writeln!(
-                output,
-                "    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {{"
-            )
-            .unwrap();
-        } else {
-            writeln!(
-                output,
-                "    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {{"
-            )
-            .unwrap();
-        }
+        writeln!(
+            output,
+            "    /// Create a new pattern node with accumulated metric name."
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {{"
+        )
+        .unwrap();
         writeln!(output, "        Self {{").unwrap();
 
         let syntax = RustSyntax;
         for field in &pattern.fields {
-            if is_parameterizable {
-                generate_parameterized_field(output, &syntax, field, pattern, metadata, "            ");
-            } else {
-                generate_tree_path_field(output, &syntax, field, metadata, "            ");
-            }
+            generate_parameterized_field(output, &syntax, field, pattern, metadata, "            ");
         }
 
         writeln!(output, "        }}").unwrap();

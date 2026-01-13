@@ -4,7 +4,7 @@
 //! language-specific code generation patterns, allowing shared generation
 //! logic to work across Python, JavaScript, and Rust backends.
 
-use crate::{FieldNamePosition, GenericSyntax};
+use crate::GenericSyntax;
 
 /// Language-specific syntax for code generation.
 ///
@@ -30,11 +30,27 @@ pub trait LanguageSyntax {
     /// - Rust: `format!("{acc}_suffix")`
     fn path_expr(&self, base_var: &str, suffix: &str) -> String;
 
-    /// Format a `FieldNamePosition` as a path expression.
+    /// Format a suffix mode expression: `_m(acc, relative)`.
     ///
-    /// This handles the different name transformation patterns (append, prepend,
-    /// identity, set_base) in a language-specific way.
-    fn position_expr(&self, pos: &FieldNamePosition, base_var: &str) -> String;
+    /// Suffix mode appends the relative name to the accumulator.
+    /// - If relative is empty, returns just acc (identity)
+    /// - Otherwise: `{acc}_{relative}` or `{relative}` if acc is empty
+    ///
+    /// # Arguments
+    /// * `acc_var` - The accumulator variable name (e.g., "acc")
+    /// * `relative` - The relative name to append (e.g., "max_cost_basis")
+    fn suffix_expr(&self, acc_var: &str, relative: &str) -> String;
+
+    /// Format a prefix mode expression: `_p(prefix, acc)`.
+    ///
+    /// Prefix mode prepends the prefix to the accumulator.
+    /// - If prefix is empty, returns just acc (identity)
+    /// - Otherwise: `{prefix}{acc}` (prefix includes trailing underscore)
+    ///
+    /// # Arguments
+    /// * `prefix` - The prefix to prepend (e.g., "cumulative_")
+    /// * `acc_var` - The accumulator variable name (e.g., "acc")
+    fn prefix_expr(&self, prefix: &str, acc_var: &str) -> String;
 
     /// Generate a constructor call for patterns and accessors.
     ///

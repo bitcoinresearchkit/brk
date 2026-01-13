@@ -175,10 +175,8 @@ fn generate_tree_initializer(
                 TreeNode::Branch(grandchildren) => {
                     let field_name = to_camel_case(child_name);
                     let child_fields = get_node_fields(grandchildren, pattern_lookup);
-                    // Only use pattern factory if pattern is parameterizable
-                    let pattern_name = pattern_lookup
-                        .get(&child_fields)
-                        .filter(|name| metadata.is_parameterizable(name));
+                    // Use pattern factory if ANY pattern matches (not just parameterizable)
+                    let pattern_name = pattern_lookup.get(&child_fields);
 
                     let base_result = get_pattern_instance_base(child_node);
 

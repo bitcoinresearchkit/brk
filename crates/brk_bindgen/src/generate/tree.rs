@@ -23,10 +23,12 @@ pub struct ChildContext<'a> {
     pub base_result: PatternBaseResult,
     /// Whether this is a leaf node.
     pub is_leaf: bool,
-    /// Whether to use an inline type instead of a pattern factory (only meaningful for branches).
+    /// Whether to use an inline type instead of a pattern type (only meaningful for branches).
     pub should_inline: bool,
     /// The type name to use for inline branches.
     pub inline_type_name: String,
+    /// Whether the pattern is parameterizable (has ::new() constructor).
+    pub is_parameterizable: bool,
 }
 
 /// Context for generating a tree node, returned by `prepare_tree_node`.
@@ -78,11 +80,20 @@ pub fn prepare_tree_node<'a>(
         .map(|((child_name, child_node), (field, child_fields))| {
             let is_leaf = matches!(child_node, TreeNode::Leaf(_));
             let base_result = get_pattern_instance_base(child_node);
+
+            // For type annotations: use pattern type if ANY pattern matches
+            let matches_any_pattern = child_fields
+                .as_ref()
+                .is_some_and(|cf| metadata.matches_pattern(cf));
+
+            // For constructors: only use ::new() if parameterizable
             let is_parameterizable = child_fields
                 .as_ref()
                 .is_some_and(|cf| metadata.is_parameterizable_fields(cf));
-            // should_inline is only meaningful for branches
-            let should_inline = !is_leaf && base_result.should_inline(is_parameterizable);
+
+            // should_inline determines if we generate an inline struct type
+            // We inline only if it's a branch AND doesn't match any pattern
+            let should_inline = !is_leaf && !matches_any_pattern;
 
             // Inline type name (only used when should_inline is true)
             let inline_type_name = if should_inline {
@@ -100,6 +111,7 @@ pub fn prepare_tree_node<'a>(
                 is_leaf,
                 should_inline,
                 inline_type_name,
+                is_parameterizable,
             }
         })
         .collect();

@@ -1,6 +1,6 @@
 //! JavaScript language syntax implementation.
 
-use crate::{FieldNamePosition, GenericSyntax, LanguageSyntax, to_camel_case, to_pascal_case};
+use crate::{GenericSyntax, LanguageSyntax, to_camel_case, to_pascal_case};
 
 /// JavaScript-specific code generation syntax.
 pub struct JavaScriptSyntax;
@@ -16,32 +16,26 @@ impl LanguageSyntax for JavaScriptSyntax {
         format!("`${{{}}}{}`", var_name, suffix)
     }
 
-    fn position_expr(&self, pos: &FieldNamePosition, base_var: &str) -> String {
-        // Convert base_var to camelCase for JavaScript
-        let var_name = to_camel_case(base_var);
-        match pos {
-            FieldNamePosition::Append(s) => {
-                // Use helper _m(acc, suffix) to build metric name
-                // e.g., _m(acc, "cap") produces: acc ? `${acc}_cap` : 'cap'
-                if let Some(suffix) = s.strip_prefix('_') {
-                    format!("_m({}, '{}')", var_name, suffix)
-                } else {
-                    format!("`${{{}}}{}`", var_name, s)
-                }
-            }
-            FieldNamePosition::Prepend(s) => {
-                // Handle empty acc case for prepend
-                if let Some(prefix) = s.strip_suffix('_') {
-                    format!(
-                        "({} ? `{}${{{}}}` : '{}')",
-                        var_name, s, var_name, prefix
-                    )
-                } else {
-                    format!("`{}${{{}}}`", s, var_name)
-                }
-            }
-            FieldNamePosition::Identity => var_name,
-            FieldNamePosition::SetBase(s) => format!("'{}'", s),
+    fn suffix_expr(&self, acc_var: &str, relative: &str) -> String {
+        let var_name = to_camel_case(acc_var);
+        if relative.is_empty() {
+            // Identity: just return acc
+            var_name
+        } else {
+            // _m(acc, relative) -> acc ? `${acc}_relative` : 'relative'
+            format!("_m({}, '{}')", var_name, relative)
+        }
+    }
+
+    fn prefix_expr(&self, prefix: &str, acc_var: &str) -> String {
+        let var_name = to_camel_case(acc_var);
+        if prefix.is_empty() {
+            // Identity: just return acc
+            var_name
+        } else {
+            // _p(prefix, acc) -> acc ? `${prefix}${acc}` : 'prefix_without_underscore'
+            let prefix_base = prefix.trim_end_matches('_');
+            format!("_p('{}', {})", prefix_base, var_name)
         }
     }
 

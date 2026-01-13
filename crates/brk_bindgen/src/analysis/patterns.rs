@@ -7,7 +7,7 @@ use std::collections::{BTreeSet, HashMap};
 
 use brk_types::{TreeNode, extract_json_type};
 
-use super::analyze_all_field_positions;
+use super::analyze_pattern_modes;
 use crate::{PatternField, StructuralPattern, to_pascal_case};
 
 /// Context for pattern detection, holding all intermediate state.
@@ -39,6 +39,7 @@ impl PatternContext {
 /// Detect structural patterns in the tree using a bottom-up approach.
 ///
 /// Returns (patterns, concrete_to_pattern, concrete_to_type_param).
+/// Each pattern has its `mode` set based on analysis of all instances.
 pub fn detect_structural_patterns(
     tree: &TreeNode,
 ) -> (
@@ -52,7 +53,9 @@ pub fn detect_structural_patterns(
     let (generic_patterns, generic_mappings, type_mappings) =
         detect_generic_patterns(&ctx.signature_to_pattern);
 
-    let mut patterns: Vec<StructuralPattern> = ctx.signature_to_pattern
+    // Only include patterns that appear 2+ times for the patterns list
+    let mut patterns: Vec<StructuralPattern> = ctx
+        .signature_to_pattern
         .iter()
         .filter(|(sig, _)| {
             ctx.signature_counts.get(*sig).copied().unwrap_or(0) >= 2
@@ -76,7 +79,7 @@ pub fn detect_structural_patterns(
             StructuralPattern {
                 name: name.clone(),
                 fields: fields_with_type_params,
-                field_positions: HashMap::new(),
+                mode: None, // Will be determined by analyze_pattern_modes
                 is_generic: false,
             }
         })
@@ -84,6 +87,7 @@ pub fn detect_structural_patterns(
 
     patterns.extend(generic_patterns);
 
+    // Build pattern lookup for mode analysis (patterns appearing 2+ times)
     let mut pattern_lookup: HashMap<Vec<PatternField>, String> = HashMap::new();
     for (sig, name) in &ctx.signature_to_pattern {
         if ctx.signature_counts.get(sig).copied().unwrap_or(0) >= 2 {
@@ -94,8 +98,8 @@ pub fn detect_structural_patterns(
 
     let concrete_to_pattern = pattern_lookup.clone();
 
-    // Use the new bottom-up field position analysis
-    analyze_all_field_positions(tree, &mut patterns, &pattern_lookup);
+    // Analyze pattern modes (suffix vs prefix) from all instances
+    analyze_pattern_modes(tree, &mut patterns, &pattern_lookup);
 
     patterns.sort_by(|a, b| b.fields.len().cmp(&a.fields.len()));
     (patterns, concrete_to_pattern, type_mappings)
@@ -137,7 +141,7 @@ fn detect_generic_patterns(
             patterns.push(StructuralPattern {
                 name: generic_name,
                 fields: normalized_fields,
-                field_positions: HashMap::new(),
+                mode: None, // Will be determined by analyze_pattern_modes
                 is_generic: true,
             });
         }

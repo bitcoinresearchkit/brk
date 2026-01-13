@@ -1,6 +1,6 @@
 //! Python language syntax implementation.
 
-use crate::{FieldNamePosition, GenericSyntax, LanguageSyntax, escape_python_keyword, to_snake_case};
+use crate::{GenericSyntax, LanguageSyntax, escape_python_keyword, to_snake_case};
 
 /// Python-specific code generation syntax.
 pub struct PythonSyntax;
@@ -14,30 +14,24 @@ impl LanguageSyntax for PythonSyntax {
         format!("f'{{{}}}{}'", base_var, suffix)
     }
 
-    fn position_expr(&self, pos: &FieldNamePosition, base_var: &str) -> String {
-        match pos {
-            FieldNamePosition::Append(s) => {
-                // Use helper _m(acc, suffix) to build metric name
-                if let Some(suffix) = s.strip_prefix('_') {
-                    format!("_m({}, '{}')", base_var, suffix)
-                } else {
-                    format!("f'{{{}}}{}'", base_var, s)
-                }
-            }
-            FieldNamePosition::Prepend(s) => {
-                // Handle empty acc case for prepend
-                // Want to produce: (f'prefix_{acc}' if acc else 'prefix')
-                if let Some(prefix) = s.strip_suffix('_') {
-                    format!(
-                        "(f'{}{{{}}}' if {} else '{}')",
-                        s, base_var, base_var, prefix
-                    )
-                } else {
-                    format!("f'{}{{{}}}'" , s, base_var)
-                }
-            }
-            FieldNamePosition::Identity => base_var.to_string(),
-            FieldNamePosition::SetBase(s) => format!("'{}'", s),
+    fn suffix_expr(&self, acc_var: &str, relative: &str) -> String {
+        if relative.is_empty() {
+            // Identity: just return acc
+            acc_var.to_string()
+        } else {
+            // _m(acc, relative) -> f'{acc}_{relative}' if acc else 'relative'
+            format!("_m({}, '{}')", acc_var, relative)
+        }
+    }
+
+    fn prefix_expr(&self, prefix: &str, acc_var: &str) -> String {
+        if prefix.is_empty() {
+            // Identity: just return acc
+            acc_var.to_string()
+        } else {
+            // _p(prefix, acc) -> f'{prefix}{acc}' if acc else 'prefix_base'
+            let prefix_base = prefix.trim_end_matches('_');
+            format!("_p('{}', {})", prefix_base, acc_var)
         }
     }
 

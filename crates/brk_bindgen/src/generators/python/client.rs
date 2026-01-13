@@ -11,7 +11,7 @@ use serde::Serialize;
 
 use crate::{
     ClientMetadata, IndexSetPattern, PythonSyntax, StructuralPattern, VERSION,
-    generate_parameterized_field, generate_tree_path_field, index_to_field_name,
+    generate_parameterized_field, index_to_field_name,
 };
 
 /// Generate class-level constants for the BrkClient class.
@@ -132,8 +132,14 @@ class BrkClientBase:
 
 
 def _m(acc: str, s: str) -> str:
-    """Build metric name with optional prefix."""
+    """Build metric name with suffix."""
+    if not s: return acc
     return f"{{acc}}_{{s}}" if acc else s
+
+
+def _p(prefix: str, acc: str) -> str:
+    """Build metric name with prefix."""
+    return f"{{prefix}}_{{acc}}" if acc else prefix
 
 "#
     )
@@ -309,9 +315,10 @@ class MetricEndpointBuilder(Generic[T]):
 
     def tail(self, n: int = 10) -> RangeBuilder[T]:
         """Get the last n items (pandas-style)."""
+        start, end = (None, 0) if n == 0 else (-n, None)
         return RangeBuilder(_EndpointConfig(
             self._config.client, self._config.name, self._config.index,
-            -n, None
+            start, end
         ))
 
     def skip(self, n: int) -> SkippedBuilder[T]:
@@ -467,9 +474,7 @@ pub fn generate_structural_patterns(
     writeln!(output, "# Reusable structural pattern classes\n").unwrap();
 
     for pattern in patterns {
-        let is_parameterizable = pattern.is_parameterizable();
-
-        // For generic patterns, inherit from Generic[T]
+        // Generate class
         if pattern.is_generic {
             writeln!(output, "class {}(Generic[T]):", pattern.name).unwrap();
         } else {
@@ -481,33 +486,20 @@ pub fn generate_structural_patterns(
         )
         .unwrap();
         writeln!(output, "    ").unwrap();
-
-        if is_parameterizable {
-            writeln!(
-                output,
-                "    def __init__(self, client: BrkClientBase, acc: str):"
-            )
-            .unwrap();
-            writeln!(
-                output,
-                "        \"\"\"Create pattern node with accumulated metric name.\"\"\""
-            )
-            .unwrap();
-        } else {
-            writeln!(
-                output,
-                "    def __init__(self, client: BrkClientBase, base_path: str):"
-            )
-            .unwrap();
-        }
+        writeln!(
+            output,
+            "    def __init__(self, client: BrkClientBase, acc: str):"
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "        \"\"\"Create pattern node with accumulated metric name.\"\"\""
+        )
+        .unwrap();
 
         let syntax = PythonSyntax;
         for field in &pattern.fields {
-            if is_parameterizable {
-                generate_parameterized_field(output, &syntax, field, pattern, metadata, "        ");
-            } else {
-                generate_tree_path_field(output, &syntax, field, metadata, "        ");
-            }
+            generate_parameterized_field(output, &syntax, field, pattern, metadata, "        ");
         }
 
         writeln!(output).unwrap();

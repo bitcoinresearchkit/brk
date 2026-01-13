@@ -3,9 +3,9 @@
 //! This module generates a JavaScript + JSDoc client for the BRK API.
 
 mod api;
-mod client;
-mod tree;
-mod types;
+pub mod client;
+pub mod tree;
+pub mod types;
 
 use std::{fmt::Write, fs, io, path::Path};
 
