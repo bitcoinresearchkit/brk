@@ -165,24 +165,17 @@ pub fn extract_endpoints(spec: &Spec) -> Vec<Endpoint> {
     endpoints
 }
 
-fn get_operations(path_item: &PathItem) -> Vec<(String, &Operation)> {
-    let mut ops = Vec::new();
-    if let Some(op) = &path_item.get {
-        ops.push(("GET".to_string(), op));
-    }
-    if let Some(op) = &path_item.post {
-        ops.push(("POST".to_string(), op));
-    }
-    if let Some(op) = &path_item.put {
-        ops.push(("PUT".to_string(), op));
-    }
-    if let Some(op) = &path_item.delete {
-        ops.push(("DELETE".to_string(), op));
-    }
-    if let Some(op) = &path_item.patch {
-        ops.push(("PATCH".to_string(), op));
-    }
-    ops
+fn get_operations(path_item: &PathItem) -> Vec<(&'static str, &Operation)> {
+    [
+        ("GET", &path_item.get),
+        ("POST", &path_item.post),
+        ("PUT", &path_item.put),
+        ("DELETE", &path_item.delete),
+        ("PATCH", &path_item.patch),
+    ]
+    .into_iter()
+    .filter_map(|(method, op)| op.as_ref().map(|o| (method, o)))
+    .collect()
 }
 
 fn extract_endpoint(path: &str, method: &str, operation: &Operation) -> Option<Endpoint> {

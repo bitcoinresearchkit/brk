@@ -97,33 +97,24 @@ pub fn generate_tree_node_field<S: LanguageSyntax>(
     let type_ann = metadata.field_type_annotation(field, false, None, syntax.generic_syntax());
 
     let value = if metadata.is_pattern_type(&field.rust_type) {
-        // Check if this pattern is parameterizable
-        let pattern = metadata.find_pattern(&field.rust_type);
-        let is_parameterizable = pattern.is_some_and(|p| p.is_parameterizable());
+        // Use metric base only for parameterizable patterns
+        let use_base = metadata
+            .find_pattern(&field.rust_type)
+            .is_some_and(|p| p.is_parameterizable())
+            && pattern_base.is_some();
 
-        if is_parameterizable {
-            if let Some(base) = pattern_base {
-                // Use the detected metric base
-                let path = syntax.string_literal(base);
-                syntax.constructor(&field.rust_type, &path)
-            } else {
-                // Fallback to tree path
-                let path_expr = syntax.path_expr("base_path", &path_suffix(child_name));
-                syntax.constructor(&field.rust_type, &path_expr)
-            }
+        let path_arg = if use_base {
+            syntax.string_literal(pattern_base.unwrap())
         } else {
-            let path_expr = syntax.path_expr("base_path", &path_suffix(child_name));
-            syntax.constructor(&field.rust_type, &path_expr)
-        }
+            syntax.path_expr("base_path", &path_suffix(child_name))
+        };
+        syntax.constructor(&field.rust_type, &path_arg)
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
-        // Leaf field - use actual metric name if provided
-        if let Some(metric_name) = pattern_base {
-            let path = syntax.string_literal(metric_name);
-            syntax.constructor(&accessor.name, &path)
-        } else {
-            let path_expr = syntax.path_expr("base_path", &path_suffix(child_name));
-            syntax.constructor(&accessor.name, &path_expr)
-        }
+        // Leaf field - use metric name if provided, else tree path
+        let path_arg = pattern_base
+            .map(|name| syntax.string_literal(name))
+            .unwrap_or_else(|| syntax.path_expr("base_path", &path_suffix(child_name)));
+        syntax.constructor(&accessor.name, &path_arg)
     } else if field.is_branch() {
         // Non-pattern branch - instantiate the nested struct
         let path_expr = syntax.path_expr("base_path", &path_suffix(child_name));

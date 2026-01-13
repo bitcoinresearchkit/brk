@@ -5,7 +5,7 @@ use std::fmt::Write;
 
 use serde_json::Value;
 
-use crate::{TypeSchemas, escape_python_keyword, generators::MANUAL_GENERIC_TYPES, ref_to_type_name};
+use crate::{TypeSchemas, escape_python_keyword, generators::MANUAL_GENERIC_TYPES, get_union_variants, ref_to_type_name};
 
 /// Generate type definitions from schemas.
 pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
@@ -36,7 +36,7 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
     for name in type_aliases {
         let schema = &schemas[&name];
         let type_desc = schema.get("description").and_then(|d| d.as_str());
-        let py_type = schema_to_python_type_quoting(schema, Some(&name), &typed_dict_set);
+        let py_type = schema_to_python_type(schema, Some(&name), Some(&typed_dict_set));
         if let Some(desc) = type_desc {
             for line in desc.lines() {
                 writeln!(output, "# {}", line).unwrap();
@@ -87,7 +87,7 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
         }
 
         for (prop_name, prop_schema) in props {
-            let prop_type = schema_to_python_type_ctx(prop_schema, Some(&name));
+            let prop_type = schema_to_python_type(prop_schema, Some(&name), None);
             let safe_name = escape_python_keyword(prop_name);
             writeln!(output, "    {}: {}", safe_name, prop_type).unwrap();
         }
@@ -193,13 +193,13 @@ fn json_type_to_python(ty: &str, schema: &Value, current_type: Option<&str>) -> 
         "array" => {
             let item_type = schema
                 .get("items")
-                .map(|s| schema_to_python_type_ctx(s, current_type))
+                .map(|s| schema_to_python_type(s, current_type, None))
                 .unwrap_or_else(|| "Any".to_string());
             format!("List[{}]", item_type)
         }
         "object" => {
             if let Some(add_props) = schema.get("additionalProperties") {
-                let value_type = schema_to_python_type_ctx(add_props, current_type);
+                let value_type = schema_to_python_type(add_props, current_type, None);
                 return format!("dict[str, {}]", value_type);
             }
             "dict".to_string()
@@ -208,15 +208,18 @@ fn json_type_to_python(ty: &str, schema: &Value, current_type: Option<&str>) -> 
     }
 }
 
-/// Convert JSON Schema to Python type, quoting types in the given set
-fn schema_to_python_type_quoting(
+/// Convert JSON Schema to Python type.
+///
+/// - `current_type`: Used to detect and quote self-references for recursive types
+/// - `quote_types`: Optional set of additional type names that should be quoted
+pub fn schema_to_python_type(
     schema: &Value,
     current_type: Option<&str>,
-    quote_types: &HashSet<String>,
+    quote_types: Option<&HashSet<String>>,
 ) -> String {
     if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
         for item in all_of {
-            let resolved = schema_to_python_type_quoting(item, current_type, quote_types);
+            let resolved = schema_to_python_type(item, current_type, quote_types);
             if resolved != "Any" {
                 return resolved;
             }
@@ -227,67 +230,9 @@ fn schema_to_python_type_quoting(
     if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
         let type_name = ref_to_type_name(ref_path).unwrap_or("Any");
         // Quote self-references or types in quote_types set
-        if current_type == Some(type_name) || quote_types.contains(type_name) {
-            return format!("\"{}\"", type_name);
-        }
-        return type_name.to_string();
-    }
-
-    // Handle enum (array of string values)
-    if let Some(enum_values) = schema.get("enum").and_then(|e| e.as_array()) {
-        let literals: Vec<String> = enum_values
-            .iter()
-            .filter_map(|v| v.as_str())
-            .map(|s| format!("\"{}\"", s))
-            .collect();
-        if !literals.is_empty() {
-            return format!("Literal[{}]", literals.join(", "));
-        }
-    }
-
-    if let Some(variants) = schema
-        .get("anyOf")
-        .or_else(|| schema.get("oneOf"))
-        .and_then(|v| v.as_array())
-    {
-        let types: Vec<String> = variants
-            .iter()
-            .map(|v| schema_to_python_type_quoting(v, current_type, quote_types))
-            .collect();
-        let filtered: Vec<_> = types.iter().filter(|t| *t != "Any").collect();
-        if !filtered.is_empty() {
-            return format!(
-                "Union[{}]",
-                filtered
-                    .iter()
-                    .map(|s| s.as_str())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            );
-        }
-        return format!("Union[{}]", types.join(", "));
-    }
-
-    // Fall back to regular conversion for other cases
-    schema_to_python_type_ctx(schema, current_type)
-}
-
-/// Convert JSON Schema to Python type with context for detecting self-references
-pub fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
-    if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
-        for item in all_of {
-            let resolved = schema_to_python_type_ctx(item, current_type);
-            if resolved != "Any" {
-                return resolved;
-            }
-        }
-    }
-
-    // Handle $ref
-    if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
-        let type_name = ref_to_type_name(ref_path).unwrap_or("Any");
-        // Quote self-references to handle recursive types
-        if current_type == Some(type_name) {
+        let should_quote = current_type == Some(type_name)
+            || quote_types.is_some_and(|qt| qt.contains(type_name));
+        if should_quote {
             return format!("\"{}\"", type_name);
         }
         return type_name.to_string();
@@ -310,7 +255,7 @@ pub fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> 
             let types: Vec<String> = type_array
                 .iter()
                 .filter_map(|t| t.as_str())
-                .filter(|t| *t != "null") // Filter out null for cleaner Optional handling
+                .filter(|t| *t != "null")
                 .map(|t| json_type_to_python(t, schema, current_type))
                 .collect();
             let has_null = type_array.iter().any(|t| t.as_str() == Some("null"));
@@ -337,14 +282,10 @@ pub fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> 
         }
     }
 
-    if let Some(variants) = schema
-        .get("anyOf")
-        .or_else(|| schema.get("oneOf"))
-        .and_then(|v| v.as_array())
-    {
+    if let Some(variants) = get_union_variants(schema) {
         let types: Vec<String> = variants
             .iter()
-            .map(|v| schema_to_python_type_ctx(v, current_type))
+            .map(|v| schema_to_python_type(v, current_type, quote_types))
             .collect();
         let filtered: Vec<_> = types.iter().filter(|t| *t != "Any").collect();
         if !filtered.is_empty() {

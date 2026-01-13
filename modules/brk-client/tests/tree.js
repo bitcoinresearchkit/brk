@@ -5,30 +5,43 @@
 import { BrkClient } from "../index.js";
 
 /**
+ * @typedef {import('../index.js').AnyMetricPattern} AnyMetricPattern
+ */
+
+/**
+ * Check if an object is a metric pattern (has indexes() method and by object).
+ * @param {any} obj
+ * @returns {obj is AnyMetricPattern}
+ */
+function isMetricPattern(obj) {
+  return (
+    obj &&
+    typeof obj === "object" &&
+    typeof obj.indexes === "function" &&
+    obj.by &&
+    typeof obj.by === "object"
+  );
+}
+
+/**
  * Recursively collect all metric patterns from the tree.
  * @param {Record<string, any>} obj
  * @param {string} path
- * @returns {Array<{path: string, metric: Record<string, any>, indexes: string[]}>}
+ * @returns {Array<{path: string, metric: AnyMetricPattern}>}
  */
 function getAllMetrics(obj, path = "") {
+  /** @type {Array<{path: string, metric: AnyMetricPattern}>} */
   const metrics = [];
 
   for (const key of Object.keys(obj)) {
-    if (key.startsWith("_")) continue;
-
     const attr = obj[key];
     if (!attr || typeof attr !== "object") continue;
 
     const currentPath = path ? `${path}.${key}` : key;
 
-    // Check if this is a metric pattern (has 'by' property with index getters)
-    if (attr.by && typeof attr.by === "object") {
-      const indexes = Object.keys(attr.by).filter(
-        (k) => !k.startsWith("_") && typeof attr.by[k] === "object",
-      );
-      if (indexes.length > 0) {
-        metrics.push({ path: currentPath, metric: attr, indexes });
-      }
+    // Check if this is a metric pattern using the indexes() method
+    if (isMetricPattern(attr)) {
+      metrics.push({ path: currentPath, metric: attr });
     }
 
     // Recurse into nested tree nodes
@@ -40,32 +53,37 @@ function getAllMetrics(obj, path = "") {
   return metrics;
 }
 
-// Endpoints with sparse data (holes at the end) - skip these
-const SKIP_ENDPOINTS = new Set([
-  "distribution.addressesData.empty.by.emptyaddressindex",
-  "distribution.addressesData.loaded.by.loadedaddressindex",
-]);
-
 async function testAllEndpoints() {
-  const client = new BrkClient({ baseUrl: "http://localhost:3110", timeout: 15000 });
+  const client = new BrkClient({
+    baseUrl: "http://localhost:3110",
+    timeout: 15000,
+  });
 
   const metrics = getAllMetrics(client.metrics);
   console.log(`\nFound ${metrics.length} metrics`);
 
   let success = 0;
-  let skipped = 0;
 
-  for (const { path, metric, indexes } of metrics) {
+  for (const { path, metric } of metrics) {
+    // Use the indexes() method to get all available indexes
+    const indexes = metric.indexes();
+
     for (const idxName of indexes) {
       const fullPath = `${path}.by.${idxName}`;
-      if (SKIP_ENDPOINTS.has(fullPath)) {
-        skipped++;
-        console.log(`SKIP: ${fullPath} -> sparse data`);
-        continue;
-      }
+
       try {
-        const endpoint = metric.by[idxName];
-        await endpoint.last(0);
+        // Verify both access methods work: .by[index] and .get(index)
+        const endpointByProperty = metric.by[idxName];
+        const endpointByGet = metric.get(idxName);
+
+        if (!endpointByProperty) {
+          throw new Error(`metric.by.${idxName} is undefined`);
+        }
+        if (!endpointByGet) {
+          throw new Error(`metric.get('${idxName}') returned undefined`);
+        }
+
+        await endpointByProperty.last(0);
         success++;
         console.log(`OK: ${fullPath}`);
       } catch (e) {
@@ -79,7 +97,6 @@ async function testAllEndpoints() {
 
   console.log(`\n=== Results ===`);
   console.log(`Success: ${success}`);
-  console.log(`Skipped: ${skipped}`);
 }
 
 testAllEndpoints();

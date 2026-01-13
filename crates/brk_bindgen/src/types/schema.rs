@@ -33,3 +33,11 @@ pub fn extract_inner_type(type_str: &str) -> String {
 pub fn ref_to_type_name(ref_path: &str) -> Option<&str> {
     ref_path.rsplit('/').next()
 }
+
+/// Get union variants from anyOf or oneOf schema.
+pub fn get_union_variants(schema: &Value) -> Option<&Vec<Value>> {
+    schema
+        .get("anyOf")
+        .or_else(|| schema.get("oneOf"))
+        .and_then(|v| v.as_array())
+}

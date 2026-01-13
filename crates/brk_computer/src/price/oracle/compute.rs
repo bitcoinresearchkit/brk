@@ -20,6 +20,9 @@ use super::{
 };
 use crate::{ComputeIndexes, indexes};
 
+/// Flush interval for periodic writes during oracle computation.
+const FLUSH_INTERVAL: usize = 10_000;
+
 impl Vecs {
     /// Compute oracle prices from on-chain data
     pub fn compute(
@@ -275,9 +278,15 @@ impl Vecs {
 
             self.price_cents
                 .truncate_push_at(height.to_usize(), price_cents)?;
+
+            // Periodic flush to avoid data loss on long computations
+            if height.to_usize() % FLUSH_INTERVAL == 0 {
+                let _lock = exit.lock();
+                self.price_cents.write()?;
+            }
         }
 
-        // Write height prices
+        // Final write
         {
             let _lock = exit.lock();
             self.price_cents.write()?;

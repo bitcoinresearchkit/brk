@@ -371,9 +371,11 @@ fn test_generated_rust_output() {
     );
     println!("  Output size: {} bytes", rust_output.len());
 
-    // Write output to actual client location
-    let output_path = concat!(env!("CARGO_MANIFEST_DIR"), "/../brk_client/src/lib.rs");
-    std::fs::write(output_path, &rust_output).expect("Failed to write client output");
+    // Write output to test directory (not actual client)
+    let output_dir = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/output");
+    std::fs::create_dir_all(output_dir).ok();
+    let output_path = format!("{}/rust_client.rs", output_dir);
+    std::fs::write(&output_path, &rust_output).expect("Failed to write client output");
     println!("  Wrote output to: {}", output_path);
 
     // Verify the output contains the key components
@@ -468,12 +470,11 @@ fn test_generated_javascript_output() {
     println!("  Output size: {} bytes", js_output.len());
     println!("  Output lines: {}", js_output.lines().count());
 
-    // Write output to actual client location
-    let output_path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../modules/brk-client/index.js"
-    );
-    std::fs::write(output_path, &js_output).expect("Failed to write JS client output");
+    // Write output to test directory (not actual client)
+    let output_dir = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/output");
+    std::fs::create_dir_all(output_dir).ok();
+    let output_path = format!("{}/js_client.js", output_dir);
+    std::fs::write(&output_path, &js_output).expect("Failed to write JS client output");
     println!("  Wrote output to: {}", output_path);
 
     // Verify the output contains key components
@@ -562,12 +563,11 @@ fn test_generated_python_output() {
     println!("  Output size: {} bytes", py_output.len());
     println!("  Output lines: {}", py_output.lines().count());
 
-    // Write output to actual client location
-    let output_path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../packages/brk_client/brk_client/__init__.py"
-    );
-    std::fs::write(output_path, &py_output).expect("Failed to write Python client output");
+    // Write output to test directory (not actual client)
+    let output_dir = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/output");
+    std::fs::create_dir_all(output_dir).ok();
+    let output_path = format!("{}/python_client.py", output_dir);
+    std::fs::write(&output_path, &py_output).expect("Failed to write Python client output");
     println!("  Wrote output to: {}", output_path);
 
     // Verify the output contains key components

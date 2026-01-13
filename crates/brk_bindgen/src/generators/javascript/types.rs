@@ -4,7 +4,7 @@ use std::fmt::Write;
 
 use serde_json::Value;
 
-use crate::{TypeSchemas, generators::{MANUAL_GENERIC_TYPES, write_description}, ref_to_type_name, to_camel_case};
+use crate::{TypeSchemas, generators::{MANUAL_GENERIC_TYPES, write_description}, get_union_variants, ref_to_type_name, to_camel_case};
 
 /// Generate JSDoc type definitions from OpenAPI schemas.
 pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
@@ -165,11 +165,7 @@ pub fn schema_to_js_type(schema: &Value, current_type: Option<&str>) -> String {
         }
     }
 
-    if let Some(variants) = schema
-        .get("anyOf")
-        .or_else(|| schema.get("oneOf"))
-        .and_then(|v| v.as_array())
-    {
+    if let Some(variants) = get_union_variants(schema) {
         let types: Vec<String> = variants
             .iter()
             .map(|v| schema_to_js_type(v, current_type))
