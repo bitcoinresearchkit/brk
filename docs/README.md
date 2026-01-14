@@ -18,15 +18,19 @@ Open-source on-chain analytics for Bitcoin. Combines functionality of [Glassnode
 
 ## Usage
 
+### Website
+
+Browse metrics and charts visually. Use it free at [Bitview](https://bitview.space), no signup required.
+
 ### API
 
-Query thousands of metrics and blockchain data in JSON or CSV. Use it free at [Bitview](https://bitview.space/api), no signup required.
+Query thousands of metrics and blockchain data in JSON or CSV. Freely accessible at [Bitview](https://bitview.space/api).
 
 [Documentation](https://bitview.space/api) · Clients: [JavaScript](https://www.npmjs.com/package/brk-client), [Python](https://pypi.org/project/brk-client), [Rust](https://crates.io/crates/brk_client) · [MCP](https://modelcontextprotocol.io)
 
 ### Self-host
 
-Compute all metrics locally. Private, verifiable, self-sovereign. Runs alongside Bitcoin Core.
+Run your own website and API. Private, verifiable, self-sovereign. Runs alongside Bitcoin Core.
 
 [Guide](./HOSTING.md)
 
