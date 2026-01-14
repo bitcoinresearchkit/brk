@@ -1,5 +1,6 @@
 import {
   line,
+  candlestick,
   baseline,
   histogram,
   fromBlockCount,
@@ -37,6 +38,7 @@ export function createContext({ colors, brk }) {
 
     // Series helpers
     line,
+    candlestick,
     baseline,
     histogram,
     fromBlockCount: (pattern, title, color) =>

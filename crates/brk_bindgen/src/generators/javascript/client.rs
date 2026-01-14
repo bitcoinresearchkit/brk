@@ -2,16 +2,9 @@
 
 use std::fmt::Write;
 
-use brk_cohort::{
-    AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, GE_AMOUNT_NAMES, LT_AMOUNT_NAMES,
-    MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, YEAR_NAMES,
-};
-use brk_types::{Index, PoolSlug, pools};
-use serde::Serialize;
-use serde_json::Value;
-
 use crate::{
-    ClientMetadata, GenericSyntax, IndexSetPattern, JavaScriptSyntax, StructuralPattern, VERSION,
+    ClientConstants, ClientMetadata, CohortConstants, GenericSyntax, IndexSetPattern,
+    JavaScriptSyntax, StructuralPattern, camel_case_keys, format_json,
     generate_parameterized_field, to_camel_case,
 };
 
@@ -293,59 +286,16 @@ const _p = (prefix, acc) => acc ? `${{prefix}}_${{acc}}` : prefix;
 
 /// Generate static constants for the BrkClient class.
 pub fn generate_static_constants(output: &mut String) {
-    fn instance_const<T: Serialize>(output: &mut String, name: &str, value: &T) {
-        write_static_const(output, name, &serde_json::to_string_pretty(value).unwrap());
-    }
+    let constants = ClientConstants::collect();
 
-    fn instance_const_raw(output: &mut String, name: &str, value: &str) {
-        writeln!(output, "  {} = {};\n", name, value).unwrap();
-    }
+    // VERSION, INDEXES, POOL_ID_TO_POOL_NAME
+    writeln!(output, "  VERSION = \"{}\";\n", constants.version).unwrap();
+    write_static_const(output, "INDEXES", &format_json(&constants.indexes));
+    write_static_const(output, "POOL_ID_TO_POOL_NAME", &format_json(&constants.pool_map));
 
-    instance_const_raw(output, "VERSION", &format!("\"v{}\"", VERSION));
-
-    let indexes = Index::all();
-    let indexes_json: Vec<&'static str> = indexes.iter().map(|i| i.serialize_long()).collect();
-    instance_const(output, "INDEXES", &indexes_json);
-
-    let pools = pools();
-    let mut sorted_pools: Vec<_> = pools.iter().collect();
-    sorted_pools.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
-    let pool_map: std::collections::BTreeMap<PoolSlug, &'static str> =
-        sorted_pools.iter().map(|p| (p.slug(), p.name)).collect();
-    instance_const(output, "POOL_ID_TO_POOL_NAME", &pool_map);
-
-    fn instance_const_camel<T: Serialize>(output: &mut String, name: &str, value: &T) {
-        let json_value: Value = serde_json::to_value(value).unwrap();
-        let camel_value = camel_case_top_level_keys(json_value);
-        write_static_const(
-            output,
-            name,
-            &serde_json::to_string_pretty(&camel_value).unwrap(),
-        );
-    }
-
-    instance_const_camel(output, "TERM_NAMES", &TERM_NAMES);
-    instance_const_camel(output, "EPOCH_NAMES", &EPOCH_NAMES);
-    instance_const_camel(output, "YEAR_NAMES", &YEAR_NAMES);
-    instance_const_camel(output, "SPENDABLE_TYPE_NAMES", &SPENDABLE_TYPE_NAMES);
-    instance_const_camel(output, "AGE_RANGE_NAMES", &AGE_RANGE_NAMES);
-    instance_const_camel(output, "MAX_AGE_NAMES", &MAX_AGE_NAMES);
-    instance_const_camel(output, "MIN_AGE_NAMES", &MIN_AGE_NAMES);
-    instance_const_camel(output, "AMOUNT_RANGE_NAMES", &AMOUNT_RANGE_NAMES);
-    instance_const_camel(output, "GE_AMOUNT_NAMES", &GE_AMOUNT_NAMES);
-    instance_const_camel(output, "LT_AMOUNT_NAMES", &LT_AMOUNT_NAMES);
-}
-
-fn camel_case_top_level_keys(value: Value) -> Value {
-    match value {
-        Value::Object(map) => {
-            let new_map: serde_json::Map<String, Value> = map
-                .into_iter()
-                .map(|(k, v)| (to_camel_case(&k), v))
-                .collect();
-            Value::Object(new_map)
-        }
-        other => other,
+    // Cohort constants with camelCase keys
+    for (name, value) in CohortConstants::all() {
+        write_static_const(output, name, &format_json(&camel_case_keys(value)));
     }
 }
 

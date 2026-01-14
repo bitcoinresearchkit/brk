@@ -135,7 +135,8 @@ pub fn find_best_price(histogram: &Histogram, min_slide: i32, max_slide: i32) ->
     let range_size = max_slide - min_slide + 1;
     let chunk_size = (range_size + PARALLEL_CHUNKS - 1) / PARALLEL_CHUNKS;
 
-    let (best_position, _best_score) = (0..PARALLEL_CHUNKS)
+    // Track total score for weighted average computation
+    let (best_position, best_score, total_score) = (0..PARALLEL_CHUNKS)
         .into_par_iter()
         .map(|chunk_idx| {
             let chunk_start = min_slide + chunk_idx * chunk_size;
@@ -143,26 +144,60 @@ pub fn find_best_price(histogram: &Histogram, min_slide: i32, max_slide: i32) ->
 
             let mut local_best_score = f64::NEG_INFINITY;
             let mut local_best_pos = chunk_start;
+            let mut local_total = 0.0;
 
             for slide in chunk_start..=chunk_end {
                 let score = compute_score_fast(&non_zero_bins, &bin_map, linear_sum, slide);
+                local_total += score;
                 if score > local_best_score {
                     local_best_score = score;
                     local_best_pos = slide;
                 }
             }
 
-            (local_best_pos, local_best_score)
+            (local_best_pos, local_best_score, local_total)
         })
         .reduce(
-            || (0, f64::NEG_INFINITY),
-            |a, b| if a.1 > b.1 { a } else { b },
+            || (0, f64::NEG_INFINITY, 0.0),
+            |a, b| {
+                let total = a.2 + b.2;
+                if a.1 > b.1 {
+                    (a.0, a.1, total)
+                } else {
+                    (b.0, b.1, total)
+                }
+            },
         );
 
-    // Convert position to price in cents
-    // Position 0 corresponds to $100 center
-    // Each bin is 1/200 of a decade (log scale)
-    position_to_cents(best_position)
+    // Compute neighbor scores for sub-bin interpolation (matches Python behavior)
+    let neighbor_up_score = compute_score_fast(&non_zero_bins, &bin_map, linear_sum, best_position + 1);
+    let neighbor_down_score = compute_score_fast(&non_zero_bins, &bin_map, linear_sum, best_position - 1);
+
+    // Find best neighbor
+    let (best_neighbor_offset, neighbor_score) = if neighbor_up_score > neighbor_down_score {
+        (1, neighbor_up_score)
+    } else {
+        (-1, neighbor_down_score)
+    };
+
+    // Weighted average between best position and best neighbor (Python lines 1144-1149)
+    // This provides sub-bin precision for the rough estimate
+    let avg_score = total_score / range_size as f64;
+    let a1 = best_score - avg_score;
+    let a2 = (neighbor_score - avg_score).abs();
+
+    if a1 + a2 > 0.0 {
+        let w1 = a1 / (a1 + a2);
+        let w2 = a2 / (a1 + a2);
+
+        let price_best = i64::from(position_to_cents(best_position)?);
+        let price_neighbor = i64::from(position_to_cents(best_position + best_neighbor_offset)?);
+
+        let weighted_price = Cents::from((w1 * price_best as f64 + w2 * price_neighbor as f64) as i64);
+        Some(weighted_price)
+    } else {
+        position_to_cents(best_position)
+    }
 }
 
 /// Fast score computation using sparse bin representation

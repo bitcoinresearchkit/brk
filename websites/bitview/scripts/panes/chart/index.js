@@ -293,6 +293,11 @@ export function init({
           return field;
         },
       });
+    } else {
+      // Clean up bottom pane when new option has no bottom series
+      seriesListBottom.forEach((series) => series.remove());
+      seriesListBottom.length = 0;
+      chart.legendBottom.removeFrom(0);
     }
 
     chart.addFieldsetIfNeeded({
@@ -468,7 +473,19 @@ export function init({
                   break;
                 }
                 case "Candlestick": {
-                  throw Error("TODO");
+                  seriesList.push(
+                    chart.addCandlestickSeries({
+                      metric: blueprint.metric,
+                      name: blueprint.title,
+                      unit,
+                      colors: blueprint.colors,
+                      defaultActive: blueprint.defaultActive,
+                      paneIndex,
+                      options,
+                      order,
+                    }),
+                  );
+                  break;
                 }
                 case "Line":
                 case undefined:

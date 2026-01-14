@@ -1,5 +1,6 @@
 /** Market section - Main entry point */
 
+import { localhost } from "../../utils/env.js";
 import { Unit } from "../../utils/units.js";
 import { buildAverages, createAveragesSection } from "./averages.js";
 import { createPerformanceSection } from "./performance.js";
@@ -12,8 +13,8 @@ import { createInvestingSection } from "./investing.js";
  * @returns {PartialOptionsGroup}
  */
 export function createMarketSection(ctx) {
-  const { colors, brk, line } = ctx;
-  const { market, supply } = brk.metrics;
+  const { colors, brk, line, candlestick } = ctx;
+  const { market, supply, price } = brk.metrics;
   const {
     movingAverage,
     ath,
@@ -34,6 +35,16 @@ export function createMarketSection(ctx) {
       {
         name: "Price",
         title: "Bitcoin Price",
+        ...(localhost && {
+          top: [
+            candlestick({
+              metric: price.oracle.ohlcDollars,
+              name: "Oracle",
+              unit: Unit.usd,
+              colors: [colors.cyan, colors.purple],
+            }),
+          ],
+        }),
       },
 
       // Capitalization

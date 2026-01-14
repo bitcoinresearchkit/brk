@@ -569,6 +569,7 @@ export function createChartElement({
      * @param {AnyMetricPattern} [args.metric]
      * @param {Accessor<CandlestickData[]>} [args.data]
      * @param {number} [args.paneIndex]
+     * @param {[Color, Color]} [args.colors] - [upColor, downColor] for legend
      * @param {boolean} [args.defaultActive]
      * @param {boolean} [args.inverse]
      * @param {SetDataCallback} [args.setDataCallback]
@@ -580,24 +581,27 @@ export function createChartElement({
       unit,
       order,
       paneIndex = 0,
+      colors: customColors,
       defaultActive,
       setDataCallback,
       data,
       inverse,
       options,
     }) {
-      const green = inverse ? colors.red : colors.green;
-      const red = inverse ? colors.green : colors.red;
+      const defaultGreen = inverse ? colors.red : colors.green;
+      const defaultRed = inverse ? colors.green : colors.red;
+      const upColor = customColors?.[0] ?? defaultGreen;
+      const downColor = customColors?.[1] ?? defaultRed;
 
       /** @type {CandlestickISeries} */
       const iseries = /** @type {any} */ (
         ichart.addSeries(
           /** @type {SeriesDefinition<'Candlestick'>} */ (CandlestickSeries),
           {
-            upColor: green(),
-            downColor: red(),
-            wickUpColor: green(),
-            wickDownColor: red(),
+            upColor: upColor(),
+            downColor: downColor(),
+            wickUpColor: upColor(),
+            wickDownColor: downColor(),
             borderVisible: false,
             visible: defaultActive !== false,
             ...options,
@@ -607,7 +611,7 @@ export function createChartElement({
       );
 
       return addSeries({
-        colors: [green, red],
+        colors: [upColor, downColor],
         iseries,
         name,
         order,

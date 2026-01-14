@@ -25,6 +25,29 @@ export function line({ metric, name, color, defaultActive, unit, options }) {
 }
 
 /**
+ * Create a Candlestick series
+ * @param {Object} args
+ * @param {AnyMetricPattern} args.metric
+ * @param {string} args.name
+ * @param {Unit} args.unit
+ * @param {[Color, Color]} [args.colors] - [upColor, downColor] for legend
+ * @param {boolean} [args.defaultActive]
+ * @param {CandlestickSeriesPartialOptions} [args.options]
+ * @returns {FetchedCandlestickSeriesBlueprint}
+ */
+export function candlestick({ metric, name, colors, defaultActive, unit, options }) {
+  return {
+    type: /** @type {const} */ ("Candlestick"),
+    metric,
+    title: name,
+    colors,
+    unit,
+    defaultActive,
+    options,
+  };
+}
+
+/**
  * Create a Baseline series
  * @param {Object} args
  * @param {AnyMetricPattern} args.metric

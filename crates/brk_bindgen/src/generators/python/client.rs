@@ -2,67 +2,48 @@
 
 use std::fmt::Write;
 
-use brk_cohort::{
-    AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, GE_AMOUNT_NAMES, LT_AMOUNT_NAMES,
-    MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, YEAR_NAMES,
-};
-use brk_types::{pools, Index};
-use serde::Serialize;
-
 use crate::{
-    ClientMetadata, IndexSetPattern, PythonSyntax, StructuralPattern, VERSION,
-    generate_parameterized_field, index_to_field_name,
+    ClientConstants, ClientMetadata, CohortConstants, IndexSetPattern, PythonSyntax,
+    StructuralPattern, format_json, generate_parameterized_field, index_to_field_name,
 };
 
 /// Generate class-level constants for the BrkClient class.
 pub fn generate_class_constants(output: &mut String) {
-    fn class_const<T: Serialize>(output: &mut String, name: &str, value: &T) {
-        let json = serde_json::to_string_pretty(value).unwrap();
-        // Indent all lines for class body
-        let indented = json
-            .lines()
-            .enumerate()
-            .map(|(i, line)| {
-                if i == 0 {
-                    format!("    {} = {}", name, line)
-                } else {
-                    format!("    {}", line)
-                }
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
-        writeln!(output, "{}\n", indented).unwrap();
-    }
+    let constants = ClientConstants::collect();
 
     // VERSION
-    writeln!(output, "    VERSION = \"v{}\"\n", VERSION).unwrap();
+    writeln!(output, "    VERSION = \"{}\"\n", constants.version).unwrap();
 
-    // INDEXES
-    let indexes = Index::all();
-    let indexes_list: Vec<&str> = indexes.iter().map(|i| i.serialize_long()).collect();
-    class_const(output, "INDEXES", &indexes_list);
-
-    // POOL_ID_TO_POOL_NAME
-    let pools = pools();
-    let mut sorted_pools: Vec<_> = pools.iter().collect();
-    sorted_pools.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
-    let pool_map: std::collections::BTreeMap<String, &str> = sorted_pools
+    // INDEXES, POOL_ID_TO_POOL_NAME
+    write_class_const(output, "INDEXES", &format_json(&constants.indexes));
+    // Python needs string keys for pool map
+    let pool_map: std::collections::BTreeMap<String, &str> = constants
+        .pool_map
         .iter()
-        .map(|p| (p.slug().to_string(), p.name))
+        .map(|(k, v)| (k.to_string(), *v))
         .collect();
-    class_const(output, "POOL_ID_TO_POOL_NAME", &pool_map);
+    write_class_const(output, "POOL_ID_TO_POOL_NAME", &format_json(&pool_map));
 
-    // Cohort names
-    class_const(output, "TERM_NAMES", &TERM_NAMES);
-    class_const(output, "EPOCH_NAMES", &EPOCH_NAMES);
-    class_const(output, "YEAR_NAMES", &YEAR_NAMES);
-    class_const(output, "SPENDABLE_TYPE_NAMES", &SPENDABLE_TYPE_NAMES);
-    class_const(output, "AGE_RANGE_NAMES", &AGE_RANGE_NAMES);
-    class_const(output, "MAX_AGE_NAMES", &MAX_AGE_NAMES);
-    class_const(output, "MIN_AGE_NAMES", &MIN_AGE_NAMES);
-    class_const(output, "AMOUNT_RANGE_NAMES", &AMOUNT_RANGE_NAMES);
-    class_const(output, "GE_AMOUNT_NAMES", &GE_AMOUNT_NAMES);
-    class_const(output, "LT_AMOUNT_NAMES", &LT_AMOUNT_NAMES);
+    // Cohort constants (no camelCase conversion for Python)
+    for (name, value) in CohortConstants::all() {
+        write_class_const(output, name, &format_json(&value));
+    }
+}
+
+fn write_class_const(output: &mut String, name: &str, json: &str) {
+    let indented = json
+        .lines()
+        .enumerate()
+        .map(|(i, line)| {
+            if i == 0 {
+                format!("    {} = {}", name, line)
+            } else {
+                format!("    {}", line)
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    writeln!(output, "{}\n", indented).unwrap();
 }
 
 /// Generate the base BrkClient class with HTTP functionality
