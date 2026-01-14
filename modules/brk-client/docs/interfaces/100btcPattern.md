@@ -6,7 +6,7 @@
 
 # Interface: \_100btcPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2314](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2314)
+Defined in: [Developer/brk/modules/brk-client/index.js:2314](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2314)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2314](https://github.com/
 
 > **activity**: [`ActivityPattern2`](ActivityPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2315](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2315)
+Defined in: [Developer/brk/modules/brk-client/index.js:2315](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2315)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2315](https://github.com/
 
 > **costBasis**: [`CostBasisPattern`](CostBasisPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2316](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2316)
+Defined in: [Developer/brk/modules/brk-client/index.js:2316](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2316)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2316](https://github.com/
 
 > **outputs**: [`OutputsPattern`](OutputsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2317](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2317)
+Defined in: [Developer/brk/modules/brk-client/index.js:2317](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2317)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2317](https://github.com/
 
 > **realized**: [`RealizedPattern`](RealizedPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2318](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2318)
+Defined in: [Developer/brk/modules/brk-client/index.js:2318](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2318)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2318](https://github.com/
 
 > **relative**: [`RelativePattern`](RelativePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2319](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2319)
+Defined in: [Developer/brk/modules/brk-client/index.js:2319](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2319)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2319](https://github.com/
 
 > **supply**: [`SupplyPattern2`](SupplyPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2320](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2320)
+Defined in: [Developer/brk/modules/brk-client/index.js:2320](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2320)
 
 ***
 
@@ -62,4 +62,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2320](https://github.com/
 
 > **unrealized**: [`UnrealizedPattern`](UnrealizedPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2321](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2321)
+Defined in: [Developer/brk/modules/brk-client/index.js:2321](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2321)

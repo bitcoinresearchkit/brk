@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Distribution\_UtxoCohorts\_Epoch
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3265](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3265)
+Defined in: [Developer/brk/modules/brk-client/index.js:3265](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3265)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3265](https://github.com/
 
 > **\_0**: [`_0satsPattern2`](0satsPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3266](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3266)
+Defined in: [Developer/brk/modules/brk-client/index.js:3266](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3266)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3266](https://github.com/
 
 > **\_1**: [`_0satsPattern2`](0satsPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3267](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3267)
+Defined in: [Developer/brk/modules/brk-client/index.js:3267](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3267)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3267](https://github.com/
 
 > **\_2**: [`_0satsPattern2`](0satsPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3268](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3268)
+Defined in: [Developer/brk/modules/brk-client/index.js:3268](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3268)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3268](https://github.com/
 
 > **\_3**: [`_0satsPattern2`](0satsPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3269](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3269)
+Defined in: [Developer/brk/modules/brk-client/index.js:3269](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3269)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3269](https://github.com/
 
 > **\_4**: [`_0satsPattern2`](0satsPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3270](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3270)
+Defined in: [Developer/brk/modules/brk-client/index.js:3270](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3270)

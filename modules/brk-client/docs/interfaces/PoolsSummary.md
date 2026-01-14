@@ -6,7 +6,7 @@
 
 # Interface: PoolsSummary
 
-Defined in: [Developer/brk/modules/brk-client/index.js:561](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L561)
+Defined in: [Developer/brk/modules/brk-client/index.js:561](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L561)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:561](https://github.com/b
 
 > **blockCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:563](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L563)
+Defined in: [Developer/brk/modules/brk-client/index.js:563](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L563)
 
 Total blocks in the time period
 
@@ -24,7 +24,7 @@ Total blocks in the time period
 
 > **lastEstimatedHashrate**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:564](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L564)
+Defined in: [Developer/brk/modules/brk-client/index.js:564](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L564)
 
 Estimated network hashrate (hashes per second)
 
@@ -34,6 +34,6 @@ Estimated network hashrate (hashes per second)
 
 > **pools**: [`PoolStats`](PoolStats.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:562](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L562)
+Defined in: [Developer/brk/modules/brk-client/index.js:562](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L562)
 
 List of pools sorted by block count descending

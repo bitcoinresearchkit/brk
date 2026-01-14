@@ -6,7 +6,7 @@
 
 # Interface: Utxo
 
-Defined in: [Developer/brk/modules/brk-client/index.js:760](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L760)
+Defined in: [Developer/brk/modules/brk-client/index.js:760](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L760)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:760](https://github.com/b
 
 > **status**: [`TxStatus`](TxStatus.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:763](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L763)
+Defined in: [Developer/brk/modules/brk-client/index.js:763](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L763)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:763](https://github.com/b
 
 > **txid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:761](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L761)
+Defined in: [Developer/brk/modules/brk-client/index.js:761](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L761)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:761](https://github.com/b
 
 > **value**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:764](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L764)
+Defined in: [Developer/brk/modules/brk-client/index.js:764](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L764)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:764](https://github.com/b
 
 > **vout**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:762](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L762)
+Defined in: [Developer/brk/modules/brk-client/index.js:762](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L762)

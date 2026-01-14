@@ -6,7 +6,7 @@
 
 # Interface: CoinbasePattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2559](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2559)
+Defined in: [Developer/brk/modules/brk-client/index.js:2559](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2559)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2559](https://github.com/
 
 > **bitcoin**: [`BitcoinPattern`](BitcoinPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2560](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2560)
+Defined in: [Developer/brk/modules/brk-client/index.js:2560](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2560)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2560](https://github.com/
 
 > **dollars**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2561](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2561)
+Defined in: [Developer/brk/modules/brk-client/index.js:2561](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2561)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2561](https://github.com/
 
 > **sats**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2562](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2562)
+Defined in: [Developer/brk/modules/brk-client/index.js:2562](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L2562)

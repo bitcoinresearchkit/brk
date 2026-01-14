@@ -107,6 +107,12 @@ echo "--- Python ---"
 "$SCRIPT_DIR/python-docs.sh"
 echo ""
 
+# Commit generated docs
+cd "$ROOT_DIR"
+git add -A
+git commit -m "docs: update generated docs" || echo "No doc changes to commit"
+echo ""
+
 # ============================================================================
 # 4. CARGO RELEASE (Rust crates)
 # ============================================================================
@@ -116,7 +122,7 @@ echo ""
 
 cd "$ROOT_DIR"
 # Version bump, commit, and tag (but don't publish yet)
-cargo release "$RELEASE_ARG" --execute --no-publish --allow-dirty
+cargo release "$RELEASE_ARG" --execute --no-publish
 
 # Publish crates with retry logic for rate limits
 "$SCRIPT_DIR/rust-publish.sh"

@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Market\_MovingAverage
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3716](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3716)
+Defined in: [Developer/brk/modules/brk-client/index.js:3716](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3716)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3716](https://github.com/
 
 > **price111dSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3717](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3717)
+Defined in: [Developer/brk/modules/brk-client/index.js:3717](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3717)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3717](https://github.com/
 
 > **price12dEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3718](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3718)
+Defined in: [Developer/brk/modules/brk-client/index.js:3718](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3718)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3718](https://github.com/
 
 > **price13dEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3719](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3719)
+Defined in: [Developer/brk/modules/brk-client/index.js:3719](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3719)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3719](https://github.com/
 
 > **price13dSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3720](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3720)
+Defined in: [Developer/brk/modules/brk-client/index.js:3720](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3720)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3720](https://github.com/
 
 > **price144dEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3721](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3721)
+Defined in: [Developer/brk/modules/brk-client/index.js:3721](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3721)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3721](https://github.com/
 
 > **price144dSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3722](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3722)
+Defined in: [Developer/brk/modules/brk-client/index.js:3722](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3722)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3722](https://github.com/
 
 > **price1mEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3723](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3723)
+Defined in: [Developer/brk/modules/brk-client/index.js:3723](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3723)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3723](https://github.com/
 
 > **price1mSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3724](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3724)
+Defined in: [Developer/brk/modules/brk-client/index.js:3724](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3724)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3724](https://github.com/
 
 > **price1wEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3725](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3725)
+Defined in: [Developer/brk/modules/brk-client/index.js:3725](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3725)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3725](https://github.com/
 
 > **price1wSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3726](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3726)
+Defined in: [Developer/brk/modules/brk-client/index.js:3726](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3726)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3726](https://github.com/
 
 > **price1yEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3727](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3727)
+Defined in: [Developer/brk/modules/brk-client/index.js:3727](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3727)
 
 ***
 
@@ -102,7 +102,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3727](https://github.com/
 
 > **price1ySma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3728](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3728)
+Defined in: [Developer/brk/modules/brk-client/index.js:3728](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3728)
 
 ***
 
@@ -110,7 +110,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3728](https://github.com/
 
 > **price200dEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3729](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3729)
+Defined in: [Developer/brk/modules/brk-client/index.js:3729](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3729)
 
 ***
 
@@ -118,7 +118,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3729](https://github.com/
 
 > **price200dSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3730](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3730)
+Defined in: [Developer/brk/modules/brk-client/index.js:3730](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3730)
 
 ***
 
@@ -126,7 +126,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3730](https://github.com/
 
 > **price200dSmaX08**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3731](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3731)
+Defined in: [Developer/brk/modules/brk-client/index.js:3731](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3731)
 
 ***
 
@@ -134,7 +134,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3731](https://github.com/
 
 > **price200dSmaX24**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3732](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3732)
+Defined in: [Developer/brk/modules/brk-client/index.js:3732](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3732)
 
 ***
 
@@ -142,7 +142,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3732](https://github.com/
 
 > **price200wEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3733](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3733)
+Defined in: [Developer/brk/modules/brk-client/index.js:3733](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3733)
 
 ***
 
@@ -150,7 +150,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3733](https://github.com/
 
 > **price200wSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3734](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3734)
+Defined in: [Developer/brk/modules/brk-client/index.js:3734](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3734)
 
 ***
 
@@ -158,7 +158,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3734](https://github.com/
 
 > **price21dEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3735](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3735)
+Defined in: [Developer/brk/modules/brk-client/index.js:3735](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3735)
 
 ***
 
@@ -166,7 +166,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3735](https://github.com/
 
 > **price21dSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3736](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3736)
+Defined in: [Developer/brk/modules/brk-client/index.js:3736](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3736)
 
 ***
 
@@ -174,7 +174,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3736](https://github.com/
 
 > **price26dEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3737](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3737)
+Defined in: [Developer/brk/modules/brk-client/index.js:3737](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3737)
 
 ***
 
@@ -182,7 +182,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3737](https://github.com/
 
 > **price2yEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3738](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3738)
+Defined in: [Developer/brk/modules/brk-client/index.js:3738](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3738)
 
 ***
 
@@ -190,7 +190,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3738](https://github.com/
 
 > **price2ySma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3739](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3739)
+Defined in: [Developer/brk/modules/brk-client/index.js:3739](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3739)
 
 ***
 
@@ -198,7 +198,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3739](https://github.com/
 
 > **price34dEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3740](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3740)
+Defined in: [Developer/brk/modules/brk-client/index.js:3740](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3740)
 
 ***
 
@@ -206,7 +206,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3740](https://github.com/
 
 > **price34dSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3741](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3741)
+Defined in: [Developer/brk/modules/brk-client/index.js:3741](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3741)
 
 ***
 
@@ -214,7 +214,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3741](https://github.com/
 
 > **price350dSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3742](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3742)
+Defined in: [Developer/brk/modules/brk-client/index.js:3742](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3742)
 
 ***
 
@@ -222,7 +222,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3742](https://github.com/
 
 > **price350dSmaX2**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3743](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3743)
+Defined in: [Developer/brk/modules/brk-client/index.js:3743](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3743)
 
 ***
 
@@ -230,7 +230,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3743](https://github.com/
 
 > **price4yEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3744](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3744)
+Defined in: [Developer/brk/modules/brk-client/index.js:3744](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3744)
 
 ***
 
@@ -238,7 +238,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3744](https://github.com/
 
 > **price4ySma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3745](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3745)
+Defined in: [Developer/brk/modules/brk-client/index.js:3745](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3745)
 
 ***
 
@@ -246,7 +246,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3745](https://github.com/
 
 > **price55dEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3746](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3746)
+Defined in: [Developer/brk/modules/brk-client/index.js:3746](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3746)
 
 ***
 
@@ -254,7 +254,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3746](https://github.com/
 
 > **price55dSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3747](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3747)
+Defined in: [Developer/brk/modules/brk-client/index.js:3747](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3747)
 
 ***
 
@@ -262,7 +262,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3747](https://github.com/
 
 > **price89dEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3748](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3748)
+Defined in: [Developer/brk/modules/brk-client/index.js:3748](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3748)
 
 ***
 
@@ -270,7 +270,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3748](https://github.com/
 
 > **price89dSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3749](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3749)
+Defined in: [Developer/brk/modules/brk-client/index.js:3749](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3749)
 
 ***
 
@@ -278,7 +278,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3749](https://github.com/
 
 > **price8dEma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3750](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3750)
+Defined in: [Developer/brk/modules/brk-client/index.js:3750](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3750)
 
 ***
 
@@ -286,4 +286,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3750](https://github.com/
 
 > **price8dSma**: [`Price111dSmaPattern`](Price111dSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3751](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3751)
+Defined in: [Developer/brk/modules/brk-client/index.js:3751](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3751)

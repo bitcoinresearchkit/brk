@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Distribution
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3087](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3087)
+Defined in: [Developer/brk/modules/brk-client/index.js:3087](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3087)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3087](https://github.com/
 
 > **addrCount**: [`AddrCountPattern`](AddrCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3088](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3088)
+Defined in: [Developer/brk/modules/brk-client/index.js:3088](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3088)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3088](https://github.com/
 
 > **addressCohorts**: [`MetricsTree_Distribution_AddressCohorts`](MetricsTree_Distribution_AddressCohorts.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3089](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3089)
+Defined in: [Developer/brk/modules/brk-client/index.js:3089](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3089)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3089](https://github.com/
 
 > **addressesData**: [`MetricsTree_Distribution_AddressesData`](MetricsTree_Distribution_AddressesData.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3090](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3090)
+Defined in: [Developer/brk/modules/brk-client/index.js:3090](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3090)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3090](https://github.com/
 
 > **anyAddressIndexes**: [`MetricsTree_Distribution_AnyAddressIndexes`](MetricsTree_Distribution_AnyAddressIndexes.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3091](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3091)
+Defined in: [Developer/brk/modules/brk-client/index.js:3091](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3091)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3091](https://github.com/
 
 > **chainState**: [`MetricPattern11`](../type-aliases/MetricPattern11.md)\<[`SupplyState`](SupplyState.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3092](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3092)
+Defined in: [Developer/brk/modules/brk-client/index.js:3092](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3092)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3092](https://github.com/
 
 > **emptyAddrCount**: [`AddrCountPattern`](AddrCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3093](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3093)
+Defined in: [Developer/brk/modules/brk-client/index.js:3093](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3093)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3093](https://github.com/
 
 > **emptyaddressindex**: [`MetricPattern32`](../type-aliases/MetricPattern32.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3094](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3094)
+Defined in: [Developer/brk/modules/brk-client/index.js:3094](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3094)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3094](https://github.com/
 
 > **loadedaddressindex**: [`MetricPattern31`](../type-aliases/MetricPattern31.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3095](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3095)
+Defined in: [Developer/brk/modules/brk-client/index.js:3095](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3095)
 
 ***
 
@@ -78,4 +78,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3095](https://github.com/
 
 > **utxoCohorts**: [`MetricsTree_Distribution_UtxoCohorts`](MetricsTree_Distribution_UtxoCohorts.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3096](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3096)
+Defined in: [Developer/brk/modules/brk-client/index.js:3096](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3096)

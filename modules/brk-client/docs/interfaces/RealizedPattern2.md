@@ -6,7 +6,7 @@
 
 # Interface: RealizedPattern2
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1446](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1446)
+Defined in: [Developer/brk/modules/brk-client/index.js:1446](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1446)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1446](https://github.com/
 
 > **mvrv**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1447](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1447)
+Defined in: [Developer/brk/modules/brk-client/index.js:1447](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1447)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1447](https://github.com/
 
 > **negRealizedLoss**: [`BitcoinPattern2`](BitcoinPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1448](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1448)
+Defined in: [Developer/brk/modules/brk-client/index.js:1448](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1448)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1448](https://github.com/
 
 > **netRealizedPnl**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1449](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1449)
+Defined in: [Developer/brk/modules/brk-client/index.js:1449](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1449)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1449](https://github.com/
 
 > **netRealizedPnlCumulative30dDelta**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1450](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1450)
+Defined in: [Developer/brk/modules/brk-client/index.js:1450](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1450)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1450](https://github.com/
 
 > **netRealizedPnlCumulative30dDeltaRelToMarketCap**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1451](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1451)
+Defined in: [Developer/brk/modules/brk-client/index.js:1451](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1451)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1451](https://github.com/
 
 > **netRealizedPnlCumulative30dDeltaRelToRealizedCap**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1452](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1452)
+Defined in: [Developer/brk/modules/brk-client/index.js:1452](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1452)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1452](https://github.com/
 
 > **netRealizedPnlRelToRealizedCap**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1453](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1453)
+Defined in: [Developer/brk/modules/brk-client/index.js:1453](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1453)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1453](https://github.com/
 
 > **realizedCap**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1454](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1454)
+Defined in: [Developer/brk/modules/brk-client/index.js:1454](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1454)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1454](https://github.com/
 
 > **realizedCap30dDelta**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1455](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1455)
+Defined in: [Developer/brk/modules/brk-client/index.js:1455](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1455)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1455](https://github.com/
 
 > **realizedCapRelToOwnMarketCap**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1456](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1456)
+Defined in: [Developer/brk/modules/brk-client/index.js:1456](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1456)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1456](https://github.com/
 
 > **realizedLoss**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1457](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1457)
+Defined in: [Developer/brk/modules/brk-client/index.js:1457](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1457)
 
 ***
 
@@ -102,7 +102,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1457](https://github.com/
 
 > **realizedLossRelToRealizedCap**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1458](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1458)
+Defined in: [Developer/brk/modules/brk-client/index.js:1458](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1458)
 
 ***
 
@@ -110,7 +110,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1458](https://github.com/
 
 > **realizedPrice**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1459](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1459)
+Defined in: [Developer/brk/modules/brk-client/index.js:1459](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1459)
 
 ***
 
@@ -118,7 +118,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1459](https://github.com/
 
 > **realizedPriceExtra**: [`ActivePriceRatioPattern`](ActivePriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1460](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1460)
+Defined in: [Developer/brk/modules/brk-client/index.js:1460](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1460)
 
 ***
 
@@ -126,7 +126,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1460](https://github.com/
 
 > **realizedProfit**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1461](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1461)
+Defined in: [Developer/brk/modules/brk-client/index.js:1461](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1461)
 
 ***
 
@@ -134,7 +134,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1461](https://github.com/
 
 > **realizedProfitRelToRealizedCap**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1462](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1462)
+Defined in: [Developer/brk/modules/brk-client/index.js:1462](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1462)
 
 ***
 
@@ -142,7 +142,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1462](https://github.com/
 
 > **realizedProfitToLossRatio**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1463](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1463)
+Defined in: [Developer/brk/modules/brk-client/index.js:1463](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1463)
 
 ***
 
@@ -150,7 +150,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1463](https://github.com/
 
 > **realizedValue**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1464](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1464)
+Defined in: [Developer/brk/modules/brk-client/index.js:1464](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1464)
 
 ***
 
@@ -158,7 +158,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1464](https://github.com/
 
 > **sellSideRiskRatio**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1465](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1465)
+Defined in: [Developer/brk/modules/brk-client/index.js:1465](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1465)
 
 ***
 
@@ -166,7 +166,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1465](https://github.com/
 
 > **sellSideRiskRatio30dEma**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1466](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1466)
+Defined in: [Developer/brk/modules/brk-client/index.js:1466](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1466)
 
 ***
 
@@ -174,7 +174,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1466](https://github.com/
 
 > **sellSideRiskRatio7dEma**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1467](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1467)
+Defined in: [Developer/brk/modules/brk-client/index.js:1467](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1467)
 
 ***
 
@@ -182,7 +182,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1467](https://github.com/
 
 > **sopr**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1468](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1468)
+Defined in: [Developer/brk/modules/brk-client/index.js:1468](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1468)
 
 ***
 
@@ -190,7 +190,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1468](https://github.com/
 
 > **sopr30dEma**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1469](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1469)
+Defined in: [Developer/brk/modules/brk-client/index.js:1469](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1469)
 
 ***
 
@@ -198,7 +198,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1469](https://github.com/
 
 > **sopr7dEma**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1470](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1470)
+Defined in: [Developer/brk/modules/brk-client/index.js:1470](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1470)
 
 ***
 
@@ -206,7 +206,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1470](https://github.com/
 
 > **totalRealizedPnl**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1471](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1471)
+Defined in: [Developer/brk/modules/brk-client/index.js:1471](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1471)
 
 ***
 
@@ -214,7 +214,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1471](https://github.com/
 
 > **valueCreated**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1472](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1472)
+Defined in: [Developer/brk/modules/brk-client/index.js:1472](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1472)
 
 ***
 
@@ -222,4 +222,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1472](https://github.com/
 
 > **valueDestroyed**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1473](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1473)
+Defined in: [Developer/brk/modules/brk-client/index.js:1473](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1473)

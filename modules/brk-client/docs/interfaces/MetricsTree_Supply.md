@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Supply
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4083](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L4083)
+Defined in: [Developer/brk/modules/brk-client/index.js:4083](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L4083)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4083](https://github.com/
 
 > **burned**: [`MetricsTree_Supply_Burned`](MetricsTree_Supply_Burned.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4084](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L4084)
+Defined in: [Developer/brk/modules/brk-client/index.js:4084](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L4084)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4084](https://github.com/
 
 > **circulating**: [`MetricsTree_Supply_Circulating`](MetricsTree_Supply_Circulating.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4085](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L4085)
+Defined in: [Developer/brk/modules/brk-client/index.js:4085](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L4085)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4085](https://github.com/
 
 > **inflation**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4086](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L4086)
+Defined in: [Developer/brk/modules/brk-client/index.js:4086](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L4086)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4086](https://github.com/
 
 > **marketCap**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4087](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L4087)
+Defined in: [Developer/brk/modules/brk-client/index.js:4087](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L4087)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4087](https://github.com/
 
 > **velocity**: [`MetricsTree_Supply_Velocity`](MetricsTree_Supply_Velocity.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4088](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L4088)
+Defined in: [Developer/brk/modules/brk-client/index.js:4088](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L4088)

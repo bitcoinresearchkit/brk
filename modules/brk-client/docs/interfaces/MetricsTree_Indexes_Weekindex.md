@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Indexes\_Weekindex
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3595](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3595)
+Defined in: [Developer/brk/modules/brk-client/index.js:3595](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3595)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3595](https://github.com/
 
 > **date**: [`MetricPattern29`](../type-aliases/MetricPattern29.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3596](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3596)
+Defined in: [Developer/brk/modules/brk-client/index.js:3596](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3596)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3596](https://github.com/
 
 > **dateindexCount**: [`MetricPattern29`](../type-aliases/MetricPattern29.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3597](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3597)
+Defined in: [Developer/brk/modules/brk-client/index.js:3597](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3597)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3597](https://github.com/
 
 > **firstDateindex**: [`MetricPattern29`](../type-aliases/MetricPattern29.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3598](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3598)
+Defined in: [Developer/brk/modules/brk-client/index.js:3598](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3598)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3598](https://github.com/
 
 > **identity**: [`MetricPattern29`](../type-aliases/MetricPattern29.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3599](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3599)
+Defined in: [Developer/brk/modules/brk-client/index.js:3599](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3599)

@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Distribution\_AddressCohorts
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3100](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3100)
+Defined in: [Developer/brk/modules/brk-client/index.js:3100](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3100)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3100](https://github.com/
 
 > **amountRange**: [`MetricsTree_Distribution_AddressCohorts_AmountRange`](MetricsTree_Distribution_AddressCohorts_AmountRange.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3101](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3101)
+Defined in: [Developer/brk/modules/brk-client/index.js:3101](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3101)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3101](https://github.com/
 
 > **geAmount**: [`MetricsTree_Distribution_AddressCohorts_GeAmount`](MetricsTree_Distribution_AddressCohorts_GeAmount.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3102](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3102)
+Defined in: [Developer/brk/modules/brk-client/index.js:3102](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3102)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3102](https://github.com/
 
 > **ltAmount**: [`MetricsTree_Distribution_AddressCohorts_LtAmount`](MetricsTree_Distribution_AddressCohorts_LtAmount.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3103](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3103)
+Defined in: [Developer/brk/modules/brk-client/index.js:3103](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3103)

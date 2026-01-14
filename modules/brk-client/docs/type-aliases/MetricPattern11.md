@@ -8,7 +8,7 @@
 
 > **MetricPattern11**\<`T`\> = `object`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1151](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1151)
+Defined in: [Developer/brk/modules/brk-client/index.js:1151](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1151)
 
 ## Type Parameters
 

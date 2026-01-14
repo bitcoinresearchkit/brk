@@ -6,7 +6,7 @@
 
 # Interface: MetricData\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:831](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L831)
+Defined in: [Developer/brk/modules/brk-client/index.js:831](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L831)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:831](https://github.com/b
 
 > **data**: `T`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:835](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L835)
+Defined in: [Developer/brk/modules/brk-client/index.js:835](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L835)
 
 The metric data
 
@@ -30,7 +30,7 @@ The metric data
 
 > **end**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:834](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L834)
+Defined in: [Developer/brk/modules/brk-client/index.js:834](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L834)
 
 End index (exclusive)
 
@@ -40,7 +40,7 @@ End index (exclusive)
 
 > **start**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:833](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L833)
+Defined in: [Developer/brk/modules/brk-client/index.js:833](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L833)
 
 Start index (inclusive)
 
@@ -50,6 +50,6 @@ Start index (inclusive)
 
 > **total**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:832](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L832)
+Defined in: [Developer/brk/modules/brk-client/index.js:832](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L832)
 
 Total number of data points

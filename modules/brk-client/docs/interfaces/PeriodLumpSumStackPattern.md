@@ -6,7 +6,7 @@
 
 # Interface: PeriodLumpSumStackPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1878](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1878)
+Defined in: [Developer/brk/modules/brk-client/index.js:1878](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1878)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1878](https://github.com/
 
 > **\_10y**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1879](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1879)
+Defined in: [Developer/brk/modules/brk-client/index.js:1879](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1879)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1879](https://github.com/
 
 > **\_1m**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1880](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1880)
+Defined in: [Developer/brk/modules/brk-client/index.js:1880](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1880)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1880](https://github.com/
 
 > **\_1w**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1881](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1881)
+Defined in: [Developer/brk/modules/brk-client/index.js:1881](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1881)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1881](https://github.com/
 
 > **\_1y**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1882](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1882)
+Defined in: [Developer/brk/modules/brk-client/index.js:1882](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1882)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1882](https://github.com/
 
 > **\_2y**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1883](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1883)
+Defined in: [Developer/brk/modules/brk-client/index.js:1883](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1883)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1883](https://github.com/
 
 > **\_3m**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1884](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1884)
+Defined in: [Developer/brk/modules/brk-client/index.js:1884](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1884)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1884](https://github.com/
 
 > **\_3y**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1885](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1885)
+Defined in: [Developer/brk/modules/brk-client/index.js:1885](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1885)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1885](https://github.com/
 
 > **\_4y**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1886](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1886)
+Defined in: [Developer/brk/modules/brk-client/index.js:1886](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1886)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1886](https://github.com/
 
 > **\_5y**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1887](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1887)
+Defined in: [Developer/brk/modules/brk-client/index.js:1887](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1887)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1887](https://github.com/
 
 > **\_6m**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1888](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1888)
+Defined in: [Developer/brk/modules/brk-client/index.js:1888](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1888)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1888](https://github.com/
 
 > **\_6y**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1889](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1889)
+Defined in: [Developer/brk/modules/brk-client/index.js:1889](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1889)
 
 ***
 
@@ -102,4 +102,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1889](https://github.com/
 
 > **\_8y**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1890](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1890)
+Defined in: [Developer/brk/modules/brk-client/index.js:1890](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L1890)

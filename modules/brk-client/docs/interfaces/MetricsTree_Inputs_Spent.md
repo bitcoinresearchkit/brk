@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Inputs\_Spent
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3623](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3623)
+Defined in: [Developer/brk/modules/brk-client/index.js:3623](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3623)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3623](https://github.com/
 
 > **txoutindex**: [`MetricPattern12`](../type-aliases/MetricPattern12.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3624](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3624)
+Defined in: [Developer/brk/modules/brk-client/index.js:3624](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3624)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3624](https://github.com/
 
 > **value**: [`MetricPattern12`](../type-aliases/MetricPattern12.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3625](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L3625)
+Defined in: [Developer/brk/modules/brk-client/index.js:3625](https://github.com/bitcoinresearchkit/brk/blob/467dfcc4b801a25e7d5f0ec4af8dddfffc3861d4/modules/brk-client/index.js#L3625)
