@@ -379,11 +379,11 @@ export function createChartElement({
       if (metric) {
         signals.createEffect(index, (index) => {
           // Get timestamp metric from tree based on index type
-          // timestampFixed has height only, timestamp has date-based indexes
+          // timestampMonotonic has height only, timestamp has date-based indexes
           /** @type {AnyMetricPattern} */
           const timeMetric =
             index === "height"
-              ? brk.metrics.blocks.time.timestampFixed
+              ? brk.metrics.blocks.time.timestampMonotonic
               : brk.metrics.blocks.time.timestamp;
           /** @type {AnyMetricPattern} */
           const valuesMetric = metric;

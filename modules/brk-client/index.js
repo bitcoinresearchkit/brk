@@ -2903,59 +2903,6 @@ function createPrice111dSmaPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} ActivePriceRatioPattern
- * @property {MetricPattern4<StoredF32>} ratio
- * @property {MetricPattern4<StoredF32>} ratio1mSma
- * @property {MetricPattern4<StoredF32>} ratio1wSma
- * @property {Ratio1ySdPattern} ratio1ySd
- * @property {Ratio1ySdPattern} ratio2ySd
- * @property {Ratio1ySdPattern} ratio4ySd
- * @property {MetricPattern4<StoredF32>} ratioPct1
- * @property {MetricPattern4<Dollars>} ratioPct1Usd
- * @property {MetricPattern4<StoredF32>} ratioPct2
- * @property {MetricPattern4<Dollars>} ratioPct2Usd
- * @property {MetricPattern4<StoredF32>} ratioPct5
- * @property {MetricPattern4<Dollars>} ratioPct5Usd
- * @property {MetricPattern4<StoredF32>} ratioPct95
- * @property {MetricPattern4<Dollars>} ratioPct95Usd
- * @property {MetricPattern4<StoredF32>} ratioPct98
- * @property {MetricPattern4<Dollars>} ratioPct98Usd
- * @property {MetricPattern4<StoredF32>} ratioPct99
- * @property {MetricPattern4<Dollars>} ratioPct99Usd
- * @property {Ratio1ySdPattern} ratioSd
- */
-
-/**
- * Create a ActivePriceRatioPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {ActivePriceRatioPattern}
- */
-function createActivePriceRatioPattern(client, acc) {
-  return {
-    ratio: createMetricPattern4(client, acc),
-    ratio1mSma: createMetricPattern4(client, _m(acc, "1m_sma")),
-    ratio1wSma: createMetricPattern4(client, _m(acc, "1w_sma")),
-    ratio1ySd: createRatio1ySdPattern(client, _m(acc, "1y")),
-    ratio2ySd: createRatio1ySdPattern(client, _m(acc, "2y")),
-    ratio4ySd: createRatio1ySdPattern(client, _m(acc, "4y")),
-    ratioPct1: createMetricPattern4(client, _m(acc, "pct1")),
-    ratioPct1Usd: createMetricPattern4(client, _m(acc, "pct1_usd")),
-    ratioPct2: createMetricPattern4(client, _m(acc, "pct2")),
-    ratioPct2Usd: createMetricPattern4(client, _m(acc, "pct2_usd")),
-    ratioPct5: createMetricPattern4(client, _m(acc, "pct5")),
-    ratioPct5Usd: createMetricPattern4(client, _m(acc, "pct5_usd")),
-    ratioPct95: createMetricPattern4(client, _m(acc, "pct95")),
-    ratioPct95Usd: createMetricPattern4(client, _m(acc, "pct95_usd")),
-    ratioPct98: createMetricPattern4(client, _m(acc, "pct98")),
-    ratioPct98Usd: createMetricPattern4(client, _m(acc, "pct98_usd")),
-    ratioPct99: createMetricPattern4(client, _m(acc, "pct99")),
-    ratioPct99Usd: createMetricPattern4(client, _m(acc, "pct99_usd")),
-    ratioSd: createRatio1ySdPattern(client, acc),
-  };
-}
-
-/**
  * @typedef {Object} PercentilesPattern
  * @property {MetricPattern4<Dollars>} pct05
  * @property {MetricPattern4<Dollars>} pct10
@@ -3005,6 +2952,59 @@ function createPercentilesPattern(client, acc) {
     pct85: createMetricPattern4(client, _m(acc, "pct85")),
     pct90: createMetricPattern4(client, _m(acc, "pct90")),
     pct95: createMetricPattern4(client, _m(acc, "pct95")),
+  };
+}
+
+/**
+ * @typedef {Object} ActivePriceRatioPattern
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * Create a ActivePriceRatioPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {ActivePriceRatioPattern}
+ */
+function createActivePriceRatioPattern(client, acc) {
+  return {
+    ratio: createMetricPattern4(client, acc),
+    ratio1mSma: createMetricPattern4(client, _m(acc, "1m_sma")),
+    ratio1wSma: createMetricPattern4(client, _m(acc, "1w_sma")),
+    ratio1ySd: createRatio1ySdPattern(client, _m(acc, "1y")),
+    ratio2ySd: createRatio1ySdPattern(client, _m(acc, "2y")),
+    ratio4ySd: createRatio1ySdPattern(client, _m(acc, "4y")),
+    ratioPct1: createMetricPattern4(client, _m(acc, "pct1")),
+    ratioPct1Usd: createMetricPattern4(client, _m(acc, "pct1_usd")),
+    ratioPct2: createMetricPattern4(client, _m(acc, "pct2")),
+    ratioPct2Usd: createMetricPattern4(client, _m(acc, "pct2_usd")),
+    ratioPct5: createMetricPattern4(client, _m(acc, "pct5")),
+    ratioPct5Usd: createMetricPattern4(client, _m(acc, "pct5_usd")),
+    ratioPct95: createMetricPattern4(client, _m(acc, "pct95")),
+    ratioPct95Usd: createMetricPattern4(client, _m(acc, "pct95_usd")),
+    ratioPct98: createMetricPattern4(client, _m(acc, "pct98")),
+    ratioPct98Usd: createMetricPattern4(client, _m(acc, "pct98_usd")),
+    ratioPct99: createMetricPattern4(client, _m(acc, "pct99")),
+    ratioPct99Usd: createMetricPattern4(client, _m(acc, "pct99_usd")),
+    ratioSd: createRatio1ySdPattern(client, acc),
   };
 }
 
@@ -3338,17 +3338,17 @@ function createBitcoinPattern(client, acc) {
  */
 function createClassAveragePricePattern(client, acc) {
   return {
-    _2015: createMetricPattern4(client, _m(acc, "2015_average_price")),
-    _2016: createMetricPattern4(client, _m(acc, "2016_average_price")),
-    _2017: createMetricPattern4(client, _m(acc, "2017_average_price")),
-    _2018: createMetricPattern4(client, _m(acc, "2018_average_price")),
-    _2019: createMetricPattern4(client, _m(acc, "2019_average_price")),
-    _2020: createMetricPattern4(client, _m(acc, "2020_average_price")),
-    _2021: createMetricPattern4(client, _m(acc, "2021_average_price")),
-    _2022: createMetricPattern4(client, _m(acc, "2022_average_price")),
-    _2023: createMetricPattern4(client, _m(acc, "2023_average_price")),
-    _2024: createMetricPattern4(client, _m(acc, "2024_average_price")),
-    _2025: createMetricPattern4(client, _m(acc, "2025_average_price")),
+    _2015: createMetricPattern4(client, _m(acc, "2015_returns")),
+    _2016: createMetricPattern4(client, _m(acc, "2016_returns")),
+    _2017: createMetricPattern4(client, _m(acc, "2017_returns")),
+    _2018: createMetricPattern4(client, _m(acc, "2018_returns")),
+    _2019: createMetricPattern4(client, _m(acc, "2019_returns")),
+    _2020: createMetricPattern4(client, _m(acc, "2020_returns")),
+    _2021: createMetricPattern4(client, _m(acc, "2021_returns")),
+    _2022: createMetricPattern4(client, _m(acc, "2022_returns")),
+    _2023: createMetricPattern4(client, _m(acc, "2023_returns")),
+    _2024: createMetricPattern4(client, _m(acc, "2024_returns")),
+    _2025: createMetricPattern4(client, _m(acc, "2025_returns")),
   };
 }
 
@@ -3690,6 +3690,122 @@ function create_0satsPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} _100btcPattern
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a _100btcPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_100btcPattern}
+ */
+function create_100btcPattern(client, acc) {
+  return {
+    activity: createActivityPattern2(client, acc),
+    costBasis: createCostBasisPattern(client, acc),
+    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
+    realized: createRealizedPattern(client, acc),
+    relative: createRelativePattern(client, acc),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
+    unrealized: createUnrealizedPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} _10yTo12yPattern
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern2} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a _10yTo12yPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_10yTo12yPattern}
+ */
+function create_10yTo12yPattern(client, acc) {
+  return {
+    activity: createActivityPattern2(client, acc),
+    costBasis: createCostBasisPattern2(client, acc),
+    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
+    realized: createRealizedPattern2(client, acc),
+    relative: createRelativePattern2(client, acc),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
+    unrealized: createUnrealizedPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} _0satsPattern2
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a _0satsPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_0satsPattern2}
+ */
+function create_0satsPattern2(client, acc) {
+  return {
+    activity: createActivityPattern2(client, acc),
+    costBasis: createCostBasisPattern(client, acc),
+    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
+    realized: createRealizedPattern(client, acc),
+    relative: createRelativePattern4(client, _m(acc, "supply_in")),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
+    unrealized: createUnrealizedPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} PeriodCagrPattern
+ * @property {MetricPattern4<StoredF32>} _10y
+ * @property {MetricPattern4<StoredF32>} _2y
+ * @property {MetricPattern4<StoredF32>} _3y
+ * @property {MetricPattern4<StoredF32>} _4y
+ * @property {MetricPattern4<StoredF32>} _5y
+ * @property {MetricPattern4<StoredF32>} _6y
+ * @property {MetricPattern4<StoredF32>} _8y
+ */
+
+/**
+ * Create a PeriodCagrPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {PeriodCagrPattern}
+ */
+function createPeriodCagrPattern(client, acc) {
+  return {
+    _10y: createMetricPattern4(client, _p("10y", acc)),
+    _2y: createMetricPattern4(client, _p("2y", acc)),
+    _3y: createMetricPattern4(client, _p("3y", acc)),
+    _4y: createMetricPattern4(client, _p("4y", acc)),
+    _5y: createMetricPattern4(client, _p("5y", acc)),
+    _6y: createMetricPattern4(client, _p("6y", acc)),
+    _8y: createMetricPattern4(client, _p("8y", acc)),
+  };
+}
+
+/**
  * @typedef {Object} UnrealizedPattern
  * @property {MetricPattern1<Dollars>} negUnrealizedLoss
  * @property {MetricPattern1<Dollars>} netUnrealizedPnl
@@ -3734,35 +3850,6 @@ function createUnrealizedPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} _100btcPattern
- * @property {ActivityPattern2} activity
- * @property {CostBasisPattern} costBasis
- * @property {OutputsPattern} outputs
- * @property {RealizedPattern} realized
- * @property {RelativePattern} relative
- * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
- */
-
-/**
- * Create a _100btcPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_100btcPattern}
- */
-function create_100btcPattern(client, acc) {
-  return {
-    activity: createActivityPattern2(client, acc),
-    costBasis: createCostBasisPattern(client, acc),
-    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
-    realized: createRealizedPattern(client, acc),
-    relative: createRelativePattern(client, acc),
-    supply: createSupplyPattern2(client, _m(acc, "supply")),
-    unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
  * @typedef {Object} _10yPattern
  * @property {ActivityPattern2} activity
  * @property {CostBasisPattern} costBasis
@@ -3786,93 +3873,6 @@ function create_10yPattern(client, acc) {
     outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
     realized: createRealizedPattern4(client, acc),
     relative: createRelativePattern(client, acc),
-    supply: createSupplyPattern2(client, _m(acc, "supply")),
-    unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} PeriodCagrPattern
- * @property {MetricPattern4<StoredF32>} _10y
- * @property {MetricPattern4<StoredF32>} _2y
- * @property {MetricPattern4<StoredF32>} _3y
- * @property {MetricPattern4<StoredF32>} _4y
- * @property {MetricPattern4<StoredF32>} _5y
- * @property {MetricPattern4<StoredF32>} _6y
- * @property {MetricPattern4<StoredF32>} _8y
- */
-
-/**
- * Create a PeriodCagrPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {PeriodCagrPattern}
- */
-function createPeriodCagrPattern(client, acc) {
-  return {
-    _10y: createMetricPattern4(client, _p("10y", acc)),
-    _2y: createMetricPattern4(client, _p("2y", acc)),
-    _3y: createMetricPattern4(client, _p("3y", acc)),
-    _4y: createMetricPattern4(client, _p("4y", acc)),
-    _5y: createMetricPattern4(client, _p("5y", acc)),
-    _6y: createMetricPattern4(client, _p("6y", acc)),
-    _8y: createMetricPattern4(client, _p("8y", acc)),
-  };
-}
-
-/**
- * @typedef {Object} _0satsPattern2
- * @property {ActivityPattern2} activity
- * @property {CostBasisPattern} costBasis
- * @property {OutputsPattern} outputs
- * @property {RealizedPattern} realized
- * @property {RelativePattern4} relative
- * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
- */
-
-/**
- * Create a _0satsPattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_0satsPattern2}
- */
-function create_0satsPattern2(client, acc) {
-  return {
-    activity: createActivityPattern2(client, acc),
-    costBasis: createCostBasisPattern(client, acc),
-    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
-    realized: createRealizedPattern(client, acc),
-    relative: createRelativePattern4(client, _m(acc, "supply_in")),
-    supply: createSupplyPattern2(client, _m(acc, "supply")),
-    unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} _10yTo12yPattern
- * @property {ActivityPattern2} activity
- * @property {CostBasisPattern2} costBasis
- * @property {OutputsPattern} outputs
- * @property {RealizedPattern2} realized
- * @property {RelativePattern2} relative
- * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
- */
-
-/**
- * Create a _10yTo12yPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_10yTo12yPattern}
- */
-function create_10yTo12yPattern(client, acc) {
-  return {
-    activity: createActivityPattern2(client, acc),
-    costBasis: createCostBasisPattern2(client, acc),
-    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
-    realized: createRealizedPattern2(client, acc),
-    relative: createRelativePattern2(client, acc),
     supply: createSupplyPattern2(client, _m(acc, "supply")),
     unrealized: createUnrealizedPattern(client, acc),
   };
@@ -3941,6 +3941,27 @@ function createSplitPattern2(client, acc) {
 }
 
 /**
+ * @typedef {Object} CoinbasePattern2
+ * @property {BlockCountPattern<Bitcoin>} bitcoin
+ * @property {BlockCountPattern<Dollars>} dollars
+ * @property {BlockCountPattern<Sats>} sats
+ */
+
+/**
+ * Create a CoinbasePattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CoinbasePattern2}
+ */
+function createCoinbasePattern2(client, acc) {
+  return {
+    bitcoin: createBlockCountPattern(client, _m(acc, "btc")),
+    dollars: createBlockCountPattern(client, _m(acc, "usd")),
+    sats: createBlockCountPattern(client, acc),
+  };
+}
+
+/**
  * @typedef {Object} SegwitAdoptionPattern
  * @property {MetricPattern11<StoredF32>} base
  * @property {MetricPattern2<StoredF32>} cumulative
@@ -3962,44 +3983,23 @@ function createSegwitAdoptionPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} CostBasisPattern2
- * @property {MetricPattern1<Dollars>} max
- * @property {MetricPattern1<Dollars>} min
- * @property {PercentilesPattern} percentiles
+ * @typedef {Object} CoinbasePattern
+ * @property {BitcoinPattern} bitcoin
+ * @property {DollarsPattern<Dollars>} dollars
+ * @property {DollarsPattern<Sats>} sats
  */
 
 /**
- * Create a CostBasisPattern2 pattern node
+ * Create a CoinbasePattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {CostBasisPattern2}
+ * @returns {CoinbasePattern}
  */
-function createCostBasisPattern2(client, acc) {
+function createCoinbasePattern(client, acc) {
   return {
-    max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
-    min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
-    percentiles: createPercentilesPattern(client, _m(acc, "cost_basis")),
-  };
-}
-
-/**
- * @typedef {Object} ActiveSupplyPattern
- * @property {MetricPattern1<Bitcoin>} bitcoin
- * @property {MetricPattern1<Dollars>} dollars
- * @property {MetricPattern1<Sats>} sats
- */
-
-/**
- * Create a ActiveSupplyPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {ActiveSupplyPattern}
- */
-function createActiveSupplyPattern(client, acc) {
-  return {
-    bitcoin: createMetricPattern1(client, _m(acc, "btc")),
-    dollars: createMetricPattern1(client, _m(acc, "usd")),
-    sats: createMetricPattern1(client, acc),
+    bitcoin: createBitcoinPattern(client, _m(acc, "btc")),
+    dollars: createDollarsPattern(client, _m(acc, "usd")),
+    sats: createDollarsPattern(client, acc),
   };
 }
 
@@ -4046,44 +4046,63 @@ function create_2015Pattern(client, acc) {
 }
 
 /**
- * @typedef {Object} CoinbasePattern
- * @property {BitcoinPattern} bitcoin
- * @property {DollarsPattern<Dollars>} dollars
- * @property {DollarsPattern<Sats>} sats
+ * @typedef {Object} CostBasisPattern2
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
  */
 
 /**
- * Create a CoinbasePattern pattern node
+ * Create a CostBasisPattern2 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {CoinbasePattern}
+ * @returns {CostBasisPattern2}
  */
-function createCoinbasePattern(client, acc) {
+function createCostBasisPattern2(client, acc) {
   return {
-    bitcoin: createBitcoinPattern(client, _m(acc, "btc")),
-    dollars: createDollarsPattern(client, _m(acc, "usd")),
-    sats: createDollarsPattern(client, acc),
+    max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
+    min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
+    percentiles: createPercentilesPattern(client, _m(acc, "cost_basis")),
   };
 }
 
 /**
- * @typedef {Object} CoinbasePattern2
- * @property {BlockCountPattern<Bitcoin>} bitcoin
- * @property {BlockCountPattern<Dollars>} dollars
- * @property {BlockCountPattern<Sats>} sats
+ * @typedef {Object} ActiveSupplyPattern
+ * @property {MetricPattern1<Bitcoin>} bitcoin
+ * @property {MetricPattern1<Dollars>} dollars
+ * @property {MetricPattern1<Sats>} sats
  */
 
 /**
- * Create a CoinbasePattern2 pattern node
+ * Create a ActiveSupplyPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {CoinbasePattern2}
+ * @returns {ActiveSupplyPattern}
  */
-function createCoinbasePattern2(client, acc) {
+function createActiveSupplyPattern(client, acc) {
   return {
-    bitcoin: createBlockCountPattern(client, _m(acc, "btc")),
-    dollars: createBlockCountPattern(client, _m(acc, "usd")),
-    sats: createBlockCountPattern(client, acc),
+    bitcoin: createMetricPattern1(client, _m(acc, "btc")),
+    dollars: createMetricPattern1(client, _m(acc, "usd")),
+    sats: createMetricPattern1(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} CostBasisPattern
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ */
+
+/**
+ * Create a CostBasisPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CostBasisPattern}
+ */
+function createCostBasisPattern(client, acc) {
+  return {
+    max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
+    min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
   };
 }
 
@@ -4113,21 +4132,21 @@ function createRelativePattern4(client, acc) {
 }
 
 /**
- * @typedef {Object} CostBasisPattern
- * @property {MetricPattern1<Dollars>} max
- * @property {MetricPattern1<Dollars>} min
+ * @typedef {Object} SupplyPattern2
+ * @property {ActiveSupplyPattern} halved
+ * @property {ActiveSupplyPattern} total
  */
 
 /**
- * Create a CostBasisPattern pattern node
+ * Create a SupplyPattern2 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {CostBasisPattern}
+ * @returns {SupplyPattern2}
  */
-function createCostBasisPattern(client, acc) {
+function createSupplyPattern2(client, acc) {
   return {
-    max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
-    min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
+    halved: createActiveSupplyPattern(client, _m(acc, "halved")),
+    total: createActiveSupplyPattern(client, acc),
   };
 }
 
@@ -4151,42 +4170,23 @@ function create_1dReturns1mSdPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} SupplyPattern2
- * @property {ActiveSupplyPattern} halved
- * @property {ActiveSupplyPattern} total
- */
-
-/**
- * Create a SupplyPattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {SupplyPattern2}
- */
-function createSupplyPattern2(client, acc) {
-  return {
-    halved: createActiveSupplyPattern(client, _m(acc, "halved")),
-    total: createActiveSupplyPattern(client, acc),
-  };
-}
-
-/**
  * @template T
- * @typedef {Object} SatsPattern
- * @property {MetricPattern1<T>} ohlc
- * @property {SplitPattern2<T>} split
+ * @typedef {Object} BitcoinPattern2
+ * @property {MetricPattern2<T>} cumulative
+ * @property {MetricPattern1<T>} sum
  */
 
 /**
- * Create a SatsPattern pattern node
+ * Create a BitcoinPattern2 pattern node
  * @template T
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {SatsPattern<T>}
+ * @returns {BitcoinPattern2<T>}
  */
-function createSatsPattern(client, acc) {
+function createBitcoinPattern2(client, acc) {
   return {
-    ohlc: createMetricPattern1(client, _m(acc, "ohlc_sats")),
-    split: createSplitPattern2(client, _m(acc, "sats")),
+    cumulative: createMetricPattern2(client, _m(acc, "cumulative")),
+    sum: createMetricPattern1(client, acc),
   };
 }
 
@@ -4213,39 +4213,22 @@ function createBlockCountPattern(client, acc) {
 
 /**
  * @template T
- * @typedef {Object} BitcoinPattern2
- * @property {MetricPattern2<T>} cumulative
- * @property {MetricPattern1<T>} sum
+ * @typedef {Object} SatsPattern
+ * @property {MetricPattern1<T>} ohlc
+ * @property {SplitPattern2<T>} split
  */
 
 /**
- * Create a BitcoinPattern2 pattern node
+ * Create a SatsPattern pattern node
  * @template T
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {BitcoinPattern2<T>}
+ * @returns {SatsPattern<T>}
  */
-function createBitcoinPattern2(client, acc) {
+function createSatsPattern(client, acc) {
   return {
-    cumulative: createMetricPattern2(client, _m(acc, "cumulative")),
-    sum: createMetricPattern1(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} RealizedPriceExtraPattern
- * @property {MetricPattern4<StoredF32>} ratio
- */
-
-/**
- * Create a RealizedPriceExtraPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {RealizedPriceExtraPattern}
- */
-function createRealizedPriceExtraPattern(client, acc) {
-  return {
-    ratio: createMetricPattern4(client, acc),
+    ohlc: createMetricPattern1(client, _m(acc, "ohlc")),
+    split: createSplitPattern2(client, acc),
   };
 }
 
@@ -4263,6 +4246,23 @@ function createRealizedPriceExtraPattern(client, acc) {
 function createOutputsPattern(client, acc) {
   return {
     utxoCount: createMetricPattern1(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} RealizedPriceExtraPattern
+ * @property {MetricPattern4<StoredF32>} ratio
+ */
+
+/**
+ * Create a RealizedPriceExtraPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {RealizedPriceExtraPattern}
+ */
+function createRealizedPriceExtraPattern(client, acc) {
+  return {
+    ratio: createMetricPattern4(client, acc),
   };
 }
 
@@ -4451,13 +4451,105 @@ function createOutputsPattern(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Cointime_Pricing
  * @property {MetricPattern1<Dollars>} activePrice
- * @property {ActivePriceRatioPattern} activePriceRatio
+ * @property {MetricsTree_Cointime_Pricing_ActivePriceRatio} activePriceRatio
  * @property {MetricPattern1<Dollars>} cointimePrice
- * @property {ActivePriceRatioPattern} cointimePriceRatio
+ * @property {MetricsTree_Cointime_Pricing_CointimePriceRatio} cointimePriceRatio
  * @property {MetricPattern1<Dollars>} trueMarketMean
- * @property {ActivePriceRatioPattern} trueMarketMeanRatio
+ * @property {MetricsTree_Cointime_Pricing_TrueMarketMeanRatio} trueMarketMeanRatio
  * @property {MetricPattern1<Dollars>} vaultedPrice
- * @property {ActivePriceRatioPattern} vaultedPriceRatio
+ * @property {MetricsTree_Cointime_Pricing_VaultedPriceRatio} vaultedPriceRatio
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Cointime_Pricing_ActivePriceRatio
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Cointime_Pricing_CointimePriceRatio
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Cointime_Pricing_TrueMarketMeanRatio
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Cointime_Pricing_VaultedPriceRatio
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
  */
 
 /**
@@ -4517,55 +4609,547 @@ function createOutputsPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange
- * @property {_0satsPattern} _0sats
- * @property {_0satsPattern} _100btcTo1kBtc
- * @property {_0satsPattern} _100kBtcOrMore
- * @property {_0satsPattern} _100kSatsTo1mSats
- * @property {_0satsPattern} _100satsTo1kSats
- * @property {_0satsPattern} _10btcTo100btc
- * @property {_0satsPattern} _10kBtcTo100kBtc
- * @property {_0satsPattern} _10kSatsTo100kSats
- * @property {_0satsPattern} _10mSatsTo1btc
- * @property {_0satsPattern} _10satsTo100sats
- * @property {_0satsPattern} _1btcTo10btc
- * @property {_0satsPattern} _1kBtcTo10kBtc
- * @property {_0satsPattern} _1kSatsTo10kSats
- * @property {_0satsPattern} _1mSatsTo10mSats
- * @property {_0satsPattern} _1satTo10sats
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_0sats} _0sats
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_100btcTo1kBtc} _100btcTo1kBtc
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_100kBtcOrMore} _100kBtcOrMore
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_100kSatsTo1mSats} _100kSatsTo1mSats
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_100satsTo1kSats} _100satsTo1kSats
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_10btcTo100btc} _10btcTo100btc
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_10kBtcTo100kBtc} _10kBtcTo100kBtc
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_10kSatsTo100kSats} _10kSatsTo100kSats
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_10mSatsTo1btc} _10mSatsTo1btc
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_10satsTo100sats} _10satsTo100sats
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_1btcTo10btc} _1btcTo10btc
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_1kBtcTo10kBtc} _1kBtcTo10kBtc
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_1kSatsTo10kSats} _1kSatsTo10kSats
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_1mSatsTo10mSats} _1mSatsTo10mSats
+ * @property {MetricsTree_Distribution_AddressCohorts_AmountRange_1satTo10sats} _1satTo10sats
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_0sats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_100btcTo1kBtc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_100kBtcOrMore
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_100kSatsTo1mSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_100satsTo1kSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_10btcTo100btc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_10kBtcTo100kBtc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_10kSatsTo100kSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_10mSatsTo1btc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_10satsTo100sats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_1btcTo10btc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_1kBtcTo10kBtc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_1kSatsTo10kSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_1mSatsTo10mSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_AmountRange_1satTo10sats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount
- * @property {_0satsPattern} _100btc
- * @property {_0satsPattern} _100kSats
- * @property {_0satsPattern} _100sats
- * @property {_0satsPattern} _10btc
- * @property {_0satsPattern} _10kBtc
- * @property {_0satsPattern} _10kSats
- * @property {_0satsPattern} _10mSats
- * @property {_0satsPattern} _10sats
- * @property {_0satsPattern} _1btc
- * @property {_0satsPattern} _1kBtc
- * @property {_0satsPattern} _1kSats
- * @property {_0satsPattern} _1mSats
- * @property {_0satsPattern} _1sat
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_100btc} _100btc
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_100kSats} _100kSats
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_100sats} _100sats
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_10btc} _10btc
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_10kBtc} _10kBtc
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_10kSats} _10kSats
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_10mSats} _10mSats
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_10sats} _10sats
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_1btc} _1btc
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_1kBtc} _1kBtc
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_1kSats} _1kSats
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_1mSats} _1mSats
+ * @property {MetricsTree_Distribution_AddressCohorts_GeAmount_1sat} _1sat
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_100btc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_100kSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_100sats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_10btc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_10kBtc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_10kSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_10mSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_10sats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_1btc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_1kBtc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_1kSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_1mSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_GeAmount_1sat
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount
- * @property {_0satsPattern} _100btc
- * @property {_0satsPattern} _100kBtc
- * @property {_0satsPattern} _100kSats
- * @property {_0satsPattern} _100sats
- * @property {_0satsPattern} _10btc
- * @property {_0satsPattern} _10kBtc
- * @property {_0satsPattern} _10kSats
- * @property {_0satsPattern} _10mSats
- * @property {_0satsPattern} _10sats
- * @property {_0satsPattern} _1btc
- * @property {_0satsPattern} _1kBtc
- * @property {_0satsPattern} _1kSats
- * @property {_0satsPattern} _1mSats
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_100btc} _100btc
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_100kBtc} _100kBtc
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_100kSats} _100kSats
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_100sats} _100sats
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_10btc} _10btc
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_10kBtc} _10kBtc
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_10kSats} _10kSats
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_10mSats} _10mSats
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_10sats} _10sats
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_1btc} _1btc
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_1kBtc} _1kBtc
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_1kSats} _1kSats
+ * @property {MetricsTree_Distribution_AddressCohorts_LtAmount_1mSats} _1mSats
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_100btc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_100kBtc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_100kSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_100sats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_10btc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_10kBtc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_10kSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_10mSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_10sats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_1btc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_1kBtc
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_1kSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_AddressCohorts_LtAmount_1mSats
+ * @property {ActivityPattern2} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
  */
 
 /**
@@ -4603,27 +5187,405 @@ function createOutputsPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange
- * @property {_10yTo12yPattern} _10yTo12y
- * @property {_10yTo12yPattern} _12yTo15y
- * @property {_10yTo12yPattern} _1dTo1w
- * @property {_10yTo12yPattern} _1hTo1d
- * @property {_10yTo12yPattern} _1mTo2m
- * @property {_10yTo12yPattern} _1wTo1m
- * @property {_10yTo12yPattern} _1yTo2y
- * @property {_10yTo12yPattern} _2mTo3m
- * @property {_10yTo12yPattern} _2yTo3y
- * @property {_10yTo12yPattern} _3mTo4m
- * @property {_10yTo12yPattern} _3yTo4y
- * @property {_10yTo12yPattern} _4mTo5m
- * @property {_10yTo12yPattern} _4yTo5y
- * @property {_10yTo12yPattern} _5mTo6m
- * @property {_10yTo12yPattern} _5yTo6y
- * @property {_10yTo12yPattern} _6mTo1y
- * @property {_10yTo12yPattern} _6yTo7y
- * @property {_10yTo12yPattern} _7yTo8y
- * @property {_10yTo12yPattern} _8yTo10y
- * @property {_10yTo12yPattern} from15y
- * @property {_10yTo12yPattern} upTo1h
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_10yTo12y} _10yTo12y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_12yTo15y} _12yTo15y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_1dTo1w} _1dTo1w
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_1hTo1d} _1hTo1d
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_1mTo2m} _1mTo2m
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_1wTo1m} _1wTo1m
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_1yTo2y} _1yTo2y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_2mTo3m} _2mTo3m
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_2yTo3y} _2yTo3y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_3mTo4m} _3mTo4m
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_3yTo4y} _3yTo4y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_4mTo5m} _4mTo5m
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_4yTo5y} _4yTo5y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_5mTo6m} _5mTo6m
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_5yTo6y} _5yTo6y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_6mTo1y} _6mTo1y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_6yTo7y} _6yTo7y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_7yTo8y} _7yTo8y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_8yTo10y} _8yTo10y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_From15y} from15y
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_UpTo1h} upTo1h
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_10yTo12y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_10yTo12y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_10yTo12y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_12yTo15y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_12yTo15y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_12yTo15y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_1dTo1w
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_1dTo1w_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_1dTo1w_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_1hTo1d
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_1hTo1d_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_1hTo1d_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_1mTo2m
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_1mTo2m_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_1mTo2m_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_1wTo1m
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_1wTo1m_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_1wTo1m_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_1yTo2y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_1yTo2y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_1yTo2y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_2mTo3m
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_2mTo3m_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_2mTo3m_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_2yTo3y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_2yTo3y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_2yTo3y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_3mTo4m
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_3mTo4m_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_3mTo4m_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_3yTo4y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_3yTo4y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_3yTo4y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_4mTo5m
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_4mTo5m_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_4mTo5m_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_4yTo5y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_4yTo5y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_4yTo5y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_5mTo6m
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_5mTo6m_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_5mTo6m_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_5yTo6y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_5yTo6y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_5yTo6y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_6mTo1y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_6mTo1y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_6mTo1y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_6yTo7y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_6yTo7y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_6yTo7y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_7yTo8y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_7yTo8y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_7yTo8y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_8yTo10y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_8yTo10y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_8yTo10y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_From15y
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_From15y_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_From15y_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_UpTo1h
+ * @property {ActivityPattern2} activity
+ * @property {MetricsTree_Distribution_UtxoCohorts_AgeRange_UpTo1h_CostBasis} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange_UpTo1h_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
  */
 
 /**
@@ -4631,10 +5593,10 @@ function createOutputsPattern(client, acc) {
  * @property {MetricsTree_Distribution_UtxoCohorts_All_Activity} activity
  * @property {MetricsTree_Distribution_UtxoCohorts_All_CostBasis} costBasis
  * @property {OutputsPattern} outputs
- * @property {RealizedPattern3} realized
+ * @property {MetricsTree_Distribution_UtxoCohorts_All_Realized} realized
  * @property {MetricsTree_Distribution_UtxoCohorts_All_Relative} relative
  * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
+ * @property {MetricsTree_Distribution_UtxoCohorts_All_Unrealized} unrealized
  */
 
 /**
@@ -4654,6 +5616,65 @@ function createOutputsPattern(client, acc) {
  */
 
 /**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_All_Realized
+ * @property {MetricPattern6<StoredF64>} adjustedSopr
+ * @property {MetricPattern6<StoredF64>} adjustedSopr30dEma
+ * @property {MetricPattern6<StoredF64>} adjustedSopr7dEma
+ * @property {MetricPattern1<Dollars>} adjustedValueCreated
+ * @property {MetricPattern1<Dollars>} adjustedValueDestroyed
+ * @property {MetricPattern4<StoredF32>} mvrv
+ * @property {BitcoinPattern2<Dollars>} negRealizedLoss
+ * @property {BlockCountPattern<Dollars>} netRealizedPnl
+ * @property {MetricPattern4<Dollars>} netRealizedPnlCumulative30dDelta
+ * @property {MetricPattern4<StoredF32>} netRealizedPnlCumulative30dDeltaRelToMarketCap
+ * @property {MetricPattern4<StoredF32>} netRealizedPnlCumulative30dDeltaRelToRealizedCap
+ * @property {BlockCountPattern<StoredF32>} netRealizedPnlRelToRealizedCap
+ * @property {MetricPattern1<Dollars>} realizedCap
+ * @property {MetricPattern4<Dollars>} realizedCap30dDelta
+ * @property {MetricPattern1<StoredF32>} realizedCapRelToOwnMarketCap
+ * @property {BlockCountPattern<Dollars>} realizedLoss
+ * @property {BlockCountPattern<StoredF32>} realizedLossRelToRealizedCap
+ * @property {MetricPattern1<Dollars>} realizedPrice
+ * @property {MetricsTree_Distribution_UtxoCohorts_All_Realized_RealizedPriceExtra} realizedPriceExtra
+ * @property {BlockCountPattern<Dollars>} realizedProfit
+ * @property {BlockCountPattern<StoredF32>} realizedProfitRelToRealizedCap
+ * @property {MetricPattern6<StoredF64>} realizedProfitToLossRatio
+ * @property {MetricPattern1<Dollars>} realizedValue
+ * @property {MetricPattern6<StoredF32>} sellSideRiskRatio
+ * @property {MetricPattern6<StoredF32>} sellSideRiskRatio30dEma
+ * @property {MetricPattern6<StoredF32>} sellSideRiskRatio7dEma
+ * @property {MetricPattern6<StoredF64>} sopr
+ * @property {MetricPattern6<StoredF64>} sopr30dEma
+ * @property {MetricPattern6<StoredF64>} sopr7dEma
+ * @property {MetricPattern1<Dollars>} totalRealizedPnl
+ * @property {MetricPattern1<Dollars>} valueCreated
+ * @property {MetricPattern1<Dollars>} valueDestroyed
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_All_Realized_RealizedPriceExtra
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_All_Relative
  * @property {MetricPattern1<StoredF32>} negUnrealizedLossRelToOwnTotalUnrealizedPnl
  * @property {MetricPattern1<StoredF32>} netUnrealizedPnlRelToOwnTotalUnrealizedPnl
@@ -4664,109 +5685,1022 @@ function createOutputsPattern(client, acc) {
  */
 
 /**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_All_Unrealized
+ * @property {MetricPattern1<Dollars>} negUnrealizedLoss
+ * @property {MetricPattern1<Dollars>} netUnrealizedPnl
+ * @property {ActiveSupplyPattern} supplyInLoss
+ * @property {ActiveSupplyPattern} supplyInProfit
+ * @property {MetricPattern1<Dollars>} totalUnrealizedPnl
+ * @property {MetricPattern1<Dollars>} unrealizedLoss
+ * @property {MetricPattern1<Dollars>} unrealizedProfit
+ */
+
+/**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange
- * @property {_0satsPattern2} _0sats
- * @property {_0satsPattern2} _100btcTo1kBtc
- * @property {_0satsPattern2} _100kBtcOrMore
- * @property {_0satsPattern2} _100kSatsTo1mSats
- * @property {_0satsPattern2} _100satsTo1kSats
- * @property {_0satsPattern2} _10btcTo100btc
- * @property {_0satsPattern2} _10kBtcTo100kBtc
- * @property {_0satsPattern2} _10kSatsTo100kSats
- * @property {_0satsPattern2} _10mSatsTo1btc
- * @property {_0satsPattern2} _10satsTo100sats
- * @property {_0satsPattern2} _1btcTo10btc
- * @property {_0satsPattern2} _1kBtcTo10kBtc
- * @property {_0satsPattern2} _1kSatsTo10kSats
- * @property {_0satsPattern2} _1mSatsTo10mSats
- * @property {_0satsPattern2} _1satTo10sats
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_0sats} _0sats
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_100btcTo1kBtc} _100btcTo1kBtc
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_100kBtcOrMore} _100kBtcOrMore
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_100kSatsTo1mSats} _100kSatsTo1mSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_100satsTo1kSats} _100satsTo1kSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_10btcTo100btc} _10btcTo100btc
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_10kBtcTo100kBtc} _10kBtcTo100kBtc
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_10kSatsTo100kSats} _10kSatsTo100kSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_10mSatsTo1btc} _10mSatsTo1btc
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_10satsTo100sats} _10satsTo100sats
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_1btcTo10btc} _1btcTo10btc
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_1kBtcTo10kBtc} _1kBtcTo10kBtc
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_1kSatsTo10kSats} _1kSatsTo10kSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_1mSatsTo10mSats} _1mSatsTo10mSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange_1satTo10sats} _1satTo10sats
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_0sats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_100btcTo1kBtc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_100kBtcOrMore
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_100kSatsTo1mSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_100satsTo1kSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_10btcTo100btc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_10kBtcTo100kBtc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_10kSatsTo100kSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_10mSatsTo1btc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_10satsTo100sats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_1btcTo10btc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_1kBtcTo10kBtc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_1kSatsTo10kSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_1mSatsTo10mSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AmountRange_1satTo10sats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Epoch
- * @property {_0satsPattern2} _0
- * @property {_0satsPattern2} _1
- * @property {_0satsPattern2} _2
- * @property {_0satsPattern2} _3
- * @property {_0satsPattern2} _4
+ * @property {MetricsTree_Distribution_UtxoCohorts_Epoch_0} _0
+ * @property {MetricsTree_Distribution_UtxoCohorts_Epoch_1} _1
+ * @property {MetricsTree_Distribution_UtxoCohorts_Epoch_2} _2
+ * @property {MetricsTree_Distribution_UtxoCohorts_Epoch_3} _3
+ * @property {MetricsTree_Distribution_UtxoCohorts_Epoch_4} _4
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Epoch_0
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Epoch_1
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Epoch_2
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Epoch_3
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Epoch_4
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount
- * @property {_100btcPattern} _100btc
- * @property {_100btcPattern} _100kSats
- * @property {_100btcPattern} _100sats
- * @property {_100btcPattern} _10btc
- * @property {_100btcPattern} _10kBtc
- * @property {_100btcPattern} _10kSats
- * @property {_100btcPattern} _10mSats
- * @property {_100btcPattern} _10sats
- * @property {_100btcPattern} _1btc
- * @property {_100btcPattern} _1kBtc
- * @property {_100btcPattern} _1kSats
- * @property {_100btcPattern} _1mSats
- * @property {_100btcPattern} _1sat
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_100btc} _100btc
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_100kSats} _100kSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_100sats} _100sats
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_10btc} _10btc
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_10kBtc} _10kBtc
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_10kSats} _10kSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_10mSats} _10mSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_10sats} _10sats
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_1btc} _1btc
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_1kBtc} _1kBtc
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_1kSats} _1kSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_1mSats} _1mSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_GeAmount_1sat} _1sat
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_100btc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_100kSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_100sats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_10btc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_10kBtc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_10kSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_10mSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_10sats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_1btc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_1kBtc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_1kSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_1mSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_GeAmount_1sat
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount
- * @property {_100btcPattern} _100btc
- * @property {_100btcPattern} _100kBtc
- * @property {_100btcPattern} _100kSats
- * @property {_100btcPattern} _100sats
- * @property {_100btcPattern} _10btc
- * @property {_100btcPattern} _10kBtc
- * @property {_100btcPattern} _10kSats
- * @property {_100btcPattern} _10mSats
- * @property {_100btcPattern} _10sats
- * @property {_100btcPattern} _1btc
- * @property {_100btcPattern} _1kBtc
- * @property {_100btcPattern} _1kSats
- * @property {_100btcPattern} _1mSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_100btc} _100btc
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_100kBtc} _100kBtc
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_100kSats} _100kSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_100sats} _100sats
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_10btc} _10btc
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_10kBtc} _10kBtc
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_10kSats} _10kSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_10mSats} _10mSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_10sats} _10sats
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_1btc} _1btc
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_1kBtc} _1kBtc
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_1kSats} _1kSats
+ * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount_1mSats} _1mSats
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_100btc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_100kBtc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_100kSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_100sats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_10btc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_10kBtc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_10kSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_10mSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_10sats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_1btc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_1kBtc
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_1kSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_LtAmount_1mSats
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge
- * @property {_10yPattern} _10y
- * @property {_10yPattern} _12y
- * @property {_10yPattern} _15y
- * @property {_10yPattern} _1m
- * @property {_10yPattern} _1w
- * @property {_10yPattern} _1y
- * @property {_10yPattern} _2m
- * @property {_10yPattern} _2y
- * @property {_10yPattern} _3m
- * @property {_10yPattern} _3y
- * @property {_10yPattern} _4m
- * @property {_10yPattern} _4y
- * @property {_10yPattern} _5m
- * @property {_10yPattern} _5y
- * @property {_10yPattern} _6m
- * @property {_10yPattern} _6y
- * @property {_10yPattern} _7y
- * @property {_10yPattern} _8y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_10y} _10y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_12y} _12y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_15y} _15y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_1m} _1m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_1w} _1w
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_1y} _1y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_2m} _2m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_2y} _2y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_3m} _3m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_3y} _3y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_4m} _4m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_4y} _4y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_5m} _5m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_5y} _5y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_6m} _6m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_6y} _6y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_7y} _7y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MaxAge_8y} _8y
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_10y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_12y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_15y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_1m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_1w
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_1y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_2m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_2y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_3m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_3y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_4m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_4y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_5m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_5y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_6m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_6y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_7y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge_8y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern4} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge
- * @property {_100btcPattern} _10y
- * @property {_100btcPattern} _12y
- * @property {_100btcPattern} _1d
- * @property {_100btcPattern} _1m
- * @property {_100btcPattern} _1w
- * @property {_100btcPattern} _1y
- * @property {_100btcPattern} _2m
- * @property {_100btcPattern} _2y
- * @property {_100btcPattern} _3m
- * @property {_100btcPattern} _3y
- * @property {_100btcPattern} _4m
- * @property {_100btcPattern} _4y
- * @property {_100btcPattern} _5m
- * @property {_100btcPattern} _5y
- * @property {_100btcPattern} _6m
- * @property {_100btcPattern} _6y
- * @property {_100btcPattern} _7y
- * @property {_100btcPattern} _8y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_10y} _10y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_12y} _12y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_1d} _1d
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_1m} _1m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_1w} _1w
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_1y} _1y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_2m} _2m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_2y} _2y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_3m} _3m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_3y} _3y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_4m} _4m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_4y} _4y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_5m} _5m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_5y} _5y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_6m} _6m
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_6y} _6y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_7y} _7y
+ * @property {MetricsTree_Distribution_UtxoCohorts_MinAge_8y} _8y
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_10y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_12y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_1d
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_1m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_1w
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_1y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_2m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_2y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_3m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_3y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_4m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_4y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_5m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_5y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_6m
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_6y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_7y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge_8y
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
  */
 
 /**
@@ -4778,7 +6712,7 @@ function createOutputsPattern(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Term_Long
  * @property {ActivityPattern2} activity
- * @property {CostBasisPattern2} costBasis
+ * @property {MetricsTree_Distribution_UtxoCohorts_Term_Long_CostBasis} costBasis
  * @property {OutputsPattern} outputs
  * @property {RealizedPattern2} realized
  * @property {RelativePattern5} relative
@@ -4787,9 +6721,16 @@ function createOutputsPattern(client, acc) {
  */
 
 /**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Term_Long_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Term_Short
  * @property {ActivityPattern2} activity
- * @property {CostBasisPattern2} costBasis
+ * @property {MetricsTree_Distribution_UtxoCohorts_Term_Short_CostBasis} costBasis
  * @property {OutputsPattern} outputs
  * @property {RealizedPattern3} realized
  * @property {RelativePattern5} relative
@@ -4798,40 +6739,366 @@ function createOutputsPattern(client, acc) {
  */
 
 /**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Term_Short_CostBasis
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
+ */
+
+/**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type
- * @property {_0satsPattern2} empty
- * @property {_0satsPattern2} p2a
- * @property {_0satsPattern2} p2ms
- * @property {_0satsPattern2} p2pk33
- * @property {_0satsPattern2} p2pk65
- * @property {_0satsPattern2} p2pkh
- * @property {_0satsPattern2} p2sh
- * @property {_0satsPattern2} p2tr
- * @property {_0satsPattern2} p2wpkh
- * @property {_0satsPattern2} p2wsh
- * @property {_0satsPattern2} unknown
+ * @property {MetricsTree_Distribution_UtxoCohorts_Type_Empty} empty
+ * @property {MetricsTree_Distribution_UtxoCohorts_Type_P2a} p2a
+ * @property {MetricsTree_Distribution_UtxoCohorts_Type_P2ms} p2ms
+ * @property {MetricsTree_Distribution_UtxoCohorts_Type_P2pk33} p2pk33
+ * @property {MetricsTree_Distribution_UtxoCohorts_Type_P2pk65} p2pk65
+ * @property {MetricsTree_Distribution_UtxoCohorts_Type_P2pkh} p2pkh
+ * @property {MetricsTree_Distribution_UtxoCohorts_Type_P2sh} p2sh
+ * @property {MetricsTree_Distribution_UtxoCohorts_Type_P2tr} p2tr
+ * @property {MetricsTree_Distribution_UtxoCohorts_Type_P2wpkh} p2wpkh
+ * @property {MetricsTree_Distribution_UtxoCohorts_Type_P2wsh} p2wsh
+ * @property {MetricsTree_Distribution_UtxoCohorts_Type_Unknown} unknown
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type_Empty
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type_P2a
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type_P2ms
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type_P2pk33
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type_P2pk65
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type_P2pkh
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type_P2sh
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type_P2tr
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type_P2wpkh
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type_P2wsh
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Type_Unknown
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year
- * @property {_0satsPattern2} _2009
- * @property {_0satsPattern2} _2010
- * @property {_0satsPattern2} _2011
- * @property {_0satsPattern2} _2012
- * @property {_0satsPattern2} _2013
- * @property {_0satsPattern2} _2014
- * @property {_0satsPattern2} _2015
- * @property {_0satsPattern2} _2016
- * @property {_0satsPattern2} _2017
- * @property {_0satsPattern2} _2018
- * @property {_0satsPattern2} _2019
- * @property {_0satsPattern2} _2020
- * @property {_0satsPattern2} _2021
- * @property {_0satsPattern2} _2022
- * @property {_0satsPattern2} _2023
- * @property {_0satsPattern2} _2024
- * @property {_0satsPattern2} _2025
- * @property {_0satsPattern2} _2026
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2009} _2009
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2010} _2010
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2011} _2011
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2012} _2012
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2013} _2013
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2014} _2014
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2015} _2015
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2016} _2016
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2017} _2017
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2018} _2018
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2019} _2019
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2020} _2020
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2021} _2021
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2022} _2022
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2023} _2023
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2024} _2024
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2025} _2025
+ * @property {MetricsTree_Distribution_UtxoCohorts_Year_2026} _2026
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2009
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2010
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2011
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2012
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2013
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2014
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2015
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2016
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2017
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2018
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2019
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2020
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2021
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2022
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2023
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2024
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2025
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year_2026
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
  */
 
 /**
@@ -5070,7 +7337,7 @@ function createOutputsPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Market_Dca
- * @property {ClassAveragePricePattern<Dollars>} classAveragePrice
+ * @property {MetricsTree_Market_Dca_ClassAveragePrice} classAveragePrice
  * @property {ClassAveragePricePattern<StoredF32>} classReturns
  * @property {MetricsTree_Market_Dca_ClassStack} classStack
  * @property {PeriodAveragePricePattern<Dollars>} periodAveragePrice
@@ -5078,6 +7345,21 @@ function createOutputsPattern(client, acc) {
  * @property {PeriodLumpSumStackPattern} periodLumpSumStack
  * @property {PeriodAveragePricePattern<StoredF32>} periodReturns
  * @property {PeriodLumpSumStackPattern} periodStack
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_Dca_ClassAveragePrice
+ * @property {MetricPattern4<Dollars>} _2015
+ * @property {MetricPattern4<Dollars>} _2016
+ * @property {MetricPattern4<Dollars>} _2017
+ * @property {MetricPattern4<Dollars>} _2018
+ * @property {MetricPattern4<Dollars>} _2019
+ * @property {MetricPattern4<Dollars>} _2020
+ * @property {MetricPattern4<Dollars>} _2021
+ * @property {MetricPattern4<Dollars>} _2022
+ * @property {MetricPattern4<Dollars>} _2023
+ * @property {MetricPattern4<Dollars>} _2024
+ * @property {MetricPattern4<Dollars>} _2025
  */
 
 /**
@@ -5120,41 +7402,809 @@ function createOutputsPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Market_MovingAverage
- * @property {Price111dSmaPattern} price111dSma
- * @property {Price111dSmaPattern} price12dEma
- * @property {Price111dSmaPattern} price13dEma
- * @property {Price111dSmaPattern} price13dSma
- * @property {Price111dSmaPattern} price144dEma
- * @property {Price111dSmaPattern} price144dSma
- * @property {Price111dSmaPattern} price1mEma
- * @property {Price111dSmaPattern} price1mSma
- * @property {Price111dSmaPattern} price1wEma
- * @property {Price111dSmaPattern} price1wSma
- * @property {Price111dSmaPattern} price1yEma
- * @property {Price111dSmaPattern} price1ySma
- * @property {Price111dSmaPattern} price200dEma
- * @property {Price111dSmaPattern} price200dSma
+ * @property {MetricsTree_Market_MovingAverage_Price111dSma} price111dSma
+ * @property {MetricsTree_Market_MovingAverage_Price12dEma} price12dEma
+ * @property {MetricsTree_Market_MovingAverage_Price13dEma} price13dEma
+ * @property {MetricsTree_Market_MovingAverage_Price13dSma} price13dSma
+ * @property {MetricsTree_Market_MovingAverage_Price144dEma} price144dEma
+ * @property {MetricsTree_Market_MovingAverage_Price144dSma} price144dSma
+ * @property {MetricsTree_Market_MovingAverage_Price1mEma} price1mEma
+ * @property {MetricsTree_Market_MovingAverage_Price1mSma} price1mSma
+ * @property {MetricsTree_Market_MovingAverage_Price1wEma} price1wEma
+ * @property {MetricsTree_Market_MovingAverage_Price1wSma} price1wSma
+ * @property {MetricsTree_Market_MovingAverage_Price1yEma} price1yEma
+ * @property {MetricsTree_Market_MovingAverage_Price1ySma} price1ySma
+ * @property {MetricsTree_Market_MovingAverage_Price200dEma} price200dEma
+ * @property {MetricsTree_Market_MovingAverage_Price200dSma} price200dSma
  * @property {MetricPattern4<Dollars>} price200dSmaX08
  * @property {MetricPattern4<Dollars>} price200dSmaX24
- * @property {Price111dSmaPattern} price200wEma
- * @property {Price111dSmaPattern} price200wSma
- * @property {Price111dSmaPattern} price21dEma
- * @property {Price111dSmaPattern} price21dSma
- * @property {Price111dSmaPattern} price26dEma
- * @property {Price111dSmaPattern} price2yEma
- * @property {Price111dSmaPattern} price2ySma
- * @property {Price111dSmaPattern} price34dEma
- * @property {Price111dSmaPattern} price34dSma
- * @property {Price111dSmaPattern} price350dSma
+ * @property {MetricsTree_Market_MovingAverage_Price200wEma} price200wEma
+ * @property {MetricsTree_Market_MovingAverage_Price200wSma} price200wSma
+ * @property {MetricsTree_Market_MovingAverage_Price21dEma} price21dEma
+ * @property {MetricsTree_Market_MovingAverage_Price21dSma} price21dSma
+ * @property {MetricsTree_Market_MovingAverage_Price26dEma} price26dEma
+ * @property {MetricsTree_Market_MovingAverage_Price2yEma} price2yEma
+ * @property {MetricsTree_Market_MovingAverage_Price2ySma} price2ySma
+ * @property {MetricsTree_Market_MovingAverage_Price34dEma} price34dEma
+ * @property {MetricsTree_Market_MovingAverage_Price34dSma} price34dSma
+ * @property {MetricsTree_Market_MovingAverage_Price350dSma} price350dSma
  * @property {MetricPattern4<Dollars>} price350dSmaX2
- * @property {Price111dSmaPattern} price4yEma
- * @property {Price111dSmaPattern} price4ySma
- * @property {Price111dSmaPattern} price55dEma
- * @property {Price111dSmaPattern} price55dSma
- * @property {Price111dSmaPattern} price89dEma
- * @property {Price111dSmaPattern} price89dSma
- * @property {Price111dSmaPattern} price8dEma
- * @property {Price111dSmaPattern} price8dSma
+ * @property {MetricsTree_Market_MovingAverage_Price4yEma} price4yEma
+ * @property {MetricsTree_Market_MovingAverage_Price4ySma} price4ySma
+ * @property {MetricsTree_Market_MovingAverage_Price55dEma} price55dEma
+ * @property {MetricsTree_Market_MovingAverage_Price55dSma} price55dSma
+ * @property {MetricsTree_Market_MovingAverage_Price89dEma} price89dEma
+ * @property {MetricsTree_Market_MovingAverage_Price89dSma} price89dSma
+ * @property {MetricsTree_Market_MovingAverage_Price8dEma} price8dEma
+ * @property {MetricsTree_Market_MovingAverage_Price8dSma} price8dSma
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price111dSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price12dEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price13dEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price13dSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price144dEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price144dSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price1mEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price1mSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price1wEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price1wSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price1yEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price1ySma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price200dEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price200dSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price200wEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price200wSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price21dEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price21dSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price26dEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price2yEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price2ySma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price34dEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price34dSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price350dSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price4yEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price4ySma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price55dEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price55dSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price89dEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price89dSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price8dEma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Price8dSma
+ * @property {MetricPattern4<Dollars>} price
+ * @property {MetricPattern4<StoredF32>} ratio
+ * @property {MetricPattern4<StoredF32>} ratio1mSma
+ * @property {MetricPattern4<StoredF32>} ratio1wSma
+ * @property {Ratio1ySdPattern} ratio1ySd
+ * @property {Ratio1ySdPattern} ratio2ySd
+ * @property {Ratio1ySdPattern} ratio4ySd
+ * @property {MetricPattern4<StoredF32>} ratioPct1
+ * @property {MetricPattern4<Dollars>} ratioPct1Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct2
+ * @property {MetricPattern4<Dollars>} ratioPct2Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct5
+ * @property {MetricPattern4<Dollars>} ratioPct5Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct95
+ * @property {MetricPattern4<Dollars>} ratioPct95Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct98
+ * @property {MetricPattern4<Dollars>} ratioPct98Usd
+ * @property {MetricPattern4<StoredF32>} ratioPct99
+ * @property {MetricPattern4<Dollars>} ratioPct99Usd
+ * @property {Ratio1ySdPattern} ratioSd
  */
 
 /**
@@ -5415,8 +8465,8 @@ function createOutputsPattern(client, acc) {
  * @typedef {Object} MetricsTree_Price
  * @property {MetricsTree_Price_Cents} cents
  * @property {MetricsTree_Price_Oracle} oracle
- * @property {SatsPattern<OHLCSats>} sats
- * @property {SatsPattern<OHLCDollars>} usd
+ * @property {MetricsTree_Price_Sats} sats
+ * @property {MetricsTree_Price_Usd} usd
  */
 
 /**
@@ -5439,6 +8489,18 @@ function createOutputsPattern(client, acc) {
  * @property {MetricPattern6<OHLCDollars>} ohlcDollars
  * @property {MetricPattern11<Cents>} priceCents
  * @property {MetricPattern6<StoredU32>} txCount
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Price_Sats
+ * @property {MetricPattern1<OHLCSats>} ohlc
+ * @property {SplitPattern2<Sats>} split
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Price_Usd
+ * @property {MetricPattern1<OHLCDollars>} ohlc
+ * @property {SplitPattern2<Dollars>} split
  */
 
 /**
@@ -6676,25 +9738,219 @@ class BrkClient extends BrkClientBase {
         },
         pricing: {
           activePrice: createMetricPattern1(this, "active_price"),
-          activePriceRatio: createActivePriceRatioPattern(
-            this,
-            "active_price_ratio",
-          ),
+          activePriceRatio: {
+            ratio: createMetricPattern4(this, "active_price_ratio"),
+            ratio1mSma: createMetricPattern4(this, "active_price_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "active_price_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "active_price_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "active_price_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "active_price_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "active_price_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "active_price_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "active_price_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "active_price_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "active_price_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "active_price_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "active_price_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "active_price_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "active_price_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "active_price_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "active_price_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "active_price_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "active_price_ratio"),
+          },
           cointimePrice: createMetricPattern1(this, "cointime_price"),
-          cointimePriceRatio: createActivePriceRatioPattern(
-            this,
-            "cointime_price_ratio",
-          ),
+          cointimePriceRatio: {
+            ratio: createMetricPattern4(this, "cointime_price_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "cointime_price_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "cointime_price_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "cointime_price_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "cointime_price_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "cointime_price_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "cointime_price_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "cointime_price_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "cointime_price_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "cointime_price_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "cointime_price_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "cointime_price_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(
+              this,
+              "cointime_price_ratio_pct95",
+            ),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "cointime_price_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(
+              this,
+              "cointime_price_ratio_pct98",
+            ),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "cointime_price_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(
+              this,
+              "cointime_price_ratio_pct99",
+            ),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "cointime_price_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "cointime_price_ratio"),
+          },
           trueMarketMean: createMetricPattern1(this, "true_market_mean"),
-          trueMarketMeanRatio: createActivePriceRatioPattern(
-            this,
-            "true_market_mean_ratio",
-          ),
+          trueMarketMeanRatio: {
+            ratio: createMetricPattern4(this, "true_market_mean_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(
+              this,
+              "true_market_mean_ratio_1y",
+            ),
+            ratio2ySd: createRatio1ySdPattern(
+              this,
+              "true_market_mean_ratio_2y",
+            ),
+            ratio4ySd: createRatio1ySdPattern(
+              this,
+              "true_market_mean_ratio_4y",
+            ),
+            ratioPct1: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct1",
+            ),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct2",
+            ),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct5",
+            ),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct95",
+            ),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct98",
+            ),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct99",
+            ),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "true_market_mean_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "true_market_mean_ratio"),
+          },
           vaultedPrice: createMetricPattern1(this, "vaulted_price"),
-          vaultedPriceRatio: createActivePriceRatioPattern(
-            this,
-            "vaulted_price_ratio",
-          ),
+          vaultedPriceRatio: {
+            ratio: createMetricPattern4(this, "vaulted_price_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "vaulted_price_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "vaulted_price_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "vaulted_price_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "vaulted_price_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "vaulted_price_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "vaulted_price_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "vaulted_price_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "vaulted_price_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "vaulted_price_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "vaulted_price_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "vaulted_price_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "vaulted_price_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "vaulted_price_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "vaulted_price_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "vaulted_price_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "vaulted_price_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "vaulted_price_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "vaulted_price_ratio"),
+          },
         },
         supply: {
           activeSupply: createActiveSupplyPattern(this, "active_supply"),
@@ -6739,90 +9995,912 @@ class BrkClient extends BrkClientBase {
         addrCount: createAddrCountPattern(this, "addr_count"),
         addressCohorts: {
           amountRange: {
-            _0sats: create_0satsPattern(this, "addrs_with_0sats"),
-            _100btcTo1kBtc: create_0satsPattern(
-              this,
-              "addrs_above_100btc_under_1k_btc",
-            ),
-            _100kBtcOrMore: create_0satsPattern(this, "addrs_above_100k_btc"),
-            _100kSatsTo1mSats: create_0satsPattern(
-              this,
-              "addrs_above_100k_sats_under_1m_sats",
-            ),
-            _100satsTo1kSats: create_0satsPattern(
-              this,
-              "addrs_above_100sats_under_1k_sats",
-            ),
-            _10btcTo100btc: create_0satsPattern(
-              this,
-              "addrs_above_10btc_under_100btc",
-            ),
-            _10kBtcTo100kBtc: create_0satsPattern(
-              this,
-              "addrs_above_10k_btc_under_100k_btc",
-            ),
-            _10kSatsTo100kSats: create_0satsPattern(
-              this,
-              "addrs_above_10k_sats_under_100k_sats",
-            ),
-            _10mSatsTo1btc: create_0satsPattern(
-              this,
-              "addrs_above_10m_sats_under_1btc",
-            ),
-            _10satsTo100sats: create_0satsPattern(
-              this,
-              "addrs_above_10sats_under_100sats",
-            ),
-            _1btcTo10btc: create_0satsPattern(
-              this,
-              "addrs_above_1btc_under_10btc",
-            ),
-            _1kBtcTo10kBtc: create_0satsPattern(
-              this,
-              "addrs_above_1k_btc_under_10k_btc",
-            ),
-            _1kSatsTo10kSats: create_0satsPattern(
-              this,
-              "addrs_above_1k_sats_under_10k_sats",
-            ),
-            _1mSatsTo10mSats: create_0satsPattern(
-              this,
-              "addrs_above_1m_sats_under_10m_sats",
-            ),
-            _1satTo10sats: create_0satsPattern(
-              this,
-              "addrs_above_1sat_under_10sats",
-            ),
+            _0sats: {
+              activity: createActivityPattern2(this, "addrs_with_0sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_with_0sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_with_0sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_with_0sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_with_0sats"),
+              relative: createRelativePattern(this, "addrs_with_0sats"),
+              supply: createSupplyPattern2(this, "addrs_with_0sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_with_0sats"),
+            },
+            _100btcTo1kBtc: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_100btc_under_1k_btc",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_100btc_under_1k_btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_100btc_under_1k_btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_100btc_under_1k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_100btc_under_1k_btc",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_100btc_under_1k_btc",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_100btc_under_1k_btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_100btc_under_1k_btc",
+              ),
+            },
+            _100kBtcOrMore: {
+              activity: createActivityPattern2(this, "addrs_above_100k_btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_100k_btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_100k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_100k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_100k_btc"),
+              relative: createRelativePattern(this, "addrs_above_100k_btc"),
+              supply: createSupplyPattern2(this, "addrs_above_100k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_100k_btc"),
+            },
+            _100kSatsTo1mSats: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_100k_sats_under_1m_sats",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_100k_sats_under_1m_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_100k_sats_under_1m_sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_100k_sats_under_1m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_100k_sats_under_1m_sats",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_100k_sats_under_1m_sats",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_100k_sats_under_1m_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_100k_sats_under_1m_sats",
+              ),
+            },
+            _100satsTo1kSats: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_100sats_under_1k_sats",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_100sats_under_1k_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_100sats_under_1k_sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_100sats_under_1k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_100sats_under_1k_sats",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_100sats_under_1k_sats",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_100sats_under_1k_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_100sats_under_1k_sats",
+              ),
+            },
+            _10btcTo100btc: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_10btc_under_100btc",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_10btc_under_100btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_10btc_under_100btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_10btc_under_100btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_10btc_under_100btc",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_10btc_under_100btc",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_10btc_under_100btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_10btc_under_100btc",
+              ),
+            },
+            _10kBtcTo100kBtc: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_10k_btc_under_100k_btc",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_10k_btc_under_100k_btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_10k_btc_under_100k_btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_10k_btc_under_100k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_10k_btc_under_100k_btc",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_10k_btc_under_100k_btc",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_10k_btc_under_100k_btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_10k_btc_under_100k_btc",
+              ),
+            },
+            _10kSatsTo100kSats: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_10k_sats_under_100k_sats",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_10k_sats_under_100k_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_10k_sats_under_100k_sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_10k_sats_under_100k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_10k_sats_under_100k_sats",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_10k_sats_under_100k_sats",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_10k_sats_under_100k_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_10k_sats_under_100k_sats",
+              ),
+            },
+            _10mSatsTo1btc: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_10m_sats_under_1btc",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_10m_sats_under_1btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_10m_sats_under_1btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_10m_sats_under_1btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_10m_sats_under_1btc",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_10m_sats_under_1btc",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_10m_sats_under_1btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_10m_sats_under_1btc",
+              ),
+            },
+            _10satsTo100sats: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_10sats_under_100sats",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_10sats_under_100sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_10sats_under_100sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_10sats_under_100sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_10sats_under_100sats",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_10sats_under_100sats",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_10sats_under_100sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_10sats_under_100sats",
+              ),
+            },
+            _1btcTo10btc: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_1btc_under_10btc",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_1btc_under_10btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_1btc_under_10btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_1btc_under_10btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_1btc_under_10btc",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_1btc_under_10btc",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_1btc_under_10btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_1btc_under_10btc",
+              ),
+            },
+            _1kBtcTo10kBtc: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_1k_btc_under_10k_btc",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_1k_btc_under_10k_btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_1k_btc_under_10k_btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_1k_btc_under_10k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_1k_btc_under_10k_btc",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_1k_btc_under_10k_btc",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_1k_btc_under_10k_btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_1k_btc_under_10k_btc",
+              ),
+            },
+            _1kSatsTo10kSats: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_1k_sats_under_10k_sats",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_1k_sats_under_10k_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_1k_sats_under_10k_sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_1k_sats_under_10k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_1k_sats_under_10k_sats",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_1k_sats_under_10k_sats",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_1k_sats_under_10k_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_1k_sats_under_10k_sats",
+              ),
+            },
+            _1mSatsTo10mSats: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_1m_sats_under_10m_sats",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_1m_sats_under_10m_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_1m_sats_under_10m_sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_1m_sats_under_10m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_1m_sats_under_10m_sats",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_1m_sats_under_10m_sats",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_1m_sats_under_10m_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_1m_sats_under_10m_sats",
+              ),
+            },
+            _1satTo10sats: {
+              activity: createActivityPattern2(
+                this,
+                "addrs_above_1sat_under_10sats",
+              ),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_1sat_under_10sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "addrs_above_1sat_under_10sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_1sat_under_10sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "addrs_above_1sat_under_10sats",
+              ),
+              relative: createRelativePattern(
+                this,
+                "addrs_above_1sat_under_10sats",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_1sat_under_10sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_1sat_under_10sats",
+              ),
+            },
           },
           geAmount: {
-            _100btc: create_0satsPattern(this, "addrs_above_100btc"),
-            _100kSats: create_0satsPattern(this, "addrs_above_100k_sats"),
-            _100sats: create_0satsPattern(this, "addrs_above_100sats"),
-            _10btc: create_0satsPattern(this, "addrs_above_10btc"),
-            _10kBtc: create_0satsPattern(this, "addrs_above_10k_btc"),
-            _10kSats: create_0satsPattern(this, "addrs_above_10k_sats"),
-            _10mSats: create_0satsPattern(this, "addrs_above_10m_sats"),
-            _10sats: create_0satsPattern(this, "addrs_above_10sats"),
-            _1btc: create_0satsPattern(this, "addrs_above_1btc"),
-            _1kBtc: create_0satsPattern(this, "addrs_above_1k_btc"),
-            _1kSats: create_0satsPattern(this, "addrs_above_1k_sats"),
-            _1mSats: create_0satsPattern(this, "addrs_above_1m_sats"),
-            _1sat: create_0satsPattern(this, "addrs_above_1sat"),
+            _100btc: {
+              activity: createActivityPattern2(this, "addrs_above_100btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_100btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_100btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_100btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_100btc"),
+              relative: createRelativePattern(this, "addrs_above_100btc"),
+              supply: createSupplyPattern2(this, "addrs_above_100btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_100btc"),
+            },
+            _100kSats: {
+              activity: createActivityPattern2(this, "addrs_above_100k_sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_100k_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_100k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_100k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_100k_sats"),
+              relative: createRelativePattern(this, "addrs_above_100k_sats"),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_above_100k_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_above_100k_sats",
+              ),
+            },
+            _100sats: {
+              activity: createActivityPattern2(this, "addrs_above_100sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_100sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_100sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_100sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_100sats"),
+              relative: createRelativePattern(this, "addrs_above_100sats"),
+              supply: createSupplyPattern2(this, "addrs_above_100sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_100sats"),
+            },
+            _10btc: {
+              activity: createActivityPattern2(this, "addrs_above_10btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_10btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_10btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_10btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_10btc"),
+              relative: createRelativePattern(this, "addrs_above_10btc"),
+              supply: createSupplyPattern2(this, "addrs_above_10btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_10btc"),
+            },
+            _10kBtc: {
+              activity: createActivityPattern2(this, "addrs_above_10k_btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_10k_btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_10k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_10k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_10k_btc"),
+              relative: createRelativePattern(this, "addrs_above_10k_btc"),
+              supply: createSupplyPattern2(this, "addrs_above_10k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_10k_btc"),
+            },
+            _10kSats: {
+              activity: createActivityPattern2(this, "addrs_above_10k_sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_10k_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_10k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_10k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_10k_sats"),
+              relative: createRelativePattern(this, "addrs_above_10k_sats"),
+              supply: createSupplyPattern2(this, "addrs_above_10k_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_10k_sats"),
+            },
+            _10mSats: {
+              activity: createActivityPattern2(this, "addrs_above_10m_sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_10m_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_10m_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_10m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_10m_sats"),
+              relative: createRelativePattern(this, "addrs_above_10m_sats"),
+              supply: createSupplyPattern2(this, "addrs_above_10m_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_10m_sats"),
+            },
+            _10sats: {
+              activity: createActivityPattern2(this, "addrs_above_10sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_10sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_10sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_10sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_10sats"),
+              relative: createRelativePattern(this, "addrs_above_10sats"),
+              supply: createSupplyPattern2(this, "addrs_above_10sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_10sats"),
+            },
+            _1btc: {
+              activity: createActivityPattern2(this, "addrs_above_1btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_1btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_1btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_1btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_1btc"),
+              relative: createRelativePattern(this, "addrs_above_1btc"),
+              supply: createSupplyPattern2(this, "addrs_above_1btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_1btc"),
+            },
+            _1kBtc: {
+              activity: createActivityPattern2(this, "addrs_above_1k_btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_1k_btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_1k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_1k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_1k_btc"),
+              relative: createRelativePattern(this, "addrs_above_1k_btc"),
+              supply: createSupplyPattern2(this, "addrs_above_1k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_1k_btc"),
+            },
+            _1kSats: {
+              activity: createActivityPattern2(this, "addrs_above_1k_sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_1k_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_1k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_1k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_1k_sats"),
+              relative: createRelativePattern(this, "addrs_above_1k_sats"),
+              supply: createSupplyPattern2(this, "addrs_above_1k_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_1k_sats"),
+            },
+            _1mSats: {
+              activity: createActivityPattern2(this, "addrs_above_1m_sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_1m_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_1m_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_1m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_1m_sats"),
+              relative: createRelativePattern(this, "addrs_above_1m_sats"),
+              supply: createSupplyPattern2(this, "addrs_above_1m_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_1m_sats"),
+            },
+            _1sat: {
+              activity: createActivityPattern2(this, "addrs_above_1sat"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_above_1sat_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_above_1sat"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_above_1sat_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_above_1sat"),
+              relative: createRelativePattern(this, "addrs_above_1sat"),
+              supply: createSupplyPattern2(this, "addrs_above_1sat_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_above_1sat"),
+            },
           },
           ltAmount: {
-            _100btc: create_0satsPattern(this, "addrs_under_100btc"),
-            _100kBtc: create_0satsPattern(this, "addrs_under_100k_btc"),
-            _100kSats: create_0satsPattern(this, "addrs_under_100k_sats"),
-            _100sats: create_0satsPattern(this, "addrs_under_100sats"),
-            _10btc: create_0satsPattern(this, "addrs_under_10btc"),
-            _10kBtc: create_0satsPattern(this, "addrs_under_10k_btc"),
-            _10kSats: create_0satsPattern(this, "addrs_under_10k_sats"),
-            _10mSats: create_0satsPattern(this, "addrs_under_10m_sats"),
-            _10sats: create_0satsPattern(this, "addrs_under_10sats"),
-            _1btc: create_0satsPattern(this, "addrs_under_1btc"),
-            _1kBtc: create_0satsPattern(this, "addrs_under_1k_btc"),
-            _1kSats: create_0satsPattern(this, "addrs_under_1k_sats"),
-            _1mSats: create_0satsPattern(this, "addrs_under_1m_sats"),
+            _100btc: {
+              activity: createActivityPattern2(this, "addrs_under_100btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_100btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_100btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_100btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_100btc"),
+              relative: createRelativePattern(this, "addrs_under_100btc"),
+              supply: createSupplyPattern2(this, "addrs_under_100btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_100btc"),
+            },
+            _100kBtc: {
+              activity: createActivityPattern2(this, "addrs_under_100k_btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_100k_btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_100k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_100k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_100k_btc"),
+              relative: createRelativePattern(this, "addrs_under_100k_btc"),
+              supply: createSupplyPattern2(this, "addrs_under_100k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_100k_btc"),
+            },
+            _100kSats: {
+              activity: createActivityPattern2(this, "addrs_under_100k_sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_100k_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_100k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_100k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_100k_sats"),
+              relative: createRelativePattern(this, "addrs_under_100k_sats"),
+              supply: createSupplyPattern2(
+                this,
+                "addrs_under_100k_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "addrs_under_100k_sats",
+              ),
+            },
+            _100sats: {
+              activity: createActivityPattern2(this, "addrs_under_100sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_100sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_100sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_100sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_100sats"),
+              relative: createRelativePattern(this, "addrs_under_100sats"),
+              supply: createSupplyPattern2(this, "addrs_under_100sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_100sats"),
+            },
+            _10btc: {
+              activity: createActivityPattern2(this, "addrs_under_10btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_10btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_10btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_10btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_10btc"),
+              relative: createRelativePattern(this, "addrs_under_10btc"),
+              supply: createSupplyPattern2(this, "addrs_under_10btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_10btc"),
+            },
+            _10kBtc: {
+              activity: createActivityPattern2(this, "addrs_under_10k_btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_10k_btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_10k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_10k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_10k_btc"),
+              relative: createRelativePattern(this, "addrs_under_10k_btc"),
+              supply: createSupplyPattern2(this, "addrs_under_10k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_10k_btc"),
+            },
+            _10kSats: {
+              activity: createActivityPattern2(this, "addrs_under_10k_sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_10k_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_10k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_10k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_10k_sats"),
+              relative: createRelativePattern(this, "addrs_under_10k_sats"),
+              supply: createSupplyPattern2(this, "addrs_under_10k_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_10k_sats"),
+            },
+            _10mSats: {
+              activity: createActivityPattern2(this, "addrs_under_10m_sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_10m_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_10m_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_10m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_10m_sats"),
+              relative: createRelativePattern(this, "addrs_under_10m_sats"),
+              supply: createSupplyPattern2(this, "addrs_under_10m_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_10m_sats"),
+            },
+            _10sats: {
+              activity: createActivityPattern2(this, "addrs_under_10sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_10sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_10sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_10sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_10sats"),
+              relative: createRelativePattern(this, "addrs_under_10sats"),
+              supply: createSupplyPattern2(this, "addrs_under_10sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_10sats"),
+            },
+            _1btc: {
+              activity: createActivityPattern2(this, "addrs_under_1btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_1btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_1btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_1btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_1btc"),
+              relative: createRelativePattern(this, "addrs_under_1btc"),
+              supply: createSupplyPattern2(this, "addrs_under_1btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_1btc"),
+            },
+            _1kBtc: {
+              activity: createActivityPattern2(this, "addrs_under_1k_btc"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_1k_btc_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_1k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_1k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_1k_btc"),
+              relative: createRelativePattern(this, "addrs_under_1k_btc"),
+              supply: createSupplyPattern2(this, "addrs_under_1k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_1k_btc"),
+            },
+            _1kSats: {
+              activity: createActivityPattern2(this, "addrs_under_1k_sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_1k_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_1k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_1k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_1k_sats"),
+              relative: createRelativePattern(this, "addrs_under_1k_sats"),
+              supply: createSupplyPattern2(this, "addrs_under_1k_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_1k_sats"),
+            },
+            _1mSats: {
+              activity: createActivityPattern2(this, "addrs_under_1m_sats"),
+              addrCount: createMetricPattern1(
+                this,
+                "addrs_under_1m_sats_addr_count",
+              ),
+              costBasis: createCostBasisPattern(this, "addrs_under_1m_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "addrs_under_1m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "addrs_under_1m_sats"),
+              relative: createRelativePattern(this, "addrs_under_1m_sats"),
+              supply: createSupplyPattern2(this, "addrs_under_1m_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "addrs_under_1m_sats"),
+            },
           },
         },
         addressesData: {
@@ -6845,84 +10923,822 @@ class BrkClient extends BrkClientBase {
         loadedaddressindex: createMetricPattern31(this, "loadedaddressindex"),
         utxoCohorts: {
           ageRange: {
-            _10yTo12y: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_10y_up_to_12y_old",
-            ),
-            _12yTo15y: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_12y_up_to_15y_old",
-            ),
-            _1dTo1w: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_1d_up_to_1w_old",
-            ),
-            _1hTo1d: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_1h_up_to_1d_old",
-            ),
-            _1mTo2m: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_1m_up_to_2m_old",
-            ),
-            _1wTo1m: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_1w_up_to_1m_old",
-            ),
-            _1yTo2y: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_1y_up_to_2y_old",
-            ),
-            _2mTo3m: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_2m_up_to_3m_old",
-            ),
-            _2yTo3y: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_2y_up_to_3y_old",
-            ),
-            _3mTo4m: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_3m_up_to_4m_old",
-            ),
-            _3yTo4y: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_3y_up_to_4y_old",
-            ),
-            _4mTo5m: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_4m_up_to_5m_old",
-            ),
-            _4yTo5y: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_4y_up_to_5y_old",
-            ),
-            _5mTo6m: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_5m_up_to_6m_old",
-            ),
-            _5yTo6y: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_5y_up_to_6y_old",
-            ),
-            _6mTo1y: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_6m_up_to_1y_old",
-            ),
-            _6yTo7y: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_6y_up_to_7y_old",
-            ),
-            _7yTo8y: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_7y_up_to_8y_old",
-            ),
-            _8yTo10y: create_10yTo12yPattern(
-              this,
-              "utxos_at_least_8y_up_to_10y_old",
-            ),
-            from15y: create_10yTo12yPattern(this, "utxos_at_least_15y_old"),
-            upTo1h: create_10yTo12yPattern(this, "utxos_up_to_1h_old"),
+            _10yTo12y: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_10y_up_to_12y_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_10y_up_to_12y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_10y_up_to_12y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_10y_up_to_12y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_10y_up_to_12y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_10y_up_to_12y_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_10y_up_to_12y_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_10y_up_to_12y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_10y_up_to_12y_old",
+              ),
+            },
+            _12yTo15y: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_12y_up_to_15y_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_12y_up_to_15y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_12y_up_to_15y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_12y_up_to_15y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_12y_up_to_15y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_12y_up_to_15y_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_12y_up_to_15y_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_12y_up_to_15y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_12y_up_to_15y_old",
+              ),
+            },
+            _1dTo1w: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_1d_up_to_1w_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_1d_up_to_1w_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_1d_up_to_1w_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_1d_up_to_1w_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_1d_up_to_1w_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_1d_up_to_1w_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_1d_up_to_1w_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_1d_up_to_1w_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_1d_up_to_1w_old",
+              ),
+            },
+            _1hTo1d: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_1h_up_to_1d_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_1h_up_to_1d_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_1h_up_to_1d_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_1h_up_to_1d_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_1h_up_to_1d_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_1h_up_to_1d_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_1h_up_to_1d_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_1h_up_to_1d_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_1h_up_to_1d_old",
+              ),
+            },
+            _1mTo2m: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_1m_up_to_2m_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_1m_up_to_2m_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_1m_up_to_2m_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_1m_up_to_2m_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_1m_up_to_2m_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_1m_up_to_2m_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_1m_up_to_2m_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_1m_up_to_2m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_1m_up_to_2m_old",
+              ),
+            },
+            _1wTo1m: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_1w_up_to_1m_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_1w_up_to_1m_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_1w_up_to_1m_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_1w_up_to_1m_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_1w_up_to_1m_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_1w_up_to_1m_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_1w_up_to_1m_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_1w_up_to_1m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_1w_up_to_1m_old",
+              ),
+            },
+            _1yTo2y: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_1y_up_to_2y_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_1y_up_to_2y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_1y_up_to_2y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_1y_up_to_2y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_1y_up_to_2y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_1y_up_to_2y_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_1y_up_to_2y_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_1y_up_to_2y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_1y_up_to_2y_old",
+              ),
+            },
+            _2mTo3m: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_2m_up_to_3m_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_2m_up_to_3m_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_2m_up_to_3m_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_2m_up_to_3m_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_2m_up_to_3m_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_2m_up_to_3m_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_2m_up_to_3m_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_2m_up_to_3m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_2m_up_to_3m_old",
+              ),
+            },
+            _2yTo3y: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_2y_up_to_3y_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_2y_up_to_3y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_2y_up_to_3y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_2y_up_to_3y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_2y_up_to_3y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_2y_up_to_3y_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_2y_up_to_3y_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_2y_up_to_3y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_2y_up_to_3y_old",
+              ),
+            },
+            _3mTo4m: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_3m_up_to_4m_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_3m_up_to_4m_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_3m_up_to_4m_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_3m_up_to_4m_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_3m_up_to_4m_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_3m_up_to_4m_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_3m_up_to_4m_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_3m_up_to_4m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_3m_up_to_4m_old",
+              ),
+            },
+            _3yTo4y: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_3y_up_to_4y_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_3y_up_to_4y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_3y_up_to_4y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_3y_up_to_4y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_3y_up_to_4y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_3y_up_to_4y_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_3y_up_to_4y_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_3y_up_to_4y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_3y_up_to_4y_old",
+              ),
+            },
+            _4mTo5m: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_4m_up_to_5m_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_4m_up_to_5m_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_4m_up_to_5m_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_4m_up_to_5m_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_4m_up_to_5m_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_4m_up_to_5m_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_4m_up_to_5m_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_4m_up_to_5m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_4m_up_to_5m_old",
+              ),
+            },
+            _4yTo5y: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_4y_up_to_5y_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_4y_up_to_5y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_4y_up_to_5y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_4y_up_to_5y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_4y_up_to_5y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_4y_up_to_5y_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_4y_up_to_5y_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_4y_up_to_5y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_4y_up_to_5y_old",
+              ),
+            },
+            _5mTo6m: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_5m_up_to_6m_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_5m_up_to_6m_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_5m_up_to_6m_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_5m_up_to_6m_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_5m_up_to_6m_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_5m_up_to_6m_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_5m_up_to_6m_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_5m_up_to_6m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_5m_up_to_6m_old",
+              ),
+            },
+            _5yTo6y: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_5y_up_to_6y_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_5y_up_to_6y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_5y_up_to_6y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_5y_up_to_6y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_5y_up_to_6y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_5y_up_to_6y_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_5y_up_to_6y_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_5y_up_to_6y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_5y_up_to_6y_old",
+              ),
+            },
+            _6mTo1y: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_6m_up_to_1y_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_6m_up_to_1y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_6m_up_to_1y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_6m_up_to_1y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_6m_up_to_1y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_6m_up_to_1y_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_6m_up_to_1y_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_6m_up_to_1y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_6m_up_to_1y_old",
+              ),
+            },
+            _6yTo7y: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_6y_up_to_7y_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_6y_up_to_7y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_6y_up_to_7y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_6y_up_to_7y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_6y_up_to_7y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_6y_up_to_7y_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_6y_up_to_7y_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_6y_up_to_7y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_6y_up_to_7y_old",
+              ),
+            },
+            _7yTo8y: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_7y_up_to_8y_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_7y_up_to_8y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_7y_up_to_8y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_7y_up_to_8y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_7y_up_to_8y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_7y_up_to_8y_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_7y_up_to_8y_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_7y_up_to_8y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_7y_up_to_8y_old",
+              ),
+            },
+            _8yTo10y: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_at_least_8y_up_to_10y_old",
+              ),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_8y_up_to_10y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_8y_up_to_10y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_8y_up_to_10y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_8y_up_to_10y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(
+                this,
+                "utxos_at_least_8y_up_to_10y_old",
+              ),
+              relative: createRelativePattern2(
+                this,
+                "utxos_at_least_8y_up_to_10y_old",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_8y_up_to_10y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_8y_up_to_10y_old",
+              ),
+            },
+            from15y: {
+              activity: createActivityPattern2(this, "utxos_at_least_15y_old"),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_at_least_15y_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_at_least_15y_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_at_least_15y_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_15y_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(this, "utxos_at_least_15y_old"),
+              relative: createRelativePattern2(this, "utxos_at_least_15y_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_15y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_15y_old",
+              ),
+            },
+            upTo1h: {
+              activity: createActivityPattern2(this, "utxos_up_to_1h_old"),
+              costBasis: {
+                max: createMetricPattern1(
+                  this,
+                  "utxos_up_to_1h_old_max_cost_basis",
+                ),
+                min: createMetricPattern1(
+                  this,
+                  "utxos_up_to_1h_old_min_cost_basis",
+                ),
+                percentiles: createPercentilesPattern(
+                  this,
+                  "utxos_up_to_1h_old_cost_basis",
+                ),
+              },
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_1h_old_utxo_count",
+              ),
+              realized: createRealizedPattern2(this, "utxos_up_to_1h_old"),
+              relative: createRelativePattern2(this, "utxos_up_to_1h_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_1h_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_1h_old"),
+            },
           },
           all: {
             activity: {
@@ -6950,7 +11766,164 @@ class BrkClient extends BrkClientBase {
               percentiles: createPercentilesPattern(this, "cost_basis"),
             },
             outputs: createOutputsPattern(this, "utxo_count"),
-            realized: createRealizedPattern3(this, ""),
+            realized: {
+              adjustedSopr: createMetricPattern6(this, "adjusted_sopr"),
+              adjustedSopr30dEma: createMetricPattern6(
+                this,
+                "adjusted_sopr_30d_ema",
+              ),
+              adjustedSopr7dEma: createMetricPattern6(
+                this,
+                "adjusted_sopr_7d_ema",
+              ),
+              adjustedValueCreated: createMetricPattern1(
+                this,
+                "adjusted_value_created",
+              ),
+              adjustedValueDestroyed: createMetricPattern1(
+                this,
+                "adjusted_value_destroyed",
+              ),
+              mvrv: createMetricPattern4(this, "mvrv"),
+              negRealizedLoss: createBitcoinPattern2(this, "neg_realized_loss"),
+              netRealizedPnl: createBlockCountPattern(this, "net_realized_pnl"),
+              netRealizedPnlCumulative30dDelta: createMetricPattern4(
+                this,
+                "net_realized_pnl_cumulative_30d_delta",
+              ),
+              netRealizedPnlCumulative30dDeltaRelToMarketCap:
+                createMetricPattern4(
+                  this,
+                  "net_realized_pnl_cumulative_30d_delta_rel_to_market_cap",
+                ),
+              netRealizedPnlCumulative30dDeltaRelToRealizedCap:
+                createMetricPattern4(
+                  this,
+                  "net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap",
+                ),
+              netRealizedPnlRelToRealizedCap: createBlockCountPattern(
+                this,
+                "net_realized_pnl_rel_to_realized_cap",
+              ),
+              realizedCap: createMetricPattern1(this, "realized_cap"),
+              realizedCap30dDelta: createMetricPattern4(
+                this,
+                "realized_cap_30d_delta",
+              ),
+              realizedCapRelToOwnMarketCap: createMetricPattern1(
+                this,
+                "realized_cap_rel_to_own_market_cap",
+              ),
+              realizedLoss: createBlockCountPattern(this, "realized_loss"),
+              realizedLossRelToRealizedCap: createBlockCountPattern(
+                this,
+                "realized_loss_rel_to_realized_cap",
+              ),
+              realizedPrice: createMetricPattern1(this, "realized_price"),
+              realizedPriceExtra: {
+                ratio: createMetricPattern4(this, "realized_price_ratio"),
+                ratio1mSma: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_1m_sma",
+                ),
+                ratio1wSma: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_1w_sma",
+                ),
+                ratio1ySd: createRatio1ySdPattern(
+                  this,
+                  "realized_price_ratio_1y",
+                ),
+                ratio2ySd: createRatio1ySdPattern(
+                  this,
+                  "realized_price_ratio_2y",
+                ),
+                ratio4ySd: createRatio1ySdPattern(
+                  this,
+                  "realized_price_ratio_4y",
+                ),
+                ratioPct1: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct1",
+                ),
+                ratioPct1Usd: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct1_usd",
+                ),
+                ratioPct2: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct2",
+                ),
+                ratioPct2Usd: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct2_usd",
+                ),
+                ratioPct5: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct5",
+                ),
+                ratioPct5Usd: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct5_usd",
+                ),
+                ratioPct95: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct95",
+                ),
+                ratioPct95Usd: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct95_usd",
+                ),
+                ratioPct98: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct98",
+                ),
+                ratioPct98Usd: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct98_usd",
+                ),
+                ratioPct99: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct99",
+                ),
+                ratioPct99Usd: createMetricPattern4(
+                  this,
+                  "realized_price_ratio_pct99_usd",
+                ),
+                ratioSd: createRatio1ySdPattern(this, "realized_price_ratio"),
+              },
+              realizedProfit: createBlockCountPattern(this, "realized_profit"),
+              realizedProfitRelToRealizedCap: createBlockCountPattern(
+                this,
+                "realized_profit_rel_to_realized_cap",
+              ),
+              realizedProfitToLossRatio: createMetricPattern6(
+                this,
+                "realized_profit_to_loss_ratio",
+              ),
+              realizedValue: createMetricPattern1(this, "realized_value"),
+              sellSideRiskRatio: createMetricPattern6(
+                this,
+                "sell_side_risk_ratio",
+              ),
+              sellSideRiskRatio30dEma: createMetricPattern6(
+                this,
+                "sell_side_risk_ratio_30d_ema",
+              ),
+              sellSideRiskRatio7dEma: createMetricPattern6(
+                this,
+                "sell_side_risk_ratio_7d_ema",
+              ),
+              sopr: createMetricPattern6(this, "sopr"),
+              sopr30dEma: createMetricPattern6(this, "sopr_30d_ema"),
+              sopr7dEma: createMetricPattern6(this, "sopr_7d_ema"),
+              totalRealizedPnl: createMetricPattern1(
+                this,
+                "total_realized_pnl",
+              ),
+              valueCreated: createMetricPattern1(this, "value_created"),
+              valueDestroyed: createMetricPattern1(this, "value_destroyed"),
+            },
             relative: {
               negUnrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(
                 this,
@@ -6978,145 +11951,1377 @@ class BrkClient extends BrkClientBase {
               ),
             },
             supply: createSupplyPattern2(this, "supply"),
-            unrealized: createUnrealizedPattern(this, ""),
+            unrealized: {
+              negUnrealizedLoss: createMetricPattern1(
+                this,
+                "neg_unrealized_loss",
+              ),
+              netUnrealizedPnl: createMetricPattern1(
+                this,
+                "net_unrealized_pnl",
+              ),
+              supplyInLoss: createActiveSupplyPattern(this, "supply_in_loss"),
+              supplyInProfit: createActiveSupplyPattern(
+                this,
+                "supply_in_profit",
+              ),
+              totalUnrealizedPnl: createMetricPattern1(
+                this,
+                "total_unrealized_pnl",
+              ),
+              unrealizedLoss: createMetricPattern1(this, "unrealized_loss"),
+              unrealizedProfit: createMetricPattern1(this, "unrealized_profit"),
+            },
           },
           amountRange: {
-            _0sats: create_0satsPattern2(this, "utxos_with_0sats"),
-            _100btcTo1kBtc: create_0satsPattern2(
-              this,
-              "utxos_above_100btc_under_1k_btc",
-            ),
-            _100kBtcOrMore: create_0satsPattern2(this, "utxos_above_100k_btc"),
-            _100kSatsTo1mSats: create_0satsPattern2(
-              this,
-              "utxos_above_100k_sats_under_1m_sats",
-            ),
-            _100satsTo1kSats: create_0satsPattern2(
-              this,
-              "utxos_above_100sats_under_1k_sats",
-            ),
-            _10btcTo100btc: create_0satsPattern2(
-              this,
-              "utxos_above_10btc_under_100btc",
-            ),
-            _10kBtcTo100kBtc: create_0satsPattern2(
-              this,
-              "utxos_above_10k_btc_under_100k_btc",
-            ),
-            _10kSatsTo100kSats: create_0satsPattern2(
-              this,
-              "utxos_above_10k_sats_under_100k_sats",
-            ),
-            _10mSatsTo1btc: create_0satsPattern2(
-              this,
-              "utxos_above_10m_sats_under_1btc",
-            ),
-            _10satsTo100sats: create_0satsPattern2(
-              this,
-              "utxos_above_10sats_under_100sats",
-            ),
-            _1btcTo10btc: create_0satsPattern2(
-              this,
-              "utxos_above_1btc_under_10btc",
-            ),
-            _1kBtcTo10kBtc: create_0satsPattern2(
-              this,
-              "utxos_above_1k_btc_under_10k_btc",
-            ),
-            _1kSatsTo10kSats: create_0satsPattern2(
-              this,
-              "utxos_above_1k_sats_under_10k_sats",
-            ),
-            _1mSatsTo10mSats: create_0satsPattern2(
-              this,
-              "utxos_above_1m_sats_under_10m_sats",
-            ),
-            _1satTo10sats: create_0satsPattern2(
-              this,
-              "utxos_above_1sat_under_10sats",
-            ),
+            _0sats: {
+              activity: createActivityPattern2(this, "utxos_with_0sats"),
+              costBasis: createCostBasisPattern(this, "utxos_with_0sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_with_0sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_with_0sats"),
+              relative: createRelativePattern4(
+                this,
+                "utxos_with_0sats_supply_in",
+              ),
+              supply: createSupplyPattern2(this, "utxos_with_0sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_with_0sats"),
+            },
+            _100btcTo1kBtc: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_100btc_under_1k_btc",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_100btc_under_1k_btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_100btc_under_1k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_100btc_under_1k_btc",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_100btc_under_1k_btc_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_100btc_under_1k_btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_100btc_under_1k_btc",
+              ),
+            },
+            _100kBtcOrMore: {
+              activity: createActivityPattern2(this, "utxos_above_100k_btc"),
+              costBasis: createCostBasisPattern(this, "utxos_above_100k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_100k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_100k_btc"),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_100k_btc_supply_in",
+              ),
+              supply: createSupplyPattern2(this, "utxos_above_100k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_100k_btc"),
+            },
+            _100kSatsTo1mSats: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_100k_sats_under_1m_sats",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_100k_sats_under_1m_sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_100k_sats_under_1m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_100k_sats_under_1m_sats",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_100k_sats_under_1m_sats_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_100k_sats_under_1m_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_100k_sats_under_1m_sats",
+              ),
+            },
+            _100satsTo1kSats: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_100sats_under_1k_sats",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_100sats_under_1k_sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_100sats_under_1k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_100sats_under_1k_sats",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_100sats_under_1k_sats_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_100sats_under_1k_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_100sats_under_1k_sats",
+              ),
+            },
+            _10btcTo100btc: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_10btc_under_100btc",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_10btc_under_100btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_10btc_under_100btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_10btc_under_100btc",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_10btc_under_100btc_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_10btc_under_100btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_10btc_under_100btc",
+              ),
+            },
+            _10kBtcTo100kBtc: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_10k_btc_under_100k_btc",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_10k_btc_under_100k_btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_10k_btc_under_100k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_10k_btc_under_100k_btc",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_10k_btc_under_100k_btc_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_10k_btc_under_100k_btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_10k_btc_under_100k_btc",
+              ),
+            },
+            _10kSatsTo100kSats: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_10k_sats_under_100k_sats",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_10k_sats_under_100k_sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_10k_sats_under_100k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_10k_sats_under_100k_sats",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_10k_sats_under_100k_sats_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_10k_sats_under_100k_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_10k_sats_under_100k_sats",
+              ),
+            },
+            _10mSatsTo1btc: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_10m_sats_under_1btc",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_10m_sats_under_1btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_10m_sats_under_1btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_10m_sats_under_1btc",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_10m_sats_under_1btc_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_10m_sats_under_1btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_10m_sats_under_1btc",
+              ),
+            },
+            _10satsTo100sats: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_10sats_under_100sats",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_10sats_under_100sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_10sats_under_100sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_10sats_under_100sats",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_10sats_under_100sats_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_10sats_under_100sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_10sats_under_100sats",
+              ),
+            },
+            _1btcTo10btc: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_1btc_under_10btc",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_1btc_under_10btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_1btc_under_10btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_1btc_under_10btc",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_1btc_under_10btc_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_1btc_under_10btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_1btc_under_10btc",
+              ),
+            },
+            _1kBtcTo10kBtc: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_1k_btc_under_10k_btc",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_1k_btc_under_10k_btc",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_1k_btc_under_10k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_1k_btc_under_10k_btc",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_1k_btc_under_10k_btc_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_1k_btc_under_10k_btc_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_1k_btc_under_10k_btc",
+              ),
+            },
+            _1kSatsTo10kSats: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_1k_sats_under_10k_sats",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_1k_sats_under_10k_sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_1k_sats_under_10k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_1k_sats_under_10k_sats",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_1k_sats_under_10k_sats_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_1k_sats_under_10k_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_1k_sats_under_10k_sats",
+              ),
+            },
+            _1mSatsTo10mSats: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_1m_sats_under_10m_sats",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_1m_sats_under_10m_sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_1m_sats_under_10m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_1m_sats_under_10m_sats",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_1m_sats_under_10m_sats_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_1m_sats_under_10m_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_1m_sats_under_10m_sats",
+              ),
+            },
+            _1satTo10sats: {
+              activity: createActivityPattern2(
+                this,
+                "utxos_above_1sat_under_10sats",
+              ),
+              costBasis: createCostBasisPattern(
+                this,
+                "utxos_above_1sat_under_10sats",
+              ),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_1sat_under_10sats_utxo_count",
+              ),
+              realized: createRealizedPattern(
+                this,
+                "utxos_above_1sat_under_10sats",
+              ),
+              relative: createRelativePattern4(
+                this,
+                "utxos_above_1sat_under_10sats_supply_in",
+              ),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_1sat_under_10sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_1sat_under_10sats",
+              ),
+            },
           },
           epoch: {
-            _0: create_0satsPattern2(this, "epoch_0"),
-            _1: create_0satsPattern2(this, "epoch_1"),
-            _2: create_0satsPattern2(this, "epoch_2"),
-            _3: create_0satsPattern2(this, "epoch_3"),
-            _4: create_0satsPattern2(this, "epoch_4"),
+            _0: {
+              activity: createActivityPattern2(this, "epoch_0"),
+              costBasis: createCostBasisPattern(this, "epoch_0"),
+              outputs: createOutputsPattern(this, "epoch_0_utxo_count"),
+              realized: createRealizedPattern(this, "epoch_0"),
+              relative: createRelativePattern4(this, "epoch_0_supply_in"),
+              supply: createSupplyPattern2(this, "epoch_0_supply"),
+              unrealized: createUnrealizedPattern(this, "epoch_0"),
+            },
+            _1: {
+              activity: createActivityPattern2(this, "epoch_1"),
+              costBasis: createCostBasisPattern(this, "epoch_1"),
+              outputs: createOutputsPattern(this, "epoch_1_utxo_count"),
+              realized: createRealizedPattern(this, "epoch_1"),
+              relative: createRelativePattern4(this, "epoch_1_supply_in"),
+              supply: createSupplyPattern2(this, "epoch_1_supply"),
+              unrealized: createUnrealizedPattern(this, "epoch_1"),
+            },
+            _2: {
+              activity: createActivityPattern2(this, "epoch_2"),
+              costBasis: createCostBasisPattern(this, "epoch_2"),
+              outputs: createOutputsPattern(this, "epoch_2_utxo_count"),
+              realized: createRealizedPattern(this, "epoch_2"),
+              relative: createRelativePattern4(this, "epoch_2_supply_in"),
+              supply: createSupplyPattern2(this, "epoch_2_supply"),
+              unrealized: createUnrealizedPattern(this, "epoch_2"),
+            },
+            _3: {
+              activity: createActivityPattern2(this, "epoch_3"),
+              costBasis: createCostBasisPattern(this, "epoch_3"),
+              outputs: createOutputsPattern(this, "epoch_3_utxo_count"),
+              realized: createRealizedPattern(this, "epoch_3"),
+              relative: createRelativePattern4(this, "epoch_3_supply_in"),
+              supply: createSupplyPattern2(this, "epoch_3_supply"),
+              unrealized: createUnrealizedPattern(this, "epoch_3"),
+            },
+            _4: {
+              activity: createActivityPattern2(this, "epoch_4"),
+              costBasis: createCostBasisPattern(this, "epoch_4"),
+              outputs: createOutputsPattern(this, "epoch_4_utxo_count"),
+              realized: createRealizedPattern(this, "epoch_4"),
+              relative: createRelativePattern4(this, "epoch_4_supply_in"),
+              supply: createSupplyPattern2(this, "epoch_4_supply"),
+              unrealized: createUnrealizedPattern(this, "epoch_4"),
+            },
           },
           geAmount: {
-            _100btc: create_100btcPattern(this, "utxos_above_100btc"),
-            _100kSats: create_100btcPattern(this, "utxos_above_100k_sats"),
-            _100sats: create_100btcPattern(this, "utxos_above_100sats"),
-            _10btc: create_100btcPattern(this, "utxos_above_10btc"),
-            _10kBtc: create_100btcPattern(this, "utxos_above_10k_btc"),
-            _10kSats: create_100btcPattern(this, "utxos_above_10k_sats"),
-            _10mSats: create_100btcPattern(this, "utxos_above_10m_sats"),
-            _10sats: create_100btcPattern(this, "utxos_above_10sats"),
-            _1btc: create_100btcPattern(this, "utxos_above_1btc"),
-            _1kBtc: create_100btcPattern(this, "utxos_above_1k_btc"),
-            _1kSats: create_100btcPattern(this, "utxos_above_1k_sats"),
-            _1mSats: create_100btcPattern(this, "utxos_above_1m_sats"),
-            _1sat: create_100btcPattern(this, "utxos_above_1sat"),
+            _100btc: {
+              activity: createActivityPattern2(this, "utxos_above_100btc"),
+              costBasis: createCostBasisPattern(this, "utxos_above_100btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_100btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_100btc"),
+              relative: createRelativePattern(this, "utxos_above_100btc"),
+              supply: createSupplyPattern2(this, "utxos_above_100btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_100btc"),
+            },
+            _100kSats: {
+              activity: createActivityPattern2(this, "utxos_above_100k_sats"),
+              costBasis: createCostBasisPattern(this, "utxos_above_100k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_100k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_100k_sats"),
+              relative: createRelativePattern(this, "utxos_above_100k_sats"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_above_100k_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_above_100k_sats",
+              ),
+            },
+            _100sats: {
+              activity: createActivityPattern2(this, "utxos_above_100sats"),
+              costBasis: createCostBasisPattern(this, "utxos_above_100sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_100sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_100sats"),
+              relative: createRelativePattern(this, "utxos_above_100sats"),
+              supply: createSupplyPattern2(this, "utxos_above_100sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_100sats"),
+            },
+            _10btc: {
+              activity: createActivityPattern2(this, "utxos_above_10btc"),
+              costBasis: createCostBasisPattern(this, "utxos_above_10btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_10btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_10btc"),
+              relative: createRelativePattern(this, "utxos_above_10btc"),
+              supply: createSupplyPattern2(this, "utxos_above_10btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_10btc"),
+            },
+            _10kBtc: {
+              activity: createActivityPattern2(this, "utxos_above_10k_btc"),
+              costBasis: createCostBasisPattern(this, "utxos_above_10k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_10k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_10k_btc"),
+              relative: createRelativePattern(this, "utxos_above_10k_btc"),
+              supply: createSupplyPattern2(this, "utxos_above_10k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_10k_btc"),
+            },
+            _10kSats: {
+              activity: createActivityPattern2(this, "utxos_above_10k_sats"),
+              costBasis: createCostBasisPattern(this, "utxos_above_10k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_10k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_10k_sats"),
+              relative: createRelativePattern(this, "utxos_above_10k_sats"),
+              supply: createSupplyPattern2(this, "utxos_above_10k_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_10k_sats"),
+            },
+            _10mSats: {
+              activity: createActivityPattern2(this, "utxos_above_10m_sats"),
+              costBasis: createCostBasisPattern(this, "utxos_above_10m_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_10m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_10m_sats"),
+              relative: createRelativePattern(this, "utxos_above_10m_sats"),
+              supply: createSupplyPattern2(this, "utxos_above_10m_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_10m_sats"),
+            },
+            _10sats: {
+              activity: createActivityPattern2(this, "utxos_above_10sats"),
+              costBasis: createCostBasisPattern(this, "utxos_above_10sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_10sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_10sats"),
+              relative: createRelativePattern(this, "utxos_above_10sats"),
+              supply: createSupplyPattern2(this, "utxos_above_10sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_10sats"),
+            },
+            _1btc: {
+              activity: createActivityPattern2(this, "utxos_above_1btc"),
+              costBasis: createCostBasisPattern(this, "utxos_above_1btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_1btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_1btc"),
+              relative: createRelativePattern(this, "utxos_above_1btc"),
+              supply: createSupplyPattern2(this, "utxos_above_1btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_1btc"),
+            },
+            _1kBtc: {
+              activity: createActivityPattern2(this, "utxos_above_1k_btc"),
+              costBasis: createCostBasisPattern(this, "utxos_above_1k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_1k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_1k_btc"),
+              relative: createRelativePattern(this, "utxos_above_1k_btc"),
+              supply: createSupplyPattern2(this, "utxos_above_1k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_1k_btc"),
+            },
+            _1kSats: {
+              activity: createActivityPattern2(this, "utxos_above_1k_sats"),
+              costBasis: createCostBasisPattern(this, "utxos_above_1k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_1k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_1k_sats"),
+              relative: createRelativePattern(this, "utxos_above_1k_sats"),
+              supply: createSupplyPattern2(this, "utxos_above_1k_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_1k_sats"),
+            },
+            _1mSats: {
+              activity: createActivityPattern2(this, "utxos_above_1m_sats"),
+              costBasis: createCostBasisPattern(this, "utxos_above_1m_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_1m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_1m_sats"),
+              relative: createRelativePattern(this, "utxos_above_1m_sats"),
+              supply: createSupplyPattern2(this, "utxos_above_1m_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_1m_sats"),
+            },
+            _1sat: {
+              activity: createActivityPattern2(this, "utxos_above_1sat"),
+              costBasis: createCostBasisPattern(this, "utxos_above_1sat"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_above_1sat_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_above_1sat"),
+              relative: createRelativePattern(this, "utxos_above_1sat"),
+              supply: createSupplyPattern2(this, "utxos_above_1sat_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_above_1sat"),
+            },
           },
           ltAmount: {
-            _100btc: create_100btcPattern(this, "utxos_under_100btc"),
-            _100kBtc: create_100btcPattern(this, "utxos_under_100k_btc"),
-            _100kSats: create_100btcPattern(this, "utxos_under_100k_sats"),
-            _100sats: create_100btcPattern(this, "utxos_under_100sats"),
-            _10btc: create_100btcPattern(this, "utxos_under_10btc"),
-            _10kBtc: create_100btcPattern(this, "utxos_under_10k_btc"),
-            _10kSats: create_100btcPattern(this, "utxos_under_10k_sats"),
-            _10mSats: create_100btcPattern(this, "utxos_under_10m_sats"),
-            _10sats: create_100btcPattern(this, "utxos_under_10sats"),
-            _1btc: create_100btcPattern(this, "utxos_under_1btc"),
-            _1kBtc: create_100btcPattern(this, "utxos_under_1k_btc"),
-            _1kSats: create_100btcPattern(this, "utxos_under_1k_sats"),
-            _1mSats: create_100btcPattern(this, "utxos_under_1m_sats"),
+            _100btc: {
+              activity: createActivityPattern2(this, "utxos_under_100btc"),
+              costBasis: createCostBasisPattern(this, "utxos_under_100btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_100btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_100btc"),
+              relative: createRelativePattern(this, "utxos_under_100btc"),
+              supply: createSupplyPattern2(this, "utxos_under_100btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_100btc"),
+            },
+            _100kBtc: {
+              activity: createActivityPattern2(this, "utxos_under_100k_btc"),
+              costBasis: createCostBasisPattern(this, "utxos_under_100k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_100k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_100k_btc"),
+              relative: createRelativePattern(this, "utxos_under_100k_btc"),
+              supply: createSupplyPattern2(this, "utxos_under_100k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_100k_btc"),
+            },
+            _100kSats: {
+              activity: createActivityPattern2(this, "utxos_under_100k_sats"),
+              costBasis: createCostBasisPattern(this, "utxos_under_100k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_100k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_100k_sats"),
+              relative: createRelativePattern(this, "utxos_under_100k_sats"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_under_100k_sats_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_under_100k_sats",
+              ),
+            },
+            _100sats: {
+              activity: createActivityPattern2(this, "utxos_under_100sats"),
+              costBasis: createCostBasisPattern(this, "utxos_under_100sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_100sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_100sats"),
+              relative: createRelativePattern(this, "utxos_under_100sats"),
+              supply: createSupplyPattern2(this, "utxos_under_100sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_100sats"),
+            },
+            _10btc: {
+              activity: createActivityPattern2(this, "utxos_under_10btc"),
+              costBasis: createCostBasisPattern(this, "utxos_under_10btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_10btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_10btc"),
+              relative: createRelativePattern(this, "utxos_under_10btc"),
+              supply: createSupplyPattern2(this, "utxos_under_10btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_10btc"),
+            },
+            _10kBtc: {
+              activity: createActivityPattern2(this, "utxos_under_10k_btc"),
+              costBasis: createCostBasisPattern(this, "utxos_under_10k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_10k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_10k_btc"),
+              relative: createRelativePattern(this, "utxos_under_10k_btc"),
+              supply: createSupplyPattern2(this, "utxos_under_10k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_10k_btc"),
+            },
+            _10kSats: {
+              activity: createActivityPattern2(this, "utxos_under_10k_sats"),
+              costBasis: createCostBasisPattern(this, "utxos_under_10k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_10k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_10k_sats"),
+              relative: createRelativePattern(this, "utxos_under_10k_sats"),
+              supply: createSupplyPattern2(this, "utxos_under_10k_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_10k_sats"),
+            },
+            _10mSats: {
+              activity: createActivityPattern2(this, "utxos_under_10m_sats"),
+              costBasis: createCostBasisPattern(this, "utxos_under_10m_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_10m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_10m_sats"),
+              relative: createRelativePattern(this, "utxos_under_10m_sats"),
+              supply: createSupplyPattern2(this, "utxos_under_10m_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_10m_sats"),
+            },
+            _10sats: {
+              activity: createActivityPattern2(this, "utxos_under_10sats"),
+              costBasis: createCostBasisPattern(this, "utxos_under_10sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_10sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_10sats"),
+              relative: createRelativePattern(this, "utxos_under_10sats"),
+              supply: createSupplyPattern2(this, "utxos_under_10sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_10sats"),
+            },
+            _1btc: {
+              activity: createActivityPattern2(this, "utxos_under_1btc"),
+              costBasis: createCostBasisPattern(this, "utxos_under_1btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_1btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_1btc"),
+              relative: createRelativePattern(this, "utxos_under_1btc"),
+              supply: createSupplyPattern2(this, "utxos_under_1btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_1btc"),
+            },
+            _1kBtc: {
+              activity: createActivityPattern2(this, "utxos_under_1k_btc"),
+              costBasis: createCostBasisPattern(this, "utxos_under_1k_btc"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_1k_btc_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_1k_btc"),
+              relative: createRelativePattern(this, "utxos_under_1k_btc"),
+              supply: createSupplyPattern2(this, "utxos_under_1k_btc_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_1k_btc"),
+            },
+            _1kSats: {
+              activity: createActivityPattern2(this, "utxos_under_1k_sats"),
+              costBasis: createCostBasisPattern(this, "utxos_under_1k_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_1k_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_1k_sats"),
+              relative: createRelativePattern(this, "utxos_under_1k_sats"),
+              supply: createSupplyPattern2(this, "utxos_under_1k_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_1k_sats"),
+            },
+            _1mSats: {
+              activity: createActivityPattern2(this, "utxos_under_1m_sats"),
+              costBasis: createCostBasisPattern(this, "utxos_under_1m_sats"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_under_1m_sats_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_under_1m_sats"),
+              relative: createRelativePattern(this, "utxos_under_1m_sats"),
+              supply: createSupplyPattern2(this, "utxos_under_1m_sats_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_under_1m_sats"),
+            },
           },
           maxAge: {
-            _10y: create_10yPattern(this, "utxos_up_to_10y_old"),
-            _12y: create_10yPattern(this, "utxos_up_to_12y_old"),
-            _15y: create_10yPattern(this, "utxos_up_to_15y_old"),
-            _1m: create_10yPattern(this, "utxos_up_to_1m_old"),
-            _1w: create_10yPattern(this, "utxos_up_to_1w_old"),
-            _1y: create_10yPattern(this, "utxos_up_to_1y_old"),
-            _2m: create_10yPattern(this, "utxos_up_to_2m_old"),
-            _2y: create_10yPattern(this, "utxos_up_to_2y_old"),
-            _3m: create_10yPattern(this, "utxos_up_to_3m_old"),
-            _3y: create_10yPattern(this, "utxos_up_to_3y_old"),
-            _4m: create_10yPattern(this, "utxos_up_to_4m_old"),
-            _4y: create_10yPattern(this, "utxos_up_to_4y_old"),
-            _5m: create_10yPattern(this, "utxos_up_to_5m_old"),
-            _5y: create_10yPattern(this, "utxos_up_to_5y_old"),
-            _6m: create_10yPattern(this, "utxos_up_to_6m_old"),
-            _6y: create_10yPattern(this, "utxos_up_to_6y_old"),
-            _7y: create_10yPattern(this, "utxos_up_to_7y_old"),
-            _8y: create_10yPattern(this, "utxos_up_to_8y_old"),
+            _10y: {
+              activity: createActivityPattern2(this, "utxos_up_to_10y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_10y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_10y_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_10y_old"),
+              relative: createRelativePattern(this, "utxos_up_to_10y_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_10y_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_10y_old"),
+            },
+            _12y: {
+              activity: createActivityPattern2(this, "utxos_up_to_12y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_12y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_12y_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_12y_old"),
+              relative: createRelativePattern(this, "utxos_up_to_12y_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_12y_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_12y_old"),
+            },
+            _15y: {
+              activity: createActivityPattern2(this, "utxos_up_to_15y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_15y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_15y_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_15y_old"),
+              relative: createRelativePattern(this, "utxos_up_to_15y_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_15y_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_15y_old"),
+            },
+            _1m: {
+              activity: createActivityPattern2(this, "utxos_up_to_1m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_1m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_1m_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_1m_old"),
+              relative: createRelativePattern(this, "utxos_up_to_1m_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_1m_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_1m_old"),
+            },
+            _1w: {
+              activity: createActivityPattern2(this, "utxos_up_to_1w_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_1w_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_1w_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_1w_old"),
+              relative: createRelativePattern(this, "utxos_up_to_1w_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_1w_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_1w_old"),
+            },
+            _1y: {
+              activity: createActivityPattern2(this, "utxos_up_to_1y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_1y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_1y_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_1y_old"),
+              relative: createRelativePattern(this, "utxos_up_to_1y_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_1y_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_1y_old"),
+            },
+            _2m: {
+              activity: createActivityPattern2(this, "utxos_up_to_2m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_2m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_2m_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_2m_old"),
+              relative: createRelativePattern(this, "utxos_up_to_2m_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_2m_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_2m_old"),
+            },
+            _2y: {
+              activity: createActivityPattern2(this, "utxos_up_to_2y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_2y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_2y_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_2y_old"),
+              relative: createRelativePattern(this, "utxos_up_to_2y_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_2y_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_2y_old"),
+            },
+            _3m: {
+              activity: createActivityPattern2(this, "utxos_up_to_3m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_3m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_3m_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_3m_old"),
+              relative: createRelativePattern(this, "utxos_up_to_3m_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_3m_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_3m_old"),
+            },
+            _3y: {
+              activity: createActivityPattern2(this, "utxos_up_to_3y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_3y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_3y_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_3y_old"),
+              relative: createRelativePattern(this, "utxos_up_to_3y_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_3y_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_3y_old"),
+            },
+            _4m: {
+              activity: createActivityPattern2(this, "utxos_up_to_4m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_4m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_4m_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_4m_old"),
+              relative: createRelativePattern(this, "utxos_up_to_4m_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_4m_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_4m_old"),
+            },
+            _4y: {
+              activity: createActivityPattern2(this, "utxos_up_to_4y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_4y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_4y_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_4y_old"),
+              relative: createRelativePattern(this, "utxos_up_to_4y_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_4y_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_4y_old"),
+            },
+            _5m: {
+              activity: createActivityPattern2(this, "utxos_up_to_5m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_5m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_5m_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_5m_old"),
+              relative: createRelativePattern(this, "utxos_up_to_5m_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_5m_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_5m_old"),
+            },
+            _5y: {
+              activity: createActivityPattern2(this, "utxos_up_to_5y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_5y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_5y_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_5y_old"),
+              relative: createRelativePattern(this, "utxos_up_to_5y_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_5y_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_5y_old"),
+            },
+            _6m: {
+              activity: createActivityPattern2(this, "utxos_up_to_6m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_6m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_6m_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_6m_old"),
+              relative: createRelativePattern(this, "utxos_up_to_6m_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_6m_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_6m_old"),
+            },
+            _6y: {
+              activity: createActivityPattern2(this, "utxos_up_to_6y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_6y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_6y_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_6y_old"),
+              relative: createRelativePattern(this, "utxos_up_to_6y_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_6y_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_6y_old"),
+            },
+            _7y: {
+              activity: createActivityPattern2(this, "utxos_up_to_7y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_7y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_7y_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_7y_old"),
+              relative: createRelativePattern(this, "utxos_up_to_7y_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_7y_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_7y_old"),
+            },
+            _8y: {
+              activity: createActivityPattern2(this, "utxos_up_to_8y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_up_to_8y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_up_to_8y_old_utxo_count",
+              ),
+              realized: createRealizedPattern4(this, "utxos_up_to_8y_old"),
+              relative: createRelativePattern(this, "utxos_up_to_8y_old"),
+              supply: createSupplyPattern2(this, "utxos_up_to_8y_old_supply"),
+              unrealized: createUnrealizedPattern(this, "utxos_up_to_8y_old"),
+            },
           },
           minAge: {
-            _10y: create_100btcPattern(this, "utxos_at_least_10y_old"),
-            _12y: create_100btcPattern(this, "utxos_at_least_12y_old"),
-            _1d: create_100btcPattern(this, "utxos_at_least_1d_old"),
-            _1m: create_100btcPattern(this, "utxos_at_least_1m_old"),
-            _1w: create_100btcPattern(this, "utxos_at_least_1w_old"),
-            _1y: create_100btcPattern(this, "utxos_at_least_1y_old"),
-            _2m: create_100btcPattern(this, "utxos_at_least_2m_old"),
-            _2y: create_100btcPattern(this, "utxos_at_least_2y_old"),
-            _3m: create_100btcPattern(this, "utxos_at_least_3m_old"),
-            _3y: create_100btcPattern(this, "utxos_at_least_3y_old"),
-            _4m: create_100btcPattern(this, "utxos_at_least_4m_old"),
-            _4y: create_100btcPattern(this, "utxos_at_least_4y_old"),
-            _5m: create_100btcPattern(this, "utxos_at_least_5m_old"),
-            _5y: create_100btcPattern(this, "utxos_at_least_5y_old"),
-            _6m: create_100btcPattern(this, "utxos_at_least_6m_old"),
-            _6y: create_100btcPattern(this, "utxos_at_least_6y_old"),
-            _7y: create_100btcPattern(this, "utxos_at_least_7y_old"),
-            _8y: create_100btcPattern(this, "utxos_at_least_8y_old"),
+            _10y: {
+              activity: createActivityPattern2(this, "utxos_at_least_10y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_10y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_10y_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_10y_old"),
+              relative: createRelativePattern(this, "utxos_at_least_10y_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_10y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_10y_old",
+              ),
+            },
+            _12y: {
+              activity: createActivityPattern2(this, "utxos_at_least_12y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_12y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_12y_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_12y_old"),
+              relative: createRelativePattern(this, "utxos_at_least_12y_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_12y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_12y_old",
+              ),
+            },
+            _1d: {
+              activity: createActivityPattern2(this, "utxos_at_least_1d_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_1d_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_1d_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_1d_old"),
+              relative: createRelativePattern(this, "utxos_at_least_1d_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_1d_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_1d_old",
+              ),
+            },
+            _1m: {
+              activity: createActivityPattern2(this, "utxos_at_least_1m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_1m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_1m_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_1m_old"),
+              relative: createRelativePattern(this, "utxos_at_least_1m_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_1m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_1m_old",
+              ),
+            },
+            _1w: {
+              activity: createActivityPattern2(this, "utxos_at_least_1w_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_1w_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_1w_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_1w_old"),
+              relative: createRelativePattern(this, "utxos_at_least_1w_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_1w_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_1w_old",
+              ),
+            },
+            _1y: {
+              activity: createActivityPattern2(this, "utxos_at_least_1y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_1y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_1y_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_1y_old"),
+              relative: createRelativePattern(this, "utxos_at_least_1y_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_1y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_1y_old",
+              ),
+            },
+            _2m: {
+              activity: createActivityPattern2(this, "utxos_at_least_2m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_2m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_2m_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_2m_old"),
+              relative: createRelativePattern(this, "utxos_at_least_2m_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_2m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_2m_old",
+              ),
+            },
+            _2y: {
+              activity: createActivityPattern2(this, "utxos_at_least_2y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_2y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_2y_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_2y_old"),
+              relative: createRelativePattern(this, "utxos_at_least_2y_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_2y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_2y_old",
+              ),
+            },
+            _3m: {
+              activity: createActivityPattern2(this, "utxos_at_least_3m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_3m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_3m_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_3m_old"),
+              relative: createRelativePattern(this, "utxos_at_least_3m_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_3m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_3m_old",
+              ),
+            },
+            _3y: {
+              activity: createActivityPattern2(this, "utxos_at_least_3y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_3y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_3y_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_3y_old"),
+              relative: createRelativePattern(this, "utxos_at_least_3y_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_3y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_3y_old",
+              ),
+            },
+            _4m: {
+              activity: createActivityPattern2(this, "utxos_at_least_4m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_4m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_4m_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_4m_old"),
+              relative: createRelativePattern(this, "utxos_at_least_4m_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_4m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_4m_old",
+              ),
+            },
+            _4y: {
+              activity: createActivityPattern2(this, "utxos_at_least_4y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_4y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_4y_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_4y_old"),
+              relative: createRelativePattern(this, "utxos_at_least_4y_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_4y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_4y_old",
+              ),
+            },
+            _5m: {
+              activity: createActivityPattern2(this, "utxos_at_least_5m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_5m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_5m_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_5m_old"),
+              relative: createRelativePattern(this, "utxos_at_least_5m_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_5m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_5m_old",
+              ),
+            },
+            _5y: {
+              activity: createActivityPattern2(this, "utxos_at_least_5y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_5y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_5y_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_5y_old"),
+              relative: createRelativePattern(this, "utxos_at_least_5y_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_5y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_5y_old",
+              ),
+            },
+            _6m: {
+              activity: createActivityPattern2(this, "utxos_at_least_6m_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_6m_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_6m_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_6m_old"),
+              relative: createRelativePattern(this, "utxos_at_least_6m_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_6m_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_6m_old",
+              ),
+            },
+            _6y: {
+              activity: createActivityPattern2(this, "utxos_at_least_6y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_6y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_6y_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_6y_old"),
+              relative: createRelativePattern(this, "utxos_at_least_6y_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_6y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_6y_old",
+              ),
+            },
+            _7y: {
+              activity: createActivityPattern2(this, "utxos_at_least_7y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_7y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_7y_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_7y_old"),
+              relative: createRelativePattern(this, "utxos_at_least_7y_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_7y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_7y_old",
+              ),
+            },
+            _8y: {
+              activity: createActivityPattern2(this, "utxos_at_least_8y_old"),
+              costBasis: createCostBasisPattern(this, "utxos_at_least_8y_old"),
+              outputs: createOutputsPattern(
+                this,
+                "utxos_at_least_8y_old_utxo_count",
+              ),
+              realized: createRealizedPattern(this, "utxos_at_least_8y_old"),
+              relative: createRelativePattern(this, "utxos_at_least_8y_old"),
+              supply: createSupplyPattern2(
+                this,
+                "utxos_at_least_8y_old_supply",
+              ),
+              unrealized: createUnrealizedPattern(
+                this,
+                "utxos_at_least_8y_old",
+              ),
+            },
           },
           term: {
             long: {
               activity: createActivityPattern2(this, "lth"),
-              costBasis: createCostBasisPattern2(this, "lth"),
+              costBasis: {
+                max: createMetricPattern1(this, "lth_max_cost_basis"),
+                min: createMetricPattern1(this, "lth_min_cost_basis"),
+                percentiles: createPercentilesPattern(this, "lth_cost_basis"),
+              },
               outputs: createOutputsPattern(this, "lth_utxo_count"),
               realized: createRealizedPattern2(this, "lth"),
               relative: createRelativePattern5(this, "lth"),
@@ -7125,7 +13330,11 @@ class BrkClient extends BrkClientBase {
             },
             short: {
               activity: createActivityPattern2(this, "sth"),
-              costBasis: createCostBasisPattern2(this, "sth"),
+              costBasis: {
+                max: createMetricPattern1(this, "sth_max_cost_basis"),
+                min: createMetricPattern1(this, "sth_min_cost_basis"),
+                percentiles: createPercentilesPattern(this, "sth_cost_basis"),
+              },
               outputs: createOutputsPattern(this, "sth_utxo_count"),
               realized: createRealizedPattern3(this, "sth"),
               relative: createRelativePattern5(this, "sth"),
@@ -7134,37 +13343,272 @@ class BrkClient extends BrkClientBase {
             },
           },
           type: {
-            empty: create_0satsPattern2(this, "empty_outputs"),
-            p2a: create_0satsPattern2(this, "p2a"),
-            p2ms: create_0satsPattern2(this, "p2ms"),
-            p2pk33: create_0satsPattern2(this, "p2pk33"),
-            p2pk65: create_0satsPattern2(this, "p2pk65"),
-            p2pkh: create_0satsPattern2(this, "p2pkh"),
-            p2sh: create_0satsPattern2(this, "p2sh"),
-            p2tr: create_0satsPattern2(this, "p2tr"),
-            p2wpkh: create_0satsPattern2(this, "p2wpkh"),
-            p2wsh: create_0satsPattern2(this, "p2wsh"),
-            unknown: create_0satsPattern2(this, "unknown_outputs"),
+            empty: {
+              activity: createActivityPattern2(this, "empty_outputs"),
+              costBasis: createCostBasisPattern(this, "empty_outputs"),
+              outputs: createOutputsPattern(this, "empty_outputs_utxo_count"),
+              realized: createRealizedPattern(this, "empty_outputs"),
+              relative: createRelativePattern4(this, "empty_outputs_supply_in"),
+              supply: createSupplyPattern2(this, "empty_outputs_supply"),
+              unrealized: createUnrealizedPattern(this, "empty_outputs"),
+            },
+            p2a: {
+              activity: createActivityPattern2(this, "p2a"),
+              costBasis: createCostBasisPattern(this, "p2a"),
+              outputs: createOutputsPattern(this, "p2a_utxo_count"),
+              realized: createRealizedPattern(this, "p2a"),
+              relative: createRelativePattern4(this, "p2a_supply_in"),
+              supply: createSupplyPattern2(this, "p2a_supply"),
+              unrealized: createUnrealizedPattern(this, "p2a"),
+            },
+            p2ms: {
+              activity: createActivityPattern2(this, "p2ms"),
+              costBasis: createCostBasisPattern(this, "p2ms"),
+              outputs: createOutputsPattern(this, "p2ms_utxo_count"),
+              realized: createRealizedPattern(this, "p2ms"),
+              relative: createRelativePattern4(this, "p2ms_supply_in"),
+              supply: createSupplyPattern2(this, "p2ms_supply"),
+              unrealized: createUnrealizedPattern(this, "p2ms"),
+            },
+            p2pk33: {
+              activity: createActivityPattern2(this, "p2pk33"),
+              costBasis: createCostBasisPattern(this, "p2pk33"),
+              outputs: createOutputsPattern(this, "p2pk33_utxo_count"),
+              realized: createRealizedPattern(this, "p2pk33"),
+              relative: createRelativePattern4(this, "p2pk33_supply_in"),
+              supply: createSupplyPattern2(this, "p2pk33_supply"),
+              unrealized: createUnrealizedPattern(this, "p2pk33"),
+            },
+            p2pk65: {
+              activity: createActivityPattern2(this, "p2pk65"),
+              costBasis: createCostBasisPattern(this, "p2pk65"),
+              outputs: createOutputsPattern(this, "p2pk65_utxo_count"),
+              realized: createRealizedPattern(this, "p2pk65"),
+              relative: createRelativePattern4(this, "p2pk65_supply_in"),
+              supply: createSupplyPattern2(this, "p2pk65_supply"),
+              unrealized: createUnrealizedPattern(this, "p2pk65"),
+            },
+            p2pkh: {
+              activity: createActivityPattern2(this, "p2pkh"),
+              costBasis: createCostBasisPattern(this, "p2pkh"),
+              outputs: createOutputsPattern(this, "p2pkh_utxo_count"),
+              realized: createRealizedPattern(this, "p2pkh"),
+              relative: createRelativePattern4(this, "p2pkh_supply_in"),
+              supply: createSupplyPattern2(this, "p2pkh_supply"),
+              unrealized: createUnrealizedPattern(this, "p2pkh"),
+            },
+            p2sh: {
+              activity: createActivityPattern2(this, "p2sh"),
+              costBasis: createCostBasisPattern(this, "p2sh"),
+              outputs: createOutputsPattern(this, "p2sh_utxo_count"),
+              realized: createRealizedPattern(this, "p2sh"),
+              relative: createRelativePattern4(this, "p2sh_supply_in"),
+              supply: createSupplyPattern2(this, "p2sh_supply"),
+              unrealized: createUnrealizedPattern(this, "p2sh"),
+            },
+            p2tr: {
+              activity: createActivityPattern2(this, "p2tr"),
+              costBasis: createCostBasisPattern(this, "p2tr"),
+              outputs: createOutputsPattern(this, "p2tr_utxo_count"),
+              realized: createRealizedPattern(this, "p2tr"),
+              relative: createRelativePattern4(this, "p2tr_supply_in"),
+              supply: createSupplyPattern2(this, "p2tr_supply"),
+              unrealized: createUnrealizedPattern(this, "p2tr"),
+            },
+            p2wpkh: {
+              activity: createActivityPattern2(this, "p2wpkh"),
+              costBasis: createCostBasisPattern(this, "p2wpkh"),
+              outputs: createOutputsPattern(this, "p2wpkh_utxo_count"),
+              realized: createRealizedPattern(this, "p2wpkh"),
+              relative: createRelativePattern4(this, "p2wpkh_supply_in"),
+              supply: createSupplyPattern2(this, "p2wpkh_supply"),
+              unrealized: createUnrealizedPattern(this, "p2wpkh"),
+            },
+            p2wsh: {
+              activity: createActivityPattern2(this, "p2wsh"),
+              costBasis: createCostBasisPattern(this, "p2wsh"),
+              outputs: createOutputsPattern(this, "p2wsh_utxo_count"),
+              realized: createRealizedPattern(this, "p2wsh"),
+              relative: createRelativePattern4(this, "p2wsh_supply_in"),
+              supply: createSupplyPattern2(this, "p2wsh_supply"),
+              unrealized: createUnrealizedPattern(this, "p2wsh"),
+            },
+            unknown: {
+              activity: createActivityPattern2(this, "unknown_outputs"),
+              costBasis: createCostBasisPattern(this, "unknown_outputs"),
+              outputs: createOutputsPattern(this, "unknown_outputs_utxo_count"),
+              realized: createRealizedPattern(this, "unknown_outputs"),
+              relative: createRelativePattern4(
+                this,
+                "unknown_outputs_supply_in",
+              ),
+              supply: createSupplyPattern2(this, "unknown_outputs_supply"),
+              unrealized: createUnrealizedPattern(this, "unknown_outputs"),
+            },
           },
           year: {
-            _2009: create_0satsPattern2(this, "year_2009"),
-            _2010: create_0satsPattern2(this, "year_2010"),
-            _2011: create_0satsPattern2(this, "year_2011"),
-            _2012: create_0satsPattern2(this, "year_2012"),
-            _2013: create_0satsPattern2(this, "year_2013"),
-            _2014: create_0satsPattern2(this, "year_2014"),
-            _2015: create_0satsPattern2(this, "year_2015"),
-            _2016: create_0satsPattern2(this, "year_2016"),
-            _2017: create_0satsPattern2(this, "year_2017"),
-            _2018: create_0satsPattern2(this, "year_2018"),
-            _2019: create_0satsPattern2(this, "year_2019"),
-            _2020: create_0satsPattern2(this, "year_2020"),
-            _2021: create_0satsPattern2(this, "year_2021"),
-            _2022: create_0satsPattern2(this, "year_2022"),
-            _2023: create_0satsPattern2(this, "year_2023"),
-            _2024: create_0satsPattern2(this, "year_2024"),
-            _2025: create_0satsPattern2(this, "year_2025"),
-            _2026: create_0satsPattern2(this, "year_2026"),
+            _2009: {
+              activity: createActivityPattern2(this, "year_2009"),
+              costBasis: createCostBasisPattern(this, "year_2009"),
+              outputs: createOutputsPattern(this, "year_2009_utxo_count"),
+              realized: createRealizedPattern(this, "year_2009"),
+              relative: createRelativePattern4(this, "year_2009_supply_in"),
+              supply: createSupplyPattern2(this, "year_2009_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2009"),
+            },
+            _2010: {
+              activity: createActivityPattern2(this, "year_2010"),
+              costBasis: createCostBasisPattern(this, "year_2010"),
+              outputs: createOutputsPattern(this, "year_2010_utxo_count"),
+              realized: createRealizedPattern(this, "year_2010"),
+              relative: createRelativePattern4(this, "year_2010_supply_in"),
+              supply: createSupplyPattern2(this, "year_2010_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2010"),
+            },
+            _2011: {
+              activity: createActivityPattern2(this, "year_2011"),
+              costBasis: createCostBasisPattern(this, "year_2011"),
+              outputs: createOutputsPattern(this, "year_2011_utxo_count"),
+              realized: createRealizedPattern(this, "year_2011"),
+              relative: createRelativePattern4(this, "year_2011_supply_in"),
+              supply: createSupplyPattern2(this, "year_2011_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2011"),
+            },
+            _2012: {
+              activity: createActivityPattern2(this, "year_2012"),
+              costBasis: createCostBasisPattern(this, "year_2012"),
+              outputs: createOutputsPattern(this, "year_2012_utxo_count"),
+              realized: createRealizedPattern(this, "year_2012"),
+              relative: createRelativePattern4(this, "year_2012_supply_in"),
+              supply: createSupplyPattern2(this, "year_2012_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2012"),
+            },
+            _2013: {
+              activity: createActivityPattern2(this, "year_2013"),
+              costBasis: createCostBasisPattern(this, "year_2013"),
+              outputs: createOutputsPattern(this, "year_2013_utxo_count"),
+              realized: createRealizedPattern(this, "year_2013"),
+              relative: createRelativePattern4(this, "year_2013_supply_in"),
+              supply: createSupplyPattern2(this, "year_2013_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2013"),
+            },
+            _2014: {
+              activity: createActivityPattern2(this, "year_2014"),
+              costBasis: createCostBasisPattern(this, "year_2014"),
+              outputs: createOutputsPattern(this, "year_2014_utxo_count"),
+              realized: createRealizedPattern(this, "year_2014"),
+              relative: createRelativePattern4(this, "year_2014_supply_in"),
+              supply: createSupplyPattern2(this, "year_2014_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2014"),
+            },
+            _2015: {
+              activity: createActivityPattern2(this, "year_2015"),
+              costBasis: createCostBasisPattern(this, "year_2015"),
+              outputs: createOutputsPattern(this, "year_2015_utxo_count"),
+              realized: createRealizedPattern(this, "year_2015"),
+              relative: createRelativePattern4(this, "year_2015_supply_in"),
+              supply: createSupplyPattern2(this, "year_2015_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2015"),
+            },
+            _2016: {
+              activity: createActivityPattern2(this, "year_2016"),
+              costBasis: createCostBasisPattern(this, "year_2016"),
+              outputs: createOutputsPattern(this, "year_2016_utxo_count"),
+              realized: createRealizedPattern(this, "year_2016"),
+              relative: createRelativePattern4(this, "year_2016_supply_in"),
+              supply: createSupplyPattern2(this, "year_2016_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2016"),
+            },
+            _2017: {
+              activity: createActivityPattern2(this, "year_2017"),
+              costBasis: createCostBasisPattern(this, "year_2017"),
+              outputs: createOutputsPattern(this, "year_2017_utxo_count"),
+              realized: createRealizedPattern(this, "year_2017"),
+              relative: createRelativePattern4(this, "year_2017_supply_in"),
+              supply: createSupplyPattern2(this, "year_2017_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2017"),
+            },
+            _2018: {
+              activity: createActivityPattern2(this, "year_2018"),
+              costBasis: createCostBasisPattern(this, "year_2018"),
+              outputs: createOutputsPattern(this, "year_2018_utxo_count"),
+              realized: createRealizedPattern(this, "year_2018"),
+              relative: createRelativePattern4(this, "year_2018_supply_in"),
+              supply: createSupplyPattern2(this, "year_2018_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2018"),
+            },
+            _2019: {
+              activity: createActivityPattern2(this, "year_2019"),
+              costBasis: createCostBasisPattern(this, "year_2019"),
+              outputs: createOutputsPattern(this, "year_2019_utxo_count"),
+              realized: createRealizedPattern(this, "year_2019"),
+              relative: createRelativePattern4(this, "year_2019_supply_in"),
+              supply: createSupplyPattern2(this, "year_2019_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2019"),
+            },
+            _2020: {
+              activity: createActivityPattern2(this, "year_2020"),
+              costBasis: createCostBasisPattern(this, "year_2020"),
+              outputs: createOutputsPattern(this, "year_2020_utxo_count"),
+              realized: createRealizedPattern(this, "year_2020"),
+              relative: createRelativePattern4(this, "year_2020_supply_in"),
+              supply: createSupplyPattern2(this, "year_2020_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2020"),
+            },
+            _2021: {
+              activity: createActivityPattern2(this, "year_2021"),
+              costBasis: createCostBasisPattern(this, "year_2021"),
+              outputs: createOutputsPattern(this, "year_2021_utxo_count"),
+              realized: createRealizedPattern(this, "year_2021"),
+              relative: createRelativePattern4(this, "year_2021_supply_in"),
+              supply: createSupplyPattern2(this, "year_2021_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2021"),
+            },
+            _2022: {
+              activity: createActivityPattern2(this, "year_2022"),
+              costBasis: createCostBasisPattern(this, "year_2022"),
+              outputs: createOutputsPattern(this, "year_2022_utxo_count"),
+              realized: createRealizedPattern(this, "year_2022"),
+              relative: createRelativePattern4(this, "year_2022_supply_in"),
+              supply: createSupplyPattern2(this, "year_2022_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2022"),
+            },
+            _2023: {
+              activity: createActivityPattern2(this, "year_2023"),
+              costBasis: createCostBasisPattern(this, "year_2023"),
+              outputs: createOutputsPattern(this, "year_2023_utxo_count"),
+              realized: createRealizedPattern(this, "year_2023"),
+              relative: createRelativePattern4(this, "year_2023_supply_in"),
+              supply: createSupplyPattern2(this, "year_2023_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2023"),
+            },
+            _2024: {
+              activity: createActivityPattern2(this, "year_2024"),
+              costBasis: createCostBasisPattern(this, "year_2024"),
+              outputs: createOutputsPattern(this, "year_2024_utxo_count"),
+              realized: createRealizedPattern(this, "year_2024"),
+              relative: createRelativePattern4(this, "year_2024_supply_in"),
+              supply: createSupplyPattern2(this, "year_2024_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2024"),
+            },
+            _2025: {
+              activity: createActivityPattern2(this, "year_2025"),
+              costBasis: createCostBasisPattern(this, "year_2025"),
+              outputs: createOutputsPattern(this, "year_2025_utxo_count"),
+              realized: createRealizedPattern(this, "year_2025"),
+              relative: createRelativePattern4(this, "year_2025_supply_in"),
+              supply: createSupplyPattern2(this, "year_2025_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2025"),
+            },
+            _2026: {
+              activity: createActivityPattern2(this, "year_2026"),
+              costBasis: createCostBasisPattern(this, "year_2026"),
+              outputs: createOutputsPattern(this, "year_2026_utxo_count"),
+              realized: createRealizedPattern(this, "year_2026"),
+              relative: createRelativePattern4(this, "year_2026_supply_in"),
+              supply: createSupplyPattern2(this, "year_2026_supply"),
+              unrealized: createUnrealizedPattern(this, "year_2026"),
+            },
           },
         },
       },
@@ -7314,7 +13758,19 @@ class BrkClient extends BrkClientBase {
           ),
         },
         dca: {
-          classAveragePrice: createClassAveragePricePattern(this, "dca_class"),
+          classAveragePrice: {
+            _2015: createMetricPattern4(this, "dca_class_2015_average_price"),
+            _2016: createMetricPattern4(this, "dca_class_2016_average_price"),
+            _2017: createMetricPattern4(this, "dca_class_2017_average_price"),
+            _2018: createMetricPattern4(this, "dca_class_2018_average_price"),
+            _2019: createMetricPattern4(this, "dca_class_2019_average_price"),
+            _2020: createMetricPattern4(this, "dca_class_2020_average_price"),
+            _2021: createMetricPattern4(this, "dca_class_2021_average_price"),
+            _2022: createMetricPattern4(this, "dca_class_2022_average_price"),
+            _2023: createMetricPattern4(this, "dca_class_2023_average_price"),
+            _2024: createMetricPattern4(this, "dca_class_2024_average_price"),
+            _2025: createMetricPattern4(this, "dca_class_2025_average_price"),
+          },
           classReturns: createClassAveragePricePattern(this, "dca_class"),
           classStack: {
             _2015: create_2015Pattern(this, "dca_class_2015_stack"),
@@ -7364,41 +13820,1481 @@ class BrkClient extends BrkClientBase {
         },
         lookback: createLookbackPattern(this, "price"),
         movingAverage: {
-          price111dSma: createPrice111dSmaPattern(this, "price_111d_sma"),
-          price12dEma: createPrice111dSmaPattern(this, "price_12d_ema"),
-          price13dEma: createPrice111dSmaPattern(this, "price_13d_ema"),
-          price13dSma: createPrice111dSmaPattern(this, "price_13d_sma"),
-          price144dEma: createPrice111dSmaPattern(this, "price_144d_ema"),
-          price144dSma: createPrice111dSmaPattern(this, "price_144d_sma"),
-          price1mEma: createPrice111dSmaPattern(this, "price_1m_ema"),
-          price1mSma: createPrice111dSmaPattern(this, "price_1m_sma"),
-          price1wEma: createPrice111dSmaPattern(this, "price_1w_ema"),
-          price1wSma: createPrice111dSmaPattern(this, "price_1w_sma"),
-          price1yEma: createPrice111dSmaPattern(this, "price_1y_ema"),
-          price1ySma: createPrice111dSmaPattern(this, "price_1y_sma"),
-          price200dEma: createPrice111dSmaPattern(this, "price_200d_ema"),
-          price200dSma: createPrice111dSmaPattern(this, "price_200d_sma"),
+          price111dSma: {
+            price: createMetricPattern4(this, "price_111d_sma"),
+            ratio: createMetricPattern4(this, "price_111d_sma_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_111d_sma_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_111d_sma_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_111d_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_111d_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_111d_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_111d_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_111d_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_111d_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_111d_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_111d_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_111d_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(
+              this,
+              "price_111d_sma_ratio_pct95",
+            ),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_111d_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(
+              this,
+              "price_111d_sma_ratio_pct98",
+            ),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_111d_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(
+              this,
+              "price_111d_sma_ratio_pct99",
+            ),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_111d_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_111d_sma_ratio"),
+          },
+          price12dEma: {
+            price: createMetricPattern4(this, "price_12d_ema"),
+            ratio: createMetricPattern4(this, "price_12d_ema_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_12d_ema_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_12d_ema_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_12d_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_12d_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_12d_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_12d_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_12d_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_12d_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_12d_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_12d_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_12d_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_12d_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_12d_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_12d_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_12d_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_12d_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_12d_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_12d_ema_ratio"),
+          },
+          price13dEma: {
+            price: createMetricPattern4(this, "price_13d_ema"),
+            ratio: createMetricPattern4(this, "price_13d_ema_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_13d_ema_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_13d_ema_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_13d_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_13d_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_13d_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_13d_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_13d_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_13d_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_13d_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_13d_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_13d_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_13d_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_13d_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_13d_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_13d_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_13d_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_13d_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_13d_ema_ratio"),
+          },
+          price13dSma: {
+            price: createMetricPattern4(this, "price_13d_sma"),
+            ratio: createMetricPattern4(this, "price_13d_sma_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_13d_sma_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_13d_sma_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_13d_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_13d_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_13d_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_13d_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_13d_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_13d_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_13d_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_13d_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_13d_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_13d_sma_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_13d_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_13d_sma_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_13d_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_13d_sma_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_13d_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_13d_sma_ratio"),
+          },
+          price144dEma: {
+            price: createMetricPattern4(this, "price_144d_ema"),
+            ratio: createMetricPattern4(this, "price_144d_ema_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_144d_ema_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_144d_ema_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_144d_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_144d_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_144d_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_144d_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_144d_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_144d_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_144d_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_144d_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_144d_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(
+              this,
+              "price_144d_ema_ratio_pct95",
+            ),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_144d_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(
+              this,
+              "price_144d_ema_ratio_pct98",
+            ),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_144d_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(
+              this,
+              "price_144d_ema_ratio_pct99",
+            ),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_144d_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_144d_ema_ratio"),
+          },
+          price144dSma: {
+            price: createMetricPattern4(this, "price_144d_sma"),
+            ratio: createMetricPattern4(this, "price_144d_sma_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_144d_sma_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_144d_sma_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_144d_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_144d_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_144d_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_144d_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_144d_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_144d_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_144d_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_144d_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_144d_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(
+              this,
+              "price_144d_sma_ratio_pct95",
+            ),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_144d_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(
+              this,
+              "price_144d_sma_ratio_pct98",
+            ),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_144d_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(
+              this,
+              "price_144d_sma_ratio_pct99",
+            ),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_144d_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_144d_sma_ratio"),
+          },
+          price1mEma: {
+            price: createMetricPattern4(this, "price_1m_ema"),
+            ratio: createMetricPattern4(this, "price_1m_ema_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_1m_ema_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_1m_ema_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_1m_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_1m_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_1m_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_1m_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_1m_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_1m_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_1m_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_1m_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_1m_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_1m_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_1m_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_1m_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_1m_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_1m_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_1m_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_1m_ema_ratio"),
+          },
+          price1mSma: {
+            price: createMetricPattern4(this, "price_1m_sma"),
+            ratio: createMetricPattern4(this, "price_1m_sma_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_1m_sma_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_1m_sma_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_1m_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_1m_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_1m_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_1m_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_1m_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_1m_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_1m_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_1m_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_1m_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_1m_sma_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_1m_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_1m_sma_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_1m_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_1m_sma_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_1m_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_1m_sma_ratio"),
+          },
+          price1wEma: {
+            price: createMetricPattern4(this, "price_1w_ema"),
+            ratio: createMetricPattern4(this, "price_1w_ema_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_1w_ema_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_1w_ema_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_1w_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_1w_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_1w_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_1w_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_1w_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_1w_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_1w_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_1w_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_1w_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_1w_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_1w_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_1w_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_1w_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_1w_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_1w_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_1w_ema_ratio"),
+          },
+          price1wSma: {
+            price: createMetricPattern4(this, "price_1w_sma"),
+            ratio: createMetricPattern4(this, "price_1w_sma_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_1w_sma_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_1w_sma_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_1w_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_1w_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_1w_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_1w_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_1w_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_1w_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_1w_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_1w_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_1w_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_1w_sma_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_1w_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_1w_sma_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_1w_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_1w_sma_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_1w_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_1w_sma_ratio"),
+          },
+          price1yEma: {
+            price: createMetricPattern4(this, "price_1y_ema"),
+            ratio: createMetricPattern4(this, "price_1y_ema_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_1y_ema_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_1y_ema_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_1y_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_1y_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_1y_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_1y_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_1y_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_1y_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_1y_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_1y_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_1y_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_1y_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_1y_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_1y_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_1y_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_1y_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_1y_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_1y_ema_ratio"),
+          },
+          price1ySma: {
+            price: createMetricPattern4(this, "price_1y_sma"),
+            ratio: createMetricPattern4(this, "price_1y_sma_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_1y_sma_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_1y_sma_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_1y_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_1y_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_1y_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_1y_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_1y_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_1y_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_1y_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_1y_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_1y_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_1y_sma_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_1y_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_1y_sma_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_1y_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_1y_sma_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_1y_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_1y_sma_ratio"),
+          },
+          price200dEma: {
+            price: createMetricPattern4(this, "price_200d_ema"),
+            ratio: createMetricPattern4(this, "price_200d_ema_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_200d_ema_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_200d_ema_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_200d_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_200d_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_200d_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_200d_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_200d_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_200d_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_200d_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_200d_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_200d_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(
+              this,
+              "price_200d_ema_ratio_pct95",
+            ),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_200d_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(
+              this,
+              "price_200d_ema_ratio_pct98",
+            ),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_200d_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(
+              this,
+              "price_200d_ema_ratio_pct99",
+            ),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_200d_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_200d_ema_ratio"),
+          },
+          price200dSma: {
+            price: createMetricPattern4(this, "price_200d_sma"),
+            ratio: createMetricPattern4(this, "price_200d_sma_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_200d_sma_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_200d_sma_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_200d_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_200d_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_200d_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_200d_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_200d_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_200d_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_200d_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_200d_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_200d_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(
+              this,
+              "price_200d_sma_ratio_pct95",
+            ),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_200d_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(
+              this,
+              "price_200d_sma_ratio_pct98",
+            ),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_200d_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(
+              this,
+              "price_200d_sma_ratio_pct99",
+            ),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_200d_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_200d_sma_ratio"),
+          },
           price200dSmaX08: createMetricPattern4(this, "price_200d_sma_x0_8"),
           price200dSmaX24: createMetricPattern4(this, "price_200d_sma_x2_4"),
-          price200wEma: createPrice111dSmaPattern(this, "price_200w_ema"),
-          price200wSma: createPrice111dSmaPattern(this, "price_200w_sma"),
-          price21dEma: createPrice111dSmaPattern(this, "price_21d_ema"),
-          price21dSma: createPrice111dSmaPattern(this, "price_21d_sma"),
-          price26dEma: createPrice111dSmaPattern(this, "price_26d_ema"),
-          price2yEma: createPrice111dSmaPattern(this, "price_2y_ema"),
-          price2ySma: createPrice111dSmaPattern(this, "price_2y_sma"),
-          price34dEma: createPrice111dSmaPattern(this, "price_34d_ema"),
-          price34dSma: createPrice111dSmaPattern(this, "price_34d_sma"),
-          price350dSma: createPrice111dSmaPattern(this, "price_350d_sma"),
+          price200wEma: {
+            price: createMetricPattern4(this, "price_200w_ema"),
+            ratio: createMetricPattern4(this, "price_200w_ema_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_200w_ema_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_200w_ema_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_200w_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_200w_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_200w_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_200w_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_200w_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_200w_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_200w_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_200w_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_200w_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(
+              this,
+              "price_200w_ema_ratio_pct95",
+            ),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_200w_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(
+              this,
+              "price_200w_ema_ratio_pct98",
+            ),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_200w_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(
+              this,
+              "price_200w_ema_ratio_pct99",
+            ),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_200w_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_200w_ema_ratio"),
+          },
+          price200wSma: {
+            price: createMetricPattern4(this, "price_200w_sma"),
+            ratio: createMetricPattern4(this, "price_200w_sma_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_200w_sma_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_200w_sma_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_200w_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_200w_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_200w_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_200w_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_200w_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_200w_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_200w_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_200w_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_200w_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(
+              this,
+              "price_200w_sma_ratio_pct95",
+            ),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_200w_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(
+              this,
+              "price_200w_sma_ratio_pct98",
+            ),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_200w_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(
+              this,
+              "price_200w_sma_ratio_pct99",
+            ),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_200w_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_200w_sma_ratio"),
+          },
+          price21dEma: {
+            price: createMetricPattern4(this, "price_21d_ema"),
+            ratio: createMetricPattern4(this, "price_21d_ema_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_21d_ema_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_21d_ema_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_21d_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_21d_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_21d_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_21d_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_21d_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_21d_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_21d_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_21d_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_21d_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_21d_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_21d_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_21d_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_21d_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_21d_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_21d_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_21d_ema_ratio"),
+          },
+          price21dSma: {
+            price: createMetricPattern4(this, "price_21d_sma"),
+            ratio: createMetricPattern4(this, "price_21d_sma_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_21d_sma_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_21d_sma_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_21d_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_21d_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_21d_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_21d_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_21d_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_21d_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_21d_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_21d_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_21d_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_21d_sma_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_21d_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_21d_sma_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_21d_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_21d_sma_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_21d_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_21d_sma_ratio"),
+          },
+          price26dEma: {
+            price: createMetricPattern4(this, "price_26d_ema"),
+            ratio: createMetricPattern4(this, "price_26d_ema_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_26d_ema_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_26d_ema_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_26d_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_26d_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_26d_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_26d_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_26d_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_26d_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_26d_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_26d_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_26d_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_26d_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_26d_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_26d_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_26d_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_26d_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_26d_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_26d_ema_ratio"),
+          },
+          price2yEma: {
+            price: createMetricPattern4(this, "price_2y_ema"),
+            ratio: createMetricPattern4(this, "price_2y_ema_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_2y_ema_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_2y_ema_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_2y_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_2y_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_2y_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_2y_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_2y_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_2y_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_2y_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_2y_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_2y_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_2y_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_2y_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_2y_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_2y_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_2y_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_2y_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_2y_ema_ratio"),
+          },
+          price2ySma: {
+            price: createMetricPattern4(this, "price_2y_sma"),
+            ratio: createMetricPattern4(this, "price_2y_sma_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_2y_sma_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_2y_sma_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_2y_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_2y_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_2y_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_2y_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_2y_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_2y_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_2y_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_2y_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_2y_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_2y_sma_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_2y_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_2y_sma_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_2y_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_2y_sma_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_2y_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_2y_sma_ratio"),
+          },
+          price34dEma: {
+            price: createMetricPattern4(this, "price_34d_ema"),
+            ratio: createMetricPattern4(this, "price_34d_ema_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_34d_ema_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_34d_ema_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_34d_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_34d_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_34d_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_34d_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_34d_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_34d_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_34d_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_34d_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_34d_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_34d_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_34d_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_34d_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_34d_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_34d_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_34d_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_34d_ema_ratio"),
+          },
+          price34dSma: {
+            price: createMetricPattern4(this, "price_34d_sma"),
+            ratio: createMetricPattern4(this, "price_34d_sma_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_34d_sma_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_34d_sma_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_34d_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_34d_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_34d_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_34d_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_34d_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_34d_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_34d_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_34d_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_34d_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_34d_sma_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_34d_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_34d_sma_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_34d_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_34d_sma_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_34d_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_34d_sma_ratio"),
+          },
+          price350dSma: {
+            price: createMetricPattern4(this, "price_350d_sma"),
+            ratio: createMetricPattern4(this, "price_350d_sma_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_350d_sma_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_350d_sma_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_350d_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_350d_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_350d_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_350d_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_350d_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_350d_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_350d_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_350d_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_350d_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(
+              this,
+              "price_350d_sma_ratio_pct95",
+            ),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_350d_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(
+              this,
+              "price_350d_sma_ratio_pct98",
+            ),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_350d_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(
+              this,
+              "price_350d_sma_ratio_pct99",
+            ),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_350d_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_350d_sma_ratio"),
+          },
           price350dSmaX2: createMetricPattern4(this, "price_350d_sma_x2"),
-          price4yEma: createPrice111dSmaPattern(this, "price_4y_ema"),
-          price4ySma: createPrice111dSmaPattern(this, "price_4y_sma"),
-          price55dEma: createPrice111dSmaPattern(this, "price_55d_ema"),
-          price55dSma: createPrice111dSmaPattern(this, "price_55d_sma"),
-          price89dEma: createPrice111dSmaPattern(this, "price_89d_ema"),
-          price89dSma: createPrice111dSmaPattern(this, "price_89d_sma"),
-          price8dEma: createPrice111dSmaPattern(this, "price_8d_ema"),
-          price8dSma: createPrice111dSmaPattern(this, "price_8d_sma"),
+          price4yEma: {
+            price: createMetricPattern4(this, "price_4y_ema"),
+            ratio: createMetricPattern4(this, "price_4y_ema_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_4y_ema_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_4y_ema_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_4y_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_4y_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_4y_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_4y_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_4y_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_4y_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_4y_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_4y_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_4y_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_4y_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_4y_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_4y_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_4y_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_4y_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_4y_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_4y_ema_ratio"),
+          },
+          price4ySma: {
+            price: createMetricPattern4(this, "price_4y_sma"),
+            ratio: createMetricPattern4(this, "price_4y_sma_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_4y_sma_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_4y_sma_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_4y_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_4y_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_4y_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_4y_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_4y_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_4y_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_4y_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_4y_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_4y_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_4y_sma_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_4y_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_4y_sma_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_4y_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_4y_sma_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_4y_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_4y_sma_ratio"),
+          },
+          price55dEma: {
+            price: createMetricPattern4(this, "price_55d_ema"),
+            ratio: createMetricPattern4(this, "price_55d_ema_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_55d_ema_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_55d_ema_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_55d_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_55d_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_55d_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_55d_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_55d_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_55d_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_55d_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_55d_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_55d_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_55d_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_55d_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_55d_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_55d_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_55d_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_55d_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_55d_ema_ratio"),
+          },
+          price55dSma: {
+            price: createMetricPattern4(this, "price_55d_sma"),
+            ratio: createMetricPattern4(this, "price_55d_sma_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_55d_sma_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_55d_sma_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_55d_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_55d_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_55d_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_55d_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_55d_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_55d_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_55d_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_55d_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_55d_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_55d_sma_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_55d_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_55d_sma_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_55d_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_55d_sma_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_55d_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_55d_sma_ratio"),
+          },
+          price89dEma: {
+            price: createMetricPattern4(this, "price_89d_ema"),
+            ratio: createMetricPattern4(this, "price_89d_ema_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_89d_ema_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_89d_ema_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_89d_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_89d_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_89d_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_89d_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_89d_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_89d_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_89d_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_89d_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_89d_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_89d_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_89d_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_89d_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_89d_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_89d_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_89d_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_89d_ema_ratio"),
+          },
+          price89dSma: {
+            price: createMetricPattern4(this, "price_89d_sma"),
+            ratio: createMetricPattern4(this, "price_89d_sma_ratio"),
+            ratio1mSma: createMetricPattern4(
+              this,
+              "price_89d_sma_ratio_1m_sma",
+            ),
+            ratio1wSma: createMetricPattern4(
+              this,
+              "price_89d_sma_ratio_1w_sma",
+            ),
+            ratio1ySd: createRatio1ySdPattern(this, "price_89d_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_89d_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_89d_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_89d_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_89d_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_89d_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_89d_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_89d_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_89d_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_89d_sma_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_89d_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_89d_sma_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_89d_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_89d_sma_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_89d_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_89d_sma_ratio"),
+          },
+          price8dEma: {
+            price: createMetricPattern4(this, "price_8d_ema"),
+            ratio: createMetricPattern4(this, "price_8d_ema_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_8d_ema_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_8d_ema_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_8d_ema_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_8d_ema_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_8d_ema_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_8d_ema_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_8d_ema_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_8d_ema_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_8d_ema_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_8d_ema_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_8d_ema_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_8d_ema_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_8d_ema_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_8d_ema_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_8d_ema_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_8d_ema_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_8d_ema_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_8d_ema_ratio"),
+          },
+          price8dSma: {
+            price: createMetricPattern4(this, "price_8d_sma"),
+            ratio: createMetricPattern4(this, "price_8d_sma_ratio"),
+            ratio1mSma: createMetricPattern4(this, "price_8d_sma_ratio_1m_sma"),
+            ratio1wSma: createMetricPattern4(this, "price_8d_sma_ratio_1w_sma"),
+            ratio1ySd: createRatio1ySdPattern(this, "price_8d_sma_ratio_1y"),
+            ratio2ySd: createRatio1ySdPattern(this, "price_8d_sma_ratio_2y"),
+            ratio4ySd: createRatio1ySdPattern(this, "price_8d_sma_ratio_4y"),
+            ratioPct1: createMetricPattern4(this, "price_8d_sma_ratio_pct1"),
+            ratioPct1Usd: createMetricPattern4(
+              this,
+              "price_8d_sma_ratio_pct1_usd",
+            ),
+            ratioPct2: createMetricPattern4(this, "price_8d_sma_ratio_pct2"),
+            ratioPct2Usd: createMetricPattern4(
+              this,
+              "price_8d_sma_ratio_pct2_usd",
+            ),
+            ratioPct5: createMetricPattern4(this, "price_8d_sma_ratio_pct5"),
+            ratioPct5Usd: createMetricPattern4(
+              this,
+              "price_8d_sma_ratio_pct5_usd",
+            ),
+            ratioPct95: createMetricPattern4(this, "price_8d_sma_ratio_pct95"),
+            ratioPct95Usd: createMetricPattern4(
+              this,
+              "price_8d_sma_ratio_pct95_usd",
+            ),
+            ratioPct98: createMetricPattern4(this, "price_8d_sma_ratio_pct98"),
+            ratioPct98Usd: createMetricPattern4(
+              this,
+              "price_8d_sma_ratio_pct98_usd",
+            ),
+            ratioPct99: createMetricPattern4(this, "price_8d_sma_ratio_pct99"),
+            ratioPct99Usd: createMetricPattern4(
+              this,
+              "price_8d_sma_ratio_pct99_usd",
+            ),
+            ratioSd: createRatio1ySdPattern(this, "price_8d_sma_ratio"),
+          },
         },
         range: {
           price1mMax: createMetricPattern4(this, "price_1m_max"),
@@ -7662,8 +15558,14 @@ class BrkClient extends BrkClientBase {
           priceCents: createMetricPattern11(this, "orange_price_cents"),
           txCount: createMetricPattern6(this, "oracle_tx_count"),
         },
-        sats: createSatsPattern(this, "price"),
-        usd: createSatsPattern(this, "price"),
+        sats: {
+          ohlc: createMetricPattern1(this, "price_ohlc_sats"),
+          split: createSplitPattern2(this, "price_sats"),
+        },
+        usd: {
+          ohlc: createMetricPattern1(this, "price_ohlc"),
+          split: createSplitPattern2(this, "price"),
+        },
       },
       scripts: {
         count: {

@@ -11,5 +11,5 @@
     "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
     "skipLibCheck": true,
   },
-  "exclude": ["assets", "./scripts/modules", "../../modules"],
+  "exclude": ["assets", "./scripts/modules"],
 }

@@ -1,6 +1,6 @@
 //! Structural pattern and field types.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 
 use brk_types::Index;
 
@@ -46,6 +46,30 @@ impl StructuralPattern {
     /// Returns true if this pattern is in suffix mode.
     pub fn is_suffix_mode(&self) -> bool {
         matches!(&self.mode, Some(PatternMode::Suffix { .. }))
+    }
+
+    /// Check if the given instance field parts match this pattern's field parts.
+    /// Returns true if all field parts in the pattern match the instance's field parts.
+    pub fn field_parts_match(&self, instance_field_parts: &HashMap<String, String>) -> bool {
+        match &self.mode {
+            Some(PatternMode::Suffix { relatives }) => {
+                // For each field in the pattern, check if the instance has the same suffix
+                relatives.iter().all(|(field_name, pattern_suffix)| {
+                    instance_field_parts
+                        .get(field_name)
+                        .is_some_and(|instance_suffix| instance_suffix == pattern_suffix)
+                })
+            }
+            Some(PatternMode::Prefix { prefixes }) => {
+                // For each field in the pattern, check if the instance has the same prefix
+                prefixes.iter().all(|(field_name, pattern_prefix)| {
+                    instance_field_parts
+                        .get(field_name)
+                        .is_some_and(|instance_prefix| instance_prefix == pattern_prefix)
+                })
+            }
+            None => false, // Non-parameterizable patterns don't use field parts
+        }
     }
 }
 

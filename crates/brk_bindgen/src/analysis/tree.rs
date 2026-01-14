@@ -123,6 +123,9 @@ pub struct PatternBaseResult {
     /// Whether this instance uses suffix mode (common prefix) or prefix mode (common suffix).
     /// Used to check compatibility with the pattern's mode.
     pub is_suffix_mode: bool,
+    /// The field parts (suffix in suffix mode, prefix in prefix mode) for each field.
+    /// Used to check if instance field parts match the pattern's field parts.
+    pub field_parts: HashMap<String, String>,
 }
 
 /// Get the metric base for a pattern instance by analyzing direct children.
@@ -141,6 +144,7 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
             base: String::new(),
             has_outlier: false,
             is_suffix_mode: true, // default
+            field_parts: HashMap::new(),
         };
     }
 
@@ -150,6 +154,7 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
             base: result.base,
             has_outlier: result.has_outlier,
             is_suffix_mode: result.is_suffix_mode,
+            field_parts: result.field_parts,
         };
     }
 
@@ -168,6 +173,7 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
                     base: result.base,
                     has_outlier: true,
                     is_suffix_mode: result.is_suffix_mode,
+                    field_parts: result.field_parts,
                 };
             }
         }
@@ -179,14 +185,16 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
         base: String::new(),
         has_outlier: false,
         is_suffix_mode: true, // default
+        field_parts: HashMap::new(),
     }
 }
 
-/// Result of try_find_base: base name, has_outlier flag, and is_suffix_mode flag.
+/// Result of try_find_base: base name, has_outlier flag, is_suffix_mode flag, and field_parts.
 struct FindBaseResult {
     base: String,
     has_outlier: bool,
     is_suffix_mode: bool,
+    field_parts: HashMap<String, String>,
 }
 
 /// Try to find a common base from child names using prefix/suffix detection.
@@ -197,20 +205,52 @@ fn try_find_base(child_names: &[(String, String)], is_outlier_attempt: bool) -> 
     // Try common prefix first (suffix mode)
     if let Some(prefix) = find_common_prefix(&leaf_names) {
         let base = prefix.trim_end_matches('_').to_string();
+        let mut field_parts = HashMap::new();
+        for (field_name, leaf_name) in child_names {
+            // Compute the suffix part for this field
+            let suffix = if leaf_name == &base {
+                String::new()
+            } else {
+                leaf_name
+                    .strip_prefix(&prefix)
+                    .unwrap_or(leaf_name)
+                    .to_string()
+            };
+            field_parts.insert(field_name.clone(), suffix);
+        }
         return Some(FindBaseResult {
             base,
             has_outlier: is_outlier_attempt,
             is_suffix_mode: true,
+            field_parts,
         });
     }
 
     // Try common suffix (prefix mode)
     if let Some(suffix) = find_common_suffix(&leaf_names) {
         let base = suffix.trim_start_matches('_').to_string();
+        let mut field_parts = HashMap::new();
+        for (field_name, leaf_name) in child_names {
+            // Compute the prefix part for this field
+            let prefix_part = leaf_name
+                .strip_suffix(&suffix)
+                .map(|s| {
+                    if s.is_empty() {
+                        String::new()
+                    } else if s.ends_with('_') {
+                        s.to_string()
+                    } else {
+                        format!("{}_", s)
+                    }
+                })
+                .unwrap_or_default();
+            field_parts.insert(field_name.clone(), prefix_part);
+        }
         return Some(FindBaseResult {
             base,
             has_outlier: is_outlier_attempt,
             is_suffix_mode: false,
+            field_parts,
         });
     }
 

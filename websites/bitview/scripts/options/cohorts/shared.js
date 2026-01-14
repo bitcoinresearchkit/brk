@@ -379,34 +379,34 @@ export function createCostBasisPercentilesSeries(ctx, list, useGroupName) {
     const percentiles = tree.costBasis.percentiles;
     return [
       line({
-        metric: percentiles.costBasisPct10,
+        metric: percentiles.pct10,
         name: useGroupName ? `${name} p10` : "p10",
         color,
         unit: Unit.usd,
         defaultActive: false,
       }),
       line({
-        metric: percentiles.costBasisPct25,
+        metric: percentiles.pct25,
         name: useGroupName ? `${name} p25` : "p25",
         color,
         unit: Unit.usd,
         defaultActive: false,
       }),
       line({
-        metric: percentiles.costBasisPct50,
+        metric: percentiles.pct50,
         name: useGroupName ? `${name} p50` : "p50",
         color,
         unit: Unit.usd,
       }),
       line({
-        metric: percentiles.costBasisPct75,
+        metric: percentiles.pct75,
         name: useGroupName ? `${name} p75` : "p75",
         color,
         unit: Unit.usd,
         defaultActive: false,
       }),
       line({
-        metric: percentiles.costBasisPct90,
+        metric: percentiles.pct90,
         name: useGroupName ? `${name} p90` : "p90",
         color,
         unit: Unit.usd,

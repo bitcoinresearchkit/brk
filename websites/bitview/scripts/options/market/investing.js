@@ -64,7 +64,7 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
           ["10y", "_10y"],
         ]).map(([id, key]) => {
           const name = periodIdToName(id, true);
-          const priceAgo = lookback.priceAgo[key];
+          const priceAgo = lookback[key];
           const priceReturns = returns.priceReturns[key];
           const dcaCostBasis = dca.periodAveragePrice[key];
           const dcaReturns = dca.periodReturns[key];
@@ -181,14 +181,15 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
               {
                 name: "Returns",
                 title: "DCA Returns by Year",
-                bottom: dcaClasses.map(({ year, color, defaultActive, returns }) =>
-                  baseline({
-                    metric: returns,
-                    name: `${year}`,
-                    color,
-                    defaultActive,
-                    unit: Unit.percentage,
-                  }),
+                bottom: dcaClasses.map(
+                  ({ year, color, defaultActive, returns }) =>
+                    baseline({
+                      metric: returns,
+                      name: `${year}`,
+                      color,
+                      defaultActive,
+                      unit: Unit.percentage,
+                    }),
                 ),
               },
               {
