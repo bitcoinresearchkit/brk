@@ -57,10 +57,10 @@ pub fn prepare_tree_node<'a>(
 
     // Skip if this matches a parameterizable pattern AND has no outlier AND field parts match
     let base_result = get_pattern_instance_base(node);
-    let pattern_fully_matches = pattern_lookup
+    let pattern_compatible = pattern_lookup
         .get(&fields)
         .and_then(|name| metadata.find_pattern(name))
-        .is_some_and(|p| {
+        .is_none_or(|p| {
             p.is_suffix_mode() == base_result.is_suffix_mode
                 && p.field_parts_match(&base_result.field_parts)
         });
@@ -68,7 +68,7 @@ pub fn prepare_tree_node<'a>(
         && pattern_name != name
         && metadata.is_parameterizable(pattern_name)
         && !base_result.has_outlier
-        && pattern_fully_matches
+        && pattern_compatible
     {
         return None;
     }
@@ -93,22 +93,19 @@ pub fn prepare_tree_node<'a>(
                 .is_some_and(|cf| metadata.matches_pattern(cf));
 
             // Check if the pattern mode AND field parts match the instance
-            let pattern_fully_matches = child_fields
+            // Uses is_none_or so that "no pattern" doesn't trigger inlining
+            let pattern_compatible = child_fields
                 .as_ref()
                 .and_then(|cf| metadata.find_pattern_by_fields(cf))
-                .is_some_and(|p| {
-                    // Mode must match (suffix vs prefix)
-                    if p.is_suffix_mode() != base_result.is_suffix_mode {
-                        return false;
-                    }
-                    // Field parts must also match
-                    p.field_parts_match(&base_result.field_parts)
+                .is_none_or(|p| {
+                    p.is_suffix_mode() == base_result.is_suffix_mode
+                        && p.field_parts_match(&base_result.field_parts)
                 });
 
             // should_inline determines if we generate an inline struct type
-            // We inline if: it's a branch AND (doesn't match any pattern OR pattern doesn't fully match OR has outlier)
+            // We inline if: it's a branch AND (doesn't match any pattern OR pattern incompatible OR has outlier)
             let should_inline =
-                !is_leaf && (!matches_any_pattern || !pattern_fully_matches || base_result.has_outlier);
+                !is_leaf && (!matches_any_pattern || !pattern_compatible || base_result.has_outlier);
 
             // Inline type name (only used when should_inline is true)
             let inline_type_name = if should_inline {

@@ -3315,6 +3315,45 @@ function createBitcoinPattern(client, acc) {
 
 /**
  * @template T
+ * @typedef {Object} DollarsPattern
+ * @property {MetricPattern2<T>} average
+ * @property {MetricPattern11<T>} base
+ * @property {MetricPattern1<T>} cumulative
+ * @property {MetricPattern2<T>} max
+ * @property {MetricPattern6<T>} median
+ * @property {MetricPattern2<T>} min
+ * @property {MetricPattern6<T>} pct10
+ * @property {MetricPattern6<T>} pct25
+ * @property {MetricPattern6<T>} pct75
+ * @property {MetricPattern6<T>} pct90
+ * @property {MetricPattern2<T>} sum
+ */
+
+/**
+ * Create a DollarsPattern pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {DollarsPattern<T>}
+ */
+function createDollarsPattern(client, acc) {
+  return {
+    average: createMetricPattern2(client, _m(acc, "average")),
+    base: createMetricPattern11(client, acc),
+    cumulative: createMetricPattern1(client, _m(acc, "cumulative")),
+    max: createMetricPattern2(client, _m(acc, "max")),
+    median: createMetricPattern6(client, _m(acc, "median")),
+    min: createMetricPattern2(client, _m(acc, "min")),
+    pct10: createMetricPattern6(client, _m(acc, "pct10")),
+    pct25: createMetricPattern6(client, _m(acc, "pct25")),
+    pct75: createMetricPattern6(client, _m(acc, "pct75")),
+    pct90: createMetricPattern6(client, _m(acc, "pct90")),
+    sum: createMetricPattern2(client, _m(acc, "sum")),
+  };
+}
+
+/**
+ * @template T
  * @typedef {Object} ClassAveragePricePattern
  * @property {MetricPattern4<T>} _2015
  * @property {MetricPattern4<T>} _2016
@@ -3353,41 +3392,64 @@ function createClassAveragePricePattern(client, acc) {
 }
 
 /**
- * @template T
- * @typedef {Object} DollarsPattern
- * @property {MetricPattern2<T>} average
- * @property {MetricPattern11<T>} base
- * @property {MetricPattern1<T>} cumulative
- * @property {MetricPattern2<T>} max
- * @property {MetricPattern6<T>} median
- * @property {MetricPattern2<T>} min
- * @property {MetricPattern6<T>} pct10
- * @property {MetricPattern6<T>} pct25
- * @property {MetricPattern6<T>} pct75
- * @property {MetricPattern6<T>} pct90
- * @property {MetricPattern2<T>} sum
+ * @typedef {Object} RelativePattern
+ * @property {MetricPattern1<StoredF32>} negUnrealizedLossRelToMarketCap
+ * @property {MetricPattern1<StoredF32>} netUnrealizedPnlRelToMarketCap
+ * @property {MetricPattern1<StoredF32>} nupl
+ * @property {MetricPattern1<StoredF64>} supplyInLossRelToCirculatingSupply
+ * @property {MetricPattern1<StoredF64>} supplyInLossRelToOwnSupply
+ * @property {MetricPattern1<StoredF64>} supplyInProfitRelToCirculatingSupply
+ * @property {MetricPattern1<StoredF64>} supplyInProfitRelToOwnSupply
+ * @property {MetricPattern4<StoredF64>} supplyRelToCirculatingSupply
+ * @property {MetricPattern1<StoredF32>} unrealizedLossRelToMarketCap
+ * @property {MetricPattern1<StoredF32>} unrealizedProfitRelToMarketCap
  */
 
 /**
- * Create a DollarsPattern pattern node
- * @template T
+ * Create a RelativePattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {DollarsPattern<T>}
+ * @returns {RelativePattern}
  */
-function createDollarsPattern(client, acc) {
+function createRelativePattern(client, acc) {
   return {
-    average: createMetricPattern2(client, _m(acc, "average")),
-    base: createMetricPattern11(client, acc),
-    cumulative: createMetricPattern1(client, _m(acc, "cumulative")),
-    max: createMetricPattern2(client, _m(acc, "max")),
-    median: createMetricPattern6(client, _m(acc, "median")),
-    min: createMetricPattern2(client, _m(acc, "min")),
-    pct10: createMetricPattern6(client, _m(acc, "pct10")),
-    pct25: createMetricPattern6(client, _m(acc, "pct25")),
-    pct75: createMetricPattern6(client, _m(acc, "pct75")),
-    pct90: createMetricPattern6(client, _m(acc, "pct90")),
-    sum: createMetricPattern2(client, _m(acc, "sum")),
+    negUnrealizedLossRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "neg_unrealized_loss_rel_to_market_cap"),
+    ),
+    netUnrealizedPnlRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "net_unrealized_pnl_rel_to_market_cap"),
+    ),
+    nupl: createMetricPattern1(client, _m(acc, "nupl")),
+    supplyInLossRelToCirculatingSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_loss_rel_to_circulating_supply"),
+    ),
+    supplyInLossRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_loss_rel_to_own_supply"),
+    ),
+    supplyInProfitRelToCirculatingSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_profit_rel_to_circulating_supply"),
+    ),
+    supplyInProfitRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_profit_rel_to_own_supply"),
+    ),
+    supplyRelToCirculatingSupply: createMetricPattern4(
+      client,
+      _m(acc, "supply_rel_to_circulating_supply"),
+    ),
+    unrealizedLossRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_loss_rel_to_market_cap"),
+    ),
+    unrealizedProfitRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_profit_rel_to_market_cap"),
+    ),
   };
 }
 
@@ -3452,68 +3514,6 @@ function createRelativePattern2(client, acc) {
     unrealizedProfitRelToOwnTotalUnrealizedPnl: createMetricPattern1(
       client,
       _m(acc, "unrealized_profit_rel_to_own_total_unrealized_pnl"),
-    ),
-  };
-}
-
-/**
- * @typedef {Object} RelativePattern
- * @property {MetricPattern1<StoredF32>} negUnrealizedLossRelToMarketCap
- * @property {MetricPattern1<StoredF32>} netUnrealizedPnlRelToMarketCap
- * @property {MetricPattern1<StoredF32>} nupl
- * @property {MetricPattern1<StoredF64>} supplyInLossRelToCirculatingSupply
- * @property {MetricPattern1<StoredF64>} supplyInLossRelToOwnSupply
- * @property {MetricPattern1<StoredF64>} supplyInProfitRelToCirculatingSupply
- * @property {MetricPattern1<StoredF64>} supplyInProfitRelToOwnSupply
- * @property {MetricPattern4<StoredF64>} supplyRelToCirculatingSupply
- * @property {MetricPattern1<StoredF32>} unrealizedLossRelToMarketCap
- * @property {MetricPattern1<StoredF32>} unrealizedProfitRelToMarketCap
- */
-
-/**
- * Create a RelativePattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {RelativePattern}
- */
-function createRelativePattern(client, acc) {
-  return {
-    negUnrealizedLossRelToMarketCap: createMetricPattern1(
-      client,
-      _m(acc, "neg_unrealized_loss_rel_to_market_cap"),
-    ),
-    netUnrealizedPnlRelToMarketCap: createMetricPattern1(
-      client,
-      _m(acc, "net_unrealized_pnl_rel_to_market_cap"),
-    ),
-    nupl: createMetricPattern1(client, _m(acc, "nupl")),
-    supplyInLossRelToCirculatingSupply: createMetricPattern1(
-      client,
-      _m(acc, "supply_in_loss_rel_to_circulating_supply"),
-    ),
-    supplyInLossRelToOwnSupply: createMetricPattern1(
-      client,
-      _m(acc, "supply_in_loss_rel_to_own_supply"),
-    ),
-    supplyInProfitRelToCirculatingSupply: createMetricPattern1(
-      client,
-      _m(acc, "supply_in_profit_rel_to_circulating_supply"),
-    ),
-    supplyInProfitRelToOwnSupply: createMetricPattern1(
-      client,
-      _m(acc, "supply_in_profit_rel_to_own_supply"),
-    ),
-    supplyRelToCirculatingSupply: createMetricPattern4(
-      client,
-      _m(acc, "supply_rel_to_circulating_supply"),
-    ),
-    unrealizedLossRelToMarketCap: createMetricPattern1(
-      client,
-      _m(acc, "unrealized_loss_rel_to_market_cap"),
-    ),
-    unrealizedProfitRelToMarketCap: createMetricPattern1(
-      client,
-      _m(acc, "unrealized_profit_rel_to_market_cap"),
     ),
   };
 }
@@ -3590,41 +3590,6 @@ function createAddrCountPattern(client, acc) {
 
 /**
  * @template T
- * @typedef {Object} FullnessPattern
- * @property {MetricPattern2<T>} average
- * @property {MetricPattern11<T>} base
- * @property {MetricPattern2<T>} max
- * @property {MetricPattern6<T>} median
- * @property {MetricPattern2<T>} min
- * @property {MetricPattern6<T>} pct10
- * @property {MetricPattern6<T>} pct25
- * @property {MetricPattern6<T>} pct75
- * @property {MetricPattern6<T>} pct90
- */
-
-/**
- * Create a FullnessPattern pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {FullnessPattern<T>}
- */
-function createFullnessPattern(client, acc) {
-  return {
-    average: createMetricPattern2(client, _m(acc, "average")),
-    base: createMetricPattern11(client, acc),
-    max: createMetricPattern2(client, _m(acc, "max")),
-    median: createMetricPattern6(client, _m(acc, "median")),
-    min: createMetricPattern2(client, _m(acc, "min")),
-    pct10: createMetricPattern6(client, _m(acc, "pct10")),
-    pct25: createMetricPattern6(client, _m(acc, "pct25")),
-    pct75: createMetricPattern6(client, _m(acc, "pct75")),
-    pct90: createMetricPattern6(client, _m(acc, "pct90")),
-  };
-}
-
-/**
- * @template T
  * @typedef {Object} FeeRatePattern
  * @property {MetricPattern1<T>} average
  * @property {MetricPattern1<T>} max
@@ -3655,6 +3620,41 @@ function createFeeRatePattern(client, acc) {
     pct75: createMetricPattern11(client, _m(acc, "pct75")),
     pct90: createMetricPattern11(client, _m(acc, "pct90")),
     txindex: createMetricPattern27(client, acc),
+  };
+}
+
+/**
+ * @template T
+ * @typedef {Object} FullnessPattern
+ * @property {MetricPattern2<T>} average
+ * @property {MetricPattern11<T>} base
+ * @property {MetricPattern2<T>} max
+ * @property {MetricPattern6<T>} median
+ * @property {MetricPattern2<T>} min
+ * @property {MetricPattern6<T>} pct10
+ * @property {MetricPattern6<T>} pct25
+ * @property {MetricPattern6<T>} pct75
+ * @property {MetricPattern6<T>} pct90
+ */
+
+/**
+ * Create a FullnessPattern pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {FullnessPattern<T>}
+ */
+function createFullnessPattern(client, acc) {
+  return {
+    average: createMetricPattern2(client, _m(acc, "average")),
+    base: createMetricPattern11(client, acc),
+    max: createMetricPattern2(client, _m(acc, "max")),
+    median: createMetricPattern6(client, _m(acc, "median")),
+    min: createMetricPattern2(client, _m(acc, "min")),
+    pct10: createMetricPattern6(client, _m(acc, "pct10")),
+    pct25: createMetricPattern6(client, _m(acc, "pct25")),
+    pct75: createMetricPattern6(client, _m(acc, "pct75")),
+    pct90: createMetricPattern6(client, _m(acc, "pct90")),
   };
 }
 
@@ -3715,93 +3715,6 @@ function create_100btcPattern(client, acc) {
     relative: createRelativePattern(client, acc),
     supply: createSupplyPattern2(client, _m(acc, "supply")),
     unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} _10yTo12yPattern
- * @property {ActivityPattern2} activity
- * @property {CostBasisPattern2} costBasis
- * @property {OutputsPattern} outputs
- * @property {RealizedPattern2} realized
- * @property {RelativePattern2} relative
- * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
- */
-
-/**
- * Create a _10yTo12yPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_10yTo12yPattern}
- */
-function create_10yTo12yPattern(client, acc) {
-  return {
-    activity: createActivityPattern2(client, acc),
-    costBasis: createCostBasisPattern2(client, acc),
-    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
-    realized: createRealizedPattern2(client, acc),
-    relative: createRelativePattern2(client, acc),
-    supply: createSupplyPattern2(client, _m(acc, "supply")),
-    unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} _0satsPattern2
- * @property {ActivityPattern2} activity
- * @property {CostBasisPattern} costBasis
- * @property {OutputsPattern} outputs
- * @property {RealizedPattern} realized
- * @property {RelativePattern4} relative
- * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
- */
-
-/**
- * Create a _0satsPattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_0satsPattern2}
- */
-function create_0satsPattern2(client, acc) {
-  return {
-    activity: createActivityPattern2(client, acc),
-    costBasis: createCostBasisPattern(client, acc),
-    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
-    realized: createRealizedPattern(client, acc),
-    relative: createRelativePattern4(client, _m(acc, "supply_in")),
-    supply: createSupplyPattern2(client, _m(acc, "supply")),
-    unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} PeriodCagrPattern
- * @property {MetricPattern4<StoredF32>} _10y
- * @property {MetricPattern4<StoredF32>} _2y
- * @property {MetricPattern4<StoredF32>} _3y
- * @property {MetricPattern4<StoredF32>} _4y
- * @property {MetricPattern4<StoredF32>} _5y
- * @property {MetricPattern4<StoredF32>} _6y
- * @property {MetricPattern4<StoredF32>} _8y
- */
-
-/**
- * Create a PeriodCagrPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {PeriodCagrPattern}
- */
-function createPeriodCagrPattern(client, acc) {
-  return {
-    _10y: createMetricPattern4(client, _p("10y", acc)),
-    _2y: createMetricPattern4(client, _p("2y", acc)),
-    _3y: createMetricPattern4(client, _p("3y", acc)),
-    _4y: createMetricPattern4(client, _p("4y", acc)),
-    _5y: createMetricPattern4(client, _p("5y", acc)),
-    _6y: createMetricPattern4(client, _p("6y", acc)),
-    _8y: createMetricPattern4(client, _p("8y", acc)),
   };
 }
 
@@ -3879,6 +3792,93 @@ function create_10yPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} _0satsPattern2
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a _0satsPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_0satsPattern2}
+ */
+function create_0satsPattern2(client, acc) {
+  return {
+    activity: createActivityPattern2(client, acc),
+    costBasis: createCostBasisPattern(client, acc),
+    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
+    realized: createRealizedPattern(client, acc),
+    relative: createRelativePattern4(client, _m(acc, "supply_in")),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
+    unrealized: createUnrealizedPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} _10yTo12yPattern
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern2} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a _10yTo12yPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_10yTo12yPattern}
+ */
+function create_10yTo12yPattern(client, acc) {
+  return {
+    activity: createActivityPattern2(client, acc),
+    costBasis: createCostBasisPattern2(client, acc),
+    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
+    realized: createRealizedPattern2(client, acc),
+    relative: createRelativePattern2(client, acc),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
+    unrealized: createUnrealizedPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} PeriodCagrPattern
+ * @property {MetricPattern4<StoredF32>} _10y
+ * @property {MetricPattern4<StoredF32>} _2y
+ * @property {MetricPattern4<StoredF32>} _3y
+ * @property {MetricPattern4<StoredF32>} _4y
+ * @property {MetricPattern4<StoredF32>} _5y
+ * @property {MetricPattern4<StoredF32>} _6y
+ * @property {MetricPattern4<StoredF32>} _8y
+ */
+
+/**
+ * Create a PeriodCagrPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {PeriodCagrPattern}
+ */
+function createPeriodCagrPattern(client, acc) {
+  return {
+    _10y: createMetricPattern4(client, _p("10y", acc)),
+    _2y: createMetricPattern4(client, _p("2y", acc)),
+    _3y: createMetricPattern4(client, _p("3y", acc)),
+    _4y: createMetricPattern4(client, _p("4y", acc)),
+    _5y: createMetricPattern4(client, _p("5y", acc)),
+    _6y: createMetricPattern4(client, _p("6y", acc)),
+    _8y: createMetricPattern4(client, _p("8y", acc)),
+  };
+}
+
+/**
  * @typedef {Object} ActivityPattern2
  * @property {BlockCountPattern<StoredF64>} coinblocksDestroyed
  * @property {BlockCountPattern<StoredF64>} coindaysDestroyed
@@ -3941,44 +3941,23 @@ function createSplitPattern2(client, acc) {
 }
 
 /**
- * @typedef {Object} CoinbasePattern2
- * @property {BlockCountPattern<Bitcoin>} bitcoin
- * @property {BlockCountPattern<Dollars>} dollars
- * @property {BlockCountPattern<Sats>} sats
+ * @typedef {Object} CostBasisPattern2
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
  */
 
 /**
- * Create a CoinbasePattern2 pattern node
+ * Create a CostBasisPattern2 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {CoinbasePattern2}
+ * @returns {CostBasisPattern2}
  */
-function createCoinbasePattern2(client, acc) {
+function createCostBasisPattern2(client, acc) {
   return {
-    bitcoin: createBlockCountPattern(client, _m(acc, "btc")),
-    dollars: createBlockCountPattern(client, _m(acc, "usd")),
-    sats: createBlockCountPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} SegwitAdoptionPattern
- * @property {MetricPattern11<StoredF32>} base
- * @property {MetricPattern2<StoredF32>} cumulative
- * @property {MetricPattern2<StoredF32>} sum
- */
-
-/**
- * Create a SegwitAdoptionPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {SegwitAdoptionPattern}
- */
-function createSegwitAdoptionPattern(client, acc) {
-  return {
-    base: createMetricPattern11(client, acc),
-    cumulative: createMetricPattern2(client, _m(acc, "cumulative")),
-    sum: createMetricPattern2(client, _m(acc, "sum")),
+    max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
+    min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
+    percentiles: createPercentilesPattern(client, _m(acc, "cost_basis")),
   };
 }
 
@@ -4004,27 +3983,6 @@ function createCoinbasePattern(client, acc) {
 }
 
 /**
- * @typedef {Object} UnclaimedRewardsPattern
- * @property {BitcoinPattern2<Bitcoin>} bitcoin
- * @property {BlockCountPattern<Dollars>} dollars
- * @property {BlockCountPattern<Sats>} sats
- */
-
-/**
- * Create a UnclaimedRewardsPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {UnclaimedRewardsPattern}
- */
-function createUnclaimedRewardsPattern(client, acc) {
-  return {
-    bitcoin: createBitcoinPattern2(client, _m(acc, "btc")),
-    dollars: createBlockCountPattern(client, _m(acc, "usd")),
-    sats: createBlockCountPattern(client, acc),
-  };
-}
-
-/**
  * @typedef {Object} _2015Pattern
  * @property {MetricPattern4<Bitcoin>} bitcoin
  * @property {MetricPattern4<Dollars>} dollars
@@ -4042,27 +4000,6 @@ function create_2015Pattern(client, acc) {
     bitcoin: createMetricPattern4(client, _m(acc, "btc")),
     dollars: createMetricPattern4(client, _m(acc, "usd")),
     sats: createMetricPattern4(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} CostBasisPattern2
- * @property {MetricPattern1<Dollars>} max
- * @property {MetricPattern1<Dollars>} min
- * @property {PercentilesPattern} percentiles
- */
-
-/**
- * Create a CostBasisPattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CostBasisPattern2}
- */
-function createCostBasisPattern2(client, acc) {
-  return {
-    max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
-    min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
-    percentiles: createPercentilesPattern(client, _m(acc, "cost_basis")),
   };
 }
 
@@ -4088,21 +4025,103 @@ function createActiveSupplyPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} CostBasisPattern
- * @property {MetricPattern1<Dollars>} max
- * @property {MetricPattern1<Dollars>} min
+ * @typedef {Object} SegwitAdoptionPattern
+ * @property {MetricPattern11<StoredF32>} base
+ * @property {MetricPattern2<StoredF32>} cumulative
+ * @property {MetricPattern2<StoredF32>} sum
  */
 
 /**
- * Create a CostBasisPattern pattern node
+ * Create a SegwitAdoptionPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {CostBasisPattern}
+ * @returns {SegwitAdoptionPattern}
  */
-function createCostBasisPattern(client, acc) {
+function createSegwitAdoptionPattern(client, acc) {
   return {
-    max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
-    min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
+    base: createMetricPattern11(client, acc),
+    cumulative: createMetricPattern2(client, _m(acc, "cumulative")),
+    sum: createMetricPattern2(client, _m(acc, "sum")),
+  };
+}
+
+/**
+ * @typedef {Object} CoinbasePattern2
+ * @property {BlockCountPattern<Bitcoin>} bitcoin
+ * @property {BlockCountPattern<Dollars>} dollars
+ * @property {BlockCountPattern<Sats>} sats
+ */
+
+/**
+ * Create a CoinbasePattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CoinbasePattern2}
+ */
+function createCoinbasePattern2(client, acc) {
+  return {
+    bitcoin: createBlockCountPattern(client, _m(acc, "btc")),
+    dollars: createBlockCountPattern(client, _m(acc, "usd")),
+    sats: createBlockCountPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} UnclaimedRewardsPattern
+ * @property {BitcoinPattern2<Bitcoin>} bitcoin
+ * @property {BlockCountPattern<Dollars>} dollars
+ * @property {BlockCountPattern<Sats>} sats
+ */
+
+/**
+ * Create a UnclaimedRewardsPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {UnclaimedRewardsPattern}
+ */
+function createUnclaimedRewardsPattern(client, acc) {
+  return {
+    bitcoin: createBitcoinPattern2(client, _m(acc, "btc")),
+    dollars: createBlockCountPattern(client, _m(acc, "usd")),
+    sats: createBlockCountPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} _1dReturns1mSdPattern
+ * @property {MetricPattern4<StoredF32>} sd
+ * @property {MetricPattern4<StoredF32>} sma
+ */
+
+/**
+ * Create a _1dReturns1mSdPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_1dReturns1mSdPattern}
+ */
+function create_1dReturns1mSdPattern(client, acc) {
+  return {
+    sd: createMetricPattern4(client, _m(acc, "sd")),
+    sma: createMetricPattern4(client, _m(acc, "sma")),
+  };
+}
+
+/**
+ * @typedef {Object} SupplyPattern2
+ * @property {ActiveSupplyPattern} halved
+ * @property {ActiveSupplyPattern} total
+ */
+
+/**
+ * Create a SupplyPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {SupplyPattern2}
+ */
+function createSupplyPattern2(client, acc) {
+  return {
+    halved: createActiveSupplyPattern(client, _m(acc, "halved")),
+    total: createActiveSupplyPattern(client, acc),
   };
 }
 
@@ -4132,40 +4151,21 @@ function createRelativePattern4(client, acc) {
 }
 
 /**
- * @typedef {Object} SupplyPattern2
- * @property {ActiveSupplyPattern} halved
- * @property {ActiveSupplyPattern} total
+ * @typedef {Object} CostBasisPattern
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
  */
 
 /**
- * Create a SupplyPattern2 pattern node
+ * Create a CostBasisPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {SupplyPattern2}
+ * @returns {CostBasisPattern}
  */
-function createSupplyPattern2(client, acc) {
+function createCostBasisPattern(client, acc) {
   return {
-    halved: createActiveSupplyPattern(client, _m(acc, "halved")),
-    total: createActiveSupplyPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} _1dReturns1mSdPattern
- * @property {MetricPattern4<StoredF32>} sd
- * @property {MetricPattern4<StoredF32>} sma
- */
-
-/**
- * Create a _1dReturns1mSdPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_1dReturns1mSdPattern}
- */
-function create_1dReturns1mSdPattern(client, acc) {
-  return {
-    sd: createMetricPattern4(client, _m(acc, "sd")),
-    sma: createMetricPattern4(client, _m(acc, "sma")),
+    max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
+    min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
   };
 }
 
@@ -4227,25 +4227,8 @@ function createBlockCountPattern(client, acc) {
  */
 function createSatsPattern(client, acc) {
   return {
-    ohlc: createMetricPattern1(client, _m(acc, "ohlc")),
-    split: createSplitPattern2(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} OutputsPattern
- * @property {MetricPattern1<StoredU64>} utxoCount
- */
-
-/**
- * Create a OutputsPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {OutputsPattern}
- */
-function createOutputsPattern(client, acc) {
-  return {
-    utxoCount: createMetricPattern1(client, acc),
+    ohlc: createMetricPattern1(client, _m(acc, "ohlc_sats")),
+    split: createSplitPattern2(client, _m(acc, "sats")),
   };
 }
 
@@ -4263,6 +4246,23 @@ function createOutputsPattern(client, acc) {
 function createRealizedPriceExtraPattern(client, acc) {
   return {
     ratio: createMetricPattern4(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} OutputsPattern
+ * @property {MetricPattern1<StoredU64>} utxoCount
+ */
+
+/**
+ * Create a OutputsPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {OutputsPattern}
+ */
+function createOutputsPattern(client, acc) {
+  return {
+    utxoCount: createMetricPattern1(client, acc),
   };
 }
 

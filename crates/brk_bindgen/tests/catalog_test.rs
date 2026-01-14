@@ -861,3 +861,83 @@ fn test_root_cost_basis_prefix() {
     let nested_prefix = find_common_prefix(&nested_bases);
     println!("Nested cost_basis prefix: {:?}", nested_prefix);
 }
+
+#[test]
+fn test_price_sats_vs_usd_different_field_parts() {
+    // This test verifies that price.sats and price.usd, which have the same structure
+    // but different metric naming conventions, are handled correctly.
+    //
+    // price.sats has: price_ohlc_sats, price_sats_close, price_sats_high, etc.
+    // price.usd has: price_ohlc, price_close, price_high, etc.
+    //
+    // Both should use the same structural pattern but with different base arguments.
+
+    let catalog = load_catalog();
+    let metadata = ClientMetadata::from_catalog(catalog.clone());
+
+    // Generate JavaScript output
+    let mut js_output = String::new();
+    writeln!(js_output, "// Test output").unwrap();
+    brk_bindgen::javascript::client::generate_base_client(&mut js_output);
+    brk_bindgen::javascript::client::generate_index_accessors(
+        &mut js_output,
+        &metadata.index_set_patterns,
+    );
+    brk_bindgen::javascript::client::generate_structural_patterns(
+        &mut js_output,
+        &metadata.structural_patterns,
+        &metadata,
+    );
+    brk_bindgen::javascript::tree::generate_tree_typedefs(
+        &mut js_output,
+        &metadata.catalog,
+        &metadata,
+    );
+    brk_bindgen::javascript::tree::generate_main_client(
+        &mut js_output,
+        &metadata.catalog,
+        &metadata,
+        &[],
+    );
+
+    // Verify price.sats uses sats-suffixed metrics
+    assert!(
+        js_output.contains("'price_ohlc_sats'"),
+        "price.sats.ohlc should use 'price_ohlc_sats'"
+    );
+    assert!(
+        js_output.contains("'price_sats'") || js_output.contains("createSplitPattern2(this, 'price_sats')"),
+        "price.sats.split should use 'price_sats' base"
+    );
+
+    // Verify price.usd uses non-sats metrics (no _sats suffix)
+    assert!(
+        js_output.contains("createMetricPattern1(this, 'price_ohlc')"),
+        "price.usd.ohlc should use 'price_ohlc' (without _sats)"
+    );
+    assert!(
+        js_output.contains("createSplitPattern2(this, 'price')"),
+        "price.usd.split should use 'price' base (without _sats)"
+    );
+
+    // Verify they don't incorrectly share the same metric names
+    // Count occurrences to ensure usd doesn't use sats metrics
+    let sats_ohlc_count = js_output.matches("'price_ohlc_sats'").count();
+    let usd_ohlc_count = js_output.matches("'price_ohlc')").count();
+
+    println!("price_ohlc_sats occurrences: {}", sats_ohlc_count);
+    println!("price_ohlc occurrences: {}", usd_ohlc_count);
+
+    assert!(
+        sats_ohlc_count >= 1,
+        "Should have at least one 'price_ohlc_sats' for price.sats"
+    );
+    assert!(
+        usd_ohlc_count >= 1,
+        "Should have at least one 'price_ohlc' for price.usd"
+    );
+
+    println!("\nPrice sats vs usd field_parts test passed!");
+    println!("  - price.sats correctly uses sats-suffixed metrics");
+    println!("  - price.usd correctly uses non-sats metrics");
+}
