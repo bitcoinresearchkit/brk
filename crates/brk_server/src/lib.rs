@@ -22,7 +22,7 @@ use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 use tracing::{error, info};
 
 /// Embedded website assets
-pub static EMBEDDED_WEBSITE: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../website");
+pub static EMBEDDED_WEBSITE: Dir = include_dir!("$CARGO_MANIFEST_DIR/website");
 
 /// Source for serving the website
 #[derive(Debug, Clone)]

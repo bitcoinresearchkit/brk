@@ -15,8 +15,8 @@ CRATES=(
     brk_store
     brk_traversable_derive
     brk_traversable
-    brk_grouper
     brk_bencher
+    brk_cohort
     brk_indexer
     brk_computer
     brk_query
