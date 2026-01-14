@@ -16,5 +16,8 @@ cd "$ROOT_DIR/packages/brk_client"
 sed -i '' 's/^version = "[^"]*"/version = "'"$VERSION"'"/' pyproject.toml
 echo "Updated pyproject.toml to $VERSION"
 
+# Clean old build artifacts
+rm -rf dist
+
 uv build
 uv publish

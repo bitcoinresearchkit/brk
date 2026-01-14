@@ -16,4 +16,15 @@ cd "$ROOT_DIR/modules/brk-client"
 sed -i '' 's/"version": "[^"]*"/"version": "'"$VERSION"'"/' package.json
 echo "Updated package.json to $VERSION"
 
-npm publish --access public
+# Determine npm tag based on version
+if [[ "$VERSION" == *"-alpha"* ]]; then
+    NPM_TAG="alpha"
+elif [[ "$VERSION" == *"-beta"* ]]; then
+    NPM_TAG="beta"
+elif [[ "$VERSION" == *"-rc"* ]]; then
+    NPM_TAG="rc"
+else
+    NPM_TAG="latest"
+fi
+
+npm publish --access public --tag "$NPM_TAG"

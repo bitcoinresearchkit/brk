@@ -23,6 +23,7 @@ CRATES=(
     brk_bindgen
     brk_mcp
     brk_server
+    brk_client
     brk
     brk_cli
 )
