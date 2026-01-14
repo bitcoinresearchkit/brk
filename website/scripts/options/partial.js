@@ -1,6 +1,5 @@
 /** Partial options - Main entry point */
 
-import { localhost } from "../utils/env.js";
 import { createContext } from "./context.js";
 import {
   buildCohortData,
@@ -45,6 +44,7 @@ export function createPartialOptions({ colors, brk }) {
     utxosAmountRanges,
     addressesAmountRanges,
     type,
+    year,
   } = buildCohortData(colors, brk);
 
   // Helpers to map cohorts by capability type
@@ -58,16 +58,16 @@ export function createPartialOptions({ colors, brk }) {
   const mapAddressCohorts = (cohort) => createAddressCohortFolder(ctx, cohort);
 
   return [
-    // Debug explorer (localhost only)
-    ...(localhost
-      ? [
-          {
-            kind: /** @type {const} */ ("explorer"),
-            name: "Explorer",
-            title: "Debug explorer",
-          },
-        ]
-      : []),
+    // Debug explorer (disabled)
+    // ...(localhost
+    //   ? [
+    //       {
+    //         kind: /** @type {const} */ ("explorer"),
+    //         name: "Explorer",
+    //         title: "Debug explorer",
+    //       },
+    //     ]
+    //   : []),
 
     // Charts section
     {
@@ -88,7 +88,7 @@ export function createPartialOptions({ colors, brk }) {
 
             // Terms (STH/LTH) - Short is Full, Long is WithPercentiles
             {
-              name: "terms",
+              name: "Terms",
               tree: [
                 // Individual cohorts with their specific capabilities
                 createCohortFolderFull(ctx, termShort),
@@ -96,7 +96,149 @@ export function createPartialOptions({ colors, brk }) {
               ],
             },
 
-            // Epochs - CohortBasic (neither adjustedSopr nor percentiles)
+            // Types - CohortBasic
+            {
+              name: "Types",
+              tree: [
+                createCohortFolderBasic(ctx, {
+                  name: "Compare",
+                  title: "Type",
+                  list: type,
+                }),
+                ...type.map(mapBasic),
+              ],
+            },
+
+            // Age cohorts
+            {
+              name: "Age",
+              tree: [
+                // Up To (< X old)
+                {
+                  name: "Up To",
+                  tree: [
+                    createCohortFolderWithAdjusted(ctx, {
+                      name: "Compare",
+                      title: "Age Up To",
+                      list: upToDate,
+                    }),
+                    ...upToDate.map(mapWithAdjusted),
+                  ],
+                },
+                // At Least (≥ X old)
+                {
+                  name: "At Least",
+                  tree: [
+                    createCohortFolderBasic(ctx, {
+                      name: "Compare",
+                      title: "Age At Least",
+                      list: fromDate,
+                    }),
+                    ...fromDate.map(mapBasic),
+                  ],
+                },
+                // Range
+                {
+                  name: "Range",
+                  tree: [
+                    createCohortFolderWithPercentiles(ctx, {
+                      name: "Compare",
+                      title: "Age Range",
+                      list: dateRange,
+                    }),
+                    ...dateRange.map(mapWithPercentiles),
+                  ],
+                },
+              ],
+            },
+
+            // Amount cohorts (UTXO size)
+            {
+              name: "Amount",
+              tree: [
+                // Under (< X sats)
+                {
+                  name: "Under",
+                  tree: [
+                    createCohortFolderBasic(ctx, {
+                      name: "Compare",
+                      title: "Amount Under",
+                      list: utxosUnderAmount,
+                    }),
+                    ...utxosUnderAmount.map(mapBasic),
+                  ],
+                },
+                // Above (≥ X sats)
+                {
+                  name: "Above",
+                  tree: [
+                    createCohortFolderBasic(ctx, {
+                      name: "Compare",
+                      title: "Amount Above",
+                      list: utxosAboveAmount,
+                    }),
+                    ...utxosAboveAmount.map(mapBasic),
+                  ],
+                },
+                // Range
+                {
+                  name: "Range",
+                  tree: [
+                    createCohortFolderBasic(ctx, {
+                      name: "Compare",
+                      title: "Amount Range",
+                      list: utxosAmountRanges,
+                    }),
+                    ...utxosAmountRanges.map(mapBasic),
+                  ],
+                },
+              ],
+            },
+
+            // Balance cohorts (Address balance)
+            {
+              name: "Balance",
+              tree: [
+                // Under (< X sats)
+                {
+                  name: "Under",
+                  tree: [
+                    createAddressCohortFolder(ctx, {
+                      name: "Compare",
+                      title: "Balance Under",
+                      list: addressesUnderAmount,
+                    }),
+                    ...addressesUnderAmount.map(mapAddressCohorts),
+                  ],
+                },
+                // Above (≥ X sats)
+                {
+                  name: "Above",
+                  tree: [
+                    createAddressCohortFolder(ctx, {
+                      name: "Compare",
+                      title: "Balance Above",
+                      list: addressesAboveAmount,
+                    }),
+                    ...addressesAboveAmount.map(mapAddressCohorts),
+                  ],
+                },
+                // Range
+                {
+                  name: "Range",
+                  tree: [
+                    createAddressCohortFolder(ctx, {
+                      name: "Compare",
+                      title: "Balance Range",
+                      list: addressesAmountRanges,
+                    }),
+                    ...addressesAmountRanges.map(mapAddressCohorts),
+                  ],
+                },
+              ],
+            },
+
+            // Epochs - CohortBasic
             {
               name: "Epochs",
               tree: [
@@ -109,133 +251,16 @@ export function createPartialOptions({ colors, brk }) {
               ],
             },
 
-            // Types - CohortBasic
+            // Years - CohortBasic
             {
-              name: "types",
+              name: "Years",
               tree: [
                 createCohortFolderBasic(ctx, {
                   name: "Compare",
-                  title: "Type",
-                  list: type,
+                  title: "Year",
+                  list: year,
                 }),
-                ...type.map(mapBasic),
-              ],
-            },
-
-            // UTXOs Up to age - CohortWithAdjusted (adjustedSopr only)
-            {
-              name: "UTXOs Up to age",
-              tree: [
-                createCohortFolderWithAdjusted(ctx, {
-                  name: "Compare",
-                  title: "UTXOs Up To Age",
-                  list: upToDate,
-                }),
-                ...upToDate.map(mapWithAdjusted),
-              ],
-            },
-
-            // UTXOs from age - CohortBasic
-            {
-              name: "UTXOs from age",
-              tree: [
-                createCohortFolderBasic(ctx, {
-                  name: "Compare",
-                  title: "UTXOs from age",
-                  list: fromDate,
-                }),
-                ...fromDate.map(mapBasic),
-              ],
-            },
-
-            // UTXOs age ranges - CohortWithPercentiles (percentiles only)
-            {
-              name: "UTXOs age Ranges",
-              tree: [
-                createCohortFolderWithPercentiles(ctx, {
-                  name: "Compare",
-                  title: "UTXOs Age Range",
-                  list: dateRange,
-                }),
-                ...dateRange.map(mapWithPercentiles),
-              ],
-            },
-
-            // UTXOs under amounts - CohortBasic
-            {
-              name: "UTXOs under amounts",
-              tree: [
-                createCohortFolderBasic(ctx, {
-                  name: "Compare",
-                  title: "UTXOs under amount",
-                  list: utxosUnderAmount,
-                }),
-                ...utxosUnderAmount.map(mapBasic),
-              ],
-            },
-
-            // UTXOs above amounts - CohortBasic
-            {
-              name: "UTXOs Above Amounts",
-              tree: [
-                createCohortFolderBasic(ctx, {
-                  name: "Compare",
-                  title: "UTXOs Above Amount",
-                  list: utxosAboveAmount,
-                }),
-                ...utxosAboveAmount.map(mapBasic),
-              ],
-            },
-
-            // UTXOs between amounts - CohortBasic
-            {
-              name: "UTXOs between amounts",
-              tree: [
-                createCohortFolderBasic(ctx, {
-                  name: "Compare",
-                  title: "UTXOs between amounts",
-                  list: utxosAmountRanges,
-                }),
-                ...utxosAmountRanges.map(mapBasic),
-              ],
-            },
-
-            // Addresses under amount (TYPE SAFE - uses createAddressCohortFolder!)
-            {
-              name: "Addresses under amount",
-              tree: [
-                createAddressCohortFolder(ctx, {
-                  name: "Compare",
-                  title: "Addresses under Amount",
-                  list: addressesUnderAmount,
-                }),
-                ...addressesUnderAmount.map(mapAddressCohorts),
-              ],
-            },
-
-            // Addresses above amount (TYPE SAFE - uses createAddressCohortFolder!)
-            {
-              name: "Addresses above amount",
-              tree: [
-                createAddressCohortFolder(ctx, {
-                  name: "Compare",
-                  title: "Addresses above amount",
-                  list: addressesAboveAmount,
-                }),
-                ...addressesAboveAmount.map(mapAddressCohorts),
-              ],
-            },
-
-            // Addresses between amounts (TYPE SAFE - uses createAddressCohortFolder!)
-            {
-              name: "Addresses between amounts",
-              tree: [
-                createAddressCohortFolder(ctx, {
-                  name: "Compare",
-                  title: "Addresses between amounts",
-                  list: addressesAmountRanges,
-                }),
-                ...addressesAmountRanges.map(mapAddressCohorts),
+                ...year.map(mapBasic),
               ],
             },
           ],
@@ -246,117 +271,37 @@ export function createPartialOptions({ colors, brk }) {
       ],
     },
 
-    // Table section
+    // Table section (disabled)
+    // {
+    //   kind: /** @type {const} */ ("table"),
+    //   title: "Table",
+    //   name: "Table",
+    // },
+
+    // Simulations section (disabled)
+    // {
+    //   name: "Simulations",
+    //   tree: [
+    //     {
+    //       kind: /** @type {const} */ ("simulation"),
+    //       name: "Save In Bitcoin",
+    //       title: "Save In Bitcoin",
+    //     },
+    //   ],
+    // },
+
+    // API documentation
     {
-      kind: /** @type {const} */ ("table"),
-      title: "Table",
-      name: "Table",
+      name: "API",
+      url: () => "/api",
+      title: "API documentation",
     },
 
-    // Simulations section
+    // Project link
     {
-      name: "Simulations",
-      tree: [
-        {
-          kind: /** @type {const} */ ("simulation"),
-          name: "Save In Bitcoin",
-          title: "Save In Bitcoin",
-        },
-      ],
-    },
-
-    // Tools section
-    {
-      name: "Tools",
-      tree: [
-        {
-          name: "Documentation",
-          tree: [
-            {
-              name: "API",
-              url: () => "/api",
-              title: "API documentation",
-            },
-            {
-              name: "MCP",
-              url: () =>
-                "https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_mcp/README.md#brk_mcp",
-              title: "Model Context Protocol documentation",
-            },
-            {
-              name: "Crate",
-              url: () => "/crate",
-              title: "View on crates.io",
-            },
-            {
-              name: "Source",
-              url: () => "/github",
-              title: "Source code and issues",
-            },
-            {
-              name: "Changelog",
-              url: () => "/changelog",
-              title: "Release notes and changelog",
-            },
-          ],
-        },
-        {
-          name: "Hosting",
-          tree: [
-            {
-              name: "Status",
-              url: () => "/status",
-              title: "Service status and uptime",
-            },
-            {
-              name: "Self-host",
-              url: () => "/install",
-              title: "Install and run yourself",
-            },
-            {
-              name: "Service",
-              url: () => "/service",
-              title: "Hosted service offering",
-            },
-          ],
-        },
-        {
-          name: "Community",
-          tree: [
-            {
-              name: "Discord",
-              url: () => "/discord",
-              title: "Join the Discord server",
-            },
-            {
-              name: "GitHub",
-              url: () => "/github",
-              title: "Source code and issues",
-            },
-            {
-              name: "Nostr",
-              url: () => "/nostr",
-              title: "Follow on Nostr",
-            },
-          ],
-        },
-      ],
-    },
-
-    // Donate
-    {
-      name: "Donate",
-      qrcode: true,
-      url: () => "bitcoin:bc1q098zsm89m7kgyze338vfejhpdt92ua9p3peuve",
-      title: "Bitcoin address for donations",
-    },
-
-    // Share
-    {
-      name: "Share",
-      qrcode: true,
-      url: () => window.location.href,
-      title: "Share",
+      name: "Source",
+      url: () => "https://bitcoinresearchkit.org",
+      title: "Bitcoin Research Kit",
     },
   ];
 }

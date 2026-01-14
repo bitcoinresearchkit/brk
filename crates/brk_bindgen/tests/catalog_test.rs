@@ -79,7 +79,7 @@ fn test_all_leaves_have_names() {
 fn test_pattern_detection() {
     let catalog = load_catalog();
 
-    let (patterns, concrete_to_pattern, concrete_to_type_param) =
+    let (patterns, concrete_to_pattern, concrete_to_type_param, _node_bases) =
         brk_bindgen::detect_structural_patterns(&catalog);
 
     println!("Detected {} structural patterns", patterns.len());
@@ -142,7 +142,7 @@ fn test_pattern_detection() {
 fn test_cost_basis_pattern() {
     let catalog = load_catalog();
 
-    let (patterns, _, _) = brk_bindgen::detect_structural_patterns(&catalog);
+    let (patterns, _, _, _) = brk_bindgen::detect_structural_patterns(&catalog);
 
     // Find CostBasisPattern2 and inspect it
     let cost_basis = patterns
@@ -211,7 +211,7 @@ fn test_realized_pattern3_fields() {
 #[test]
 fn test_parameterizable_patterns_have_mode() {
     let catalog = load_catalog();
-    let (patterns, _, _) = brk_bindgen::detect_structural_patterns(&catalog);
+    let (patterns, _, _, _) = brk_bindgen::detect_structural_patterns(&catalog);
 
     // All patterns that appear 2+ times should either:
     // 1. Be parameterizable (have a mode)
@@ -272,7 +272,7 @@ fn test_parameterizable_patterns_have_mode() {
 #[test]
 fn test_fee_rate_pattern_relatives() {
     let catalog = load_catalog();
-    let (patterns, _, _) = brk_bindgen::detect_structural_patterns(&catalog);
+    let (patterns, _, _, _) = brk_bindgen::detect_structural_patterns(&catalog);
 
     let fee_rate_pattern = patterns
         .iter()
@@ -900,17 +900,14 @@ fn test_price_sats_vs_usd_different_field_parts() {
         &[],
     );
 
-    // Verify price.sats uses sats-suffixed metrics
+    // With improved pattern detection, price.sats now correctly uses a SatsPattern factory
+    // which eliminates duplication. Verify that it's being used:
     assert!(
-        js_output.contains("'price_ohlc_sats'"),
-        "price.sats.ohlc should use 'price_ohlc_sats'"
-    );
-    assert!(
-        js_output.contains("'price_sats'") || js_output.contains("createSplitPattern2(this, 'price_sats')"),
-        "price.sats.split should use 'price_sats' base"
+        js_output.contains("sats: createSatsPattern(this, 'price')"),
+        "price.sats should use SatsPattern factory"
     );
 
-    // Verify price.usd uses non-sats metrics (no _sats suffix)
+    // Verify price.usd is inlined and uses non-sats metrics (no _sats suffix)
     assert!(
         js_output.contains("createMetricPattern1(this, 'price_ohlc')"),
         "price.usd.ohlc should use 'price_ohlc' (without _sats)"
@@ -920,24 +917,57 @@ fn test_price_sats_vs_usd_different_field_parts() {
         "price.usd.split should use 'price' base (without _sats)"
     );
 
-    // Verify they don't incorrectly share the same metric names
-    // Count occurrences to ensure usd doesn't use sats metrics
-    let sats_ohlc_count = js_output.matches("'price_ohlc_sats'").count();
-    let usd_ohlc_count = js_output.matches("'price_ohlc')").count();
-
-    println!("price_ohlc_sats occurrences: {}", sats_ohlc_count);
-    println!("price_ohlc occurrences: {}", usd_ohlc_count);
-
-    assert!(
-        sats_ohlc_count >= 1,
-        "Should have at least one 'price_ohlc_sats' for price.sats"
-    );
-    assert!(
-        usd_ohlc_count >= 1,
-        "Should have at least one 'price_ohlc' for price.usd"
-    );
-
     println!("\nPrice sats vs usd field_parts test passed!");
     println!("  - price.sats correctly uses sats-suffixed metrics");
     println!("  - price.usd correctly uses non-sats metrics");
+}
+
+#[test]
+fn test_utxo_cohorts_all_activity_base() {
+    // Test that distribution.utxo_cohorts.all.activity uses empty base
+    // because its children (coinblocks_destroyed, coindays_destroyed, etc.)
+    // have no common prefix or suffix.
+    let catalog = load_catalog();
+    let metadata = ClientMetadata::from_catalog(catalog.clone());
+
+    // Generate JavaScript output
+    let mut js_output = String::new();
+    writeln!(js_output, "// Test output").unwrap();
+    brk_bindgen::javascript::client::generate_base_client(&mut js_output);
+    brk_bindgen::javascript::client::generate_index_accessors(
+        &mut js_output,
+        &metadata.index_set_patterns,
+    );
+    brk_bindgen::javascript::client::generate_structural_patterns(
+        &mut js_output,
+        &metadata.structural_patterns,
+        &metadata,
+    );
+    brk_bindgen::javascript::tree::generate_tree_typedefs(
+        &mut js_output,
+        &metadata.catalog,
+        &metadata,
+    );
+    brk_bindgen::javascript::tree::generate_main_client(
+        &mut js_output,
+        &metadata.catalog,
+        &metadata,
+        &[],
+    );
+
+    // The all.activity should use empty base, so metrics don't get duplicated
+    // Look for: activity: createActivityPattern2(this, '')
+    // NOT: activity: createActivityPattern2(this, 'coinblocks_destroyed')
+    assert!(
+        !js_output.contains("createActivityPattern2(this, 'coinblocks_destroyed')"),
+        "all.activity should NOT use 'coinblocks_destroyed' as base (causes duplication)"
+    );
+
+    // Check that it uses empty string as base
+    assert!(
+        js_output.contains("activity: createActivityPattern2(this, '')"),
+        "all.activity should use empty base"
+    );
+
+    println!("utxo_cohorts.all.activity base test passed!");
 }

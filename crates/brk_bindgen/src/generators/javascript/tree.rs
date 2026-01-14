@@ -6,8 +6,8 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, Endpoint, GenericSyntax, JavaScriptSyntax, PatternField, generate_leaf_field,
-    prepare_tree_node, to_camel_case,
+    ClientMetadata, Endpoint, GenericSyntax, JavaScriptSyntax, PatternField, build_child_path,
+    generate_leaf_field, prepare_tree_node, to_camel_case,
 };
 
 use super::api::generate_api_methods;
@@ -22,6 +22,7 @@ pub fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata:
     generate_tree_typedef(
         output,
         "MetricsTree",
+        "",
         catalog,
         &pattern_lookup,
         metadata,
@@ -32,12 +33,13 @@ pub fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata:
 fn generate_tree_typedef(
     output: &mut String,
     name: &str,
+    path: &str,
     node: &TreeNode,
     pattern_lookup: &std::collections::HashMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
     generated: &mut HashSet<String>,
 ) {
-    let Some(ctx) = prepare_tree_node(node, name, pattern_lookup, metadata, generated) else {
+    let Some(ctx) = prepare_tree_node(node, name, path, pattern_lookup, metadata, generated) else {
         return;
     };
 
@@ -71,9 +73,11 @@ fn generate_tree_typedef(
     // Generate child typedefs
     for child in &ctx.children {
         if child.should_inline {
+            let child_path = build_child_path(path, child.name);
             generate_tree_typedef(
                 output,
                 &child.inline_type_name,
+                &child_path,
                 child.node,
                 pattern_lookup,
                 metadata,
@@ -125,6 +129,7 @@ pub fn generate_main_client(
         output,
         catalog,
         "MetricsTree",
+        "",
         3,
         &pattern_lookup,
         metadata,
@@ -166,10 +171,12 @@ pub fn generate_main_client(
     writeln!(output, "export {{ BrkClient, BrkError }};").unwrap();
 }
 
+#[allow(clippy::too_many_arguments)]
 fn generate_tree_initializer(
     output: &mut String,
     node: &TreeNode,
     name: &str,
+    path: &str,
     indent: usize,
     pattern_lookup: &std::collections::HashMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
@@ -177,7 +184,7 @@ fn generate_tree_initializer(
 ) {
     let indent_str = "  ".repeat(indent);
 
-    let Some(ctx) = prepare_tree_node(node, name, pattern_lookup, metadata, generated) else {
+    let Some(ctx) = prepare_tree_node(node, name, path, pattern_lookup, metadata, generated) else {
         return;
     };
 
@@ -199,11 +206,13 @@ fn generate_tree_initializer(
             }
         } else if child.should_inline {
             // Inline object
+            let child_path = build_child_path(path, child.name);
             writeln!(output, "{}{}: {{", indent_str, field_name).unwrap();
             generate_tree_initializer(
                 output,
                 child.node,
                 &child.inline_type_name,
+                &child_path,
                 indent + 1,
                 pattern_lookup,
                 metadata,

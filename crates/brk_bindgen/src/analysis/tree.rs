@@ -9,15 +9,7 @@ use brk_types::{Index, TreeNode, extract_json_type};
 
 use crate::{IndexSetPattern, PatternField, child_type_name};
 
-use super::{find_common_prefix, find_common_suffix};
-
-/// Get the first leaf name from a tree node.
-pub fn get_first_leaf_name(node: &TreeNode) -> Option<String> {
-    match node {
-        TreeNode::Leaf(leaf) => Some(leaf.name().to_string()),
-        TreeNode::Branch(children) => children.values().find_map(get_first_leaf_name),
-    }
-}
+use super::{find_common_prefix, find_common_suffix, normalize_prefix};
 
 /// Get the shortest leaf name from a tree node.
 ///
@@ -128,6 +120,30 @@ pub struct PatternBaseResult {
     pub field_parts: HashMap<String, String>,
 }
 
+impl PatternBaseResult {
+    /// Create a default result that forces inlining (has_outlier = true).
+    /// Use when no pattern base could be computed during lookup.
+    pub fn force_inline() -> Self {
+        Self {
+            base: String::new(),
+            has_outlier: true,
+            is_suffix_mode: true,
+            field_parts: HashMap::new(),
+        }
+    }
+
+    /// Create an empty result with no outlier.
+    /// Use for root-level patterns or when children have no common pattern.
+    pub fn empty() -> Self {
+        Self {
+            base: String::new(),
+            has_outlier: false,
+            is_suffix_mode: true,
+            field_parts: HashMap::new(),
+        }
+    }
+}
+
 /// Get the metric base for a pattern instance by analyzing direct children.
 ///
 /// Uses the shortest leaf names from direct children to find common prefix/suffix.
@@ -140,12 +156,7 @@ pub struct PatternBaseResult {
 pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
     let child_names = get_direct_children_for_analysis(node);
     if child_names.is_empty() {
-        return PatternBaseResult {
-            base: String::new(),
-            has_outlier: false,
-            is_suffix_mode: true, // default
-            field_parts: HashMap::new(),
-        };
+        return PatternBaseResult::empty();
     }
 
     // Try to find common base from leaf names
@@ -181,12 +192,7 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
 
     // Fallback: no common prefix/suffix found - this is a root-level pattern
     // Return empty base so metric names are used directly
-    PatternBaseResult {
-        base: String::new(),
-        has_outlier: false,
-        is_suffix_mode: true, // default
-        field_parts: HashMap::new(),
-    }
+    PatternBaseResult::empty()
 }
 
 /// Result of try_find_base: base name, has_outlier flag, is_suffix_mode flag, and field_parts.
@@ -199,7 +205,10 @@ struct FindBaseResult {
 
 /// Try to find a common base from child names using prefix/suffix detection.
 /// Returns Some(FindBaseResult) if found.
-fn try_find_base(child_names: &[(String, String)], is_outlier_attempt: bool) -> Option<FindBaseResult> {
+fn try_find_base(
+    child_names: &[(String, String)],
+    is_outlier_attempt: bool,
+) -> Option<FindBaseResult> {
     let leaf_names: Vec<&str> = child_names.iter().map(|(_, n)| n.as_str()).collect();
 
     // Try common prefix first (suffix mode)
@@ -231,18 +240,10 @@ fn try_find_base(child_names: &[(String, String)], is_outlier_attempt: bool) -> 
         let base = suffix.trim_start_matches('_').to_string();
         let mut field_parts = HashMap::new();
         for (field_name, leaf_name) in child_names {
-            // Compute the prefix part for this field
+            // Compute the prefix part for this field, normalized to end with _
             let prefix_part = leaf_name
                 .strip_suffix(&suffix)
-                .map(|s| {
-                    if s.is_empty() {
-                        String::new()
-                    } else if s.ends_with('_') {
-                        s.to_string()
-                    } else {
-                        format!("{}_", s)
-                    }
-                })
+                .map(normalize_prefix)
                 .unwrap_or_default();
             field_parts.insert(field_name.clone(), prefix_part);
         }
@@ -366,9 +367,18 @@ mod tests {
     fn test_get_pattern_instance_base_with_base_field() {
         // Simulates vbytes tree: has base field with block_vbytes leaf
         let tree = make_branch(vec![
-            ("base", make_branch(vec![("dateindex", make_leaf("block_vbytes"))])),
-            ("average", make_branch(vec![("dateindex", make_leaf("block_vbytes_average"))])),
-            ("sum", make_branch(vec![("dateindex", make_leaf("block_vbytes_sum"))])),
+            (
+                "base",
+                make_branch(vec![("dateindex", make_leaf("block_vbytes"))]),
+            ),
+            (
+                "average",
+                make_branch(vec![("dateindex", make_leaf("block_vbytes_average"))]),
+            ),
+            (
+                "sum",
+                make_branch(vec![("dateindex", make_leaf("block_vbytes_sum"))]),
+            ),
         ]);
 
         let result = get_pattern_instance_base(&tree);
@@ -380,11 +390,26 @@ mod tests {
     fn test_get_pattern_instance_base_without_base_field() {
         // Simulates weight tree: NO base field, only suffixed metrics
         let tree = make_branch(vec![
-            ("average", make_branch(vec![("dateindex", make_leaf("block_weight_average"))])),
-            ("sum", make_branch(vec![("dateindex", make_leaf("block_weight_sum"))])),
-            ("cumulative", make_branch(vec![("dateindex", make_leaf("block_weight_cumulative"))])),
-            ("max", make_branch(vec![("dateindex", make_leaf("block_weight_max"))])),
-            ("min", make_branch(vec![("dateindex", make_leaf("block_weight_min"))])),
+            (
+                "average",
+                make_branch(vec![("dateindex", make_leaf("block_weight_average"))]),
+            ),
+            (
+                "sum",
+                make_branch(vec![("dateindex", make_leaf("block_weight_sum"))]),
+            ),
+            (
+                "cumulative",
+                make_branch(vec![("dateindex", make_leaf("block_weight_cumulative"))]),
+            ),
+            (
+                "max",
+                make_branch(vec![("dateindex", make_leaf("block_weight_max"))]),
+            ),
+            (
+                "min",
+                make_branch(vec![("dateindex", make_leaf("block_weight_min"))]),
+            ),
         ]);
 
         let result = get_pattern_instance_base(&tree);
@@ -397,9 +422,18 @@ mod tests {
         // What if there's a "base" field that points to the same leaf as "average"?
         // This could happen if the tree generation creates a base field that shares leaves with average
         let tree = make_branch(vec![
-            ("base", make_branch(vec![("dateindex", make_leaf("block_weight_average"))])),
-            ("average", make_branch(vec![("dateindex", make_leaf("block_weight_average"))])),
-            ("sum", make_branch(vec![("dateindex", make_leaf("block_weight_sum"))])),
+            (
+                "base",
+                make_branch(vec![("dateindex", make_leaf("block_weight_average"))]),
+            ),
+            (
+                "average",
+                make_branch(vec![("dateindex", make_leaf("block_weight_average"))]),
+            ),
+            (
+                "sum",
+                make_branch(vec![("dateindex", make_leaf("block_weight_sum"))]),
+            ),
         ]);
 
         let result = get_pattern_instance_base(&tree);

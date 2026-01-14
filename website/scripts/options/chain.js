@@ -12,6 +12,7 @@ export function createChainSection(ctx) {
     colors,
     brk,
     line,
+    baseline,
     dots,
     createPriceLine,
     fromSizePattern,
@@ -635,6 +636,17 @@ export function createChainSection(ctx) {
                 color: colors.purple,
                 unit: Unit.days,
                 defaultActive: false,
+              }),
+            ],
+          },
+          {
+            name: "Adjustment",
+            title: "Difficulty Adjustment",
+            bottom: [
+              baseline({
+                metric: blocks.difficulty.adjustment,
+                name: "Difficulty Change",
+                unit: Unit.percentage,
               }),
             ],
           },

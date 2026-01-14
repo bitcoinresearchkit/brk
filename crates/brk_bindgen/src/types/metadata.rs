@@ -6,7 +6,7 @@ use brk_query::Vecs;
 use brk_types::{Index, MetricLeafWithSchema};
 
 use super::{GenericSyntax, IndexSetPattern, PatternField, StructuralPattern, extract_inner_type};
-use crate::analysis;
+use crate::{PatternBaseResult, analysis};
 
 /// Metadata extracted from brk_query for client generation.
 #[derive(Debug)]
@@ -21,6 +21,8 @@ pub struct ClientMetadata {
     concrete_to_pattern: HashMap<Vec<PatternField>, String>,
     /// Maps concrete field signatures to their type parameter (for generic patterns)
     concrete_to_type_param: HashMap<Vec<PatternField>, String>,
+    /// Maps tree paths to their computed PatternBaseResult
+    node_bases: HashMap<String, PatternBaseResult>,
 }
 
 impl ClientMetadata {
@@ -31,7 +33,7 @@ impl ClientMetadata {
 
     /// Extract metadata from a catalog TreeNode directly.
     pub fn from_catalog(catalog: brk_types::TreeNode) -> Self {
-        let (structural_patterns, concrete_to_pattern, concrete_to_type_param) =
+        let (structural_patterns, concrete_to_pattern, concrete_to_type_param, node_bases) =
             analysis::detect_structural_patterns(&catalog);
         let index_set_patterns = analysis::detect_index_patterns(&catalog);
 
@@ -41,6 +43,7 @@ impl ClientMetadata {
             index_set_patterns,
             concrete_to_pattern,
             concrete_to_type_param,
+            node_bases,
         }
     }
 
@@ -137,6 +140,11 @@ impl ClientMetadata {
             lookup.insert(p.fields.clone(), p.name.clone());
         }
         lookup
+    }
+
+    /// Get the pre-computed PatternBaseResult for a tree path.
+    pub fn get_node_base(&self, path: &str) -> Option<&PatternBaseResult> {
+        self.node_bases.get(path)
     }
 
     /// Generate type annotation for a field with language-specific syntax.

@@ -6,8 +6,8 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, GenericSyntax, PatternField, PythonSyntax, generate_leaf_field,
-    prepare_tree_node, to_snake_case,
+    ClientMetadata, GenericSyntax, PatternField, PythonSyntax, build_child_path,
+    generate_leaf_field, prepare_tree_node, to_snake_case,
 };
 
 /// Generate tree classes
@@ -19,6 +19,7 @@ pub fn generate_tree_classes(output: &mut String, catalog: &TreeNode, metadata: 
     generate_tree_class(
         output,
         "MetricsTree",
+        "",
         catalog,
         &pattern_lookup,
         metadata,
@@ -30,12 +31,13 @@ pub fn generate_tree_classes(output: &mut String, catalog: &TreeNode, metadata: 
 fn generate_tree_class(
     output: &mut String,
     name: &str,
+    path: &str,
     node: &TreeNode,
     pattern_lookup: &std::collections::HashMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
     generated: &mut HashSet<String>,
 ) {
-    let Some(ctx) = prepare_tree_node(node, name, pattern_lookup, metadata, generated) else {
+    let Some(ctx) = prepare_tree_node(node, name, path, pattern_lookup, metadata, generated) else {
         return;
     };
 
@@ -43,9 +45,11 @@ fn generate_tree_class(
     // This ensures children are defined before parent references them
     for child in &ctx.children {
         if child.should_inline {
+            let child_path = build_child_path(path, child.name);
             generate_tree_class(
                 output,
                 &child.inline_type_name,
+                &child_path,
                 child.node,
                 pattern_lookup,
                 metadata,

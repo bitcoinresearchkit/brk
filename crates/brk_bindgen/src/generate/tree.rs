@@ -4,10 +4,18 @@ use std::collections::{HashMap, HashSet};
 
 use brk_types::TreeNode;
 
-use crate::{
-    ClientMetadata, PatternBaseResult, PatternField, child_type_name, get_fields_with_child_info,
-    get_pattern_instance_base,
-};
+use crate::{ClientMetadata, PatternBaseResult, PatternField, child_type_name, get_fields_with_child_info};
+
+/// Build a child path by appending a child name to a parent path.
+/// Uses "/" as separator. If parent is empty, returns just the child name.
+#[inline]
+pub fn build_child_path(parent: &str, child: &str) -> String {
+    if parent.is_empty() {
+        child.to_string()
+    } else {
+        format!("{}/{}", parent, child)
+    }
+}
 
 /// Pre-computed context for a single child node.
 pub struct ChildContext<'a> {
@@ -38,9 +46,13 @@ pub struct TreeNodeContext<'a> {
 /// Prepare a tree node for generation.
 /// Returns None if the node should be skipped (not a branch, already generated,
 /// or matches a parameterizable pattern).
+///
+/// The `path` parameter is the tree path to this node (e.g., "distribution/utxoCohorts").
+/// It's used to look up pre-computed PatternBaseResult from the analysis phase.
 pub fn prepare_tree_node<'a>(
     node: &'a TreeNode,
     name: &str,
+    path: &str,
     pattern_lookup: &HashMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
     generated: &mut HashSet<String>,
@@ -55,8 +67,13 @@ pub fn prepare_tree_node<'a>(
         .map(|(f, _)| f.clone())
         .collect();
 
+    // Look up the pre-computed base result, or use a default that forces inlining
+    let base_result = metadata
+        .get_node_base(path)
+        .cloned()
+        .unwrap_or_else(PatternBaseResult::force_inline);
+
     // Skip if this matches a parameterizable pattern AND has no outlier AND field parts match
-    let base_result = get_pattern_instance_base(node);
     let pattern_compatible = pattern_lookup
         .get(&fields)
         .and_then(|name| metadata.find_pattern(name))
@@ -85,7 +102,13 @@ pub fn prepare_tree_node<'a>(
         .zip(fields_with_child_info)
         .map(|((child_name, child_node), (field, child_fields))| {
             let is_leaf = matches!(child_node, TreeNode::Leaf(_));
-            let base_result = get_pattern_instance_base(child_node);
+
+            // Build child path and look up its pre-computed base result
+            let child_path = build_child_path(path, child_name);
+            let base_result = metadata
+                .get_node_base(&child_path)
+                .cloned()
+                .unwrap_or_else(PatternBaseResult::force_inline);
 
             // For type annotations: use pattern type if ANY pattern matches
             let matches_any_pattern = child_fields

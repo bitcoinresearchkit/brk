@@ -11,6 +11,7 @@ import { Unit } from "../../utils/units.js";
 import signals from "../../signals.js";
 import { createChartElement } from "../../chart/index.js";
 import { webSockets } from "../../utils/ws.js";
+import { screenshot } from "./screenshot.js";
 
 const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
@@ -82,21 +83,20 @@ export function init({ colors, option, brk }) {
   });
 
   if (!(ios && !canShare)) {
-    const chartBottomRightCanvas = Array.from(
-      chart.inner.chartElement().getElementsByTagName("tr"),
-    ).at(-1)?.lastChild?.firstChild?.firstChild;
-    if (chartBottomRightCanvas) {
-      const domain = window.document.createElement("p");
-      domain.innerText = `${window.location.host}`;
-      domain.id = "domain";
-      const screenshotButton = window.document.createElement("button");
-      screenshotButton.id = "screenshot";
-      const camera = "[ ◉¯]";
-      screenshotButton.innerHTML = camera;
-      screenshotButton.title = "Screenshot";
-      chartBottomRightCanvas.replaceWith(screenshotButton);
-      screenshotButton.addEventListener("click", () => {
-        import("./screenshot").then(async ({ screenshot }) => {
+    const domain = window.document.createElement("p");
+    domain.innerText = `${window.location.host}`;
+    domain.id = "domain";
+
+    chart.addFieldsetIfNeeded({
+      id: "capture",
+      paneIndex: 0,
+      position: "ne",
+      createChild() {
+        const button = window.document.createElement("button");
+        button.id = "capture";
+        button.innerText = "capture";
+        button.title = "Capture chart as image";
+        button.addEventListener("click", async () => {
           chartElement.dataset.screenshot = "true";
           chartElement.append(domain);
           try {
@@ -109,8 +109,9 @@ export function init({ colors, option, brk }) {
           chartElement.removeChild(domain);
           chartElement.dataset.screenshot = "false";
         });
-      });
-    }
+        return button;
+      },
+    });
   }
 
   chart.inner.timeScale().subscribeVisibleLogicalRangeChange(

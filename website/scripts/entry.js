@@ -52,7 +52,7 @@
  * @typedef {Brk.AnyMetricEndpointBuilder} AnyMetricEndpoint
  * @typedef {Brk.AnyMetricData} AnyMetricData
  * @typedef {Brk.AddrCountPattern} AddrCountPattern
- * @typedef {Brk.MetricsTree_Blocks_Interval} IntervalPattern
+ * @typedef {FullnessPattern<any>} IntervalPattern
  * @typedef {Brk.MetricsTree_Supply_Circulating} SupplyPattern
  * @typedef {Brk.RelativePattern} GlobalRelativePattern
  * @typedef {Brk.RelativePattern2} OwnRelativePattern

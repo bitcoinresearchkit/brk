@@ -10,6 +10,7 @@ import {
   ltAmountColors,
   amountRangeColors,
   spendableTypeColors,
+  yearColors,
 } from "../colors/index.js";
 
 /**
@@ -40,6 +41,7 @@ export function buildCohortData(colors, brk) {
     LT_AMOUNT_NAMES,
     AMOUNT_RANGE_NAMES,
     SPENDABLE_TYPE_NAMES,
+    YEAR_NAMES,
   } = brk;
 
   // Base cohort representing "all" - CohortAll (adjustedSopr + percentiles but no RelToMarketCap)
@@ -210,6 +212,18 @@ export function buildCohortData(colors, brk) {
     };
   });
 
+  // Year cohorts - CohortBasic (neither adjustedSopr nor percentiles)
+  /** @type {readonly CohortBasic[]} */
+  const year = entries(utxoCohorts.year).map(([key, tree]) => {
+    const names = YEAR_NAMES[key];
+    return {
+      name: names.short,
+      title: names.long,
+      color: colors[yearColors[key]],
+      tree,
+    };
+  });
+
   return {
     cohortAll,
     termShort,
@@ -225,5 +239,6 @@ export function buildCohortData(colors, brk) {
     utxosAmountRanges,
     addressesAmountRanges,
     type,
+    year,
   };
 }

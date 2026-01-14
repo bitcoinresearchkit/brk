@@ -653,7 +653,10 @@ export function createChartElement({
             ({ count, active }) => {
               showLine = count > 500;
               candlestickISeries.applyOptions({ visible: active && !showLine });
-              lineISeries.applyOptions({ visible: active && showLine });
+              lineISeries.applyOptions({
+                visible: active && showLine,
+                priceLineVisible: active && showLine,
+              });
             },
           );
         },

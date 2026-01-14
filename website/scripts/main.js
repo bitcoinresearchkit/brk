@@ -545,6 +545,11 @@ signals.createRoot(() => {
   function initShare() {
     const shareDiv = getElementById("share-div");
     const shareContentDiv = getElementById("share-content-div");
+    const shareButton = getElementById("share-button");
+
+    shareButton.addEventListener("click", () => {
+      qrcode.set(window.location.href);
+    });
 
     shareDiv.addEventListener("click", () => {
       qrcode.set(null);

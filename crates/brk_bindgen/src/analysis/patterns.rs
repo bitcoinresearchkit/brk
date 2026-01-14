@@ -8,7 +8,7 @@ use std::collections::{BTreeSet, HashMap};
 use brk_types::{TreeNode, extract_json_type};
 
 use super::analyze_pattern_modes;
-use crate::{PatternField, StructuralPattern, to_pascal_case};
+use crate::{PatternBaseResult, PatternField, StructuralPattern, to_pascal_case};
 
 /// Context for pattern detection, holding all intermediate state.
 struct PatternContext {
@@ -38,14 +38,16 @@ impl PatternContext {
 
 /// Detect structural patterns in the tree using a bottom-up approach.
 ///
-/// Returns (patterns, concrete_to_pattern, concrete_to_type_param).
+/// Returns (patterns, concrete_to_pattern, concrete_to_type_param, node_bases).
 /// Each pattern has its `mode` set based on analysis of all instances.
+/// `node_bases` maps tree paths to their computed PatternBaseResult for use during generation.
 pub fn detect_structural_patterns(
     tree: &TreeNode,
 ) -> (
     Vec<StructuralPattern>,
     HashMap<Vec<PatternField>, String>,
     HashMap<Vec<PatternField>, String>,
+    HashMap<String, PatternBaseResult>,
 ) {
     let mut ctx = PatternContext::new();
     resolve_branch_patterns(tree, "root", &mut ctx);
@@ -99,10 +101,11 @@ pub fn detect_structural_patterns(
     let concrete_to_pattern = pattern_lookup.clone();
 
     // Analyze pattern modes (suffix vs prefix) from all instances
-    analyze_pattern_modes(tree, &mut patterns, &pattern_lookup);
+    // Also collects node bases for each tree path
+    let node_bases = analyze_pattern_modes(tree, &mut patterns, &pattern_lookup);
 
     patterns.sort_by(|a, b| b.fields.len().cmp(&a.fields.len()));
-    (patterns, concrete_to_pattern, type_mappings)
+    (patterns, concrete_to_pattern, type_mappings, node_bases)
 }
 
 /// Detect generic patterns by grouping signatures by their normalized form.

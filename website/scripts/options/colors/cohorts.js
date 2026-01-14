@@ -150,3 +150,25 @@ export const spendableTypeColors = {
   unknown: "violet",
   empty: "fuchsia",
 };
+
+/** @type {Readonly<Record<string, ColorName>>} */
+export const yearColors = {
+  _2009: "red",
+  _2010: "orange",
+  _2011: "amber",
+  _2012: "yellow",
+  _2013: "lime",
+  _2014: "green",
+  _2015: "teal",
+  _2016: "cyan",
+  _2017: "sky",
+  _2018: "blue",
+  _2019: "indigo",
+  _2020: "violet",
+  _2021: "purple",
+  _2022: "fuchsia",
+  _2023: "pink",
+  _2024: "rose",
+  _2025: "red",
+  _2026: "orange",
+};

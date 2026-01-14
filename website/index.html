@@ -620,8 +620,13 @@
             display: flex;
             gap: 1.25rem;
 
-            > label {
+            > label,
+            > button {
               pointer-events: auto;
+            }
+
+            > button {
+              color: var(--off-color);
             }
           }
         }
@@ -1824,6 +1829,8 @@
             />
             Search
           </label>
+
+          <button id="share-button" title="Share">Share</button>
         </fieldset>
       </footer>
     </main>

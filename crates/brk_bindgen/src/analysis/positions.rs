@@ -8,8 +8,8 @@ use std::collections::HashMap;
 
 use brk_types::TreeNode;
 
-use super::{find_common_prefix, find_common_suffix, get_node_fields};
-use crate::{PatternField, PatternMode, StructuralPattern};
+use super::{find_common_prefix, find_common_suffix, get_node_fields, normalize_prefix};
+use crate::{PatternBaseResult, PatternField, PatternMode, StructuralPattern, build_child_path};
 
 /// Result of analyzing a single pattern instance.
 #[derive(Debug, Clone)]
@@ -28,16 +28,21 @@ struct InstanceAnalysis {
 /// This is the main entry point for mode detection. It processes
 /// the tree bottom-up, collecting analysis for each pattern instance,
 /// then determines the consistent mode for each pattern.
+///
+/// Returns a map from tree paths to their computed PatternBaseResult.
+/// This map is used during generation to check pattern compatibility.
 pub fn analyze_pattern_modes(
     tree: &TreeNode,
     patterns: &mut [StructuralPattern],
     pattern_lookup: &HashMap<Vec<PatternField>, String>,
-) {
+) -> HashMap<String, PatternBaseResult> {
     // Collect analyses from all instances, keyed by pattern name
     let mut all_analyses: HashMap<String, Vec<InstanceAnalysis>> = HashMap::new();
+    // Also collect base results for each node, keyed by tree path
+    let mut node_bases: HashMap<String, PatternBaseResult> = HashMap::new();
 
     // Bottom-up traversal
-    collect_instance_analyses(tree, pattern_lookup, &mut all_analyses);
+    collect_instance_analyses(tree, "", pattern_lookup, &mut all_analyses, &mut node_bases);
 
     // For each pattern, determine mode from collected instances
     for pattern in patterns.iter_mut() {
@@ -45,14 +50,20 @@ pub fn analyze_pattern_modes(
             pattern.mode = determine_pattern_mode(analyses, &pattern.fields);
         }
     }
+
+    node_bases
 }
 
 /// Recursively collect instance analyses bottom-up.
 /// Returns the "base" for this node (used by parent for its analysis).
+///
+/// Also stores the PatternBaseResult for each node in `node_bases`, keyed by path.
 fn collect_instance_analyses(
     node: &TreeNode,
+    path: &str,
     pattern_lookup: &HashMap<Vec<PatternField>, String>,
     all_analyses: &mut HashMap<String, Vec<InstanceAnalysis>>,
+    node_bases: &mut HashMap<String, PatternBaseResult>,
 ) -> Option<String> {
     match node {
         TreeNode::Leaf(leaf) => {
@@ -63,9 +74,14 @@ fn collect_instance_analyses(
             // First, process all children recursively (bottom-up)
             let mut child_bases: HashMap<String, String> = HashMap::new();
             for (field_name, child_node) in children {
-                if let Some(base) =
-                    collect_instance_analyses(child_node, pattern_lookup, all_analyses)
-                {
+                let child_path = build_child_path(path, field_name);
+                if let Some(base) = collect_instance_analyses(
+                    child_node,
+                    &child_path,
+                    pattern_lookup,
+                    all_analyses,
+                    node_bases,
+                ) {
                     child_bases.insert(field_name.clone(), base);
                 }
             }
@@ -76,6 +92,19 @@ fn collect_instance_analyses(
 
             // Analyze this instance
             let analysis = analyze_instance(&child_bases);
+
+            // Store the base result for this node
+            // Note: has_outlier is false because we use recursive base computation
+            // which gives correct bases without needing outlier detection
+            node_bases.insert(
+                path.to_string(),
+                PatternBaseResult {
+                    base: analysis.base.clone(),
+                    has_outlier: false,
+                    is_suffix_mode: analysis.is_suffix_mode,
+                    field_parts: analysis.field_parts.clone(),
+                },
+            );
 
             // Get the pattern name for this node (if any)
             let fields = get_node_fields(children, pattern_lookup);
@@ -128,19 +157,10 @@ fn analyze_instance(child_bases: &HashMap<String, String>) -> InstanceAnalysis {
         let mut field_parts = HashMap::new();
 
         for (field_name, child_base) in child_bases {
-            // Prefix = child_base with common suffix stripped
+            // Prefix = child_base with common suffix stripped, normalized to end with _
             let prefix = child_base
                 .strip_suffix(&common_suffix)
-                .map(|s| {
-                    // Ensure prefix ends with underscore if non-empty
-                    if s.is_empty() {
-                        String::new()
-                    } else if s.ends_with('_') {
-                        s.to_string()
-                    } else {
-                        format!("{}_", s)
-                    }
-                })
+                .map(normalize_prefix)
                 .unwrap_or_default();
             field_parts.insert(field_name.clone(), prefix);
         }
@@ -152,16 +172,16 @@ fn analyze_instance(child_bases: &HashMap<String, String>) -> InstanceAnalysis {
         };
     }
 
-    // No common prefix or suffix - use first child's base and treat as suffix mode
-    // with full metric names as relatives
-    let base = child_bases.values().next().cloned().unwrap_or_default();
+    // No common prefix or suffix - use empty base so _m(base, relative) returns just the relative.
+    // This handles cases like utxo_cohorts.all.activity where children have completely
+    // different bases (coinblocks_destroyed, coindays_destroyed, etc.)
     let field_parts = child_bases
         .iter()
         .map(|(k, v)| (k.clone(), v.clone()))
         .collect();
 
     InstanceAnalysis {
-        base,
+        base: String::new(),
         field_parts,
         is_suffix_mode: true,
     }
@@ -197,7 +217,9 @@ fn determine_pattern_mode(
     // Convert to sorted Vec for comparison since HashMap isn't hashable
     let mut parts_counts: HashMap<Vec<(String, String)>, usize> = HashMap::new();
     for analysis in &majority_instances {
-        let mut sorted: Vec<_> = analysis.field_parts.iter()
+        let mut sorted: Vec<_> = analysis
+            .field_parts
+            .iter()
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect();
         sorted.sort();
@@ -244,7 +266,10 @@ mod tests {
         assert_eq!(analysis.base, "lth_cost_basis");
         assert_eq!(analysis.field_parts.get("max"), Some(&"max".to_string()));
         assert_eq!(analysis.field_parts.get("min"), Some(&"min".to_string()));
-        assert_eq!(analysis.field_parts.get("percentiles"), Some(&"".to_string()));
+        assert_eq!(
+            analysis.field_parts.get("percentiles"),
+            Some(&"".to_string())
+        );
     }
 
     #[test]
@@ -280,7 +305,10 @@ mod tests {
         assert_eq!(analysis.base, "cost_basis");
         assert_eq!(analysis.field_parts.get("max"), Some(&"max".to_string()));
         assert_eq!(analysis.field_parts.get("min"), Some(&"min".to_string()));
-        assert_eq!(analysis.field_parts.get("percentiles"), Some(&"".to_string()));
+        assert_eq!(
+            analysis.field_parts.get("percentiles"),
+            Some(&"".to_string())
+        );
     }
 
     #[test]

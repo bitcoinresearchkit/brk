@@ -9,6 +9,7 @@ export {
   ltAmountColors,
   amountRangeColors,
   spendableTypeColors,
+  yearColors,
 } from "./cohorts.js";
 
 export { averageColors, dcaColors } from "./misc.js";

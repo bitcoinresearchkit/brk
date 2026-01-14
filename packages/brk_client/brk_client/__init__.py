@@ -1864,31 +1864,6 @@ class Price111dSmaPattern:
         self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'ratio_pct99_usd'))
         self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, _m(acc, 'ratio'))
 
-class PercentilesPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.pct05: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct05'))
-        self.pct10: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct10'))
-        self.pct15: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct15'))
-        self.pct20: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct20'))
-        self.pct25: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct25'))
-        self.pct30: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct30'))
-        self.pct35: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct35'))
-        self.pct40: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct40'))
-        self.pct45: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct45'))
-        self.pct50: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct50'))
-        self.pct55: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct55'))
-        self.pct60: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct60'))
-        self.pct65: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct65'))
-        self.pct70: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct70'))
-        self.pct75: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct75'))
-        self.pct80: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct80'))
-        self.pct85: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct85'))
-        self.pct90: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct90'))
-        self.pct95: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct95'))
-
 class ActivePriceRatioPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -1913,6 +1888,31 @@ class ActivePriceRatioPattern:
         self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, _m(acc, 'pct99'))
         self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct99_usd'))
         self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, acc)
+
+class PercentilesPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.pct05: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct05'))
+        self.pct10: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct10'))
+        self.pct15: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct15'))
+        self.pct20: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct20'))
+        self.pct25: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct25'))
+        self.pct30: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct30'))
+        self.pct35: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct35'))
+        self.pct40: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct40'))
+        self.pct45: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct45'))
+        self.pct50: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct50'))
+        self.pct55: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct55'))
+        self.pct60: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct60'))
+        self.pct65: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct65'))
+        self.pct70: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct70'))
+        self.pct75: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct75'))
+        self.pct80: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct80'))
+        self.pct85: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct85'))
+        self.pct90: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct90'))
+        self.pct95: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'pct95'))
 
 class RelativePattern5:
     """Pattern struct for repeated tree structure."""
@@ -2035,17 +2035,17 @@ class ClassAveragePricePattern(Generic[T]):
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self._2015: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2015_average_price'))
-        self._2016: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2016_average_price'))
-        self._2017: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2017_average_price'))
-        self._2018: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2018_average_price'))
-        self._2019: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2019_average_price'))
-        self._2020: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2020_average_price'))
-        self._2021: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2021_average_price'))
-        self._2022: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2022_average_price'))
-        self._2023: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2023_average_price'))
-        self._2024: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2024_average_price'))
-        self._2025: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2025_average_price'))
+        self._2015: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2015_returns'))
+        self._2016: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2016_returns'))
+        self._2017: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2017_returns'))
+        self._2018: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2018_returns'))
+        self._2019: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2019_returns'))
+        self._2020: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2020_returns'))
+        self._2021: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2021_returns'))
+        self._2022: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2022_returns'))
+        self._2023: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2023_returns'))
+        self._2024: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2024_returns'))
+        self._2025: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2025_returns'))
 
 class DollarsPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
@@ -2171,6 +2171,19 @@ class _0satsPattern:
         self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
         self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
 
+class _100btcPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.activity: ActivityPattern2 = ActivityPattern2(client, acc)
+        self.cost_basis: CostBasisPattern = CostBasisPattern(client, acc)
+        self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, 'utxo_count'))
+        self.realized: RealizedPattern = RealizedPattern(client, acc)
+        self.relative: RelativePattern = RelativePattern(client, acc)
+        self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
+        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
+
 class PeriodCagrPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2197,6 +2210,19 @@ class UnrealizedPattern:
         self.unrealized_loss: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'unrealized_loss'))
         self.unrealized_profit: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'unrealized_profit'))
 
+class _10yTo12yPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.activity: ActivityPattern2 = ActivityPattern2(client, acc)
+        self.cost_basis: CostBasisPattern2 = CostBasisPattern2(client, acc)
+        self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, 'utxo_count'))
+        self.realized: RealizedPattern2 = RealizedPattern2(client, acc)
+        self.relative: RelativePattern2 = RelativePattern2(client, acc)
+        self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
+        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
+
 class _0satsPattern2:
     """Pattern struct for repeated tree structure."""
     
@@ -2210,19 +2236,6 @@ class _0satsPattern2:
         self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
         self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
 
-class _100btcPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.activity: ActivityPattern2 = ActivityPattern2(client, acc)
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, acc)
-        self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, 'utxo_count'))
-        self.realized: RealizedPattern = RealizedPattern(client, acc)
-        self.relative: RelativePattern = RelativePattern(client, acc)
-        self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
-
 class _10yPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2233,19 +2246,6 @@ class _10yPattern:
         self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, 'utxo_count'))
         self.realized: RealizedPattern4 = RealizedPattern4(client, acc)
         self.relative: RelativePattern = RelativePattern(client, acc)
-        self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
-
-class _10yTo12yPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.activity: ActivityPattern2 = ActivityPattern2(client, acc)
-        self.cost_basis: CostBasisPattern2 = CostBasisPattern2(client, acc)
-        self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, 'utxo_count'))
-        self.realized: RealizedPattern2 = RealizedPattern2(client, acc)
-        self.relative: RelativePattern2 = RelativePattern2(client, acc)
         self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
         self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
 
@@ -2270,24 +2270,6 @@ class SplitPattern2(Generic[T]):
         self.low: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'low'))
         self.open: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'open'))
 
-class ActiveSupplyPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.bitcoin: MetricPattern1[Bitcoin] = MetricPattern1(client, _m(acc, 'btc'))
-        self.dollars: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'usd'))
-        self.sats: MetricPattern1[Sats] = MetricPattern1(client, acc)
-
-class CoinbasePattern2:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.bitcoin: BlockCountPattern[Bitcoin] = BlockCountPattern(client, _m(acc, 'btc'))
-        self.dollars: BlockCountPattern[Dollars] = BlockCountPattern(client, _m(acc, 'usd'))
-        self.sats: BlockCountPattern[Sats] = BlockCountPattern(client, acc)
-
 class _2015Pattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2306,12 +2288,12 @@ class CoinbasePattern:
         self.dollars: DollarsPattern[Dollars] = DollarsPattern(client, _m(acc, 'usd'))
         self.sats: DollarsPattern[Sats] = DollarsPattern(client, acc)
 
-class UnclaimedRewardsPattern:
+class CoinbasePattern2:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.bitcoin: BitcoinPattern2[Bitcoin] = BitcoinPattern2(client, _m(acc, 'btc'))
+        self.bitcoin: BlockCountPattern[Bitcoin] = BlockCountPattern(client, _m(acc, 'btc'))
         self.dollars: BlockCountPattern[Dollars] = BlockCountPattern(client, _m(acc, 'usd'))
         self.sats: BlockCountPattern[Sats] = BlockCountPattern(client, acc)
 
@@ -2332,6 +2314,24 @@ class CostBasisPattern2:
         self.max: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'max_cost_basis'))
         self.min: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'min_cost_basis'))
         self.percentiles: PercentilesPattern = PercentilesPattern(client, _m(acc, 'cost_basis'))
+
+class ActiveSupplyPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.bitcoin: MetricPattern1[Bitcoin] = MetricPattern1(client, _m(acc, 'btc'))
+        self.dollars: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'usd'))
+        self.sats: MetricPattern1[Sats] = MetricPattern1(client, acc)
+
+class UnclaimedRewardsPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.bitcoin: BitcoinPattern2[Bitcoin] = BitcoinPattern2(client, _m(acc, 'btc'))
+        self.dollars: BlockCountPattern[Dollars] = BlockCountPattern(client, _m(acc, 'usd'))
+        self.sats: BlockCountPattern[Sats] = BlockCountPattern(client, acc)
 
 class CostBasisPattern:
     """Pattern struct for repeated tree structure."""
@@ -2373,14 +2373,6 @@ class BlockCountPattern(Generic[T]):
         self.cumulative: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'cumulative'))
         self.sum: MetricPattern1[T] = MetricPattern1(client, acc)
 
-class SatsPattern(Generic[T]):
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.ohlc: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'ohlc_sats'))
-        self.split: SplitPattern2[T] = SplitPattern2(client, _m(acc, 'sats'))
-
 class BitcoinPattern2(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
@@ -2389,12 +2381,13 @@ class BitcoinPattern2(Generic[T]):
         self.cumulative: MetricPattern2[T] = MetricPattern2(client, _m(acc, 'cumulative'))
         self.sum: MetricPattern1[T] = MetricPattern1(client, acc)
 
-class OutputsPattern:
+class SatsPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.utxo_count: MetricPattern1[StoredU64] = MetricPattern1(client, acc)
+        self.ohlc: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'ohlc_sats'))
+        self.split: SplitPattern2[T] = SplitPattern2(client, _m(acc, 'sats'))
 
 class RealizedPriceExtraPattern:
     """Pattern struct for repeated tree structure."""
@@ -2402,6 +2395,13 @@ class RealizedPriceExtraPattern:
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
         self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, acc)
+
+class OutputsPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.utxo_count: MetricPattern1[StoredU64] = MetricPattern1(client, acc)
 
 # Metrics tree classes
 
@@ -2569,114 +2569,18 @@ class MetricsTree_Cointime_Cap:
         self.thermo_cap: MetricPattern1[Dollars] = MetricPattern1(client, 'thermo_cap')
         self.vaulted_cap: MetricPattern1[Dollars] = MetricPattern1(client, 'vaulted_cap')
 
-class MetricsTree_Cointime_Pricing_ActivePriceRatio:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'active_price_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'active_price_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'active_price_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'active_price_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'active_price_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'active_price_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'active_price_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'active_price_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'active_price_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'active_price_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'active_price_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'active_price_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'active_price_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'active_price_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'active_price_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'active_price_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'active_price_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'active_price_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'active_price_ratio')
-
-class MetricsTree_Cointime_Pricing_CointimePriceRatio:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'cointime_price_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'cointime_price_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'cointime_price_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'cointime_price_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'cointime_price_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'cointime_price_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'cointime_price_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'cointime_price_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'cointime_price_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'cointime_price_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'cointime_price_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'cointime_price_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'cointime_price_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'cointime_price_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'cointime_price_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'cointime_price_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'cointime_price_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'cointime_price_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'cointime_price_ratio')
-
-class MetricsTree_Cointime_Pricing_TrueMarketMeanRatio:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'true_market_mean_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'true_market_mean_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'true_market_mean_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'true_market_mean_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'true_market_mean_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'true_market_mean_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'true_market_mean_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'true_market_mean_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'true_market_mean_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'true_market_mean_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'true_market_mean_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'true_market_mean_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'true_market_mean_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'true_market_mean_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'true_market_mean_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'true_market_mean_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'true_market_mean_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'true_market_mean_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'true_market_mean_ratio')
-
-class MetricsTree_Cointime_Pricing_VaultedPriceRatio:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'vaulted_price_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'vaulted_price_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'vaulted_price_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'vaulted_price_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'vaulted_price_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'vaulted_price_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'vaulted_price_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'vaulted_price_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'vaulted_price_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'vaulted_price_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'vaulted_price_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'vaulted_price_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'vaulted_price_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'vaulted_price_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'vaulted_price_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'vaulted_price_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'vaulted_price_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'vaulted_price_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'vaulted_price_ratio')
-
 class MetricsTree_Cointime_Pricing:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.active_price: MetricPattern1[Dollars] = MetricPattern1(client, 'active_price')
-        self.active_price_ratio: MetricsTree_Cointime_Pricing_ActivePriceRatio = MetricsTree_Cointime_Pricing_ActivePriceRatio(client)
+        self.active_price_ratio: ActivePriceRatioPattern = ActivePriceRatioPattern(client, 'active_price_ratio')
         self.cointime_price: MetricPattern1[Dollars] = MetricPattern1(client, 'cointime_price')
-        self.cointime_price_ratio: MetricsTree_Cointime_Pricing_CointimePriceRatio = MetricsTree_Cointime_Pricing_CointimePriceRatio(client)
+        self.cointime_price_ratio: ActivePriceRatioPattern = ActivePriceRatioPattern(client, 'cointime_price_ratio')
         self.true_market_mean: MetricPattern1[Dollars] = MetricPattern1(client, 'true_market_mean')
-        self.true_market_mean_ratio: MetricsTree_Cointime_Pricing_TrueMarketMeanRatio = MetricsTree_Cointime_Pricing_TrueMarketMeanRatio(client)
+        self.true_market_mean_ratio: ActivePriceRatioPattern = ActivePriceRatioPattern(client, 'true_market_mean_ratio')
         self.vaulted_price: MetricPattern1[Dollars] = MetricPattern1(client, 'vaulted_price')
-        self.vaulted_price_ratio: MetricsTree_Cointime_Pricing_VaultedPriceRatio = MetricsTree_Cointime_Pricing_VaultedPriceRatio(client)
+        self.vaulted_price_ratio: ActivePriceRatioPattern = ActivePriceRatioPattern(client, 'vaulted_price_ratio')
 
 class MetricsTree_Cointime_Supply:
     """Metrics tree node."""
@@ -2727,594 +2631,61 @@ class MetricsTree_Constants:
         self.constant_minus_3: MetricPattern1[StoredI16] = MetricPattern1(client, 'constant_minus_3')
         self.constant_minus_4: MetricPattern1[StoredI16] = MetricPattern1(client, 'constant_minus_4')
 
-class MetricsTree_Distribution_AddressCohorts_AmountRange_0sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_with_0sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_with_0sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_with_0sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_with_0sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_with_0sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_with_0sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_with_0sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_with_0sats')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_100btcTo1kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_100btc_under_1k_btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_100btc_under_1k_btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_100btc_under_1k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_100btc_under_1k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_100btc_under_1k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_100btc_under_1k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_100btc_under_1k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_100btc_under_1k_btc')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_100kBtcOrMore:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_100k_btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_100k_btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_100k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_100k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_100k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_100k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_100k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_100k_btc')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_100kSatsTo1mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_100k_sats_under_1m_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_100k_sats_under_1m_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_100k_sats_under_1m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_100k_sats_under_1m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_100k_sats_under_1m_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_100k_sats_under_1m_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_100k_sats_under_1m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_100k_sats_under_1m_sats')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_100satsTo1kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_100sats_under_1k_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_100sats_under_1k_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_100sats_under_1k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_100sats_under_1k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_100sats_under_1k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_100sats_under_1k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_100sats_under_1k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_100sats_under_1k_sats')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_10btcTo100btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_10btc_under_100btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_10btc_under_100btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_10btc_under_100btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_10btc_under_100btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_10btc_under_100btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_10btc_under_100btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_10btc_under_100btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_10btc_under_100btc')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_10kBtcTo100kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_10k_btc_under_100k_btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_10k_btc_under_100k_btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_10k_btc_under_100k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_10k_btc_under_100k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_10k_btc_under_100k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_10k_btc_under_100k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_10k_btc_under_100k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_10k_btc_under_100k_btc')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_10kSatsTo100kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_10k_sats_under_100k_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_10k_sats_under_100k_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_10k_sats_under_100k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_10k_sats_under_100k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_10k_sats_under_100k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_10k_sats_under_100k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_10k_sats_under_100k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_10k_sats_under_100k_sats')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_10mSatsTo1btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_10m_sats_under_1btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_10m_sats_under_1btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_10m_sats_under_1btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_10m_sats_under_1btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_10m_sats_under_1btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_10m_sats_under_1btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_10m_sats_under_1btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_10m_sats_under_1btc')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_10satsTo100sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_10sats_under_100sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_10sats_under_100sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_10sats_under_100sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_10sats_under_100sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_10sats_under_100sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_10sats_under_100sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_10sats_under_100sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_10sats_under_100sats')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_1btcTo10btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_1btc_under_10btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_1btc_under_10btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_1btc_under_10btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_1btc_under_10btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_1btc_under_10btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_1btc_under_10btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_1btc_under_10btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_1btc_under_10btc')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_1kBtcTo10kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_1k_btc_under_10k_btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_1k_btc_under_10k_btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_1k_btc_under_10k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_1k_btc_under_10k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_1k_btc_under_10k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_1k_btc_under_10k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_1k_btc_under_10k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_1k_btc_under_10k_btc')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_1kSatsTo10kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_1k_sats_under_10k_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_1k_sats_under_10k_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_1k_sats_under_10k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_1k_sats_under_10k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_1k_sats_under_10k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_1k_sats_under_10k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_1k_sats_under_10k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_1k_sats_under_10k_sats')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_1mSatsTo10mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_1m_sats_under_10m_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_1m_sats_under_10m_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_1m_sats_under_10m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_1m_sats_under_10m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_1m_sats_under_10m_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_1m_sats_under_10m_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_1m_sats_under_10m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_1m_sats_under_10m_sats')
-
-class MetricsTree_Distribution_AddressCohorts_AmountRange_1satTo10sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_1sat_under_10sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_1sat_under_10sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_1sat_under_10sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_1sat_under_10sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_1sat_under_10sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_1sat_under_10sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_1sat_under_10sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_1sat_under_10sats')
-
 class MetricsTree_Distribution_AddressCohorts_AmountRange:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._0sats: MetricsTree_Distribution_AddressCohorts_AmountRange_0sats = MetricsTree_Distribution_AddressCohorts_AmountRange_0sats(client)
-        self._100btc_to_1k_btc: MetricsTree_Distribution_AddressCohorts_AmountRange_100btcTo1kBtc = MetricsTree_Distribution_AddressCohorts_AmountRange_100btcTo1kBtc(client)
-        self._100k_btc_or_more: MetricsTree_Distribution_AddressCohorts_AmountRange_100kBtcOrMore = MetricsTree_Distribution_AddressCohorts_AmountRange_100kBtcOrMore(client)
-        self._100k_sats_to_1m_sats: MetricsTree_Distribution_AddressCohorts_AmountRange_100kSatsTo1mSats = MetricsTree_Distribution_AddressCohorts_AmountRange_100kSatsTo1mSats(client)
-        self._100sats_to_1k_sats: MetricsTree_Distribution_AddressCohorts_AmountRange_100satsTo1kSats = MetricsTree_Distribution_AddressCohorts_AmountRange_100satsTo1kSats(client)
-        self._10btc_to_100btc: MetricsTree_Distribution_AddressCohorts_AmountRange_10btcTo100btc = MetricsTree_Distribution_AddressCohorts_AmountRange_10btcTo100btc(client)
-        self._10k_btc_to_100k_btc: MetricsTree_Distribution_AddressCohorts_AmountRange_10kBtcTo100kBtc = MetricsTree_Distribution_AddressCohorts_AmountRange_10kBtcTo100kBtc(client)
-        self._10k_sats_to_100k_sats: MetricsTree_Distribution_AddressCohorts_AmountRange_10kSatsTo100kSats = MetricsTree_Distribution_AddressCohorts_AmountRange_10kSatsTo100kSats(client)
-        self._10m_sats_to_1btc: MetricsTree_Distribution_AddressCohorts_AmountRange_10mSatsTo1btc = MetricsTree_Distribution_AddressCohorts_AmountRange_10mSatsTo1btc(client)
-        self._10sats_to_100sats: MetricsTree_Distribution_AddressCohorts_AmountRange_10satsTo100sats = MetricsTree_Distribution_AddressCohorts_AmountRange_10satsTo100sats(client)
-        self._1btc_to_10btc: MetricsTree_Distribution_AddressCohorts_AmountRange_1btcTo10btc = MetricsTree_Distribution_AddressCohorts_AmountRange_1btcTo10btc(client)
-        self._1k_btc_to_10k_btc: MetricsTree_Distribution_AddressCohorts_AmountRange_1kBtcTo10kBtc = MetricsTree_Distribution_AddressCohorts_AmountRange_1kBtcTo10kBtc(client)
-        self._1k_sats_to_10k_sats: MetricsTree_Distribution_AddressCohorts_AmountRange_1kSatsTo10kSats = MetricsTree_Distribution_AddressCohorts_AmountRange_1kSatsTo10kSats(client)
-        self._1m_sats_to_10m_sats: MetricsTree_Distribution_AddressCohorts_AmountRange_1mSatsTo10mSats = MetricsTree_Distribution_AddressCohorts_AmountRange_1mSatsTo10mSats(client)
-        self._1sat_to_10sats: MetricsTree_Distribution_AddressCohorts_AmountRange_1satTo10sats = MetricsTree_Distribution_AddressCohorts_AmountRange_1satTo10sats(client)
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_100btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_100btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_100btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_100btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_100btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_100btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_100btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_100btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_100btc')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_100kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_100k_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_100k_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_100k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_100k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_100k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_100k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_100k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_100k_sats')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_100sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_100sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_100sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_100sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_100sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_100sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_100sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_100sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_100sats')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_10btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_10btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_10btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_10btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_10btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_10btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_10btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_10btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_10btc')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_10kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_10k_btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_10k_btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_10k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_10k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_10k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_10k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_10k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_10k_btc')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_10kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_10k_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_10k_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_10k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_10k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_10k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_10k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_10k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_10k_sats')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_10mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_10m_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_10m_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_10m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_10m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_10m_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_10m_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_10m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_10m_sats')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_10sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_10sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_10sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_10sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_10sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_10sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_10sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_10sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_10sats')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_1btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_1btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_1btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_1btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_1btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_1btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_1btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_1btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_1btc')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_1kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_1k_btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_1k_btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_1k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_1k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_1k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_1k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_1k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_1k_btc')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_1kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_1k_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_1k_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_1k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_1k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_1k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_1k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_1k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_1k_sats')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_1mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_1m_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_1m_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_1m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_1m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_1m_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_1m_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_1m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_1m_sats')
-
-class MetricsTree_Distribution_AddressCohorts_GeAmount_1sat:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_above_1sat')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_above_1sat_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_above_1sat')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_above_1sat_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_above_1sat')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_above_1sat')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_above_1sat_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_above_1sat')
+        self._0sats: _0satsPattern = _0satsPattern(client, 'addrs_with_0sats')
+        self._100btc_to_1k_btc: _0satsPattern = _0satsPattern(client, 'addrs_above_100btc_under_1k_btc')
+        self._100k_btc_or_more: _0satsPattern = _0satsPattern(client, 'addrs_above_100k_btc')
+        self._100k_sats_to_1m_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_100k_sats_under_1m_sats')
+        self._100sats_to_1k_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_100sats_under_1k_sats')
+        self._10btc_to_100btc: _0satsPattern = _0satsPattern(client, 'addrs_above_10btc_under_100btc')
+        self._10k_btc_to_100k_btc: _0satsPattern = _0satsPattern(client, 'addrs_above_10k_btc_under_100k_btc')
+        self._10k_sats_to_100k_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_10k_sats_under_100k_sats')
+        self._10m_sats_to_1btc: _0satsPattern = _0satsPattern(client, 'addrs_above_10m_sats_under_1btc')
+        self._10sats_to_100sats: _0satsPattern = _0satsPattern(client, 'addrs_above_10sats_under_100sats')
+        self._1btc_to_10btc: _0satsPattern = _0satsPattern(client, 'addrs_above_1btc_under_10btc')
+        self._1k_btc_to_10k_btc: _0satsPattern = _0satsPattern(client, 'addrs_above_1k_btc_under_10k_btc')
+        self._1k_sats_to_10k_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_1k_sats_under_10k_sats')
+        self._1m_sats_to_10m_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_1m_sats_under_10m_sats')
+        self._1sat_to_10sats: _0satsPattern = _0satsPattern(client, 'addrs_above_1sat_under_10sats')
 
 class MetricsTree_Distribution_AddressCohorts_GeAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._100btc: MetricsTree_Distribution_AddressCohorts_GeAmount_100btc = MetricsTree_Distribution_AddressCohorts_GeAmount_100btc(client)
-        self._100k_sats: MetricsTree_Distribution_AddressCohorts_GeAmount_100kSats = MetricsTree_Distribution_AddressCohorts_GeAmount_100kSats(client)
-        self._100sats: MetricsTree_Distribution_AddressCohorts_GeAmount_100sats = MetricsTree_Distribution_AddressCohorts_GeAmount_100sats(client)
-        self._10btc: MetricsTree_Distribution_AddressCohorts_GeAmount_10btc = MetricsTree_Distribution_AddressCohorts_GeAmount_10btc(client)
-        self._10k_btc: MetricsTree_Distribution_AddressCohorts_GeAmount_10kBtc = MetricsTree_Distribution_AddressCohorts_GeAmount_10kBtc(client)
-        self._10k_sats: MetricsTree_Distribution_AddressCohorts_GeAmount_10kSats = MetricsTree_Distribution_AddressCohorts_GeAmount_10kSats(client)
-        self._10m_sats: MetricsTree_Distribution_AddressCohorts_GeAmount_10mSats = MetricsTree_Distribution_AddressCohorts_GeAmount_10mSats(client)
-        self._10sats: MetricsTree_Distribution_AddressCohorts_GeAmount_10sats = MetricsTree_Distribution_AddressCohorts_GeAmount_10sats(client)
-        self._1btc: MetricsTree_Distribution_AddressCohorts_GeAmount_1btc = MetricsTree_Distribution_AddressCohorts_GeAmount_1btc(client)
-        self._1k_btc: MetricsTree_Distribution_AddressCohorts_GeAmount_1kBtc = MetricsTree_Distribution_AddressCohorts_GeAmount_1kBtc(client)
-        self._1k_sats: MetricsTree_Distribution_AddressCohorts_GeAmount_1kSats = MetricsTree_Distribution_AddressCohorts_GeAmount_1kSats(client)
-        self._1m_sats: MetricsTree_Distribution_AddressCohorts_GeAmount_1mSats = MetricsTree_Distribution_AddressCohorts_GeAmount_1mSats(client)
-        self._1sat: MetricsTree_Distribution_AddressCohorts_GeAmount_1sat = MetricsTree_Distribution_AddressCohorts_GeAmount_1sat(client)
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_100btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_100btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_100btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_100btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_100btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_100btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_100btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_100btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_100btc')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_100kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_100k_btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_100k_btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_100k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_100k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_100k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_100k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_100k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_100k_btc')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_100kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_100k_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_100k_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_100k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_100k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_100k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_100k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_100k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_100k_sats')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_100sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_100sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_100sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_100sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_100sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_100sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_100sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_100sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_100sats')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_10btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_10btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_10btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_10btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_10btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_10btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_10btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_10btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_10btc')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_10kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_10k_btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_10k_btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_10k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_10k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_10k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_10k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_10k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_10k_btc')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_10kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_10k_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_10k_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_10k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_10k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_10k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_10k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_10k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_10k_sats')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_10mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_10m_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_10m_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_10m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_10m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_10m_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_10m_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_10m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_10m_sats')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_10sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_10sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_10sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_10sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_10sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_10sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_10sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_10sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_10sats')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_1btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_1btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_1btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_1btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_1btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_1btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_1btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_1btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_1btc')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_1kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_1k_btc')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_1k_btc_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_1k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_1k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_1k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_1k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_1k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_1k_btc')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_1kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_1k_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_1k_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_1k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_1k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_1k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_1k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_1k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_1k_sats')
-
-class MetricsTree_Distribution_AddressCohorts_LtAmount_1mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'addrs_under_1m_sats')
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, 'addrs_under_1m_sats_addr_count')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'addrs_under_1m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'addrs_under_1m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'addrs_under_1m_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'addrs_under_1m_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'addrs_under_1m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'addrs_under_1m_sats')
+        self._100btc: _0satsPattern = _0satsPattern(client, 'addrs_above_100btc')
+        self._100k_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_100k_sats')
+        self._100sats: _0satsPattern = _0satsPattern(client, 'addrs_above_100sats')
+        self._10btc: _0satsPattern = _0satsPattern(client, 'addrs_above_10btc')
+        self._10k_btc: _0satsPattern = _0satsPattern(client, 'addrs_above_10k_btc')
+        self._10k_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_10k_sats')
+        self._10m_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_10m_sats')
+        self._10sats: _0satsPattern = _0satsPattern(client, 'addrs_above_10sats')
+        self._1btc: _0satsPattern = _0satsPattern(client, 'addrs_above_1btc')
+        self._1k_btc: _0satsPattern = _0satsPattern(client, 'addrs_above_1k_btc')
+        self._1k_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_1k_sats')
+        self._1m_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_1m_sats')
+        self._1sat: _0satsPattern = _0satsPattern(client, 'addrs_above_1sat')
 
 class MetricsTree_Distribution_AddressCohorts_LtAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._100btc: MetricsTree_Distribution_AddressCohorts_LtAmount_100btc = MetricsTree_Distribution_AddressCohorts_LtAmount_100btc(client)
-        self._100k_btc: MetricsTree_Distribution_AddressCohorts_LtAmount_100kBtc = MetricsTree_Distribution_AddressCohorts_LtAmount_100kBtc(client)
-        self._100k_sats: MetricsTree_Distribution_AddressCohorts_LtAmount_100kSats = MetricsTree_Distribution_AddressCohorts_LtAmount_100kSats(client)
-        self._100sats: MetricsTree_Distribution_AddressCohorts_LtAmount_100sats = MetricsTree_Distribution_AddressCohorts_LtAmount_100sats(client)
-        self._10btc: MetricsTree_Distribution_AddressCohorts_LtAmount_10btc = MetricsTree_Distribution_AddressCohorts_LtAmount_10btc(client)
-        self._10k_btc: MetricsTree_Distribution_AddressCohorts_LtAmount_10kBtc = MetricsTree_Distribution_AddressCohorts_LtAmount_10kBtc(client)
-        self._10k_sats: MetricsTree_Distribution_AddressCohorts_LtAmount_10kSats = MetricsTree_Distribution_AddressCohorts_LtAmount_10kSats(client)
-        self._10m_sats: MetricsTree_Distribution_AddressCohorts_LtAmount_10mSats = MetricsTree_Distribution_AddressCohorts_LtAmount_10mSats(client)
-        self._10sats: MetricsTree_Distribution_AddressCohorts_LtAmount_10sats = MetricsTree_Distribution_AddressCohorts_LtAmount_10sats(client)
-        self._1btc: MetricsTree_Distribution_AddressCohorts_LtAmount_1btc = MetricsTree_Distribution_AddressCohorts_LtAmount_1btc(client)
-        self._1k_btc: MetricsTree_Distribution_AddressCohorts_LtAmount_1kBtc = MetricsTree_Distribution_AddressCohorts_LtAmount_1kBtc(client)
-        self._1k_sats: MetricsTree_Distribution_AddressCohorts_LtAmount_1kSats = MetricsTree_Distribution_AddressCohorts_LtAmount_1kSats(client)
-        self._1m_sats: MetricsTree_Distribution_AddressCohorts_LtAmount_1mSats = MetricsTree_Distribution_AddressCohorts_LtAmount_1mSats(client)
+        self._100btc: _0satsPattern = _0satsPattern(client, 'addrs_under_100btc')
+        self._100k_btc: _0satsPattern = _0satsPattern(client, 'addrs_under_100k_btc')
+        self._100k_sats: _0satsPattern = _0satsPattern(client, 'addrs_under_100k_sats')
+        self._100sats: _0satsPattern = _0satsPattern(client, 'addrs_under_100sats')
+        self._10btc: _0satsPattern = _0satsPattern(client, 'addrs_under_10btc')
+        self._10k_btc: _0satsPattern = _0satsPattern(client, 'addrs_under_10k_btc')
+        self._10k_sats: _0satsPattern = _0satsPattern(client, 'addrs_under_10k_sats')
+        self._10m_sats: _0satsPattern = _0satsPattern(client, 'addrs_under_10m_sats')
+        self._10sats: _0satsPattern = _0satsPattern(client, 'addrs_under_10sats')
+        self._1btc: _0satsPattern = _0satsPattern(client, 'addrs_under_1btc')
+        self._1k_btc: _0satsPattern = _0satsPattern(client, 'addrs_under_1k_btc')
+        self._1k_sats: _0satsPattern = _0satsPattern(client, 'addrs_under_1k_sats')
+        self._1m_sats: _0satsPattern = _0satsPattern(client, 'addrs_under_1m_sats')
 
 class MetricsTree_Distribution_AddressCohorts:
     """Metrics tree node."""
@@ -3344,461 +2715,31 @@ class MetricsTree_Distribution_AnyAddressIndexes:
         self.p2wpkh: MetricPattern23[AnyAddressIndex] = MetricPattern23(client, 'anyaddressindex')
         self.p2wsh: MetricPattern24[AnyAddressIndex] = MetricPattern24(client, 'anyaddressindex')
 
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_10yTo12y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_10y_up_to_12y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_10y_up_to_12y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_10y_up_to_12y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_10yTo12y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_10y_up_to_12y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_10yTo12y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_10yTo12y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_10y_up_to_12y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_10y_up_to_12y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_10y_up_to_12y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_10y_up_to_12y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_10y_up_to_12y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_12yTo15y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_12y_up_to_15y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_12y_up_to_15y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_12y_up_to_15y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_12yTo15y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_12y_up_to_15y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_12yTo15y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_12yTo15y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_12y_up_to_15y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_12y_up_to_15y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_12y_up_to_15y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_12y_up_to_15y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_12y_up_to_15y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_1dTo1w_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_1d_up_to_1w_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_1d_up_to_1w_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_1d_up_to_1w_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_1dTo1w:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_1d_up_to_1w_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_1dTo1w_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_1dTo1w_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_1d_up_to_1w_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_1d_up_to_1w_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_1d_up_to_1w_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_1d_up_to_1w_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_1d_up_to_1w_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_1hTo1d_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_1h_up_to_1d_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_1h_up_to_1d_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_1h_up_to_1d_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_1hTo1d:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_1h_up_to_1d_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_1hTo1d_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_1hTo1d_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_1h_up_to_1d_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_1h_up_to_1d_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_1h_up_to_1d_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_1h_up_to_1d_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_1h_up_to_1d_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_1mTo2m_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_1m_up_to_2m_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_1m_up_to_2m_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_1m_up_to_2m_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_1mTo2m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_1m_up_to_2m_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_1mTo2m_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_1mTo2m_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_1m_up_to_2m_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_1m_up_to_2m_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_1m_up_to_2m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_1m_up_to_2m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_1m_up_to_2m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_1wTo1m_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_1w_up_to_1m_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_1w_up_to_1m_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_1w_up_to_1m_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_1wTo1m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_1w_up_to_1m_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_1wTo1m_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_1wTo1m_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_1w_up_to_1m_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_1w_up_to_1m_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_1w_up_to_1m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_1w_up_to_1m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_1w_up_to_1m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_1yTo2y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_1y_up_to_2y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_1y_up_to_2y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_1y_up_to_2y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_1yTo2y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_1y_up_to_2y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_1yTo2y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_1yTo2y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_1y_up_to_2y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_1y_up_to_2y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_1y_up_to_2y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_1y_up_to_2y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_1y_up_to_2y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_2mTo3m_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_2m_up_to_3m_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_2m_up_to_3m_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_2m_up_to_3m_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_2mTo3m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_2m_up_to_3m_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_2mTo3m_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_2mTo3m_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_2m_up_to_3m_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_2m_up_to_3m_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_2m_up_to_3m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_2m_up_to_3m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_2m_up_to_3m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_2yTo3y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_2y_up_to_3y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_2y_up_to_3y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_2y_up_to_3y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_2yTo3y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_2y_up_to_3y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_2yTo3y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_2yTo3y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_2y_up_to_3y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_2y_up_to_3y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_2y_up_to_3y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_2y_up_to_3y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_2y_up_to_3y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_3mTo4m_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_3m_up_to_4m_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_3m_up_to_4m_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_3m_up_to_4m_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_3mTo4m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_3m_up_to_4m_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_3mTo4m_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_3mTo4m_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_3m_up_to_4m_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_3m_up_to_4m_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_3m_up_to_4m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_3m_up_to_4m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_3m_up_to_4m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_3yTo4y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_3y_up_to_4y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_3y_up_to_4y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_3y_up_to_4y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_3yTo4y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_3y_up_to_4y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_3yTo4y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_3yTo4y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_3y_up_to_4y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_3y_up_to_4y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_3y_up_to_4y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_3y_up_to_4y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_3y_up_to_4y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_4mTo5m_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_4m_up_to_5m_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_4m_up_to_5m_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_4m_up_to_5m_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_4mTo5m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_4m_up_to_5m_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_4mTo5m_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_4mTo5m_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_4m_up_to_5m_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_4m_up_to_5m_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_4m_up_to_5m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_4m_up_to_5m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_4m_up_to_5m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_4yTo5y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_4y_up_to_5y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_4y_up_to_5y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_4y_up_to_5y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_4yTo5y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_4y_up_to_5y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_4yTo5y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_4yTo5y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_4y_up_to_5y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_4y_up_to_5y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_4y_up_to_5y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_4y_up_to_5y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_4y_up_to_5y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_5mTo6m_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_5m_up_to_6m_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_5m_up_to_6m_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_5m_up_to_6m_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_5mTo6m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_5m_up_to_6m_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_5mTo6m_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_5mTo6m_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_5m_up_to_6m_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_5m_up_to_6m_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_5m_up_to_6m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_5m_up_to_6m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_5m_up_to_6m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_5yTo6y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_5y_up_to_6y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_5y_up_to_6y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_5y_up_to_6y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_5yTo6y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_5y_up_to_6y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_5yTo6y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_5yTo6y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_5y_up_to_6y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_5y_up_to_6y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_5y_up_to_6y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_5y_up_to_6y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_5y_up_to_6y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_6mTo1y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_6m_up_to_1y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_6m_up_to_1y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_6m_up_to_1y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_6mTo1y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_6m_up_to_1y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_6mTo1y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_6mTo1y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_6m_up_to_1y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_6m_up_to_1y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_6m_up_to_1y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_6m_up_to_1y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_6m_up_to_1y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_6yTo7y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_6y_up_to_7y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_6y_up_to_7y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_6y_up_to_7y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_6yTo7y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_6y_up_to_7y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_6yTo7y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_6yTo7y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_6y_up_to_7y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_6y_up_to_7y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_6y_up_to_7y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_6y_up_to_7y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_6y_up_to_7y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_7yTo8y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_7y_up_to_8y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_7y_up_to_8y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_7y_up_to_8y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_7yTo8y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_7y_up_to_8y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_7yTo8y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_7yTo8y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_7y_up_to_8y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_7y_up_to_8y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_7y_up_to_8y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_7y_up_to_8y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_7y_up_to_8y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_8yTo10y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_8y_up_to_10y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_8y_up_to_10y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_8y_up_to_10y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_8yTo10y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_8y_up_to_10y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_8yTo10y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_8yTo10y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_8y_up_to_10y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_8y_up_to_10y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_8y_up_to_10y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_8y_up_to_10y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_8y_up_to_10y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_From15y_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_15y_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_at_least_15y_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_at_least_15y_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_From15y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_15y_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_From15y_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_From15y_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_15y_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_at_least_15y_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_at_least_15y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_15y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_15y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_UpTo1h_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_up_to_1h_old_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'utxos_up_to_1h_old_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'utxos_up_to_1h_old_cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_AgeRange_UpTo1h:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_1h_old')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_AgeRange_UpTo1h_CostBasis = MetricsTree_Distribution_UtxoCohorts_AgeRange_UpTo1h_CostBasis(client)
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_1h_old_utxo_count')
-        self.realized: RealizedPattern2 = RealizedPattern2(client, 'utxos_up_to_1h_old')
-        self.relative: RelativePattern2 = RelativePattern2(client, 'utxos_up_to_1h_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_1h_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_1h_old')
-
 class MetricsTree_Distribution_UtxoCohorts_AgeRange:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._10y_to_12y: MetricsTree_Distribution_UtxoCohorts_AgeRange_10yTo12y = MetricsTree_Distribution_UtxoCohorts_AgeRange_10yTo12y(client)
-        self._12y_to_15y: MetricsTree_Distribution_UtxoCohorts_AgeRange_12yTo15y = MetricsTree_Distribution_UtxoCohorts_AgeRange_12yTo15y(client)
-        self._1d_to_1w: MetricsTree_Distribution_UtxoCohorts_AgeRange_1dTo1w = MetricsTree_Distribution_UtxoCohorts_AgeRange_1dTo1w(client)
-        self._1h_to_1d: MetricsTree_Distribution_UtxoCohorts_AgeRange_1hTo1d = MetricsTree_Distribution_UtxoCohorts_AgeRange_1hTo1d(client)
-        self._1m_to_2m: MetricsTree_Distribution_UtxoCohorts_AgeRange_1mTo2m = MetricsTree_Distribution_UtxoCohorts_AgeRange_1mTo2m(client)
-        self._1w_to_1m: MetricsTree_Distribution_UtxoCohorts_AgeRange_1wTo1m = MetricsTree_Distribution_UtxoCohorts_AgeRange_1wTo1m(client)
-        self._1y_to_2y: MetricsTree_Distribution_UtxoCohorts_AgeRange_1yTo2y = MetricsTree_Distribution_UtxoCohorts_AgeRange_1yTo2y(client)
-        self._2m_to_3m: MetricsTree_Distribution_UtxoCohorts_AgeRange_2mTo3m = MetricsTree_Distribution_UtxoCohorts_AgeRange_2mTo3m(client)
-        self._2y_to_3y: MetricsTree_Distribution_UtxoCohorts_AgeRange_2yTo3y = MetricsTree_Distribution_UtxoCohorts_AgeRange_2yTo3y(client)
-        self._3m_to_4m: MetricsTree_Distribution_UtxoCohorts_AgeRange_3mTo4m = MetricsTree_Distribution_UtxoCohorts_AgeRange_3mTo4m(client)
-        self._3y_to_4y: MetricsTree_Distribution_UtxoCohorts_AgeRange_3yTo4y = MetricsTree_Distribution_UtxoCohorts_AgeRange_3yTo4y(client)
-        self._4m_to_5m: MetricsTree_Distribution_UtxoCohorts_AgeRange_4mTo5m = MetricsTree_Distribution_UtxoCohorts_AgeRange_4mTo5m(client)
-        self._4y_to_5y: MetricsTree_Distribution_UtxoCohorts_AgeRange_4yTo5y = MetricsTree_Distribution_UtxoCohorts_AgeRange_4yTo5y(client)
-        self._5m_to_6m: MetricsTree_Distribution_UtxoCohorts_AgeRange_5mTo6m = MetricsTree_Distribution_UtxoCohorts_AgeRange_5mTo6m(client)
-        self._5y_to_6y: MetricsTree_Distribution_UtxoCohorts_AgeRange_5yTo6y = MetricsTree_Distribution_UtxoCohorts_AgeRange_5yTo6y(client)
-        self._6m_to_1y: MetricsTree_Distribution_UtxoCohorts_AgeRange_6mTo1y = MetricsTree_Distribution_UtxoCohorts_AgeRange_6mTo1y(client)
-        self._6y_to_7y: MetricsTree_Distribution_UtxoCohorts_AgeRange_6yTo7y = MetricsTree_Distribution_UtxoCohorts_AgeRange_6yTo7y(client)
-        self._7y_to_8y: MetricsTree_Distribution_UtxoCohorts_AgeRange_7yTo8y = MetricsTree_Distribution_UtxoCohorts_AgeRange_7yTo8y(client)
-        self._8y_to_10y: MetricsTree_Distribution_UtxoCohorts_AgeRange_8yTo10y = MetricsTree_Distribution_UtxoCohorts_AgeRange_8yTo10y(client)
-        self.from_15y: MetricsTree_Distribution_UtxoCohorts_AgeRange_From15y = MetricsTree_Distribution_UtxoCohorts_AgeRange_From15y(client)
-        self.up_to_1h: MetricsTree_Distribution_UtxoCohorts_AgeRange_UpTo1h = MetricsTree_Distribution_UtxoCohorts_AgeRange_UpTo1h(client)
-
-class MetricsTree_Distribution_UtxoCohorts_All_Activity:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.coinblocks_destroyed: BlockCountPattern[StoredF64] = BlockCountPattern(client, 'coinblocks_destroyed')
-        self.coindays_destroyed: BlockCountPattern[StoredF64] = BlockCountPattern(client, 'coindays_destroyed')
-        self.satblocks_destroyed: MetricPattern11[Sats] = MetricPattern11(client, 'satblocks_destroyed')
-        self.satdays_destroyed: MetricPattern11[Sats] = MetricPattern11(client, 'satdays_destroyed')
-        self.sent: UnclaimedRewardsPattern = UnclaimedRewardsPattern(client, 'sent')
+        self._10y_to_12y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_10y_up_to_12y_old')
+        self._12y_to_15y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_12y_up_to_15y_old')
+        self._1d_to_1w: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_1d_up_to_1w_old')
+        self._1h_to_1d: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_1h_up_to_1d_old')
+        self._1m_to_2m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_1m_up_to_2m_old')
+        self._1w_to_1m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_1w_up_to_1m_old')
+        self._1y_to_2y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_1y_up_to_2y_old')
+        self._2m_to_3m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_2m_up_to_3m_old')
+        self._2y_to_3y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_2y_up_to_3y_old')
+        self._3m_to_4m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_3m_up_to_4m_old')
+        self._3y_to_4y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_3y_up_to_4y_old')
+        self._4m_to_5m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_4m_up_to_5m_old')
+        self._4y_to_5y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_4y_up_to_5y_old')
+        self._5m_to_6m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_5m_up_to_6m_old')
+        self._5y_to_6y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_5y_up_to_6y_old')
+        self._6m_to_1y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_6m_up_to_1y_old')
+        self._6y_to_7y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_6y_up_to_7y_old')
+        self._7y_to_8y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_7y_up_to_8y_old')
+        self._8y_to_10y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_8y_up_to_10y_old')
+        self.from_15y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_15y_old')
+        self.up_to_1h: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_up_to_1h_old')
 
 class MetricsTree_Distribution_UtxoCohorts_All_CostBasis:
     """Metrics tree node."""
@@ -3807,67 +2748,6 @@ class MetricsTree_Distribution_UtxoCohorts_All_CostBasis:
         self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'max_cost_basis')
         self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'min_cost_basis')
         self.percentiles: PercentilesPattern = PercentilesPattern(client, 'cost_basis')
-
-class MetricsTree_Distribution_UtxoCohorts_All_Realized_RealizedPriceExtra:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'realized_price_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'realized_price_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'realized_price_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'realized_price_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'realized_price_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'realized_price_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'realized_price_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'realized_price_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'realized_price_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'realized_price_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'realized_price_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'realized_price_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'realized_price_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'realized_price_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'realized_price_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'realized_price_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'realized_price_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'realized_price_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'realized_price_ratio')
-
-class MetricsTree_Distribution_UtxoCohorts_All_Realized:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.adjusted_sopr: MetricPattern6[StoredF64] = MetricPattern6(client, 'adjusted_sopr')
-        self.adjusted_sopr_30d_ema: MetricPattern6[StoredF64] = MetricPattern6(client, 'adjusted_sopr_30d_ema')
-        self.adjusted_sopr_7d_ema: MetricPattern6[StoredF64] = MetricPattern6(client, 'adjusted_sopr_7d_ema')
-        self.adjusted_value_created: MetricPattern1[Dollars] = MetricPattern1(client, 'adjusted_value_created')
-        self.adjusted_value_destroyed: MetricPattern1[Dollars] = MetricPattern1(client, 'adjusted_value_destroyed')
-        self.mvrv: MetricPattern4[StoredF32] = MetricPattern4(client, 'mvrv')
-        self.neg_realized_loss: BitcoinPattern2[Dollars] = BitcoinPattern2(client, 'neg_realized_loss')
-        self.net_realized_pnl: BlockCountPattern[Dollars] = BlockCountPattern(client, 'net_realized_pnl')
-        self.net_realized_pnl_cumulative_30d_delta: MetricPattern4[Dollars] = MetricPattern4(client, 'net_realized_pnl_cumulative_30d_delta')
-        self.net_realized_pnl_cumulative_30d_delta_rel_to_market_cap: MetricPattern4[StoredF32] = MetricPattern4(client, 'net_realized_pnl_cumulative_30d_delta_rel_to_market_cap')
-        self.net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap: MetricPattern4[StoredF32] = MetricPattern4(client, 'net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap')
-        self.net_realized_pnl_rel_to_realized_cap: BlockCountPattern[StoredF32] = BlockCountPattern(client, 'net_realized_pnl_rel_to_realized_cap')
-        self.realized_cap: MetricPattern1[Dollars] = MetricPattern1(client, 'realized_cap')
-        self.realized_cap_30d_delta: MetricPattern4[Dollars] = MetricPattern4(client, 'realized_cap_30d_delta')
-        self.realized_cap_rel_to_own_market_cap: MetricPattern1[StoredF32] = MetricPattern1(client, 'realized_cap_rel_to_own_market_cap')
-        self.realized_loss: BlockCountPattern[Dollars] = BlockCountPattern(client, 'realized_loss')
-        self.realized_loss_rel_to_realized_cap: BlockCountPattern[StoredF32] = BlockCountPattern(client, 'realized_loss_rel_to_realized_cap')
-        self.realized_price: MetricPattern1[Dollars] = MetricPattern1(client, 'realized_price')
-        self.realized_price_extra: MetricsTree_Distribution_UtxoCohorts_All_Realized_RealizedPriceExtra = MetricsTree_Distribution_UtxoCohorts_All_Realized_RealizedPriceExtra(client)
-        self.realized_profit: BlockCountPattern[Dollars] = BlockCountPattern(client, 'realized_profit')
-        self.realized_profit_rel_to_realized_cap: BlockCountPattern[StoredF32] = BlockCountPattern(client, 'realized_profit_rel_to_realized_cap')
-        self.realized_profit_to_loss_ratio: MetricPattern6[StoredF64] = MetricPattern6(client, 'realized_profit_to_loss_ratio')
-        self.realized_value: MetricPattern1[Dollars] = MetricPattern1(client, 'realized_value')
-        self.sell_side_risk_ratio: MetricPattern6[StoredF32] = MetricPattern6(client, 'sell_side_risk_ratio')
-        self.sell_side_risk_ratio_30d_ema: MetricPattern6[StoredF32] = MetricPattern6(client, 'sell_side_risk_ratio_30d_ema')
-        self.sell_side_risk_ratio_7d_ema: MetricPattern6[StoredF32] = MetricPattern6(client, 'sell_side_risk_ratio_7d_ema')
-        self.sopr: MetricPattern6[StoredF64] = MetricPattern6(client, 'sopr')
-        self.sopr_30d_ema: MetricPattern6[StoredF64] = MetricPattern6(client, 'sopr_30d_ema')
-        self.sopr_7d_ema: MetricPattern6[StoredF64] = MetricPattern6(client, 'sopr_7d_ema')
-        self.total_realized_pnl: MetricPattern1[Dollars] = MetricPattern1(client, 'total_realized_pnl')
-        self.value_created: MetricPattern1[Dollars] = MetricPattern1(client, 'value_created')
-        self.value_destroyed: MetricPattern1[Dollars] = MetricPattern1(client, 'value_destroyed')
 
 class MetricsTree_Distribution_UtxoCohorts_All_Relative:
     """Metrics tree node."""
@@ -3880,1160 +2760,148 @@ class MetricsTree_Distribution_UtxoCohorts_All_Relative:
         self.unrealized_loss_rel_to_own_total_unrealized_pnl: MetricPattern1[StoredF32] = MetricPattern1(client, 'unrealized_loss_rel_to_own_total_unrealized_pnl')
         self.unrealized_profit_rel_to_own_total_unrealized_pnl: MetricPattern1[StoredF32] = MetricPattern1(client, 'unrealized_profit_rel_to_own_total_unrealized_pnl')
 
-class MetricsTree_Distribution_UtxoCohorts_All_Unrealized:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.neg_unrealized_loss: MetricPattern1[Dollars] = MetricPattern1(client, 'neg_unrealized_loss')
-        self.net_unrealized_pnl: MetricPattern1[Dollars] = MetricPattern1(client, 'net_unrealized_pnl')
-        self.supply_in_loss: ActiveSupplyPattern = ActiveSupplyPattern(client, 'supply_in_loss')
-        self.supply_in_profit: ActiveSupplyPattern = ActiveSupplyPattern(client, 'supply_in_profit')
-        self.total_unrealized_pnl: MetricPattern1[Dollars] = MetricPattern1(client, 'total_unrealized_pnl')
-        self.unrealized_loss: MetricPattern1[Dollars] = MetricPattern1(client, 'unrealized_loss')
-        self.unrealized_profit: MetricPattern1[Dollars] = MetricPattern1(client, 'unrealized_profit')
-
 class MetricsTree_Distribution_UtxoCohorts_All:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: MetricsTree_Distribution_UtxoCohorts_All_Activity = MetricsTree_Distribution_UtxoCohorts_All_Activity(client)
+        self.activity: ActivityPattern2 = ActivityPattern2(client, '')
         self.cost_basis: MetricsTree_Distribution_UtxoCohorts_All_CostBasis = MetricsTree_Distribution_UtxoCohorts_All_CostBasis(client)
         self.outputs: OutputsPattern = OutputsPattern(client, 'utxo_count')
-        self.realized: MetricsTree_Distribution_UtxoCohorts_All_Realized = MetricsTree_Distribution_UtxoCohorts_All_Realized(client)
+        self.realized: RealizedPattern3 = RealizedPattern3(client, '')
         self.relative: MetricsTree_Distribution_UtxoCohorts_All_Relative = MetricsTree_Distribution_UtxoCohorts_All_Relative(client)
         self.supply: SupplyPattern2 = SupplyPattern2(client, 'supply')
-        self.unrealized: MetricsTree_Distribution_UtxoCohorts_All_Unrealized = MetricsTree_Distribution_UtxoCohorts_All_Unrealized(client)
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_0sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_with_0sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_with_0sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_with_0sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_with_0sats')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_with_0sats_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_with_0sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_with_0sats')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_100btcTo1kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_100btc_under_1k_btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_100btc_under_1k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_100btc_under_1k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_100btc_under_1k_btc')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_100btc_under_1k_btc_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_100btc_under_1k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_100btc_under_1k_btc')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_100kBtcOrMore:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_100k_btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_100k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_100k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_100k_btc')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_100k_btc_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_100k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_100k_btc')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_100kSatsTo1mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_100k_sats_under_1m_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_100k_sats_under_1m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_100k_sats_under_1m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_100k_sats_under_1m_sats')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_100k_sats_under_1m_sats_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_100k_sats_under_1m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_100k_sats_under_1m_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_100satsTo1kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_100sats_under_1k_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_100sats_under_1k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_100sats_under_1k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_100sats_under_1k_sats')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_100sats_under_1k_sats_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_100sats_under_1k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_100sats_under_1k_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_10btcTo100btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_10btc_under_100btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_10btc_under_100btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_10btc_under_100btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_10btc_under_100btc')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_10btc_under_100btc_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_10btc_under_100btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_10btc_under_100btc')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_10kBtcTo100kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_10k_btc_under_100k_btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_10k_btc_under_100k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_10k_btc_under_100k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_10k_btc_under_100k_btc')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_10k_btc_under_100k_btc_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_10k_btc_under_100k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_10k_btc_under_100k_btc')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_10kSatsTo100kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_10k_sats_under_100k_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_10k_sats_under_100k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_10k_sats_under_100k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_10k_sats_under_100k_sats')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_10k_sats_under_100k_sats_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_10k_sats_under_100k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_10k_sats_under_100k_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_10mSatsTo1btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_10m_sats_under_1btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_10m_sats_under_1btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_10m_sats_under_1btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_10m_sats_under_1btc')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_10m_sats_under_1btc_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_10m_sats_under_1btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_10m_sats_under_1btc')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_10satsTo100sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_10sats_under_100sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_10sats_under_100sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_10sats_under_100sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_10sats_under_100sats')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_10sats_under_100sats_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_10sats_under_100sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_10sats_under_100sats')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_1btcTo10btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_1btc_under_10btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_1btc_under_10btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_1btc_under_10btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_1btc_under_10btc')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_1btc_under_10btc_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_1btc_under_10btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_1btc_under_10btc')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_1kBtcTo10kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_1k_btc_under_10k_btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_1k_btc_under_10k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_1k_btc_under_10k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_1k_btc_under_10k_btc')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_1k_btc_under_10k_btc_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_1k_btc_under_10k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_1k_btc_under_10k_btc')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_1kSatsTo10kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_1k_sats_under_10k_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_1k_sats_under_10k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_1k_sats_under_10k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_1k_sats_under_10k_sats')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_1k_sats_under_10k_sats_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_1k_sats_under_10k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_1k_sats_under_10k_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_1mSatsTo10mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_1m_sats_under_10m_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_1m_sats_under_10m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_1m_sats_under_10m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_1m_sats_under_10m_sats')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_1m_sats_under_10m_sats_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_1m_sats_under_10m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_1m_sats_under_10m_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_AmountRange_1satTo10sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_1sat_under_10sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_1sat_under_10sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_1sat_under_10sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_1sat_under_10sats')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'utxos_above_1sat_under_10sats_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_1sat_under_10sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_1sat_under_10sats')
+        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, '')
 
 class MetricsTree_Distribution_UtxoCohorts_AmountRange:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._0sats: MetricsTree_Distribution_UtxoCohorts_AmountRange_0sats = MetricsTree_Distribution_UtxoCohorts_AmountRange_0sats(client)
-        self._100btc_to_1k_btc: MetricsTree_Distribution_UtxoCohorts_AmountRange_100btcTo1kBtc = MetricsTree_Distribution_UtxoCohorts_AmountRange_100btcTo1kBtc(client)
-        self._100k_btc_or_more: MetricsTree_Distribution_UtxoCohorts_AmountRange_100kBtcOrMore = MetricsTree_Distribution_UtxoCohorts_AmountRange_100kBtcOrMore(client)
-        self._100k_sats_to_1m_sats: MetricsTree_Distribution_UtxoCohorts_AmountRange_100kSatsTo1mSats = MetricsTree_Distribution_UtxoCohorts_AmountRange_100kSatsTo1mSats(client)
-        self._100sats_to_1k_sats: MetricsTree_Distribution_UtxoCohorts_AmountRange_100satsTo1kSats = MetricsTree_Distribution_UtxoCohorts_AmountRange_100satsTo1kSats(client)
-        self._10btc_to_100btc: MetricsTree_Distribution_UtxoCohorts_AmountRange_10btcTo100btc = MetricsTree_Distribution_UtxoCohorts_AmountRange_10btcTo100btc(client)
-        self._10k_btc_to_100k_btc: MetricsTree_Distribution_UtxoCohorts_AmountRange_10kBtcTo100kBtc = MetricsTree_Distribution_UtxoCohorts_AmountRange_10kBtcTo100kBtc(client)
-        self._10k_sats_to_100k_sats: MetricsTree_Distribution_UtxoCohorts_AmountRange_10kSatsTo100kSats = MetricsTree_Distribution_UtxoCohorts_AmountRange_10kSatsTo100kSats(client)
-        self._10m_sats_to_1btc: MetricsTree_Distribution_UtxoCohorts_AmountRange_10mSatsTo1btc = MetricsTree_Distribution_UtxoCohorts_AmountRange_10mSatsTo1btc(client)
-        self._10sats_to_100sats: MetricsTree_Distribution_UtxoCohorts_AmountRange_10satsTo100sats = MetricsTree_Distribution_UtxoCohorts_AmountRange_10satsTo100sats(client)
-        self._1btc_to_10btc: MetricsTree_Distribution_UtxoCohorts_AmountRange_1btcTo10btc = MetricsTree_Distribution_UtxoCohorts_AmountRange_1btcTo10btc(client)
-        self._1k_btc_to_10k_btc: MetricsTree_Distribution_UtxoCohorts_AmountRange_1kBtcTo10kBtc = MetricsTree_Distribution_UtxoCohorts_AmountRange_1kBtcTo10kBtc(client)
-        self._1k_sats_to_10k_sats: MetricsTree_Distribution_UtxoCohorts_AmountRange_1kSatsTo10kSats = MetricsTree_Distribution_UtxoCohorts_AmountRange_1kSatsTo10kSats(client)
-        self._1m_sats_to_10m_sats: MetricsTree_Distribution_UtxoCohorts_AmountRange_1mSatsTo10mSats = MetricsTree_Distribution_UtxoCohorts_AmountRange_1mSatsTo10mSats(client)
-        self._1sat_to_10sats: MetricsTree_Distribution_UtxoCohorts_AmountRange_1satTo10sats = MetricsTree_Distribution_UtxoCohorts_AmountRange_1satTo10sats(client)
-
-class MetricsTree_Distribution_UtxoCohorts_Epoch_0:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'epoch_0')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'epoch_0')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'epoch_0_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'epoch_0')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'epoch_0_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'epoch_0_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'epoch_0')
-
-class MetricsTree_Distribution_UtxoCohorts_Epoch_1:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'epoch_1')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'epoch_1')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'epoch_1_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'epoch_1')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'epoch_1_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'epoch_1_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'epoch_1')
-
-class MetricsTree_Distribution_UtxoCohorts_Epoch_2:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'epoch_2')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'epoch_2')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'epoch_2_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'epoch_2')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'epoch_2_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'epoch_2_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'epoch_2')
-
-class MetricsTree_Distribution_UtxoCohorts_Epoch_3:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'epoch_3')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'epoch_3')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'epoch_3_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'epoch_3')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'epoch_3_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'epoch_3_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'epoch_3')
-
-class MetricsTree_Distribution_UtxoCohorts_Epoch_4:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'epoch_4')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'epoch_4')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'epoch_4_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'epoch_4')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'epoch_4_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'epoch_4_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'epoch_4')
+        self._0sats: _0satsPattern2 = _0satsPattern2(client, 'utxos_with_0sats')
+        self._100btc_to_1k_btc: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_100btc_under_1k_btc')
+        self._100k_btc_or_more: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_100k_btc')
+        self._100k_sats_to_1m_sats: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_100k_sats_under_1m_sats')
+        self._100sats_to_1k_sats: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_100sats_under_1k_sats')
+        self._10btc_to_100btc: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_10btc_under_100btc')
+        self._10k_btc_to_100k_btc: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_10k_btc_under_100k_btc')
+        self._10k_sats_to_100k_sats: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_10k_sats_under_100k_sats')
+        self._10m_sats_to_1btc: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_10m_sats_under_1btc')
+        self._10sats_to_100sats: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_10sats_under_100sats')
+        self._1btc_to_10btc: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_1btc_under_10btc')
+        self._1k_btc_to_10k_btc: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_1k_btc_under_10k_btc')
+        self._1k_sats_to_10k_sats: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_1k_sats_under_10k_sats')
+        self._1m_sats_to_10m_sats: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_1m_sats_under_10m_sats')
+        self._1sat_to_10sats: _0satsPattern2 = _0satsPattern2(client, 'utxos_above_1sat_under_10sats')
 
 class MetricsTree_Distribution_UtxoCohorts_Epoch:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._0: MetricsTree_Distribution_UtxoCohorts_Epoch_0 = MetricsTree_Distribution_UtxoCohorts_Epoch_0(client)
-        self._1: MetricsTree_Distribution_UtxoCohorts_Epoch_1 = MetricsTree_Distribution_UtxoCohorts_Epoch_1(client)
-        self._2: MetricsTree_Distribution_UtxoCohorts_Epoch_2 = MetricsTree_Distribution_UtxoCohorts_Epoch_2(client)
-        self._3: MetricsTree_Distribution_UtxoCohorts_Epoch_3 = MetricsTree_Distribution_UtxoCohorts_Epoch_3(client)
-        self._4: MetricsTree_Distribution_UtxoCohorts_Epoch_4 = MetricsTree_Distribution_UtxoCohorts_Epoch_4(client)
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_100btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_100btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_100btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_100btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_100btc')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_100btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_100btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_100btc')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_100kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_100k_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_100k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_100k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_100k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_100k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_100k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_100k_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_100sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_100sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_100sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_100sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_100sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_100sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_100sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_100sats')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_10btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_10btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_10btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_10btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_10btc')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_10btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_10btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_10btc')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_10kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_10k_btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_10k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_10k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_10k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_10k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_10k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_10k_btc')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_10kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_10k_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_10k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_10k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_10k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_10k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_10k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_10k_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_10mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_10m_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_10m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_10m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_10m_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_10m_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_10m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_10m_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_10sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_10sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_10sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_10sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_10sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_10sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_10sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_10sats')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_1btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_1btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_1btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_1btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_1btc')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_1btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_1btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_1btc')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_1kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_1k_btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_1k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_1k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_1k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_1k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_1k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_1k_btc')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_1kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_1k_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_1k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_1k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_1k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_1k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_1k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_1k_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_1mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_1m_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_1m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_1m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_1m_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_1m_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_1m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_1m_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_GeAmount_1sat:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_above_1sat')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_above_1sat')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_above_1sat_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_above_1sat')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_above_1sat')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_above_1sat_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_above_1sat')
+        self._0: _0satsPattern2 = _0satsPattern2(client, 'epoch_0')
+        self._1: _0satsPattern2 = _0satsPattern2(client, 'epoch_1')
+        self._2: _0satsPattern2 = _0satsPattern2(client, 'epoch_2')
+        self._3: _0satsPattern2 = _0satsPattern2(client, 'epoch_3')
+        self._4: _0satsPattern2 = _0satsPattern2(client, 'epoch_4')
 
 class MetricsTree_Distribution_UtxoCohorts_GeAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._100btc: MetricsTree_Distribution_UtxoCohorts_GeAmount_100btc = MetricsTree_Distribution_UtxoCohorts_GeAmount_100btc(client)
-        self._100k_sats: MetricsTree_Distribution_UtxoCohorts_GeAmount_100kSats = MetricsTree_Distribution_UtxoCohorts_GeAmount_100kSats(client)
-        self._100sats: MetricsTree_Distribution_UtxoCohorts_GeAmount_100sats = MetricsTree_Distribution_UtxoCohorts_GeAmount_100sats(client)
-        self._10btc: MetricsTree_Distribution_UtxoCohorts_GeAmount_10btc = MetricsTree_Distribution_UtxoCohorts_GeAmount_10btc(client)
-        self._10k_btc: MetricsTree_Distribution_UtxoCohorts_GeAmount_10kBtc = MetricsTree_Distribution_UtxoCohorts_GeAmount_10kBtc(client)
-        self._10k_sats: MetricsTree_Distribution_UtxoCohorts_GeAmount_10kSats = MetricsTree_Distribution_UtxoCohorts_GeAmount_10kSats(client)
-        self._10m_sats: MetricsTree_Distribution_UtxoCohorts_GeAmount_10mSats = MetricsTree_Distribution_UtxoCohorts_GeAmount_10mSats(client)
-        self._10sats: MetricsTree_Distribution_UtxoCohorts_GeAmount_10sats = MetricsTree_Distribution_UtxoCohorts_GeAmount_10sats(client)
-        self._1btc: MetricsTree_Distribution_UtxoCohorts_GeAmount_1btc = MetricsTree_Distribution_UtxoCohorts_GeAmount_1btc(client)
-        self._1k_btc: MetricsTree_Distribution_UtxoCohorts_GeAmount_1kBtc = MetricsTree_Distribution_UtxoCohorts_GeAmount_1kBtc(client)
-        self._1k_sats: MetricsTree_Distribution_UtxoCohorts_GeAmount_1kSats = MetricsTree_Distribution_UtxoCohorts_GeAmount_1kSats(client)
-        self._1m_sats: MetricsTree_Distribution_UtxoCohorts_GeAmount_1mSats = MetricsTree_Distribution_UtxoCohorts_GeAmount_1mSats(client)
-        self._1sat: MetricsTree_Distribution_UtxoCohorts_GeAmount_1sat = MetricsTree_Distribution_UtxoCohorts_GeAmount_1sat(client)
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_100btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_100btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_100btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_100btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_100btc')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_100btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_100btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_100btc')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_100kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_100k_btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_100k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_100k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_100k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_100k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_100k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_100k_btc')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_100kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_100k_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_100k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_100k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_100k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_100k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_100k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_100k_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_100sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_100sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_100sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_100sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_100sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_100sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_100sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_100sats')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_10btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_10btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_10btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_10btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_10btc')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_10btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_10btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_10btc')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_10kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_10k_btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_10k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_10k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_10k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_10k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_10k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_10k_btc')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_10kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_10k_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_10k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_10k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_10k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_10k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_10k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_10k_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_10mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_10m_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_10m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_10m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_10m_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_10m_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_10m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_10m_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_10sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_10sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_10sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_10sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_10sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_10sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_10sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_10sats')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_1btc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_1btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_1btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_1btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_1btc')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_1btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_1btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_1btc')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_1kBtc:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_1k_btc')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_1k_btc')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_1k_btc_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_1k_btc')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_1k_btc')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_1k_btc_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_1k_btc')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_1kSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_1k_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_1k_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_1k_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_1k_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_1k_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_1k_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_1k_sats')
-
-class MetricsTree_Distribution_UtxoCohorts_LtAmount_1mSats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_under_1m_sats')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_under_1m_sats')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_under_1m_sats_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_under_1m_sats')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_under_1m_sats')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_under_1m_sats_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_under_1m_sats')
+        self._100btc: _100btcPattern = _100btcPattern(client, 'utxos_above_100btc')
+        self._100k_sats: _100btcPattern = _100btcPattern(client, 'utxos_above_100k_sats')
+        self._100sats: _100btcPattern = _100btcPattern(client, 'utxos_above_100sats')
+        self._10btc: _100btcPattern = _100btcPattern(client, 'utxos_above_10btc')
+        self._10k_btc: _100btcPattern = _100btcPattern(client, 'utxos_above_10k_btc')
+        self._10k_sats: _100btcPattern = _100btcPattern(client, 'utxos_above_10k_sats')
+        self._10m_sats: _100btcPattern = _100btcPattern(client, 'utxos_above_10m_sats')
+        self._10sats: _100btcPattern = _100btcPattern(client, 'utxos_above_10sats')
+        self._1btc: _100btcPattern = _100btcPattern(client, 'utxos_above_1btc')
+        self._1k_btc: _100btcPattern = _100btcPattern(client, 'utxos_above_1k_btc')
+        self._1k_sats: _100btcPattern = _100btcPattern(client, 'utxos_above_1k_sats')
+        self._1m_sats: _100btcPattern = _100btcPattern(client, 'utxos_above_1m_sats')
+        self._1sat: _100btcPattern = _100btcPattern(client, 'utxos_above_1sat')
 
 class MetricsTree_Distribution_UtxoCohorts_LtAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._100btc: MetricsTree_Distribution_UtxoCohorts_LtAmount_100btc = MetricsTree_Distribution_UtxoCohorts_LtAmount_100btc(client)
-        self._100k_btc: MetricsTree_Distribution_UtxoCohorts_LtAmount_100kBtc = MetricsTree_Distribution_UtxoCohorts_LtAmount_100kBtc(client)
-        self._100k_sats: MetricsTree_Distribution_UtxoCohorts_LtAmount_100kSats = MetricsTree_Distribution_UtxoCohorts_LtAmount_100kSats(client)
-        self._100sats: MetricsTree_Distribution_UtxoCohorts_LtAmount_100sats = MetricsTree_Distribution_UtxoCohorts_LtAmount_100sats(client)
-        self._10btc: MetricsTree_Distribution_UtxoCohorts_LtAmount_10btc = MetricsTree_Distribution_UtxoCohorts_LtAmount_10btc(client)
-        self._10k_btc: MetricsTree_Distribution_UtxoCohorts_LtAmount_10kBtc = MetricsTree_Distribution_UtxoCohorts_LtAmount_10kBtc(client)
-        self._10k_sats: MetricsTree_Distribution_UtxoCohorts_LtAmount_10kSats = MetricsTree_Distribution_UtxoCohorts_LtAmount_10kSats(client)
-        self._10m_sats: MetricsTree_Distribution_UtxoCohorts_LtAmount_10mSats = MetricsTree_Distribution_UtxoCohorts_LtAmount_10mSats(client)
-        self._10sats: MetricsTree_Distribution_UtxoCohorts_LtAmount_10sats = MetricsTree_Distribution_UtxoCohorts_LtAmount_10sats(client)
-        self._1btc: MetricsTree_Distribution_UtxoCohorts_LtAmount_1btc = MetricsTree_Distribution_UtxoCohorts_LtAmount_1btc(client)
-        self._1k_btc: MetricsTree_Distribution_UtxoCohorts_LtAmount_1kBtc = MetricsTree_Distribution_UtxoCohorts_LtAmount_1kBtc(client)
-        self._1k_sats: MetricsTree_Distribution_UtxoCohorts_LtAmount_1kSats = MetricsTree_Distribution_UtxoCohorts_LtAmount_1kSats(client)
-        self._1m_sats: MetricsTree_Distribution_UtxoCohorts_LtAmount_1mSats = MetricsTree_Distribution_UtxoCohorts_LtAmount_1mSats(client)
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_10y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_10y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_10y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_10y_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_10y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_10y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_10y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_10y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_12y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_12y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_12y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_12y_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_12y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_12y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_12y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_12y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_15y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_15y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_15y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_15y_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_15y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_15y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_15y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_15y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_1m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_1m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_1m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_1m_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_1m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_1m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_1m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_1m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_1w:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_1w_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_1w_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_1w_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_1w_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_1w_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_1w_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_1w_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_1y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_1y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_1y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_1y_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_1y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_1y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_1y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_1y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_2m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_2m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_2m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_2m_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_2m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_2m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_2m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_2m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_2y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_2y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_2y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_2y_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_2y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_2y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_2y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_2y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_3m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_3m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_3m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_3m_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_3m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_3m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_3m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_3m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_3y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_3y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_3y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_3y_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_3y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_3y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_3y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_3y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_4m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_4m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_4m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_4m_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_4m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_4m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_4m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_4m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_4y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_4y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_4y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_4y_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_4y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_4y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_4y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_4y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_5m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_5m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_5m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_5m_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_5m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_5m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_5m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_5m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_5y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_5y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_5y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_5y_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_5y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_5y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_5y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_5y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_6m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_6m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_6m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_6m_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_6m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_6m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_6m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_6m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_6y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_6y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_6y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_6y_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_6y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_6y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_6y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_6y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_7y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_7y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_7y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_7y_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_7y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_7y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_7y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_7y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MaxAge_8y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_up_to_8y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_up_to_8y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_up_to_8y_old_utxo_count')
-        self.realized: RealizedPattern4 = RealizedPattern4(client, 'utxos_up_to_8y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_up_to_8y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_up_to_8y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_up_to_8y_old')
+        self._100btc: _100btcPattern = _100btcPattern(client, 'utxos_under_100btc')
+        self._100k_btc: _100btcPattern = _100btcPattern(client, 'utxos_under_100k_btc')
+        self._100k_sats: _100btcPattern = _100btcPattern(client, 'utxos_under_100k_sats')
+        self._100sats: _100btcPattern = _100btcPattern(client, 'utxos_under_100sats')
+        self._10btc: _100btcPattern = _100btcPattern(client, 'utxos_under_10btc')
+        self._10k_btc: _100btcPattern = _100btcPattern(client, 'utxos_under_10k_btc')
+        self._10k_sats: _100btcPattern = _100btcPattern(client, 'utxos_under_10k_sats')
+        self._10m_sats: _100btcPattern = _100btcPattern(client, 'utxos_under_10m_sats')
+        self._10sats: _100btcPattern = _100btcPattern(client, 'utxos_under_10sats')
+        self._1btc: _100btcPattern = _100btcPattern(client, 'utxos_under_1btc')
+        self._1k_btc: _100btcPattern = _100btcPattern(client, 'utxos_under_1k_btc')
+        self._1k_sats: _100btcPattern = _100btcPattern(client, 'utxos_under_1k_sats')
+        self._1m_sats: _100btcPattern = _100btcPattern(client, 'utxos_under_1m_sats')
 
 class MetricsTree_Distribution_UtxoCohorts_MaxAge:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._10y: MetricsTree_Distribution_UtxoCohorts_MaxAge_10y = MetricsTree_Distribution_UtxoCohorts_MaxAge_10y(client)
-        self._12y: MetricsTree_Distribution_UtxoCohorts_MaxAge_12y = MetricsTree_Distribution_UtxoCohorts_MaxAge_12y(client)
-        self._15y: MetricsTree_Distribution_UtxoCohorts_MaxAge_15y = MetricsTree_Distribution_UtxoCohorts_MaxAge_15y(client)
-        self._1m: MetricsTree_Distribution_UtxoCohorts_MaxAge_1m = MetricsTree_Distribution_UtxoCohorts_MaxAge_1m(client)
-        self._1w: MetricsTree_Distribution_UtxoCohorts_MaxAge_1w = MetricsTree_Distribution_UtxoCohorts_MaxAge_1w(client)
-        self._1y: MetricsTree_Distribution_UtxoCohorts_MaxAge_1y = MetricsTree_Distribution_UtxoCohorts_MaxAge_1y(client)
-        self._2m: MetricsTree_Distribution_UtxoCohorts_MaxAge_2m = MetricsTree_Distribution_UtxoCohorts_MaxAge_2m(client)
-        self._2y: MetricsTree_Distribution_UtxoCohorts_MaxAge_2y = MetricsTree_Distribution_UtxoCohorts_MaxAge_2y(client)
-        self._3m: MetricsTree_Distribution_UtxoCohorts_MaxAge_3m = MetricsTree_Distribution_UtxoCohorts_MaxAge_3m(client)
-        self._3y: MetricsTree_Distribution_UtxoCohorts_MaxAge_3y = MetricsTree_Distribution_UtxoCohorts_MaxAge_3y(client)
-        self._4m: MetricsTree_Distribution_UtxoCohorts_MaxAge_4m = MetricsTree_Distribution_UtxoCohorts_MaxAge_4m(client)
-        self._4y: MetricsTree_Distribution_UtxoCohorts_MaxAge_4y = MetricsTree_Distribution_UtxoCohorts_MaxAge_4y(client)
-        self._5m: MetricsTree_Distribution_UtxoCohorts_MaxAge_5m = MetricsTree_Distribution_UtxoCohorts_MaxAge_5m(client)
-        self._5y: MetricsTree_Distribution_UtxoCohorts_MaxAge_5y = MetricsTree_Distribution_UtxoCohorts_MaxAge_5y(client)
-        self._6m: MetricsTree_Distribution_UtxoCohorts_MaxAge_6m = MetricsTree_Distribution_UtxoCohorts_MaxAge_6m(client)
-        self._6y: MetricsTree_Distribution_UtxoCohorts_MaxAge_6y = MetricsTree_Distribution_UtxoCohorts_MaxAge_6y(client)
-        self._7y: MetricsTree_Distribution_UtxoCohorts_MaxAge_7y = MetricsTree_Distribution_UtxoCohorts_MaxAge_7y(client)
-        self._8y: MetricsTree_Distribution_UtxoCohorts_MaxAge_8y = MetricsTree_Distribution_UtxoCohorts_MaxAge_8y(client)
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_10y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_10y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_10y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_10y_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_10y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_10y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_10y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_10y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_12y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_12y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_12y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_12y_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_12y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_12y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_12y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_12y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_1d:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_1d_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_1d_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_1d_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_1d_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_1d_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_1d_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_1d_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_1m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_1m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_1m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_1m_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_1m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_1m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_1m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_1m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_1w:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_1w_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_1w_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_1w_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_1w_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_1w_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_1w_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_1w_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_1y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_1y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_1y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_1y_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_1y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_1y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_1y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_1y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_2m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_2m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_2m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_2m_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_2m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_2m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_2m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_2m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_2y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_2y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_2y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_2y_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_2y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_2y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_2y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_2y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_3m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_3m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_3m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_3m_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_3m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_3m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_3m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_3m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_3y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_3y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_3y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_3y_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_3y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_3y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_3y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_3y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_4m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_4m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_4m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_4m_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_4m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_4m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_4m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_4m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_4y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_4y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_4y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_4y_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_4y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_4y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_4y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_4y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_5m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_5m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_5m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_5m_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_5m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_5m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_5m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_5m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_5y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_5y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_5y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_5y_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_5y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_5y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_5y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_5y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_6m:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_6m_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_6m_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_6m_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_6m_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_6m_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_6m_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_6m_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_6y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_6y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_6y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_6y_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_6y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_6y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_6y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_6y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_7y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_7y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_7y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_7y_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_7y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_7y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_7y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_7y_old')
-
-class MetricsTree_Distribution_UtxoCohorts_MinAge_8y:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'utxos_at_least_8y_old')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'utxos_at_least_8y_old')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'utxos_at_least_8y_old_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'utxos_at_least_8y_old')
-        self.relative: RelativePattern = RelativePattern(client, 'utxos_at_least_8y_old')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'utxos_at_least_8y_old_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'utxos_at_least_8y_old')
+        self._10y: _10yPattern = _10yPattern(client, 'utxos_up_to_10y_old')
+        self._12y: _10yPattern = _10yPattern(client, 'utxos_up_to_12y_old')
+        self._15y: _10yPattern = _10yPattern(client, 'utxos_up_to_15y_old')
+        self._1m: _10yPattern = _10yPattern(client, 'utxos_up_to_1m_old')
+        self._1w: _10yPattern = _10yPattern(client, 'utxos_up_to_1w_old')
+        self._1y: _10yPattern = _10yPattern(client, 'utxos_up_to_1y_old')
+        self._2m: _10yPattern = _10yPattern(client, 'utxos_up_to_2m_old')
+        self._2y: _10yPattern = _10yPattern(client, 'utxos_up_to_2y_old')
+        self._3m: _10yPattern = _10yPattern(client, 'utxos_up_to_3m_old')
+        self._3y: _10yPattern = _10yPattern(client, 'utxos_up_to_3y_old')
+        self._4m: _10yPattern = _10yPattern(client, 'utxos_up_to_4m_old')
+        self._4y: _10yPattern = _10yPattern(client, 'utxos_up_to_4y_old')
+        self._5m: _10yPattern = _10yPattern(client, 'utxos_up_to_5m_old')
+        self._5y: _10yPattern = _10yPattern(client, 'utxos_up_to_5y_old')
+        self._6m: _10yPattern = _10yPattern(client, 'utxos_up_to_6m_old')
+        self._6y: _10yPattern = _10yPattern(client, 'utxos_up_to_6y_old')
+        self._7y: _10yPattern = _10yPattern(client, 'utxos_up_to_7y_old')
+        self._8y: _10yPattern = _10yPattern(client, 'utxos_up_to_8y_old')
 
 class MetricsTree_Distribution_UtxoCohorts_MinAge:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._10y: MetricsTree_Distribution_UtxoCohorts_MinAge_10y = MetricsTree_Distribution_UtxoCohorts_MinAge_10y(client)
-        self._12y: MetricsTree_Distribution_UtxoCohorts_MinAge_12y = MetricsTree_Distribution_UtxoCohorts_MinAge_12y(client)
-        self._1d: MetricsTree_Distribution_UtxoCohorts_MinAge_1d = MetricsTree_Distribution_UtxoCohorts_MinAge_1d(client)
-        self._1m: MetricsTree_Distribution_UtxoCohorts_MinAge_1m = MetricsTree_Distribution_UtxoCohorts_MinAge_1m(client)
-        self._1w: MetricsTree_Distribution_UtxoCohorts_MinAge_1w = MetricsTree_Distribution_UtxoCohorts_MinAge_1w(client)
-        self._1y: MetricsTree_Distribution_UtxoCohorts_MinAge_1y = MetricsTree_Distribution_UtxoCohorts_MinAge_1y(client)
-        self._2m: MetricsTree_Distribution_UtxoCohorts_MinAge_2m = MetricsTree_Distribution_UtxoCohorts_MinAge_2m(client)
-        self._2y: MetricsTree_Distribution_UtxoCohorts_MinAge_2y = MetricsTree_Distribution_UtxoCohorts_MinAge_2y(client)
-        self._3m: MetricsTree_Distribution_UtxoCohorts_MinAge_3m = MetricsTree_Distribution_UtxoCohorts_MinAge_3m(client)
-        self._3y: MetricsTree_Distribution_UtxoCohorts_MinAge_3y = MetricsTree_Distribution_UtxoCohorts_MinAge_3y(client)
-        self._4m: MetricsTree_Distribution_UtxoCohorts_MinAge_4m = MetricsTree_Distribution_UtxoCohorts_MinAge_4m(client)
-        self._4y: MetricsTree_Distribution_UtxoCohorts_MinAge_4y = MetricsTree_Distribution_UtxoCohorts_MinAge_4y(client)
-        self._5m: MetricsTree_Distribution_UtxoCohorts_MinAge_5m = MetricsTree_Distribution_UtxoCohorts_MinAge_5m(client)
-        self._5y: MetricsTree_Distribution_UtxoCohorts_MinAge_5y = MetricsTree_Distribution_UtxoCohorts_MinAge_5y(client)
-        self._6m: MetricsTree_Distribution_UtxoCohorts_MinAge_6m = MetricsTree_Distribution_UtxoCohorts_MinAge_6m(client)
-        self._6y: MetricsTree_Distribution_UtxoCohorts_MinAge_6y = MetricsTree_Distribution_UtxoCohorts_MinAge_6y(client)
-        self._7y: MetricsTree_Distribution_UtxoCohorts_MinAge_7y = MetricsTree_Distribution_UtxoCohorts_MinAge_7y(client)
-        self._8y: MetricsTree_Distribution_UtxoCohorts_MinAge_8y = MetricsTree_Distribution_UtxoCohorts_MinAge_8y(client)
-
-class MetricsTree_Distribution_UtxoCohorts_Term_Long_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'lth_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'lth_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'lth_cost_basis')
+        self._10y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_10y_old')
+        self._12y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_12y_old')
+        self._1d: _100btcPattern = _100btcPattern(client, 'utxos_at_least_1d_old')
+        self._1m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_1m_old')
+        self._1w: _100btcPattern = _100btcPattern(client, 'utxos_at_least_1w_old')
+        self._1y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_1y_old')
+        self._2m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_2m_old')
+        self._2y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_2y_old')
+        self._3m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_3m_old')
+        self._3y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_3y_old')
+        self._4m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_4m_old')
+        self._4y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_4y_old')
+        self._5m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_5m_old')
+        self._5y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_5y_old')
+        self._6m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_6m_old')
+        self._6y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_6y_old')
+        self._7y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_7y_old')
+        self._8y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_8y_old')
 
 class MetricsTree_Distribution_UtxoCohorts_Term_Long:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.activity: ActivityPattern2 = ActivityPattern2(client, 'lth')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_Term_Long_CostBasis = MetricsTree_Distribution_UtxoCohorts_Term_Long_CostBasis(client)
+        self.cost_basis: CostBasisPattern2 = CostBasisPattern2(client, 'lth')
         self.outputs: OutputsPattern = OutputsPattern(client, 'lth_utxo_count')
         self.realized: RealizedPattern2 = RealizedPattern2(client, 'lth')
         self.relative: RelativePattern5 = RelativePattern5(client, 'lth')
         self.supply: SupplyPattern2 = SupplyPattern2(client, 'lth_supply')
         self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'lth')
 
-class MetricsTree_Distribution_UtxoCohorts_Term_Short_CostBasis:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'sth_max_cost_basis')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'sth_min_cost_basis')
-        self.percentiles: PercentilesPattern = PercentilesPattern(client, 'sth_cost_basis')
-
 class MetricsTree_Distribution_UtxoCohorts_Term_Short:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.activity: ActivityPattern2 = ActivityPattern2(client, 'sth')
-        self.cost_basis: MetricsTree_Distribution_UtxoCohorts_Term_Short_CostBasis = MetricsTree_Distribution_UtxoCohorts_Term_Short_CostBasis(client)
+        self.cost_basis: CostBasisPattern2 = CostBasisPattern2(client, 'sth')
         self.outputs: OutputsPattern = OutputsPattern(client, 'sth_utxo_count')
         self.realized: RealizedPattern3 = RealizedPattern3(client, 'sth')
         self.relative: RelativePattern5 = RelativePattern5(client, 'sth')
@@ -5047,392 +2915,44 @@ class MetricsTree_Distribution_UtxoCohorts_Term:
         self.long: MetricsTree_Distribution_UtxoCohorts_Term_Long = MetricsTree_Distribution_UtxoCohorts_Term_Long(client)
         self.short: MetricsTree_Distribution_UtxoCohorts_Term_Short = MetricsTree_Distribution_UtxoCohorts_Term_Short(client)
 
-class MetricsTree_Distribution_UtxoCohorts_Type_Empty:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'empty_outputs')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'empty_outputs')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'empty_outputs_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'empty_outputs')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'empty_outputs_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'empty_outputs_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'empty_outputs')
-
-class MetricsTree_Distribution_UtxoCohorts_Type_P2a:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'p2a')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'p2a')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'p2a_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'p2a')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'p2a_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'p2a_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'p2a')
-
-class MetricsTree_Distribution_UtxoCohorts_Type_P2ms:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'p2ms')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'p2ms')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'p2ms_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'p2ms')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'p2ms_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'p2ms_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'p2ms')
-
-class MetricsTree_Distribution_UtxoCohorts_Type_P2pk33:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'p2pk33')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'p2pk33')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'p2pk33_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'p2pk33')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'p2pk33_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'p2pk33_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'p2pk33')
-
-class MetricsTree_Distribution_UtxoCohorts_Type_P2pk65:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'p2pk65')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'p2pk65')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'p2pk65_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'p2pk65')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'p2pk65_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'p2pk65_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'p2pk65')
-
-class MetricsTree_Distribution_UtxoCohorts_Type_P2pkh:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'p2pkh')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'p2pkh')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'p2pkh_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'p2pkh')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'p2pkh_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'p2pkh_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'p2pkh')
-
-class MetricsTree_Distribution_UtxoCohorts_Type_P2sh:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'p2sh')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'p2sh')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'p2sh_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'p2sh')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'p2sh_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'p2sh_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'p2sh')
-
-class MetricsTree_Distribution_UtxoCohorts_Type_P2tr:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'p2tr')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'p2tr')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'p2tr_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'p2tr')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'p2tr_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'p2tr_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'p2tr')
-
-class MetricsTree_Distribution_UtxoCohorts_Type_P2wpkh:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'p2wpkh')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'p2wpkh')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'p2wpkh_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'p2wpkh')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'p2wpkh_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'p2wpkh_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'p2wpkh')
-
-class MetricsTree_Distribution_UtxoCohorts_Type_P2wsh:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'p2wsh')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'p2wsh')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'p2wsh_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'p2wsh')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'p2wsh_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'p2wsh_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'p2wsh')
-
-class MetricsTree_Distribution_UtxoCohorts_Type_Unknown:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'unknown_outputs')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'unknown_outputs')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'unknown_outputs_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'unknown_outputs')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'unknown_outputs_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'unknown_outputs_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'unknown_outputs')
-
 class MetricsTree_Distribution_UtxoCohorts_Type:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.empty: MetricsTree_Distribution_UtxoCohorts_Type_Empty = MetricsTree_Distribution_UtxoCohorts_Type_Empty(client)
-        self.p2a: MetricsTree_Distribution_UtxoCohorts_Type_P2a = MetricsTree_Distribution_UtxoCohorts_Type_P2a(client)
-        self.p2ms: MetricsTree_Distribution_UtxoCohorts_Type_P2ms = MetricsTree_Distribution_UtxoCohorts_Type_P2ms(client)
-        self.p2pk33: MetricsTree_Distribution_UtxoCohorts_Type_P2pk33 = MetricsTree_Distribution_UtxoCohorts_Type_P2pk33(client)
-        self.p2pk65: MetricsTree_Distribution_UtxoCohorts_Type_P2pk65 = MetricsTree_Distribution_UtxoCohorts_Type_P2pk65(client)
-        self.p2pkh: MetricsTree_Distribution_UtxoCohorts_Type_P2pkh = MetricsTree_Distribution_UtxoCohorts_Type_P2pkh(client)
-        self.p2sh: MetricsTree_Distribution_UtxoCohorts_Type_P2sh = MetricsTree_Distribution_UtxoCohorts_Type_P2sh(client)
-        self.p2tr: MetricsTree_Distribution_UtxoCohorts_Type_P2tr = MetricsTree_Distribution_UtxoCohorts_Type_P2tr(client)
-        self.p2wpkh: MetricsTree_Distribution_UtxoCohorts_Type_P2wpkh = MetricsTree_Distribution_UtxoCohorts_Type_P2wpkh(client)
-        self.p2wsh: MetricsTree_Distribution_UtxoCohorts_Type_P2wsh = MetricsTree_Distribution_UtxoCohorts_Type_P2wsh(client)
-        self.unknown: MetricsTree_Distribution_UtxoCohorts_Type_Unknown = MetricsTree_Distribution_UtxoCohorts_Type_Unknown(client)
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2009:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2009')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2009')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2009_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2009')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2009_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2009_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2009')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2010:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2010')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2010')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2010_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2010')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2010_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2010_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2010')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2011:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2011')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2011')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2011_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2011')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2011_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2011_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2011')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2012:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2012')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2012')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2012_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2012')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2012_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2012_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2012')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2013:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2013')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2013')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2013_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2013')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2013_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2013_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2013')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2014:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2014')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2014')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2014_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2014')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2014_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2014_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2014')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2015:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2015')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2015')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2015_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2015')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2015_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2015_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2015')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2016:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2016')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2016')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2016_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2016')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2016_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2016_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2016')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2017:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2017')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2017')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2017_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2017')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2017_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2017_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2017')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2018:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2018')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2018')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2018_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2018')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2018_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2018_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2018')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2019:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2019')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2019')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2019_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2019')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2019_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2019_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2019')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2020:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2020')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2020')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2020_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2020')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2020_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2020_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2020')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2021:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2021')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2021')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2021_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2021')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2021_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2021_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2021')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2022:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2022')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2022')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2022_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2022')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2022_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2022_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2022')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2023:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2023')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2023')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2023_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2023')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2023_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2023_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2023')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2024:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2024')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2024')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2024_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2024')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2024_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2024_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2024')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2025:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2025')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2025')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2025_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2025')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2025_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2025_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2025')
-
-class MetricsTree_Distribution_UtxoCohorts_Year_2026:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.activity: ActivityPattern2 = ActivityPattern2(client, 'year_2026')
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, 'year_2026')
-        self.outputs: OutputsPattern = OutputsPattern(client, 'year_2026_utxo_count')
-        self.realized: RealizedPattern = RealizedPattern(client, 'year_2026')
-        self.relative: RelativePattern4 = RelativePattern4(client, 'year_2026_supply_in')
-        self.supply: SupplyPattern2 = SupplyPattern2(client, 'year_2026_supply')
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, 'year_2026')
+        self.empty: _0satsPattern2 = _0satsPattern2(client, 'empty_outputs')
+        self.p2a: _0satsPattern2 = _0satsPattern2(client, 'p2a')
+        self.p2ms: _0satsPattern2 = _0satsPattern2(client, 'p2ms')
+        self.p2pk33: _0satsPattern2 = _0satsPattern2(client, 'p2pk33')
+        self.p2pk65: _0satsPattern2 = _0satsPattern2(client, 'p2pk65')
+        self.p2pkh: _0satsPattern2 = _0satsPattern2(client, 'p2pkh')
+        self.p2sh: _0satsPattern2 = _0satsPattern2(client, 'p2sh')
+        self.p2tr: _0satsPattern2 = _0satsPattern2(client, 'p2tr')
+        self.p2wpkh: _0satsPattern2 = _0satsPattern2(client, 'p2wpkh')
+        self.p2wsh: _0satsPattern2 = _0satsPattern2(client, 'p2wsh')
+        self.unknown: _0satsPattern2 = _0satsPattern2(client, 'unknown_outputs')
 
 class MetricsTree_Distribution_UtxoCohorts_Year:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._2009: MetricsTree_Distribution_UtxoCohorts_Year_2009 = MetricsTree_Distribution_UtxoCohorts_Year_2009(client)
-        self._2010: MetricsTree_Distribution_UtxoCohorts_Year_2010 = MetricsTree_Distribution_UtxoCohorts_Year_2010(client)
-        self._2011: MetricsTree_Distribution_UtxoCohorts_Year_2011 = MetricsTree_Distribution_UtxoCohorts_Year_2011(client)
-        self._2012: MetricsTree_Distribution_UtxoCohorts_Year_2012 = MetricsTree_Distribution_UtxoCohorts_Year_2012(client)
-        self._2013: MetricsTree_Distribution_UtxoCohorts_Year_2013 = MetricsTree_Distribution_UtxoCohorts_Year_2013(client)
-        self._2014: MetricsTree_Distribution_UtxoCohorts_Year_2014 = MetricsTree_Distribution_UtxoCohorts_Year_2014(client)
-        self._2015: MetricsTree_Distribution_UtxoCohorts_Year_2015 = MetricsTree_Distribution_UtxoCohorts_Year_2015(client)
-        self._2016: MetricsTree_Distribution_UtxoCohorts_Year_2016 = MetricsTree_Distribution_UtxoCohorts_Year_2016(client)
-        self._2017: MetricsTree_Distribution_UtxoCohorts_Year_2017 = MetricsTree_Distribution_UtxoCohorts_Year_2017(client)
-        self._2018: MetricsTree_Distribution_UtxoCohorts_Year_2018 = MetricsTree_Distribution_UtxoCohorts_Year_2018(client)
-        self._2019: MetricsTree_Distribution_UtxoCohorts_Year_2019 = MetricsTree_Distribution_UtxoCohorts_Year_2019(client)
-        self._2020: MetricsTree_Distribution_UtxoCohorts_Year_2020 = MetricsTree_Distribution_UtxoCohorts_Year_2020(client)
-        self._2021: MetricsTree_Distribution_UtxoCohorts_Year_2021 = MetricsTree_Distribution_UtxoCohorts_Year_2021(client)
-        self._2022: MetricsTree_Distribution_UtxoCohorts_Year_2022 = MetricsTree_Distribution_UtxoCohorts_Year_2022(client)
-        self._2023: MetricsTree_Distribution_UtxoCohorts_Year_2023 = MetricsTree_Distribution_UtxoCohorts_Year_2023(client)
-        self._2024: MetricsTree_Distribution_UtxoCohorts_Year_2024 = MetricsTree_Distribution_UtxoCohorts_Year_2024(client)
-        self._2025: MetricsTree_Distribution_UtxoCohorts_Year_2025 = MetricsTree_Distribution_UtxoCohorts_Year_2025(client)
-        self._2026: MetricsTree_Distribution_UtxoCohorts_Year_2026 = MetricsTree_Distribution_UtxoCohorts_Year_2026(client)
+        self._2009: _0satsPattern2 = _0satsPattern2(client, 'year_2009')
+        self._2010: _0satsPattern2 = _0satsPattern2(client, 'year_2010')
+        self._2011: _0satsPattern2 = _0satsPattern2(client, 'year_2011')
+        self._2012: _0satsPattern2 = _0satsPattern2(client, 'year_2012')
+        self._2013: _0satsPattern2 = _0satsPattern2(client, 'year_2013')
+        self._2014: _0satsPattern2 = _0satsPattern2(client, 'year_2014')
+        self._2015: _0satsPattern2 = _0satsPattern2(client, 'year_2015')
+        self._2016: _0satsPattern2 = _0satsPattern2(client, 'year_2016')
+        self._2017: _0satsPattern2 = _0satsPattern2(client, 'year_2017')
+        self._2018: _0satsPattern2 = _0satsPattern2(client, 'year_2018')
+        self._2019: _0satsPattern2 = _0satsPattern2(client, 'year_2019')
+        self._2020: _0satsPattern2 = _0satsPattern2(client, 'year_2020')
+        self._2021: _0satsPattern2 = _0satsPattern2(client, 'year_2021')
+        self._2022: _0satsPattern2 = _0satsPattern2(client, 'year_2022')
+        self._2023: _0satsPattern2 = _0satsPattern2(client, 'year_2023')
+        self._2024: _0satsPattern2 = _0satsPattern2(client, 'year_2024')
+        self._2025: _0satsPattern2 = _0satsPattern2(client, 'year_2025')
+        self._2026: _0satsPattern2 = _0satsPattern2(client, 'year_2026')
 
 class MetricsTree_Distribution_UtxoCohorts:
     """Metrics tree node."""
@@ -5716,21 +3236,21 @@ class MetricsTree_Market_Ath:
         self.price_drawdown: MetricPattern3[StoredF32] = MetricPattern3(client, 'price_drawdown')
         self.years_since_price_ath: MetricPattern4[StoredF32] = MetricPattern4(client, 'years_since_price_ath')
 
-class MetricsTree_Market_Dca_ClassReturns:
+class MetricsTree_Market_Dca_ClassAveragePrice:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._2015: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2015_returns')
-        self._2016: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2016_returns')
-        self._2017: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2017_returns')
-        self._2018: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2018_returns')
-        self._2019: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2019_returns')
-        self._2020: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2020_returns')
-        self._2021: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2021_returns')
-        self._2022: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2022_returns')
-        self._2023: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2023_returns')
-        self._2024: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2024_returns')
-        self._2025: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2025_returns')
+        self._2015: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2015_average_price')
+        self._2016: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2016_average_price')
+        self._2017: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2017_average_price')
+        self._2018: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2018_average_price')
+        self._2019: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2019_average_price')
+        self._2020: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2020_average_price')
+        self._2021: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2021_average_price')
+        self._2022: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2022_average_price')
+        self._2023: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2023_average_price')
+        self._2024: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2024_average_price')
+        self._2025: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2025_average_price')
 
 class MetricsTree_Market_Dca_ClassStack:
     """Metrics tree node."""
@@ -5752,8 +3272,8 @@ class MetricsTree_Market_Dca:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.class_average_price: ClassAveragePricePattern[Dollars] = ClassAveragePricePattern(client, 'dca_class')
-        self.class_returns: MetricsTree_Market_Dca_ClassReturns = MetricsTree_Market_Dca_ClassReturns(client)
+        self.class_average_price: MetricsTree_Market_Dca_ClassAveragePrice = MetricsTree_Market_Dca_ClassAveragePrice(client)
+        self.class_returns: ClassAveragePricePattern[StoredF32] = ClassAveragePricePattern(client, 'dca_class')
         self.class_stack: MetricsTree_Market_Dca_ClassStack = MetricsTree_Market_Dca_ClassStack(client)
         self.period_average_price: PeriodAveragePricePattern[Dollars] = PeriodAveragePricePattern(client, 'dca_average_price')
         self.period_cagr: PeriodCagrPattern = PeriodCagrPattern(client, 'dca_cagr')
@@ -5785,845 +3305,45 @@ class MetricsTree_Market_Indicators:
         self.stoch_rsi_d: MetricPattern6[StoredF32] = MetricPattern6(client, 'stoch_rsi_d')
         self.stoch_rsi_k: MetricPattern6[StoredF32] = MetricPattern6(client, 'stoch_rsi_k')
 
-class MetricsTree_Market_MovingAverage_Price111dSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_111d_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_111d_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_111d_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_111d_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_111d_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_111d_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_111d_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_111d_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_111d_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_111d_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_111d_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_111d_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_111d_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_111d_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_111d_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_111d_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_111d_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_111d_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_111d_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_111d_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price12dEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_12d_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_12d_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_12d_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_12d_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_12d_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_12d_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_12d_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_12d_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_12d_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_12d_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_12d_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_12d_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_12d_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_12d_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_12d_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_12d_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_12d_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_12d_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_12d_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_12d_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price13dEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_13d_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_13d_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_13d_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_13d_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price13dSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_13d_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_13d_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_13d_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_13d_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_13d_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_13d_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price144dEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_144d_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_144d_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_144d_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_144d_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price144dSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_144d_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_144d_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_144d_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_144d_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_144d_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_144d_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price1mEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1m_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1m_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1m_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1m_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price1mSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1m_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1m_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1m_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1m_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1m_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1m_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price1wEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1w_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1w_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1w_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1w_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price1wSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1w_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1w_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1w_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1w_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1w_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1w_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price1yEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1y_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1y_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1y_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1y_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price1ySma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1y_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1y_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1y_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_1y_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_1y_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_1y_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price200dEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200d_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200d_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200d_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200d_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price200dSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200d_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200d_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200d_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200d_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200d_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price200wEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200w_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200w_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200w_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200w_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price200wSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200w_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200w_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200w_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_200w_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200w_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_200w_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price21dEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_21d_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_21d_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_21d_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_21d_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price21dSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_21d_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_21d_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_21d_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_21d_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_21d_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_21d_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price26dEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_26d_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_26d_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_26d_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_26d_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_26d_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_26d_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_26d_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_26d_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_26d_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_26d_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_26d_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_26d_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_26d_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_26d_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_26d_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_26d_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_26d_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_26d_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_26d_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_26d_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price2yEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_2y_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_2y_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_2y_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_2y_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price2ySma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_2y_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_2y_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_2y_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_2y_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_2y_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_2y_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price34dEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_34d_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_34d_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_34d_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_34d_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price34dSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_34d_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_34d_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_34d_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_34d_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_34d_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_34d_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price350dSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_350d_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_350d_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_350d_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_350d_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_350d_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_350d_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_350d_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_350d_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_350d_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_350d_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_350d_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_350d_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_350d_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_350d_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_350d_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_350d_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_350d_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_350d_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_350d_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_350d_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price4yEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_4y_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_4y_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_4y_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_4y_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price4ySma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_4y_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_4y_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_4y_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_4y_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_4y_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_4y_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price55dEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_55d_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_55d_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_55d_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_55d_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price55dSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_55d_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_55d_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_55d_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_55d_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_55d_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_55d_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price89dEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_89d_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_89d_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_89d_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_89d_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price89dSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_89d_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_89d_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_89d_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_89d_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_89d_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_89d_sma_ratio')
-
-class MetricsTree_Market_MovingAverage_Price8dEma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_ema')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_ema_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_ema_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_ema_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_8d_ema_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_8d_ema_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_8d_ema_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_ema_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_ema_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_ema_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_ema_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_ema_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_ema_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_ema_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_ema_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_ema_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_ema_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_ema_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_ema_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_8d_ema_ratio')
-
-class MetricsTree_Market_MovingAverage_Price8dSma:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_sma')
-        self.ratio: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_sma_ratio')
-        self.ratio_1m_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_sma_ratio_1m_sma')
-        self.ratio_1w_sma: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_sma_ratio_1w_sma')
-        self.ratio_1y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_8d_sma_ratio_1y')
-        self.ratio_2y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_8d_sma_ratio_2y')
-        self.ratio_4y_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_8d_sma_ratio_4y')
-        self.ratio_pct1: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_sma_ratio_pct1')
-        self.ratio_pct1_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_sma_ratio_pct1_usd')
-        self.ratio_pct2: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_sma_ratio_pct2')
-        self.ratio_pct2_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_sma_ratio_pct2_usd')
-        self.ratio_pct5: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_sma_ratio_pct5')
-        self.ratio_pct5_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_sma_ratio_pct5_usd')
-        self.ratio_pct95: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_sma_ratio_pct95')
-        self.ratio_pct95_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_sma_ratio_pct95_usd')
-        self.ratio_pct98: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_sma_ratio_pct98')
-        self.ratio_pct98_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_sma_ratio_pct98_usd')
-        self.ratio_pct99: MetricPattern4[StoredF32] = MetricPattern4(client, 'price_8d_sma_ratio_pct99')
-        self.ratio_pct99_usd: MetricPattern4[Dollars] = MetricPattern4(client, 'price_8d_sma_ratio_pct99_usd')
-        self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, 'price_8d_sma_ratio')
-
 class MetricsTree_Market_MovingAverage:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.price_111d_sma: MetricsTree_Market_MovingAverage_Price111dSma = MetricsTree_Market_MovingAverage_Price111dSma(client)
-        self.price_12d_ema: MetricsTree_Market_MovingAverage_Price12dEma = MetricsTree_Market_MovingAverage_Price12dEma(client)
-        self.price_13d_ema: MetricsTree_Market_MovingAverage_Price13dEma = MetricsTree_Market_MovingAverage_Price13dEma(client)
-        self.price_13d_sma: MetricsTree_Market_MovingAverage_Price13dSma = MetricsTree_Market_MovingAverage_Price13dSma(client)
-        self.price_144d_ema: MetricsTree_Market_MovingAverage_Price144dEma = MetricsTree_Market_MovingAverage_Price144dEma(client)
-        self.price_144d_sma: MetricsTree_Market_MovingAverage_Price144dSma = MetricsTree_Market_MovingAverage_Price144dSma(client)
-        self.price_1m_ema: MetricsTree_Market_MovingAverage_Price1mEma = MetricsTree_Market_MovingAverage_Price1mEma(client)
-        self.price_1m_sma: MetricsTree_Market_MovingAverage_Price1mSma = MetricsTree_Market_MovingAverage_Price1mSma(client)
-        self.price_1w_ema: MetricsTree_Market_MovingAverage_Price1wEma = MetricsTree_Market_MovingAverage_Price1wEma(client)
-        self.price_1w_sma: MetricsTree_Market_MovingAverage_Price1wSma = MetricsTree_Market_MovingAverage_Price1wSma(client)
-        self.price_1y_ema: MetricsTree_Market_MovingAverage_Price1yEma = MetricsTree_Market_MovingAverage_Price1yEma(client)
-        self.price_1y_sma: MetricsTree_Market_MovingAverage_Price1ySma = MetricsTree_Market_MovingAverage_Price1ySma(client)
-        self.price_200d_ema: MetricsTree_Market_MovingAverage_Price200dEma = MetricsTree_Market_MovingAverage_Price200dEma(client)
-        self.price_200d_sma: MetricsTree_Market_MovingAverage_Price200dSma = MetricsTree_Market_MovingAverage_Price200dSma(client)
+        self.price_111d_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_111d_sma')
+        self.price_12d_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_12d_ema')
+        self.price_13d_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_13d_ema')
+        self.price_13d_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_13d_sma')
+        self.price_144d_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_144d_ema')
+        self.price_144d_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_144d_sma')
+        self.price_1m_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_1m_ema')
+        self.price_1m_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_1m_sma')
+        self.price_1w_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_1w_ema')
+        self.price_1w_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_1w_sma')
+        self.price_1y_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_1y_ema')
+        self.price_1y_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_1y_sma')
+        self.price_200d_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_200d_ema')
+        self.price_200d_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_200d_sma')
         self.price_200d_sma_x0_8: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_sma_x0_8')
         self.price_200d_sma_x2_4: MetricPattern4[Dollars] = MetricPattern4(client, 'price_200d_sma_x2_4')
-        self.price_200w_ema: MetricsTree_Market_MovingAverage_Price200wEma = MetricsTree_Market_MovingAverage_Price200wEma(client)
-        self.price_200w_sma: MetricsTree_Market_MovingAverage_Price200wSma = MetricsTree_Market_MovingAverage_Price200wSma(client)
-        self.price_21d_ema: MetricsTree_Market_MovingAverage_Price21dEma = MetricsTree_Market_MovingAverage_Price21dEma(client)
-        self.price_21d_sma: MetricsTree_Market_MovingAverage_Price21dSma = MetricsTree_Market_MovingAverage_Price21dSma(client)
-        self.price_26d_ema: MetricsTree_Market_MovingAverage_Price26dEma = MetricsTree_Market_MovingAverage_Price26dEma(client)
-        self.price_2y_ema: MetricsTree_Market_MovingAverage_Price2yEma = MetricsTree_Market_MovingAverage_Price2yEma(client)
-        self.price_2y_sma: MetricsTree_Market_MovingAverage_Price2ySma = MetricsTree_Market_MovingAverage_Price2ySma(client)
-        self.price_34d_ema: MetricsTree_Market_MovingAverage_Price34dEma = MetricsTree_Market_MovingAverage_Price34dEma(client)
-        self.price_34d_sma: MetricsTree_Market_MovingAverage_Price34dSma = MetricsTree_Market_MovingAverage_Price34dSma(client)
-        self.price_350d_sma: MetricsTree_Market_MovingAverage_Price350dSma = MetricsTree_Market_MovingAverage_Price350dSma(client)
+        self.price_200w_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_200w_ema')
+        self.price_200w_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_200w_sma')
+        self.price_21d_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_21d_ema')
+        self.price_21d_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_21d_sma')
+        self.price_26d_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_26d_ema')
+        self.price_2y_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_2y_ema')
+        self.price_2y_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_2y_sma')
+        self.price_34d_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_34d_ema')
+        self.price_34d_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_34d_sma')
+        self.price_350d_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_350d_sma')
         self.price_350d_sma_x2: MetricPattern4[Dollars] = MetricPattern4(client, 'price_350d_sma_x2')
-        self.price_4y_ema: MetricsTree_Market_MovingAverage_Price4yEma = MetricsTree_Market_MovingAverage_Price4yEma(client)
-        self.price_4y_sma: MetricsTree_Market_MovingAverage_Price4ySma = MetricsTree_Market_MovingAverage_Price4ySma(client)
-        self.price_55d_ema: MetricsTree_Market_MovingAverage_Price55dEma = MetricsTree_Market_MovingAverage_Price55dEma(client)
-        self.price_55d_sma: MetricsTree_Market_MovingAverage_Price55dSma = MetricsTree_Market_MovingAverage_Price55dSma(client)
-        self.price_89d_ema: MetricsTree_Market_MovingAverage_Price89dEma = MetricsTree_Market_MovingAverage_Price89dEma(client)
-        self.price_89d_sma: MetricsTree_Market_MovingAverage_Price89dSma = MetricsTree_Market_MovingAverage_Price89dSma(client)
-        self.price_8d_ema: MetricsTree_Market_MovingAverage_Price8dEma = MetricsTree_Market_MovingAverage_Price8dEma(client)
-        self.price_8d_sma: MetricsTree_Market_MovingAverage_Price8dSma = MetricsTree_Market_MovingAverage_Price8dSma(client)
+        self.price_4y_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_4y_ema')
+        self.price_4y_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_4y_sma')
+        self.price_55d_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_55d_ema')
+        self.price_55d_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_55d_sma')
+        self.price_89d_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_89d_ema')
+        self.price_89d_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_89d_sma')
+        self.price_8d_ema: Price111dSmaPattern = Price111dSmaPattern(client, 'price_8d_ema')
+        self.price_8d_sma: Price111dSmaPattern = Price111dSmaPattern(client, 'price_8d_sma')
 
 class MetricsTree_Market_Range:
     """Metrics tree node."""
@@ -6927,13 +3647,6 @@ class MetricsTree_Price_Oracle:
         self.price_cents: MetricPattern11[Cents] = MetricPattern11(client, 'oracle_price_cents')
         self.tx_count: MetricPattern6[StoredU32] = MetricPattern6(client, 'oracle_tx_count')
 
-class MetricsTree_Price_Sats:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.ohlc: MetricPattern1[OHLCSats] = MetricPattern1(client, 'price_ohlc_sats')
-        self.split: SplitPattern2[Sats] = SplitPattern2(client, 'price_sats')
-
 class MetricsTree_Price_Usd:
     """Metrics tree node."""
     
@@ -6947,7 +3660,7 @@ class MetricsTree_Price:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.cents: MetricsTree_Price_Cents = MetricsTree_Price_Cents(client)
         self.oracle: MetricsTree_Price_Oracle = MetricsTree_Price_Oracle(client)
-        self.sats: MetricsTree_Price_Sats = MetricsTree_Price_Sats(client)
+        self.sats: SatsPattern[OHLCSats] = SatsPattern(client, 'price')
         self.usd: MetricsTree_Price_Usd = MetricsTree_Price_Usd(client)
 
 class MetricsTree_Scripts_Count:

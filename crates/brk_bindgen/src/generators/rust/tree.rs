@@ -6,7 +6,7 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, GenericSyntax, LanguageSyntax, PatternField, RustSyntax,
+    ClientMetadata, GenericSyntax, LanguageSyntax, PatternField, RustSyntax, build_child_path,
     generate_leaf_field, generate_tree_node_field, prepare_tree_node, to_snake_case,
 };
 
@@ -19,6 +19,7 @@ pub fn generate_tree(output: &mut String, catalog: &TreeNode, metadata: &ClientM
     generate_tree_node(
         output,
         "MetricsTree",
+        "",
         catalog,
         &pattern_lookup,
         metadata,
@@ -29,12 +30,13 @@ pub fn generate_tree(output: &mut String, catalog: &TreeNode, metadata: &ClientM
 fn generate_tree_node(
     output: &mut String,
     name: &str,
+    path: &str,
     node: &TreeNode,
     pattern_lookup: &std::collections::HashMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
     generated: &mut HashSet<String>,
 ) {
-    let Some(ctx) = prepare_tree_node(node, name, pattern_lookup, metadata, generated) else {
+    let Some(ctx) = prepare_tree_node(node, name, path, pattern_lookup, metadata, generated) else {
         return;
     };
 
@@ -117,9 +119,11 @@ fn generate_tree_node(
     // Generate child structs
     for child in &ctx.children {
         if child.should_inline {
+            let child_path = build_child_path(path, child.name);
             generate_tree_node(
                 output,
                 &child.inline_type_name,
+                &child_path,
                 child.node,
                 pattern_lookup,
                 metadata,

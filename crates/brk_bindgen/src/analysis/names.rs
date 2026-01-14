@@ -120,6 +120,18 @@ pub fn find_common_suffix(names: &[&str]) -> Option<String> {
     None
 }
 
+/// Normalize a prefix string by ensuring it ends with underscore.
+/// Returns empty string if input is empty.
+pub fn normalize_prefix(s: &str) -> String {
+    if s.is_empty() {
+        String::new()
+    } else if s.ends_with('_') {
+        s.to_string()
+    } else {
+        format!("{}_", s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -139,28 +139,102 @@ function createCointimePriceWithRatioOptions(
     },
     {
       name: "ZScores",
-      tree: sdPatterns.map(({ nameAddon, titleAddon, sd }) => ({
-        name: nameAddon,
-        title: `${title} ${titleAddon} Z-Score`,
-        top: getSdBands(sd).map(({ name: bandName, prop, color: bandColor }) =>
-          line({
-            metric: prop,
-            name: bandName,
-            color: bandColor,
-            unit: Unit.usd,
-          }),
-        ),
-        bottom: [
-          line({ metric: sd.zscore, name: "Z-Score", color, unit: Unit.sd }),
-          createPriceLine({ unit: Unit.sd, number: 3 }),
-          createPriceLine({ unit: Unit.sd, number: 2 }),
-          createPriceLine({ unit: Unit.sd, number: 1 }),
-          createPriceLine({ unit: Unit.sd, number: 0 }),
-          createPriceLine({ unit: Unit.sd, number: -1 }),
-          createPriceLine({ unit: Unit.sd, number: -2 }),
-          createPriceLine({ unit: Unit.sd, number: -3 }),
-        ],
-      })),
+      tree: [
+        // Compare all Z-Scores
+        {
+          name: "Compare",
+          title: `Compare ${title} Z-Scores`,
+          top: [
+            line({ metric: price, name: legend, color, unit: Unit.usd }),
+            line({
+              metric: ratio.ratio1ySd._0sdUsd,
+              name: "1y 0sd",
+              color: colors.fuchsia,
+              defaultActive: false,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: ratio.ratio2ySd._0sdUsd,
+              name: "2y 0sd",
+              color: colors.purple,
+              defaultActive: false,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: ratio.ratio4ySd._0sdUsd,
+              name: "4y 0sd",
+              color: colors.violet,
+              defaultActive: false,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: ratio.ratioSd._0sdUsd,
+              name: "0sd",
+              color: colors.indigo,
+              defaultActive: false,
+              unit: Unit.usd,
+            }),
+          ],
+          bottom: [
+            line({
+              metric: ratio.ratioSd.zscore,
+              name: "All",
+              color: colors.default,
+              unit: Unit.sd,
+            }),
+            line({
+              metric: ratio.ratio4ySd.zscore,
+              name: "4y",
+              color: colors.lime,
+              unit: Unit.sd,
+            }),
+            line({
+              metric: ratio.ratio2ySd.zscore,
+              name: "2y",
+              color: colors.avocado,
+              unit: Unit.sd,
+            }),
+            line({
+              metric: ratio.ratio1ySd.zscore,
+              name: "1y",
+              color: colors.yellow,
+              unit: Unit.sd,
+            }),
+            createPriceLine({ unit: Unit.sd, number: 4 }),
+            createPriceLine({ unit: Unit.sd, number: 3 }),
+            createPriceLine({ unit: Unit.sd, number: 2 }),
+            createPriceLine({ unit: Unit.sd, number: 1 }),
+            createPriceLine({ unit: Unit.sd, number: 0 }),
+            createPriceLine({ unit: Unit.sd, number: -1 }),
+            createPriceLine({ unit: Unit.sd, number: -2 }),
+            createPriceLine({ unit: Unit.sd, number: -3 }),
+            createPriceLine({ unit: Unit.sd, number: -4 }),
+          ],
+        },
+        // Individual Z-Score charts
+        ...sdPatterns.map(({ nameAddon, titleAddon, sd }) => ({
+          name: nameAddon,
+          title: `${title} ${titleAddon} Z-Score`,
+          top: getSdBands(sd).map(({ name: bandName, prop, color: bandColor }) =>
+            line({
+              metric: prop,
+              name: bandName,
+              color: bandColor,
+              unit: Unit.usd,
+            }),
+          ),
+          bottom: [
+            line({ metric: sd.zscore, name: "Z-Score", color, unit: Unit.sd }),
+            createPriceLine({ unit: Unit.sd, number: 3 }),
+            createPriceLine({ unit: Unit.sd, number: 2 }),
+            createPriceLine({ unit: Unit.sd, number: 1 }),
+            createPriceLine({ unit: Unit.sd, number: 0 }),
+            createPriceLine({ unit: Unit.sd, number: -1 }),
+            createPriceLine({ unit: Unit.sd, number: -2 }),
+            createPriceLine({ unit: Unit.sd, number: -3 }),
+          ],
+        })),
+      ],
     },
   ];
 }
