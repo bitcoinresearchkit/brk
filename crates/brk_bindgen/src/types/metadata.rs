@@ -95,6 +95,14 @@ impl ClientMetadata {
             || self.structural_patterns.iter().any(|p| p.fields == fields)
     }
 
+    /// Find a pattern by its fields.
+    pub fn find_pattern_by_fields(&self, fields: &[PatternField]) -> Option<&StructuralPattern> {
+        self.concrete_to_pattern
+            .get(fields)
+            .and_then(|name| self.find_pattern(name))
+            .or_else(|| self.structural_patterns.iter().find(|p| p.fields == fields))
+    }
+
     /// Resolve the type name for a tree field.
     /// If the field matches ANY pattern (parameterizable or not), returns pattern type.
     /// Otherwise returns the inline type name (parent_child format).

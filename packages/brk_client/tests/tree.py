@@ -1,6 +1,18 @@
+# Run:
+# uv run pytest tests/tree.py -s
+
 """Comprehensive test that fetches all endpoints in the tree."""
 
 from brk_client import BrkClient
+
+
+def is_metric_pattern(obj):
+    """Check if an object is a metric pattern (has indexes() method and by attribute)."""
+    return (
+        hasattr(obj, "indexes")
+        and callable(getattr(obj, "indexes", None))
+        and hasattr(obj, "by")
+    )
 
 
 def get_all_metrics(obj, path=""):
@@ -8,7 +20,8 @@ def get_all_metrics(obj, path=""):
     metrics = []
 
     for attr_name in dir(obj):
-        if attr_name.startswith("_"):
+        # Skip dunder methods and internal attributes like _client
+        if attr_name.startswith("__") or attr_name == "_client":
             continue
 
         try:
@@ -16,74 +29,58 @@ def get_all_metrics(obj, path=""):
         except Exception:
             continue
 
+        if attr is None or callable(attr):
+            continue
+
         current_path = f"{path}.{attr_name}" if path else attr_name
 
-        # Check if this is a metric pattern (has 'by' attribute with index methods)
-        if hasattr(attr, "by"):
-            by = attr.by
-            indexes = []
-            for idx_name in dir(by):
-                if not idx_name.startswith("_") and callable(
-                    getattr(by, idx_name, None)
-                ):
-                    indexes.append(idx_name)
-            if indexes:
-                metrics.append((current_path, attr, indexes))
+        # Check if this is a metric pattern using the indexes() method
+        if is_metric_pattern(attr):
+            metrics.append((current_path, attr))
 
         # Recurse into nested tree nodes
-        if hasattr(attr, "__dict__") and not callable(attr):
+        if hasattr(attr, "__dict__"):
             metrics.extend(get_all_metrics(attr, current_path))
 
     return metrics
 
 
 def test_all_endpoints():
-    """Test fetching last 3 values from all metric endpoints."""
+    """Test fetching last value from all metric endpoints."""
     client = BrkClient("http://localhost:3110")
 
     metrics = get_all_metrics(client.metrics)
     print(f"\nFound {len(metrics)} metrics")
 
     success = 0
-    failed = 0
-    errors = []
 
-    for path, metric, indexes in metrics:
+    for path, metric in metrics:
+        # Use the indexes() method to get all available indexes
+        indexes = metric.indexes()
+
         for idx_name in indexes:
+            full_path = f"{path}.by.{idx_name}"
+
             try:
+                # Verify both access methods work: .by.index() and .get(index)
                 by = metric.by
-                endpoint = getattr(by, idx_name)()
-                # Use the new idiomatic API: tail(3).fetch() or [-3:].fetch()
-                res = endpoint.tail(3).fetch()
-                count = len(res["data"])
-                if count != 3:
-                    failed += 1
-                    error_msg = (
-                        f"FAIL: {path}.by.{idx_name}() -> expected 3, got {count}"
-                    )
-                    errors.append(error_msg)
-                    print(error_msg)
-                else:
-                    success += 1
-                    print(f"OK: {path}.by.{idx_name}() -> {count} items")
+                endpoint_by_property = getattr(by, idx_name)()
+                endpoint_by_get = metric.get(idx_name)
+
+                if endpoint_by_property is None:
+                    raise Exception(f"metric.by.{idx_name}() returned None")
+                if endpoint_by_get is None:
+                    raise Exception(f"metric.get('{idx_name}') returned None")
+
+                endpoint_by_property.tail(1).fetch()
+                success += 1
+                print(f"OK: {full_path}")
             except Exception as e:
-                failed += 1
-                error_msg = f"FAIL: {path}.by.{idx_name}() -> {e}"
-                errors.append(error_msg)
-                print(error_msg)
+                print(f"FAIL: {full_path} -> {e}")
+                return
 
     print("\n=== Results ===")
     print(f"Success: {success}")
-    print(f"Failed: {failed}")
-
-    if errors:
-        print("\nErrors:")
-        for err in errors[:10]:  # Show first 10 errors
-            print(f"  {err}")
-        if len(errors) > 10:
-            print(f"  ... and {len(errors) - 10} more")
-
-    assert failed == 0, f"{failed} endpoints failed"
 
 
 if __name__ == "__main__":

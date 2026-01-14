@@ -55,12 +55,17 @@ pub fn prepare_tree_node<'a>(
         .map(|(f, _)| f.clone())
         .collect();
 
-    // Skip if this matches a parameterizable pattern AND has no outlier
+    // Skip if this matches a parameterizable pattern AND has no outlier AND mode matches
     let base_result = get_pattern_instance_base(node);
+    let mode_matches = pattern_lookup
+        .get(&fields)
+        .and_then(|name| metadata.find_pattern(name))
+        .is_none_or(|p| p.is_suffix_mode() == base_result.is_suffix_mode);
     if let Some(pattern_name) = pattern_lookup.get(&fields)
         && pattern_name != name
         && metadata.is_parameterizable(pattern_name)
         && !base_result.has_outlier
+        && mode_matches
     {
         return None;
     }
@@ -84,9 +89,16 @@ pub fn prepare_tree_node<'a>(
                 .as_ref()
                 .is_some_and(|cf| metadata.matches_pattern(cf));
 
+            // Check if the pattern mode matches the instance mode
+            let mode_matches = child_fields
+                .as_ref()
+                .and_then(|cf| metadata.find_pattern_by_fields(cf))
+                .is_none_or(|p| p.is_suffix_mode() == base_result.is_suffix_mode);
+
             // should_inline determines if we generate an inline struct type
-            // We inline only if it's a branch AND doesn't match any pattern
-            let should_inline = !is_leaf && !matches_any_pattern;
+            // We inline if: it's a branch AND (doesn't match any pattern OR mode doesn't match OR has outlier)
+            let should_inline =
+                !is_leaf && (!matches_any_pattern || !mode_matches || base_result.has_outlier);
 
             // Inline type name (only used when should_inline is true)
             let inline_type_name = if should_inline {

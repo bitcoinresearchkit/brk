@@ -120,6 +120,9 @@ pub struct PatternBaseResult {
     /// Whether an outlier child was excluded to find the pattern.
     /// If true, pattern factory should not be used.
     pub has_outlier: bool,
+    /// Whether this instance uses suffix mode (common prefix) or prefix mode (common suffix).
+    /// Used to check compatibility with the pattern's mode.
+    pub is_suffix_mode: bool,
 }
 
 /// Get the metric base for a pattern instance by analyzing direct children.
@@ -137,12 +140,17 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
         return PatternBaseResult {
             base: String::new(),
             has_outlier: false,
+            is_suffix_mode: true, // default
         };
     }
 
     // Try to find common base from leaf names
-    if let Some((base, has_outlier)) = try_find_base(&child_names, false) {
-        return PatternBaseResult { base, has_outlier };
+    if let Some(result) = try_find_base(&child_names, false) {
+        return PatternBaseResult {
+            base: result.base,
+            has_outlier: result.has_outlier,
+            is_suffix_mode: result.is_suffix_mode,
+        };
     }
 
     // If no common pattern found and we have enough children, try excluding outliers
@@ -155,10 +163,11 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
                 .map(|(_, v)| v.clone())
                 .collect();
 
-            if let Some((base, _)) = try_find_base(&filtered, true) {
+            if let Some(result) = try_find_base(&filtered, true) {
                 return PatternBaseResult {
-                    base,
+                    base: result.base,
                     has_outlier: true,
+                    is_suffix_mode: result.is_suffix_mode,
                 };
             }
         }
@@ -169,24 +178,40 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
     PatternBaseResult {
         base: String::new(),
         has_outlier: false,
+        is_suffix_mode: true, // default
     }
 }
 
+/// Result of try_find_base: base name, has_outlier flag, and is_suffix_mode flag.
+struct FindBaseResult {
+    base: String,
+    has_outlier: bool,
+    is_suffix_mode: bool,
+}
+
 /// Try to find a common base from child names using prefix/suffix detection.
-/// Returns Some((base, has_outlier)) if found.
-fn try_find_base(child_names: &[(String, String)], is_outlier_attempt: bool) -> Option<(String, bool)> {
+/// Returns Some(FindBaseResult) if found.
+fn try_find_base(child_names: &[(String, String)], is_outlier_attempt: bool) -> Option<FindBaseResult> {
     let leaf_names: Vec<&str> = child_names.iter().map(|(_, n)| n.as_str()).collect();
 
     // Try common prefix first (suffix mode)
     if let Some(prefix) = find_common_prefix(&leaf_names) {
         let base = prefix.trim_end_matches('_').to_string();
-        return Some((base, is_outlier_attempt));
+        return Some(FindBaseResult {
+            base,
+            has_outlier: is_outlier_attempt,
+            is_suffix_mode: true,
+        });
     }
 
     // Try common suffix (prefix mode)
     if let Some(suffix) = find_common_suffix(&leaf_names) {
         let base = suffix.trim_start_matches('_').to_string();
-        return Some((base, is_outlier_attempt));
+        return Some(FindBaseResult {
+            base,
+            has_outlier: is_outlier_attempt,
+            is_suffix_mode: false,
+        });
     }
 
     None
@@ -408,5 +433,65 @@ mod tests {
         // Outlier detected - pattern base found by excluding "asopr"
         assert_eq!(result.base, "sopr");
         assert!(result.has_outlier); // Pattern factory should NOT be used (inline instead)
+    }
+
+    #[test]
+    fn test_get_pattern_instance_base_suffix_mode_price_ago() {
+        // Simulates price_ago pattern: price_1d_ago, price_1w_ago, price_10y_ago
+        // Common prefix is "price_", so this is suffix mode
+        let tree = make_branch(vec![
+            ("_1d", make_leaf("price_1d_ago")),
+            ("_1w", make_leaf("price_1w_ago")),
+            ("_1m", make_leaf("price_1m_ago")),
+            ("_10y", make_leaf("price_10y_ago")),
+        ]);
+
+        let result = get_pattern_instance_base(&tree);
+        assert_eq!(result.base, "price");
+        assert!(result.is_suffix_mode); // Suffix mode: _m(base, "1d_ago")
+        assert!(!result.has_outlier);
+    }
+
+    #[test]
+    fn test_get_pattern_instance_base_prefix_mode_price_returns() {
+        // Simulates price_returns pattern: 1d_price_returns, 1w_price_returns, 10y_price_returns
+        // Common suffix is "_price_returns", so this is prefix mode
+        let tree = make_branch(vec![
+            ("_1d", make_leaf("1d_price_returns")),
+            ("_1w", make_leaf("1w_price_returns")),
+            ("_1m", make_leaf("1m_price_returns")),
+            ("_10y", make_leaf("10y_price_returns")),
+        ]);
+
+        let result = get_pattern_instance_base(&tree);
+        assert_eq!(result.base, "price_returns");
+        assert!(!result.is_suffix_mode); // Prefix mode: _p("1d_", base)
+        assert!(!result.has_outlier);
+    }
+
+    #[test]
+    fn test_mode_detection_distinguishes_similar_structures() {
+        // Two patterns with identical structure but different naming conventions
+        // should have different modes detected
+
+        // Suffix mode pattern
+        let suffix_tree = make_branch(vec![
+            ("_1y", make_leaf("lump_sum_1y")),
+            ("_2y", make_leaf("lump_sum_2y")),
+            ("_5y", make_leaf("lump_sum_5y")),
+        ]);
+        let suffix_result = get_pattern_instance_base(&suffix_tree);
+        assert_eq!(suffix_result.base, "lump_sum");
+        assert!(suffix_result.is_suffix_mode);
+
+        // Prefix mode pattern (same structure, different naming)
+        let prefix_tree = make_branch(vec![
+            ("_1y", make_leaf("1y_returns")),
+            ("_2y", make_leaf("2y_returns")),
+            ("_5y", make_leaf("5y_returns")),
+        ]);
+        let prefix_result = get_pattern_instance_base(&prefix_tree);
+        assert_eq!(prefix_result.base, "returns");
+        assert!(!prefix_result.is_suffix_mode);
     }
 }

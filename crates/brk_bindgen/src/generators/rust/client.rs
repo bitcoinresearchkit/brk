@@ -392,7 +392,12 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         writeln!(output, "impl<T: DeserializeOwned> {}<T> {{", by_name).unwrap();
         for index in &pattern.indexes {
             let method_name = index_to_field_name(index);
-            writeln!(output, "    pub fn {}(&self) -> MetricEndpointBuilder<T> {{", method_name).unwrap();
+            writeln!(
+                output,
+                "    pub fn {}(&self) -> MetricEndpointBuilder<T> {{",
+                method_name
+            )
+            .unwrap();
             writeln!(
                 output,
                 "        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::{})",
@@ -425,7 +430,12 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         writeln!(output, "        let name: Arc<str> = name.into();").unwrap();
         writeln!(output, "        Self {{").unwrap();
         writeln!(output, "            name: name.clone(),").unwrap();
-        writeln!(output, "            by: {} {{ client, name, _marker: std::marker::PhantomData }}", by_name).unwrap();
+        writeln!(
+            output,
+            "            by: {} {{ client, name, _marker: std::marker::PhantomData }}",
+            by_name
+        )
+        .unwrap();
         writeln!(output, "        }}").unwrap();
         writeln!(output, "    }}").unwrap();
         writeln!(output).unwrap();
@@ -436,7 +446,12 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         writeln!(output, "}}\n").unwrap();
 
         // Implement AnyMetricPattern trait
-        writeln!(output, "impl<T> AnyMetricPattern for {}<T> {{", pattern.name).unwrap();
+        writeln!(
+            output,
+            "impl<T> AnyMetricPattern for {}<T> {{",
+            pattern.name
+        )
+        .unwrap();
         writeln!(output, "    fn name(&self) -> &str {{").unwrap();
         writeln!(output, "        &self.name").unwrap();
         writeln!(output, "    }}").unwrap();
@@ -451,12 +466,26 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         writeln!(output, "}}\n").unwrap();
 
         // Implement MetricPattern<T> trait
-        writeln!(output, "impl<T: DeserializeOwned> MetricPattern<T> for {}<T> {{", pattern.name).unwrap();
-        writeln!(output, "    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {{").unwrap();
+        writeln!(
+            output,
+            "impl<T: DeserializeOwned> MetricPattern<T> for {}<T> {{",
+            pattern.name
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {{"
+        )
+        .unwrap();
         writeln!(output, "        match index {{").unwrap();
         for index in &pattern.indexes {
             let method_name = index_to_field_name(index);
-            writeln!(output, "            Index::{} => Some(self.by.{}()),", index, method_name).unwrap();
+            writeln!(
+                output,
+                "            Index::{} => Some(self.by.{}()),",
+                index, method_name
+            )
+            .unwrap();
         }
         writeln!(output, "            _ => None,").unwrap();
         writeln!(output, "        }}").unwrap();
@@ -486,8 +515,12 @@ pub fn generate_pattern_structs(
 
         for field in &pattern.fields {
             let field_name = to_snake_case(&field.name);
-            let type_annotation =
-                metadata.field_type_annotation(field, pattern.is_generic, None, GenericSyntax::RUST);
+            let type_annotation = metadata.field_type_annotation(
+                field,
+                pattern.is_generic,
+                None,
+                GenericSyntax::RUST,
+            );
             writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
         }
 
