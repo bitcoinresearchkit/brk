@@ -19,7 +19,7 @@ Persist and query Bitcoin index data (address→outputs, txid→height, etc.) wi
 ```rust,ignore
 let store: Store<Txid, Height> = Store::import(
     &db, &path, "txid_to_height",
-    Version::new(1), Mode::default(), Kind::Random
+    Version::new(1), Mode::Any, Kind::Random
 )?;
 
 store.insert(txid, height);

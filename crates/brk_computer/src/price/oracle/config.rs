@@ -48,11 +48,12 @@ impl OracleConfig {
                 blocks_per_window: 144,     // ~1 day
                 min_tx_count: 1000,
             },
-            // 2017+: Modern era ($1,000 - $1,000,000+)
+            // 2017+: Modern era ($10,000 - $500,000)
+            // Matches Python's slide range of -141 to 201
             _ => Self {
-                min_price_cents: 100_000,     // $1,000
-                max_price_cents: 100_000_000, // $1,000,000
-                blocks_per_window: 144,       // ~1 day
+                min_price_cents: 1_000_000,  // $10,000 (gives max_slide = 200)
+                max_price_cents: 50_000_000, // $500,000 (gives min_slide ≈ -140)
+                blocks_per_window: 144,      // ~1 day
                 min_tx_count: 2000,
             },
         }
@@ -90,9 +91,10 @@ mod tests {
 
     #[test]
     fn test_config_for_year() {
+        // 2017+ config matches Python: $10,000 to $500,000
         let c2020 = OracleConfig::for_year(2020);
-        assert_eq!(c2020.min_price_cents, 100_000);
-        assert_eq!(c2020.max_price_cents, 100_000_000);
+        assert_eq!(c2020.min_price_cents, 1_000_000);
+        assert_eq!(c2020.max_price_cents, 50_000_000);
 
         let c2015 = OracleConfig::for_year(2015);
         assert_eq!(c2015.min_price_cents, 10_000);
@@ -101,13 +103,13 @@ mod tests {
 
     #[test]
     fn test_slide_range() {
-        // 2024 config: $1,000 to $1,000,000
+        // 2024 config: $10,000 to $500,000 (matches Python's -141 to 201)
         let config = OracleConfig::for_year(2024);
         let (min, max) = config.slide_range();
-        // $1,000,000 = 10^8 cents → slide = (7-8)*200 = -200
-        // $1,000 = 10^5 cents → slide = (7-5)*200 = 400
-        assert_eq!(min, -200);
-        assert_eq!(max, 400);
+        // $500,000 = 5*10^7 cents → slide = (7-7.699)*200 ≈ -140
+        // $10,000 = 10^6 cents → slide = (7-6)*200 = 200
+        assert!((-141..=-139).contains(&min)); // ~-140
+        assert_eq!(max, 200);
 
         // 2015 config: $100 to $20,000
         let config = OracleConfig::for_year(2015);

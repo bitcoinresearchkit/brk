@@ -15,10 +15,28 @@ use axum::{
 use brk_error::Result;
 use brk_mcp::route::mcp_router;
 use brk_query::AsyncQuery;
+use include_dir::{include_dir, Dir};
 use quick_cache::sync::Cache;
 use tokio::net::TcpListener;
 use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 use tracing::{error, info};
+
+/// Embedded website assets
+pub static EMBEDDED_WEBSITE: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../website");
+
+/// Source for serving the website
+#[derive(Debug, Clone)]
+pub enum WebsiteSource {
+    Disabled,
+    Embedded,
+    Filesystem(PathBuf),
+}
+
+impl WebsiteSource {
+    pub fn is_enabled(&self) -> bool {
+        !matches!(self, Self::Disabled)
+    }
+}
 
 mod api;
 pub mod cache;
@@ -37,12 +55,12 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Server(AppState);
 
 impl Server {
-    pub fn new(query: &AsyncQuery, data_path: PathBuf, files_path: Option<PathBuf>) -> Self {
+    pub fn new(query: &AsyncQuery, data_path: PathBuf, website: WebsiteSource) -> Self {
         Self(AppState {
             client: query.client().clone(),
             query: query.clone(),
             data_path,
-            files_path,
+            website,
             cache: Arc::new(Cache::new(5_000)),
             started_at: jiff::Timestamp::now(),
             started_instant: Instant::now(),
@@ -87,7 +105,7 @@ impl Server {
         let vecs = state.query.inner().vecs();
         let router = ApiRouter::new()
             .add_api_routes()
-            .add_files_routes(state.files_path.as_ref())
+            .add_files_routes(&state.website)
             .route(
                 "/discord",
                 get(Redirect::temporary("https://discord.gg/WACpShCB7M")),

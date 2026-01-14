@@ -24,23 +24,24 @@ let mut indexer = Indexer::forced_import(&outputs_dir)?;
 let starting_indexes = indexer.index(&blocks, &client, &exit)?;
 
 // Access indexed data
-let height = indexer.stores.txidprefix_to_txindex.get(&txid_prefix)?;
-let blockhash = indexer.vecs.block.height_to_blockhash.get(height)?;
+let txindex = indexer.stores.txidprefix_to_txindex.get(&txid_prefix)?;
+let blockhash = indexer.vecs.blocks.blockhash.get(height)?;
 ```
 
 ## Data Structures
 
 **Vecs** (append-only vectors):
-- Block: `height_to_blockhash`, `height_to_timestamp`, `height_to_difficulty`
-- Transaction: `txindex_to_txid`, `txindex_to_height`, `txindex_to_base_size`
-- Input/Output: `txinindex_to_outpoint`, `txoutindex_to_value`, `txoutindex_to_outputtype`
-- Address: Per-type `typeindex_to_addressbytes`
+- `blocks`: `blockhash`, `timestamp`, `difficulty`, `total_size`, `weight`
+- `transactions`: `txid`, `first_txinindex`, `first_txoutindex`
+- `inputs`: `outpoint`, `txindex`
+- `outputs`: `value`, `outputtype`, `typeindex`, `txindex`
+- `addresses`: Per-type `p2pkhbytes`, `p2shbytes`, `p2wpkhbytes`, etc.
 
 **Stores** (key-value lookups):
 - `txidprefix_to_txindex` - TXID lookup via 10-byte prefix
 - `blockhashprefix_to_height` - Block lookup via 4-byte prefix
-- `addresshash_to_addressindex` - Address lookup per type
-- `addressindex_to_unspent_outpoints` - Live UTXO set per address
+- `addresstype_to_addresshash_to_addressindex` - Address lookup per type
+- `addresstype_to_addressindex_and_unspentoutpoint` - Live UTXO set per address
 
 ## Processing Pipeline
 
@@ -55,10 +56,10 @@ let blockhash = indexer.vecs.block.height_to_blockhash.get(height)?;
 
 | Machine | Time | Disk | Peak Disk | Memory | Peak Memory |
 |---------|------|------|-----------|--------|-------------|
-| MBP M3 Pro (36GB, internal SSD) | 3.1h | 233 GB | 307 GB | 5.5 GB | 11 GB |
+| MBP M3 Pro (36GB, internal SSD) | 3h | 247 GB | 314 GB | 5.2 GB | 11 GB |
 | Mac Mini M4 (16GB, external SSD) | 4.9h | 233 GB | 303 GB | 5.4 GB | 11 GB |
 
-Full benchmark data: [`https://github.com/bitcoinresearchkit/benches/tree/main/brk_indexer`](/benches/brk_indexer)
+Full benchmark data: [bitcoinresearchkit/benches](https://github.com/bitcoinresearchkit/benches/tree/main/brk_indexer)
 
 ## Recommended: mimalloc v3
 
@@ -66,6 +67,7 @@ Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator to 
 
 ## Built On
 
+- `vecdb` for append-only vectors
 - `brk_cohort` for address type handling
 - `brk_iterator` for block iteration
 - `brk_store` for key-value storage

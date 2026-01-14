@@ -19,14 +19,14 @@ Compute 1000+ on-chain metrics from indexed blockchain data: supply breakdowns, 
 ## Core API
 
 ```rust,ignore
-let mut computer = Computer::forced_import(&outputs_path, &indexer, fetcher)?;
+let mut computer = Computer::forced_import(&outputs_path, &indexer, Some(fetcher))?;
 
 // Compute all metrics for new blocks
 computer.compute(&indexer, starting_indexes, &reader, &exit)?;
 
-// Access computed data
-let supply = computer.distribution.utxo_cohorts.all.metrics.supply.height_to_supply.get(height)?;
-let realized_cap = computer.distribution.utxo_cohorts.all.metrics.realized.height_to_realized_cap.get(height)?;
+// Access computed data via traversable vecs
+let supply = computer.distribution.utxo_cohorts.all.metrics.supply.total.sats.height;
+let realized_cap = computer.distribution.utxo_cohorts.all.metrics.realized.unwrap().realized_cap.height;
 ```
 
 ## Metric Categories
@@ -45,9 +45,9 @@ let realized_cap = computer.distribution.utxo_cohorts.all.metrics.realized.heigh
 ## Cohort System
 
 UTXO and address cohorts support filtering by:
-- **Age**: STH (<150d), LTH (≥150d), age bands (1d, 1w, 1m, 3m, 6m, 1y, 2y, ...)
+- **Age**: STH (<150d), LTH (≥150d), 21 age bands (<1h, 1h-1d, 1d-1w, 1w-1m, 1m-2m, ..., 6m-1y, 1y-2y, ..., 12y-15y, 15y+)
 - **Amount**: 0-0.001 BTC, 0.001-0.01, ..., 10k+ BTC
-- **Type**: P2PKH, P2SH, P2WPKH, P2WSH, P2TR
+- **Type**: P2PK, P2PKH, P2MS, P2SH, P2WPKH, P2WSH, P2TR, P2A
 - **Epoch**: By halving epoch
 
 ## Performance
@@ -58,9 +58,10 @@ Full pipeline benchmarks (indexer + computer):
 
 | Machine | Time | Disk | Peak Disk | Memory | Peak Memory |
 |---------|------|------|-----------|--------|-------------|
-| MBP M3 Pro (36GB, internal SSD) | 5.2h | 341 GB | 415 GB | 6.4 GB | 12 GB |
+| MBP M3 Pro (36GB, internal SSD) | 4.4h | 345 GB | 348 GB | 3.3 GB | 11 GB |
+| Mac Mini M4 (16GB, external SSD) | 7h | 344 GB | 346 GB | 4 GB | 10 GB |
 
-Full benchmark data: [`https://github.com/bitcoinresearchkit/benches/tree/main/brk`](/benches/brk)
+Full benchmark data: [bitcoinresearchkit/benches](https://github.com/bitcoinresearchkit/benches/tree/main/brk)
 
 ## Recommended: mimalloc v3
 

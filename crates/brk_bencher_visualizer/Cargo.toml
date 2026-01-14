@@ -7,7 +7,6 @@ license.workspace = true
 homepage.workspace = true
 repository.workspace = true
 publish = false
-build = "build.rs"
 
 [dependencies]
 plotters = "0.3.7"

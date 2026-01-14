@@ -15,7 +15,7 @@ pip install brk-client
 ```python
 from brk_client import BrkClient
 
-client = BrkClient("http://localhost:3000")
+client = BrkClient("http://localhost:3110")
 
 # Blockchain data (mempool.space compatible)
 block = client.get_block_by_height(800000)
@@ -34,9 +34,5 @@ data = client.get_metric("price_close", "dateindex", -30)
 ## Configuration
 
 ```python
-client = BrkClient("http://localhost:3000", timeout=60.0)
+client = BrkClient("http://localhost:3110", timeout=60.0)
 ```
-
-## License
-
-MIT

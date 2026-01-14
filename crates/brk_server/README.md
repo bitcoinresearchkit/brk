@@ -8,7 +8,7 @@ Serve BRK data via REST API with OpenAPI documentation, response caching, MCP en
 
 ## Key Features
 
-- **OpenAPI spec**: Auto-generated documentation at `/api/openapi.json`
+- **OpenAPI spec**: Auto-generated documentation at `/api.json` (interactive docs at `/api`)
 - **Response caching**: LRU cache with 5000 entries for repeated queries
 - **Compression**: Brotli, gzip, deflate, zstd support
 - **Static files**: Optional web interface hosting
@@ -17,7 +17,8 @@ Serve BRK data via REST API with OpenAPI documentation, response caching, MCP en
 ## Core API
 
 ```rust,ignore
-let server = Server::new(&async_query, Some(files_path));
+let server = Server::new(&async_query, data_path, WebsiteSource::Filesystem(files_path));
+// Or WebsiteSource::Embedded, or WebsiteSource::Disabled
 server.serve(true).await?;  // true enables MCP endpoint
 ```
 
@@ -25,17 +26,18 @@ server.serve(true).await?;  // true enables MCP endpoint
 
 | Path | Description |
 |------|-------------|
-| `/api/blocks/{height}` | Block info, transactions, status |
-| `/api/txs/{txid}` | Transaction details, status, merkle proof |
-| `/api/addresses/{addr}` | Address stats, transactions, UTXOs |
+| `/api/block-height/{height}` | Block by height |
+| `/api/block/{hash}` | Block info, transactions, status |
+| `/api/tx/{txid}` | Transaction details, status, hex |
+| `/api/address/{addr}` | Address stats, transactions, UTXOs |
 | `/api/metrics` | Metric catalog and data queries |
-| `/api/mining/*` | Hashrate, difficulty, pools, epochs |
+| `/api/v1/mining/*` | Hashrate, difficulty, pools, rewards |
 | `/api/mempool/*` | Fee estimates, projected blocks |
 | `/mcp` | MCP endpoint (if enabled) |
 
 ## Caching
 
-Uses ETag-based caching with stale-while-revalidate semantics:
+Uses ETag-based caching with must-revalidate semantics:
 - Height-indexed data: Cache until height changes
 - Date-indexed data: Cache with longer TTL
 - Mempool data: Short TTL, frequent updates

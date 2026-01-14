@@ -21,6 +21,30 @@ Run a full BRK instance: index the blockchain, compute metrics, serve the API, a
 cargo install --locked brk_cli
 ```
 
+For pre-release versions (alpha, beta, rc), specify the version explicitly:
+
+```bash
+# Find the latest version
+cargo search brk_cli
+
+# Install a specific version
+cargo install --locked brk_cli --version "VERSION"
+```
+
+See [crates.io/crates/brk_cli/versions](https://crates.io/crates/brk_cli/versions) for all available versions.
+
+For better performance, build with native CPU optimizations:
+
+```bash
+RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli
+```
+
+## Requirements
+
+- Bitcoin Core with accessible `blk*.dat` files
+- ~400 GB disk space
+- 12+ GB RAM recommended
+
 ## Usage
 
 ```bash
@@ -45,11 +69,7 @@ brk --help
 
 ## Performance
 
-| Machine | Time | Disk | Peak Disk | Memory | Peak Memory |
-|---------|------|------|-----------|--------|-------------|
-| MBP M3 Pro (36GB, internal SSD) | 5.2h | 341 GB | 415 GB | 6.4 GB | 12 GB |
-
-Full benchmark data: [`https://github.com/bitcoinresearchkit/benches/tree/main/brk`](/benches/brk)
+See [brk_computer](https://docs.rs/brk_computer) for full pipeline benchmarks.
 
 ## Built On
 

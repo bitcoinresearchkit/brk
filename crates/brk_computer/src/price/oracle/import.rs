@@ -5,8 +5,11 @@ use vecdb::{BytesVec, Database, ImportableVec, IterableCloneableVec, LazyVecFrom
 use super::Vecs;
 
 impl Vecs {
-    pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
-        let price_cents = PcoVec::forced_import(db, "orange_price_cents", version)?;
+    pub fn forced_import(db: &Database, parent_version: Version) -> Result<Self> {
+        // v2: Fixed spike stencil positions and Gaussian center to match Python's empirical data
+        let version = parent_version + Version::TWO;
+
+        let price_cents = PcoVec::forced_import(db, "oracle_price_cents", version)?;
         let ohlc_cents = BytesVec::forced_import(db, "oracle_ohlc_cents", version)?;
         let tx_count = PcoVec::forced_import(db, "oracle_tx_count", version)?;
 

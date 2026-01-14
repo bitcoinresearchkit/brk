@@ -12,68 +12,66 @@ use super::histogram::{BINS_PER_DECADE, Histogram, TOTAL_BINS};
 /// Number of parallel chunks for stencil sliding
 const PARALLEL_CHUNKS: i32 = 4;
 
-/// USD spike stencil entries: (bin offset from $100 center, weight)
+/// USD spike stencil entries: (bin offset from center_bin, weight)
 /// These represent the expected frequency of round USD amounts in transactions
-/// Offset formula: log10(USD/100) * 200 bins/decade
-/// Companion spikes at ±2 bins from main spike (Rust 200 bins/decade ≈ Python's ±1 at 180 bins/decade)
-/// Matches Python's 29 entries from utxo_oracle.py lines 1013-1041
+/// Positions derived from Python's empirical data (utxo_oracle.py lines 1013-1041)
+/// Offset = python_stencil_index - 402 (since Python stencil starts at bin 199, center is 601)
 const SPIKE_STENCIL: &[(i32, f64)] = &[
-    // $1 (single)
-    (-400, 0.00130),
-    // $5 (single)
-    (-260, 0.00168),
-    // $10 (main + companion)
-    (-200, 0.00347),
-    (-198, 0.00199),
-    // $15 (single)
-    (-165, 0.00191),
-    // $20 (main + companion)
-    (-140, 0.00334),
-    (-138, 0.00259),
-    // $30 (main + companion)
-    (-105, 0.00258),
-    (-103, 0.00273),
-    // $50 (main + 2 companions)
+    // $1 (single) - Python index 40
+    (-362, 0.00130),
+    // $5 (single) - Python index 141
+    (-261, 0.00168),
+    // $10 (main + companion) - Python indices 201-202
+    (-201, 0.00347),
+    (-200, 0.00199),
+    // $15 (single) - Python index 236
+    (-166, 0.00191),
+    // $20 (main + companion) - Python indices 261-262
+    (-141, 0.00334),
+    (-140, 0.00259),
+    // $30 (main + companion) - Python indices 296-297
+    (-106, 0.00258),
+    (-105, 0.00273),
+    // $50 (main + 2 companions) - Python indices 340-342
     (-62, 0.00308),
-    (-60, 0.00561),
-    (-58, 0.00309),
-    // $100 (main + 3 companions) - center
+    (-61, 0.00561),
+    (-60, 0.00309),
+    // $100 (main + 3 companions) - Python indices 400-403
     (-2, 0.00292),
-    (0, 0.00617),
-    (2, 0.00442),
-    (4, 0.00263),
-    // $150 (single)
-    (35, 0.00286),
-    // $200 (main + companion)
-    (60, 0.00410),
-    (62, 0.00335),
-    // $300 (main + companion)
-    (95, 0.00252),
-    (97, 0.00278),
-    // $500 (single)
-    (140, 0.00379),
-    // $1000 (main + companion)
-    (200, 0.00369),
-    (202, 0.00239),
-    // $1500 (single)
-    (235, 0.00128),
-    // $2000 (main + companion)
-    (260, 0.00165),
-    (262, 0.00140),
-    // $5000 (single)
-    (340, 0.00115),
-    // $10000 (single)
-    (400, 0.00083),
+    (-1, 0.00617),
+    (0, 0.00442),
+    (1, 0.00263),
+    // $150 (single) - Python index 436
+    (34, 0.00286),
+    // $200 (main + companion) - Python indices 461-462
+    (59, 0.00410),
+    (60, 0.00335),
+    // $300 (main + companion) - Python indices 496-497
+    (94, 0.00252),
+    (95, 0.00278),
+    // $500 (single) - Python index 541
+    (139, 0.00379),
+    // $1000 (main + companion) - Python indices 601-602
+    (199, 0.00369),
+    (200, 0.00239),
+    // $1500 (single) - Python index 636
+    (234, 0.00128),
+    // $2000 (main + companion) - Python indices 661-662
+    (259, 0.00165),
+    (260, 0.00140),
+    // $5000 (single) - Python index 741
+    (339, 0.00115),
+    // $10000 (single) - Python index 801
+    (399, 0.00083),
 ];
 
 /// Width of the smooth stencil in bins (Gaussian sigma)
-/// Python uses std_dev=201 with 803 bins. Our histogram has 1600 bins (2x),
-/// so we use 201 * (1600/803) ≈ 400 bins sigma equivalent
-const SMOOTH_WIDTH: f64 = 400.0;
+/// Both Python and Rust use 200 bins per decade, so sigma is the same
+const SMOOTH_WIDTH: f64 = 201.0;
 
 /// Linear term coefficient for smooth stencil (per Python: 0.0000005 * x)
-/// Scaled for our larger histogram: 0.0000005 * (803/1600) ≈ 0.00000025
-const SMOOTH_LINEAR_COEF: f64 = 0.00000025;
+/// NOT scaled - the linear term uses window position (0-802), same as Python
+const SMOOTH_LINEAR_COEF: f64 = 0.0000005;
 
 /// Weight given to smooth stencil vs spike stencil
 const SMOOTH_WEIGHT: f64 = 0.65;
@@ -83,6 +81,12 @@ const SPIKE_WEIGHT: f64 = 1.0;
 /// Index is absolute distance from center (0 to SMOOTH_RANGE)
 /// This avoids computing exp() billions of times
 const SMOOTH_RANGE: usize = 800;
+
+/// Gaussian center bin offset from spike center
+/// Python's Gaussian has mean=411 in 803-element stencil
+/// Stencil starts at bin 199, so Gaussian centers at bin 199+411=610
+/// Spike center is at bin 601, so Gaussian is offset by +9 bins
+const GAUSSIAN_CENTER_OFFSET: i32 = 9;
 
 /// Lazily initialized Gaussian weight lookup table
 fn gaussian_weights() -> &'static [f64; SMOOTH_RANGE + 1] {
@@ -109,16 +113,6 @@ fn gaussian_weights() -> &'static [f64; SMOOTH_RANGE + 1] {
 /// The estimated price in cents, or None if no valid estimate found
 pub fn find_best_price(histogram: &Histogram, min_slide: i32, max_slide: i32) -> Option<Cents> {
     let bins = histogram.bins();
-
-    // Pre-compute the linear term sum (constant for all slide positions)
-    // linear_sum = Σ bins[i] * SMOOTH_LINEAR_COEF * i
-    let linear_sum: f64 = bins
-        .iter()
-        .copied()
-        .enumerate()
-        .filter(|(_, v)| *v > 0.0)
-        .map(|(i, v)| v * SMOOTH_LINEAR_COEF * i as f64)
-        .sum();
 
     // Collect non-zero bins: Vec for Gaussian (needs iteration), HashMap for spike (needs lookup)
     let non_zero_bins: Vec<(usize, f64)> = bins
@@ -147,7 +141,7 @@ pub fn find_best_price(histogram: &Histogram, min_slide: i32, max_slide: i32) ->
             let mut local_total = 0.0;
 
             for slide in chunk_start..=chunk_end {
-                let score = compute_score_fast(&non_zero_bins, &bin_map, linear_sum, slide);
+                let score = compute_score_fast(&non_zero_bins, &bin_map, slide);
                 local_total += score;
                 if score > local_best_score {
                     local_best_score = score;
@@ -170,8 +164,8 @@ pub fn find_best_price(histogram: &Histogram, min_slide: i32, max_slide: i32) ->
         );
 
     // Compute neighbor scores for sub-bin interpolation (matches Python behavior)
-    let neighbor_up_score = compute_score_fast(&non_zero_bins, &bin_map, linear_sum, best_position + 1);
-    let neighbor_down_score = compute_score_fast(&non_zero_bins, &bin_map, linear_sum, best_position - 1);
+    let neighbor_up_score = compute_score_fast(&non_zero_bins, &bin_map, best_position + 1);
+    let neighbor_down_score = compute_score_fast(&non_zero_bins, &bin_map, best_position - 1);
 
     // Find best neighbor
     let (best_neighbor_offset, neighbor_score) = if neighbor_up_score > neighbor_down_score {
@@ -204,7 +198,6 @@ pub fn find_best_price(histogram: &Histogram, min_slide: i32, max_slide: i32) ->
 fn compute_score_fast(
     non_zero_bins: &[(usize, f64)],
     bin_map: &FxHashMap<usize, f64>,
-    linear_sum: f64,
     slide: i32,
 ) -> f64 {
     let spike_score = compute_spike_score_hash(bin_map, slide);
@@ -212,17 +205,40 @@ fn compute_score_fast(
     // Python: smooth weight only applied for slide < 150
     if slide < 150 {
         let gaussian_score = compute_gaussian_score_sparse(non_zero_bins, slide);
+        let linear_score = compute_linear_score_sparse(non_zero_bins, slide);
         // Combine Gaussian and linear parts of smooth score
-        let smooth_score = 0.0015 * gaussian_score + linear_sum;
+        let smooth_score = 0.0015 * gaussian_score + linear_score;
         SMOOTH_WEIGHT * smooth_score + SPIKE_WEIGHT * spike_score
     } else {
         SPIKE_WEIGHT * spike_score
     }
 }
 
+/// Compute the linear part of the smooth stencil (per-slide, matches Python)
+/// Python: sum(shifted_curve[n] * 0.0000005 * n) where n is window position (0-802)
+fn compute_linear_score_sparse(non_zero_bins: &[(usize, f64)], slide: i32) -> f64 {
+    // Window starts at left_p001 + slide = (center_bin - 402) + slide = 199 + slide
+    // Python: left_p001 = center_p001 - int((803+1)/2) = 601 - 402 = 199
+    let window_start = 199 + slide;
+    let window_end = window_start + 803; // 803 elements like Python's stencil
+    let mut score = 0.0;
+
+    for &(i, bin_value) in non_zero_bins {
+        let bin_idx = i as i32;
+        if bin_idx >= window_start && bin_idx < window_end {
+            let window_pos = bin_idx - window_start;
+            score += bin_value * SMOOTH_LINEAR_COEF * window_pos as f64;
+        }
+    }
+
+    score
+}
+
 /// Compute just the Gaussian part of the smooth stencil (sparse iteration)
+/// Note: Gaussian center is offset from spike center by GAUSSIAN_CENTER_OFFSET
 fn compute_gaussian_score_sparse(non_zero_bins: &[(usize, f64)], slide: i32) -> f64 {
-    let center = center_bin() as i32 + slide;
+    // Python's Gaussian is centered at bin 610 (not 601), so we add the offset
+    let center = center_bin() as i32 + GAUSSIAN_CENTER_OFFSET + slide;
     let weights = gaussian_weights();
     let mut score = 0.0;
 

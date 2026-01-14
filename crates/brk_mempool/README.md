@@ -36,10 +36,10 @@ let tracker = mempool.get_addresses();
 
 Returns `RecommendedFees` with sat/vB rates for different confirmation targets:
 
-- `fastest_fee` - Next block
-- `half_hour_fee` - ~3 blocks
-- `hour_fee` - ~6 blocks
-- `economy_fee` - ~144 blocks
+- `fastest_fee` - Next block (index 0)
+- `half_hour_fee` - ~3 blocks (index 2)
+- `hour_fee` - ~6 blocks (index 5)
+- `economy_fee` - ~8 blocks (index 7, last projected block)
 - `minimum_fee` - Relay minimum
 
 ## Block Projection
@@ -48,7 +48,7 @@ Builds projected blocks by:
 1. Constructing transaction dependency graph
 2. Calculating effective fee rates (including ancestors)
 3. Selecting transactions greedily by ancestor-aware fee rate
-4. Partitioning into ~4MB virtual blocks
+4. Partitioning into 1MB vsize blocks
 
 ## Built On
 

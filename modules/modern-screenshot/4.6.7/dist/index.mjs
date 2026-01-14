@@ -1,3 +1,4 @@
+// @ts-nocheck
 function changeJpegDpi(uint8Array, dpi) {
   uint8Array[13] = 1;
   uint8Array[14] = dpi >> 8;

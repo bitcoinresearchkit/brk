@@ -61,7 +61,3 @@ Feature flags match crate names without the `brk_` prefix. Use `full` to enable 
 | [brk_error](https://docs.rs/brk_error) | Error types |
 | [brk_logger](https://docs.rs/brk_logger) | Logging infrastructure |
 | [brk_bencher](https://docs.rs/brk_bencher) | Benchmarking utilities |
-
-## License
-
-MIT

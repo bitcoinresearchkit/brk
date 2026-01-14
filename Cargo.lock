@@ -135,15 +135,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arbitrary"
-version = "1.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
-dependencies = [
- "derive_arbitrary",
-]
-
-[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -471,14 +462,11 @@ dependencies = [
  "brk_server",
  "clap",
  "color-eyre",
- "importmap",
- "minreq",
  "serde",
  "tokio",
  "toml",
  "tracing",
  "vecdb",
- "zip",
 ]
 
 [[package]]
@@ -748,6 +736,8 @@ dependencies = [
  "brk_traversable",
  "brk_types",
  "derive_more",
+ "importmap",
+ "include_dir",
  "jiff",
  "quick_cache",
  "schemars",
@@ -1250,17 +1240,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derive_arbitrary"
-version = "1.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e567bd82dcff979e4b03460c307b3cdc9e96fde3d73bed1496d2bc75d9dd62a"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "derive_more"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1450,7 +1429,6 @@ checksum = "b375d6465b98090a5f25b1c7703f3859783755aa9a80433b36e0379a3ec2f369"
 dependencies = [
  "crc32fast",
  "miniz_oxide",
- "zlib-rs",
 ]
 
 [[package]]
@@ -1954,14 +1932,33 @@ dependencies = [
 
 [[package]]
 name = "importmap"
-version = "0.1.3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a45c4c5e8b4d0a6aed90f3a14125bd3af3bca73d49d44e8f8b764311903b5213"
+checksum = "f650142f4c83e122ae10a49dbaa88593dc4b20158124409856adbae847775938"
 dependencies = [
  "rapidhash",
  "serde",
  "serde_json",
  "walkdir",
+]
+
+[[package]]
+name = "include_dir"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "923d117408f1e49d914f1a379a309cffe4f18c05cf4e3d12e613a15fc81bd0dd"
+dependencies = [
+ "include_dir_macros",
+]
+
+[[package]]
+name = "include_dir_macros"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7cab85a7ed0bd5f0e76d93846e0147172bed2e2d3f859bcc33a8d9699cad1a75"
+dependencies = [
+ "proc-macro2",
+ "quote",
 ]
 
 [[package]]
@@ -2644,9 +2641,9 @@ dependencies = [
 
 [[package]]
 name = "quickmatch"
-version = "0.1.8"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2da298bd4f885924ca16faab70af76893797eb0164dfa4e86a14ffd983b8cb14"
+checksum = "e6f3930eacf56a69f668e37113288d810cc83a7af7afde8d7bf81d73148a5db7"
 dependencies = [
  "rustc-hash",
 ]
@@ -2745,9 +2742,9 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.5.9"
+version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb8999fc8f80521c13091f98e1a24bde2448b29c0637f008dc470ed84d58f703"
+checksum = "12f4f316acfc1844da8b3c84163aabd98f155df82d3b57ce4075dda550e1752d"
 dependencies = [
  "libc",
  "log",
@@ -3689,9 +3686,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.5.9"
+version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a31985bee527adda1601eab9c72de0a567be83a08e80e646b79afb77ab14970"
+checksum = "28d56bd525ca319c5772dcc91b40caa6947dfb6c56b63c4a9b2268ee24254c05"
 dependencies = [
  "ctrlc",
  "log",
@@ -3710,9 +3707,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.5.9"
+version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61716cbeb322dcc9838cea11b533cea278f9592b2ef2ce520595849833cfee1c"
+checksum = "17c227a593e7a08c3d00babaa81aec624052d2c6a16ba127fb8f491f273c9751"
 dependencies = [
  "quote",
  "syn",
@@ -4207,42 +4204,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "zip"
-version = "7.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdd8a47718a4ee5fe78e07667cd36f3de80e7c2bfe727c7074245ffc7303c037"
-dependencies = [
- "arbitrary",
- "crc32fast",
- "flate2",
- "indexmap",
- "memchr",
- "zopfli",
-]
-
-[[package]]
-name = "zlib-rs"
-version = "0.5.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40990edd51aae2c2b6907af74ffb635029d5788228222c4bb811e9351c0caad3"
-
-[[package]]
 name = "zmij"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd8f3f50b848df28f887acb68e41201b5aea6bc8a8dacc00fb40635ff9a72fea"
-
-[[package]]
-name = "zopfli"
-version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f05cd8797d63865425ff89b5c4a48804f35ba0ce8d125800027ad6017d2b5249"
-dependencies = [
- "bumpalo",
- "crc32fast",
- "log",
- "simd-adler32",
-]
 
 [[package]]
 name = "zstd"

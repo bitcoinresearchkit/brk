@@ -24,6 +24,7 @@ brk_rpc = { workspace = true }
 brk_types = { workspace = true }
 brk_traversable = { workspace = true }
 derive_more = { workspace = true }
+include_dir = "0.7"
 vecdb = { workspace = true }
 jiff = { workspace = true }
 quick_cache = "0.6.18"
@@ -34,5 +35,12 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 tower-http = { version = "0.6.8", features = ["compression-full", "trace"] }
 
+[build-dependencies]
+# importmap = { path = "../../../importmap" }
+importmap = "0.2"
+
 [dev-dependencies]
 brk_mempool = { workspace = true }
+
+[package.metadata.cargo-machete]
+ignored = ["importmap"]

@@ -35,7 +35,7 @@ BRK parses, indexes, and analyzes Bitcoin blockchain data. It combines on-chain 
 
 **Use the Public API** — Access data without running infrastructure. Client libraries available for [JavaScript](https://www.npmjs.com/package/brk-client), [Python](https://pypi.org/project/brk-client/), and [Rust](https://crates.io/crates/brk_client). See the [API reference](https://bitcoinresearchkit.org/api) for endpoints.
 
-**Self-Host** — Run your own instance with Bitcoin Core. Install via `cargo install --locked brk_cli` or use [Docker](https://github.com/bitcoinresearchkit/brk/tree/main/docker). Requires ~400 GB disk and 12+ GB RAM. See the [hosting guide](./HOSTING.md).
+**Self-Host** — Run your own instance with Bitcoin Core. Install via [`brk_cli`](https://docs.rs/brk_cli) or use [Docker](https://github.com/bitcoinresearchkit/brk/tree/main/docker). See the [hosting guide](./HOSTING.md).
 
 **Use as a Library** — Build custom tools with the Rust crates. Use individual components or the [umbrella crate](https://docs.rs/brk). See [architecture](./ARCHITECTURE.md) for how they fit together.
 

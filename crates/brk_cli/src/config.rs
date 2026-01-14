@@ -9,9 +9,8 @@ use brk_rpc::{Auth, Client};
 use clap::Parser;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::{default_brk_path, dot_brk_path, website::Website};
+use crate::{default_brk_path, dot_brk_path, fix_user_path, website::Website};
 
-const DOWNLOADS: &str = "downloads";
 
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[command(version, about)]
@@ -234,58 +233,36 @@ Finally, you can run the program with '-h' for help."
         self.bitcoindir
             .as_ref()
             .map_or_else(Client::default_bitcoin_path, |s| {
-                Self::fix_user_path(s.as_ref())
+                fix_user_path(s.as_ref())
             })
     }
 
     pub fn blocksdir(&self) -> PathBuf {
         self.blocksdir.as_ref().map_or_else(
             || self.bitcoindir().join("blocks"),
-            |blocksdir| Self::fix_user_path(blocksdir.as_str()),
+            |blocksdir| fix_user_path(blocksdir.as_str()),
         )
     }
 
     pub fn brkdir(&self) -> PathBuf {
         self.brkdir
             .as_ref()
-            .map_or_else(default_brk_path, |s| Self::fix_user_path(s.as_ref()))
+            .map_or_else(default_brk_path, |s| fix_user_path(s.as_ref()))
     }
 
     pub fn harsdir(&self) -> PathBuf {
         self.brkdir().join("hars")
     }
 
-    pub fn downloads_dir(&self) -> PathBuf {
-        dot_brk_path().join(DOWNLOADS)
-    }
-
     fn path_cookiefile(&self) -> PathBuf {
         self.rpccookiefile.as_ref().map_or_else(
             || self.bitcoindir().join(".cookie"),
-            |p| Self::fix_user_path(p.as_str()),
+            |p| fix_user_path(p.as_str()),
         )
     }
 
-    fn fix_user_path(path: &str) -> PathBuf {
-        let fix = move |pattern: &str| {
-            if path.starts_with(pattern) {
-                let path = &path
-                    .replace(&format!("{pattern}/"), "")
-                    .replace(pattern, "");
-
-                let home = std::env::var("HOME").unwrap();
-
-                Some(Path::new(&home).join(path))
-            } else {
-                None
-            }
-        };
-
-        fix("~").unwrap_or_else(|| fix("$HOME").unwrap_or_else(|| PathBuf::from(&path)))
-    }
-
     pub fn website(&self) -> Website {
-        self.website.unwrap_or(Website::Bitview)
+        self.website.clone().unwrap_or_default()
     }
 
     pub fn fetch(&self) -> bool {

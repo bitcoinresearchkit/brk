@@ -11,10 +11,12 @@ pub const MAX_LOG_BTC: f64 = 2.0; // 10^2 BTC = 100 BTC
 pub const NUM_DECADES: usize = 8; // -6 to +2
 pub const TOTAL_BINS: usize = NUM_DECADES * BINS_PER_DECADE; // 1600 bins
 
-/// Minimum output value to consider (10,000 sats = 0.0001 BTC)
-pub const MIN_OUTPUT_SATS: Sats = Sats::_10K;
-/// Maximum output value to consider (10 BTC)
-pub const MAX_OUTPUT_SATS: Sats = Sats::_10BTC;
+/// Minimum output value to consider (~1,000 sats = 0.00001 BTC)
+/// Matches Python: zeros bins 0-200 which is 10^-5 BTC
+pub const MIN_OUTPUT_SATS: Sats = Sats::_1K;
+/// Maximum output value to consider (100 BTC)
+/// Matches Python: zeros bins 1601+ which is ~10^2 BTC
+pub const MAX_OUTPUT_SATS: Sats = Sats::_100BTC;
 
 /// Round BTC bin indices that should be smoothed to avoid false positives
 /// These are bins where round BTC amounts would naturally cluster

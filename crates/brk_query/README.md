@@ -25,20 +25,19 @@ let height = query.height();
 
 // Metric queries
 let data = query.search_and_format(MetricSelection {
-    vecids: vec!["supply".into()],
+    metrics: vec!["supply".into()],
     index: Index::Height,
-    range: DataRange::Last(100),
-    ..Default::default()
+    range: DataRangeFormat::default(),
 })?;
 
 // Block queries
-let info = query.block_info(Height::new(840_000))?;
+let info = query.block_by_height(Height::new(840_000))?;
 
 // Transaction queries
-let tx = query.transaction(&txid)?;
+let tx = query.transaction(txid.into())?;
 
 // Address queries
-let stats = query.address_stats(&address)?;
+let stats = query.address(address)?;
 ```
 
 ## Query Types
@@ -46,11 +45,11 @@ let stats = query.address_stats(&address)?;
 | Domain | Methods |
 |--------|---------|
 | Metrics | `metrics`, `search_and_format`, `metric_to_indexes` |
-| Blocks | `block_info`, `block_txs`, `block_status`, `block_timestamp` |
-| Transactions | `transaction`, `tx_status`, `tx_merkle_proof` |
-| Addresses | `address_stats`, `address_txs`, `address_utxos` |
-| Mining | `difficulty_adjustments`, `hashrate`, `pools`, `epochs` |
-| Mempool | `mempool_info`, `mempool_fees`, `mempool_projected_blocks` |
+| Blocks | `block`, `block_by_height`, `blocks`, `block_txs`, `block_status`, `block_by_timestamp` |
+| Transactions | `transaction`, `transaction_status`, `transaction_hex`, `outspend`, `outspends` |
+| Addresses | `address`, `address_txids`, `address_utxos` |
+| Mining | `difficulty_adjustments`, `hashrate`, `mining_pools`, `reward_stats` |
+| Mempool | `mempool_info`, `recommended_fees`, `mempool_blocks` |
 
 ## Async Usage
 
@@ -58,7 +57,7 @@ let stats = query.address_stats(&address)?;
 let async_query = AsyncQuery::build(&reader, &indexer, &computer, mempool);
 
 // Run blocking queries in thread pool
-let result = async_query.run(|q| q.block_info(height)).await;
+let result = async_query.run(|q| q.block_by_height(height)).await;
 
 // Access inner Query
 let height = async_query.inner().height();

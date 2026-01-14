@@ -4,9 +4,9 @@
 #[doc(inline)]
 pub use brk_bencher as bencher;
 
-#[cfg(feature = "binder")]
+#[cfg(feature = "bindgen")]
 #[doc(inline)]
-pub use brk_bindgen as binder;
+pub use brk_bindgen as bindgen;
 
 #[cfg(feature = "client")]
 #[doc(inline)]

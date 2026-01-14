@@ -2,19 +2,7 @@
 
 ## Self-Hosting
 
-BRK is designed to be self-hosted. Install and run with:
-
-```bash
-cargo install --locked brk_cli
-brk --bitcoindir ~/.bitcoin --brkdir ~/.brk
-```
-
-Requirements:
-- Bitcoin Core with accessible `blk*.dat` files
-- ~400 GB disk space
-- 12+ GB RAM recommended
-
-See the [CLI documentation](https://docs.rs/brk_cli) for configuration options.
+BRK is designed to be self-hosted. See the [brk_cli documentation](https://docs.rs/brk_cli) for installation, requirements, and configuration options.
 
 ## Professional Hosting
 

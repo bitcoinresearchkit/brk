@@ -1,28 +1,35 @@
-use clap::ValueEnum;
+use std::{path::PathBuf, str::FromStr};
+
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, ValueEnum)]
-#[serde(rename_all = "lowercase")]
+use crate::paths::fix_user_path;
+
+/// Website configuration:
+/// - `true` or omitted: serve embedded website
+/// - `false`: disable website serving
+/// - `"/path/to/website"`: serve custom website from path
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[serde(untagged)]
 pub enum Website {
-    None,
-    Bitview,
-    Custom,
+    Enabled(bool),
+    Path(PathBuf),
 }
 
-impl Website {
-    pub fn is_none(&self) -> bool {
-        self == &Self::None
+impl Default for Website {
+    fn default() -> Self {
+        Self::Enabled(true)
     }
+}
 
-    pub fn is_some(&self) -> bool {
-        !self.is_none()
-    }
 
-    pub fn to_folder_name(self) -> &'static str {
-        match self {
-            Self::Custom => "custom",
-            Self::Bitview => "bitview",
-            Self::None => unreachable!(),
-        }
+impl FromStr for Website {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s.to_lowercase().as_str() {
+            "true" | "1" | "yes" | "on" => Self::Enabled(true),
+            "false" | "0" | "no" | "off" => Self::Enabled(false),
+            _ => Self::Path(fix_user_path(s)),
+        })
     }
 }

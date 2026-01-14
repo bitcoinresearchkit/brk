@@ -17,7 +17,7 @@ brk_client = "0.1"
 use brk_client::{BrkClient, Index};
 
 fn main() -> brk_client::Result<()> {
-    let client = BrkClient::new("http://localhost:3000");
+    let client = BrkClient::new("http://localhost:3110");
 
     // Blockchain data (mempool.space compatible)
     let block = client.get_block_by_height(800000)?;
@@ -47,11 +47,7 @@ fn main() -> brk_client::Result<()> {
 use brk_client::{BrkClient, BrkClientOptions};
 
 let client = BrkClient::with_options(BrkClientOptions {
-    base_url: "http://localhost:3000".to_string(),
+    base_url: "http://localhost:3110".to_string(),
     timeout_secs: 60,
 });
 ```
-
-## License
-
-MIT

@@ -110,7 +110,7 @@ class BrkError extends Error {{
  * @typedef {{Object}} MetricPattern
  * @property {{string}} name - The metric name
  * @property {{Readonly<Partial<Record<Index, MetricEndpointBuilder<T>>>>}} by - Index endpoints as lazy getters. Access via .by.dateindex or .by['dateindex']
- * @property {{() => Index[]}} indexes - Get the list of available indexes
+ * @property {{() => readonly Index[]}} indexes - Get the list of available indexes
  * @property {{(index: Index) => MetricEndpointBuilder<T>|undefined}} get - Get an endpoint for a specific index
  */
 
@@ -333,14 +333,14 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
 
     // Generate index array constants (e.g., _i1 = ["dateindex", "height"])
     for (i, pattern) in patterns.iter().enumerate() {
-        write!(output, "const _i{} = [", i + 1).unwrap();
+        write!(output, "const _i{} = /** @type {{const}} */ ([", i + 1).unwrap();
         for (j, index) in pattern.indexes.iter().enumerate() {
             if j > 0 {
                 write!(output, ", ").unwrap();
             }
             write!(output, "\"{}\"", index.serialize_long()).unwrap();
         }
-        writeln!(output, "];").unwrap();
+        writeln!(output, "]);").unwrap();
     }
     writeln!(output).unwrap();
 
@@ -352,11 +352,10 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
  * @template T
  * @param {{BrkClientBase}} client
  * @param {{string}} name - The metric vec name
- * @param {{readonly string[]}} indexes - The supported indexes
- * @returns {{MetricPattern<T>}}
+ * @param {{readonly Index[]}} indexes - The supported indexes
  */
 function _mp(client, name, indexes) {{
-  const by = {{}};
+  const by = /** @type {{any}} */ ({{}});
   for (const idx of indexes) {{
     Object.defineProperty(by, idx, {{
       get() {{ return _endpoint(client, name, idx); }},
@@ -368,6 +367,7 @@ function _mp(client, name, indexes) {{
     name,
     by,
     indexes() {{ return indexes; }},
+    /** @param {{Index}} index */
     get(index) {{ return indexes.includes(index) ? _endpoint(client, name, index) : undefined; }}
   }};
 }}
@@ -392,7 +392,7 @@ function _mp(client, name, indexes) {{
 
         writeln!(
             output,
-            "/** @template T @typedef {{{{ name: string, by: {}, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }}}} {} */",
+            "/** @template T @typedef {{{{ name: string, by: {}, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }}}} {} */",
             by_type, pattern.name
         )
         .unwrap();

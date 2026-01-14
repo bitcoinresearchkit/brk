@@ -187,12 +187,14 @@ impl Vecs {
                     continue;
                 }
 
-                // Check witness size (SegWit era only, activated Aug 2017)
+                // Check witness size per input (SegWit era only, activated Aug 2017)
                 // Pre-SegWit transactions have no witness data
+                // Python checks each input's witness ≤ 500 bytes; we approximate with average
                 if cached_year >= 2017 {
                     let base_size: StoredU32 = txindex_to_base_size_iter.get_at_unwrap(txindex);
                     let total_size: StoredU32 = txindex_to_total_size_iter.get_at_unwrap(txindex);
-                    if *total_size - *base_size > 500 {
+                    let witness_size = *total_size - *base_size;
+                    if witness_size / *input_count as u32 > 500 {
                         continue;
                     }
                 }
@@ -379,10 +381,9 @@ impl Vecs {
                 }
             };
 
-            self.ohlc_cents
-                .truncate_push_at(dateindex.to_usize(), ohlc)?;
+            self.ohlc_cents.truncate_push(dateindex, ohlc)?;
             self.tx_count
-                .truncate_push_at(dateindex.to_usize(), StoredU32::from(tx_count))?;
+                .truncate_push(dateindex, StoredU32::from(tx_count))?;
         }
 
         // Write daily data

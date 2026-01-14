@@ -2,7 +2,6 @@
 
 use std::{
     fs,
-    io::Cursor,
     path::PathBuf,
     thread::{self, sleep},
     time::Duration,
@@ -16,8 +15,7 @@ use brk_iterator::Blocks;
 use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
-use brk_server::{Server, VERSION};
-use importmap::ImportMap;
+use brk_server::{Server, WebsiteSource};
 use tracing::info;
 use vecdb::Exit;
 
@@ -25,7 +23,7 @@ mod config;
 mod paths;
 mod website;
 
-use crate::{config::Config, paths::*};
+use crate::{config::Config, paths::*, website::Website};
 
 pub fn main() -> color_eyre::Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread
@@ -80,89 +78,22 @@ pub fn run() -> color_eyre::Result<()> {
 
     let query = AsyncQuery::build(&reader, &indexer, &computer, Some(mempool));
 
-    let website = config.website();
-
-    let downloads_path = config.downloads_dir();
     let data_path = config.brkdir();
 
-    let future = async move {
-        // Try to find local dev directories - check cwd and parent directories
-        let find_dev_dirs = || -> Option<(PathBuf, PathBuf)> {
-            let mut dir = std::env::current_dir().ok()?;
-            loop {
-                let websites = dir.join("websites");
-                let modules = dir.join("modules");
-                if websites.exists() && modules.exists() {
-                    return Some((websites, modules));
-                }
-                // Stop at workspace root (crates/ indicates we're there)
-                if dir.join("crates").exists() {
-                    return None;
-                }
-                dir = dir.parent()?.to_path_buf();
-            }
-        };
-
-        let dev_dirs = find_dev_dirs();
-        let is_dev = dev_dirs.is_some();
-
-        let bundle_path = if website.is_some() {
-            let websites_path = if let Some((websites, _modules)) = dev_dirs {
-                websites
-            } else {
-                let downloaded_brk_path = downloads_path.join(format!("brk-{VERSION}"));
-                let downloaded_websites_path = downloaded_brk_path.join("websites");
-
-                if !fs::exists(&downloaded_websites_path)? {
-                    info!("Downloading source from Github...");
-
-                    let url = format!(
-                        "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/v{VERSION}.zip",
-                    );
-
-                    let response = minreq::get(url).with_timeout(60).send()?;
-                    let bytes = response.as_bytes();
-                    let cursor = Cursor::new(bytes);
-
-                    let mut zip = zip::ZipArchive::new(cursor).unwrap();
-
-                    zip.extract(downloads_path).unwrap();
-                }
-
-                downloaded_websites_path
-            };
-
-            Some(websites_path.join(website.to_folder_name()))
-        } else {
-            None
-        };
-
-        // Generate import map for cache busting (disabled in dev mode)
-        if let Some(ref path) = bundle_path {
-            let map = if is_dev {
-                ImportMap::empty()
-            } else {
-                match ImportMap::scan(path, "") {
-                    Ok(map) => map,
-                    Err(e) => {
-                        tracing::error!("Failed to generate importmap: {e}");
-                        ImportMap::empty()
-                    }
-                }
-            };
-
-            let html_path = path.join("index.html");
-            if let Ok(html) = fs::read_to_string(&html_path)
-                && let Some(updated) = map.update_html(&html)
-            {
-                let _ = fs::write(&html_path, updated);
-                if !is_dev {
-                    info!("Updated importmap in index.html");
-                }
+    let website_source = match config.website() {
+        Website::Enabled(false) => WebsiteSource::Disabled,
+        Website::Path(p) => WebsiteSource::Filesystem(p),
+        Website::Enabled(true) => {
+            // Prefer local filesystem if available, otherwise use embedded
+            match find_local_website_dir() {
+                Some(path) => WebsiteSource::Filesystem(path),
+                None => WebsiteSource::Embedded,
             }
         }
+    };
 
-        let server = Server::new(&query, data_path, bundle_path);
+    let future = async move {
+        let server = Server::new(&query, data_path, website_source);
 
         tokio::spawn(async move {
             server.serve(true).await.unwrap();
@@ -200,4 +131,13 @@ pub fn run() -> color_eyre::Result<()> {
             sleep(Duration::from_secs(1))
         }
     }
+}
+
+/// Path to website directory relative to this crate (only valid at dev machine)
+const DEV_WEBSITE_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../website");
+
+/// Returns local website path if it exists (dev mode)
+fn find_local_website_dir() -> Option<PathBuf> {
+    let path = PathBuf::from(DEV_WEBSITE_DIR);
+    path.exists().then_some(path)
 }

@@ -2,7 +2,10 @@ use std::{collections::BTreeMap, io};
 
 use crate::ref_to_type_name;
 use oas3::Spec;
-use oas3::spec::{ObjectOrReference, ObjectSchema, Operation, ParameterIn, PathItem, Schema, SchemaType, SchemaTypeSet};
+use oas3::spec::{
+    ObjectOrReference, ObjectSchema, Operation, ParameterIn, PathItem, Schema, SchemaType,
+    SchemaTypeSet,
+};
 use serde_json::Value;
 
 /// Type schema extracted from OpenAPI components
@@ -156,7 +159,7 @@ pub fn extract_endpoints(spec: &Spec) -> Vec<Endpoint> {
 
     for (path, path_item) in paths {
         for (method, operation) in get_operations(path_item) {
-            if let Some(endpoint) = extract_endpoint(path, &method, operation) {
+            if let Some(endpoint) = extract_endpoint(path, method, operation) {
                 endpoints.push(endpoint);
             }
         }
@@ -218,11 +221,7 @@ fn extract_path_parameters(path: &str, operation: &Operation) -> Vec<Parameter> 
     // Extract parameter names from the path in order (e.g., "/api/metric/{metric}/{index}" -> ["metric", "index"])
     let path_order: Vec<&str> = path
         .split('/')
-        .filter_map(|segment| {
-            segment
-                .strip_prefix('{')
-                .and_then(|s| s.strip_suffix('}'))
-        })
+        .filter_map(|segment| segment.strip_prefix('{').and_then(|s| s.strip_suffix('}')))
         .collect();
 
     // Get all path parameters from the operation
