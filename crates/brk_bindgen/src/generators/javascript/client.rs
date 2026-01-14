@@ -379,10 +379,55 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         return;
     }
 
-    writeln!(output, "// Index accessor factory functions\n").unwrap();
+    writeln!(output, "// Index group constants and factory\n").unwrap();
 
-    for pattern in patterns {
-        // Use 'readonly' to indicate these are getters (lazy evaluation)
+    // Generate index array constants (e.g., _i1 = ["dateindex", "height"])
+    for (i, pattern) in patterns.iter().enumerate() {
+        write!(output, "const _i{} = [", i + 1).unwrap();
+        for (j, index) in pattern.indexes.iter().enumerate() {
+            if j > 0 {
+                write!(output, ", ").unwrap();
+            }
+            write!(output, "\"{}\"", index.serialize_long()).unwrap();
+        }
+        writeln!(output, "];").unwrap();
+    }
+    writeln!(output).unwrap();
+
+    // Generate ONE generic metric pattern factory
+    writeln!(
+        output,
+        r#"/**
+ * Generic metric pattern factory.
+ * @template T
+ * @param {{BrkClientBase}} client
+ * @param {{string}} name - The metric vec name
+ * @param {{readonly string[]}} indexes - The supported indexes
+ * @returns {{MetricPattern<T>}}
+ */
+function _mp(client, name, indexes) {{
+  const by = {{}};
+  for (const idx of indexes) {{
+    Object.defineProperty(by, idx, {{
+      get() {{ return _endpoint(client, name, idx); }},
+      enumerable: true,
+      configurable: true
+    }});
+  }}
+  return {{
+    name,
+    by,
+    indexes() {{ return indexes; }},
+    get(index) {{ return indexes.includes(index) ? _endpoint(client, name, index) : undefined; }}
+  }};
+}}
+"#
+    )
+    .unwrap();
+
+    // Generate typedefs and thin wrapper functions
+    for (i, pattern) in patterns.iter().enumerate() {
+        // Generate typedef for type safety
         let by_fields: Vec<String> = pattern
             .indexes
             .iter()
@@ -395,74 +440,29 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
             .collect();
         let by_type = format!("{{ {} }}", by_fields.join(", "));
 
-        writeln!(output, "/**").unwrap();
         writeln!(
             output,
-            " * Metric pattern with index endpoints as lazy getters."
-        )
-        .unwrap();
-        writeln!(
-            output,
-            " * Access via property (.by.dateindex) or bracket notation (.by['dateindex'])."
-        )
-        .unwrap();
-        writeln!(output, " * @template T").unwrap();
-        writeln!(
-            output,
-            " * @typedef {{{{ name: string, by: {}, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }}}} {}",
+            "/** @template T @typedef {{{{ name: string, by: {}, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }}}} {} */",
             by_type, pattern.name
         )
         .unwrap();
-        writeln!(output, " */\n").unwrap();
 
-        writeln!(output, "/**").unwrap();
-        writeln!(output, " * Create a {} accessor", pattern.name).unwrap();
-        writeln!(output, " * @template T").unwrap();
-        writeln!(output, " * @param {{BrkClientBase}} client").unwrap();
-        writeln!(output, " * @param {{string}} name - The metric vec name").unwrap();
-        writeln!(output, " * @returns {{{}<T>}}", pattern.name).unwrap();
-        writeln!(output, " */").unwrap();
-        writeln!(output, "function create{}(client, name) {{", pattern.name).unwrap();
-        writeln!(output, "  return {{").unwrap();
-        writeln!(output, "    name,").unwrap();
-        writeln!(output, "    by: {{").unwrap();
-
-        for (i, index) in pattern.indexes.iter().enumerate() {
-            let index_name = index.serialize_long();
-            let comma = if i < pattern.indexes.len() - 1 {
-                ","
-            } else {
-                ""
-            };
-            writeln!(
-                output,
-                "      get {}() {{ return _endpoint(client, name, '{}'); }}{}",
-                index_name, index_name, comma
-            )
-            .unwrap();
-        }
-
-        writeln!(output, "    }},").unwrap();
-        writeln!(output, "    indexes() {{").unwrap();
-
-        write!(output, "      return [").unwrap();
-        for (i, index) in pattern.indexes.iter().enumerate() {
-            if i > 0 {
-                write!(output, ", ").unwrap();
-            }
-            write!(output, "'{}'", index.serialize_long()).unwrap();
-        }
-        writeln!(output, "];").unwrap();
-
-        writeln!(output, "    }},").unwrap();
-        writeln!(output, "    get(index) {{").unwrap();
-        writeln!(output, "      if (this.indexes().includes(index)) {{").unwrap();
-        writeln!(output, "        return _endpoint(client, name, index);").unwrap();
-        writeln!(output, "      }}").unwrap();
-        writeln!(output, "    }}").unwrap();
-        writeln!(output, "  }};").unwrap();
-        writeln!(output, "}}\n").unwrap();
+        // Generate thin wrapper that calls the generic factory
+        writeln!(
+            output,
+            "/** @template T @param {{BrkClientBase}} client @param {{string}} name @returns {{{}<T>}} */",
+            pattern.name
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "function create{}(client, name) {{ return _mp(client, name, _i{}); }}",
+            pattern.name,
+            i + 1
+        )
+        .unwrap();
     }
+    writeln!(output).unwrap();
 }
 
 /// Generate structural pattern factory functions.

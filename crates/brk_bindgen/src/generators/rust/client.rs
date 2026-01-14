@@ -375,122 +375,84 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         return;
     }
 
+    // Generate static index arrays
+    writeln!(output, "// Static index arrays").unwrap();
+    for (i, pattern) in patterns.iter().enumerate() {
+        write!(output, "const _I{}: &[Index] = &[", i + 1).unwrap();
+        for (j, index) in pattern.indexes.iter().enumerate() {
+            if j > 0 {
+                write!(output, ", ").unwrap();
+            }
+            write!(output, "Index::{}", index).unwrap();
+        }
+        writeln!(output, "];").unwrap();
+    }
+    writeln!(output).unwrap();
+
+    // Generate helper function
+    writeln!(
+        output,
+        r#"#[inline]
+fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> MetricEndpointBuilder<T> {{
+    MetricEndpointBuilder::new(c.clone(), n.clone(), i)
+}}
+"#
+    )
+    .unwrap();
+
+    // Generate index accessor structs
     writeln!(output, "// Index accessor structs\n").unwrap();
 
-    for pattern in patterns {
+    for (i, pattern) in patterns.iter().enumerate() {
         let by_name = format!("{}By", pattern.name);
+        let idx_const = format!("_I{}", i + 1);
 
-        // Generate the "By" struct with lazy endpoint methods
-        writeln!(output, "/// Container for index endpoint methods.").unwrap();
-        writeln!(output, "pub struct {}<T> {{", by_name).unwrap();
-        writeln!(output, "    client: Arc<BrkClientBase>,").unwrap();
-        writeln!(output, "    name: Arc<str>,").unwrap();
-        writeln!(output, "    _marker: std::marker::PhantomData<T>,").unwrap();
-        writeln!(output, "}}\n").unwrap();
-
-        // Generate impl with methods for each index
+        // Generate the "By" struct
+        writeln!(output, "pub struct {}<T> {{ client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }}", by_name).unwrap();
         writeln!(output, "impl<T: DeserializeOwned> {}<T> {{", by_name).unwrap();
         for index in &pattern.indexes {
             let method_name = index_to_field_name(index);
             writeln!(
                 output,
-                "    pub fn {}(&self) -> MetricEndpointBuilder<T> {{",
-                method_name
+                "    pub fn {}(&self) -> MetricEndpointBuilder<T> {{ _ep(&self.client, &self.name, Index::{}) }}",
+                method_name, index
             )
             .unwrap();
-            writeln!(
-                output,
-                "        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::{})",
-                index
-            )
-            .unwrap();
-            writeln!(output, "    }}").unwrap();
         }
         writeln!(output, "}}\n").unwrap();
 
         // Generate the main accessor struct
         writeln!(
             output,
-            "/// Index accessor for metrics with {} indexes.",
-            pattern.indexes.len()
+            "pub struct {}<T> {{ name: Arc<str>, pub by: {}<T> }}",
+            pattern.name, by_name
         )
         .unwrap();
-        writeln!(output, "pub struct {}<T> {{", pattern.name).unwrap();
-        writeln!(output, "    name: Arc<str>,").unwrap();
-        writeln!(output, "    pub by: {}<T>,", by_name).unwrap();
-        writeln!(output, "}}\n").unwrap();
-
-        // Generate impl block with constructor
         writeln!(output, "impl<T: DeserializeOwned> {}<T> {{", pattern.name).unwrap();
         writeln!(
             output,
-            "    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {{"
-        )
-        .unwrap();
-        writeln!(output, "        let name: Arc<str> = name.into();").unwrap();
-        writeln!(output, "        Self {{").unwrap();
-        writeln!(output, "            name: name.clone(),").unwrap();
-        writeln!(
-            output,
-            "            by: {} {{ client, name, _marker: std::marker::PhantomData }}",
+            "    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {{ let name: Arc<str> = name.into(); Self {{ name: name.clone(), by: {} {{ client, name, _marker: std::marker::PhantomData }} }} }}",
             by_name
         )
         .unwrap();
-        writeln!(output, "        }}").unwrap();
-        writeln!(output, "    }}").unwrap();
-        writeln!(output).unwrap();
-        writeln!(output, "    /// Get the metric name.").unwrap();
-        writeln!(output, "    pub fn name(&self) -> &str {{").unwrap();
-        writeln!(output, "        &self.name").unwrap();
-        writeln!(output, "    }}").unwrap();
+        writeln!(output, "    pub fn name(&self) -> &str {{ &self.name }}").unwrap();
         writeln!(output, "}}\n").unwrap();
 
         // Implement AnyMetricPattern trait
         writeln!(
             output,
-            "impl<T> AnyMetricPattern for {}<T> {{",
-            pattern.name
+            "impl<T> AnyMetricPattern for {}<T> {{ fn name(&self) -> &str {{ &self.name }} fn indexes(&self) -> &'static [Index] {{ {} }} }}",
+            pattern.name, idx_const
         )
         .unwrap();
-        writeln!(output, "    fn name(&self) -> &str {{").unwrap();
-        writeln!(output, "        &self.name").unwrap();
-        writeln!(output, "    }}").unwrap();
-        writeln!(output).unwrap();
-        writeln!(output, "    fn indexes(&self) -> &'static [Index] {{").unwrap();
-        writeln!(output, "        &[").unwrap();
-        for index in &pattern.indexes {
-            writeln!(output, "            Index::{},", index).unwrap();
-        }
-        writeln!(output, "        ]").unwrap();
-        writeln!(output, "    }}").unwrap();
-        writeln!(output, "}}\n").unwrap();
 
         // Implement MetricPattern<T> trait
         writeln!(
             output,
-            "impl<T: DeserializeOwned> MetricPattern<T> for {}<T> {{",
-            pattern.name
+            "impl<T: DeserializeOwned> MetricPattern<T> for {}<T> {{ fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {{ {}.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) }} }}\n",
+            pattern.name, idx_const
         )
         .unwrap();
-        writeln!(
-            output,
-            "    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {{"
-        )
-        .unwrap();
-        writeln!(output, "        match index {{").unwrap();
-        for index in &pattern.indexes {
-            let method_name = index_to_field_name(index);
-            writeln!(
-                output,
-                "            Index::{} => Some(self.by.{}()),",
-                index, method_name
-            )
-            .unwrap();
-        }
-        writeln!(output, "            _ => None,").unwrap();
-        writeln!(output, "        }}").unwrap();
-        writeln!(output, "    }}").unwrap();
-        writeln!(output, "}}\n").unwrap();
     }
 }
 

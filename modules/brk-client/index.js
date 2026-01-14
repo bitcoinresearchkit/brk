@@ -1101,1185 +1101,269 @@ const _m = (acc, s) => (s ? (acc ? `${acc}_${s}` : s) : acc);
  */
 const _p = (prefix, acc) => (acc ? `${prefix}_${acc}` : prefix);
 
-// Index accessor factory functions
+// Index group constants and factory
+
+const _i1 = [
+  "dateindex",
+  "decadeindex",
+  "difficultyepoch",
+  "height",
+  "monthindex",
+  "quarterindex",
+  "semesterindex",
+  "weekindex",
+  "yearindex",
+];
+const _i2 = [
+  "dateindex",
+  "decadeindex",
+  "difficultyepoch",
+  "monthindex",
+  "quarterindex",
+  "semesterindex",
+  "weekindex",
+  "yearindex",
+];
+const _i3 = [
+  "dateindex",
+  "decadeindex",
+  "height",
+  "monthindex",
+  "quarterindex",
+  "semesterindex",
+  "weekindex",
+  "yearindex",
+];
+const _i4 = [
+  "dateindex",
+  "decadeindex",
+  "monthindex",
+  "quarterindex",
+  "semesterindex",
+  "weekindex",
+  "yearindex",
+];
+const _i5 = ["dateindex", "height"];
+const _i6 = ["dateindex"];
+const _i7 = ["decadeindex"];
+const _i8 = ["difficultyepoch"];
+const _i9 = ["emptyoutputindex"];
+const _i10 = ["halvingepoch"];
+const _i11 = ["height"];
+const _i12 = ["txinindex"];
+const _i13 = ["monthindex"];
+const _i14 = ["opreturnindex"];
+const _i15 = ["txoutindex"];
+const _i16 = ["p2aaddressindex"];
+const _i17 = ["p2msoutputindex"];
+const _i18 = ["p2pk33addressindex"];
+const _i19 = ["p2pk65addressindex"];
+const _i20 = ["p2pkhaddressindex"];
+const _i21 = ["p2shaddressindex"];
+const _i22 = ["p2traddressindex"];
+const _i23 = ["p2wpkhaddressindex"];
+const _i24 = ["p2wshaddressindex"];
+const _i25 = ["quarterindex"];
+const _i26 = ["semesterindex"];
+const _i27 = ["txindex"];
+const _i28 = ["unknownoutputindex"];
+const _i29 = ["weekindex"];
+const _i30 = ["yearindex"];
+const _i31 = ["loadedaddressindex"];
+const _i32 = ["emptyaddressindex"];
 
 /**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T>, readonly decadeindex: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T>, readonly height: MetricEndpointBuilder<T>, readonly monthindex: MetricEndpointBuilder<T>, readonly quarterindex: MetricEndpointBuilder<T>, readonly semesterindex: MetricEndpointBuilder<T>, readonly weekindex: MetricEndpointBuilder<T>, readonly yearindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern1
- */
-
-/**
- * Create a MetricPattern1 accessor
+ * Generic metric pattern factory.
  * @template T
  * @param {BrkClientBase} client
  * @param {string} name - The metric vec name
- * @returns {MetricPattern1<T>}
+ * @param {readonly string[]} indexes - The supported indexes
+ * @returns {MetricPattern<T>}
  */
+function _mp(client, name, indexes) {
+  const by = {};
+  for (const idx of indexes) {
+    Object.defineProperty(by, idx, {
+      get() {
+        return _endpoint(client, name, idx);
+      },
+      enumerable: true,
+      configurable: true,
+    });
+  }
+  return {
+    name,
+    by,
+    indexes() {
+      return indexes;
+    },
+    get(index) {
+      return indexes.includes(index)
+        ? _endpoint(client, name, index)
+        : undefined;
+    },
+  };
+}
+
+/** @template T @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T>, readonly decadeindex: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T>, readonly height: MetricEndpointBuilder<T>, readonly monthindex: MetricEndpointBuilder<T>, readonly quarterindex: MetricEndpointBuilder<T>, readonly semesterindex: MetricEndpointBuilder<T>, readonly weekindex: MetricEndpointBuilder<T>, readonly yearindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern1 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern1<T>} */
 function createMetricPattern1(client, name) {
-  return {
-    name,
-    by: {
-      get dateindex() {
-        return _endpoint(client, name, "dateindex");
-      },
-      get decadeindex() {
-        return _endpoint(client, name, "decadeindex");
-      },
-      get difficultyepoch() {
-        return _endpoint(client, name, "difficultyepoch");
-      },
-      get height() {
-        return _endpoint(client, name, "height");
-      },
-      get monthindex() {
-        return _endpoint(client, name, "monthindex");
-      },
-      get quarterindex() {
-        return _endpoint(client, name, "quarterindex");
-      },
-      get semesterindex() {
-        return _endpoint(client, name, "semesterindex");
-      },
-      get weekindex() {
-        return _endpoint(client, name, "weekindex");
-      },
-      get yearindex() {
-        return _endpoint(client, name, "yearindex");
-      },
-    },
-    indexes() {
-      return [
-        "dateindex",
-        "decadeindex",
-        "difficultyepoch",
-        "height",
-        "monthindex",
-        "quarterindex",
-        "semesterindex",
-        "weekindex",
-        "yearindex",
-      ];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i1);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T>, readonly decadeindex: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T>, readonly monthindex: MetricEndpointBuilder<T>, readonly quarterindex: MetricEndpointBuilder<T>, readonly semesterindex: MetricEndpointBuilder<T>, readonly weekindex: MetricEndpointBuilder<T>, readonly yearindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern2
- */
-
-/**
- * Create a MetricPattern2 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern2<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T>, readonly decadeindex: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T>, readonly monthindex: MetricEndpointBuilder<T>, readonly quarterindex: MetricEndpointBuilder<T>, readonly semesterindex: MetricEndpointBuilder<T>, readonly weekindex: MetricEndpointBuilder<T>, readonly yearindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern2 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern2<T>} */
 function createMetricPattern2(client, name) {
-  return {
-    name,
-    by: {
-      get dateindex() {
-        return _endpoint(client, name, "dateindex");
-      },
-      get decadeindex() {
-        return _endpoint(client, name, "decadeindex");
-      },
-      get difficultyepoch() {
-        return _endpoint(client, name, "difficultyepoch");
-      },
-      get monthindex() {
-        return _endpoint(client, name, "monthindex");
-      },
-      get quarterindex() {
-        return _endpoint(client, name, "quarterindex");
-      },
-      get semesterindex() {
-        return _endpoint(client, name, "semesterindex");
-      },
-      get weekindex() {
-        return _endpoint(client, name, "weekindex");
-      },
-      get yearindex() {
-        return _endpoint(client, name, "yearindex");
-      },
-    },
-    indexes() {
-      return [
-        "dateindex",
-        "decadeindex",
-        "difficultyepoch",
-        "monthindex",
-        "quarterindex",
-        "semesterindex",
-        "weekindex",
-        "yearindex",
-      ];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i2);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T>, readonly decadeindex: MetricEndpointBuilder<T>, readonly height: MetricEndpointBuilder<T>, readonly monthindex: MetricEndpointBuilder<T>, readonly quarterindex: MetricEndpointBuilder<T>, readonly semesterindex: MetricEndpointBuilder<T>, readonly weekindex: MetricEndpointBuilder<T>, readonly yearindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern3
- */
-
-/**
- * Create a MetricPattern3 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern3<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T>, readonly decadeindex: MetricEndpointBuilder<T>, readonly height: MetricEndpointBuilder<T>, readonly monthindex: MetricEndpointBuilder<T>, readonly quarterindex: MetricEndpointBuilder<T>, readonly semesterindex: MetricEndpointBuilder<T>, readonly weekindex: MetricEndpointBuilder<T>, readonly yearindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern3 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern3<T>} */
 function createMetricPattern3(client, name) {
-  return {
-    name,
-    by: {
-      get dateindex() {
-        return _endpoint(client, name, "dateindex");
-      },
-      get decadeindex() {
-        return _endpoint(client, name, "decadeindex");
-      },
-      get height() {
-        return _endpoint(client, name, "height");
-      },
-      get monthindex() {
-        return _endpoint(client, name, "monthindex");
-      },
-      get quarterindex() {
-        return _endpoint(client, name, "quarterindex");
-      },
-      get semesterindex() {
-        return _endpoint(client, name, "semesterindex");
-      },
-      get weekindex() {
-        return _endpoint(client, name, "weekindex");
-      },
-      get yearindex() {
-        return _endpoint(client, name, "yearindex");
-      },
-    },
-    indexes() {
-      return [
-        "dateindex",
-        "decadeindex",
-        "height",
-        "monthindex",
-        "quarterindex",
-        "semesterindex",
-        "weekindex",
-        "yearindex",
-      ];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i3);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T>, readonly decadeindex: MetricEndpointBuilder<T>, readonly monthindex: MetricEndpointBuilder<T>, readonly quarterindex: MetricEndpointBuilder<T>, readonly semesterindex: MetricEndpointBuilder<T>, readonly weekindex: MetricEndpointBuilder<T>, readonly yearindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern4
- */
-
-/**
- * Create a MetricPattern4 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern4<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T>, readonly decadeindex: MetricEndpointBuilder<T>, readonly monthindex: MetricEndpointBuilder<T>, readonly quarterindex: MetricEndpointBuilder<T>, readonly semesterindex: MetricEndpointBuilder<T>, readonly weekindex: MetricEndpointBuilder<T>, readonly yearindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern4 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern4<T>} */
 function createMetricPattern4(client, name) {
-  return {
-    name,
-    by: {
-      get dateindex() {
-        return _endpoint(client, name, "dateindex");
-      },
-      get decadeindex() {
-        return _endpoint(client, name, "decadeindex");
-      },
-      get monthindex() {
-        return _endpoint(client, name, "monthindex");
-      },
-      get quarterindex() {
-        return _endpoint(client, name, "quarterindex");
-      },
-      get semesterindex() {
-        return _endpoint(client, name, "semesterindex");
-      },
-      get weekindex() {
-        return _endpoint(client, name, "weekindex");
-      },
-      get yearindex() {
-        return _endpoint(client, name, "yearindex");
-      },
-    },
-    indexes() {
-      return [
-        "dateindex",
-        "decadeindex",
-        "monthindex",
-        "quarterindex",
-        "semesterindex",
-        "weekindex",
-        "yearindex",
-      ];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i4);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T>, readonly height: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern5
- */
-
-/**
- * Create a MetricPattern5 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern5<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T>, readonly height: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern5 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern5<T>} */
 function createMetricPattern5(client, name) {
-  return {
-    name,
-    by: {
-      get dateindex() {
-        return _endpoint(client, name, "dateindex");
-      },
-      get height() {
-        return _endpoint(client, name, "height");
-      },
-    },
-    indexes() {
-      return ["dateindex", "height"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i5);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern6
- */
-
-/**
- * Create a MetricPattern6 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern6<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly dateindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern6 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern6<T>} */
 function createMetricPattern6(client, name) {
-  return {
-    name,
-    by: {
-      get dateindex() {
-        return _endpoint(client, name, "dateindex");
-      },
-    },
-    indexes() {
-      return ["dateindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i6);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly decadeindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern7
- */
-
-/**
- * Create a MetricPattern7 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern7<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly decadeindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern7 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern7<T>} */
 function createMetricPattern7(client, name) {
-  return {
-    name,
-    by: {
-      get decadeindex() {
-        return _endpoint(client, name, "decadeindex");
-      },
-    },
-    indexes() {
-      return ["decadeindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i7);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly difficultyepoch: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern8
- */
-
-/**
- * Create a MetricPattern8 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern8<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly difficultyepoch: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern8 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern8<T>} */
 function createMetricPattern8(client, name) {
-  return {
-    name,
-    by: {
-      get difficultyepoch() {
-        return _endpoint(client, name, "difficultyepoch");
-      },
-    },
-    indexes() {
-      return ["difficultyepoch"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i8);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly emptyoutputindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern9
- */
-
-/**
- * Create a MetricPattern9 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern9<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly emptyoutputindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern9 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern9<T>} */
 function createMetricPattern9(client, name) {
-  return {
-    name,
-    by: {
-      get emptyoutputindex() {
-        return _endpoint(client, name, "emptyoutputindex");
-      },
-    },
-    indexes() {
-      return ["emptyoutputindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i9);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly halvingepoch: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern10
- */
-
-/**
- * Create a MetricPattern10 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern10<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly halvingepoch: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern10 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern10<T>} */
 function createMetricPattern10(client, name) {
-  return {
-    name,
-    by: {
-      get halvingepoch() {
-        return _endpoint(client, name, "halvingepoch");
-      },
-    },
-    indexes() {
-      return ["halvingepoch"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i10);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly height: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern11
- */
-
-/**
- * Create a MetricPattern11 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern11<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly height: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern11 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern11<T>} */
 function createMetricPattern11(client, name) {
-  return {
-    name,
-    by: {
-      get height() {
-        return _endpoint(client, name, "height");
-      },
-    },
-    indexes() {
-      return ["height"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i11);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly txinindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern12
- */
-
-/**
- * Create a MetricPattern12 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern12<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly txinindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern12 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern12<T>} */
 function createMetricPattern12(client, name) {
-  return {
-    name,
-    by: {
-      get txinindex() {
-        return _endpoint(client, name, "txinindex");
-      },
-    },
-    indexes() {
-      return ["txinindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i12);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly monthindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern13
- */
-
-/**
- * Create a MetricPattern13 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern13<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly monthindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern13 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern13<T>} */
 function createMetricPattern13(client, name) {
-  return {
-    name,
-    by: {
-      get monthindex() {
-        return _endpoint(client, name, "monthindex");
-      },
-    },
-    indexes() {
-      return ["monthindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i13);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly opreturnindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern14
- */
-
-/**
- * Create a MetricPattern14 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern14<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly opreturnindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern14 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern14<T>} */
 function createMetricPattern14(client, name) {
-  return {
-    name,
-    by: {
-      get opreturnindex() {
-        return _endpoint(client, name, "opreturnindex");
-      },
-    },
-    indexes() {
-      return ["opreturnindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i14);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly txoutindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern15
- */
-
-/**
- * Create a MetricPattern15 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern15<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly txoutindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern15 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern15<T>} */
 function createMetricPattern15(client, name) {
-  return {
-    name,
-    by: {
-      get txoutindex() {
-        return _endpoint(client, name, "txoutindex");
-      },
-    },
-    indexes() {
-      return ["txoutindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i15);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly p2aaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern16
- */
-
-/**
- * Create a MetricPattern16 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern16<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly p2aaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern16 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern16<T>} */
 function createMetricPattern16(client, name) {
-  return {
-    name,
-    by: {
-      get p2aaddressindex() {
-        return _endpoint(client, name, "p2aaddressindex");
-      },
-    },
-    indexes() {
-      return ["p2aaddressindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i16);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly p2msoutputindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern17
- */
-
-/**
- * Create a MetricPattern17 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern17<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly p2msoutputindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern17 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern17<T>} */
 function createMetricPattern17(client, name) {
-  return {
-    name,
-    by: {
-      get p2msoutputindex() {
-        return _endpoint(client, name, "p2msoutputindex");
-      },
-    },
-    indexes() {
-      return ["p2msoutputindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i17);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly p2pk33addressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern18
- */
-
-/**
- * Create a MetricPattern18 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern18<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly p2pk33addressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern18 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern18<T>} */
 function createMetricPattern18(client, name) {
-  return {
-    name,
-    by: {
-      get p2pk33addressindex() {
-        return _endpoint(client, name, "p2pk33addressindex");
-      },
-    },
-    indexes() {
-      return ["p2pk33addressindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i18);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly p2pk65addressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern19
- */
-
-/**
- * Create a MetricPattern19 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern19<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly p2pk65addressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern19 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern19<T>} */
 function createMetricPattern19(client, name) {
-  return {
-    name,
-    by: {
-      get p2pk65addressindex() {
-        return _endpoint(client, name, "p2pk65addressindex");
-      },
-    },
-    indexes() {
-      return ["p2pk65addressindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i19);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly p2pkhaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern20
- */
-
-/**
- * Create a MetricPattern20 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern20<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly p2pkhaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern20 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern20<T>} */
 function createMetricPattern20(client, name) {
-  return {
-    name,
-    by: {
-      get p2pkhaddressindex() {
-        return _endpoint(client, name, "p2pkhaddressindex");
-      },
-    },
-    indexes() {
-      return ["p2pkhaddressindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i20);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly p2shaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern21
- */
-
-/**
- * Create a MetricPattern21 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern21<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly p2shaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern21 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern21<T>} */
 function createMetricPattern21(client, name) {
-  return {
-    name,
-    by: {
-      get p2shaddressindex() {
-        return _endpoint(client, name, "p2shaddressindex");
-      },
-    },
-    indexes() {
-      return ["p2shaddressindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i21);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly p2traddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern22
- */
-
-/**
- * Create a MetricPattern22 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern22<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly p2traddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern22 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern22<T>} */
 function createMetricPattern22(client, name) {
-  return {
-    name,
-    by: {
-      get p2traddressindex() {
-        return _endpoint(client, name, "p2traddressindex");
-      },
-    },
-    indexes() {
-      return ["p2traddressindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i22);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly p2wpkhaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern23
- */
-
-/**
- * Create a MetricPattern23 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern23<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly p2wpkhaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern23 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern23<T>} */
 function createMetricPattern23(client, name) {
-  return {
-    name,
-    by: {
-      get p2wpkhaddressindex() {
-        return _endpoint(client, name, "p2wpkhaddressindex");
-      },
-    },
-    indexes() {
-      return ["p2wpkhaddressindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i23);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly p2wshaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern24
- */
-
-/**
- * Create a MetricPattern24 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern24<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly p2wshaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern24 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern24<T>} */
 function createMetricPattern24(client, name) {
-  return {
-    name,
-    by: {
-      get p2wshaddressindex() {
-        return _endpoint(client, name, "p2wshaddressindex");
-      },
-    },
-    indexes() {
-      return ["p2wshaddressindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i24);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly quarterindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern25
- */
-
-/**
- * Create a MetricPattern25 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern25<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly quarterindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern25 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern25<T>} */
 function createMetricPattern25(client, name) {
-  return {
-    name,
-    by: {
-      get quarterindex() {
-        return _endpoint(client, name, "quarterindex");
-      },
-    },
-    indexes() {
-      return ["quarterindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i25);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly semesterindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern26
- */
-
-/**
- * Create a MetricPattern26 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern26<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly semesterindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern26 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern26<T>} */
 function createMetricPattern26(client, name) {
-  return {
-    name,
-    by: {
-      get semesterindex() {
-        return _endpoint(client, name, "semesterindex");
-      },
-    },
-    indexes() {
-      return ["semesterindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i26);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly txindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern27
- */
-
-/**
- * Create a MetricPattern27 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern27<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly txindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern27 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern27<T>} */
 function createMetricPattern27(client, name) {
-  return {
-    name,
-    by: {
-      get txindex() {
-        return _endpoint(client, name, "txindex");
-      },
-    },
-    indexes() {
-      return ["txindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i27);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly unknownoutputindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern28
- */
-
-/**
- * Create a MetricPattern28 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern28<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly unknownoutputindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern28 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern28<T>} */
 function createMetricPattern28(client, name) {
-  return {
-    name,
-    by: {
-      get unknownoutputindex() {
-        return _endpoint(client, name, "unknownoutputindex");
-      },
-    },
-    indexes() {
-      return ["unknownoutputindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i28);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly weekindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern29
- */
-
-/**
- * Create a MetricPattern29 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern29<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly weekindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern29 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern29<T>} */
 function createMetricPattern29(client, name) {
-  return {
-    name,
-    by: {
-      get weekindex() {
-        return _endpoint(client, name, "weekindex");
-      },
-    },
-    indexes() {
-      return ["weekindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i29);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly yearindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern30
- */
-
-/**
- * Create a MetricPattern30 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern30<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly yearindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern30 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern30<T>} */
 function createMetricPattern30(client, name) {
-  return {
-    name,
-    by: {
-      get yearindex() {
-        return _endpoint(client, name, "yearindex");
-      },
-    },
-    indexes() {
-      return ["yearindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i30);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly loadedaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern31
- */
-
-/**
- * Create a MetricPattern31 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern31<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly loadedaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern31 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern31<T>} */
 function createMetricPattern31(client, name) {
-  return {
-    name,
-    by: {
-      get loadedaddressindex() {
-        return _endpoint(client, name, "loadedaddressindex");
-      },
-    },
-    indexes() {
-      return ["loadedaddressindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i31);
 }
-
-/**
- * Metric pattern with index endpoints as lazy getters.
- * Access via property (.by.dateindex) or bracket notation (.by['dateindex']).
- * @template T
- * @typedef {{ name: string, by: { readonly emptyaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern32
- */
-
-/**
- * Create a MetricPattern32 accessor
- * @template T
- * @param {BrkClientBase} client
- * @param {string} name - The metric vec name
- * @returns {MetricPattern32<T>}
- */
+/** @template T @typedef {{ name: string, by: { readonly emptyaddressindex: MetricEndpointBuilder<T> }, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern32 */
+/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern32<T>} */
 function createMetricPattern32(client, name) {
-  return {
-    name,
-    by: {
-      get emptyaddressindex() {
-        return _endpoint(client, name, "emptyaddressindex");
-      },
-    },
-    indexes() {
-      return ["emptyaddressindex"];
-    },
-    get(index) {
-      if (this.indexes().includes(index)) {
-        return _endpoint(client, name, index);
-      }
-    },
-  };
+  return _mp(client, name, _i32);
 }
 
 // Reusable structural pattern factories
@@ -2903,59 +1987,6 @@ function createPrice111dSmaPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} PercentilesPattern
- * @property {MetricPattern4<Dollars>} pct05
- * @property {MetricPattern4<Dollars>} pct10
- * @property {MetricPattern4<Dollars>} pct15
- * @property {MetricPattern4<Dollars>} pct20
- * @property {MetricPattern4<Dollars>} pct25
- * @property {MetricPattern4<Dollars>} pct30
- * @property {MetricPattern4<Dollars>} pct35
- * @property {MetricPattern4<Dollars>} pct40
- * @property {MetricPattern4<Dollars>} pct45
- * @property {MetricPattern4<Dollars>} pct50
- * @property {MetricPattern4<Dollars>} pct55
- * @property {MetricPattern4<Dollars>} pct60
- * @property {MetricPattern4<Dollars>} pct65
- * @property {MetricPattern4<Dollars>} pct70
- * @property {MetricPattern4<Dollars>} pct75
- * @property {MetricPattern4<Dollars>} pct80
- * @property {MetricPattern4<Dollars>} pct85
- * @property {MetricPattern4<Dollars>} pct90
- * @property {MetricPattern4<Dollars>} pct95
- */
-
-/**
- * Create a PercentilesPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {PercentilesPattern}
- */
-function createPercentilesPattern(client, acc) {
-  return {
-    pct05: createMetricPattern4(client, _m(acc, "pct05")),
-    pct10: createMetricPattern4(client, _m(acc, "pct10")),
-    pct15: createMetricPattern4(client, _m(acc, "pct15")),
-    pct20: createMetricPattern4(client, _m(acc, "pct20")),
-    pct25: createMetricPattern4(client, _m(acc, "pct25")),
-    pct30: createMetricPattern4(client, _m(acc, "pct30")),
-    pct35: createMetricPattern4(client, _m(acc, "pct35")),
-    pct40: createMetricPattern4(client, _m(acc, "pct40")),
-    pct45: createMetricPattern4(client, _m(acc, "pct45")),
-    pct50: createMetricPattern4(client, _m(acc, "pct50")),
-    pct55: createMetricPattern4(client, _m(acc, "pct55")),
-    pct60: createMetricPattern4(client, _m(acc, "pct60")),
-    pct65: createMetricPattern4(client, _m(acc, "pct65")),
-    pct70: createMetricPattern4(client, _m(acc, "pct70")),
-    pct75: createMetricPattern4(client, _m(acc, "pct75")),
-    pct80: createMetricPattern4(client, _m(acc, "pct80")),
-    pct85: createMetricPattern4(client, _m(acc, "pct85")),
-    pct90: createMetricPattern4(client, _m(acc, "pct90")),
-    pct95: createMetricPattern4(client, _m(acc, "pct95")),
-  };
-}
-
-/**
  * @typedef {Object} ActivePriceRatioPattern
  * @property {MetricPattern4<StoredF32>} ratio
  * @property {MetricPattern4<StoredF32>} ratio1mSma
@@ -3005,6 +2036,59 @@ function createActivePriceRatioPattern(client, acc) {
     ratioPct99: createMetricPattern4(client, _m(acc, "pct99")),
     ratioPct99Usd: createMetricPattern4(client, _m(acc, "pct99_usd")),
     ratioSd: createRatio1ySdPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} PercentilesPattern
+ * @property {MetricPattern4<Dollars>} pct05
+ * @property {MetricPattern4<Dollars>} pct10
+ * @property {MetricPattern4<Dollars>} pct15
+ * @property {MetricPattern4<Dollars>} pct20
+ * @property {MetricPattern4<Dollars>} pct25
+ * @property {MetricPattern4<Dollars>} pct30
+ * @property {MetricPattern4<Dollars>} pct35
+ * @property {MetricPattern4<Dollars>} pct40
+ * @property {MetricPattern4<Dollars>} pct45
+ * @property {MetricPattern4<Dollars>} pct50
+ * @property {MetricPattern4<Dollars>} pct55
+ * @property {MetricPattern4<Dollars>} pct60
+ * @property {MetricPattern4<Dollars>} pct65
+ * @property {MetricPattern4<Dollars>} pct70
+ * @property {MetricPattern4<Dollars>} pct75
+ * @property {MetricPattern4<Dollars>} pct80
+ * @property {MetricPattern4<Dollars>} pct85
+ * @property {MetricPattern4<Dollars>} pct90
+ * @property {MetricPattern4<Dollars>} pct95
+ */
+
+/**
+ * Create a PercentilesPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {PercentilesPattern}
+ */
+function createPercentilesPattern(client, acc) {
+  return {
+    pct05: createMetricPattern4(client, _m(acc, "pct05")),
+    pct10: createMetricPattern4(client, _m(acc, "pct10")),
+    pct15: createMetricPattern4(client, _m(acc, "pct15")),
+    pct20: createMetricPattern4(client, _m(acc, "pct20")),
+    pct25: createMetricPattern4(client, _m(acc, "pct25")),
+    pct30: createMetricPattern4(client, _m(acc, "pct30")),
+    pct35: createMetricPattern4(client, _m(acc, "pct35")),
+    pct40: createMetricPattern4(client, _m(acc, "pct40")),
+    pct45: createMetricPattern4(client, _m(acc, "pct45")),
+    pct50: createMetricPattern4(client, _m(acc, "pct50")),
+    pct55: createMetricPattern4(client, _m(acc, "pct55")),
+    pct60: createMetricPattern4(client, _m(acc, "pct60")),
+    pct65: createMetricPattern4(client, _m(acc, "pct65")),
+    pct70: createMetricPattern4(client, _m(acc, "pct70")),
+    pct75: createMetricPattern4(client, _m(acc, "pct75")),
+    pct80: createMetricPattern4(client, _m(acc, "pct80")),
+    pct85: createMetricPattern4(client, _m(acc, "pct85")),
+    pct90: createMetricPattern4(client, _m(acc, "pct90")),
+    pct95: createMetricPattern4(client, _m(acc, "pct95")),
   };
 }
 
@@ -3377,79 +2461,17 @@ function createDollarsPattern(client, acc) {
  */
 function createClassAveragePricePattern(client, acc) {
   return {
-    _2015: createMetricPattern4(client, _m(acc, "2015_returns")),
-    _2016: createMetricPattern4(client, _m(acc, "2016_returns")),
-    _2017: createMetricPattern4(client, _m(acc, "2017_returns")),
-    _2018: createMetricPattern4(client, _m(acc, "2018_returns")),
-    _2019: createMetricPattern4(client, _m(acc, "2019_returns")),
-    _2020: createMetricPattern4(client, _m(acc, "2020_returns")),
-    _2021: createMetricPattern4(client, _m(acc, "2021_returns")),
-    _2022: createMetricPattern4(client, _m(acc, "2022_returns")),
-    _2023: createMetricPattern4(client, _m(acc, "2023_returns")),
-    _2024: createMetricPattern4(client, _m(acc, "2024_returns")),
-    _2025: createMetricPattern4(client, _m(acc, "2025_returns")),
-  };
-}
-
-/**
- * @typedef {Object} RelativePattern
- * @property {MetricPattern1<StoredF32>} negUnrealizedLossRelToMarketCap
- * @property {MetricPattern1<StoredF32>} netUnrealizedPnlRelToMarketCap
- * @property {MetricPattern1<StoredF32>} nupl
- * @property {MetricPattern1<StoredF64>} supplyInLossRelToCirculatingSupply
- * @property {MetricPattern1<StoredF64>} supplyInLossRelToOwnSupply
- * @property {MetricPattern1<StoredF64>} supplyInProfitRelToCirculatingSupply
- * @property {MetricPattern1<StoredF64>} supplyInProfitRelToOwnSupply
- * @property {MetricPattern4<StoredF64>} supplyRelToCirculatingSupply
- * @property {MetricPattern1<StoredF32>} unrealizedLossRelToMarketCap
- * @property {MetricPattern1<StoredF32>} unrealizedProfitRelToMarketCap
- */
-
-/**
- * Create a RelativePattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {RelativePattern}
- */
-function createRelativePattern(client, acc) {
-  return {
-    negUnrealizedLossRelToMarketCap: createMetricPattern1(
-      client,
-      _m(acc, "neg_unrealized_loss_rel_to_market_cap"),
-    ),
-    netUnrealizedPnlRelToMarketCap: createMetricPattern1(
-      client,
-      _m(acc, "net_unrealized_pnl_rel_to_market_cap"),
-    ),
-    nupl: createMetricPattern1(client, _m(acc, "nupl")),
-    supplyInLossRelToCirculatingSupply: createMetricPattern1(
-      client,
-      _m(acc, "supply_in_loss_rel_to_circulating_supply"),
-    ),
-    supplyInLossRelToOwnSupply: createMetricPattern1(
-      client,
-      _m(acc, "supply_in_loss_rel_to_own_supply"),
-    ),
-    supplyInProfitRelToCirculatingSupply: createMetricPattern1(
-      client,
-      _m(acc, "supply_in_profit_rel_to_circulating_supply"),
-    ),
-    supplyInProfitRelToOwnSupply: createMetricPattern1(
-      client,
-      _m(acc, "supply_in_profit_rel_to_own_supply"),
-    ),
-    supplyRelToCirculatingSupply: createMetricPattern4(
-      client,
-      _m(acc, "supply_rel_to_circulating_supply"),
-    ),
-    unrealizedLossRelToMarketCap: createMetricPattern1(
-      client,
-      _m(acc, "unrealized_loss_rel_to_market_cap"),
-    ),
-    unrealizedProfitRelToMarketCap: createMetricPattern1(
-      client,
-      _m(acc, "unrealized_profit_rel_to_market_cap"),
-    ),
+    _2015: createMetricPattern4(client, _m(acc, "2015_average_price")),
+    _2016: createMetricPattern4(client, _m(acc, "2016_average_price")),
+    _2017: createMetricPattern4(client, _m(acc, "2017_average_price")),
+    _2018: createMetricPattern4(client, _m(acc, "2018_average_price")),
+    _2019: createMetricPattern4(client, _m(acc, "2019_average_price")),
+    _2020: createMetricPattern4(client, _m(acc, "2020_average_price")),
+    _2021: createMetricPattern4(client, _m(acc, "2021_average_price")),
+    _2022: createMetricPattern4(client, _m(acc, "2022_average_price")),
+    _2023: createMetricPattern4(client, _m(acc, "2023_average_price")),
+    _2024: createMetricPattern4(client, _m(acc, "2024_average_price")),
+    _2025: createMetricPattern4(client, _m(acc, "2025_average_price")),
   };
 }
 
@@ -3514,6 +2536,68 @@ function createRelativePattern2(client, acc) {
     unrealizedProfitRelToOwnTotalUnrealizedPnl: createMetricPattern1(
       client,
       _m(acc, "unrealized_profit_rel_to_own_total_unrealized_pnl"),
+    ),
+  };
+}
+
+/**
+ * @typedef {Object} RelativePattern
+ * @property {MetricPattern1<StoredF32>} negUnrealizedLossRelToMarketCap
+ * @property {MetricPattern1<StoredF32>} netUnrealizedPnlRelToMarketCap
+ * @property {MetricPattern1<StoredF32>} nupl
+ * @property {MetricPattern1<StoredF64>} supplyInLossRelToCirculatingSupply
+ * @property {MetricPattern1<StoredF64>} supplyInLossRelToOwnSupply
+ * @property {MetricPattern1<StoredF64>} supplyInProfitRelToCirculatingSupply
+ * @property {MetricPattern1<StoredF64>} supplyInProfitRelToOwnSupply
+ * @property {MetricPattern4<StoredF64>} supplyRelToCirculatingSupply
+ * @property {MetricPattern1<StoredF32>} unrealizedLossRelToMarketCap
+ * @property {MetricPattern1<StoredF32>} unrealizedProfitRelToMarketCap
+ */
+
+/**
+ * Create a RelativePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {RelativePattern}
+ */
+function createRelativePattern(client, acc) {
+  return {
+    negUnrealizedLossRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "neg_unrealized_loss_rel_to_market_cap"),
+    ),
+    netUnrealizedPnlRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "net_unrealized_pnl_rel_to_market_cap"),
+    ),
+    nupl: createMetricPattern1(client, _m(acc, "nupl")),
+    supplyInLossRelToCirculatingSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_loss_rel_to_circulating_supply"),
+    ),
+    supplyInLossRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_loss_rel_to_own_supply"),
+    ),
+    supplyInProfitRelToCirculatingSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_profit_rel_to_circulating_supply"),
+    ),
+    supplyInProfitRelToOwnSupply: createMetricPattern1(
+      client,
+      _m(acc, "supply_in_profit_rel_to_own_supply"),
+    ),
+    supplyRelToCirculatingSupply: createMetricPattern4(
+      client,
+      _m(acc, "supply_rel_to_circulating_supply"),
+    ),
+    unrealizedLossRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_loss_rel_to_market_cap"),
+    ),
+    unrealizedProfitRelToMarketCap: createMetricPattern1(
+      client,
+      _m(acc, "unrealized_profit_rel_to_market_cap"),
     ),
   };
 }
@@ -3690,35 +2774,6 @@ function create_0satsPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} _100btcPattern
- * @property {ActivityPattern2} activity
- * @property {CostBasisPattern} costBasis
- * @property {OutputsPattern} outputs
- * @property {RealizedPattern} realized
- * @property {RelativePattern} relative
- * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
- */
-
-/**
- * Create a _100btcPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_100btcPattern}
- */
-function create_100btcPattern(client, acc) {
-  return {
-    activity: createActivityPattern2(client, acc),
-    costBasis: createCostBasisPattern(client, acc),
-    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
-    realized: createRealizedPattern(client, acc),
-    relative: createRelativePattern(client, acc),
-    supply: createSupplyPattern2(client, _m(acc, "supply")),
-    unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
  * @typedef {Object} UnrealizedPattern
  * @property {MetricPattern1<Dollars>} negUnrealizedLoss
  * @property {MetricPattern1<Dollars>} netUnrealizedPnl
@@ -3763,6 +2818,35 @@ function createUnrealizedPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} _10yTo12yPattern
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern2} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a _10yTo12yPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_10yTo12yPattern}
+ */
+function create_10yTo12yPattern(client, acc) {
+  return {
+    activity: createActivityPattern2(client, acc),
+    costBasis: createCostBasisPattern2(client, acc),
+    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
+    realized: createRealizedPattern2(client, acc),
+    relative: createRelativePattern2(client, acc),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
+    unrealized: createUnrealizedPattern(client, acc),
+  };
+}
+
+/**
  * @typedef {Object} _10yPattern
  * @property {ActivityPattern2} activity
  * @property {CostBasisPattern} costBasis
@@ -3792,58 +2876,29 @@ function create_10yPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} _0satsPattern2
+ * @typedef {Object} _100btcPattern
  * @property {ActivityPattern2} activity
  * @property {CostBasisPattern} costBasis
  * @property {OutputsPattern} outputs
  * @property {RealizedPattern} realized
- * @property {RelativePattern4} relative
+ * @property {RelativePattern} relative
  * @property {SupplyPattern2} supply
  * @property {UnrealizedPattern} unrealized
  */
 
 /**
- * Create a _0satsPattern2 pattern node
+ * Create a _100btcPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {_0satsPattern2}
+ * @returns {_100btcPattern}
  */
-function create_0satsPattern2(client, acc) {
+function create_100btcPattern(client, acc) {
   return {
     activity: createActivityPattern2(client, acc),
     costBasis: createCostBasisPattern(client, acc),
     outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
     realized: createRealizedPattern(client, acc),
-    relative: createRelativePattern4(client, _m(acc, "supply_in")),
-    supply: createSupplyPattern2(client, _m(acc, "supply")),
-    unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} _10yTo12yPattern
- * @property {ActivityPattern2} activity
- * @property {CostBasisPattern2} costBasis
- * @property {OutputsPattern} outputs
- * @property {RealizedPattern2} realized
- * @property {RelativePattern2} relative
- * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
- */
-
-/**
- * Create a _10yTo12yPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_10yTo12yPattern}
- */
-function create_10yTo12yPattern(client, acc) {
-  return {
-    activity: createActivityPattern2(client, acc),
-    costBasis: createCostBasisPattern2(client, acc),
-    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
-    realized: createRealizedPattern2(client, acc),
-    relative: createRelativePattern2(client, acc),
+    relative: createRelativePattern(client, acc),
     supply: createSupplyPattern2(client, _m(acc, "supply")),
     unrealized: createUnrealizedPattern(client, acc),
   };
@@ -3875,6 +2930,35 @@ function createPeriodCagrPattern(client, acc) {
     _5y: createMetricPattern4(client, _p("5y", acc)),
     _6y: createMetricPattern4(client, _p("6y", acc)),
     _8y: createMetricPattern4(client, _p("8y", acc)),
+  };
+}
+
+/**
+ * @typedef {Object} _0satsPattern2
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a _0satsPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_0satsPattern2}
+ */
+function create_0satsPattern2(client, acc) {
+  return {
+    activity: createActivityPattern2(client, acc),
+    costBasis: createCostBasisPattern(client, acc),
+    outputs: createOutputsPattern(client, _m(acc, "utxo_count")),
+    realized: createRealizedPattern(client, acc),
+    relative: createRelativePattern4(client, _m(acc, "supply_in")),
+    supply: createSupplyPattern2(client, _m(acc, "supply")),
+    unrealized: createUnrealizedPattern(client, acc),
   };
 }
 
@@ -3941,90 +3025,6 @@ function createSplitPattern2(client, acc) {
 }
 
 /**
- * @typedef {Object} CostBasisPattern2
- * @property {MetricPattern1<Dollars>} max
- * @property {MetricPattern1<Dollars>} min
- * @property {PercentilesPattern} percentiles
- */
-
-/**
- * Create a CostBasisPattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CostBasisPattern2}
- */
-function createCostBasisPattern2(client, acc) {
-  return {
-    max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
-    min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
-    percentiles: createPercentilesPattern(client, _m(acc, "cost_basis")),
-  };
-}
-
-/**
- * @typedef {Object} CoinbasePattern
- * @property {BitcoinPattern} bitcoin
- * @property {DollarsPattern<Dollars>} dollars
- * @property {DollarsPattern<Sats>} sats
- */
-
-/**
- * Create a CoinbasePattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CoinbasePattern}
- */
-function createCoinbasePattern(client, acc) {
-  return {
-    bitcoin: createBitcoinPattern(client, _m(acc, "btc")),
-    dollars: createDollarsPattern(client, _m(acc, "usd")),
-    sats: createDollarsPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} _2015Pattern
- * @property {MetricPattern4<Bitcoin>} bitcoin
- * @property {MetricPattern4<Dollars>} dollars
- * @property {MetricPattern4<Sats>} sats
- */
-
-/**
- * Create a _2015Pattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_2015Pattern}
- */
-function create_2015Pattern(client, acc) {
-  return {
-    bitcoin: createMetricPattern4(client, _m(acc, "btc")),
-    dollars: createMetricPattern4(client, _m(acc, "usd")),
-    sats: createMetricPattern4(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} ActiveSupplyPattern
- * @property {MetricPattern1<Bitcoin>} bitcoin
- * @property {MetricPattern1<Dollars>} dollars
- * @property {MetricPattern1<Sats>} sats
- */
-
-/**
- * Create a ActiveSupplyPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {ActiveSupplyPattern}
- */
-function createActiveSupplyPattern(client, acc) {
-  return {
-    bitcoin: createMetricPattern1(client, _m(acc, "btc")),
-    dollars: createMetricPattern1(client, _m(acc, "usd")),
-    sats: createMetricPattern1(client, acc),
-  };
-}
-
-/**
  * @typedef {Object} SegwitAdoptionPattern
  * @property {MetricPattern11<StoredF32>} base
  * @property {MetricPattern2<StoredF32>} cumulative
@@ -4042,27 +3042,6 @@ function createSegwitAdoptionPattern(client, acc) {
     base: createMetricPattern11(client, acc),
     cumulative: createMetricPattern2(client, _m(acc, "cumulative")),
     sum: createMetricPattern2(client, _m(acc, "sum")),
-  };
-}
-
-/**
- * @typedef {Object} CoinbasePattern2
- * @property {BlockCountPattern<Bitcoin>} bitcoin
- * @property {BlockCountPattern<Dollars>} dollars
- * @property {BlockCountPattern<Sats>} sats
- */
-
-/**
- * Create a CoinbasePattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CoinbasePattern2}
- */
-function createCoinbasePattern2(client, acc) {
-  return {
-    bitcoin: createBlockCountPattern(client, _m(acc, "btc")),
-    dollars: createBlockCountPattern(client, _m(acc, "usd")),
-    sats: createBlockCountPattern(client, acc),
   };
 }
 
@@ -4088,40 +3067,107 @@ function createUnclaimedRewardsPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} _1dReturns1mSdPattern
- * @property {MetricPattern4<StoredF32>} sd
- * @property {MetricPattern4<StoredF32>} sma
+ * @typedef {Object} _2015Pattern
+ * @property {MetricPattern4<Bitcoin>} bitcoin
+ * @property {MetricPattern4<Dollars>} dollars
+ * @property {MetricPattern4<Sats>} sats
  */
 
 /**
- * Create a _1dReturns1mSdPattern pattern node
+ * Create a _2015Pattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {_1dReturns1mSdPattern}
+ * @returns {_2015Pattern}
  */
-function create_1dReturns1mSdPattern(client, acc) {
+function create_2015Pattern(client, acc) {
   return {
-    sd: createMetricPattern4(client, _m(acc, "sd")),
-    sma: createMetricPattern4(client, _m(acc, "sma")),
+    bitcoin: createMetricPattern4(client, _m(acc, "btc")),
+    dollars: createMetricPattern4(client, _m(acc, "usd")),
+    sats: createMetricPattern4(client, acc),
   };
 }
 
 /**
- * @typedef {Object} SupplyPattern2
- * @property {ActiveSupplyPattern} halved
- * @property {ActiveSupplyPattern} total
+ * @typedef {Object} CostBasisPattern2
+ * @property {MetricPattern1<Dollars>} max
+ * @property {MetricPattern1<Dollars>} min
+ * @property {PercentilesPattern} percentiles
  */
 
 /**
- * Create a SupplyPattern2 pattern node
+ * Create a CostBasisPattern2 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {SupplyPattern2}
+ * @returns {CostBasisPattern2}
  */
-function createSupplyPattern2(client, acc) {
+function createCostBasisPattern2(client, acc) {
   return {
-    halved: createActiveSupplyPattern(client, _m(acc, "halved")),
-    total: createActiveSupplyPattern(client, acc),
+    max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
+    min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
+    percentiles: createPercentilesPattern(client, _m(acc, "cost_basis")),
+  };
+}
+
+/**
+ * @typedef {Object} CoinbasePattern2
+ * @property {BlockCountPattern<Bitcoin>} bitcoin
+ * @property {BlockCountPattern<Dollars>} dollars
+ * @property {BlockCountPattern<Sats>} sats
+ */
+
+/**
+ * Create a CoinbasePattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CoinbasePattern2}
+ */
+function createCoinbasePattern2(client, acc) {
+  return {
+    bitcoin: createBlockCountPattern(client, _m(acc, "btc")),
+    dollars: createBlockCountPattern(client, _m(acc, "usd")),
+    sats: createBlockCountPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} ActiveSupplyPattern
+ * @property {MetricPattern1<Bitcoin>} bitcoin
+ * @property {MetricPattern1<Dollars>} dollars
+ * @property {MetricPattern1<Sats>} sats
+ */
+
+/**
+ * Create a ActiveSupplyPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {ActiveSupplyPattern}
+ */
+function createActiveSupplyPattern(client, acc) {
+  return {
+    bitcoin: createMetricPattern1(client, _m(acc, "btc")),
+    dollars: createMetricPattern1(client, _m(acc, "usd")),
+    sats: createMetricPattern1(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} CoinbasePattern
+ * @property {BitcoinPattern} bitcoin
+ * @property {DollarsPattern<Dollars>} dollars
+ * @property {DollarsPattern<Sats>} sats
+ */
+
+/**
+ * Create a CoinbasePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CoinbasePattern}
+ */
+function createCoinbasePattern(client, acc) {
+  return {
+    bitcoin: createBitcoinPattern(client, _m(acc, "btc")),
+    dollars: createDollarsPattern(client, _m(acc, "usd")),
+    sats: createDollarsPattern(client, acc),
   };
 }
 
@@ -4151,6 +3197,25 @@ function createRelativePattern4(client, acc) {
 }
 
 /**
+ * @typedef {Object} _1dReturns1mSdPattern
+ * @property {MetricPattern4<StoredF32>} sd
+ * @property {MetricPattern4<StoredF32>} sma
+ */
+
+/**
+ * Create a _1dReturns1mSdPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_1dReturns1mSdPattern}
+ */
+function create_1dReturns1mSdPattern(client, acc) {
+  return {
+    sd: createMetricPattern4(client, _m(acc, "sd")),
+    sma: createMetricPattern4(client, _m(acc, "sma")),
+  };
+}
+
+/**
  * @typedef {Object} CostBasisPattern
  * @property {MetricPattern1<Dollars>} max
  * @property {MetricPattern1<Dollars>} min
@@ -4166,6 +3231,46 @@ function createCostBasisPattern(client, acc) {
   return {
     max: createMetricPattern1(client, _m(acc, "max_cost_basis")),
     min: createMetricPattern1(client, _m(acc, "min_cost_basis")),
+  };
+}
+
+/**
+ * @typedef {Object} SupplyPattern2
+ * @property {ActiveSupplyPattern} halved
+ * @property {ActiveSupplyPattern} total
+ */
+
+/**
+ * Create a SupplyPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {SupplyPattern2}
+ */
+function createSupplyPattern2(client, acc) {
+  return {
+    halved: createActiveSupplyPattern(client, _m(acc, "halved")),
+    total: createActiveSupplyPattern(client, acc),
+  };
+}
+
+/**
+ * @template T
+ * @typedef {Object} SatsPattern
+ * @property {MetricPattern1<T>} ohlc
+ * @property {SplitPattern2<T>} split
+ */
+
+/**
+ * Create a SatsPattern pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {SatsPattern<T>}
+ */
+function createSatsPattern(client, acc) {
+  return {
+    ohlc: createMetricPattern1(client, _m(acc, "ohlc")),
+    split: createSplitPattern2(client, acc),
   };
 }
 
@@ -4208,27 +3313,6 @@ function createBlockCountPattern(client, acc) {
   return {
     cumulative: createMetricPattern1(client, _m(acc, "cumulative")),
     sum: createMetricPattern1(client, acc),
-  };
-}
-
-/**
- * @template T
- * @typedef {Object} SatsPattern
- * @property {MetricPattern1<T>} ohlc
- * @property {SplitPattern2<T>} split
- */
-
-/**
- * Create a SatsPattern pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {SatsPattern<T>}
- */
-function createSatsPattern(client, acc) {
-  return {
-    ohlc: createMetricPattern1(client, _m(acc, "ohlc_sats")),
-    split: createSplitPattern2(client, _m(acc, "sats")),
   };
 }
 
@@ -7337,8 +6421,8 @@ function createOutputsPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Market_Dca
- * @property {MetricsTree_Market_Dca_ClassAveragePrice} classAveragePrice
- * @property {ClassAveragePricePattern<StoredF32>} classReturns
+ * @property {ClassAveragePricePattern<Dollars>} classAveragePrice
+ * @property {MetricsTree_Market_Dca_ClassReturns} classReturns
  * @property {MetricsTree_Market_Dca_ClassStack} classStack
  * @property {PeriodAveragePricePattern<Dollars>} periodAveragePrice
  * @property {PeriodCagrPattern} periodCagr
@@ -7348,18 +6432,18 @@ function createOutputsPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Market_Dca_ClassAveragePrice
- * @property {MetricPattern4<Dollars>} _2015
- * @property {MetricPattern4<Dollars>} _2016
- * @property {MetricPattern4<Dollars>} _2017
- * @property {MetricPattern4<Dollars>} _2018
- * @property {MetricPattern4<Dollars>} _2019
- * @property {MetricPattern4<Dollars>} _2020
- * @property {MetricPattern4<Dollars>} _2021
- * @property {MetricPattern4<Dollars>} _2022
- * @property {MetricPattern4<Dollars>} _2023
- * @property {MetricPattern4<Dollars>} _2024
- * @property {MetricPattern4<Dollars>} _2025
+ * @typedef {Object} MetricsTree_Market_Dca_ClassReturns
+ * @property {MetricPattern4<StoredF32>} _2015
+ * @property {MetricPattern4<StoredF32>} _2016
+ * @property {MetricPattern4<StoredF32>} _2017
+ * @property {MetricPattern4<StoredF32>} _2018
+ * @property {MetricPattern4<StoredF32>} _2019
+ * @property {MetricPattern4<StoredF32>} _2020
+ * @property {MetricPattern4<StoredF32>} _2021
+ * @property {MetricPattern4<StoredF32>} _2022
+ * @property {MetricPattern4<StoredF32>} _2023
+ * @property {MetricPattern4<StoredF32>} _2024
+ * @property {MetricPattern4<StoredF32>} _2025
  */
 
 /**
@@ -13758,20 +12842,20 @@ class BrkClient extends BrkClientBase {
           ),
         },
         dca: {
-          classAveragePrice: {
-            _2015: createMetricPattern4(this, "dca_class_2015_average_price"),
-            _2016: createMetricPattern4(this, "dca_class_2016_average_price"),
-            _2017: createMetricPattern4(this, "dca_class_2017_average_price"),
-            _2018: createMetricPattern4(this, "dca_class_2018_average_price"),
-            _2019: createMetricPattern4(this, "dca_class_2019_average_price"),
-            _2020: createMetricPattern4(this, "dca_class_2020_average_price"),
-            _2021: createMetricPattern4(this, "dca_class_2021_average_price"),
-            _2022: createMetricPattern4(this, "dca_class_2022_average_price"),
-            _2023: createMetricPattern4(this, "dca_class_2023_average_price"),
-            _2024: createMetricPattern4(this, "dca_class_2024_average_price"),
-            _2025: createMetricPattern4(this, "dca_class_2025_average_price"),
+          classAveragePrice: createClassAveragePricePattern(this, "dca_class"),
+          classReturns: {
+            _2015: createMetricPattern4(this, "dca_class_2015_returns"),
+            _2016: createMetricPattern4(this, "dca_class_2016_returns"),
+            _2017: createMetricPattern4(this, "dca_class_2017_returns"),
+            _2018: createMetricPattern4(this, "dca_class_2018_returns"),
+            _2019: createMetricPattern4(this, "dca_class_2019_returns"),
+            _2020: createMetricPattern4(this, "dca_class_2020_returns"),
+            _2021: createMetricPattern4(this, "dca_class_2021_returns"),
+            _2022: createMetricPattern4(this, "dca_class_2022_returns"),
+            _2023: createMetricPattern4(this, "dca_class_2023_returns"),
+            _2024: createMetricPattern4(this, "dca_class_2024_returns"),
+            _2025: createMetricPattern4(this, "dca_class_2025_returns"),
           },
-          classReturns: createClassAveragePricePattern(this, "dca_class"),
           classStack: {
             _2015: create_2015Pattern(this, "dca_class_2015_stack"),
             _2016: create_2015Pattern(this, "dca_class_2016_stack"),

@@ -372,91 +372,75 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         return;
     }
 
+    // Generate static index tuples
+    writeln!(output, "# Static index tuples").unwrap();
+    for (i, pattern) in patterns.iter().enumerate() {
+        write!(output, "_i{} = (", i + 1).unwrap();
+        for (j, index) in pattern.indexes.iter().enumerate() {
+            if j > 0 {
+                write!(output, ", ").unwrap();
+            }
+            write!(output, "'{}'", index.serialize_long()).unwrap();
+        }
+        // Single-element tuple needs trailing comma
+        if pattern.indexes.len() == 1 {
+            write!(output, ",").unwrap();
+        }
+        writeln!(output, ")").unwrap();
+    }
+    writeln!(output).unwrap();
+
+    // Generate helper function
+    writeln!(
+        output,
+        r#"def _ep(c: BrkClientBase, n: str, i: Index) -> MetricEndpointBuilder:
+    return MetricEndpointBuilder(c, n, i)
+"#
+    )
+    .unwrap();
+
     writeln!(output, "# Index accessor classes\n").unwrap();
 
-    for pattern in patterns {
+    for (i, pattern) in patterns.iter().enumerate() {
         let by_class_name = format!("_{}By", pattern.name);
+        let idx_var = format!("_i{}", i + 1);
 
-        // Generate the By class with lazy endpoint methods
+        // Generate the By class with compact methods
         writeln!(output, "class {}(Generic[T]):", by_class_name).unwrap();
-        writeln!(output, "    \"\"\"Index endpoint methods container.\"\"\"").unwrap();
-        writeln!(output, "    ").unwrap();
         writeln!(
             output,
-            "    def __init__(self, client: BrkClientBase, name: str):"
+            "    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n"
         )
         .unwrap();
-        writeln!(output, "        self._client = client").unwrap();
-        writeln!(output, "        self._name = name").unwrap();
-        writeln!(output).unwrap();
-
-        // Generate methods for each index
         for index in &pattern.indexes {
             let method_name = index_to_field_name(index);
             let index_name = index.serialize_long();
-            writeln!(output, "    def {}(self) -> MetricEndpointBuilder[T]:", method_name).unwrap();
             writeln!(
                 output,
-                "        return MetricEndpointBuilder(self._client, self._name, '{}')",
-                index_name
+                "    def {}(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, '{}')",
+                method_name, index_name
             )
             .unwrap();
-            writeln!(output).unwrap();
         }
+        writeln!(output).unwrap();
 
         // Generate the main accessor class
         writeln!(output, "class {}(Generic[T]):", pattern.name).unwrap();
         writeln!(
             output,
-            "    \"\"\"Index accessor for metrics with {} indexes.\"\"\"",
-            pattern.indexes.len()
+            "    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, {}(c, n)",
+            by_class_name
         )
         .unwrap();
-        writeln!(output, "    ").unwrap();
-        writeln!(
-            output,
-            "    def __init__(self, client: BrkClientBase, name: str):"
-        )
-        .unwrap();
-        writeln!(output, "        self._client = client").unwrap();
-        writeln!(output, "        self._name = name").unwrap();
-        writeln!(
-            output,
-            "        self.by: {}[T] = {}(client, name)",
-            by_class_name, by_class_name
-        )
-        .unwrap();
-        writeln!(output).unwrap();
         writeln!(output, "    @property").unwrap();
-        writeln!(output, "    def name(self) -> str:").unwrap();
-        writeln!(output, "        \"\"\"Get the metric name.\"\"\"").unwrap();
-        writeln!(output, "        return self._name").unwrap();
-        writeln!(output).unwrap();
-        writeln!(output, "    def indexes(self) -> List[str]:").unwrap();
-        writeln!(output, "        \"\"\"Get the list of available indexes.\"\"\"").unwrap();
-        write!(output, "        return [").unwrap();
-        for (i, index) in pattern.indexes.iter().enumerate() {
-            if i > 0 {
-                write!(output, ", ").unwrap();
-            }
-            write!(output, "'{}'", index.serialize_long()).unwrap();
-        }
-        writeln!(output, "]").unwrap();
-        writeln!(output).unwrap();
-
-        // Generate get(index) method
-        writeln!(output, "    def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:").unwrap();
-        writeln!(output, "        \"\"\"Get an endpoint builder for a specific index, if supported.\"\"\"").unwrap();
-        for (i, index) in pattern.indexes.iter().enumerate() {
-            let method_name = index_to_field_name(index);
-            let index_name = index.serialize_long();
-            if i == 0 {
-                writeln!(output, "        if index == '{}': return self.by.{}()", index_name, method_name).unwrap();
-            } else {
-                writeln!(output, "        elif index == '{}': return self.by.{}()", index_name, method_name).unwrap();
-            }
-        }
-        writeln!(output, "        return None").unwrap();
+        writeln!(output, "    def name(self) -> str: return self._n").unwrap();
+        writeln!(output, "    def indexes(self) -> List[str]: return list({})", idx_var).unwrap();
+        writeln!(
+            output,
+            "    def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in {} else None",
+            idx_var
+        )
+        .unwrap();
         writeln!(output).unwrap();
     }
 }

@@ -337,1912 +337,523 @@ impl<T: DeserializeOwned> RangeBuilder<T> {
 }
 
 
+// Static index arrays
+const _I1: &[Index] = &[Index::DateIndex, Index::DecadeIndex, Index::DifficultyEpoch, Index::Height, Index::MonthIndex, Index::QuarterIndex, Index::SemesterIndex, Index::WeekIndex, Index::YearIndex];
+const _I2: &[Index] = &[Index::DateIndex, Index::DecadeIndex, Index::DifficultyEpoch, Index::MonthIndex, Index::QuarterIndex, Index::SemesterIndex, Index::WeekIndex, Index::YearIndex];
+const _I3: &[Index] = &[Index::DateIndex, Index::DecadeIndex, Index::Height, Index::MonthIndex, Index::QuarterIndex, Index::SemesterIndex, Index::WeekIndex, Index::YearIndex];
+const _I4: &[Index] = &[Index::DateIndex, Index::DecadeIndex, Index::MonthIndex, Index::QuarterIndex, Index::SemesterIndex, Index::WeekIndex, Index::YearIndex];
+const _I5: &[Index] = &[Index::DateIndex, Index::Height];
+const _I6: &[Index] = &[Index::DateIndex];
+const _I7: &[Index] = &[Index::DecadeIndex];
+const _I8: &[Index] = &[Index::DifficultyEpoch];
+const _I9: &[Index] = &[Index::EmptyOutputIndex];
+const _I10: &[Index] = &[Index::HalvingEpoch];
+const _I11: &[Index] = &[Index::Height];
+const _I12: &[Index] = &[Index::TxInIndex];
+const _I13: &[Index] = &[Index::MonthIndex];
+const _I14: &[Index] = &[Index::OpReturnIndex];
+const _I15: &[Index] = &[Index::TxOutIndex];
+const _I16: &[Index] = &[Index::P2AAddressIndex];
+const _I17: &[Index] = &[Index::P2MSOutputIndex];
+const _I18: &[Index] = &[Index::P2PK33AddressIndex];
+const _I19: &[Index] = &[Index::P2PK65AddressIndex];
+const _I20: &[Index] = &[Index::P2PKHAddressIndex];
+const _I21: &[Index] = &[Index::P2SHAddressIndex];
+const _I22: &[Index] = &[Index::P2TRAddressIndex];
+const _I23: &[Index] = &[Index::P2WPKHAddressIndex];
+const _I24: &[Index] = &[Index::P2WSHAddressIndex];
+const _I25: &[Index] = &[Index::QuarterIndex];
+const _I26: &[Index] = &[Index::SemesterIndex];
+const _I27: &[Index] = &[Index::TxIndex];
+const _I28: &[Index] = &[Index::UnknownOutputIndex];
+const _I29: &[Index] = &[Index::WeekIndex];
+const _I30: &[Index] = &[Index::YearIndex];
+const _I31: &[Index] = &[Index::LoadedAddressIndex];
+const _I32: &[Index] = &[Index::EmptyAddressIndex];
+
+#[inline]
+fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> MetricEndpointBuilder<T> {
+    MetricEndpointBuilder::new(c.clone(), n.clone(), i)
+}
+
 // Index accessor structs
 
-/// Container for index endpoint methods.
-pub struct MetricPattern1By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern1By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern1By<T> {
-    pub fn dateindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DateIndex)
-    }
-    pub fn decadeindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DecadeIndex)
-    }
-    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DifficultyEpoch)
-    }
-    pub fn height(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::Height)
-    }
-    pub fn monthindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::MonthIndex)
-    }
-    pub fn quarterindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::QuarterIndex)
-    }
-    pub fn semesterindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::SemesterIndex)
-    }
-    pub fn weekindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::WeekIndex)
-    }
-    pub fn yearindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::YearIndex)
-    }
+    pub fn dateindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DateIndex) }
+    pub fn decadeindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DecadeIndex) }
+    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DifficultyEpoch) }
+    pub fn height(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Height) }
+    pub fn monthindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::MonthIndex) }
+    pub fn quarterindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::QuarterIndex) }
+    pub fn semesterindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::SemesterIndex) }
+    pub fn weekindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::WeekIndex) }
+    pub fn yearindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::YearIndex) }
 }
 
-/// Index accessor for metrics with 9 indexes.
-pub struct MetricPattern1<T> {
-    name: Arc<str>,
-    pub by: MetricPattern1By<T>,
-}
-
+pub struct MetricPattern1<T> { name: Arc<str>, pub by: MetricPattern1By<T> }
 impl<T: DeserializeOwned> MetricPattern1<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern1By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern1By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern1<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern1<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I1 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern1<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I1.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::DateIndex,
-            Index::DecadeIndex,
-            Index::DifficultyEpoch,
-            Index::Height,
-            Index::MonthIndex,
-            Index::QuarterIndex,
-            Index::SemesterIndex,
-            Index::WeekIndex,
-            Index::YearIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern1<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::DateIndex => Some(self.by.dateindex()),
-            Index::DecadeIndex => Some(self.by.decadeindex()),
-            Index::DifficultyEpoch => Some(self.by.difficultyepoch()),
-            Index::Height => Some(self.by.height()),
-            Index::MonthIndex => Some(self.by.monthindex()),
-            Index::QuarterIndex => Some(self.by.quarterindex()),
-            Index::SemesterIndex => Some(self.by.semesterindex()),
-            Index::WeekIndex => Some(self.by.weekindex()),
-            Index::YearIndex => Some(self.by.yearindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern2By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern2By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern2By<T> {
-    pub fn dateindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DateIndex)
-    }
-    pub fn decadeindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DecadeIndex)
-    }
-    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DifficultyEpoch)
-    }
-    pub fn monthindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::MonthIndex)
-    }
-    pub fn quarterindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::QuarterIndex)
-    }
-    pub fn semesterindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::SemesterIndex)
-    }
-    pub fn weekindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::WeekIndex)
-    }
-    pub fn yearindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::YearIndex)
-    }
+    pub fn dateindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DateIndex) }
+    pub fn decadeindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DecadeIndex) }
+    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DifficultyEpoch) }
+    pub fn monthindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::MonthIndex) }
+    pub fn quarterindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::QuarterIndex) }
+    pub fn semesterindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::SemesterIndex) }
+    pub fn weekindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::WeekIndex) }
+    pub fn yearindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::YearIndex) }
 }
 
-/// Index accessor for metrics with 8 indexes.
-pub struct MetricPattern2<T> {
-    name: Arc<str>,
-    pub by: MetricPattern2By<T>,
-}
-
+pub struct MetricPattern2<T> { name: Arc<str>, pub by: MetricPattern2By<T> }
 impl<T: DeserializeOwned> MetricPattern2<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern2By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern2By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern2<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern2<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I2 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern2<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I2.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::DateIndex,
-            Index::DecadeIndex,
-            Index::DifficultyEpoch,
-            Index::MonthIndex,
-            Index::QuarterIndex,
-            Index::SemesterIndex,
-            Index::WeekIndex,
-            Index::YearIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern2<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::DateIndex => Some(self.by.dateindex()),
-            Index::DecadeIndex => Some(self.by.decadeindex()),
-            Index::DifficultyEpoch => Some(self.by.difficultyepoch()),
-            Index::MonthIndex => Some(self.by.monthindex()),
-            Index::QuarterIndex => Some(self.by.quarterindex()),
-            Index::SemesterIndex => Some(self.by.semesterindex()),
-            Index::WeekIndex => Some(self.by.weekindex()),
-            Index::YearIndex => Some(self.by.yearindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern3By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern3By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern3By<T> {
-    pub fn dateindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DateIndex)
-    }
-    pub fn decadeindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DecadeIndex)
-    }
-    pub fn height(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::Height)
-    }
-    pub fn monthindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::MonthIndex)
-    }
-    pub fn quarterindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::QuarterIndex)
-    }
-    pub fn semesterindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::SemesterIndex)
-    }
-    pub fn weekindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::WeekIndex)
-    }
-    pub fn yearindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::YearIndex)
-    }
+    pub fn dateindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DateIndex) }
+    pub fn decadeindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DecadeIndex) }
+    pub fn height(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Height) }
+    pub fn monthindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::MonthIndex) }
+    pub fn quarterindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::QuarterIndex) }
+    pub fn semesterindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::SemesterIndex) }
+    pub fn weekindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::WeekIndex) }
+    pub fn yearindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::YearIndex) }
 }
 
-/// Index accessor for metrics with 8 indexes.
-pub struct MetricPattern3<T> {
-    name: Arc<str>,
-    pub by: MetricPattern3By<T>,
-}
-
+pub struct MetricPattern3<T> { name: Arc<str>, pub by: MetricPattern3By<T> }
 impl<T: DeserializeOwned> MetricPattern3<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern3By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern3By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern3<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern3<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I3 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern3<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I3.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::DateIndex,
-            Index::DecadeIndex,
-            Index::Height,
-            Index::MonthIndex,
-            Index::QuarterIndex,
-            Index::SemesterIndex,
-            Index::WeekIndex,
-            Index::YearIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern3<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::DateIndex => Some(self.by.dateindex()),
-            Index::DecadeIndex => Some(self.by.decadeindex()),
-            Index::Height => Some(self.by.height()),
-            Index::MonthIndex => Some(self.by.monthindex()),
-            Index::QuarterIndex => Some(self.by.quarterindex()),
-            Index::SemesterIndex => Some(self.by.semesterindex()),
-            Index::WeekIndex => Some(self.by.weekindex()),
-            Index::YearIndex => Some(self.by.yearindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern4By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern4By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern4By<T> {
-    pub fn dateindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DateIndex)
-    }
-    pub fn decadeindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DecadeIndex)
-    }
-    pub fn monthindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::MonthIndex)
-    }
-    pub fn quarterindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::QuarterIndex)
-    }
-    pub fn semesterindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::SemesterIndex)
-    }
-    pub fn weekindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::WeekIndex)
-    }
-    pub fn yearindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::YearIndex)
-    }
+    pub fn dateindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DateIndex) }
+    pub fn decadeindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DecadeIndex) }
+    pub fn monthindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::MonthIndex) }
+    pub fn quarterindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::QuarterIndex) }
+    pub fn semesterindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::SemesterIndex) }
+    pub fn weekindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::WeekIndex) }
+    pub fn yearindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::YearIndex) }
 }
 
-/// Index accessor for metrics with 7 indexes.
-pub struct MetricPattern4<T> {
-    name: Arc<str>,
-    pub by: MetricPattern4By<T>,
-}
-
+pub struct MetricPattern4<T> { name: Arc<str>, pub by: MetricPattern4By<T> }
 impl<T: DeserializeOwned> MetricPattern4<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern4By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern4By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern4<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern4<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I4 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern4<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I4.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::DateIndex,
-            Index::DecadeIndex,
-            Index::MonthIndex,
-            Index::QuarterIndex,
-            Index::SemesterIndex,
-            Index::WeekIndex,
-            Index::YearIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern4<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::DateIndex => Some(self.by.dateindex()),
-            Index::DecadeIndex => Some(self.by.decadeindex()),
-            Index::MonthIndex => Some(self.by.monthindex()),
-            Index::QuarterIndex => Some(self.by.quarterindex()),
-            Index::SemesterIndex => Some(self.by.semesterindex()),
-            Index::WeekIndex => Some(self.by.weekindex()),
-            Index::YearIndex => Some(self.by.yearindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern5By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern5By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern5By<T> {
-    pub fn dateindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DateIndex)
-    }
-    pub fn height(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::Height)
-    }
+    pub fn dateindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DateIndex) }
+    pub fn height(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Height) }
 }
 
-/// Index accessor for metrics with 2 indexes.
-pub struct MetricPattern5<T> {
-    name: Arc<str>,
-    pub by: MetricPattern5By<T>,
-}
-
+pub struct MetricPattern5<T> { name: Arc<str>, pub by: MetricPattern5By<T> }
 impl<T: DeserializeOwned> MetricPattern5<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern5By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern5By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern5<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern5<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I5 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern5<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I5.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::DateIndex,
-            Index::Height,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern5<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::DateIndex => Some(self.by.dateindex()),
-            Index::Height => Some(self.by.height()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern6By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern6By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern6By<T> {
-    pub fn dateindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DateIndex)
-    }
+    pub fn dateindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DateIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern6<T> {
-    name: Arc<str>,
-    pub by: MetricPattern6By<T>,
-}
-
+pub struct MetricPattern6<T> { name: Arc<str>, pub by: MetricPattern6By<T> }
 impl<T: DeserializeOwned> MetricPattern6<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern6By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern6By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern6<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern6<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I6 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern6<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I6.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::DateIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern6<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::DateIndex => Some(self.by.dateindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern7By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern7By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern7By<T> {
-    pub fn decadeindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DecadeIndex)
-    }
+    pub fn decadeindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DecadeIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern7<T> {
-    name: Arc<str>,
-    pub by: MetricPattern7By<T>,
-}
-
+pub struct MetricPattern7<T> { name: Arc<str>, pub by: MetricPattern7By<T> }
 impl<T: DeserializeOwned> MetricPattern7<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern7By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern7By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern7<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern7<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I7 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern7<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I7.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::DecadeIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern7<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::DecadeIndex => Some(self.by.decadeindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern8By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern8By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern8By<T> {
-    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::DifficultyEpoch)
-    }
+    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DifficultyEpoch) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern8<T> {
-    name: Arc<str>,
-    pub by: MetricPattern8By<T>,
-}
-
+pub struct MetricPattern8<T> { name: Arc<str>, pub by: MetricPattern8By<T> }
 impl<T: DeserializeOwned> MetricPattern8<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern8By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern8By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern8<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern8<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I8 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern8<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I8.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::DifficultyEpoch,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern8<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::DifficultyEpoch => Some(self.by.difficultyepoch()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern9By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern9By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern9By<T> {
-    pub fn emptyoutputindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::EmptyOutputIndex)
-    }
+    pub fn emptyoutputindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::EmptyOutputIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern9<T> {
-    name: Arc<str>,
-    pub by: MetricPattern9By<T>,
-}
-
+pub struct MetricPattern9<T> { name: Arc<str>, pub by: MetricPattern9By<T> }
 impl<T: DeserializeOwned> MetricPattern9<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern9By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern9By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern9<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern9<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I9 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern9<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I9.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::EmptyOutputIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern9<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::EmptyOutputIndex => Some(self.by.emptyoutputindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern10By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern10By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern10By<T> {
-    pub fn halvingepoch(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::HalvingEpoch)
-    }
+    pub fn halvingepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::HalvingEpoch) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern10<T> {
-    name: Arc<str>,
-    pub by: MetricPattern10By<T>,
-}
-
+pub struct MetricPattern10<T> { name: Arc<str>, pub by: MetricPattern10By<T> }
 impl<T: DeserializeOwned> MetricPattern10<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern10By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern10By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern10<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern10<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I10 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern10<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I10.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::HalvingEpoch,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern10<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::HalvingEpoch => Some(self.by.halvingepoch()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern11By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern11By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern11By<T> {
-    pub fn height(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::Height)
-    }
+    pub fn height(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Height) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern11<T> {
-    name: Arc<str>,
-    pub by: MetricPattern11By<T>,
-}
-
+pub struct MetricPattern11<T> { name: Arc<str>, pub by: MetricPattern11By<T> }
 impl<T: DeserializeOwned> MetricPattern11<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern11By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern11By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern11<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern11<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I11 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern11<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I11.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::Height,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern11<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::Height => Some(self.by.height()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern12By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern12By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern12By<T> {
-    pub fn txinindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::TxInIndex)
-    }
+    pub fn txinindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::TxInIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern12<T> {
-    name: Arc<str>,
-    pub by: MetricPattern12By<T>,
-}
-
+pub struct MetricPattern12<T> { name: Arc<str>, pub by: MetricPattern12By<T> }
 impl<T: DeserializeOwned> MetricPattern12<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern12By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern12By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern12<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern12<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I12 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern12<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I12.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::TxInIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern12<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::TxInIndex => Some(self.by.txinindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern13By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern13By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern13By<T> {
-    pub fn monthindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::MonthIndex)
-    }
+    pub fn monthindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::MonthIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern13<T> {
-    name: Arc<str>,
-    pub by: MetricPattern13By<T>,
-}
-
+pub struct MetricPattern13<T> { name: Arc<str>, pub by: MetricPattern13By<T> }
 impl<T: DeserializeOwned> MetricPattern13<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern13By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern13By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern13<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern13<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I13 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern13<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I13.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::MonthIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern13<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::MonthIndex => Some(self.by.monthindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern14By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern14By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern14By<T> {
-    pub fn opreturnindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::OpReturnIndex)
-    }
+    pub fn opreturnindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::OpReturnIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern14<T> {
-    name: Arc<str>,
-    pub by: MetricPattern14By<T>,
-}
-
+pub struct MetricPattern14<T> { name: Arc<str>, pub by: MetricPattern14By<T> }
 impl<T: DeserializeOwned> MetricPattern14<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern14By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern14By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern14<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern14<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I14 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern14<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I14.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::OpReturnIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern14<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::OpReturnIndex => Some(self.by.opreturnindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern15By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern15By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern15By<T> {
-    pub fn txoutindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::TxOutIndex)
-    }
+    pub fn txoutindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::TxOutIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern15<T> {
-    name: Arc<str>,
-    pub by: MetricPattern15By<T>,
-}
-
+pub struct MetricPattern15<T> { name: Arc<str>, pub by: MetricPattern15By<T> }
 impl<T: DeserializeOwned> MetricPattern15<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern15By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern15By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern15<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern15<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I15 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern15<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I15.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::TxOutIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern15<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::TxOutIndex => Some(self.by.txoutindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern16By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern16By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern16By<T> {
-    pub fn p2aaddressindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::P2AAddressIndex)
-    }
+    pub fn p2aaddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2AAddressIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern16<T> {
-    name: Arc<str>,
-    pub by: MetricPattern16By<T>,
-}
-
+pub struct MetricPattern16<T> { name: Arc<str>, pub by: MetricPattern16By<T> }
 impl<T: DeserializeOwned> MetricPattern16<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern16By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern16By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern16<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern16<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I16 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern16<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I16.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::P2AAddressIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern16<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::P2AAddressIndex => Some(self.by.p2aaddressindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern17By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern17By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern17By<T> {
-    pub fn p2msoutputindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::P2MSOutputIndex)
-    }
+    pub fn p2msoutputindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2MSOutputIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern17<T> {
-    name: Arc<str>,
-    pub by: MetricPattern17By<T>,
-}
-
+pub struct MetricPattern17<T> { name: Arc<str>, pub by: MetricPattern17By<T> }
 impl<T: DeserializeOwned> MetricPattern17<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern17By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern17By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern17<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern17<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I17 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern17<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I17.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::P2MSOutputIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern17<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::P2MSOutputIndex => Some(self.by.p2msoutputindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern18By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern18By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern18By<T> {
-    pub fn p2pk33addressindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::P2PK33AddressIndex)
-    }
+    pub fn p2pk33addressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2PK33AddressIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern18<T> {
-    name: Arc<str>,
-    pub by: MetricPattern18By<T>,
-}
-
+pub struct MetricPattern18<T> { name: Arc<str>, pub by: MetricPattern18By<T> }
 impl<T: DeserializeOwned> MetricPattern18<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern18By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern18By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern18<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern18<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I18 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern18<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I18.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::P2PK33AddressIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern18<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::P2PK33AddressIndex => Some(self.by.p2pk33addressindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern19By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern19By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern19By<T> {
-    pub fn p2pk65addressindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::P2PK65AddressIndex)
-    }
+    pub fn p2pk65addressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2PK65AddressIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern19<T> {
-    name: Arc<str>,
-    pub by: MetricPattern19By<T>,
-}
-
+pub struct MetricPattern19<T> { name: Arc<str>, pub by: MetricPattern19By<T> }
 impl<T: DeserializeOwned> MetricPattern19<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern19By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern19By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern19<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern19<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I19 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern19<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I19.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::P2PK65AddressIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern19<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::P2PK65AddressIndex => Some(self.by.p2pk65addressindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern20By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern20By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern20By<T> {
-    pub fn p2pkhaddressindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::P2PKHAddressIndex)
-    }
+    pub fn p2pkhaddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2PKHAddressIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern20<T> {
-    name: Arc<str>,
-    pub by: MetricPattern20By<T>,
-}
-
+pub struct MetricPattern20<T> { name: Arc<str>, pub by: MetricPattern20By<T> }
 impl<T: DeserializeOwned> MetricPattern20<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern20By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern20By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern20<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern20<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I20 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern20<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I20.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::P2PKHAddressIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern20<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::P2PKHAddressIndex => Some(self.by.p2pkhaddressindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern21By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern21By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern21By<T> {
-    pub fn p2shaddressindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::P2SHAddressIndex)
-    }
+    pub fn p2shaddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2SHAddressIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern21<T> {
-    name: Arc<str>,
-    pub by: MetricPattern21By<T>,
-}
-
+pub struct MetricPattern21<T> { name: Arc<str>, pub by: MetricPattern21By<T> }
 impl<T: DeserializeOwned> MetricPattern21<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern21By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern21By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern21<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern21<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I21 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern21<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I21.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::P2SHAddressIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern21<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::P2SHAddressIndex => Some(self.by.p2shaddressindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern22By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern22By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern22By<T> {
-    pub fn p2traddressindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::P2TRAddressIndex)
-    }
+    pub fn p2traddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2TRAddressIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern22<T> {
-    name: Arc<str>,
-    pub by: MetricPattern22By<T>,
-}
-
+pub struct MetricPattern22<T> { name: Arc<str>, pub by: MetricPattern22By<T> }
 impl<T: DeserializeOwned> MetricPattern22<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern22By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern22By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern22<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern22<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I22 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern22<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I22.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::P2TRAddressIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern22<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::P2TRAddressIndex => Some(self.by.p2traddressindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern23By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern23By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern23By<T> {
-    pub fn p2wpkhaddressindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::P2WPKHAddressIndex)
-    }
+    pub fn p2wpkhaddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2WPKHAddressIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern23<T> {
-    name: Arc<str>,
-    pub by: MetricPattern23By<T>,
-}
-
+pub struct MetricPattern23<T> { name: Arc<str>, pub by: MetricPattern23By<T> }
 impl<T: DeserializeOwned> MetricPattern23<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern23By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern23By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern23<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern23<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I23 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern23<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I23.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::P2WPKHAddressIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern23<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::P2WPKHAddressIndex => Some(self.by.p2wpkhaddressindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern24By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern24By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern24By<T> {
-    pub fn p2wshaddressindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::P2WSHAddressIndex)
-    }
+    pub fn p2wshaddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2WSHAddressIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern24<T> {
-    name: Arc<str>,
-    pub by: MetricPattern24By<T>,
-}
-
+pub struct MetricPattern24<T> { name: Arc<str>, pub by: MetricPattern24By<T> }
 impl<T: DeserializeOwned> MetricPattern24<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern24By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern24By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern24<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern24<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I24 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern24<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I24.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::P2WSHAddressIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern24<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::P2WSHAddressIndex => Some(self.by.p2wshaddressindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern25By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern25By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern25By<T> {
-    pub fn quarterindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::QuarterIndex)
-    }
+    pub fn quarterindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::QuarterIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern25<T> {
-    name: Arc<str>,
-    pub by: MetricPattern25By<T>,
-}
-
+pub struct MetricPattern25<T> { name: Arc<str>, pub by: MetricPattern25By<T> }
 impl<T: DeserializeOwned> MetricPattern25<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern25By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern25By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern25<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern25<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I25 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern25<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I25.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::QuarterIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern25<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::QuarterIndex => Some(self.by.quarterindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern26By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern26By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern26By<T> {
-    pub fn semesterindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::SemesterIndex)
-    }
+    pub fn semesterindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::SemesterIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern26<T> {
-    name: Arc<str>,
-    pub by: MetricPattern26By<T>,
-}
-
+pub struct MetricPattern26<T> { name: Arc<str>, pub by: MetricPattern26By<T> }
 impl<T: DeserializeOwned> MetricPattern26<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern26By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern26By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern26<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern26<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I26 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern26<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I26.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::SemesterIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern26<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::SemesterIndex => Some(self.by.semesterindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern27By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern27By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern27By<T> {
-    pub fn txindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::TxIndex)
-    }
+    pub fn txindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::TxIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern27<T> {
-    name: Arc<str>,
-    pub by: MetricPattern27By<T>,
-}
-
+pub struct MetricPattern27<T> { name: Arc<str>, pub by: MetricPattern27By<T> }
 impl<T: DeserializeOwned> MetricPattern27<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern27By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern27By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern27<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern27<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I27 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern27<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I27.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::TxIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern27<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::TxIndex => Some(self.by.txindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern28By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern28By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern28By<T> {
-    pub fn unknownoutputindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::UnknownOutputIndex)
-    }
+    pub fn unknownoutputindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::UnknownOutputIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern28<T> {
-    name: Arc<str>,
-    pub by: MetricPattern28By<T>,
-}
-
+pub struct MetricPattern28<T> { name: Arc<str>, pub by: MetricPattern28By<T> }
 impl<T: DeserializeOwned> MetricPattern28<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern28By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern28By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern28<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern28<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I28 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern28<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I28.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::UnknownOutputIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern28<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::UnknownOutputIndex => Some(self.by.unknownoutputindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern29By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern29By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern29By<T> {
-    pub fn weekindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::WeekIndex)
-    }
+    pub fn weekindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::WeekIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern29<T> {
-    name: Arc<str>,
-    pub by: MetricPattern29By<T>,
-}
-
+pub struct MetricPattern29<T> { name: Arc<str>, pub by: MetricPattern29By<T> }
 impl<T: DeserializeOwned> MetricPattern29<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern29By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern29By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern29<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern29<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I29 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern29<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I29.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::WeekIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern29<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::WeekIndex => Some(self.by.weekindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern30By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern30By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern30By<T> {
-    pub fn yearindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::YearIndex)
-    }
+    pub fn yearindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::YearIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern30<T> {
-    name: Arc<str>,
-    pub by: MetricPattern30By<T>,
-}
-
+pub struct MetricPattern30<T> { name: Arc<str>, pub by: MetricPattern30By<T> }
 impl<T: DeserializeOwned> MetricPattern30<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern30By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern30By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern30<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern30<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I30 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern30<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I30.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::YearIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern30<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::YearIndex => Some(self.by.yearindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern31By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern31By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern31By<T> {
-    pub fn loadedaddressindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::LoadedAddressIndex)
-    }
+    pub fn loadedaddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::LoadedAddressIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern31<T> {
-    name: Arc<str>,
-    pub by: MetricPattern31By<T>,
-}
-
+pub struct MetricPattern31<T> { name: Arc<str>, pub by: MetricPattern31By<T> }
 impl<T: DeserializeOwned> MetricPattern31<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern31By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern31By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern31<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
+impl<T> AnyMetricPattern for MetricPattern31<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I31 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern31<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I31.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::LoadedAddressIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern31<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::LoadedAddressIndex => Some(self.by.loadedaddressindex()),
-            _ => None,
-        }
-    }
-}
-
-/// Container for index endpoint methods.
-pub struct MetricPattern32By<T> {
-    client: Arc<BrkClientBase>,
-    name: Arc<str>,
-    _marker: std::marker::PhantomData<T>,
-}
-
+pub struct MetricPattern32By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern32By<T> {
-    pub fn emptyaddressindex(&self) -> MetricEndpointBuilder<T> {
-        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::EmptyAddressIndex)
-    }
+    pub fn emptyaddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::EmptyAddressIndex) }
 }
 
-/// Index accessor for metrics with 1 indexes.
-pub struct MetricPattern32<T> {
-    name: Arc<str>,
-    pub by: MetricPattern32By<T>,
-}
-
+pub struct MetricPattern32<T> { name: Arc<str>, pub by: MetricPattern32By<T> }
 impl<T: DeserializeOwned> MetricPattern32<T> {
-    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self {
-        let name: Arc<str> = name.into();
-        Self {
-            name: name.clone(),
-            by: MetricPattern32By { client, name, _marker: std::marker::PhantomData }
-        }
-    }
-
-    /// Get the metric name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub fn new(client: Arc<BrkClientBase>, name: String) -> Self { let name: Arc<str> = name.into(); Self { name: name.clone(), by: MetricPattern32By { client, name, _marker: std::marker::PhantomData } } }
+    pub fn name(&self) -> &str { &self.name }
 }
 
-impl<T> AnyMetricPattern for MetricPattern32<T> {
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn indexes(&self) -> &'static [Index] {
-        &[
-            Index::EmptyAddressIndex,
-        ]
-    }
-}
-
-impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern32<T> {
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {
-        match index {
-            Index::EmptyAddressIndex => Some(self.by.emptyaddressindex()),
-            _ => None,
-        }
-    }
-}
+impl<T> AnyMetricPattern for MetricPattern32<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I32 } }
+impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern32<T> { fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> { _I32.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 // Reusable pattern structs
 
@@ -2643,56 +1254,6 @@ impl Price111dSmaPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct PercentilesPattern {
-    pub pct05: MetricPattern4<Dollars>,
-    pub pct10: MetricPattern4<Dollars>,
-    pub pct15: MetricPattern4<Dollars>,
-    pub pct20: MetricPattern4<Dollars>,
-    pub pct25: MetricPattern4<Dollars>,
-    pub pct30: MetricPattern4<Dollars>,
-    pub pct35: MetricPattern4<Dollars>,
-    pub pct40: MetricPattern4<Dollars>,
-    pub pct45: MetricPattern4<Dollars>,
-    pub pct50: MetricPattern4<Dollars>,
-    pub pct55: MetricPattern4<Dollars>,
-    pub pct60: MetricPattern4<Dollars>,
-    pub pct65: MetricPattern4<Dollars>,
-    pub pct70: MetricPattern4<Dollars>,
-    pub pct75: MetricPattern4<Dollars>,
-    pub pct80: MetricPattern4<Dollars>,
-    pub pct85: MetricPattern4<Dollars>,
-    pub pct90: MetricPattern4<Dollars>,
-    pub pct95: MetricPattern4<Dollars>,
-}
-
-impl PercentilesPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            pct05: MetricPattern4::new(client.clone(), _m(&acc, "pct05")),
-            pct10: MetricPattern4::new(client.clone(), _m(&acc, "pct10")),
-            pct15: MetricPattern4::new(client.clone(), _m(&acc, "pct15")),
-            pct20: MetricPattern4::new(client.clone(), _m(&acc, "pct20")),
-            pct25: MetricPattern4::new(client.clone(), _m(&acc, "pct25")),
-            pct30: MetricPattern4::new(client.clone(), _m(&acc, "pct30")),
-            pct35: MetricPattern4::new(client.clone(), _m(&acc, "pct35")),
-            pct40: MetricPattern4::new(client.clone(), _m(&acc, "pct40")),
-            pct45: MetricPattern4::new(client.clone(), _m(&acc, "pct45")),
-            pct50: MetricPattern4::new(client.clone(), _m(&acc, "pct50")),
-            pct55: MetricPattern4::new(client.clone(), _m(&acc, "pct55")),
-            pct60: MetricPattern4::new(client.clone(), _m(&acc, "pct60")),
-            pct65: MetricPattern4::new(client.clone(), _m(&acc, "pct65")),
-            pct70: MetricPattern4::new(client.clone(), _m(&acc, "pct70")),
-            pct75: MetricPattern4::new(client.clone(), _m(&acc, "pct75")),
-            pct80: MetricPattern4::new(client.clone(), _m(&acc, "pct80")),
-            pct85: MetricPattern4::new(client.clone(), _m(&acc, "pct85")),
-            pct90: MetricPattern4::new(client.clone(), _m(&acc, "pct90")),
-            pct95: MetricPattern4::new(client.clone(), _m(&acc, "pct95")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct ActivePriceRatioPattern {
     pub ratio: MetricPattern4<StoredF32>,
     pub ratio_1m_sma: MetricPattern4<StoredF32>,
@@ -2738,6 +1299,56 @@ impl ActivePriceRatioPattern {
             ratio_pct99: MetricPattern4::new(client.clone(), _m(&acc, "pct99")),
             ratio_pct99_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct99_usd")),
             ratio_sd: Ratio1ySdPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct PercentilesPattern {
+    pub pct05: MetricPattern4<Dollars>,
+    pub pct10: MetricPattern4<Dollars>,
+    pub pct15: MetricPattern4<Dollars>,
+    pub pct20: MetricPattern4<Dollars>,
+    pub pct25: MetricPattern4<Dollars>,
+    pub pct30: MetricPattern4<Dollars>,
+    pub pct35: MetricPattern4<Dollars>,
+    pub pct40: MetricPattern4<Dollars>,
+    pub pct45: MetricPattern4<Dollars>,
+    pub pct50: MetricPattern4<Dollars>,
+    pub pct55: MetricPattern4<Dollars>,
+    pub pct60: MetricPattern4<Dollars>,
+    pub pct65: MetricPattern4<Dollars>,
+    pub pct70: MetricPattern4<Dollars>,
+    pub pct75: MetricPattern4<Dollars>,
+    pub pct80: MetricPattern4<Dollars>,
+    pub pct85: MetricPattern4<Dollars>,
+    pub pct90: MetricPattern4<Dollars>,
+    pub pct95: MetricPattern4<Dollars>,
+}
+
+impl PercentilesPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            pct05: MetricPattern4::new(client.clone(), _m(&acc, "pct05")),
+            pct10: MetricPattern4::new(client.clone(), _m(&acc, "pct10")),
+            pct15: MetricPattern4::new(client.clone(), _m(&acc, "pct15")),
+            pct20: MetricPattern4::new(client.clone(), _m(&acc, "pct20")),
+            pct25: MetricPattern4::new(client.clone(), _m(&acc, "pct25")),
+            pct30: MetricPattern4::new(client.clone(), _m(&acc, "pct30")),
+            pct35: MetricPattern4::new(client.clone(), _m(&acc, "pct35")),
+            pct40: MetricPattern4::new(client.clone(), _m(&acc, "pct40")),
+            pct45: MetricPattern4::new(client.clone(), _m(&acc, "pct45")),
+            pct50: MetricPattern4::new(client.clone(), _m(&acc, "pct50")),
+            pct55: MetricPattern4::new(client.clone(), _m(&acc, "pct55")),
+            pct60: MetricPattern4::new(client.clone(), _m(&acc, "pct60")),
+            pct65: MetricPattern4::new(client.clone(), _m(&acc, "pct65")),
+            pct70: MetricPattern4::new(client.clone(), _m(&acc, "pct70")),
+            pct75: MetricPattern4::new(client.clone(), _m(&acc, "pct75")),
+            pct80: MetricPattern4::new(client.clone(), _m(&acc, "pct80")),
+            pct85: MetricPattern4::new(client.clone(), _m(&acc, "pct85")),
+            pct90: MetricPattern4::new(client.clone(), _m(&acc, "pct90")),
+            pct95: MetricPattern4::new(client.clone(), _m(&acc, "pct95")),
         }
     }
 }
@@ -3027,49 +1638,17 @@ impl<T: DeserializeOwned> ClassAveragePricePattern<T> {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            _2015: MetricPattern4::new(client.clone(), _m(&acc, "2015_returns")),
-            _2016: MetricPattern4::new(client.clone(), _m(&acc, "2016_returns")),
-            _2017: MetricPattern4::new(client.clone(), _m(&acc, "2017_returns")),
-            _2018: MetricPattern4::new(client.clone(), _m(&acc, "2018_returns")),
-            _2019: MetricPattern4::new(client.clone(), _m(&acc, "2019_returns")),
-            _2020: MetricPattern4::new(client.clone(), _m(&acc, "2020_returns")),
-            _2021: MetricPattern4::new(client.clone(), _m(&acc, "2021_returns")),
-            _2022: MetricPattern4::new(client.clone(), _m(&acc, "2022_returns")),
-            _2023: MetricPattern4::new(client.clone(), _m(&acc, "2023_returns")),
-            _2024: MetricPattern4::new(client.clone(), _m(&acc, "2024_returns")),
-            _2025: MetricPattern4::new(client.clone(), _m(&acc, "2025_returns")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct RelativePattern {
-    pub neg_unrealized_loss_rel_to_market_cap: MetricPattern1<StoredF32>,
-    pub net_unrealized_pnl_rel_to_market_cap: MetricPattern1<StoredF32>,
-    pub nupl: MetricPattern1<StoredF32>,
-    pub supply_in_loss_rel_to_circulating_supply: MetricPattern1<StoredF64>,
-    pub supply_in_loss_rel_to_own_supply: MetricPattern1<StoredF64>,
-    pub supply_in_profit_rel_to_circulating_supply: MetricPattern1<StoredF64>,
-    pub supply_in_profit_rel_to_own_supply: MetricPattern1<StoredF64>,
-    pub supply_rel_to_circulating_supply: MetricPattern4<StoredF64>,
-    pub unrealized_loss_rel_to_market_cap: MetricPattern1<StoredF32>,
-    pub unrealized_profit_rel_to_market_cap: MetricPattern1<StoredF32>,
-}
-
-impl RelativePattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            neg_unrealized_loss_rel_to_market_cap: MetricPattern1::new(client.clone(), _m(&acc, "neg_unrealized_loss_rel_to_market_cap")),
-            net_unrealized_pnl_rel_to_market_cap: MetricPattern1::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_market_cap")),
-            nupl: MetricPattern1::new(client.clone(), _m(&acc, "nupl")),
-            supply_in_loss_rel_to_circulating_supply: MetricPattern1::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_circulating_supply")),
-            supply_in_loss_rel_to_own_supply: MetricPattern1::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_own_supply")),
-            supply_in_profit_rel_to_circulating_supply: MetricPattern1::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_circulating_supply")),
-            supply_in_profit_rel_to_own_supply: MetricPattern1::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_own_supply")),
-            supply_rel_to_circulating_supply: MetricPattern4::new(client.clone(), _m(&acc, "supply_rel_to_circulating_supply")),
-            unrealized_loss_rel_to_market_cap: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_market_cap")),
-            unrealized_profit_rel_to_market_cap: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_market_cap")),
+            _2015: MetricPattern4::new(client.clone(), _m(&acc, "2015_average_price")),
+            _2016: MetricPattern4::new(client.clone(), _m(&acc, "2016_average_price")),
+            _2017: MetricPattern4::new(client.clone(), _m(&acc, "2017_average_price")),
+            _2018: MetricPattern4::new(client.clone(), _m(&acc, "2018_average_price")),
+            _2019: MetricPattern4::new(client.clone(), _m(&acc, "2019_average_price")),
+            _2020: MetricPattern4::new(client.clone(), _m(&acc, "2020_average_price")),
+            _2021: MetricPattern4::new(client.clone(), _m(&acc, "2021_average_price")),
+            _2022: MetricPattern4::new(client.clone(), _m(&acc, "2022_average_price")),
+            _2023: MetricPattern4::new(client.clone(), _m(&acc, "2023_average_price")),
+            _2024: MetricPattern4::new(client.clone(), _m(&acc, "2024_average_price")),
+            _2025: MetricPattern4::new(client.clone(), _m(&acc, "2025_average_price")),
         }
     }
 }
@@ -3102,6 +1681,38 @@ impl RelativePattern2 {
             unrealized_loss_rel_to_own_total_unrealized_pnl: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_total_unrealized_pnl")),
             unrealized_profit_rel_to_own_market_cap: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_own_market_cap")),
             unrealized_profit_rel_to_own_total_unrealized_pnl: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_own_total_unrealized_pnl")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct RelativePattern {
+    pub neg_unrealized_loss_rel_to_market_cap: MetricPattern1<StoredF32>,
+    pub net_unrealized_pnl_rel_to_market_cap: MetricPattern1<StoredF32>,
+    pub nupl: MetricPattern1<StoredF32>,
+    pub supply_in_loss_rel_to_circulating_supply: MetricPattern1<StoredF64>,
+    pub supply_in_loss_rel_to_own_supply: MetricPattern1<StoredF64>,
+    pub supply_in_profit_rel_to_circulating_supply: MetricPattern1<StoredF64>,
+    pub supply_in_profit_rel_to_own_supply: MetricPattern1<StoredF64>,
+    pub supply_rel_to_circulating_supply: MetricPattern4<StoredF64>,
+    pub unrealized_loss_rel_to_market_cap: MetricPattern1<StoredF32>,
+    pub unrealized_profit_rel_to_market_cap: MetricPattern1<StoredF32>,
+}
+
+impl RelativePattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            neg_unrealized_loss_rel_to_market_cap: MetricPattern1::new(client.clone(), _m(&acc, "neg_unrealized_loss_rel_to_market_cap")),
+            net_unrealized_pnl_rel_to_market_cap: MetricPattern1::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_market_cap")),
+            nupl: MetricPattern1::new(client.clone(), _m(&acc, "nupl")),
+            supply_in_loss_rel_to_circulating_supply: MetricPattern1::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_circulating_supply")),
+            supply_in_loss_rel_to_own_supply: MetricPattern1::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_own_supply")),
+            supply_in_profit_rel_to_circulating_supply: MetricPattern1::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_circulating_supply")),
+            supply_in_profit_rel_to_own_supply: MetricPattern1::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_own_supply")),
+            supply_rel_to_circulating_supply: MetricPattern4::new(client.clone(), _m(&acc, "supply_rel_to_circulating_supply")),
+            unrealized_loss_rel_to_market_cap: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_market_cap")),
+            unrealized_profit_rel_to_market_cap: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_market_cap")),
         }
     }
 }
@@ -3257,32 +1868,6 @@ impl _0satsPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct _100btcPattern {
-    pub activity: ActivityPattern2,
-    pub cost_basis: CostBasisPattern,
-    pub outputs: OutputsPattern,
-    pub realized: RealizedPattern,
-    pub relative: RelativePattern,
-    pub supply: SupplyPattern2,
-    pub unrealized: UnrealizedPattern,
-}
-
-impl _100btcPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            activity: ActivityPattern2::new(client.clone(), acc.clone()),
-            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
-            outputs: OutputsPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: RealizedPattern::new(client.clone(), acc.clone()),
-            relative: RelativePattern::new(client.clone(), acc.clone()),
-            supply: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct UnrealizedPattern {
     pub neg_unrealized_loss: MetricPattern1<Dollars>,
     pub net_unrealized_pnl: MetricPattern1<Dollars>,
@@ -3304,58 +1889,6 @@ impl UnrealizedPattern {
             total_unrealized_pnl: MetricPattern1::new(client.clone(), _m(&acc, "total_unrealized_pnl")),
             unrealized_loss: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_loss")),
             unrealized_profit: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_profit")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _10yPattern {
-    pub activity: ActivityPattern2,
-    pub cost_basis: CostBasisPattern,
-    pub outputs: OutputsPattern,
-    pub realized: RealizedPattern4,
-    pub relative: RelativePattern,
-    pub supply: SupplyPattern2,
-    pub unrealized: UnrealizedPattern,
-}
-
-impl _10yPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            activity: ActivityPattern2::new(client.clone(), acc.clone()),
-            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
-            outputs: OutputsPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: RealizedPattern4::new(client.clone(), acc.clone()),
-            relative: RelativePattern::new(client.clone(), acc.clone()),
-            supply: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _0satsPattern2 {
-    pub activity: ActivityPattern2,
-    pub cost_basis: CostBasisPattern,
-    pub outputs: OutputsPattern,
-    pub realized: RealizedPattern,
-    pub relative: RelativePattern4,
-    pub supply: SupplyPattern2,
-    pub unrealized: UnrealizedPattern,
-}
-
-impl _0satsPattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            activity: ActivityPattern2::new(client.clone(), acc.clone()),
-            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
-            outputs: OutputsPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: RealizedPattern::new(client.clone(), acc.clone()),
-            relative: RelativePattern4::new(client.clone(), _m(&acc, "supply_in")),
-            supply: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -3387,6 +1920,58 @@ impl _10yTo12yPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct _10yPattern {
+    pub activity: ActivityPattern2,
+    pub cost_basis: CostBasisPattern,
+    pub outputs: OutputsPattern,
+    pub realized: RealizedPattern4,
+    pub relative: RelativePattern,
+    pub supply: SupplyPattern2,
+    pub unrealized: UnrealizedPattern,
+}
+
+impl _10yPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            activity: ActivityPattern2::new(client.clone(), acc.clone()),
+            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
+            outputs: OutputsPattern::new(client.clone(), _m(&acc, "utxo_count")),
+            realized: RealizedPattern4::new(client.clone(), acc.clone()),
+            relative: RelativePattern::new(client.clone(), acc.clone()),
+            supply: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _100btcPattern {
+    pub activity: ActivityPattern2,
+    pub cost_basis: CostBasisPattern,
+    pub outputs: OutputsPattern,
+    pub realized: RealizedPattern,
+    pub relative: RelativePattern,
+    pub supply: SupplyPattern2,
+    pub unrealized: UnrealizedPattern,
+}
+
+impl _100btcPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            activity: ActivityPattern2::new(client.clone(), acc.clone()),
+            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
+            outputs: OutputsPattern::new(client.clone(), _m(&acc, "utxo_count")),
+            realized: RealizedPattern::new(client.clone(), acc.clone()),
+            relative: RelativePattern::new(client.clone(), acc.clone()),
+            supply: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct PeriodCagrPattern {
     pub _10y: MetricPattern4<StoredF32>,
     pub _2y: MetricPattern4<StoredF32>,
@@ -3408,6 +1993,32 @@ impl PeriodCagrPattern {
             _5y: MetricPattern4::new(client.clone(), _p("5y", &acc)),
             _6y: MetricPattern4::new(client.clone(), _p("6y", &acc)),
             _8y: MetricPattern4::new(client.clone(), _p("8y", &acc)),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _0satsPattern2 {
+    pub activity: ActivityPattern2,
+    pub cost_basis: CostBasisPattern,
+    pub outputs: OutputsPattern,
+    pub realized: RealizedPattern,
+    pub relative: RelativePattern4,
+    pub supply: SupplyPattern2,
+    pub unrealized: UnrealizedPattern,
+}
+
+impl _0satsPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            activity: ActivityPattern2::new(client.clone(), acc.clone()),
+            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
+            outputs: OutputsPattern::new(client.clone(), _m(&acc, "utxo_count")),
+            realized: RealizedPattern::new(client.clone(), acc.clone()),
+            relative: RelativePattern4::new(client.clone(), _m(&acc, "supply_in")),
+            supply: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -3455,78 +2066,6 @@ impl<T: DeserializeOwned> SplitPattern2<T> {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CostBasisPattern2 {
-    pub max: MetricPattern1<Dollars>,
-    pub min: MetricPattern1<Dollars>,
-    pub percentiles: PercentilesPattern,
-}
-
-impl CostBasisPattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            max: MetricPattern1::new(client.clone(), _m(&acc, "max_cost_basis")),
-            min: MetricPattern1::new(client.clone(), _m(&acc, "min_cost_basis")),
-            percentiles: PercentilesPattern::new(client.clone(), _m(&acc, "cost_basis")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct CoinbasePattern {
-    pub bitcoin: BitcoinPattern,
-    pub dollars: DollarsPattern<Dollars>,
-    pub sats: DollarsPattern<Sats>,
-}
-
-impl CoinbasePattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            bitcoin: BitcoinPattern::new(client.clone(), _m(&acc, "btc")),
-            dollars: DollarsPattern::new(client.clone(), _m(&acc, "usd")),
-            sats: DollarsPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _2015Pattern {
-    pub bitcoin: MetricPattern4<Bitcoin>,
-    pub dollars: MetricPattern4<Dollars>,
-    pub sats: MetricPattern4<Sats>,
-}
-
-impl _2015Pattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            bitcoin: MetricPattern4::new(client.clone(), _m(&acc, "btc")),
-            dollars: MetricPattern4::new(client.clone(), _m(&acc, "usd")),
-            sats: MetricPattern4::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct ActiveSupplyPattern {
-    pub bitcoin: MetricPattern1<Bitcoin>,
-    pub dollars: MetricPattern1<Dollars>,
-    pub sats: MetricPattern1<Sats>,
-}
-
-impl ActiveSupplyPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            bitcoin: MetricPattern1::new(client.clone(), _m(&acc, "btc")),
-            dollars: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
-            sats: MetricPattern1::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct SegwitAdoptionPattern {
     pub base: MetricPattern11<StoredF32>,
     pub cumulative: MetricPattern2<StoredF32>,
@@ -3540,24 +2079,6 @@ impl SegwitAdoptionPattern {
             base: MetricPattern11::new(client.clone(), acc.clone()),
             cumulative: MetricPattern2::new(client.clone(), _m(&acc, "cumulative")),
             sum: MetricPattern2::new(client.clone(), _m(&acc, "sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct CoinbasePattern2 {
-    pub bitcoin: BlockCountPattern<Bitcoin>,
-    pub dollars: BlockCountPattern<Dollars>,
-    pub sats: BlockCountPattern<Sats>,
-}
-
-impl CoinbasePattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            bitcoin: BlockCountPattern::new(client.clone(), _m(&acc, "btc")),
-            dollars: BlockCountPattern::new(client.clone(), _m(&acc, "usd")),
-            sats: BlockCountPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -3581,33 +2102,91 @@ impl UnclaimedRewardsPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct _1dReturns1mSdPattern {
-    pub sd: MetricPattern4<StoredF32>,
-    pub sma: MetricPattern4<StoredF32>,
+pub struct _2015Pattern {
+    pub bitcoin: MetricPattern4<Bitcoin>,
+    pub dollars: MetricPattern4<Dollars>,
+    pub sats: MetricPattern4<Sats>,
 }
 
-impl _1dReturns1mSdPattern {
+impl _2015Pattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            sd: MetricPattern4::new(client.clone(), _m(&acc, "sd")),
-            sma: MetricPattern4::new(client.clone(), _m(&acc, "sma")),
+            bitcoin: MetricPattern4::new(client.clone(), _m(&acc, "btc")),
+            dollars: MetricPattern4::new(client.clone(), _m(&acc, "usd")),
+            sats: MetricPattern4::new(client.clone(), acc.clone()),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct SupplyPattern2 {
-    pub halved: ActiveSupplyPattern,
-    pub total: ActiveSupplyPattern,
+pub struct CostBasisPattern2 {
+    pub max: MetricPattern1<Dollars>,
+    pub min: MetricPattern1<Dollars>,
+    pub percentiles: PercentilesPattern,
 }
 
-impl SupplyPattern2 {
+impl CostBasisPattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            halved: ActiveSupplyPattern::new(client.clone(), _m(&acc, "halved")),
-            total: ActiveSupplyPattern::new(client.clone(), acc.clone()),
+            max: MetricPattern1::new(client.clone(), _m(&acc, "max_cost_basis")),
+            min: MetricPattern1::new(client.clone(), _m(&acc, "min_cost_basis")),
+            percentiles: PercentilesPattern::new(client.clone(), _m(&acc, "cost_basis")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CoinbasePattern2 {
+    pub bitcoin: BlockCountPattern<Bitcoin>,
+    pub dollars: BlockCountPattern<Dollars>,
+    pub sats: BlockCountPattern<Sats>,
+}
+
+impl CoinbasePattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            bitcoin: BlockCountPattern::new(client.clone(), _m(&acc, "btc")),
+            dollars: BlockCountPattern::new(client.clone(), _m(&acc, "usd")),
+            sats: BlockCountPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct ActiveSupplyPattern {
+    pub bitcoin: MetricPattern1<Bitcoin>,
+    pub dollars: MetricPattern1<Dollars>,
+    pub sats: MetricPattern1<Sats>,
+}
+
+impl ActiveSupplyPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            bitcoin: MetricPattern1::new(client.clone(), _m(&acc, "btc")),
+            dollars: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
+            sats: MetricPattern1::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CoinbasePattern {
+    pub bitcoin: BitcoinPattern,
+    pub dollars: DollarsPattern<Dollars>,
+    pub sats: DollarsPattern<Sats>,
+}
+
+impl CoinbasePattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            bitcoin: BitcoinPattern::new(client.clone(), _m(&acc, "btc")),
+            dollars: DollarsPattern::new(client.clone(), _m(&acc, "usd")),
+            sats: DollarsPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -3629,6 +2208,22 @@ impl RelativePattern4 {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct _1dReturns1mSdPattern {
+    pub sd: MetricPattern4<StoredF32>,
+    pub sma: MetricPattern4<StoredF32>,
+}
+
+impl _1dReturns1mSdPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            sd: MetricPattern4::new(client.clone(), _m(&acc, "sd")),
+            sma: MetricPattern4::new(client.clone(), _m(&acc, "sma")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct CostBasisPattern {
     pub max: MetricPattern1<Dollars>,
     pub min: MetricPattern1<Dollars>,
@@ -3640,6 +2235,38 @@ impl CostBasisPattern {
         Self {
             max: MetricPattern1::new(client.clone(), _m(&acc, "max_cost_basis")),
             min: MetricPattern1::new(client.clone(), _m(&acc, "min_cost_basis")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct SupplyPattern2 {
+    pub halved: ActiveSupplyPattern,
+    pub total: ActiveSupplyPattern,
+}
+
+impl SupplyPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            halved: ActiveSupplyPattern::new(client.clone(), _m(&acc, "halved")),
+            total: ActiveSupplyPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct SatsPattern<T> {
+    pub ohlc: MetricPattern1<T>,
+    pub split: SplitPattern2<T>,
+}
+
+impl<T: DeserializeOwned> SatsPattern<T> {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            ohlc: MetricPattern1::new(client.clone(), _m(&acc, "ohlc")),
+            split: SplitPattern2::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -3672,22 +2299,6 @@ impl<T: DeserializeOwned> BlockCountPattern<T> {
         Self {
             cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
             sum: MetricPattern1::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct SatsPattern<T> {
-    pub ohlc: MetricPattern1<T>,
-    pub split: SplitPattern2<T>,
-}
-
-impl<T: DeserializeOwned> SatsPattern<T> {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            ohlc: MetricPattern1::new(client.clone(), _m(&acc, "ohlc_sats")),
-            split: SplitPattern2::new(client.clone(), _m(&acc, "sats")),
         }
     }
 }
@@ -10689,8 +9300,8 @@ impl MetricsTree_Market_Ath {
 
 /// Metrics tree node.
 pub struct MetricsTree_Market_Dca {
-    pub class_average_price: MetricsTree_Market_Dca_ClassAveragePrice,
-    pub class_returns: ClassAveragePricePattern<StoredF32>,
+    pub class_average_price: ClassAveragePricePattern<Dollars>,
+    pub class_returns: MetricsTree_Market_Dca_ClassReturns,
     pub class_stack: MetricsTree_Market_Dca_ClassStack,
     pub period_average_price: PeriodAveragePricePattern<Dollars>,
     pub period_cagr: PeriodCagrPattern,
@@ -10702,8 +9313,8 @@ pub struct MetricsTree_Market_Dca {
 impl MetricsTree_Market_Dca {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            class_average_price: MetricsTree_Market_Dca_ClassAveragePrice::new(client.clone(), format!("{base_path}_class_average_price")),
-            class_returns: ClassAveragePricePattern::new(client.clone(), "dca_class".to_string()),
+            class_average_price: ClassAveragePricePattern::new(client.clone(), "dca_class".to_string()),
+            class_returns: MetricsTree_Market_Dca_ClassReturns::new(client.clone(), format!("{base_path}_class_returns")),
             class_stack: MetricsTree_Market_Dca_ClassStack::new(client.clone(), format!("{base_path}_class_stack")),
             period_average_price: PeriodAveragePricePattern::new(client.clone(), "dca_average_price".to_string()),
             period_cagr: PeriodCagrPattern::new(client.clone(), "dca_cagr".to_string()),
@@ -10715,34 +9326,34 @@ impl MetricsTree_Market_Dca {
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Market_Dca_ClassAveragePrice {
-    pub _2015: MetricPattern4<Dollars>,
-    pub _2016: MetricPattern4<Dollars>,
-    pub _2017: MetricPattern4<Dollars>,
-    pub _2018: MetricPattern4<Dollars>,
-    pub _2019: MetricPattern4<Dollars>,
-    pub _2020: MetricPattern4<Dollars>,
-    pub _2021: MetricPattern4<Dollars>,
-    pub _2022: MetricPattern4<Dollars>,
-    pub _2023: MetricPattern4<Dollars>,
-    pub _2024: MetricPattern4<Dollars>,
-    pub _2025: MetricPattern4<Dollars>,
+pub struct MetricsTree_Market_Dca_ClassReturns {
+    pub _2015: MetricPattern4<StoredF32>,
+    pub _2016: MetricPattern4<StoredF32>,
+    pub _2017: MetricPattern4<StoredF32>,
+    pub _2018: MetricPattern4<StoredF32>,
+    pub _2019: MetricPattern4<StoredF32>,
+    pub _2020: MetricPattern4<StoredF32>,
+    pub _2021: MetricPattern4<StoredF32>,
+    pub _2022: MetricPattern4<StoredF32>,
+    pub _2023: MetricPattern4<StoredF32>,
+    pub _2024: MetricPattern4<StoredF32>,
+    pub _2025: MetricPattern4<StoredF32>,
 }
 
-impl MetricsTree_Market_Dca_ClassAveragePrice {
+impl MetricsTree_Market_Dca_ClassReturns {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _2015: MetricPattern4::new(client.clone(), "dca_class_2015_average_price".to_string()),
-            _2016: MetricPattern4::new(client.clone(), "dca_class_2016_average_price".to_string()),
-            _2017: MetricPattern4::new(client.clone(), "dca_class_2017_average_price".to_string()),
-            _2018: MetricPattern4::new(client.clone(), "dca_class_2018_average_price".to_string()),
-            _2019: MetricPattern4::new(client.clone(), "dca_class_2019_average_price".to_string()),
-            _2020: MetricPattern4::new(client.clone(), "dca_class_2020_average_price".to_string()),
-            _2021: MetricPattern4::new(client.clone(), "dca_class_2021_average_price".to_string()),
-            _2022: MetricPattern4::new(client.clone(), "dca_class_2022_average_price".to_string()),
-            _2023: MetricPattern4::new(client.clone(), "dca_class_2023_average_price".to_string()),
-            _2024: MetricPattern4::new(client.clone(), "dca_class_2024_average_price".to_string()),
-            _2025: MetricPattern4::new(client.clone(), "dca_class_2025_average_price".to_string()),
+            _2015: MetricPattern4::new(client.clone(), "dca_class_2015_returns".to_string()),
+            _2016: MetricPattern4::new(client.clone(), "dca_class_2016_returns".to_string()),
+            _2017: MetricPattern4::new(client.clone(), "dca_class_2017_returns".to_string()),
+            _2018: MetricPattern4::new(client.clone(), "dca_class_2018_returns".to_string()),
+            _2019: MetricPattern4::new(client.clone(), "dca_class_2019_returns".to_string()),
+            _2020: MetricPattern4::new(client.clone(), "dca_class_2020_returns".to_string()),
+            _2021: MetricPattern4::new(client.clone(), "dca_class_2021_returns".to_string()),
+            _2022: MetricPattern4::new(client.clone(), "dca_class_2022_returns".to_string()),
+            _2023: MetricPattern4::new(client.clone(), "dca_class_2023_returns".to_string()),
+            _2024: MetricPattern4::new(client.clone(), "dca_class_2024_returns".to_string()),
+            _2025: MetricPattern4::new(client.clone(), "dca_class_2025_returns".to_string()),
         }
     }
 }

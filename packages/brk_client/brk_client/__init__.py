@@ -1610,1308 +1610,905 @@ class MetricPattern(Protocol[T]):
         ...
 
 
+# Static index tuples
+_i1 = (
+    "dateindex",
+    "decadeindex",
+    "difficultyepoch",
+    "height",
+    "monthindex",
+    "quarterindex",
+    "semesterindex",
+    "weekindex",
+    "yearindex",
+)
+_i2 = (
+    "dateindex",
+    "decadeindex",
+    "difficultyepoch",
+    "monthindex",
+    "quarterindex",
+    "semesterindex",
+    "weekindex",
+    "yearindex",
+)
+_i3 = (
+    "dateindex",
+    "decadeindex",
+    "height",
+    "monthindex",
+    "quarterindex",
+    "semesterindex",
+    "weekindex",
+    "yearindex",
+)
+_i4 = (
+    "dateindex",
+    "decadeindex",
+    "monthindex",
+    "quarterindex",
+    "semesterindex",
+    "weekindex",
+    "yearindex",
+)
+_i5 = ("dateindex", "height")
+_i6 = ("dateindex",)
+_i7 = ("decadeindex",)
+_i8 = ("difficultyepoch",)
+_i9 = ("emptyoutputindex",)
+_i10 = ("halvingepoch",)
+_i11 = ("height",)
+_i12 = ("txinindex",)
+_i13 = ("monthindex",)
+_i14 = ("opreturnindex",)
+_i15 = ("txoutindex",)
+_i16 = ("p2aaddressindex",)
+_i17 = ("p2msoutputindex",)
+_i18 = ("p2pk33addressindex",)
+_i19 = ("p2pk65addressindex",)
+_i20 = ("p2pkhaddressindex",)
+_i21 = ("p2shaddressindex",)
+_i22 = ("p2traddressindex",)
+_i23 = ("p2wpkhaddressindex",)
+_i24 = ("p2wshaddressindex",)
+_i25 = ("quarterindex",)
+_i26 = ("semesterindex",)
+_i27 = ("txindex",)
+_i28 = ("unknownoutputindex",)
+_i29 = ("weekindex",)
+_i30 = ("yearindex",)
+_i31 = ("loadedaddressindex",)
+_i32 = ("emptyaddressindex",)
+
+
+def _ep(c: BrkClientBase, n: str, i: Index) -> MetricEndpointBuilder:
+    return MetricEndpointBuilder(c, n, i)
+
+
 # Index accessor classes
 
 
 class _MetricPattern1By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def dateindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "dateindex")
+        return _ep(self._c, self._n, "dateindex")
 
     def decadeindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "decadeindex")
+        return _ep(self._c, self._n, "decadeindex")
 
     def difficultyepoch(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "difficultyepoch")
+        return _ep(self._c, self._n, "difficultyepoch")
 
     def height(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "height")
+        return _ep(self._c, self._n, "height")
 
     def monthindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "monthindex")
+        return _ep(self._c, self._n, "monthindex")
 
     def quarterindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "quarterindex")
+        return _ep(self._c, self._n, "quarterindex")
 
     def semesterindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "semesterindex")
+        return _ep(self._c, self._n, "semesterindex")
 
     def weekindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "weekindex")
+        return _ep(self._c, self._n, "weekindex")
 
     def yearindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "yearindex")
+        return _ep(self._c, self._n, "yearindex")
 
 
 class MetricPattern1(Generic[T]):
-    """Index accessor for metrics with 9 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern1By[T] = _MetricPattern1By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern1By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return [
-            "dateindex",
-            "decadeindex",
-            "difficultyepoch",
-            "height",
-            "monthindex",
-            "quarterindex",
-            "semesterindex",
-            "weekindex",
-            "yearindex",
-        ]
+        return list(_i1)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "dateindex":
-            return self.by.dateindex()
-        elif index == "decadeindex":
-            return self.by.decadeindex()
-        elif index == "difficultyepoch":
-            return self.by.difficultyepoch()
-        elif index == "height":
-            return self.by.height()
-        elif index == "monthindex":
-            return self.by.monthindex()
-        elif index == "quarterindex":
-            return self.by.quarterindex()
-        elif index == "semesterindex":
-            return self.by.semesterindex()
-        elif index == "weekindex":
-            return self.by.weekindex()
-        elif index == "yearindex":
-            return self.by.yearindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i1 else None
 
 
 class _MetricPattern2By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def dateindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "dateindex")
+        return _ep(self._c, self._n, "dateindex")
 
     def decadeindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "decadeindex")
+        return _ep(self._c, self._n, "decadeindex")
 
     def difficultyepoch(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "difficultyepoch")
+        return _ep(self._c, self._n, "difficultyepoch")
 
     def monthindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "monthindex")
+        return _ep(self._c, self._n, "monthindex")
 
     def quarterindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "quarterindex")
+        return _ep(self._c, self._n, "quarterindex")
 
     def semesterindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "semesterindex")
+        return _ep(self._c, self._n, "semesterindex")
 
     def weekindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "weekindex")
+        return _ep(self._c, self._n, "weekindex")
 
     def yearindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "yearindex")
+        return _ep(self._c, self._n, "yearindex")
 
 
 class MetricPattern2(Generic[T]):
-    """Index accessor for metrics with 8 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern2By[T] = _MetricPattern2By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern2By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return [
-            "dateindex",
-            "decadeindex",
-            "difficultyepoch",
-            "monthindex",
-            "quarterindex",
-            "semesterindex",
-            "weekindex",
-            "yearindex",
-        ]
+        return list(_i2)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "dateindex":
-            return self.by.dateindex()
-        elif index == "decadeindex":
-            return self.by.decadeindex()
-        elif index == "difficultyepoch":
-            return self.by.difficultyepoch()
-        elif index == "monthindex":
-            return self.by.monthindex()
-        elif index == "quarterindex":
-            return self.by.quarterindex()
-        elif index == "semesterindex":
-            return self.by.semesterindex()
-        elif index == "weekindex":
-            return self.by.weekindex()
-        elif index == "yearindex":
-            return self.by.yearindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i2 else None
 
 
 class _MetricPattern3By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def dateindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "dateindex")
+        return _ep(self._c, self._n, "dateindex")
 
     def decadeindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "decadeindex")
+        return _ep(self._c, self._n, "decadeindex")
 
     def height(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "height")
+        return _ep(self._c, self._n, "height")
 
     def monthindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "monthindex")
+        return _ep(self._c, self._n, "monthindex")
 
     def quarterindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "quarterindex")
+        return _ep(self._c, self._n, "quarterindex")
 
     def semesterindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "semesterindex")
+        return _ep(self._c, self._n, "semesterindex")
 
     def weekindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "weekindex")
+        return _ep(self._c, self._n, "weekindex")
 
     def yearindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "yearindex")
+        return _ep(self._c, self._n, "yearindex")
 
 
 class MetricPattern3(Generic[T]):
-    """Index accessor for metrics with 8 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern3By[T] = _MetricPattern3By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern3By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return [
-            "dateindex",
-            "decadeindex",
-            "height",
-            "monthindex",
-            "quarterindex",
-            "semesterindex",
-            "weekindex",
-            "yearindex",
-        ]
+        return list(_i3)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "dateindex":
-            return self.by.dateindex()
-        elif index == "decadeindex":
-            return self.by.decadeindex()
-        elif index == "height":
-            return self.by.height()
-        elif index == "monthindex":
-            return self.by.monthindex()
-        elif index == "quarterindex":
-            return self.by.quarterindex()
-        elif index == "semesterindex":
-            return self.by.semesterindex()
-        elif index == "weekindex":
-            return self.by.weekindex()
-        elif index == "yearindex":
-            return self.by.yearindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i3 else None
 
 
 class _MetricPattern4By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def dateindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "dateindex")
+        return _ep(self._c, self._n, "dateindex")
 
     def decadeindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "decadeindex")
+        return _ep(self._c, self._n, "decadeindex")
 
     def monthindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "monthindex")
+        return _ep(self._c, self._n, "monthindex")
 
     def quarterindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "quarterindex")
+        return _ep(self._c, self._n, "quarterindex")
 
     def semesterindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "semesterindex")
+        return _ep(self._c, self._n, "semesterindex")
 
     def weekindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "weekindex")
+        return _ep(self._c, self._n, "weekindex")
 
     def yearindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "yearindex")
+        return _ep(self._c, self._n, "yearindex")
 
 
 class MetricPattern4(Generic[T]):
-    """Index accessor for metrics with 7 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern4By[T] = _MetricPattern4By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern4By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return [
-            "dateindex",
-            "decadeindex",
-            "monthindex",
-            "quarterindex",
-            "semesterindex",
-            "weekindex",
-            "yearindex",
-        ]
+        return list(_i4)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "dateindex":
-            return self.by.dateindex()
-        elif index == "decadeindex":
-            return self.by.decadeindex()
-        elif index == "monthindex":
-            return self.by.monthindex()
-        elif index == "quarterindex":
-            return self.by.quarterindex()
-        elif index == "semesterindex":
-            return self.by.semesterindex()
-        elif index == "weekindex":
-            return self.by.weekindex()
-        elif index == "yearindex":
-            return self.by.yearindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i4 else None
 
 
 class _MetricPattern5By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def dateindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "dateindex")
+        return _ep(self._c, self._n, "dateindex")
 
     def height(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "height")
+        return _ep(self._c, self._n, "height")
 
 
 class MetricPattern5(Generic[T]):
-    """Index accessor for metrics with 2 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern5By[T] = _MetricPattern5By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern5By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["dateindex", "height"]
+        return list(_i5)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "dateindex":
-            return self.by.dateindex()
-        elif index == "height":
-            return self.by.height()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i5 else None
 
 
 class _MetricPattern6By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def dateindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "dateindex")
+        return _ep(self._c, self._n, "dateindex")
 
 
 class MetricPattern6(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern6By[T] = _MetricPattern6By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern6By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["dateindex"]
+        return list(_i6)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "dateindex":
-            return self.by.dateindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i6 else None
 
 
 class _MetricPattern7By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def decadeindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "decadeindex")
+        return _ep(self._c, self._n, "decadeindex")
 
 
 class MetricPattern7(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern7By[T] = _MetricPattern7By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern7By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["decadeindex"]
+        return list(_i7)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "decadeindex":
-            return self.by.decadeindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i7 else None
 
 
 class _MetricPattern8By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def difficultyepoch(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "difficultyepoch")
+        return _ep(self._c, self._n, "difficultyepoch")
 
 
 class MetricPattern8(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern8By[T] = _MetricPattern8By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern8By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["difficultyepoch"]
+        return list(_i8)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "difficultyepoch":
-            return self.by.difficultyepoch()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i8 else None
 
 
 class _MetricPattern9By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def emptyoutputindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "emptyoutputindex")
+        return _ep(self._c, self._n, "emptyoutputindex")
 
 
 class MetricPattern9(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern9By[T] = _MetricPattern9By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern9By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["emptyoutputindex"]
+        return list(_i9)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "emptyoutputindex":
-            return self.by.emptyoutputindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i9 else None
 
 
 class _MetricPattern10By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def halvingepoch(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "halvingepoch")
+        return _ep(self._c, self._n, "halvingepoch")
 
 
 class MetricPattern10(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern10By[T] = _MetricPattern10By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern10By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["halvingepoch"]
+        return list(_i10)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "halvingepoch":
-            return self.by.halvingepoch()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i10 else None
 
 
 class _MetricPattern11By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def height(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "height")
+        return _ep(self._c, self._n, "height")
 
 
 class MetricPattern11(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern11By[T] = _MetricPattern11By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern11By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["height"]
+        return list(_i11)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "height":
-            return self.by.height()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i11 else None
 
 
 class _MetricPattern12By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def txinindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "txinindex")
+        return _ep(self._c, self._n, "txinindex")
 
 
 class MetricPattern12(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern12By[T] = _MetricPattern12By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern12By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["txinindex"]
+        return list(_i12)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "txinindex":
-            return self.by.txinindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i12 else None
 
 
 class _MetricPattern13By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def monthindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "monthindex")
+        return _ep(self._c, self._n, "monthindex")
 
 
 class MetricPattern13(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern13By[T] = _MetricPattern13By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern13By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["monthindex"]
+        return list(_i13)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "monthindex":
-            return self.by.monthindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i13 else None
 
 
 class _MetricPattern14By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def opreturnindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "opreturnindex")
+        return _ep(self._c, self._n, "opreturnindex")
 
 
 class MetricPattern14(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern14By[T] = _MetricPattern14By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern14By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["opreturnindex"]
+        return list(_i14)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "opreturnindex":
-            return self.by.opreturnindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i14 else None
 
 
 class _MetricPattern15By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def txoutindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "txoutindex")
+        return _ep(self._c, self._n, "txoutindex")
 
 
 class MetricPattern15(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern15By[T] = _MetricPattern15By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern15By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["txoutindex"]
+        return list(_i15)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "txoutindex":
-            return self.by.txoutindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i15 else None
 
 
 class _MetricPattern16By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def p2aaddressindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "p2aaddressindex")
+        return _ep(self._c, self._n, "p2aaddressindex")
 
 
 class MetricPattern16(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern16By[T] = _MetricPattern16By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern16By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["p2aaddressindex"]
+        return list(_i16)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "p2aaddressindex":
-            return self.by.p2aaddressindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i16 else None
 
 
 class _MetricPattern17By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def p2msoutputindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "p2msoutputindex")
+        return _ep(self._c, self._n, "p2msoutputindex")
 
 
 class MetricPattern17(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern17By[T] = _MetricPattern17By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern17By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["p2msoutputindex"]
+        return list(_i17)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "p2msoutputindex":
-            return self.by.p2msoutputindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i17 else None
 
 
 class _MetricPattern18By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def p2pk33addressindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "p2pk33addressindex")
+        return _ep(self._c, self._n, "p2pk33addressindex")
 
 
 class MetricPattern18(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern18By[T] = _MetricPattern18By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern18By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["p2pk33addressindex"]
+        return list(_i18)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "p2pk33addressindex":
-            return self.by.p2pk33addressindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i18 else None
 
 
 class _MetricPattern19By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def p2pk65addressindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "p2pk65addressindex")
+        return _ep(self._c, self._n, "p2pk65addressindex")
 
 
 class MetricPattern19(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern19By[T] = _MetricPattern19By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern19By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["p2pk65addressindex"]
+        return list(_i19)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "p2pk65addressindex":
-            return self.by.p2pk65addressindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i19 else None
 
 
 class _MetricPattern20By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def p2pkhaddressindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "p2pkhaddressindex")
+        return _ep(self._c, self._n, "p2pkhaddressindex")
 
 
 class MetricPattern20(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern20By[T] = _MetricPattern20By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern20By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["p2pkhaddressindex"]
+        return list(_i20)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "p2pkhaddressindex":
-            return self.by.p2pkhaddressindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i20 else None
 
 
 class _MetricPattern21By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def p2shaddressindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "p2shaddressindex")
+        return _ep(self._c, self._n, "p2shaddressindex")
 
 
 class MetricPattern21(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern21By[T] = _MetricPattern21By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern21By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["p2shaddressindex"]
+        return list(_i21)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "p2shaddressindex":
-            return self.by.p2shaddressindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i21 else None
 
 
 class _MetricPattern22By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def p2traddressindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "p2traddressindex")
+        return _ep(self._c, self._n, "p2traddressindex")
 
 
 class MetricPattern22(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern22By[T] = _MetricPattern22By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern22By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["p2traddressindex"]
+        return list(_i22)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "p2traddressindex":
-            return self.by.p2traddressindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i22 else None
 
 
 class _MetricPattern23By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def p2wpkhaddressindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "p2wpkhaddressindex")
+        return _ep(self._c, self._n, "p2wpkhaddressindex")
 
 
 class MetricPattern23(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern23By[T] = _MetricPattern23By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern23By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["p2wpkhaddressindex"]
+        return list(_i23)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "p2wpkhaddressindex":
-            return self.by.p2wpkhaddressindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i23 else None
 
 
 class _MetricPattern24By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def p2wshaddressindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "p2wshaddressindex")
+        return _ep(self._c, self._n, "p2wshaddressindex")
 
 
 class MetricPattern24(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern24By[T] = _MetricPattern24By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern24By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["p2wshaddressindex"]
+        return list(_i24)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "p2wshaddressindex":
-            return self.by.p2wshaddressindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i24 else None
 
 
 class _MetricPattern25By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def quarterindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "quarterindex")
+        return _ep(self._c, self._n, "quarterindex")
 
 
 class MetricPattern25(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern25By[T] = _MetricPattern25By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern25By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["quarterindex"]
+        return list(_i25)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "quarterindex":
-            return self.by.quarterindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i25 else None
 
 
 class _MetricPattern26By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def semesterindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "semesterindex")
+        return _ep(self._c, self._n, "semesterindex")
 
 
 class MetricPattern26(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern26By[T] = _MetricPattern26By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern26By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["semesterindex"]
+        return list(_i26)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "semesterindex":
-            return self.by.semesterindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i26 else None
 
 
 class _MetricPattern27By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def txindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "txindex")
+        return _ep(self._c, self._n, "txindex")
 
 
 class MetricPattern27(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern27By[T] = _MetricPattern27By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern27By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["txindex"]
+        return list(_i27)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "txindex":
-            return self.by.txindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i27 else None
 
 
 class _MetricPattern28By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def unknownoutputindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "unknownoutputindex")
+        return _ep(self._c, self._n, "unknownoutputindex")
 
 
 class MetricPattern28(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern28By[T] = _MetricPattern28By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern28By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["unknownoutputindex"]
+        return list(_i28)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "unknownoutputindex":
-            return self.by.unknownoutputindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i28 else None
 
 
 class _MetricPattern29By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def weekindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "weekindex")
+        return _ep(self._c, self._n, "weekindex")
 
 
 class MetricPattern29(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern29By[T] = _MetricPattern29By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern29By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["weekindex"]
+        return list(_i29)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "weekindex":
-            return self.by.weekindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i29 else None
 
 
 class _MetricPattern30By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def yearindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "yearindex")
+        return _ep(self._c, self._n, "yearindex")
 
 
 class MetricPattern30(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern30By[T] = _MetricPattern30By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern30By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["yearindex"]
+        return list(_i30)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "yearindex":
-            return self.by.yearindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i30 else None
 
 
 class _MetricPattern31By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def loadedaddressindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "loadedaddressindex")
+        return _ep(self._c, self._n, "loadedaddressindex")
 
 
 class MetricPattern31(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern31By[T] = _MetricPattern31By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern31By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["loadedaddressindex"]
+        return list(_i31)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "loadedaddressindex":
-            return self.by.loadedaddressindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i31 else None
 
 
 class _MetricPattern32By(Generic[T]):
-    """Index endpoint methods container."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
+    def __init__(self, c: BrkClientBase, n: str):
+        self._c, self._n = c, n
 
     def emptyaddressindex(self) -> MetricEndpointBuilder[T]:
-        return MetricEndpointBuilder(self._client, self._name, "emptyaddressindex")
+        return _ep(self._c, self._n, "emptyaddressindex")
 
 
 class MetricPattern32(Generic[T]):
-    """Index accessor for metrics with 1 indexes."""
-
-    def __init__(self, client: BrkClientBase, name: str):
-        self._client = client
-        self._name = name
-        self.by: _MetricPattern32By[T] = _MetricPattern32By(client, name)
+    def __init__(self, c: BrkClientBase, n: str):
+        self._n, self.by = n, _MetricPattern32By(c, n)
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
-        return self._name
+        return self._n
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes."""
-        return ["emptyaddressindex"]
+        return list(_i32)
 
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
-        """Get an endpoint builder for a specific index, if supported."""
-        if index == "emptyaddressindex":
-            return self.by.emptyaddressindex()
-        return None
+        return _ep(self.by._c, self._n, index) if index in _i32 else None
 
 
 # Reusable structural pattern classes
@@ -3423,32 +3020,6 @@ class Price111dSmaPattern:
         self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, _m(acc, "ratio"))
 
 
-class PercentilesPattern:
-    """Pattern struct for repeated tree structure."""
-
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.pct05: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct05"))
-        self.pct10: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct10"))
-        self.pct15: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct15"))
-        self.pct20: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct20"))
-        self.pct25: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct25"))
-        self.pct30: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct30"))
-        self.pct35: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct35"))
-        self.pct40: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct40"))
-        self.pct45: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct45"))
-        self.pct50: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct50"))
-        self.pct55: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct55"))
-        self.pct60: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct60"))
-        self.pct65: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct65"))
-        self.pct70: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct70"))
-        self.pct75: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct75"))
-        self.pct80: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct80"))
-        self.pct85: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct85"))
-        self.pct90: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct90"))
-        self.pct95: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct95"))
-
-
 class ActivePriceRatioPattern:
     """Pattern struct for repeated tree structure."""
 
@@ -3501,6 +3072,32 @@ class ActivePriceRatioPattern:
             client, _m(acc, "pct99_usd")
         )
         self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, acc)
+
+
+class PercentilesPattern:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.pct05: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct05"))
+        self.pct10: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct10"))
+        self.pct15: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct15"))
+        self.pct20: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct20"))
+        self.pct25: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct25"))
+        self.pct30: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct30"))
+        self.pct35: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct35"))
+        self.pct40: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct40"))
+        self.pct45: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct45"))
+        self.pct50: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct50"))
+        self.pct55: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct55"))
+        self.pct60: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct60"))
+        self.pct65: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct65"))
+        self.pct70: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct70"))
+        self.pct75: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct75"))
+        self.pct80: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct80"))
+        self.pct85: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct85"))
+        self.pct90: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct90"))
+        self.pct95: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "pct95"))
 
 
 class RelativePattern5:
@@ -3724,53 +3321,38 @@ class ClassAveragePricePattern(Generic[T]):
 
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self._2015: MetricPattern4[T] = MetricPattern4(client, _m(acc, "2015_returns"))
-        self._2016: MetricPattern4[T] = MetricPattern4(client, _m(acc, "2016_returns"))
-        self._2017: MetricPattern4[T] = MetricPattern4(client, _m(acc, "2017_returns"))
-        self._2018: MetricPattern4[T] = MetricPattern4(client, _m(acc, "2018_returns"))
-        self._2019: MetricPattern4[T] = MetricPattern4(client, _m(acc, "2019_returns"))
-        self._2020: MetricPattern4[T] = MetricPattern4(client, _m(acc, "2020_returns"))
-        self._2021: MetricPattern4[T] = MetricPattern4(client, _m(acc, "2021_returns"))
-        self._2022: MetricPattern4[T] = MetricPattern4(client, _m(acc, "2022_returns"))
-        self._2023: MetricPattern4[T] = MetricPattern4(client, _m(acc, "2023_returns"))
-        self._2024: MetricPattern4[T] = MetricPattern4(client, _m(acc, "2024_returns"))
-        self._2025: MetricPattern4[T] = MetricPattern4(client, _m(acc, "2025_returns"))
-
-
-class RelativePattern:
-    """Pattern struct for repeated tree structure."""
-
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.neg_unrealized_loss_rel_to_market_cap: MetricPattern1[StoredF32] = (
-            MetricPattern1(client, _m(acc, "neg_unrealized_loss_rel_to_market_cap"))
+        self._2015: MetricPattern4[T] = MetricPattern4(
+            client, _m(acc, "2015_average_price")
         )
-        self.net_unrealized_pnl_rel_to_market_cap: MetricPattern1[StoredF32] = (
-            MetricPattern1(client, _m(acc, "net_unrealized_pnl_rel_to_market_cap"))
+        self._2016: MetricPattern4[T] = MetricPattern4(
+            client, _m(acc, "2016_average_price")
         )
-        self.nupl: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, "nupl"))
-        self.supply_in_loss_rel_to_circulating_supply: MetricPattern1[StoredF64] = (
-            MetricPattern1(client, _m(acc, "supply_in_loss_rel_to_circulating_supply"))
+        self._2017: MetricPattern4[T] = MetricPattern4(
+            client, _m(acc, "2017_average_price")
         )
-        self.supply_in_loss_rel_to_own_supply: MetricPattern1[StoredF64] = (
-            MetricPattern1(client, _m(acc, "supply_in_loss_rel_to_own_supply"))
+        self._2018: MetricPattern4[T] = MetricPattern4(
+            client, _m(acc, "2018_average_price")
         )
-        self.supply_in_profit_rel_to_circulating_supply: MetricPattern1[StoredF64] = (
-            MetricPattern1(
-                client, _m(acc, "supply_in_profit_rel_to_circulating_supply")
-            )
+        self._2019: MetricPattern4[T] = MetricPattern4(
+            client, _m(acc, "2019_average_price")
         )
-        self.supply_in_profit_rel_to_own_supply: MetricPattern1[StoredF64] = (
-            MetricPattern1(client, _m(acc, "supply_in_profit_rel_to_own_supply"))
+        self._2020: MetricPattern4[T] = MetricPattern4(
+            client, _m(acc, "2020_average_price")
         )
-        self.supply_rel_to_circulating_supply: MetricPattern4[StoredF64] = (
-            MetricPattern4(client, _m(acc, "supply_rel_to_circulating_supply"))
+        self._2021: MetricPattern4[T] = MetricPattern4(
+            client, _m(acc, "2021_average_price")
         )
-        self.unrealized_loss_rel_to_market_cap: MetricPattern1[StoredF32] = (
-            MetricPattern1(client, _m(acc, "unrealized_loss_rel_to_market_cap"))
+        self._2022: MetricPattern4[T] = MetricPattern4(
+            client, _m(acc, "2022_average_price")
         )
-        self.unrealized_profit_rel_to_market_cap: MetricPattern1[StoredF32] = (
-            MetricPattern1(client, _m(acc, "unrealized_profit_rel_to_market_cap"))
+        self._2023: MetricPattern4[T] = MetricPattern4(
+            client, _m(acc, "2023_average_price")
+        )
+        self._2024: MetricPattern4[T] = MetricPattern4(
+            client, _m(acc, "2024_average_price")
+        )
+        self._2025: MetricPattern4[T] = MetricPattern4(
+            client, _m(acc, "2025_average_price")
         )
 
 
@@ -3816,6 +3398,43 @@ class RelativePattern2:
             StoredF32
         ] = MetricPattern1(
             client, _m(acc, "unrealized_profit_rel_to_own_total_unrealized_pnl")
+        )
+
+
+class RelativePattern:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.neg_unrealized_loss_rel_to_market_cap: MetricPattern1[StoredF32] = (
+            MetricPattern1(client, _m(acc, "neg_unrealized_loss_rel_to_market_cap"))
+        )
+        self.net_unrealized_pnl_rel_to_market_cap: MetricPattern1[StoredF32] = (
+            MetricPattern1(client, _m(acc, "net_unrealized_pnl_rel_to_market_cap"))
+        )
+        self.nupl: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, "nupl"))
+        self.supply_in_loss_rel_to_circulating_supply: MetricPattern1[StoredF64] = (
+            MetricPattern1(client, _m(acc, "supply_in_loss_rel_to_circulating_supply"))
+        )
+        self.supply_in_loss_rel_to_own_supply: MetricPattern1[StoredF64] = (
+            MetricPattern1(client, _m(acc, "supply_in_loss_rel_to_own_supply"))
+        )
+        self.supply_in_profit_rel_to_circulating_supply: MetricPattern1[StoredF64] = (
+            MetricPattern1(
+                client, _m(acc, "supply_in_profit_rel_to_circulating_supply")
+            )
+        )
+        self.supply_in_profit_rel_to_own_supply: MetricPattern1[StoredF64] = (
+            MetricPattern1(client, _m(acc, "supply_in_profit_rel_to_own_supply"))
+        )
+        self.supply_rel_to_circulating_supply: MetricPattern4[StoredF64] = (
+            MetricPattern4(client, _m(acc, "supply_rel_to_circulating_supply"))
+        )
+        self.unrealized_loss_rel_to_market_cap: MetricPattern1[StoredF32] = (
+            MetricPattern1(client, _m(acc, "unrealized_loss_rel_to_market_cap"))
+        )
+        self.unrealized_profit_rel_to_market_cap: MetricPattern1[StoredF32] = (
+            MetricPattern1(client, _m(acc, "unrealized_profit_rel_to_market_cap"))
         )
 
 
@@ -3909,20 +3528,6 @@ class _0satsPattern:
         self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
 
 
-class _100btcPattern:
-    """Pattern struct for repeated tree structure."""
-
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.activity: ActivityPattern2 = ActivityPattern2(client, acc)
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, acc)
-        self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, "utxo_count"))
-        self.realized: RealizedPattern = RealizedPattern(client, acc)
-        self.relative: RelativePattern = RelativePattern(client, acc)
-        self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, "supply"))
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
-
-
 class UnrealizedPattern:
     """Pattern struct for repeated tree structure."""
 
@@ -3951,6 +3556,20 @@ class UnrealizedPattern:
         )
 
 
+class _10yTo12yPattern:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.activity: ActivityPattern2 = ActivityPattern2(client, acc)
+        self.cost_basis: CostBasisPattern2 = CostBasisPattern2(client, acc)
+        self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, "utxo_count"))
+        self.realized: RealizedPattern2 = RealizedPattern2(client, acc)
+        self.relative: RelativePattern2 = RelativePattern2(client, acc)
+        self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, "supply"))
+        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
+
+
 class _10yPattern:
     """Pattern struct for repeated tree structure."""
 
@@ -3965,7 +3584,7 @@ class _10yPattern:
         self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
 
 
-class _0satsPattern2:
+class _100btcPattern:
     """Pattern struct for repeated tree structure."""
 
     def __init__(self, client: BrkClientBase, acc: str):
@@ -3974,21 +3593,7 @@ class _0satsPattern2:
         self.cost_basis: CostBasisPattern = CostBasisPattern(client, acc)
         self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, "utxo_count"))
         self.realized: RealizedPattern = RealizedPattern(client, acc)
-        self.relative: RelativePattern4 = RelativePattern4(client, _m(acc, "supply_in"))
-        self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, "supply"))
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
-
-
-class _10yTo12yPattern:
-    """Pattern struct for repeated tree structure."""
-
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.activity: ActivityPattern2 = ActivityPattern2(client, acc)
-        self.cost_basis: CostBasisPattern2 = CostBasisPattern2(client, acc)
-        self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, "utxo_count"))
-        self.realized: RealizedPattern2 = RealizedPattern2(client, acc)
-        self.relative: RelativePattern2 = RelativePattern2(client, acc)
+        self.relative: RelativePattern = RelativePattern(client, acc)
         self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, "supply"))
         self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
 
@@ -4005,6 +3610,20 @@ class PeriodCagrPattern:
         self._5y: MetricPattern4[StoredF32] = MetricPattern4(client, _p("5y", acc))
         self._6y: MetricPattern4[StoredF32] = MetricPattern4(client, _p("6y", acc))
         self._8y: MetricPattern4[StoredF32] = MetricPattern4(client, _p("8y", acc))
+
+
+class _0satsPattern2:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.activity: ActivityPattern2 = ActivityPattern2(client, acc)
+        self.cost_basis: CostBasisPattern = CostBasisPattern(client, acc)
+        self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, "utxo_count"))
+        self.realized: RealizedPattern = RealizedPattern(client, acc)
+        self.relative: RelativePattern4 = RelativePattern4(client, _m(acc, "supply_in"))
+        self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, "supply"))
+        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
 
 
 class ActivityPattern2:
@@ -4040,6 +3659,40 @@ class SplitPattern2(Generic[T]):
         self.open: MetricPattern1[T] = MetricPattern1(client, _m(acc, "open"))
 
 
+class SegwitAdoptionPattern:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.base: MetricPattern11[StoredF32] = MetricPattern11(client, acc)
+        self.cumulative: MetricPattern2[StoredF32] = MetricPattern2(
+            client, _m(acc, "cumulative")
+        )
+        self.sum: MetricPattern2[StoredF32] = MetricPattern2(client, _m(acc, "sum"))
+
+
+class UnclaimedRewardsPattern:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.bitcoin: BitcoinPattern2[Bitcoin] = BitcoinPattern2(client, _m(acc, "btc"))
+        self.dollars: BlockCountPattern[Dollars] = BlockCountPattern(
+            client, _m(acc, "usd")
+        )
+        self.sats: BlockCountPattern[Sats] = BlockCountPattern(client, acc)
+
+
+class _2015Pattern:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.bitcoin: MetricPattern4[Bitcoin] = MetricPattern4(client, _m(acc, "btc"))
+        self.dollars: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "usd"))
+        self.sats: MetricPattern4[Sats] = MetricPattern4(client, acc)
+
+
 class CostBasisPattern2:
     """Pattern struct for repeated tree structure."""
 
@@ -4056,48 +3709,6 @@ class CostBasisPattern2:
         )
 
 
-class CoinbasePattern:
-    """Pattern struct for repeated tree structure."""
-
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.bitcoin: BitcoinPattern = BitcoinPattern(client, _m(acc, "btc"))
-        self.dollars: DollarsPattern[Dollars] = DollarsPattern(client, _m(acc, "usd"))
-        self.sats: DollarsPattern[Sats] = DollarsPattern(client, acc)
-
-
-class _2015Pattern:
-    """Pattern struct for repeated tree structure."""
-
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.bitcoin: MetricPattern4[Bitcoin] = MetricPattern4(client, _m(acc, "btc"))
-        self.dollars: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, "usd"))
-        self.sats: MetricPattern4[Sats] = MetricPattern4(client, acc)
-
-
-class ActiveSupplyPattern:
-    """Pattern struct for repeated tree structure."""
-
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.bitcoin: MetricPattern1[Bitcoin] = MetricPattern1(client, _m(acc, "btc"))
-        self.dollars: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, "usd"))
-        self.sats: MetricPattern1[Sats] = MetricPattern1(client, acc)
-
-
-class SegwitAdoptionPattern:
-    """Pattern struct for repeated tree structure."""
-
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.base: MetricPattern11[StoredF32] = MetricPattern11(client, acc)
-        self.cumulative: MetricPattern2[StoredF32] = MetricPattern2(
-            client, _m(acc, "cumulative")
-        )
-        self.sum: MetricPattern2[StoredF32] = MetricPattern2(client, _m(acc, "sum"))
-
-
 class CoinbasePattern2:
     """Pattern struct for repeated tree structure."""
 
@@ -4112,36 +3723,24 @@ class CoinbasePattern2:
         self.sats: BlockCountPattern[Sats] = BlockCountPattern(client, acc)
 
 
-class UnclaimedRewardsPattern:
+class ActiveSupplyPattern:
     """Pattern struct for repeated tree structure."""
 
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.bitcoin: BitcoinPattern2[Bitcoin] = BitcoinPattern2(client, _m(acc, "btc"))
-        self.dollars: BlockCountPattern[Dollars] = BlockCountPattern(
-            client, _m(acc, "usd")
-        )
-        self.sats: BlockCountPattern[Sats] = BlockCountPattern(client, acc)
+        self.bitcoin: MetricPattern1[Bitcoin] = MetricPattern1(client, _m(acc, "btc"))
+        self.dollars: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, "usd"))
+        self.sats: MetricPattern1[Sats] = MetricPattern1(client, acc)
 
 
-class _1dReturns1mSdPattern:
+class CoinbasePattern:
     """Pattern struct for repeated tree structure."""
 
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.sd: MetricPattern4[StoredF32] = MetricPattern4(client, _m(acc, "sd"))
-        self.sma: MetricPattern4[StoredF32] = MetricPattern4(client, _m(acc, "sma"))
-
-
-class SupplyPattern2:
-    """Pattern struct for repeated tree structure."""
-
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.halved: ActiveSupplyPattern = ActiveSupplyPattern(
-            client, _m(acc, "halved")
-        )
-        self.total: ActiveSupplyPattern = ActiveSupplyPattern(client, acc)
+        self.bitcoin: BitcoinPattern = BitcoinPattern(client, _m(acc, "btc"))
+        self.dollars: DollarsPattern[Dollars] = DollarsPattern(client, _m(acc, "usd"))
+        self.sats: DollarsPattern[Sats] = DollarsPattern(client, acc)
 
 
 class RelativePattern4:
@@ -4157,6 +3756,15 @@ class RelativePattern4:
         )
 
 
+class _1dReturns1mSdPattern:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.sd: MetricPattern4[StoredF32] = MetricPattern4(client, _m(acc, "sd"))
+        self.sma: MetricPattern4[StoredF32] = MetricPattern4(client, _m(acc, "sma"))
+
+
 class CostBasisPattern:
     """Pattern struct for repeated tree structure."""
 
@@ -4168,6 +3776,26 @@ class CostBasisPattern:
         self.min: MetricPattern1[Dollars] = MetricPattern1(
             client, _m(acc, "min_cost_basis")
         )
+
+
+class SupplyPattern2:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.halved: ActiveSupplyPattern = ActiveSupplyPattern(
+            client, _m(acc, "halved")
+        )
+        self.total: ActiveSupplyPattern = ActiveSupplyPattern(client, acc)
+
+
+class SatsPattern(Generic[T]):
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.ohlc: MetricPattern1[T] = MetricPattern1(client, _m(acc, "ohlc"))
+        self.split: SplitPattern2[T] = SplitPattern2(client, acc)
 
 
 class BitcoinPattern2(Generic[T]):
@@ -4190,15 +3818,6 @@ class BlockCountPattern(Generic[T]):
             client, _m(acc, "cumulative")
         )
         self.sum: MetricPattern1[T] = MetricPattern1(client, acc)
-
-
-class SatsPattern(Generic[T]):
-    """Pattern struct for repeated tree structure."""
-
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.ohlc: MetricPattern1[T] = MetricPattern1(client, _m(acc, "ohlc_sats"))
-        self.split: SplitPattern2[T] = SplitPattern2(client, _m(acc, "sats"))
 
 
 class RealizedPriceExtraPattern:
@@ -10706,42 +10325,42 @@ class MetricsTree_Market_Ath:
         )
 
 
-class MetricsTree_Market_Dca_ClassAveragePrice:
+class MetricsTree_Market_Dca_ClassReturns:
     """Metrics tree node."""
 
     def __init__(self, client: BrkClientBase, base_path: str = ""):
-        self._2015: MetricPattern4[Dollars] = MetricPattern4(
-            client, "dca_class_2015_average_price"
+        self._2015: MetricPattern4[StoredF32] = MetricPattern4(
+            client, "dca_class_2015_returns"
         )
-        self._2016: MetricPattern4[Dollars] = MetricPattern4(
-            client, "dca_class_2016_average_price"
+        self._2016: MetricPattern4[StoredF32] = MetricPattern4(
+            client, "dca_class_2016_returns"
         )
-        self._2017: MetricPattern4[Dollars] = MetricPattern4(
-            client, "dca_class_2017_average_price"
+        self._2017: MetricPattern4[StoredF32] = MetricPattern4(
+            client, "dca_class_2017_returns"
         )
-        self._2018: MetricPattern4[Dollars] = MetricPattern4(
-            client, "dca_class_2018_average_price"
+        self._2018: MetricPattern4[StoredF32] = MetricPattern4(
+            client, "dca_class_2018_returns"
         )
-        self._2019: MetricPattern4[Dollars] = MetricPattern4(
-            client, "dca_class_2019_average_price"
+        self._2019: MetricPattern4[StoredF32] = MetricPattern4(
+            client, "dca_class_2019_returns"
         )
-        self._2020: MetricPattern4[Dollars] = MetricPattern4(
-            client, "dca_class_2020_average_price"
+        self._2020: MetricPattern4[StoredF32] = MetricPattern4(
+            client, "dca_class_2020_returns"
         )
-        self._2021: MetricPattern4[Dollars] = MetricPattern4(
-            client, "dca_class_2021_average_price"
+        self._2021: MetricPattern4[StoredF32] = MetricPattern4(
+            client, "dca_class_2021_returns"
         )
-        self._2022: MetricPattern4[Dollars] = MetricPattern4(
-            client, "dca_class_2022_average_price"
+        self._2022: MetricPattern4[StoredF32] = MetricPattern4(
+            client, "dca_class_2022_returns"
         )
-        self._2023: MetricPattern4[Dollars] = MetricPattern4(
-            client, "dca_class_2023_average_price"
+        self._2023: MetricPattern4[StoredF32] = MetricPattern4(
+            client, "dca_class_2023_returns"
         )
-        self._2024: MetricPattern4[Dollars] = MetricPattern4(
-            client, "dca_class_2024_average_price"
+        self._2024: MetricPattern4[StoredF32] = MetricPattern4(
+            client, "dca_class_2024_returns"
         )
-        self._2025: MetricPattern4[Dollars] = MetricPattern4(
-            client, "dca_class_2025_average_price"
+        self._2025: MetricPattern4[StoredF32] = MetricPattern4(
+            client, "dca_class_2025_returns"
         )
 
 
@@ -10766,11 +10385,11 @@ class MetricsTree_Market_Dca:
     """Metrics tree node."""
 
     def __init__(self, client: BrkClientBase, base_path: str = ""):
-        self.class_average_price: MetricsTree_Market_Dca_ClassAveragePrice = (
-            MetricsTree_Market_Dca_ClassAveragePrice(client)
-        )
-        self.class_returns: ClassAveragePricePattern[StoredF32] = (
+        self.class_average_price: ClassAveragePricePattern[Dollars] = (
             ClassAveragePricePattern(client, "dca_class")
+        )
+        self.class_returns: MetricsTree_Market_Dca_ClassReturns = (
+            MetricsTree_Market_Dca_ClassReturns(client)
         )
         self.class_stack: MetricsTree_Market_Dca_ClassStack = (
             MetricsTree_Market_Dca_ClassStack(client)
