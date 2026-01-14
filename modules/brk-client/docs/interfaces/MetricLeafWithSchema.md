@@ -6,7 +6,7 @@
 
 # Interface: MetricLeafWithSchema
 
-Defined in: [Developer/brk/modules/brk-client/index.js:244](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L244)
+Defined in: [Developer/brk/modules/brk-client/index.js:382](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L382)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:244](https://github.com/b
 
 > **indexes**: [`Index`](../type-aliases/Index.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:245](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L245)
+Defined in: [Developer/brk/modules/brk-client/index.js:385](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L385)
+
+Available indexes for this metric
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:245](https://github.com/b
 
 > **kind**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:246](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L246)
+Defined in: [Developer/brk/modules/brk-client/index.js:384](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L384)
+
+The Rust type (e.g., "Sats", "StoredF64")
 
 ***
 
@@ -30,7 +34,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:246](https://github.com/b
 
 > **name**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:247](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L247)
+Defined in: [Developer/brk/modules/brk-client/index.js:383](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L383)
+
+The metric name/identifier
 
 ***
 
@@ -38,4 +44,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:247](https://github.com/b
 
 > **type**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:248](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L248)
+Defined in: [Developer/brk/modules/brk-client/index.js:386](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L386)
+
+JSON Schema type (e.g., "integer", "number", "string", "boolean", "array", "object")

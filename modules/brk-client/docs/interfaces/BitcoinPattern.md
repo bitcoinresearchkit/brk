@@ -4,28 +4,94 @@
 
 [brk-client](../globals.md) / BitcoinPattern
 
-# Interface: BitcoinPattern\<T\>
+# Interface: BitcoinPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3665](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L3665)
-
-## Type Parameters
-
-### T
-
-`T`
+Defined in: [Developer/brk/modules/brk-client/index.js:1958](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1958)
 
 ## Properties
 
+### average
+
+> **average**: [`MetricPattern2`](../type-aliases/MetricPattern2.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:1959](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1959)
+
+***
+
+### base
+
+> **base**: [`MetricPattern11`](../type-aliases/MetricPattern11.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:1960](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1960)
+
+***
+
 ### cumulative
 
-> **cumulative**: [`MetricPattern2`](../type-aliases/MetricPattern2.md)\<`T`\>
+> **cumulative**: [`MetricPattern2`](../type-aliases/MetricPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3666](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L3666)
+Defined in: [Developer/brk/modules/brk-client/index.js:1961](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1961)
+
+***
+
+### max
+
+> **max**: [`MetricPattern2`](../type-aliases/MetricPattern2.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:1962](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1962)
+
+***
+
+### median
+
+> **median**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:1963](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1963)
+
+***
+
+### min
+
+> **min**: [`MetricPattern2`](../type-aliases/MetricPattern2.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:1964](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1964)
+
+***
+
+### pct10
+
+> **pct10**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:1965](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1965)
+
+***
+
+### pct25
+
+> **pct25**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:1966](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1966)
+
+***
+
+### pct75
+
+> **pct75**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:1967](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1967)
+
+***
+
+### pct90
+
+> **pct90**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:1968](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1968)
 
 ***
 
 ### sum
 
-> **sum**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`T`\>
+> **sum**: [`MetricPattern2`](../type-aliases/MetricPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3667](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L3667)
+Defined in: [Developer/brk/modules/brk-client/index.js:1969](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1969)

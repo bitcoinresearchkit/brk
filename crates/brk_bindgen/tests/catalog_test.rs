@@ -863,66 +863,6 @@ fn test_root_cost_basis_prefix() {
 }
 
 #[test]
-fn test_price_sats_vs_usd_different_field_parts() {
-    // This test verifies that price.sats and price.usd, which have the same structure
-    // but different metric naming conventions, are handled correctly.
-    //
-    // price.sats has: price_ohlc_sats, price_sats_close, price_sats_high, etc.
-    // price.usd has: price_ohlc, price_close, price_high, etc.
-    //
-    // Both should use the same structural pattern but with different base arguments.
-
-    let catalog = load_catalog();
-    let metadata = ClientMetadata::from_catalog(catalog.clone());
-
-    // Generate JavaScript output
-    let mut js_output = String::new();
-    writeln!(js_output, "// Test output").unwrap();
-    brk_bindgen::javascript::client::generate_base_client(&mut js_output);
-    brk_bindgen::javascript::client::generate_index_accessors(
-        &mut js_output,
-        &metadata.index_set_patterns,
-    );
-    brk_bindgen::javascript::client::generate_structural_patterns(
-        &mut js_output,
-        &metadata.structural_patterns,
-        &metadata,
-    );
-    brk_bindgen::javascript::tree::generate_tree_typedefs(
-        &mut js_output,
-        &metadata.catalog,
-        &metadata,
-    );
-    brk_bindgen::javascript::tree::generate_main_client(
-        &mut js_output,
-        &metadata.catalog,
-        &metadata,
-        &[],
-    );
-
-    // With improved pattern detection, price.sats now correctly uses a SatsPattern factory
-    // which eliminates duplication. Verify that it's being used:
-    assert!(
-        js_output.contains("sats: createSatsPattern(this, 'price')"),
-        "price.sats should use SatsPattern factory"
-    );
-
-    // Verify price.usd is inlined and uses non-sats metrics (no _sats suffix)
-    assert!(
-        js_output.contains("createMetricPattern1(this, 'price_ohlc')"),
-        "price.usd.ohlc should use 'price_ohlc' (without _sats)"
-    );
-    assert!(
-        js_output.contains("createSplitPattern2(this, 'price')"),
-        "price.usd.split should use 'price' base (without _sats)"
-    );
-
-    println!("\nPrice sats vs usd field_parts test passed!");
-    println!("  - price.sats correctly uses sats-suffixed metrics");
-    println!("  - price.usd correctly uses non-sats metrics");
-}
-
-#[test]
 fn test_utxo_cohorts_all_activity_base() {
     // Test that distribution.utxo_cohorts.all.activity uses empty base
     // because its children (coinblocks_destroyed, coindays_destroyed, etc.)

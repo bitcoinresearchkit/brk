@@ -6,7 +6,7 @@
 
 # Interface: BlockInfo
 
-Defined in: [Developer/brk/modules/brk-client/index.js:78](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L78)
+Defined in: [Developer/brk/modules/brk-client/index.js:114](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L114)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:78](https://github.com/bi
 
 > **difficulty**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:79](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L79)
+Defined in: [Developer/brk/modules/brk-client/index.js:121](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L121)
+
+Block difficulty as a floating point number
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:79](https://github.com/bi
 
 > **height**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:80](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L80)
+Defined in: [Developer/brk/modules/brk-client/index.js:116](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L116)
+
+Block height
 
 ***
 
@@ -30,7 +34,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:80](https://github.com/bi
 
 > **id**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:81](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L81)
+Defined in: [Developer/brk/modules/brk-client/index.js:115](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L115)
+
+Block hash
 
 ***
 
@@ -38,7 +44,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:81](https://github.com/bi
 
 > **size**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:82](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L82)
+Defined in: [Developer/brk/modules/brk-client/index.js:118](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L118)
+
+Block size in bytes
 
 ***
 
@@ -46,7 +54,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:82](https://github.com/bi
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:83](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L83)
+Defined in: [Developer/brk/modules/brk-client/index.js:120](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L120)
+
+Block timestamp (Unix time)
 
 ***
 
@@ -54,7 +64,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:83](https://github.com/bi
 
 > **txCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:84](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L84)
+Defined in: [Developer/brk/modules/brk-client/index.js:117](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L117)
+
+Number of transactions in the block
 
 ***
 
@@ -62,4 +74,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:84](https://github.com/bi
 
 > **weight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:85](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L85)
+Defined in: [Developer/brk/modules/brk-client/index.js:119](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L119)
+
+Block weight in weight units

@@ -6,15 +6,17 @@
 
 # Interface: MetricSelectionLegacy
 
-Defined in: [Developer/brk/modules/brk-client/index.js:264](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L264)
+Defined in: [Developer/brk/modules/brk-client/index.js:406](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L406)
 
 ## Properties
 
-### count?
+### end?
 
-> `optional` **count**: `number` \| `null`
+> `optional` **end**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:265](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L265)
+Defined in: [Developer/brk/modules/brk-client/index.js:410](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L410)
+
+Exclusive ending index, if negative counts from end
 
 ***
 
@@ -22,15 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:265](https://github.com/b
 
 > `optional` **format**: [`Format`](../type-aliases/Format.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:266](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L266)
+Defined in: [Developer/brk/modules/brk-client/index.js:412](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L412)
 
-***
-
-### from?
-
-> `optional` **from**: `number` \| `null`
-
-Defined in: [Developer/brk/modules/brk-client/index.js:267](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L267)
+Format of the output
 
 ***
 
@@ -38,7 +34,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:267](https://github.com/b
 
 > **ids**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:268](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L268)
+Defined in: [Developer/brk/modules/brk-client/index.js:408](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L408)
 
 ***
 
@@ -46,12 +42,24 @@ Defined in: [Developer/brk/modules/brk-client/index.js:268](https://github.com/b
 
 > **index**: [`Index`](../type-aliases/Index.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:269](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L269)
+Defined in: [Developer/brk/modules/brk-client/index.js:407](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L407)
 
 ***
 
-### to?
+### limit?
 
-> `optional` **to**: `number` \| `null`
+> `optional` **limit**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:270](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L270)
+Defined in: [Developer/brk/modules/brk-client/index.js:411](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L411)
+
+Maximum number of values to return (ignored if `end` is set)
+
+***
+
+### start?
+
+> `optional` **start**: `number` \| `null`
+
+Defined in: [Developer/brk/modules/brk-client/index.js:409](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L409)
+
+Inclusive starting index, if negative counts from end

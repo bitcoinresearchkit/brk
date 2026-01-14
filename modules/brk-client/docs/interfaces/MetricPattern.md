@@ -6,7 +6,7 @@
 
 # Interface: MetricPattern\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:565](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L565)
+Defined in: [Developer/brk/modules/brk-client/index.js:888](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L888)
 
 ## Type Parameters
 
@@ -18,19 +18,19 @@ Defined in: [Developer/brk/modules/brk-client/index.js:565](https://github.com/b
 
 ### by
 
-> **by**: `Partial`\<`Record`\<[`Index`](../type-aliases/Index.md), [`MetricEndpoint`](MetricEndpoint.md)\<`T`\>\>\>
+> **by**: `Readonly`\<`Partial`\<`Record`\<[`Index`](../type-aliases/Index.md), [`MetricEndpointBuilder`](MetricEndpointBuilder.md)\<`T`\>\>\>\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:567](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L567)
+Defined in: [Developer/brk/modules/brk-client/index.js:890](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L890)
 
-Index endpoints (lazy getters)
+Index endpoints as lazy getters. Access via .by.dateindex or .by['dateindex']
 
 ***
 
 ### get()
 
-> **get**: (`index`) => [`MetricEndpoint`](MetricEndpoint.md)\<`T`\> \| `undefined`
+> **get**: (`index`) => [`MetricEndpointBuilder`](MetricEndpointBuilder.md)\<`T`\> \| `undefined`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:569](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L569)
+Defined in: [Developer/brk/modules/brk-client/index.js:892](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L892)
 
 Get an endpoint for a specific index
 
@@ -42,21 +42,21 @@ Get an endpoint for a specific index
 
 #### Returns
 
-[`MetricEndpoint`](MetricEndpoint.md)\<`T`\> \| `undefined`
+[`MetricEndpointBuilder`](MetricEndpointBuilder.md)\<`T`\> \| `undefined`
 
 ***
 
 ### indexes()
 
-> **indexes**: () => [`Index`](../type-aliases/Index.md)[]
+> **indexes**: () => readonly [`Index`](../type-aliases/Index.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:568](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L568)
+Defined in: [Developer/brk/modules/brk-client/index.js:891](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L891)
 
 Get the list of available indexes
 
 #### Returns
 
-[`Index`](../type-aliases/Index.md)[]
+readonly [`Index`](../type-aliases/Index.md)[]
 
 ***
 
@@ -64,6 +64,6 @@ Get the list of available indexes
 
 > **name**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:566](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L566)
+Defined in: [Developer/brk/modules/brk-client/index.js:889](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L889)
 
 The metric name

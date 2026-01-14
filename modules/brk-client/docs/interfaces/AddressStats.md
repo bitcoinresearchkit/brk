@@ -6,7 +6,7 @@
 
 # Interface: AddressStats
 
-Defined in: [Developer/brk/modules/brk-client/index.js:29](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L29)
+Defined in: [Developer/brk/modules/brk-client/index.js:43](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L43)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:29](https://github.com/bi
 
 > **address**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:30](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L30)
+Defined in: [Developer/brk/modules/brk-client/index.js:44](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L44)
+
+Bitcoin address string
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:30](https://github.com/bi
 
 > **chainStats**: [`AddressChainStats`](AddressChainStats.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:31](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L31)
+Defined in: [Developer/brk/modules/brk-client/index.js:45](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L45)
+
+Statistics for confirmed transactions on the blockchain
 
 ***
 
@@ -30,4 +34,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:31](https://github.com/bi
 
 > `optional` **mempoolStats**: [`AddressMempoolStats`](AddressMempoolStats.md) \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:32](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L32)
+Defined in: [Developer/brk/modules/brk-client/index.js:46](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L46)
+
+Statistics for unconfirmed transactions in the mempool

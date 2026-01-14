@@ -6,7 +6,7 @@
 
 # Interface: BlockHashTxIndex
 
-Defined in: [Developer/brk/modules/brk-client/index.js:73](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L73)
+Defined in: [Developer/brk/modules/brk-client/index.js:107](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L107)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:73](https://github.com/bi
 
 > **hash**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:74](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L74)
+Defined in: [Developer/brk/modules/brk-client/index.js:108](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L108)
+
+Bitcoin block hash
 
 ***
 
@@ -22,4 +24,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:74](https://github.com/bi
 
 > **index**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:75](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L75)
+Defined in: [Developer/brk/modules/brk-client/index.js:109](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L109)
+
+Transaction index within the block (0-based)

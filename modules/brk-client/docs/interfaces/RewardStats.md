@@ -6,7 +6,7 @@
 
 # Interface: RewardStats
 
-Defined in: [Developer/brk/modules/brk-client/index.js:399](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L399)
+Defined in: [Developer/brk/modules/brk-client/index.js:585](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L585)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:399](https://github.com/b
 
 > **endBlock**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:400](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L400)
+Defined in: [Developer/brk/modules/brk-client/index.js:587](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L587)
+
+Last block in the range
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:400](https://github.com/b
 
 > **startBlock**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:401](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L401)
+Defined in: [Developer/brk/modules/brk-client/index.js:586](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L586)
+
+First block in the range
 
 ***
 
@@ -30,7 +34,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:401](https://github.com/b
 
 > **totalFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:402](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L402)
+Defined in: [Developer/brk/modules/brk-client/index.js:589](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L589)
 
 ***
 
@@ -38,7 +42,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:402](https://github.com/b
 
 > **totalReward**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:403](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L403)
+Defined in: [Developer/brk/modules/brk-client/index.js:588](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L588)
 
 ***
 
@@ -46,4 +50,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:403](https://github.com/b
 
 > **totalTx**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:404](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L404)
+Defined in: [Developer/brk/modules/brk-client/index.js:590](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L590)

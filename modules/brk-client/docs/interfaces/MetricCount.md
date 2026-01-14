@@ -6,7 +6,7 @@
 
 # Interface: MetricCount
 
-Defined in: [Developer/brk/modules/brk-client/index.js:237](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L237)
+Defined in: [Developer/brk/modules/brk-client/index.js:373](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L373)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:237](https://github.com/b
 
 > **distinctMetrics**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:238](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L238)
+Defined in: [Developer/brk/modules/brk-client/index.js:374](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L374)
+
+Number of unique metrics available (e.g., realized_price, market_cap)
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:238](https://github.com/b
 
 > **lazyEndpoints**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:239](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L239)
+Defined in: [Developer/brk/modules/brk-client/index.js:376](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L376)
+
+Number of lazy (computed on-the-fly) metric-index combinations
 
 ***
 
@@ -30,7 +34,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:239](https://github.com/b
 
 > **storedEndpoints**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:240](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L240)
+Defined in: [Developer/brk/modules/brk-client/index.js:377](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L377)
+
+Number of eager (stored on disk) metric-index combinations
 
 ***
 
@@ -38,4 +44,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:240](https://github.com/b
 
 > **totalEndpoints**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:241](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L241)
+Defined in: [Developer/brk/modules/brk-client/index.js:375](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L375)
+
+Total number of metric-index combinations across all timeframes

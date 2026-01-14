@@ -6,7 +6,7 @@
 
 # Interface: BlockStatus
 
-Defined in: [Developer/brk/modules/brk-client/index.js:105](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L105)
+Defined in: [Developer/brk/modules/brk-client/index.js:149](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L149)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:105](https://github.com/b
 
 > `optional` **height**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:106](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L106)
+Defined in: [Developer/brk/modules/brk-client/index.js:151](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L151)
+
+Block height (only if in best chain)
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:106](https://github.com/b
 
 > **inBestChain**: `boolean`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:107](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L107)
+Defined in: [Developer/brk/modules/brk-client/index.js:150](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L150)
+
+Whether this block is in the best chain
 
 ***
 
@@ -30,4 +34,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:107](https://github.com/b
 
 > `optional` **nextBest**: `string` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:108](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L108)
+Defined in: [Developer/brk/modules/brk-client/index.js:152](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L152)
+
+Hash of the next block in the best chain (only if in best chain and not tip)

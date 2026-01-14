@@ -8,7 +8,7 @@
 
 > **MetricPattern1**\<`T`\> = `object`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:666](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L666)
+Defined in: [Developer/brk/modules/brk-client/index.js:1121](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L1121)
 
 ## Type Parameters
 
@@ -24,43 +24,43 @@ Defined in: [Developer/brk/modules/brk-client/index.js:666](https://github.com/b
 
 #### by.dateindex
 
-> **dateindex**: [`MetricEndpoint`](../interfaces/MetricEndpoint.md)\<`T`\>
+> `readonly` **dateindex**: [`MetricEndpointBuilder`](../interfaces/MetricEndpointBuilder.md)\<`T`\>
 
 #### by.decadeindex
 
-> **decadeindex**: [`MetricEndpoint`](../interfaces/MetricEndpoint.md)\<`T`\>
+> `readonly` **decadeindex**: [`MetricEndpointBuilder`](../interfaces/MetricEndpointBuilder.md)\<`T`\>
 
 #### by.difficultyepoch
 
-> **difficultyepoch**: [`MetricEndpoint`](../interfaces/MetricEndpoint.md)\<`T`\>
+> `readonly` **difficultyepoch**: [`MetricEndpointBuilder`](../interfaces/MetricEndpointBuilder.md)\<`T`\>
 
 #### by.height
 
-> **height**: [`MetricEndpoint`](../interfaces/MetricEndpoint.md)\<`T`\>
+> `readonly` **height**: [`MetricEndpointBuilder`](../interfaces/MetricEndpointBuilder.md)\<`T`\>
 
 #### by.monthindex
 
-> **monthindex**: [`MetricEndpoint`](../interfaces/MetricEndpoint.md)\<`T`\>
+> `readonly` **monthindex**: [`MetricEndpointBuilder`](../interfaces/MetricEndpointBuilder.md)\<`T`\>
 
 #### by.quarterindex
 
-> **quarterindex**: [`MetricEndpoint`](../interfaces/MetricEndpoint.md)\<`T`\>
+> `readonly` **quarterindex**: [`MetricEndpointBuilder`](../interfaces/MetricEndpointBuilder.md)\<`T`\>
 
 #### by.semesterindex
 
-> **semesterindex**: [`MetricEndpoint`](../interfaces/MetricEndpoint.md)\<`T`\>
+> `readonly` **semesterindex**: [`MetricEndpointBuilder`](../interfaces/MetricEndpointBuilder.md)\<`T`\>
 
 #### by.weekindex
 
-> **weekindex**: [`MetricEndpoint`](../interfaces/MetricEndpoint.md)\<`T`\>
+> `readonly` **weekindex**: [`MetricEndpointBuilder`](../interfaces/MetricEndpointBuilder.md)\<`T`\>
 
 #### by.yearindex
 
-> **yearindex**: [`MetricEndpoint`](../interfaces/MetricEndpoint.md)\<`T`\>
+> `readonly` **yearindex**: [`MetricEndpointBuilder`](../interfaces/MetricEndpointBuilder.md)\<`T`\>
 
 ### get()
 
-> **get**: (`index`) => [`MetricEndpoint`](../interfaces/MetricEndpoint.md)\<`T`\> \| `undefined`
+> **get**: (`index`) => [`MetricEndpointBuilder`](../interfaces/MetricEndpointBuilder.md)\<`T`\> \| `undefined`
 
 #### Parameters
 
@@ -70,15 +70,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:666](https://github.com/b
 
 #### Returns
 
-[`MetricEndpoint`](../interfaces/MetricEndpoint.md)\<`T`\> \| `undefined`
+[`MetricEndpointBuilder`](../interfaces/MetricEndpointBuilder.md)\<`T`\> \| `undefined`
 
 ### indexes()
 
-> **indexes**: () => [`Index`](Index.md)[]
+> **indexes**: () => readonly [`Index`](Index.md)[]
 
 #### Returns
 
-[`Index`](Index.md)[]
+readonly [`Index`](Index.md)[]
 
 ### name
 

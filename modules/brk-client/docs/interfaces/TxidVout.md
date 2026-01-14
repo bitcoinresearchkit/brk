@@ -6,7 +6,7 @@
 
 # Interface: TxidVout
 
-Defined in: [Developer/brk/modules/brk-client/index.js:485](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L485)
+Defined in: [Developer/brk/modules/brk-client/index.js:742](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L742)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:485](https://github.com/b
 
 > **txid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:486](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L486)
+Defined in: [Developer/brk/modules/brk-client/index.js:743](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L743)
+
+Transaction ID
 
 ***
 
@@ -22,4 +24,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:486](https://github.com/b
 
 > **vout**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:487](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L487)
+Defined in: [Developer/brk/modules/brk-client/index.js:744](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L744)
+
+Output index

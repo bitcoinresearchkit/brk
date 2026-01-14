@@ -6,7 +6,7 @@
 
 # Class: BrkError
 
-Defined in: [Developer/brk/modules/brk-client/index.js:532](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L532)
+Defined in: [Developer/brk/modules/brk-client/index.js:817](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L817)
 
 Custom error class for BRK client errors
 
@@ -20,7 +20,7 @@ Custom error class for BRK client errors
 
 > **new BrkError**(`message`, `status?`): `BrkError`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:537](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L537)
+Defined in: [Developer/brk/modules/brk-client/index.js:822](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L822)
 
 #### Parameters
 

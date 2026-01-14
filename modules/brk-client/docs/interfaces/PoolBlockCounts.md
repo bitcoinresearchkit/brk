@@ -6,7 +6,7 @@
 
 # Interface: PoolBlockCounts
 
-Defined in: [Developer/brk/modules/brk-client/index.js:332](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L332)
+Defined in: [Developer/brk/modules/brk-client/index.js:498](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L498)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:332](https://github.com/b
 
 > **\_1w**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:333](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L333)
+Defined in: [Developer/brk/modules/brk-client/index.js:501](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L501)
+
+Blocks mined in last week
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:333](https://github.com/b
 
 > **\_24h**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:334](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L334)
+Defined in: [Developer/brk/modules/brk-client/index.js:500](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L500)
+
+Blocks mined in last 24 hours
 
 ***
 
@@ -30,4 +34,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:334](https://github.com/b
 
 > **all**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:335](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L335)
+Defined in: [Developer/brk/modules/brk-client/index.js:499](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L499)
+
+Total blocks mined (all time)

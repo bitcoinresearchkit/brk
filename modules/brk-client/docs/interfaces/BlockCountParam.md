@@ -6,7 +6,7 @@
 
 # Interface: BlockCountParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:53](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L53)
+Defined in: [Developer/brk/modules/brk-client/index.js:81](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L81)
 
 ## Properties
 
@@ -14,4 +14,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:53](https://github.com/bi
 
 > **blockCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:54](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L54)
+Defined in: [Developer/brk/modules/brk-client/index.js:82](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L82)
+
+Number of recent blocks to include

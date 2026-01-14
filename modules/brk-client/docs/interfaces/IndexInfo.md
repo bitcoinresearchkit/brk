@@ -6,7 +6,7 @@
 
 # Interface: IndexInfo
 
-Defined in: [Developer/brk/modules/brk-client/index.js:200](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L200)
+Defined in: [Developer/brk/modules/brk-client/index.js:316](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L316)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:200](https://github.com/b
 
 > **aliases**: `string`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:201](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L201)
+Defined in: [Developer/brk/modules/brk-client/index.js:318](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L318)
+
+All Accepted query aliases
 
 ***
 
@@ -22,4 +24,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:201](https://github.com/b
 
 > **index**: [`Index`](../type-aliases/Index.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:202](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L202)
+Defined in: [Developer/brk/modules/brk-client/index.js:317](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L317)
+
+The canonical index name

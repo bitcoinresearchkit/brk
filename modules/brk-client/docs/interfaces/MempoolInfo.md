@@ -6,7 +6,7 @@
 
 # Interface: MempoolInfo
 
-Defined in: [Developer/brk/modules/brk-client/index.js:230](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L230)
+Defined in: [Developer/brk/modules/brk-client/index.js:360](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L360)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:230](https://github.com/b
 
 > **count**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:231](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L231)
+Defined in: [Developer/brk/modules/brk-client/index.js:361](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L361)
+
+Number of transactions in the mempool
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:231](https://github.com/b
 
 > **totalFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:232](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L232)
+Defined in: [Developer/brk/modules/brk-client/index.js:363](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L363)
+
+Total fees of all transactions in the mempool (satoshis)
 
 ***
 
@@ -30,4 +34,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:232](https://github.com/b
 
 > **vsize**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:233](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L233)
+Defined in: [Developer/brk/modules/brk-client/index.js:362](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L362)
+
+Total virtual size of all transactions in the mempool (vbytes)

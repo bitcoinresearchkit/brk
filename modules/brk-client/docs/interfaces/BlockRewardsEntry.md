@@ -6,7 +6,7 @@
 
 # Interface: BlockRewardsEntry
 
-Defined in: [Developer/brk/modules/brk-client/index.js:88](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L88)
+Defined in: [Developer/brk/modules/brk-client/index.js:126](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L126)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:88](https://github.com/bi
 
 > **avgHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:89](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L89)
+Defined in: [Developer/brk/modules/brk-client/index.js:127](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L127)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:89](https://github.com/bi
 
 > **avgRewards**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:90](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L90)
+Defined in: [Developer/brk/modules/brk-client/index.js:129](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L129)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:90](https://github.com/bi
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:91](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L91)
+Defined in: [Developer/brk/modules/brk-client/index.js:128](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L128)

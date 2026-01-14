@@ -6,7 +6,7 @@
 
 # Interface: AddressTxidsParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:35](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L35)
+Defined in: [Developer/brk/modules/brk-client/index.js:49](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L49)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:35](https://github.com/bi
 
 > `optional` **afterTxid**: `string` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:36](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L36)
+Defined in: [Developer/brk/modules/brk-client/index.js:50](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L50)
+
+Txid to paginate from (return transactions before this one)
 
 ***
 
@@ -22,4 +24,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:36](https://github.com/bi
 
 > `optional` **limit**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:37](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L37)
+Defined in: [Developer/brk/modules/brk-client/index.js:51](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L51)
+
+Maximum number of results to return. Defaults to 25 if not specified.

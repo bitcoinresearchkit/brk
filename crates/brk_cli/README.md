@@ -17,26 +17,37 @@ Run a full BRK instance: index the blockchain, compute metrics, serve the API, a
 
 ## Install
 
+First, ensure Rust is up to date:
+
 ```bash
+rustup update
+```
+
+Recommended (optimized for your CPU, auto-finds latest version):
+
+```bash
+RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli --version "$(cargo search brk_cli | head -1 | awk -F'"' '{print $2}')"
+```
+
+**Variants:**
+
+```bash
+# Standard install (portable, latest stable only)
 cargo install --locked brk_cli
+
+# Specific version
+cargo install --locked brk_cli --version "0.1.0-alpha.2"
 ```
 
-For pre-release versions (alpha, beta, rc), specify the version explicitly:
+See [crates.io/crates/brk_cli/versions](https://crates.io/crates/brk_cli/versions) for all versions.
+
+## Update
+
+Same as install - cargo replaces the existing binary:
 
 ```bash
-# Find the latest version
-cargo search brk_cli
-
-# Install a specific version
-cargo install --locked brk_cli --version "VERSION"
-```
-
-See [crates.io/crates/brk_cli/versions](https://crates.io/crates/brk_cli/versions) for all available versions.
-
-For better performance, build with native CPU optimizations:
-
-```bash
-RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli
+rustup update
+RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli --version "$(cargo search brk_cli | head -1 | awk -F'"' '{print $2}')"
 ```
 
 ## Requirements

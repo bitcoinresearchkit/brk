@@ -6,7 +6,7 @@
 
 # Interface: AddressChainStats
 
-Defined in: [Developer/brk/modules/brk-client/index.js:8](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L8)
+Defined in: [Developer/brk/modules/brk-client/index.js:16](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L16)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:8](https://github.com/bit
 
 > **fundedTxoCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:9](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L9)
+Defined in: [Developer/brk/modules/brk-client/index.js:17](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L17)
+
+Total number of transaction outputs that funded this address
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:9](https://github.com/bit
 
 > **fundedTxoSum**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L10)
+Defined in: [Developer/brk/modules/brk-client/index.js:18](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L18)
+
+Total amount in satoshis received by this address across all funded outputs
 
 ***
 
@@ -30,7 +34,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:10](https://github.com/bi
 
 > **spentTxoCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L11)
+Defined in: [Developer/brk/modules/brk-client/index.js:19](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L19)
+
+Total number of transaction outputs spent from this address
 
 ***
 
@@ -38,7 +44,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:11](https://github.com/bi
 
 > **spentTxoSum**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:12](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L12)
+Defined in: [Developer/brk/modules/brk-client/index.js:20](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L20)
+
+Total amount in satoshis spent from this address
 
 ***
 
@@ -46,7 +54,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:12](https://github.com/bi
 
 > **txCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:13](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L13)
+Defined in: [Developer/brk/modules/brk-client/index.js:21](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L21)
+
+Total number of confirmed transactions involving this address
 
 ***
 
@@ -54,4 +64,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:13](https://github.com/bi
 
 > **typeIndex**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:14](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L14)
+Defined in: [Developer/brk/modules/brk-client/index.js:22](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L22)
+
+Index of this address within its type on the blockchain

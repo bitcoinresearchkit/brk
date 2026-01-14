@@ -6,15 +6,15 @@
 
 # Interface: CoinbasePattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3414](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L3414)
+Defined in: [Developer/brk/modules/brk-client/index.js:2559](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2559)
 
 ## Properties
 
 ### bitcoin
 
-> **bitcoin**: [`FullnessPattern`](FullnessPattern.md)\<`number`\>
+> **bitcoin**: [`BitcoinPattern`](BitcoinPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3415](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L3415)
+Defined in: [Developer/brk/modules/brk-client/index.js:2560](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2560)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3415](https://github.com/
 
 > **dollars**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3416](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L3416)
+Defined in: [Developer/brk/modules/brk-client/index.js:2561](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2561)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3416](https://github.com/
 
 > **sats**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3417](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L3417)
+Defined in: [Developer/brk/modules/brk-client/index.js:2562](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L2562)

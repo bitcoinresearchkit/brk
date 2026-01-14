@@ -6,7 +6,7 @@
 
 # Interface: PoolStats
 
-Defined in: [Developer/brk/modules/brk-client/index.js:372](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L372)
+Defined in: [Developer/brk/modules/brk-client/index.js:548](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L548)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:372](https://github.com/b
 
 > **blockCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:373](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L373)
+Defined in: [Developer/brk/modules/brk-client/index.js:552](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L552)
+
+Number of blocks mined in the time period
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:373](https://github.com/b
 
 > **emptyBlocks**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:374](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L374)
+Defined in: [Developer/brk/modules/brk-client/index.js:554](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L554)
+
+Number of empty blocks mined
 
 ***
 
@@ -30,7 +34,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:374](https://github.com/b
 
 > **link**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:375](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L375)
+Defined in: [Developer/brk/modules/brk-client/index.js:551](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L551)
+
+Pool website URL
 
 ***
 
@@ -38,7 +44,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:375](https://github.com/b
 
 > **name**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:376](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L376)
+Defined in: [Developer/brk/modules/brk-client/index.js:550](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L550)
+
+Pool name
 
 ***
 
@@ -46,7 +54,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:376](https://github.com/b
 
 > **poolId**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:377](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L377)
+Defined in: [Developer/brk/modules/brk-client/index.js:549](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L549)
+
+Unique pool identifier
 
 ***
 
@@ -54,7 +64,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:377](https://github.com/b
 
 > **rank**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:378](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L378)
+Defined in: [Developer/brk/modules/brk-client/index.js:553](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L553)
+
+Pool ranking by block count (1 = most blocks)
 
 ***
 
@@ -62,7 +74,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:378](https://github.com/b
 
 > **share**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:379](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L379)
+Defined in: [Developer/brk/modules/brk-client/index.js:556](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L556)
+
+Pool's share of total blocks (0.0 - 1.0)
 
 ***
 
@@ -70,4 +84,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:379](https://github.com/b
 
 > **slug**: [`PoolSlug`](../type-aliases/PoolSlug.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:380](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L380)
+Defined in: [Developer/brk/modules/brk-client/index.js:555](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L555)
+
+URL-friendly pool identifier

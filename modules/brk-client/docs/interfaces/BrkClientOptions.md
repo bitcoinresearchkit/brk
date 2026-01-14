@@ -6,7 +6,7 @@
 
 # Interface: BrkClientOptions
 
-Defined in: [Developer/brk/modules/brk-client/index.js:515](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L515)
+Defined in: [Developer/brk/modules/brk-client/index.js:794](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L794)
 
 ## Properties
 
@@ -14,9 +14,19 @@ Defined in: [Developer/brk/modules/brk-client/index.js:515](https://github.com/b
 
 > **baseUrl**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:516](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L516)
+Defined in: [Developer/brk/modules/brk-client/index.js:795](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L795)
 
 Base URL for the API
+
+***
+
+### cache?
+
+> `optional` **cache**: `string` \| `boolean`
+
+Defined in: [Developer/brk/modules/brk-client/index.js:797](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L797)
+
+Enable browser cache with default name (true), custom name (string), or disable (false). No effect in Node.js. Default: true
 
 ***
 
@@ -24,6 +34,6 @@ Base URL for the API
 
 > `optional` **timeout**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:517](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L517)
+Defined in: [Developer/brk/modules/brk-client/index.js:796](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L796)
 
 Request timeout in milliseconds

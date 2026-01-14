@@ -6,7 +6,7 @@
 
 # Interface: AddressValidation
 
-Defined in: [Developer/brk/modules/brk-client/index.js:40](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L40)
+Defined in: [Developer/brk/modules/brk-client/index.js:56](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L56)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:40](https://github.com/bi
 
 > `optional` **address**: `string` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:41](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L41)
+Defined in: [Developer/brk/modules/brk-client/index.js:58](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L58)
+
+The validated address
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:41](https://github.com/bi
 
 > `optional` **isscript**: `boolean` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:42](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L42)
+Defined in: [Developer/brk/modules/brk-client/index.js:60](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L60)
+
+Whether this is a script address (P2SH)
 
 ***
 
@@ -30,7 +34,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:42](https://github.com/bi
 
 > **isvalid**: `boolean`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:43](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L43)
+Defined in: [Developer/brk/modules/brk-client/index.js:57](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L57)
+
+Whether the address is valid
 
 ***
 
@@ -38,7 +44,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:43](https://github.com/bi
 
 > `optional` **iswitness**: `boolean` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:44](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L44)
+Defined in: [Developer/brk/modules/brk-client/index.js:61](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L61)
+
+Whether this is a witness address
 
 ***
 
@@ -46,7 +54,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:44](https://github.com/bi
 
 > `optional` **scriptPubKey**: `string` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:45](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L45)
+Defined in: [Developer/brk/modules/brk-client/index.js:59](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L59)
+
+The scriptPubKey in hex
 
 ***
 
@@ -54,7 +64,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:45](https://github.com/bi
 
 > `optional` **witnessProgram**: `string` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:46](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L46)
+Defined in: [Developer/brk/modules/brk-client/index.js:63](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L63)
+
+Witness program in hex
 
 ***
 
@@ -62,4 +74,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:46](https://github.com/bi
 
 > `optional` **witnessVersion**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:47](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L47)
+Defined in: [Developer/brk/modules/brk-client/index.js:62](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L62)
+
+Witness version (0 for P2WPKH/P2WSH, 1 for P2TR)

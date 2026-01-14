@@ -6,7 +6,7 @@
 
 # Interface: DifficultyAdjustment
 
-Defined in: [Developer/brk/modules/brk-client/index.js:135](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L135)
+Defined in: [Developer/brk/modules/brk-client/index.js:195](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L195)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:135](https://github.com/b
 
 > **adjustedTimeAvg**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:136](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L136)
+Defined in: [Developer/brk/modules/brk-client/index.js:204](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L204)
+
+Time-adjusted average (accounting for timestamp manipulation)
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:136](https://github.com/b
 
 > **difficultyChange**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:137](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L137)
+Defined in: [Developer/brk/modules/brk-client/index.js:197](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L197)
+
+Estimated difficulty change at next retarget (%)
 
 ***
 
@@ -30,7 +34,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:137](https://github.com/b
 
 > **estimatedRetargetDate**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:138](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L138)
+Defined in: [Developer/brk/modules/brk-client/index.js:198](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L198)
+
+Estimated Unix timestamp of next retarget
 
 ***
 
@@ -38,7 +44,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:138](https://github.com/b
 
 > **nextRetargetHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:139](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L139)
+Defined in: [Developer/brk/modules/brk-client/index.js:202](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L202)
+
+Height of next retarget
 
 ***
 
@@ -46,7 +54,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:139](https://github.com/b
 
 > **previousRetarget**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:140](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L140)
+Defined in: [Developer/brk/modules/brk-client/index.js:201](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L201)
+
+Previous difficulty adjustment (%)
 
 ***
 
@@ -54,7 +64,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:140](https://github.com/b
 
 > **progressPercent**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:141](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L141)
+Defined in: [Developer/brk/modules/brk-client/index.js:196](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L196)
+
+Progress through current difficulty epoch (0-100%)
 
 ***
 
@@ -62,7 +74,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:141](https://github.com/b
 
 > **remainingBlocks**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:142](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L142)
+Defined in: [Developer/brk/modules/brk-client/index.js:199](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L199)
+
+Blocks remaining until retarget
 
 ***
 
@@ -70,7 +84,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:142](https://github.com/b
 
 > **remainingTime**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:143](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L143)
+Defined in: [Developer/brk/modules/brk-client/index.js:200](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L200)
+
+Estimated seconds until retarget
 
 ***
 
@@ -78,7 +94,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:143](https://github.com/b
 
 > **timeAvg**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:144](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L144)
+Defined in: [Developer/brk/modules/brk-client/index.js:203](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L203)
+
+Average block time in current epoch (seconds)
 
 ***
 
@@ -86,4 +104,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:144](https://github.com/b
 
 > **timeOffset**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:145](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L145)
+Defined in: [Developer/brk/modules/brk-client/index.js:205](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L205)
+
+Time offset from expected schedule (seconds)

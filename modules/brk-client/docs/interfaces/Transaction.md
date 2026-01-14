@@ -6,7 +6,7 @@
 
 # Interface: Transaction
 
-Defined in: [Developer/brk/modules/brk-client/index.js:431](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L431)
+Defined in: [Developer/brk/modules/brk-client/index.js:666](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L666)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:431](https://github.com/b
 
 > **fee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:432](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L432)
+Defined in: [Developer/brk/modules/brk-client/index.js:674](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L674)
+
+Transaction fee in satoshis
 
 ***
 
@@ -22,7 +24,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:432](https://github.com/b
 
 > `optional` **index**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:433](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L433)
+Defined in: [Developer/brk/modules/brk-client/index.js:667](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L667)
 
 ***
 
@@ -30,7 +32,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:433](https://github.com/b
 
 > **locktime**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:434](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L434)
+Defined in: [Developer/brk/modules/brk-client/index.js:670](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L670)
 
 ***
 
@@ -38,7 +40,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:434](https://github.com/b
 
 > **sigops**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:435](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L435)
+Defined in: [Developer/brk/modules/brk-client/index.js:673](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L673)
+
+Number of signature operations
 
 ***
 
@@ -46,7 +50,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:435](https://github.com/b
 
 > **size**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:436](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L436)
+Defined in: [Developer/brk/modules/brk-client/index.js:671](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L671)
+
+Transaction size in bytes
 
 ***
 
@@ -54,7 +60,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:436](https://github.com/b
 
 > **status**: [`TxStatus`](TxStatus.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:437](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L437)
+Defined in: [Developer/brk/modules/brk-client/index.js:677](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L677)
 
 ***
 
@@ -62,7 +68,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:437](https://github.com/b
 
 > **txid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:438](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L438)
+Defined in: [Developer/brk/modules/brk-client/index.js:668](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L668)
 
 ***
 
@@ -70,7 +76,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:438](https://github.com/b
 
 > **version**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:439](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L439)
+Defined in: [Developer/brk/modules/brk-client/index.js:669](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L669)
 
 ***
 
@@ -78,7 +84,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:439](https://github.com/b
 
 > **vin**: [`TxIn`](TxIn.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:440](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L440)
+Defined in: [Developer/brk/modules/brk-client/index.js:675](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L675)
+
+Transaction inputs
 
 ***
 
@@ -86,7 +94,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:440](https://github.com/b
 
 > **vout**: [`TxOut`](TxOut.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:441](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L441)
+Defined in: [Developer/brk/modules/brk-client/index.js:676](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L676)
+
+Transaction outputs
 
 ***
 
@@ -94,4 +104,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:441](https://github.com/b
 
 > **weight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:442](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L442)
+Defined in: [Developer/brk/modules/brk-client/index.js:672](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L672)
+
+Transaction weight

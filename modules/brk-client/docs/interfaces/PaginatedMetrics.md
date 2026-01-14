@@ -6,7 +6,7 @@
 
 # Interface: PaginatedMetrics
 
-Defined in: [Developer/brk/modules/brk-client/index.js:322](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L322)
+Defined in: [Developer/brk/modules/brk-client/index.js:484](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L484)
 
 ## Properties
 
@@ -14,7 +14,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:322](https://github.com/b
 
 > **currentPage**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:323](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L323)
+Defined in: [Developer/brk/modules/brk-client/index.js:485](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L485)
+
+Current page number (0-indexed)
 
 ***
 
@@ -22,7 +24,9 @@ Defined in: [Developer/brk/modules/brk-client/index.js:323](https://github.com/b
 
 > **maxPage**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:324](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L324)
+Defined in: [Developer/brk/modules/brk-client/index.js:486](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L486)
+
+Maximum valid page index (0-indexed)
 
 ***
 
@@ -30,4 +34,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:324](https://github.com/b
 
 > **metrics**: `string`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:325](https://github.com/bitcoinresearchkit/brk/blob/6f45ec13f3a9e84728abdaed03e8c5432df5ffa3/modules/brk-client/index.js#L325)
+Defined in: [Developer/brk/modules/brk-client/index.js:487](https://github.com/bitcoinresearchkit/brk/blob/8a938c00f6edf1f447532c02f94f3a13fd7da30e/modules/brk-client/index.js#L487)
+
+List of metric names (max 1000 per page)
