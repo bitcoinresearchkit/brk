@@ -19,7 +19,6 @@ full = [
     "indexer",
     "iterator",
     "logger",
-    "mcp",
     "mempool",
     "query",
     "reader",
@@ -39,7 +38,6 @@ cohort = ["brk_cohort"]
 indexer = ["brk_indexer"]
 iterator = ["brk_iterator"]
 logger = ["brk_logger"]
-mcp = ["brk_mcp"]
 mempool = ["brk_mempool"]
 query = ["brk_query"]
 reader = ["brk_reader"]
@@ -60,7 +58,6 @@ brk_cohort = { workspace = true, optional = true }
 brk_indexer = { workspace = true, optional = true }
 brk_iterator = { workspace = true, optional = true }
 brk_logger = { workspace = true, optional = true }
-brk_mcp = { workspace = true, optional = true }
 brk_mempool = { workspace = true, optional = true }
 brk_query = { workspace = true, optional = true }
 brk_reader = { workspace = true, optional = true }

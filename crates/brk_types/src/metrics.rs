@@ -10,9 +10,10 @@ use super::Metric;
 #[derive(Debug, Deref, JsonSchema)]
 #[schemars(
     with = "String",
+    example = &"date,price_close",
     example = &"price_close",
     example = &"price_close,market_cap",
-    example = &"realized_price,nvt_ratio,mvrv"
+    example = &"realized_price,market_cap,mvrv"
 )]
 pub struct Metrics(Vec<Metric>);
 

@@ -20,7 +20,7 @@ type LogHook = Box<dyn Fn(&str) + Send + Sync>;
 static GUARD: OnceLock<WorkerGuard> = OnceLock::new();
 static LOG_HOOK: OnceLock<LogHook> = OnceLock::new();
 
-const MAX_LOG_FILES: u64 = 2;
+const MAX_LOG_FILES: u64 = 5;
 const MAX_FILE_SIZE_MB: u64 = 42;
 
 // Don't remove, used to know the target of unwanted logs
@@ -117,9 +117,13 @@ impl<const ANSI: bool> tracing::field::Visit for FieldVisitor<ANSI> {
         match name {
             "uri" => self.uri = Some(format!("{value:?}")),
             "latency" => self.latency = Some(format!("{value:?}")),
-            "message" => { let _ = write!(self.result, "{value:?}"); }
+            "message" => {
+                let _ = write!(self.result, "{value:?}");
+            }
             _ if name.starts_with("log.") => {}
-            _ => { let _ = write!(self.result, "{}={:?} ", name, value); }
+            _ => {
+                let _ = write!(self.result, "{}={:?} ", name, value);
+            }
         }
     }
 }
@@ -214,7 +218,7 @@ pub fn init(path: Option<&Path>) -> io::Result<()> {
     const DEFAULT_LEVEL: &str = "info";
 
     let default_filter = format!(
-        "{DEFAULT_LEVEL},bitcoin=off,bitcoincore-rpc=off,fjall=off,brk_fjall=off,lsm_tree=off,brk_rolldown=off,rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,rustls=off,notify=off,oxc_resolver=off,tower_http=off"
+        "{DEFAULT_LEVEL},bitcoin=off,bitcoincore-rpc=off,fjall=off,brk_fjall=off,lsm_tree=off,brk_rolldown=off,rolldown=off,tracing=off,aide=off,rustls=off,notify=off,oxc_resolver=off,tower_http=off"
     );
 
     let filter =

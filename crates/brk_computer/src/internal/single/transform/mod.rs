@@ -1,3 +1,4 @@
+mod cents_to_dollars;
 mod close_price_times_ratio;
 mod close_price_times_sats;
 mod difference_f32;
@@ -37,6 +38,7 @@ mod volatility_sqrt365;
 mod volatility_sqrt7;
 mod weight_to_fullness;
 
+pub use cents_to_dollars::*;
 pub use close_price_times_ratio::*;
 pub use close_price_times_sats::*;
 pub use difference_f32::*;

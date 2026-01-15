@@ -1,5 +1,3 @@
-use aide::openapi::{Contact, Info, License, OpenApi, Tag};
-
 //
 // https://docs.rs/schemars/latest/schemars/derive.JsonSchema.html
 //
@@ -11,6 +9,12 @@ use aide::openapi::{Contact, Info, License, OpenApi, Tag};
 //   - https://tailscale.com/api
 //   - https://api.supabase.com/api/v1
 //
+
+mod trim;
+
+pub use trim::trim_openapi_json;
+
+use aide::openapi::{Contact, Info, License, OpenApi, Tag};
 
 use crate::VERSION;
 
@@ -25,10 +29,11 @@ pub fn create_openapi() -> OpenApi {
 - **Metrics**: Thousands of time-series metrics across multiple indexes (date, block height, etc.)
 - **[Mempool.space](https://mempool.space/docs/api/rest) compatible** (WIP): Most non-metrics endpoints follow the mempool.space API format
 - **Multiple formats**: JSON and CSV output
+- **LLM-optimized**: Compact OpenAPI spec at [`/api.trimmed.json`](/api.trimmed.json) for AI tools
 
 ### Client Libraries
 
-- [JavaScript/TypeScript](https://www.npmjs.com/package/brk-client)
+- [JavaScript](https://www.npmjs.com/package/brk-client)
 - [Python](https://pypi.org/project/brk-client/)
 - [Rust](https://crates.io/crates/brk_client)
 
@@ -56,6 +61,13 @@ pub fn create_openapi() -> OpenApi {
     };
 
     let tags = vec![
+        Tag {
+            name: "Server".to_string(),
+            description: Some(
+                "API metadata, health monitoring, and OpenAPI specifications.".to_string(),
+            ),
+            ..Default::default()
+        },
         Tag {
             name: "Metrics".to_string(),
             description: Some(
@@ -111,14 +123,6 @@ pub fn create_openapi() -> OpenApi {
                 "Mining statistics including pool distribution, hashrate, difficulty adjustments, \
                 block rewards, and fee rates across configurable time periods.\n\n\
                 *[Mempool.space](https://mempool.space/docs/api/rest) compatible (WIP).*"
-                    .to_string(),
-            ),
-            ..Default::default()
-        },
-        Tag {
-            name: "Server".to_string(),
-            description: Some(
-                "API metadata and health monitoring. Version information and service status."
                     .to_string(),
             ),
             ..Default::default()

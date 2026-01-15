@@ -6,12 +6,12 @@ use axum::{
     http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
-use brk_query::{MetricSelection, Output};
-use brk_types::Format;
+use brk_types::{Format, MetricSelection, Output};
 use quick_cache::sync::GuardResult;
 
 use crate::{
-    CacheStrategy, api::metrics::MAX_WEIGHT, cache::CacheParams, extended::HeaderMapExtended,
+    api::metrics::{CACHE_CONTROL, MAX_WEIGHT},
+    extended::HeaderMapExtended,
 };
 
 use super::AppState;
@@ -39,35 +39,32 @@ async fn req_to_response_res(
     Query(params): Query<MetricSelection>,
     AppState { query, cache, .. }: AppState,
 ) -> brk_error::Result<Response> {
-    let format = params.format();
-    let height = query.sync(|q| q.height());
+    // Phase 1: Search and resolve metadata (cheap)
+    let resolved = query
+        .run(move |q| q.resolve(params, MAX_WEIGHT))
+        .await?;
 
-    let cache_params =
-        CacheParams::resolve(&CacheStrategy::height_with(params.etag_suffix()), || {
-            height.into()
-        });
+    let format = resolved.format();
+    let etag = resolved.etag();
 
-    if cache_params.matches_etag(&headers) {
+    // Check if client has fresh cache
+    if headers.has_etag(etag.as_str()) {
         let mut response = (StatusCode::NOT_MODIFIED, "").into_response();
         response.headers_mut().insert_cors();
         return Ok(response);
     }
 
-    let cache_key = format!(
-        "{}{}{}",
-        uri.path(),
-        uri.query().unwrap_or(""),
-        cache_params.etag_str()
-    );
+    // Check server-side cache
+    let cache_key = format!("bulk-{}{}{}", uri.path(), uri.query().unwrap_or(""), etag);
     let guard_res = cache.get_value_or_guard(&cache_key, Some(Duration::from_millis(50)));
 
     let mut response = if let GuardResult::Value(v) = guard_res {
         Response::new(Body::from(v))
     } else {
-        match query
-            .run(move |q| q.search_and_format_bulk_checked(params, MAX_WEIGHT))
-            .await?
-        {
+        // Phase 2: Format (expensive, only on cache miss)
+        let metric_output = query.run(move |q| q.format(resolved)).await?;
+
+        match metric_output.output {
             Output::CSV(s) => {
                 if let GuardResult::Guard(g) = guard_res {
                     let _ = g.insert(s.clone().into());
@@ -75,21 +72,18 @@ async fn req_to_response_res(
                 s.into_response()
             }
             Output::Json(v) => {
-                let json = v.to_vec();
                 if let GuardResult::Guard(g) = guard_res {
-                    let _ = g.insert(json.clone().into());
+                    let _ = g.insert(v.clone().into());
                 }
-                json.into_response()
+                Response::new(Body::from(v))
             }
         }
     };
 
     let headers = response.headers_mut();
     headers.insert_cors();
-    if let Some(etag) = &cache_params.etag {
-        headers.insert_etag(etag);
-    }
-    headers.insert_cache_control(&cache_params.cache_control);
+    headers.insert_etag(etag.as_str());
+    headers.insert_cache_control(CACHE_CONTROL);
 
     match format {
         Format::CSV => {

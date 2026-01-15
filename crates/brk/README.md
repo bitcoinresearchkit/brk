@@ -51,7 +51,6 @@ Feature flags match crate names without the `brk_` prefix. Use `full` to enable 
 |-------|-------------|
 | [brk_client](https://docs.rs/brk_client) | Generated Rust API client |
 | [brk_bindgen](https://docs.rs/brk_bindgen) | Generate typed clients (Rust, JavaScript, Python) |
-| [brk_mcp](https://docs.rs/brk_mcp) | Model Context Protocol server for LLM integration |
 
 **Internal**
 

@@ -67,7 +67,6 @@
       - example: from -10,000 count 10, won’t work if underlying vec isn’t 10k or more long
   - _LOGGER_
     - BUG: remove colors from file
-  - _MCP_
   - _PARSER_
   - _SERVER_
     - api

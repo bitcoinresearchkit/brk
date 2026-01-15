@@ -55,11 +55,6 @@ impl DataRange {
         })
     }
 
-    /// Returns a string for etag/cache key generation that captures all range parameters
-    pub fn etag_suffix(&self) -> String {
-        format!("{:?}{:?}{:?}", self.start, self.end, self.limit)
-    }
-
     fn resolve_index(&self, idx: Option<i64>, len: usize, default: usize) -> usize {
         match idx {
             None => default,

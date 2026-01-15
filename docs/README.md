@@ -26,7 +26,7 @@ Browse metrics and charts visually. Use it free at [Bitview](https://bitview.spa
 
 Query thousands of metrics and blockchain data in JSON or CSV. Freely accessible at [Bitview](https://bitview.space/api).
 
-[Documentation](https://bitview.space/api) · Clients: [JavaScript](https://www.npmjs.com/package/brk-client), [Python](https://pypi.org/project/brk-client), [Rust](https://crates.io/crates/brk_client) · [MCP](https://modelcontextprotocol.io)
+[Documentation](https://bitview.space/api) · [JavaScript](https://www.npmjs.com/package/brk-client) · [Python](https://pypi.org/project/brk-client) · [Rust](https://crates.io/crates/brk_client)
 
 ### Self-host
 

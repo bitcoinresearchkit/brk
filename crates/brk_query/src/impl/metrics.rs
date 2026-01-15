@@ -3,12 +3,15 @@ use std::collections::BTreeMap;
 use brk_error::{Error, Result};
 use brk_traversable::TreeNode;
 use brk_types::{
-    DetailedMetricCount, Format, Index, IndexInfo, Limit, Metric, MetricData, PaginatedMetrics,
-    Pagination, PaginationIndex,
+    DetailedMetricCount, Format, Index, IndexInfo, Limit, Metric, MetricData, MetricOutput,
+    MetricSelection, Output, PaginatedMetrics, Pagination, PaginationIndex,
 };
 use vecdb::AnyExportableVec;
 
-use crate::{vecs::{IndexToVec, MetricToVec}, DataRangeFormat, MetricSelection, Output, Query};
+use crate::{
+    Query, ResolvedQuery,
+    vecs::{IndexToVec, MetricToVec},
+};
 
 /// Estimated bytes per column header
 const CSV_HEADER_BYTES_PER_COL: usize = 10;
@@ -33,18 +36,24 @@ impl Query {
         // Metric doesn't exist, suggest alternatives
         Error::MetricNotFound {
             metric: metric.to_string(),
-            suggestion: self.match_metric(metric, Limit::MIN).first().map(|s| s.to_string()),
+            suggestion: self
+                .match_metric(metric, Limit::MIN)
+                .first()
+                .map(|s| s.to_string()),
         }
     }
 
     pub(crate) fn columns_to_csv(
         columns: &[&dyn AnyExportableVec],
-        from: Option<i64>,
-        to: Option<i64>,
+        start: usize,
+        end: usize,
     ) -> Result<String> {
         if columns.is_empty() {
             return Ok(String::new());
         }
+
+        let from = Some(start as i64);
+        let to = Some(end as i64);
 
         let num_rows = columns[0].range_count(from, to);
         let num_cols = columns.len();
@@ -79,82 +88,6 @@ impl Query {
         Ok(csv)
     }
 
-    /// Format single metric - returns `MetricData`
-    pub fn format(
-        &self,
-        metric: &dyn AnyExportableVec,
-        params: &DataRangeFormat,
-    ) -> Result<Output> {
-        let len = metric.len();
-        let from = params.start().map(|start| metric.i64_to_usize(start));
-        let to = params.end_for_len(len).map(|end| metric.i64_to_usize(end));
-
-        Ok(match params.format() {
-            Format::CSV => Output::CSV(Self::columns_to_csv(
-                &[metric],
-                from.map(|v| v as i64),
-                to.map(|v| v as i64),
-            )?),
-            Format::JSON => {
-                let mut buf = Vec::new();
-                MetricData::serialize(metric, from, to, &mut buf)?;
-                Output::Json(buf)
-            }
-        })
-    }
-
-    /// Format multiple metrics - returns `Vec<MetricData>`
-    pub fn format_bulk(
-        &self,
-        metrics: &[&dyn AnyExportableVec],
-        params: &DataRangeFormat,
-    ) -> Result<Output> {
-        // Use min length across metrics for consistent count resolution
-        let min_len = metrics.iter().map(|v| v.len()).min().unwrap_or(0);
-
-        let from = params.start().map(|start| {
-            metrics
-                .iter()
-                .map(|v| v.i64_to_usize(start))
-                .min()
-                .unwrap_or_default()
-        });
-
-        let to = params.end_for_len(min_len).map(|end| {
-            metrics
-                .iter()
-                .map(|v| v.i64_to_usize(end))
-                .min()
-                .unwrap_or_default()
-        });
-
-        let format = params.format();
-
-        Ok(match format {
-            Format::CSV => Output::CSV(Self::columns_to_csv(
-                metrics,
-                from.map(|v| v as i64),
-                to.map(|v| v as i64),
-            )?),
-            Format::JSON => {
-                if metrics.is_empty() {
-                    return Ok(Output::default(format));
-                }
-
-                let mut buf = Vec::new();
-                buf.push(b'[');
-                for (i, vec) in metrics.iter().enumerate() {
-                    if i > 0 {
-                        buf.push(b',');
-                    }
-                    MetricData::serialize(*vec, from, to, &mut buf)?;
-                }
-                buf.push(b']');
-                Output::Json(buf)
-            }
-        })
-    }
-
     /// Search for vecs matching the given metrics and index.
     /// Returns error if no metrics requested or any requested metric is not found.
     pub fn search(&self, params: &MetricSelection) -> Result<Vec<&'static dyn AnyExportableVec>> {
@@ -185,22 +118,34 @@ impl Query {
             .sum()
     }
 
-    /// Search and format single metric
-    pub fn search_and_format(&self, params: MetricSelection) -> Result<Output> {
-        self.search_and_format_checked(params, usize::MAX)
-    }
-
-    /// Search and format single metric with weight limit
-    pub fn search_and_format_checked(
+    /// Resolve query metadata without formatting (cheap).
+    /// Use with `format` for lazy formatting after ETag check.
+    pub fn resolve(
         &self,
         params: MetricSelection,
         max_weight: usize,
-    ) -> Result<Output> {
+    ) -> Result<ResolvedQuery> {
         let vecs = self.search(&params)?;
 
-        let metric = vecs.first().expect("search guarantees non-empty on success");
+        let total = vecs.iter().map(|v| v.len()).min().unwrap_or(0);
+        let version: u64 = vecs.iter().map(|v| u64::from(v.version())).sum();
 
-        let weight = Self::weight(&vecs, params.start(), params.end_for_len(metric.len()));
+        let start = params
+            .start()
+            .map(|s| vecs.iter().map(|v| v.i64_to_usize(s)).min().unwrap_or(0))
+            .unwrap_or(0);
+
+        let end = params
+            .end_for_len(total)
+            .map(|e| {
+                vecs.iter()
+                    .map(|v| v.i64_to_usize(e))
+                    .min()
+                    .unwrap_or(total)
+            })
+            .unwrap_or(total);
+
+        let weight = Self::weight(&vecs, Some(start as i64), Some(end as i64));
         if weight > max_weight {
             return Err(Error::WeightExceeded {
                 requested: weight,
@@ -208,32 +153,57 @@ impl Query {
             });
         }
 
-        self.format(*metric, &params.range)
+        Ok(ResolvedQuery {
+            vecs,
+            format: params.format(),
+            version,
+            total,
+            start,
+            end,
+        })
     }
 
-    /// Search and format bulk metrics
-    pub fn search_and_format_bulk(&self, params: MetricSelection) -> Result<Output> {
-        self.search_and_format_bulk_checked(params, usize::MAX)
-    }
+    /// Format a resolved query (expensive).
+    /// Call after ETag/cache checks to avoid unnecessary work.
+    pub fn format(&self, resolved: ResolvedQuery) -> Result<MetricOutput> {
+        let ResolvedQuery {
+            vecs,
+            format,
+            version,
+            total,
+            start,
+            end,
+        } = resolved;
 
-    /// Search and format bulk metrics with weight limit (for DDoS prevention)
-    pub fn search_and_format_bulk_checked(
-        &self,
-        params: MetricSelection,
-        max_weight: usize,
-    ) -> Result<Output> {
-        let vecs = self.search(&params)?;
+        let output = match format {
+            Format::CSV => Output::CSV(Self::columns_to_csv(&vecs, start, end)?),
+            Format::JSON => {
+                if vecs.len() == 1 {
+                    let mut buf = Vec::new();
+                    MetricData::serialize(vecs[0], start, end, &mut buf)?;
+                    Output::Json(buf)
+                } else {
+                    let mut buf = Vec::new();
+                    buf.push(b'[');
+                    for (i, vec) in vecs.iter().enumerate() {
+                        if i > 0 {
+                            buf.push(b',');
+                        }
+                        MetricData::serialize(*vec, start, end, &mut buf)?;
+                    }
+                    buf.push(b']');
+                    Output::Json(buf)
+                }
+            }
+        };
 
-        let min_len = vecs.iter().map(|v| v.len()).min().expect("search guarantees non-empty");
-        let weight = Self::weight(&vecs, params.start(), params.end_for_len(min_len));
-        if weight > max_weight {
-            return Err(Error::WeightExceeded {
-                requested: weight,
-                max: max_weight,
-            });
-        }
-
-        self.format_bulk(&vecs, &params.range)
+        Ok(MetricOutput {
+            output,
+            version,
+            total,
+            start,
+            end,
+        })
     }
 
     pub fn metric_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {

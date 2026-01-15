@@ -21,7 +21,6 @@ CRATES=(
     brk_computer
     brk_query
     brk_bindgen
-    brk_mcp
     brk_server
     brk_client
     brk

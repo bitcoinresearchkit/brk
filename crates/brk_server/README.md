@@ -2,57 +2,50 @@
 
 HTTP API server for Bitcoin on-chain analytics.
 
-## What It Enables
+## Features
 
-Serve BRK data via REST API with OpenAPI documentation, response caching, MCP endpoint, and optional static file hosting for web interfaces.
-
-## Key Features
-
-- **OpenAPI spec**: Auto-generated documentation at `/api.json` (interactive docs at `/api`)
-- **Response caching**: LRU cache with 5000 entries for repeated queries
-- **Compression**: Brotli, gzip, deflate, zstd support
+- **OpenAPI spec**: Auto-generated docs at `/api` with full spec at `/api.json`
+- **LLM-optimized**: Compact spec at `/api.trimmed.json` for AI tools
+- **Response caching**: ETag-based with LRU cache (5000 entries)
+- **Compression**: Brotli, gzip, deflate, zstd
 - **Static files**: Optional web interface hosting
-- **Request logging**: Colorized status/latency logging
 
-## Core API
+## Usage
 
 ```rust,ignore
 let server = Server::new(&async_query, data_path, WebsiteSource::Filesystem(files_path));
 // Or WebsiteSource::Embedded, or WebsiteSource::Disabled
-server.serve(true).await?;  // true enables MCP endpoint
+server.serve().await?;
 ```
 
-## API Endpoints
+## Endpoints
 
 | Path | Description |
 |------|-------------|
-| `/api/block-height/{height}` | Block by height |
+| `/api` | Interactive API documentation |
+| `/api.json` | Full OpenAPI specification |
+| `/api.trimmed.json` | Compact OpenAPI for LLMs |
+| `/api/address/{address}` | Address stats, transactions, UTXOs |
 | `/api/block/{hash}` | Block info, transactions, status |
+| `/api/block-height/{height}` | Block by height |
 | `/api/tx/{txid}` | Transaction details, status, hex |
-| `/api/address/{addr}` | Address stats, transactions, UTXOs |
+| `/api/mempool` | Fee estimates, mempool stats |
 | `/api/metrics` | Metric catalog and data queries |
-| `/api/v1/mining/*` | Hashrate, difficulty, pools, rewards |
-| `/api/mempool/*` | Fee estimates, projected blocks |
-| `/mcp` | MCP endpoint (if enabled) |
+| `/api/v1/mining/...` | Hashrate, difficulty, pools |
 
 ## Caching
 
-Uses ETag-based caching with must-revalidate semantics:
-- Height-indexed data: Cache until height changes
-- Date-indexed data: Cache with longer TTL
-- Mempool data: Short TTL, frequent updates
+Uses ETag-based caching with `must-revalidate`:
+- **Height-indexed**: Invalidates when new block arrives
+- **Immutable**: 1-year cache for deeply-confirmed blocks/txs (6+ confirmations)
+- **Mempool**: Short max-age, no ETag
 
 ## Configuration
 
-Server binds to port 3110 by default, auto-incrementing if busy (up to 3210).
+Binds to port 3110, auto-incrementing up to 3210 if busy.
 
-## Recommended: mimalloc v3
+## Dependencies
 
-Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator to reduce memory usage.
-
-## Built On
-
-- `brk_query` for data access
-- `brk_mcp` for MCP protocol
-- `aide` + `axum` for HTTP routing and OpenAPI
-- `tower-http` for compression and tracing
+- `brk_query` - data access
+- `aide` + `axum` - HTTP routing and OpenAPI
+- `tower-http` - compression and tracing

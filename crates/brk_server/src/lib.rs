@@ -13,7 +13,6 @@ use axum::{
     serve,
 };
 use brk_error::Result;
-use brk_mcp::route::mcp_router;
 use brk_query::AsyncQuery;
 use include_dir::{include_dir, Dir};
 use quick_cache::sync::Cache;
@@ -67,7 +66,7 @@ impl Server {
         })
     }
 
-    pub async fn serve(self, mcp: bool) -> Result<()> {
+    pub async fn serve(self) -> Result<()> {
         let state = self.0;
 
         let compression_layer = CompressionLayer::new()
@@ -159,6 +158,8 @@ impl Server {
             .python(workspace_root.join("packages/brk_client/brk_client/__init__.py"));
 
         let openapi_json = Arc::new(serde_json::to_string(&openapi).unwrap());
+        let openapi_trimmed = Arc::new(trim_openapi_json(&openapi_json));
+
         let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
             brk_bindgen::generate_clients(vecs, &openapi_json, &output_paths)
         }));
@@ -169,17 +170,11 @@ impl Server {
             Err(_) => error!("Client generation panicked"),
         }
 
-        let router = if mcp {
-            let base_url = format!("http://127.0.0.1:{port}");
-            router.merge(mcp_router(base_url, openapi_json))
-        } else {
-            router
-        };
-
         serve(
             listener,
             router
                 .layer(Extension(Arc::new(openapi)))
+                .layer(Extension(openapi_trimmed))
                 .into_make_service(),
         )
         .await?;

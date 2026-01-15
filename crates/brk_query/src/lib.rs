@@ -13,20 +13,15 @@ use vecdb::AnyStoredVec;
 
 #[cfg(feature = "tokio")]
 mod r#async;
-mod output;
+mod resolved;
 mod vecs;
 
 mod r#impl;
 
 #[cfg(feature = "tokio")]
 pub use r#async::*;
-pub use brk_types::{
-    DataRange, DataRangeFormat, MetricSelection, MetricSelectionLegacy, PaginatedMetrics,
-    Pagination, PaginationIndex,
-};
 pub use r#impl::BLOCK_TXS_PAGE_SIZE;
-pub use output::{LegacyValue, Output, OutputLegacy};
-
+use resolved::ResolvedQuery;
 pub use vecs::Vecs;
 
 #[derive(Clone)]

@@ -1,10 +1,50 @@
+//! # Phase Oracle - On-chain Price Discovery
+//!
+//! Uses `frac(log10(sats))` to bin outputs into 100 bins per block.
+//! The peak bin indicates the price decade (cyclical: $6.3, $63, $630, $6300 all map to same bin).
+//! Monthly/yearly calibration anchors resolve the decade ambiguity.
+//!
+//! ## What Worked
+//!
+//! **Transaction filters (in `compute_pair_index`):**
+//! - `output_count == 2` - payment + change pattern
+//! - `input_count <= 5` - matches Python UTXOracle
+//! - `witness_size <= 2500` bytes total
+//! - No OP_RETURN outputs
+//! - No P2TR (taproot) outputs - significantly cleaned up 2021+ data
+//! - No P2MS, Empty, Unknown outputs - allowlist approach
+//! - No same-day spends - inputs must spend outputs confirmed on earlier days
+//! - No both-outputs-round - skip tx if both outputs are round BTC amounts (±0.1%)
+//!
+//! **Output filters (in `OracleBins::sats_to_bin`):**
+//! - Per-output min/max: 1k sats to 100k BTC (matches Python's 1e-5 to 1e5 BTC)
+//!
+//! **Peak finding:**
+//! - Skip bin 0 when finding peak - round BTC amounts (0.001, 0.01, 0.1, 1.0 BTC) cluster there
+//!
+//! **Anchors:**
+//! - Monthly anchors 2010-2020 for better decade selection in volatile early years
+//! - Yearly anchors 2021+ when prices are more stable
+//!
+//! ## What Didn't Work
+//!
+//! - **Skip all round bins (0, 10, 20, ..., 90) before 2020** - made results worse, not better
+//! - **Top-N tie-breaking with prev_price** - caused drift
+//! - **50% margin threshold for round bin avoidance** - still had issues
+//! - **Transaction-level min sats filter** - Python filters per-output, not per-tx
+//!
+//! ## Known Limitations
+//!
+//! - Pre-2017 data is noisy due to low transaction volume (weak signal)
+//! - 2017 SegWit activation era has some spikes
+
 use std::collections::VecDeque;
 
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{
-    Cents, Close, Date, DateIndex, Height, High, Low, OHLCCents, Open, OutputType, Sats, StoredU32,
-    StoredU64, TxIndex,
+    Cents, Close, Date, DateIndex, Height, High, Low, OHLCCents, Open, OracleBins, OutputType,
+    PHASE_BINS, PairOutputIndex, Sats, StoredU32, StoredU64, TxIndex,
 };
 use tracing::info;
 use vecdb::{
@@ -26,6 +66,653 @@ const FLUSH_INTERVAL: usize = 10_000;
 impl Vecs {
     /// Compute oracle prices from on-chain data
     pub fn compute(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        // Step 1: Compute pair output index (all 2-output transactions)
+        self.compute_pair_index(indexer, indexes, starting_indexes, exit)?;
+
+        // Step 2: Compute phase histograms (Layer 4)
+        self.compute_phase_histograms(starting_indexes, exit)?;
+
+        // Step 3: Compute phase oracle prices (Layer 5)
+        self.compute_phase_prices(starting_indexes, exit)?;
+
+        // Step 4: Compute phase daily average
+        self.compute_phase_daily_average(indexes, starting_indexes, exit)?;
+
+        // Step 6: Compute UTXOracle prices (Python port)
+        self.compute_prices(indexer, indexes, starting_indexes, exit)?;
+
+        // Step 7: Aggregate to daily OHLC
+        self.compute_daily_ohlc(indexes, starting_indexes, exit)?;
+
+        Ok(())
+    }
+
+    /// Compute the pair output index: all transactions with exactly 2 outputs
+    ///
+    /// This is Layer 1 of the oracle computation - identifies all candidate
+    /// transactions for the payment+change pattern.
+    fn compute_pair_index(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        // Validate version - combine all source vec versions
+        let source_version = indexes.txindex.output_count.version()
+            + indexes.txindex.input_count.version()
+            + indexer.vecs.transactions.base_size.version()
+            + indexer.vecs.transactions.total_size.version()
+            + indexer.vecs.outputs.outputtype.version()
+            + indexer.vecs.outputs.value.version()
+            + indexer.vecs.inputs.outpoint.version()
+            + indexes.height.dateindex.version();
+        self.pairoutputindex_to_txindex
+            .validate_computed_version_or_reset(source_version)?;
+        self.height_to_first_pairoutputindex
+            .validate_computed_version_or_reset(source_version)?;
+        self.output0_value
+            .validate_computed_version_or_reset(source_version)?;
+        self.output1_value
+            .validate_computed_version_or_reset(source_version)?;
+
+        let total_heights = indexer.vecs.blocks.timestamp.len();
+        let total_txs = indexer.vecs.transactions.height.len();
+
+        // Determine starting height (handle rollback + sync)
+        let start_height = self
+            .height_to_first_pairoutputindex
+            .len()
+            .min(starting_indexes.height.to_usize());
+
+        // Truncation point for pair vecs: first_pairoutputindex of start_height block
+        // (i.e., keep all pairs from blocks before start_height)
+        let pair_truncate_len =
+            if start_height > 0 && start_height <= self.height_to_first_pairoutputindex.len() {
+                self.height_to_first_pairoutputindex
+                    .iter()?
+                    .get(Height::from(start_height))
+                    .map(|idx| idx.to_usize())
+                    .unwrap_or(self.pairoutputindex_to_txindex.len())
+            } else if start_height == 0 {
+                0
+            } else {
+                self.pairoutputindex_to_txindex.len()
+            }
+            .min(self.pairoutputindex_to_txindex.len())
+            .min(self.output0_value.len())
+            .min(self.output1_value.len());
+
+        // Truncate all vecs together
+        self.height_to_first_pairoutputindex
+            .truncate_if_needed_at(start_height)?;
+        self.pairoutputindex_to_txindex
+            .truncate_if_needed_at(pair_truncate_len)?;
+        self.output0_value
+            .truncate_if_needed_at(pair_truncate_len)?;
+        self.output1_value
+            .truncate_if_needed_at(pair_truncate_len)?;
+
+        if start_height >= total_heights {
+            return Ok(());
+        }
+
+        info!(
+            "Computing pair index from height {} to {}",
+            start_height, total_heights
+        );
+
+        let mut height_to_first_txindex_iter = indexer.vecs.transactions.first_txindex.into_iter();
+        let mut txindex_to_output_count_iter = indexes.txindex.output_count.iter();
+        let mut txindex_to_input_count_iter = indexes.txindex.input_count.iter();
+        let mut txindex_to_base_size_iter = indexer.vecs.transactions.base_size.into_iter();
+        let mut txindex_to_total_size_iter = indexer.vecs.transactions.total_size.into_iter();
+        let mut txindex_to_first_txoutindex_iter =
+            indexer.vecs.transactions.first_txoutindex.into_iter();
+        let mut txindex_to_first_txinindex_iter =
+            indexer.vecs.transactions.first_txinindex.into_iter();
+        let mut txoutindex_to_outputtype_iter = indexer.vecs.outputs.outputtype.into_iter();
+        let mut txoutindex_to_value_iter = indexer.vecs.outputs.value.into_iter();
+        let mut txinindex_to_outpoint_iter = indexer.vecs.inputs.outpoint.into_iter();
+        let mut height_to_dateindex_iter = indexes.height.dateindex.iter();
+        let mut dateindex_to_first_height_iter = indexes.dateindex.first_height.iter();
+
+        // Track current date for same-day spend check
+        let mut current_dateindex = DateIndex::from(0usize);
+        let mut current_date_first_txindex = TxIndex::from(0usize);
+
+        let mut last_progress = (start_height * 100 / total_heights.max(1)) as u8;
+
+        for height in start_height..total_heights {
+            // Record first pairoutputindex for this block
+            let first_pairoutputindex =
+                PairOutputIndex::from(self.pairoutputindex_to_txindex.len());
+            self.height_to_first_pairoutputindex
+                .push(first_pairoutputindex);
+
+            // Get transaction range for this block
+            let first_txindex = height_to_first_txindex_iter.get_at_unwrap(height);
+            let next_first_txindex = height_to_first_txindex_iter
+                .get_at(height + 1)
+                .unwrap_or(TxIndex::from(total_txs));
+
+            // Update current date tracking for same-day spend check
+            let block_dateindex = height_to_dateindex_iter.get_unwrap(Height::from(height));
+            if block_dateindex != current_dateindex {
+                current_dateindex = block_dateindex;
+                if let Some(first_height) = dateindex_to_first_height_iter.get(block_dateindex) {
+                    current_date_first_txindex = height_to_first_txindex_iter
+                        .get_at(first_height.to_usize())
+                        .unwrap_or(first_txindex);
+                }
+            }
+
+            // Skip coinbase (first tx in block)
+            let tx_start = first_txindex.to_usize() + 1;
+            let tx_end = next_first_txindex.to_usize();
+
+            for txindex in tx_start..tx_end {
+                // Check output count first (most common filter)
+                let output_count: StoredU64 =
+                    txindex_to_output_count_iter.get_unwrap(TxIndex::from(txindex));
+                if *output_count != 2 {
+                    continue;
+                }
+
+                // Filter: 1-5 inputs (same as UTXOracle)
+                let input_count: StoredU64 =
+                    txindex_to_input_count_iter.get_unwrap(TxIndex::from(txindex));
+                if *input_count == 0 || *input_count > 5 {
+                    continue;
+                }
+
+                // Filter: max 2500 bytes total witness size
+                let base_size: StoredU32 = txindex_to_base_size_iter.get_at_unwrap(txindex);
+                let total_size: StoredU32 = txindex_to_total_size_iter.get_at_unwrap(txindex);
+                let witness_size = *total_size - *base_size;
+                if witness_size > 2500 {
+                    continue;
+                }
+
+                // Filter: only standard payment types (no OP_RETURN, P2TR, P2MS, Empty, Unknown)
+                let first_txoutindex = txindex_to_first_txoutindex_iter.get_at_unwrap(txindex);
+                let out0_type =
+                    txoutindex_to_outputtype_iter.get_at_unwrap(first_txoutindex.to_usize());
+                let out1_type =
+                    txoutindex_to_outputtype_iter.get_at_unwrap(first_txoutindex.to_usize() + 1);
+                if !matches!(
+                    out0_type,
+                    OutputType::P2PK65
+                        | OutputType::P2PK33
+                        | OutputType::P2PKH
+                        | OutputType::P2SH
+                        | OutputType::P2WPKH
+                        | OutputType::P2WSH
+                        | OutputType::P2A
+                ) || !matches!(
+                    out1_type,
+                    OutputType::P2PK65
+                        | OutputType::P2PK33
+                        | OutputType::P2PKH
+                        | OutputType::P2SH
+                        | OutputType::P2WPKH
+                        | OutputType::P2WSH
+                        | OutputType::P2A
+                ) {
+                    continue;
+                }
+
+                // Filter: no same-day spends (input spending output confirmed today)
+                let first_txinindex = txindex_to_first_txinindex_iter.get_at_unwrap(txindex);
+                let mut has_same_day_spend = false;
+                for i in 0..*input_count as usize {
+                    let txinindex = first_txinindex.to_usize() + i;
+                    let outpoint = txinindex_to_outpoint_iter.get_at_unwrap(txinindex);
+                    if !outpoint.is_coinbase() && outpoint.txindex() >= current_date_first_txindex {
+                        has_same_day_spend = true;
+                        break;
+                    }
+                }
+                if has_same_day_spend {
+                    continue;
+                }
+
+                // Get output values (Layer 3)
+                let value0: Sats =
+                    txoutindex_to_value_iter.get_at_unwrap(first_txoutindex.to_usize());
+                let value1: Sats =
+                    txoutindex_to_value_iter.get_at_unwrap(first_txoutindex.to_usize() + 1);
+
+                // Filter: skip if BOTH outputs are round BTC amounts (not price-related)
+                if value0.is_round_btc() && value1.is_round_btc() {
+                    continue;
+                }
+
+                // Store Layer 1 & 3 data
+                // Note: min/max sats filtering done per-output in OracleBins::sats_to_bin
+                self.pairoutputindex_to_txindex.push(TxIndex::from(txindex));
+                self.output0_value.push(value0);
+                self.output1_value.push(value1);
+            }
+
+            // Log and flush every 1%
+            let progress = (height * 100 / total_heights.max(1)) as u8;
+            if progress > last_progress {
+                last_progress = progress;
+                info!("Pair index computation: {}%", progress);
+
+                let _lock = exit.lock();
+                self.pairoutputindex_to_txindex.write()?;
+                self.height_to_first_pairoutputindex.write()?;
+                self.output0_value.write()?;
+                self.output1_value.write()?;
+            }
+        }
+
+        // Final write
+        {
+            let _lock = exit.lock();
+            self.pairoutputindex_to_txindex.write()?;
+            self.height_to_first_pairoutputindex.write()?;
+            self.output0_value.write()?;
+            self.output1_value.write()?;
+        }
+
+        info!(
+            "Pair index complete: {} pairs across {} blocks",
+            self.pairoutputindex_to_txindex.len(),
+            self.height_to_first_pairoutputindex.len()
+        );
+
+        Ok(())
+    }
+
+    /// Compute phase histograms per block (Layer 4)
+    ///
+    /// Bins output values by frac(log10(sats)) into 100 bins per block.
+    fn compute_phase_histograms(
+        &mut self,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        let source_version = self.pairoutputindex_to_txindex.version();
+        self.phase_histogram
+            .validate_computed_version_or_reset(source_version)?;
+
+        let total_heights = self.height_to_first_pairoutputindex.len();
+        let total_pairs = self.pairoutputindex_to_txindex.len();
+
+        let start_height = self
+            .phase_histogram
+            .len()
+            .min(starting_indexes.height.to_usize());
+
+        self.phase_histogram.truncate_if_needed_at(start_height)?;
+
+        if start_height >= total_heights {
+            return Ok(());
+        }
+
+        info!(
+            "Computing phase histograms from height {} to {}",
+            start_height, total_heights
+        );
+
+        let mut output0_iter = self.output0_value.iter()?;
+        let mut output1_iter = self.output1_value.iter()?;
+        let mut height_to_first_pair_iter = self.height_to_first_pairoutputindex.iter()?;
+
+        let mut last_progress = (start_height * 100 / total_heights.max(1)) as u8;
+
+        for height in start_height..total_heights {
+            // Get pair range for this block
+            let first_pair = height_to_first_pair_iter
+                .get_unwrap(Height::from(height))
+                .to_usize();
+            let next_first_pair = height_to_first_pair_iter
+                .get(Height::from(height + 1))
+                .map(|p| p.to_usize())
+                .unwrap_or(total_pairs);
+
+            // Build phase histogram
+            let mut histogram = OracleBins::ZERO;
+
+            for pair_idx in first_pair..next_first_pair {
+                let pair_idx = PairOutputIndex::from(pair_idx);
+
+                let sats0: Sats = output0_iter.get_unwrap(pair_idx);
+                let sats1: Sats = output1_iter.get_unwrap(pair_idx);
+
+                histogram.add(sats0);
+                histogram.add(sats1);
+            }
+
+            self.phase_histogram.push(histogram);
+
+            // Progress logging
+            let progress = (height * 100 / total_heights.max(1)) as u8;
+            if progress > last_progress {
+                last_progress = progress;
+                info!("Phase histogram computation: {}%", progress);
+
+                let _lock = exit.lock();
+                self.phase_histogram.write()?;
+            }
+        }
+
+        // Final write
+        {
+            let _lock = exit.lock();
+            self.phase_histogram.write()?;
+        }
+
+        info!(
+            "Phase histograms complete: {} blocks",
+            self.phase_histogram.len()
+        );
+
+        Ok(())
+    }
+
+    /// Compute phase oracle prices (Layer 5)
+    ///
+    /// Derives prices from phase histograms using peak finding.
+    /// Uses monthly calibration anchors (2010-2020) then yearly (2021+).
+    fn compute_phase_prices(
+        &mut self,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        /// Monthly calibration anchors 2010-2020, then yearly 2021+
+        /// Format: (first_height_of_period, open_price)
+        const ANCHORS: [(u32, f64); 129] = [
+            // 2010 (monthly from Oct)
+            (82_998, 0.06), // 2010-10-01
+            (88_893, 0.19), // 2010-11-01
+            (94_802, 0.20), // 2010-12-01
+            // 2011
+            (100_410, 0.30),  // 2011-01-01
+            (105_571, 0.55),  // 2011-02-01
+            (111_137, 0.86),  // 2011-03-01
+            (116_039, 0.78),  // 2011-04-01
+            (121_127, 3.50),  // 2011-05-01
+            (127_866, 8.74),  // 2011-06-01
+            (134_122, 16.10), // 2011-07-01
+            (139_036, 13.35), // 2011-08-01
+            (143_409, 8.19),  // 2011-09-01
+            (147_566, 5.14),  // 2011-10-01
+            (151_315, 3.24),  // 2011-11-01
+            (155_452, 2.97),  // 2011-12-01
+            // 2012
+            (160_037, 4.72),  // 2012-01-01
+            (164_781, 5.48),  // 2012-02-01
+            (169_136, 4.86),  // 2012-03-01
+            (173_805, 4.90),  // 2012-04-01
+            (178_015, 4.94),  // 2012-05-01
+            (182_429, 5.18),  // 2012-06-01
+            (186_964, 6.68),  // 2012-07-01
+            (191_737, 9.35),  // 2012-08-01
+            (196_616, 10.16), // 2012-09-01
+            (201_311, 12.40), // 2012-10-01
+            (205_919, 11.20), // 2012-11-01
+            (210_350, 12.56), // 2012-12-01
+            // 2013
+            (214_563, 13.51),   // 2013-01-01
+            (219_007, 20.41),   // 2013-02-01
+            (223_665, 33.38),   // 2013-03-01
+            (229_008, 93.03),   // 2013-04-01
+            (233_975, 139.22),  // 2013-05-01
+            (238_952, 128.81),  // 2013-06-01
+            (244_160, 97.51),   // 2013-07-01
+            (249_525, 106.21),  // 2013-08-01
+            (255_362, 141.00),  // 2013-09-01
+            (260_989, 141.89),  // 2013-10-01
+            (267_188, 211.17),  // 2013-11-01
+            (272_375, 1205.80), // 2013-12-01
+            // 2014
+            (277_996, 739.28), // 2014-01-01
+            (283_468, 805.22), // 2014-02-01
+            (288_370, 549.99), // 2014-03-01
+            (293_483, 456.98), // 2014-04-01
+            (298_513, 449.02), // 2014-05-01
+            (303_552, 626.21), // 2014-06-01
+            (308_672, 640.79), // 2014-07-01
+            (313_404, 580.00), // 2014-08-01
+            (318_531, 477.81), // 2014-09-01
+            (323_269, 387.00), // 2014-10-01
+            (327_939, 336.82), // 2014-11-01
+            (332_363, 379.89), // 2014-12-01
+            // 2015
+            (336_861, 322.30), // 2015-01-01
+            (341_392, 215.80), // 2015-02-01
+            (345_611, 255.70), // 2015-03-01
+            (350_162, 244.51), // 2015-04-01
+            (354_416, 236.11), // 2015-05-01
+            (358_881, 228.70), // 2015-06-01
+            (363_263, 262.89), // 2015-07-01
+            (367_846, 284.45), // 2015-08-01
+            (372_441, 231.35), // 2015-09-01
+            (376_910, 236.49), // 2015-10-01
+            (381_470, 316.00), // 2015-11-01
+            (386_119, 376.88), // 2015-12-01
+            // 2016
+            (391_182, 429.02), // 2016-01-01
+            (396_049, 365.52), // 2016-02-01
+            (400_601, 438.99), // 2016-03-01
+            (405_179, 416.02), // 2016-04-01
+            (409_638, 446.60), // 2016-05-01
+            (414_258, 530.69), // 2016-06-01
+            (418_723, 671.91), // 2016-07-01
+            (423_088, 624.22), // 2016-08-01
+            (427_737, 573.80), // 2016-09-01
+            (432_284, 609.67), // 2016-10-01
+            (436_828, 697.69), // 2016-11-01
+            (441_341, 742.33), // 2016-12-01
+            // 2017
+            (446_033, 970.41),  // 2017-01-01
+            (450_945, 968.74),  // 2017-02-01
+            (455_200, 1190.37), // 2017-03-01
+            (459_832, 1080.82), // 2017-04-01
+            (464_270, 1362.02), // 2017-05-01
+            (469_122, 2299.05), // 2017-06-01
+            (473_593, 2455.42), // 2017-07-01
+            (478_479, 2865.02), // 2017-08-01
+            (482_885, 4737.93), // 2017-09-01
+            (487_740, 4334.18), // 2017-10-01
+            (492_558, 6439.52), // 2017-11-01
+            (496_932, 9968.39), // 2017-12-01
+            // 2018
+            (501_961, 13888.32), // 2018-01-01
+            (507_016, 10115.79), // 2018-02-01
+            (511_385, 10306.80), // 2018-03-01
+            (516_040, 6922.18),  // 2018-04-01
+            (520_650, 9243.39),  // 2018-05-01
+            (525_367, 7486.93),  // 2018-06-01
+            (529_967, 6386.45),  // 2018-07-01
+            (534_613, 7725.93),  // 2018-08-01
+            (539_416, 7016.31),  // 2018-09-01
+            (543_835, 6565.64),  // 2018-10-01
+            (548_214, 6305.13),  // 2018-11-01
+            (552_084, 3971.61),  // 2018-12-01
+            // 2019
+            (556_459, 3692.35),  // 2019-01-01
+            (560_984, 3411.57),  // 2019-02-01
+            (565_109, 3792.17),  // 2019-03-01
+            (569_659, 4095.32),  // 2019-04-01
+            (573_997, 5269.55),  // 2019-05-01
+            (578_718, 8542.59),  // 2019-06-01
+            (583_237, 10754.91), // 2019-07-01
+            (588_007, 10085.57), // 2019-08-01
+            (592_683, 9600.93),  // 2019-09-01
+            (597_318, 8303.79),  // 2019-10-01
+            (601_842, 9152.56),  // 2019-11-01
+            (606_088, 7554.92),  // 2019-12-01
+            // 2020
+            (610_691, 7167.07),  // 2020-01-01
+            (615_428, 9333.17),  // 2020-02-01
+            (619_582, 8526.76),  // 2020-03-01
+            (623_837, 6424.03),  // 2020-04-01
+            (628_350, 8627.93),  // 2020-05-01
+            (632_542, 9448.95),  // 2020-06-01
+            (637_091, 9134.01),  // 2020-07-01
+            (641_680, 11354.08), // 2020-08-01
+            (646_201, 11657.26), // 2020-09-01
+            (650_732, 10779.19), // 2020-10-01
+            (654_933, 13809.85), // 2020-11-01
+            (658_977, 19698.14), // 2020-12-01
+            // 2021+ (yearly)
+            (663_913, 28_980.45), // 2021-01-01
+            (716_599, 46_195.56), // 2022-01-01
+            (769_787, 16_528.89), // 2023-01-01
+            (823_786, 42_241.10), // 2024-01-01
+            (877_259, 93_576.00), // 2025-01-01
+            (930_341, 87_648.22), // 2026-01-01
+        ];
+
+        /// Find the calibration price for a given height
+        fn anchor_price_for_height(height: usize) -> Option<f64> {
+            let mut result = None;
+            for &(anchor_height, price) in &ANCHORS {
+                if height >= anchor_height as usize {
+                    result = Some(price);
+                } else {
+                    break;
+                }
+            }
+            result
+        }
+
+        let source_version = self.phase_histogram.version();
+        self.phase_price_cents
+            .validate_computed_version_or_reset(source_version)?;
+
+        let total_heights = self.phase_histogram.len();
+
+        let start_height = self
+            .phase_price_cents
+            .len()
+            .min(starting_indexes.height.to_usize());
+
+        self.phase_price_cents.truncate_if_needed_at(start_height)?;
+
+        if start_height >= total_heights {
+            return Ok(());
+        }
+
+        info!(
+            "Computing phase prices from height {} to {}",
+            start_height, total_heights
+        );
+
+        let mut histogram_iter = self.phase_histogram.iter()?;
+        let mut last_progress = (start_height * 100 / total_heights.max(1)) as u8;
+
+        // Fixed exponent calibrated for ~$63,000 (ceil(log10(63000)) = 5)
+        const EXPONENT: f64 = 5.0;
+
+        /// Convert a bin to price using anchor for decade selection
+        fn bin_to_price(bin: usize, anchor_price: f64) -> f64 {
+            let peak = (bin as f64 + 0.5) / PHASE_BINS as f64;
+            let raw_price = 10.0_f64.powf(EXPONENT - peak);
+            let decade_ratio = (anchor_price / raw_price).log10().round();
+            raw_price * 10.0_f64.powf(decade_ratio)
+        }
+
+        for height in start_height..total_heights {
+            // Before first anchor (pre-Oct 2010), output 0
+            let anchor_price = match anchor_price_for_height(height) {
+                Some(price) => price,
+                None => {
+                    self.phase_price_cents.push(Cents::ZERO);
+                    continue;
+                }
+            };
+
+            let histogram = histogram_iter.get_unwrap(Height::from(height));
+
+            // Skip empty histograms, use anchor price
+            if histogram.total_count() == 0 {
+                let price_cents = Cents::from((anchor_price * 100.0) as i64);
+                self.phase_price_cents.push(price_cents);
+                continue;
+            }
+
+            // Find peak bin, skipping bin 0 (round BTC amounts cluster there)
+            let peak_bin = histogram
+                .bins
+                .iter()
+                .enumerate()
+                .filter(|(bin, _)| *bin != 0)
+                .max_by_key(|(_, count)| *count)
+                .map(|(bin, _)| bin)
+                .unwrap_or(0);
+
+            let price = bin_to_price(peak_bin, anchor_price);
+
+            // Clamp to reasonable range ($0.001 to $10M)
+            let price = price.clamp(0.001, 10_000_000.0);
+
+            let price_cents = Cents::from((price * 100.0) as i64);
+            self.phase_price_cents.push(price_cents);
+
+            // Progress logging
+            let progress = (height * 100 / total_heights.max(1)) as u8;
+            if progress > last_progress {
+                last_progress = progress;
+                info!("Phase price computation: {}%", progress);
+
+                let _lock = exit.lock();
+                self.phase_price_cents.write()?;
+            }
+        }
+
+        // Final write
+        {
+            let _lock = exit.lock();
+            self.phase_price_cents.write()?;
+        }
+
+        info!(
+            "Phase prices complete: {} blocks",
+            self.phase_price_cents.len()
+        );
+
+        Ok(())
+    }
+
+    /// Compute daily distribution (min, max, average, percentiles) from phase oracle prices
+    fn compute_phase_daily_average(
+        &mut self,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        info!("Computing phase daily distribution");
+
+        self.phase_daily_cents.compute(
+            starting_indexes.dateindex,
+            &self.phase_price_cents,
+            &indexes.dateindex.first_height,
+            &indexes.dateindex.height_count,
+            exit,
+        )?;
+
+        info!(
+            "Phase daily distribution complete: {} days",
+            self.phase_daily_cents.len()
+        );
+
+        Ok(())
+    }
+
+    /// Compute oracle prices from on-chain data (UTXOracle port)
+    fn compute_prices(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
@@ -92,8 +779,8 @@ impl Vecs {
         };
 
         // Progress tracking
-        let total_blocks = last_height.to_usize() - start_height.to_usize();
-        let mut last_progress = 0u8;
+        let mut last_progress =
+            (start_height.to_usize() * 100 / last_height.to_usize().max(1)) as u8;
         let total_txs = indexer.vecs.transactions.height.len();
 
         // Sparse entries for current block (reused buffer)
@@ -109,8 +796,7 @@ impl Vecs {
             let height = Height::from(height);
 
             // Log progress every 1%
-            let progress =
-                ((height.to_usize() - start_height.to_usize()) * 100 / total_blocks.max(1)) as u8;
+            let progress = (height.to_usize() * 100 / last_height.to_usize().max(1)) as u8;
             if progress > last_progress {
                 last_progress = progress;
                 info!("Oracle price computation: {}%", progress);
@@ -174,14 +860,14 @@ impl Vecs {
                 // Check outputs: no OP_RETURN, collect values
                 let mut has_opreturn = false;
                 let mut values: [Sats; 2] = [Sats::ZERO; 2];
-                for i in 0..2usize {
+                for (i, value) in values.iter_mut().enumerate() {
                     let txoutindex = first_txoutindex.to_usize() + i;
                     let outputtype = txoutindex_to_outputtype_iter.get_at_unwrap(txoutindex);
                     if outputtype == OutputType::OpReturn {
                         has_opreturn = true;
                         break;
                     }
-                    values[i] = txoutindex_to_value_iter.get_at_unwrap(txoutindex);
+                    *value = txoutindex_to_value_iter.get_at_unwrap(txoutindex);
                 }
                 if has_opreturn {
                     continue;

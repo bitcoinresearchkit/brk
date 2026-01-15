@@ -63,7 +63,6 @@ cd docker && docker compose up -d
 | `BTC_RPC_PASSWORD` | Bitcoin RPC password | - |
 | `BRK_DATA_VOLUME` | Docker volume name for BRK data | `brk-data` |
 | `BRK_FETCH` | Enable price fetching | `true` |
-| `BRK_MCP` | Enable MCP for AI/LLM | `true` |
 
 ### Example .env File
 
@@ -80,7 +79,6 @@ BTC_RPC_PASSWORD=your_password
 
 # BRK settings
 BRK_FETCH=true
-BRK_MCP=true
 ```
 
 ### Connecting to Bitcoin Core

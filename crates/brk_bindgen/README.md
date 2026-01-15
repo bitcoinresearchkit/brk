@@ -4,7 +4,7 @@ Code generation for BRK client libraries.
 
 ## What It Enables
 
-Generate typed client libraries for Rust, JavaScript/TypeScript, and Python from the OpenAPI specification. Keeps frontend code in sync with available metrics and API endpoints without manual maintenance.
+Generate typed client libraries for Rust, JavaScript, and Python from the OpenAPI specification. Keeps frontend code in sync with available metrics and API endpoints without manual maintenance.
 
 ## Key Features
 

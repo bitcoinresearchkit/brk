@@ -52,7 +52,6 @@ brk_fetcher = { version = "0.1.0-alpha.3", path = "crates/brk_fetcher" }
 brk_indexer = { version = "0.1.0-alpha.3", path = "crates/brk_indexer" }
 brk_iterator = { version = "0.1.0-alpha.3", path = "crates/brk_iterator" }
 brk_logger = { version = "0.1.0-alpha.3", path = "crates/brk_logger" }
-brk_mcp = { version = "0.1.0-alpha.3", path = "crates/brk_mcp" }
 brk_mempool = { version = "0.1.0-alpha.3", path = "crates/brk_mempool" }
 brk_query = { version = "0.1.0-alpha.3", path = "crates/brk_query", features = ["tokio"] }
 brk_reader = { version = "0.1.0-alpha.3", path = "crates/brk_reader" }

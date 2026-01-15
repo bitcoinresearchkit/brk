@@ -38,7 +38,6 @@ services:
       # BRK configuration
       - BRKDIR=/home/brk/.brk
       - FETCH=${BRK_FETCH:-true}
-      - MCP=${BRK_MCP:-true}
     command:
       - --bitcoindir
       - /bitcoin

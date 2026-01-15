@@ -40,10 +40,6 @@ pub use brk_iterator as iterator;
 #[doc(inline)]
 pub use brk_logger as logger;
 
-#[cfg(feature = "mcp")]
-#[doc(inline)]
-pub use brk_mcp as mcp;
-
 #[cfg(feature = "mempool")]
 #[doc(inline)]
 pub use brk_mempool as mempool;

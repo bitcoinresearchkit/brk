@@ -23,12 +23,13 @@ let query = Query::build(&reader, &indexer, &computer, Some(mempool));
 // Current height
 let height = query.height();
 
-// Metric queries
-let data = query.search_and_format(MetricSelection {
+// Metric queries (two-phase: resolve then format)
+let resolved = query.resolve(MetricSelection {
     metrics: vec!["supply".into()],
     index: Index::Height,
     range: DataRangeFormat::default(),
-})?;
+}, usize::MAX)?;
+let data = query.format(resolved)?;
 
 // Block queries
 let info = query.block_by_height(Height::new(840_000))?;
@@ -44,7 +45,7 @@ let stats = query.address(address)?;
 
 | Domain | Methods |
 |--------|---------|
-| Metrics | `metrics`, `search_and_format`, `metric_to_indexes` |
+| Metrics | `metrics`, `resolve`, `format`, `metric_to_indexes` |
 | Blocks | `block`, `block_by_height`, `blocks`, `block_txs`, `block_status`, `block_by_timestamp` |
 | Transactions | `transaction`, `transaction_status`, `transaction_hex`, `outspend`, `outspends` |
 | Addresses | `address`, `address_txids`, `address_utxos` |

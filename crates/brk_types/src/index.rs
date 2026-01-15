@@ -5,12 +5,14 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::PrintableIndex;
 
+use crate::PairOutputIndex;
+
 use super::{
     DateIndex, DecadeIndex, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
-    Height, TxInIndex, LoadedAddressIndex, MonthIndex, OpReturnIndex, TxOutIndex,
-    P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
-    P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, QuarterIndex,
-    SemesterIndex, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
+    Height, LoadedAddressIndex, MonthIndex, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex,
+    P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
+    P2WPKHAddressIndex, P2WSHAddressIndex, QuarterIndex, SemesterIndex, TxInIndex, TxIndex,
+    TxOutIndex, UnknownOutputIndex, WeekIndex, YearIndex,
 };
 
 /// Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
@@ -46,10 +48,11 @@ pub enum Index {
     YearIndex,
     LoadedAddressIndex,
     EmptyAddressIndex,
+    PairOutputIndex,
 }
 
 impl Index {
-    pub const fn all() -> [Self; 27] {
+    pub const fn all() -> [Self; 28] {
         [
             Self::DateIndex,
             Self::DecadeIndex,
@@ -78,6 +81,7 @@ impl Index {
             Self::YearIndex,
             Self::LoadedAddressIndex,
             Self::EmptyAddressIndex,
+            Self::PairOutputIndex,
         ]
     }
 
@@ -110,6 +114,7 @@ impl Index {
             Self::YearIndex => YearIndex::to_possible_strings(),
             Self::LoadedAddressIndex => LoadedAddressIndex::to_possible_strings(),
             Self::EmptyAddressIndex => EmptyAddressIndex::to_possible_strings(),
+            Self::PairOutputIndex => PairOutputIndex::to_possible_strings(),
         }
     }
 
@@ -188,6 +193,7 @@ impl TryFrom<&str> for Index {
             v if (Self::EmptyAddressIndex).possible_values().contains(&v) => {
                 Self::EmptyAddressIndex
             }
+            v if (Self::PairOutputIndex).possible_values().contains(&v) => Self::PairOutputIndex,
             _ => return Err(Error::Parse(format!("Invalid index: {value}"))),
         })
     }

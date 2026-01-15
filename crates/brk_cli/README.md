@@ -75,7 +75,7 @@ brk --help
 1. **Indexer**: Processes blocks into queryable indexes
 2. **Computer**: Derives 1000+ on-chain metrics
 3. **Mempool**: Real-time fee estimation
-4. **Server**: REST API + MCP endpoint
+4. **Server**: REST API with OpenAPI docs
 5. **Bundler**: JS bundling for web interface (if enabled)
 
 ## Performance

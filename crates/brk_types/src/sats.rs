@@ -69,6 +69,40 @@ impl Sats {
     pub fn is_max(&self) -> bool {
         *self == Self::MAX
     }
+
+    /// Check if value is a "round" BTC amount (±0.1% of common round values).
+    /// Used to filter out non-price-related transactions.
+    /// Round amounts: 1k, 10k, 20k, 30k, 50k, 100k, 200k, 300k, 500k sats,
+    /// 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.3, 0.5, 1, 10 BTC
+    pub fn is_round_btc(&self) -> bool {
+        const ROUND_SATS: [u64; 19] = [
+            1_000,        // 1k sats
+            10_000,       // 10k sats
+            20_000,       // 20k sats
+            30_000,       // 30k sats
+            50_000,       // 50k sats
+            100_000,      // 100k sats (0.001 BTC)
+            200_000,      // 200k sats
+            300_000,      // 300k sats
+            500_000,      // 500k sats
+            1_000_000,    // 0.01 BTC
+            2_000_000,    // 0.02 BTC
+            3_000_000,    // 0.03 BTC
+            5_000_000,    // 0.05 BTC
+            10_000_000,   // 0.1 BTC
+            20_000_000,   // 0.2 BTC
+            30_000_000,   // 0.3 BTC
+            50_000_000,   // 0.5 BTC
+            100_000_000,  // 1 BTC
+            1_000_000_000, // 10 BTC
+        ];
+        const TOLERANCE: f64 = 0.001; // 0.1%
+
+        let v = self.0 as f64;
+        ROUND_SATS
+            .iter()
+            .any(|&r| (v - r as f64).abs() <= r as f64 * TOLERANCE)
+    }
 }
 
 impl Add for Sats {

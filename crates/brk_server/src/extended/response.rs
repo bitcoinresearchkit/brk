@@ -1,6 +1,6 @@
 use axum::{
     body::Body,
-    http::{Response, StatusCode},
+    http::{HeaderMap, Response, StatusCode},
     response::IntoResponse,
 };
 use serde::Serialize;
@@ -20,6 +20,9 @@ where
     where
         T: Serialize;
     fn new_json_cached<T>(value: T, params: &CacheParams) -> Self
+    where
+        T: Serialize;
+    fn static_json<T>(headers: &HeaderMap, value: T) -> Self
     where
         T: Serialize;
     fn new_text(value: &str, etag: &str) -> Self;
@@ -106,6 +109,17 @@ impl ResponseExtended for Response<Body> {
             headers.insert_etag(etag);
         }
         response
+    }
+
+    fn static_json<T>(headers: &HeaderMap, value: T) -> Self
+    where
+        T: Serialize,
+    {
+        let params = CacheParams::version();
+        if params.matches_etag(headers) {
+            return Self::new_not_modified();
+        }
+        Self::new_json_cached(value, &params)
     }
 
     fn new_text_cached(value: &str, params: &CacheParams) -> Self {

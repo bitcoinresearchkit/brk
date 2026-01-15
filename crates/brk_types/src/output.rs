@@ -1,6 +1,6 @@
-use brk_types::Format;
+use crate::Format;
 
-/// New format with MetricData metadata wrapper
+/// Metric data output format
 #[derive(Debug)]
 pub enum Output {
     Json(Vec<u8>),
@@ -19,7 +19,9 @@ impl Output {
     pub fn default(format: Format) -> Self {
         match format {
             Format::CSV => Output::CSV(String::new()),
-            Format::JSON => Output::Json(br#"{"len":0,"from":0,"to":0,"data":[]}"#.to_vec()),
+            Format::JSON => {
+                Output::Json(br#"{"version":0,"total":0,"start":0,"end":0,"data":[]}"#.to_vec())
+            }
         }
     }
 }

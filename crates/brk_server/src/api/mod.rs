@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aide::{
-    axum::ApiRouter,
+    axum::{ApiRouter, routing::get_with},
     openapi::OpenApi,
 };
 use axum::{
@@ -12,13 +12,12 @@ use axum::{
 };
 
 use crate::{
-    VERSION,
     api::{
         addresses::AddressRoutes, blocks::BlockRoutes, mempool::MempoolRoutes,
         metrics::ApiMetricsRoutes, mining::MiningRoutes, server::ServerRoutes,
         transactions::TxRoutes,
     },
-    extended::{HeaderMapExtended, ResponseExtended},
+    extended::{ResponseExtended, TransformResponseExtended},
 };
 
 use super::AppState;
@@ -48,19 +47,39 @@ impl ApiRoutes for ApiRouter<AppState> {
             .add_metrics_routes()
             .add_server_routes()
             .route("/api/server", get(Redirect::temporary("/api#tag/server")))
-            .route(
+            .api_route(
                 "/api.json",
-                get(
+                get_with(
                     async |headers: HeaderMap,
                            Extension(api): Extension<Arc<OpenApi>>|
+                           -> Response { Response::static_json(&headers, &*api) },
+                    |op| {
+                        op.id("get_openapi")
+                            .server_tag()
+                            .summary("OpenAPI specification")
+                            .description("Full OpenAPI 3.1 specification for this API.")
+                    },
+                ),
+            )
+            .api_route(
+                "/api.trimmed.json",
+                get_with(
+                    async |headers: HeaderMap,
+                           Extension(api_trimmed): Extension<Arc<String>>|
                            -> Response {
-                        let etag = VERSION;
-
-                        if headers.has_etag(etag) {
-                            return Response::new_not_modified();
-                        }
-
-                        Response::new_json(&api, etag)
+                        let value: serde_json::Value =
+                            serde_json::from_str(&api_trimmed).unwrap();
+                        Response::static_json(&headers, &value)
+                    },
+                    |op| {
+                        op.id("get_openapi_trimmed")
+                            .server_tag()
+                            .summary("Trimmed OpenAPI specification")
+                            .description(
+                                "Compact OpenAPI specification optimized for LLM consumption. \
+                                 Removes redundant fields while preserving essential API information.",
+                            )
+                            .ok_response::<serde_json::Value>()
                     },
                 ),
             )

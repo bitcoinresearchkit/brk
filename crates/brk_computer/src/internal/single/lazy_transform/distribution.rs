@@ -7,7 +7,7 @@ use brk_types::Version;
 use schemars::JsonSchema;
 use vecdb::{LazyVecFrom1, UnaryTransform, VecIndex};
 
-use crate::internal::{ComputedVecValue, Full};
+use crate::internal::{ComputedVecValue, Distribution, Full};
 
 use super::LazyPercentiles;
 
@@ -58,6 +58,35 @@ where
                 name,
                 version,
                 &source.distribution.percentiles,
+            ),
+        }
+    }
+
+    pub fn from_distribution<F: UnaryTransform<S1T, T>>(
+        name: &str,
+        version: Version,
+        source: &Distribution<I, S1T>,
+    ) -> Self {
+        Self {
+            average: LazyVecFrom1::transformed::<F>(
+                &format!("{name}_average"),
+                version,
+                source.boxed_average(),
+            ),
+            min: LazyVecFrom1::transformed::<F>(
+                &format!("{name}_min"),
+                version,
+                source.boxed_min(),
+            ),
+            max: LazyVecFrom1::transformed::<F>(
+                &format!("{name}_max"),
+                version,
+                source.boxed_max(),
+            ),
+            percentiles: LazyPercentiles::from_percentiles::<F>(
+                name,
+                version,
+                &source.percentiles,
             ),
         }
     }

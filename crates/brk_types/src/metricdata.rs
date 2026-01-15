@@ -11,6 +11,8 @@ use vecdb::AnySerializableVec;
 /// This type is not instantiated - use `MetricData::serialize()` to write JSON bytes directly.
 #[derive(Debug, JsonSchema, Deserialize)]
 pub struct MetricData<T = Value> {
+    /// Version of the metric data
+    pub version: u64,
     /// Total number of data points in the metric
     pub total: usize,
     /// Start index (inclusive) of the returned range
@@ -22,22 +24,23 @@ pub struct MetricData<T = Value> {
 }
 
 impl MetricData {
-    /// Write metric data as JSON to buffer: `{"total":N,"start":N,"end":N,"data":[...]}`
+    /// Write metric data as JSON to buffer: `{"version":N,"total":N,"start":N,"end":N,"data":[...]}`
     pub fn serialize(
         vec: &dyn AnySerializableVec,
-        start: Option<usize>,
-        end: Option<usize>,
+        start: usize,
+        end: usize,
         buf: &mut Vec<u8>,
     ) -> vecdb::Result<()> {
+        let version = u64::from(vec.version());
         let total = vec.len();
-        let start_idx = start.unwrap_or(0);
-        let end_idx = end.unwrap_or(total).min(total);
+        let end = end.min(total);
+        let start = start.min(end);
 
         write!(
             buf,
-            r#"{{"total":{total},"start":{start_idx},"end":{end_idx},"data":"#
+            r#"{{"version":{version},"total":{total},"start":{start},"end":{end},"data":"#,
         )?;
-        vec.write_json(start, end, buf)?;
+        vec.write_json(Some(start), Some(end), buf)?;
         buf.push(b'}');
         Ok(())
     }

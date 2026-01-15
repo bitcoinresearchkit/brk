@@ -1,73 +1,65 @@
-use brk_error::{Error, Result};
-use brk_types::Format;
-use vecdb::AnyExportableVec;
+use brk_error::Result;
+use brk_types::{Format, LegacyValue, MetricOutputLegacy, OutputLegacy};
 
-use crate::{DataRangeFormat, LegacyValue, MetricSelection, OutputLegacy, Query};
+use crate::{Query, ResolvedQuery};
 
 impl Query {
-    /// Deprecated - raw data without MetricData wrapper
-    pub fn format_legacy(&self, metrics: &[&dyn AnyExportableVec], params: &DataRangeFormat) -> Result<OutputLegacy> {
-        let min_len = metrics.iter().map(|v| v.len()).min().unwrap_or(0);
+    /// Deprecated - format a resolved query as legacy output (expensive).
+    pub fn format_legacy(&self, resolved: ResolvedQuery) -> Result<MetricOutputLegacy> {
+        let ResolvedQuery {
+            vecs,
+            format,
+            version,
+            total,
+            start,
+            end,
+        } = resolved;
 
-        let from = params
-            .start()
-            .map(|start| metrics.iter().map(|v| v.i64_to_usize(start)).min().unwrap_or_default());
+        if vecs.is_empty() {
+            return Ok(MetricOutputLegacy {
+                output: OutputLegacy::default(format),
+                version: 0,
+                total: 0,
+                start: 0,
+                end: 0,
+            });
+        }
 
-        let to = params
-            .end_for_len(min_len)
-            .map(|end| metrics.iter().map(|v| v.i64_to_usize(end)).min().unwrap_or_default());
+        let from = Some(start as i64);
+        let to = Some(end as i64);
 
-        let format = params.format();
-
-        Ok(match format {
-            Format::CSV => OutputLegacy::CSV(Self::columns_to_csv(metrics, from.map(|v| v as i64), to.map(|v| v as i64))?),
+        let output = match format {
+            Format::CSV => OutputLegacy::CSV(Self::columns_to_csv(&vecs, start, end)?),
             Format::JSON => {
-                if metrics.is_empty() {
-                    return Ok(OutputLegacy::default(format));
-                }
-
-                if metrics.len() == 1 {
-                    let metric = metrics[0];
-                    let count = metric.range_count(from.map(|v| v as i64), to.map(|v| v as i64));
+                if vecs.len() == 1 {
+                    let metric = vecs[0];
+                    let count = metric.range_count(from, to);
                     let mut buf = Vec::new();
                     if count == 1 {
-                        metric.write_json_value(from, &mut buf)?;
+                        metric.write_json_value(Some(start), &mut buf)?;
                         OutputLegacy::Json(LegacyValue::Value(buf))
                     } else {
-                        metric.write_json(from, to, &mut buf)?;
+                        metric.write_json(Some(start), Some(end), &mut buf)?;
                         OutputLegacy::Json(LegacyValue::List(buf))
                     }
                 } else {
-                    let mut values = Vec::with_capacity(metrics.len());
-                    for vec in metrics {
+                    let mut values = Vec::with_capacity(vecs.len());
+                    for vec in &vecs {
                         let mut buf = Vec::new();
-                        vec.write_json(from, to, &mut buf)?;
+                        vec.write_json(Some(start), Some(end), &mut buf)?;
                         values.push(buf);
                     }
                     OutputLegacy::Json(LegacyValue::Matrix(values))
                 }
             }
+        };
+
+        Ok(MetricOutputLegacy {
+            output,
+            version,
+            total,
+            start,
+            end,
         })
-    }
-
-    /// Deprecated - use search_and_format instead
-    pub fn search_and_format_legacy(&self, params: MetricSelection) -> Result<OutputLegacy> {
-        self.search_and_format_legacy_checked(params, usize::MAX)
-    }
-
-    /// Deprecated - use search_and_format_checked instead
-    pub fn search_and_format_legacy_checked(&self, params: MetricSelection, max_weight: usize) -> Result<OutputLegacy> {
-        let vecs = self.search(&params)?;
-
-        let min_len = vecs.iter().map(|v| v.len()).min().expect("search guarantees non-empty");
-        let weight = Self::weight(&vecs, params.start(), params.end_for_len(min_len));
-        if weight > max_weight {
-            return Err(Error::WeightExceeded {
-                requested: weight,
-                max: max_weight,
-            });
-        }
-
-        self.format_legacy(&vecs, &params.range)
     }
 }

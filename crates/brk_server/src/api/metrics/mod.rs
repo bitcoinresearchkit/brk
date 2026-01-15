@@ -4,13 +4,10 @@ use axum::{
     http::{HeaderMap, Uri},
     response::{IntoResponse, Response},
 };
-use brk_query::{
-    DataRangeFormat, MetricSelection, MetricSelectionLegacy, PaginatedMetrics, Pagination,
-};
 use brk_traversable::TreeNode;
 use brk_types::{
-    Index, IndexInfo, LimitParam, Metric, MetricCount, MetricData, MetricParam, MetricWithIndex,
-    Metrics,
+    DataRangeFormat, Index, IndexInfo, LimitParam, Metric, MetricCount, MetricData, MetricParam,
+    MetricSelection, MetricSelectionLegacy, MetricWithIndex, Metrics, PaginatedMetrics, Pagination,
 };
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
@@ -23,6 +20,8 @@ mod legacy;
 
 /// Maximum allowed request weight in bytes (650KB)
 const MAX_WEIGHT: usize = 65 * 10_000;
+/// Cache control header for metric data responses
+const CACHE_CONTROL: &str = "public, max-age=1, must-revalidate";
 
 pub trait ApiMetricsRoutes {
     fn add_metrics_routes(self) -> Self;
@@ -250,7 +249,8 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                        Query(params): Query<MetricSelectionLegacy>,
                        state: State<AppState>|
                        -> Response {
-                    legacy::handler(uri, headers, Query(params.into()), state).await
+                    let params: MetricSelection = params.into();
+                    legacy::handler(uri, headers, Query(params), state).await
                 },
                 |op| op
                     .metrics_tag()

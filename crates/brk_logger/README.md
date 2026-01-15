@@ -4,7 +4,7 @@ Colorized, timestamped logging with optional file output and hooks.
 
 ## What It Enables
 
-Drop-in logging initialization that silences noisy dependencies (bitcoin, fjall, rolldown, rmcp) while keeping your logs readable with color-coded levels and local timestamps.
+Drop-in logging initialization that silences noisy dependencies (bitcoin, fjall, rolldown, ...) while keeping your logs readable with color-coded levels and local timestamps.
 
 ## Key Features
 
