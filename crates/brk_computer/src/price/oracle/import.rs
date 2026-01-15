@@ -24,8 +24,8 @@ impl Vecs {
         let phase_histogram = BytesVec::forced_import(db, "phase_histogram", version)?;
 
         // Layer 5: Phase Oracle prices
-        // v20: Skip only bin 0 (reverted round bin skip)
-        let phase_version = version + Version::new(13);
+        // v32: Revert to simple anchor-based decade selection (no prev_price tracking)
+        let phase_version = version + Version::new(25);
         let phase_price_cents = PcoVec::forced_import(db, "phase_price_cents", phase_version)?;
         let phase_daily_cents = Distribution::forced_import(db, "phase_daily", phase_version)?;
         let phase_daily_dollars = LazyTransformDistribution::from_distribution::<CentsToDollars>(

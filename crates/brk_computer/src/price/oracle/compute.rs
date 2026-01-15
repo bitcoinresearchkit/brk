@@ -32,6 +32,16 @@
 //! - **Top-N tie-breaking with prev_price** - caused drift
 //! - **50% margin threshold for round bin avoidance** - still had issues
 //! - **Transaction-level min sats filter** - Python filters per-output, not per-tx
+//! - **Heel-based weighted peak** - noise also has spread, not just isolated spikes
+//! - **Top-3 with non-round preference (50% threshold)** - inconsistent results
+//! - **Neighbor-weighted scoring** - inconsistent, round BTC has correlated neighbors
+//!
+//! ## Not Yet Tried
+//!
+//! - **Tighter witness filter** - Python uses 500 bytes per input max, we use 2500 total
+//! - **Multi-block smoothing** - aggregate histograms across N blocks
+//! - **Minimum histogram count threshold** - fall back to anchor if total_count < N
+//! - **Blend with UTXOracle port** - we compute both, could validate/combine
 //!
 //! ## Known Limitations
 //!
@@ -618,8 +628,8 @@ impl Vecs {
 
         /// Convert a bin to price using anchor for decade selection
         fn bin_to_price(bin: usize, anchor_price: f64) -> f64 {
-            let peak = (bin as f64 + 0.5) / PHASE_BINS as f64;
-            let raw_price = 10.0_f64.powf(EXPONENT - peak);
+            let phase = (bin as f64 + 0.5) / PHASE_BINS as f64;
+            let raw_price = 10.0_f64.powf(EXPONENT - phase);
             let decade_ratio = (anchor_price / raw_price).log10().round();
             raw_price * 10.0_f64.powf(decade_ratio)
         }
