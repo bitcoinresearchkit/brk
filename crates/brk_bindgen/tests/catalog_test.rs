@@ -13,10 +13,10 @@ fn load_catalog() -> TreeNode {
     serde_json::from_str(&catalog_json).expect("Failed to parse catalog.json")
 }
 
-/// Load OpenAPI spec from api.json.
+/// Load OpenAPI spec from openapi.json.
 fn load_openapi_json() -> String {
-    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/api.json");
-    std::fs::read_to_string(path).expect("Failed to read api.json")
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/openapi.json");
+    std::fs::read_to_string(path).expect("Failed to read openapi.json")
 }
 
 /// Load metadata from the catalog.

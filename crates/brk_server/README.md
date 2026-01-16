@@ -4,8 +4,8 @@ HTTP API server for Bitcoin on-chain analytics.
 
 ## Features
 
-- **OpenAPI spec**: Auto-generated docs at `/api` with full spec at `/api.json`
-- **LLM-optimized**: Compact spec at `/api.trimmed.json` for AI tools
+- **OpenAPI spec**: Auto-generated docs at `/api` with full spec at `/openapi.json`
+- **LLM-optimized**: Compact spec at `/api.json` for AI tools
 - **Response caching**: ETag-based with LRU cache (5000 entries)
 - **Compression**: Brotli, gzip, deflate, zstd
 - **Static files**: Optional web interface hosting
@@ -23,8 +23,8 @@ server.serve().await?;
 | Path | Description |
 |------|-------------|
 | `/api` | Interactive API documentation |
-| `/api.json` | Full OpenAPI specification |
-| `/api.trimmed.json` | Compact OpenAPI for LLMs |
+| `/openapi.json` | Full OpenAPI specification |
+| `/api.json` | Compact OpenAPI for LLMs |
 | `/api/address/{address}` | Address stats, transactions, UTXOs |
 | `/api/block/{hash}` | Block info, transactions, status |
 | `/api/block-height/{height}` | Block by height |

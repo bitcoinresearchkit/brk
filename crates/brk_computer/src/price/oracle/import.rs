@@ -46,6 +46,58 @@ impl Vecs {
             |di: DateIndex, iter| iter.get(di).map(|o: OHLCCents| OHLCDollars::from(o)),
         );
 
+        // Phase Oracle V2 (round USD template matching)
+        // v3: Peak prices use 100 bins (downsampled from 200)
+        let phase_v2_version = version + Version::new(3);
+        let phase_v2_histogram =
+            BytesVec::forced_import(db, "phase_v2_histogram", phase_v2_version)?;
+        let phase_v2_price_cents =
+            PcoVec::forced_import(db, "phase_v2_price_cents", phase_v2_version)?;
+        let phase_v2_peak_price_cents =
+            PcoVec::forced_import(db, "phase_v2_peak_price_cents", phase_v2_version)?;
+        let phase_v2_daily_cents =
+            Distribution::forced_import(db, "phase_v2_daily", phase_v2_version)?;
+        let phase_v2_daily_dollars =
+            LazyTransformDistribution::from_distribution::<CentsToDollars>(
+                "phase_v2_daily_dollars",
+                phase_v2_version,
+                &phase_v2_daily_cents,
+            );
+        let phase_v2_peak_daily_cents =
+            Distribution::forced_import(db, "phase_v2_peak_daily", phase_v2_version)?;
+        let phase_v2_peak_daily_dollars =
+            LazyTransformDistribution::from_distribution::<CentsToDollars>(
+                "phase_v2_peak_daily_dollars",
+                phase_v2_version,
+                &phase_v2_peak_daily_cents,
+            );
+
+        // Phase Oracle V3 (BASE + uniqueVal filter)
+        // v4: Peak prices use 100 bins (downsampled from 200)
+        let phase_v3_version = version + Version::new(4);
+        let phase_v3_histogram =
+            BytesVec::forced_import(db, "phase_v3_histogram", phase_v3_version)?;
+        let phase_v3_price_cents =
+            PcoVec::forced_import(db, "phase_v3_price_cents", phase_v3_version)?;
+        let phase_v3_peak_price_cents =
+            PcoVec::forced_import(db, "phase_v3_peak_price_cents", phase_v3_version)?;
+        let phase_v3_daily_cents =
+            Distribution::forced_import(db, "phase_v3_daily", phase_v3_version)?;
+        let phase_v3_daily_dollars =
+            LazyTransformDistribution::from_distribution::<CentsToDollars>(
+                "phase_v3_daily_dollars",
+                phase_v3_version,
+                &phase_v3_daily_cents,
+            );
+        let phase_v3_peak_daily_cents =
+            Distribution::forced_import(db, "phase_v3_peak_daily", phase_v3_version)?;
+        let phase_v3_peak_daily_dollars =
+            LazyTransformDistribution::from_distribution::<CentsToDollars>(
+                "phase_v3_peak_daily_dollars",
+                phase_v3_version,
+                &phase_v3_peak_daily_cents,
+            );
+
         Ok(Self {
             pairoutputindex_to_txindex,
             height_to_first_pairoutputindex,
@@ -59,6 +111,20 @@ impl Vecs {
             ohlc_cents,
             ohlc_dollars,
             tx_count,
+            phase_v2_histogram,
+            phase_v2_price_cents,
+            phase_v2_peak_price_cents,
+            phase_v2_daily_cents,
+            phase_v2_daily_dollars,
+            phase_v2_peak_daily_cents,
+            phase_v2_peak_daily_dollars,
+            phase_v3_histogram,
+            phase_v3_price_cents,
+            phase_v3_peak_price_cents,
+            phase_v3_daily_cents,
+            phase_v3_daily_dollars,
+            phase_v3_peak_daily_cents,
+            phase_v3_peak_daily_dollars,
         })
     }
 }

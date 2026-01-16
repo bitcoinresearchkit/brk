@@ -26,7 +26,8 @@ impl Vecs {
 
             info!("Computing oracle prices...");
             let i = Instant::now();
-            self.oracle.compute(indexer, indexes, starting_indexes, exit)?;
+            self.oracle
+                .compute(indexer, indexes, &self.cents, starting_indexes, exit)?;
             info!("Computed oracle prices in {:?}", i.elapsed());
         }
 

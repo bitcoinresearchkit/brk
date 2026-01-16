@@ -7,30 +7,30 @@ use std::{
 use axum::{
     body::Body,
     extract::{self, State},
-    http::{HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
+    http::HeaderMap,
+    response::Response,
 };
-use brk_error::Result;
 use quick_cache::sync::GuardResult;
 use tracing::{error, info};
 
 use crate::{
-    AppState, EMBEDDED_WEBSITE, HeaderMapExtended, ModifiedState, ResponseExtended, WebsiteSource,
+    AppState, EMBEDDED_WEBSITE, Error, HeaderMapExtended, ModifiedState, ResponseExtended, Result,
+    WebsiteSource,
 };
 
 pub async fn file_handler(
     headers: HeaderMap,
     State(state): State<AppState>,
     path: extract::Path<String>,
-) -> Response {
+) -> Result<Response> {
     any_handler(headers, state, Some(path.0))
 }
 
-pub async fn index_handler(headers: HeaderMap, State(state): State<AppState>) -> Response {
+pub async fn index_handler(headers: HeaderMap, State(state): State<AppState>) -> Result<Response> {
     any_handler(headers, state, None)
 }
 
-fn any_handler(headers: HeaderMap, state: AppState, path: Option<String>) -> Response {
+fn any_handler(headers: HeaderMap, state: AppState, path: Option<String>) -> Result<Response> {
     match &state.website {
         WebsiteSource::Disabled => unreachable!("routes not added when disabled"),
         WebsiteSource::Embedded => embedded_handler(&state, path),
@@ -92,7 +92,7 @@ fn build_response(state: &AppState, path: &Path, content: Vec<u8>, cache_key: &s
     response
 }
 
-fn embedded_handler(state: &AppState, path: Option<String>) -> Response {
+fn embedded_handler(state: &AppState, path: Option<String>) -> Result<Response> {
     let path = path.unwrap_or_else(|| "index.html".to_string());
     let sanitized = sanitize_path(&path);
 
@@ -113,17 +113,15 @@ fn embedded_handler(state: &AppState, path: Option<String>) -> Response {
         });
 
     let Some(file) = file else {
-        let response: Response<Body> =
-            (StatusCode::NOT_FOUND, "File not found".to_string()).into_response();
-        return response;
+        return Err(Error::not_found("File not found"));
     };
 
-    build_response(
+    Ok(build_response(
         state,
         Path::new(file.path()),
         file.contents().to_vec(),
         &file.path().to_string_lossy(),
-    )
+    ))
 }
 
 fn filesystem_handler(
@@ -131,7 +129,7 @@ fn filesystem_handler(
     state: &AppState,
     files_path: &Path,
     path: Option<String>,
-) -> Response {
+) -> Result<Response> {
     let path = if let Some(path) = path {
         let sanitized = sanitize_path(&path);
         let mut path = files_path.join(&sanitized);
@@ -145,9 +143,7 @@ fn filesystem_handler(
             let allowed = canonical.starts_with(&canonical_base)
                 || project_root.is_some_and(|root| canonical.starts_with(root));
             if !allowed {
-                let response: Response<Body> =
-                    (StatusCode::FORBIDDEN, "Access denied".to_string()).into_response();
-                return response;
+                return Err(Error::forbidden("Access denied"));
             }
         }
 
@@ -162,12 +158,7 @@ fn filesystem_handler(
         // SPA fallback
         if !path.exists() || path.is_dir() {
             if path.extension().is_some() {
-                let response: Response<Body> = (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "File doesn't exist".to_string(),
-                )
-                    .into_response();
-                return response;
+                return Err(Error::not_found("File doesn't exist"));
             } else {
                 path = files_path.join("index.html");
             }
@@ -181,14 +172,7 @@ fn filesystem_handler(
     path_to_response(&headers, state, &path)
 }
 
-fn path_to_response(headers: &HeaderMap, state: &AppState, path: &Path) -> Response {
-    match path_to_response_(headers, state, path) {
-        Ok(response) => response,
-        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response(),
-    }
-}
-
-fn path_to_response_(headers: &HeaderMap, state: &AppState, path: &Path) -> Result<Response> {
+fn path_to_response(headers: &HeaderMap, state: &AppState, path: &Path) -> Result<Response> {
     let (modified, date) = headers.check_if_modified_since(path)?;
     if !cfg!(debug_assertions) && modified == ModifiedState::NotModifiedSince {
         return Ok(Response::new_not_modified());

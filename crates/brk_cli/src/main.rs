@@ -2,7 +2,6 @@
 
 use std::{
     fs,
-    path::PathBuf,
     thread::{self, sleep},
     time::Duration,
 };
@@ -68,14 +67,17 @@ pub fn run() -> color_eyre::Result<()> {
     let data_path = config.brkdir();
 
     let website_source = match config.website() {
-        Website::Enabled(false) => WebsiteSource::Disabled,
-        Website::Path(p) => WebsiteSource::Filesystem(p),
+        Website::Enabled(false) => {
+            info!("Website: disabled");
+            WebsiteSource::Disabled
+        }
+        Website::Path(p) => {
+            info!("Website: filesystem ({})", p.display());
+            WebsiteSource::Filesystem(p)
+        }
         Website::Enabled(true) => {
-            // Prefer local filesystem if available, otherwise use embedded
-            match find_local_website_dir() {
-                Some(path) => WebsiteSource::Filesystem(path),
-                None => WebsiteSource::Embedded,
-            }
+            info!("Website: embedded");
+            WebsiteSource::Embedded
         }
     };
 
@@ -118,13 +120,4 @@ pub fn run() -> color_eyre::Result<()> {
             sleep(Duration::from_secs(1))
         }
     }
-}
-
-/// Path to website directory relative to this crate (only valid at dev machine)
-const DEV_WEBSITE_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../website");
-
-/// Returns local website path if it exists (dev mode)
-fn find_local_website_dir() -> Option<PathBuf> {
-    let path = PathBuf::from(DEV_WEBSITE_DIR);
-    path.exists().then_some(path)
 }

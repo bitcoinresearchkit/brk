@@ -53,8 +53,8 @@ use std::collections::VecDeque;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{
-    Cents, Close, Date, DateIndex, Height, High, Low, OHLCCents, Open, OracleBins, OutputType,
-    PHASE_BINS, PairOutputIndex, Sats, StoredU32, StoredU64, TxIndex,
+    Cents, Close, Date, DateIndex, Height, High, Low, OHLCCents, Open, OracleBins, OracleBinsV2,
+    OutputType, PHASE_BINS, PairOutputIndex, Sats, StoredU32, StoredU64, TxIndex,
 };
 use tracing::info;
 use vecdb::{
@@ -66,9 +66,10 @@ use super::{
     Vecs,
     config::OracleConfig,
     histogram::{Histogram, TOTAL_BINS},
+    phase_v2::{PhaseHistogramV2, find_best_phase, phase_range_from_anchor, phase_to_price},
     stencil::{find_best_price, is_round_sats, refine_price},
 };
-use crate::{ComputeIndexes, indexes};
+use crate::{ComputeIndexes, indexes, price::cents};
 
 /// Flush interval for periodic writes during oracle computation.
 const FLUSH_INTERVAL: usize = 10_000;
@@ -79,6 +80,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
+        price_cents: &cents::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -99,6 +101,32 @@ impl Vecs {
 
         // Step 7: Aggregate to daily OHLC
         self.compute_daily_ohlc(indexes, starting_indexes, exit)?;
+
+        // Step 8: Compute Phase Oracle V2 (round USD template matching)
+        // 8a: Per-block 200-bin histograms (uses ALL outputs, not pair-filtered)
+        self.compute_phase_v2_histograms(indexer, indexes, starting_indexes, exit)?;
+
+        // 8b: Per-block prices using cross-correlation with weekly anchors
+        self.compute_phase_v2_prices(indexes, price_cents, starting_indexes, exit)?;
+
+        // 8c: Per-block prices using direct peak finding (like V1)
+        self.compute_phase_v2_peak_prices(indexes, price_cents, starting_indexes, exit)?;
+
+        // 8d: Daily distributions from per-block prices
+        self.compute_phase_v2_daily(indexes, starting_indexes, exit)?;
+
+        // Step 9: Compute Phase Oracle V3 (BASE + uniqueVal filter)
+        // 9a: Per-block histograms with uniqueVal filtering (only outputs with unique values in tx)
+        self.compute_phase_v3_histograms(indexer, indexes, starting_indexes, exit)?;
+
+        // 9b: Per-block prices using cross-correlation
+        self.compute_phase_v3_prices(indexes, price_cents, starting_indexes, exit)?;
+
+        // 9c: Per-block prices using direct peak finding (like V1)
+        self.compute_phase_v3_peak_prices(indexes, price_cents, starting_indexes, exit)?;
+
+        // 9d: Daily distributions from per-block prices
+        self.compute_phase_v3_daily(indexes, starting_indexes, exit)?;
 
         Ok(())
     }
@@ -1088,6 +1116,900 @@ impl Vecs {
             self.ohlc_cents.write()?;
             self.tx_count.write()?;
         }
+
+        Ok(())
+    }
+
+    /// Compute Phase Oracle V2 - Step 1: Per-block 200-bin phase histograms
+    ///
+    /// Uses ALL outputs (like Python test), filtered only by sats range (1k-100k BTC).
+    /// This is different from the pair-filtered approach used by UTXOracle.
+    fn compute_phase_v2_histograms(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        let source_version = indexer.vecs.outputs.value.version();
+        self.phase_v2_histogram
+            .validate_computed_version_or_reset(source_version)?;
+
+        let total_heights = indexer.vecs.blocks.timestamp.len();
+
+        let start_height = self
+            .phase_v2_histogram
+            .len()
+            .min(starting_indexes.height.to_usize());
+
+        self.phase_v2_histogram
+            .truncate_if_needed_at(start_height)?;
+
+        if start_height >= total_heights {
+            return Ok(());
+        }
+
+        info!(
+            "Computing phase V2 histograms from height {} to {}",
+            start_height, total_heights
+        );
+
+        let mut height_to_first_txindex_iter = indexer.vecs.transactions.first_txindex.into_iter();
+        let mut txindex_to_first_txoutindex_iter =
+            indexer.vecs.transactions.first_txoutindex.into_iter();
+        let mut txindex_to_output_count_iter = indexes.txindex.output_count.iter();
+        let mut txoutindex_to_value_iter = indexer.vecs.outputs.value.into_iter();
+
+        let total_txs = indexer.vecs.transactions.height.len();
+        let mut last_progress = (start_height * 100 / total_heights.max(1)) as u8;
+
+        for height in start_height..total_heights {
+            // Get transaction range for this block
+            let first_txindex = height_to_first_txindex_iter.get_at_unwrap(height);
+            let next_first_txindex = height_to_first_txindex_iter
+                .get_at(height + 1)
+                .unwrap_or(TxIndex::from(total_txs));
+
+            // Build phase histogram from ALL outputs in this block
+            let mut histogram = OracleBinsV2::ZERO;
+
+            for txindex in first_txindex.to_usize()..next_first_txindex.to_usize() {
+                // Get output count and first output for this transaction
+                let first_txoutindex = txindex_to_first_txoutindex_iter.get_at_unwrap(txindex);
+                let output_count: StoredU64 =
+                    txindex_to_output_count_iter.get_unwrap(TxIndex::from(txindex));
+
+                for i in 0..*output_count as usize {
+                    let txoutindex = first_txoutindex.to_usize() + i;
+                    let sats: Sats = txoutindex_to_value_iter.get_at_unwrap(txoutindex);
+                    // OracleBinsV2::add already filters by sats range (1k to 100k BTC)
+                    histogram.add(sats);
+                }
+            }
+
+            self.phase_v2_histogram.push(histogram);
+
+            // Progress logging
+            let progress = (height * 100 / total_heights.max(1)) as u8;
+            if progress > last_progress {
+                last_progress = progress;
+                info!("Phase V2 histogram computation: {}%", progress);
+
+                let _lock = exit.lock();
+                self.phase_v2_histogram.write()?;
+            }
+        }
+
+        // Final write
+        {
+            let _lock = exit.lock();
+            self.phase_v2_histogram.write()?;
+        }
+
+        info!(
+            "Phase V2 histograms complete: {} blocks",
+            self.phase_v2_histogram.len()
+        );
+
+        Ok(())
+    }
+
+    /// Compute Phase Oracle V2 - Step 2: Per-block prices using cross-correlation
+    fn compute_phase_v2_prices(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price_cents: &cents::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        let source_version = self.phase_v2_histogram.version();
+        self.phase_v2_price_cents
+            .validate_computed_version_or_reset(source_version)?;
+
+        let total_heights = self.phase_v2_histogram.len();
+
+        let start_height = self
+            .phase_v2_price_cents
+            .len()
+            .min(starting_indexes.height.to_usize());
+
+        self.phase_v2_price_cents
+            .truncate_if_needed_at(start_height)?;
+
+        if start_height >= total_heights {
+            return Ok(());
+        }
+
+        info!(
+            "Computing phase V2 prices from height {} to {}",
+            start_height, total_heights
+        );
+
+        let mut histogram_iter = self.phase_v2_histogram.iter()?;
+        let mut height_to_dateindex_iter = indexes.height.dateindex.iter();
+
+        // For weekly OHLC anchors
+        let mut price_ohlc_iter = price_cents.ohlc.dateindex.iter()?;
+        let mut dateindex_to_weekindex_iter = indexes.dateindex.weekindex.iter();
+        let mut weekindex_to_first_dateindex_iter = indexes.weekindex.first_dateindex.iter();
+        let mut weekindex_dateindex_count_iter = indexes.weekindex.dateindex_count.iter();
+
+        let mut last_progress = (start_height * 100 / total_heights.max(1)) as u8;
+
+        // Track previous price for fallback
+        let mut prev_price_cents = if start_height > 0 {
+            self.phase_v2_price_cents
+                .iter()?
+                .get(Height::from(start_height - 1))
+                .unwrap_or(Cents::from(10_000_000i64))
+        } else {
+            Cents::from(10_000_000i64) // Default ~$100k
+        };
+
+        for height in start_height..total_heights {
+            let height_idx = Height::from(height);
+            let histogram: OracleBinsV2 = histogram_iter.get_unwrap(height_idx);
+
+            // Get weekly anchor for this block's date
+            let dateindex = height_to_dateindex_iter.get(height_idx);
+            let weekly_bounds: Option<(f64, f64)> = dateindex.and_then(|di| {
+                let wi = dateindex_to_weekindex_iter.get(di)?;
+                let first_di = weekindex_to_first_dateindex_iter.get(wi)?;
+                let count = weekindex_dateindex_count_iter
+                    .get(wi)
+                    .map(|c| *c as usize)?;
+
+                let mut low = Cents::from(i64::MAX);
+                let mut high = Cents::from(0i64);
+
+                for i in 0..count {
+                    let di = DateIndex::from(first_di.to_usize() + i);
+                    if let Some(ohlc) = price_ohlc_iter.get(di) {
+                        if *ohlc.low < low {
+                            low = *ohlc.low;
+                        }
+                        if *ohlc.high > high {
+                            high = *ohlc.high;
+                        }
+                    }
+                }
+
+                if i64::from(low) > 0 && i64::from(high) > 0 {
+                    Some((
+                        i64::from(low) as f64 / 100.0,
+                        i64::from(high) as f64 / 100.0,
+                    ))
+                } else {
+                    None
+                }
+            });
+
+            // Compute price using cross-correlation
+            let price_cents = if histogram.total_count() >= 10 {
+                // Convert OracleBinsV2 to PhaseHistogramV2
+                let mut phase_hist = PhaseHistogramV2::new();
+                for (i, &count) in histogram.bins.iter().enumerate() {
+                    if count > 0 {
+                        let phase = (i as f64 + 0.5) / 200.0;
+                        let log_sats = 6.0 + phase;
+                        let sats = 10.0_f64.powf(log_sats);
+                        for _ in 0..count {
+                            phase_hist.add(Sats::from(sats as u64));
+                        }
+                    }
+                }
+
+                if let Some((low, high)) = weekly_bounds {
+                    // Have weekly anchor - constrained search
+                    let (phase_min, phase_max) = phase_range_from_anchor(low, high, 0.05);
+                    let (best_phase, _corr) =
+                        find_best_phase(&phase_hist, 2, Some(phase_min), Some(phase_max));
+                    let price = phase_to_price(best_phase, low, high);
+                    Cents::from((price * 100.0) as i64)
+                } else {
+                    // No anchor - use previous price as reference
+                    let anchor_low = (i64::from(prev_price_cents) as f64 / 100.0) * 0.5;
+                    let anchor_high = (i64::from(prev_price_cents) as f64 / 100.0) * 2.0;
+                    let (best_phase, _corr) = find_best_phase(&phase_hist, 2, None, None);
+                    let price = phase_to_price(best_phase, anchor_low, anchor_high);
+                    Cents::from((price * 100.0) as i64)
+                }
+            } else {
+                // Too few outputs - use previous price
+                prev_price_cents
+            };
+
+            prev_price_cents = price_cents;
+            self.phase_v2_price_cents.push(price_cents);
+
+            // Progress logging
+            let progress = (height * 100 / total_heights.max(1)) as u8;
+            if progress > last_progress {
+                last_progress = progress;
+                info!("Phase V2 price computation: {}%", progress);
+
+                let _lock = exit.lock();
+                self.phase_v2_price_cents.write()?;
+            }
+        }
+
+        // Final write
+        {
+            let _lock = exit.lock();
+            self.phase_v2_price_cents.write()?;
+        }
+
+        info!(
+            "Phase V2 prices complete: {} blocks",
+            self.phase_v2_price_cents.len()
+        );
+
+        Ok(())
+    }
+
+    /// Compute Phase Oracle V2 - Peak prices using direct peak finding (like V1)
+    fn compute_phase_v2_peak_prices(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price_cents: &cents::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        let source_version = self.phase_v2_histogram.version();
+        self.phase_v2_peak_price_cents
+            .validate_computed_version_or_reset(source_version)?;
+
+        let total_heights = self.phase_v2_histogram.len();
+
+        let start_height = self
+            .phase_v2_peak_price_cents
+            .len()
+            .min(starting_indexes.height.to_usize());
+
+        self.phase_v2_peak_price_cents
+            .truncate_if_needed_at(start_height)?;
+
+        if start_height >= total_heights {
+            return Ok(());
+        }
+
+        info!(
+            "Computing phase V2 peak prices from height {} to {}",
+            start_height, total_heights
+        );
+
+        let mut histogram_iter = self.phase_v2_histogram.iter()?;
+        let mut height_to_dateindex_iter = indexes.height.dateindex.iter();
+
+        // For weekly OHLC anchors
+        let mut price_ohlc_iter = price_cents.ohlc.dateindex.iter()?;
+        let mut dateindex_to_weekindex_iter = indexes.dateindex.weekindex.iter();
+        let mut weekindex_to_first_dateindex_iter = indexes.weekindex.first_dateindex.iter();
+        let mut weekindex_dateindex_count_iter = indexes.weekindex.dateindex_count.iter();
+
+        let mut last_progress = (start_height * 100 / total_heights.max(1)) as u8;
+
+        // Track previous price for fallback
+        let mut prev_price_cents = if start_height > 0 {
+            self.phase_v2_peak_price_cents
+                .iter()?
+                .get(Height::from(start_height - 1))
+                .unwrap_or(Cents::from(10_000_000i64))
+        } else {
+            Cents::from(10_000_000i64)
+        };
+
+        for height in start_height..total_heights {
+            let height_idx = Height::from(height);
+            let histogram: OracleBinsV2 = histogram_iter.get_unwrap(height_idx);
+
+            // Get weekly anchor for decade selection
+            let dateindex = height_to_dateindex_iter.get(height_idx);
+            let anchor_price: Option<f64> = dateindex.and_then(|di| {
+                let wi = dateindex_to_weekindex_iter.get(di)?;
+                let first_di = weekindex_to_first_dateindex_iter.get(wi)?;
+                let count = weekindex_dateindex_count_iter
+                    .get(wi)
+                    .map(|c| *c as usize)?;
+
+                let mut sum = 0i64;
+                let mut cnt = 0;
+                for i in 0..count {
+                    let di = DateIndex::from(first_di.to_usize() + i);
+                    if let Some(ohlc) = price_ohlc_iter.get(di) {
+                        sum += i64::from(*ohlc.close);
+                        cnt += 1;
+                    }
+                }
+
+                if cnt > 0 {
+                    Some(sum as f64 / cnt as f64 / 100.0)
+                } else {
+                    None
+                }
+            });
+
+            // Use anchor or previous price for decade selection
+            let anchor = anchor_price.unwrap_or(i64::from(prev_price_cents) as f64 / 100.0);
+
+            // Find peak bin directly (like V1) using 100 bins (downsample from 200)
+            let price_cents = if histogram.total_count() >= 10 {
+                // Downsample 200 bins to 100 bins
+                let mut bins100 = [0u32; 100];
+                for i in 0..100 {
+                    bins100[i] = histogram.bins[i * 2] as u32 + histogram.bins[i * 2 + 1] as u32;
+                }
+
+                // Find peak bin, skipping bin 0 (round BTC amounts cluster there)
+                let peak_bin = bins100
+                    .iter()
+                    .enumerate()
+                    .filter(|(bin, _)| *bin != 0)
+                    .max_by_key(|(_, count)| *count)
+                    .map(|(bin, _)| bin)
+                    .unwrap_or(0);
+
+                // Convert bin to price using anchor for decade (100 bins)
+                let phase = (peak_bin as f64 + 0.5) / 100.0;
+                let base_price = 10.0_f64.powf(phase);
+
+                // Find best decade
+                let mut best_price = base_price;
+                let mut best_dist = f64::MAX;
+                for decade in -2..=6 {
+                    let candidate = base_price * 10.0_f64.powi(decade);
+                    let dist = (candidate - anchor).abs();
+                    if dist < best_dist {
+                        best_dist = dist;
+                        best_price = candidate;
+                    }
+                }
+
+                Cents::from((best_price.clamp(0.01, 10_000_000.0) * 100.0) as i64)
+            } else {
+                prev_price_cents
+            };
+
+            prev_price_cents = price_cents;
+            self.phase_v2_peak_price_cents.push(price_cents);
+
+            // Progress logging
+            let progress = (height * 100 / total_heights.max(1)) as u8;
+            if progress > last_progress {
+                last_progress = progress;
+                info!("Phase V2 peak price computation: {}%", progress);
+
+                let _lock = exit.lock();
+                self.phase_v2_peak_price_cents.write()?;
+            }
+        }
+
+        // Final write
+        {
+            let _lock = exit.lock();
+            self.phase_v2_peak_price_cents.write()?;
+        }
+
+        info!(
+            "Phase V2 peak prices complete: {} blocks",
+            self.phase_v2_peak_price_cents.len()
+        );
+
+        Ok(())
+    }
+
+    /// Compute Phase Oracle V2 - Daily distributions from per-block prices
+    fn compute_phase_v2_daily(
+        &mut self,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        info!("Computing phase V2 daily distributions");
+
+        // Cross-correlation based
+        self.phase_v2_daily_cents.compute(
+            starting_indexes.dateindex,
+            &self.phase_v2_price_cents,
+            &indexes.dateindex.first_height,
+            &indexes.dateindex.height_count,
+            exit,
+        )?;
+
+        // Peak-based
+        self.phase_v2_peak_daily_cents.compute(
+            starting_indexes.dateindex,
+            &self.phase_v2_peak_price_cents,
+            &indexes.dateindex.first_height,
+            &indexes.dateindex.height_count,
+            exit,
+        )?;
+
+        info!(
+            "Phase V2 daily distributions complete: {} days",
+            self.phase_v2_daily_cents.len()
+        );
+
+        Ok(())
+    }
+
+    /// Compute Phase Oracle V3 - Step 1: Per-block histograms with uniqueVal filtering
+    ///
+    /// Filters: >= 1000 sats, only outputs with unique values within their transaction.
+    /// This reduces spurious peaks from exchange batched payouts and inscription spam.
+    fn compute_phase_v3_histograms(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        let source_version = indexer.vecs.outputs.value.version();
+        self.phase_v3_histogram
+            .validate_computed_version_or_reset(source_version)?;
+
+        let total_heights = indexer.vecs.blocks.timestamp.len();
+
+        let start_height = self
+            .phase_v3_histogram
+            .len()
+            .min(starting_indexes.height.to_usize());
+
+        self.phase_v3_histogram
+            .truncate_if_needed_at(start_height)?;
+
+        if start_height >= total_heights {
+            return Ok(());
+        }
+
+        info!(
+            "Computing phase V3 histograms from height {} to {}",
+            start_height, total_heights
+        );
+
+        let mut height_to_first_txindex_iter = indexer.vecs.transactions.first_txindex.into_iter();
+        let mut txindex_to_first_txoutindex_iter =
+            indexer.vecs.transactions.first_txoutindex.into_iter();
+        let mut txindex_to_output_count_iter = indexes.txindex.output_count.iter();
+        let mut txoutindex_to_value_iter = indexer.vecs.outputs.value.into_iter();
+
+        let total_txs = indexer.vecs.transactions.height.len();
+        let mut last_progress = (start_height * 100 / total_heights.max(1)) as u8;
+
+        // Reusable buffer for collecting output values per transaction
+        let mut tx_values: Vec<Sats> = Vec::with_capacity(16);
+
+        for height in start_height..total_heights {
+            // Get transaction range for this block
+            let first_txindex = height_to_first_txindex_iter.get_at_unwrap(height);
+            let next_first_txindex = height_to_first_txindex_iter
+                .get_at(height + 1)
+                .unwrap_or(TxIndex::from(total_txs));
+
+            // Build phase histogram with uniqueVal filtering
+            let mut histogram = OracleBinsV2::ZERO;
+
+            // Skip coinbase (first tx in block)
+            for txindex in (first_txindex.to_usize() + 1)..next_first_txindex.to_usize() {
+                // Get output count and first output for this transaction
+                let first_txoutindex = txindex_to_first_txoutindex_iter.get_at_unwrap(txindex);
+                let output_count: StoredU64 =
+                    txindex_to_output_count_iter.get_unwrap(TxIndex::from(txindex));
+
+                // Collect all output values for this transaction
+                tx_values.clear();
+                for i in 0..*output_count as usize {
+                    let txoutindex = first_txoutindex.to_usize() + i;
+                    let sats: Sats = txoutindex_to_value_iter.get_at_unwrap(txoutindex);
+                    tx_values.push(sats);
+                }
+
+                // Count occurrences of each value to determine uniqueness
+                // For small output counts, simple nested loop is faster than HashMap
+                for (i, &sats) in tx_values.iter().enumerate() {
+                    // Skip if below minimum (BASE filter: >= 1000 sats)
+                    if sats < Sats::_1K {
+                        continue;
+                    }
+
+                    // Check if this value is unique within the transaction
+                    let mut is_unique = true;
+                    for (j, &other_sats) in tx_values.iter().enumerate() {
+                        if i != j && sats == other_sats {
+                            is_unique = false;
+                            break;
+                        }
+                    }
+
+                    // Only add unique values to histogram
+                    if is_unique {
+                        histogram.add(sats);
+                    }
+                }
+            }
+
+            self.phase_v3_histogram.push(histogram);
+
+            // Progress logging
+            let progress = (height * 100 / total_heights.max(1)) as u8;
+            if progress > last_progress {
+                last_progress = progress;
+                info!("Phase V3 histogram computation: {}%", progress);
+
+                let _lock = exit.lock();
+                self.phase_v3_histogram.write()?;
+            }
+        }
+
+        // Final write
+        {
+            let _lock = exit.lock();
+            self.phase_v3_histogram.write()?;
+        }
+
+        info!(
+            "Phase V3 histograms complete: {} blocks",
+            self.phase_v3_histogram.len()
+        );
+
+        Ok(())
+    }
+
+    /// Compute Phase Oracle V3 - Step 2: Per-block prices using cross-correlation
+    fn compute_phase_v3_prices(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price_cents: &cents::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        let source_version = self.phase_v3_histogram.version();
+        self.phase_v3_price_cents
+            .validate_computed_version_or_reset(source_version)?;
+
+        let total_heights = self.phase_v3_histogram.len();
+
+        let start_height = self
+            .phase_v3_price_cents
+            .len()
+            .min(starting_indexes.height.to_usize());
+
+        self.phase_v3_price_cents
+            .truncate_if_needed_at(start_height)?;
+
+        if start_height >= total_heights {
+            return Ok(());
+        }
+
+        info!(
+            "Computing phase V3 prices from height {} to {}",
+            start_height, total_heights
+        );
+
+        let mut histogram_iter = self.phase_v3_histogram.iter()?;
+        let mut height_to_dateindex_iter = indexes.height.dateindex.iter();
+
+        // For weekly OHLC anchors
+        let mut price_ohlc_iter = price_cents.ohlc.dateindex.iter()?;
+        let mut dateindex_to_weekindex_iter = indexes.dateindex.weekindex.iter();
+        let mut weekindex_to_first_dateindex_iter = indexes.weekindex.first_dateindex.iter();
+        let mut weekindex_dateindex_count_iter = indexes.weekindex.dateindex_count.iter();
+
+        let mut last_progress = (start_height * 100 / total_heights.max(1)) as u8;
+
+        // Track previous price for fallback
+        let mut prev_price_cents = if start_height > 0 {
+            self.phase_v3_price_cents
+                .iter()?
+                .get(Height::from(start_height - 1))
+                .unwrap_or(Cents::from(10_000_000i64))
+        } else {
+            Cents::from(10_000_000i64) // Default ~$100k
+        };
+
+        for height in start_height..total_heights {
+            let height_idx = Height::from(height);
+            let histogram: OracleBinsV2 = histogram_iter.get_unwrap(height_idx);
+
+            // Get weekly anchor for this block's date
+            let dateindex = height_to_dateindex_iter.get(height_idx);
+            let weekly_bounds: Option<(f64, f64)> = dateindex.and_then(|di| {
+                let wi = dateindex_to_weekindex_iter.get(di)?;
+                let first_di = weekindex_to_first_dateindex_iter.get(wi)?;
+                let count = weekindex_dateindex_count_iter
+                    .get(wi)
+                    .map(|c| *c as usize)?;
+
+                let mut low = Cents::from(i64::MAX);
+                let mut high = Cents::from(0i64);
+
+                for i in 0..count {
+                    let di = DateIndex::from(first_di.to_usize() + i);
+                    if let Some(ohlc) = price_ohlc_iter.get(di) {
+                        if *ohlc.low < low {
+                            low = *ohlc.low;
+                        }
+                        if *ohlc.high > high {
+                            high = *ohlc.high;
+                        }
+                    }
+                }
+
+                if i64::from(low) > 0 && i64::from(high) > 0 {
+                    Some((
+                        i64::from(low) as f64 / 100.0,
+                        i64::from(high) as f64 / 100.0,
+                    ))
+                } else {
+                    None
+                }
+            });
+
+            // Compute price using cross-correlation
+            let price_cents = if histogram.total_count() >= 10 {
+                // Convert OracleBinsV2 to PhaseHistogramV2
+                let mut phase_hist = PhaseHistogramV2::new();
+                for (i, &count) in histogram.bins.iter().enumerate() {
+                    if count > 0 {
+                        let phase = (i as f64 + 0.5) / 200.0;
+                        let log_sats = 6.0 + phase;
+                        let sats = 10.0_f64.powf(log_sats);
+                        for _ in 0..count {
+                            phase_hist.add(Sats::from(sats as u64));
+                        }
+                    }
+                }
+
+                if let Some((low, high)) = weekly_bounds {
+                    // Have weekly anchor - constrained search
+                    let (phase_min, phase_max) = phase_range_from_anchor(low, high, 0.05);
+                    let (best_phase, _corr) =
+                        find_best_phase(&phase_hist, 2, Some(phase_min), Some(phase_max));
+                    let price = phase_to_price(best_phase, low, high);
+                    Cents::from((price * 100.0) as i64)
+                } else {
+                    // No anchor - use previous price as reference
+                    let anchor_low = (i64::from(prev_price_cents) as f64 / 100.0) * 0.5;
+                    let anchor_high = (i64::from(prev_price_cents) as f64 / 100.0) * 2.0;
+                    let (best_phase, _corr) = find_best_phase(&phase_hist, 2, None, None);
+                    let price = phase_to_price(best_phase, anchor_low, anchor_high);
+                    Cents::from((price * 100.0) as i64)
+                }
+            } else {
+                // Too few outputs - use previous price
+                prev_price_cents
+            };
+
+            prev_price_cents = price_cents;
+            self.phase_v3_price_cents.push(price_cents);
+
+            // Progress logging
+            let progress = (height * 100 / total_heights.max(1)) as u8;
+            if progress > last_progress {
+                last_progress = progress;
+                info!("Phase V3 price computation: {}%", progress);
+
+                let _lock = exit.lock();
+                self.phase_v3_price_cents.write()?;
+            }
+        }
+
+        // Final write
+        {
+            let _lock = exit.lock();
+            self.phase_v3_price_cents.write()?;
+        }
+
+        info!(
+            "Phase V3 prices complete: {} blocks",
+            self.phase_v3_price_cents.len()
+        );
+
+        Ok(())
+    }
+
+    /// Compute Phase Oracle V3 - Peak prices using direct peak finding (like V1)
+    fn compute_phase_v3_peak_prices(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price_cents: &cents::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        let source_version = self.phase_v3_histogram.version();
+        self.phase_v3_peak_price_cents
+            .validate_computed_version_or_reset(source_version)?;
+
+        let total_heights = self.phase_v3_histogram.len();
+
+        let start_height = self
+            .phase_v3_peak_price_cents
+            .len()
+            .min(starting_indexes.height.to_usize());
+
+        self.phase_v3_peak_price_cents
+            .truncate_if_needed_at(start_height)?;
+
+        if start_height >= total_heights {
+            return Ok(());
+        }
+
+        info!(
+            "Computing phase V3 peak prices from height {} to {}",
+            start_height, total_heights
+        );
+
+        let mut histogram_iter = self.phase_v3_histogram.iter()?;
+        let mut height_to_dateindex_iter = indexes.height.dateindex.iter();
+
+        // For weekly OHLC anchors
+        let mut price_ohlc_iter = price_cents.ohlc.dateindex.iter()?;
+        let mut dateindex_to_weekindex_iter = indexes.dateindex.weekindex.iter();
+        let mut weekindex_to_first_dateindex_iter = indexes.weekindex.first_dateindex.iter();
+        let mut weekindex_dateindex_count_iter = indexes.weekindex.dateindex_count.iter();
+
+        let mut last_progress = (start_height * 100 / total_heights.max(1)) as u8;
+
+        // Track previous price for fallback
+        let mut prev_price_cents = if start_height > 0 {
+            self.phase_v3_peak_price_cents
+                .iter()?
+                .get(Height::from(start_height - 1))
+                .unwrap_or(Cents::from(10_000_000i64))
+        } else {
+            Cents::from(10_000_000i64)
+        };
+
+        for height in start_height..total_heights {
+            let height_idx = Height::from(height);
+            let histogram: OracleBinsV2 = histogram_iter.get_unwrap(height_idx);
+
+            // Get weekly anchor for decade selection
+            let dateindex = height_to_dateindex_iter.get(height_idx);
+            let anchor_price: Option<f64> = dateindex.and_then(|di| {
+                let wi = dateindex_to_weekindex_iter.get(di)?;
+                let first_di = weekindex_to_first_dateindex_iter.get(wi)?;
+                let count = weekindex_dateindex_count_iter
+                    .get(wi)
+                    .map(|c| *c as usize)?;
+
+                let mut sum = 0i64;
+                let mut cnt = 0;
+                for i in 0..count {
+                    let di = DateIndex::from(first_di.to_usize() + i);
+                    if let Some(ohlc) = price_ohlc_iter.get(di) {
+                        sum += i64::from(*ohlc.close);
+                        cnt += 1;
+                    }
+                }
+
+                if cnt > 0 {
+                    Some(sum as f64 / cnt as f64 / 100.0)
+                } else {
+                    None
+                }
+            });
+
+            // Use anchor or previous price for decade selection
+            let anchor = anchor_price.unwrap_or(i64::from(prev_price_cents) as f64 / 100.0);
+
+            // Find peak bin directly (like V1) using 100 bins (downsample from 200)
+            let price_cents = if histogram.total_count() >= 10 {
+                // Downsample 200 bins to 100 bins
+                let mut bins100 = [0u32; 100];
+                (0..100).for_each(|i| {
+                    bins100[i] = histogram.bins[i * 2] as u32 + histogram.bins[i * 2 + 1] as u32;
+                });
+
+                // Find peak bin, skipping bin 0 (round BTC amounts cluster there)
+                let peak_bin = bins100
+                    .iter()
+                    .enumerate()
+                    .filter(|(bin, _)| *bin != 0)
+                    .max_by_key(|(_, count)| *count)
+                    .map(|(bin, _)| bin)
+                    .unwrap_or(0);
+
+                // Convert bin to price using anchor for decade (100 bins)
+                let phase = (peak_bin as f64 + 0.5) / 100.0;
+                let base_price = 10.0_f64.powf(phase);
+
+                // Find best decade
+                let mut best_price = base_price;
+                let mut best_dist = f64::MAX;
+                for decade in -2..=6 {
+                    let candidate = base_price * 10.0_f64.powi(decade);
+                    let dist = (candidate - anchor).abs();
+                    if dist < best_dist {
+                        best_dist = dist;
+                        best_price = candidate;
+                    }
+                }
+
+                Cents::from((best_price.clamp(0.01, 10_000_000.0) * 100.0) as i64)
+            } else {
+                prev_price_cents
+            };
+
+            prev_price_cents = price_cents;
+            self.phase_v3_peak_price_cents.push(price_cents);
+
+            // Progress logging
+            let progress = (height * 100 / total_heights.max(1)) as u8;
+            if progress > last_progress {
+                last_progress = progress;
+                info!("Phase V3 peak price computation: {}%", progress);
+
+                let _lock = exit.lock();
+                self.phase_v3_peak_price_cents.write()?;
+            }
+        }
+
+        // Final write
+        {
+            let _lock = exit.lock();
+            self.phase_v3_peak_price_cents.write()?;
+        }
+
+        info!(
+            "Phase V3 peak prices complete: {} blocks",
+            self.phase_v3_peak_price_cents.len()
+        );
+
+        Ok(())
+    }
+
+    /// Compute Phase Oracle V3 - Daily distributions from per-block prices
+    fn compute_phase_v3_daily(
+        &mut self,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        info!("Computing phase V3 daily distributions");
+
+        // Cross-correlation based
+        self.phase_v3_daily_cents.compute(
+            starting_indexes.dateindex,
+            &self.phase_v3_price_cents,
+            &indexes.dateindex.first_height,
+            &indexes.dateindex.height_count,
+            exit,
+        )?;
+
+        // Peak-based
+        self.phase_v3_peak_daily_cents.compute(
+            starting_indexes.dateindex,
+            &self.phase_v3_peak_price_cents,
+            &indexes.dateindex.first_height,
+            &indexes.dateindex.height_count,
+            exit,
+        )?;
+
+        info!(
+            "Phase V3 daily distributions complete: {} days",
+            self.phase_v3_daily_cents.len()
+        );
 
         Ok(())
     }

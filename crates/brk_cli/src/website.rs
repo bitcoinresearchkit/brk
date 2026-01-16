@@ -21,7 +21,6 @@ impl Default for Website {
     }
 }
 
-
 impl FromStr for Website {
     type Err = std::convert::Infallible;
 

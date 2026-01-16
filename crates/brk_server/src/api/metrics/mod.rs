@@ -170,6 +170,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                         state,
                     )
                     .await
+                    .into_response()
                 },
                 |op| op
                     .id("get_metric")
@@ -188,7 +189,9 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/metrics/bulk",
             get_with(
-                bulk::handler,
+                |uri, headers, query, state| async move {
+                    bulk::handler(uri, headers, query, state).await.into_response()
+                },
                 |op| op
                     .id("get_metrics")
                     .metrics_tag()
@@ -225,7 +228,9 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                         Metrics::from(split.collect::<Vec<_>>().join(separator)),
                         range,
                     ));
-                    legacy::handler(uri, headers, Query(params), state).await
+                    legacy::handler(uri, headers, Query(params), state)
+                        .await
+                        .into_response()
                 },
                 |op| op
                     .metrics_tag()
@@ -250,7 +255,9 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                        state: State<AppState>|
                        -> Response {
                     let params: MetricSelection = params.into();
-                    legacy::handler(uri, headers, Query(params), state).await
+                    legacy::handler(uri, headers, Query(params), state)
+                        .await
+                        .into_response()
                 },
                 |op| op
                     .metrics_tag()

@@ -6,6 +6,7 @@ target
 websites/dist
 bridge/
 /ids.txt
+rust_out
 
 # Copies
 *\ copy*
@@ -15,9 +16,10 @@ _*
 !__*.py
 /*.md
 /*.py
-/api.json
 /*.json
 /*.html
+/research
+/filter_*
 
 # Logs
 *.log*

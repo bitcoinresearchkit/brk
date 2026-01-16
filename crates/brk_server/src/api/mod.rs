@@ -48,7 +48,7 @@ impl ApiRoutes for ApiRouter<AppState> {
             .add_server_routes()
             .route("/api/server", get(Redirect::temporary("/api#tag/server")))
             .api_route(
-                "/api.json",
+                "/openapi.json",
                 get_with(
                     async |headers: HeaderMap,
                            Extension(api): Extension<Arc<OpenApi>>|
@@ -62,7 +62,7 @@ impl ApiRoutes for ApiRouter<AppState> {
                 ),
             )
             .api_route(
-                "/api.trimmed.json",
+                "/api.json",
                 get_with(
                     async |headers: HeaderMap,
                            Extension(api_trimmed): Extension<Arc<String>>|
@@ -72,12 +72,13 @@ impl ApiRoutes for ApiRouter<AppState> {
                         Response::static_json(&headers, &value)
                     },
                     |op| {
-                        op.id("get_openapi_trimmed")
+                        op.id("get_api")
                             .server_tag()
-                            .summary("Trimmed OpenAPI specification")
+                            .summary("Compact OpenAPI specification")
                             .description(
                                 "Compact OpenAPI specification optimized for LLM consumption. \
-                                 Removes redundant fields while preserving essential API information.",
+                                 Removes redundant fields while preserving essential API information. \
+                                 Full spec available at `/openapi.json`.",
                             )
                             .ok_response::<serde_json::Value>()
                     },

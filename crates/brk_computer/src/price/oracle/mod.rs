@@ -158,6 +158,7 @@ mod compute;
 mod config;
 mod histogram;
 mod import;
+mod phase_v2;
 mod stencil;
 mod vecs;
 

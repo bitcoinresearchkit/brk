@@ -1,7 +1,7 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    Cents, DateIndex, Dollars, Height, OHLCCents, OHLCDollars, OracleBins, PairOutputIndex, Sats,
-    StoredU32, TxIndex,
+    Cents, DateIndex, Dollars, Height, OHLCCents, OHLCDollars, OracleBins, OracleBinsV2,
+    PairOutputIndex, Sats, StoredU32, TxIndex,
 };
 use vecdb::{BytesVec, LazyVecFrom1, PcoVec};
 
@@ -55,4 +55,49 @@ pub struct Vecs {
 
     /// Number of qualifying transactions per day (for confidence)
     pub tx_count: PcoVec<DateIndex, StoredU32>,
+
+    // ========== Phase Oracle V2 (round USD template matching) ==========
+    /// Per-block 200-bin phase histogram
+    pub phase_v2_histogram: BytesVec<Height, OracleBinsV2>,
+
+    /// Per-block price in cents from phase oracle V2 (cross-correlation with round USD template)
+    pub phase_v2_price_cents: PcoVec<Height, Cents>,
+
+    /// Per-block price in cents using direct peak finding (like V1)
+    pub phase_v2_peak_price_cents: PcoVec<Height, Cents>,
+
+    /// Daily distribution (min, max, average, percentiles) from phase oracle V2
+    pub phase_v2_daily_cents: Distribution<DateIndex, Cents>,
+
+    /// Daily distribution in dollars (lazy conversion from cents)
+    pub phase_v2_daily_dollars: LazyTransformDistribution<DateIndex, Dollars, Cents>,
+
+    /// Daily distribution from peak-based prices
+    pub phase_v2_peak_daily_cents: Distribution<DateIndex, Cents>,
+
+    /// Daily distribution in dollars (lazy conversion from cents)
+    pub phase_v2_peak_daily_dollars: LazyTransformDistribution<DateIndex, Dollars, Cents>,
+
+    // ========== Phase Oracle V3 (BASE + uniqueVal filter) ==========
+    /// Per-block 200-bin phase histogram with uniqueVal filtering
+    /// Only includes outputs with unique values within their transaction
+    pub phase_v3_histogram: BytesVec<Height, OracleBinsV2>,
+
+    /// Per-block price in cents from phase oracle V3 (cross-correlation)
+    pub phase_v3_price_cents: PcoVec<Height, Cents>,
+
+    /// Per-block price in cents using direct peak finding (like V1)
+    pub phase_v3_peak_price_cents: PcoVec<Height, Cents>,
+
+    /// Daily distribution from phase oracle V3
+    pub phase_v3_daily_cents: Distribution<DateIndex, Cents>,
+
+    /// Daily distribution in dollars (lazy conversion from cents)
+    pub phase_v3_daily_dollars: LazyTransformDistribution<DateIndex, Dollars, Cents>,
+
+    /// Daily distribution from peak-based prices
+    pub phase_v3_peak_daily_cents: Distribution<DateIndex, Cents>,
+
+    /// Daily distribution in dollars (lazy conversion from cents)
+    pub phase_v3_peak_daily_dollars: LazyTransformDistribution<DateIndex, Dollars, Cents>,
 }

@@ -17,7 +17,6 @@ use axum::{
     routing::get,
     serve,
 };
-use brk_error::Result;
 use brk_query::AsyncQuery;
 use include_dir::{Dir, include_dir};
 use quick_cache::sync::Cache;
@@ -48,12 +47,14 @@ impl WebsiteSource {
 
 mod api;
 pub mod cache;
+mod error;
 mod extended;
 mod files;
 mod state;
 
 use api::*;
 pub use cache::{CacheParams, CacheStrategy};
+pub use error::{Error, Result};
 use extended::*;
 use files::FilesRoutes;
 use state::*;
@@ -75,7 +76,7 @@ impl Server {
         })
     }
 
-    pub async fn serve(self) -> Result<()> {
+    pub async fn serve(self) -> brk_error::Result<()> {
         let state = self.0;
 
         let compression_layer = CompressionLayer::new()

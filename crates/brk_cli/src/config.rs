@@ -11,7 +11,6 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{default_brk_path, dot_brk_path, fix_user_path, website::Website};
 
-
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[command(version, about)]
 pub struct Config {
@@ -40,9 +39,9 @@ pub struct Config {
     #[arg(long, value_name = "BOOL")]
     exchanges: Option<bool>,
 
-    /// Website served by the server, default: default, saved
+    /// Website served by the server: true (default), false, or PATH, saved
     #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(short, long)]
+    #[arg(short, long, value_name = "BOOL|PATH")]
     website: Option<Website>,
 
     /// Bitcoin RPC ip, default: localhost, saved
@@ -232,9 +231,7 @@ Finally, you can run the program with '-h' for help."
     pub fn bitcoindir(&self) -> PathBuf {
         self.bitcoindir
             .as_ref()
-            .map_or_else(Client::default_bitcoin_path, |s| {
-                fix_user_path(s.as_ref())
-            })
+            .map_or_else(Client::default_bitcoin_path, |s| fix_user_path(s.as_ref()))
     }
 
     pub fn blocksdir(&self) -> PathBuf {

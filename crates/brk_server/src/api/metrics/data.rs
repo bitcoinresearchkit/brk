@@ -6,11 +6,11 @@ use axum::{
     http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
-use brk_error::Result;
 use brk_types::{Format, MetricSelection, Output};
 use quick_cache::sync::GuardResult;
 
 use crate::{
+    Result,
     api::metrics::{CACHE_CONTROL, MAX_WEIGHT},
     extended::HeaderMapExtended,
 };
@@ -20,20 +20,8 @@ use super::AppState;
 pub async fn handler(
     uri: Uri,
     headers: HeaderMap,
-    query: Query<MetricSelection>,
-    State(state): State<AppState>,
-) -> Response {
-    match req_to_response_res(uri, headers, query, state).await {
-        Ok(response) => response,
-        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response(),
-    }
-}
-
-async fn req_to_response_res(
-    uri: Uri,
-    headers: HeaderMap,
     Query(params): Query<MetricSelection>,
-    AppState { query, cache, .. }: AppState,
+    State(AppState { query, cache, .. }): State<AppState>,
 ) -> Result<Response> {
     // Phase 1: Search and resolve metadata (cheap)
     let resolved = query.run(move |q| q.resolve(params, MAX_WEIGHT)).await?;
