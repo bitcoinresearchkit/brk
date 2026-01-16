@@ -377,7 +377,10 @@ mod tests {
 
         let props = &parsed["components"]["schemas"]["AddressStats"]["properties"];
         assert_eq!(props["address"], "Address", "address should be simplified");
-        assert_eq!(props["chain_stats"], "AddressChainStats", "chain_stats should be simplified");
+        assert_eq!(
+            props["chain_stats"], "AddressChainStats",
+            "chain_stats should be simplified"
+        );
     }
 
     #[test]

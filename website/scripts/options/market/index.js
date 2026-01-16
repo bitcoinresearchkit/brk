@@ -37,23 +37,29 @@ export function createMarketSection(ctx) {
         title: "Bitcoin Price",
         ...(localhost && {
           top: [
-            candlestick({
-              metric: price.oracle.ohlcDollars,
-              name: "Oracle",
-              unit: Unit.usd,
-              colors: [colors.cyan, colors.purple],
-            }),
+            // candlestick({
+            //   metric: price.oracle.ohlcDollars,
+            //   name: "Oracle base",
+            //   unit: Unit.usd,
+            //   colors: [colors.cyan, colors.purple],
+            // }),
             line({
               metric: price.oracle.phaseDailyDollars.median,
-              name: "Oracle2 median",
-              unit: Unit.usd,
-              color: colors.blue,
-            }),
-            line({
-              metric: price.oracle.phaseDailyDollars.average,
-              name: "Oracle2 average",
+              name: "o. p50",
               unit: Unit.usd,
               color: colors.yellow,
+            }),
+            line({
+              metric: price.oracle.phaseDailyDollars.max,
+              name: "o. max",
+              unit: Unit.usd,
+              color: colors.lime,
+            }),
+            line({
+              metric: price.oracle.phaseDailyDollars.min,
+              name: "o. min",
+              unit: Unit.usd,
+              color: colors.rose,
             }),
           ],
         }),

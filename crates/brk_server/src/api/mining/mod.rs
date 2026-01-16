@@ -6,9 +6,9 @@ use axum::{
     routing::get,
 };
 use brk_types::{
-    BlockCountParam, BlockFeesEntry, BlockRewardsEntry, BlockSizesWeights,
-    DifficultyAdjustment, DifficultyAdjustmentEntry, HashrateSummary, PoolDetail, PoolInfo,
-    PoolSlugParam, PoolsSummary, RewardStats, TimePeriodParam,
+    BlockCountParam, BlockFeesEntry, BlockRewardsEntry, BlockSizesWeights, DifficultyAdjustment,
+    DifficultyAdjustmentEntry, HashrateSummary, PoolDetail, PoolInfo, PoolSlugParam, PoolsSummary,
+    RewardStats, TimePeriodParam,
 };
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};

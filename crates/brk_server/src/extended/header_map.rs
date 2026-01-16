@@ -19,8 +19,6 @@ pub enum ModifiedState {
 }
 
 pub trait HeaderMapExtended {
-    fn insert_cors(&mut self);
-
     fn has_etag(&self, etag: &str) -> bool;
 
     fn get_if_modified_since(&self) -> Option<DateTime>;
@@ -52,11 +50,6 @@ pub trait HeaderMapExtended {
 }
 
 impl HeaderMapExtended for HeaderMap {
-    fn insert_cors(&mut self) {
-        self.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*".parse().unwrap());
-        self.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, "*".parse().unwrap());
-    }
-
     fn insert_cache_control(&mut self, value: &str) {
         self.insert(header::CACHE_CONTROL, value.parse().unwrap());
     }

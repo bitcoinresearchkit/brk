@@ -14,7 +14,8 @@ fn main() {
         let map = if is_dev {
             importmap::ImportMap::empty()
         } else {
-            importmap::ImportMap::scan(&website_path, "").unwrap_or_else(|_| importmap::ImportMap::empty())
+            importmap::ImportMap::scan(&website_path, "")
+                .unwrap_or_else(|_| importmap::ImportMap::empty())
         };
 
         let _ = map.update_html_file(&website_path.join("index.html"));

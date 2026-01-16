@@ -1,10 +1,5 @@
 use aide::axum::{ApiRouter, routing::get_with};
-use axum::{
-    extract::State,
-    http::HeaderMap,
-    response::Redirect,
-    routing::get,
-};
+use axum::{extract::State, http::HeaderMap, response::Redirect, routing::get};
 use brk_types::{MempoolBlock, MempoolInfo, RecommendedFees, Txid};
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};

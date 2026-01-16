@@ -36,8 +36,7 @@ where
 impl ResponseExtended for Response<Body> {
     fn new_not_modified() -> Response<Body> {
         let mut response = (StatusCode::NOT_MODIFIED, "").into_response();
-        let headers = response.headers_mut();
-        headers.insert_cors();
+        let _headers = response.headers_mut();
         response
     }
 
@@ -56,7 +55,6 @@ impl ResponseExtended for Response<Body> {
         let mut response = Response::builder().body(bytes.into()).unwrap();
         *response.status_mut() = status;
         let headers = response.headers_mut();
-        headers.insert_cors();
         headers.insert_content_type_application_json();
         headers.insert_cache_control_must_revalidate();
         headers.insert_etag(etag);
@@ -68,12 +66,9 @@ impl ResponseExtended for Response<Body> {
     }
 
     fn new_text_with(status: StatusCode, value: &str, etag: &str) -> Self {
-        let mut response = Response::builder()
-            .body(value.to_string().into())
-            .unwrap();
+        let mut response = Response::builder().body(value.to_string().into()).unwrap();
         *response.status_mut() = status;
         let headers = response.headers_mut();
-        headers.insert_cors();
         headers.insert_content_type_text_plain();
         headers.insert_cache_control_must_revalidate();
         headers.insert_etag(etag);
@@ -88,7 +83,6 @@ impl ResponseExtended for Response<Body> {
         let mut response = Response::builder().body(value.into()).unwrap();
         *response.status_mut() = status;
         let headers = response.headers_mut();
-        headers.insert_cors();
         headers.insert_content_type_octet_stream();
         headers.insert_cache_control_must_revalidate();
         headers.insert_etag(etag);
@@ -102,7 +96,6 @@ impl ResponseExtended for Response<Body> {
         let bytes = serde_json::to_vec(&value).unwrap();
         let mut response = Response::builder().body(bytes.into()).unwrap();
         let headers = response.headers_mut();
-        headers.insert_cors();
         headers.insert_content_type_application_json();
         headers.insert_cache_control(&params.cache_control);
         if let Some(etag) = &params.etag {
@@ -123,11 +116,8 @@ impl ResponseExtended for Response<Body> {
     }
 
     fn new_text_cached(value: &str, params: &CacheParams) -> Self {
-        let mut response = Response::builder()
-            .body(value.to_string().into())
-            .unwrap();
+        let mut response = Response::builder().body(value.to_string().into()).unwrap();
         let headers = response.headers_mut();
-        headers.insert_cors();
         headers.insert_content_type_text_plain();
         headers.insert_cache_control(&params.cache_control);
         if let Some(etag) = &params.etag {
@@ -139,7 +129,6 @@ impl ResponseExtended for Response<Body> {
     fn new_bytes_cached(value: Vec<u8>, params: &CacheParams) -> Self {
         let mut response = Response::builder().body(value.into()).unwrap();
         let headers = response.headers_mut();
-        headers.insert_cors();
         headers.insert_content_type_octet_stream();
         headers.insert_cache_control(&params.cache_control);
         if let Some(etag) = &params.etag {

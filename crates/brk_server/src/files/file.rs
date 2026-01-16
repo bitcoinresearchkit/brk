@@ -81,7 +81,6 @@ fn build_response(state: &AppState, path: &Path, content: Vec<u8>, cache_key: &s
     };
 
     let headers = response.headers_mut();
-    headers.insert_cors();
     headers.insert_content_type(path);
 
     if cfg!(debug_assertions) || must_revalidate {
@@ -114,9 +113,8 @@ fn embedded_handler(state: &AppState, path: Option<String>) -> Response {
         });
 
     let Some(file) = file else {
-        let mut response: Response<Body> =
+        let response: Response<Body> =
             (StatusCode::NOT_FOUND, "File not found".to_string()).into_response();
-        response.headers_mut().insert_cors();
         return response;
     };
 
@@ -147,9 +145,8 @@ fn filesystem_handler(
             let allowed = canonical.starts_with(&canonical_base)
                 || project_root.is_some_and(|root| canonical.starts_with(root));
             if !allowed {
-                let mut response: Response<Body> =
+                let response: Response<Body> =
                     (StatusCode::FORBIDDEN, "Access denied".to_string()).into_response();
-                response.headers_mut().insert_cors();
                 return response;
             }
         }
@@ -165,12 +162,11 @@ fn filesystem_handler(
         // SPA fallback
         if !path.exists() || path.is_dir() {
             if path.extension().is_some() {
-                let mut response: Response<Body> = (
+                let response: Response<Body> = (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "File doesn't exist".to_string(),
                 )
                     .into_response();
-                response.headers_mut().insert_cors();
                 return response;
             } else {
                 path = files_path.join("index.html");
@@ -188,12 +184,7 @@ fn filesystem_handler(
 fn path_to_response(headers: &HeaderMap, state: &AppState, path: &Path) -> Response {
     match path_to_response_(headers, state, path) {
         Ok(response) => response,
-        Err(error) => {
-            let mut response =
-                (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response();
-            response.headers_mut().insert_cors();
-            response
-        }
+        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response(),
     }
 }
 

@@ -17,7 +17,7 @@ impl Vecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
         Ok(Self {
             identity: EagerVec::forced_import(db, "height", version)?,
-            dateindex: EagerVec::forced_import(db, "height_dateindex", version)?,
+            dateindex: EagerVec::forced_import(db, "dateindex", version)?,
             difficultyepoch: EagerVec::forced_import(db, "difficultyepoch", version)?,
             halvingepoch: EagerVec::forced_import(db, "halvingepoch", version)?,
             txindex_count: EagerVec::forced_import(db, "txindex_count", version)?,

@@ -1,6 +1,11 @@
 #![doc = include_str!("../README.md")]
 
-use std::{panic, path::PathBuf, sync::Arc, time::{Duration, Instant}};
+use std::{
+    panic,
+    path::PathBuf,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use aide::axum::ApiRouter;
 use axum::{
@@ -14,10 +19,14 @@ use axum::{
 };
 use brk_error::Result;
 use brk_query::AsyncQuery;
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 use quick_cache::sync::Cache;
 use tokio::net::TcpListener;
-use tower_http::{compression::CompressionLayer, trace::TraceLayer};
+use tower_http::{
+    catch_panic::CatchPanicLayer, classify::ServerErrorsFailureClass,
+    compression::CompressionLayer, cors::CorsLayer, normalize_path::NormalizePathLayer,
+    timeout::TimeoutLayer, trace::TraceLayer,
+};
 use tracing::{error, info};
 
 /// Embedded website assets
@@ -86,19 +95,25 @@ impl Server {
 
         let trace_layer = TraceLayer::new_for_http()
             .on_request(())
-            .on_response(|response: &Response<Body>, latency: Duration, _: &tracing::Span| {
-                let status = response.status().as_u16();
-                let uri = response.extensions().get::<Uri>().unwrap();
-                match response.status() {
-                    StatusCode::OK => info!(status, %uri, ?latency),
-                    StatusCode::NOT_MODIFIED
-                    | StatusCode::TEMPORARY_REDIRECT
-                    | StatusCode::PERMANENT_REDIRECT => info!(status, %uri, ?latency),
-                    _ => error!(status, %uri, ?latency),
-                }
-            })
+            .on_response(
+                |response: &Response<Body>, latency: Duration, _: &tracing::Span| {
+                    let status = response.status().as_u16();
+                    let uri = response.extensions().get::<Uri>().unwrap();
+                    match response.status() {
+                        StatusCode::OK => info!(status, %uri, ?latency),
+                        StatusCode::NOT_MODIFIED
+                        | StatusCode::TEMPORARY_REDIRECT
+                        | StatusCode::PERMANENT_REDIRECT => info!(status, %uri, ?latency),
+                        _ => error!(status, %uri, ?latency),
+                    }
+                },
+            )
             .on_body_chunk(())
-            .on_failure(())
+            .on_failure(
+                |error: ServerErrorsFailureClass, latency: Duration, _: &tracing::Span| {
+                    error!(?error, ?latency, "request failed");
+                },
+            )
             .on_eos(());
 
         let vecs = state.query.inner().vecs();
@@ -126,9 +141,13 @@ impl Server {
             )
             .route("/nostr", get(Redirect::temporary("https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44")))
             .with_state(state)
+            .layer(CatchPanicLayer::new())
             .layer(compression_layer)
             .layer(response_uri_layer)
-            .layer(trace_layer);
+            .layer(trace_layer)
+            .layer(TimeoutLayer::with_status_code(StatusCode::GATEWAY_TIMEOUT, Duration::from_secs(5)))
+            .layer(CorsLayer::permissive())
+            .layer(NormalizePathLayer::trim_trailing_slash());
 
         const BASE_PORT: u16 = 3110;
         const MAX_PORT: u16 = BASE_PORT + 100;
