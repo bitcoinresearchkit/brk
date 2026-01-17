@@ -56,7 +56,7 @@ fn run() -> Result<()> {
     runtime.block_on(async move {
         let server = Server::new(&query, outputs_dir, Website::Disabled);
 
-        let handle = tokio::spawn(async move { server.serve().await });
+        let handle = tokio::spawn(async move { server.serve(None).await });
 
         // Await the handle to catch both panics and errors
         match handle.await {

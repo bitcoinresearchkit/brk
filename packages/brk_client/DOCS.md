@@ -19,6 +19,7 @@
     * [LT\_AMOUNT\_NAMES](#brk_client.BrkClient.LT_AMOUNT_NAMES)
     * [\_\_init\_\_](#brk_client.BrkClient.__init__)
     * [metric](#brk_client.BrkClient.metric)
+    * [get\_api](#brk_client.BrkClient.get_api)
     * [get\_address](#brk_client.BrkClient.get_address)
     * [get\_address\_txs](#brk_client.BrkClient.get_address_txs)
     * [get\_address\_confirmed\_txs](#brk_client.BrkClient.get_address_confirmed_txs)
@@ -68,6 +69,7 @@
     * [get\_reward\_stats](#brk_client.BrkClient.get_reward_stats)
     * [validate\_address](#brk_client.BrkClient.validate_address)
     * [get\_health](#brk_client.BrkClient.get_health)
+    * [get\_openapi](#brk_client.BrkClient.get_openapi)
     * [get\_version](#brk_client.BrkClient.get_version)
 
 <a id="brk_client"></a>
@@ -161,7 +163,7 @@ Main BRK client with metrics tree and API methods.
 #### \_\_init\_\_
 
 ```python
-def __init__(base_url: str = "http://localhost:3000", timeout: float = 30.0)
+def __init__(base_url: str = 'http://localhost:3000', timeout: float = 30.0)
 ```
 
 <a id="brk_client.BrkClient.metric"></a>
@@ -176,6 +178,20 @@ Create a dynamic metric endpoint builder for any metric/index combination.
 
 Use this for programmatic access when the metric name is determined at runtime.
 For type-safe access, use the `metrics` tree instead.
+
+<a id="brk_client.BrkClient.get_api"></a>
+
+#### get\_api
+
+```python
+def get_api() -> Any
+```
+
+Compact OpenAPI specification.
+
+Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
+
+Endpoint: `GET /api.json`
 
 <a id="brk_client.BrkClient.get_address"></a>
 
@@ -955,6 +971,20 @@ Health check.
 Returns the health status of the API server, including uptime information.
 
 Endpoint: `GET /health`
+
+<a id="brk_client.BrkClient.get_openapi"></a>
+
+#### get\_openapi
+
+```python
+def get_openapi() -> Any
+```
+
+OpenAPI specification.
+
+Full OpenAPI 3.1 specification for this API.
+
+Endpoint: `GET /openapi.json`
 
 <a id="brk_client.BrkClient.get_version"></a>
 
