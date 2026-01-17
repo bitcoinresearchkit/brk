@@ -1,6 +1,23 @@
+use aide::openapi::OpenApi;
+use derive_more::Deref;
 use serde_json::{Map, Value};
 
-/// Trims an OpenAPI spec JSON to reduce size for LLM consumption.
+/// Compact OpenAPI spec optimized for LLM consumption.
+#[derive(Deref)]
+pub struct ApiJson(String);
+
+impl ApiJson {
+    pub fn new(openapi: &OpenApi) -> Self {
+        let json = serde_json::to_string(openapi).unwrap();
+        Self(compact_json(&json))
+    }
+
+    pub fn to_json(&self) -> serde_json::Value {
+        serde_json::from_str(&self.0).unwrap()
+    }
+}
+
+/// Compacts an OpenAPI spec JSON to reduce size for LLM consumption.
 /// Removes redundant fields while preserving essential API information.
 ///
 /// Transformations applied (in order):
@@ -15,13 +32,13 @@ use serde_json::{Map, Value};
 /// 9. Remove format
 /// 10. Remove property descriptions
 /// 11. Simplify properties to direct types
-pub fn trim_openapi_json(json: &str) -> String {
+fn compact_json(json: &str) -> String {
     let mut spec: Value = serde_json::from_str(json).expect("Invalid OpenAPI JSON");
-    trim_value(&mut spec);
+    compact_value(&mut spec);
     serde_json::to_string(&spec).unwrap()
 }
 
-fn trim_value(value: &mut Value) {
+fn compact_value(value: &mut Value) {
     match value {
         Value::Object(obj) => {
             // Step 1: Remove error responses
@@ -106,12 +123,12 @@ fn trim_value(value: &mut Value) {
 
             // Recurse into remaining values
             for (_, v) in obj.iter_mut() {
-                trim_value(v);
+                compact_value(v);
             }
         }
         Value::Array(arr) => {
             for item in arr {
-                trim_value(item);
+                compact_value(item);
             }
         }
         _ => {}
@@ -298,7 +315,7 @@ mod tests {
             }
         }"##;
 
-        let result = trim_openapi_json(input);
+        let result = compact_json(input);
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         // Property should be simplified to array, not {"type": [...]}
@@ -323,7 +340,7 @@ mod tests {
             }]
         }"##;
 
-        let result = trim_openapi_json(input);
+        let result = compact_json(input);
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         // Parameter should have type array including null
@@ -344,7 +361,7 @@ mod tests {
             }
         }"##;
 
-        let result = trim_openapi_json(input);
+        let result = compact_json(input);
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         // Property with $ref should be simplified to just the type name
@@ -372,7 +389,7 @@ mod tests {
             }
         }"##;
 
-        let result = trim_openapi_json(input);
+        let result = compact_json(input);
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         let props = &parsed["components"]["schemas"]["AddressStats"]["properties"];
@@ -398,7 +415,7 @@ mod tests {
             }
         }"##;
 
-        let result = trim_openapi_json(input);
+        let result = compact_json(input);
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         assert_eq!(parsed["properties"]["address"], "Address");
@@ -418,7 +435,7 @@ mod tests {
             }
         }"##;
 
-        let result = trim_openapi_json(input);
+        let result = compact_json(input);
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         // Array with $ref items should be simplified to "array[Type]"
@@ -441,7 +458,7 @@ mod tests {
             }
         }"##;
 
-        let result = trim_openapi_json(input);
+        let result = compact_json(input);
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         assert_eq!(parsed["returns"], "Block");

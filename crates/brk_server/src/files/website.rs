@@ -120,7 +120,7 @@ impl Website {
 
         // Try direct lookup, then with hash stripped
         let file = EMBEDDED_WEBSITE.get_file(path).or_else(|| {
-            strip_importmap_hash(Path::new(path))
+            ImportMap::strip_hash(Path::new(path))
                 .and_then(|unhashed| EMBEDDED_WEBSITE.get_file(unhashed.to_str()?))
         });
 
@@ -146,7 +146,7 @@ impl Website {
 
         // Try with hash stripped
         if !file_path.exists()
-            && let Some(unhashed) = strip_importmap_hash(&file_path)
+            && let Some(unhashed) = ImportMap::strip_hash(&file_path)
             && unhashed.exists()
         {
             file_path = unhashed;
@@ -169,25 +169,5 @@ impl Website {
             error!("{e}");
             Error::not_found("File not found")
         })
-    }
-}
-
-/// Strip importmap hash from filename: `foo.abc12345.js` -> `foo.js`
-fn strip_importmap_hash(path: &Path) -> Option<PathBuf> {
-    let stem = path.file_stem()?.to_str()?;
-    let ext = path.extension()?.to_str()?;
-
-    if !matches!(ext, "js" | "mjs" | "css") {
-        return None;
-    }
-
-    let dot_pos = stem.rfind('.')?;
-    let hash = &stem[dot_pos + 1..];
-
-    if hash.len() == 8 && hash.chars().all(|c| c.is_ascii_hexdigit()) {
-        let name = &stem[..dot_pos];
-        Some(path.with_file_name(format!("{}.{}", name, ext)))
-    } else {
-        None
     }
 }

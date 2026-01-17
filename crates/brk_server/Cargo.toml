@@ -24,8 +24,8 @@ brk_types = { workspace = true }
 brk_traversable = { workspace = true }
 derive_more = { workspace = true }
 include_dir = "0.7"
-importmap = { path = "../../../importmap", features = ["embedded"] }
-# importmap = { version = "0.3", features = ["embedded"] }
+# importmap = { path = "../../../importmap", features = ["embedded"] }
+importmap = { version = "0.3.0", features = ["embedded"] }
 vecdb = { workspace = true }
 jiff = { workspace = true }
 quick_cache = "0.6.18"

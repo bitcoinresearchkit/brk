@@ -165,8 +165,8 @@ impl Server {
             .javascript(workspace_root.join("modules/brk-client/index.js"))
             .python(workspace_root.join("packages/brk_client/brk_client/__init__.py"));
 
-        let openapi_json = Arc::new(serde_json::to_string(&openapi).unwrap());
-        let openapi_trimmed = Arc::new(trim_openapi_json(&openapi_json));
+        let api_json = Arc::new(ApiJson::new(&openapi));
+        let openapi_json = serde_json::to_string(&openapi).unwrap();
 
         let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
             brk_bindgen::generate_clients(vecs, &openapi_json, &output_paths)
@@ -180,7 +180,7 @@ impl Server {
 
         let router = router
             .layer(Extension(Arc::new(openapi)))
-            .layer(Extension(openapi_trimmed));
+            .layer(Extension(api_json));
 
         let service = NormalizePathLayer::trim_trailing_slash().layer(router);
 

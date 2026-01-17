@@ -65,11 +65,9 @@ impl ApiRoutes for ApiRouter<AppState> {
                 "/api.json",
                 get_with(
                     async |headers: HeaderMap,
-                           Extension(api_trimmed): Extension<Arc<String>>|
+                           Extension(api): Extension<Arc<ApiJson>>|
                            -> Response {
-                        let value: serde_json::Value =
-                            serde_json::from_str(&api_trimmed).unwrap();
-                        Response::static_json(&headers, &value)
+                        Response::static_json(&headers, api.to_json())
                     },
                     |op| {
                         op.id("get_api")

@@ -10,9 +10,9 @@
 //   - https://api.supabase.com/api/v1
 //
 
-mod trim;
+mod compact;
 
-pub use trim::trim_openapi_json;
+pub use compact::ApiJson;
 
 use aide::openapi::{Contact, Info, License, OpenApi, Tag};
 
