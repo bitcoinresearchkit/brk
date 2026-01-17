@@ -1,90 +1,73 @@
 # brk_cli
 
-Command-line interface for running the Bitcoin Research Kit.
+Command-line interface for running a Bitcoin Research Kit instance.
 
-## What It Enables
+## Preview
 
-Run a full BRK instance: index the blockchain, compute metrics, serve the API, and optionally host a web interface. Continuously syncs with new blocks.
-
-## Key Features
-
-- **All-in-one**: Single binary runs indexer, computer, mempool monitor, and server
-- **Auto-sync**: Waits for new blocks and processes them automatically
-- **Web interface**: Downloads and bundles frontend from GitHub releases
-- **Configurable**: TOML config for RPC, paths, and features
-- **Collision checking**: Optional TXID collision validation mode
-- **Memory optimized**: Uses mimalloc allocator, 512MB stack for deep recursion
-
-## Install
-
-First, ensure Rust is up to date:
-
-```bash
-rustup update
-```
-
-Recommended (optimized for your CPU, auto-finds latest version):
-
-```bash
-RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli --version "$(cargo search brk_cli | head -1 | awk -F'"' '{print $2}')"
-```
-
-**Variants:**
-
-```bash
-# Standard install (portable, latest stable only)
-cargo install --locked brk_cli
-
-# Specific version
-cargo install --locked brk_cli --version "0.1.0-alpha.2"
-```
-
-See [crates.io/crates/brk_cli/versions](https://crates.io/crates/brk_cli/versions) for all versions.
-
-## Update
-
-Same as install - cargo replaces the existing binary:
-
-```bash
-rustup update
-RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli --version "$(cargo search brk_cli | head -1 | awk -F'"' '{print $2}')"
-```
+- https://bitview.space - web interface
+- https://bitview.space/api - API docs
 
 ## Requirements
 
-- Bitcoin Core with accessible `blk*.dat` files
+- Bitcoin Core running with RPC enabled
+- Access to `blk*.dat` files
 - ~400 GB disk space
-- 12+ GB RAM recommended
+- 12+ GB RAM
 
-## Usage
+## Install
 
 ```bash
-# See all options
-brk --help
-
-# The CLI will:
-# 1. Index new blocks
-# 2. Compute derived metrics
-# 3. Start mempool monitor
-# 4. Launch API server (port 3110)
-# 5. Wait for new blocks and repeat
+rustup update
+RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli --version "$(cargo search brk_cli | head -1 | awk -F'"' '{print $2}')"
 ```
 
-## Components
+Portable build (without native CPU optimizations):
 
-1. **Indexer**: Processes blocks into queryable indexes
-2. **Computer**: Derives 1000+ on-chain metrics
-3. **Mempool**: Real-time fee estimation
-4. **Server**: REST API with OpenAPI docs
-5. **Bundler**: JS bundling for web interface (if enabled)
+```bash
+cargo install --locked brk_cli
+```
 
-## Performance
+## Run
 
-See [brk_computer](https://docs.rs/brk_computer) for full pipeline benchmarks.
+```bash
+brk
+```
 
-## Built On
+Indexes the blockchain, computes datasets, starts the server on `localhost:3110`, and waits for new blocks.
 
-- `brk_indexer` for blockchain indexing
-- `brk_computer` for metric computation
-- `brk_mempool` for mempool monitoring
-- `brk_server` for HTTP API
+## Help
+
+```
+brk -h       Show all options
+brk -V       Show version
+```
+
+## Options
+
+Options are saved to `~/.brk/config.toml` after first use.
+
+```
+--bitcoindir <PATH>       Bitcoin data directory
+--blocksdir <PATH>        Blocks directory (default: bitcoindir/blocks)
+--brkdir <PATH>           Output directory (default: ~/.brk)
+
+--rpcconnect <IP>         RPC host (default: localhost)
+--rpcport <PORT>          RPC port (default: 8332)
+--rpccookiefile <PATH>    RPC cookie file (default: bitcoindir/.cookie)
+--rpcuser <USERNAME>      RPC username
+--rpcpassword <PASSWORD>  RPC password
+
+-F, --fetch <BOOL>        Fetch price data (default: true)
+--exchanges <BOOL>        Fetch from exchange APIs (default: true)
+-w, --website <BOOL|PATH> Serve web interface (default: true)
+```
+
+## Files
+
+```
+~/.brk/
+├── config.toml   Configuration
+└── log/          Logs
+
+<brkdir>/         Indexed data (default: ~/.brk)
+```

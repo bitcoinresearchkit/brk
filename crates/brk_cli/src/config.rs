@@ -9,7 +9,7 @@ use brk_rpc::{Auth, Client};
 use clap::Parser;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::{default_brk_path, dot_brk_path, fix_user_path, website::Website};
+use crate::{default_brk_path, dot_brk_path, fix_user_path, website::WebsiteArg};
 
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[command(version, about)]
@@ -42,7 +42,7 @@ pub struct Config {
     /// Website served by the server: true (default), false, or PATH, saved
     #[serde(default, deserialize_with = "default_on_error")]
     #[arg(short, long, value_name = "BOOL|PATH")]
-    website: Option<Website>,
+    website: Option<WebsiteArg>,
 
     /// Bitcoin RPC ip, default: localhost, saved
     #[serde(default, deserialize_with = "default_on_error")]
@@ -258,7 +258,7 @@ Finally, you can run the program with '-h' for help."
         )
     }
 
-    pub fn website(&self) -> Website {
+    pub fn website(&self) -> WebsiteArg {
         self.website.clone().unwrap_or_default()
     }
 

@@ -1456,9 +1456,9 @@ impl Vecs {
             let price_cents = if histogram.total_count() >= 10 {
                 // Downsample 200 bins to 100 bins
                 let mut bins100 = [0u32; 100];
-                for i in 0..100 {
+                (0..100).for_each(|i| {
                     bins100[i] = histogram.bins[i * 2] as u32 + histogram.bins[i * 2 + 1] as u32;
-                }
+                });
 
                 // Find peak bin, skipping bin 0 (round BTC amounts cluster there)
                 let peak_bin = bins100
@@ -1553,10 +1553,10 @@ impl Vecs {
         Ok(())
     }
 
-    /// Compute Phase Oracle V3 - Step 1: Per-block histograms with uniqueVal filtering
+    /// Compute Phase Oracle V3 - Step 1: Per-block histograms with uniqueVal + noP2TR filtering
     ///
-    /// Filters: >= 1000 sats, only outputs with unique values within their transaction.
-    /// This reduces spurious peaks from exchange batched payouts and inscription spam.
+    /// Filters: >= 1000 sats, no P2TR outputs, only outputs with unique values within their tx.
+    /// This reduces spurious peaks from inscription spam and exchange batched payouts.
     fn compute_phase_v3_histograms(
         &mut self,
         indexer: &Indexer,
@@ -1564,7 +1564,8 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let source_version = indexer.vecs.outputs.value.version();
+        let source_version =
+            indexer.vecs.outputs.value.version() + indexer.vecs.outputs.outputtype.version();
         self.phase_v3_histogram
             .validate_computed_version_or_reset(source_version)?;
 
@@ -1592,12 +1593,13 @@ impl Vecs {
             indexer.vecs.transactions.first_txoutindex.into_iter();
         let mut txindex_to_output_count_iter = indexes.txindex.output_count.iter();
         let mut txoutindex_to_value_iter = indexer.vecs.outputs.value.into_iter();
+        let mut txoutindex_to_outputtype_iter = indexer.vecs.outputs.outputtype.into_iter();
 
         let total_txs = indexer.vecs.transactions.height.len();
         let mut last_progress = (start_height * 100 / total_heights.max(1)) as u8;
 
-        // Reusable buffer for collecting output values per transaction
-        let mut tx_values: Vec<Sats> = Vec::with_capacity(16);
+        // Reusable buffer for collecting output values per transaction (sats, is_p2tr)
+        let mut tx_outputs: Vec<(Sats, bool)> = Vec::with_capacity(16);
 
         for height in start_height..total_heights {
             // Get transaction range for this block
@@ -1606,7 +1608,7 @@ impl Vecs {
                 .get_at(height + 1)
                 .unwrap_or(TxIndex::from(total_txs));
 
-            // Build phase histogram with uniqueVal filtering
+            // Build phase histogram with uniqueVal + noP2TR filtering
             let mut histogram = OracleBinsV2::ZERO;
 
             // Skip coinbase (first tx in block)
@@ -1616,17 +1618,25 @@ impl Vecs {
                 let output_count: StoredU64 =
                     txindex_to_output_count_iter.get_unwrap(TxIndex::from(txindex));
 
-                // Collect all output values for this transaction
-                tx_values.clear();
+                // Collect all output values and types for this transaction
+                tx_outputs.clear();
                 for i in 0..*output_count as usize {
                     let txoutindex = first_txoutindex.to_usize() + i;
                     let sats: Sats = txoutindex_to_value_iter.get_at_unwrap(txoutindex);
-                    tx_values.push(sats);
+                    let outputtype: OutputType =
+                        txoutindex_to_outputtype_iter.get_at_unwrap(txoutindex);
+                    let is_p2tr = outputtype == OutputType::P2TR;
+                    tx_outputs.push((sats, is_p2tr));
                 }
 
                 // Count occurrences of each value to determine uniqueness
                 // For small output counts, simple nested loop is faster than HashMap
-                for (i, &sats) in tx_values.iter().enumerate() {
+                for (i, &(sats, is_p2tr)) in tx_outputs.iter().enumerate() {
+                    // Skip P2TR outputs (inscription spam)
+                    if is_p2tr {
+                        continue;
+                    }
+
                     // Skip if below minimum (BASE filter: >= 1000 sats)
                     if sats < Sats::_1K {
                         continue;
@@ -1634,7 +1644,7 @@ impl Vecs {
 
                     // Check if this value is unique within the transaction
                     let mut is_unique = true;
-                    for (j, &other_sats) in tx_values.iter().enumerate() {
+                    for (j, &(other_sats, _)) in tx_outputs.iter().enumerate() {
                         if i != j && sats == other_sats {
                             is_unique = false;
                             break;

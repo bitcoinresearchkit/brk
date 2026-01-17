@@ -10,18 +10,18 @@ use crate::paths::fix_user_path;
 /// - `"/path/to/website"`: serve custom website from path
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(untagged)]
-pub enum Website {
+pub enum WebsiteArg {
     Enabled(bool),
     Path(PathBuf),
 }
 
-impl Default for Website {
+impl Default for WebsiteArg {
     fn default() -> Self {
         Self::Enabled(true)
     }
 }
 
-impl FromStr for Website {
+impl FromStr for WebsiteArg {
     type Err = std::convert::Infallible;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {

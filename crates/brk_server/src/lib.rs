@@ -9,7 +9,7 @@ use std::{
 
 use aide::axum::ApiRouter;
 use axum::{
-    Extension,
+    Extension, ServiceExt,
     body::Body,
     http::{Request, Response, StatusCode, Uri},
     middleware::Next,
@@ -26,24 +26,11 @@ use tower_http::{
     compression::CompressionLayer, cors::CorsLayer, normalize_path::NormalizePathLayer,
     timeout::TimeoutLayer, trace::TraceLayer,
 };
+use tower_layer::Layer;
 use tracing::{error, info};
 
 /// Embedded website assets
 pub static EMBEDDED_WEBSITE: Dir = include_dir!("$CARGO_MANIFEST_DIR/website");
-
-/// Source for serving the website
-#[derive(Debug, Clone)]
-pub enum WebsiteSource {
-    Disabled,
-    Embedded,
-    Filesystem(PathBuf),
-}
-
-impl WebsiteSource {
-    pub fn is_enabled(&self) -> bool {
-        !matches!(self, Self::Disabled)
-    }
-}
 
 mod api;
 pub mod cache;
@@ -57,6 +44,7 @@ pub use cache::{CacheParams, CacheStrategy};
 pub use error::{Error, Result};
 use extended::*;
 use files::FilesRoutes;
+pub use files::Website;
 use state::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -64,7 +52,8 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Server(AppState);
 
 impl Server {
-    pub fn new(query: &AsyncQuery, data_path: PathBuf, website: WebsiteSource) -> Self {
+    pub fn new(query: &AsyncQuery, data_path: PathBuf, website: Website) -> Self {
+        website.log();
         Self(AppState {
             client: query.client().clone(),
             query: query.clone(),
@@ -147,8 +136,7 @@ impl Server {
             .layer(response_uri_layer)
             .layer(trace_layer)
             .layer(TimeoutLayer::with_status_code(StatusCode::GATEWAY_TIMEOUT, Duration::from_secs(5)))
-            .layer(CorsLayer::permissive())
-            .layer(NormalizePathLayer::trim_trailing_slash());
+            .layer(CorsLayer::permissive());
 
         const BASE_PORT: u16 = 3110;
         const MAX_PORT: u16 = BASE_PORT + 100;
@@ -190,12 +178,15 @@ impl Server {
             Err(_) => error!("Client generation panicked"),
         }
 
+        let router = router
+            .layer(Extension(Arc::new(openapi)))
+            .layer(Extension(openapi_trimmed));
+
+        let service = NormalizePathLayer::trim_trailing_slash().layer(router);
+
         serve(
             listener,
-            router
-                .layer(Extension(Arc::new(openapi)))
-                .layer(Extension(openapi_trimmed))
-                .into_make_service(),
+            ServiceExt::<Request<Body>>::into_make_service(service),
         )
         .await?;
 

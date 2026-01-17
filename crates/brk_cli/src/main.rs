@@ -14,7 +14,7 @@ use brk_iterator::Blocks;
 use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
-use brk_server::{Server, WebsiteSource};
+use brk_server::{Server, Website};
 use tracing::info;
 use vecdb::Exit;
 
@@ -22,7 +22,7 @@ mod config;
 mod paths;
 mod website;
 
-use crate::{config::Config, paths::*, website::Website};
+use crate::{config::Config, paths::*, website::WebsiteArg};
 
 pub fn main() -> color_eyre::Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread
@@ -66,23 +66,14 @@ pub fn run() -> color_eyre::Result<()> {
 
     let data_path = config.brkdir();
 
-    let website_source = match config.website() {
-        Website::Enabled(false) => {
-            info!("Website: disabled");
-            WebsiteSource::Disabled
-        }
-        Website::Path(p) => {
-            info!("Website: filesystem ({})", p.display());
-            WebsiteSource::Filesystem(p)
-        }
-        Website::Enabled(true) => {
-            info!("Website: embedded");
-            WebsiteSource::Embedded
-        }
+    let website = match config.website() {
+        WebsiteArg::Enabled(false) => Website::Disabled,
+        WebsiteArg::Enabled(true) => Website::Default,
+        WebsiteArg::Path(p) => Website::Filesystem(p),
     };
 
     let future = async move {
-        let server = Server::new(&query, data_path, website_source);
+        let server = Server::new(&query, data_path, website);
 
         tokio::spawn(async move {
             server.serve().await.unwrap();

@@ -13,7 +13,7 @@ use quick_cache::sync::Cache;
 use serde::Serialize;
 
 use crate::{
-    CacheParams, CacheStrategy, WebsiteSource,
+    CacheParams, CacheStrategy, Website,
     extended::{ResponseExtended, ResultExtended},
 };
 
@@ -22,7 +22,7 @@ pub struct AppState {
     #[deref]
     pub query: AsyncQuery,
     pub data_path: PathBuf,
-    pub website: WebsiteSource,
+    pub website: Website,
     pub cache: Arc<Cache<String, Bytes>>,
     pub client: Client,
     pub started_at: Timestamp,

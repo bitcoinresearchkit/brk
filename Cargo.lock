@@ -682,6 +682,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tower-http",
+ "tower-layer",
  "tracing",
  "vecdb",
 ]
@@ -1822,9 +1823,8 @@ dependencies = [
 [[package]]
 name = "importmap"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f650142f4c83e122ae10a49dbaa88593dc4b20158124409856adbae847775938"
 dependencies = [
+ "include_dir",
  "rapidhash",
  "serde",
  "serde_json",

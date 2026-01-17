@@ -5,6 +5,8 @@ use serde::Deserialize;
 use serde_json::Value;
 use vecdb::AnySerializableVec;
 
+use super::Timestamp;
+
 /// Metric data with range information.
 ///
 /// All metric data endpoints return this structure when format is JSON.
@@ -19,12 +21,14 @@ pub struct MetricData<T = Value> {
     pub start: usize,
     /// End index (exclusive) of the returned range
     pub end: usize,
+    /// ISO 8601 timestamp of when the response was generated
+    pub stamp: String,
     /// The metric data
     pub data: Vec<T>,
 }
 
 impl MetricData {
-    /// Write metric data as JSON to buffer: `{"version":N,"total":N,"start":N,"end":N,"data":[...]}`
+    /// Write metric data as JSON to buffer: `{"version":N,"total":N,"start":N,"end":N,"stamp":"...","data":[...]}`
     pub fn serialize(
         vec: &dyn AnySerializableVec,
         start: usize,
@@ -35,10 +39,11 @@ impl MetricData {
         let total = vec.len();
         let end = end.min(total);
         let start = start.min(end);
+        let stamp = Timestamp::now().to_iso8601();
 
         write!(
             buf,
-            r#"{{"version":{version},"total":{total},"start":{start},"end":{end},"data":"#,
+            r#"{{"version":{version},"total":{total},"start":{start},"end":{end},"stamp":"{stamp}","data":"#,
         )?;
         vec.write_json(Some(start), Some(end), buf)?;
         buf.push(b'}');

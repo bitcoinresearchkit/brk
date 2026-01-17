@@ -67,6 +67,7 @@ impl Default for PhaseHistogramV2 {
     }
 }
 
+#[allow(unused)]
 impl PhaseHistogramV2 {
     pub fn new() -> Self {
         Self {
@@ -153,9 +154,7 @@ pub fn find_best_phase(
             (min_bin..=max_bin).collect()
         } else {
             // Wraps around
-            (min_bin..PHASE_BINS_V2)
-                .chain(0..=max_bin)
-                .collect()
+            (min_bin..PHASE_BINS_V2).chain(0..=max_bin).collect()
         }
     } else {
         (0..PHASE_BINS_V2).collect()

@@ -8,7 +8,6 @@ import {
 } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.mjs";
 
 const createChart = /** @type {CreateChart} */ (_createChart);
-
 import {
   createChoiceField,
   createLabeledInput,
@@ -502,7 +501,8 @@ export function createChartElement({
                   if (!hasData()) {
                     setData(data);
                     hasData.set(true);
-                    lastTime = /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
+                    lastTime =
+                      /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
 
                     if (fitContent) {
                       ichart.timeScale().fitContent();

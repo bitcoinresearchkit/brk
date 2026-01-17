@@ -72,9 +72,9 @@ impl Vecs {
                 &phase_v2_peak_daily_cents,
             );
 
-        // Phase Oracle V3 (BASE + uniqueVal filter)
-        // v4: Peak prices use 100 bins (downsampled from 200)
-        let phase_v3_version = version + Version::new(4);
+        // Phase Oracle V3 (BASE + noP2TR + uniqueVal filter)
+        // v5: Added noP2TR filter to reduce inscription spam
+        let phase_v3_version = version + Version::new(5);
         let phase_v3_histogram =
             BytesVec::forced_import(db, "phase_v3_histogram", phase_v3_version)?;
         let phase_v3_price_cents =

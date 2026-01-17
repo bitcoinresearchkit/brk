@@ -13,8 +13,8 @@ HTTP API server for Bitcoin on-chain analytics.
 ## Usage
 
 ```rust,ignore
-let server = Server::new(&async_query, data_path, WebsiteSource::Filesystem(files_path));
-// Or WebsiteSource::Embedded, or WebsiteSource::Disabled
+let server = Server::new(&async_query, data_path, Website::Filesystem(files_path));
+// Or Website::Default, or Website::Disabled
 server.serve().await?;
 ```
 

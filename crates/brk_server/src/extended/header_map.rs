@@ -1,35 +1,17 @@
-use std::{
-    path::Path,
-    time::{self, Duration},
-};
+use std::path::Path;
 
 use axum::http::{
     HeaderMap,
-    header::{self, IF_MODIFIED_SINCE, IF_NONE_MATCH},
+    header::{self, IF_NONE_MATCH},
 };
-use brk_error::Result;
-use jiff::{Timestamp, civil::DateTime, fmt::strtime, tz::TimeZone};
-
-const MODIFIED_SINCE_FORMAT: &str = "%a, %d %b %Y %H:%M:%S GMT";
-
-#[derive(PartialEq, Eq)]
-pub enum ModifiedState {
-    ModifiedSince,
-    NotModifiedSince,
-}
 
 pub trait HeaderMapExtended {
     fn has_etag(&self, etag: &str) -> bool;
-
-    fn get_if_modified_since(&self) -> Option<DateTime>;
-    fn check_if_modified_since(&self, path: &Path) -> Result<(ModifiedState, DateTime)>;
-    fn check_if_modified_since_(&self, duration: Duration) -> Result<(ModifiedState, DateTime)>;
 
     fn insert_cache_control(&mut self, value: &str);
     fn insert_cache_control_must_revalidate(&mut self);
     fn insert_cache_control_immutable(&mut self);
     fn insert_etag(&mut self, etag: &str);
-    fn insert_last_modified(&mut self, date: DateTime);
 
     fn insert_content_disposition_attachment(&mut self);
 
@@ -66,54 +48,8 @@ impl HeaderMapExtended for HeaderMap {
         self.insert(header::CONTENT_DISPOSITION, "attachment".parse().unwrap());
     }
 
-    fn insert_last_modified(&mut self, date: DateTime) {
-        let formatted = date
-            .to_zoned(TimeZone::system())
-            .unwrap()
-            .strftime(MODIFIED_SINCE_FORMAT)
-            .to_string();
-
-        self.insert(header::LAST_MODIFIED, formatted.parse().unwrap());
-    }
-
     fn insert_etag(&mut self, etag: &str) {
         self.insert(header::ETAG, etag.parse().unwrap());
-    }
-
-    fn check_if_modified_since(&self, path: &Path) -> Result<(ModifiedState, DateTime)> {
-        self.check_if_modified_since_(
-            path.metadata()?
-                .modified()?
-                .duration_since(time::UNIX_EPOCH)?,
-        )
-    }
-
-    fn check_if_modified_since_(&self, duration: Duration) -> Result<(ModifiedState, DateTime)> {
-        let date = Timestamp::new(duration.as_secs() as i64, 0)
-            .unwrap()
-            .to_zoned(TimeZone::UTC)
-            .datetime();
-
-        if let Some(if_modified_since) = self.get_if_modified_since()
-            && if_modified_since == date
-        {
-            return Ok((ModifiedState::NotModifiedSince, date));
-        }
-
-        Ok((ModifiedState::ModifiedSince, date))
-    }
-
-    fn get_if_modified_since(&self) -> Option<DateTime> {
-        if let Some(modified_since) = self.get(IF_MODIFIED_SINCE)
-            && let Ok(modified_since) = modified_since.to_str()
-        {
-            return strtime::parse(MODIFIED_SINCE_FORMAT, modified_since)
-                .unwrap()
-                .to_datetime()
-                .ok();
-        }
-
-        None
     }
 
     fn has_etag(&self, etag: &str) -> bool {
