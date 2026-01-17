@@ -66,7 +66,7 @@ color-eyre = "0.6.5"
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
 fjall = "3.0.1"
 jiff = { version = "0.2.18", features = ["perf-inline", "tz-system"], default-features = false }
-minreq = { version = "2.14.1", features = ["https", "serde_json"] }
+minreq = { version = "2.14.1", features = ["https", "json-using-serde"] }
 parking_lot = "0.12.5"
 rayon = "1.11.0"
 rustc-hash = "2.1.1"

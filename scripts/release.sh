@@ -121,6 +121,10 @@ echo "=== Rust release ==="
 echo ""
 
 cd "$ROOT_DIR"
+
+# Verify all
+cargo publish --workspace --dry-run --allow-dirty
+
 # Version bump, commit, and tag (but don't publish yet)
 cargo release "$RELEASE_ARG" --execute --no-publish
 
