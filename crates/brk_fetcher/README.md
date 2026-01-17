@@ -17,7 +17,7 @@ Fetch OHLC (Open/High/Low/Close) price data from Binance, Kraken, or BRK's own A
 ## Core API
 
 ```rust,ignore
-let mut fetcher = Fetcher::import(true, Some(&hars_path))?;
+let mut fetcher = Fetcher::import(Some(&hars_path))?;
 
 // Daily price
 let ohlc = fetcher.get_date(Date::new(2024, 4, 20))?;

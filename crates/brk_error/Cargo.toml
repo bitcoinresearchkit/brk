@@ -7,13 +7,23 @@ license.workspace = true
 homepage.workspace = true
 repository.workspace = true
 
+[features]
+bitcoin = ["dep:bitcoin"]
+bitcoincore-rpc = ["dep:bitcoincore-rpc"]
+fjall = ["dep:fjall"]
+jiff = ["dep:jiff"]
+minreq = ["dep:minreq"]
+serde_json = ["dep:serde_json"]
+tokio = ["dep:tokio"]
+vecdb = ["dep:vecdb"]
+
 [dependencies]
-bitcoin = { workspace = true }
-bitcoincore-rpc = { workspace = true }
-fjall = { workspace = true }
-jiff = { workspace = true }
-minreq = { workspace = true }
-serde_json = { workspace = true }
+bitcoin = { workspace = true, optional = true }
+bitcoincore-rpc = { workspace = true, optional = true }
+fjall = { workspace = true, optional = true }
+jiff = { workspace = true, optional = true }
+minreq = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
 thiserror = "2.0"
-tokio = { workspace = true }
-vecdb = { workspace = true }
+tokio = { workspace = true, optional = true }
+vecdb = { workspace = true, optional = true }

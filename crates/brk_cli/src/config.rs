@@ -6,78 +6,53 @@ use std::{
 use brk_error::{Error, Result};
 use brk_fetcher::Fetcher;
 use brk_rpc::{Auth, Client};
-use clap::Parser;
+use brk_types::Port;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{default_brk_path, dot_brk_path, fix_user_path, website::WebsiteArg};
 
-#[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-#[command(version, about)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct Config {
-    /// Bitcoin main directory path, defaults: ~/.bitcoin, ~/Library/Application\ Support/Bitcoin, saved
     #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(long, value_name = "PATH")]
-    bitcoindir: Option<String>,
-
-    /// Bitcoin blocks directory path, default: --bitcoindir/blocks, saved
-    #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(long, value_name = "PATH")]
-    blocksdir: Option<String>,
-
-    /// Bitcoin Research Kit outputs directory path, default: ~/.brk, saved
-    #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(long, value_name = "PATH")]
     brkdir: Option<String>,
 
-    /// Activate fetching prices from BRK's API and the computation of all price related datasets, default: true, saved
     #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(short = 'F', long, value_name = "BOOL")]
-    fetch: Option<bool>,
+    brkport: Option<Port>,
 
-    /// Activate fetching prices from exchanges APIs if `fetch` is also set to `true`, default: true, saved
     #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(long, value_name = "BOOL")]
-    exchanges: Option<bool>,
-
-    /// Website served by the server: true (default), false, or PATH, saved
-    #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(short, long, value_name = "BOOL|PATH")]
     website: Option<WebsiteArg>,
 
-    /// Bitcoin RPC ip, default: localhost, saved
     #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(long, value_name = "IP")]
+    fetch: Option<bool>,
+
+    #[serde(default, deserialize_with = "default_on_error")]
+    bitcoindir: Option<String>,
+
+    #[serde(default, deserialize_with = "default_on_error")]
+    blocksdir: Option<String>,
+
+    #[serde(default, deserialize_with = "default_on_error")]
     rpcconnect: Option<String>,
 
-    /// Bitcoin RPC port, default: 8332, saved
     #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(long, value_name = "PORT")]
     rpcport: Option<u16>,
 
-    /// Bitcoin RPC cookie file, default: --bitcoindir/.cookie, saved
     #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(long, value_name = "PATH")]
     rpccookiefile: Option<String>,
 
-    /// Bitcoin RPC username, saved
     #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(long, value_name = "USERNAME")]
     rpcuser: Option<String>,
 
-    /// Bitcoin RPC password, saved
     #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(long, value_name = "PASSWORD")]
     rpcpassword: Option<String>,
 
-    /// DEV: Activate checking address hashes for collisions when indexing, default: false, saved
     #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(skip)]
     check_collisions: Option<bool>,
 }
 
 impl Config {
     pub fn import() -> Result<Self> {
-        let config_args = Some(Config::parse());
+        let config_args = Self::parse_args();
 
         let path = dot_brk_path();
 
@@ -85,70 +60,117 @@ impl Config {
 
         let path = path.join("config.toml");
 
-        let mut config_saved = Self::read(&path);
+        let mut config = Self::read(&path);
 
-        if let Some(mut config_args) = config_args {
-            if let Some(bitcoindir) = config_args.bitcoindir.take() {
-                config_saved.bitcoindir = Some(bitcoindir);
-            }
-
-            if let Some(blocksdir) = config_args.blocksdir.take() {
-                config_saved.blocksdir = Some(blocksdir);
-            }
-
-            if let Some(brkdir) = config_args.brkdir.take() {
-                config_saved.brkdir = Some(brkdir);
-            }
-
-            if let Some(fetch) = config_args.fetch.take() {
-                config_saved.fetch = Some(fetch);
-            }
-
-            if let Some(exchanges) = config_args.exchanges.take() {
-                config_saved.exchanges = Some(exchanges);
-            }
-
-            if let Some(website) = config_args.website.take() {
-                config_saved.website = Some(website);
-            }
-
-            if let Some(rpcconnect) = config_args.rpcconnect.take() {
-                config_saved.rpcconnect = Some(rpcconnect);
-            }
-
-            if let Some(rpcport) = config_args.rpcport.take() {
-                config_saved.rpcport = Some(rpcport);
-            }
-
-            if let Some(rpccookiefile) = config_args.rpccookiefile.take() {
-                config_saved.rpccookiefile = Some(rpccookiefile);
-            }
-
-            if let Some(rpcuser) = config_args.rpcuser.take() {
-                config_saved.rpcuser = Some(rpcuser);
-            }
-
-            if let Some(rpcpassword) = config_args.rpcpassword.take() {
-                config_saved.rpcpassword = Some(rpcpassword);
-            }
-
-            if let Some(check_collisions) = config_args.check_collisions.take() {
-                config_saved.check_collisions = Some(check_collisions);
-            }
-
-            if config_args != Config::default() {
-                dbg!(config_args);
-                panic!("Didn't consume the full config")
-            }
+        if let Some(v) = config_args.brkdir {
+            config.brkdir = Some(v);
         }
-
-        let config = config_saved;
+        if let Some(v) = config_args.brkport {
+            config.brkport = Some(v);
+        }
+        if let Some(v) = config_args.website {
+            config.website = Some(v);
+        }
+        if let Some(v) = config_args.fetch {
+            config.fetch = Some(v);
+        }
+        if let Some(v) = config_args.bitcoindir {
+            config.bitcoindir = Some(v);
+        }
+        if let Some(v) = config_args.blocksdir {
+            config.blocksdir = Some(v);
+        }
+        if let Some(v) = config_args.rpcconnect {
+            config.rpcconnect = Some(v);
+        }
+        if let Some(v) = config_args.rpcport {
+            config.rpcport = Some(v);
+        }
+        if let Some(v) = config_args.rpccookiefile {
+            config.rpccookiefile = Some(v);
+        }
+        if let Some(v) = config_args.rpcuser {
+            config.rpcuser = Some(v);
+        }
+        if let Some(v) = config_args.rpcpassword {
+            config.rpcpassword = Some(v);
+        }
+        if let Some(v) = config_args.check_collisions {
+            config.check_collisions = Some(v);
+        }
 
         config.check();
 
         config.write(&path)?;
 
         Ok(config)
+    }
+
+    fn parse_args() -> Self {
+        use lexopt::prelude::*;
+
+        let mut config = Self::default();
+        let mut parser = lexopt::Parser::from_env();
+
+        while let Some(arg) = parser.next().unwrap() {
+            match arg {
+                Short('h') | Long("help") => {
+                    Self::print_help();
+                    std::process::exit(0);
+                }
+                Short('V') | Long("version") => {
+                    println!("brk {}", env!("CARGO_PKG_VERSION"));
+                    std::process::exit(0);
+                }
+                Long("brkdir") => config.brkdir = Some(parser.value().unwrap().parse().unwrap()),
+                Long("brkport") => config.brkport = Some(parser.value().unwrap().parse().unwrap()),
+                Long("website") => config.website = Some(parser.value().unwrap().parse().unwrap()),
+                Long("fetch") => config.fetch = Some(parser.value().unwrap().parse().unwrap()),
+                Long("bitcoindir") => config.bitcoindir = Some(parser.value().unwrap().parse().unwrap()),
+                Long("blocksdir") => config.blocksdir = Some(parser.value().unwrap().parse().unwrap()),
+                Long("rpcconnect") => config.rpcconnect = Some(parser.value().unwrap().parse().unwrap()),
+                Long("rpcport") => config.rpcport = Some(parser.value().unwrap().parse().unwrap()),
+                Long("rpccookiefile") => config.rpccookiefile = Some(parser.value().unwrap().parse().unwrap()),
+                Long("rpcuser") => config.rpcuser = Some(parser.value().unwrap().parse().unwrap()),
+                Long("rpcpassword") => config.rpcpassword = Some(parser.value().unwrap().parse().unwrap()),
+                Long("check-collisions") => config.check_collisions = Some(parser.value().unwrap().parse().unwrap()),
+                _ => {
+                    eprintln!("{}", arg.unexpected());
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        config
+    }
+
+    fn print_help() {
+        println!(
+            "brk {}
+Bitcoin Research Kit
+
+USAGE:
+    brk [OPTIONS]
+
+OPTIONS:
+    -h, --help                   Print help
+    -V, --version                Print version
+
+    --brkdir <PATH>              Output directory [~/.brk]
+    --brkport <PORT>             Server port [3110]
+    --website <BOOL|PATH>        Website: true, false, or path [true]
+    --fetch <BOOL>               Fetch prices [true]
+
+    --bitcoindir <PATH>          Bitcoin directory [~/.bitcoin, ~/Library/Application Support/Bitcoin]
+    --blocksdir <PATH>           Blocks directory [<bitcoindir>/blocks]
+
+    --rpcconnect <IP>            RPC host [localhost]
+    --rpcport <PORT>             RPC port [8332]
+    --rpccookiefile <PATH>       RPC cookie file [<bitcoindir>/.cookie]
+    --rpcuser <USERNAME>         RPC username
+    --rpcpassword <PASSWORD>     RPC password",
+            env!("CARGO_PKG_VERSION")
+        );
     }
 
     fn check(&self) {
@@ -262,17 +284,17 @@ Finally, you can run the program with '-h' for help."
         self.website.clone().unwrap_or_default()
     }
 
+    pub fn brkport(&self) -> Option<Port> {
+        self.brkport
+    }
+
     pub fn fetch(&self) -> bool {
         self.fetch.is_none_or(|b| b)
     }
 
-    pub fn exchanges(&self) -> bool {
-        self.exchanges.is_none_or(|b| b)
-    }
-
     pub fn fetcher(&self) -> Option<Fetcher> {
         self.fetch()
-            .then(|| Fetcher::import(self.exchanges(), Some(self.harsdir().as_path())).unwrap())
+            .then(|| Fetcher::import(Some(self.harsdir().as_path())).unwrap())
     }
 
     pub fn check_collisions(&self) -> bool {

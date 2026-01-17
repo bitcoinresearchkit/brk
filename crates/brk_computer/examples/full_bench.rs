@@ -60,7 +60,7 @@ fn run() -> Result<()> {
 
     let blocks = Blocks::new(&client, &reader);
 
-    let fetcher = Fetcher::import(true, None)?;
+    let fetcher = Fetcher::import(None)?;
 
     info!("Ping: {:?}", fetcher.brk.ping()?);
 

@@ -1,4 +1,3 @@
-use num_enum::{FromPrimitive, IntoPrimitive};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum::Display;
@@ -19,8 +18,6 @@ use vecdb::{Bytes, Formattable};
     Serialize,
     Deserialize,
     JsonSchema,
-    FromPrimitive,
-    IntoPrimitive,
 )]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
@@ -410,5 +407,20 @@ impl Bytes for PoolSlug {
         // All values 0-255 are valid (includes dummy variants)
         let s: Self = unsafe { std::mem::transmute(bytes[0]) };
         Ok(s)
+    }
+}
+
+impl From<u8> for PoolSlug {
+    #[inline]
+    fn from(val: u8) -> Self {
+        // SAFETY: PoolSlug is repr(u8) and all 256 values are valid (includes dummy variants)
+        unsafe { std::mem::transmute(val) }
+    }
+}
+
+impl From<PoolSlug> for u8 {
+    #[inline]
+    fn from(val: PoolSlug) -> u8 {
+        val as u8
     }
 }

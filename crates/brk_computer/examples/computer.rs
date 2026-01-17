@@ -48,7 +48,7 @@ fn run() -> Result<()> {
 
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
-    let fetcher = Fetcher::import(true, None)?;
+    let fetcher = Fetcher::import(None)?;
 
     let exit = Exit::new();
     exit.set_ctrlc_handler();

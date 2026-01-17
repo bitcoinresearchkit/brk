@@ -40,6 +40,7 @@ mod files;
 mod state;
 
 use api::*;
+pub use brk_types::Port;
 pub use cache::{CacheParams, CacheStrategy};
 pub use error::{Error, Result};
 use extended::*;
@@ -65,12 +66,11 @@ impl Server {
         })
     }
 
-    pub async fn serve(self) -> brk_error::Result<()> {
+    pub async fn serve(self, port: Option<Port>) -> brk_error::Result<()> {
         let state = self.0;
 
         let compression_layer = CompressionLayer::new()
             .br(true)
-            .deflate(true)
             .gzip(true)
             .zstd(true);
 
@@ -138,15 +138,23 @@ impl Server {
             .layer(TimeoutLayer::with_status_code(StatusCode::GATEWAY_TIMEOUT, Duration::from_secs(5)))
             .layer(CorsLayer::permissive());
 
-        const BASE_PORT: u16 = 3110;
-        const MAX_PORT: u16 = BASE_PORT + 100;
-
-        let mut port = BASE_PORT;
-        let listener = loop {
-            match TcpListener::bind(format!("0.0.0.0:{port}")).await {
-                Ok(l) => break l,
-                Err(_) if port < MAX_PORT => port += 1,
-                Err(e) => return Err(e.into()),
+        let (listener, port) = match port {
+            Some(port) => {
+                let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
+                (listener, *port)
+            }
+            None => {
+                let base_port: u16 = *Port::DEFAULT;
+                let max_port: u16 = base_port + 100;
+                let mut port = base_port;
+                let listener = loop {
+                    match TcpListener::bind(format!("0.0.0.0:{port}")).await {
+                        Ok(l) => break l,
+                        Err(_) if port < max_port => port += 1,
+                        Err(e) => return Err(e.into()),
+                    }
+                };
+                (listener, port)
             }
         };
 

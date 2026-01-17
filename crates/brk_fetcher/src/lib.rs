@@ -37,20 +37,20 @@ pub fn check_response(response: minreq::Response, url: &str) -> Result<Vec<u8>> 
 
 #[derive(Clone)]
 pub struct Fetcher {
-    pub binance: Option<TrackedSource<Binance>>,
-    pub kraken: Option<TrackedSource<Kraken>>,
+    pub binance: TrackedSource<Binance>,
+    pub kraken: TrackedSource<Kraken>,
     pub brk: TrackedSource<BRK>,
 }
 
 impl Fetcher {
-    pub fn import(exchanges: bool, hars_path: Option<&Path>) -> Result<Self> {
-        Self::new(exchanges, hars_path)
+    pub fn import(hars_path: Option<&Path>) -> Result<Self> {
+        Self::new(hars_path)
     }
 
-    pub fn new(exchanges: bool, hars_path: Option<&Path>) -> Result<Self> {
+    pub fn new(hars_path: Option<&Path>) -> Result<Self> {
         Ok(Self {
-            binance: exchanges.then(|| TrackedSource::new(Binance::init(hars_path))),
-            kraken: exchanges.then(|| TrackedSource::new(Kraken::default())),
+            binance: TrackedSource::new(Binance::init(hars_path)),
+            kraken: TrackedSource::new(Kraken::default()),
             brk: TrackedSource::new(BRK::default()),
         })
     }
@@ -60,12 +60,8 @@ impl Fetcher {
     where
         F: FnMut(&mut dyn PriceSource),
     {
-        if let Some(binance) = &mut self.binance {
-            f(binance);
-        }
-        if let Some(kraken) = &mut self.kraken {
-            f(kraken);
-        }
+        f(&mut self.binance);
+        f(&mut self.kraken);
         f(&mut self.brk);
     }
 
@@ -74,14 +70,10 @@ impl Fetcher {
     where
         F: FnMut(&mut dyn PriceSource) -> Option<Result<OHLCCents>>,
     {
-        if let Some(binance) = &mut self.binance
-            && let Some(Ok(ohlc)) = fetch(binance)
-        {
+        if let Some(Ok(ohlc)) = fetch(&mut self.binance) {
             return Some(Ok(ohlc));
         }
-        if let Some(kraken) = &mut self.kraken
-            && let Some(Ok(ohlc)) = fetch(kraken)
-        {
+        if let Some(Ok(ohlc)) = fetch(&mut self.kraken) {
             return Some(Ok(ohlc));
         }
         if let Some(Ok(ohlc)) = fetch(&mut self.brk) {
@@ -168,30 +160,20 @@ How to fix this:
 
     /// Clear caches and reset health state for all sources
     pub fn clear(&mut self) {
-        if let Some(binance) = &mut self.binance {
-            binance.clear();
-            binance.reset_health();
-        }
-        if let Some(kraken) = &mut self.kraken {
-            kraken.clear();
-            kraken.reset_health();
-        }
+        self.binance.clear();
+        self.binance.reset_health();
+        self.kraken.clear();
+        self.kraken.reset_health();
         self.brk.clear();
         self.brk.reset_health();
     }
 
     /// Ping all sources and return results for each
     pub fn ping(&self) -> Vec<(&'static str, Result<()>)> {
-        let mut results = Vec::new();
-
-        if let Some(binance) = &self.binance {
-            results.push((binance.name(), binance.ping()));
-        }
-        if let Some(kraken) = &self.kraken {
-            results.push((kraken.name(), kraken.ping()));
-        }
-        results.push((self.brk.name(), self.brk.ping()));
-
-        results
+        vec![
+            (self.binance.name(), self.binance.ping()),
+            (self.kraken.name(), self.kraken.ping()),
+            (self.brk.name(), self.brk.ping()),
+        ]
     }
 }

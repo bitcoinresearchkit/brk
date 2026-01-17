@@ -34,7 +34,7 @@ fn run() -> Result<()> {
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
     let indexer = Indexer::forced_import(&outputs_dir)?;
-    let fetcher = Some(Fetcher::import(true, None)?);
+    let fetcher = Some(Fetcher::import(None)?);
     let computer = Computer::forced_import(&outputs_dir, &indexer, fetcher)?;
 
     let mempool = Mempool::new(&client);

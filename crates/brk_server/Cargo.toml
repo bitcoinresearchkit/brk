@@ -13,7 +13,7 @@ aide = { workspace = true }
 axum = { workspace = true }
 brk_bindgen = { workspace = true }
 brk_computer = { workspace = true }
-brk_error = { workspace = true }
+brk_error = { workspace = true, features = ["jiff", "serde_json", "tokio", "vecdb"] }
 brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
@@ -34,7 +34,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
-tower-http = { version = "0.6.8", features = ["catch-panic", "compression-full", "cors", "normalize-path", "timeout", "trace"] }
+tower-http = { version = "0.6.8", features = ["catch-panic", "compression-br", "compression-gzip", "compression-zstd", "cors", "normalize-path", "timeout", "trace"] }
 tower-layer = "0.3"
 
 [dev-dependencies]

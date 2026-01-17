@@ -35,39 +35,21 @@ brk
 
 Indexes the blockchain, computes datasets, starts the server on `localhost:3110`, and waits for new blocks.
 
-## Help
-
-```
-brk -h       Show all options
-brk -V       Show version
-```
-
 ## Options
 
+```bash
+brk -h       # Show all options
+brk -V       # Show version
+```
+
 Options are saved to `~/.brk/config.toml` after first use.
-
-```
---bitcoindir <PATH>       Bitcoin data directory
---blocksdir <PATH>        Blocks directory (default: bitcoindir/blocks)
---brkdir <PATH>           Output directory (default: ~/.brk)
-
---rpcconnect <IP>         RPC host (default: localhost)
---rpcport <PORT>          RPC port (default: 8332)
---rpccookiefile <PATH>    RPC cookie file (default: bitcoindir/.cookie)
---rpcuser <USERNAME>      RPC username
---rpcpassword <PASSWORD>  RPC password
-
--F, --fetch <BOOL>        Fetch price data (default: true)
---exchanges <BOOL>        Fetch from exchange APIs (default: true)
--w, --website <BOOL|PATH> Serve web interface (default: true)
-```
 
 ## Files
 
 ```
 ~/.brk/
 ├── config.toml   Configuration
-└── log/          Logs
+└── log           Logs
 
 <brkdir>/         Indexed data (default: ~/.brk)
 ```

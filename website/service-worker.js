@@ -2,17 +2,6 @@ const CACHE = "v1";
 const ROOT = "/";
 const API = "/api";
 
-const BYPASS = new Set([
-  "/changelog",
-  "/crate",
-  "/discord",
-  "/github",
-  "/install",
-  "/nostr",
-  "/service",
-  "/status",
-]);
-
 // Match hashed filenames: name.abc12345.js/mjs/css
 const HASHED_RE = /\.[0-9a-f]{8}\.(js|mjs|css)$/;
 
@@ -59,7 +48,7 @@ sw.addEventListener("fetch", (event) => {
   const path = url.pathname;
 
   // Bypass API and redirects
-  if (path.startsWith(API) || BYPASS.has(path)) return;
+  if (path.startsWith(API)) return;
 
   // Navigation: network-first for shell
   if (req.mode === "navigate") {

@@ -24,7 +24,7 @@ mod website;
 
 use crate::{config::Config, paths::*, website::WebsiteArg};
 
-pub fn main() -> color_eyre::Result<()> {
+pub fn main() -> anyhow::Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread
     thread::Builder::new()
         .stack_size(512 * 1024 * 1024)
@@ -33,9 +33,7 @@ pub fn main() -> color_eyre::Result<()> {
         .unwrap()
 }
 
-pub fn run() -> color_eyre::Result<()> {
-    color_eyre::install()?;
-
+pub fn run() -> anyhow::Result<()> {
     fs::create_dir_all(dot_brk_path())?;
 
     brk_logger::init(Some(&dot_brk_log_path()))?;
@@ -72,11 +70,13 @@ pub fn run() -> color_eyre::Result<()> {
         WebsiteArg::Path(p) => Website::Filesystem(p),
     };
 
+    let port = config.brkport();
+
     let future = async move {
         let server = Server::new(&query, data_path, website);
 
         tokio::spawn(async move {
-            server.serve().await.unwrap();
+            server.serve(port).await.unwrap();
         });
 
         Ok(()) as Result<()>

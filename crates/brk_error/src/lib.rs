@@ -11,45 +11,58 @@ pub enum Error {
     #[error(transparent)]
     IO(#[from] io::Error),
 
+    #[cfg(feature = "bitcoincore-rpc")]
     #[error(transparent)]
     BitcoinRPC(#[from] bitcoincore_rpc::Error),
 
+    #[cfg(feature = "jiff")]
     #[error(transparent)]
     Jiff(#[from] jiff::Error),
 
+    #[cfg(feature = "fjall")]
     #[error(transparent)]
     Fjall(#[from] fjall::Error),
 
+    #[cfg(feature = "vecdb")]
     #[error(transparent)]
     VecDB(#[from] vecdb::Error),
 
+    #[cfg(feature = "vecdb")]
     #[error(transparent)]
     RawDB(#[from] vecdb::RawDBError),
 
+    #[cfg(feature = "minreq")]
     #[error(transparent)]
     Minreq(#[from] minreq::Error),
 
     #[error(transparent)]
     SystemTimeError(#[from] time::SystemTimeError),
 
+    #[cfg(feature = "bitcoin")]
     #[error(transparent)]
     BitcoinConsensusEncode(#[from] bitcoin::consensus::encode::Error),
 
+    #[cfg(feature = "bitcoin")]
     #[error(transparent)]
     BitcoinBip34Error(#[from] bitcoin::block::Bip34Error),
 
+    #[cfg(feature = "bitcoin")]
     #[error(transparent)]
     BitcoinHexError(#[from] bitcoin::consensus::encode::FromHexError),
 
+    #[cfg(feature = "bitcoin")]
     #[error(transparent)]
     BitcoinFromScriptError(#[from] bitcoin::address::FromScriptError),
 
+    #[cfg(feature = "bitcoin")]
     #[error(transparent)]
     BitcoinHexToArrayError(#[from] bitcoin::hex::HexToArrayError),
 
+    #[cfg(feature = "serde_json")]
     #[error(transparent)]
     SerdeJSON(#[from] serde_json::Error),
 
+    #[cfg(feature = "tokio")]
     #[error(transparent)]
     TokioJoin(#[from] tokio::task::JoinError),
 
@@ -139,12 +152,14 @@ pub enum Error {
 impl Error {
     /// Returns true if this error is due to a file lock (another process has the database open).
     /// Lock errors are transient and should not trigger data deletion.
+    #[cfg(feature = "vecdb")]
     pub fn is_lock_error(&self) -> bool {
         matches!(self, Error::VecDB(e) if e.is_lock_error())
     }
 
     /// Returns true if this error indicates data corruption or version incompatibility.
     /// These errors may require resetting/deleting the data to recover.
+    #[cfg(feature = "vecdb")]
     pub fn is_data_error(&self) -> bool {
         matches!(self, Error::VecDB(e) if e.is_data_error())
     }
@@ -154,6 +169,7 @@ impl Error {
     /// Returns false for transient errors worth retrying (timeouts, rate limits, server errors).
     pub fn is_network_permanently_blocked(&self) -> bool {
         match self {
+            #[cfg(feature = "minreq")]
             Error::Minreq(e) => is_minreq_error_permanent(e),
             Error::IO(e) => is_io_error_permanent(e),
             // 403 Forbidden suggests IP/geo blocking; 429 and 5xx are transient
@@ -164,6 +180,7 @@ impl Error {
     }
 }
 
+#[cfg(feature = "minreq")]
 fn is_minreq_error_permanent(e: &minreq::Error) -> bool {
     use minreq::Error::*;
     match e {

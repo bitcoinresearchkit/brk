@@ -18,6 +18,7 @@ uv add brk-client
 from brk_client import BrkClient
 
 # Use the free public API or your own instance
+# Has optional `, timeout=60.0` argument
 client = BrkClient("https://bitview.space")
 
 # Blockchain data (mempool.space compatible)
@@ -33,19 +34,4 @@ prices = client.metrics.price.usd.split.close \
 
 # Generic metric fetching
 data = client.get_metric("price_close", "dateindex", -30)
-```
-
-## API
-
-```python
-# Range methods
-.head(n)   # First n items
-.tail(n)   # Last n items
-.fetch()   # Execute the request
-```
-
-## Configuration
-
-```python
-client = BrkClient("https://bitview.space", timeout=60.0)
 ```

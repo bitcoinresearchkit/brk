@@ -37,7 +37,7 @@ debug = true
 
 [workspace.dependencies]
 aide = { version = "0.16.0-alpha.2", features = ["axum-json", "axum-query"] }
-axum = "0.8.8"
+axum = { version = "0.8.8", default-features = false, features = ["http1", "json", "query", "tokio", "tracing"] }
 bitcoin = { version = "0.32.8", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
 brk_alloc = { version = "0.1.0-alpha.3", path = "crates/brk_alloc" }
@@ -65,7 +65,7 @@ byteview = "0.10.0"
 color-eyre = "0.6.5"
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
 fjall = "3.0.1"
-jiff = "0.2.18"
+jiff = { version = "0.2.18", features = ["perf-inline", "tz-system"], default-features = false }
 minreq = { version = "2.14.1", features = ["https", "serde_json"] }
 parking_lot = "0.12.5"
 rayon = "1.11.0"
