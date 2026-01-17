@@ -1,6 +1,6 @@
 [project]
 name = "brk-client"
-version = "0.1.0-alpha.3"
+version = "0.1.0-alpha.6"
 description = "Python client for the Bitcoin Research Kit"
 readme = "README.md"
 requires-python = ">=3.11"
