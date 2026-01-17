@@ -126,7 +126,7 @@ cd "$ROOT_DIR"
 cargo publish --workspace --dry-run --allow-dirty
 
 # Version bump, commit, and tag (but don't publish yet)
-cargo release "$RELEASE_ARG" --execute --no-publish
+cargo release "$RELEASE_ARG" --execute --no-publish --no-confirm
 
 # Publish crates with retry logic for rate limits
 "$SCRIPT_DIR/rust-publish.sh"
