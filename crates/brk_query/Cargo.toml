@@ -8,7 +8,7 @@ homepage.workspace = true
 repository.workspace = true
 
 [features]
-tokio = ["dep:tokio"]
+tokio = ["dep:tokio", "brk_error/tokio"]
 
 [dependencies]
 bitcoin = { workspace = true }
