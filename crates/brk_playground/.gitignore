@@ -1,0 +1,7 @@
+# Ignore everything in playground except essential files
+*
+!.gitignore
+!Cargo.toml
+!src/
+!src/lib.rs
+!README.md

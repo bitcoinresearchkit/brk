@@ -1,0 +1,20 @@
+[package]
+name = "brk_playground"
+description = "Experimental playground for brk development"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+brk_computer = { workspace = true }
+brk_error = { workspace = true }
+brk_fetcher = { workspace = true }
+brk_indexer = { workspace = true }
+brk_logger = { workspace = true }
+brk_types = { workspace = true }
+plotters = "0.3"
+tracing = { workspace = true }
+vecdb = { workspace = true }

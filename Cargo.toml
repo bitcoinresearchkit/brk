@@ -61,6 +61,7 @@ brk_store = { version = "0.1.0-alpha.6", path = "crates/brk_store" }
 brk_traversable = { version = "0.1.0-alpha.6", path = "crates/brk_traversable", features = ["pco", "derive"] }
 brk_traversable_derive = { version = "0.1.0-alpha.6", path = "crates/brk_traversable_derive" }
 brk_types = { version = "0.1.0-alpha.6", path = "crates/brk_types" }
+brk_website = { version = "0.1.0-alpha.6", path = "crates/brk_website" }
 byteview = "0.10.0"
 color-eyre = "0.6.5"
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
@@ -78,6 +79,8 @@ serde_json = { version = "1.0.149", features = ["float_roundtrip", "preserve_ord
 smallvec = "1.15.1"
 tokio = { version = "1.49.0", features = ["rt-multi-thread"] }
 tracing = { version = "0.1", default-features = false, features = ["std"] }
+tower-http = { version = "0.6.8", features = ["catch-panic", "compression-br", "compression-gzip", "compression-zstd", "cors", "normalize-path", "timeout", "trace"] }
+tower-layer = "0.3"
 vecdb = { version = "0.5.11", features = ["derive", "serde_json", "pco", "schemars"] }
 # vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
 

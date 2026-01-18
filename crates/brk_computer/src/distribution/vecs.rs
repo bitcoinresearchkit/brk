@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex,
+    DateIndex, EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex,
     SupplyState, Version,
 };
 use tracing::info;
@@ -241,6 +241,21 @@ impl Vecs {
 
             (recovered_height, chain_state)
         };
+
+        // Update starting_indexes if we need to recompute from an earlier point
+        if starting_height < starting_indexes.height {
+            starting_indexes.height = starting_height;
+            // Also update dateindex to match
+            if starting_height.is_zero() {
+                starting_indexes.dateindex = DateIndex::from(0);
+            } else {
+                starting_indexes.dateindex = indexes
+                    .height
+                    .dateindex
+                    .read_once(starting_height.decremented().unwrap())?
+                    .into();
+            }
+        }
 
         // 2b. Validate computed versions
         let base_version = VERSION;

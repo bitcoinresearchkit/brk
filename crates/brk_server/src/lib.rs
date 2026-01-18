@@ -18,7 +18,6 @@ use axum::{
     serve,
 };
 use brk_query::AsyncQuery;
-use include_dir::{Dir, include_dir};
 use quick_cache::sync::Cache;
 use tokio::net::TcpListener;
 use tower_http::{
@@ -29,23 +28,17 @@ use tower_http::{
 use tower_layer::Layer;
 use tracing::{error, info};
 
-/// Embedded website assets
-pub static EMBEDDED_WEBSITE: Dir = include_dir!("$CARGO_MANIFEST_DIR/website");
-
 mod api;
 pub mod cache;
 mod error;
 mod extended;
-mod files;
 mod state;
 
 use api::*;
 pub use brk_types::Port;
+pub use brk_website::Website;
 pub use cache::{CacheParams, CacheStrategy};
 pub use error::{Error, Result};
-use extended::*;
-use files::FilesRoutes;
-pub use files::Website;
 use state::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -69,10 +62,7 @@ impl Server {
     pub async fn serve(self, port: Option<Port>) -> brk_error::Result<()> {
         let state = self.0;
 
-        let compression_layer = CompressionLayer::new()
-            .br(true)
-            .gzip(true)
-            .zstd(true);
+        let compression_layer = CompressionLayer::new().br(true).gzip(true).zstd(true);
 
         let response_uri_layer = axum::middleware::from_fn(
             async |request: Request<Body>, next: Next| -> Response<Body> {
@@ -107,35 +97,23 @@ impl Server {
             .on_eos(());
 
         let vecs = state.query.inner().vecs();
-        let router = ApiRouter::new()
-            .add_api_routes()
-            .add_files_routes(&state.website)
-            .route(
-                "/discord",
-                get(Redirect::temporary("https://discord.gg/WACpShCB7M")),
-            )
-            .route("/crate", get(Redirect::temporary("https://crates.io/crates/brk")))
-            .route(
-                "/status",
-                get(Redirect::temporary("https://status.bitview.space")),
-            )
-            .route("/github", get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk")))
-            .route("/changelog", get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk/blob/main/docs/CHANGELOG.md")))
-            .route(
-                "/install",
-                get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_cli/README.md#brk_cli")),
-            )
-            .route(
-                "/service",
-                get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk?tab=readme-ov-file#professional-hosting")),
-            )
-            .route("/nostr", get(Redirect::temporary("https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44")))
+
+        let website_router = brk_website::router(state.website.clone());
+        let mut router = ApiRouter::new().add_api_routes();
+        if !state.website.is_enabled() {
+            router = router.route("/", get(Redirect::temporary("/api")));
+        }
+        let router = router
             .with_state(state)
+            .merge(website_router)
             .layer(CatchPanicLayer::new())
             .layer(compression_layer)
             .layer(response_uri_layer)
             .layer(trace_layer)
-            .layer(TimeoutLayer::with_status_code(StatusCode::GATEWAY_TIMEOUT, Duration::from_secs(5)))
+            .layer(TimeoutLayer::with_status_code(
+                StatusCode::GATEWAY_TIMEOUT,
+                Duration::from_secs(5),
+            ))
             .layer(CorsLayer::permissive());
 
         let (listener, port) = match port {

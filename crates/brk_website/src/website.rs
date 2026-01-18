@@ -5,17 +5,22 @@ use std::{
 };
 
 use importmap::ImportMap;
+use include_dir::{Dir, include_dir};
 use tracing::{error, info};
 
-use crate::{EMBEDDED_WEBSITE, Error, Result};
+use crate::{Error, Result};
+
+/// Embedded website assets
+pub static EMBEDDED_WEBSITE: Dir = include_dir!("$CARGO_MANIFEST_DIR/website");
 
 /// Cached index.html with importmap injected
 static INDEX_HTML: OnceLock<String> = OnceLock::new();
 
 /// Source for serving the website
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum Website {
     Disabled,
+    #[default]
     Default,
     Filesystem(PathBuf),
 }
@@ -42,7 +47,12 @@ impl Website {
     }
 
     /// Get file content by path (handles hash-stripping, SPA fallback, importmap)
+    ///
+    /// Returns an error if the website is disabled.
     pub fn get_file(&self, path: &str) -> Result<Vec<u8>> {
+        if !self.is_enabled() {
+            return Err(Error::not_found("Website is disabled"));
+        }
         match self.filesystem_path() {
             None => self.get_embedded(path),
             Some(base) => self.get_filesystem(&base, path),
@@ -52,15 +62,15 @@ impl Website {
     /// Log which website source is being used (call once at startup)
     pub fn log(&self) {
         match self {
-            Self::Disabled => info!("Website: disabled"),
+            Self::Disabled => info!("website: disabled"),
             Self::Default => {
                 if let Some(p) = self.filesystem_path() {
-                    info!("Website: filesystem ({})", p.display());
+                    info!("website: filesystem ({})", p.display());
                 } else {
-                    info!("Website: embedded");
+                    info!("website: embedded");
                 }
             }
-            Self::Filesystem(p) => info!("Website: filesystem ({})", p.display()),
+            Self::Filesystem(p) => info!("website: filesystem ({})", p.display()),
         }
     }
 

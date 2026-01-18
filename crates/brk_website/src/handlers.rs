@@ -1,23 +1,23 @@
 use std::path::Path;
 
-use axum::{body::Body, extract::State, response::Response};
+use axum::{body::Body, extract::State, http::Response};
 
-use crate::{AppState, HeaderMapExtended, Result};
+use crate::{HeaderMapExtended, Result, Website};
 
 pub async fn file_handler(
-    State(state): State<AppState>,
+    State(website): State<Website>,
     path: axum::extract::Path<String>,
-) -> Result<Response> {
-    serve(&state, &path.0)
+) -> Result<Response<Body>> {
+    serve(&website, &path.0)
 }
 
-pub async fn index_handler(State(state): State<AppState>) -> Result<Response> {
-    serve(&state, "")
+pub async fn index_handler(State(website): State<Website>) -> Result<Response<Body>> {
+    serve(&website, "")
 }
 
-fn serve(state: &AppState, path: &str) -> Result<Response> {
+fn serve(website: &Website, path: &str) -> Result<Response<Body>> {
     let path = sanitize(path);
-    let content = state.website.get_file(&path)?;
+    let content = website.get_file(&path)?;
 
     let mut response = Response::new(Body::from(content));
     let headers = response.headers_mut();
