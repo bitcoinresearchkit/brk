@@ -15,6 +15,7 @@ brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
 brk_types = { workspace = true }
+memmap2 = "0.9"
 plotters = "0.3"
 tracing = { workspace = true }
 vecdb = { workspace = true }

@@ -74,7 +74,7 @@ export function init({ colors }) {
 
       let stateValue = /** @type {string | null} */ (null);
 
-      signals.createEffect(
+      signals.createScopedEffect(
         () => {
           const value = signal();
           return value ? String(value) : "";
@@ -137,7 +137,7 @@ export function init({ colors }) {
 
       let stateValue = /** @type {string | null} */ (null);
 
-      signals.createEffect(
+      signals.createScopedEffect(
         () => {
           const dateSignal = signal();
           return dateSignal ? serdeDate.serialize(dateSignal) : "";
@@ -838,7 +838,7 @@ export function init({ colors }) {
       const closes = /** @type {number[]} */ (_closes);
 
       signals.runWithOwner(owner, () => {
-        signals.createEffect(
+        signals.createScopedEffect(
           () => ({
             initialDollarAmount: settings.dollars.initial.amount() || 0,
             topUpAmount: settings.dollars.topUp.amount() || 0,

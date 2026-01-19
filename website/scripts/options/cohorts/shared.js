@@ -1,6 +1,7 @@
 /** Shared cohort chart section builders */
 
 import { Unit } from "../../utils/units.js";
+import { satsBtcUsd } from "../shared.js";
 
 /**
  * Create supply section for a single cohort
@@ -13,24 +14,7 @@ export function createSingleSupplySeries(ctx, cohort) {
   const { tree } = cohort;
 
   return [
-    line({
-      metric: tree.supply.total.sats,
-      name: "Supply",
-      color: colors.default,
-      unit: Unit.sats,
-    }),
-    line({
-      metric: tree.supply.total.bitcoin,
-      name: "Supply",
-      color: colors.default,
-      unit: Unit.btc,
-    }),
-    line({
-      metric: tree.supply.total.dollars,
-      name: "Supply",
-      color: colors.default,
-      unit: Unit.usd,
-    }),
+    ...satsBtcUsd(ctx, tree.supply.total, "Supply", colors.default),
     ...("supplyRelToCirculatingSupply" in tree.relative
       ? [
           line({
@@ -41,63 +25,12 @@ export function createSingleSupplySeries(ctx, cohort) {
           }),
         ]
       : []),
-    line({
-      metric: tree.unrealized.supplyInProfit.sats,
-      name: "In Profit",
-      color: colors.green,
-      unit: Unit.sats,
-    }),
-    line({
-      metric: tree.unrealized.supplyInProfit.bitcoin,
-      name: "In Profit",
-      color: colors.green,
-      unit: Unit.btc,
-    }),
-    line({
-      metric: tree.unrealized.supplyInProfit.dollars,
-      name: "In Profit",
-      color: colors.green,
-      unit: Unit.usd,
-    }),
-    line({
-      metric: tree.unrealized.supplyInLoss.sats,
-      name: "In Loss",
-      color: colors.red,
-      unit: Unit.sats,
-    }),
-    line({
-      metric: tree.unrealized.supplyInLoss.bitcoin,
-      name: "In Loss",
-      color: colors.red,
-      unit: Unit.btc,
-    }),
-    line({
-      metric: tree.unrealized.supplyInLoss.dollars,
-      name: "In Loss",
-      color: colors.red,
-      unit: Unit.usd,
-    }),
-    line({
-      metric: tree.supply.halved.sats,
-      name: "half",
-      color: colors.gray,
-      unit: Unit.sats,
+    ...satsBtcUsd(ctx, tree.unrealized.supplyInProfit, "In Profit", colors.green),
+    ...satsBtcUsd(ctx, tree.unrealized.supplyInLoss, "In Loss", colors.red),
+    ...satsBtcUsd(ctx, tree.supply.halved, "half", colors.gray).map((s) => ({
+      ...s,
       options: { lineStyle: 4 },
-    }),
-    line({
-      metric: tree.supply.halved.bitcoin,
-      name: "half",
-      color: colors.gray,
-      unit: Unit.btc,
-      options: { lineStyle: 4 },
-    }),
-    line({
-      metric: tree.supply.halved.dollars,
-      name: "half",
-      color: colors.gray,
-      unit: Unit.usd,
-      options: { lineStyle: 4 },
-    }),
+    })),
     ...("supplyInProfitRelToCirculatingSupply" in tree.relative
       ? [
           line({
@@ -147,17 +80,16 @@ export function createGroupedSupplyTotalSeries(ctx, list) {
   const constant100 = brk.metrics.constants.constant100;
 
   return list.flatMap(({ color, name, tree }) => [
-    line({ metric: tree.supply.total.sats, name, color, unit: Unit.sats }),
-    line({ metric: tree.supply.total.bitcoin, name, color, unit: Unit.btc }),
-    line({ metric: tree.supply.total.dollars, name, color, unit: Unit.usd }),
-    "supplyRelToCirculatingSupply" in tree.relative
-      ? line({
-          metric: tree.relative.supplyRelToCirculatingSupply,
-          name,
-          color,
-          unit: Unit.pctSupply,
-        })
-      : line({ metric: constant100, name, color, unit: Unit.pctSupply }),
+    ...satsBtcUsd(ctx, tree.supply.total, name, color),
+    line({
+      metric:
+        "supplyRelToCirculatingSupply" in tree.relative
+          ? tree.relative.supplyRelToCirculatingSupply
+          : constant100,
+      name,
+      color,
+      unit: Unit.pctSupply,
+    }),
   ]);
 }
 
@@ -171,24 +103,7 @@ export function createGroupedSupplyInProfitSeries(ctx, list) {
   const { line } = ctx;
 
   return list.flatMap(({ color, name, tree }) => [
-    line({
-      metric: tree.unrealized.supplyInProfit.sats,
-      name,
-      color,
-      unit: Unit.sats,
-    }),
-    line({
-      metric: tree.unrealized.supplyInProfit.bitcoin,
-      name,
-      color,
-      unit: Unit.btc,
-    }),
-    line({
-      metric: tree.unrealized.supplyInProfit.dollars,
-      name,
-      color,
-      unit: Unit.usd,
-    }),
+    ...satsBtcUsd(ctx, tree.unrealized.supplyInProfit, name, color),
     ...("supplyInProfitRelToCirculatingSupply" in tree.relative
       ? [
           line({
@@ -212,24 +127,7 @@ export function createGroupedSupplyInLossSeries(ctx, list) {
   const { line } = ctx;
 
   return list.flatMap(({ color, name, tree }) => [
-    line({
-      metric: tree.unrealized.supplyInLoss.sats,
-      name,
-      color,
-      unit: Unit.sats,
-    }),
-    line({
-      metric: tree.unrealized.supplyInLoss.bitcoin,
-      name,
-      color,
-      unit: Unit.btc,
-    }),
-    line({
-      metric: tree.unrealized.supplyInLoss.dollars,
-      name,
-      color,
-      unit: Unit.usd,
-    }),
+    ...satsBtcUsd(ctx, tree.unrealized.supplyInLoss, name, color),
     ...("supplyInLossRelToCirculatingSupply" in tree.relative
       ? [
           line({

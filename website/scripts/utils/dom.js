@@ -291,7 +291,7 @@ export function createChoiceField({
     field.append(remainingSmall);
   }
 
-  signals.createEffect(choices, (choices) => {
+  signals.createScopedEffect(choices, (choices) => {
     const s = selected();
     const sKey = toKey(s);
     const keys = choices.map(toKey);

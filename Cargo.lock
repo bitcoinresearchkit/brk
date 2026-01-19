@@ -573,6 +573,7 @@ dependencies = [
  "brk_indexer",
  "brk_logger",
  "brk_types",
+ "memmap2",
  "plotters",
  "tracing",
  "vecdb",

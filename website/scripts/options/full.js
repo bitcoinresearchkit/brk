@@ -2,7 +2,6 @@ import { createPartialOptions } from "./partial.js";
 import {
   createButtonElement,
   createAnchorElement,
-  insertElementAtIndex,
 } from "../utils/dom.js";
 import { pushHistory, resetParams } from "../utils/url.js";
 import { readStored, writeToStorage } from "../utils/storage.js";
@@ -42,6 +41,21 @@ export function initOptions({ colors, signals, brk, qrcode }) {
   const list = [];
 
   const parent = signals.createSignal(/** @type {HTMLElement | null} */ (null));
+
+  /** @type {Map<string, HTMLLIElement>} */
+  const liByPath = new Map();
+
+  /**
+   * @param {string[]} nodePath
+   */
+  function isOnSelectedPath(nodePath) {
+    const selectedPath = selected()?.path;
+    return (
+      selectedPath &&
+      nodePath.length <= selectedPath.length &&
+      nodePath.every((v, i) => v === selectedPath[i])
+    );
+  }
 
   /**
    * @param {AnyFetchedSeriesBlueprint[]} [arr]
@@ -120,137 +134,55 @@ export function initOptions({ colors, signals, brk, qrcode }) {
   /** @type {Option | undefined} */
   let savedOption;
 
+  // ============================================
+  // Phase 1: Process partial tree (non-reactive)
+  // Transforms options, computes counts, populates list
+  // ============================================
+
+  /**
+   * @typedef {{ type: "group"; name: string; serName: string; path: string[]; count: number; children: ProcessedNode[] }} ProcessedGroup
+   * @typedef {{ type: "option"; option: Option; path: string[] }} ProcessedOption
+   * @typedef {ProcessedGroup | ProcessedOption} ProcessedNode
+   */
+
   /**
    * @param {PartialOptionsTree} partialTree
-   * @param {Accessor<HTMLElement | null>} parent
-   * @param {string[] | undefined} parentPath
-   * @returns {Accessor<number>}
+   * @param {string[]} parentPath
+   * @returns {ProcessedNode[]}
    */
-  function recursiveProcessPartialTree(
-    partialTree,
-    parent,
-    parentPath = [],
-    depth = 0,
-  ) {
-    /** @type {Accessor<number>[]} */
-    const listForSum = [];
+  function processPartialTree(partialTree, parentPath = []) {
+    /** @type {ProcessedNode[]} */
+    const nodes = [];
 
-    const ul = signals.createMemo(
-      // @ts_ignore
-      (_previous) => {
-        const previous = /** @type {HTMLUListElement | null} */ (_previous);
-        previous?.remove();
-
-        const _parent = parent();
-        if (_parent) {
-          if ("open" in _parent && !_parent.open) {
-            throw "Set accesor to null instead";
-          }
-
-          const ul = window.document.createElement("ul");
-          _parent.append(ul);
-          return ul;
-        } else {
-          return null;
-        }
-      },
-      null,
-    );
-
-    partialTree.forEach((anyPartial, partialIndex) => {
-      const renderLi = signals.createSignal(true);
-
-      const li = signals.createMemo((_previous) => {
-        const previous = _previous;
-        previous?.remove();
-
-        const _ul = ul();
-
-        if (renderLi() && _ul) {
-          const li = window.document.createElement("li");
-          insertElementAtIndex(_ul, li, partialIndex);
-          return li;
-        } else {
-          return null;
-        }
-      }, /** @type {HTMLLIElement | null} */ (null));
-
+    for (const anyPartial of partialTree) {
       if ("tree" in anyPartial) {
-        /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
-        const groupAddons = {};
-
-        Object.assign(anyPartial, groupAddons);
-
-        const passedDetails = signals.createSignal(
-          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null),
-        );
-
         const serName = stringToId(anyPartial.name);
         const path = [...parentPath, serName];
-        const childOptionsCount = recursiveProcessPartialTree(
-          anyPartial.tree,
-          passedDetails,
-          path,
-          depth + 1,
+        const children = processPartialTree(anyPartial.tree, path);
+
+        // Compute count from children
+        const count = children.reduce(
+          (sum, child) => sum + (child.type === "group" ? child.count : 1),
+          0,
         );
 
-        listForSum.push(childOptionsCount);
+        // Skip groups with no children
+        if (count === 0) continue;
 
-        signals.createEffect(li, (li) => {
-          if (!li) {
-            passedDetails.set(null);
-            return;
-          }
-
-          signals.createEffect(selected, (selected) => {
-            if (
-              path.length <= selected.path.length &&
-              path.every((v, i) => selected.path.at(i) === v)
-            ) {
-              li.dataset.highlight = "";
-            } else {
-              delete li.dataset.highlight;
-            }
-          });
-
-          const details = window.document.createElement("details");
-          details.dataset.name = serName;
-          li.appendChild(details);
-
-          const summary = window.document.createElement("summary");
-          details.append(summary);
-          summary.append(anyPartial.name);
-
-          const supCount = window.document.createElement("sup");
-          summary.append(supCount);
-
-          signals.createEffect(childOptionsCount, (childOptionsCount) => {
-            supCount.innerHTML = childOptionsCount.toLocaleString("en-us");
-          });
-
-          details.addEventListener("toggle", () => {
-            const open = details.open;
-
-            if (open) {
-              passedDetails.set(details);
-            } else {
-              passedDetails.set(null);
-            }
-          });
+        nodes.push({
+          type: "group",
+          name: anyPartial.name,
+          serName,
+          path,
+          count,
+          children,
         });
-
-        function createRenderLiEffect() {
-          signals.createEffect(childOptionsCount, (count) => {
-            renderLi.set(!!count);
-          });
-        }
-        createRenderLiEffect();
       } else {
         const option = /** @type {Option} */ (anyPartial);
-
         const name = option.name;
         const path = [...parentPath, stringToId(option.name)];
 
+        // Transform partial to full option
         if ("kind" in anyPartial && anyPartial.kind === "explorer") {
           Object.assign(
             option,
@@ -310,6 +242,7 @@ export function initOptions({ colors, signals, brk, qrcode }) {
 
         list.push(option);
 
+        // Check if this matches URL or saved path
         if (urlPath) {
           const sameAsURLPath =
             urlPath.length === path.length &&
@@ -326,37 +259,102 @@ export function initOptions({ colors, signals, brk, qrcode }) {
           }
         }
 
-        signals.createEffect(li, (li) => {
-          if (!li) {
-            return;
-          }
-
-          signals.createEffect(selected, (selected) => {
-            if (selected === option) {
-              li.dataset.highlight = "";
-            } else {
-              delete li.dataset.highlight;
-            }
-          });
-
-          const element = createOptionElement({
-            option,
-            qrcode,
-          });
-
-          li.append(element);
+        nodes.push({
+          type: "option",
+          option,
+          path,
         });
-
-        listForSum.push(() => 1);
       }
-    });
+    }
 
-    return signals.createMemo(() =>
-      listForSum.reduce((acc, s) => acc + s(), 0),
-    );
+    return nodes;
   }
-  recursiveProcessPartialTree(partialOptions, parent);
+
+  const processedTree = processPartialTree(partialOptions);
   logUnused();
+
+  // ============================================
+  // Phase 2: Build DOM lazily (imperative)
+  // Uses native toggle events for lazy loading
+  // ============================================
+
+  /**
+   * @param {ProcessedNode[]} nodes
+   * @param {HTMLElement} parentEl
+   */
+  function buildTreeDOM(nodes, parentEl) {
+    const ul = window.document.createElement("ul");
+    parentEl.append(ul);
+
+    for (const node of nodes) {
+      const li = window.document.createElement("li");
+      ul.append(li);
+
+      const pathKey = node.path.join("/");
+      liByPath.set(pathKey, li);
+
+      if (isOnSelectedPath(node.path)) {
+        li.dataset.highlight = "";
+      }
+
+      if (node.type === "group") {
+        const details = window.document.createElement("details");
+        details.dataset.name = node.serName;
+        li.appendChild(details);
+
+        const summary = window.document.createElement("summary");
+        details.append(summary);
+        summary.append(node.name);
+
+        const supCount = window.document.createElement("sup");
+        supCount.innerHTML = node.count.toLocaleString("en-us");
+        summary.append(supCount);
+
+        let built = false;
+        details.addEventListener("toggle", () => {
+          if (details.open && !built) {
+            built = true;
+            buildTreeDOM(node.children, details);
+          }
+        });
+      } else {
+        const element = createOptionElement({
+          option: node.option,
+          qrcode,
+        });
+        li.append(element);
+      }
+    }
+  }
+
+  // Single effect to kick off DOM building when parent is set
+  signals.createEffect(
+    () => parent(),
+    (_parent) => {
+      if (!_parent) return;
+      buildTreeDOM(processedTree, _parent);
+    },
+  );
+
+  // Single effect for highlighting on selection change
+  signals.createEffect(
+    () => selected(),
+    (selected) => {
+      if (!selected) return;
+
+      // Clear all existing highlights
+      liByPath.forEach((li) => {
+        delete li.dataset.highlight;
+      });
+
+      // Highlight selected option and parent groups
+      for (let i = 1; i <= selected.path.length; i++) {
+        const pathKey = selected.path.slice(0, i).join("/");
+        const li = liByPath.get(pathKey);
+        if (li) li.dataset.highlight = "";
+      }
+    },
+  );
 
   if (!selected()) {
     const option =

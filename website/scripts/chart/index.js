@@ -6,27 +6,19 @@ import {
   BaselineSeries,
   // } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.development.mjs";
 } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.mjs";
+import { createMinMaxMarkers } from "./markers.js";
+import { createLegend } from "./legend.js";
 
 const createChart = /** @type {CreateChart} */ (_createChart);
-import {
-  createChoiceField,
-  createLabeledInput,
-  createSpanName,
-} from "../utils/dom.js";
+import { createChoiceField } from "../utils/dom.js";
 import { createOklchToRGBA } from "./oklch.js";
 import { throttle } from "../utils/timing.js";
 import { serdeBool } from "../utils/serde.js";
-import { stringToId } from "../utils/format.js";
+import { stringToId, numberToShortUSFormat } from "../utils/format.js";
 import { style } from "../utils/elements.js";
 import { resources } from "../resources.js";
 
 /**
- * @typedef {Object} Valued
- * @property {number} value
- *
- * @typedef {Object} Indexed
- * @property {number} index
- *
  * @typedef {_ISeriesApi<LCSeriesType>} ISeries
  * @typedef {_ISeriesApi<'Candlestick'>} CandlestickISeries
  * @typedef {_ISeriesApi<'Histogram'>} HistogramISeries
@@ -43,6 +35,8 @@ import { resources } from "../resources.js";
  * @template T
  * @typedef {Object} Series
  * @property {string} id
+ * @property {() => ISeries} inner
+ * @property {number} paneIndex
  * @property {Signal<boolean>} active
  * @property {Signal<boolean>} hasData
  * @property {Signal<string | null>} url
@@ -83,6 +77,7 @@ const lineWidth = /** @type {any} */ (1.5);
  * @param {BrkClient} args.brk
  * @param {Accessor<ChartableIndex>} args.index
  * @param {((unknownTimeScaleCallback: VoidFunction) => void)} [args.timeScaleSetCallback]
+ * @param {number | null} [args.initialVisibleBarsCount]
  * @param {true} [args.fitContent]
  * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
  */
@@ -94,6 +89,7 @@ export function createChartElement({
   index,
   brk,
   timeScaleSetCallback,
+  initialVisibleBarsCount,
   fitContent,
   config,
 }) {
@@ -131,6 +127,7 @@ export function createChartElement({
       },
       timeScale: {
         borderVisible: false,
+        enableConflation: true,
         ...(fitContent
           ? {
               minBarSpacing: 0.001,
@@ -160,12 +157,51 @@ export function createChartElement({
 
   ichart.panes().at(0)?.setStretchFactor(1);
 
-  const visibleBarsCount = signals.createSignal(0);
-  ichart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
-    if (range) {
-      visibleBarsCount.set(range.to - range.from);
-    }
+  /** @param {{ from: number, to: number }} range */
+  const setVisibleLogicalRange = (range) => {
+    // Defer to next frame to ensure chart has rendered
+    requestAnimationFrame(() => {
+      ichart.timeScale().setVisibleLogicalRange(range);
+    });
+  };
+
+  const seriesList = signals.createSignal(/** @type {Set<AnySeries>} */ (new Set()), { equals: false });
+  const seriesCount = signals.createMemo(() => seriesList().size);
+  const markers = createMinMaxMarkers({
+    chart: ichart,
+    seriesList,
+    colors,
+    formatValue: numberToShortUSFormat,
   });
+
+  const visibleBarsCount = signals.createSignal(
+    initialVisibleBarsCount ?? Infinity,
+  );
+  /** @type {() => 0 | 1 | 2 | 3} 0: <=200, 1: <=500, 2: <=1000, 3: >1000 */
+  const visibleBarsCountBucket = signals.createMemo(() => {
+    const count = visibleBarsCount();
+    return count > 1000 ? 3 : count > 500 ? 2 : count > 200 ? 1 : 0;
+  });
+  const shouldShowLine = signals.createMemo(
+    () => visibleBarsCountBucket() >= 2,
+  );
+  const shouldUpdateMarkers = signals.createMemo(
+    () => visibleBarsCount() * seriesCount() <= 5000,
+  );
+
+  signals.createEffect(shouldUpdateMarkers, (should) => {
+    if (should) markers.update();
+    else markers.clear();
+  });
+
+  ichart.timeScale().subscribeVisibleLogicalRangeChange(
+    throttle((range) => {
+      if (range) {
+        visibleBarsCount.set(range.to - range.from);
+        if (shouldUpdateMarkers()) markers.update();
+      }
+    }, 100),
+  );
 
   signals.createEffect(
     () => ({
@@ -330,6 +366,7 @@ export function createChartElement({
    * @param {number} args.order
    * @param {Color[]} args.colors
    * @param {LCSeriesType} args.seriesType
+   * @param {() => ISeries} args.inner
    * @param {AnyMetricPattern} [args.metric]
    * @param {Accessor<WhitespaceData[]>} [args.data]
    * @param {number} args.paneIndex
@@ -343,6 +380,7 @@ export function createChartElement({
    * @param {() => void} args.onRemove
    */
   function addSeries({
+    inner,
     metric,
     name,
     unit,
@@ -384,6 +422,8 @@ export function createChartElement({
         active,
         hasData,
         id,
+        inner,
+        paneIndex,
         url: signals.createSignal(/** @type {string | null} */ (null)),
         getOptions,
         applyOptions,
@@ -395,11 +435,16 @@ export function createChartElement({
           if (_valuesResource) {
             activeResources.delete(_valuesResource);
           }
+          seriesList().delete(series);
+          seriesList.set(seriesList());
         },
       };
 
+      seriesList().add(series);
+      seriesList.set(seriesList());
+
       if (metric) {
-        signals.createEffect(index, (index) => {
+        signals.createScopedEffect(index, (index) => {
           // Get timestamp metric from tree based on index type
           // timestampMonotonic has height only, timestamp has date-based indexes
           /** @type {AnyMetricPattern} */
@@ -425,7 +470,7 @@ export function createChartElement({
             return `${base}${valuesResource.path}`;
           });
 
-          signals.createEffect(active, (active) => {
+          signals.createScopedEffect(active, (active) => {
             if (active) {
               timeResource.fetch();
               valuesResource.fetch();
@@ -433,19 +478,61 @@ export function createChartElement({
 
               const timeRange = timeResource.range();
               const valuesRange = valuesResource.range();
-              signals.createEffect(
-                () => ({
-                  _indexes: timeRange.response()?.data,
-                  values: valuesRange.response()?.data,
-                }),
-                ({ _indexes, values }) => {
-                  if (!_indexes?.length || !values?.length) return;
+              const valuesCacheKey = signals.createMemo(() => {
+                const res = valuesRange.response();
+                if (!res?.data?.length) return null;
+                if (!timeRange.response()?.data?.length) return null;
+                return `${res.version}|${res.stamp}|${res.total}|${res.start}|${res.end}`;
+              });
+              signals.createEffect(valuesCacheKey, (cacheKey) => {
+                if (!cacheKey) return;
+                const _indexes = timeRange.response()?.data;
+                const values = valuesRange.response()?.data;
+                if (!_indexes?.length || !values?.length) return;
 
-                  const indexes = /** @type {number[]} */ (_indexes);
+                const indexes = /** @type {number[]} */ (_indexes);
+                const length = Math.min(indexes.length, values.length);
 
-                  let length = Math.min(indexes.length, values.length);
+                // Find start index for processing
+                let startIdx = 0;
+                if (hasData()) {
+                  // Binary search to find first index where time >= lastTime
+                  let lo = 0;
+                  let hi = length;
+                  while (lo < hi) {
+                    const mid = (lo + hi) >>> 1;
+                    if (indexes[mid] < lastTime) {
+                      lo = mid + 1;
+                    } else {
+                      hi = mid;
+                    }
+                  }
+                  startIdx = lo;
+                  if (startIdx >= length) return; // No new data
+                }
 
-                  // TODO: Don't create new Array if data already present, update instead
+                /**
+                 * @param {number} i
+                 * @param {(number | null | [number, number, number, number])[]} vals
+                 * @returns {LineData | CandlestickData}
+                 */
+                function buildDataPoint(i, vals) {
+                  const time = /** @type {Time} */ (indexes[i]);
+                  const v = vals[i];
+                  if (v === null) {
+                    return { time, value: NaN };
+                  } else if (typeof v === "number") {
+                    return { time, value: v };
+                  } else {
+                    if (!Array.isArray(v) || v.length !== 4)
+                      throw new Error(`Expected OHLC tuple, got: ${v}`);
+                    const [open, high, low, close] = v;
+                    return { time, open, high, low, close };
+                  }
+                }
+
+                if (!hasData()) {
+                  // Initial load: build full array
                   const data = /** @type {LineData[] | CandlestickData[]} */ (
                     Array.from({ length })
                   );
@@ -454,84 +541,56 @@ export function createChartElement({
                   let timeOffset = 0;
 
                   for (let i = 0; i < length; i++) {
-                    const time = /** @type {Time} */ (indexes[i]);
+                    const time = indexes[i];
                     const sameTime = prevTime === time;
                     if (sameTime) {
                       timeOffset += 1;
                     }
-                    const v = values[i];
                     const offsetedI = i - timeOffset;
-                    if (v === null) {
-                      data[offsetedI] = {
-                        time,
-                        value: NaN,
-                      };
-                    } else if (typeof v === "number") {
-                      data[offsetedI] = {
-                        time,
-                        value: v,
-                      };
-                    } else {
-                      // if (sameTime) {
-                      //   console.log(data[offsetedI]);
-                      // }
-                      if (!Array.isArray(v) || v.length !== 4)
-                        throw new Error(`Expected OHLC tuple, got: ${v}`);
-                      let [open, high, low, close] = v;
-                      data[offsetedI] = {
-                        time,
-                        // @ts-ignore
-                        open: sameTime ? data[offsetedI].open : open,
-                        high: sameTime
-                          ? // @ts-ignore
-                            Math.max(data[offsetedI].high, high)
-                          : high,
-                        low: sameTime
-                          ? // @ts-ignore
-                            Math.min(data[offsetedI].low, low)
-                          : low,
-                        close,
-                      };
+                    const point = buildDataPoint(i, values);
+                    if (sameTime && "open" in point) {
+                      const prev = /** @type {CandlestickData} */ (
+                        data[offsetedI]
+                      );
+                      point.open = prev.open;
+                      point.high = Math.max(prev.high, point.high);
+                      point.low = Math.min(prev.low, point.low);
                     }
+                    data[offsetedI] = point;
                     prevTime = time;
                   }
 
                   data.length -= timeOffset;
 
-                  if (!hasData()) {
-                    setData(data);
-                    hasData.set(true);
-                    lastTime =
-                      /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
+                  setData(data);
+                  hasData.set(true);
+                  if (shouldUpdateMarkers()) markers.scheduleUpdate();
+                  lastTime =
+                    /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
 
-                    if (fitContent) {
-                      ichart.timeScale().fitContent();
-                    }
-
-                    timeScaleSetCallback?.(() => {
-                      if (
-                        index === "quarterindex" ||
-                        index === "semesterindex" ||
-                        index === "yearindex" ||
-                        index === "decadeindex"
-                      ) {
-                        ichart.timeScale().setVisibleLogicalRange({
-                          from: -1,
-                          to: data.length,
-                        });
-                      }
-                    });
-                  } else {
-                    for (let i = 0; i < data.length; i++) {
-                      const time = /** @type {number} */ (data[i].time);
-                      if (time >= lastTime) {
-                        update(data[i]);
-                        lastTime = time;
-                      }
-                    }
+                  if (fitContent) {
+                    ichart.timeScale().fitContent();
                   }
-                },
-              );
+
+                  timeScaleSetCallback?.(() => {
+                    if (
+                      index === "quarterindex" ||
+                      index === "semesterindex" ||
+                      index === "yearindex" ||
+                      index === "decadeindex"
+                    ) {
+                      setVisibleLogicalRange({ from: -1, to: data.length });
+                    }
+                  });
+                } else {
+                  // Incremental update: only process new data points
+                  for (let i = startIdx; i < length; i++) {
+                    const point = buildDataPoint(i, values);
+                    update(point);
+                    lastTime = /** @type {number} */ (point.time);
+                  }
+                }
+              });
             } else {
               activeResources.delete(valuesResource);
             }
@@ -541,6 +600,7 @@ export function createChartElement({
         signals.createEffect(data, (data) => {
           setData(data);
           hasData.set(true);
+          if (shouldUpdateMarkers()) markers.scheduleUpdate();
 
           if (fitContent) {
             ichart.timeScale().fitContent();
@@ -566,11 +626,22 @@ export function createChartElement({
   }
 
   const chart = {
-    inner: ichart,
     legendTop,
     legendBottom,
 
     addFieldsetIfNeeded,
+
+    setVisibleLogicalRange,
+
+    /**
+     * @param {(range: { from: number, to: number } | null) => void} callback
+     * @param {number} [wait=500]
+     */
+    onVisibleLogicalRangeChange(callback, wait = 500) {
+      ichart
+        .timeScale()
+        .subscribeVisibleLogicalRangeChange(throttle(callback, wait));
+    },
 
     /**
      * @param {Object} args
@@ -601,6 +672,7 @@ export function createChartElement({
       const defaultRed = inverse ? colors.green : colors.red;
       const upColor = customColors?.[0] ?? defaultGreen;
       const downColor = customColors?.[1] ?? defaultRed;
+      let showLine = shouldShowLine();
 
       /** @type {CandlestickISeries} */
       const candlestickISeries = /** @type {any} */ (
@@ -612,7 +684,7 @@ export function createChartElement({
             wickUpColor: upColor(),
             wickDownColor: downColor(),
             borderVisible: false,
-            visible: defaultActive !== false,
+            visible: false,
             ...options,
           },
           paneIndex,
@@ -633,9 +705,8 @@ export function createChartElement({
         )
       );
 
-      let showLine = false;
-
-      return addSeries({
+      const series = addSeries({
+        inner: () => (showLine ? lineISeries : candlestickISeries),
         colors: [upColor, downColor],
         name,
         order,
@@ -649,14 +720,22 @@ export function createChartElement({
           candlestickISeries.setSeriesOrder(order);
           lineISeries.setSeriesOrder(order);
           signals.createEffect(
-            () => ({ count: visibleBarsCount(), active: active() }),
-            ({ count, active }) => {
-              showLine = count > 500;
+            () => ({
+              shouldShow: shouldShowLine(),
+              active: active(),
+              barsCount: visibleBarsCount(),
+            }),
+            ({ shouldShow, active, barsCount }) => {
+              if (barsCount === Infinity) return;
+              const wasLine = showLine;
+              showLine = shouldShow;
               candlestickISeries.applyOptions({ visible: active && !showLine });
               lineISeries.applyOptions({
                 visible: active && showLine,
                 priceLineVisible: active && showLine,
               });
+              if (wasLine !== showLine && shouldUpdateMarkers())
+                markers.scheduleUpdate();
             },
           );
         },
@@ -681,6 +760,7 @@ export function createChartElement({
           ichart.removeSeries(lineISeries);
         },
       });
+      return series;
     },
     /**
      * @param {Object} args
@@ -723,7 +803,8 @@ export function createChartElement({
         )
       );
 
-      return addSeries({
+      const series = addSeries({
+        inner: () => iseries,
         colors: isDualColor ? [positiveColor, negativeColor] : [positiveColor],
         name,
         order,
@@ -760,6 +841,7 @@ export function createChartElement({
         applyOptions: (options) => iseries.applyOptions(options),
         onRemove: () => ichart.removeSeries(iseries),
       });
+      return series;
     },
     /**
      * @param {Object} args
@@ -801,7 +883,8 @@ export function createChartElement({
         )
       );
 
-      return addSeries({
+      const series = addSeries({
+        inner: () => iseries,
         colors: [color],
         name,
         order,
@@ -824,6 +907,7 @@ export function createChartElement({
         applyOptions: (options) => iseries.applyOptions(options),
         onRemove: () => ichart.removeSeries(iseries),
       });
+      return series;
     },
     /**
      * @param {Object} args
@@ -867,7 +951,8 @@ export function createChartElement({
         )
       );
 
-      return addSeries({
+      const series = addSeries({
+        inner: () => iseries,
         colors: [color],
         name,
         order,
@@ -882,8 +967,8 @@ export function createChartElement({
           signals.createEffect(active, (active) =>
             iseries.applyOptions({ visible: active }),
           );
-          signals.createEffect(visibleBarsCount, (count) => {
-            const radius = count > 1000 ? 1 : count > 200 ? 1.5 : 2;
+          signals.createEffect(visibleBarsCountBucket, (bucket) => {
+            const radius = bucket === 3 ? 1 : bucket >= 1 ? 1.5 : 2;
             iseries.applyOptions({ pointMarkersRadius: radius });
           });
         },
@@ -894,6 +979,7 @@ export function createChartElement({
         applyOptions: (options) => iseries.applyOptions(options),
         onRemove: () => ichart.removeSeries(iseries),
       });
+      return series;
     },
     /**
      * @param {Object} args
@@ -942,7 +1028,8 @@ export function createChartElement({
         )
       );
 
-      return addSeries({
+      const series = addSeries({
+        inner: () => iseries,
         colors: [
           () => options?.topLineColor ?? colors.green(),
           () => options?.bottomLineColor ?? colors.red(),
@@ -968,6 +1055,7 @@ export function createChartElement({
         applyOptions: (options) => iseries.applyOptions(options),
         onRemove: () => ichart.removeSeries(iseries),
       });
+      return series;
     },
   };
 
@@ -1026,213 +1114,6 @@ export function createChartElement({
   });
 
   return chart;
-}
-
-/**
- * @param {Signals} signals
- */
-function createLegend(signals) {
-  const element = window.document.createElement("legend");
-
-  const hovered = signals.createSignal(/** @type {AnySeries | null} */ (null));
-
-  /** @type {HTMLElement[]} */
-  const legends = [];
-
-  return {
-    element,
-    /**
-     * @param {Object} args
-     * @param {AnySeries} args.series
-     * @param {string} args.name
-     * @param {number} args.order
-     * @param {Color[]} args.colors
-     */
-    addOrReplace({ series, name, colors, order }) {
-      const div = window.document.createElement("div");
-
-      const prev = legends[order];
-      if (prev) {
-        prev.replaceWith(div);
-      } else {
-        const elementAtOrder = Array.from(element.children).at(order);
-        if (elementAtOrder) {
-          elementAtOrder.before(div);
-        } else {
-          element.append(div);
-        }
-      }
-      legends[order] = div;
-
-      const { input, label } = createLabeledInput({
-        inputId: stringToId(`legend-${series.id}`),
-        inputName: stringToId(`selected-${series.id}`),
-        inputValue: "value",
-        title: "Click to toggle",
-        inputChecked: series.active(),
-        onClick: () => {
-          series.active.set(input.checked);
-        },
-        type: "checkbox",
-      });
-
-      const spanMain = window.document.createElement("span");
-      spanMain.classList.add("main");
-      label.append(spanMain);
-
-      const spanName = createSpanName(name);
-      spanMain.append(spanName);
-
-      div.append(label);
-      label.addEventListener("mouseover", () => {
-        const h = hovered();
-        if (!h || h !== series) {
-          hovered.set(series);
-        }
-      });
-      label.addEventListener("mouseleave", () => {
-        hovered.set(null);
-      });
-
-      function shouldHighlight() {
-        const h = hovered();
-        return !h || h === series;
-      }
-
-      /**
-       * @param {string} color
-       */
-      function tameColor(color) {
-        return `${color.slice(0, -1)} / 50%)`;
-      }
-
-      const spanColors = window.document.createElement("span");
-      spanColors.classList.add("colors");
-      spanMain.prepend(spanColors);
-      colors.forEach((color) => {
-        const spanColor = window.document.createElement("span");
-        spanColors.append(spanColor);
-
-        signals.createEffect(
-          () => ({
-            color: color(),
-            shouldHighlight: shouldHighlight(),
-          }),
-          ({ color, shouldHighlight }) => {
-            if (shouldHighlight) {
-              spanColor.style.backgroundColor = color;
-            } else {
-              spanColor.style.backgroundColor = tameColor(color);
-            }
-          },
-        );
-      });
-
-      const initialColors = /** @type {Record<string, any>} */ ({});
-      const darkenedColors = /** @type {Record<string, any>} */ ({});
-
-      const seriesOptions = series.getOptions();
-      if (!seriesOptions) return;
-
-      Object.entries(seriesOptions).forEach(([k, v]) => {
-        if (k.toLowerCase().includes("color") && typeof v === "string") {
-          if (!v.startsWith("oklch")) return;
-          initialColors[k] = v;
-          darkenedColors[k] = tameColor(v);
-        } else if (k === "lastValueVisible" && v) {
-          initialColors[k] = true;
-          darkenedColors[k] = false;
-        }
-      });
-
-      signals.createEffect(shouldHighlight, (shouldHighlight) => {
-        if (shouldHighlight) {
-          series.applyOptions(initialColors);
-        } else {
-          series.applyOptions(darkenedColors);
-        }
-      });
-
-      const anchor = window.document.createElement("a");
-
-      signals.createEffect(series.url, (url) => {
-        if (url) {
-          anchor.href = url;
-          anchor.target = "_blank";
-          anchor.rel = "noopener noreferrer";
-          anchor.title = "Click to view data";
-          div.append(anchor);
-        }
-      });
-    },
-    /**
-     * @param {number} start
-     */
-    removeFrom(start) {
-      // disposeFrom(start);
-      legends.splice(start).forEach((child) => child.remove());
-    },
-  };
-}
-
-/**
- * @param {number} value
- * @param {0 | 2} [digits]
- */
-function numberToShortUSFormat(value, digits) {
-  const absoluteValue = Math.abs(value);
-
-  if (isNaN(value)) {
-    return "";
-  } else if (absoluteValue < 10) {
-    return numberToUSFormat(value, Math.min(3, digits || 10));
-  } else if (absoluteValue < 1_000) {
-    return numberToUSFormat(value, Math.min(2, digits || 10));
-  } else if (absoluteValue < 10_000) {
-    return numberToUSFormat(value, Math.min(1, digits || 10));
-  } else if (absoluteValue < 1_000_000) {
-    return numberToUSFormat(value, 0);
-  } else if (absoluteValue >= 1_000_000_000_000_000_000_000) {
-    return "Inf.";
-  }
-
-  const log = Math.floor(Math.log10(absoluteValue) - 6);
-
-  const suffices = ["M", "B", "T", "P", "E", "Z"];
-  const letterIndex = Math.floor(log / 3);
-  const letter = suffices[letterIndex];
-
-  const modulused = log % 3;
-
-  if (modulused === 0) {
-    return `${numberToUSFormat(
-      value / (1_000_000 * 1_000 ** letterIndex),
-      3,
-    )}${letter}`;
-  } else if (modulused === 1) {
-    return `${numberToUSFormat(
-      value / (1_000_000 * 1_000 ** letterIndex),
-      2,
-    )}${letter}`;
-  } else {
-    return `${numberToUSFormat(
-      value / (1_000_000 * 1_000 ** letterIndex),
-      1,
-    )}${letter}`;
-  }
-}
-
-/**
- * @param {number} value
- * @param {number} [digits]
- * @param {Intl.NumberFormatOptions} [options]
- */
-function numberToUSFormat(value, digits, options) {
-  return value.toLocaleString("en-us", {
-    ...options,
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  });
 }
 
 /**

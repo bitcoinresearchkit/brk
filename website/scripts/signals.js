@@ -23,13 +23,14 @@ import {
   runWithOwner,
   onCleanup,
 } from "./modules/solidjs-signals/0.6.3/dist/prod.js";
+import { debounce } from "./utils/timing.js";
 
-// let effectCount = 0;
+let effectCount = 0;
 
 const signals = {
   createSolidSignal: /** @type {typeof CreateSignal} */ (createSignal),
-  createSolidEffect: /** @type {typeof CreateEffect} */ (createEffect),
-  createEffect: /** @type {typeof CreateEffect} */ (
+  createEffect: /** @type {typeof CreateEffect} */ (createEffect),
+  createScopedEffect: /** @type {typeof CreateEffect} */ (
     // @ts-ignore
     (compute, effect) => {
       let dispose = /** @type {VoidFunction | null} */ (null);
@@ -42,13 +43,13 @@ const signals = {
         if (dispose) {
           dispose();
           dispose = null;
-          // console.log("effectCount = ", --effectCount);
+          console.log("effectCount = ", --effectCount);
         }
       }
 
       // @ts-ignore
       createEffect(compute, (v, oldV) => {
-        // console.log("effectCount = ", ++effectCount);
+        console.log("effectCount = ", ++effectCount);
         cleanup();
         signals.createRoot((_dispose) => {
           dispose = _dispose;
@@ -143,10 +144,9 @@ const signals = {
       });
 
       let firstRun2 = true;
-      this.createEffect(get, (value) => {
-        if (!save) return;
 
-        if (!firstRun2) {
+      const debouncedSave = debounce(
+        /** @param {T} value */ (value) => {
           try {
             if (
               value !== undefined &&
@@ -157,26 +157,38 @@ const signals = {
                 save.serialize(value) !== save.serialize(initialValue))
             ) {
               localStorage.setItem(storageKey(), save.serialize(value));
+              writeParam(paramKey, save.serialize(value));
             } else {
               localStorage.removeItem(storageKey());
+              removeParam(paramKey);
             }
           } catch (_) {}
-        }
+        },
+        250,
+      );
 
-        if (
-          value !== undefined &&
-          value !== null &&
-          (initialValue === undefined ||
-            initialValue === null ||
-            save.saveDefaultValue ||
-            save.serialize(value) !== save.serialize(initialValue))
-        ) {
-          writeParam(paramKey, save.serialize(value));
+      this.createEffect(get, (value) => {
+        if (!save) return;
+
+        if (firstRun2) {
+          // First run: sync URL params immediately
+          if (
+            value !== undefined &&
+            value !== null &&
+            (initialValue === undefined ||
+              initialValue === null ||
+              save.saveDefaultValue ||
+              save.serialize(value) !== save.serialize(initialValue))
+          ) {
+            writeParam(paramKey, save.serialize(value));
+          } else {
+            removeParam(paramKey);
+          }
+          firstRun2 = false;
         } else {
-          removeParam(paramKey);
+          // Subsequent runs: debounce
+          debouncedSave(value);
         }
-
-        firstRun2 = false;
       });
     }
 

@@ -115,7 +115,8 @@ function initFrameSelectors() {
 initFrameSelectors();
 
 signals.createRoot(() => {
-  const brk = new BrkClient("/");
+  const brk = new BrkClient("https://next.bitview.space");
+  // const brk = new BrkClient("/");
   const owner = signals.getOwner();
 
   console.log(`VERSION = ${brk.VERSION}`);
@@ -210,7 +211,7 @@ signals.createRoot(() => {
       let firstTimeLoadingSimulation = true;
       let firstTimeLoadingExplorer = true;
 
-      signals.createEffect(options.selected, (option) => {
+      signals.createScopedEffect(options.selected, (option) => {
         /** @type {HTMLElement} */
         let element;
 

@@ -36,3 +36,23 @@ export function throttle(callback, wait = 1000) {
     }
   };
 }
+
+/**
+ * @template {(...args: any[]) => any} F
+ * @param {F} callback
+ * @param {number} [wait]
+ */
+export function debounce(callback, wait = 1000) {
+  /** @type {number | null} */
+  let timeoutId = null;
+
+  return (/** @type {Parameters<F>} */ ...args) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+      callback(...args);
+      timeoutId = null;
+    }, wait);
+  };
+}

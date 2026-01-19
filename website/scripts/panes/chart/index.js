@@ -5,11 +5,11 @@ import {
 } from "../../utils/dom.js";
 import { chartElement } from "../../utils/elements.js";
 import { ios, canShare } from "../../utils/env.js";
-import { serdeChartableIndex, serdeOptNumber } from "../../utils/serde.js";
-import { throttle } from "../../utils/timing.js";
+import { serdeChartableIndex } from "../../utils/serde.js";
 import { Unit } from "../../utils/units.js";
 import signals from "../../signals.js";
 import { createChartElement } from "../../chart/index.js";
+import { createChartState } from "../../chart/state.js";
 import { webSockets } from "../../utils/ws.js";
 import { screenshot } from "./screenshot.js";
 
@@ -33,30 +33,10 @@ export function init({ colors, option, brk }) {
   const { headerElement, headingElement } = createHeader();
   chartElement.append(headerElement);
 
-  const { index, fieldset } = createIndexSelector(option);
+  const state = createChartState(signals);
+  const { fieldset, index } = createIndexSelector(option, state);
 
-  const TIMERANGE_LS_KEY = signals.createMemo(
-    () => `chart-timerange-${index()}`,
-  );
-
-  let firstRun = true;
-
-  const from = signals.createSignal(/** @type {number | null} */ (null), {
-    save: {
-      ...serdeOptNumber,
-      keyPrefix: TIMERANGE_LS_KEY,
-      key: "from",
-      serializeParam: firstRun,
-    },
-  });
-  const to = signals.createSignal(/** @type {number | null} */ (null), {
-    save: {
-      ...serdeOptNumber,
-      keyPrefix: TIMERANGE_LS_KEY,
-      key: "to",
-      serializeParam: firstRun,
-    },
-  });
+  const { from, to } = state.range();
 
   const chart = createChartElement({
     parent: chartElement,
@@ -65,17 +45,12 @@ export function init({ colors, option, brk }) {
     id: "charts",
     brk,
     index,
+    initialVisibleBarsCount:
+      from !== null && to !== null ? to - from : null,
     timeScaleSetCallback: (unknownTimeScaleCallback) => {
-      // TODO: Although it mostly works in practice, need to make it more robust, there is no guarantee that this runs in order and wait for `from` and `to` to update when `index` and thus `TIMERANGE_LS_KEY` is updated
-      // Need to have the right values before the update
-
-      const from_ = from();
-      const to_ = to();
-      if (from_ !== null && to_ !== null) {
-        chart.inner.timeScale().setVisibleLogicalRange({
-          from: from_,
-          to: to_,
-        });
+      const { from, to } = state.range();
+      if (from !== null && to !== null) {
+        chart.setVisibleLogicalRange({ from, to });
       } else {
         unknownTimeScaleCallback();
       }
@@ -114,13 +89,10 @@ export function init({ colors, option, brk }) {
     });
   }
 
-  chart.inner.timeScale().subscribeVisibleLogicalRangeChange(
-    throttle((t) => {
-      if (!t) return;
-      from.set(t.from);
-      to.set(t.to);
-    }, 250),
-  );
+  chart.onVisibleLogicalRangeChange((t) => {
+    if (!t) return;
+    state.setRange({ from: t.from, to: t.to });
+  });
 
   chartElement.append(fieldset);
 
@@ -230,7 +202,7 @@ export function init({ colors, option, brk }) {
     }
   }
 
-  signals.createEffect(option, (option) => {
+  signals.createScopedEffect(option, (option) => {
     headingElement.innerHTML = option.title;
 
     const bottomUnits = Array.from(option.bottom.keys());
@@ -267,8 +239,8 @@ export function init({ colors, option, brk }) {
       chart.legendBottom.removeFrom(0);
     }
 
-    signals.createEffect(index, (index) => {
-      signals.createEffect(topUnit, (topUnit) => {
+    signals.createScopedEffect(index, (index) => {
+      signals.createScopedEffect(topUnit, (topUnit) => {
         /** @type {AnySeries | undefined} */
         let series;
 
@@ -328,7 +300,7 @@ export function init({ colors, option, brk }) {
         orderStart,
         legend,
       }) {
-        signals.createEffect(unit, (unit) => {
+        signals.createScopedEffect(unit, (unit) => {
           legend.removeFrom(orderStart);
 
           seriesList.splice(orderStart).forEach((series) => {
@@ -450,15 +422,15 @@ export function init({ colors, option, brk }) {
         });
       }
 
-      firstRun = false;
     });
   });
 }
 
 /**
  * @param {Accessor<ChartOption>} option
+ * @param {ReturnType<typeof createChartState>} state
  */
-function createIndexSelector(option) {
+function createIndexSelector(option, state) {
   const choices_ = /** @satisfies {ChartableIndexName[]} */ ([
     "timestamp",
     "date",
@@ -497,17 +469,7 @@ function createIndexSelector(option) {
     );
   });
 
-  /** @type {ChartableIndexName} */
-  const defaultIndex = "date";
-  const { field, selected } = createChoiceField({
-    defaultValue: defaultIndex,
-    keyPrefix,
-    key: "index",
-    choices,
-    id: "index",
-    signals,
-  });
-
+  // Create UI that syncs with state.index
   const fieldset = window.document.createElement("fieldset");
   fieldset.id = "interval";
 
@@ -515,11 +477,36 @@ function createIndexSelector(option) {
   screenshotSpan.innerText = "interval:";
   fieldset.append(screenshotSpan);
 
-  fieldset.append(field);
+  const select = window.document.createElement("select");
+  select.id = "index";
+  fieldset.append(select);
   fieldset.dataset.size = "sm";
 
+  // Populate and update options when choices change
+  signals.createEffect(choices, (choices) => {
+    const currentValue = state.index();
+    select.innerHTML = "";
+    choices.forEach((choice) => {
+      const option = window.document.createElement("option");
+      option.value = choice;
+      option.textContent = choice;
+      option.selected = choice === currentValue;
+      select.append(option);
+    });
+  });
+
+  // Sync select value with state
+  signals.createEffect(state.index, (value) => {
+    select.value = value;
+  });
+
+  select.addEventListener("change", () => {
+    state.index.set(/** @type {ChartableIndexName} */ (select.value));
+  });
+
+  // Convert short name to internal name
   const index = signals.createMemo(() =>
-    serdeChartableIndex.deserialize(selected()),
+    serdeChartableIndex.deserialize(state.index()),
   );
 
   return { fieldset, index };

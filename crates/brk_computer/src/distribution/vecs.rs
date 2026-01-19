@@ -252,8 +252,7 @@ impl Vecs {
                 starting_indexes.dateindex = indexes
                     .height
                     .dateindex
-                    .read_once(starting_height.decremented().unwrap())?
-                    .into();
+                    .read_once(starting_height.decremented().unwrap())?;
             }
         }
 

@@ -1,6 +1,7 @@
 /** Investing section (DCA) */
 
 import { Unit } from "../../utils/units.js";
+import { satsBtcUsd } from "../shared.js";
 import { periodIdToName } from "./utils.js";
 
 /**
@@ -113,42 +114,8 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 name: "Stack",
                 title: `${name} DCA vs Lump Sum Stack ($100/day)`,
                 bottom: [
-                  line({
-                    metric: dcaStack.sats,
-                    name: "DCA",
-                    color: colors.green,
-                    unit: Unit.sats,
-                  }),
-                  line({
-                    metric: dcaStack.bitcoin,
-                    name: "DCA",
-                    color: colors.green,
-                    unit: Unit.btc,
-                  }),
-                  line({
-                    metric: dcaStack.dollars,
-                    name: "DCA",
-                    color: colors.green,
-                    unit: Unit.usd,
-                  }),
-                  line({
-                    metric: lumpSumStack.sats,
-                    name: "Lump sum",
-                    color: colors.orange,
-                    unit: Unit.sats,
-                  }),
-                  line({
-                    metric: lumpSumStack.bitcoin,
-                    name: "Lump sum",
-                    color: colors.orange,
-                    unit: Unit.btc,
-                  }),
-                  line({
-                    metric: lumpSumStack.dollars,
-                    name: "Lump sum",
-                    color: colors.orange,
-                    unit: Unit.usd,
-                  }),
+                  ...satsBtcUsd(ctx, dcaStack, "DCA", colors.green),
+                  ...satsBtcUsd(ctx, lumpSumStack, "Lump sum", colors.orange),
                 ],
               },
             ],
@@ -196,29 +163,8 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 name: "Stack",
                 title: "DCA Stack by Year ($100/day)",
                 bottom: dcaClasses.flatMap(
-                  ({ year, color, defaultActive, stack }) => [
-                    line({
-                      metric: stack.sats,
-                      name: `${year}`,
-                      color,
-                      defaultActive,
-                      unit: Unit.sats,
-                    }),
-                    line({
-                      metric: stack.bitcoin,
-                      name: `${year}`,
-                      color,
-                      defaultActive,
-                      unit: Unit.btc,
-                    }),
-                    line({
-                      metric: stack.dollars,
-                      name: `${year}`,
-                      color,
-                      defaultActive,
-                      unit: Unit.usd,
-                    }),
-                  ],
+                  ({ year, color, defaultActive, stack }) =>
+                    satsBtcUsd(ctx, stack, `${year}`, color, { defaultActive }),
                 ),
               },
             ],
@@ -254,26 +200,7 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
               {
                 name: "Stack",
                 title: `DCA Class ${year} Stack ($100/day)`,
-                bottom: [
-                  line({
-                    metric: stack.sats,
-                    name: "Stack",
-                    color,
-                    unit: Unit.sats,
-                  }),
-                  line({
-                    metric: stack.bitcoin,
-                    name: "Stack",
-                    color,
-                    unit: Unit.btc,
-                  }),
-                  line({
-                    metric: stack.dollars,
-                    name: "Stack",
-                    color,
-                    unit: Unit.usd,
-                  }),
-                ],
+                bottom: satsBtcUsd(ctx, stack, "Stack", color),
               },
             ],
           })),

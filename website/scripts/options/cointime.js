@@ -1,6 +1,14 @@
 /** Cointime section builder - typed tree-based patterns */
 
 import { Unit } from "../utils/units.js";
+import {
+  satsBtcUsd,
+  priceLines,
+  percentileUsdMap,
+  percentileMap,
+  sdPatterns,
+  sdBands,
+} from "./shared.js";
 
 /**
  * Create price with ratio options for cointime prices
@@ -19,50 +27,9 @@ function createCointimePriceWithRatioOptions(
 ) {
   const { line, colors, createPriceLine } = ctx;
 
-  // Percentile USD mappings
-  const percentileUsdMap = [
-    { name: "pct99", prop: ratio.ratioPct99Usd, color: colors.rose },
-    { name: "pct98", prop: ratio.ratioPct98Usd, color: colors.pink },
-    { name: "pct95", prop: ratio.ratioPct95Usd, color: colors.fuchsia },
-    { name: "pct5", prop: ratio.ratioPct5Usd, color: colors.cyan },
-    { name: "pct2", prop: ratio.ratioPct2Usd, color: colors.sky },
-    { name: "pct1", prop: ratio.ratioPct1Usd, color: colors.blue },
-  ];
-
-  // Percentile ratio mappings
-  const percentileMap = [
-    { name: "pct99", prop: ratio.ratioPct99, color: colors.rose },
-    { name: "pct98", prop: ratio.ratioPct98, color: colors.pink },
-    { name: "pct95", prop: ratio.ratioPct95, color: colors.fuchsia },
-    { name: "pct5", prop: ratio.ratioPct5, color: colors.cyan },
-    { name: "pct2", prop: ratio.ratioPct2, color: colors.sky },
-    { name: "pct1", prop: ratio.ratioPct1, color: colors.blue },
-  ];
-
-  // SD patterns by window
-  const sdPatterns = [
-    { nameAddon: "all", titleAddon: "", sd: ratio.ratioSd },
-    { nameAddon: "4y", titleAddon: "4y", sd: ratio.ratio4ySd },
-    { nameAddon: "2y", titleAddon: "2y", sd: ratio.ratio2ySd },
-    { nameAddon: "1y", titleAddon: "1y", sd: ratio.ratio1ySd },
-  ];
-
-  /** @param {Ratio1ySdPattern} sd */
-  const getSdBands = (sd) => [
-    { name: "0σ", prop: sd._0sdUsd, color: colors.lime },
-    { name: "+0.5σ", prop: sd.p05sdUsd, color: colors.yellow },
-    { name: "+1σ", prop: sd.p1sdUsd, color: colors.amber },
-    { name: "+1.5σ", prop: sd.p15sdUsd, color: colors.orange },
-    { name: "+2σ", prop: sd.p2sdUsd, color: colors.red },
-    { name: "+2.5σ", prop: sd.p25sdUsd, color: colors.rose },
-    { name: "+3σ", prop: sd.p3sd, color: colors.pink },
-    { name: "−0.5σ", prop: sd.m05sdUsd, color: colors.teal },
-    { name: "−1σ", prop: sd.m1sdUsd, color: colors.cyan },
-    { name: "−1.5σ", prop: sd.m15sdUsd, color: colors.sky },
-    { name: "−2σ", prop: sd.m2sdUsd, color: colors.blue },
-    { name: "−2.5σ", prop: sd.m25sdUsd, color: colors.indigo },
-    { name: "−3σ", prop: sd.m3sd, color: colors.violet },
-  ];
+  const pctUsdMap = percentileUsdMap(colors, ratio);
+  const pctMap = percentileMap(colors, ratio);
+  const sdPats = sdPatterns(ratio);
 
   return [
     {
@@ -75,7 +42,7 @@ function createCointimePriceWithRatioOptions(
       title: `${title} Ratio`,
       top: [
         line({ metric: price, name: legend, color, unit: Unit.usd }),
-        ...percentileUsdMap.map(({ name: pctName, prop, color: pctColor }) =>
+        ...pctUsdMap.map(({ name: pctName, prop, color: pctColor }) =>
           line({
             metric: prop,
             name: pctName,
@@ -124,7 +91,7 @@ function createCointimePriceWithRatioOptions(
           color: colors.rose,
           unit: Unit.ratio,
         }),
-        ...percentileMap.map(({ name: pctName, prop, color: pctColor }) =>
+        ...pctMap.map(({ name: pctName, prop, color: pctColor }) =>
           line({
             metric: prop,
             name: pctName,
@@ -200,22 +167,14 @@ function createCointimePriceWithRatioOptions(
               color: colors.yellow,
               unit: Unit.sd,
             }),
-            createPriceLine({ unit: Unit.sd, number: 4 }),
-            createPriceLine({ unit: Unit.sd, number: 3 }),
-            createPriceLine({ unit: Unit.sd, number: 2 }),
-            createPriceLine({ unit: Unit.sd, number: 1 }),
-            createPriceLine({ unit: Unit.sd, number: 0 }),
-            createPriceLine({ unit: Unit.sd, number: -1 }),
-            createPriceLine({ unit: Unit.sd, number: -2 }),
-            createPriceLine({ unit: Unit.sd, number: -3 }),
-            createPriceLine({ unit: Unit.sd, number: -4 }),
+            ...priceLines(ctx, Unit.sd, [0, 1, -1, 2, -2, 3, -3, 4, -4]),
           ],
         },
         // Individual Z-Score charts
-        ...sdPatterns.map(({ nameAddon, titleAddon, sd }) => ({
+        ...sdPats.map(({ nameAddon, titleAddon, sd }) => ({
           name: nameAddon,
           title: `${title} ${titleAddon} Z-Score`,
-          top: getSdBands(sd).map(({ name: bandName, prop, color: bandColor }) =>
+          top: sdBands(colors, sd).map(({ name: bandName, prop, color: bandColor }) =>
             line({
               metric: prop,
               name: bandName,
@@ -225,13 +184,7 @@ function createCointimePriceWithRatioOptions(
           ),
           bottom: [
             line({ metric: sd.zscore, name: "Z-Score", color, unit: Unit.sd }),
-            createPriceLine({ unit: Unit.sd, number: 3 }),
-            createPriceLine({ unit: Unit.sd, number: 2 }),
-            createPriceLine({ unit: Unit.sd, number: 1 }),
-            createPriceLine({ unit: Unit.sd, number: 0 }),
-            createPriceLine({ unit: Unit.sd, number: -1 }),
-            createPriceLine({ unit: Unit.sd, number: -2 }),
-            createPriceLine({ unit: Unit.sd, number: -3 }),
+            ...priceLines(ctx, Unit.sd, [0, 1, -1, 2, -2, 3, -3]),
           ],
         })),
       ],
@@ -395,34 +348,9 @@ export function createCointimeSection(ctx) {
         name: "Supply",
         title: "Cointime Supply",
         bottom: [
-          // All supply (different pattern structure)
-          line({
-            metric: all.supply.total.sats,
-            name: "All",
-            color: colors.orange,
-            unit: Unit.sats,
-          }),
-          line({
-            metric: all.supply.total.bitcoin,
-            name: "All",
-            color: colors.orange,
-            unit: Unit.btc,
-          }),
-          line({
-            metric: all.supply.total.dollars,
-            name: "All",
-            color: colors.orange,
-            unit: Unit.usd,
-          }),
-          // Cointime supplies (ActiveSupplyPattern)
-          .../** @type {const} */ ([
-            [cointimeSupply.vaultedSupply, "Vaulted", colors.lime],
-            [cointimeSupply.activeSupply, "Active", colors.rose],
-          ]).flatMap(([supplyItem, name, color]) => [
-            line({ metric: supplyItem.sats, name, color, unit: Unit.sats }),
-            line({ metric: supplyItem.bitcoin, name, color, unit: Unit.btc }),
-            line({ metric: supplyItem.dollars, name, color, unit: Unit.usd }),
-          ]),
+          ...satsBtcUsd(ctx, all.supply.total, "All", colors.orange),
+          ...satsBtcUsd(ctx, cointimeSupply.vaultedSupply, "Vaulted", colors.lime),
+          ...satsBtcUsd(ctx, cointimeSupply.activeSupply, "Active", colors.rose),
         ],
       },
 
