@@ -219,9 +219,10 @@ export function importStyle(href) {
  * @param {string} [args.id]
  * @param {readonly T[] | Accessor<readonly T[]>} args.choices
  * @param {string} [args.keyPrefix]
- * @param {string} args.key
+ * @param {string} [args.key]
  * @param {boolean} [args.sorted]
  * @param {Signals} args.signals
+ * @param {Signal<T>} [args.signal] - Optional external signal to use instead of creating one
  * @param {(choice: T) => string} [args.toKey] - Extract string key for storage (defaults to identity for strings)
  * @param {(choice: T) => string} [args.toLabel] - Extract display label (defaults to identity for strings)
  * @param {"radio" | "select"} [args.type] - Render as radio buttons or select dropdown
@@ -233,6 +234,7 @@ export function createChoiceField({
   keyPrefix,
   key,
   signals,
+  signal: externalSignal,
   sorted,
   toKey = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
   toLabel = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
@@ -268,12 +270,12 @@ export function createChoiceField({
   }
 
   /** @type {Signal<T>} */
-  const selected = signals.createSignal(defaultValue, {
+  const selected = externalSignal ?? signals.createSignal(defaultValue, {
     save: {
       serialize: (v) => toKey(v),
       deserialize: (s) => fromKey(s),
       keyPrefix: keyPrefix ?? "",
-      key,
+      key: key ?? "",
       saveDefaultValue: true,
     },
   });

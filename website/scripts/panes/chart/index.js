@@ -469,7 +469,16 @@ function createIndexSelector(option, state) {
     );
   });
 
-  // Create UI that syncs with state.index
+  /** @type {ChartableIndexName} */
+  const defaultIndex = "date";
+  const { field } = createChoiceField({
+    defaultValue: defaultIndex,
+    signal: state.index,
+    choices,
+    id: "index",
+    signals,
+  });
+
   const fieldset = window.document.createElement("fieldset");
   fieldset.id = "interval";
 
@@ -477,32 +486,8 @@ function createIndexSelector(option, state) {
   screenshotSpan.innerText = "interval:";
   fieldset.append(screenshotSpan);
 
-  const select = window.document.createElement("select");
-  select.id = "index";
-  fieldset.append(select);
+  fieldset.append(field);
   fieldset.dataset.size = "sm";
-
-  // Populate and update options when choices change
-  signals.createEffect(choices, (choices) => {
-    const currentValue = state.index();
-    select.innerHTML = "";
-    choices.forEach((choice) => {
-      const option = window.document.createElement("option");
-      option.value = choice;
-      option.textContent = choice;
-      option.selected = choice === currentValue;
-      select.append(option);
-    });
-  });
-
-  // Sync select value with state
-  signals.createEffect(state.index, (value) => {
-    select.value = value;
-  });
-
-  select.addEventListener("change", () => {
-    state.index.set(/** @type {ChartableIndexName} */ (select.value));
-  });
 
   // Convert short name to internal name
   const index = signals.createMemo(() =>
