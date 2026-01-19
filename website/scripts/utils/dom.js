@@ -317,8 +317,8 @@ export function createChoiceField({
       }
     } else if (type === "select") {
       const select = window.document.createElement("select");
-      select.id = id ?? key;
-      select.name = id ?? key;
+      select.id = id ?? key ?? "";
+      select.name = id ?? key ?? "";
 
       choices.forEach((choice) => {
         const option = window.document.createElement("option");
@@ -346,12 +346,13 @@ export function createChoiceField({
         }
       }
     } else {
+      const fieldId = id ?? key ?? "";
       choices.forEach((choice) => {
         const choiceKey = toKey(choice);
         const choiceLabel = toLabel(choice);
         const { label } = createLabeledInput({
-          inputId: `${id ?? key}-${choiceKey.toLowerCase()}`,
-          inputName: id ?? key,
+          inputId: `${fieldId}-${choiceKey.toLowerCase()}`,
+          inputName: fieldId,
           inputValue: choiceKey,
           inputChecked: choiceKey === sKey,
           // title: choiceLabel,
