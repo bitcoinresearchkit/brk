@@ -37,7 +37,7 @@ import { resources } from "../resources.js";
  * @property {number} paneIndex
  * @property {Signal<boolean>} active
  * @property {Signal<boolean>} highlighted
- * @property {Signal<boolean>} hasData
+ * @property {() => boolean} hasData
  * @property {Signal<string | null>} url
  * @property {() => readonly T[]} getData
  * @property {(data: T) => void} update
@@ -402,7 +402,7 @@ export function createChart({
 
       setup({ active, highlighted, zOrder: -order });
 
-      const hasData = signals.createSignal(false);
+      let hasData = false;
       let lastTime = -Infinity;
 
       /** @type {MetricResource<unknown> | undefined} */
@@ -412,7 +412,7 @@ export function createChart({
       const series = {
         active,
         highlighted,
-        hasData,
+        hasData: () => hasData,
         id,
         paneIndex,
         url: signals.createSignal(/** @type {string | null} */ (null)),
@@ -496,7 +496,7 @@ export function createChart({
 
               // Find start index for processing
               let startIdx = 0;
-              if (hasData()) {
+              if (hasData) {
                 // Binary search to find first index where time >= lastTime
                 let lo = 0;
                 let hi = length;
@@ -532,7 +532,7 @@ export function createChart({
                 }
               }
 
-              if (!hasData()) {
+              if (!hasData) {
                 // Initial load: build full array
                 const data = /** @type {LineData[] | CandlestickData[]} */ (
                   Array.from({ length })
@@ -564,7 +564,7 @@ export function createChart({
                 data.length -= timeOffset;
 
                 setData(data);
-                hasData.set(true);
+                hasData = true;
                 lastTime =
                   /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
 
@@ -596,7 +596,7 @@ export function createChart({
       } else if (data) {
         signals.createEffect(data, (data) => {
           setData(data);
-          hasData.set(true);
+          hasData = true;
           if (fitContent) {
             ichart.timeScale().fitContent();
           }

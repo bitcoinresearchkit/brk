@@ -12,11 +12,11 @@ use vecdb::{
 };
 
 use crate::{
-    ComputeIndexes, indexes,
+    indexes,
     internal::{
         ComputedVecValue, CumulativeVec, LazyDateDerivedSumCum, LazySumCum, NumericValue, SumCum,
-        compute_cumulative,
     },
+    ComputeIndexes,
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -99,7 +99,10 @@ where
         source: &impl IterableVec<Height, T>,
         exit: &Exit,
     ) -> Result<()> {
-        compute_cumulative(max_from, source, &mut self.height_cumulative.0, exit)
+        self.height_cumulative
+            .0
+            .compute_cumulative(max_from, source, exit)?;
+        Ok(())
     }
 
     fn compute_dateindex_sum_cum(

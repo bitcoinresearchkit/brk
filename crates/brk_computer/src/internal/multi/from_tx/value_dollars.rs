@@ -16,11 +16,12 @@ use vecdb::{
 };
 
 use crate::{
-    ComputeIndexes, indexes,
+    indexes,
     internal::{
         CumulativeVec, Full, LazyBinaryTransformFull, LazyDateDerivedFull, LazyFull,
-        SatsTimesClosePrice, Stats, compute_cumulative,
+        SatsTimesClosePrice, Stats,
     },
+    ComputeIndexes,
 };
 
 /// Lazy dollars at TxIndex: `sats * price[height]`
@@ -136,10 +137,9 @@ impl ValueDollarsFromTxFull {
         exit: &Exit,
     ) -> Result<()> {
         // Compute height cumulative by summing lazy height.sum values
-        compute_cumulative(
+        self.height_cumulative.0.compute_cumulative(
             starting_indexes.height,
             &self.height.sum,
-            &mut self.height_cumulative.0,
             exit,
         )?;
 
