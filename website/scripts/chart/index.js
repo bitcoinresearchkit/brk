@@ -1,5 +1,6 @@
 import {
   createChart as _createChart,
+  createSeriesMarkers,
   CandlestickSeries,
   HistogramSeries,
   LineSeries,
@@ -35,15 +36,15 @@ import { resources } from "../resources.js";
  * @template T
  * @typedef {Object} Series
  * @property {string} id
- * @property {() => ISeries} inner
  * @property {number} paneIndex
  * @property {Signal<boolean>} active
+ * @property {Signal<boolean>} highlighted
  * @property {Signal<boolean>} hasData
  * @property {Signal<string | null>} url
- * @property {() => Record<string, any>} getOptions
- * @property {(options: Record<string, any>) => void} applyOptions
  * @property {() => readonly T[]} getData
  * @property {(data: T) => void} update
+ * @property {(markers: TimeSeriesMarker[]) => void} setMarkers
+ * @property {VoidFunction} clearMarkers
  * @property {VoidFunction} remove
  */
 
@@ -96,6 +97,10 @@ export function createChartElement({
   const div = window.document.createElement("div");
   div.classList.add("chart");
   parent.append(div);
+
+  // Registry for shared legend signals (same name = linked across panes)
+  /** @type {Map<string, Signal<boolean>>} */
+  const sharedActiveSignals = new Map();
 
   const legendTop = createLegend(signals);
   div.append(legendTop.element);
@@ -165,7 +170,10 @@ export function createChartElement({
     });
   };
 
-  const seriesList = signals.createSignal(/** @type {Set<AnySeries>} */ (new Set()), { equals: false });
+  const seriesList = signals.createSignal(
+    /** @type {Set<AnySeries>} */ (new Set()),
+    { equals: false },
+  );
   const seriesCount = signals.createMemo(() => seriesList().size);
   const markers = createMinMaxMarkers({
     chart: ichart,
@@ -186,7 +194,7 @@ export function createChartElement({
     () => visibleBarsCountBucket() >= 2,
   );
   const shouldUpdateMarkers = signals.createMemo(
-    () => visibleBarsCount() * seriesCount() <= 5000,
+    () => visibleBarsCount() * seriesCount() <= 20_000,
   );
 
   signals.createEffect(shouldUpdateMarkers, (should) => {
@@ -337,12 +345,20 @@ export function createChartElement({
       paneIndex,
       position: "sw",
       createChild(pane) {
-        const { field, selected } = createChoiceField({
+        const defaultValue =
+          unit.id === "usd" && seriesType !== "Baseline" ? "log" : "lin";
+        const selected = signals.createPersistedSignal({
+          defaultValue,
+          storageKey: `${id}-scale-${paneIndex}`,
+          urlKey: paneIndex === 0 ? "price_scale" : "unit_scale",
+          serialize: (v) => v,
+          deserialize: (s) => /** @type {"lin" | "log"} */ (s),
+        });
+        const field = createChoiceField({
           choices: /** @type {const} */ (["lin", "log"]),
           id: stringToId(`${id} ${paneIndex} ${unit}`),
-          defaultValue:
-            unit.id === "usd" && seriesType !== "Baseline" ? "log" : "lin",
-          key: `${id}-price-scale-${paneIndex}`,
+          defaultValue,
+          selected,
           signals,
         });
 
@@ -366,21 +382,19 @@ export function createChartElement({
    * @param {number} args.order
    * @param {Color[]} args.colors
    * @param {LCSeriesType} args.seriesType
-   * @param {() => ISeries} args.inner
    * @param {AnyMetricPattern} [args.metric]
    * @param {Accessor<WhitespaceData[]>} [args.data]
    * @param {number} args.paneIndex
    * @param {boolean} [args.defaultActive]
-   * @param {(ctx: { active: Signal<boolean> }) => void} args.setup
+   * @param {(ctx: { active: Signal<boolean>, highlighted: Signal<boolean> }) => void} args.setup
    * @param {() => readonly any[]} args.getData
    * @param {(data: any[]) => void} args.setData
    * @param {(data: any) => void} args.update
-   * @param {() => Record<string, any>} args.getOptions
-   * @param {(options: Record<string, any>) => void} args.applyOptions
+   * @param {(markers: TimeSeriesMarker[]) => void} args.setMarkers
+   * @param {VoidFunction} args.clearMarkers
    * @param {() => void} args.onRemove
    */
   function addSeries({
-    inner,
     metric,
     name,
     unit,
@@ -394,22 +408,34 @@ export function createChartElement({
     getData,
     setData,
     update,
-    getOptions,
-    applyOptions,
+    setMarkers,
+    clearMarkers,
     onRemove,
   }) {
     return signals.createRoot((dispose) => {
       const id = `${stringToId(name)}-${paneIndex}`;
+      const urlId = stringToId(name);
 
-      const active = signals.createSignal(defaultActive ?? true, {
-        save: {
-          keyPrefix: "",
-          key: id,
+      // Reuse existing signal if same name (links legends across panes)
+      let active = sharedActiveSignals.get(urlId);
+      if (!active) {
+        active = signals.createPersistedSignal({
+          defaultValue: defaultActive ?? true,
+          storageKey: id,
+          urlKey: urlId,
           ...serdeBool,
-        },
-      });
+        });
+        sharedActiveSignals.set(urlId, active);
+      }
 
-      setup({ active });
+      const highlighted = signals.createSignal(true);
+
+      setup({ active, highlighted });
+
+      // Update markers when active changes
+      signals.createEffect(active, () => {
+        if (shouldUpdateMarkers()) markers.scheduleUpdate();
+      });
 
       const hasData = signals.createSignal(false);
       let lastTime = -Infinity;
@@ -420,15 +446,15 @@ export function createChartElement({
       /** @type {AnySeries} */
       const series = {
         active,
+        highlighted,
         hasData,
         id,
-        inner,
         paneIndex,
         url: signals.createSignal(/** @type {string | null} */ (null)),
-        getOptions,
-        applyOptions,
         getData,
         update,
+        setMarkers,
+        clearMarkers,
         remove() {
           dispose();
           onRemove();
@@ -705,8 +731,10 @@ export function createChartElement({
         )
       );
 
+      // Marker plugin always on candlestick (has true min/max via high/low)
+      const markerPlugin = createSeriesMarkers(candlestickISeries, [], { autoScale: false });
+
       const series = addSeries({
-        inner: () => (showLine ? lineISeries : candlestickISeries),
         colors: [upColor, downColor],
         name,
         order,
@@ -716,22 +744,34 @@ export function createChartElement({
         data,
         defaultActive,
         metric,
-        setup: ({ active }) => {
+        setup: ({ active, highlighted }) => {
           candlestickISeries.setSeriesOrder(order);
           lineISeries.setSeriesOrder(order);
           signals.createEffect(
             () => ({
               shouldShow: shouldShowLine(),
               active: active(),
+              highlighted: highlighted(),
               barsCount: visibleBarsCount(),
             }),
-            ({ shouldShow, active, barsCount }) => {
+            ({ shouldShow, active, highlighted, barsCount }) => {
               if (barsCount === Infinity) return;
               const wasLine = showLine;
               showLine = shouldShow;
-              candlestickISeries.applyOptions({ visible: active && !showLine });
+              // Use transparent when showing the other mode, otherwise use highlight
+              const up = showLine ? "transparent" : upColor.highlight(highlighted);
+              const down = showLine ? "transparent" : downColor.highlight(highlighted);
+              const line = showLine ? colors.default.highlight(highlighted) : "transparent";
+              candlestickISeries.applyOptions({
+                visible: active,
+                upColor: up,
+                downColor: down,
+                wickUpColor: up,
+                wickDownColor: down,
+              });
               lineISeries.applyOptions({
-                visible: active && showLine,
+                visible: active,
+                color: line,
                 priceLineVisible: active && showLine,
               });
               if (wasLine !== showLine && shouldUpdateMarkers())
@@ -749,12 +789,8 @@ export function createChartElement({
           lineISeries.update({ time: data.time, value: data.close });
         },
         getData: () => candlestickISeries.data(),
-        getOptions: () =>
-          showLine ? lineISeries.options() : candlestickISeries.options(),
-        applyOptions: (options) =>
-          showLine
-            ? lineISeries.applyOptions(options)
-            : candlestickISeries.applyOptions(options),
+        setMarkers: (m) => markerPlugin.setMarkers(m),
+        clearMarkers: () => markerPlugin.setMarkers([]),
         onRemove: () => {
           ichart.removeSeries(candlestickISeries);
           ichart.removeSeries(lineISeries);
@@ -803,8 +839,9 @@ export function createChartElement({
         )
       );
 
+      const markerPlugin = createSeriesMarkers(iseries, [], { autoScale: false });
+
       const series = addSeries({
-        inner: () => iseries,
         colors: isDualColor ? [positiveColor, negativeColor] : [positiveColor],
         name,
         order,
@@ -814,10 +851,16 @@ export function createChartElement({
         data,
         defaultActive,
         metric,
-        setup: ({ active }) => {
+        setup: ({ active, highlighted }) => {
           iseries.setSeriesOrder(order);
-          signals.createEffect(active, (active) =>
-            iseries.applyOptions({ visible: active }),
+          signals.createEffect(
+            () => ({ active: active(), highlighted: highlighted() }),
+            ({ active, highlighted }) => {
+              iseries.applyOptions({
+                visible: active,
+                color: positiveColor.highlight(highlighted),
+              });
+            },
           );
         },
         setData: (data) => {
@@ -837,8 +880,8 @@ export function createChartElement({
         },
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        getOptions: () => iseries.options(),
-        applyOptions: (options) => iseries.applyOptions(options),
+        setMarkers: (m) => markerPlugin.setMarkers(m),
+        clearMarkers: () => markerPlugin.setMarkers([]),
         onRemove: () => ichart.removeSeries(iseries),
       });
       return series;
@@ -883,8 +926,9 @@ export function createChartElement({
         )
       );
 
+      const markerPlugin = createSeriesMarkers(iseries, [], { autoScale: false });
+
       const series = addSeries({
-        inner: () => iseries,
         colors: [color],
         name,
         order,
@@ -894,17 +938,23 @@ export function createChartElement({
         data,
         defaultActive,
         metric,
-        setup: ({ active }) => {
+        setup: ({ active, highlighted }) => {
           iseries.setSeriesOrder(order);
-          signals.createEffect(active, (active) =>
-            iseries.applyOptions({ visible: active }),
+          signals.createEffect(
+            () => ({ active: active(), highlighted: highlighted() }),
+            ({ active, highlighted }) => {
+              iseries.applyOptions({
+                visible: active,
+                color: color.highlight(highlighted),
+              });
+            },
           );
         },
         setData: (data) => iseries.setData(data),
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        getOptions: () => iseries.options(),
-        applyOptions: (options) => iseries.applyOptions(options),
+        setMarkers: (m) => markerPlugin.setMarkers(m),
+        clearMarkers: () => markerPlugin.setMarkers([]),
         onRemove: () => ichart.removeSeries(iseries),
       });
       return series;
@@ -951,8 +1001,9 @@ export function createChartElement({
         )
       );
 
+      const markerPlugin = createSeriesMarkers(iseries, [], { autoScale: false });
+
       const series = addSeries({
-        inner: () => iseries,
         colors: [color],
         name,
         order,
@@ -962,10 +1013,16 @@ export function createChartElement({
         data,
         defaultActive,
         metric,
-        setup: ({ active }) => {
+        setup: ({ active, highlighted }) => {
           iseries.setSeriesOrder(order);
-          signals.createEffect(active, (active) =>
-            iseries.applyOptions({ visible: active }),
+          signals.createEffect(
+            () => ({ active: active(), highlighted: highlighted() }),
+            ({ active, highlighted }) => {
+              iseries.applyOptions({
+                visible: active,
+                color: color.highlight(highlighted),
+              });
+            },
           );
           signals.createEffect(visibleBarsCountBucket, (bucket) => {
             const radius = bucket === 3 ? 1 : bucket >= 1 ? 1.5 : 2;
@@ -975,8 +1032,8 @@ export function createChartElement({
         setData: (data) => iseries.setData(data),
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        getOptions: () => iseries.options(),
-        applyOptions: (options) => iseries.applyOptions(options),
+        setMarkers: (m) => markerPlugin.setMarkers(m),
+        clearMarkers: () => markerPlugin.setMarkers([]),
         onRemove: () => ichart.removeSeries(iseries),
       });
       return series;
@@ -990,6 +1047,8 @@ export function createChartElement({
      * @param {AnyMetricPattern} [args.metric]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
+     * @param {Color} [args.topColor]
+     * @param {Color} [args.bottomColor]
      * @param {BaselineSeriesPartialOptions} [args.options]
      */
     addBaselineSeries({
@@ -1000,6 +1059,8 @@ export function createChartElement({
       paneIndex: _paneIndex,
       defaultActive,
       data,
+      topColor = colors.green,
+      bottomColor = colors.red,
       options,
     }) {
       const paneIndex = _paneIndex ?? 0;
@@ -1015,8 +1076,8 @@ export function createChartElement({
               price: options?.baseValue?.price ?? 0,
             },
             ...options,
-            topLineColor: options?.topLineColor ?? colors.green(),
-            bottomLineColor: options?.bottomLineColor ?? colors.red(),
+            topLineColor: topColor(),
+            bottomLineColor: bottomColor(),
             priceLineVisible: false,
             bottomFillColor1: "transparent",
             bottomFillColor2: "transparent",
@@ -1028,12 +1089,10 @@ export function createChartElement({
         )
       );
 
+      const markerPlugin = createSeriesMarkers(iseries, [], { autoScale: false });
+
       const series = addSeries({
-        inner: () => iseries,
-        colors: [
-          () => options?.topLineColor ?? colors.green(),
-          () => options?.bottomLineColor ?? colors.red(),
-        ],
+        colors: [topColor, bottomColor],
         name,
         order,
         paneIndex,
@@ -1042,17 +1101,24 @@ export function createChartElement({
         data,
         defaultActive,
         metric,
-        setup: ({ active }) => {
+        setup: ({ active, highlighted }) => {
           iseries.setSeriesOrder(order);
-          signals.createEffect(active, (active) =>
-            iseries.applyOptions({ visible: active }),
+          signals.createEffect(
+            () => ({ active: active(), highlighted: highlighted() }),
+            ({ active, highlighted }) => {
+              iseries.applyOptions({
+                visible: active,
+                topLineColor: topColor.highlight(highlighted),
+                bottomLineColor: bottomColor.highlight(highlighted),
+              });
+            },
           );
         },
         setData: (data) => iseries.setData(data),
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        getOptions: () => iseries.options(),
-        applyOptions: (options) => iseries.applyOptions(options),
+        setMarkers: (m) => markerPlugin.setMarkers(m),
+        clearMarkers: () => markerPlugin.setMarkers([]),
         onRemove: () => ichart.removeSeries(iseries),
       });
       return series;

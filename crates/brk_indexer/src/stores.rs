@@ -383,11 +383,9 @@ impl Stores {
     pub fn reset(&mut self) -> Result<()> {
         info!("Resetting stores...");
 
-        // Clear all keyspaces
-        self.iter_any().try_for_each(|store| -> Result<()> {
-            store.keyspace().clear()?;
-            Ok(())
-        })?;
+        // Clear all stores (both in-memory buffers and on-disk keyspaces)
+        self.par_iter_any_mut()
+            .try_for_each(|store| store.reset())?;
 
         // Persist the cleared state
         self.db.persist(PersistMode::SyncAll)?;

@@ -13,6 +13,7 @@ impl Query {
             total,
             start,
             end,
+            ..
         } = resolved;
 
         if vecs.is_empty() {

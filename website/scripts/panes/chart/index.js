@@ -12,6 +12,7 @@ import { createChartElement } from "../../chart/index.js";
 import { createChartState } from "../../chart/state.js";
 import { webSockets } from "../../utils/ws.js";
 import { screenshot } from "./screenshot.js";
+import { debounce } from "../../utils/timing.js";
 
 const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
@@ -89,20 +90,34 @@ export function init({ colors, option, brk }) {
     });
   }
 
+  // Sync chart → state.range on user pan/zoom
+  // Debounce to avoid rapid URL updates while panning
+  const debouncedSetRange = debounce(
+    (/** @type {{ from: number, to: number }} */ range) => state.setRange(range),
+    500,
+  );
   chart.onVisibleLogicalRangeChange((t) => {
-    if (!t) return;
-    state.setRange({ from: t.from, to: t.to });
+    if (!t || t.from >= t.to) return;
+    debouncedSetRange({ from: t.from, to: t.to });
   });
 
   chartElement.append(fieldset);
 
-  const { field: topUnitField, selected: topUnit } = createChoiceField({
+  const unitChoices = /** @type {const} */ ([Unit.usd, Unit.sats]);
+  /** @type {Signal<Unit>} */
+  const topUnit = signals.createPersistedSignal({
+    defaultValue: /** @type {Unit} */ (Unit.usd),
+    storageKey: `${keyPrefix}-price`,
+    urlKey: "price",
+    serialize: (u) => u.id,
+    deserialize: (s) => /** @type {Unit} */ (unitChoices.find((u) => u.id === s) ?? Unit.usd),
+  });
+  const topUnitField = createChoiceField({
     defaultValue: Unit.usd,
-    keyPrefix,
-    key: "unit-0",
-    choices: [Unit.usd, Unit.sats],
+    choices: unitChoices,
     toKey: (u) => u.id,
     toLabel: (u) => u.name,
+    selected: topUnit,
     signals,
     sorted: true,
     type: "select",
@@ -207,23 +222,28 @@ export function init({ colors, option, brk }) {
 
     const bottomUnits = Array.from(option.bottom.keys());
 
-    /** @type {{ field: HTMLDivElement, selected: Accessor<Unit> } | undefined} */
+    /** @type {{ field: HTMLDivElement, selected: Signal<Unit> } | undefined} */
     let bottomUnitSelector;
 
     if (bottomUnits.length) {
-      bottomUnitSelector = createChoiceField({
+      const selected = signals.createPersistedSignal({
         defaultValue: bottomUnits[0],
-        keyPrefix,
-        key: "unit-1",
+        storageKey: `${keyPrefix}-unit`,
+        urlKey: "unit",
+        serialize: (u) => u.id,
+        deserialize: (s) => bottomUnits.find((u) => u.id === s) ?? bottomUnits[0],
+      });
+      const field = createChoiceField({
+        defaultValue: bottomUnits[0],
         choices: bottomUnits,
         toKey: (u) => u.id,
         toLabel: (u) => u.name,
+        selected,
         signals,
         sorted: true,
         type: "select",
       });
-
-      const field = bottomUnitSelector.field;
+      bottomUnitSelector = { field, selected };
       chart.addFieldsetIfNeeded({
         id: "charts-unit-1",
         paneIndex: 1,
@@ -471,9 +491,9 @@ function createIndexSelector(option, state) {
 
   /** @type {ChartableIndexName} */
   const defaultIndex = "date";
-  const { field } = createChoiceField({
+  const field = createChoiceField({
     defaultValue: defaultIndex,
-    signal: state.index,
+    selected: state.index,
     choices,
     id: "index",
     signals,

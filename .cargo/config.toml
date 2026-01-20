@@ -1,2 +1,15 @@
 [build]
 rustflags = ["-C", "target-cpu=native"]
+
+# pco (pcodec) decompression is significantly faster with these SIMD instructions
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "target-cpu=native", "-C", "target-feature=+bmi1,+bmi2,+avx2"]
+
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "target-cpu=native", "-C", "target-feature=+bmi1,+bmi2,+avx2"]
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-cpu=native", "-C", "target-feature=+bmi1,+bmi2,+avx2"]
+
+[target.x86_64-pc-windows-gnu]
+rustflags = ["-C", "target-cpu=native", "-C", "target-feature=+bmi1,+bmi2,+avx2"]

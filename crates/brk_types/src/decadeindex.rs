@@ -23,16 +23,16 @@ use super::{Date, DateIndex, YearIndex};
     Pco,
     JsonSchema,
 )]
-pub struct DecadeIndex(u16);
+pub struct DecadeIndex(u8);
 
-impl From<u16> for DecadeIndex {
+impl From<u8> for DecadeIndex {
     #[inline]
-    fn from(value: u16) -> Self {
+    fn from(value: u8) -> Self {
         Self(value)
     }
 }
 
-impl From<DecadeIndex> for u16 {
+impl From<DecadeIndex> for u8 {
     #[inline]
     fn from(value: DecadeIndex) -> Self {
         value.0
@@ -42,7 +42,7 @@ impl From<DecadeIndex> for u16 {
 impl From<usize> for DecadeIndex {
     #[inline]
     fn from(value: usize) -> Self {
-        Self(value as u16)
+        Self(value as u8)
     }
 }
 
@@ -57,7 +57,7 @@ impl Add<usize> for DecadeIndex {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
-        Self::from(self.0 + rhs as u16)
+        Self::from(self.0 + rhs as u8)
     }
 }
 
@@ -96,7 +96,7 @@ impl From<Date> for DecadeIndex {
         if year < 2000 {
             panic!("unsupported")
         }
-        Self((year - 2000) / 10)
+        Self(((year - 2000) / 10) as u8)
     }
 }
 
@@ -113,7 +113,7 @@ impl From<YearIndex> for DecadeIndex {
         if v == 0 {
             Self(0)
         } else {
-            Self((((v - 1) / 10) + 1) as u16)
+            Self((((v - 1) / 10) + 1) as u8)
         }
     }
 }

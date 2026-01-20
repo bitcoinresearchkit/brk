@@ -19,3 +19,11 @@ memmap2 = "0.9"
 plotters = "0.3"
 tracing = { workspace = true }
 vecdb = { workspace = true }
+
+[[example]]
+name = "heatmap"
+path = "examples/heatmap.rs"
+
+[[example]]
+name = "oracle"
+path = "examples/oracle.rs"

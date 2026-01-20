@@ -1,9 +1,6 @@
 import { createLabeledInput, createSpanName } from "../utils/dom.js";
 import { stringToId } from "../utils/format.js";
 
-/** @param {string} color */
-const tameColor = (color) => `${color.slice(0, -1)} / 50%)`;
-
 /**
  * @param {Signals} signals
  */
@@ -52,6 +49,11 @@ export function createLegend(signals) {
         type: "checkbox",
       });
 
+      // Sync checkbox with signal (for shared signals across panes)
+      signals.createEffect(series.active, (active) => {
+        input.checked = active;
+      });
+
       const spanMain = window.document.createElement("span");
       spanMain.classList.add("main");
       label.append(spanMain);
@@ -72,6 +74,11 @@ export function createLegend(signals) {
 
       const shouldHighlight = () => !hovered() || hovered() === series;
 
+      // Update series highlighted state
+      signals.createEffect(shouldHighlight, (shouldHighlight) => {
+        series.highlighted.set(shouldHighlight);
+      });
+
       const spanColors = window.document.createElement("span");
       spanColors.classList.add("colors");
       spanMain.prepend(spanColors);
@@ -80,43 +87,11 @@ export function createLegend(signals) {
         spanColors.append(spanColor);
 
         signals.createEffect(
-          () => ({
-            color: color(),
-            shouldHighlight: shouldHighlight(),
-          }),
-          ({ color, shouldHighlight }) => {
-            if (shouldHighlight) {
-              spanColor.style.backgroundColor = color;
-            } else {
-              spanColor.style.backgroundColor = tameColor(color);
-            }
+          () => color.highlight(shouldHighlight()),
+          (c) => {
+            spanColor.style.backgroundColor = c;
           },
         );
-      });
-
-      const initialColors = /** @type {Record<string, any>} */ ({});
-      const darkenedColors = /** @type {Record<string, any>} */ ({});
-
-      const seriesOptions = series.getOptions();
-      if (!seriesOptions) return;
-
-      Object.entries(seriesOptions).forEach(([k, v]) => {
-        if (k.toLowerCase().includes("color") && typeof v === "string") {
-          if (!v.startsWith("oklch")) return;
-          initialColors[k] = v;
-          darkenedColors[k] = tameColor(v);
-        } else if (k === "lastValueVisible" && v) {
-          initialColors[k] = true;
-          darkenedColors[k] = false;
-        }
-      });
-
-      signals.createEffect(shouldHighlight, (shouldHighlight) => {
-        if (shouldHighlight) {
-          series.applyOptions(initialColors);
-        } else {
-          series.applyOptions(darkenedColors);
-        }
       });
 
       const anchor = window.document.createElement("a");

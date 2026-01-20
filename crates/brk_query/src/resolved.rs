@@ -10,11 +10,12 @@ pub struct ResolvedQuery {
     pub(crate) total: usize,
     pub(crate) start: usize,
     pub(crate) end: usize,
+    pub(crate) height: u32,
 }
 
 impl ResolvedQuery {
     pub fn etag(&self) -> Etag {
-        Etag::from_metric(self.version, self.total, self.start, self.end)
+        Etag::from_metric(self.version, self.total, self.start, self.end, self.height)
     }
 
     pub fn format(&self) -> Format {

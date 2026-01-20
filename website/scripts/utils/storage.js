@@ -1,28 +1,6 @@
 /**
  * @param {string} key
  */
-export function readStoredNumber(key) {
-  const saved = readStored(key);
-  if (saved) {
-    return Number(saved);
-  }
-  return null;
-}
-
-/**
- * @param {string} key
- */
-export function readStoredBool(key) {
-  const saved = readStored(key);
-  if (saved) {
-    return saved === "true" || saved === "1";
-  }
-  return null;
-}
-
-/**
- * @param {string} key
- */
 export function readStored(key) {
   try {
     return localStorage.getItem(key);

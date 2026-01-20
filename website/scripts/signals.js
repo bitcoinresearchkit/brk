@@ -24,6 +24,8 @@ import {
   onCleanup,
 } from "./modules/solidjs-signals/0.6.3/dist/prod.js";
 import { debounce } from "./utils/timing.js";
+import { writeParam, readParam } from "./utils/url.js";
+import { readStored, writeToStorage } from "./utils/storage.js";
 
 let effectCount = 0;
 
@@ -68,14 +70,11 @@ const signals = {
   /**
    * @template T
    * @param {T} initialValue
-   * @param {SignalOptions<T> & {save?: {keyPrefix: string | Accessor<string>; key: string; serialize: (v: T) => string; deserialize: (v: string) => T; serializeParam?: boolean; saveDefaultValue?: boolean}}} [options]
+   * @param {SignalOptions<T>} [options]
    * @returns {Signal<T>}
    */
   createSignal(initialValue, options) {
-    const [get, set] = this.createSolidSignal(
-      /** @type {any} */ (initialValue),
-      options,
-    );
+    const [get, set] = this.createSolidSignal(/** @type {any} */ (initialValue), options);
 
     // @ts-ignore
     get.set = set;
@@ -83,148 +82,70 @@ const signals = {
     // @ts-ignore
     get.reset = () => set(initialValue);
 
-    if (options?.save) {
-      const save = options.save;
-
-      const paramKey = save.key;
-      const storageKey = this.createMemo(
-        () =>
-          `${
-            typeof save.keyPrefix === "string"
-              ? save.keyPrefix
-              : save.keyPrefix()
-          }-${paramKey}`,
-      );
-
-      // /** @type { ((this: Window, ev: PopStateEvent) => any) | undefined} */
-      // let popstateCallback;
-
-      let serialized = /** @type {string | null} */ (null);
-      if (options.save.serializeParam !== false) {
-        serialized = new URLSearchParams(window.location.search).get(paramKey);
-
-        // popstateCallback =
-        //   /** @type {(this: Window, ev: PopStateEvent) => any} */ (
-        //     (_) => {
-        //       serialized = new URLSearchParams(window.location.search).get(
-        //         paramKey,
-        //       );
-        //       set(() =>
-        //         serialized ? save.deserialize(serialized) : initialValue,
-        //       );
-        //     }
-        //   );
-        // if (!popstateCallback) throw "Unreachable";
-        // window.addEventListener("popstate", popstateCallback);
-        // signals.onCleanup(() => {
-        //   if (popstateCallback)
-        //     window.removeEventListener("popstate", popstateCallback);
-        // });
-      }
-      if (serialized === null) {
-        try {
-          serialized = localStorage.getItem(storageKey());
-        } catch (_) {}
-      }
-      if (serialized) {
-        set(() => (serialized ? save.deserialize(serialized) : initialValue));
-      }
-
-      let firstRun1 = true;
-      this.createEffect(storageKey, (storageKey) => {
-        if (!firstRun1) {
-          try {
-            serialized = localStorage.getItem(storageKey);
-            set(() =>
-              serialized ? save.deserialize(serialized) : initialValue,
-            );
-          } catch (_) {}
-        }
-        firstRun1 = false;
-      });
-
-      let firstRun2 = true;
-
-      const debouncedSave = debounce(
-        /** @param {T} value */ (value) => {
-          try {
-            if (
-              value !== undefined &&
-              value !== null &&
-              (initialValue === undefined ||
-                initialValue === null ||
-                save.saveDefaultValue ||
-                save.serialize(value) !== save.serialize(initialValue))
-            ) {
-              localStorage.setItem(storageKey(), save.serialize(value));
-              writeParam(paramKey, save.serialize(value));
-            } else {
-              localStorage.removeItem(storageKey());
-              removeParam(paramKey);
-            }
-          } catch (_) {}
-        },
-        250,
-      );
-
-      this.createEffect(get, (value) => {
-        if (!save) return;
-
-        if (firstRun2) {
-          // First run: sync URL params immediately
-          if (
-            value !== undefined &&
-            value !== null &&
-            (initialValue === undefined ||
-              initialValue === null ||
-              save.saveDefaultValue ||
-              save.serialize(value) !== save.serialize(initialValue))
-          ) {
-            writeParam(paramKey, save.serialize(value));
-          } else {
-            removeParam(paramKey);
-          }
-          firstRun2 = false;
-        } else {
-          // Subsequent runs: debounce
-          debouncedSave(value);
-        }
-      });
-    }
-
     // @ts-ignore
     return get;
   },
+  /**
+   * @template T
+   * @param {Object} args
+   * @param {T} args.defaultValue
+   * @param {string} args.storageKey
+   * @param {string} [args.urlKey]
+   * @param {(v: T) => string} args.serialize
+   * @param {(s: string) => T} args.deserialize
+   * @param {boolean} [args.saveDefaultValue]
+   * @returns {Signal<T>}
+   */
+  createPersistedSignal({
+    defaultValue,
+    storageKey,
+    urlKey,
+    serialize,
+    deserialize,
+    saveDefaultValue = false,
+  }) {
+    const defaultSerialized = serialize(defaultValue);
+
+    // Read: URL > localStorage > default
+    let serialized = urlKey ? readParam(urlKey) : null;
+    if (serialized === null) {
+      serialized = readStored(storageKey);
+    }
+    const initialValue = serialized !== null ? deserialize(serialized) : defaultValue;
+
+    const signal = this.createSignal(initialValue);
+
+    /** @param {T} value */
+    const write = (value) => {
+      const s = serialize(value);
+      const isDefault = s === defaultSerialized;
+
+      if (!isDefault || saveDefaultValue) {
+        writeToStorage(storageKey, s);
+      } else {
+        writeToStorage(storageKey, null);
+      }
+
+      if (urlKey) {
+        writeParam(urlKey, !isDefault || saveDefaultValue ? s : null);
+      }
+    };
+
+    const debouncedWrite = debounce(write, 250);
+
+    let firstRun = true;
+    this.createEffect(signal, (value) => {
+      if (firstRun) {
+        write(value);
+        firstRun = false;
+      } else {
+        debouncedWrite(value);
+      }
+    });
+
+    return signal;
+  },
 };
 /** @typedef {typeof signals} Signals */
-
-/**
- * @param {string} key
- * @param {string | undefined} value
- */
-function writeParam(key, value) {
-  const urlParams = new URLSearchParams(window.location.search);
-
-  if (value !== undefined) {
-    urlParams.set(key, String(value));
-  } else {
-    urlParams.delete(key);
-  }
-
-  try {
-    window.history.replaceState(
-      null,
-      "",
-      `${window.location.pathname}?${urlParams.toString()}`,
-    );
-  } catch (_) {}
-}
-
-/**
- * @param {string} key
- */
-function removeParam(key) {
-  writeParam(key, undefined);
-}
 
 export default signals;

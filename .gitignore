@@ -20,7 +20,8 @@ _*
 /*.html
 /research
 /filter_*
-/heatmaps
+/heatmaps*
+/oracle*
 
 # Logs
 *.log*

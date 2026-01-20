@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Formattable, Pco};
 
-use super::StoredU16;
+use super::StoredU8;
 
 /// Transaction version number
 #[derive(
@@ -20,13 +20,13 @@ use super::StoredU16;
     Pco,
     JsonSchema,
 )]
-pub struct TxVersion(u16);
+pub struct TxVersion(u8);
 
 impl TxVersion {
     pub const ONE: Self = Self(1);
     pub const TWO: Self = Self(2);
     pub const THREE: Self = Self(3);
-    pub const NON_STANDARD: Self = Self(u16::MAX);
+    pub const NON_STANDARD: Self = Self(u8::MAX);
 }
 
 impl From<bitcoin::transaction::Version> for TxVersion {
@@ -48,7 +48,7 @@ impl From<TxVersion> for bitcoin::transaction::Version {
     }
 }
 
-impl From<TxVersion> for StoredU16 {
+impl From<TxVersion> for StoredU8 {
     #[inline]
     fn from(value: TxVersion) -> Self {
         Self::from(value.0)

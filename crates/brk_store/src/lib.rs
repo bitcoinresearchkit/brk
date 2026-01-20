@@ -349,4 +349,15 @@ where
 
         Ok(())
     }
+
+    fn reset(&mut self) -> Result<()> {
+        self.meta.reset()?;
+        self.puts.clear();
+        self.dels.clear();
+        for cache in &mut self.caches {
+            cache.clear();
+        }
+        self.keyspace.clear()?;
+        Ok(())
+    }
 }

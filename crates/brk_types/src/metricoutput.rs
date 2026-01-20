@@ -1,4 +1,4 @@
-use crate::{Etag, Output, OutputLegacy};
+use crate::{Output, OutputLegacy};
 
 /// Metric output with metadata for caching.
 #[derive(Debug)]
@@ -10,12 +10,6 @@ pub struct MetricOutput {
     pub end: usize,
 }
 
-impl MetricOutput {
-    pub fn etag(&self) -> Etag {
-        Etag::from_metric(self.version, self.total, self.start, self.end)
-    }
-}
-
 /// Deprecated: Legacy metric output with metadata for caching.
 #[derive(Debug)]
 pub struct MetricOutputLegacy {
@@ -24,10 +18,4 @@ pub struct MetricOutputLegacy {
     pub total: usize,
     pub start: usize,
     pub end: usize,
-}
-
-impl MetricOutputLegacy {
-    pub fn etag(&self) -> Etag {
-        Etag::from_metric(self.version, self.total, self.start, self.end)
-    }
 }

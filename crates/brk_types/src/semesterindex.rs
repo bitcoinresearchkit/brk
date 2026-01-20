@@ -23,11 +23,11 @@ use super::MonthIndex;
     Pco,
     JsonSchema,
 )]
-pub struct SemesterIndex(u16);
+pub struct SemesterIndex(u8);
 
-impl From<u16> for SemesterIndex {
+impl From<u8> for SemesterIndex {
     #[inline]
-    fn from(value: u16) -> Self {
+    fn from(value: u8) -> Self {
         Self(value)
     }
 }
@@ -35,11 +35,11 @@ impl From<u16> for SemesterIndex {
 impl From<usize> for SemesterIndex {
     #[inline]
     fn from(value: usize) -> Self {
-        Self(value as u16)
+        Self(value as u8)
     }
 }
 
-impl From<SemesterIndex> for u16 {
+impl From<SemesterIndex> for u8 {
     #[inline]
     fn from(value: SemesterIndex) -> Self {
         value.0
@@ -57,7 +57,7 @@ impl Add<usize> for SemesterIndex {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
-        Self::from(self.0 + rhs as u16)
+        Self::from(self.0 + rhs as u8)
     }
 }
 
@@ -85,7 +85,7 @@ impl Div<usize> for SemesterIndex {
 impl From<MonthIndex> for SemesterIndex {
     #[inline]
     fn from(value: MonthIndex) -> Self {
-        Self((usize::from(value) / 6) as u16)
+        Self((usize::from(value) / 6) as u8)
     }
 }
 

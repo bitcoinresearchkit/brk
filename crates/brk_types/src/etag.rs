@@ -44,16 +44,16 @@ impl Etag {
     ///
     /// Format varies based on whether the slice touches the end:
     /// - Slice ends before total: `{version:x}-{start}-{end}` (len irrelevant, data won't change if metric grows)
-    /// - Slice reaches the end: `{version:x}-{start}-{total}` (len matters, new data would change results)
+    /// - Slice reaches the end: `{version:x}-{start}-{total}-{height}` (includes height since last value may be recomputed each block)
     ///
     /// `version` is the metric version for single queries, or the sum of versions for bulk queries.
-    pub fn from_metric(version: u64, total: usize, start: usize, end: usize) -> Self {
+    pub fn from_metric(version: u64, total: usize, start: usize, end: usize, height: u32) -> Self {
         if end < total {
             // Fixed window not at the end - len doesn't matter
             Self(format!("{version:x}-{start}-{end}"))
         } else {
-            // Fetching up to current end - len matters
-            Self(format!("{version:x}-{start}-{total}"))
+            // Fetching up to current end - include height since last value may change each block
+            Self(format!("{version:x}-{start}-{total}-{height}"))
         }
     }
 }

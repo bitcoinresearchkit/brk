@@ -23,7 +23,7 @@ use crate::AddressBytes;
 )]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
-#[repr(u16)]
+#[repr(u8)]
 /// Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
 pub enum OutputType {
     P2PK65,
@@ -41,8 +41,8 @@ pub enum OutputType {
 }
 
 impl OutputType {
-    fn is_valid(value: u16) -> bool {
-        value <= Self::Unknown as u16
+    fn is_valid(value: u8) -> bool {
+        value <= Self::Unknown as u8
     }
 
     pub fn is_spendable(&self) -> bool {
@@ -205,7 +205,7 @@ impl Bytes for OutputType {
 
     #[inline]
     fn to_bytes(&self) -> Self::Array {
-        (*self as u16).to_le_bytes()
+        [*self as u8]
     }
 
     #[inline]
@@ -216,7 +216,7 @@ impl Bytes for OutputType {
                 received: bytes.len(),
             });
         };
-        let value = u16::from_le_bytes([bytes[0], bytes[1]]);
+        let value = bytes[0];
         if !Self::is_valid(value) {
             return Err(vecdb::Error::InvalidArgument("invalid OutputType"));
         }
@@ -227,7 +227,7 @@ impl Bytes for OutputType {
 }
 
 impl Pco for OutputType {
-    type NumberType = u16;
+    type NumberType = u8;
 }
 
-impl TransparentPco<u16> for OutputType {}
+impl TransparentPco<u8> for OutputType {}

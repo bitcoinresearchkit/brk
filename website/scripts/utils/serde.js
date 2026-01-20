@@ -104,10 +104,8 @@ export const serdeBool = {
   deserialize(v) {
     if (v === "true" || v === "1") {
       return true;
-    } else if (v === "false" || v === "0") {
-      return false;
     } else {
-      throw "deser bool err";
+      return false;
     }
   },
 };

@@ -99,7 +99,7 @@ impl From<DateIndex> for MonthIndex {
 impl From<Date> for MonthIndex {
     #[inline]
     fn from(value: Date) -> Self {
-        Self(u16::from(YearIndex::from(value)) * 12 + value.month() as u16 - 1)
+        Self(u8::from(YearIndex::from(value)) as u16 * 12 + value.month() as u16 - 1)
     }
 }
 

@@ -14,6 +14,19 @@ const offline = () =>
     headers: { "Content-Type": "text/plain" },
   });
 
+/**
+ * @param {Request | string} req
+ */
+function fetchAndCache(req) {
+  return fetch(req).then((res) => {
+    if (res.ok) {
+      const clone = res.clone();
+      caches.open(CACHE).then((c) => c.put(req, clone));
+    }
+    return res;
+  });
+}
+
 sw.addEventListener("install", (e) => {
   e.waitUntil(
     caches
@@ -53,12 +66,9 @@ sw.addEventListener("fetch", (event) => {
   // Navigation: network-first for shell
   if (req.mode === "navigate") {
     event.respondWith(
-      fetch(ROOT)
-        .then((res) => {
-          if (res.ok) caches.open(CACHE).then((c) => c.put(ROOT, res.clone()));
-          return res;
-        })
-        .catch(() => caches.match(ROOT).then((c) => c || offline())),
+      fetchAndCache(ROOT).catch(() =>
+        caches.match(ROOT).then((c) => c || offline()),
+      ),
     );
     return;
   }
@@ -68,15 +78,7 @@ sw.addEventListener("fetch", (event) => {
     event.respondWith(
       caches
         .match(req)
-        .then(
-          (cached) =>
-            cached ||
-            fetch(req).then((res) => {
-              if (res.ok)
-                caches.open(CACHE).then((c) => c.put(req, res.clone()));
-              return res;
-            }),
-        )
+        .then((cached) => cached || fetchAndCache(req))
         .catch(() => offline()),
     );
     return;
@@ -86,21 +88,16 @@ sw.addEventListener("fetch", (event) => {
   // SPA routes (no extension) fall back to ROOT, static assets get 503
   const isStatic = path.includes(".") && !path.endsWith(".html");
   event.respondWith(
-    fetch(req)
-      .then((res) => {
-        if (res.ok) caches.open(CACHE).then((c) => c.put(req, res.clone()));
-        return res;
-      })
-      .catch(() =>
-        caches
-          .match(req)
-          .then(
-            (cached) =>
-              cached ||
-              (isStatic
-                ? offline()
-                : caches.match(ROOT).then((c) => c || offline())),
-          ),
-      ),
+    fetchAndCache(req).catch(() =>
+      caches
+        .match(req)
+        .then(
+          (cached) =>
+            cached ||
+            (isStatic
+              ? offline()
+              : caches.match(ROOT).then((c) => c || offline())),
+        ),
+    ),
   );
 });

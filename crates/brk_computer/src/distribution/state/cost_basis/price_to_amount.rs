@@ -8,7 +8,7 @@ use std::{
 use brk_error::{Error, Result};
 use brk_types::{CentsCompact, Dollars, Height, Sats, SupplyState};
 use derive_more::{Deref, DerefMut};
-use pco::standalone::{simple_decompress, simpler_compress};
+use pco::{standalone::{simple_compress, simple_decompress}, ChunkConfig};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use vecdb::Bytes;
@@ -234,15 +234,14 @@ impl PriceToAmount {
 #[derive(Clone, Default, Debug, Deref, DerefMut, Serialize, Deserialize)]
 struct State(BTreeMap<CentsCompact, Sats>);
 
-const COMPRESSION_LEVEL: usize = 4;
-
 impl State {
     fn serialize(&self) -> vecdb::Result<Vec<u8>> {
         let keys: Vec<i32> = self.keys().map(|k| i32::from(*k)).collect();
         let values: Vec<u64> = self.values().map(|v| u64::from(*v)).collect();
 
-        let compressed_keys = simpler_compress(&keys, COMPRESSION_LEVEL)?;
-        let compressed_values = simpler_compress(&values, COMPRESSION_LEVEL)?;
+        let config = ChunkConfig::default();
+        let compressed_keys = simple_compress(&keys, &config)?;
+        let compressed_values = simple_compress(&values, &config)?;
 
         let mut buffer = Vec::new();
         buffer.extend(keys.len().to_bytes());

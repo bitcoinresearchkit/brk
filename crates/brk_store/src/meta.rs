@@ -82,6 +82,14 @@ impl StoreMeta {
     pub fn has(&self, height: Height) -> bool {
         !self.needs(height)
     }
+    pub fn reset(&mut self) -> io::Result<()> {
+        self.height = None;
+        let path = self.path_height();
+        if path.exists() {
+            fs::remove_file(&path)?;
+        }
+        Ok(())
+    }
     fn path_height(&self) -> PathBuf {
         Self::path_height_(&self.pathbuf)
     }

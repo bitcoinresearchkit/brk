@@ -23,11 +23,11 @@ use super::{Date, DateIndex, MonthIndex};
     Pco,
     JsonSchema,
 )]
-pub struct YearIndex(u16);
+pub struct YearIndex(u8);
 
-impl From<u16> for YearIndex {
+impl From<u8> for YearIndex {
     #[inline]
-    fn from(value: u16) -> Self {
+    fn from(value: u8) -> Self {
         Self(value)
     }
 }
@@ -35,7 +35,7 @@ impl From<u16> for YearIndex {
 impl From<usize> for YearIndex {
     #[inline]
     fn from(value: usize) -> Self {
-        Self(value as u16)
+        Self(value as u8)
     }
 }
 
@@ -57,7 +57,7 @@ impl Add<usize> for YearIndex {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
-        Self::from(self.0 + rhs as u16)
+        Self::from(self.0 + rhs as u8)
     }
 }
 
@@ -92,11 +92,11 @@ impl From<DateIndex> for YearIndex {
 impl From<Date> for YearIndex {
     #[inline]
     fn from(value: Date) -> Self {
-        Self(value.year() - 2009)
+        Self((value.year() - 2009) as u8)
     }
 }
 
-impl From<YearIndex> for u16 {
+impl From<YearIndex> for u8 {
     #[inline]
     fn from(value: YearIndex) -> Self {
         value.0
@@ -112,7 +112,7 @@ impl CheckedSub for YearIndex {
 impl From<MonthIndex> for YearIndex {
     #[inline]
     fn from(value: MonthIndex) -> Self {
-        Self((usize::from(value) / 12) as u16)
+        Self((usize::from(value) / 12) as u8)
     }
 }
 

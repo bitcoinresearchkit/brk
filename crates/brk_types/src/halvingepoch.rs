@@ -25,17 +25,17 @@ pub const BLOCKS_PER_HALVING: u32 = 210_000;
     Pco,
     JsonSchema,
 )]
-pub struct HalvingEpoch(u16);
+pub struct HalvingEpoch(u8);
 
 impl HalvingEpoch {
-    pub const fn new(value: u16) -> Self {
+    pub const fn new(value: u8) -> Self {
         Self(value)
     }
 }
 
-impl From<u16> for HalvingEpoch {
+impl From<u8> for HalvingEpoch {
     #[inline]
-    fn from(value: u16) -> Self {
+    fn from(value: u8) -> Self {
         Self(value)
     }
 }
@@ -43,7 +43,7 @@ impl From<u16> for HalvingEpoch {
 impl From<usize> for HalvingEpoch {
     #[inline]
     fn from(value: usize) -> Self {
-        Self(value as u16)
+        Self(value as u8)
     }
 }
 
@@ -72,14 +72,14 @@ impl Add<usize> for HalvingEpoch {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
-        Self::from(self.0 + rhs as u16)
+        Self::from(self.0 + rhs as u8)
     }
 }
 
 impl From<Height> for HalvingEpoch {
     #[inline]
     fn from(value: Height) -> Self {
-        Self((u32::from(value) / BLOCKS_PER_HALVING) as u16)
+        Self((u32::from(value) / BLOCKS_PER_HALVING) as u8)
     }
 }
 

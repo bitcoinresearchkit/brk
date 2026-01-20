@@ -1,9 +1,9 @@
 use brk_traversable::Traversable;
-use brk_types::{StoredF32, StoredI16, StoredU16, Version};
+use brk_types::{StoredF32, StoredI8, StoredU16, Version};
 
 use super::{
     indexes,
-    internal::{ConstantVecs, ReturnF32Tenths, ReturnI16, ReturnU16},
+    internal::{ConstantVecs, ReturnF32Tenths, ReturnI8, ReturnU16},
 };
 
 pub const DB_NAME: &str = "constants";
@@ -24,10 +24,10 @@ pub struct Vecs {
     pub constant_80: ConstantVecs<StoredU16>,
     pub constant_100: ConstantVecs<StoredU16>,
     pub constant_600: ConstantVecs<StoredU16>,
-    pub constant_minus_1: ConstantVecs<StoredI16>,
-    pub constant_minus_2: ConstantVecs<StoredI16>,
-    pub constant_minus_3: ConstantVecs<StoredI16>,
-    pub constant_minus_4: ConstantVecs<StoredI16>,
+    pub constant_minus_1: ConstantVecs<StoredI8>,
+    pub constant_minus_2: ConstantVecs<StoredI8>,
+    pub constant_minus_3: ConstantVecs<StoredI8>,
+    pub constant_minus_4: ConstantVecs<StoredI8>,
 }
 
 impl Vecs {
@@ -49,10 +49,10 @@ impl Vecs {
             constant_80: ConstantVecs::new::<ReturnU16<80>>("constant_80", v, indexes),
             constant_100: ConstantVecs::new::<ReturnU16<100>>("constant_100", v, indexes),
             constant_600: ConstantVecs::new::<ReturnU16<600>>("constant_600", v, indexes),
-            constant_minus_1: ConstantVecs::new::<ReturnI16<-1>>("constant_minus_1", v, indexes),
-            constant_minus_2: ConstantVecs::new::<ReturnI16<-2>>("constant_minus_2", v, indexes),
-            constant_minus_3: ConstantVecs::new::<ReturnI16<-3>>("constant_minus_3", v, indexes),
-            constant_minus_4: ConstantVecs::new::<ReturnI16<-4>>("constant_minus_4", v, indexes),
+            constant_minus_1: ConstantVecs::new::<ReturnI8<-1>>("constant_minus_1", v, indexes),
+            constant_minus_2: ConstantVecs::new::<ReturnI8<-2>>("constant_minus_2", v, indexes),
+            constant_minus_3: ConstantVecs::new::<ReturnI8<-3>>("constant_minus_3", v, indexes),
+            constant_minus_4: ConstantVecs::new::<ReturnI8<-4>>("constant_minus_4", v, indexes),
         }
     }
 }

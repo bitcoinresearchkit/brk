@@ -215,15 +215,13 @@ export function importStyle(href) {
 /**
  * @template T
  * @param {Object} args
- * @param {T} args.defaultValue
+ * @param {T} args.defaultValue - Fallback when selected value is no longer in choices
  * @param {string} [args.id]
  * @param {readonly T[] | Accessor<readonly T[]>} args.choices
- * @param {string} [args.keyPrefix]
- * @param {string} [args.key]
  * @param {boolean} [args.sorted]
  * @param {Signals} args.signals
- * @param {Signal<T>} [args.signal] - Optional external signal to use instead of creating one
- * @param {(choice: T) => string} [args.toKey] - Extract string key for storage (defaults to identity for strings)
+ * @param {Signal<T>} args.selected
+ * @param {(choice: T) => string} [args.toKey] - Extract string key (defaults to identity for strings)
  * @param {(choice: T) => string} [args.toLabel] - Extract display label (defaults to identity for strings)
  * @param {"radio" | "select"} [args.type] - Render as radio buttons or select dropdown
  */
@@ -231,10 +229,8 @@ export function createChoiceField({
   id,
   choices: unsortedChoices,
   defaultValue,
-  keyPrefix,
-  key,
   signals,
-  signal: externalSignal,
+  selected,
   sorted,
   toKey = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
   toLabel = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
@@ -260,25 +256,8 @@ export function createChoiceField({
       : c;
   });
 
-  /**
-   * @param {string} storedKey
-   * @returns {T}
-   */
-  function fromKey(storedKey) {
-    const found = choices().find((c) => toKey(c) === storedKey);
-    return found ?? defaultValue;
-  }
-
-  /** @type {Signal<T>} */
-  const selected = externalSignal ?? signals.createSignal(defaultValue, {
-    save: {
-      serialize: (v) => toKey(v),
-      deserialize: (s) => fromKey(s),
-      keyPrefix: keyPrefix ?? "",
-      key: key ?? "",
-      saveDefaultValue: true,
-    },
-  });
+  /** @param {string} key */
+  const fromKey = (key) => choices().find((c) => toKey(c) === key) ?? defaultValue;
 
   const field = window.document.createElement("div");
   field.classList.add("field");
@@ -317,8 +296,8 @@ export function createChoiceField({
       }
     } else if (type === "select") {
       const select = window.document.createElement("select");
-      select.id = id ?? key ?? "";
-      select.name = id ?? key ?? "";
+      select.id = id ?? "";
+      select.name = id ?? "";
 
       choices.forEach((choice) => {
         const option = window.document.createElement("option");
@@ -346,7 +325,7 @@ export function createChoiceField({
         }
       }
     } else {
-      const fieldId = id ?? key ?? "";
+      const fieldId = id ?? "";
       choices.forEach((choice) => {
         const choiceKey = toKey(choice);
         const choiceLabel = toLabel(choice);
@@ -372,7 +351,7 @@ export function createChoiceField({
     }
   });
 
-  return { field, selected };
+  return field;
 }
 
 /**

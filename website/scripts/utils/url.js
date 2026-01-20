@@ -3,10 +3,12 @@
  */
 function processPathname(pathname) {
   pathname ||= window.location.pathname;
-  return Array.isArray(pathname) ? pathname.join("/") : pathname;
+  const result = Array.isArray(pathname) ? pathname.join("/") : pathname;
+  // Strip leading slash to avoid double slashes when prepending /
+  return result.startsWith("/") ? result.slice(1) : result;
 }
 
-const chartParamsWhitelist = ["from", "to"];
+const chartParamsWhitelist = ["range"];
 
 /**
  * @param {string | string[]} pathname
@@ -16,7 +18,6 @@ export function pushHistory(pathname) {
   pathname = processPathname(pathname);
   try {
     const url = `/${pathname}?${urlParams.toString()}`;
-    console.log(`push history: ${url}`);
     window.history.pushState(null, "", url);
   } catch (_) {}
 }
@@ -31,7 +32,6 @@ export function replaceHistory({ urlParams, pathname }) {
   pathname = processPathname(pathname);
   try {
     const url = `/${pathname}?${urlParams.toString()}`;
-    console.log(`replace history: ${url}`);
     window.history.replaceState(null, "", url);
   } catch (_) {}
 }

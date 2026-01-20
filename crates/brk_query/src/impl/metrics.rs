@@ -160,6 +160,7 @@ impl Query {
             total,
             start,
             end,
+            height: *self.height(),
         })
     }
 
@@ -173,6 +174,7 @@ impl Query {
             total,
             start,
             end,
+            ..
         } = resolved;
 
         let output = match format {

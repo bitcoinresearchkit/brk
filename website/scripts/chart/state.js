@@ -1,96 +1,59 @@
-import {
-  readParam,
-  readNumberParam,
-  writeParam,
-} from "../utils/url.js";
+import { readParam, writeParam } from "../utils/url.js";
+import { readStored, writeToStorage } from "../utils/storage.js";
 
 /**
  * @typedef {{ from: number | null, to: number | null }} Range
  */
 
-const INDEX_KEY = "chart-index";
 const RANGES_KEY = "chart-ranges";
+const RANGE_SEP = "_";
 
 /**
  * @param {Signals} signals
  */
 export function createChartState(signals) {
+  const index = signals.createPersistedSignal({
+    storageKey: "chart-index",
+    urlKey: "index",
+    defaultValue: /** @type {ChartableIndexName} */ ("date"),
+    serialize: (v) => v,
+    deserialize: (s) => /** @type {ChartableIndexName} */ (s),
+  });
+
+  // Ranges stored per-index in localStorage only
   /** @type {Record<string, Range>} */
   let ranges = {};
   try {
-    const stored = localStorage.getItem(RANGES_KEY);
+    const stored = readStored(RANGES_KEY);
     if (stored) ranges = JSON.parse(stored);
   } catch {}
 
-  const saveRanges = () => {
-    try {
-      localStorage.setItem(RANGES_KEY, JSON.stringify(ranges));
-    } catch {}
-  };
-
-  // Read index: URL > localStorage > default
-  /** @type {ChartableIndexName} */
-  const defaultIndex = "date";
-  const urlIndex = readParam("index");
-  /** @type {ChartableIndexName} */
-  let initialIndex = defaultIndex;
-  if (urlIndex) {
-    initialIndex = /** @type {ChartableIndexName} */ (urlIndex);
-  } else {
-    try {
-      const stored = localStorage.getItem(INDEX_KEY);
-      if (stored) initialIndex = /** @type {ChartableIndexName} */ (stored);
-    } catch {}
+  // Initialize from URL if present
+  const urlRange = readParam("range");
+  if (urlRange) {
+    const [from, to] = urlRange.split(RANGE_SEP).map(Number);
+    if (!isNaN(from) && !isNaN(to)) {
+      ranges[index()] = { from, to };
+      writeToStorage(RANGES_KEY, JSON.stringify(ranges));
+    }
   }
-
-  // Read range: URL > localStorage (per index)
-  const urlFrom = readNumberParam("from");
-  const urlTo = readNumberParam("to");
-  const storedRange = ranges[initialIndex] ?? { from: null, to: null };
-  const initialRange = {
-    from: urlFrom ?? storedRange.from,
-    to: urlTo ?? storedRange.to,
-  };
-  // Save URL range to localStorage if present
-  if (urlFrom !== null || urlTo !== null) {
-    ranges[initialIndex] = initialRange;
-    saveRanges();
-  }
-
-  const index = signals.createSignal(/** @type {ChartableIndexName} */ (initialIndex));
-  const currentRange = signals.createSignal(initialRange);
-
-  // Save index changes to localStorage + URL
-  signals.createEffect(index, (value) => {
-    try {
-      localStorage.setItem(INDEX_KEY, value);
-    } catch {}
-    writeParam("index", value !== defaultIndex ? value : null);
-  });
-
-  // When index changes, switch to that index's saved range
-  signals.createEffect(index, (i) => {
-    const range = ranges[i] ?? { from: null, to: null };
-    currentRange.set(range);
-    // Update URL with new range
-    writeParam("from", range.from !== null ? String(range.from) : null);
-    writeParam("to", range.to !== null ? String(range.to) : null);
-  });
 
   return {
     index,
-    /** @type {Accessor<Range>} */
-    range: currentRange,
-    /**
-     * @param {Range} value
-     */
+    /** @returns {Range} */
+    range: () => ranges[index()] ?? { from: null, to: null },
+    /** @param {Range} value */
     setRange(value) {
-      const i = index();
-      ranges[i] = value;
-      currentRange.set(value);
-      saveRanges();
-      writeParam("from", value.from !== null ? String(value.from) : null);
-      writeParam("to", value.to !== null ? String(value.to) : null);
+      ranges[index()] = value;
+      writeToStorage(RANGES_KEY, JSON.stringify(ranges));
+      if (value.from !== null && value.to !== null) {
+        // Round to 2 decimals for cleaner URLs
+        const f = Math.floor(value.from * 100) / 100;
+        const t = Math.floor(value.to * 100) / 100;
+        writeParam("range", `${f}${RANGE_SEP}${t}`);
+      } else {
+        writeParam("range", null);
+      }
     },
   };
 }

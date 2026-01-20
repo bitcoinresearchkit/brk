@@ -1,70 +1,45 @@
 /**
+ * Reduce color opacity to 50% for dimming effect
+ * @param {string} color - oklch color string
+ */
+export function tameColor(color) {
+  if (color === "transparent") return color;
+  return `${color.slice(0, -1)} / 50%)`;
+}
+
+/**
+ * @typedef {Object} ColorMethods
+ * @property {() => string} tame - Returns tamed (50% opacity) version
+ * @property {(highlighted: boolean) => string} highlight - Returns normal if highlighted, tamed otherwise
+ */
+
+/**
+ * @typedef {(() => string) & ColorMethods} Color
+ */
+
+/**
+ * Creates a Color object that is callable and has utility methods
+ * @param {() => string} getter
+ * @returns {Color}
+ */
+function createColor(getter) {
+  const color = /** @type {Color} */ (() => getter());
+  color.tame = () => tameColor(getter());
+  color.highlight = (highlighted) => highlighted ? getter() : tameColor(getter());
+  return color;
+}
+
+/**
  * @param {Accessor<boolean>} dark
  */
 export function createColors(dark) {
   const globalComputedStyle = getComputedStyle(window.document.documentElement);
+
   /**
-   * @param {string} color
+   * @param {string} name
    */
-  function getColor(color) {
-    return globalComputedStyle.getPropertyValue(`--${color}`);
-  }
-  function red() {
-    return getColor("red");
-  }
-  function orange() {
-    return getColor("orange");
-  }
-  function amber() {
-    return getColor("amber");
-  }
-  function yellow() {
-    return getColor("yellow");
-  }
-  function avocado() {
-    return getColor("avocado");
-  }
-  function lime() {
-    return getColor("lime");
-  }
-  function green() {
-    return getColor("green");
-  }
-  function emerald() {
-    return getColor("emerald");
-  }
-  function teal() {
-    return getColor("teal");
-  }
-  function cyan() {
-    return getColor("cyan");
-  }
-  function sky() {
-    return getColor("sky");
-  }
-  function blue() {
-    return getColor("blue");
-  }
-  function indigo() {
-    return getColor("indigo");
-  }
-  function violet() {
-    return getColor("violet");
-  }
-  function purple() {
-    return getColor("purple");
-  }
-  function fuchsia() {
-    return getColor("fuchsia");
-  }
-  function pink() {
-    return getColor("pink");
-  }
-  function rose() {
-    return getColor("rose");
-  }
-  function gray() {
-    return getColor("gray");
+  function getColor(name) {
+    return globalComputedStyle.getPropertyValue(`--${name}`);
   }
 
   /**
@@ -76,41 +51,33 @@ export function createColors(dark) {
     return dark() ? _dark : light;
   }
 
-  function textColor() {
-    return getLightDarkValue("--color");
-  }
-  function borderColor() {
-    return getLightDarkValue("--border-color");
-  }
-
   return {
-    default: textColor,
-    gray,
-    border: borderColor,
+    default: createColor(() => getLightDarkValue("--color")),
+    gray: createColor(() => getColor("gray")),
+    border: createColor(() => getLightDarkValue("--border-color")),
 
-    red,
-    orange,
-    amber,
-    yellow,
-    avocado,
-    lime,
-    green,
-    emerald,
-    teal,
-    cyan,
-    sky,
-    blue,
-    indigo,
-    violet,
-    purple,
-    fuchsia,
-    pink,
-    rose,
+    red: createColor(() => getColor("red")),
+    orange: createColor(() => getColor("orange")),
+    amber: createColor(() => getColor("amber")),
+    yellow: createColor(() => getColor("yellow")),
+    avocado: createColor(() => getColor("avocado")),
+    lime: createColor(() => getColor("lime")),
+    green: createColor(() => getColor("green")),
+    emerald: createColor(() => getColor("emerald")),
+    teal: createColor(() => getColor("teal")),
+    cyan: createColor(() => getColor("cyan")),
+    sky: createColor(() => getColor("sky")),
+    blue: createColor(() => getColor("blue")),
+    indigo: createColor(() => getColor("indigo")),
+    violet: createColor(() => getColor("violet")),
+    purple: createColor(() => getColor("purple")),
+    fuchsia: createColor(() => getColor("fuchsia")),
+    pink: createColor(() => getColor("pink")),
+    rose: createColor(() => getColor("rose")),
   };
 }
 
 /**
  * @typedef {ReturnType<typeof createColors>} Colors
- * @typedef {Colors["orange"]} Color
  * @typedef {keyof Colors} ColorName
  */

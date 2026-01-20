@@ -1,4 +1,3 @@
-import { createSeriesMarkers } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.mjs";
 import { throttle } from "../utils/timing.js";
 
 /**
@@ -9,20 +8,7 @@ import { throttle } from "../utils/timing.js";
  * @param {(value: number) => string} args.formatValue
  */
 export function createMinMaxMarkers({ chart, seriesList, colors, formatValue }) {
-  /** @type {WeakMap<ISeries, SeriesMarkersPlugin>} */
-  const pluginCache = new WeakMap();
-
-  /** @param {ISeries} iseries */
-  function getOrCreatePlugin(iseries) {
-    let plugin = pluginCache.get(iseries);
-    if (!plugin) {
-      plugin = createSeriesMarkers(iseries, [], { autoScale: false });
-      pluginCache.set(iseries, plugin);
-    }
-    return plugin;
-  }
-
-  /** @type {Set<ISeries>} */
+  /** @type {Set<AnySeries>} */
   const prevMarkerSeries = new Set();
 
   function update() {
@@ -37,7 +23,7 @@ export function createMinMaxMarkers({ chart, seriesList, colors, formatValue }) 
     const t1 = /** @type {number} */ (tRight ?? range.to);
     const color = colors.gray();
 
-    /** @type {Map<number, { minV: number, minT: Time, minS: ISeries, maxV: number, maxT: Time, maxS: ISeries }>} */
+    /** @type {Map<number, { minV: number, minT: Time, minS: AnySeries, maxV: number, maxT: Time, maxS: AnySeries }>} */
     const byPane = new Map();
 
     for (const series of seriesList()) {
@@ -57,16 +43,15 @@ export function createMinMaxMarkers({ chart, seriesList, colors, formatValue }) 
       if (lo >= len) continue;
 
       const paneIndex = series.paneIndex;
-      const iseries = series.inner();
       let pane = byPane.get(paneIndex);
       if (!pane) {
         pane = {
           minV: Infinity,
           minT: /** @type {Time} */ (0),
-          minS: iseries,
+          minS: series,
           maxV: -Infinity,
           maxT: /** @type {Time} */ (0),
-          maxS: iseries,
+          maxS: series,
         };
         byPane.set(paneIndex, pane);
       }
@@ -79,17 +64,18 @@ export function createMinMaxMarkers({ chart, seriesList, colors, formatValue }) 
         if (v && v < pane.minV) {
           pane.minV = v;
           pane.minT = pt.time;
-          pane.minS = iseries;
+          pane.minS = series;
         }
         if (h && h > pane.maxV) {
           pane.maxV = h;
           pane.maxT = pt.time;
-          pane.maxS = iseries;
+          pane.maxS = series;
         }
       }
     }
 
     // Set new markers
+    /** @type {Set<AnySeries>} */
     const used = new Set();
     for (const { minV, minT, minS, maxV, maxT, maxS } of byPane.values()) {
       if (!Number.isFinite(minV) || !Number.isFinite(maxV) || minT === maxT)
@@ -115,23 +101,23 @@ export function createMinMaxMarkers({ chart, seriesList, colors, formatValue }) 
       used.add(minS);
       used.add(maxS);
       if (minS === maxS) {
-        getOrCreatePlugin(minS).setMarkers([minM, maxM]);
+        minS.setMarkers([minM, maxM]);
       } else {
-        getOrCreatePlugin(minS).setMarkers([minM]);
-        getOrCreatePlugin(maxS).setMarkers([maxM]);
+        minS.setMarkers([minM]);
+        maxS.setMarkers([maxM]);
       }
     }
 
     // Clear stale
     for (const s of prevMarkerSeries) {
-      if (!used.has(s)) getOrCreatePlugin(s).setMarkers([]);
+      if (!used.has(s)) s.clearMarkers();
     }
     prevMarkerSeries.clear();
     for (const s of used) prevMarkerSeries.add(s);
   }
 
   function clear() {
-    for (const s of prevMarkerSeries) getOrCreatePlugin(s).setMarkers([]);
+    for (const s of prevMarkerSeries) s.clearMarkers();
     prevMarkerSeries.clear();
   }
 
