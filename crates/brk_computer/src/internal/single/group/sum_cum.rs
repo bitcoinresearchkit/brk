@@ -1,7 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use schemars::JsonSchema;
-use vecdb::{AnyVec, Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec, VecIndex, VecValue, Version};
+use vecdb::{
+    AnyVec, Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec, VecIndex,
+    VecValue, Version,
+};
 
 use crate::internal::{ComputedVecValue, CumulativeVec, SumVec};
 
@@ -48,7 +51,7 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> SumCum<I, T> {
             first_indexes,
             count_indexes,
             exit,
-            0, // min_skip_count
+            0,    // min_skip_count
             None, // first
             None, // last
             None, // min
@@ -62,16 +65,6 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> SumCum<I, T> {
             None, // pct75
             None, // pct90
         )
-    }
-
-    /// Extend cumulative from an existing source vec.
-    pub fn extend_cumulative(
-        &mut self,
-        max_from: I,
-        source: &impl IterableVec<I, T>,
-        exit: &Exit,
-    ) -> Result<()> {
-        crate::internal::compute_cumulative_extend(max_from, source, &mut self.cumulative.0, exit)
     }
 
     pub fn len(&self) -> usize {

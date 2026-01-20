@@ -1,13 +1,14 @@
-import { ios } from "../../utils/env.js";
-import { domToBlob } from "../../modules/modern-screenshot/4.6.7/dist/index.mjs";
+import { ios, canShare } from "../utils/env.js";
+import { domToBlob } from "../modules/modern-screenshot/4.6.7/dist/index.mjs";
+
+export const canCapture = !ios || canShare;
 
 /**
  * @param {Object} args
  * @param {Element} args.element
  * @param {string} args.name
- * @param {string} args.title
  */
-export async function screenshot({ element, name, title }) {
+export async function capture({ element, name }) {
   const blob = await domToBlob(element, {
     scale: 2,
   });
@@ -16,15 +17,13 @@ export async function screenshot({ element, name, title }) {
     const file = new File(
       [blob],
       `bitview-${name}-${new Date().toJSON().split(".")[0]}.png`,
-      {
-        type: "image/png",
-      },
+      { type: "image/png" },
     );
 
     try {
       await navigator.share({
         files: [file],
-        title: `${title} on ${window.document.location.hostname}`,
+        title: `${name} on ${window.document.location.hostname}`,
       });
       return;
     } catch (err) {

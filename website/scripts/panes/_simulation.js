@@ -19,7 +19,7 @@ import {
 } from "../utils/format.js";
 import { serdeDate, serdeOptDate, serdeOptNumber } from "../utils/serde.js";
 import signals from "../signals.js";
-import { createChartElement } from "../chart/index.js";
+import { createChart } from "../chart/index.js";
 import { resources } from "../resources.js";
 
 /**
@@ -684,7 +684,7 @@ export function init({ colors }) {
   /** @type {() => IndexName} */
   const index = () => "dateindex";
 
-  createChartElement({
+  createChart({
     index,
     parent: resultsElement,
     signals,
@@ -727,7 +727,7 @@ export function init({ colors }) {
     ],
   });
 
-  createChartElement({
+  createChart({
     index,
     parent: resultsElement,
     signals,
@@ -750,7 +750,7 @@ export function init({ colors }) {
     ],
   });
 
-  createChartElement({
+  createChart({
     index,
     parent: resultsElement,
     signals,
@@ -779,7 +779,7 @@ export function init({ colors }) {
     ],
   });
 
-  createChartElement({
+  createChart({
     index,
     parent: resultsElement,
     signals,
@@ -801,7 +801,7 @@ export function init({ colors }) {
     ],
   });
 
-  createChartElement({
+  createChart({
     index,
     parent: resultsElement,
     signals,

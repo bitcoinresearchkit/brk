@@ -70,7 +70,9 @@ where
         }};
     }
 
-    let index = validate_vec!(first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90);
+    let index = validate_vec!(
+        first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90
+    );
 
     let needs_first = first.is_some();
     let needs_last = last.is_some();
@@ -298,7 +300,9 @@ where
         };
     }
 
-    write_vec!(first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90);
+    write_vec!(
+        first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90
+    );
 
     Ok(())
 }
@@ -306,7 +310,7 @@ where
 /// Compute cumulative extension from a source vec.
 ///
 /// Used when only cumulative needs to be extended from an existing source.
-pub fn compute_cumulative_extend<I, T>(
+pub fn compute_cumulative<I, T>(
     max_from: I,
     source: &impl IterableVec<I, T>,
     cumulative: &mut EagerVec<PcoVec<I, T>>,
@@ -333,6 +337,47 @@ where
             cumulative.truncate_push_at(i, cumulative_val)?;
             Ok(())
         })?;
+
+    let _lock = exit.lock();
+    cumulative.write()?;
+
+    Ok(())
+}
+
+/// Compute cumulative from binary transform of two source vecs.
+pub fn compute_cumulative_transform2<I, T, S1, S2, F>(
+    max_from: I,
+    source1: &impl IterableVec<I, S1>,
+    source2: &impl IterableVec<I, S2>,
+    cumulative: &mut EagerVec<PcoVec<I, T>>,
+    transform: F,
+    exit: &Exit,
+) -> Result<()>
+where
+    I: VecIndex,
+    T: ComputedVecValue + JsonSchema,
+    S1: VecValue,
+    S2: VecValue,
+    F: Fn(S1, S2) -> T,
+{
+    let combined_version = source1.version() + source2.version();
+    cumulative.validate_computed_version_or_reset(combined_version)?;
+
+    let index = max_from.min(I::from(cumulative.len()));
+    let target_len = source1.len().min(source2.len());
+
+    let mut cumulative_val = index
+        .decremented()
+        .map_or(T::from(0_usize), |idx| cumulative.read_unwrap_once(idx));
+
+    let mut iter1 = source1.iter();
+    let mut iter2 = source2.iter();
+
+    for i in index.to_usize()..target_len {
+        let idx = I::from(i);
+        cumulative_val += transform(iter1.get_unwrap(idx), iter2.get_unwrap(idx));
+        cumulative.truncate_push_at(i, cumulative_val)?;
+    }
 
     let _lock = exit.lock();
     cumulative.write()?;

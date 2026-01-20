@@ -1,18 +1,12 @@
-import {
-  createShadow,
-  createChoiceField,
-  createHeader,
-} from "../../utils/dom.js";
-import { chartElement } from "../../utils/elements.js";
-import { ios, canShare } from "../../utils/env.js";
-import { serdeChartableIndex } from "../../utils/serde.js";
-import { Unit } from "../../utils/units.js";
-import signals from "../../signals.js";
-import { createChartElement } from "../../chart/index.js";
-import { createChartState } from "../../chart/state.js";
-import { webSockets } from "../../utils/ws.js";
-import { screenshot } from "./screenshot.js";
-import { debounce } from "../../utils/timing.js";
+import { createShadow, createChoiceField, createHeader } from "../utils/dom.js";
+import { chartElement } from "../utils/elements.js";
+import { serdeChartableIndex } from "../utils/serde.js";
+import { Unit } from "../utils/units.js";
+import signals from "../signals.js";
+import { createChart } from "../chart/index.js";
+import { createChartState } from "../chart/state.js";
+import { webSockets } from "../utils/ws.js";
+import { debounce } from "../utils/timing.js";
 
 const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
@@ -39,15 +33,15 @@ export function init({ colors, option, brk }) {
 
   const { from, to } = state.range();
 
-  const chart = createChartElement({
+  const chart = createChart({
     parent: chartElement,
     signals,
     colors,
     id: "charts",
     brk,
     index,
-    initialVisibleBarsCount:
-      from !== null && to !== null ? to - from : null,
+    initialVisibleBarsCount: from !== null && to !== null ? to - from : null,
+    captureElement: chartElement,
     timeScaleSetCallback: (unknownTimeScaleCallback) => {
       const { from, to } = state.range();
       if (from !== null && to !== null) {
@@ -58,42 +52,11 @@ export function init({ colors, option, brk }) {
     },
   });
 
-  if (!(ios && !canShare)) {
-    const domain = window.document.createElement("p");
-    domain.innerText = `${window.location.host}`;
-    domain.id = "domain";
-
-    chart.addFieldsetIfNeeded({
-      id: "capture",
-      paneIndex: 0,
-      position: "ne",
-      createChild() {
-        const button = window.document.createElement("button");
-        button.id = "capture";
-        button.innerText = "capture";
-        button.title = "Capture chart as image";
-        button.addEventListener("click", async () => {
-          chartElement.dataset.screenshot = "true";
-          chartElement.append(domain);
-          try {
-            await screenshot({
-              element: chartElement,
-              name: option().path.join("-"),
-              title: option().title,
-            });
-          } catch {}
-          chartElement.removeChild(domain);
-          chartElement.dataset.screenshot = "false";
-        });
-        return button;
-      },
-    });
-  }
-
   // Sync chart → state.range on user pan/zoom
   // Debounce to avoid rapid URL updates while panning
   const debouncedSetRange = debounce(
-    (/** @type {{ from: number, to: number }} */ range) => state.setRange(range),
+    (/** @type {{ from: number, to: number }} */ range) =>
+      state.setRange(range),
     500,
   );
   chart.onVisibleLogicalRangeChange((t) => {
@@ -110,7 +73,8 @@ export function init({ colors, option, brk }) {
     storageKey: `${keyPrefix}-price`,
     urlKey: "price",
     serialize: (u) => u.id,
-    deserialize: (s) => /** @type {Unit} */ (unitChoices.find((u) => u.id === s) ?? Unit.usd),
+    deserialize: (s) =>
+      /** @type {Unit} */ (unitChoices.find((u) => u.id === s) ?? Unit.usd),
   });
   const topUnitField = createChoiceField({
     defaultValue: Unit.usd,
@@ -222,28 +186,33 @@ export function init({ colors, option, brk }) {
 
     const bottomUnits = Array.from(option.bottom.keys());
 
-    /** @type {{ field: HTMLDivElement, selected: Signal<Unit> } | undefined} */
-    let bottomUnitSelector;
+    /** @type {Signal<Unit> | undefined} */
+    let bottomUnit;
 
     if (bottomUnits.length) {
-      const selected = signals.createPersistedSignal({
+      // Storage key based on unit group (sorted unit IDs) so each group remembers its selection
+      const unitGroupKey = bottomUnits
+        .map((u) => u.id)
+        .sort()
+        .join("-");
+      bottomUnit = signals.createPersistedSignal({
         defaultValue: bottomUnits[0],
-        storageKey: `${keyPrefix}-unit`,
+        storageKey: `${keyPrefix}-unit-${unitGroupKey}`,
         urlKey: "unit",
         serialize: (u) => u.id,
-        deserialize: (s) => bottomUnits.find((u) => u.id === s) ?? bottomUnits[0],
+        deserialize: (s) =>
+          bottomUnits.find((u) => u.id === s) ?? bottomUnits[0],
       });
       const field = createChoiceField({
         defaultValue: bottomUnits[0],
         choices: bottomUnits,
         toKey: (u) => u.id,
         toLabel: (u) => u.name,
-        selected,
+        selected: bottomUnit,
         signals,
         sorted: true,
         type: "select",
       });
-      bottomUnitSelector = { field, selected };
       chart.addFieldsetIfNeeded({
         id: "charts-unit-1",
         paneIndex: 1,
@@ -259,17 +228,132 @@ export function init({ colors, option, brk }) {
       chart.legendBottom.removeFrom(0);
     }
 
-    signals.createScopedEffect(index, (index) => {
-      signals.createScopedEffect(topUnit, (topUnit) => {
+    /**
+     * @param {Object} args
+     * @param {Map<Unit, AnyFetchedSeriesBlueprint[]>} args.blueprints
+     * @param {number} args.paneIndex
+     * @param {Unit} args.unit
+     * @param {IndexName} args.idx
+     * @param {AnySeries[]} args.seriesList
+     * @param {number} args.orderStart
+     * @param {Legend} args.legend
+     */
+    function createSeriesFromBlueprints({
+      blueprints,
+      paneIndex,
+      unit,
+      idx,
+      seriesList,
+      orderStart,
+      legend,
+    }) {
+      legend.removeFrom(orderStart);
+      seriesList.splice(orderStart).forEach((series) => series.remove());
+
+      blueprints.get(unit)?.forEach((blueprint, order) => {
+        order += orderStart;
+        const options = blueprint.options;
+        const indexes = Object.keys(blueprint.metric.by);
+
+        if (indexes.includes(idx)) {
+          switch (blueprint.type) {
+            case "Baseline": {
+              seriesList.push(
+                chart.addBaselineSeries({
+                  metric: blueprint.metric,
+                  name: blueprint.title,
+                  unit,
+                  defaultActive: blueprint.defaultActive,
+                  paneIndex,
+                  options: {
+                    ...options,
+                    topLineColor:
+                      blueprint.color?.() ?? blueprint.colors?.[0](),
+                    bottomLineColor:
+                      blueprint.color?.() ?? blueprint.colors?.[1](),
+                  },
+                  order,
+                }),
+              );
+              break;
+            }
+            case "Histogram": {
+              seriesList.push(
+                chart.addHistogramSeries({
+                  metric: blueprint.metric,
+                  name: blueprint.title,
+                  unit,
+                  color: blueprint.color,
+                  defaultActive: blueprint.defaultActive,
+                  paneIndex,
+                  options,
+                  order,
+                }),
+              );
+              break;
+            }
+            case "Candlestick": {
+              seriesList.push(
+                chart.addCandlestickSeries({
+                  metric: blueprint.metric,
+                  name: blueprint.title,
+                  unit,
+                  colors: blueprint.colors,
+                  defaultActive: blueprint.defaultActive,
+                  paneIndex,
+                  options,
+                  order,
+                }),
+              );
+              break;
+            }
+            case "Dots": {
+              seriesList.push(
+                chart.addDotsSeries({
+                  metric: blueprint.metric,
+                  color: blueprint.color,
+                  name: blueprint.title,
+                  unit,
+                  defaultActive: blueprint.defaultActive,
+                  paneIndex,
+                  options,
+                  order,
+                }),
+              );
+              break;
+            }
+            case "Line":
+            case undefined:
+              seriesList.push(
+                chart.addLineSeries({
+                  metric: blueprint.metric,
+                  color: blueprint.color,
+                  name: blueprint.title,
+                  unit,
+                  defaultActive: blueprint.defaultActive,
+                  paneIndex,
+                  options,
+                  order,
+                }),
+              );
+          }
+        }
+      });
+    }
+
+    // Price series + top pane blueprints: combined effect on index + topUnit
+    signals.createScopedEffect(
+      () => ({ idx: index(), unit: topUnit() }),
+      ({ idx, unit }) => {
+        // Create price series
         /** @type {AnySeries | undefined} */
         let series;
-
-        switch (topUnit) {
+        switch (unit) {
           case Unit.usd: {
             series = chart.addCandlestickSeries({
               metric: brk.metrics.price.usd.ohlc,
               name: "Price",
-              unit: topUnit,
+              unit,
               order: 0,
             });
             break;
@@ -278,19 +362,19 @@ export function init({ colors, option, brk }) {
             series = chart.addCandlestickSeries({
               metric: brk.metrics.price.sats.ohlc,
               name: "Price",
-              unit: topUnit,
+              unit,
               inverse: true,
               order: 0,
             });
             break;
           }
         }
-
         if (!series) throw Error("Unreachable");
 
         seriesListTop[0]?.remove();
         seriesListTop[0] = series;
 
+        // Live price update effect
         signals.createEffect(
           () => ({
             latest: webSockets.kraken1dCandle.latest(),
@@ -298,151 +382,40 @@ export function init({ colors, option, brk }) {
           }),
           ({ latest, hasData }) => {
             if (!series || !latest || !hasData) return;
-            printLatest({ series, unit: topUnit, index });
+            printLatest({ series, unit, index: idx });
           },
         );
-      });
 
-      /**
-       * @param {Object} args
-       * @param {Map<Unit, AnyFetchedSeriesBlueprint[]>} args.blueprints
-       * @param {number} args.paneIndex
-       * @param {Accessor<Unit>} args.unit
-       * @param {AnySeries[]} args.seriesList
-       * @param {number} args.orderStart
-       * @param {Legend} args.legend
-       */
-      function processPane({
-        blueprints,
-        paneIndex,
-        unit,
-        seriesList,
-        orderStart,
-        legend,
-      }) {
-        signals.createScopedEffect(unit, (unit) => {
-          legend.removeFrom(orderStart);
-
-          seriesList.splice(orderStart).forEach((series) => {
-            series.remove();
-          });
-
-          blueprints.get(unit)?.forEach((blueprint, order) => {
-            order += orderStart;
-
-            const options = blueprint.options;
-
-            // Tree-first: metric is now an accessor with .by property
-            const indexes = Object.keys(blueprint.metric.by);
-
-            if (indexes.includes(index)) {
-              switch (blueprint.type) {
-                case "Baseline": {
-                  seriesList.push(
-                    chart.addBaselineSeries({
-                      metric: blueprint.metric,
-                      name: blueprint.title,
-                      unit,
-                      defaultActive: blueprint.defaultActive,
-                      paneIndex,
-                      options: {
-                        ...options,
-                        topLineColor:
-                          blueprint.color?.() ?? blueprint.colors?.[0](),
-                        bottomLineColor:
-                          blueprint.color?.() ?? blueprint.colors?.[1](),
-                      },
-                      order,
-                    }),
-                  );
-                  break;
-                }
-                case "Histogram": {
-                  seriesList.push(
-                    chart.addHistogramSeries({
-                      metric: blueprint.metric,
-                      name: blueprint.title,
-                      unit,
-                      color: blueprint.color,
-                      defaultActive: blueprint.defaultActive,
-                      paneIndex,
-                      options,
-                      order,
-                    }),
-                  );
-                  break;
-                }
-                case "Candlestick": {
-                  seriesList.push(
-                    chart.addCandlestickSeries({
-                      metric: blueprint.metric,
-                      name: blueprint.title,
-                      unit,
-                      colors: blueprint.colors,
-                      defaultActive: blueprint.defaultActive,
-                      paneIndex,
-                      options,
-                      order,
-                    }),
-                  );
-                  break;
-                }
-                case "Dots": {
-                  seriesList.push(
-                    chart.addDotsSeries({
-                      metric: blueprint.metric,
-                      color: blueprint.color,
-                      name: blueprint.title,
-                      unit,
-                      defaultActive: blueprint.defaultActive,
-                      paneIndex,
-                      options,
-                      order,
-                    }),
-                  );
-                  break;
-                }
-                case "Line":
-                case undefined:
-                  seriesList.push(
-                    chart.addLineSeries({
-                      metric: blueprint.metric,
-                      color: blueprint.color,
-                      name: blueprint.title,
-                      unit,
-                      defaultActive: blueprint.defaultActive,
-                      paneIndex,
-                      options,
-                      order,
-                    }),
-                  );
-              }
-            }
-          });
+        // Top pane blueprint series
+        createSeriesFromBlueprints({
+          blueprints: option.top,
+          paneIndex: 0,
+          unit,
+          idx,
+          seriesList: seriesListTop,
+          orderStart: 1,
+          legend: chart.legendTop,
         });
-      }
+      },
+    );
 
-      processPane({
-        blueprints: option.top,
-        paneIndex: 0,
-        unit: topUnit,
-        seriesList: seriesListTop,
-        orderStart: 1,
-        legend: chart.legendTop,
-      });
-
-      if (bottomUnitSelector) {
-        processPane({
-          blueprints: option.bottom,
-          paneIndex: 1,
-          unit: bottomUnitSelector.selected,
-          seriesList: seriesListBottom,
-          orderStart: 0,
-          legend: chart.legendBottom,
-        });
-      }
-
-    });
+    // Bottom pane blueprints: combined effect on index + bottomUnit
+    if (bottomUnit) {
+      signals.createScopedEffect(
+        () => ({ idx: index(), unit: bottomUnit() }),
+        ({ idx, unit }) => {
+          createSeriesFromBlueprints({
+            blueprints: option.bottom,
+            paneIndex: 1,
+            unit,
+            idx,
+            seriesList: seriesListBottom,
+            orderStart: 0,
+            legend: chart.legendBottom,
+          });
+        },
+      );
+    }
   });
 }
 

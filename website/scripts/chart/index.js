@@ -1,18 +1,16 @@
 import {
-  createChart as _createChart,
-  createSeriesMarkers,
+  createChart as untypedLcCreateChart,
   CandlestickSeries,
   HistogramSeries,
   LineSeries,
   BaselineSeries,
   // } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.development.mjs";
 } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.mjs";
-import { createMinMaxMarkers } from "./markers.js";
 import { createLegend } from "./legend.js";
+import { capture, canCapture } from "./capture.js";
 
-const createChart = /** @type {CreateChart} */ (_createChart);
+const lcCreateChart = /** @type {CreateLCChart} */ (untypedLcCreateChart);
 import { createChoiceField } from "../utils/dom.js";
-import { createOklchToRGBA } from "./oklch.js";
 import { throttle } from "../utils/timing.js";
 import { serdeBool } from "../utils/serde.js";
 import { stringToId, numberToShortUSFormat } from "../utils/format.js";
@@ -43,8 +41,6 @@ import { resources } from "../resources.js";
  * @property {Signal<string | null>} url
  * @property {() => readonly T[]} getData
  * @property {(data: T) => void} update
- * @property {(markers: TimeSeriesMarker[]) => void} setMarkers
- * @property {VoidFunction} clearMarkers
  * @property {VoidFunction} remove
  */
 
@@ -65,8 +61,6 @@ import { resources } from "../resources.js";
  * @property {function(number): void} removeFrom
  */
 
-const oklchToRGBA = createOklchToRGBA();
-
 const lineWidth = /** @type {any} */ (1.5);
 
 /**
@@ -80,9 +74,10 @@ const lineWidth = /** @type {any} */ (1.5);
  * @param {((unknownTimeScaleCallback: VoidFunction) => void)} [args.timeScaleSetCallback]
  * @param {number | null} [args.initialVisibleBarsCount]
  * @param {true} [args.fitContent]
+ * @param {HTMLElement} [args.captureElement]
  * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
  */
-export function createChartElement({
+export function createChart({
   parent,
   signals,
   colors,
@@ -92,6 +87,7 @@ export function createChartElement({
   timeScaleSetCallback,
   initialVisibleBarsCount,
   fitContent,
+  captureElement,
   config,
 }) {
   const div = window.document.createElement("div");
@@ -112,7 +108,7 @@ export function createChartElement({
   const legendBottom = createLegend(signals);
   div.append(legendBottom.element);
 
-  const ichart = createChart(
+  const ichart = lcCreateChart(
     chartDiv,
     /** @satisfies {DeepPartial<ChartOptions>} */ ({
       autoSize: true,
@@ -120,8 +116,6 @@ export function createChartElement({
         fontFamily: style.fontFamily,
         background: { color: "transparent" },
         attributionLogo: false,
-        colorSpace: "display-p3",
-        colorParsers: [oklchToRGBA],
       },
       grid: {
         vertLines: { visible: false },
@@ -133,6 +127,7 @@ export function createChartElement({
       timeScale: {
         borderVisible: false,
         enableConflation: true,
+        // conflationThresholdFactor: 8,
         ...(fitContent
           ? {
               minBarSpacing: 0.001,
@@ -144,7 +139,7 @@ export function createChartElement({
         locale: "en-us",
       },
       crosshair: {
-        mode: 3,
+        mode: 0,
       },
       ...(fitContent
         ? {
@@ -170,18 +165,6 @@ export function createChartElement({
     });
   };
 
-  const seriesList = signals.createSignal(
-    /** @type {Set<AnySeries>} */ (new Set()),
-    { equals: false },
-  );
-  const seriesCount = signals.createMemo(() => seriesList().size);
-  const markers = createMinMaxMarkers({
-    chart: ichart,
-    seriesList,
-    colors,
-    formatValue: numberToShortUSFormat,
-  });
-
   const visibleBarsCount = signals.createSignal(
     initialVisibleBarsCount ?? Infinity,
   );
@@ -193,20 +176,11 @@ export function createChartElement({
   const shouldShowLine = signals.createMemo(
     () => visibleBarsCountBucket() >= 2,
   );
-  const shouldUpdateMarkers = signals.createMemo(
-    () => visibleBarsCount() * seriesCount() <= 20_000,
-  );
-
-  signals.createEffect(shouldUpdateMarkers, (should) => {
-    if (should) markers.update();
-    else markers.clear();
-  });
 
   ichart.timeScale().subscribeVisibleLogicalRangeChange(
     throttle((range) => {
       if (range) {
         visibleBarsCount.set(range.to - range.from);
-        if (shouldUpdateMarkers()) markers.update();
       }
     }, 100),
   );
@@ -273,7 +247,7 @@ export function createChartElement({
       activeResources.forEach((v) => {
         v.fetch();
       });
-    }),
+    }, 10_000),
   );
 
   if (fitContent) {
@@ -386,12 +360,10 @@ export function createChartElement({
    * @param {Accessor<WhitespaceData[]>} [args.data]
    * @param {number} args.paneIndex
    * @param {boolean} [args.defaultActive]
-   * @param {(ctx: { active: Signal<boolean>, highlighted: Signal<boolean> }) => void} args.setup
+   * @param {(ctx: { active: Signal<boolean>, highlighted: Signal<boolean>, zOrder: number }) => void} args.setup
    * @param {() => readonly any[]} args.getData
    * @param {(data: any[]) => void} args.setData
    * @param {(data: any) => void} args.update
-   * @param {(markers: TimeSeriesMarker[]) => void} args.setMarkers
-   * @param {VoidFunction} args.clearMarkers
    * @param {() => void} args.onRemove
    */
   function addSeries({
@@ -408,8 +380,6 @@ export function createChartElement({
     getData,
     setData,
     update,
-    setMarkers,
-    clearMarkers,
     onRemove,
   }) {
     return signals.createRoot((dispose) => {
@@ -430,12 +400,7 @@ export function createChartElement({
 
       const highlighted = signals.createSignal(true);
 
-      setup({ active, highlighted });
-
-      // Update markers when active changes
-      signals.createEffect(active, () => {
-        if (shouldUpdateMarkers()) markers.scheduleUpdate();
-      });
+      setup({ active, highlighted, zOrder: -order });
 
       const hasData = signals.createSignal(false);
       let lastTime = -Infinity;
@@ -453,21 +418,14 @@ export function createChartElement({
         url: signals.createSignal(/** @type {string | null} */ (null)),
         getData,
         update,
-        setMarkers,
-        clearMarkers,
         remove() {
           dispose();
           onRemove();
           if (_valuesResource) {
             activeResources.delete(_valuesResource);
           }
-          seriesList().delete(series);
-          seriesList.set(seriesList());
         },
       };
-
-      seriesList().add(series);
-      seriesList.set(seriesList());
 
       if (metric) {
         signals.createScopedEffect(index, (index) => {
@@ -496,138 +454,149 @@ export function createChartElement({
             return `${base}${valuesResource.path}`;
           });
 
-          signals.createScopedEffect(active, (active) => {
-            if (active) {
-              timeResource.fetch();
-              valuesResource.fetch();
-              activeResources.add(valuesResource);
-
-              const timeRange = timeResource.range();
-              const valuesRange = valuesResource.range();
-              const valuesCacheKey = signals.createMemo(() => {
-                const res = valuesRange.response();
-                if (!res?.data?.length) return null;
-                if (!timeRange.response()?.data?.length) return null;
-                return `${res.version}|${res.stamp}|${res.total}|${res.start}|${res.end}`;
-              });
-              signals.createEffect(valuesCacheKey, (cacheKey) => {
-                if (!cacheKey) return;
-                const _indexes = timeRange.response()?.data;
-                const values = valuesRange.response()?.data;
-                if (!_indexes?.length || !values?.length) return;
-
-                const indexes = /** @type {number[]} */ (_indexes);
-                const length = Math.min(indexes.length, values.length);
-
-                // Find start index for processing
-                let startIdx = 0;
-                if (hasData()) {
-                  // Binary search to find first index where time >= lastTime
-                  let lo = 0;
-                  let hi = length;
-                  while (lo < hi) {
-                    const mid = (lo + hi) >>> 1;
-                    if (indexes[mid] < lastTime) {
-                      lo = mid + 1;
-                    } else {
-                      hi = mid;
-                    }
-                  }
-                  startIdx = lo;
-                  if (startIdx >= length) return; // No new data
-                }
-
-                /**
-                 * @param {number} i
-                 * @param {(number | null | [number, number, number, number])[]} vals
-                 * @returns {LineData | CandlestickData}
-                 */
-                function buildDataPoint(i, vals) {
-                  const time = /** @type {Time} */ (indexes[i]);
-                  const v = vals[i];
-                  if (v === null) {
-                    return { time, value: NaN };
-                  } else if (typeof v === "number") {
-                    return { time, value: v };
-                  } else {
-                    if (!Array.isArray(v) || v.length !== 4)
-                      throw new Error(`Expected OHLC tuple, got: ${v}`);
-                    const [open, high, low, close] = v;
-                    return { time, open, high, low, close };
-                  }
-                }
-
-                if (!hasData()) {
-                  // Initial load: build full array
-                  const data = /** @type {LineData[] | CandlestickData[]} */ (
-                    Array.from({ length })
-                  );
-
-                  let prevTime = null;
-                  let timeOffset = 0;
-
-                  for (let i = 0; i < length; i++) {
-                    const time = indexes[i];
-                    const sameTime = prevTime === time;
-                    if (sameTime) {
-                      timeOffset += 1;
-                    }
-                    const offsetedI = i - timeOffset;
-                    const point = buildDataPoint(i, values);
-                    if (sameTime && "open" in point) {
-                      const prev = /** @type {CandlestickData} */ (
-                        data[offsetedI]
-                      );
-                      point.open = prev.open;
-                      point.high = Math.max(prev.high, point.high);
-                      point.low = Math.min(prev.low, point.low);
-                    }
-                    data[offsetedI] = point;
-                    prevTime = time;
-                  }
-
-                  data.length -= timeOffset;
-
-                  setData(data);
-                  hasData.set(true);
-                  if (shouldUpdateMarkers()) markers.scheduleUpdate();
-                  lastTime =
-                    /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
-
-                  if (fitContent) {
-                    ichart.timeScale().fitContent();
-                  }
-
-                  timeScaleSetCallback?.(() => {
-                    if (
-                      index === "quarterindex" ||
-                      index === "semesterindex" ||
-                      index === "yearindex" ||
-                      index === "decadeindex"
-                    ) {
-                      setVisibleLogicalRange({ from: -1, to: data.length });
-                    }
-                  });
-                } else {
-                  // Incremental update: only process new data points
-                  for (let i = startIdx; i < length; i++) {
-                    const point = buildDataPoint(i, values);
-                    update(point);
-                    lastTime = /** @type {number} */ (point.time);
-                  }
-                }
-              });
-            } else {
-              activeResources.delete(valuesResource);
-            }
+          // Create memo outside active check (cheap, just checks data existence)
+          const timeRange = timeResource.range();
+          const valuesRange = valuesResource.range();
+          const valuesCacheKey = signals.createMemo(() => {
+            const res = valuesRange.response();
+            if (!res?.data?.length) return null;
+            if (!timeRange.response()?.data?.length) return null;
+            return `${res.version}|${res.stamp}|${res.total}|${res.start}|${res.end}`;
           });
+
+          // Combined effect for active + data processing (flat, uses prev comparison)
+          signals.createEffect(
+            () => ({ isActive: active(), cacheKey: valuesCacheKey() }),
+            (curr, prev) => {
+              const becameActive = curr.isActive && (!prev || !prev.isActive);
+              const becameInactive = !curr.isActive && prev?.isActive;
+
+              if (becameInactive) {
+                activeResources.delete(valuesResource);
+                return;
+              }
+
+              if (!curr.isActive) return;
+
+              if (becameActive) {
+                timeResource.fetch();
+                valuesResource.fetch();
+                activeResources.add(valuesResource);
+              }
+
+              // Process data only if cacheKey changed
+              if (!curr.cacheKey || curr.cacheKey === prev?.cacheKey) return;
+
+              const _indexes = timeRange.response()?.data;
+              const values = valuesRange.response()?.data;
+              if (!_indexes?.length || !values?.length) return;
+
+              const indexes = /** @type {number[]} */ (_indexes);
+              const length = Math.min(indexes.length, values.length);
+
+              // Find start index for processing
+              let startIdx = 0;
+              if (hasData()) {
+                // Binary search to find first index where time >= lastTime
+                let lo = 0;
+                let hi = length;
+                while (lo < hi) {
+                  const mid = (lo + hi) >>> 1;
+                  if (indexes[mid] < lastTime) {
+                    lo = mid + 1;
+                  } else {
+                    hi = mid;
+                  }
+                }
+                startIdx = lo;
+                if (startIdx >= length) return; // No new data
+              }
+
+              /**
+               * @param {number} i
+               * @param {(number | null | [number, number, number, number])[]} vals
+               * @returns {LineData | CandlestickData}
+               */
+              function buildDataPoint(i, vals) {
+                const time = /** @type {Time} */ (indexes[i]);
+                const v = vals[i];
+                if (v === null) {
+                  return { time, value: NaN };
+                } else if (typeof v === "number") {
+                  return { time, value: v };
+                } else {
+                  if (!Array.isArray(v) || v.length !== 4)
+                    throw new Error(`Expected OHLC tuple, got: ${v}`);
+                  const [open, high, low, close] = v;
+                  return { time, open, high, low, close };
+                }
+              }
+
+              if (!hasData()) {
+                // Initial load: build full array
+                const data = /** @type {LineData[] | CandlestickData[]} */ (
+                  Array.from({ length })
+                );
+
+                let prevTime = null;
+                let timeOffset = 0;
+
+                for (let i = 0; i < length; i++) {
+                  const time = indexes[i];
+                  const sameTime = prevTime === time;
+                  if (sameTime) {
+                    timeOffset += 1;
+                  }
+                  const offsetedI = i - timeOffset;
+                  const point = buildDataPoint(i, values);
+                  if (sameTime && "open" in point) {
+                    const prev = /** @type {CandlestickData} */ (
+                      data[offsetedI]
+                    );
+                    point.open = prev.open;
+                    point.high = Math.max(prev.high, point.high);
+                    point.low = Math.min(prev.low, point.low);
+                  }
+                  data[offsetedI] = point;
+                  prevTime = time;
+                }
+
+                data.length -= timeOffset;
+
+                setData(data);
+                hasData.set(true);
+                lastTime =
+                  /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
+
+                if (fitContent) {
+                  ichart.timeScale().fitContent();
+                }
+
+                timeScaleSetCallback?.(() => {
+                  if (
+                    index === "quarterindex" ||
+                    index === "semesterindex" ||
+                    index === "yearindex" ||
+                    index === "decadeindex"
+                  ) {
+                    setVisibleLogicalRange({ from: -1, to: data.length });
+                  }
+                });
+              } else {
+                // Incremental update: only process new data points
+                for (let i = startIdx; i < length; i++) {
+                  const point = buildDataPoint(i, values);
+                  update(point);
+                  lastTime = /** @type {number} */ (point.time);
+                }
+              }
+            },
+          );
         });
       } else if (data) {
         signals.createEffect(data, (data) => {
           setData(data);
           hasData.set(true);
-          if (shouldUpdateMarkers()) markers.scheduleUpdate();
-
           if (fitContent) {
             ichart.timeScale().fitContent();
           }
@@ -698,7 +667,6 @@ export function createChartElement({
       const defaultRed = inverse ? colors.green : colors.red;
       const upColor = customColors?.[0] ?? defaultGreen;
       const downColor = customColors?.[1] ?? defaultRed;
-      let showLine = shouldShowLine();
 
       /** @type {CandlestickISeries} */
       const candlestickISeries = /** @type {any} */ (
@@ -710,7 +678,7 @@ export function createChartElement({
             wickUpColor: upColor(),
             wickDownColor: downColor(),
             borderVisible: false,
-            visible: false,
+            visible: defaultActive !== false,
             ...options,
           },
           paneIndex,
@@ -731,8 +699,7 @@ export function createChartElement({
         )
       );
 
-      // Marker plugin always on candlestick (has true min/max via high/low)
-      const markerPlugin = createSeriesMarkers(candlestickISeries, [], { autoScale: false });
+      let showLine = false;
 
       const series = addSeries({
         colors: [upColor, downColor],
@@ -744,38 +711,28 @@ export function createChartElement({
         data,
         defaultActive,
         metric,
-        setup: ({ active, highlighted }) => {
-          candlestickISeries.setSeriesOrder(order);
-          lineISeries.setSeriesOrder(order);
+        setup: ({ active, highlighted, zOrder }) => {
+          candlestickISeries.setSeriesOrder(zOrder);
+          lineISeries.setSeriesOrder(zOrder);
           signals.createEffect(
             () => ({
               shouldShow: shouldShowLine(),
               active: active(),
               highlighted: highlighted(),
-              barsCount: visibleBarsCount(),
             }),
-            ({ shouldShow, active, highlighted, barsCount }) => {
-              if (barsCount === Infinity) return;
-              const wasLine = showLine;
+            ({ shouldShow, active, highlighted }) => {
               showLine = shouldShow;
-              // Use transparent when showing the other mode, otherwise use highlight
-              const up = showLine ? "transparent" : upColor.highlight(highlighted);
-              const down = showLine ? "transparent" : downColor.highlight(highlighted);
-              const line = showLine ? colors.default.highlight(highlighted) : "transparent";
               candlestickISeries.applyOptions({
-                visible: active,
-                upColor: up,
-                downColor: down,
-                wickUpColor: up,
-                wickDownColor: down,
+                visible: active && !showLine,
+                upColor: upColor.highlight(highlighted),
+                downColor: downColor.highlight(highlighted),
+                wickUpColor: upColor.highlight(highlighted),
+                wickDownColor: downColor.highlight(highlighted),
               });
               lineISeries.applyOptions({
-                visible: active,
-                color: line,
-                priceLineVisible: active && showLine,
+                visible: active && showLine,
+                color: colors.default.highlight(highlighted),
               });
-              if (wasLine !== showLine && shouldUpdateMarkers())
-                markers.scheduleUpdate();
             },
           );
         },
@@ -789,8 +746,6 @@ export function createChartElement({
           lineISeries.update({ time: data.time, value: data.close });
         },
         getData: () => candlestickISeries.data(),
-        setMarkers: (m) => markerPlugin.setMarkers(m),
-        clearMarkers: () => markerPlugin.setMarkers([]),
         onRemove: () => {
           ichart.removeSeries(candlestickISeries);
           ichart.removeSeries(lineISeries);
@@ -839,8 +794,6 @@ export function createChartElement({
         )
       );
 
-      const markerPlugin = createSeriesMarkers(iseries, [], { autoScale: false });
-
       const series = addSeries({
         colors: isDualColor ? [positiveColor, negativeColor] : [positiveColor],
         name,
@@ -851,8 +804,8 @@ export function createChartElement({
         data,
         defaultActive,
         metric,
-        setup: ({ active, highlighted }) => {
-          iseries.setSeriesOrder(order);
+        setup: ({ active, highlighted, zOrder }) => {
+          iseries.setSeriesOrder(zOrder);
           signals.createEffect(
             () => ({ active: active(), highlighted: highlighted() }),
             ({ active, highlighted }) => {
@@ -880,8 +833,6 @@ export function createChartElement({
         },
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        setMarkers: (m) => markerPlugin.setMarkers(m),
-        clearMarkers: () => markerPlugin.setMarkers([]),
         onRemove: () => ichart.removeSeries(iseries),
       });
       return series;
@@ -926,8 +877,6 @@ export function createChartElement({
         )
       );
 
-      const markerPlugin = createSeriesMarkers(iseries, [], { autoScale: false });
-
       const series = addSeries({
         colors: [color],
         name,
@@ -938,8 +887,8 @@ export function createChartElement({
         data,
         defaultActive,
         metric,
-        setup: ({ active, highlighted }) => {
-          iseries.setSeriesOrder(order);
+        setup: ({ active, highlighted, zOrder }) => {
+          iseries.setSeriesOrder(zOrder);
           signals.createEffect(
             () => ({ active: active(), highlighted: highlighted() }),
             ({ active, highlighted }) => {
@@ -953,8 +902,6 @@ export function createChartElement({
         setData: (data) => iseries.setData(data),
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        setMarkers: (m) => markerPlugin.setMarkers(m),
-        clearMarkers: () => markerPlugin.setMarkers([]),
         onRemove: () => ichart.removeSeries(iseries),
       });
       return series;
@@ -1001,8 +948,6 @@ export function createChartElement({
         )
       );
 
-      const markerPlugin = createSeriesMarkers(iseries, [], { autoScale: false });
-
       const series = addSeries({
         colors: [color],
         name,
@@ -1013,8 +958,8 @@ export function createChartElement({
         data,
         defaultActive,
         metric,
-        setup: ({ active, highlighted }) => {
-          iseries.setSeriesOrder(order);
+        setup: ({ active, highlighted, zOrder }) => {
+          iseries.setSeriesOrder(zOrder);
           signals.createEffect(
             () => ({ active: active(), highlighted: highlighted() }),
             ({ active, highlighted }) => {
@@ -1032,8 +977,6 @@ export function createChartElement({
         setData: (data) => iseries.setData(data),
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        setMarkers: (m) => markerPlugin.setMarkers(m),
-        clearMarkers: () => markerPlugin.setMarkers([]),
         onRemove: () => ichart.removeSeries(iseries),
       });
       return series;
@@ -1089,8 +1032,6 @@ export function createChartElement({
         )
       );
 
-      const markerPlugin = createSeriesMarkers(iseries, [], { autoScale: false });
-
       const series = addSeries({
         colors: [topColor, bottomColor],
         name,
@@ -1101,8 +1042,8 @@ export function createChartElement({
         data,
         defaultActive,
         metric,
-        setup: ({ active, highlighted }) => {
-          iseries.setSeriesOrder(order);
+        setup: ({ active, highlighted, zOrder }) => {
+          iseries.setSeriesOrder(zOrder);
           signals.createEffect(
             () => ({ active: active(), highlighted: highlighted() }),
             ({ active, highlighted }) => {
@@ -1117,8 +1058,6 @@ export function createChartElement({
         setData: (data) => iseries.setData(data),
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        setMarkers: (m) => markerPlugin.setMarkers(m),
-        clearMarkers: () => markerPlugin.setMarkers([]),
         onRemove: () => ichart.removeSeries(iseries),
       });
       return series;
@@ -1179,10 +1118,38 @@ export function createChartElement({
     });
   });
 
+  if (captureElement && canCapture) {
+    const domain = window.document.createElement("p");
+    domain.innerText = window.location.host;
+    domain.id = "domain";
+
+    addFieldsetIfNeeded({
+      id: "capture",
+      paneIndex: 0,
+      position: "ne",
+      createChild() {
+        const button = window.document.createElement("button");
+        button.id = "capture";
+        button.innerText = "capture";
+        button.title = "Capture chart as image";
+        button.addEventListener("click", async () => {
+          captureElement.dataset.screenshot = "true";
+          captureElement.append(domain);
+          try {
+            await capture({ element: captureElement, name: chartId });
+          } catch {}
+          captureElement.removeChild(domain);
+          captureElement.dataset.screenshot = "false";
+        });
+        return button;
+      },
+    });
+  }
+
   return chart;
 }
 
 /**
- * @typedef {typeof createChartElement} CreateChartElement
- * @typedef {ReturnType<createChartElement>} Chart
+ * @typedef {typeof createChart} CreateChart
+ * @typedef {ReturnType<createChart>} Chart
  */

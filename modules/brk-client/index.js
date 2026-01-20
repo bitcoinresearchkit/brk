@@ -839,9 +839,11 @@ class BrkError extends Error {
 /**
  * @template T
  * @typedef {Object} MetricData
+ * @property {number} version - Version of the metric data
  * @property {number} total - Total number of data points
  * @property {number} start - Start index (inclusive)
  * @property {number} end - End index (exclusive)
+ * @property {string} stamp - ISO 8601 timestamp of when the response was generated
  * @property {T[]} data - The metric data
  */
 /** @typedef {MetricData<any>} AnyMetricData */

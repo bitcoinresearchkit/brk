@@ -1041,9 +1041,11 @@ def _p(prefix: str, acc: str) -> str:
 
 class MetricData(TypedDict, Generic[T]):
     """Metric data with range information."""
+    version: int
     total: int
     start: int
     end: int
+    stamp: str
     data: List[T]
 
 

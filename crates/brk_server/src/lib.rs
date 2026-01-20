@@ -1,7 +1,6 @@
 #![doc = include_str!("../README.md")]
 
 use std::{
-    panic,
     path::PathBuf,
     sync::Arc,
     time::{Duration, Instant},
@@ -62,6 +61,9 @@ impl Server {
     pub async fn serve(self, port: Option<Port>) -> brk_error::Result<()> {
         let state = self.0;
 
+        #[cfg(feature = "bindgen")]
+        let vecs = state.query.inner().vecs();
+
         let compression_layer = CompressionLayer::new().br(true).gzip(true).zstd(true);
 
         let response_uri_layer = axum::middleware::from_fn(
@@ -95,8 +97,6 @@ impl Server {
                 },
             )
             .on_eos(());
-
-        let vecs = state.query.inner().vecs();
 
         let website_router = brk_website::router(state.website.clone());
         let mut router = ApiRouter::new().add_api_routes();
@@ -141,28 +141,33 @@ impl Server {
         let mut openapi = create_openapi();
         let router = router.finish_api(&mut openapi);
 
-        let workspace_root: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .and_then(|p| p.parent())
-            .unwrap()
-            .into();
-        let output_paths = brk_bindgen::ClientOutputPaths::new()
-            .rust(workspace_root.join("crates/brk_client/src/lib.rs"))
-            .javascript(workspace_root.join("modules/brk-client/index.js"))
-            .python(workspace_root.join("packages/brk_client/brk_client/__init__.py"));
+        #[cfg(feature = "bindgen")]
+        {
+            let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .parent()
+                .and_then(|p| p.parent())
+                .unwrap()
+                .to_path_buf();
+
+            let output_paths = brk_bindgen::ClientOutputPaths::new()
+                .rust(workspace_root.join("crates/brk_client/src/lib.rs"))
+                .javascript(workspace_root.join("modules/brk-client/index.js"))
+                .python(workspace_root.join("packages/brk_client/brk_client/__init__.py"));
+
+            let openapi_json = serde_json::to_string(&openapi).unwrap();
+
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                brk_bindgen::generate_clients(vecs, &openapi_json, &output_paths)
+            }));
+
+            match result {
+                Ok(Ok(())) => info!("Generated clients"),
+                Ok(Err(e)) => error!("Failed to generate clients: {e}"),
+                Err(_) => error!("Client generation panicked"),
+            }
+        }
 
         let api_json = Arc::new(ApiJson::new(&openapi));
-        let openapi_json = serde_json::to_string(&openapi).unwrap();
-
-        let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
-            brk_bindgen::generate_clients(vecs, &openapi_json, &output_paths)
-        }));
-
-        match result {
-            Ok(Ok(())) => info!("Generated clients"),
-            Ok(Err(e)) => error!("Failed to generate clients: {e}"),
-            Err(_) => error!("Client generation panicked"),
-        }
 
         let router = router
             .layer(Extension(Arc::new(openapi)))

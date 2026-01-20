@@ -1,4 +1,4 @@
-import { createColors } from "./utils/colors.js";
+import { createColors } from "./chart/colors.js";
 import { webSockets } from "./utils/ws.js";
 import * as formatters from "./utils/format.js";
 import { onFirstIntersection, getElementById, isHidden } from "./utils/dom.js";
@@ -8,7 +8,7 @@ import { initOptions } from "./options/full.js";
 import ufuzzy from "./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.mjs";
 import * as leanQr from "./modules/lean-qr/2.7.1/index.mjs";
 import { init as initExplorer } from "./panes/_explorer.js";
-import { init as initChart } from "./panes/chart/index.js";
+import { init as initChart } from "./panes/chart.js";
 import { init as initTable } from "./panes/table.js";
 import { init as initSimulation } from "./panes/_simulation.js";
 import { next } from "./utils/timing.js";

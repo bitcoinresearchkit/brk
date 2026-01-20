@@ -12,15 +12,14 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec,
-    IterableBoxedVec, IterableCloneableVec, IterableVec, LazyVecFrom3,
+    Database, EagerVec, Exit, ImportableVec, IterableBoxedVec, IterableCloneableVec, LazyVecFrom3,
 };
 
 use crate::{
     ComputeIndexes, indexes,
     internal::{
         CumulativeVec, Full, LazyBinaryTransformFull, LazyDateDerivedFull, LazyFull,
-        SatsTimesClosePrice, Stats,
+        SatsTimesClosePrice, Stats, compute_cumulative,
     },
 };
 
@@ -137,7 +136,12 @@ impl ValueDollarsFromTxFull {
         exit: &Exit,
     ) -> Result<()> {
         // Compute height cumulative by summing lazy height.sum values
-        self.compute_height_cumulative(starting_indexes.height, exit)?;
+        compute_cumulative(
+            starting_indexes.height,
+            &self.height.sum,
+            &mut self.height_cumulative.0,
+            exit,
+        )?;
 
         // Compute dateindex stats by aggregating lazy height stats
         self.dateindex.compute(
@@ -147,30 +151,6 @@ impl ValueDollarsFromTxFull {
             &indexes.dateindex.height_count,
             exit,
         )?;
-
-        Ok(())
-    }
-
-    /// Compute cumulative USD by summing `sum_sats[h] * price[h]` for all heights.
-    fn compute_height_cumulative(&mut self, max_from: Height, exit: &Exit) -> Result<()> {
-        let starting_height = max_from.min(Height::from(self.height_cumulative.0.len()));
-
-        let mut cumulative = starting_height.decremented().map_or(Dollars::ZERO, |h| {
-            self.height_cumulative.0.iter().get_unwrap(h)
-        });
-
-        let mut sum_iter = self.height.sum.iter();
-        let start_idx = *starting_height as usize;
-        let end_idx = sum_iter.len();
-
-        for h in start_idx..end_idx {
-            let sum_usd = sum_iter.get_unwrap(Height::from(h));
-            cumulative += sum_usd;
-            self.height_cumulative.0.truncate_push_at(h, cumulative)?;
-        }
-
-        let _lock = exit.lock();
-        self.height_cumulative.0.write()?;
 
         Ok(())
     }

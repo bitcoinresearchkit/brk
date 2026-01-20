@@ -11,8 +11,8 @@ use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec}
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        ComputedVecValue, CumulativeVec, LazyDateDerivedFull, Full, LazyFull, NumericValue,
-        compute_cumulative_extend,
+        ComputedVecValue, CumulativeVec, Full, LazyDateDerivedFull, LazyFull, NumericValue,
+        compute_cumulative,
     },
 };
 
@@ -102,6 +102,6 @@ where
         height_source: &impl IterableVec<Height, T>,
         exit: &Exit,
     ) -> Result<()> {
-        compute_cumulative_extend(max_from, height_source, &mut self.height_cumulative.0, exit)
+        compute_cumulative(max_from, height_source, &mut self.height_cumulative.0, exit)
     }
 }

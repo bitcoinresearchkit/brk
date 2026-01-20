@@ -1,8 +1,26 @@
+import { oklchToRgba } from "./oklch.js";
+
+/** @type {Map<string, string>} */
+const rgbaCache = new Map();
+
+/**
+ * Convert oklch to rgba with caching
+ * @param {string} color - oklch color string
+ */
+function toRgba(color) {
+  if (color === "transparent") return color;
+  const cached = rgbaCache.get(color);
+  if (cached) return cached;
+  const rgba = oklchToRgba(color);
+  rgbaCache.set(color, rgba);
+  return rgba;
+}
+
 /**
  * Reduce color opacity to 50% for dimming effect
  * @param {string} color - oklch color string
  */
-export function tameColor(color) {
+function tameColor(color) {
   if (color === "transparent") return color;
   return `${color.slice(0, -1)} / 50%)`;
 }
@@ -23,9 +41,10 @@ export function tameColor(color) {
  * @returns {Color}
  */
 function createColor(getter) {
-  const color = /** @type {Color} */ (() => getter());
-  color.tame = () => tameColor(getter());
-  color.highlight = (highlighted) => highlighted ? getter() : tameColor(getter());
+  const color = /** @type {Color} */ (() => toRgba(getter()));
+  color.tame = () => toRgba(tameColor(getter()));
+  color.highlight = (highlighted) =>
+    highlighted ? toRgba(getter()) : toRgba(tameColor(getter()));
   return color;
 }
 
