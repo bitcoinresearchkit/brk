@@ -40,7 +40,7 @@ impl Vecs {
 
         // Price-dependent metrics
         if let Some(price) = price {
-            // Value computes (cointime value destroyed/created/stored)
+            // Value computes (cointime value destroyed/created/stored, VOCDD)
             self.value.compute(
                 indexes,
                 starting_indexes,
@@ -70,6 +70,14 @@ impl Vecs {
                 &self.activity,
                 &self.supply,
                 &self.cap,
+                exit,
+            )?;
+
+            // Reserve Risk computes (depends on value.vocdd and price)
+            self.reserve_risk.compute(
+                starting_indexes,
+                price,
+                &self.value,
                 exit,
             )?;
         }

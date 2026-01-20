@@ -26,6 +26,12 @@ impl Vecs {
                 version,
                 indexes,
             )?,
+            vocdd: ComputedFromHeightSumCum::forced_import(
+                db,
+                "vocdd",
+                version,
+                indexes,
+            )?,
         })
     }
 }

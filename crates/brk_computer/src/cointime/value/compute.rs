@@ -22,6 +22,13 @@ impl Vecs {
             .activity
             .coinblocks_destroyed;
 
+        let coindays_destroyed = &distribution
+            .utxo_cohorts
+            .all
+            .metrics
+            .activity
+            .coindays_destroyed;
+
         self.cointime_value_destroyed
             .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_multiply(
@@ -50,6 +57,19 @@ impl Vecs {
                     starting_indexes.height,
                     &price.usd.split.close.height,
                     &activity.coinblocks_stored.height,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        // VOCDD: Value-weighted Coin Days Destroyed = CDD × price
+        // This is a key input for Reserve Risk calculation
+        self.vocdd
+            .compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_multiply(
+                    starting_indexes.height,
+                    &price.usd.split.close.height,
+                    &coindays_destroyed.height,
                     exit,
                 )?;
                 Ok(())
