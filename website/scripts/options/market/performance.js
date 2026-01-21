@@ -1,6 +1,7 @@
 /** Performance section */
 
 import { Unit } from "../../utils/units.js";
+import { baseline } from "../series.js";
 import { periodIdToName } from "./utils.js";
 
 /**
@@ -9,7 +10,7 @@ import { periodIdToName } from "./utils.js";
  * @param {Market["returns"]} returns
  */
 export function createPerformanceSection(ctx, returns) {
-  const { colors, baseline, createPriceLine } = ctx;
+  const { colors, createPriceLine } = ctx;
 
   return {
     name: "Performance",

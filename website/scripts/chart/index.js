@@ -33,16 +33,18 @@ import { resources } from "../resources.js";
 /**
  * @template T
  * @typedef {Object} Series
+ * @property {string} key
  * @property {string} id
  * @property {number} paneIndex
  * @property {Signal<boolean>} active
+ * @property {(value: boolean) => void} setActive
  * @property {() => void} show
  * @property {() => void} hide
  * @property {(order: number) => void} setOrder
  * @property {() => void} highlight
  * @property {() => void} tame
  * @property {() => boolean} hasData
- * @property {Signal<string | null>} url
+ * @property {string | null} url
  * @property {() => readonly T[]} getData
  * @property {(data: T) => void} update
  * @property {VoidFunction} remove
@@ -102,14 +104,18 @@ export function createChart({
   /** @type {Map<string, Signal<boolean>>} */
   const sharedActiveSignals = new Map();
 
-  const legendTop = createLegend(signals);
+  // Registry for linked series (same key = linked across panes)
+  /** @type {Map<string, Set<AnySeries>>} */
+  const seriesByKey = new Map();
+
+  const legendTop = createLegend();
   div.append(legendTop.element);
 
   const chartDiv = window.document.createElement("div");
   chartDiv.classList.add("lightweight-chart");
   div.append(chartDiv);
 
-  const legendBottom = createLegend(signals);
+  const legendBottom = createLegend();
   div.append(legendBottom.element);
 
   const ichart = lcCreateChart(
@@ -175,15 +181,18 @@ export function createChart({
   /** @type {Set<ZoomChangeCallback>} */
   const onZoomChange = new Set();
 
-  ichart.timeScale().subscribeVisibleLogicalRangeChange(
-    throttle((range) => {
-      if (!range) return;
-      const count = range.to - range.from;
-      if (count === visibleBarsCount) return;
-      visibleBarsCount = count;
-      onZoomChange.forEach((cb) => cb(count));
-    }, 100),
-  );
+  /** @param {{ from: number, to: number } | null} range */
+  function updateVisibleBarsCount(range) {
+    if (!range) return;
+    const count = range.to - range.from;
+    if (count === visibleBarsCount) return;
+    visibleBarsCount = count;
+    onZoomChange.forEach((cb) => cb(count));
+  }
+
+  ichart
+    .timeScale()
+    .subscribeVisibleLogicalRangeChange(throttle(updateVisibleBarsCount, 100));
 
   signals.createEffect(
     () => ({
@@ -391,27 +400,24 @@ export function createChart({
     onRemove,
   }) {
     return signals.createRoot((dispose) => {
-      const id = `${stringToId(name)}-${paneIndex}`;
-      const urlId = stringToId(name);
+      const key = stringToId(name);
+      const id = `${key}-${paneIndex}`;
 
       // Reuse existing signal if same name (links legends across panes)
-      let active = sharedActiveSignals.get(urlId);
+      let active = sharedActiveSignals.get(key);
       if (!active) {
         active = signals.createPersistedSignal({
           defaultValue: defaultActive ?? true,
           storageKey: id,
-          urlKey: urlId,
+          urlKey: key,
           ...serdeBool,
         });
-        sharedActiveSignals.set(urlId, active);
+        sharedActiveSignals.set(key, active);
       }
 
       setOrder(-order);
 
-      // Bridge signal to series methods
-      signals.createEffect(active, (isActive) => {
-        isActive ? show() : hide();
-      });
+      active() ? show() : hide();
 
       let hasData = false;
       let lastTime = -Infinity;
@@ -422,25 +428,46 @@ export function createChart({
       /** @type {AnySeries} */
       const series = {
         active,
+        setActive(value) {
+          active.set(value);
+          seriesByKey.get(key)?.forEach((s) => {
+            value ? s.show() : s.hide();
+          });
+          document.querySelectorAll(`[data-series="${key}"]`).forEach((el) => {
+            if (el instanceof HTMLInputElement && el.type === "checkbox") {
+              el.checked = value;
+            }
+          });
+        },
         setOrder,
         show,
         hide,
         highlight,
         tame,
         hasData: () => hasData,
+        key,
         id,
         paneIndex,
-        url: signals.createSignal(/** @type {string | null} */ (null)),
+        url: null,
         getData,
         update,
         remove() {
           dispose();
           onRemove();
+          seriesByKey.get(key)?.delete(series);
           if (_valuesResource) {
             activeResources.delete(_valuesResource);
           }
         },
       };
+
+      // Register series for cross-pane linking
+      let keySet = seriesByKey.get(key);
+      if (!keySet) {
+        keySet = new Set();
+        seriesByKey.set(key, keySet);
+      }
+      keySet.add(series);
 
       if (metric) {
         signals.createScopedEffect(index, (index) => {
@@ -462,11 +489,15 @@ export function createChart({
           const valuesResource = resources.useMetricEndpoint(valuesNode);
           _valuesResource = valuesResource;
 
-          series.url.set(() => {
-            const base = brk.baseUrl.endsWith("/")
-              ? brk.baseUrl.slice(0, -1)
-              : brk.baseUrl;
-            return `${base}${valuesResource.path}`;
+          series.url = `${
+            brk.baseUrl.endsWith("/") ? brk.baseUrl.slice(0, -1) : brk.baseUrl
+          }${valuesResource.path}`;
+
+          (paneIndex ? legendBottom : legendTop).addOrReplace({
+            series,
+            name,
+            colors,
+            order,
           });
 
           // Create memo outside active check (cheap, just checks data existence)
@@ -608,22 +639,24 @@ export function createChart({
             },
           );
         });
-      } else if (data) {
-        signals.createEffect(data, (data) => {
-          setData(data);
-          hasData = true;
-          if (fitContent) {
-            ichart.timeScale().fitContent();
-          }
+      } else {
+        (paneIndex ? legendBottom : legendTop).addOrReplace({
+          series,
+          name,
+          colors,
+          order,
         });
-      }
 
-      (paneIndex ? legendBottom : legendTop).addOrReplace({
-        series,
-        name,
-        colors,
-        order,
-      });
+        if (data) {
+          signals.createEffect(data, (data) => {
+            setData(data);
+            hasData = true;
+            if (fitContent) {
+              ichart.timeScale().fitContent();
+            }
+          });
+        }
+      }
 
       addPriceScaleSelectorIfNeeded({
         paneIndex,
@@ -693,7 +726,6 @@ export function createChart({
             wickUpColor: upColor(),
             wickDownColor: downColor(),
             borderVisible: false,
-            visible: defaultActive !== false,
             ...options,
           },
           paneIndex,
@@ -707,14 +739,13 @@ export function createChart({
           {
             color: colors.default(),
             lineWidth,
-            visible: false,
             priceLineVisible: true,
           },
           paneIndex,
         )
       );
 
-      let active = true;
+      let active = defaultActive !== false;
       let highlighted = true;
       let showLine = visibleBarsCount > 500;
 
@@ -733,11 +764,11 @@ export function createChart({
           color: colors.default.highlight(highlighted),
         });
       }
+      update();
 
       /** @type {ZoomChangeCallback} */
       function handleZoom(count) {
         const newShowLine = count > 500;
-        if (newShowLine === showLine) return;
         showLine = newShowLine;
         update();
       }
@@ -827,8 +858,6 @@ export function createChart({
         ichart.addSeries(
           /** @type {SeriesDefinition<'Histogram'>} */ (HistogramSeries),
           {
-            color: positiveColor(),
-            visible: defaultActive !== false,
             priceLineVisible: false,
             ...options,
           },
@@ -836,7 +865,7 @@ export function createChart({
         )
       );
 
-      let active = true;
+      let active = defaultActive !== false;
       let highlighted = true;
 
       function update() {
@@ -846,6 +875,7 @@ export function createChart({
           color: positiveColor.highlight(highlighted),
         });
       }
+      update();
 
       const series = addSeries({
         colors: isDualColor ? [positiveColor, negativeColor] : [positiveColor],
@@ -931,16 +961,14 @@ export function createChart({
           /** @type {SeriesDefinition<'Line'>} */ (LineSeries),
           {
             lineWidth,
-            visible: defaultActive !== false,
             priceLineVisible: false,
-            color: color(),
             ...options,
           },
           paneIndex,
         )
       );
 
-      let active = true;
+      let active = defaultActive !== false;
       let highlighted = true;
 
       function update() {
@@ -950,6 +978,7 @@ export function createChart({
           color: color.highlight(highlighted),
         });
       }
+      update();
 
       const series = addSeries({
         colors: [color],
@@ -1020,9 +1049,7 @@ export function createChart({
         ichart.addSeries(
           /** @type {SeriesDefinition<'Line'>} */ (LineSeries),
           {
-            visible: defaultActive !== false,
             priceLineVisible: false,
-            color: color(),
             lineVisible: false,
             pointMarkersVisible: true,
             pointMarkersRadius: 1,
@@ -1032,7 +1059,7 @@ export function createChart({
         )
       );
 
-      let active = true;
+      let active = defaultActive !== false;
       let highlighted = true;
       let radius =
         visibleBarsCount > 1000 ? 1 : visibleBarsCount > 200 ? 1.5 : 2;
@@ -1044,6 +1071,7 @@ export function createChart({
           color: color.highlight(highlighted),
         });
       }
+      update();
 
       /** @type {ZoomChangeCallback} */
       function handleZoom(count) {
@@ -1128,13 +1156,10 @@ export function createChart({
           /** @type {SeriesDefinition<'Baseline'>} */ (BaselineSeries),
           {
             lineWidth,
-            visible: defaultActive !== false,
             baseValue: {
               price: options?.baseValue?.price ?? 0,
             },
             ...options,
-            topLineColor: topColor(),
-            bottomLineColor: bottomColor(),
             priceLineVisible: false,
             bottomFillColor1: "transparent",
             bottomFillColor2: "transparent",
@@ -1146,7 +1171,7 @@ export function createChart({
         )
       );
 
-      let active = true;
+      let active = defaultActive !== false;
       let highlighted = true;
 
       function update() {
@@ -1157,6 +1182,7 @@ export function createChart({
           bottomLineColor: bottomColor.highlight(highlighted),
         });
       }
+      update();
 
       const series = addSeries({
         colors: [topColor, bottomColor],

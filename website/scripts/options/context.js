@@ -1,9 +1,4 @@
 import {
-  line,
-  dots,
-  candlestick,
-  baseline,
-  histogram,
   fromBlockCount,
   fromBitcoin,
   fromBlockSize,
@@ -37,12 +32,6 @@ export function createContext({ colors, brk }) {
     colors,
     brk,
 
-    // Series helpers
-    line,
-    dots,
-    candlestick,
-    baseline,
-    histogram,
     fromBlockCount: (pattern, title, color) =>
       fromBlockCount(colors, pattern, title, color),
     fromBitcoin: (pattern, title, color) =>

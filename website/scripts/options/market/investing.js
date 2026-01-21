@@ -1,6 +1,7 @@
 /** Investing section (DCA) */
 
 import { Unit } from "../../utils/units.js";
+import { line, baseline } from "../series.js";
 import { satsBtcUsd } from "../shared.js";
 import { periodIdToName } from "./utils.js";
 
@@ -41,7 +42,7 @@ export function buildDcaClasses(colors, dca) {
  * @param {Market["returns"]} args.returns
  */
 export function createInvestingSection(ctx, { dca, lookback, returns }) {
-  const { line, baseline, colors, createPriceLine } = ctx;
+  const { colors, createPriceLine } = ctx;
   const dcaClasses = buildDcaClasses(colors, dca);
 
   return {
@@ -114,8 +115,8 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 name: "Stack",
                 title: `${name} DCA vs Lump Sum Stack ($100/day)`,
                 bottom: [
-                  ...satsBtcUsd(ctx, dcaStack, "DCA", colors.green),
-                  ...satsBtcUsd(ctx, lumpSumStack, "Lump sum", colors.orange),
+                  ...satsBtcUsd( dcaStack, "DCA", colors.green),
+                  ...satsBtcUsd( lumpSumStack, "Lump sum", colors.orange),
                 ],
               },
             ],
@@ -164,7 +165,7 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 title: "DCA Stack by Year ($100/day)",
                 bottom: dcaClasses.flatMap(
                   ({ year, color, defaultActive, stack }) =>
-                    satsBtcUsd(ctx, stack, `${year}`, color, { defaultActive }),
+                    satsBtcUsd( stack, `${year}`, color, { defaultActive }),
                 ),
               },
             ],
@@ -200,7 +201,7 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
               {
                 name: "Stack",
                 title: `DCA Class ${year} Stack ($100/day)`,
-                bottom: satsBtcUsd(ctx, stack, "Stack", color),
+                bottom: satsBtcUsd( stack, "Stack", color),
               },
             ],
           })),

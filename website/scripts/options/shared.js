@@ -1,22 +1,22 @@
 /** Shared helpers for options */
 
 import { Unit } from "../utils/units.js";
+import { line } from "./series.js";
 
 /**
  * Create sats/btc/usd line series from a pattern with .sats/.bitcoin/.dollars
- * @param {PartialContext} ctx
  * @param {{ sats: AnyMetricPattern, bitcoin: AnyMetricPattern, dollars: AnyMetricPattern }} pattern
  * @param {string} name
  * @param {Color} [color]
  * @param {{ defaultActive?: boolean }} [options]
  * @returns {FetchedLineSeriesBlueprint[]}
  */
-export function satsBtcUsd(ctx, pattern, name, color, options) {
+export function satsBtcUsd(pattern, name, color, options) {
   const { defaultActive } = options || {};
   return [
-    ctx.line({ metric: pattern.sats, name, color, unit: Unit.sats, defaultActive }),
-    ctx.line({ metric: pattern.bitcoin, name, color, unit: Unit.btc, defaultActive }),
-    ctx.line({ metric: pattern.dollars, name, color, unit: Unit.usd, defaultActive }),
+    line({ metric: pattern.sats, name, color, unit: Unit.sats, defaultActive }),
+    line({ metric: pattern.bitcoin, name, color, unit: Unit.btc, defaultActive }),
+    line({ metric: pattern.dollars, name, color, unit: Unit.usd, defaultActive }),
   ];
 }
 

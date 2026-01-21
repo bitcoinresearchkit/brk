@@ -1,6 +1,7 @@
 /** Bands indicators (MinMax, Mayer Multiple) */
 
 import { Unit } from "../../../utils/units.js";
+import { line } from "../../series.js";
 
 /**
  * Create Bands section
@@ -10,7 +11,7 @@ import { Unit } from "../../../utils/units.js";
  * @param {Market["movingAverage"]} args.movingAverage
  */
 export function createBandsSection(ctx, { range, movingAverage }) {
-  const { line, colors } = ctx;
+  const { colors } = ctx;
 
   return {
     name: "Bands",

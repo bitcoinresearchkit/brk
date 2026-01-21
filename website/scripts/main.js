@@ -14,6 +14,7 @@ import { init as initSimulation } from "./panes/_simulation.js";
 import { next } from "./utils/timing.js";
 import { replaceHistory } from "./utils/url.js";
 import { removeStored, writeToStorage } from "./utils/storage.js";
+import { dark } from "./utils/theme.js";
 import {
   asideElement,
   asideLabelElement,
@@ -120,18 +121,6 @@ signals.createRoot(() => {
   const owner = signals.getOwner();
 
   console.log(`VERSION = ${brk.VERSION}`);
-
-  function initDark() {
-    const preferredColorSchemeMatchMedia = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    );
-    const dark = signals.createSignal(preferredColorSchemeMatchMedia.matches);
-    preferredColorSchemeMatchMedia.addEventListener("change", ({ matches }) => {
-      dark.set(matches);
-    });
-    return dark;
-  }
-  const dark = initDark();
 
   const qrcode = signals.createSignal(/** @type {string | null} */ (null));
 
@@ -552,6 +541,7 @@ signals.createRoot(() => {
       qrcode.set(window.location.href);
     });
 
+    
     shareDiv.addEventListener("click", () => {
       qrcode.set(null);
     });

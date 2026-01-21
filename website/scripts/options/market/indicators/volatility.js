@@ -1,6 +1,7 @@
 /** Volatility indicators (Index, True Range, Choppiness, Sharpe, Sortino) */
 
 import { Unit } from "../../../utils/units.js";
+import { line } from "../../series.js";
 
 /**
  * Create Volatility section
@@ -10,7 +11,7 @@ import { Unit } from "../../../utils/units.js";
  * @param {Market["range"]} args.range
  */
 export function createVolatilitySection(ctx, { volatility, range }) {
-  const { line, colors, createPriceLine } = ctx;
+  const { colors, createPriceLine } = ctx;
 
   return {
     name: "Volatility",

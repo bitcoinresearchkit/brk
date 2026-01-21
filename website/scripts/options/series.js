@@ -85,6 +85,8 @@ export function candlestick({
  * @param {Unit} args.unit
  * @param {Color | [Color, Color]} [args.color]
  * @param {boolean} [args.defaultActive]
+ * @param {boolean} [args.defaultActive]
+ * @param {number | undefined} [args.base]
  * @param {BaselineSeriesPartialOptions} [args.options]
  * @returns {FetchedBaselineSeriesBlueprint}
  */
@@ -94,6 +96,7 @@ export function baseline({
   color,
   defaultActive,
   unit,
+  base,
   options,
 }) {
   const isTuple = Array.isArray(color);
@@ -105,7 +108,12 @@ export function baseline({
     colors: isTuple ? color : undefined,
     unit,
     defaultActive,
-    options,
+    options: {
+      baseValue: {
+        price: base,
+      },
+      ...options,
+    },
   };
 }
 

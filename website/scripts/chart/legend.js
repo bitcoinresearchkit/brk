@@ -1,10 +1,7 @@
 import { createLabeledInput, createSpanName } from "../utils/dom.js";
 import { stringToId } from "../utils/format.js";
 
-/**
- * @param {Signals} signals
- */
-export function createLegend(signals) {
+export function createLegend() {
   const element = window.document.createElement("legend");
 
   /** @type {AnySeries | null} */
@@ -60,15 +57,11 @@ export function createLegend(signals) {
         title: "Click to toggle",
         inputChecked: series.active(),
         onClick: () => {
-          series.active.set(input.checked);
+          series.setActive(input.checked);
         },
         type: "checkbox",
       });
-
-      // Sync checkbox with signal (for shared signals across panes)
-      signals.createEffect(series.active, (active) => {
-        input.checked = active;
-      });
+      input.dataset.series = series.key;
 
       const spanMain = window.document.createElement("span");
       spanMain.classList.add("main");
@@ -94,17 +87,14 @@ export function createLegend(signals) {
       });
       seriesColorSpans.set(series, colorSpans);
 
-      const anchor = window.document.createElement("a");
-
-      signals.createEffect(series.url, (url) => {
-        if (url) {
-          anchor.href = url;
-          anchor.target = "_blank";
-          anchor.rel = "noopener noreferrer";
-          anchor.title = "Click to view data";
-          div.append(anchor);
-        }
-      });
+      if (series.url) {
+        const anchor = window.document.createElement("a");
+        anchor.href = series.url;
+        anchor.target = "_blank";
+        anchor.rel = "noopener noreferrer";
+        anchor.title = "Click to view data";
+        div.append(anchor);
+      }
     },
     /**
      * @param {number} start

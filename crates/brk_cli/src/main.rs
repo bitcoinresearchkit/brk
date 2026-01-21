@@ -57,7 +57,7 @@ pub fn run() -> anyhow::Result<()> {
         let chain_height = client.get_last_height()?;
         let indexed_height = indexer.vecs.starting_height();
         let blocks_behind = chain_height.saturating_sub(*indexed_height);
-        if blocks_behind > 1000 {
+        if blocks_behind > 10_000 {
             info!("Indexing {blocks_behind} blocks before starting server...");
             sleep(Duration::from_secs(3));
             indexer.index(&blocks, &client, &exit)?;
