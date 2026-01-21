@@ -76,15 +76,13 @@ const lineWidth = /** @type {any} */ (1.5);
  * @param {Object} args
  * @param {string} args.id
  * @param {HTMLElement} args.parent
- * @param {Signals} args.signals
  * @param {BrkClient} args.brk
  * @param {true} [args.fitContent]
  * @param {HTMLElement} [args.captureElement]
- * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
+ * @param {{unit: Unit; blueprints: AnyFetchedSeriesBlueprint[]}[]} [args.config]
  */
 export function createChart({
   parent,
-  signals,
   id: chartId,
   brk,
   fitContent,
@@ -418,8 +416,7 @@ export function createChart({
    * @param {number} args.order
    * @param {Color[]} args.colors
    * @param {LCSeriesType} args.seriesType
-   * @param {AnyMetricPattern} [args.metric]
-   * @param {Accessor<WhitespaceData[]>} [args.data]
+   * @param {AnyMetricPattern} args.metric
    * @param {number} args.paneIndex
    * @param {boolean} [args.defaultActive]
    * @param {(order: number) => void} args.setOrder
@@ -442,7 +439,6 @@ export function createChart({
     paneIndex,
     defaultActive,
     colors,
-    data,
     setOrder,
     show,
     hide,
@@ -454,273 +450,243 @@ export function createChart({
     onRemove,
     onDataLoaded,
   }) {
-    return signals.createRoot((dispose) => {
-      const key = stringToId(name);
-      const id = `${key}-${paneIndex}`;
+    const key = stringToId(name);
+    const id = `${key}-${paneIndex}`;
 
-      // Reuse existing state if same name (links legends across panes)
-      const existingActive = sharedActiveStates.get(key);
-      const active =
-        existingActive ??
-        createPersistedValue({
-          defaultValue: defaultActive ?? true,
-          storageKey: id,
-          urlKey: key,
-          ...serdeBool,
+    // Reuse existing state if same name (links legends across panes)
+    const existingActive = sharedActiveStates.get(key);
+    const active =
+      existingActive ??
+      createPersistedValue({
+        defaultValue: defaultActive ?? true,
+        storageKey: id,
+        urlKey: key,
+        ...serdeBool,
+      });
+    if (!existingActive) sharedActiveStates.set(key, active);
+
+    setOrder(-order);
+
+    active.value ? show() : hide();
+
+    let hasData = false;
+    let lastTime = -Infinity;
+
+    /** @type {VoidFunction | null} */
+    let _fetch = null;
+
+    /** @type {AnySeries} */
+    const series = {
+      active,
+      setActive(value) {
+        const wasActive = active.value;
+        active.set(value);
+        seriesByKey.get(key)?.forEach((s) => {
+          value ? s.show() : s.hide();
         });
-      if (!existingActive) sharedActiveStates.set(key, active);
-
-      setOrder(-order);
-
-      active.value ? show() : hide();
-
-      let hasData = false;
-      let lastTime = -Infinity;
-
-      /** @type {VoidFunction | null} */
-      let _fetch = null;
-
-      /** @type {AnySeries} */
-      const series = {
-        active,
-        setActive(value) {
-          const wasActive = active.value;
-          active.set(value);
-          seriesByKey.get(key)?.forEach((s) => {
-            value ? s.show() : s.hide();
-          });
-          document.querySelectorAll(`[data-series="${id}"]`).forEach((el) => {
-            if (el instanceof HTMLInputElement && el.type === "checkbox") {
-              el.checked = value;
-            }
-          });
-          if (value && !wasActive) _fetch?.();
-        },
-        setOrder,
-        show,
-        hide,
-        highlight,
-        tame,
-        hasData: () => hasData,
-        fetch: () => _fetch?.(),
-        key,
-        id,
-        paneIndex,
-        url: null,
-        getData,
-        update,
-        remove() {
-          dispose();
-          onRemove();
-          seriesByKey.get(key)?.delete(series);
-        },
-      };
-
-      // Register series for cross-pane linking
-      let keySet = seriesByKey.get(key);
-      if (!keySet) {
-        keySet = new Set();
-        seriesByKey.set(key, keySet);
-      }
-      keySet.add(series);
-
-      if (metric) {
-        /** @param {ChartableIndex} idx */
-        function setupIndexEffect(idx) {
-          // Reset data state for new index
-          hasData = false;
-          lastTime = -Infinity;
-          _fetch = null;
-
-          // Get timestamp metric from tree based on index type
-          const timeMetric =
-            idx === "height"
-              ? brk.metrics.blocks.time.timestampMonotonic
-              : brk.metrics.blocks.time.timestamp;
-          const valuesMetric = /** @type {AnyMetricPattern} */ (metric);
-          const _timeEndpoint = timeMetric.get(idx);
-          if (!_timeEndpoint) throw "Expect time endpoint";
-          const timeEndpoint = _timeEndpoint;
-          const valuesEndpoint = valuesMetric.by[idx];
-          // Gracefully skip - series may be about to be removed by option change
-          if (!timeEndpoint || !valuesEndpoint) return;
-
-          series.url = `${
-            brk.baseUrl.endsWith("/") ? brk.baseUrl.slice(0, -1) : brk.baseUrl
-          }${valuesEndpoint.path}`;
-
-          (paneIndex ? legendBottom : legendTop).addOrReplace({
-            series,
-            name,
-            colors,
-            order,
-          });
-
-          /**
-           * @param {number[]} indexes
-           * @param {(number | null | [number, number, number, number])[]} values
-           */
-          function processData(indexes, values) {
-            const length = Math.min(indexes.length, values.length);
-
-            // Find start index for processing
-            let startIdx = 0;
-            if (hasData) {
-              // Binary search to find first index where time >= lastTime
-              let lo = 0;
-              let hi = length;
-              while (lo < hi) {
-                const mid = (lo + hi) >>> 1;
-                if (indexes[mid] < lastTime) {
-                  lo = mid + 1;
-                } else {
-                  hi = mid;
-                }
-              }
-              startIdx = lo;
-              if (startIdx >= length) return; // No new data
-            }
-
-            /**
-             * @param {number} i
-             * @returns {LineData | CandlestickData}
-             */
-            function buildDataPoint(i) {
-              const time = /** @type {Time} */ (indexes[i]);
-              const v = values[i];
-              if (v === null) {
-                return { time, value: NaN };
-              } else if (typeof v === "number") {
-                return { time, value: v };
-              } else {
-                if (!Array.isArray(v) || v.length !== 4)
-                  throw new Error(`Expected OHLC tuple, got: ${v}`);
-                const [open, high, low, close] = v;
-                return { time, open, high, low, close };
-              }
-            }
-
-            if (!hasData) {
-              // Initial load: build full array
-              const data = /** @type {LineData[] | CandlestickData[]} */ (
-                Array.from({ length })
-              );
-
-              let prevTime = null;
-              let timeOffset = 0;
-
-              for (let i = 0; i < length; i++) {
-                const time = indexes[i];
-                const sameTime = prevTime === time;
-                if (sameTime) {
-                  timeOffset += 1;
-                }
-                const offsetedI = i - timeOffset;
-                const point = buildDataPoint(i);
-                if (sameTime && "open" in point) {
-                  const prev = /** @type {CandlestickData} */ (data[offsetedI]);
-                  point.open = prev.open;
-                  point.high = Math.max(prev.high, point.high);
-                  point.low = Math.min(prev.low, point.low);
-                }
-                data[offsetedI] = point;
-                prevTime = time;
-              }
-
-              data.length -= timeOffset;
-
-              setData(data);
-              hasData = true;
-              lastTime = /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
-
-              // Restore saved range or use defaults
-              const savedRange = getRange();
-              if (savedRange) {
-                ichart.timeScale().setVisibleLogicalRange({
-                  from: savedRange.from,
-                  to: savedRange.to,
-                });
-              } else if (fitContent) {
-                ichart.timeScale().fitContent();
-              } else if (
-                idx === "quarterindex" ||
-                idx === "semesterindex" ||
-                idx === "yearindex" ||
-                idx === "decadeindex"
-              ) {
-                ichart
-                  .timeScale()
-                  .setVisibleLogicalRange({ from: -1, to: data.length });
-              }
-              // Delay until chart has applied the range
-              requestAnimationFrame(() => onDataLoaded?.());
-            } else {
-              // Incremental update: only process new data points
-              for (let i = startIdx; i < length; i++) {
-                const point = buildDataPoint(i);
-                update(point);
-                lastTime = /** @type {number} */ (point.time);
-              }
-            }
+        document.querySelectorAll(`[data-series="${id}"]`).forEach((el) => {
+          if (el instanceof HTMLInputElement && el.type === "checkbox") {
+            el.checked = value;
           }
-
-          async function fetchAndProcess() {
-            const [timeResult, valuesResult] = await Promise.all([
-              timeEndpoint.slice(-10000).fetch(),
-              valuesEndpoint?.slice(-10000).fetch(),
-            ]);
-            if (timeResult?.data?.length && valuesResult?.data?.length) {
-              processData(timeResult.data, valuesResult.data);
-            }
-          }
-
-          _fetch = fetchAndProcess;
-
-          // Initial fetch if active
-          if (active.value) {
-            fetchAndProcess();
-          }
-        }
-
-        setupIndexEffect(index());
-        // Series don't subscribe to onIndexChange - panes recreates them on index change
-        // onIndexChange.add(setupIndexEffect);
-        // _cleanup = () => onIndexChange.delete(setupIndexEffect);
-      } else {
-        (paneIndex ? legendBottom : legendTop).addOrReplace({
-          series,
-          name,
-          colors,
-          order,
         });
+        if (value && !wasActive) _fetch?.();
+      },
+      setOrder,
+      show,
+      hide,
+      highlight,
+      tame,
+      hasData: () => hasData,
+      fetch: () => _fetch?.(),
+      key,
+      id,
+      paneIndex,
+      url: null,
+      getData,
+      update,
+      remove() {
+        onRemove();
+        seriesByKey.get(key)?.delete(series);
+      },
+    };
 
-        if (data) {
-          signals.createEffect(data, (data) => {
-            setData(data);
-            hasData = true;
-            const savedRange = getRange();
-            if (savedRange) {
-              ichart.timeScale().setVisibleLogicalRange({
-                from: savedRange.from,
-                to: savedRange.to,
-              });
-            } else if (fitContent) {
-              ichart.timeScale().fitContent();
-            }
-            // Delay until chart has applied the range
-            requestAnimationFrame(() => onDataLoaded?.());
-          });
-        }
-      }
+    // Register series for cross-pane linking
+    let keySet = seriesByKey.get(key);
+    if (!keySet) {
+      keySet = new Set();
+      seriesByKey.set(key, keySet);
+    }
+    keySet.add(series);
 
-      addPriceScaleSelectorIfNeeded({
-        paneIndex,
-        seriesType,
-        unit,
+    /** @param {ChartableIndex} idx */
+    function setupIndexEffect(idx) {
+      // Reset data state for new index
+      hasData = false;
+      lastTime = -Infinity;
+      _fetch = null;
+
+      // Get timestamp metric from tree based on index type
+      const timeMetric =
+        idx === "height"
+          ? brk.metrics.blocks.time.timestampMonotonic
+          : brk.metrics.blocks.time.timestamp;
+      const valuesMetric = /** @type {AnyMetricPattern} */ (metric);
+      const _timeEndpoint = timeMetric.get(idx);
+      if (!_timeEndpoint) throw "Expect time endpoint";
+      const timeEndpoint = _timeEndpoint;
+      const valuesEndpoint = valuesMetric.by[idx];
+      // Gracefully skip - series may be about to be removed by option change
+      if (!timeEndpoint || !valuesEndpoint) return;
+
+      series.url = `${
+        brk.baseUrl.endsWith("/") ? brk.baseUrl.slice(0, -1) : brk.baseUrl
+      }${valuesEndpoint.path}`;
+
+      (paneIndex ? legendBottom : legendTop).addOrReplace({
+        series,
+        name,
+        colors,
+        order,
       });
 
-      return series;
+      /**
+       * @param {number[]} indexes
+       * @param {(number | null | [number, number, number, number])[]} values
+       */
+      function processData(indexes, values) {
+        const length = Math.min(indexes.length, values.length);
+
+        // Find start index for processing
+        let startIdx = 0;
+        if (hasData) {
+          // Binary search to find first index where time >= lastTime
+          let lo = 0;
+          let hi = length;
+          while (lo < hi) {
+            const mid = (lo + hi) >>> 1;
+            if (indexes[mid] < lastTime) {
+              lo = mid + 1;
+            } else {
+              hi = mid;
+            }
+          }
+          startIdx = lo;
+          if (startIdx >= length) return; // No new data
+        }
+
+        /**
+         * @param {number} i
+         * @returns {LineData | CandlestickData}
+         */
+        function buildDataPoint(i) {
+          const time = /** @type {Time} */ (indexes[i]);
+          const v = values[i];
+          if (v === null) {
+            return { time, value: NaN };
+          } else if (typeof v === "number") {
+            return { time, value: v };
+          } else {
+            if (!Array.isArray(v) || v.length !== 4)
+              throw new Error(`Expected OHLC tuple, got: ${v}`);
+            const [open, high, low, close] = v;
+            return { time, open, high, low, close };
+          }
+        }
+
+        if (!hasData) {
+          // Initial load: build full array
+          const data = /** @type {LineData[] | CandlestickData[]} */ (
+            Array.from({ length })
+          );
+
+          let prevTime = null;
+          let timeOffset = 0;
+
+          for (let i = 0; i < length; i++) {
+            const time = indexes[i];
+            const sameTime = prevTime === time;
+            if (sameTime) {
+              timeOffset += 1;
+            }
+            const offsetedI = i - timeOffset;
+            const point = buildDataPoint(i);
+            if (sameTime && "open" in point) {
+              const prev = /** @type {CandlestickData} */ (data[offsetedI]);
+              point.open = prev.open;
+              point.high = Math.max(prev.high, point.high);
+              point.low = Math.min(prev.low, point.low);
+            }
+            data[offsetedI] = point;
+            prevTime = time;
+          }
+
+          data.length -= timeOffset;
+
+          setData(data);
+          hasData = true;
+          lastTime = /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
+
+          // Restore saved range or use defaults
+          const savedRange = getRange();
+          if (savedRange) {
+            ichart.timeScale().setVisibleLogicalRange({
+              from: savedRange.from,
+              to: savedRange.to,
+            });
+          } else if (fitContent) {
+            ichart.timeScale().fitContent();
+          } else if (
+            idx === "quarterindex" ||
+            idx === "semesterindex" ||
+            idx === "yearindex" ||
+            idx === "decadeindex"
+          ) {
+            ichart
+              .timeScale()
+              .setVisibleLogicalRange({ from: -1, to: data.length });
+          }
+          // Delay until chart has applied the range
+          requestAnimationFrame(() => onDataLoaded?.());
+        } else {
+          // Incremental update: only process new data points
+          for (let i = startIdx; i < length; i++) {
+            const point = buildDataPoint(i);
+            update(point);
+            lastTime = /** @type {number} */ (point.time);
+          }
+        }
+      }
+
+      async function fetchAndProcess() {
+        const [timeResult, valuesResult] = await Promise.all([
+          timeEndpoint.slice(-10000).fetch(),
+          valuesEndpoint?.slice(-10000).fetch(),
+        ]);
+        if (timeResult?.data?.length && valuesResult?.data?.length) {
+          processData(timeResult.data, valuesResult.data);
+        }
+      }
+
+      _fetch = fetchAndProcess;
+
+      // Initial fetch if active
+      if (active.value) {
+        fetchAndProcess();
+      }
+    }
+
+    setupIndexEffect(index());
+    // Series don't subscribe to onIndexChange - panes recreates them on index change
+    // onIndexChange.add(setupIndexEffect);
+    // _cleanup = () => onIndexChange.delete(setupIndexEffect);
+
+    addPriceScaleSelectorIfNeeded({
+      paneIndex,
+      seriesType,
+      unit,
     });
+
+    return series;
   }
 
   const chart = {
@@ -738,8 +704,7 @@ export function createChart({
      * @param {string} args.name
      * @param {Unit} args.unit
      * @param {number} args.order
-     * @param {AnyMetricPattern} [args.metric]
-     * @param {Accessor<CandlestickData[]>} [args.data]
+     * @param {AnyMetricPattern} args.metric
      * @param {number} [args.paneIndex]
      * @param {[Color, Color]} [args.colors] - [upColor, downColor] for legend
      * @param {boolean} [args.defaultActive]
@@ -754,7 +719,6 @@ export function createChart({
       paneIndex = 0,
       colors: customColors,
       defaultActive,
-      data,
       inverse,
       options,
     }) {
@@ -828,7 +792,6 @@ export function createChart({
         paneIndex,
         seriesType: "Candlestick",
         unit,
-        data,
         defaultActive,
         metric,
         setOrder(order) {
@@ -883,9 +846,8 @@ export function createChart({
      * @param {string} args.name
      * @param {Unit} args.unit
      * @param {number} args.order
+     * @param {AnyMetricPattern} args.metric
      * @param {Color | [Color, Color]} [args.color] - Single color or [positive, negative] colors
-     * @param {AnyMetricPattern} [args.metric]
-     * @param {Accessor<HistogramData[]>} [args.data]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
      * @param {HistogramSeriesPartialOptions} [args.options]
@@ -898,7 +860,6 @@ export function createChart({
       order,
       paneIndex = 0,
       defaultActive,
-      data,
       options,
     }) {
       const isDualColor = Array.isArray(color);
@@ -937,7 +898,6 @@ export function createChart({
         paneIndex,
         seriesType: "Bar",
         unit,
-        data,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -990,8 +950,7 @@ export function createChart({
      * @param {string} args.name
      * @param {Unit} args.unit
      * @param {number} args.order
-     * @param {Accessor<LineData[]>} [args.data]
-     * @param {AnyMetricPattern} [args.metric]
+     * @param {AnyMetricPattern} args.metric
      * @param {Color} [args.color]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
@@ -1005,7 +964,6 @@ export function createChart({
       color: _color,
       paneIndex = 0,
       defaultActive,
-      data,
       options,
     }) {
       const color =
@@ -1044,7 +1002,6 @@ export function createChart({
         paneIndex,
         seriesType: "Line",
         unit,
-        data,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -1083,8 +1040,7 @@ export function createChart({
      * @param {string} args.name
      * @param {Unit} args.unit
      * @param {number} args.order
-     * @param {Accessor<LineData[]>} [args.data]
-     * @param {AnyMetricPattern} [args.metric]
+     * @param {AnyMetricPattern} args.metric
      * @param {Color} [args.color]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
@@ -1098,7 +1054,6 @@ export function createChart({
       color: _color,
       paneIndex = 0,
       defaultActive,
-      data,
       options,
     }) {
       const color =
@@ -1150,7 +1105,6 @@ export function createChart({
         paneIndex,
         seriesType: "Line",
         unit,
-        data,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -1190,8 +1144,7 @@ export function createChart({
      * @param {string} args.name
      * @param {Unit} args.unit
      * @param {number} args.order
-     * @param {Accessor<BaselineData[]>} [args.data]
-     * @param {AnyMetricPattern} [args.metric]
+     * @param {AnyMetricPattern} args.metric
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
      * @param {Color} [args.topColor]
@@ -1205,7 +1158,6 @@ export function createChart({
       order,
       paneIndex: _paneIndex,
       defaultActive,
-      data,
       topColor = colors.green,
       bottomColor = colors.red,
       options,
@@ -1254,7 +1206,6 @@ export function createChart({
         paneIndex,
         seriesType: "Baseline",
         unit,
-        data,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -1299,50 +1250,56 @@ export function createChart({
     blueprints.forEach((blueprint, order) => {
       if (blueprint.type === "Candlestick") {
         chart.addCandlestickSeries({
+          metric: blueprint.metric,
           name: blueprint.title,
           unit,
-          data: blueprint.data,
+          colors: blueprint.colors,
           defaultActive: blueprint.defaultActive,
           paneIndex,
+          options: blueprint.options,
           order,
         });
       } else if (blueprint.type === "Baseline") {
         chart.addBaselineSeries({
+          metric: blueprint.metric,
           name: blueprint.title,
           unit,
-          data: blueprint.data,
           defaultActive: blueprint.defaultActive,
           paneIndex,
+          options: blueprint.options,
           order,
         });
       } else if (blueprint.type === "Histogram") {
         chart.addHistogramSeries({
+          metric: blueprint.metric,
           name: blueprint.title,
           unit,
           color: blueprint.color,
-          data: blueprint.data,
           defaultActive: blueprint.defaultActive,
           paneIndex,
+          options: blueprint.options,
           order,
         });
       } else if (blueprint.type === "Dots") {
         chart.addDotsSeries({
+          metric: blueprint.metric,
           name: blueprint.title,
           unit,
           color: blueprint.color,
-          data: blueprint.data,
           defaultActive: blueprint.defaultActive,
           paneIndex,
+          options: blueprint.options,
           order,
         });
       } else {
         chart.addLineSeries({
+          metric: blueprint.metric,
           name: blueprint.title,
           unit,
-          data: blueprint.data,
           defaultActive: blueprint.defaultActive,
           paneIndex,
           color: blueprint.color,
+          options: blueprint.options,
           order,
         });
       }

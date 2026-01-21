@@ -28,7 +28,6 @@ export function init({ option, brk }) {
 
   const chart = createChart({
     parent: chartElement,
-    signals,
     id: "charts",
     brk,
     captureElement: chartElement,
@@ -223,6 +222,8 @@ export function init({ option, brk }) {
       orderStart,
       legend,
     }) {
+      console.log("createSeriesFromBlueprints paneIndex:", paneIndex);
+
       legend.removeFrom(orderStart);
       seriesList.splice(orderStart).forEach((series) => series.remove());
 
@@ -321,10 +322,7 @@ export function init({ option, brk }) {
     signals.createScopedEffect(
       () => ({ unit: topUnit(), _: indexVersion() }),
       ({ unit }) => {
-        // Remove old series BEFORE creating new one
-        seriesListTop[0]?.remove();
-
-        // Create price series
+        // Create price series BEFORE removing old one to prevent pane collapse
         /** @type {AnySeries | undefined} */
         let series;
         switch (unit) {
@@ -350,6 +348,7 @@ export function init({ option, brk }) {
         }
         if (!series) throw Error("Unreachable");
 
+        seriesListTop[0]?.remove();
         seriesListTop[0] = series;
 
         // Live price update effect
@@ -456,7 +455,7 @@ function createIndexSelector(option, chart) {
     // Use preferred index if available, otherwise fall back to first choice
     let currentValue = newChoices.includes(preferredIndex)
       ? preferredIndex
-      : newChoices[0] ?? "date";
+      : (newChoices[0] ?? "date");
 
     if (currentValue !== chart.indexName.value) {
       chart.indexName.set(currentValue);
