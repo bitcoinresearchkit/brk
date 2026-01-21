@@ -314,46 +314,39 @@ export function createChart({
    * @param {(pane: IPaneApi<Time>) => HTMLElement} args.createChild
    */
   function addFieldsetIfNeeded({ paneIndex, id, position, createChild }) {
-    const owner = signals.getOwner();
+    setTimeout(() => {
+      const parent = ichart
+        ?.panes()
+        .at(paneIndex)
+        ?.getHTMLElement()
+        ?.children?.item(1)?.firstChild;
 
-    setTimeout(
-      () =>
-        signals.runWithOwner(owner, () => {
-          const parent = ichart
-            ?.panes()
-            .at(paneIndex)
-            ?.getHTMLElement()
-            ?.children?.item(1)?.firstChild;
+      if (!parent) throw Error("Parent should exist");
 
-          if (!parent) throw Error("Parent should exist");
+      const children = Array.from(parent.childNodes).filter(
+        (element) =>
+          /** @type {HTMLElement} */ (element).dataset.position === position,
+      );
 
-          const children = Array.from(parent.childNodes).filter(
-            (element) =>
-              /** @type {HTMLElement} */ (element).dataset.position ===
-              position,
-          );
+      if (children.length === 1) {
+        children[0].remove();
+      } else if (children.length > 1) {
+        throw Error("Untraceable");
+      }
 
-          if (children.length === 1) {
-            children[0].remove();
-          } else if (children.length > 1) {
-            throw Error("Untraceable");
-          }
+      const fieldset = window.document.createElement("fieldset");
+      fieldset.dataset.size = "xs";
+      fieldset.dataset.position = position;
+      fieldset.id = `${id}-${paneIndex}`;
+      const pane = ichart.panes().at(paneIndex);
+      if (!pane) throw Error("Expect pane");
+      pane
+        .getHTMLElement()
+        ?.children?.item(1)
+        ?.firstChild?.appendChild(fieldset);
 
-          const fieldset = window.document.createElement("fieldset");
-          fieldset.dataset.size = "xs";
-          fieldset.dataset.position = position;
-          fieldset.id = `${id}-${paneIndex}`;
-          const pane = ichart.panes().at(paneIndex);
-          if (!pane) throw Error("Expect pane");
-          pane
-            .getHTMLElement()
-            ?.children?.item(1)
-            ?.firstChild?.appendChild(fieldset);
-
-          fieldset.append(createChild(pane));
-        }),
-      paneIndex ? 50 : 0,
-    );
+      fieldset.append(createChild(pane));
+    }, paneIndex ? 50 : 0);
   }
 
   /**
