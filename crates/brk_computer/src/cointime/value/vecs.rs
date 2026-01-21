@@ -8,4 +8,5 @@ pub struct Vecs {
     pub cointime_value_destroyed: ComputedFromHeightSumCum<StoredF64>,
     pub cointime_value_created: ComputedFromHeightSumCum<StoredF64>,
     pub cointime_value_stored: ComputedFromHeightSumCum<StoredF64>,
+    pub vocdd: ComputedFromHeightSumCum<StoredF64>,
 }
