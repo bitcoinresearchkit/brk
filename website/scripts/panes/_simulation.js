@@ -21,12 +21,9 @@ import { serdeDate, serdeOptDate, serdeOptNumber } from "../utils/serde.js";
 import signals from "../signals.js";
 import { createChart } from "../chart/index.js";
 import { resources } from "../resources.js";
+import { colors } from "../chart/colors.js";
 
-/**
- * @param {Object} args
- * @param {Colors} args.colors
- */
-export function init({ colors }) {
+export function init() {
   /**
    * @typedef {Object} Frequency
    * @property {string} name

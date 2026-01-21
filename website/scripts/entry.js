@@ -21,7 +21,7 @@
  *
  * @import { UnitObject as Unit } from "./utils/units.js"
  *
- * @import { ChartableIndexName } from "./panes/chart.js";
+ * @import { ChartableIndexName } from "./utils/serde.js";
  */
 
 // import uFuzzy = require("./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts");

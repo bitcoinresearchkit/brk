@@ -8,11 +8,14 @@ import {
 } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.mjs";
 import { createLegend } from "./legend.js";
 import { capture, canCapture } from "./capture.js";
+import { colors } from "./colors.js";
 
 const lcCreateChart = /** @type {CreateLCChart} */ (untypedLcCreateChart);
 import { createChoiceField } from "../utils/dom.js";
-import { throttle } from "../utils/timing.js";
-import { serdeBool } from "../utils/serde.js";
+import { createPersistedValue } from "../utils/persisted.js";
+import { onChange as onThemeChange } from "../utils/theme.js";
+import { throttle, debounce } from "../utils/timing.js";
+import { serdeBool, serdeChartableIndex } from "../utils/serde.js";
 import { stringToId, numberToShortUSFormat } from "../utils/format.js";
 import { style } from "../utils/elements.js";
 import { resources } from "../resources.js";
@@ -74,11 +77,7 @@ const lineWidth = /** @type {any} */ (1.5);
  * @param {string} args.id
  * @param {HTMLElement} args.parent
  * @param {Signals} args.signals
- * @param {Colors} args.colors
  * @param {BrkClient} args.brk
- * @param {Accessor<ChartableIndex>} args.index
- * @param {((unknownTimeScaleCallback: VoidFunction) => void)} [args.timeScaleSetCallback]
- * @param {number | null} [args.initialVisibleBarsCount]
  * @param {true} [args.fitContent]
  * @param {HTMLElement} [args.captureElement]
  * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
@@ -86,16 +85,55 @@ const lineWidth = /** @type {any} */ (1.5);
 export function createChart({
   parent,
   signals,
-  colors,
   id: chartId,
-  index,
   brk,
-  timeScaleSetCallback,
-  initialVisibleBarsCount,
   fitContent,
   captureElement,
   config,
 }) {
+  // Chart owns its index state
+  /** @type {Signal<ChartableIndexName>} */
+  const indexName = signals.createPersistedSignal({
+    defaultValue: /** @type {ChartableIndexName} */ ("date"),
+    storageKey: "chart-index",
+    urlKey: "i",
+    serialize: (v) => v,
+    deserialize: (s) => /** @type {ChartableIndexName} */ (s),
+  });
+
+  const index = signals.createMemo(() =>
+    serdeChartableIndex.deserialize(indexName()),
+  );
+
+  // Range state: localStorage stores all ranges per-index, URL stores current range only
+  /** @typedef {{ from: number, to: number }} Range */
+  const ranges = createPersistedValue({
+    defaultValue: /** @type {Record<string, Range>} */ ({}),
+    storageKey: "chart-ranges",
+    serialize: JSON.stringify,
+    deserialize: JSON.parse,
+  });
+
+  const range = createPersistedValue({
+    defaultValue: /** @type {Range | null} */ (null),
+    urlKey: "range",
+    serialize: (v) => (v ? `${v.from.toFixed(2)}_${v.to.toFixed(2)}` : ""),
+    deserialize: (s) => {
+      if (!s) return null;
+      const [from, to] = s.split("_").map(Number);
+      return !isNaN(from) && !isNaN(to) ? { from, to } : null;
+    },
+  });
+
+  /** @returns {Range | null} */
+  const getRange = () => range.value ?? ranges.value[indexName()] ?? null;
+
+  /** @param {Range} value */
+  const setRange = (value) => {
+    ranges.set({ ...ranges.value, [indexName()]: value });
+    range.set(value);
+  };
+
   const div = window.document.createElement("div");
   div.classList.add("chart");
   parent.append(div);
@@ -167,60 +205,64 @@ export function createChart({
 
   ichart.panes().at(0)?.setStretchFactor(1);
 
-  /** @param {{ from: number, to: number }} range */
-  const setVisibleLogicalRange = (range) => {
-    // Defer to next frame to ensure chart has rendered
-    requestAnimationFrame(() => {
-      ichart.timeScale().setVisibleLogicalRange(range);
-    });
-  };
-
   /** @typedef {(visibleBarsCount: number) => void} ZoomChangeCallback */
 
-  let visibleBarsCount = initialVisibleBarsCount ?? Infinity;
+  const initialRange = getRange();
+  if (initialRange) {
+    ichart.timeScale().setVisibleLogicalRange(initialRange);
+  }
+
+  let visibleBarsCount = initialRange
+    ? initialRange.to - initialRange.from
+    : Infinity;
+
   /** @type {Set<ZoomChangeCallback>} */
   const onZoomChange = new Set();
 
-  /** @param {{ from: number, to: number } | null} range */
-  function updateVisibleBarsCount(range) {
-    if (!range) return;
-    const count = range.to - range.from;
-    if (count === visibleBarsCount) return;
-    visibleBarsCount = count;
-    onZoomChange.forEach((cb) => cb(count));
-  }
-
-  ichart
-    .timeScale()
-    .subscribeVisibleLogicalRangeChange(throttle(updateVisibleBarsCount, 100));
-
-  signals.createEffect(
-    () => ({
-      defaultColor: colors.default(),
-      offColor: colors.gray(),
-      borderColor: colors.border(),
-    }),
-    ({ defaultColor, offColor, borderColor }) => {
-      ichart.applyOptions({
-        layout: {
-          textColor: offColor,
-          panes: {
-            separatorColor: borderColor,
-          },
-        },
-        crosshair: {
-          horzLine: {
-            color: offColor,
-            labelBackgroundColor: defaultColor,
-          },
-          vertLine: {
-            color: offColor,
-            labelBackgroundColor: defaultColor,
-          },
-        },
-      });
-    },
+  ichart.timeScale().subscribeVisibleLogicalRangeChange(
+    throttle((range) => {
+      if (!range) return;
+      const count = range.to - range.from;
+      if (count === visibleBarsCount) return;
+      visibleBarsCount = count;
+      onZoomChange.forEach((cb) => cb(count));
+    }, 100),
   );
+
+  // Debounced range persistence
+  ichart.timeScale().subscribeVisibleLogicalRangeChange(
+    debounce((range) => {
+      if (range && range.from < range.to) {
+        setRange({ from: range.from, to: range.to });
+      }
+    }, 100),
+  );
+
+  function applyColors() {
+    const defaultColor = colors.default();
+    const offColor = colors.gray();
+    const borderColor = colors.border();
+    ichart.applyOptions({
+      layout: {
+        textColor: offColor,
+        panes: {
+          separatorColor: borderColor,
+        },
+      },
+      crosshair: {
+        horzLine: {
+          color: offColor,
+          labelBackgroundColor: defaultColor,
+        },
+        vertLine: {
+          color: offColor,
+          labelBackgroundColor: defaultColor,
+        },
+      },
+    });
+  }
+  applyColors();
+  const removeThemeListener = onThemeChange(applyColors);
 
   signals.createEffect(index, (index) => {
     const minBarSpacing =
@@ -328,29 +370,38 @@ export function createChart({
       paneIndex,
       position: "sw",
       createChild(pane) {
+        /** @type {"lin" | "log"} */
         const defaultValue =
           unit.id === "usd" && seriesType !== "Baseline" ? "log" : "lin";
-        const selected = signals.createPersistedSignal({
+
+        const persisted = createPersistedValue({
           defaultValue,
           storageKey: `${id}-scale-${paneIndex}`,
           urlKey: paneIndex === 0 ? "price_scale" : "unit_scale",
           serialize: (v) => v,
           deserialize: (s) => /** @type {"lin" | "log"} */ (s),
         });
+
+        /** @param {"lin" | "log"} value */
+        const applyScale = (value) => {
+          try {
+            pane.priceScale("right").applyOptions({
+              mode: value === "lin" ? 0 : 1,
+            });
+          } catch {}
+        };
+
+        // Apply initial value
+        applyScale(persisted.value);
+
         const field = createChoiceField({
           choices: /** @type {const} */ (["lin", "log"]),
           id: stringToId(`${id} ${paneIndex} ${unit}`),
-          defaultValue,
-          selected,
-          signals,
-        });
-
-        signals.createEffect(selected, (selected) => {
-          try {
-            pane.priceScale("right").applyOptions({
-              mode: selected === "lin" ? 0 : 1,
-            });
-          } catch {}
+          initialValue: persisted.value,
+          onChange(value) {
+            persisted.set(value);
+            applyScale(value);
+          },
         });
 
         return field;
@@ -378,6 +429,7 @@ export function createChart({
    * @param {(data: any[]) => void} args.setData
    * @param {(data: any) => void} args.update
    * @param {() => void} args.onRemove
+   * @param {() => void} [args.onDataLoaded]
    */
   function addSeries({
     metric,
@@ -398,6 +450,7 @@ export function createChart({
     setData,
     update,
     onRemove,
+    onDataLoaded,
   }) {
     return signals.createRoot((dispose) => {
       const key = stringToId(name);
@@ -433,7 +486,7 @@ export function createChart({
           seriesByKey.get(key)?.forEach((s) => {
             value ? s.show() : s.hide();
           });
-          document.querySelectorAll(`[data-series="${key}"]`).forEach((el) => {
+          document.querySelectorAll(`[data-series="${id}"]`).forEach((el) => {
             if (el instanceof HTMLInputElement && el.type === "checkbox") {
               el.checked = value;
             }
@@ -614,20 +667,27 @@ export function createChart({
                 lastTime =
                   /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
 
-                if (fitContent) {
+                // Restore saved range or use defaults
+                const savedRange = getRange();
+                if (savedRange) {
+                  ichart.timeScale().setVisibleLogicalRange({
+                    from: savedRange.from,
+                    to: savedRange.to,
+                  });
+                } else if (fitContent) {
                   ichart.timeScale().fitContent();
+                } else if (
+                  index === "quarterindex" ||
+                  index === "semesterindex" ||
+                  index === "yearindex" ||
+                  index === "decadeindex"
+                ) {
+                  ichart
+                    .timeScale()
+                    .setVisibleLogicalRange({ from: -1, to: data.length });
                 }
-
-                timeScaleSetCallback?.(() => {
-                  if (
-                    index === "quarterindex" ||
-                    index === "semesterindex" ||
-                    index === "yearindex" ||
-                    index === "decadeindex"
-                  ) {
-                    setVisibleLogicalRange({ from: -1, to: data.length });
-                  }
-                });
+                // Delay until chart has applied the range
+                requestAnimationFrame(() => onDataLoaded?.());
               } else {
                 // Incremental update: only process new data points
                 for (let i = startIdx; i < length; i++) {
@@ -651,9 +711,17 @@ export function createChart({
           signals.createEffect(data, (data) => {
             setData(data);
             hasData = true;
-            if (fitContent) {
+            const savedRange = getRange();
+            if (savedRange) {
+              ichart.timeScale().setVisibleLogicalRange({
+                from: savedRange.from,
+                to: savedRange.to,
+              });
+            } else if (fitContent) {
               ichart.timeScale().fitContent();
             }
+            // Delay until chart has applied the range
+            requestAnimationFrame(() => onDataLoaded?.());
           });
         }
       }
@@ -669,22 +737,13 @@ export function createChart({
   }
 
   const chart = {
+    index,
+    indexName,
+
     legendTop,
     legendBottom,
 
     addFieldsetIfNeeded,
-
-    setVisibleLogicalRange,
-
-    /**
-     * @param {(range: { from: number, to: number } | null) => void} callback
-     * @param {number} [wait=500]
-     */
-    onVisibleLogicalRangeChange(callback, wait = 500) {
-      ichart
-        .timeScale()
-        .subscribeVisibleLogicalRangeChange(throttle(callback, wait));
-    },
 
     /**
      * @param {Object} args
@@ -721,10 +780,7 @@ export function createChart({
         ichart.addSeries(
           /** @type {SeriesDefinition<'Candlestick'>} */ (CandlestickSeries),
           {
-            upColor: upColor(),
-            downColor: downColor(),
-            wickUpColor: upColor(),
-            wickDownColor: downColor(),
+            visible: false,
             borderVisible: false,
             ...options,
           },
@@ -737,7 +793,7 @@ export function createChart({
         ichart.addSeries(
           /** @type {SeriesDefinition<'Line'>} */ (LineSeries),
           {
-            color: colors.default(),
+            visible: false,
             lineWidth,
             priceLineVisible: true,
           },
@@ -748,6 +804,7 @@ export function createChart({
       let active = defaultActive !== false;
       let highlighted = true;
       let showLine = visibleBarsCount > 500;
+      let dataLoaded = false;
 
       function update() {
         candlestickISeries.applyOptions({
@@ -764,15 +821,17 @@ export function createChart({
           color: colors.default.highlight(highlighted),
         });
       }
-      update();
 
       /** @type {ZoomChangeCallback} */
       function handleZoom(count) {
+        if (!dataLoaded) return; // Ignore zoom changes until data is ready
         const newShowLine = count > 500;
+        if (newShowLine === showLine) return;
         showLine = newShowLine;
         update();
       }
       onZoomChange.add(handleZoom);
+      const removeSeriesThemeListener = onThemeChange(update);
 
       const series = addSeries({
         colors: [upColor, downColor],
@@ -820,8 +879,13 @@ export function createChart({
         getData: () => candlestickISeries.data(),
         onRemove: () => {
           onZoomChange.delete(handleZoom);
+          removeSeriesThemeListener();
           ichart.removeSeries(candlestickISeries);
           ichart.removeSeries(lineISeries);
+        },
+        onDataLoaded: () => {
+          dataLoaded = true;
+          update();
         },
       });
       return series;
@@ -876,6 +940,7 @@ export function createChart({
         });
       }
       update();
+      const removeSeriesThemeListener = onThemeChange(update);
 
       const series = addSeries({
         colors: isDualColor ? [positiveColor, negativeColor] : [positiveColor],
@@ -925,7 +990,10 @@ export function createChart({
         },
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        onRemove: () => ichart.removeSeries(iseries),
+        onRemove: () => {
+          removeSeriesThemeListener();
+          ichart.removeSeries(iseries);
+        },
       });
       return series;
     },
@@ -979,6 +1047,7 @@ export function createChart({
         });
       }
       update();
+      const removeSeriesThemeListener = onThemeChange(update);
 
       const series = addSeries({
         colors: [color],
@@ -1014,7 +1083,10 @@ export function createChart({
         setData: (data) => iseries.setData(data),
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        onRemove: () => ichart.removeSeries(iseries),
+        onRemove: () => {
+          removeSeriesThemeListener();
+          ichart.removeSeries(iseries);
+        },
       });
       return series;
     },
@@ -1081,6 +1153,7 @@ export function createChart({
         iseries.applyOptions({ pointMarkersRadius: radius });
       }
       onZoomChange.add(handleZoom);
+      const removeSeriesThemeListener = onThemeChange(update);
 
       const series = addSeries({
         colors: [color],
@@ -1118,6 +1191,7 @@ export function createChart({
         getData: () => iseries.data(),
         onRemove: () => {
           onZoomChange.delete(handleZoom);
+          removeSeriesThemeListener();
           ichart.removeSeries(iseries);
         },
       });
@@ -1183,6 +1257,7 @@ export function createChart({
         });
       }
       update();
+      const removeSeriesThemeListener = onThemeChange(update);
 
       const series = addSeries({
         colors: [topColor, bottomColor],
@@ -1218,9 +1293,17 @@ export function createChart({
         setData: (data) => iseries.setData(data),
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        onRemove: () => ichart.removeSeries(iseries),
+        onRemove: () => {
+          removeSeriesThemeListener();
+          ichart.removeSeries(iseries);
+        },
       });
       return series;
+    },
+
+    destroy() {
+      removeThemeListener();
+      ichart.remove();
     },
   };
 

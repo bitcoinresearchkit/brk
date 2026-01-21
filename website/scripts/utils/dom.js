@@ -225,7 +225,7 @@ export function importStyle(href) {
  * @param {(choice: T) => string} [args.toLabel] - Extract display label (defaults to identity for strings)
  * @param {"radio" | "select"} [args.type] - Render as radio buttons or select dropdown
  */
-export function createChoiceField({
+export function createReactiveChoiceField({
   id,
   choices: unsortedChoices,
   defaultValue,
@@ -257,7 +257,8 @@ export function createChoiceField({
   });
 
   /** @param {string} key */
-  const fromKey = (key) => choices().find((c) => toKey(c) === key) ?? defaultValue;
+  const fromKey = (key) =>
+    choices().find((c) => toKey(c) === key) ?? defaultValue;
 
   const field = window.document.createElement("div");
   field.classList.add("field");
@@ -350,6 +351,85 @@ export function createChoiceField({
       });
     }
   });
+
+  return field;
+}
+
+/**
+ * @template T
+ * @param {Object} args
+ * @param {T} args.initialValue
+ * @param {string} [args.id]
+ * @param {readonly T[]} args.choices
+ * @param {(value: T) => void} [args.onChange]
+ * @param {(choice: T) => string} [args.toKey]
+ * @param {(choice: T) => string} [args.toLabel]
+ * @param {"radio" | "select"} [args.type]
+ */
+export function createChoiceField({
+  id,
+  choices,
+  initialValue,
+  onChange,
+  toKey = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
+  toLabel = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
+  type = "radio",
+}) {
+  const field = window.document.createElement("div");
+  field.classList.add("field");
+
+  const div = window.document.createElement("div");
+  field.append(div);
+
+  const initialKey = toKey(initialValue);
+
+  /** @param {string} key */
+  const fromKey = (key) =>
+    choices.find((c) => toKey(c) === key) ?? initialValue;
+
+  if (type === "select") {
+    const select = window.document.createElement("select");
+    select.id = id ?? "";
+    select.name = id ?? "";
+
+    choices.forEach((choice) => {
+      const option = window.document.createElement("option");
+      option.value = toKey(choice);
+      option.textContent = toLabel(choice);
+      if (toKey(choice) === initialKey) {
+        option.selected = true;
+      }
+      select.append(option);
+    });
+
+    select.addEventListener("change", () => {
+      onChange?.(fromKey(select.value));
+    });
+
+    div.append(select);
+  } else {
+    const fieldId = id ?? "";
+    choices.forEach((choice) => {
+      const choiceKey = toKey(choice);
+      const choiceLabel = toLabel(choice);
+      const { label } = createLabeledInput({
+        inputId: `${fieldId}-${choiceKey.toLowerCase()}`,
+        inputName: fieldId,
+        inputValue: choiceKey,
+        inputChecked: choiceKey === initialKey,
+        type: "radio",
+      });
+
+      const text = window.document.createTextNode(choiceLabel);
+      label.append(text);
+      div.append(label);
+    });
+
+    field.addEventListener("change", (event) => {
+      // @ts-ignore
+      onChange?.(fromKey(event.target.value));
+    });
+  }
 
   return field;
 }

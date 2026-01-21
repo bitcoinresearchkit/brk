@@ -1,4 +1,3 @@
-import { createColors } from "./chart/colors.js";
 import { webSockets } from "./utils/ws.js";
 import * as formatters from "./utils/format.js";
 import { onFirstIntersection, getElementById, isHidden } from "./utils/dom.js";
@@ -14,7 +13,6 @@ import { init as initSimulation } from "./panes/_simulation.js";
 import { next } from "./utils/timing.js";
 import { replaceHistory } from "./utils/url.js";
 import { removeStored, writeToStorage } from "./utils/storage.js";
-import { dark } from "./utils/theme.js";
 import {
   asideElement,
   asideLabelElement,
@@ -148,10 +146,7 @@ signals.createRoot(() => {
   // }
   // const lastHeight = createLastHeightResource();
 
-  const colors = createColors(dark);
-
   const options = initOptions({
-    colors,
     signals,
     brk,
     qrcode,
@@ -223,7 +218,6 @@ signals.createRoot(() => {
             if (firstTimeLoadingChart) {
               signals.runWithOwner(owner, () =>
                 initChart({
-                  colors,
                   option: /** @type {Accessor<ChartOption>} */ (chartOption),
                   brk,
                 }),
@@ -249,11 +243,7 @@ signals.createRoot(() => {
             simOption.set(option);
 
             if (firstTimeLoadingSimulation) {
-              signals.runWithOwner(owner, () =>
-                initSimulation({
-                  colors,
-                }),
-              );
+              signals.runWithOwner(owner, () => initSimulation());
             }
             firstTimeLoadingSimulation = false;
 

@@ -1,69 +1,40 @@
-import { createShadow, createChoiceField, createHeader } from "../utils/dom.js";
+import {
+  createShadow,
+  createReactiveChoiceField,
+  createHeader,
+} from "../utils/dom.js";
 import { chartElement } from "../utils/elements.js";
 import { serdeChartableIndex } from "../utils/serde.js";
 import { Unit } from "../utils/units.js";
 import signals from "../signals.js";
 import { createChart } from "../chart/index.js";
-import { createChartState } from "../chart/state.js";
 import { webSockets } from "../utils/ws.js";
-import { debounce } from "../utils/timing.js";
 
 const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
 
 /**
- * @typedef {"timestamp" | "date" | "week" | "month" | "quarter" | "semester" | "year" | "decade" } ChartableIndexName
- */
-
-/**
  * @param {Object} args
- * @param {Colors} args.colors
  * @param {Accessor<ChartOption>} args.option
  * @param {BrkClient} args.brk
  */
-export function init({ colors, option, brk }) {
+export function init({ option, brk }) {
   chartElement.append(createShadow("left"));
   chartElement.append(createShadow("right"));
 
   const { headerElement, headingElement } = createHeader();
   chartElement.append(headerElement);
 
-  const state = createChartState(signals);
-  const { fieldset, index } = createIndexSelector(option, state);
-
-  const { from, to } = state.range();
-
   const chart = createChart({
     parent: chartElement,
     signals,
-    colors,
     id: "charts",
     brk,
-    index,
-    initialVisibleBarsCount: from !== null && to !== null ? to - from : null,
     captureElement: chartElement,
-    timeScaleSetCallback: (unknownTimeScaleCallback) => {
-      const { from, to } = state.range();
-      if (from !== null && to !== null) {
-        chart.setVisibleLogicalRange({ from, to });
-      } else {
-        unknownTimeScaleCallback();
-      }
-    },
   });
 
-  // Sync chart → state.range on user pan/zoom
-  // Debounce to avoid rapid URL updates while panning
-  const debouncedSetRange = debounce(
-    (/** @type {{ from: number, to: number }} */ range) =>
-      state.setRange(range),
-    500,
-  );
-  chart.onVisibleLogicalRangeChange((t) => {
-    if (!t || t.from >= t.to) return;
-    debouncedSetRange({ from: t.from, to: t.to });
-  });
-
+  // Create index selector using chart's index state
+  const fieldset = createIndexSelector(option, chart);
   chartElement.append(fieldset);
 
   const unitChoices = /** @type {const} */ ([Unit.usd, Unit.sats]);
@@ -76,7 +47,7 @@ export function init({ colors, option, brk }) {
     deserialize: (s) =>
       /** @type {Unit} */ (unitChoices.find((u) => u.id === s) ?? Unit.usd),
   });
-  const topUnitField = createChoiceField({
+  const topUnitField = createReactiveChoiceField({
     defaultValue: Unit.usd,
     choices: unitChoices,
     toKey: (u) => u.id,
@@ -203,7 +174,7 @@ export function init({ colors, option, brk }) {
         deserialize: (s) =>
           bottomUnits.find((u) => u.id === s) ?? bottomUnits[0],
       });
-      const field = createChoiceField({
+      const field = createReactiveChoiceField({
         defaultValue: bottomUnits[0],
         choices: bottomUnits,
         toKey: (u) => u.id,
@@ -343,7 +314,7 @@ export function init({ colors, option, brk }) {
 
     // Price series + top pane blueprints: combined effect on index + topUnit
     signals.createScopedEffect(
-      () => ({ idx: index(), unit: topUnit() }),
+      () => ({ idx: chart.index(), unit: topUnit() }),
       ({ idx, unit }) => {
         // Create price series
         /** @type {AnySeries | undefined} */
@@ -402,7 +373,7 @@ export function init({ colors, option, brk }) {
     // Bottom pane blueprints: combined effect on index + bottomUnit
     if (bottomUnit) {
       signals.createScopedEffect(
-        () => ({ idx: index(), unit: bottomUnit() }),
+        () => ({ idx: chart.index(), unit: bottomUnit() }),
         ({ idx, unit }) => {
           createSeriesFromBlueprints({
             blueprints: option.bottom,
@@ -421,9 +392,9 @@ export function init({ colors, option, brk }) {
 
 /**
  * @param {Accessor<ChartOption>} option
- * @param {ReturnType<typeof createChartState>} state
+ * @param {Chart} chart
  */
-function createIndexSelector(option, state) {
+function createIndexSelector(option, chart) {
   const choices_ = /** @satisfies {ChartableIndexName[]} */ ([
     "timestamp",
     "date",
@@ -452,21 +423,18 @@ function createIndexSelector(option, state) {
         .flatMap((blueprint) => blueprint.metric.indexes()),
     );
 
-    const serializedIndexes = [...rawIndexes].flatMap((index) => {
-      const c = serdeChartableIndex.serialize(index);
-      return c ? [c] : [];
-    });
-
     return /** @type {any} */ (
-      choices_.filter((choice) => serializedIndexes.includes(choice))
+      choices_.filter((choice) =>
+        rawIndexes.has(serdeChartableIndex.deserialize(choice)),
+      )
     );
   });
 
   /** @type {ChartableIndexName} */
   const defaultIndex = "date";
-  const field = createChoiceField({
+  const field = createReactiveChoiceField({
     defaultValue: defaultIndex,
-    selected: state.index,
+    selected: chart.indexName,
     choices,
     id: "index",
     signals,
@@ -482,10 +450,5 @@ function createIndexSelector(option, state) {
   fieldset.append(field);
   fieldset.dataset.size = "sm";
 
-  // Convert short name to internal name
-  const index = signals.createMemo(() =>
-    serdeChartableIndex.deserialize(state.index()),
-  );
-
-  return { fieldset, index };
+  return fieldset;
 }

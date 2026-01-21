@@ -17,15 +17,15 @@ import {
   createPriceLines,
   constantLine,
 } from "./constants.js";
+import { colors } from "../chart/colors.js";
 
 /**
  * Create a context object with all dependencies for building partial options
  * @param {Object} args
- * @param {Colors} args.colors
  * @param {BrkClient} args.brk
  * @returns {PartialContext}
  */
-export function createContext({ colors, brk }) {
+export function createContext({ brk }) {
   const constants = brk.metrics.constants;
 
   return {

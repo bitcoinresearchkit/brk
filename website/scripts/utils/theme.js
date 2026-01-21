@@ -1,4 +1,3 @@
-import signals from "../signals.js";
 import { readStored, removeStored, writeToStorage } from "./storage.js";
 
 const preferredColorSchemeMatchMedia = window.matchMedia(
@@ -7,7 +6,24 @@ const preferredColorSchemeMatchMedia = window.matchMedia(
 const stored = readStored("theme");
 const initial = stored ? stored === "dark" : preferredColorSchemeMatchMedia.matches;
 
-export const dark = signals.createSignal(initial);
+export let dark = initial;
+
+/** @type {Set<() => void>} */
+const callbacks = new Set();
+
+/** @param {() => void} callback */
+export function onChange(callback) {
+  callbacks.add(callback);
+  return () => callbacks.delete(callback);
+}
+
+/** @param {boolean} value */
+export function setDark(value) {
+  if (dark === value) return;
+  dark = value;
+  apply(value);
+  callbacks.forEach((cb) => cb());
+}
 
 /** @param {boolean} isDark */
 function apply(isDark) {
@@ -17,15 +33,13 @@ apply(initial);
 
 preferredColorSchemeMatchMedia.addEventListener("change", ({ matches }) => {
   if (!readStored("theme")) {
-    dark.set(matches);
-    apply(matches);
+    setDark(matches);
   }
 });
 
 function invert() {
-  const newValue = !dark();
-  dark.set(newValue);
-  apply(newValue);
+  const newValue = !dark;
+  setDark(newValue);
   if (newValue === preferredColorSchemeMatchMedia.matches) {
     removeStored("theme");
   } else {
