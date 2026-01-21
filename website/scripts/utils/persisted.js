@@ -11,6 +11,7 @@ import { debounce } from "./timing.js";
  * @param {(v: T) => string} args.serialize
  * @param {(s: string) => T} args.deserialize
  * @param {boolean} [args.saveDefaultValue]
+ * @param {(v: T) => void} [args.onChange]
  */
 export function createPersistedValue({
   defaultValue,
@@ -19,6 +20,7 @@ export function createPersistedValue({
   serialize,
   deserialize,
   saveDefaultValue = false,
+  onChange,
 }) {
   const defaultSerialized = serialize(defaultValue);
 
@@ -60,11 +62,13 @@ export function createPersistedValue({
     set(v) {
       value = v;
       debouncedWrite(v);
+      onChange?.(v);
     },
     /** @param {T} v */
     setImmediate(v) {
       value = v;
       write(v);
+      onChange?.(v);
     },
   };
 }

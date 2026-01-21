@@ -1,6 +1,7 @@
 import {
   createShadow,
   createReactiveChoiceField,
+  createChoiceField,
   createHeader,
 } from "../utils/dom.js";
 import { chartElement } from "../utils/elements.js";
@@ -430,25 +431,26 @@ function createIndexSelector(option, chart) {
     );
   });
 
-  /** @type {ChartableIndexName} */
-  const defaultIndex = "date";
-  const field = createReactiveChoiceField({
-    defaultValue: defaultIndex,
-    selected: chart.indexName,
-    choices,
-    id: "index",
-    signals,
-  });
-
   const fieldset = window.document.createElement("fieldset");
   fieldset.id = "interval";
+  fieldset.dataset.size = "sm";
 
   const screenshotSpan = window.document.createElement("span");
   screenshotSpan.innerText = "interval:";
   fieldset.append(screenshotSpan);
 
-  fieldset.append(field);
-  fieldset.dataset.size = "sm";
+  /** @type {HTMLElement | null} */
+  let field = null;
+  signals.createEffect(choices, (newChoices) => {
+    if (field) field.remove();
+    field = createChoiceField({
+      initialValue: chart.indexName.value,
+      onChange: (v) => chart.indexName.set(v),
+      choices: newChoices,
+      id: "index",
+    });
+    fieldset.append(field);
+  });
 
   return fieldset;
 }

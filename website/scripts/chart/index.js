@@ -92,18 +92,19 @@ export function createChart({
   config,
 }) {
   // Chart owns its index state
-  /** @type {Signal<ChartableIndexName>} */
-  const indexName = signals.createPersistedSignal({
+  /** @type {Set<(index: ChartableIndex) => void>} */
+  const onIndexChange = new Set();
+
+  const index = () => serdeChartableIndex.deserialize(indexName.value);
+
+  const indexName = createPersistedValue({
     defaultValue: /** @type {ChartableIndexName} */ ("date"),
     storageKey: "chart-index",
     urlKey: "i",
     serialize: (v) => v,
     deserialize: (s) => /** @type {ChartableIndexName} */ (s),
+    onChange: () => onIndexChange.forEach((cb) => cb(index())),
   });
-
-  const index = signals.createMemo(() =>
-    serdeChartableIndex.deserialize(indexName()),
-  );
 
   // Range state: localStorage stores all ranges per-index, URL stores current range only
   /** @typedef {{ from: number, to: number }} Range */
@@ -126,11 +127,11 @@ export function createChart({
   });
 
   /** @returns {Range | null} */
-  const getRange = () => range.value ?? ranges.value[indexName()] ?? null;
+  const getRange = () => range.value ?? ranges.value[indexName.value] ?? null;
 
   /** @param {Range} value */
   const setRange = (value) => {
-    ranges.set({ ...ranges.value, [indexName()]: value });
+    ranges.set({ ...ranges.value, [indexName.value]: value });
     range.set(value);
   };
 
@@ -264,7 +265,8 @@ export function createChart({
   applyColors();
   const removeThemeListener = onThemeChange(applyColors);
 
-  signals.createEffect(index, (index) => {
+  /** @param {ChartableIndex} index */
+  function applyIndexSettings(index) {
     const minBarSpacing =
       index === "monthindex"
         ? 1
@@ -288,7 +290,9 @@ export function createChart({
           : {}),
       },
     });
-  });
+  }
+  applyIndexSettings(index());
+  onIndexChange.add(applyIndexSettings);
 
   const activeResources = /** @type {Set<MetricResource<unknown>>} */ (
     new Set()
@@ -314,39 +318,42 @@ export function createChart({
    * @param {(pane: IPaneApi<Time>) => HTMLElement} args.createChild
    */
   function addFieldsetIfNeeded({ paneIndex, id, position, createChild }) {
-    setTimeout(() => {
-      const parent = ichart
-        ?.panes()
-        .at(paneIndex)
-        ?.getHTMLElement()
-        ?.children?.item(1)?.firstChild;
+    setTimeout(
+      () => {
+        const parent = ichart
+          ?.panes()
+          .at(paneIndex)
+          ?.getHTMLElement()
+          ?.children?.item(1)?.firstChild;
 
-      if (!parent) throw Error("Parent should exist");
+        if (!parent) throw Error("Parent should exist");
 
-      const children = Array.from(parent.childNodes).filter(
-        (element) =>
-          /** @type {HTMLElement} */ (element).dataset.position === position,
-      );
+        const children = Array.from(parent.childNodes).filter(
+          (element) =>
+            /** @type {HTMLElement} */ (element).dataset.position === position,
+        );
 
-      if (children.length === 1) {
-        children[0].remove();
-      } else if (children.length > 1) {
-        throw Error("Untraceable");
-      }
+        if (children.length === 1) {
+          children[0].remove();
+        } else if (children.length > 1) {
+          throw Error("Untraceable");
+        }
 
-      const fieldset = window.document.createElement("fieldset");
-      fieldset.dataset.size = "xs";
-      fieldset.dataset.position = position;
-      fieldset.id = `${id}-${paneIndex}`;
-      const pane = ichart.panes().at(paneIndex);
-      if (!pane) throw Error("Expect pane");
-      pane
-        .getHTMLElement()
-        ?.children?.item(1)
-        ?.firstChild?.appendChild(fieldset);
+        const fieldset = window.document.createElement("fieldset");
+        fieldset.dataset.size = "xs";
+        fieldset.dataset.position = position;
+        fieldset.id = `${id}-${paneIndex}`;
+        const pane = ichart.panes().at(paneIndex);
+        if (!pane) throw Error("Expect pane");
+        pane
+          .getHTMLElement()
+          ?.children?.item(1)
+          ?.firstChild?.appendChild(fieldset);
 
-      fieldset.append(createChild(pane));
-    }, paneIndex ? 50 : 0);
+        fieldset.append(createChild(pane));
+      },
+      paneIndex ? 50 : 0,
+    );
   }
 
   /**
