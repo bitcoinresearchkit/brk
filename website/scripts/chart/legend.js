@@ -7,7 +7,23 @@ import { stringToId } from "../utils/format.js";
 export function createLegend(signals) {
   const element = window.document.createElement("legend");
 
-  const hovered = signals.createSignal(/** @type {AnySeries | null} */ (null));
+  /** @type {AnySeries | null} */
+  let hoveredSeries = null;
+  /** @type {Map<AnySeries, { span: HTMLSpanElement, color: Color }[]>} */
+  const seriesColorSpans = new Map();
+
+  /** @param {AnySeries | null} series */
+  function setHovered(series) {
+    if (hoveredSeries === series) return;
+    hoveredSeries = series;
+    for (const [entrySeries, colorSpans] of seriesColorSpans) {
+      const shouldHighlight = !hoveredSeries || hoveredSeries === entrySeries;
+      shouldHighlight ? entrySeries.highlight() : entrySeries.tame();
+      for (const { span, color } of colorSpans) {
+        span.style.backgroundColor = color.highlight(shouldHighlight);
+      }
+    }
+  }
 
   /** @type {HTMLElement[]} */
   const legends = [];
@@ -62,37 +78,21 @@ export function createLegend(signals) {
       spanMain.append(spanName);
 
       div.append(label);
-      label.addEventListener("mouseover", () => {
-        const h = hovered();
-        if (!h || h !== series) {
-          hovered.set(series);
-        }
-      });
-      label.addEventListener("mouseleave", () => {
-        hovered.set(null);
-      });
-
-      const shouldHighlight = () => !hovered() || hovered() === series;
-
-      // Update series highlighted state
-      signals.createEffect(shouldHighlight, (shouldHighlight) => {
-        series.highlighted.set(shouldHighlight);
-      });
+      label.addEventListener("mouseover", () => setHovered(series));
+      label.addEventListener("mouseleave", () => setHovered(null));
 
       const spanColors = window.document.createElement("span");
       spanColors.classList.add("colors");
       spanMain.prepend(spanColors);
+      /** @type {{ span: HTMLSpanElement, color: Color }[]} */
+      const colorSpans = [];
       colors.forEach((color) => {
         const spanColor = window.document.createElement("span");
+        spanColor.style.backgroundColor = color.highlight(true);
         spanColors.append(spanColor);
-
-        signals.createEffect(
-          () => color.highlight(shouldHighlight()),
-          (c) => {
-            spanColor.style.backgroundColor = c;
-          },
-        );
+        colorSpans.push({ span: spanColor, color });
       });
+      seriesColorSpans.set(series, colorSpans);
 
       const anchor = window.document.createElement("a");
 

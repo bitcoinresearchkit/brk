@@ -22,7 +22,7 @@ function toRgba(color) {
  */
 function tameColor(color) {
   if (color === "transparent") return color;
-  return `${color.slice(0, -1)} / 50%)`;
+  return `${color.slice(0, -1)} / 25%)`;
 }
 
 /**

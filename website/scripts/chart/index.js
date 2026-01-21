@@ -36,7 +36,11 @@ import { resources } from "../resources.js";
  * @property {string} id
  * @property {number} paneIndex
  * @property {Signal<boolean>} active
- * @property {Signal<boolean>} highlighted
+ * @property {() => void} show
+ * @property {() => void} hide
+ * @property {(order: number) => void} setOrder
+ * @property {() => void} highlight
+ * @property {() => void} tame
  * @property {() => boolean} hasData
  * @property {Signal<string | null>} url
  * @property {() => readonly T[]} getData
@@ -165,23 +169,19 @@ export function createChart({
     });
   };
 
-  const visibleBarsCount = signals.createSignal(
-    initialVisibleBarsCount ?? Infinity,
-  );
-  /** @type {() => 0 | 1 | 2 | 3} 0: <=200, 1: <=500, 2: <=1000, 3: >1000 */
-  const visibleBarsCountBucket = signals.createMemo(() => {
-    const count = visibleBarsCount();
-    return count > 1000 ? 3 : count > 500 ? 2 : count > 200 ? 1 : 0;
-  });
-  const shouldShowLine = signals.createMemo(
-    () => visibleBarsCountBucket() >= 2,
-  );
+  /** @typedef {(visibleBarsCount: number) => void} ZoomChangeCallback */
+
+  let visibleBarsCount = initialVisibleBarsCount ?? Infinity;
+  /** @type {Set<ZoomChangeCallback>} */
+  const onZoomChange = new Set();
 
   ichart.timeScale().subscribeVisibleLogicalRangeChange(
     throttle((range) => {
-      if (range) {
-        visibleBarsCount.set(range.to - range.from);
-      }
+      if (!range) return;
+      const count = range.to - range.from;
+      if (count === visibleBarsCount) return;
+      visibleBarsCount = count;
+      onZoomChange.forEach((cb) => cb(count));
     }, 100),
   );
 
@@ -360,7 +360,11 @@ export function createChart({
    * @param {Accessor<WhitespaceData[]>} [args.data]
    * @param {number} args.paneIndex
    * @param {boolean} [args.defaultActive]
-   * @param {(ctx: { active: Signal<boolean>, highlighted: Signal<boolean>, zOrder: number }) => void} args.setup
+   * @param {(order: number) => void} args.setOrder
+   * @param {() => void} args.show
+   * @param {() => void} args.hide
+   * @param {() => void} args.highlight
+   * @param {() => void} args.tame
    * @param {() => readonly any[]} args.getData
    * @param {(data: any[]) => void} args.setData
    * @param {(data: any) => void} args.update
@@ -376,7 +380,11 @@ export function createChart({
     defaultActive,
     colors,
     data,
-    setup,
+    setOrder,
+    show,
+    hide,
+    highlight,
+    tame,
     getData,
     setData,
     update,
@@ -398,9 +406,12 @@ export function createChart({
         sharedActiveSignals.set(urlId, active);
       }
 
-      const highlighted = signals.createSignal(true);
+      setOrder(-order);
 
-      setup({ active, highlighted, zOrder: -order });
+      // Bridge signal to series methods
+      signals.createEffect(active, (isActive) => {
+        isActive ? show() : hide();
+      });
 
       let hasData = false;
       let lastTime = -Infinity;
@@ -411,7 +422,11 @@ export function createChart({
       /** @type {AnySeries} */
       const series = {
         active,
-        highlighted,
+        setOrder,
+        show,
+        hide,
+        highlight,
+        tame,
         hasData: () => hasData,
         id,
         paneIndex,
@@ -693,13 +708,40 @@ export function createChart({
             color: colors.default(),
             lineWidth,
             visible: false,
-            priceLineVisible: false,
+            priceLineVisible: true,
           },
           paneIndex,
         )
       );
 
-      let showLine = false;
+      let active = true;
+      let highlighted = true;
+      let showLine = visibleBarsCount > 500;
+
+      function update() {
+        candlestickISeries.applyOptions({
+          visible: active && !showLine,
+          lastValueVisible: highlighted,
+          upColor: upColor.highlight(highlighted),
+          downColor: downColor.highlight(highlighted),
+          wickUpColor: upColor.highlight(highlighted),
+          wickDownColor: downColor.highlight(highlighted),
+        });
+        lineISeries.applyOptions({
+          visible: active && showLine,
+          lastValueVisible: highlighted,
+          color: colors.default.highlight(highlighted),
+        });
+      }
+
+      /** @type {ZoomChangeCallback} */
+      function handleZoom(count) {
+        const newShowLine = count > 500;
+        if (newShowLine === showLine) return;
+        showLine = newShowLine;
+        update();
+      }
+      onZoomChange.add(handleZoom);
 
       const series = addSeries({
         colors: [upColor, downColor],
@@ -711,30 +753,29 @@ export function createChart({
         data,
         defaultActive,
         metric,
-        setup: ({ active, highlighted, zOrder }) => {
-          candlestickISeries.setSeriesOrder(zOrder);
-          lineISeries.setSeriesOrder(zOrder);
-          signals.createEffect(
-            () => ({
-              shouldShow: shouldShowLine(),
-              active: active(),
-              highlighted: highlighted(),
-            }),
-            ({ shouldShow, active, highlighted }) => {
-              showLine = shouldShow;
-              candlestickISeries.applyOptions({
-                visible: active && !showLine,
-                upColor: upColor.highlight(highlighted),
-                downColor: downColor.highlight(highlighted),
-                wickUpColor: upColor.highlight(highlighted),
-                wickDownColor: downColor.highlight(highlighted),
-              });
-              lineISeries.applyOptions({
-                visible: active && showLine,
-                color: colors.default.highlight(highlighted),
-              });
-            },
-          );
+        setOrder(order) {
+          candlestickISeries.setSeriesOrder(order);
+          lineISeries.setSeriesOrder(order);
+        },
+        show() {
+          if (active) return;
+          active = true;
+          update();
+        },
+        hide() {
+          if (!active) return;
+          active = false;
+          update();
+        },
+        highlight() {
+          if (highlighted) return;
+          highlighted = true;
+          update();
+        },
+        tame() {
+          if (!highlighted) return;
+          highlighted = false;
+          update();
         },
         setData: (data) => {
           candlestickISeries.setData(data);
@@ -747,6 +788,7 @@ export function createChart({
         },
         getData: () => candlestickISeries.data(),
         onRemove: () => {
+          onZoomChange.delete(handleZoom);
           ichart.removeSeries(candlestickISeries);
           ichart.removeSeries(lineISeries);
         },
@@ -794,6 +836,17 @@ export function createChart({
         )
       );
 
+      let active = true;
+      let highlighted = true;
+
+      function update() {
+        iseries.applyOptions({
+          visible: active,
+          lastValueVisible: highlighted,
+          color: positiveColor.highlight(highlighted),
+        });
+      }
+
       const series = addSeries({
         colors: isDualColor ? [positiveColor, negativeColor] : [positiveColor],
         name,
@@ -804,17 +857,26 @@ export function createChart({
         data,
         defaultActive,
         metric,
-        setup: ({ active, highlighted, zOrder }) => {
-          iseries.setSeriesOrder(zOrder);
-          signals.createEffect(
-            () => ({ active: active(), highlighted: highlighted() }),
-            ({ active, highlighted }) => {
-              iseries.applyOptions({
-                visible: active,
-                color: positiveColor.highlight(highlighted),
-              });
-            },
-          );
+        setOrder: (order) => iseries.setSeriesOrder(order),
+        show() {
+          if (active) return;
+          active = true;
+          update();
+        },
+        hide() {
+          if (!active) return;
+          active = false;
+          update();
+        },
+        highlight() {
+          if (highlighted) return;
+          highlighted = true;
+          update();
+        },
+        tame() {
+          if (!highlighted) return;
+          highlighted = false;
+          update();
         },
         setData: (data) => {
           if (isDualColor) {
@@ -854,13 +916,14 @@ export function createChart({
       name,
       unit,
       order,
-      color,
+      color: _color,
       paneIndex = 0,
       defaultActive,
       data,
       options,
     }) {
-      color ||= unit.id === "usd" ? colors.green : colors.orange;
+      const color =
+        _color ?? (unit.id === "usd" ? colors.green : colors.orange);
 
       /** @type {LineISeries} */
       const iseries = /** @type {any} */ (
@@ -877,6 +940,17 @@ export function createChart({
         )
       );
 
+      let active = true;
+      let highlighted = true;
+
+      function update() {
+        iseries.applyOptions({
+          visible: active,
+          lastValueVisible: highlighted,
+          color: color.highlight(highlighted),
+        });
+      }
+
       const series = addSeries({
         colors: [color],
         name,
@@ -887,17 +961,26 @@ export function createChart({
         data,
         defaultActive,
         metric,
-        setup: ({ active, highlighted, zOrder }) => {
-          iseries.setSeriesOrder(zOrder);
-          signals.createEffect(
-            () => ({ active: active(), highlighted: highlighted() }),
-            ({ active, highlighted }) => {
-              iseries.applyOptions({
-                visible: active,
-                color: color.highlight(highlighted),
-              });
-            },
-          );
+        setOrder: (order) => iseries.setSeriesOrder(order),
+        show() {
+          if (active) return;
+          active = true;
+          update();
+        },
+        hide() {
+          if (!active) return;
+          active = false;
+          update();
+        },
+        highlight() {
+          if (highlighted) return;
+          highlighted = true;
+          update();
+        },
+        tame() {
+          if (!highlighted) return;
+          highlighted = false;
+          update();
         },
         setData: (data) => iseries.setData(data),
         update: (data) => iseries.update(data),
@@ -923,13 +1006,14 @@ export function createChart({
       name,
       unit,
       order,
-      color,
+      color: _color,
       paneIndex = 0,
       defaultActive,
       data,
       options,
     }) {
-      color ||= unit.id === "usd" ? colors.green : colors.orange;
+      const color =
+        _color ?? (unit.id === "usd" ? colors.green : colors.orange);
 
       /** @type {LineISeries} */
       const iseries = /** @type {any} */ (
@@ -948,6 +1032,28 @@ export function createChart({
         )
       );
 
+      let active = true;
+      let highlighted = true;
+      let radius =
+        visibleBarsCount > 1000 ? 1 : visibleBarsCount > 200 ? 1.5 : 2;
+
+      function update() {
+        iseries.applyOptions({
+          visible: active,
+          lastValueVisible: highlighted,
+          color: color.highlight(highlighted),
+        });
+      }
+
+      /** @type {ZoomChangeCallback} */
+      function handleZoom(count) {
+        const newRadius = count > 1000 ? 1 : count > 200 ? 1.5 : 2;
+        if (newRadius === radius) return;
+        radius = newRadius;
+        iseries.applyOptions({ pointMarkersRadius: radius });
+      }
+      onZoomChange.add(handleZoom);
+
       const series = addSeries({
         colors: [color],
         name,
@@ -958,26 +1064,34 @@ export function createChart({
         data,
         defaultActive,
         metric,
-        setup: ({ active, highlighted, zOrder }) => {
-          iseries.setSeriesOrder(zOrder);
-          signals.createEffect(
-            () => ({ active: active(), highlighted: highlighted() }),
-            ({ active, highlighted }) => {
-              iseries.applyOptions({
-                visible: active,
-                color: color.highlight(highlighted),
-              });
-            },
-          );
-          signals.createEffect(visibleBarsCountBucket, (bucket) => {
-            const radius = bucket === 3 ? 1 : bucket >= 1 ? 1.5 : 2;
-            iseries.applyOptions({ pointMarkersRadius: radius });
-          });
+        setOrder: (order) => iseries.setSeriesOrder(order),
+        show() {
+          if (active) return;
+          active = true;
+          update();
+        },
+        hide() {
+          if (!active) return;
+          active = false;
+          update();
+        },
+        highlight() {
+          if (highlighted) return;
+          highlighted = true;
+          update();
+        },
+        tame() {
+          if (!highlighted) return;
+          highlighted = false;
+          update();
         },
         setData: (data) => iseries.setData(data),
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
-        onRemove: () => ichart.removeSeries(iseries),
+        onRemove: () => {
+          onZoomChange.delete(handleZoom);
+          ichart.removeSeries(iseries);
+        },
       });
       return series;
     },
@@ -1032,6 +1146,18 @@ export function createChart({
         )
       );
 
+      let active = true;
+      let highlighted = true;
+
+      function update() {
+        iseries.applyOptions({
+          visible: active,
+          lastValueVisible: highlighted,
+          topLineColor: topColor.highlight(highlighted),
+          bottomLineColor: bottomColor.highlight(highlighted),
+        });
+      }
+
       const series = addSeries({
         colors: [topColor, bottomColor],
         name,
@@ -1042,18 +1168,26 @@ export function createChart({
         data,
         defaultActive,
         metric,
-        setup: ({ active, highlighted, zOrder }) => {
-          iseries.setSeriesOrder(zOrder);
-          signals.createEffect(
-            () => ({ active: active(), highlighted: highlighted() }),
-            ({ active, highlighted }) => {
-              iseries.applyOptions({
-                visible: active,
-                topLineColor: topColor.highlight(highlighted),
-                bottomLineColor: bottomColor.highlight(highlighted),
-              });
-            },
-          );
+        setOrder: (order) => iseries.setSeriesOrder(order),
+        show() {
+          if (active) return;
+          active = true;
+          update();
+        },
+        hide() {
+          if (!active) return;
+          active = false;
+          update();
+        },
+        highlight() {
+          if (highlighted) return;
+          highlighted = true;
+          update();
+        },
+        tame() {
+          if (!highlighted) return;
+          highlighted = false;
+          update();
         },
         setData: (data) => iseries.setData(data),
         update: (data) => iseries.update(data),
