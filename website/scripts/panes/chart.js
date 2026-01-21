@@ -38,12 +38,16 @@ export function init({ option, brk }) {
   const fieldset = createIndexSelector(option, chart);
   chartElement.append(fieldset);
 
+  // Bridge chart's index changes into signals system
+  const indexVersion = signals.createSignal(0);
+  chart.onIndexChange.add(() => indexVersion.set(indexVersion() + 1));
+
   const unitChoices = /** @type {const} */ ([Unit.usd, Unit.sats]);
   /** @type {Signal<Unit>} */
   const topUnit = signals.createPersistedSignal({
     defaultValue: /** @type {Unit} */ (Unit.usd),
     storageKey: `${keyPrefix}-price`,
-    urlKey: "price",
+    urlKey: "u1",
     serialize: (u) => u.id,
     deserialize: (s) =>
       /** @type {Unit} */ (unitChoices.find((u) => u.id === s) ?? Unit.usd),
@@ -170,7 +174,7 @@ export function init({ option, brk }) {
       bottomUnit = signals.createPersistedSignal({
         defaultValue: bottomUnits[0],
         storageKey: `${keyPrefix}-unit-${unitGroupKey}`,
-        urlKey: "unit",
+        urlKey: "u2",
         serialize: (u) => u.id,
         deserialize: (s) =>
           bottomUnits.find((u) => u.id === s) ?? bottomUnits[0],
@@ -313,10 +317,13 @@ export function init({ option, brk }) {
       });
     }
 
-    // Price series + top pane blueprints: combined effect on index + topUnit
+    // Price series + top pane blueprints: react to topUnit and index changes
     signals.createScopedEffect(
-      () => ({ idx: chart.index(), unit: topUnit() }),
-      ({ idx, unit }) => {
+      () => ({ unit: topUnit(), _: indexVersion() }),
+      ({ unit }) => {
+        // Remove old series BEFORE creating new one
+        seriesListTop[0]?.remove();
+
         // Create price series
         /** @type {AnySeries | undefined} */
         let series;
@@ -343,7 +350,6 @@ export function init({ option, brk }) {
         }
         if (!series) throw Error("Unreachable");
 
-        seriesListTop[0]?.remove();
         seriesListTop[0] = series;
 
         // Live price update effect
@@ -354,7 +360,7 @@ export function init({ option, brk }) {
           }),
           ({ latest, hasData }) => {
             if (!series || !latest || !hasData) return;
-            printLatest({ series, unit, index: idx });
+            printLatest({ series, unit, index: chart.index() });
           },
         );
 
@@ -363,7 +369,7 @@ export function init({ option, brk }) {
           blueprints: option.top,
           paneIndex: 0,
           unit,
-          idx,
+          idx: chart.index(),
           seriesList: seriesListTop,
           orderStart: 1,
           legend: chart.legendTop,
@@ -371,16 +377,16 @@ export function init({ option, brk }) {
       },
     );
 
-    // Bottom pane blueprints: combined effect on index + bottomUnit
+    // Bottom pane blueprints: react to bottomUnit and index changes
     if (bottomUnit) {
       signals.createScopedEffect(
-        () => ({ idx: chart.index(), unit: bottomUnit() }),
-        ({ idx, unit }) => {
+        () => ({ unit: bottomUnit(), _: indexVersion() }),
+        ({ unit }) => {
           createSeriesFromBlueprints({
             blueprints: option.bottom,
             paneIndex: 1,
             unit,
-            idx,
+            idx: chart.index(),
             seriesList: seriesListBottom,
             orderStart: 0,
             legend: chart.legendBottom,

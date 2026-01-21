@@ -73,4 +73,7 @@ export function createPersistedValue({
   };
 }
 
-/** @typedef {ReturnType<typeof createPersistedValue>} PersistedValue */
+/**
+ * @template T
+ * @typedef {ReturnType<typeof createPersistedValue<T>>} PersistedValue
+ */

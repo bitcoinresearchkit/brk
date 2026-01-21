@@ -18,7 +18,6 @@ import { throttle, debounce } from "../utils/timing.js";
 import { serdeBool, serdeChartableIndex } from "../utils/serde.js";
 import { stringToId, numberToShortUSFormat } from "../utils/format.js";
 import { style } from "../utils/elements.js";
-import { resources } from "../resources.js";
 
 /**
  * @typedef {_ISeriesApi<LCSeriesType>} ISeries
@@ -39,7 +38,7 @@ import { resources } from "../resources.js";
  * @property {string} key
  * @property {string} id
  * @property {number} paneIndex
- * @property {Signal<boolean>} active
+ * @property {PersistedValue<boolean>} active
  * @property {(value: boolean) => void} setActive
  * @property {() => void} show
  * @property {() => void} hide
@@ -47,6 +46,7 @@ import { resources } from "../resources.js";
  * @property {() => void} highlight
  * @property {() => void} tame
  * @property {() => boolean} hasData
+ * @property {() => void} [fetch]
  * @property {string | null} url
  * @property {() => readonly T[]} getData
  * @property {(data: T) => void} update
@@ -121,7 +121,7 @@ export function createChart({
 
   const range = createPersistedValue({
     defaultValue: /** @type {Range | null} */ (null),
-    urlKey: "range",
+    urlKey: "r",
     serialize: (v) => (v ? `${v.from.toFixed(2)}_${v.to.toFixed(2)}` : ""),
     deserialize: (s) => {
       if (!s) return null;
@@ -143,9 +143,9 @@ export function createChart({
   div.classList.add("chart");
   parent.append(div);
 
-  // Registry for shared legend signals (same name = linked across panes)
-  /** @type {Map<string, Signal<boolean>>} */
-  const sharedActiveSignals = new Map();
+  // Registry for shared active states (same name = linked across panes)
+  /** @type {Map<string, PersistedValue<boolean>>} */
+  const sharedActiveStates = new Map();
 
   // Registry for linked series (same key = linked across panes)
   /** @type {Map<string, Set<AnySeries>>} */
@@ -298,16 +298,14 @@ export function createChart({
   applyIndexSettings(index());
   onIndexChange.add(applyIndexSettings);
 
-  const activeResources = /** @type {Set<MetricResource<unknown>>} */ (
-    new Set()
-  );
-  ichart.subscribeCrosshairMove(
-    throttle(() => {
-      activeResources.forEach((v) => {
-        v.fetch();
+  // Periodic refresh of active series data
+  setInterval(() => {
+    seriesByKey.forEach((set) => {
+      set.forEach((s) => {
+        if (s.active.value) s.fetch?.();
       });
-    }, 10_000),
-  );
+    });
+  }, 30_000);
 
   if (fitContent) {
     new ResizeObserver(() => ichart.timeScale().fitContent()).observe(chartDiv);
@@ -460,32 +458,33 @@ export function createChart({
       const key = stringToId(name);
       const id = `${key}-${paneIndex}`;
 
-      // Reuse existing signal if same name (links legends across panes)
-      let active = sharedActiveSignals.get(key);
-      if (!active) {
-        active = signals.createPersistedSignal({
+      // Reuse existing state if same name (links legends across panes)
+      const existingActive = sharedActiveStates.get(key);
+      const active =
+        existingActive ??
+        createPersistedValue({
           defaultValue: defaultActive ?? true,
           storageKey: id,
           urlKey: key,
           ...serdeBool,
         });
-        sharedActiveSignals.set(key, active);
-      }
+      if (!existingActive) sharedActiveStates.set(key, active);
 
       setOrder(-order);
 
-      active() ? show() : hide();
+      active.value ? show() : hide();
 
       let hasData = false;
       let lastTime = -Infinity;
 
-      /** @type {MetricResource<unknown> | undefined} */
-      let _valuesResource;
+      /** @type {VoidFunction | null} */
+      let _fetch = null;
 
       /** @type {AnySeries} */
       const series = {
         active,
         setActive(value) {
+          const wasActive = active.value;
           active.set(value);
           seriesByKey.get(key)?.forEach((s) => {
             value ? s.show() : s.hide();
@@ -495,6 +494,7 @@ export function createChart({
               el.checked = value;
             }
           });
+          if (value && !wasActive) _fetch?.();
         },
         setOrder,
         show,
@@ -502,6 +502,7 @@ export function createChart({
         highlight,
         tame,
         hasData: () => hasData,
+        fetch: () => _fetch?.(),
         key,
         id,
         paneIndex,
@@ -512,9 +513,6 @@ export function createChart({
           dispose();
           onRemove();
           seriesByKey.get(key)?.delete(series);
-          if (_valuesResource) {
-            activeResources.delete(_valuesResource);
-          }
         },
       };
 
@@ -527,206 +525,167 @@ export function createChart({
       keySet.add(series);
 
       if (metric) {
-        /** @type {VoidFunction | null} */
-        let disposeIndexEffect = null;
-
         /** @param {ChartableIndex} idx */
         function setupIndexEffect(idx) {
-          if (disposeIndexEffect) {
-            disposeIndexEffect();
-            disposeIndexEffect = null;
-          }
           // Reset data state for new index
           hasData = false;
           lastTime = -Infinity;
-          signals.createRoot((_dispose) => {
-            disposeIndexEffect = _dispose;
+          _fetch = null;
 
-            // Get timestamp metric from tree based on index type
-            // timestampMonotonic has height only, timestamp has date-based indexes
-            /** @type {AnyMetricPattern} */
-            const timeMetric =
-              idx === "height"
-                ? brk.metrics.blocks.time.timestampMonotonic
-                : brk.metrics.blocks.time.timestamp;
-            const valuesMetric = /** @type {AnyMetricPattern} */ (metric);
-            const timeNode = timeMetric.by[idx];
-            const valuesNode = valuesMetric.by[idx];
-            // Gracefully skip - series may be about to be removed by option change
-            // TODO: Revisit after the signals are completely gone
-            if (!timeNode || !valuesNode) return;
+          // Get timestamp metric from tree based on index type
+          const timeMetric =
+            idx === "height"
+              ? brk.metrics.blocks.time.timestampMonotonic
+              : brk.metrics.blocks.time.timestamp;
+          const valuesMetric = /** @type {AnyMetricPattern} */ (metric);
+          const _timeEndpoint = timeMetric.get(idx);
+          if (!_timeEndpoint) throw "Expect time endpoint";
+          const timeEndpoint = _timeEndpoint;
+          const valuesEndpoint = valuesMetric.by[idx];
+          // Gracefully skip - series may be about to be removed by option change
+          if (!timeEndpoint || !valuesEndpoint) return;
 
-            const timeResource = resources.useMetricEndpoint(timeNode);
-            const valuesResource = resources.useMetricEndpoint(valuesNode);
-            _valuesResource = valuesResource;
+          series.url = `${
+            brk.baseUrl.endsWith("/") ? brk.baseUrl.slice(0, -1) : brk.baseUrl
+          }${valuesEndpoint.path}`;
 
-            series.url = `${
-              brk.baseUrl.endsWith("/") ? brk.baseUrl.slice(0, -1) : brk.baseUrl
-            }${valuesResource.path}`;
-
-            (paneIndex ? legendBottom : legendTop).addOrReplace({
-              series,
-              name,
-              colors,
-              order,
-            });
-
-            // Create memo outside active check (cheap, just checks data existence)
-            const timeRange = timeResource.range();
-            const valuesRange = valuesResource.range();
-            const valuesCacheKey = signals.createMemo(() => {
-              const res = valuesRange.response();
-              if (!res?.data?.length) return null;
-              if (!timeRange.response()?.data?.length) return null;
-              return `${res.version}|${res.stamp}|${res.total}|${res.start}|${res.end}`;
-            });
-
-            // Combined effect for active + data processing (flat, uses prev comparison)
-            signals.createEffect(
-              () => ({ isActive: active?.(), cacheKey: valuesCacheKey() }),
-              (curr, prev) => {
-                const becameActive = curr.isActive && (!prev || !prev.isActive);
-                const becameInactive = !curr.isActive && prev?.isActive;
-
-                if (becameInactive) {
-                  activeResources.delete(valuesResource);
-                  return;
-                }
-
-                if (!curr.isActive) return;
-
-                if (becameActive) {
-                  timeResource.fetch();
-                  valuesResource.fetch();
-                  activeResources.add(valuesResource);
-                }
-
-                // Process data only if cacheKey changed
-                if (!curr.cacheKey || curr.cacheKey === prev?.cacheKey) return;
-
-                const _indexes = timeRange.response()?.data;
-                const values = valuesRange.response()?.data;
-                if (!_indexes?.length || !values?.length) return;
-
-                const indexes = /** @type {number[]} */ (_indexes);
-                const length = Math.min(indexes.length, values.length);
-
-                // Find start index for processing
-                let startIdx = 0;
-                if (hasData) {
-                  // Binary search to find first index where time >= lastTime
-                  let lo = 0;
-                  let hi = length;
-                  while (lo < hi) {
-                    const mid = (lo + hi) >>> 1;
-                    if (indexes[mid] < lastTime) {
-                      lo = mid + 1;
-                    } else {
-                      hi = mid;
-                    }
-                  }
-                  startIdx = lo;
-                  if (startIdx >= length) return; // No new data
-                }
-
-                /**
-                 * @param {number} i
-                 * @param {(number | null | [number, number, number, number])[]} vals
-                 * @returns {LineData | CandlestickData}
-                 */
-                function buildDataPoint(i, vals) {
-                  const time = /** @type {Time} */ (indexes[i]);
-                  const v = vals[i];
-                  if (v === null) {
-                    return { time, value: NaN };
-                  } else if (typeof v === "number") {
-                    return { time, value: v };
-                  } else {
-                    if (!Array.isArray(v) || v.length !== 4)
-                      throw new Error(`Expected OHLC tuple, got: ${v}`);
-                    const [open, high, low, close] = v;
-                    return { time, open, high, low, close };
-                  }
-                }
-
-                if (!hasData) {
-                  // Initial load: build full array
-                  const data = /** @type {LineData[] | CandlestickData[]} */ (
-                    Array.from({ length })
-                  );
-
-                  let prevTime = null;
-                  let timeOffset = 0;
-
-                  for (let i = 0; i < length; i++) {
-                    const time = indexes[i];
-                    const sameTime = prevTime === time;
-                    if (sameTime) {
-                      timeOffset += 1;
-                    }
-                    const offsetedI = i - timeOffset;
-                    const point = buildDataPoint(i, values);
-                    if (sameTime && "open" in point) {
-                      const prev = /** @type {CandlestickData} */ (
-                        data[offsetedI]
-                      );
-                      point.open = prev.open;
-                      point.high = Math.max(prev.high, point.high);
-                      point.low = Math.min(prev.low, point.low);
-                    }
-                    data[offsetedI] = point;
-                    prevTime = time;
-                  }
-
-                  data.length -= timeOffset;
-
-                  setData(data);
-                  hasData = true;
-                  lastTime =
-                    /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
-
-                  // Restore saved range or use defaults
-                  const savedRange = getRange();
-                  if (savedRange) {
-                    ichart.timeScale().setVisibleLogicalRange({
-                      from: savedRange.from,
-                      to: savedRange.to,
-                    });
-                  } else if (fitContent) {
-                    ichart.timeScale().fitContent();
-                  } else if (
-                    idx === "quarterindex" ||
-                    idx === "semesterindex" ||
-                    idx === "yearindex" ||
-                    idx === "decadeindex"
-                  ) {
-                    ichart
-                      .timeScale()
-                      .setVisibleLogicalRange({ from: -1, to: data.length });
-                  }
-                  // Delay until chart has applied the range
-                  requestAnimationFrame(() => onDataLoaded?.());
-                } else {
-                  // Incremental update: only process new data points
-                  for (let i = startIdx; i < length; i++) {
-                    const point = buildDataPoint(i, values);
-                    update(point);
-                    lastTime = /** @type {number} */ (point.time);
-                  }
-                }
-              },
-            );
+          (paneIndex ? legendBottom : legendTop).addOrReplace({
+            series,
+            name,
+            colors,
+            order,
           });
+
+          /**
+           * @param {number[]} indexes
+           * @param {(number | null | [number, number, number, number])[]} values
+           */
+          function processData(indexes, values) {
+            const length = Math.min(indexes.length, values.length);
+
+            // Find start index for processing
+            let startIdx = 0;
+            if (hasData) {
+              // Binary search to find first index where time >= lastTime
+              let lo = 0;
+              let hi = length;
+              while (lo < hi) {
+                const mid = (lo + hi) >>> 1;
+                if (indexes[mid] < lastTime) {
+                  lo = mid + 1;
+                } else {
+                  hi = mid;
+                }
+              }
+              startIdx = lo;
+              if (startIdx >= length) return; // No new data
+            }
+
+            /**
+             * @param {number} i
+             * @returns {LineData | CandlestickData}
+             */
+            function buildDataPoint(i) {
+              const time = /** @type {Time} */ (indexes[i]);
+              const v = values[i];
+              if (v === null) {
+                return { time, value: NaN };
+              } else if (typeof v === "number") {
+                return { time, value: v };
+              } else {
+                if (!Array.isArray(v) || v.length !== 4)
+                  throw new Error(`Expected OHLC tuple, got: ${v}`);
+                const [open, high, low, close] = v;
+                return { time, open, high, low, close };
+              }
+            }
+
+            if (!hasData) {
+              // Initial load: build full array
+              const data = /** @type {LineData[] | CandlestickData[]} */ (
+                Array.from({ length })
+              );
+
+              let prevTime = null;
+              let timeOffset = 0;
+
+              for (let i = 0; i < length; i++) {
+                const time = indexes[i];
+                const sameTime = prevTime === time;
+                if (sameTime) {
+                  timeOffset += 1;
+                }
+                const offsetedI = i - timeOffset;
+                const point = buildDataPoint(i);
+                if (sameTime && "open" in point) {
+                  const prev = /** @type {CandlestickData} */ (data[offsetedI]);
+                  point.open = prev.open;
+                  point.high = Math.max(prev.high, point.high);
+                  point.low = Math.min(prev.low, point.low);
+                }
+                data[offsetedI] = point;
+                prevTime = time;
+              }
+
+              data.length -= timeOffset;
+
+              setData(data);
+              hasData = true;
+              lastTime = /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
+
+              // Restore saved range or use defaults
+              const savedRange = getRange();
+              if (savedRange) {
+                ichart.timeScale().setVisibleLogicalRange({
+                  from: savedRange.from,
+                  to: savedRange.to,
+                });
+              } else if (fitContent) {
+                ichart.timeScale().fitContent();
+              } else if (
+                idx === "quarterindex" ||
+                idx === "semesterindex" ||
+                idx === "yearindex" ||
+                idx === "decadeindex"
+              ) {
+                ichart
+                  .timeScale()
+                  .setVisibleLogicalRange({ from: -1, to: data.length });
+              }
+              // Delay until chart has applied the range
+              requestAnimationFrame(() => onDataLoaded?.());
+            } else {
+              // Incremental update: only process new data points
+              for (let i = startIdx; i < length; i++) {
+                const point = buildDataPoint(i);
+                update(point);
+                lastTime = /** @type {number} */ (point.time);
+              }
+            }
+          }
+
+          async function fetchAndProcess() {
+            const [timeResult, valuesResult] = await Promise.all([
+              timeEndpoint.slice(-10000).fetch(),
+              valuesEndpoint?.slice(-10000).fetch(),
+            ]);
+            if (timeResult?.data?.length && valuesResult?.data?.length) {
+              processData(timeResult.data, valuesResult.data);
+            }
+          }
+
+          _fetch = fetchAndProcess;
+
+          // Initial fetch if active
+          if (active.value) {
+            fetchAndProcess();
+          }
         }
 
         setupIndexEffect(index());
-        onIndexChange.add(setupIndexEffect);
-        signals.onCleanup(() => {
-          onIndexChange.delete(setupIndexEffect);
-          if (disposeIndexEffect) {
-            disposeIndexEffect();
-          }
-        });
+        // Series don't subscribe to onIndexChange - panes recreates them on index change
+        // onIndexChange.add(setupIndexEffect);
+        // _cleanup = () => onIndexChange.delete(setupIndexEffect);
       } else {
         (paneIndex ? legendBottom : legendTop).addOrReplace({
           series,
@@ -767,6 +726,7 @@ export function createChart({
   const chart = {
     index,
     indexName,
+    onIndexChange,
 
     legendTop,
     legendBottom,

@@ -10,6 +10,8 @@
  *
  * @import { Resources, MetricResource } from './resources.js'
  *
+ * @import { PersistedValue } from './utils/persisted.js'
+ *
  * @import { SingleValueData, CandlestickData, Series, AnySeries, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, Chart, Legend } from "./chart/index.js"
  *
  * @import { Color, ColorName, Colors } from "./chart/colors.js"

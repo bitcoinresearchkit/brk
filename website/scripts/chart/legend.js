@@ -55,7 +55,7 @@ export function createLegend() {
         inputName: stringToId(`selected-${series.id}`),
         inputValue: "value",
         title: "Click to toggle",
-        inputChecked: series.active(),
+        inputChecked: series.active.value,
         onClick: () => {
           series.setActive(input.checked);
         },
