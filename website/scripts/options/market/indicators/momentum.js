@@ -1,6 +1,7 @@
 /** Momentum indicators (RSI, StochRSI, Stochastic, MACD) */
 
 import { Unit } from "../../../utils/units.js";
+import { line, histogram } from "../../series.js";
 
 /**
  * Create Momentum section
@@ -8,7 +9,7 @@ import { Unit } from "../../../utils/units.js";
  * @param {Market["indicators"]} indicators
  */
 export function createMomentumSection(ctx, indicators) {
-  const { line, histogram, colors, createPriceLine } = ctx;
+  const { colors, createPriceLine } = ctx;
 
   return {
     name: "Momentum",

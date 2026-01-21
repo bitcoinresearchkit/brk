@@ -1,0 +1,98 @@
+import { oklchToRgba } from "./oklch.js";
+import { dark } from "../utils/theme.js";
+
+/** @type {Map<string, string>} */
+const rgbaCache = new Map();
+
+/**
+ * Convert oklch to rgba with caching
+ * @param {string} color - oklch color string
+ */
+function toRgba(color) {
+  if (color === "transparent") return color;
+  const cached = rgbaCache.get(color);
+  if (cached) return cached;
+  const rgba = oklchToRgba(color);
+  rgbaCache.set(color, rgba);
+  return rgba;
+}
+
+/**
+ * Reduce color opacity to 50% for dimming effect
+ * @param {string} color - oklch color string
+ */
+function tameColor(color) {
+  if (color === "transparent") return color;
+  return `${color.slice(0, -1)} / 25%)`;
+}
+
+/**
+ * @typedef {Object} ColorMethods
+ * @property {() => string} tame - Returns tamed (50% opacity) version
+ * @property {(highlighted: boolean) => string} highlight - Returns normal if highlighted, tamed otherwise
+ */
+
+/**
+ * @typedef {(() => string) & ColorMethods} Color
+ */
+
+/**
+ * Creates a Color object that is callable and has utility methods
+ * @param {() => string} getter
+ * @returns {Color}
+ */
+function createColor(getter) {
+  const color = /** @type {Color} */ (() => toRgba(getter()));
+  color.tame = () => toRgba(tameColor(getter()));
+  color.highlight = (highlighted) =>
+    highlighted ? toRgba(getter()) : toRgba(tameColor(getter()));
+  return color;
+}
+
+const globalComputedStyle = getComputedStyle(window.document.documentElement);
+
+/**
+ * @param {string} name
+ */
+function getColor(name) {
+  return globalComputedStyle.getPropertyValue(`--${name}`);
+}
+
+/**
+ * @param {string} property
+ */
+function getLightDarkValue(property) {
+  const value = globalComputedStyle.getPropertyValue(property);
+  const [light, _dark] = value.slice(11, -1).split(", ");
+  return dark ? _dark : light;
+}
+
+export const colors = {
+  default: createColor(() => getLightDarkValue("--color")),
+  gray: createColor(() => getColor("gray")),
+  border: createColor(() => getLightDarkValue("--border-color")),
+
+  red: createColor(() => getColor("red")),
+  orange: createColor(() => getColor("orange")),
+  amber: createColor(() => getColor("amber")),
+  yellow: createColor(() => getColor("yellow")),
+  avocado: createColor(() => getColor("avocado")),
+  lime: createColor(() => getColor("lime")),
+  green: createColor(() => getColor("green")),
+  emerald: createColor(() => getColor("emerald")),
+  teal: createColor(() => getColor("teal")),
+  cyan: createColor(() => getColor("cyan")),
+  sky: createColor(() => getColor("sky")),
+  blue: createColor(() => getColor("blue")),
+  indigo: createColor(() => getColor("indigo")),
+  violet: createColor(() => getColor("violet")),
+  purple: createColor(() => getColor("purple")),
+  fuchsia: createColor(() => getColor("fuchsia")),
+  pink: createColor(() => getColor("pink")),
+  rose: createColor(() => getColor("rose")),
+};
+
+/**
+ * @typedef {typeof colors} Colors
+ * @typedef {keyof Colors} ColorName
+ */

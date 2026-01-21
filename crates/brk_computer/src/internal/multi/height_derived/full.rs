@@ -9,11 +9,11 @@ use schemars::JsonSchema;
 use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec};
 
 use crate::{
-    ComputeIndexes, indexes,
+    indexes,
     internal::{
-        ComputedVecValue, CumulativeVec, LazyDateDerivedFull, Full, LazyFull, NumericValue,
-        compute_cumulative_extend,
+        ComputedVecValue, CumulativeVec, Full, LazyDateDerivedFull, LazyFull, NumericValue,
     },
+    ComputeIndexes,
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -102,6 +102,9 @@ where
         height_source: &impl IterableVec<Height, T>,
         exit: &Exit,
     ) -> Result<()> {
-        compute_cumulative_extend(max_from, height_source, &mut self.height_cumulative.0, exit)
+        self.height_cumulative
+            .0
+            .compute_cumulative(max_from, height_source, exit)?;
+        Ok(())
     }
 }

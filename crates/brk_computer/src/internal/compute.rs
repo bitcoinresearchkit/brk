@@ -70,7 +70,9 @@ where
         }};
     }
 
-    let index = validate_vec!(first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90);
+    let index = validate_vec!(
+        first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90
+    );
 
     let needs_first = first.is_some();
     let needs_last = last.is_some();
@@ -298,44 +300,9 @@ where
         };
     }
 
-    write_vec!(first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90);
-
-    Ok(())
-}
-
-/// Compute cumulative extension from a source vec.
-///
-/// Used when only cumulative needs to be extended from an existing source.
-pub fn compute_cumulative_extend<I, T>(
-    max_from: I,
-    source: &impl IterableVec<I, T>,
-    cumulative: &mut EagerVec<PcoVec<I, T>>,
-    exit: &Exit,
-) -> Result<()>
-where
-    I: VecIndex,
-    T: ComputedVecValue + JsonSchema,
-{
-    cumulative.validate_computed_version_or_reset(source.version())?;
-
-    let index = max_from.min(I::from(cumulative.len()));
-
-    let mut cumulative_val = index
-        .decremented()
-        .map_or(T::from(0_usize), |idx| cumulative.iter().get_unwrap(idx));
-
-    source
-        .iter()
-        .enumerate()
-        .skip(index.to_usize())
-        .try_for_each(|(i, v)| -> Result<()> {
-            cumulative_val += v;
-            cumulative.truncate_push_at(i, cumulative_val)?;
-            Ok(())
-        })?;
-
-    let _lock = exit.lock();
-    cumulative.write()?;
+    write_vec!(
+        first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90
+    );
 
     Ok(())
 }

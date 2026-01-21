@@ -37,6 +37,8 @@ brk
 
 Indexes the blockchain, computes datasets, starts the server on `localhost:3110`, and waits for new blocks.
 
+**Note:** When more than 10,000 blocks behind, indexing completes before the server starts to free up memory from fragmentation that occurs during large syncs. The web interface at `localhost:3110` won't be available until sync finishes.
+
 ## Options
 
 ```bash

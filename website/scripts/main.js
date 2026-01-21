@@ -1,4 +1,3 @@
-import { createColors } from "./utils/colors.js";
 import { webSockets } from "./utils/ws.js";
 import * as formatters from "./utils/format.js";
 import { onFirstIntersection, getElementById, isHidden } from "./utils/dom.js";
@@ -8,7 +7,7 @@ import { initOptions } from "./options/full.js";
 import ufuzzy from "./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.mjs";
 import * as leanQr from "./modules/lean-qr/2.7.1/index.mjs";
 import { init as initExplorer } from "./panes/_explorer.js";
-import { init as initChart } from "./panes/chart/index.js";
+import { init as initChart } from "./panes/chart.js";
 import { init as initTable } from "./panes/table.js";
 import { init as initSimulation } from "./panes/_simulation.js";
 import { next } from "./utils/timing.js";
@@ -121,18 +120,6 @@ signals.createRoot(() => {
 
   console.log(`VERSION = ${brk.VERSION}`);
 
-  function initDark() {
-    const preferredColorSchemeMatchMedia = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    );
-    const dark = signals.createSignal(preferredColorSchemeMatchMedia.matches);
-    preferredColorSchemeMatchMedia.addEventListener("change", ({ matches }) => {
-      dark.set(matches);
-    });
-    return dark;
-  }
-  const dark = initDark();
-
   const qrcode = signals.createSignal(/** @type {string | null} */ (null));
 
   signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
@@ -159,10 +146,7 @@ signals.createRoot(() => {
   // }
   // const lastHeight = createLastHeightResource();
 
-  const colors = createColors(dark);
-
   const options = initOptions({
-    colors,
     signals,
     brk,
     qrcode,
@@ -234,7 +218,6 @@ signals.createRoot(() => {
             if (firstTimeLoadingChart) {
               signals.runWithOwner(owner, () =>
                 initChart({
-                  colors,
                   option: /** @type {Accessor<ChartOption>} */ (chartOption),
                   brk,
                 }),
@@ -260,11 +243,7 @@ signals.createRoot(() => {
             simOption.set(option);
 
             if (firstTimeLoadingSimulation) {
-              signals.runWithOwner(owner, () =>
-                initSimulation({
-                  colors,
-                }),
-              );
+              signals.runWithOwner(owner, () => initSimulation());
             }
             firstTimeLoadingSimulation = false;
 
@@ -552,6 +531,7 @@ signals.createRoot(() => {
       qrcode.set(window.location.href);
     });
 
+    
     shareDiv.addEventListener("click", () => {
       qrcode.set(null);
     });

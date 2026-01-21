@@ -1,6 +1,7 @@
 /** Shared cohort chart section builders */
 
 import { Unit } from "../../utils/units.js";
+import { line } from "../series.js";
 import { satsBtcUsd } from "../shared.js";
 
 /**
@@ -10,11 +11,11 @@ import { satsBtcUsd } from "../shared.js";
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createSingleSupplySeries(ctx, cohort) {
-  const { colors, line, createPriceLine } = ctx;
+  const { colors, createPriceLine } = ctx;
   const { tree } = cohort;
 
   return [
-    ...satsBtcUsd(ctx, tree.supply.total, "Supply", colors.default),
+    ...satsBtcUsd( tree.supply.total, "Supply", colors.default),
     ...("supplyRelToCirculatingSupply" in tree.relative
       ? [
           line({
@@ -25,9 +26,9 @@ export function createSingleSupplySeries(ctx, cohort) {
           }),
         ]
       : []),
-    ...satsBtcUsd(ctx, tree.unrealized.supplyInProfit, "In Profit", colors.green),
-    ...satsBtcUsd(ctx, tree.unrealized.supplyInLoss, "In Loss", colors.red),
-    ...satsBtcUsd(ctx, tree.supply.halved, "half", colors.gray).map((s) => ({
+    ...satsBtcUsd( tree.unrealized.supplyInProfit, "In Profit", colors.green),
+    ...satsBtcUsd( tree.unrealized.supplyInLoss, "In Loss", colors.red),
+    ...satsBtcUsd( tree.supply.halved, "half", colors.gray).map((s) => ({
       ...s,
       options: { lineStyle: 4 },
     })),
@@ -76,11 +77,11 @@ export function createSingleSupplySeries(ctx, cohort) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createGroupedSupplyTotalSeries(ctx, list) {
-  const { line, brk } = ctx;
+  const { brk } = ctx;
   const constant100 = brk.metrics.constants.constant100;
 
   return list.flatMap(({ color, name, tree }) => [
-    ...satsBtcUsd(ctx, tree.supply.total, name, color),
+    ...satsBtcUsd( tree.supply.total, name, color),
     line({
       metric:
         "supplyRelToCirculatingSupply" in tree.relative
@@ -95,15 +96,13 @@ export function createGroupedSupplyTotalSeries(ctx, list) {
 
 /**
  * Create supply in profit series for grouped cohorts
- * @param {PartialContext} ctx
  * @param {readonly CohortObject[]} list
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createGroupedSupplyInProfitSeries(ctx, list) {
-  const { line } = ctx;
-
+export function createGroupedSupplyInProfitSeries(list) {
+  
   return list.flatMap(({ color, name, tree }) => [
-    ...satsBtcUsd(ctx, tree.unrealized.supplyInProfit, name, color),
+    ...satsBtcUsd( tree.unrealized.supplyInProfit, name, color),
     ...("supplyInProfitRelToCirculatingSupply" in tree.relative
       ? [
           line({
@@ -119,15 +118,13 @@ export function createGroupedSupplyInProfitSeries(ctx, list) {
 
 /**
  * Create supply in loss series for grouped cohorts
- * @param {PartialContext} ctx
  * @param {readonly CohortObject[]} list
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createGroupedSupplyInLossSeries(ctx, list) {
-  const { line } = ctx;
-
+export function createGroupedSupplyInLossSeries(list) {
+  
   return list.flatMap(({ color, name, tree }) => [
-    ...satsBtcUsd(ctx, tree.unrealized.supplyInLoss, name, color),
+    ...satsBtcUsd( tree.unrealized.supplyInLoss, name, color),
     ...("supplyInLossRelToCirculatingSupply" in tree.relative
       ? [
           line({
@@ -143,14 +140,11 @@ export function createGroupedSupplyInLossSeries(ctx, list) {
 
 /**
  * Create UTXO count series
- * @param {PartialContext} ctx
  * @param {readonly CohortObject[]} list
  * @param {boolean} useGroupName
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createUtxoCountSeries(ctx, list, useGroupName) {
-  const { line } = ctx;
-
+export function createUtxoCountSeries(list, useGroupName) {
   return list.flatMap(({ color, name, tree }) => [
     line({
       metric: tree.outputs.utxoCount,
@@ -169,7 +163,7 @@ export function createUtxoCountSeries(ctx, list, useGroupName) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createAddressCountSeries(ctx, list, useGroupName) {
-  const { line, colors } = ctx;
+  const { colors } = ctx;
 
   return list.flatMap(({ color, name, tree }) => [
     line({
@@ -183,13 +177,10 @@ export function createAddressCountSeries(ctx, list, useGroupName) {
 
 /**
  * Create realized price series for grouped cohorts
- * @param {PartialContext} ctx
  * @param {readonly CohortObject[]} list
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createRealizedPriceSeries(ctx, list) {
-  const { line } = ctx;
-
+export function createRealizedPriceSeries(list) {
   return list.map(({ color, name, tree }) =>
     line({ metric: tree.realized.realizedPrice, name, color, unit: Unit.usd }),
   );
@@ -202,7 +193,7 @@ export function createRealizedPriceSeries(ctx, list) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createRealizedPriceRatioSeries(ctx, list) {
-  const { line, createPriceLine } = ctx;
+  const { createPriceLine } = ctx;
 
   return [
     ...list.map(({ color, name, tree }) =>
@@ -219,14 +210,11 @@ export function createRealizedPriceRatioSeries(ctx, list) {
 
 /**
  * Create realized capitalization series
- * @param {PartialContext} ctx
  * @param {readonly CohortObject[]} list
  * @param {boolean} useGroupName
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createRealizedCapSeries(ctx, list, useGroupName) {
-  const { line } = ctx;
-
+export function createRealizedCapSeries(list, useGroupName) {
   return list.flatMap(({ color, name, tree }) => [
     line({
       metric: tree.realized.realizedCap,
@@ -239,14 +227,11 @@ export function createRealizedCapSeries(ctx, list, useGroupName) {
 
 /**
  * Create cost basis min/max series (available on all cohorts)
- * @param {PartialContext} ctx
  * @param {readonly CohortObject[]} list
  * @param {boolean} useGroupName
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createCostBasisMinMaxSeries(ctx, list, useGroupName) {
-  const { line } = ctx;
-
+export function createCostBasisMinMaxSeries(list, useGroupName) {
   return list.flatMap(({ color, name, tree }) => [
     line({
       metric: tree.costBasis.min,
@@ -265,14 +250,11 @@ export function createCostBasisMinMaxSeries(ctx, list, useGroupName) {
 
 /**
  * Create cost basis percentile series (only for cohorts with CostBasisPattern2)
- * @param {PartialContext} ctx
  * @param {readonly CohortWithCostBasisPercentiles[]} list
  * @param {boolean} useGroupName
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createCostBasisPercentilesSeries(ctx, list, useGroupName) {
-  const { line } = ctx;
-
+export function createCostBasisPercentilesSeries(list, useGroupName) {
   return list.flatMap(({ color, name, tree }) => {
     const percentiles = tree.costBasis.percentiles;
     return [

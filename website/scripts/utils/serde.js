@@ -110,6 +110,10 @@ export const serdeBool = {
   },
 };
 
+/**
+ * @typedef {"timestamp" | "date" | "week" | "month" | "quarter" | "semester" | "year" | "decade"} ChartableIndexName
+ */
+
 export const serdeChartableIndex = {
   /**
    * @param {IndexName} v

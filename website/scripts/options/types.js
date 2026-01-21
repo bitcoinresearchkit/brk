@@ -241,11 +241,6 @@
  * @typedef {Object} PartialContext
  * @property {Colors} colors
  * @property {BrkClient} brk
- * @property {LineSeriesFn} line
- * @property {DotsSeriesFn} dots
- * @property {CandlestickSeriesFn} candlestick
- * @property {BaselineSeriesFn} baseline
- * @property {HistogramSeriesFn} histogram
  * @property {(pattern: BlockCountPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockCount
  * @property {(pattern: FullnessPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBitcoin
  * @property {(pattern: AnyStatsPattern, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockSize

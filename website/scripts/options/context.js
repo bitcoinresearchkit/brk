@@ -1,9 +1,4 @@
 import {
-  line,
-  dots,
-  candlestick,
-  baseline,
-  histogram,
   fromBlockCount,
   fromBitcoin,
   fromBlockSize,
@@ -22,27 +17,21 @@ import {
   createPriceLines,
   constantLine,
 } from "./constants.js";
+import { colors } from "../chart/colors.js";
 
 /**
  * Create a context object with all dependencies for building partial options
  * @param {Object} args
- * @param {Colors} args.colors
  * @param {BrkClient} args.brk
  * @returns {PartialContext}
  */
-export function createContext({ colors, brk }) {
+export function createContext({ brk }) {
   const constants = brk.metrics.constants;
 
   return {
     colors,
     brk,
 
-    // Series helpers
-    line,
-    dots,
-    candlestick,
-    baseline,
-    histogram,
     fromBlockCount: (pattern, title, color) =>
       fromBlockCount(colors, pattern, title, color),
     fromBitcoin: (pattern, title, color) =>

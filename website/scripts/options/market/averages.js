@@ -1,6 +1,7 @@
 /** Moving averages section */
 
 import { Unit } from "../../utils/units.js";
+import { line, baseline } from "../series.js";
 import {
   priceLines,
   percentileUsdMap,
@@ -55,7 +56,7 @@ export function createPriceWithRatioOptions(
   ctx,
   { title, legend, ratio, color },
 ) {
-  const { line, colors, createPriceLine } = ctx;
+  const { colors, createPriceLine } = ctx;
   const priceMetric = ratio.price;
 
   const pctUsdMap = percentileUsdMap(colors, ratio);
@@ -85,42 +86,54 @@ export function createPriceWithRatioOptions(
         ),
       ],
       bottom: [
-        line({ metric: ratio.ratio, name: "Ratio", color, unit: Unit.ratio }),
+        baseline({
+          metric: ratio.ratio,
+          name: "Ratio",
+          base: 1,
+          color,
+          unit: Unit.ratio,
+        }),
         line({
           metric: ratio.ratio1wSma,
           name: "1w SMA",
           color: colors.lime,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         line({
           metric: ratio.ratio1mSma,
           name: "1m SMA",
           color: colors.teal,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         line({
           metric: ratio.ratio1ySd.sma,
           name: "1y SMA",
           color: colors.sky,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         line({
           metric: ratio.ratio2ySd.sma,
           name: "2y SMA",
           color: colors.indigo,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         line({
           metric: ratio.ratio4ySd.sma,
           name: "4y SMA",
           color: colors.purple,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         line({
           metric: ratio.ratioSd.sma,
           name: "All SMA",
           color: colors.rose,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         ...pctMap.map(({ name: pctName, prop, color: pctColor }) =>
           line({
@@ -140,13 +153,14 @@ export function createPriceWithRatioOptions(
       tree: sdPats.map(({ nameAddon, titleAddon, sd }) => ({
         name: nameAddon,
         title: `${title} ${titleAddon} Z-Score`,
-        top: sdBands(colors, sd).map(({ name: bandName, prop, color: bandColor }) =>
-          line({
-            metric: prop,
-            name: bandName,
-            color: bandColor,
-            unit: Unit.usd,
-          }),
+        top: sdBands(colors, sd).map(
+          ({ name: bandName, prop, color: bandColor }) =>
+            line({
+              metric: prop,
+              name: bandName,
+              color: bandColor,
+              unit: Unit.usd,
+            }),
         ),
         bottom: [
           line({ metric: sd.zscore, name: "Z-Score", color, unit: Unit.sd }),
@@ -163,8 +177,7 @@ export function createPriceWithRatioOptions(
  * @param {ReturnType<typeof buildAverages>} averages
  */
 export function createAveragesSection(ctx, averages) {
-  const { line } = ctx;
-
+  
   return {
     name: "Averages",
     tree: [

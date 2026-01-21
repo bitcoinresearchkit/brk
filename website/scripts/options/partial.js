@@ -13,6 +13,7 @@ import {
 import { createMarketSection } from "./market/index.js";
 import { createChainSection } from "./chain.js";
 import { createCointimeSection } from "./cointime.js";
+import { colors } from "../chart/colors.js";
 
 // Re-export types for external consumers
 export * from "./types.js";
@@ -20,13 +21,12 @@ export * from "./types.js";
 /**
  * Create partial options tree
  * @param {Object} args
- * @param {Colors} args.colors
  * @param {BrkClient} args.brk
  * @returns {PartialOptionsTree}
  */
-export function createPartialOptions({ colors, brk }) {
+export function createPartialOptions({ brk }) {
   // Create context with all helpers
-  const ctx = createContext({ colors, brk });
+  const ctx = createContext({ brk });
 
   // Build cohort data
   const {

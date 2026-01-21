@@ -1533,6 +1533,11 @@
         "(prefers-color-scheme: dark)",
       );
 
+      let storedTheme;
+      try { storedTheme = localStorage.getItem("theme"); } catch (_) {}
+      const isDark = storedTheme ? storedTheme === "dark" : preferredColorSchemeMatchMedia.matches;
+      document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+
       const themeColor = window.document.createElement("meta");
       themeColor.name = "theme-color";
       window.document.getElementsByTagName("head")[0].appendChild(themeColor);
@@ -1545,7 +1550,7 @@
         themeColor.content = theme;
       }
 
-      updateThemeColor(preferredColorSchemeMatchMedia.matches);
+      updateThemeColor(isDark);
       preferredColorSchemeMatchMedia.addEventListener(
         "change",
         ({ matches }) => {
@@ -1832,6 +1837,7 @@
           </label>
 
           <button id="share-button" title="Share">Share</button>
+          <button id="invert-button" title="Invert">Invert</button>
         </fieldset>
       </footer>
     </main>

@@ -9,9 +9,7 @@ repository.workspace = true
 
 [dependencies]
 jiff = { workspace = true }
-logroller = "0.1"
 owo-colors = "4.2.3"
 tracing = { workspace = true }
-tracing-appender = "0.2"
 tracing-log = "0.2"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "std"] }

@@ -22,18 +22,22 @@ export function throttle(callback, wait = 1000) {
   let timeoutId = null;
   /** @type {Parameters<F>} */
   let latestArgs;
+  let hasTrailing = false;
 
   return (/** @type {Parameters<F>} */ ...args) => {
     latestArgs = args;
-
-    if (!timeoutId) {
-      // Otherwise it optimizes away timeoutId in Chrome and FF
-      timeoutId = timeoutId;
-      timeoutId = setTimeout(() => {
-        callback(...latestArgs); // Execute with latest args
-        timeoutId = null;
-      }, wait);
+    if (timeoutId) {
+      hasTrailing = true;
+      return;
     }
+    callback(...latestArgs);
+    timeoutId = setTimeout(() => {
+      timeoutId = null;
+      if (hasTrailing) {
+        hasTrailing = false;
+        callback(...latestArgs);
+      }
+    }, wait);
   };
 }
 

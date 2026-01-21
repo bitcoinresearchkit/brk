@@ -10,12 +10,11 @@ import { collect, markUsed, logUnused } from "./unused.js";
 
 /**
  * @param {Object} args
- * @param {Colors} args.colors
  * @param {Signals} args.signals
  * @param {BrkClient} args.brk
  * @param {Signal<string | null>} args.qrcode
  */
-export function initOptions({ colors, signals, brk, qrcode }) {
+export function initOptions({ signals, brk, qrcode }) {
   collect(brk.metrics);
 
   const LS_SELECTED_KEY = `selected_path`;
@@ -33,7 +32,6 @@ export function initOptions({ colors, signals, brk, qrcode }) {
   const selected = signals.createSignal(/** @type {any} */ (undefined));
 
   const partialOptions = createPartialOptions({
-    colors,
     brk,
   });
 

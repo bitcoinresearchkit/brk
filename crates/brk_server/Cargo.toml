@@ -7,10 +7,13 @@ license.workspace = true
 homepage.workspace = true
 repository.workspace = true
 
+[features]
+bindgen = ["dep:brk_bindgen"]
+
 [dependencies]
 aide = { workspace = true }
 axum = { workspace = true }
-brk_bindgen = { workspace = true }
+brk_bindgen = { workspace = true, optional = true }
 brk_computer = { workspace = true }
 brk_error = { workspace = true, features = ["jiff", "serde_json", "tokio", "vecdb"] }
 brk_fetcher = { workspace = true }

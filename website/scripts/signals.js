@@ -23,11 +23,9 @@ import {
   runWithOwner,
   onCleanup,
 } from "./modules/solidjs-signals/0.6.3/dist/prod.js";
-import { debounce } from "./utils/timing.js";
-import { writeParam, readParam } from "./utils/url.js";
-import { readStored, writeToStorage } from "./utils/storage.js";
+import { createPersistedValue } from "./utils/persisted.js";
 
-let effectCount = 0;
+// let effectCount = 0;
 
 const signals = {
   createSolidSignal: /** @type {typeof CreateSignal} */ (createSignal),
@@ -45,13 +43,13 @@ const signals = {
         if (dispose) {
           dispose();
           dispose = null;
-          console.log("effectCount = ", --effectCount);
+          // console.log("effectCount = ", --effectCount);
         }
       }
 
       // @ts-ignore
       createEffect(compute, (v, oldV) => {
-        console.log("effectCount = ", ++effectCount);
+        // console.log("effectCount = ", ++effectCount);
         cleanup();
         signals.createRoot((_dispose) => {
           dispose = _dispose;
@@ -74,7 +72,10 @@ const signals = {
    * @returns {Signal<T>}
    */
   createSignal(initialValue, options) {
-    const [get, set] = this.createSolidSignal(/** @type {any} */ (initialValue), options);
+    const [get, set] = this.createSolidSignal(
+      /** @type {any} */ (initialValue),
+      options,
+    );
 
     // @ts-ignore
     get.set = set;
@@ -104,42 +105,24 @@ const signals = {
     deserialize,
     saveDefaultValue = false,
   }) {
-    const defaultSerialized = serialize(defaultValue);
+    const persisted = createPersistedValue({
+      defaultValue,
+      storageKey,
+      urlKey,
+      serialize,
+      deserialize,
+      saveDefaultValue,
+    });
 
-    // Read: URL > localStorage > default
-    let serialized = urlKey ? readParam(urlKey) : null;
-    if (serialized === null) {
-      serialized = readStored(storageKey);
-    }
-    const initialValue = serialized !== null ? deserialize(serialized) : defaultValue;
+    const signal = this.createSignal(persisted.value);
 
-    const signal = this.createSignal(initialValue);
-
-    /** @param {T} value */
-    const write = (value) => {
-      const s = serialize(value);
-      const isDefault = s === defaultSerialized;
-
-      if (!isDefault || saveDefaultValue) {
-        writeToStorage(storageKey, s);
-      } else {
-        writeToStorage(storageKey, null);
-      }
-
-      if (urlKey) {
-        writeParam(urlKey, !isDefault || saveDefaultValue ? s : null);
-      }
-    };
-
-    const debouncedWrite = debounce(write, 250);
-
+    // Sync signal changes to persisted storage
     let firstRun = true;
     this.createEffect(signal, (value) => {
       if (firstRun) {
-        write(value);
         firstRun = false;
       } else {
-        debouncedWrite(value);
+        persisted.set(value);
       }
     });
 

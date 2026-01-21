@@ -1,13 +1,26 @@
 import { createLabeledInput, createSpanName } from "../utils/dom.js";
 import { stringToId } from "../utils/format.js";
 
-/**
- * @param {Signals} signals
- */
-export function createLegend(signals) {
+export function createLegend() {
   const element = window.document.createElement("legend");
 
-  const hovered = signals.createSignal(/** @type {AnySeries | null} */ (null));
+  /** @type {AnySeries | null} */
+  let hoveredSeries = null;
+  /** @type {Map<AnySeries, { span: HTMLSpanElement, color: Color }[]>} */
+  const seriesColorSpans = new Map();
+
+  /** @param {AnySeries | null} series */
+  function setHovered(series) {
+    if (hoveredSeries === series) return;
+    hoveredSeries = series;
+    for (const [entrySeries, colorSpans] of seriesColorSpans) {
+      const shouldHighlight = !hoveredSeries || hoveredSeries === entrySeries;
+      shouldHighlight ? entrySeries.highlight() : entrySeries.tame();
+      for (const { span, color } of colorSpans) {
+        span.style.backgroundColor = color.highlight(shouldHighlight);
+      }
+    }
+  }
 
   /** @type {HTMLElement[]} */
   const legends = [];
@@ -44,15 +57,11 @@ export function createLegend(signals) {
         title: "Click to toggle",
         inputChecked: series.active(),
         onClick: () => {
-          series.active.set(input.checked);
+          series.setActive(input.checked);
         },
         type: "checkbox",
       });
-
-      // Sync checkbox with signal (for shared signals across panes)
-      signals.createEffect(series.active, (active) => {
-        input.checked = active;
-      });
+      input.dataset.series = series.key;
 
       const spanMain = window.document.createElement("span");
       spanMain.classList.add("main");
@@ -62,49 +71,30 @@ export function createLegend(signals) {
       spanMain.append(spanName);
 
       div.append(label);
-      label.addEventListener("mouseover", () => {
-        const h = hovered();
-        if (!h || h !== series) {
-          hovered.set(series);
-        }
-      });
-      label.addEventListener("mouseleave", () => {
-        hovered.set(null);
-      });
-
-      const shouldHighlight = () => !hovered() || hovered() === series;
-
-      // Update series highlighted state
-      signals.createEffect(shouldHighlight, (shouldHighlight) => {
-        series.highlighted.set(shouldHighlight);
-      });
+      label.addEventListener("mouseover", () => setHovered(series));
+      label.addEventListener("mouseleave", () => setHovered(null));
 
       const spanColors = window.document.createElement("span");
       spanColors.classList.add("colors");
       spanMain.prepend(spanColors);
+      /** @type {{ span: HTMLSpanElement, color: Color }[]} */
+      const colorSpans = [];
       colors.forEach((color) => {
         const spanColor = window.document.createElement("span");
+        spanColor.style.backgroundColor = color.highlight(true);
         spanColors.append(spanColor);
-
-        signals.createEffect(
-          () => color.highlight(shouldHighlight()),
-          (c) => {
-            spanColor.style.backgroundColor = c;
-          },
-        );
+        colorSpans.push({ span: spanColor, color });
       });
+      seriesColorSpans.set(series, colorSpans);
 
-      const anchor = window.document.createElement("a");
-
-      signals.createEffect(series.url, (url) => {
-        if (url) {
-          anchor.href = url;
-          anchor.target = "_blank";
-          anchor.rel = "noopener noreferrer";
-          anchor.title = "Click to view data";
-          div.append(anchor);
-        }
-      });
+      if (series.url) {
+        const anchor = window.document.createElement("a");
+        anchor.href = series.url;
+        anchor.target = "_blank";
+        anchor.rel = "noopener noreferrer";
+        anchor.title = "Click to view data";
+        div.append(anchor);
+      }
     },
     /**
      * @param {number} start

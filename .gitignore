@@ -22,6 +22,7 @@ _*
 /filter_*
 /heatmaps*
 /oracle*
+/playground
 
 # Logs
 *.log*

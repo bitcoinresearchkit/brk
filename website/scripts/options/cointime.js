@@ -1,6 +1,7 @@
 /** Cointime section builder - typed tree-based patterns */
 
 import { Unit } from "../utils/units.js";
+import { line, baseline } from "./series.js";
 import {
   satsBtcUsd,
   priceLines,
@@ -25,7 +26,7 @@ function createCointimePriceWithRatioOptions(
   ctx,
   { title, legend, price, ratio, color },
 ) {
-  const { line, colors, createPriceLine } = ctx;
+  const { colors, createPriceLine } = ctx;
 
   const pctUsdMap = percentileUsdMap(colors, ratio);
   const pctMap = percentileMap(colors, ratio);
@@ -54,42 +55,53 @@ function createCointimePriceWithRatioOptions(
         ),
       ],
       bottom: [
-        line({ metric: ratio.ratio, name: "Ratio", color, unit: Unit.ratio }),
+        baseline({
+          metric: ratio.ratio,
+          name: "Ratio",
+          color,
+          unit: Unit.ratio,
+        }),
         line({
           metric: ratio.ratio1wSma,
           name: "1w SMA",
           color: colors.lime,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         line({
           metric: ratio.ratio1mSma,
           name: "1m SMA",
           color: colors.teal,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         line({
           metric: ratio.ratio1ySd.sma,
           name: "1y SMA",
           color: colors.sky,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         line({
           metric: ratio.ratio2ySd.sma,
           name: "2y SMA",
           color: colors.indigo,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         line({
           metric: ratio.ratio4ySd.sma,
           name: "4y SMA",
           color: colors.purple,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         line({
           metric: ratio.ratioSd.sma,
           name: "All SMA",
           color: colors.rose,
           unit: Unit.ratio,
+          defaultActive: false,
         }),
         ...pctMap.map(({ name: pctName, prop, color: pctColor }) =>
           line({
@@ -174,13 +186,14 @@ function createCointimePriceWithRatioOptions(
         ...sdPats.map(({ nameAddon, titleAddon, sd }) => ({
           name: nameAddon,
           title: `${title} ${titleAddon} Z-Score`,
-          top: sdBands(colors, sd).map(({ name: bandName, prop, color: bandColor }) =>
-            line({
-              metric: prop,
-              name: bandName,
-              color: bandColor,
-              unit: Unit.usd,
-            }),
+          top: sdBands(colors, sd).map(
+            ({ name: bandName, prop, color: bandColor }) =>
+              line({
+                metric: prop,
+                name: bandName,
+                color: bandColor,
+                unit: Unit.usd,
+              }),
           ),
           bottom: [
             line({ metric: sd.zscore, name: "Z-Score", color, unit: Unit.sd }),
@@ -198,7 +211,7 @@ function createCointimePriceWithRatioOptions(
  * @returns {PartialOptionsGroup}
  */
 export function createCointimeSection(ctx) {
-  const { colors, brk, line } = ctx;
+  const { colors, brk } = ctx;
   const { cointime, distribution, supply } = brk.metrics;
   const { pricing, cap, activity, supply: cointimeSupply, adjusted } = cointime;
   const { all } = distribution.utxoCohorts;
@@ -348,9 +361,17 @@ export function createCointimeSection(ctx) {
         name: "Supply",
         title: "Cointime Supply",
         bottom: [
-          ...satsBtcUsd(ctx, all.supply.total, "All", colors.orange),
-          ...satsBtcUsd(ctx, cointimeSupply.vaultedSupply, "Vaulted", colors.lime),
-          ...satsBtcUsd(ctx, cointimeSupply.activeSupply, "Active", colors.rose),
+          ...satsBtcUsd( all.supply.total, "All", colors.orange),
+          ...satsBtcUsd(
+            cointimeSupply.vaultedSupply,
+            "Vaulted",
+            colors.lime,
+          ),
+          ...satsBtcUsd(
+            cointimeSupply.activeSupply,
+            "Active",
+            colors.rose,
+          ),
         ],
       },
 

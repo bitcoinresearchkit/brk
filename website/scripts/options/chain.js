@@ -1,6 +1,7 @@
 /** Chain section builder - typed tree-based patterns */
 
 import { Unit } from "../utils/units.js";
+import { line, baseline, dots } from "./series.js";
 import { satsBtcUsd } from "./shared.js";
 
 /**
@@ -12,9 +13,6 @@ export function createChainSection(ctx) {
   const {
     colors,
     brk,
-    line,
-    baseline,
-    dots,
     createPriceLine,
     fromSizePattern,
     fromFullnessPattern,
@@ -240,7 +238,7 @@ export function createChainSection(ctx) {
             name: "Volume",
             title: "Transaction Volume",
             bottom: [
-              ...satsBtcUsd(ctx, transactions.volume.sentSum, "Sent"),
+              ...satsBtcUsd( transactions.volume.sentSum, "Sent"),
               line({
                 metric: transactions.volume.annualizedVolume.sats,
                 name: "annualized",

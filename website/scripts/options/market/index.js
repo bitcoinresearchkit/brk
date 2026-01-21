@@ -2,6 +2,7 @@
 
 import { localhost } from "../../utils/env.js";
 import { Unit } from "../../utils/units.js";
+import { line } from "../series.js";
 import { buildAverages, createAveragesSection } from "./averages.js";
 import { createPerformanceSection } from "./performance.js";
 import { createIndicatorsSection } from "./indicators/index.js";
@@ -13,7 +14,7 @@ import { createInvestingSection } from "./investing.js";
  * @returns {PartialOptionsGroup}
  */
 export function createMarketSection(ctx) {
-  const { colors, brk, line } = ctx;
+  const { colors, brk } = ctx;
   const { market, supply, price } = brk.metrics;
   const {
     movingAverage,

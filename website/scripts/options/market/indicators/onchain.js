@@ -1,6 +1,7 @@
 /** On-chain indicators (Pi Cycle, Puell, NVT, Gini) */
 
 import { Unit } from "../../../utils/units.js";
+import { line } from "../../series.js";
 
 /**
  * Create On-chain section
@@ -10,7 +11,7 @@ import { Unit } from "../../../utils/units.js";
  * @param {Market["movingAverage"]} args.movingAverage
  */
 export function createOnchainSection(ctx, { indicators, movingAverage }) {
-  const { line, colors, createPriceLine } = ctx;
+  const { colors, createPriceLine } = ctx;
 
   return {
     name: "On-chain",

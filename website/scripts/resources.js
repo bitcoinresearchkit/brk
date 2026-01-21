@@ -87,7 +87,7 @@ function useMetricEndpoint(endpoint) {
      * @param {number} [to]
      * @returns {RangeState<T>}
      */
-    function range(from, to) {
+    function range(from = -10000, to) {
       const key = `${from}-${to ?? ""}`;
       const existing = ranges.get(key);
       if (existing) return existing;
@@ -111,7 +111,7 @@ function useMetricEndpoint(endpoint) {
        * @param {number} [start=-10000]
        * @param {number} [end]
        */
-      async fetch(start, end) {
+      async fetch(start = -10000, end) {
         const r = range(start, end);
         r.loading.set(true);
         try {

@@ -5,6 +5,7 @@
  */
 
 import { Unit } from "../../utils/units.js";
+import { line, baseline } from "../series.js";
 import {
   createSingleSupplySeries,
   createGroupedSupplyTotalSeries,
@@ -54,12 +55,12 @@ export function createAddressCohortFolder(ctx, args) {
               {
                 name: "in profit",
                 title: `Supply In Profit ${title}`,
-                bottom: createGroupedSupplyInProfitSeries(ctx, list),
+                bottom: createGroupedSupplyInProfitSeries(list),
               },
               {
                 name: "in loss",
                 title: `Supply In Loss ${title}`,
-                bottom: createGroupedSupplyInLossSeries(ctx, list),
+                bottom: createGroupedSupplyInLossSeries(list),
               },
             ],
           },
@@ -68,7 +69,7 @@ export function createAddressCohortFolder(ctx, args) {
       {
         name: "utxo count",
         title: `UTXO Count ${title}`,
-        bottom: createUtxoCountSeries(ctx, list, useGroupName),
+        bottom: createUtxoCountSeries(list, useGroupName),
       },
 
       // Address count (ADDRESS COHORTS ONLY - fully type safe!)
@@ -87,7 +88,7 @@ export function createAddressCohortFolder(ctx, args) {
                 {
                   name: "Price",
                   title: `Realized Price ${title}`,
-                  top: createRealizedPriceSeries(ctx, list),
+                  top: createRealizedPriceSeries(list),
                 },
                 {
                   name: "Ratio",
@@ -96,7 +97,6 @@ export function createAddressCohortFolder(ctx, args) {
                 },
               ]
             : createRealizedPriceOptions(
-                ctx,
                 /** @type {AddressCohortObject} */ (args),
                 title,
               )),
@@ -119,24 +119,22 @@ export function createAddressCohortFolder(ctx, args) {
       ...createUnrealizedSection(ctx, list, useGroupName, title),
 
       // Cost basis section (no percentiles for address cohorts)
-      ...createCostBasisSection(ctx, list, useGroupName, title),
+      ...createCostBasisSection(list, useGroupName, title),
 
       // Activity section
-      ...createActivitySection(ctx, list, useGroupName, title),
+      ...createActivitySection(list, useGroupName, title),
     ],
   };
 }
 
 /**
  * Create realized price options for single cohort
- * @param {PartialContext} ctx
  * @param {AddressCohortObject} args
  * @param {string} title
  * @returns {PartialOptionsTree}
  */
-function createRealizedPriceOptions(ctx, args, title) {
-  const { line } = ctx;
-  const { tree, color } = args;
+function createRealizedPriceOptions(args, title) {
+    const { tree, color } = args;
 
   return [
     {
@@ -163,7 +161,7 @@ function createRealizedPriceOptions(ctx, args, title) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
-  const { line, baseline, createPriceLine } = ctx;
+  const { createPriceLine } = ctx;
   const isSingle = !("list" in args);
 
   return list.flatMap(({ color, name, tree }) => [
@@ -196,7 +194,7 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
  * @returns {PartialOptionsTree}
  */
 function createRealizedPnlSection(ctx, args, title) {
-  const { colors, line } = ctx;
+  const { colors } = ctx;
   const { realized } = args.tree;
 
   return [
@@ -251,7 +249,7 @@ function createRealizedPnlSection(ctx, args, title) {
  * @returns {PartialOptionsTree}
  */
 function createUnrealizedSection(ctx, list, useGroupName, title) {
-  const { colors, line, baseline } = ctx;
+  const { colors } = ctx;
 
   return [
     {
@@ -301,15 +299,12 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
 
 /**
  * Create cost basis section (no percentiles for address cohorts)
- * @param {PartialContext} ctx
  * @param {readonly AddressCohortObject[]} list
  * @param {boolean} useGroupName
  * @param {string} title
  * @returns {PartialOptionsTree}
  */
-function createCostBasisSection(ctx, list, useGroupName, title) {
-  const { line } = ctx;
-
+function createCostBasisSection(list, useGroupName, title) {
   return [
     {
       name: "Cost Basis",
@@ -345,15 +340,12 @@ function createCostBasisSection(ctx, list, useGroupName, title) {
 
 /**
  * Create activity section
- * @param {PartialContext} ctx
  * @param {readonly AddressCohortObject[]} list
  * @param {boolean} useGroupName
  * @param {string} title
  * @returns {PartialOptionsTree}
  */
-function createActivitySection(ctx, list, useGroupName, title) {
-  const { line } = ctx;
-
+function createActivitySection(list, useGroupName, title) {
   return [
     {
       name: "Activity",

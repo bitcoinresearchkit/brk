@@ -13,3 +13,6 @@ rustflags = ["-C", "target-cpu=native", "-C", "target-feature=+bmi1,+bmi2,+avx2"
 
 [target.x86_64-pc-windows-gnu]
 rustflags = ["-C", "target-cpu=native", "-C", "target-feature=+bmi1,+bmi2,+avx2"]
+
+[alias]
+dev = "run -p brk_cli --features brk_server/bindgen"

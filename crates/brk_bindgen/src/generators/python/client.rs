@@ -133,9 +133,11 @@ pub fn generate_endpoint_class(output: &mut String) {
         output,
         r#"class MetricData(TypedDict, Generic[T]):
     """Metric data with range information."""
+    version: int
     total: int
     start: int
     end: int
+    stamp: str
     data: List[T]
 
 
