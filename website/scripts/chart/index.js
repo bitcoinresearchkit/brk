@@ -103,7 +103,11 @@ export function createChart({
     urlKey: "i",
     serialize: (v) => v,
     deserialize: (s) => /** @type {ChartableIndexName} */ (s),
-    onChange: () => onIndexChange.forEach((cb) => cb(index())),
+    onChange: () => {
+      // Reset URL range so getRange() falls back to per-index saved range
+      range.set(null);
+      onIndexChange.forEach((cb) => cb(index()));
+    },
   });
 
   // Range state: localStorage stores all ranges per-index, URL stores current range only
@@ -523,181 +527,205 @@ export function createChart({
       keySet.add(series);
 
       if (metric) {
-        signals.createScopedEffect(index, (index) => {
-          // Get timestamp metric from tree based on index type
-          // timestampMonotonic has height only, timestamp has date-based indexes
-          /** @type {AnyMetricPattern} */
-          const timeMetric =
-            index === "height"
-              ? brk.metrics.blocks.time.timestampMonotonic
-              : brk.metrics.blocks.time.timestamp;
-          /** @type {AnyMetricPattern} */
-          const valuesMetric = metric;
-          const timeNode = timeMetric.by[index];
-          const valuesNode = valuesMetric.by[index];
-          if (!timeNode || !valuesNode)
-            throw new Error(`Missing node for index: ${index}`);
+        /** @type {VoidFunction | null} */
+        let disposeIndexEffect = null;
 
-          const timeResource = resources.useMetricEndpoint(timeNode);
-          const valuesResource = resources.useMetricEndpoint(valuesNode);
-          _valuesResource = valuesResource;
+        /** @param {ChartableIndex} idx */
+        function setupIndexEffect(idx) {
+          if (disposeIndexEffect) {
+            disposeIndexEffect();
+            disposeIndexEffect = null;
+          }
+          // Reset data state for new index
+          hasData = false;
+          lastTime = -Infinity;
+          signals.createRoot((_dispose) => {
+            disposeIndexEffect = _dispose;
 
-          series.url = `${
-            brk.baseUrl.endsWith("/") ? brk.baseUrl.slice(0, -1) : brk.baseUrl
-          }${valuesResource.path}`;
+            // Get timestamp metric from tree based on index type
+            // timestampMonotonic has height only, timestamp has date-based indexes
+            /** @type {AnyMetricPattern} */
+            const timeMetric =
+              idx === "height"
+                ? brk.metrics.blocks.time.timestampMonotonic
+                : brk.metrics.blocks.time.timestamp;
+            const valuesMetric = /** @type {AnyMetricPattern} */ (metric);
+            const timeNode = timeMetric.by[idx];
+            const valuesNode = valuesMetric.by[idx];
+            // Gracefully skip - series may be about to be removed by option change
+            // TODO: Revisit after the signals are completely gone
+            if (!timeNode || !valuesNode) return;
 
-          (paneIndex ? legendBottom : legendTop).addOrReplace({
-            series,
-            name,
-            colors,
-            order,
-          });
+            const timeResource = resources.useMetricEndpoint(timeNode);
+            const valuesResource = resources.useMetricEndpoint(valuesNode);
+            _valuesResource = valuesResource;
 
-          // Create memo outside active check (cheap, just checks data existence)
-          const timeRange = timeResource.range();
-          const valuesRange = valuesResource.range();
-          const valuesCacheKey = signals.createMemo(() => {
-            const res = valuesRange.response();
-            if (!res?.data?.length) return null;
-            if (!timeRange.response()?.data?.length) return null;
-            return `${res.version}|${res.stamp}|${res.total}|${res.start}|${res.end}`;
-          });
+            series.url = `${
+              brk.baseUrl.endsWith("/") ? brk.baseUrl.slice(0, -1) : brk.baseUrl
+            }${valuesResource.path}`;
 
-          // Combined effect for active + data processing (flat, uses prev comparison)
-          signals.createEffect(
-            () => ({ isActive: active(), cacheKey: valuesCacheKey() }),
-            (curr, prev) => {
-              const becameActive = curr.isActive && (!prev || !prev.isActive);
-              const becameInactive = !curr.isActive && prev?.isActive;
+            (paneIndex ? legendBottom : legendTop).addOrReplace({
+              series,
+              name,
+              colors,
+              order,
+            });
 
-              if (becameInactive) {
-                activeResources.delete(valuesResource);
-                return;
-              }
+            // Create memo outside active check (cheap, just checks data existence)
+            const timeRange = timeResource.range();
+            const valuesRange = valuesResource.range();
+            const valuesCacheKey = signals.createMemo(() => {
+              const res = valuesRange.response();
+              if (!res?.data?.length) return null;
+              if (!timeRange.response()?.data?.length) return null;
+              return `${res.version}|${res.stamp}|${res.total}|${res.start}|${res.end}`;
+            });
 
-              if (!curr.isActive) return;
+            // Combined effect for active + data processing (flat, uses prev comparison)
+            signals.createEffect(
+              () => ({ isActive: active?.(), cacheKey: valuesCacheKey() }),
+              (curr, prev) => {
+                const becameActive = curr.isActive && (!prev || !prev.isActive);
+                const becameInactive = !curr.isActive && prev?.isActive;
 
-              if (becameActive) {
-                timeResource.fetch();
-                valuesResource.fetch();
-                activeResources.add(valuesResource);
-              }
+                if (becameInactive) {
+                  activeResources.delete(valuesResource);
+                  return;
+                }
 
-              // Process data only if cacheKey changed
-              if (!curr.cacheKey || curr.cacheKey === prev?.cacheKey) return;
+                if (!curr.isActive) return;
 
-              const _indexes = timeRange.response()?.data;
-              const values = valuesRange.response()?.data;
-              if (!_indexes?.length || !values?.length) return;
+                if (becameActive) {
+                  timeResource.fetch();
+                  valuesResource.fetch();
+                  activeResources.add(valuesResource);
+                }
 
-              const indexes = /** @type {number[]} */ (_indexes);
-              const length = Math.min(indexes.length, values.length);
+                // Process data only if cacheKey changed
+                if (!curr.cacheKey || curr.cacheKey === prev?.cacheKey) return;
 
-              // Find start index for processing
-              let startIdx = 0;
-              if (hasData) {
-                // Binary search to find first index where time >= lastTime
-                let lo = 0;
-                let hi = length;
-                while (lo < hi) {
-                  const mid = (lo + hi) >>> 1;
-                  if (indexes[mid] < lastTime) {
-                    lo = mid + 1;
+                const _indexes = timeRange.response()?.data;
+                const values = valuesRange.response()?.data;
+                if (!_indexes?.length || !values?.length) return;
+
+                const indexes = /** @type {number[]} */ (_indexes);
+                const length = Math.min(indexes.length, values.length);
+
+                // Find start index for processing
+                let startIdx = 0;
+                if (hasData) {
+                  // Binary search to find first index where time >= lastTime
+                  let lo = 0;
+                  let hi = length;
+                  while (lo < hi) {
+                    const mid = (lo + hi) >>> 1;
+                    if (indexes[mid] < lastTime) {
+                      lo = mid + 1;
+                    } else {
+                      hi = mid;
+                    }
+                  }
+                  startIdx = lo;
+                  if (startIdx >= length) return; // No new data
+                }
+
+                /**
+                 * @param {number} i
+                 * @param {(number | null | [number, number, number, number])[]} vals
+                 * @returns {LineData | CandlestickData}
+                 */
+                function buildDataPoint(i, vals) {
+                  const time = /** @type {Time} */ (indexes[i]);
+                  const v = vals[i];
+                  if (v === null) {
+                    return { time, value: NaN };
+                  } else if (typeof v === "number") {
+                    return { time, value: v };
                   } else {
-                    hi = mid;
+                    if (!Array.isArray(v) || v.length !== 4)
+                      throw new Error(`Expected OHLC tuple, got: ${v}`);
+                    const [open, high, low, close] = v;
+                    return { time, open, high, low, close };
                   }
                 }
-                startIdx = lo;
-                if (startIdx >= length) return; // No new data
-              }
 
-              /**
-               * @param {number} i
-               * @param {(number | null | [number, number, number, number])[]} vals
-               * @returns {LineData | CandlestickData}
-               */
-              function buildDataPoint(i, vals) {
-                const time = /** @type {Time} */ (indexes[i]);
-                const v = vals[i];
-                if (v === null) {
-                  return { time, value: NaN };
-                } else if (typeof v === "number") {
-                  return { time, value: v };
+                if (!hasData) {
+                  // Initial load: build full array
+                  const data = /** @type {LineData[] | CandlestickData[]} */ (
+                    Array.from({ length })
+                  );
+
+                  let prevTime = null;
+                  let timeOffset = 0;
+
+                  for (let i = 0; i < length; i++) {
+                    const time = indexes[i];
+                    const sameTime = prevTime === time;
+                    if (sameTime) {
+                      timeOffset += 1;
+                    }
+                    const offsetedI = i - timeOffset;
+                    const point = buildDataPoint(i, values);
+                    if (sameTime && "open" in point) {
+                      const prev = /** @type {CandlestickData} */ (
+                        data[offsetedI]
+                      );
+                      point.open = prev.open;
+                      point.high = Math.max(prev.high, point.high);
+                      point.low = Math.min(prev.low, point.low);
+                    }
+                    data[offsetedI] = point;
+                    prevTime = time;
+                  }
+
+                  data.length -= timeOffset;
+
+                  setData(data);
+                  hasData = true;
+                  lastTime =
+                    /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
+
+                  // Restore saved range or use defaults
+                  const savedRange = getRange();
+                  if (savedRange) {
+                    ichart.timeScale().setVisibleLogicalRange({
+                      from: savedRange.from,
+                      to: savedRange.to,
+                    });
+                  } else if (fitContent) {
+                    ichart.timeScale().fitContent();
+                  } else if (
+                    idx === "quarterindex" ||
+                    idx === "semesterindex" ||
+                    idx === "yearindex" ||
+                    idx === "decadeindex"
+                  ) {
+                    ichart
+                      .timeScale()
+                      .setVisibleLogicalRange({ from: -1, to: data.length });
+                  }
+                  // Delay until chart has applied the range
+                  requestAnimationFrame(() => onDataLoaded?.());
                 } else {
-                  if (!Array.isArray(v) || v.length !== 4)
-                    throw new Error(`Expected OHLC tuple, got: ${v}`);
-                  const [open, high, low, close] = v;
-                  return { time, open, high, low, close };
-                }
-              }
-
-              if (!hasData) {
-                // Initial load: build full array
-                const data = /** @type {LineData[] | CandlestickData[]} */ (
-                  Array.from({ length })
-                );
-
-                let prevTime = null;
-                let timeOffset = 0;
-
-                for (let i = 0; i < length; i++) {
-                  const time = indexes[i];
-                  const sameTime = prevTime === time;
-                  if (sameTime) {
-                    timeOffset += 1;
+                  // Incremental update: only process new data points
+                  for (let i = startIdx; i < length; i++) {
+                    const point = buildDataPoint(i, values);
+                    update(point);
+                    lastTime = /** @type {number} */ (point.time);
                   }
-                  const offsetedI = i - timeOffset;
-                  const point = buildDataPoint(i, values);
-                  if (sameTime && "open" in point) {
-                    const prev = /** @type {CandlestickData} */ (
-                      data[offsetedI]
-                    );
-                    point.open = prev.open;
-                    point.high = Math.max(prev.high, point.high);
-                    point.low = Math.min(prev.low, point.low);
-                  }
-                  data[offsetedI] = point;
-                  prevTime = time;
                 }
+              },
+            );
+          });
+        }
 
-                data.length -= timeOffset;
-
-                setData(data);
-                hasData = true;
-                lastTime =
-                  /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
-
-                // Restore saved range or use defaults
-                const savedRange = getRange();
-                if (savedRange) {
-                  ichart.timeScale().setVisibleLogicalRange({
-                    from: savedRange.from,
-                    to: savedRange.to,
-                  });
-                } else if (fitContent) {
-                  ichart.timeScale().fitContent();
-                } else if (
-                  index === "quarterindex" ||
-                  index === "semesterindex" ||
-                  index === "yearindex" ||
-                  index === "decadeindex"
-                ) {
-                  ichart
-                    .timeScale()
-                    .setVisibleLogicalRange({ from: -1, to: data.length });
-                }
-                // Delay until chart has applied the range
-                requestAnimationFrame(() => onDataLoaded?.());
-              } else {
-                // Incremental update: only process new data points
-                for (let i = startIdx; i < length; i++) {
-                  const point = buildDataPoint(i, values);
-                  update(point);
-                  lastTime = /** @type {number} */ (point.time);
-                }
-              }
-            },
-          );
+        setupIndexEffect(index());
+        onIndexChange.add(setupIndexEffect);
+        signals.onCleanup(() => {
+          onIndexChange.delete(setupIndexEffect);
+          if (disposeIndexEffect) {
+            disposeIndexEffect();
+          }
         });
       } else {
         (paneIndex ? legendBottom : legendTop).addOrReplace({

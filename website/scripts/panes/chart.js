@@ -439,13 +439,29 @@ function createIndexSelector(option, chart) {
   screenshotSpan.innerText = "interval:";
   fieldset.append(screenshotSpan);
 
+  // Track user's preferred index (only updated on explicit selection)
+  let preferredIndex = chart.indexName.value;
+
   /** @type {HTMLElement | null} */
   let field = null;
   signals.createEffect(choices, (newChoices) => {
     if (field) field.remove();
+
+    // Use preferred index if available, otherwise fall back to first choice
+    let currentValue = newChoices.includes(preferredIndex)
+      ? preferredIndex
+      : newChoices[0] ?? "date";
+
+    if (currentValue !== chart.indexName.value) {
+      chart.indexName.set(currentValue);
+    }
+
     field = createChoiceField({
-      initialValue: chart.indexName.value,
-      onChange: (v) => chart.indexName.set(v),
+      initialValue: currentValue,
+      onChange: (v) => {
+        preferredIndex = v; // User explicitly selected, update preference
+        chart.indexName.set(v);
+      },
       choices: newChoices,
       id: "index",
     });
