@@ -39,7 +39,7 @@ export function init({ option, brk }) {
 
   // Bridge chart's index changes into signals system
   const indexVersion = signals.createSignal(0);
-  chart.onIndexChange.add(() => indexVersion.set(indexVersion() + 1));
+  chart.index.onChange.add(() => indexVersion.set(indexVersion() + 1));
 
   const unitChoices = /** @type {const} */ ([Unit.usd, Unit.sats]);
   /** @type {Signal<Unit>} */
@@ -200,7 +200,7 @@ export function init({ option, brk }) {
       // Clean up bottom pane when new option has no bottom series
       seriesListBottom.forEach((series) => series.remove());
       seriesListBottom.length = 0;
-      chart.legendBottom.removeFrom(0);
+      chart.legends.bottom.removeFrom(0);
     }
 
     /**
@@ -234,7 +234,7 @@ export function init({ option, brk }) {
           switch (blueprint.type) {
             case "Baseline": {
               seriesList.push(
-                chart.addBaselineSeries({
+                chart.serieses.addBaseline({
                   metric: blueprint.metric,
                   name: blueprint.title,
                   unit,
@@ -254,7 +254,7 @@ export function init({ option, brk }) {
             }
             case "Histogram": {
               seriesList.push(
-                chart.addHistogramSeries({
+                chart.serieses.addHistogram({
                   metric: blueprint.metric,
                   name: blueprint.title,
                   unit,
@@ -269,7 +269,7 @@ export function init({ option, brk }) {
             }
             case "Candlestick": {
               seriesList.push(
-                chart.addCandlestickSeries({
+                chart.serieses.addCandlestick({
                   metric: blueprint.metric,
                   name: blueprint.title,
                   unit,
@@ -284,7 +284,7 @@ export function init({ option, brk }) {
             }
             case "Dots": {
               seriesList.push(
-                chart.addDotsSeries({
+                chart.serieses.addDots({
                   metric: blueprint.metric,
                   color: blueprint.color,
                   name: blueprint.title,
@@ -300,7 +300,7 @@ export function init({ option, brk }) {
             case "Line":
             case undefined:
               seriesList.push(
-                chart.addLineSeries({
+                chart.serieses.addLine({
                   metric: blueprint.metric,
                   color: blueprint.color,
                   name: blueprint.title,
@@ -325,7 +325,7 @@ export function init({ option, brk }) {
         let series;
         switch (unit) {
           case Unit.usd: {
-            series = chart.addCandlestickSeries({
+            series = chart.serieses.addCandlestick({
               metric: brk.metrics.price.usd.ohlc,
               name: "Price",
               unit,
@@ -334,7 +334,7 @@ export function init({ option, brk }) {
             break;
           }
           case Unit.sats: {
-            series = chart.addCandlestickSeries({
+            series = chart.serieses.addCandlestick({
               metric: brk.metrics.price.sats.ohlc,
               name: "Price",
               unit,
@@ -357,7 +357,7 @@ export function init({ option, brk }) {
           }),
           ({ latest, hasData }) => {
             if (!series || !latest || !hasData) return;
-            printLatest({ series, unit, index: chart.index() });
+            printLatest({ series, unit, index: chart.index.get() });
           },
         );
 
@@ -366,10 +366,10 @@ export function init({ option, brk }) {
           blueprints: option.top,
           paneIndex: 0,
           unit,
-          idx: chart.index(),
+          idx: chart.index.get(),
           seriesList: seriesListTop,
           orderStart: 1,
-          legend: chart.legendTop,
+          legend: chart.legends.top,
         });
       },
     );
@@ -383,10 +383,10 @@ export function init({ option, brk }) {
             blueprints: option.bottom,
             paneIndex: 1,
             unit,
-            idx: chart.index(),
+            idx: chart.index.get(),
             seriesList: seriesListBottom,
             orderStart: 0,
-            legend: chart.legendBottom,
+            legend: chart.legends.bottom,
           });
         },
       );
@@ -443,7 +443,7 @@ function createIndexSelector(option, chart) {
   fieldset.append(screenshotSpan);
 
   // Track user's preferred index (only updated on explicit selection)
-  let preferredIndex = chart.indexName.value;
+  let preferredIndex = chart.index.name.value;
 
   /** @type {HTMLElement | null} */
   let field = null;
@@ -455,15 +455,15 @@ function createIndexSelector(option, chart) {
       ? preferredIndex
       : (newChoices[0] ?? "date");
 
-    if (currentValue !== chart.indexName.value) {
-      chart.indexName.set(currentValue);
+    if (currentValue !== chart.index.name.value) {
+      chart.index.name.set(currentValue);
     }
 
     field = createChoiceField({
       initialValue: currentValue,
       onChange: (v) => {
         preferredIndex = v; // User explicitly selected, update preference
-        chart.indexName.set(v);
+        chart.index.name.set(v);
       },
       choices: newChoices,
       id: "index",
