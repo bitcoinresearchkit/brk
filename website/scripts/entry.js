@@ -3,12 +3,10 @@
  *
  * @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType as LCSeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData, createChart as CreateLCChart, LineStyle, createSeriesMarkers as CreateSeriesMarkers, SeriesMarker, ISeriesMarkersPluginApi } from './modules/lightweight-charts/5.1.0/dist/typings.js'
  *
- * @import { Signal, Signals, Accessor } from "./signals.js";
- *
  * @import * as Brk from "./modules/brk-client/index.js"
  * @import { BrkClient, Index, Metric, MetricData } from "./modules/brk-client/index.js"
  *
- * @import { Resources, MetricResource } from './resources.js'
+ * @import { Options } from './options/full.js'
  *
  * @import { PersistedValue } from './utils/persisted.js'
  *

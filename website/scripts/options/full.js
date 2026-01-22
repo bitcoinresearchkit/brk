@@ -7,11 +7,9 @@ import { collect, markUsed, logUnused } from "./unused.js";
 import { setQr } from "../panes/share.js";
 
 /**
- * @param {Object} args
- * @param {Signals} args.signals
- * @param {BrkClient} args.brk
+ * @param {BrkClient} brk
  */
-export function initOptions({ signals, brk }) {
+export function initOptions(brk) {
   collect(brk.metrics);
 
   const LS_SELECTED_KEY = `selected_path`;
@@ -25,9 +23,6 @@ export function initOptions({ signals, brk }) {
   ).filter((v) => v);
   console.log(savedPath);
 
-  /** @type {Signal<Option>} */
-  const selected = signals.createSignal(/** @type {any} */ (undefined));
-
   const partialOptions = createPartialOptions({
     brk,
   });
@@ -35,16 +30,49 @@ export function initOptions({ signals, brk }) {
   /** @type {Option[]} */
   const list = [];
 
-  const parent = signals.createSignal(/** @type {HTMLElement | null} */ (null));
-
   /** @type {Map<string, HTMLLIElement>} */
   const liByPath = new Map();
+
+  /** @type {Set<(option: Option) => void>} */
+  const selectedListeners = new Set();
+
+  /**
+   * @param {Option | undefined} sel
+   */
+  function updateHighlight(sel) {
+    if (!sel) return;
+    liByPath.forEach((li) => {
+      delete li.dataset.highlight;
+    });
+    for (let i = 1; i <= sel.path.length; i++) {
+      const pathKey = sel.path.slice(0, i).join("/");
+      const li = liByPath.get(pathKey);
+      if (li) li.dataset.highlight = "";
+    }
+  }
+
+  const selected = {
+    /** @type {Option | undefined} */
+    value: undefined,
+    /** @param {Option} v */
+    set(v) {
+      this.value = v;
+      updateHighlight(v);
+      selectedListeners.forEach((cb) => cb(v));
+    },
+    /** @param {(option: Option) => void} cb */
+    onChange(cb) {
+      selectedListeners.add(cb);
+      if (this.value) cb(this.value);
+      return () => selectedListeners.delete(cb);
+    },
+  };
 
   /**
    * @param {string[]} nodePath
    */
   function isOnSelectedPath(nodePath) {
-    const selectedPath = selected()?.path;
+    const selectedPath = selected.value?.path;
     return (
       selectedPath &&
       nodePath.length <= selectedPath.length &&
@@ -127,11 +155,6 @@ export function initOptions({ signals, brk }) {
 
   /** @type {Option | undefined} */
   let savedOption;
-
-  // ============================================
-  // Phase 1: Process partial tree (non-reactive)
-  // Transforms options, computes counts, populates list
-  // ============================================
 
   /**
    * @typedef {{ type: "group"; name: string; serName: string; path: string[]; count: number; children: ProcessedNode[] }} ProcessedGroup
@@ -267,11 +290,6 @@ export function initOptions({ signals, brk }) {
   const processedTree = processPartialTree(partialOptions);
   logUnused();
 
-  // ============================================
-  // Phase 2: Build DOM lazily (imperative)
-  // Uses native toggle events for lazy loading
-  // ============================================
-
   /**
    * @param {ProcessedNode[]} nodes
    * @param {HTMLElement} parentEl
@@ -320,36 +338,19 @@ export function initOptions({ signals, brk }) {
     }
   }
 
-  // Single effect to kick off DOM building when parent is set
-  signals.createEffect(
-    () => parent(),
-    (_parent) => {
-      if (!_parent) return;
-      buildTreeDOM(processedTree, _parent);
-    },
-  );
+  /** @type {HTMLElement | null} */
+  let parentEl = null;
 
-  // Single effect for highlighting on selection change
-  signals.createEffect(
-    () => selected(),
-    (selected) => {
-      if (!selected) return;
+  /**
+   * @param {HTMLElement} el
+   */
+  function setParent(el) {
+    if (parentEl) return;
+    parentEl = el;
+    buildTreeDOM(processedTree, el);
+  }
 
-      // Clear all existing highlights
-      liByPath.forEach((li) => {
-        delete li.dataset.highlight;
-      });
-
-      // Highlight selected option and parent groups
-      for (let i = 1; i <= selected.path.length; i++) {
-        const pathKey = selected.path.slice(0, i).join("/");
-        const li = liByPath.get(pathKey);
-        if (li) li.dataset.highlight = "";
-      }
-    },
-  );
-
-  if (!selected()) {
+  if (!selected.value) {
     const option =
       savedOption || list.find((option) => option.kind === "chart");
     if (option) {
@@ -361,7 +362,7 @@ export function initOptions({ signals, brk }) {
     selected,
     list,
     tree: /** @type {OptionsTree} */ (partialOptions),
-    parent,
+    setParent,
     createOptionElement,
     selectOption,
   };

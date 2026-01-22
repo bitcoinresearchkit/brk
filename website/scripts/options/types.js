@@ -8,35 +8,30 @@
  * @property {Color} [color]
  * @property {[Color, Color]} [colors]
  * @property {BaselineSeriesPartialOptions} [options]
- * @property {Accessor<BaselineData[]>} [data]
  * @typedef {BaseSeriesBlueprint & BaselineSeriesBlueprintSpecific} BaselineSeriesBlueprint
  *
  * @typedef {Object} CandlestickSeriesBlueprintSpecific
  * @property {"Candlestick"} type
  * @property {[Color, Color]} [colors]
  * @property {CandlestickSeriesPartialOptions} [options]
- * @property {Accessor<CandlestickData[]>} [data]
  * @typedef {BaseSeriesBlueprint & CandlestickSeriesBlueprintSpecific} CandlestickSeriesBlueprint
  *
  * @typedef {Object} LineSeriesBlueprintSpecific
  * @property {"Line"} [type]
  * @property {Color} [color]
  * @property {LineSeriesPartialOptions} [options]
- * @property {Accessor<LineData[]>} [data]
  * @typedef {BaseSeriesBlueprint & LineSeriesBlueprintSpecific} LineSeriesBlueprint
  *
  * @typedef {Object} HistogramSeriesBlueprintSpecific
  * @property {"Histogram"} type
  * @property {Color | [Color, Color]} [color] - Single color or [positive, negative] colors (defaults to green/red)
  * @property {HistogramSeriesPartialOptions} [options]
- * @property {Accessor<HistogramData[]>} [data]
  * @typedef {BaseSeriesBlueprint & HistogramSeriesBlueprintSpecific} HistogramSeriesBlueprint
  *
  * @typedef {Object} DotsSeriesBlueprintSpecific
  * @property {"Dots"} type
  * @property {Color} [color]
  * @property {LineSeriesPartialOptions} [options]
- * @property {Accessor<LineData[]>} [data]
  * @typedef {BaseSeriesBlueprint & DotsSeriesBlueprintSpecific} DotsSeriesBlueprint
  *
  * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint | HistogramSeriesBlueprint | DotsSeriesBlueprint} AnySeriesBlueprint

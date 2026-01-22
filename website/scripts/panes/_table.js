@@ -1,433 +1,433 @@
-// @ts-nocheck
+// // @ts-nocheck
 
-import { randomFromArray } from "../utils/array.js";
-import { createButtonElement, createHeader, createSelect } from "../utils/dom.js";
-import { tableElement } from "../utils/elements.js";
-import { serdeMetrics, serdeString } from "../utils/serde.js";
-import { resetParams } from "../utils/url.js";
+// import { randomFromArray } from "../utils/array.js";
+// import { createButtonElement, createHeader, createSelect } from "../utils/dom.js";
+// import { tableElement } from "../utils/elements.js";
+// import { serdeMetrics, serdeString } from "../utils/serde.js";
+// import { resetParams } from "../utils/url.js";
 
-export function init() {
-  tableElement.innerHTML = "wip, will hopefuly be back soon, sorry !";
+// export function init() {
+//   tableElement.innerHTML = "wip, will hopefuly be back soon, sorry !";
 
-  // const parent = tableElement;
-  // const { headerElement } = createHeader("Table");
-  // parent.append(headerElement);
+//   // const parent = tableElement;
+//   // const { headerElement } = createHeader("Table");
+//   // parent.append(headerElement);
 
-  // const div = window.document.createElement("div");
-  // parent.append(div);
+//   // const div = window.document.createElement("div");
+//   // parent.append(div);
 
-  // const table = createTable({
-  //   signals,
-  //   brk,
-  //   resources,
-  //   option,
-  // });
-  // div.append(table.element);
+//   // const table = createTable({
+//   //   signals,
+//   //   brk,
+//   //   resources,
+//   //   option,
+//   // });
+//   // div.append(table.element);
 
-  // const span = window.document.createElement("span");
-  // span.innerHTML = "Add column";
-  // div.append(
-  //   createButtonElement({
-  //     onClick: () => {
-  //       table.addRandomCol?.();
-  //     },
-  //     inside: span,
-  //     title: "Click or tap to add a column to the table",
-  //   }),
-  // );
-}
+//   // const span = window.document.createElement("span");
+//   // span.innerHTML = "Add column";
+//   // div.append(
+//   //   createButtonElement({
+//   //     onClick: () => {
+//   //       table.addRandomCol?.();
+//   //     },
+//   //     inside: span,
+//   //     title: "Click or tap to add a column to the table",
+//   //   }),
+//   // );
+// }
+
+// // /**
+// //  * @param {Object} args
+// //  * @param {Option} args.option
+// //  * @param {Signals} args.signals
+// //  * @param {BrkClient} args.brk
+// //  * @param {Resources} args.resources
+// //  */
+// // function createTable({ brk, signals, option, resources }) {
+// //   const indexToMetrics = createIndexToMetrics(metricToIndexes);
+
+// //   const serializedIndexes = createSerializedIndexes();
+// //   /** @type {SerializedIndex} */
+// //   const defaultSerializedIndex = "height";
+// //   const serializedIndex = /** @type {Signal<SerializedIndex>} */ (
+// //     signals.createSignal(
+// //       /** @type {SerializedIndex} */ (defaultSerializedIndex),
+// //       {
+// //         save: {
+// //           ...serdeString,
+// //           keyPrefix: "table",
+// //           key: "index",
+// //         },
+// //       },
+// //     )
+// //   );
+// //   const index = signals.createMemo(() =>
+// //     serializedIndexToIndex(serializedIndex()),
+// //   );
+
+// //   const table = window.document.createElement("table");
+// //   const obj = {
+// //     element: table,
+// //     /** @type {VoidFunction | undefined} */
+// //     addRandomCol: undefined,
+// //   };
+
+// //   signals.createEffect(index, (index, prevIndex) => {
+// //     if (prevIndex !== undefined) {
+// //       resetParams(option);
+// //     }
+
+// //     const possibleMetrics = indexToMetrics[index];
+
+// //     const columns = signals.createSignal(/** @type {Metric[]} */ ([]), {
+// //       equals: false,
+// //       save: {
+// //         ...serdeMetrics,
+// //         keyPrefix: `table-${serializedIndex()}`,
+// //         key: `columns`,
+// //       },
+// //     });
+// //     columns.set((l) => l.filter((id) => possibleMetrics.includes(id)));
+
+// //     signals.createEffect(columns, (columns) => {
+// //       console.log(columns);
+// //     });
+
+// //     table.innerHTML = "";
+// //     const thead = window.document.createElement("thead");
+// //     table.append(thead);
+// //     const trHead = window.document.createElement("tr");
+// //     thead.append(trHead);
+// //     const tbody = window.document.createElement("tbody");
+// //     table.append(tbody);
+
+// //     const rowElements = signals.createSignal(
+// //       /** @type {HTMLTableRowElement[]} */ ([]),
+// //     );
+
+// //     /**
+// //      * @param {Object} args
+// //      * @param {HTMLSelectElement} args.select
+// //      * @param {Unit} [args.unit]
+// //      * @param {(event: MouseEvent) => void} [args.onLeft]
+// //      * @param {(event: MouseEvent) => void} [args.onRight]
+// //      * @param {(event: MouseEvent) => void} [args.onRemove]
+// //      */
+// //     function addThCol({ select, onLeft, onRight, onRemove, unit: _unit }) {
+// //       const th = window.document.createElement("th");
+// //       th.scope = "col";
+// //       trHead.append(th);
+// //       const div = window.document.createElement("div");
+// //       div.append(select);
+// //       // const top = window.document.createElement("div");
+// //       // div.append(top);
+// //       // top.append(select);
+// //       // top.append(
+// //       //   createAnchorElement({
+// //       //     href: "",
+// //       //     blank: true,
+// //       //   }),
+// //       // );
+// //       const bottom = window.document.createElement("div");
+// //       const unit = window.document.createElement("span");
+// //       if (_unit) {
+// //         unit.innerHTML = _unit;
+// //       }
+// //       const moveLeft = createButtonElement({
+// //         inside: "←",
+// //         title: "Move column to the left",
+// //         onClick: onLeft || (() => {}),
+// //       });
+// //       const moveRight = createButtonElement({
+// //         inside: "→",
+// //         title: "Move column to the right",
+// //         onClick: onRight || (() => {}),
+// //       });
+// //       const remove = createButtonElement({
+// //         inside: "×",
+// //         title: "Remove column",
+// //         onClick: onRemove || (() => {}),
+// //       });
+// //       bottom.append(unit);
+// //       bottom.append(moveLeft);
+// //       bottom.append(moveRight);
+// //       bottom.append(remove);
+// //       div.append(bottom);
+// //       th.append(div);
+// //       return {
+// //         element: th,
+// //         /**
+// //          * @param {Unit} _unit
+// //          */
+// //         setUnit(_unit) {
+// //           unit.innerHTML = _unit;
+// //         },
+// //       };
+// //     }
+
+// //     addThCol({
+// //       ...createSelect({
+// //         list: serializedIndexes,
+// //         signal: serializedIndex,
+// //       }),
+// //       unit: "index",
+// //     });
+
+// //     let from = 0;
+// //     let to = 0;
+
+// //     resources
+// //       .getOrCreate(index, serializedIndex())
+// //       .fetch()
+// //       .then((vec) => {
+// //         if (!vec) return;
+// //         from = /** @type {number} */ (vec[0]);
+// //         to = /** @type {number} */ (vec.at(-1)) + 1;
+// //         const trs = /** @type {HTMLTableRowElement[]} */ ([]);
+// //         for (let i = vec.length - 1; i >= 0; i--) {
+// //           const value = vec[i];
+// //           const tr = window.document.createElement("tr");
+// //           trs.push(tr);
+// //           tbody.append(tr);
+// //           const th = window.document.createElement("th");
+// //           th.innerHTML = serializeValue({
+// //             value,
+// //             unit: "index",
+// //           });
+// //           th.scope = "row";
+// //           tr.append(th);
+// //         }
+// //         rowElements.set(() => trs);
+// //       });
+
+// //     const owner = signals.getOwner();
+
+// //     /**
+// //      * @param {Metric} metric
+// //      * @param {number} [_colIndex]
+// //      */
+// //     function addCol(metric, _colIndex = columns().length) {
+// //       signals.runWithOwner(owner, () => {
+// //         /** @type {VoidFunction | undefined} */
+// //         let dispose;
+// //         signals.createRoot((_dispose) => {
+// //           dispose = _dispose;
+
+// //           const metricOption = signals.createSignal({
+// //             name: metric,
+// //             value: metric,
+// //           });
+// //           const { select } = createSelect({
+// //             list: possibleMetrics.map((metric) => ({
+// //               name: metric,
+// //               value: metric,
+// //             })),
+// //             signal: metricOption,
+// //           });
+
+// //           signals.createEffect(metricOption, (metricOption) => {
+// //             select.style.width = `${21 + 7.25 * metricOption.name.length}px`;
+// //           });
+
+// //           if (_colIndex === columns().length) {
+// //             columns.set((l) => {
+// //               l.push(metric);
+// //               return l;
+// //             });
+// //           }
+
+// //           const colIndex = signals.createSignal(_colIndex);
+
+// //           /**
+// //            * @param {boolean} right
+// //            * @returns {(event: MouseEvent) => void}
+// //            */
+// //           function createMoveColumnFunction(right) {
+// //             return () => {
+// //               const oldColIndex = colIndex();
+// //               const newColIndex = oldColIndex + (right ? 1 : -1);
+
+// //               const currentTh = /** @type {HTMLTableCellElement} */ (
+// //                 trHead.childNodes[oldColIndex + 1]
+// //               );
+// //               const oterTh = /** @type {HTMLTableCellElement} */ (
+// //                 trHead.childNodes[newColIndex + 1]
+// //               );
+
+// //               if (right) {
+// //                 oterTh.after(currentTh);
+// //               } else {
+// //                 oterTh.before(currentTh);
+// //               }
+
+// //               columns.set((l) => {
+// //                 [l[oldColIndex], l[newColIndex]] = [
+// //                   l[newColIndex],
+// //                   l[oldColIndex],
+// //                 ];
+// //                 return l;
+// //               });
+
+// //               const rows = rowElements();
+// //               for (let i = 0; i < rows.length; i++) {
+// //                 const element = rows[i].childNodes[oldColIndex + 1];
+// //                 const sibling = rows[i].childNodes[newColIndex + 1];
+// //                 const temp = element.textContent;
+// //                 element.textContent = sibling.textContent;
+// //                 sibling.textContent = temp;
+// //               }
+// //             };
+// //           }
+
+// //           const th = addThCol({
+// //             select,
+// //             unit: serdeUnit.deserialize(metric),
+// //             onLeft: createMoveColumnFunction(false),
+// //             onRight: createMoveColumnFunction(true),
+// //             onRemove: () => {
+// //               const ci = colIndex();
+// //               trHead.childNodes[ci + 1].remove();
+// //               columns.set((l) => {
+// //                 l.splice(ci, 1);
+// //                 return l;
+// //               });
+// //               const rows = rowElements();
+// //               for (let i = 0; i < rows.length; i++) {
+// //                 rows[i].childNodes[ci + 1].remove();
+// //               }
+// //               dispose?.();
+// //             },
+// //           });
+
+// //           signals.createEffect(columns, () => {
+// //             colIndex.set(Array.from(trHead.children).indexOf(th.element) - 1);
+// //           });
+
+// //           console.log(colIndex());
+
+// //           signals.createEffect(rowElements, (rowElements) => {
+// //             if (!rowElements.length) return;
+// //             for (let i = 0; i < rowElements.length; i++) {
+// //               const td = window.document.createElement("td");
+// //               rowElements[i].append(td);
+// //             }
+
+// //             signals.createEffect(
+// //               () => metricOption().name,
+// //               (metric, prevMetric) => {
+// //                 const unit = serdeUnit.deserialize(metric);
+// //                 th.setUnit(unit);
+
+// //                 const vec = resources.getOrCreate(index, metric);
+
+// //                 vec.fetch({ from, to });
+
+// //                 const fetchedKey = resources.genFetchedKey({ from, to });
+
+// //                 columns.set((l) => {
+// //                   const i = l.indexOf(prevMetric ?? metric);
+// //                   if (i === -1) {
+// //                     l.push(metric);
+// //                   } else {
+// //                     l[i] = metric;
+// //                   }
+// //                   return l;
+// //                 });
+
+// //                 signals.createEffect(
+// //                   () => vec.fetched().get(fetchedKey)?.vec(),
+// //                   (vec) => {
+// //                     if (!vec?.length) return;
+
+// //                     const thIndex = colIndex() + 1;
+
+// //                     for (let i = 0; i < rowElements.length; i++) {
+// //                       const iRev = vec.length - 1 - i;
+// //                       const value = vec[iRev];
+// //                       // @ts-ignore
+// //                       rowElements[i].childNodes[thIndex].innerHTML =
+// //                         serializeValue({
+// //                           value,
+// //                           unit,
+// //                         });
+// //                     }
+// //                   },
+// //                 );
+
+// //                 return () => metric;
+// //               },
+// //             );
+// //           });
+// //         });
+
+// //         signals.onCleanup(() => {
+// //           dispose?.();
+// //         });
+// //       });
+// //     }
+
+// //     columns().forEach((metric, colIndex) => addCol(metric, colIndex));
+
+// //     obj.addRandomCol = function () {
+// //       addCol(randomFromArray(possibleMetrics));
+// //     };
+
+// //     return () => index;
+// //   });
+
+// //   return obj;
+// // }
+
+// /**
+//  * @param {MetricToIndexes} metricToIndexes
+//  */
+// function createIndexToMetrics(metricToIndexes) {
+//   // const indexToMetrics = Object.entries(metricToIndexes).reduce(
+//   //   (arr, [_id, indexes]) => {
+//   //     const id = /** @type {Metric} */ (_id);
+//   //     indexes.forEach((i) => {
+//   //       arr[i] ??= [];
+//   //       arr[i].push(id);
+//   //     });
+//   //     return arr;
+//   //   },
+//   //   /** @type {Metric[][]} */ (Array.from({ length: 24 })),
+//   // );
+//   // indexToMetrics.forEach((arr) => {
+//   //   arr.sort();
+//   // });
+//   // return indexToMetrics;
+// }
 
 // /**
 //  * @param {Object} args
-//  * @param {Option} args.option
-//  * @param {Signals} args.signals
-//  * @param {BrkClient} args.brk
-//  * @param {Resources} args.resources
+//  * @param {number | string | Object | Array<any>} args.value
+//  * @param {Unit} args.unit
 //  */
-// function createTable({ brk, signals, option, resources }) {
-//   const indexToMetrics = createIndexToMetrics(metricToIndexes);
-
-//   const serializedIndexes = createSerializedIndexes();
-//   /** @type {SerializedIndex} */
-//   const defaultSerializedIndex = "height";
-//   const serializedIndex = /** @type {Signal<SerializedIndex>} */ (
-//     signals.createSignal(
-//       /** @type {SerializedIndex} */ (defaultSerializedIndex),
-//       {
-//         save: {
-//           ...serdeString,
-//           keyPrefix: "table",
-//           key: "index",
-//         },
-//       },
-//     )
-//   );
-//   const index = signals.createMemo(() =>
-//     serializedIndexToIndex(serializedIndex()),
-//   );
-
-//   const table = window.document.createElement("table");
-//   const obj = {
-//     element: table,
-//     /** @type {VoidFunction | undefined} */
-//     addRandomCol: undefined,
-//   };
-
-//   signals.createEffect(index, (index, prevIndex) => {
-//     if (prevIndex !== undefined) {
-//       resetParams(option);
+// function serializeValue({ value, unit }) {
+//   const t = typeof value;
+//   if (value === null) {
+//     return "null";
+//   } else if (typeof value === "string") {
+//     return value;
+//   } else if (t !== "number") {
+//     return JSON.stringify(value).replaceAll('"', "").slice(1, -1);
+//   } else if (value !== 18446744073709552000) {
+//     if (unit === "usd" || unit === "difficulty" || unit === "sat/vb") {
+//       return value.toLocaleString("en-us", {
+//         minimumFractionDigits: 2,
+//         maximumFractionDigits: 2,
+//       });
+//     } else if (unit === "btc") {
+//       return value.toLocaleString("en-us", {
+//         minimumFractionDigits: 8,
+//         maximumFractionDigits: 8,
+//       });
+//     } else {
+//       return value.toLocaleString("en-us");
 //     }
-
-//     const possibleMetrics = indexToMetrics[index];
-
-//     const columns = signals.createSignal(/** @type {Metric[]} */ ([]), {
-//       equals: false,
-//       save: {
-//         ...serdeMetrics,
-//         keyPrefix: `table-${serializedIndex()}`,
-//         key: `columns`,
-//       },
-//     });
-//     columns.set((l) => l.filter((id) => possibleMetrics.includes(id)));
-
-//     signals.createEffect(columns, (columns) => {
-//       console.log(columns);
-//     });
-
-//     table.innerHTML = "";
-//     const thead = window.document.createElement("thead");
-//     table.append(thead);
-//     const trHead = window.document.createElement("tr");
-//     thead.append(trHead);
-//     const tbody = window.document.createElement("tbody");
-//     table.append(tbody);
-
-//     const rowElements = signals.createSignal(
-//       /** @type {HTMLTableRowElement[]} */ ([]),
-//     );
-
-//     /**
-//      * @param {Object} args
-//      * @param {HTMLSelectElement} args.select
-//      * @param {Unit} [args.unit]
-//      * @param {(event: MouseEvent) => void} [args.onLeft]
-//      * @param {(event: MouseEvent) => void} [args.onRight]
-//      * @param {(event: MouseEvent) => void} [args.onRemove]
-//      */
-//     function addThCol({ select, onLeft, onRight, onRemove, unit: _unit }) {
-//       const th = window.document.createElement("th");
-//       th.scope = "col";
-//       trHead.append(th);
-//       const div = window.document.createElement("div");
-//       div.append(select);
-//       // const top = window.document.createElement("div");
-//       // div.append(top);
-//       // top.append(select);
-//       // top.append(
-//       //   createAnchorElement({
-//       //     href: "",
-//       //     blank: true,
-//       //   }),
-//       // );
-//       const bottom = window.document.createElement("div");
-//       const unit = window.document.createElement("span");
-//       if (_unit) {
-//         unit.innerHTML = _unit;
-//       }
-//       const moveLeft = createButtonElement({
-//         inside: "←",
-//         title: "Move column to the left",
-//         onClick: onLeft || (() => {}),
-//       });
-//       const moveRight = createButtonElement({
-//         inside: "→",
-//         title: "Move column to the right",
-//         onClick: onRight || (() => {}),
-//       });
-//       const remove = createButtonElement({
-//         inside: "×",
-//         title: "Remove column",
-//         onClick: onRemove || (() => {}),
-//       });
-//       bottom.append(unit);
-//       bottom.append(moveLeft);
-//       bottom.append(moveRight);
-//       bottom.append(remove);
-//       div.append(bottom);
-//       th.append(div);
-//       return {
-//         element: th,
-//         /**
-//          * @param {Unit} _unit
-//          */
-//         setUnit(_unit) {
-//           unit.innerHTML = _unit;
-//         },
-//       };
-//     }
-
-//     addThCol({
-//       ...createSelect({
-//         list: serializedIndexes,
-//         signal: serializedIndex,
-//       }),
-//       unit: "index",
-//     });
-
-//     let from = 0;
-//     let to = 0;
-
-//     resources
-//       .getOrCreate(index, serializedIndex())
-//       .fetch()
-//       .then((vec) => {
-//         if (!vec) return;
-//         from = /** @type {number} */ (vec[0]);
-//         to = /** @type {number} */ (vec.at(-1)) + 1;
-//         const trs = /** @type {HTMLTableRowElement[]} */ ([]);
-//         for (let i = vec.length - 1; i >= 0; i--) {
-//           const value = vec[i];
-//           const tr = window.document.createElement("tr");
-//           trs.push(tr);
-//           tbody.append(tr);
-//           const th = window.document.createElement("th");
-//           th.innerHTML = serializeValue({
-//             value,
-//             unit: "index",
-//           });
-//           th.scope = "row";
-//           tr.append(th);
-//         }
-//         rowElements.set(() => trs);
-//       });
-
-//     const owner = signals.getOwner();
-
-//     /**
-//      * @param {Metric} metric
-//      * @param {number} [_colIndex]
-//      */
-//     function addCol(metric, _colIndex = columns().length) {
-//       signals.runWithOwner(owner, () => {
-//         /** @type {VoidFunction | undefined} */
-//         let dispose;
-//         signals.createRoot((_dispose) => {
-//           dispose = _dispose;
-
-//           const metricOption = signals.createSignal({
-//             name: metric,
-//             value: metric,
-//           });
-//           const { select } = createSelect({
-//             list: possibleMetrics.map((metric) => ({
-//               name: metric,
-//               value: metric,
-//             })),
-//             signal: metricOption,
-//           });
-
-//           signals.createEffect(metricOption, (metricOption) => {
-//             select.style.width = `${21 + 7.25 * metricOption.name.length}px`;
-//           });
-
-//           if (_colIndex === columns().length) {
-//             columns.set((l) => {
-//               l.push(metric);
-//               return l;
-//             });
-//           }
-
-//           const colIndex = signals.createSignal(_colIndex);
-
-//           /**
-//            * @param {boolean} right
-//            * @returns {(event: MouseEvent) => void}
-//            */
-//           function createMoveColumnFunction(right) {
-//             return () => {
-//               const oldColIndex = colIndex();
-//               const newColIndex = oldColIndex + (right ? 1 : -1);
-
-//               const currentTh = /** @type {HTMLTableCellElement} */ (
-//                 trHead.childNodes[oldColIndex + 1]
-//               );
-//               const oterTh = /** @type {HTMLTableCellElement} */ (
-//                 trHead.childNodes[newColIndex + 1]
-//               );
-
-//               if (right) {
-//                 oterTh.after(currentTh);
-//               } else {
-//                 oterTh.before(currentTh);
-//               }
-
-//               columns.set((l) => {
-//                 [l[oldColIndex], l[newColIndex]] = [
-//                   l[newColIndex],
-//                   l[oldColIndex],
-//                 ];
-//                 return l;
-//               });
-
-//               const rows = rowElements();
-//               for (let i = 0; i < rows.length; i++) {
-//                 const element = rows[i].childNodes[oldColIndex + 1];
-//                 const sibling = rows[i].childNodes[newColIndex + 1];
-//                 const temp = element.textContent;
-//                 element.textContent = sibling.textContent;
-//                 sibling.textContent = temp;
-//               }
-//             };
-//           }
-
-//           const th = addThCol({
-//             select,
-//             unit: serdeUnit.deserialize(metric),
-//             onLeft: createMoveColumnFunction(false),
-//             onRight: createMoveColumnFunction(true),
-//             onRemove: () => {
-//               const ci = colIndex();
-//               trHead.childNodes[ci + 1].remove();
-//               columns.set((l) => {
-//                 l.splice(ci, 1);
-//                 return l;
-//               });
-//               const rows = rowElements();
-//               for (let i = 0; i < rows.length; i++) {
-//                 rows[i].childNodes[ci + 1].remove();
-//               }
-//               dispose?.();
-//             },
-//           });
-
-//           signals.createEffect(columns, () => {
-//             colIndex.set(Array.from(trHead.children).indexOf(th.element) - 1);
-//           });
-
-//           console.log(colIndex());
-
-//           signals.createEffect(rowElements, (rowElements) => {
-//             if (!rowElements.length) return;
-//             for (let i = 0; i < rowElements.length; i++) {
-//               const td = window.document.createElement("td");
-//               rowElements[i].append(td);
-//             }
-
-//             signals.createEffect(
-//               () => metricOption().name,
-//               (metric, prevMetric) => {
-//                 const unit = serdeUnit.deserialize(metric);
-//                 th.setUnit(unit);
-
-//                 const vec = resources.getOrCreate(index, metric);
-
-//                 vec.fetch({ from, to });
-
-//                 const fetchedKey = resources.genFetchedKey({ from, to });
-
-//                 columns.set((l) => {
-//                   const i = l.indexOf(prevMetric ?? metric);
-//                   if (i === -1) {
-//                     l.push(metric);
-//                   } else {
-//                     l[i] = metric;
-//                   }
-//                   return l;
-//                 });
-
-//                 signals.createEffect(
-//                   () => vec.fetched().get(fetchedKey)?.vec(),
-//                   (vec) => {
-//                     if (!vec?.length) return;
-
-//                     const thIndex = colIndex() + 1;
-
-//                     for (let i = 0; i < rowElements.length; i++) {
-//                       const iRev = vec.length - 1 - i;
-//                       const value = vec[iRev];
-//                       // @ts-ignore
-//                       rowElements[i].childNodes[thIndex].innerHTML =
-//                         serializeValue({
-//                           value,
-//                           unit,
-//                         });
-//                     }
-//                   },
-//                 );
-
-//                 return () => metric;
-//               },
-//             );
-//           });
-//         });
-
-//         signals.onCleanup(() => {
-//           dispose?.();
-//         });
-//       });
-//     }
-
-//     columns().forEach((metric, colIndex) => addCol(metric, colIndex));
-
-//     obj.addRandomCol = function () {
-//       addCol(randomFromArray(possibleMetrics));
-//     };
-
-//     return () => index;
-//   });
-
-//   return obj;
+//   } else {
+//     return "";
+//   }
 // }
-
-/**
- * @param {MetricToIndexes} metricToIndexes
- */
-function createIndexToMetrics(metricToIndexes) {
-  // const indexToMetrics = Object.entries(metricToIndexes).reduce(
-  //   (arr, [_id, indexes]) => {
-  //     const id = /** @type {Metric} */ (_id);
-  //     indexes.forEach((i) => {
-  //       arr[i] ??= [];
-  //       arr[i].push(id);
-  //     });
-  //     return arr;
-  //   },
-  //   /** @type {Metric[][]} */ (Array.from({ length: 24 })),
-  // );
-  // indexToMetrics.forEach((arr) => {
-  //   arr.sort();
-  // });
-  // return indexToMetrics;
-}
-
-/**
- * @param {Object} args
- * @param {number | string | Object | Array<any>} args.value
- * @param {Unit} args.unit
- */
-function serializeValue({ value, unit }) {
-  const t = typeof value;
-  if (value === null) {
-    return "null";
-  } else if (typeof value === "string") {
-    return value;
-  } else if (t !== "number") {
-    return JSON.stringify(value).replaceAll('"', "").slice(1, -1);
-  } else if (value !== 18446744073709552000) {
-    if (unit === "usd" || unit === "difficulty" || unit === "sat/vb") {
-      return value.toLocaleString("en-us", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    } else if (unit === "btc") {
-      return value.toLocaleString("en-us", {
-        minimumFractionDigits: 8,
-        maximumFractionDigits: 8,
-      });
-    } else {
-      return value.toLocaleString("en-us");
-    }
-  } else {
-    return "";
-  }
-}

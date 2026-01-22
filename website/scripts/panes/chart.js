@@ -1,24 +1,28 @@
-import {
-  createShadow,
-  createChoiceField,
-  createHeader,
-} from "../utils/dom.js";
+import { createShadow, createChoiceField, createHeader } from "../utils/dom.js";
 import { chartElement } from "../utils/elements.js";
 import { serdeChartableIndex } from "../utils/serde.js";
 import { Unit } from "../utils/units.js";
-import signals from "../signals.js";
 import { createChart } from "../chart/index.js";
 import { colors } from "../chart/colors.js";
 import { webSockets } from "../utils/ws.js";
 
 const ONE_BTC_IN_SATS = 100_000_000;
 
+/** @type {((opt: ChartOption) => void) | null} */
+let _setOption = null;
+
 /**
- * @param {Object} args
- * @param {Accessor<ChartOption>} args.option
- * @param {BrkClient} args.brk
+ * @param {ChartOption} opt
  */
-export function init({ option, brk }) {
+export function setOption(opt) {
+  if (!_setOption) throw new Error("Chart not initialized");
+  _setOption(opt);
+}
+
+/**
+ * @param {BrkClient} brk
+ */
+export function init(brk) {
   chartElement.append(createShadow("left"));
   chartElement.append(createShadow("right"));
 
@@ -31,8 +35,8 @@ export function init({ option, brk }) {
     brk,
   });
 
-  // Create index selector using chart's index state
-  const fieldset = createIndexSelector(option, chart);
+  // Create index selector
+  const { fieldset, setChoices } = createIndexSelector(chart);
   chartElement.append(fieldset);
 
   /**
@@ -91,61 +95,62 @@ export function init({ option, brk }) {
     priceSeries.update({ ...last, close });
   }
 
-  // When option changes, update heading and rebuild blueprints
-  signals.createEffect(option, (opt) => {
+  // Set up the setOption function
+  _setOption = (opt) => {
     headingElement.innerHTML = opt.title;
+
+    // Update index choices based on option
+    setChoices(computeChoices(opt));
 
     blueprints = chart.setBlueprints({
       top: buildTopBlueprints(opt.top),
       bottom: opt.bottom,
       onDataLoaded: updatePriceWithLatest,
     });
-  });
+  };
 
   // Live price update listener
   webSockets.kraken1dCandle.onLatest(updatePriceWithLatest);
 }
 
+const ALL_CHOICES = /** @satisfies {ChartableIndexName[]} */ ([
+  "timestamp",
+  "date",
+  "week",
+  "month",
+  "quarter",
+  "semester",
+  "year",
+  "decade",
+]);
+
 /**
- * @param {Accessor<ChartOption>} option
+ * @param {ChartOption} opt
+ * @returns {ChartableIndexName[]}
+ */
+function computeChoices(opt) {
+  if (!opt.top.size && !opt.bottom.size) {
+    return [...ALL_CHOICES];
+  }
+  const rawIndexes = new Set(
+    [Array.from(opt.top.values()), Array.from(opt.bottom.values())]
+      .flat(2)
+      .filter((blueprint) => {
+        const path = Object.values(blueprint.metric.by)[0]?.path ?? "";
+        return !path.includes("constant_");
+      })
+      .flatMap((blueprint) => blueprint.metric.indexes()),
+  );
+
+  return ALL_CHOICES.filter((choice) =>
+    rawIndexes.has(serdeChartableIndex.deserialize(choice)),
+  );
+}
+
+/**
  * @param {Chart} chart
  */
-function createIndexSelector(option, chart) {
-  const choices_ = /** @satisfies {ChartableIndexName[]} */ ([
-    "timestamp",
-    "date",
-    "week",
-    "month",
-    "quarter",
-    "semester",
-    "year",
-    "decade",
-  ]);
-
-  /** @type {Accessor<typeof choices_>} */
-  const choices = signals.createMemo(() => {
-    const o = option();
-
-    if (!o.top.size && !o.bottom.size) {
-      return [...choices_];
-    }
-    const rawIndexes = new Set(
-      [Array.from(o.top.values()), Array.from(o.bottom.values())]
-        .flat(2)
-        .filter((blueprint) => {
-          const path = Object.values(blueprint.metric.by)[0]?.path ?? "";
-          return !path.includes("constant_");
-        })
-        .flatMap((blueprint) => blueprint.metric.indexes()),
-    );
-
-    return /** @type {any} */ (
-      choices_.filter((choice) =>
-        rawIndexes.has(serdeChartableIndex.deserialize(choice)),
-      )
-    );
-  });
-
+function createIndexSelector(chart) {
   const fieldset = window.document.createElement("fieldset");
   fieldset.id = "interval";
   fieldset.dataset.size = "sm";
@@ -155,7 +160,11 @@ function createIndexSelector(option, chart) {
 
   /** @type {HTMLElement | null} */
   let field = null;
-  signals.createEffect(choices, (newChoices) => {
+
+  /**
+   * @param {ChartableIndexName[]} newChoices
+   */
+  function setChoices(newChoices) {
     if (field) field.remove();
 
     // Use preferred index if available, otherwise fall back to first choice
@@ -177,7 +186,7 @@ function createIndexSelector(option, chart) {
       id: "index",
     });
     fieldset.append(field);
-  });
+  }
 
-  return fieldset;
+  return { fieldset, setChoices };
 }
