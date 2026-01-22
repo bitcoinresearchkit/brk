@@ -296,7 +296,7 @@ export function createChart({
 
   // Periodic refresh of active series data
   setInterval(() => {
-    seriesByKey.forEach((set) => {
+    serieses.byKey.forEach((set) => {
       set.forEach((s) => {
         if (s.active.value) s.fetch?.();
       });
@@ -307,11 +307,12 @@ export function createChart({
     new ResizeObserver(() => ichart.timeScale().fitContent()).observe(chartDiv);
   }
 
-  /** @type {Map<string, PersistedValue<boolean>>} */
-  const sharedActiveStates = new Map();
-
-  /** @type {Map<string, Set<AnySeries>>} */
-  const seriesByKey = new Map();
+  const serieses = {
+    /** @type {Map<string, PersistedValue<boolean>>} */
+    activeStates: new Map(),
+    /** @type {Map<string, Set<AnySeries>>} */
+    byKey: new Map(),
+  };
 
   const fieldsets = {
     /** @type {Map<number, Map<string, { id: string, position: string, createChild: (pane: IPaneApi<Time>) => HTMLElement }>>} */
@@ -548,7 +549,7 @@ export function createChart({
     const id = `${key}-${paneIndex}`;
 
     // Reuse existing state if same name (links legends across panes)
-    const existingActive = sharedActiveStates.get(key);
+    const existingActive = serieses.activeStates.get(key);
     const active =
       existingActive ??
       createPersistedValue({
@@ -557,7 +558,7 @@ export function createChart({
         urlKey: key,
         ...serdeBool,
       });
-    if (!existingActive) sharedActiveStates.set(key, active);
+    if (!existingActive) serieses.activeStates.set(key, active);
 
     setOrder(-order);
 
@@ -575,7 +576,7 @@ export function createChart({
       setActive(value) {
         const wasActive = active.value;
         active.set(value);
-        seriesByKey.get(key)?.forEach((s) => {
+        serieses.byKey.get(key)?.forEach((s) => {
           value ? s.show() : s.hide();
         });
         document.querySelectorAll(`[data-series="${key}"]`).forEach((el) => {
@@ -601,16 +602,16 @@ export function createChart({
       update,
       remove() {
         onRemove();
-        seriesByKey.get(key)?.delete(series);
+        serieses.byKey.get(key)?.delete(series);
         panes.seriesByHome.get(paneIndex)?.delete(series);
       },
     };
 
     // Register series for cross-pane linking
-    let keySet = seriesByKey.get(key);
+    let keySet = serieses.byKey.get(key);
     if (!keySet) {
       keySet = new Set();
-      seriesByKey.set(key, keySet);
+      serieses.byKey.set(key, keySet);
     }
     keySet.add(series);
 
