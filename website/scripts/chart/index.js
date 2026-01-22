@@ -9,8 +9,6 @@ import {
 import { createLegend } from "./legend.js";
 import { capture, canCapture } from "./capture.js";
 import { colors } from "./colors.js";
-
-const lcCreateChart = /** @type {CreateLCChart} */ (untypedLcCreateChart);
 import { createChoiceField } from "../utils/dom.js";
 import { createPersistedValue } from "../utils/persisted.js";
 import { onChange as onThemeChange } from "../utils/theme.js";
@@ -89,6 +87,14 @@ export function createChart({
   captureElement,
   config,
 }) {
+  const baseUrl = brk.baseUrl.replace(/\/$/, "");
+
+  /** @param {ChartableIndex} idx */
+  const getTimeEndpoint = (idx) =>
+    idx === "height"
+      ? brk.metrics.blocks.time.timestampMonotonic.by[idx]
+      : brk.metrics.blocks.time.timestamp.by[idx];
+
   // Chart owns its index state
   /** @type {Set<(index: ChartableIndex) => void>} */
   const onIndexChange = new Set();
@@ -137,7 +143,7 @@ export function createChart({
     range.set(value);
   };
 
-  const div = window.document.createElement("div");
+  const div = document.createElement("div");
   div.classList.add("chart");
   parent.append(div);
 
@@ -203,6 +209,24 @@ export function createChart({
   }
 
   /**
+   * Wait for pane to exist then run callback
+   * @param {number} paneIndex
+   * @param {VoidFunction} callback
+   * @param {number} [retries]
+   */
+  function whenPaneReady(paneIndex, callback, retries = 10) {
+    const pane = ichart.panes().at(paneIndex);
+    const parent = pane?.getHTMLElement()?.children?.item(1)?.firstChild;
+    if (parent) {
+      callback();
+    } else if (retries > 0) {
+      requestAnimationFrame(() =>
+        whenPaneReady(paneIndex, callback, retries - 1),
+      );
+    }
+  }
+
+  /**
    * Update pane layout based on visibility state
    */
   function updatePaneVisibility() {
@@ -213,31 +237,36 @@ export function createChart({
     // Pane 1 series go to pane 1 only when both panes visible
     moveSeriesToPane(1, bothVisible ? 1 : 0);
 
-    setTimeout(() => {
-      if (bothVisible) {
+    if (bothVisible) {
+      // Wait for pane 1 since it's being created
+      whenPaneReady(1, () => {
         createPaneFieldsets(0);
         createPaneFieldsets(1);
-      } else if (pane0Hidden && !pane1Hidden) {
-        // Only pane 1 visible: show pane 1's fieldsets on pane 0
-        createPaneFieldsets(1, 0);
-      } else {
-        // Only pane 0 visible or both hidden
-        createPaneFieldsets(0);
-      }
-    }, 50);
+      });
+    } else {
+      whenPaneReady(0, () => {
+        if (pane0Hidden && !pane1Hidden) {
+          // Only pane 1 visible: show pane 1's fieldsets on pane 0
+          createPaneFieldsets(1, 0);
+        } else {
+          // Only pane 0 visible or both hidden
+          createPaneFieldsets(0);
+        }
+      });
+    }
   }
 
   const legendTop = createLegend();
   div.append(legendTop.element);
 
-  const chartDiv = window.document.createElement("div");
+  const chartDiv = document.createElement("div");
   chartDiv.classList.add("lightweight-chart");
   div.append(chartDiv);
 
   const legendBottom = createLegend();
   div.append(legendBottom.element);
 
-  const ichart = lcCreateChart(
+  const ichart = /** @type {CreateLCChart} */ (untypedLcCreateChart)(
     chartDiv,
     /** @satisfies {DeepPartial<ChartOptions>} */ ({
       autoSize: true,
@@ -345,20 +374,18 @@ export function createChart({
   applyColors();
   const removeThemeListener = onThemeChange(applyColors);
 
+  /** @type {Partial<Record<ChartableIndex, number>>} */
+  const minBarSpacingByIndex = {
+    monthindex: 1,
+    quarterindex: 2,
+    semesterindex: 3,
+    yearindex: 6,
+    decadeindex: 60,
+  };
+
   /** @param {ChartableIndex} index */
   function applyIndexSettings(index) {
-    const minBarSpacing =
-      index === "monthindex"
-        ? 1
-        : index === "quarterindex"
-          ? 2
-          : index === "semesterindex"
-            ? 3
-            : index === "yearindex"
-              ? 6
-              : index === "decadeindex"
-                ? 60
-                : 0.5;
+    const minBarSpacing = minBarSpacingByIndex[index] ?? 0.5;
 
     ichart.applyOptions({
       timeScale: {
@@ -417,14 +444,9 @@ export function createChart({
 
     for (const { id, position, createChild } of configs.values()) {
       // Remove existing at same position
-      Array.from(parent.childNodes)
-        .filter(
-          (el) =>
-            /** @type {HTMLElement} */ (el).dataset?.position === position,
-        )
-        .forEach((el) => el.remove());
+      /** @type {Element} */ (parent).querySelectorAll(`[data-position="${position}"]`).forEach((el) => el.remove());
 
-      const fieldset = window.document.createElement("fieldset");
+      const fieldset = document.createElement("fieldset");
       fieldset.dataset.size = "xs";
       fieldset.dataset.position = position;
       fieldset.id = `${id}-${configPaneIndex}`;
@@ -579,7 +601,7 @@ export function createChart({
         seriesByKey.get(key)?.forEach((s) => {
           value ? s.show() : s.hide();
         });
-        document.querySelectorAll(`[data-series="${id}"]`).forEach((el) => {
+        document.querySelectorAll(`[data-series="${key}"]`).forEach((el) => {
           if (el instanceof HTMLInputElement && el.type === "checkbox") {
             el.checked = value;
           }
@@ -603,6 +625,7 @@ export function createChart({
       remove() {
         onRemove();
         seriesByKey.get(key)?.delete(series);
+        seriesByHomePane.get(paneIndex)?.delete(series);
       },
     };
 
@@ -621,22 +644,12 @@ export function createChart({
       lastTime = -Infinity;
       _fetch = null;
 
-      // Get timestamp metric from tree based on index type
-      const timeMetric =
-        idx === "height"
-          ? brk.metrics.blocks.time.timestampMonotonic
-          : brk.metrics.blocks.time.timestamp;
-      const valuesMetric = /** @type {AnyMetricPattern} */ (metric);
-      const _timeEndpoint = timeMetric.get(idx);
-      if (!_timeEndpoint) throw "Expect time endpoint";
-      const timeEndpoint = _timeEndpoint;
-      const valuesEndpoint = valuesMetric.by[idx];
+      const _valuesEndpoint = metric.by[idx];
       // Gracefully skip - series may be about to be removed by option change
-      if (!timeEndpoint || !valuesEndpoint) return;
+      if (!_valuesEndpoint) return;
+      const valuesEndpoint = _valuesEndpoint;
 
-      series.url = `${
-        brk.baseUrl.endsWith("/") ? brk.baseUrl.slice(0, -1) : brk.baseUrl
-      }${valuesEndpoint.path}`;
+      series.url = `${baseUrl}${valuesEndpoint.path}`;
 
       (paneIndex ? legendBottom : legendTop).addOrReplace({
         series,
@@ -732,10 +745,8 @@ export function createChart({
           } else if (fitContent) {
             ichart.timeScale().fitContent();
           } else if (
-            idx === "quarterindex" ||
-            idx === "semesterindex" ||
-            idx === "yearindex" ||
-            idx === "decadeindex"
+            (minBarSpacingByIndex[idx] ?? 0) >=
+            /** @type {number} */ (minBarSpacingByIndex.quarterindex)
           ) {
             ichart
               .timeScale()
@@ -755,8 +766,8 @@ export function createChart({
 
       async function fetchAndProcess() {
         const [timeResult, valuesResult] = await Promise.all([
-          timeEndpoint.slice(-10000).fetch(),
-          valuesEndpoint?.slice(-10000).fetch(),
+          getTimeEndpoint(idx).slice(-10000).fetch(),
+          valuesEndpoint.slice(-10000).fetch(),
         ]);
         if (timeResult?.data?.length && valuesResult?.data?.length) {
           processData(timeResult.data, valuesResult.data);
@@ -929,7 +940,6 @@ export function createChart({
           removeSeriesThemeListener();
           ichart.removeSeries(candlestickISeries);
           ichart.removeSeries(lineISeries);
-          seriesByHomePane.get(paneIndex)?.delete(series);
         },
         onDataLoaded: () => {
           dataLoaded = true;
@@ -1041,7 +1051,6 @@ export function createChart({
         onRemove: () => {
           removeSeriesThemeListener();
           ichart.removeSeries(iseries);
-          seriesByHomePane.get(paneIndex)?.delete(series);
         },
       });
 
@@ -1135,7 +1144,6 @@ export function createChart({
         onRemove: () => {
           removeSeriesThemeListener();
           ichart.removeSeries(iseries);
-          seriesByHomePane.get(paneIndex)?.delete(series);
         },
       });
 
@@ -1243,7 +1251,6 @@ export function createChart({
           onZoomChange.delete(handleZoom);
           removeSeriesThemeListener();
           ichart.removeSeries(iseries);
-          seriesByHomePane.get(paneIndex)?.delete(series);
         },
       });
 
@@ -1347,7 +1354,6 @@ export function createChart({
         onRemove: () => {
           removeSeriesThemeListener();
           ichart.removeSeries(iseries);
-          seriesByHomePane.get(paneIndex)?.delete(series);
         },
       });
 
@@ -1364,66 +1370,31 @@ export function createChart({
 
   config?.forEach(({ unit, blueprints }, paneIndex) => {
     blueprints.forEach((blueprint, order) => {
+      const common = {
+        metric: blueprint.metric,
+        name: blueprint.title,
+        unit,
+        defaultActive: blueprint.defaultActive,
+        paneIndex,
+        options: blueprint.options,
+        order,
+      };
       if (blueprint.type === "Candlestick") {
-        chart.addCandlestickSeries({
-          metric: blueprint.metric,
-          name: blueprint.title,
-          unit,
-          colors: blueprint.colors,
-          defaultActive: blueprint.defaultActive,
-          paneIndex,
-          options: blueprint.options,
-          order,
-        });
+        chart.addCandlestickSeries({ ...common, colors: blueprint.colors });
       } else if (blueprint.type === "Baseline") {
-        chart.addBaselineSeries({
-          metric: blueprint.metric,
-          name: blueprint.title,
-          unit,
-          defaultActive: blueprint.defaultActive,
-          paneIndex,
-          options: blueprint.options,
-          order,
-        });
+        chart.addBaselineSeries(common);
       } else if (blueprint.type === "Histogram") {
-        chart.addHistogramSeries({
-          metric: blueprint.metric,
-          name: blueprint.title,
-          unit,
-          color: blueprint.color,
-          defaultActive: blueprint.defaultActive,
-          paneIndex,
-          options: blueprint.options,
-          order,
-        });
+        chart.addHistogramSeries({ ...common, color: blueprint.color });
       } else if (blueprint.type === "Dots") {
-        chart.addDotsSeries({
-          metric: blueprint.metric,
-          name: blueprint.title,
-          unit,
-          color: blueprint.color,
-          defaultActive: blueprint.defaultActive,
-          paneIndex,
-          options: blueprint.options,
-          order,
-        });
+        chart.addDotsSeries({ ...common, color: blueprint.color });
       } else {
-        chart.addLineSeries({
-          metric: blueprint.metric,
-          name: blueprint.title,
-          unit,
-          defaultActive: blueprint.defaultActive,
-          paneIndex,
-          color: blueprint.color,
-          options: blueprint.options,
-          order,
-        });
+        chart.addLineSeries({ ...common, color: blueprint.color });
       }
     });
   });
 
   if (captureElement && canCapture) {
-    const domain = window.document.createElement("p");
+    const domain = document.createElement("p");
     domain.innerText = window.location.host;
     domain.id = "domain";
 
@@ -1432,7 +1403,7 @@ export function createChart({
       paneIndex: 0,
       position: "ne",
       createChild() {
-        const button = window.document.createElement("button");
+        const button = document.createElement("button");
         button.id = "capture";
         button.innerText = "capture";
         button.title = "Capture chart as image";
