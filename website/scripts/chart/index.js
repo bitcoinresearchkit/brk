@@ -9,7 +9,7 @@ import {
 import { createLegend } from "./legend.js";
 import { capture } from "./capture.js";
 import { colors } from "./colors.js";
-import { createChoiceField } from "../utils/dom.js";
+import { createRadios, createSelect } from "../utils/dom.js";
 import { createPersistedValue } from "../utils/persisted.js";
 import { onChange as onThemeChange } from "../utils/theme.js";
 import { throttle, debounce } from "../utils/timing.js";
@@ -1289,7 +1289,7 @@ export function createChart({
       paneIndex,
       position: "sw",
       createChild() {
-        const field = createChoiceField({
+        return createRadios({
           choices: /** @type {const} */ (["lin", "log"]),
           id: stringToId(`${id} ${paneIndex}`),
           initialValue: persisted.value,
@@ -1298,8 +1298,6 @@ export function createChart({
             applyScale(value);
           },
         });
-
-        return field;
       },
     });
   }
@@ -1481,13 +1479,12 @@ export function createChart({
           paneIndex,
           position: "nw",
           createChild() {
-            return createChoiceField({
+            return createSelect({
               choices: units,
               id: `pane-${paneIndex}-unit`,
               initialValue: blueprints.panes[paneIndex].unit ?? defaultUnit,
               toKey: (u) => u.id,
               toLabel: (u) => u.name,
-              type: "select",
               sorted: true,
               onChange(unit) {
                 persistedUnit.set(unit.id);

@@ -11,7 +11,7 @@ include = ["src/**/*", "website/**/*", "examples/**/*", "Cargo.toml", "README.md
 [dependencies]
 axum = { workspace = true }
 include_dir = "0.7"
-importmap = { version = "0.3.0", features = ["embedded"] }
+importmap = { version = "0.3.1", features = ["embedded"] }
 tracing = { workspace = true }
 
 [dev-dependencies]

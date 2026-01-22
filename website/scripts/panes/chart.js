@@ -1,4 +1,4 @@
-import { createShadow, createChoiceField, createHeader } from "../utils/dom.js";
+import { createShadow, createRadios, createHeader } from "../utils/dom.js";
 import { chartElement } from "../utils/elements.js";
 import { serdeChartableIndex } from "../utils/serde.js";
 import { Unit } from "../utils/units.js";
@@ -176,7 +176,7 @@ function createIndexSelector(chart) {
       chart.index.name.set(currentValue);
     }
 
-    field = createChoiceField({
+    field = createRadios({
       initialValue: currentValue,
       onChange: (v) => {
         preferredIndex = v; // User explicitly selected, update preference

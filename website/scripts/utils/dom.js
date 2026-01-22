@@ -221,23 +221,15 @@ export function importStyle(href) {
  * @param {(value: T) => void} [args.onChange]
  * @param {(choice: T) => string} [args.toKey]
  * @param {(choice: T) => string} [args.toLabel]
- * @param {"radio" | "select"} [args.type]
- * @param {boolean} [args.sorted]
  */
-export function createChoiceField({
+export function createRadios({
   id,
-  choices: unsortedChoices,
+  choices,
   initialValue,
   onChange,
-  sorted,
   toKey = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
   toLabel = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
-  type = "radio",
 }) {
-  const choices = sorted
-    ? unsortedChoices.toSorted((a, b) => toLabel(a).localeCompare(toLabel(b)))
-    : unsortedChoices;
-
   const field = window.document.createElement("div");
   field.classList.add("field");
 
@@ -254,33 +246,6 @@ export function createChoiceField({
     const span = window.document.createElement("span");
     span.textContent = toLabel(choices[0]);
     div.append(span);
-  } else if (type === "select") {
-    const select = window.document.createElement("select");
-    select.id = id ?? "";
-    select.name = id ?? "";
-
-    choices.forEach((choice) => {
-      const option = window.document.createElement("option");
-      option.value = toKey(choice);
-      option.textContent = toLabel(choice);
-      if (toKey(choice) === initialKey) {
-        option.selected = true;
-      }
-      select.append(option);
-    });
-
-    select.addEventListener("change", () => {
-      onChange?.(fromKey(select.value));
-    });
-
-    div.append(select);
-
-    const remaining = choices.length - 1;
-    if (remaining > 0) {
-      const small = window.document.createElement("small");
-      small.textContent = ` +${remaining}`;
-      field.append(small);
-    }
   } else {
     const fieldId = id ?? "";
     choices.forEach((choice) => {
@@ -306,6 +271,57 @@ export function createChoiceField({
   }
 
   return field;
+}
+
+/**
+ * @template T
+ * @param {Object} args
+ * @param {T} args.initialValue
+ * @param {string} [args.id]
+ * @param {readonly T[]} args.choices
+ * @param {(value: T) => void} [args.onChange]
+ * @param {(choice: T) => string} [args.toKey]
+ * @param {(choice: T) => string} [args.toLabel]
+ * @param {boolean} [args.sorted]
+ */
+export function createSelect({
+  id,
+  choices: unsortedChoices,
+  initialValue,
+  onChange,
+  sorted,
+  toKey = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
+  toLabel = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
+}) {
+  const choices = sorted
+    ? unsortedChoices.toSorted((a, b) => toLabel(a).localeCompare(toLabel(b)))
+    : unsortedChoices;
+
+  const select = window.document.createElement("select");
+  select.id = id ?? "";
+  select.name = id ?? "";
+
+  const initialKey = toKey(initialValue);
+
+  /** @param {string} key */
+  const fromKey = (key) =>
+    choices.find((c) => toKey(c) === key) ?? initialValue;
+
+  choices.forEach((choice) => {
+    const option = window.document.createElement("option");
+    option.value = toKey(choice);
+    option.textContent = toLabel(choice);
+    if (toKey(choice) === initialKey) {
+      option.selected = true;
+    }
+    select.append(option);
+  });
+
+  select.addEventListener("change", () => {
+    onChange?.(fromKey(select.value));
+  });
+
+  return select;
 }
 
 /**
@@ -344,67 +360,6 @@ export function createOption(arg) {
   return option;
 }
 
-/**
- * @template {string} Name
- * @template {string} Value
- * @template {Value | {name: Name; value: Value}} T
- * @param {Object} args
- * @param {string} [args.id]
- * @param {boolean} [args.deep]
- * @param {readonly ((T) | {name: string; list: T[]})[]} args.list
- * @param {Signal<T>} args.signal
- */
-export function createSelect({ id, list, signal, deep = false }) {
-  const select = window.document.createElement("select");
-
-  if (id) {
-    select.name = id;
-    select.id = id;
-  }
-
-  /** @type {Record<string, VoidFunction>} */
-  const setters = {};
-
-  list.forEach((anyOption, index) => {
-    if (typeof anyOption === "object" && "list" in anyOption) {
-      const { name, list } = anyOption;
-      const optGroup = window.document.createElement("optgroup");
-      optGroup.label = name;
-      select.append(optGroup);
-      list.forEach((option) => {
-        optGroup.append(createOption(option));
-        const key = /** @type {string} */ (
-          typeof option === "object" ? option.value : option
-        );
-        setters[key] = () => signal.set(() => option);
-      });
-    } else {
-      select.append(createOption(anyOption));
-      const key = /** @type {string} */ (
-        typeof anyOption === "object" ? anyOption.value : anyOption
-      );
-      setters[key] = () => signal.set(() => anyOption);
-    }
-    if (deep && index !== list.length - 1) {
-      select.append(window.document.createElement("hr"));
-    }
-  });
-
-  select.addEventListener("change", () => {
-    const callback = setters[select.value];
-    // @ts-ignore
-    if (callback) {
-      callback();
-    }
-  });
-
-  const initialSignal = signal();
-  const initialValue =
-    typeof initialSignal === "object" ? initialSignal.value : initialSignal;
-  select.value = String(initialValue);
-
-  return { select, signal };
-}
 
 /**
  * @param {Object} args
