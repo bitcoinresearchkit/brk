@@ -149,6 +149,140 @@ export function createChart({
   /** @type {Map<string, Set<AnySeries>>} */
   const seriesByKey = new Map();
 
+  // Track series by their home pane for pane collapse management
+  /** @type {Map<number, Map<AnySeries, ISeries[]>>} */
+  const seriesByHomePane = new Map();
+
+
+  /**
+   * Register series with its home pane for collapse management
+   * @param {number} paneIndex
+   * @param {AnySeries} series
+   * @param {ISeries[]} iseries
+   */
+  function registerSeriesPane(paneIndex, series, iseries) {
+    let paneMap = seriesByHomePane.get(paneIndex);
+    if (!paneMap) {
+      paneMap = new Map();
+      seriesByHomePane.set(paneIndex, paneMap);
+    }
+    paneMap.set(series, iseries);
+
+    // Create fieldsets when pane becomes active (first series or after restore)
+    if (!panesWithFieldsets.has(paneIndex)) {
+      setTimeout(() => createPaneFieldsets(paneIndex), paneIndex ? 50 : 0);
+    }
+  }
+
+  /**
+   * Check if pane should collapse (all series hidden) and move series accordingly
+   * @param {number} homePane
+   */
+  function updatePaneVisibility(homePane) {
+    const paneMap = seriesByHomePane.get(homePane);
+    if (!paneMap || paneMap.size === 0) return;
+
+    const allHidden = [...paneMap.keys()].every((s) => !s.active.value);
+
+    if (homePane === 0) {
+      // For pane 0: manage pane 1 series based on visibility of both panes
+      const pane1Map = seriesByHomePane.get(1);
+      if (!pane1Map || pane1Map.size === 0) return;
+
+      const pane1AllHidden = [...pane1Map.keys()].every((s) => !s.active.value);
+
+      // Determine what fieldsets should show on physical pane 0
+      // and whether pane 1 should exist
+      if (allHidden && !pane1AllHidden) {
+        // Pane 0 hidden, pane 1 visible: show pane 1 content/fieldsets on pane 0
+        for (const iseries of pane1Map.values()) {
+          for (const is of iseries) {
+            if (is.getPane().paneIndex() !== 0) {
+              is.moveToPane(0);
+            }
+          }
+        }
+        panesWithFieldsets.delete(0);
+        panesWithFieldsets.delete(1);
+        setTimeout(() => createPaneFieldsets(1, 0), 50);
+      } else if (!allHidden && !pane1AllHidden) {
+        // Both visible: pane 0 on pane 0, pane 1 on pane 1
+        for (const iseries of pane1Map.values()) {
+          for (const is of iseries) {
+            if (is.getPane().paneIndex() === 0) {
+              is.moveToPane(1);
+            }
+          }
+        }
+        panesWithFieldsets.delete(0);
+        panesWithFieldsets.delete(1);
+        setTimeout(() => {
+          createPaneFieldsets(0);
+          createPaneFieldsets(1);
+        }, 50);
+      } else if (!allHidden && pane1AllHidden) {
+        // Pane 0 visible, pane 1 hidden: show pane 0 fieldsets, pane 1 collapsed
+        for (const iseries of pane1Map.values()) {
+          for (const is of iseries) {
+            if (is.getPane().paneIndex() !== 0) {
+              is.moveToPane(0);
+            }
+          }
+        }
+        panesWithFieldsets.delete(0);
+        panesWithFieldsets.delete(1);
+        setTimeout(() => createPaneFieldsets(0), 50);
+      }
+      // If both hidden: leave as-is, show pane 0 fieldsets (already there)
+    } else {
+      // For pane 1: move series to pane 0 when hidden, back when visible
+      const pane0Map = seriesByHomePane.get(0);
+      const pane0AllHidden = pane0Map ? [...pane0Map.keys()].every((s) => !s.active.value) : true;
+
+      if (allHidden) {
+        // Pane 1 hidden: move to pane 0
+        for (const iseries of paneMap.values()) {
+          for (const is of iseries) {
+            if (is.getPane().paneIndex() !== 0) {
+              is.moveToPane(0);
+            }
+          }
+        }
+        panesWithFieldsets.delete(homePane);
+        // Update pane 0 fieldsets based on what's visible
+        if (pane0AllHidden) {
+          // Both hidden: keep pane 0 fieldsets
+        } else {
+          // Pane 0 visible: show pane 0 fieldsets
+          panesWithFieldsets.delete(0);
+          setTimeout(() => createPaneFieldsets(0), 50);
+        }
+      } else {
+        // Pane 1 visible: move back to pane 1 if pane 0 is also visible
+        if (!pane0AllHidden) {
+          for (const iseries of paneMap.values()) {
+            for (const is of iseries) {
+              if (is.getPane().paneIndex() === 0) {
+                is.moveToPane(homePane);
+              }
+            }
+          }
+          panesWithFieldsets.delete(0);
+          panesWithFieldsets.delete(homePane);
+          setTimeout(() => {
+            createPaneFieldsets(0);
+            createPaneFieldsets(homePane);
+          }, 50);
+        } else {
+          // Pane 0 hidden, pane 1 visible: show pane 1 fieldsets on pane 0
+          panesWithFieldsets.delete(0);
+          panesWithFieldsets.delete(homePane);
+          setTimeout(() => createPaneFieldsets(homePane, 0), 50);
+        }
+      }
+    }
+  }
+
   const legendTop = createLegend();
   div.append(legendTop.element);
 
@@ -310,50 +444,65 @@ export function createChart({
   }
 
   /**
+   * @typedef {Object} FieldsetConfig
+   * @property {string} id
+   * @property {"nw" | "ne" | "se" | "sw"} position
+   * @property {(pane: IPaneApi<Time>) => HTMLElement} createChild
+   */
+
+  /** @type {Map<number, Map<string, FieldsetConfig>>} */
+  const paneFieldsetConfigs = new Map();
+
+  /** @type {Set<number>} */
+  const panesWithFieldsets = new Set();
+
+  /**
+   * Create all fieldsets for a logical pane on a physical pane
+   * @param {number} configPaneIndex - which pane's config to use
+   * @param {number} [targetPaneIndex] - which physical pane to create on (defaults to configPaneIndex)
+   */
+  function createPaneFieldsets(configPaneIndex, targetPaneIndex = configPaneIndex) {
+    const pane = ichart.panes().at(targetPaneIndex);
+    if (!pane) return;
+
+    const parent = pane.getHTMLElement()?.children?.item(1)?.firstChild;
+    if (!parent) return;
+
+    const configs = paneFieldsetConfigs.get(configPaneIndex);
+    if (!configs) return;
+
+    for (const { id, position, createChild } of configs.values()) {
+      // Remove existing at same position
+      Array.from(parent.childNodes)
+        .filter((el) => /** @type {HTMLElement} */ (el).dataset?.position === position)
+        .forEach((el) => el.remove());
+
+      const fieldset = window.document.createElement("fieldset");
+      fieldset.dataset.size = "xs";
+      fieldset.dataset.position = position;
+      fieldset.id = `${id}-${configPaneIndex}`;
+      parent.appendChild(fieldset);
+      fieldset.append(createChild(pane));
+    }
+
+    panesWithFieldsets.add(configPaneIndex);
+  }
+
+  /**
+   * Register a fieldset config for a pane (created when pane becomes active)
    * @param {Object} args
    * @param {string} args.id
    * @param {number} args.paneIndex
    * @param {"nw" | "ne" | "se" | "sw"} args.position
-   * @param {number} [args.timeout]
    * @param {(pane: IPaneApi<Time>) => HTMLElement} args.createChild
    */
   function addFieldsetIfNeeded({ paneIndex, id, position, createChild }) {
-    setTimeout(
-      () => {
-        const parent = ichart
-          ?.panes()
-          .at(paneIndex)
-          ?.getHTMLElement()
-          ?.children?.item(1)?.firstChild;
-
-        if (!parent) throw Error("Parent should exist");
-
-        const children = Array.from(parent.childNodes).filter(
-          (element) =>
-            /** @type {HTMLElement} */ (element).dataset.position === position,
-        );
-
-        if (children.length === 1) {
-          children[0].remove();
-        } else if (children.length > 1) {
-          throw Error("Untraceable");
-        }
-
-        const fieldset = window.document.createElement("fieldset");
-        fieldset.dataset.size = "xs";
-        fieldset.dataset.position = position;
-        fieldset.id = `${id}-${paneIndex}`;
-        const pane = ichart.panes().at(paneIndex);
-        if (!pane) throw Error("Expect pane");
-        pane
-          .getHTMLElement()
-          ?.children?.item(1)
-          ?.firstChild?.appendChild(fieldset);
-
-        fieldset.append(createChild(pane));
-      },
-      paneIndex ? 50 : 0,
-    );
+    let configs = paneFieldsetConfigs.get(paneIndex);
+    if (!configs) {
+      configs = new Map();
+      paneFieldsetConfigs.set(paneIndex, configs);
+    }
+    configs.set(id, { id, position, createChild });
   }
 
   /**
@@ -490,6 +639,7 @@ export function createChart({
           }
         });
         if (value && !wasActive) _fetch?.();
+        updatePaneVisibility(paneIndex);
       },
       setOrder,
       show,
@@ -833,12 +983,16 @@ export function createChart({
           removeSeriesThemeListener();
           ichart.removeSeries(candlestickISeries);
           ichart.removeSeries(lineISeries);
+          seriesByHomePane.get(paneIndex)?.delete(series);
         },
         onDataLoaded: () => {
           dataLoaded = true;
           update();
         },
       });
+
+      registerSeriesPane(paneIndex, series, [candlestickISeries, lineISeries]);
+
       return series;
     },
     /**
@@ -941,8 +1095,12 @@ export function createChart({
         onRemove: () => {
           removeSeriesThemeListener();
           ichart.removeSeries(iseries);
+          seriesByHomePane.get(paneIndex)?.delete(series);
         },
       });
+
+      registerSeriesPane(paneIndex, series, [iseries]);
+
       return series;
     },
     /**
@@ -1031,8 +1189,12 @@ export function createChart({
         onRemove: () => {
           removeSeriesThemeListener();
           ichart.removeSeries(iseries);
+          seriesByHomePane.get(paneIndex)?.delete(series);
         },
       });
+
+      registerSeriesPane(paneIndex, series, [iseries]);
+
       return series;
     },
     /**
@@ -1135,8 +1297,12 @@ export function createChart({
           onZoomChange.delete(handleZoom);
           removeSeriesThemeListener();
           ichart.removeSeries(iseries);
+          seriesByHomePane.get(paneIndex)?.delete(series);
         },
       });
+
+      registerSeriesPane(paneIndex, series, [iseries]);
+
       return series;
     },
     /**
@@ -1235,8 +1401,12 @@ export function createChart({
         onRemove: () => {
           removeSeriesThemeListener();
           ichart.removeSeries(iseries);
+          seriesByHomePane.get(paneIndex)?.delete(series);
         },
       });
+
+      registerSeriesPane(paneIndex, series, [iseries]);
+
       return series;
     },
 
