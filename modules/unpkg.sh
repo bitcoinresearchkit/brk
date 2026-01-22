@@ -405,6 +405,6 @@ main() {
 # Run the main function with all arguments
 # main "$@"
 
-main "@leeoniya/ufuzzy"
+main "quickmatch-js"
 main "lean-qr"
 main "lightweight-charts"

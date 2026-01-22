@@ -165,52 +165,6 @@ export function createLabeledInput({
   };
 }
 
-/**
- * @param {HTMLElement} parent
- * @param {HTMLElement} child
- * @param {number} index
- */
-export function insertElementAtIndex(parent, child, index) {
-  if (!index) index = 0;
-  if (index >= parent.children.length) {
-    parent.appendChild(child);
-  } else {
-    parent.insertBefore(child, parent.children[index]);
-  }
-}
-
-/**
- * @param {string} url
- * @param {boolean} [targetBlank]
- */
-export function open(url, targetBlank) {
-  console.log(`open: ${url}`);
-  const a = window.document.createElement("a");
-  window.document.body.append(a);
-  a.href = url;
-
-  if (targetBlank) {
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-  }
-
-  a.click();
-  a.remove();
-}
-
-/**
- * @param {string} href
- */
-export function importStyle(href) {
-  const link = document.createElement("link");
-  link.href = href;
-  link.type = "text/css";
-  link.rel = "stylesheet";
-  link.media = "screen,print";
-  const head = window.document.getElementsByTagName("head")[0];
-  head.appendChild(link);
-  return link;
-}
 
 /**
  * @template T
@@ -233,9 +187,6 @@ export function createRadios({
   const field = window.document.createElement("div");
   field.classList.add("field");
 
-  const div = window.document.createElement("div");
-  field.append(div);
-
   const initialKey = toKey(initialValue);
 
   /** @param {string} key */
@@ -245,7 +196,7 @@ export function createRadios({
   if (choices.length === 1) {
     const span = window.document.createElement("span");
     span.textContent = toLabel(choices[0]);
-    div.append(span);
+    field.append(span);
   } else {
     const fieldId = id ?? "";
     choices.forEach((choice) => {
@@ -261,7 +212,7 @@ export function createRadios({
 
       const text = window.document.createTextNode(choiceLabel);
       label.append(text);
-      div.append(label);
+      field.append(label);
     });
 
     field.addEventListener("change", (event) => {
@@ -297,9 +248,8 @@ export function createSelect({
     ? unsortedChoices.toSorted((a, b) => toLabel(a).localeCompare(toLabel(b)))
     : unsortedChoices;
 
-  const select = window.document.createElement("select");
-  select.id = id ?? "";
-  select.name = id ?? "";
+  const field = window.document.createElement("div");
+  field.classList.add("field");
 
   const initialKey = toKey(initialValue);
 
@@ -307,21 +257,39 @@ export function createSelect({
   const fromKey = (key) =>
     choices.find((c) => toKey(c) === key) ?? initialValue;
 
-  choices.forEach((choice) => {
-    const option = window.document.createElement("option");
-    option.value = toKey(choice);
-    option.textContent = toLabel(choice);
-    if (toKey(choice) === initialKey) {
-      option.selected = true;
+  if (choices.length === 1) {
+    const span = window.document.createElement("span");
+    span.textContent = toLabel(choices[0]);
+    field.append(span);
+  } else {
+    const select = window.document.createElement("select");
+    select.id = id ?? "";
+    select.name = id ?? "";
+    field.append(select);
+
+    choices.forEach((choice) => {
+      const option = window.document.createElement("option");
+      option.value = toKey(choice);
+      option.textContent = toLabel(choice);
+      if (toKey(choice) === initialKey) {
+        option.selected = true;
+      }
+      select.append(option);
+    });
+
+    select.addEventListener("change", () => {
+      onChange?.(fromKey(select.value));
+    });
+
+    const remaining = choices.length - 1;
+    if (remaining > 0) {
+      const small = window.document.createElement("small");
+      small.textContent = `+${remaining}`;
+      field.append(small);
     }
-    select.append(option);
-  });
+  }
 
-  select.addEventListener("change", () => {
-    onChange?.(fromKey(select.value));
-  });
-
-  return select;
+  return field;
 }
 
 /**
@@ -361,39 +329,6 @@ export function createOption(arg) {
 }
 
 
-/**
- * @param {Object} args
- * @param {string} args.title
- * @param {string} args.description
- * @param {HTMLElement} args.input
- */
-export function createFieldElement({ title, description, input }) {
-  const div = window.document.createElement("div");
-
-  const label = window.document.createElement("label");
-  div.append(label);
-
-  const titleElement = window.document.createElement("span");
-  titleElement.innerHTML = title;
-  label.append(titleElement);
-
-  const descriptionElement = window.document.createElement("small");
-  descriptionElement.innerHTML = description;
-  label.append(descriptionElement);
-
-  div.append(input);
-
-  const forId = input.id || input.firstElementChild?.id;
-
-  if (!forId) {
-    console.log(input);
-    throw `Input should've an ID`;
-  }
-
-  label.htmlFor = forId;
-
-  return div;
-}
 
 /**
  * @param {'left' | 'bottom' | 'top' | 'right'} position

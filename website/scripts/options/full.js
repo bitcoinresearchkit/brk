@@ -109,6 +109,7 @@ export function initOptions(brk) {
    * @param {Option} option
    */
   function selectOption(option) {
+    if (selected.value === option) return;
     pushHistory(option.path);
     resetParams(option);
     writeToStorage(LS_SELECTED_KEY, JSON.stringify(option.path));

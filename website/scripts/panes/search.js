@@ -3,7 +3,7 @@ import {
   searchLabelElement,
   searchResultsElement,
 } from "../utils/elements.js";
-import ufuzzy from "../modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.mjs";
+import { QuickMatch } from "../modules/quickmatch-js/0.3.1/src/index.js";
 
 /**
  * @param {Options} options
@@ -11,148 +11,47 @@ import ufuzzy from "../modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.mjs";
 export function initSearch(options) {
   console.log("search: init");
 
-  const haystack = options.list.map((option) => option.title);
-
-  const RESULTS_PER_PAGE = 100;
-
-  /**
-   * @param {uFuzzy.SearchResult} searchResult
-   * @param {number} pageIndex
-   */
-  function computeResultPage(searchResult, pageIndex) {
-    /** @type {{ option: Option, title: string }[]} */
-    let list = [];
-
-    let [indexes, _info, order] = searchResult || [null, null, null];
-
-    const minIndex = pageIndex * RESULTS_PER_PAGE;
-
-    if (indexes?.length) {
-      const maxIndex = Math.min(
-        (order || indexes).length - 1,
-        minIndex + RESULTS_PER_PAGE - 1,
-      );
-
-      list = Array(maxIndex - minIndex + 1);
-
-      for (let i = minIndex; i <= maxIndex; i++) {
-        let index = indexes[i];
-
-        const title = haystack[index];
-
-        list[i % 100] = {
-          option: options.list[index],
-          title,
-        };
-      }
-    }
-
-    return list;
-  }
-
-  /** @type {uFuzzy.Options} */
-  const config = {
-    intraIns: Infinity,
-    intraChars: `[a-z\d' ]`,
-  };
-
-  const fuzzyMultiInsert = /** @type {uFuzzy} */ (
-    ufuzzy({
-      intraIns: 1,
-    })
+  const haystack = options.list.map((option) => option.title.toLowerCase());
+  const titleToOption = new Map(
+    options.list.map((option) => [option.title.toLowerCase(), option]),
   );
-  const fuzzyMultiInsertFuzzier = /** @type {uFuzzy} */ (ufuzzy(config));
-  const fuzzySingleError = /** @type {uFuzzy} */ (
-    ufuzzy({
-      intraMode: 1,
-      ...config,
-    })
-  );
-  const fuzzySingleErrorFuzzier = /** @type {uFuzzy} */ (
-    ufuzzy({
-      intraMode: 1,
-      ...config,
-    })
-  );
+
+  const matcher = new QuickMatch(haystack);
 
   function inputEvent() {
-    const needle = /** @type {string} */ (searchInput.value);
+    const needle = /** @type {string} */ (searchInput.value).trim();
 
-    searchResultsElement.scrollTo({
-      top: 0,
-    });
+    searchResultsElement.scrollTo({ top: 0 });
+    searchResultsElement.innerHTML = "";
 
-    if (!needle) {
-      searchResultsElement.innerHTML = "";
+    if (needle.length < 3) {
+      const li = window.document.createElement("li");
+      li.textContent = 'e.g. "BTC"';
+      li.style.color = "var(--off-color)";
+      searchResultsElement.appendChild(li);
       return;
     }
 
-    const outOfOrder = 5;
-    const infoThresh = 5_000;
+    const matches = matcher.matches(needle);
 
-    let result = fuzzyMultiInsert?.search(
-      haystack,
-      needle,
-      undefined,
-      infoThresh,
-    );
-
-    if (!result?.[0]?.length || !result?.[1]) {
-      result = fuzzyMultiInsert?.search(
-        haystack,
-        needle,
-        outOfOrder,
-        infoThresh,
-      );
+    if (!matches.length) {
+      const li = window.document.createElement("li");
+      li.textContent = "No results";
+      li.style.color = "var(--off-color)";
+      searchResultsElement.appendChild(li);
+      return;
     }
 
-    if (!result?.[0]?.length || !result?.[1]) {
-      result = fuzzySingleError?.search(
-        haystack,
-        needle,
-        outOfOrder,
-        infoThresh,
-      );
-    }
+    matches.forEach((title) => {
+      const option = titleToOption.get(title);
+      if (!option) return;
 
-    if (!result?.[0]?.length || !result?.[1]) {
-      result = fuzzySingleErrorFuzzier?.search(
-        haystack,
-        needle,
-        outOfOrder,
-        infoThresh,
-      );
-    }
-
-    if (!result?.[0]?.length || !result?.[1]) {
-      result = fuzzyMultiInsertFuzzier?.search(
-        haystack,
-        needle,
-        undefined,
-        infoThresh,
-      );
-    }
-
-    if (!result?.[0]?.length || !result?.[1]) {
-      result = fuzzyMultiInsertFuzzier?.search(
-        haystack,
-        needle,
-        outOfOrder,
-        infoThresh,
-      );
-    }
-
-    searchResultsElement.innerHTML = "";
-
-    const list = computeResultPage(result, 0);
-
-    list.forEach(({ option, title }) => {
       const li = window.document.createElement("li");
       searchResultsElement.appendChild(li);
 
       const element = options.createOptionElement({
         option,
-        name: title,
+        name: option.title,
       });
 
       if (element) {
@@ -161,11 +60,11 @@ export function initSearch(options) {
     });
   }
 
-  if (searchInput.value) {
-    inputEvent();
-  }
+  inputEvent();
 
   searchInput.addEventListener("input", inputEvent);
+  const len = searchInput.value.length;
+  searchInput.setSelectionRange(len, len);
 }
 
 document.addEventListener("keydown", (e) => {

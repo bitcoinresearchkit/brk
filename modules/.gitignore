@@ -11,3 +11,5 @@ nano.*
 worker.*
 *.mts
 *.cts
+*.rs
+*.md
