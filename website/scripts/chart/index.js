@@ -153,6 +153,7 @@ export function createChart({
   /** @type {Map<number, Map<AnySeries, ISeries[]>>} */
   const seriesByHomePane = new Map();
 
+  let pendingVisibilityCheck = false;
 
   /**
    * Register series with its home pane for collapse management
@@ -171,6 +172,16 @@ export function createChart({
     // Create fieldsets when pane becomes active (first series or after restore)
     if (!panesWithFieldsets.has(paneIndex)) {
       setTimeout(() => createPaneFieldsets(paneIndex), paneIndex ? 50 : 0);
+    }
+
+    // Defer visibility check until after all series are registered
+    if (!pendingVisibilityCheck) {
+      pendingVisibilityCheck = true;
+      requestAnimationFrame(() => {
+        pendingVisibilityCheck = false;
+        updatePaneVisibility(0);
+        updatePaneVisibility(1);
+      });
     }
   }
 
@@ -237,7 +248,9 @@ export function createChart({
     } else {
       // For pane 1: move series to pane 0 when hidden, back when visible
       const pane0Map = seriesByHomePane.get(0);
-      const pane0AllHidden = pane0Map ? [...pane0Map.keys()].every((s) => !s.active.value) : true;
+      const pane0AllHidden = pane0Map
+        ? [...pane0Map.keys()].every((s) => !s.active.value)
+        : true;
 
       if (allHidden) {
         // Pane 1 hidden: move to pane 0
@@ -324,7 +337,7 @@ export function createChart({
         locale: "en-us",
       },
       crosshair: {
-        mode: 0,
+        mode: 3,
       },
       ...(fitContent
         ? {
@@ -461,7 +474,10 @@ export function createChart({
    * @param {number} configPaneIndex - which pane's config to use
    * @param {number} [targetPaneIndex] - which physical pane to create on (defaults to configPaneIndex)
    */
-  function createPaneFieldsets(configPaneIndex, targetPaneIndex = configPaneIndex) {
+  function createPaneFieldsets(
+    configPaneIndex,
+    targetPaneIndex = configPaneIndex,
+  ) {
     const pane = ichart.panes().at(targetPaneIndex);
     if (!pane) return;
 
@@ -474,7 +490,10 @@ export function createChart({
     for (const { id, position, createChild } of configs.values()) {
       // Remove existing at same position
       Array.from(parent.childNodes)
-        .filter((el) => /** @type {HTMLElement} */ (el).dataset?.position === position)
+        .filter(
+          (el) =>
+            /** @type {HTMLElement} */ (el).dataset?.position === position,
+        )
         .forEach((el) => el.remove());
 
       const fieldset = window.document.createElement("fieldset");
@@ -514,35 +533,36 @@ export function createChart({
   function addPriceScaleSelectorIfNeeded({ unit, paneIndex, seriesType }) {
     const id = `${chartId}-scale`;
 
+    /** @type {"lin" | "log"} */
+    const defaultValue =
+      unit.id === "usd" && seriesType !== "Baseline" ? "log" : "lin";
+
+    const persisted = createPersistedValue({
+      defaultValue,
+      storageKey: `${id}-scale-${paneIndex}`,
+      urlKey: paneIndex === 0 ? "price_scale" : "unit_scale",
+      serialize: (v) => v,
+      deserialize: (s) => /** @type {"lin" | "log"} */ (s),
+    });
+
+    /** @param {"lin" | "log"} value */
+    const applyScale = (value) => {
+      try {
+        const pane = ichart.panes().at(paneIndex);
+        pane?.priceScale("right").applyOptions({
+          mode: value === "lin" ? 0 : 1,
+        });
+      } catch {}
+    };
+
+    // Apply scale immediately
+    applyScale(persisted.value);
+
     addFieldsetIfNeeded({
       id,
       paneIndex,
       position: "sw",
-      createChild(pane) {
-        /** @type {"lin" | "log"} */
-        const defaultValue =
-          unit.id === "usd" && seriesType !== "Baseline" ? "log" : "lin";
-
-        const persisted = createPersistedValue({
-          defaultValue,
-          storageKey: `${id}-scale-${paneIndex}`,
-          urlKey: paneIndex === 0 ? "price_scale" : "unit_scale",
-          serialize: (v) => v,
-          deserialize: (s) => /** @type {"lin" | "log"} */ (s),
-        });
-
-        /** @param {"lin" | "log"} value */
-        const applyScale = (value) => {
-          try {
-            pane.priceScale("right").applyOptions({
-              mode: value === "lin" ? 0 : 1,
-            });
-          } catch {}
-        };
-
-        // Apply initial value
-        applyScale(persisted.value);
-
+      createChild() {
         const field = createChoiceField({
           choices: /** @type {const} */ (["lin", "log"]),
           id: stringToId(`${id} ${paneIndex} ${unit}`),
