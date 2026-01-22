@@ -23,6 +23,6 @@ brk_types = { workspace = true }
 derive_more = { workspace = true }
 jiff = { workspace = true }
 # quickmatch = { path = "../../../quickmatch" }
-quickmatch = "0.2.0"
+quickmatch = "0.3.1"
 tokio = { workspace = true, optional = true }
 vecdb = { workspace = true }

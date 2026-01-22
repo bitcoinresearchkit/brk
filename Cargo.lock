@@ -1750,8 +1750,6 @@ dependencies = [
 [[package]]
 name = "importmap"
 version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e2d16f9503f27ae2f80f4914e81c98ab8e9921fe951e450936d1eaeaae9e8d0"
 dependencies = [
  "include_dir",
  "rapidhash",
@@ -2353,9 +2351,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.105"
+version = "1.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "535d180e0ecab6268a3e718bb9fd44db66bbbc256257165fc699dadf70d16fe7"
+checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
 dependencies = [
  "unicode-ident",
 ]
@@ -2374,9 +2372,9 @@ dependencies = [
 
 [[package]]
 name = "quickmatch"
-version = "0.2.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6f3930eacf56a69f668e37113288d810cc83a7af7afde8d7bf81d73148a5db7"
+checksum = "ba3b8437da19ff13b614fc03438308e7d642b4e625e31f8e3b61e1843bffbc02"
 dependencies = [
  "rustc-hash",
 ]

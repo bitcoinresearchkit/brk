@@ -6,7 +6,7 @@ use aide::{
 };
 use axum::{
     Extension,
-    http::HeaderMap,
+    http::{HeaderMap, header},
     response::{Html, Redirect, Response},
     routing::get,
 };
@@ -83,6 +83,9 @@ impl ApiRoutes for ApiRouter<AppState> {
                 ),
             )
             .route("/api", get(Html::from(include_str!("./scalar.html"))))
+            .route("/scalar.js", get(|| async {
+                ([(header::CONTENT_TYPE, "application/javascript")], include_str!("./scalar.js"))
+            }))
             .route(
                 "/api/{*path}",
                 get(|| async { Redirect::permanent("/api") }),

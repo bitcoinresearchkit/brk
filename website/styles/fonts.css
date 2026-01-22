@@ -1,0 +1,29 @@
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/assets/fonts/GeistMono[wght]-v1_5.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/assets/fonts/GeistMono-Italic[wght]-v1_5.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: block;
+}
+
+@font-face {
+  font-family: Lilex;
+  src: url("/assets/fonts/Lilex[wght].woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+}
+@font-face {
+  font-family: Lilex;
+  src: url("/assets/fonts/Lilex-Italic[wght].woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: block;
+}
