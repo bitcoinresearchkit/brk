@@ -365,16 +365,22 @@ export function createReactiveChoiceField({
  * @param {(choice: T) => string} [args.toKey]
  * @param {(choice: T) => string} [args.toLabel]
  * @param {"radio" | "select"} [args.type]
+ * @param {boolean} [args.sorted]
  */
 export function createChoiceField({
   id,
-  choices,
+  choices: unsortedChoices,
   initialValue,
   onChange,
+  sorted,
   toKey = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
   toLabel = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
   type = "radio",
 }) {
+  const choices = sorted
+    ? unsortedChoices.toSorted((a, b) => toLabel(a).localeCompare(toLabel(b)))
+    : unsortedChoices;
+
   const field = window.document.createElement("div");
   field.classList.add("field");
 
@@ -387,7 +393,11 @@ export function createChoiceField({
   const fromKey = (key) =>
     choices.find((c) => toKey(c) === key) ?? initialValue;
 
-  if (type === "select") {
+  if (choices.length === 1) {
+    const span = window.document.createElement("span");
+    span.textContent = toLabel(choices[0]);
+    div.append(span);
+  } else if (type === "select") {
     const select = window.document.createElement("select");
     select.id = id ?? "";
     select.name = id ?? "";
@@ -407,6 +417,13 @@ export function createChoiceField({
     });
 
     div.append(select);
+
+    const remaining = choices.length - 1;
+    if (remaining > 0) {
+      const small = window.document.createElement("small");
+      small.textContent = ` +${remaining}`;
+      field.append(small);
+    }
   } else {
     const fieldId = id ?? "";
     choices.forEach((choice) => {

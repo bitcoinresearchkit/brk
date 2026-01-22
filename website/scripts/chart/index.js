@@ -77,7 +77,6 @@ const lineWidth = /** @type {any} */ (1.5);
  * @param {BrkClient} args.brk
  * @param {true} [args.fitContent]
  * @param {HTMLElement} [args.captureElement]
- * @param {{unit: Unit; blueprints: AnyFetchedSeriesBlueprint[]}[]} [args.config]
  */
 export function createChart({
   parent,
@@ -85,7 +84,6 @@ export function createChart({
   brk,
   fitContent,
   captureElement,
-  config,
 }) {
   const baseUrl = brk.baseUrl.replace(/\/$/, "");
 
@@ -173,6 +171,9 @@ export function createChart({
         fontFamily: style.fontFamily,
         background: { color: "transparent" },
         attributionLogo: false,
+        panes: {
+          enableResize: false,
+        },
       },
       grid: {
         vertLines: { visible: false },
@@ -465,10 +466,8 @@ export function createChart({
     /**
      * @param {Object} args
      * @param {string} args.name
-     * @param {Unit} args.unit
      * @param {number} args.order
      * @param {Color[]} args.colors
-     * @param {LCSeriesType} args.seriesType
      * @param {AnyMetricPattern} args.metric
      * @param {number} args.paneIndex
      * @param {boolean} [args.defaultActive]
@@ -481,14 +480,11 @@ export function createChart({
      * @param {(data: any[]) => void} args.setData
      * @param {(data: any) => void} args.update
      * @param {() => void} args.onRemove
-     * @param {() => void} [args.onDataLoaded]
      */
     create({
       metric,
       name,
-      unit,
       order,
-      seriesType,
       paneIndex,
       defaultActive,
       colors,
@@ -501,7 +497,6 @@ export function createChart({
       setData,
       update,
       onRemove,
-      onDataLoaded,
     }) {
       const key = stringToId(name);
       const id = `${key}-${paneIndex}`;
@@ -689,7 +684,7 @@ export function createChart({
                 .setVisibleLogicalRange({ from: -1, to: data.length });
             }
             // Delay until chart has applied the range
-            requestAnimationFrame(() => onDataLoaded?.());
+            requestAnimationFrame(() => blueprints.onDataLoaded?.());
           } else {
             // Incremental update: only process new data points
             for (let i = startIdx; i < length; i++) {
@@ -723,42 +718,30 @@ export function createChart({
       // index.onChange.add(setupIndexEffect);
       // _cleanup = () => index.onChange.delete(setupIndexEffect);
 
-      addPriceScaleSelectorIfNeeded({
-        paneIndex,
-        seriesType,
-        unit,
-      });
-
       return series;
     },
 
     /**
      * @param {Object} args
      * @param {string} args.name
-     * @param {Unit} args.unit
      * @param {number} args.order
      * @param {AnyMetricPattern} args.metric
      * @param {number} [args.paneIndex]
      * @param {[Color, Color]} [args.colors] - [upColor, downColor] for legend
      * @param {boolean} [args.defaultActive]
-     * @param {boolean} [args.inverse]
      * @param {CandlestickSeriesPartialOptions} [args.options]
      */
     addCandlestick({
       metric,
       name,
-      unit,
       order,
       paneIndex = 0,
       colors: customColors,
       defaultActive,
-      inverse,
       options,
     }) {
-      const defaultGreen = inverse ? colors.red : colors.green;
-      const defaultRed = inverse ? colors.green : colors.red;
-      const upColor = customColors?.[0] ?? defaultGreen;
-      const downColor = customColors?.[1] ?? defaultRed;
+      const upColor = customColors?.[0] ?? colors.green;
+      const downColor = customColors?.[1] ?? colors.red;
 
       /** @type {CandlestickISeries} */
       const candlestickISeries = /** @type {any} */ (
@@ -788,8 +771,10 @@ export function createChart({
 
       let active = defaultActive !== false;
       let highlighted = true;
-      let showLine = visibleBarsCount > 500;
-      let dataLoaded = false;
+
+      /** @param {number} barCount */
+      const shouldShowLine = (barCount) => barCount > 500;
+      let showLine = shouldShowLine(visibleBarsCount);
 
       function update() {
         candlestickISeries.applyOptions({
@@ -809,8 +794,8 @@ export function createChart({
 
       /** @type {ZoomChangeCallback} */
       function handleZoom(count) {
-        if (!dataLoaded) return; // Ignore zoom changes until data is ready
-        const newShowLine = count > 500;
+        if (!series.hasData()) return; // Ignore zoom changes until data is ready
+        const newShowLine = shouldShowLine(count);
         if (newShowLine === showLine) return;
         showLine = newShowLine;
         update();
@@ -823,8 +808,6 @@ export function createChart({
         name,
         order,
         paneIndex,
-        seriesType: "Candlestick",
-        unit,
         defaultActive,
         metric,
         setOrder(order) {
@@ -855,6 +838,13 @@ export function createChart({
           candlestickISeries.setData(data);
           const lineData = data.map((d) => ({ time: d.time, value: d.close }));
           lineISeries.setData(lineData);
+          requestAnimationFrame(() => {
+            const range = ichart.timeScale().getVisibleLogicalRange();
+            if (range) {
+              showLine = shouldShowLine(range.to - range.from);
+            }
+            update();
+          });
         },
         update: (data) => {
           candlestickISeries.update(data);
@@ -867,10 +857,6 @@ export function createChart({
           ichart.removeSeries(candlestickISeries);
           ichart.removeSeries(lineISeries);
         },
-        onDataLoaded: () => {
-          dataLoaded = true;
-          update();
-        },
       });
 
       panes.register(paneIndex, series, [candlestickISeries, lineISeries]);
@@ -880,7 +866,6 @@ export function createChart({
     /**
      * @param {Object} args
      * @param {string} args.name
-     * @param {Unit} args.unit
      * @param {number} args.order
      * @param {AnyMetricPattern} args.metric
      * @param {Color | [Color, Color]} [args.color] - Single color or [positive, negative] colors
@@ -891,7 +876,6 @@ export function createChart({
     addHistogram({
       metric,
       name,
-      unit,
       color = [colors.green, colors.red],
       order,
       paneIndex = 0,
@@ -932,8 +916,6 @@ export function createChart({
         name,
         order,
         paneIndex,
-        seriesType: "Bar",
-        unit,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -987,10 +969,9 @@ export function createChart({
     /**
      * @param {Object} args
      * @param {string} args.name
-     * @param {Unit} args.unit
      * @param {number} args.order
      * @param {AnyMetricPattern} args.metric
-     * @param {Color} [args.color]
+     * @param {Color} args.color
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
      * @param {LineSeriesPartialOptions} [args.options]
@@ -998,16 +979,12 @@ export function createChart({
     addLine({
       metric,
       name,
-      unit,
       order,
-      color: _color,
+      color,
       paneIndex = 0,
       defaultActive,
       options,
     }) {
-      const color =
-        _color ?? (unit.id === "usd" ? colors.green : colors.orange);
-
       /** @type {LineISeries} */
       const iseries = /** @type {any} */ (
         ichart.addSeries(
@@ -1039,8 +1016,6 @@ export function createChart({
         name,
         order,
         paneIndex,
-        seriesType: "Line",
-        unit,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -1080,10 +1055,9 @@ export function createChart({
     /**
      * @param {Object} args
      * @param {string} args.name
-     * @param {Unit} args.unit
      * @param {number} args.order
      * @param {AnyMetricPattern} args.metric
-     * @param {Color} [args.color]
+     * @param {Color} args.color
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
      * @param {LineSeriesPartialOptions} [args.options]
@@ -1091,16 +1065,12 @@ export function createChart({
     addDots({
       metric,
       name,
-      unit,
       order,
-      color: _color,
+      color,
       paneIndex = 0,
       defaultActive,
       options,
     }) {
-      const color =
-        _color ?? (unit.id === "usd" ? colors.green : colors.orange);
-
       /** @type {LineISeries} */
       const iseries = /** @type {any} */ (
         ichart.addSeries(
@@ -1145,8 +1115,6 @@ export function createChart({
         name,
         order,
         paneIndex,
-        seriesType: "Line",
-        unit,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -1187,7 +1155,6 @@ export function createChart({
     /**
      * @param {Object} args
      * @param {string} args.name
-     * @param {Unit} args.unit
      * @param {number} args.order
      * @param {AnyMetricPattern} args.metric
      * @param {number} [args.paneIndex]
@@ -1199,7 +1166,6 @@ export function createChart({
     addBaseline({
       metric,
       name,
-      unit,
       order,
       paneIndex: _paneIndex,
       defaultActive,
@@ -1249,8 +1215,6 @@ export function createChart({
         name,
         order,
         paneIndex,
-        seriesType: "Baseline",
-        unit,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -1290,21 +1254,16 @@ export function createChart({
   };
 
   /**
-   * @param {Object} args
-   * @param {Unit} args.unit
-   * @param {LCSeriesType} args.seriesType
-   * @param {number} args.paneIndex
+   * @param {number} paneIndex
+   * @param {Unit} unit
    */
-  function addPriceScaleSelectorIfNeeded({ unit, paneIndex, seriesType }) {
+  function applyScaleForUnit(paneIndex, unit) {
     const id = `${chartId}-scale`;
-
-    /** @type {"lin" | "log"} */
-    const defaultValue =
-      unit.id === "usd" && seriesType !== "Baseline" ? "log" : "lin";
+    const defaultValue = unit.id === "usd" ? "log" : "lin";
 
     const persisted = createPersistedValue({
-      defaultValue,
-      storageKey: `${id}-scale-${paneIndex}`,
+      defaultValue: /** @type {"lin" | "log"} */ (defaultValue),
+      storageKey: `${id}-${paneIndex}-${unit.id}`,
       urlKey: paneIndex === 0 ? "price_scale" : "unit_scale",
       serialize: (v) => v,
       deserialize: (s) => /** @type {"lin" | "log"} */ (s),
@@ -1312,15 +1271,19 @@ export function createChart({
 
     /** @param {"lin" | "log"} value */
     const applyScale = (value) => {
-      try {
-        const pane = ichart.panes().at(paneIndex);
-        pane?.priceScale("right").applyOptions({
-          mode: value === "lin" ? 0 : 1,
-        });
-      } catch {}
+      panes.whenReady(paneIndex, () => {
+        try {
+          ichart
+            .panes()
+            .at(paneIndex)
+            ?.priceScale("right")
+            .applyOptions({
+              mode: value === "lin" ? 0 : 1,
+            });
+        } catch {}
+      });
     };
 
-    // Apply scale immediately
     applyScale(persisted.value);
 
     fieldsets.addIfNeeded({
@@ -1330,7 +1293,7 @@ export function createChart({
       createChild() {
         const field = createChoiceField({
           choices: /** @type {const} */ (["lin", "log"]),
-          id: stringToId(`${id} ${paneIndex} ${unit}`),
+          id: stringToId(`${id} ${paneIndex}`),
           initialValue: persisted.value,
           onChange(value) {
             persisted.set(value);
@@ -1343,42 +1306,212 @@ export function createChart({
     });
   }
 
+  const blueprints = {
+    /** @type {{ map: Map<Unit, AnyFetchedSeriesBlueprint[]>, series: AnySeries[], unit: Unit | null, legend: Legend }[]} */
+    panes: [
+      { map: new Map(), series: [], unit: null, legend: legends.top },
+      { map: new Map(), series: [], unit: null, legend: legends.bottom },
+    ],
+
+    /** @type {VoidFunction | undefined} */
+    onDataLoaded: undefined,
+
+    /** @param {number} paneIndex */
+    rebuildPane(paneIndex) {
+      const pane = this.panes[paneIndex];
+      const { map, series, unit, legend } = pane;
+
+      if (!unit) {
+        series.forEach((s) => s.remove());
+        pane.series = [];
+        legend.removeFrom(0);
+        return;
+      }
+
+      const idx = index.get();
+      legend.removeFrom(0);
+
+      // Store old series to remove AFTER adding new ones
+      // This prevents pane collapse which loses scale settings
+      const oldSeries = [...series];
+      pane.series = [];
+
+      map.get(unit)?.forEach((blueprint, order) => {
+        const options = blueprint.options;
+        const indexes = Object.keys(blueprint.metric.by);
+
+        const defaultColor = unit.id === "usd" ? colors.green : colors.orange;
+
+        if (indexes.includes(idx)) {
+          switch (blueprint.type) {
+            case "Baseline": {
+              pane.series.push(
+                serieses.addBaseline({
+                  metric: blueprint.metric,
+                  name: blueprint.title,
+                  defaultActive: blueprint.defaultActive,
+                  paneIndex,
+                  options: {
+                    ...options,
+                    topLineColor:
+                      blueprint.color?.() ?? blueprint.colors?.[0](),
+                    bottomLineColor:
+                      blueprint.color?.() ?? blueprint.colors?.[1](),
+                  },
+                  order,
+                }),
+              );
+              break;
+            }
+            case "Histogram": {
+              pane.series.push(
+                serieses.addHistogram({
+                  metric: blueprint.metric,
+                  name: blueprint.title,
+                  color: blueprint.color,
+                  defaultActive: blueprint.defaultActive,
+                  paneIndex,
+                  options,
+                  order,
+                }),
+              );
+              break;
+            }
+            case "Candlestick": {
+              pane.series.push(
+                serieses.addCandlestick({
+                  metric: blueprint.metric,
+                  name: blueprint.title,
+                  colors: blueprint.colors,
+                  defaultActive: blueprint.defaultActive,
+                  paneIndex,
+                  options,
+                  order,
+                }),
+              );
+              break;
+            }
+            case "Dots": {
+              pane.series.push(
+                serieses.addDots({
+                  metric: blueprint.metric,
+                  color: blueprint.color ?? defaultColor,
+                  name: blueprint.title,
+                  defaultActive: blueprint.defaultActive,
+                  paneIndex,
+                  options,
+                  order,
+                }),
+              );
+              break;
+            }
+            case "Line":
+            case undefined:
+              pane.series.push(
+                serieses.addLine({
+                  metric: blueprint.metric,
+                  color: blueprint.color ?? defaultColor,
+                  name: blueprint.title,
+                  defaultActive: blueprint.defaultActive,
+                  paneIndex,
+                  options,
+                  order,
+                }),
+              );
+          }
+        }
+      });
+
+      // Remove old series AFTER adding new ones to prevent pane collapse
+      oldSeries.forEach((s) => s.remove());
+
+      // Ensure other pane's series are in their correct pane before applying scale
+      // (they may have been collapsed when this pane was empty)
+      const otherPaneIndex = paneIndex === 0 ? 1 : 0;
+      panes.moveTo(otherPaneIndex, otherPaneIndex);
+
+      // Apply scale after series are created and panes are properly separated
+      applyScaleForUnit(paneIndex, unit);
+    },
+
+    rebuild() {
+      this.rebuildPane(0);
+      this.rebuildPane(1);
+    },
+  };
+
+  // Rebuild when index changes
+  index.onChange.add(() => blueprints.rebuild());
+
   const chart = {
     index,
-    legends,
-    serieses,
-    addFieldsetIfNeeded: fieldsets.addIfNeeded.bind(fieldsets),
+
+    /**
+     * @param {Object} args
+     * @param {Map<Unit, AnyFetchedSeriesBlueprint[]>} args.top
+     * @param {Map<Unit, AnyFetchedSeriesBlueprint[]>} args.bottom
+     * @param {VoidFunction} [args.onDataLoaded]
+     */
+    setBlueprints({ top, bottom, onDataLoaded }) {
+      blueprints.panes[0].map = top;
+      blueprints.panes[1].map = bottom;
+      blueprints.onDataLoaded = onDataLoaded;
+
+      // Set up unit selectors for each pane
+      [top, bottom].forEach((map, paneIndex) => {
+        const units = Array.from(map.keys());
+        if (!units.length) {
+          blueprints.panes[paneIndex].unit = null;
+          return;
+        }
+
+        const defaultUnit = units[0];
+        const persistedUnit = createPersistedValue({
+          defaultValue: /** @type {string} */ (defaultUnit.id),
+          urlKey: paneIndex === 0 ? "u0" : "u1",
+          serialize: (v) => v,
+          deserialize: (s) => s,
+        });
+
+        // Find unit matching persisted value, or use default
+        const initialUnit =
+          units.find((u) => u.id === persistedUnit.value) ?? defaultUnit;
+        blueprints.panes[paneIndex].unit = initialUnit;
+
+        fieldsets.addIfNeeded({
+          id: `${chartId}-unit`,
+          paneIndex,
+          position: "nw",
+          createChild() {
+            return createChoiceField({
+              choices: units,
+              id: `pane-${paneIndex}-unit`,
+              initialValue: blueprints.panes[paneIndex].unit ?? defaultUnit,
+              toKey: (u) => u.id,
+              toLabel: (u) => u.name,
+              type: "select",
+              sorted: true,
+              onChange(unit) {
+                persistedUnit.set(unit.id);
+                blueprints.panes[paneIndex].unit = unit;
+                blueprints.rebuildPane(paneIndex);
+              },
+            });
+          },
+        });
+      });
+
+      blueprints.rebuild();
+
+      return blueprints;
+    },
+
     destroy() {
       removeThemeListener();
       clearInterval(refreshInterval);
       ichart.remove();
     },
   };
-
-  config?.forEach(({ unit, blueprints }, paneIndex) => {
-    blueprints.forEach((blueprint, order) => {
-      const common = {
-        metric: blueprint.metric,
-        name: blueprint.title,
-        unit,
-        defaultActive: blueprint.defaultActive,
-        paneIndex,
-        options: blueprint.options,
-        order,
-      };
-      if (blueprint.type === "Candlestick") {
-        serieses.addCandlestick({ ...common, colors: blueprint.colors });
-      } else if (blueprint.type === "Baseline") {
-        serieses.addBaseline(common);
-      } else if (blueprint.type === "Histogram") {
-        serieses.addHistogram({ ...common, color: blueprint.color });
-      } else if (blueprint.type === "Dots") {
-        serieses.addDots({ ...common, color: blueprint.color });
-      } else {
-        serieses.addLine({ ...common, color: blueprint.color });
-      }
-    });
-  });
 
   if (captureElement && canCapture) {
     const domain = document.createElement("p");

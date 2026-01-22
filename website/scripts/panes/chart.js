@@ -1,6 +1,5 @@
 import {
   createShadow,
-  createReactiveChoiceField,
   createChoiceField,
   createHeader,
 } from "../utils/dom.js";
@@ -9,9 +8,9 @@ import { serdeChartableIndex } from "../utils/serde.js";
 import { Unit } from "../utils/units.js";
 import signals from "../signals.js";
 import { createChart } from "../chart/index.js";
+import { colors } from "../chart/colors.js";
 import { webSockets } from "../utils/ws.js";
 
-const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
 
 /**
@@ -37,361 +36,78 @@ export function init({ option, brk }) {
   const fieldset = createIndexSelector(option, chart);
   chartElement.append(fieldset);
 
-  // Bridge chart's index changes into signals system
-  const indexVersion = signals.createSignal(0);
-  chart.index.onChange.add(() => indexVersion.set(indexVersion() + 1));
-
-  const unitChoices = /** @type {const} */ ([Unit.usd, Unit.sats]);
-  /** @type {Signal<Unit>} */
-  const topUnit = signals.createPersistedSignal({
-    defaultValue: /** @type {Unit} */ (Unit.usd),
-    storageKey: `${keyPrefix}-price`,
-    urlKey: "u1",
-    serialize: (u) => u.id,
-    deserialize: (s) =>
-      /** @type {Unit} */ (unitChoices.find((u) => u.id === s) ?? Unit.usd),
-  });
-  const topUnitField = createReactiveChoiceField({
-    defaultValue: Unit.usd,
-    choices: unitChoices,
-    toKey: (u) => u.id,
-    toLabel: (u) => u.name,
-    selected: topUnit,
-    signals,
-    sorted: true,
-    type: "select",
-  });
-
-  chart.addFieldsetIfNeeded({
-    id: "charts-unit-0",
-    paneIndex: 0,
-    position: "nw",
-    createChild() {
-      return topUnitField;
-    },
-  });
-
-  const seriesListTop = /** @type {AnySeries[]} */ ([]);
-  const seriesListBottom = /** @type {AnySeries[]} */ ([]);
-
   /**
-   * @param {Object} params
-   * @param {AnySeries} params.series
-   * @param {Unit} params.unit
-   * @param {IndexName} params.index
+   * Build top blueprints with price series prepended for each unit
+   * @param {Map<Unit, AnyFetchedSeriesBlueprint[]>} optionTop
+   * @returns {Map<Unit, AnyFetchedSeriesBlueprint[]>}
    */
-  function printLatest({ series, unit, index }) {
-    const _latest = webSockets.kraken1dCandle.latest();
+  function buildTopBlueprints(optionTop) {
+    /** @type {Map<Unit, AnyFetchedSeriesBlueprint[]>} */
+    const result = new Map();
 
-    if (!_latest) return;
+    // USD price + option blueprints
+    /** @type {FetchedCandlestickSeriesBlueprint} */
+    const usdPrice = {
+      type: "Candlestick",
+      title: "Price",
+      metric: brk.metrics.price.usd.ohlc,
+    };
+    result.set(Unit.usd, [usdPrice, ...(optionTop.get(Unit.usd) ?? [])]);
 
-    const latest = { ..._latest };
+    // Sats price + option blueprints
+    /** @type {FetchedCandlestickSeriesBlueprint} */
+    const satsPrice = {
+      type: "Candlestick",
+      title: "Price",
+      metric: brk.metrics.price.sats.ohlc,
+      colors: [colors.red, colors.green],
+    };
+    result.set(Unit.sats, [satsPrice, ...(optionTop.get(Unit.sats) ?? [])]);
 
-    if (unit === Unit.sats) {
-      latest.open = Math.floor(ONE_BTC_IN_SATS / latest.open);
-      latest.high = Math.floor(ONE_BTC_IN_SATS / latest.high);
-      latest.low = Math.floor(ONE_BTC_IN_SATS / latest.low);
-      latest.close = Math.floor(ONE_BTC_IN_SATS / latest.close);
-    }
-
-    const last_ = series.getData().at(-1);
-    if (!last_) return;
-    const last = { ...last_ };
-
-    if ("close" in last) {
-      last.close = latest.close;
-    }
-    if ("value" in last) {
-      last.value = latest.close;
-    }
-    const date = new Date(/** @type {number} */ (latest.time) * 1000);
-
-    switch (index) {
-      case "height":
-      case "difficultyepoch":
-      case "halvingepoch": {
-        if ("close" in last) {
-          last.low = Math.min(last.low, latest.close);
-          last.high = Math.max(last.high, latest.close);
-        }
-        series.update(last);
-        break;
-      }
-      default: {
-        if (index === "weekindex") {
-          date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
-        } else if (index === "monthindex") {
-          date.setUTCDate(1);
-        } else if (index === "quarterindex") {
-          const month = date.getUTCMonth();
-          date.setUTCMonth(month - (month % 3), 1);
-        } else if (index === "semesterindex") {
-          const month = date.getUTCMonth();
-          date.setUTCMonth(month - (month % 6), 1);
-        } else if (index === "yearindex") {
-          date.setUTCMonth(0, 1);
-        } else if (index === "decadeindex") {
-          date.setUTCFullYear(
-            Math.floor(date.getUTCFullYear() / 10) * 10,
-            0,
-            1,
-          );
-        } else if (index !== "dateindex") {
-          throw Error("Unsupported");
-        }
-
-        const time = date.valueOf() / 1000;
-
-        if (time === last.time) {
-          if ("close" in last) {
-            last.low = Math.min(last.low, latest.low);
-            last.high = Math.max(last.high, latest.high);
-          }
-          series.update(last);
-        } else {
-          last.time = time;
-          series.update(last);
-        }
-      }
-    }
+    return result;
   }
 
-  signals.createScopedEffect(option, (option) => {
-    headingElement.innerHTML = option.title;
+  /** @type {ReturnType<typeof chart.setBlueprints> | null} */
+  let blueprints = null;
 
-    const bottomUnits = Array.from(option.bottom.keys());
+  function updatePriceWithLatest() {
+    const latest = webSockets.kraken1dCandle.latest();
+    if (!latest || !blueprints) return;
 
-    /** @type {Signal<Unit> | undefined} */
-    let bottomUnit;
+    const priceSeries = blueprints.panes[0].series[0];
+    const unit = blueprints.panes[0].unit;
+    if (!priceSeries?.hasData() || !unit) return;
 
-    if (bottomUnits.length) {
-      // Storage key based on unit group (sorted unit IDs) so each group remembers its selection
-      const unitGroupKey = bottomUnits
-        .map((u) => u.id)
-        .sort()
-        .join("-");
-      bottomUnit = signals.createPersistedSignal({
-        defaultValue: bottomUnits[0],
-        storageKey: `${keyPrefix}-unit-${unitGroupKey}`,
-        urlKey: "u2",
-        serialize: (u) => u.id,
-        deserialize: (s) =>
-          bottomUnits.find((u) => u.id === s) ?? bottomUnits[0],
-      });
-      const field = createReactiveChoiceField({
-        defaultValue: bottomUnits[0],
-        choices: bottomUnits,
-        toKey: (u) => u.id,
-        toLabel: (u) => u.name,
-        selected: bottomUnit,
-        signals,
-        sorted: true,
-        type: "select",
-      });
-      chart.addFieldsetIfNeeded({
-        id: "charts-unit-1",
-        paneIndex: 1,
-        position: "nw",
-        createChild() {
-          return field;
-        },
-      });
-    } else {
-      // Clean up bottom pane when new option has no bottom series
-      seriesListBottom.forEach((series) => series.remove());
-      seriesListBottom.length = 0;
-      chart.legends.bottom.removeFrom(0);
-    }
-
-    /**
-     * @param {Object} args
-     * @param {Map<Unit, AnyFetchedSeriesBlueprint[]>} args.blueprints
-     * @param {number} args.paneIndex
-     * @param {Unit} args.unit
-     * @param {IndexName} args.idx
-     * @param {AnySeries[]} args.seriesList
-     * @param {number} args.orderStart
-     * @param {Legend} args.legend
-     */
-    function createSeriesFromBlueprints({
-      blueprints,
-      paneIndex,
-      unit,
-      idx,
-      seriesList,
-      orderStart,
-      legend,
-    }) {
-      legend.removeFrom(orderStart);
-      seriesList.splice(orderStart).forEach((series) => series.remove());
-
-      blueprints.get(unit)?.forEach((blueprint, order) => {
-        order += orderStart;
-        const options = blueprint.options;
-        const indexes = Object.keys(blueprint.metric.by);
-
-        if (indexes.includes(idx)) {
-          switch (blueprint.type) {
-            case "Baseline": {
-              seriesList.push(
-                chart.serieses.addBaseline({
-                  metric: blueprint.metric,
-                  name: blueprint.title,
-                  unit,
-                  defaultActive: blueprint.defaultActive,
-                  paneIndex,
-                  options: {
-                    ...options,
-                    topLineColor:
-                      blueprint.color?.() ?? blueprint.colors?.[0](),
-                    bottomLineColor:
-                      blueprint.color?.() ?? blueprint.colors?.[1](),
-                  },
-                  order,
-                }),
-              );
-              break;
-            }
-            case "Histogram": {
-              seriesList.push(
-                chart.serieses.addHistogram({
-                  metric: blueprint.metric,
-                  name: blueprint.title,
-                  unit,
-                  color: blueprint.color,
-                  defaultActive: blueprint.defaultActive,
-                  paneIndex,
-                  options,
-                  order,
-                }),
-              );
-              break;
-            }
-            case "Candlestick": {
-              seriesList.push(
-                chart.serieses.addCandlestick({
-                  metric: blueprint.metric,
-                  name: blueprint.title,
-                  unit,
-                  colors: blueprint.colors,
-                  defaultActive: blueprint.defaultActive,
-                  paneIndex,
-                  options,
-                  order,
-                }),
-              );
-              break;
-            }
-            case "Dots": {
-              seriesList.push(
-                chart.serieses.addDots({
-                  metric: blueprint.metric,
-                  color: blueprint.color,
-                  name: blueprint.title,
-                  unit,
-                  defaultActive: blueprint.defaultActive,
-                  paneIndex,
-                  options,
-                  order,
-                }),
-              );
-              break;
-            }
-            case "Line":
-            case undefined:
-              seriesList.push(
-                chart.serieses.addLine({
-                  metric: blueprint.metric,
-                  color: blueprint.color,
-                  name: blueprint.title,
-                  unit,
-                  defaultActive: blueprint.defaultActive,
-                  paneIndex,
-                  options,
-                  order,
-                }),
-              );
-          }
-        }
-      });
-    }
-
-    // Price series + top pane blueprints: react to topUnit and index changes
-    signals.createScopedEffect(
-      () => ({ unit: topUnit(), _: indexVersion() }),
-      ({ unit }) => {
-        // Create price series BEFORE removing old one to prevent pane collapse
-        /** @type {AnySeries | undefined} */
-        let series;
-        switch (unit) {
-          case Unit.usd: {
-            series = chart.serieses.addCandlestick({
-              metric: brk.metrics.price.usd.ohlc,
-              name: "Price",
-              unit,
-              order: 0,
-            });
-            break;
-          }
-          case Unit.sats: {
-            series = chart.serieses.addCandlestick({
-              metric: brk.metrics.price.sats.ohlc,
-              name: "Price",
-              unit,
-              inverse: true,
-              order: 0,
-            });
-            break;
-          }
-        }
-        if (!series) throw Error("Unreachable");
-
-        seriesListTop[0]?.remove();
-        seriesListTop[0] = series;
-
-        // Live price update effect
-        signals.createEffect(
-          () => ({
-            latest: webSockets.kraken1dCandle.latest(),
-            hasData: series.hasData(),
-          }),
-          ({ latest, hasData }) => {
-            if (!series || !latest || !hasData) return;
-            printLatest({ series, unit, index: chart.index.get() });
-          },
-        );
-
-        // Top pane blueprint series
-        createSeriesFromBlueprints({
-          blueprints: option.top,
-          paneIndex: 0,
-          unit,
-          idx: chart.index.get(),
-          seriesList: seriesListTop,
-          orderStart: 1,
-          legend: chart.legends.top,
-        });
-      },
+    const last = /** @type {CandlestickData | undefined} */ (
+      priceSeries.getData().at(-1)
     );
+    if (!last) return;
 
-    // Bottom pane blueprints: react to bottomUnit and index changes
-    if (bottomUnit) {
-      signals.createScopedEffect(
-        () => ({ unit: bottomUnit(), _: indexVersion() }),
-        ({ unit }) => {
-          createSeriesFromBlueprints({
-            blueprints: option.bottom,
-            paneIndex: 1,
-            unit,
-            idx: chart.index.get(),
-            seriesList: seriesListBottom,
-            orderStart: 0,
-            legend: chart.legends.bottom,
-          });
-        },
-      );
-    }
+    // Convert to sats if needed
+    const close =
+      unit === Unit.sats
+        ? Math.floor(ONE_BTC_IN_SATS / latest.close)
+        : latest.close;
+
+    priceSeries.update({ ...last, close });
+  }
+
+  // When option changes, update heading and rebuild blueprints
+  signals.createEffect(option, (opt) => {
+    headingElement.innerHTML = opt.title;
+
+    blueprints = chart.setBlueprints({
+      top: buildTopBlueprints(opt.top),
+      bottom: opt.bottom,
+      onDataLoaded: updatePriceWithLatest,
+    });
   });
+
+  // Live price update listener
+  signals.createEffect(
+    () => webSockets.kraken1dCandle.latest(),
+    updatePriceWithLatest,
+  );
 }
 
 /**
