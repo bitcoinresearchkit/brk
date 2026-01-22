@@ -143,118 +143,10 @@ export function createChart({
     range.set(value);
   };
 
+  // ─── DOM ───
   const div = document.createElement("div");
   div.classList.add("chart");
   parent.append(div);
-
-  // Registry for shared active states (same name = linked across panes)
-  /** @type {Map<string, PersistedValue<boolean>>} */
-  const sharedActiveStates = new Map();
-
-  // Registry for linked series (same key = linked across panes)
-  /** @type {Map<string, Set<AnySeries>>} */
-  const seriesByKey = new Map();
-
-  // Track series by their home pane for pane collapse management
-  /** @type {Map<number, Map<AnySeries, ISeries[]>>} */
-  const seriesByHomePane = new Map();
-
-  let pendingVisibilityCheck = false;
-
-  /**
-   * Register series with its home pane for collapse management
-   * @param {number} paneIndex
-   * @param {AnySeries} series
-   * @param {ISeries[]} iseries
-   */
-  function registerSeriesPane(paneIndex, series, iseries) {
-    let paneMap = seriesByHomePane.get(paneIndex);
-    if (!paneMap) {
-      paneMap = new Map();
-      seriesByHomePane.set(paneIndex, paneMap);
-    }
-    paneMap.set(series, iseries);
-
-    // Defer visibility check until after all series are registered
-    if (!pendingVisibilityCheck) {
-      pendingVisibilityCheck = true;
-      requestAnimationFrame(() => {
-        pendingVisibilityCheck = false;
-        updatePaneVisibility();
-      });
-    }
-  }
-
-  /** @param {number} homePane */
-  function isAllHidden(homePane) {
-    const map = seriesByHomePane.get(homePane);
-    return !map || [...map.keys()].every((s) => !s.active.value);
-  }
-
-  /**
-   * Move all series from a home pane to a target physical pane
-   * @param {number} homePane
-   * @param {number} targetPane
-   */
-  function moveSeriesToPane(homePane, targetPane) {
-    const map = seriesByHomePane.get(homePane);
-    if (!map) return;
-    for (const iseries of map.values()) {
-      for (const is of iseries) {
-        if (is.getPane().paneIndex() !== targetPane) {
-          is.moveToPane(targetPane);
-        }
-      }
-    }
-  }
-
-  /**
-   * Wait for pane to exist then run callback
-   * @param {number} paneIndex
-   * @param {VoidFunction} callback
-   * @param {number} [retries]
-   */
-  function whenPaneReady(paneIndex, callback, retries = 10) {
-    const pane = ichart.panes().at(paneIndex);
-    const parent = pane?.getHTMLElement()?.children?.item(1)?.firstChild;
-    if (parent) {
-      callback();
-    } else if (retries > 0) {
-      requestAnimationFrame(() =>
-        whenPaneReady(paneIndex, callback, retries - 1),
-      );
-    }
-  }
-
-  /**
-   * Update pane layout based on visibility state
-   */
-  function updatePaneVisibility() {
-    const pane0Hidden = isAllHidden(0);
-    const pane1Hidden = isAllHidden(1);
-    const bothVisible = !pane0Hidden && !pane1Hidden;
-
-    // Pane 1 series go to pane 1 only when both panes visible
-    moveSeriesToPane(1, bothVisible ? 1 : 0);
-
-    if (bothVisible) {
-      // Wait for pane 1 since it's being created
-      whenPaneReady(1, () => {
-        createPaneFieldsets(0);
-        createPaneFieldsets(1);
-      });
-    } else {
-      whenPaneReady(0, () => {
-        if (pane0Hidden && !pane1Hidden) {
-          // Only pane 1 visible: show pane 1's fieldsets on pane 0
-          createPaneFieldsets(1, 0);
-        } else {
-          // Only pane 0 visible or both hidden
-          createPaneFieldsets(0);
-        }
-      });
-    }
-  }
 
   const legendTop = createLegend();
   div.append(legendTop.element);
@@ -266,6 +158,7 @@ export function createChart({
   const legendBottom = createLegend();
   div.append(legendBottom.element);
 
+  // ─── Lightweight Charts ───
   const ichart = /** @type {CreateLCChart} */ (untypedLcCreateChart)(
     chartDiv,
     /** @satisfies {DeepPartial<ChartOptions>} */ ({
@@ -414,63 +307,146 @@ export function createChart({
     new ResizeObserver(() => ichart.timeScale().fitContent()).observe(chartDiv);
   }
 
-  /**
-   * @typedef {Object} FieldsetConfig
-   * @property {string} id
-   * @property {"nw" | "ne" | "se" | "sw"} position
-   * @property {(pane: IPaneApi<Time>) => HTMLElement} createChild
-   */
+  /** @type {Map<string, PersistedValue<boolean>>} */
+  const sharedActiveStates = new Map();
 
-  /** @type {Map<number, Map<string, FieldsetConfig>>} */
-  const paneFieldsetConfigs = new Map();
+  /** @type {Map<string, Set<AnySeries>>} */
+  const seriesByKey = new Map();
 
-  /**
-   * Create all fieldsets for a logical pane on a physical pane
-   * @param {number} configPaneIndex - which pane's config to use
-   * @param {number} [targetPaneIndex] - which physical pane to create on (defaults to configPaneIndex)
-   */
-  function createPaneFieldsets(
-    configPaneIndex,
-    targetPaneIndex = configPaneIndex,
-  ) {
-    const pane = ichart.panes().at(targetPaneIndex);
-    if (!pane) return;
+  const fieldsets = {
+    /** @type {Map<number, Map<string, { id: string, position: string, createChild: (pane: IPaneApi<Time>) => HTMLElement }>>} */
+    configs: new Map(),
 
-    const parent = pane.getHTMLElement()?.children?.item(1)?.firstChild;
-    if (!parent) return;
+    /**
+     * @param {number} configPaneIndex
+     * @param {number} [targetPaneIndex]
+     */
+    createForPane(configPaneIndex, targetPaneIndex = configPaneIndex) {
+      const pane = ichart.panes().at(targetPaneIndex);
+      if (!pane) return;
 
-    const configs = paneFieldsetConfigs.get(configPaneIndex);
-    if (!configs) return;
+      const parent = pane.getHTMLElement()?.children?.item(1)?.firstChild;
+      if (!parent) return;
 
-    for (const { id, position, createChild } of configs.values()) {
-      // Remove existing at same position
-      /** @type {Element} */ (parent).querySelectorAll(`[data-position="${position}"]`).forEach((el) => el.remove());
+      const configs = this.configs.get(configPaneIndex);
+      if (!configs) return;
 
-      const fieldset = document.createElement("fieldset");
-      fieldset.dataset.size = "xs";
-      fieldset.dataset.position = position;
-      fieldset.id = `${id}-${configPaneIndex}`;
-      parent.appendChild(fieldset);
-      fieldset.append(createChild(pane));
-    }
-  }
+      for (const { id, position, createChild } of configs.values()) {
+        /** @type {Element} */ (parent).querySelectorAll(`[data-position="${position}"]`).forEach((el) => el.remove());
 
-  /**
-   * Register a fieldset config for a pane (created when pane becomes active)
-   * @param {Object} args
-   * @param {string} args.id
-   * @param {number} args.paneIndex
-   * @param {"nw" | "ne" | "se" | "sw"} args.position
-   * @param {(pane: IPaneApi<Time>) => HTMLElement} args.createChild
-   */
-  function addFieldsetIfNeeded({ paneIndex, id, position, createChild }) {
-    let configs = paneFieldsetConfigs.get(paneIndex);
-    if (!configs) {
-      configs = new Map();
-      paneFieldsetConfigs.set(paneIndex, configs);
-    }
-    configs.set(id, { id, position, createChild });
-  }
+        const fieldset = document.createElement("fieldset");
+        fieldset.dataset.size = "xs";
+        fieldset.dataset.position = position;
+        fieldset.id = `${id}-${configPaneIndex}`;
+        parent.appendChild(fieldset);
+        fieldset.append(createChild(pane));
+      }
+    },
+
+    /**
+     * @param {Object} args
+     * @param {string} args.id
+     * @param {number} args.paneIndex
+     * @param {"nw" | "ne" | "se" | "sw"} args.position
+     * @param {(pane: IPaneApi<Time>) => HTMLElement} args.createChild
+     */
+    addIfNeeded({ paneIndex, id, position, createChild }) {
+      let configs = this.configs.get(paneIndex);
+      if (!configs) {
+        configs = new Map();
+        this.configs.set(paneIndex, configs);
+      }
+      configs.set(id, { id, position, createChild });
+    },
+  };
+
+  const panes = {
+    /** @type {Map<number, Map<AnySeries, ISeries[]>>} */
+    seriesByHome: new Map(),
+    pendingVisibilityCheck: false,
+
+    /** @param {number} homePane */
+    isAllHidden(homePane) {
+      const map = this.seriesByHome.get(homePane);
+      return !map || [...map.keys()].every((s) => !s.active.value);
+    },
+
+    /**
+     * @param {number} homePane
+     * @param {number} targetPane
+     */
+    moveTo(homePane, targetPane) {
+      const map = this.seriesByHome.get(homePane);
+      if (!map) return;
+      for (const iseries of map.values()) {
+        for (const is of iseries) {
+          if (is.getPane().paneIndex() !== targetPane) {
+            is.moveToPane(targetPane);
+          }
+        }
+      }
+    },
+
+    /**
+     * @param {number} paneIndex
+     * @param {VoidFunction} callback
+     * @param {number} [retries]
+     */
+    whenReady(paneIndex, callback, retries = 10) {
+      const pane = ichart.panes().at(paneIndex);
+      const parent = pane?.getHTMLElement()?.children?.item(1)?.firstChild;
+      if (parent) {
+        callback();
+      } else if (retries > 0) {
+        requestAnimationFrame(() => this.whenReady(paneIndex, callback, retries - 1));
+      }
+    },
+
+    updateVisibility() {
+      const pane0Hidden = this.isAllHidden(0);
+      const pane1Hidden = this.isAllHidden(1);
+      const bothVisible = !pane0Hidden && !pane1Hidden;
+
+      this.moveTo(1, bothVisible ? 1 : 0);
+
+      if (bothVisible) {
+        this.whenReady(1, () => {
+          fieldsets.createForPane(0);
+          fieldsets.createForPane(1);
+        });
+      } else {
+        this.whenReady(0, () => {
+          if (pane0Hidden && !pane1Hidden) {
+            fieldsets.createForPane(1, 0);
+          } else {
+            fieldsets.createForPane(0);
+          }
+        });
+      }
+    },
+
+    /**
+     * @param {number} paneIndex
+     * @param {AnySeries} series
+     * @param {ISeries[]} iseries
+     */
+    register(paneIndex, series, iseries) {
+      let paneMap = this.seriesByHome.get(paneIndex);
+      if (!paneMap) {
+        paneMap = new Map();
+        this.seriesByHome.set(paneIndex, paneMap);
+      }
+      paneMap.set(series, iseries);
+
+      if (!this.pendingVisibilityCheck) {
+        this.pendingVisibilityCheck = true;
+        requestAnimationFrame(() => {
+          this.pendingVisibilityCheck = false;
+          this.updateVisibility();
+        });
+      }
+    },
+  };
 
   /**
    * @param {Object} args
@@ -506,7 +482,7 @@ export function createChart({
     // Apply scale immediately
     applyScale(persisted.value);
 
-    addFieldsetIfNeeded({
+    fieldsets.addIfNeeded({
       id,
       paneIndex,
       position: "sw",
@@ -526,6 +502,7 @@ export function createChart({
     });
   }
 
+  // ─── Series Factory ───
   /**
    * @param {Object} args
    * @param {string} args.name
@@ -607,7 +584,7 @@ export function createChart({
           }
         });
         if (value && !wasActive) _fetch?.();
-        updatePaneVisibility();
+        panes.updateVisibility();
       },
       setOrder,
       show,
@@ -625,7 +602,7 @@ export function createChart({
       remove() {
         onRemove();
         seriesByKey.get(key)?.delete(series);
-        seriesByHomePane.get(paneIndex)?.delete(series);
+        panes.seriesByHome.get(paneIndex)?.delete(series);
       },
     };
 
@@ -804,7 +781,7 @@ export function createChart({
     legendTop,
     legendBottom,
 
-    addFieldsetIfNeeded,
+    addFieldsetIfNeeded: fieldsets.addIfNeeded.bind(fieldsets),
 
     /**
      * @param {Object} args
@@ -947,7 +924,7 @@ export function createChart({
         },
       });
 
-      registerSeriesPane(paneIndex, series, [candlestickISeries, lineISeries]);
+      panes.register(paneIndex, series, [candlestickISeries, lineISeries]);
 
       return series;
     },
@@ -1054,7 +1031,7 @@ export function createChart({
         },
       });
 
-      registerSeriesPane(paneIndex, series, [iseries]);
+      panes.register(paneIndex, series, [iseries]);
 
       return series;
     },
@@ -1147,7 +1124,7 @@ export function createChart({
         },
       });
 
-      registerSeriesPane(paneIndex, series, [iseries]);
+      panes.register(paneIndex, series, [iseries]);
 
       return series;
     },
@@ -1254,7 +1231,7 @@ export function createChart({
         },
       });
 
-      registerSeriesPane(paneIndex, series, [iseries]);
+      panes.register(paneIndex, series, [iseries]);
 
       return series;
     },
@@ -1357,7 +1334,7 @@ export function createChart({
         },
       });
 
-      registerSeriesPane(paneIndex, series, [iseries]);
+      panes.register(paneIndex, series, [iseries]);
 
       return series;
     },
@@ -1398,7 +1375,7 @@ export function createChart({
     domain.innerText = window.location.host;
     domain.id = "domain";
 
-    addFieldsetIfNeeded({
+    fieldsets.addIfNeeded({
       id: "capture",
       paneIndex: 0,
       position: "ne",
