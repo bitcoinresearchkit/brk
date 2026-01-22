@@ -1,20 +1,17 @@
 import { createPartialOptions } from "./partial.js";
-import {
-  createButtonElement,
-  createAnchorElement,
-} from "../utils/dom.js";
+import { createButtonElement, createAnchorElement } from "../utils/dom.js";
 import { pushHistory, resetParams } from "../utils/url.js";
 import { readStored, writeToStorage } from "../utils/storage.js";
 import { stringToId } from "../utils/format.js";
 import { collect, markUsed, logUnused } from "./unused.js";
+import { setQr } from "../panes/share.js";
 
 /**
  * @param {Object} args
  * @param {Signals} args.signals
  * @param {BrkClient} args.brk
- * @param {Signal<string | null>} args.qrcode
  */
-export function initOptions({ signals, brk, qrcode }) {
+export function initOptions({ signals, brk }) {
   collect(brk.metrics);
 
   const LS_SELECTED_KEY = `selected_path`;
@@ -93,12 +90,11 @@ export function initOptions({ signals, brk, qrcode }) {
   /**
    * @param {Object} args
    * @param {Option} args.option
-   * @param {Signal<string | null>} args.qrcode
    * @param {string} [args.name]
    */
-  function createOptionElement({ option, name, qrcode }) {
+  function createOptionElement({ option, name }) {
     const title = option.title;
-    if (option.kind === "url") {
+    if (option.kind === "link") {
       const href = option.url();
 
       if (option.qrcode) {
@@ -106,7 +102,7 @@ export function initOptions({ signals, brk, qrcode }) {
           inside: option.name,
           title,
           onClick: () => {
-            qrcode.set(option.url);
+            setQr(option.url());
           },
         });
       } else {
@@ -215,7 +211,7 @@ export function initOptions({ signals, brk, qrcode }) {
           Object.assign(
             option,
             /** @satisfies {UrlOption} */ ({
-              kind: "url",
+              kind: "link",
               path,
               name,
               title: name,
@@ -318,7 +314,6 @@ export function initOptions({ signals, brk, qrcode }) {
       } else {
         const element = createOptionElement({
           option: node.option,
-          qrcode,
         });
         li.append(element);
       }

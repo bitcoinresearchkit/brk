@@ -1,14 +1,14 @@
-import signals from "../signals.js";
-
 /**
  * @template T
  * @param {(callback: (value: T) => void) => WebSocket} creator
  */
 function createWebsocket(creator) {
   let ws = /** @type {WebSocket | null} */ (null);
+  let _live = false;
+  let _latest = /** @type {T | null} */ (null);
 
-  const live = signals.createSignal(false);
-  const latest = signals.createSignal(/** @type {T | null} */ (null));
+  /** @type {Set<(value: T) => void>} */
+  const listeners = new Set();
 
   function reinitWebSocket() {
     if (!ws || ws.readyState === ws.CLOSED) {
@@ -22,19 +22,31 @@ function createWebsocket(creator) {
   }
 
   const resource = {
-    live,
-    latest,
+    live() {
+      return _live;
+    },
+    latest() {
+      return _latest;
+    },
+    /** @param {(value: T) => void} callback */
+    onLatest(callback) {
+      listeners.add(callback);
+      return () => listeners.delete(callback);
+    },
     open() {
-      ws = creator((value) => latest.set(() => value));
+      ws = creator((value) => {
+        _latest = value;
+        listeners.forEach((cb) => cb(value));
+      });
 
       ws.addEventListener("open", () => {
         console.log("ws: open");
-        live.set(true);
+        _live = true;
       });
 
       ws.addEventListener("close", () => {
         console.log("ws: close");
-        live.set(false);
+        _live = false;
       });
 
       window.document.addEventListener(
@@ -51,7 +63,7 @@ function createWebsocket(creator) {
         reinitWebSocketIfDocumentNotHidden,
       );
       window.document.removeEventListener("online", reinitWebSocket);
-      live.set(false);
+      _live = false;
       ws = null;
     },
   };

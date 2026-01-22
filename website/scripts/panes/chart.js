@@ -29,7 +29,6 @@ export function init({ option, brk }) {
     parent: chartElement,
     id: "charts",
     brk,
-    captureElement: chartElement,
   });
 
   // Create index selector using chart's index state
@@ -104,10 +103,7 @@ export function init({ option, brk }) {
   });
 
   // Live price update listener
-  signals.createEffect(
-    () => webSockets.kraken1dCandle.latest(),
-    updatePriceWithLatest,
-  );
+  webSockets.kraken1dCandle.onLatest(updatePriceWithLatest);
 }
 
 /**
@@ -153,10 +149,6 @@ function createIndexSelector(option, chart) {
   const fieldset = window.document.createElement("fieldset");
   fieldset.id = "interval";
   fieldset.dataset.size = "sm";
-
-  const screenshotSpan = window.document.createElement("span");
-  screenshotSpan.innerText = "interval:";
-  fieldset.append(screenshotSpan);
 
   // Track user's preferred index (only updated on explicit selection)
   let preferredIndex = chart.index.name.value;

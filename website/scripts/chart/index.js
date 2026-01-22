@@ -7,7 +7,7 @@ import {
   // } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.development.mjs";
 } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.mjs";
 import { createLegend } from "./legend.js";
-import { capture, canCapture } from "./capture.js";
+import { capture } from "./capture.js";
 import { colors } from "./colors.js";
 import { createChoiceField } from "../utils/dom.js";
 import { createPersistedValue } from "../utils/persisted.js";
@@ -76,14 +76,12 @@ const lineWidth = /** @type {any} */ (1.5);
  * @param {HTMLElement} args.parent
  * @param {BrkClient} args.brk
  * @param {true} [args.fitContent]
- * @param {HTMLElement} [args.captureElement]
  */
 export function createChart({
   parent,
   id: chartId,
   brk,
   fitContent,
-  captureElement,
 }) {
   const baseUrl = brk.baseUrl.replace(/\/$/, "");
 
@@ -1513,33 +1511,19 @@ export function createChart({
     },
   };
 
-  if (captureElement && canCapture) {
-    const domain = document.createElement("p");
-    domain.innerText = window.location.host;
-    domain.id = "domain";
-
-    fieldsets.addIfNeeded({
-      id: "capture",
-      paneIndex: 0,
-      position: "ne",
-      createChild() {
-        const button = document.createElement("button");
-        button.id = "capture";
-        button.innerText = "capture";
-        button.title = "Capture chart as image";
-        button.addEventListener("click", async () => {
-          captureElement.dataset.screenshot = "true";
-          captureElement.append(domain);
-          try {
-            await capture({ element: captureElement, name: chartId });
-          } catch {}
-          captureElement.removeChild(domain);
-          captureElement.dataset.screenshot = "false";
-        });
-        return button;
-      },
+  const captureButton = document.createElement("button");
+  captureButton.className = "capture";
+  captureButton.innerText = "capture";
+  captureButton.title = "Capture chart as image";
+  captureButton.addEventListener("click", () => {
+    capture({
+      screenshot: ichart.takeScreenshot(),
+      chartWidth: elements.chart.clientWidth,
+      parent,
+      legends,
     });
-  }
+  });
+  elements.chart.append(captureButton);
 
   return chart;
 }

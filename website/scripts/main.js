@@ -5,11 +5,7 @@ import signals from "./signals.js";
 import { BrkClient } from "./modules/brk-client/index.js";
 import { initOptions } from "./options/full.js";
 import ufuzzy from "./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.mjs";
-import * as leanQr from "./modules/lean-qr/2.7.1/index.mjs";
-import { init as initExplorer } from "./panes/_explorer.js";
 import { init as initChart } from "./panes/chart.js";
-import { init as initTable } from "./panes/table.js";
-import { init as initSimulation } from "./panes/_simulation.js";
 import { next } from "./utils/timing.js";
 import { replaceHistory } from "./utils/url.js";
 import { removeStored, writeToStorage } from "./utils/storage.js";
@@ -18,7 +14,6 @@ import {
   asideLabelElement,
   bodyElement,
   chartElement,
-  explorerElement,
   frameSelectorsElement,
   mainElement,
   navElement,
@@ -26,9 +21,7 @@ import {
   searchElement,
   searchInput,
   searchResultsElement,
-  simulationElement,
   style,
-  tableElement,
 } from "./utils/elements.js";
 
 function initFrameSelectors() {
@@ -120,13 +113,9 @@ signals.createRoot(() => {
 
   console.log(`VERSION = ${brk.VERSION}`);
 
-  const qrcode = signals.createSignal(/** @type {string | null} */ (null));
-
-  signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
-    if (latest) {
-      console.log("close:", latest.close);
-      window.document.title = `${latest.close.toLocaleString("en-us")} | ${window.location.host}`;
-    }
+  webSockets.kraken1dCandle.onLatest((latest) => {
+    console.log("close:", latest.close);
+    window.document.title = `${latest.close.toLocaleString("en-us")} | ${window.location.host}`;
   });
 
   // function createLastHeightResource() {
@@ -149,7 +138,6 @@ signals.createRoot(() => {
   const options = initOptions({
     signals,
     brk,
-    qrcode,
   });
 
   window.addEventListener("popstate", (_event) => {
@@ -185,31 +173,15 @@ signals.createRoot(() => {
       const chartOption = signals.createSignal(
         /** @type {ChartOption | null} */ (null),
       );
-      const simOption = signals.createSignal(
-        /** @type {SimulationOption | null} */ (null),
-      );
 
       let previousElement = /** @type {HTMLElement | undefined} */ (undefined);
       let firstTimeLoadingChart = true;
-      let firstTimeLoadingTable = true;
-      let firstTimeLoadingSimulation = true;
-      let firstTimeLoadingExplorer = true;
 
       signals.createScopedEffect(options.selected, (option) => {
-        /** @type {HTMLElement} */
+        /** @type {HTMLElement | undefined} */
         let element;
 
         switch (option.kind) {
-          case "explorer": {
-            element = explorerElement;
-
-            if (firstTimeLoadingExplorer) {
-              signals.runWithOwner(owner, () => initExplorer());
-            }
-            firstTimeLoadingExplorer = false;
-
-            break;
-          }
           case "chart": {
             element = chartElement;
 
@@ -227,32 +199,12 @@ signals.createRoot(() => {
 
             break;
           }
-          case "table": {
-            element = tableElement;
-
-            if (firstTimeLoadingTable) {
-              signals.runWithOwner(owner, () => initTable());
-            }
-            firstTimeLoadingTable = false;
-
-            break;
-          }
-          case "simulation": {
-            element = simulationElement;
-
-            simOption.set(option);
-
-            if (firstTimeLoadingSimulation) {
-              signals.runWithOwner(owner, () => initSimulation());
-            }
-            firstTimeLoadingSimulation = false;
-
-            break;
-          }
-          case "url": {
+          case "link": {
             return;
           }
         }
+
+        if (!element) throw "Element should be set";
 
         if (element !== previousElement) {
           if (previousElement) previousElement.hidden = true;
@@ -505,7 +457,6 @@ signals.createRoot(() => {
           const element = options.createOptionElement({
             option,
             name: title,
-            qrcode,
           });
 
           if (element) {
@@ -521,60 +472,6 @@ signals.createRoot(() => {
 
     searchInput.addEventListener("input", inputEvent);
   });
-
-  function initShare() {
-    const shareDiv = getElementById("share-div");
-    const shareContentDiv = getElementById("share-content-div");
-    const shareButton = getElementById("share-button");
-
-    shareButton.addEventListener("click", () => {
-      qrcode.set(window.location.href);
-    });
-
-    
-    shareDiv.addEventListener("click", () => {
-      qrcode.set(null);
-    });
-
-    shareContentDiv.addEventListener("click", (event) => {
-      event.stopPropagation();
-      event.preventDefault();
-    });
-
-    signals.runWithOwner(owner, () => {
-      const imgQrcode = /** @type {HTMLImageElement} */ (
-        getElementById("share-img")
-      );
-
-      const anchor = /** @type {HTMLAnchorElement} */ (
-        getElementById("share-anchor")
-      );
-
-      signals.createEffect(qrcode, (qrcode) => {
-        if (!qrcode) {
-          shareDiv.hidden = true;
-          return;
-        }
-
-        const href = qrcode;
-        anchor.href = href;
-        anchor.innerText =
-          (href.startsWith("http")
-            ? href.split("//").at(-1)
-            : href.split(":").at(-1)) || "";
-
-        imgQrcode.src =
-          leanQr.generate(/** @type {any} */ (href))?.toDataURL({
-            // @ts-ignore
-            padX: 0,
-            padY: 0,
-          }) || "";
-
-        shareDiv.hidden = false;
-      });
-    });
-  }
-  initShare();
 
   function initDesktopResizeBar() {
     const resizeBar = getElementById("resize-bar");

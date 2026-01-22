@@ -98,7 +98,7 @@
  * @typedef {Required<PartialSimulationOption> & ProcessedOptionAddons} SimulationOption
  *
  * @typedef {Object} PartialUrlOptionSpecific
- * @property {"url"} [kind]
+ * @property {"link"} [kind]
  * @property {() => string} url
  * @property {string} title
  * @property {boolean} [qrcode]
