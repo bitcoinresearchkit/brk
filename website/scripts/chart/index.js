@@ -169,131 +169,62 @@ export function createChart({
     }
     paneMap.set(series, iseries);
 
-    // Create fieldsets when pane becomes active (first series or after restore)
-    if (!panesWithFieldsets.has(paneIndex)) {
-      setTimeout(() => createPaneFieldsets(paneIndex), paneIndex ? 50 : 0);
-    }
-
     // Defer visibility check until after all series are registered
     if (!pendingVisibilityCheck) {
       pendingVisibilityCheck = true;
       requestAnimationFrame(() => {
         pendingVisibilityCheck = false;
-        updatePaneVisibility(0);
-        updatePaneVisibility(1);
+        updatePaneVisibility();
       });
     }
   }
 
+  /** @param {number} homePane */
+  function isAllHidden(homePane) {
+    const map = seriesByHomePane.get(homePane);
+    return !map || [...map.keys()].every((s) => !s.active.value);
+  }
+
   /**
-   * Check if pane should collapse (all series hidden) and move series accordingly
+   * Move all series from a home pane to a target physical pane
    * @param {number} homePane
+   * @param {number} targetPane
    */
-  function updatePaneVisibility(homePane) {
-    const paneMap = seriesByHomePane.get(homePane);
-    if (!paneMap || paneMap.size === 0) return;
-
-    const allHidden = [...paneMap.keys()].every((s) => !s.active.value);
-
-    if (homePane === 0) {
-      // For pane 0: manage pane 1 series based on visibility of both panes
-      const pane1Map = seriesByHomePane.get(1);
-      if (!pane1Map || pane1Map.size === 0) return;
-
-      const pane1AllHidden = [...pane1Map.keys()].every((s) => !s.active.value);
-
-      // Determine what fieldsets should show on physical pane 0
-      // and whether pane 1 should exist
-      if (allHidden && !pane1AllHidden) {
-        // Pane 0 hidden, pane 1 visible: show pane 1 content/fieldsets on pane 0
-        for (const iseries of pane1Map.values()) {
-          for (const is of iseries) {
-            if (is.getPane().paneIndex() !== 0) {
-              is.moveToPane(0);
-            }
-          }
-        }
-        panesWithFieldsets.delete(0);
-        panesWithFieldsets.delete(1);
-        setTimeout(() => createPaneFieldsets(1, 0), 50);
-      } else if (!allHidden && !pane1AllHidden) {
-        // Both visible: pane 0 on pane 0, pane 1 on pane 1
-        for (const iseries of pane1Map.values()) {
-          for (const is of iseries) {
-            if (is.getPane().paneIndex() === 0) {
-              is.moveToPane(1);
-            }
-          }
-        }
-        panesWithFieldsets.delete(0);
-        panesWithFieldsets.delete(1);
-        setTimeout(() => {
-          createPaneFieldsets(0);
-          createPaneFieldsets(1);
-        }, 50);
-      } else if (!allHidden && pane1AllHidden) {
-        // Pane 0 visible, pane 1 hidden: show pane 0 fieldsets, pane 1 collapsed
-        for (const iseries of pane1Map.values()) {
-          for (const is of iseries) {
-            if (is.getPane().paneIndex() !== 0) {
-              is.moveToPane(0);
-            }
-          }
-        }
-        panesWithFieldsets.delete(0);
-        panesWithFieldsets.delete(1);
-        setTimeout(() => createPaneFieldsets(0), 50);
-      }
-      // If both hidden: leave as-is, show pane 0 fieldsets (already there)
-    } else {
-      // For pane 1: move series to pane 0 when hidden, back when visible
-      const pane0Map = seriesByHomePane.get(0);
-      const pane0AllHidden = pane0Map
-        ? [...pane0Map.keys()].every((s) => !s.active.value)
-        : true;
-
-      if (allHidden) {
-        // Pane 1 hidden: move to pane 0
-        for (const iseries of paneMap.values()) {
-          for (const is of iseries) {
-            if (is.getPane().paneIndex() !== 0) {
-              is.moveToPane(0);
-            }
-          }
-        }
-        panesWithFieldsets.delete(homePane);
-        // Update pane 0 fieldsets based on what's visible
-        if (pane0AllHidden) {
-          // Both hidden: keep pane 0 fieldsets
-        } else {
-          // Pane 0 visible: show pane 0 fieldsets
-          panesWithFieldsets.delete(0);
-          setTimeout(() => createPaneFieldsets(0), 50);
-        }
-      } else {
-        // Pane 1 visible: move back to pane 1 if pane 0 is also visible
-        if (!pane0AllHidden) {
-          for (const iseries of paneMap.values()) {
-            for (const is of iseries) {
-              if (is.getPane().paneIndex() === 0) {
-                is.moveToPane(homePane);
-              }
-            }
-          }
-          panesWithFieldsets.delete(0);
-          panesWithFieldsets.delete(homePane);
-          setTimeout(() => {
-            createPaneFieldsets(0);
-            createPaneFieldsets(homePane);
-          }, 50);
-        } else {
-          // Pane 0 hidden, pane 1 visible: show pane 1 fieldsets on pane 0
-          panesWithFieldsets.delete(0);
-          panesWithFieldsets.delete(homePane);
-          setTimeout(() => createPaneFieldsets(homePane, 0), 50);
+  function moveSeriesToPane(homePane, targetPane) {
+    const map = seriesByHomePane.get(homePane);
+    if (!map) return;
+    for (const iseries of map.values()) {
+      for (const is of iseries) {
+        if (is.getPane().paneIndex() !== targetPane) {
+          is.moveToPane(targetPane);
         }
       }
     }
+  }
+
+  /**
+   * Update pane layout based on visibility state
+   */
+  function updatePaneVisibility() {
+    const pane0Hidden = isAllHidden(0);
+    const pane1Hidden = isAllHidden(1);
+    const bothVisible = !pane0Hidden && !pane1Hidden;
+
+    // Pane 1 series go to pane 1 only when both panes visible
+    moveSeriesToPane(1, bothVisible ? 1 : 0);
+
+    setTimeout(() => {
+      if (bothVisible) {
+        createPaneFieldsets(0);
+        createPaneFieldsets(1);
+      } else if (pane0Hidden && !pane1Hidden) {
+        // Only pane 1 visible: show pane 1's fieldsets on pane 0
+        createPaneFieldsets(1, 0);
+      } else {
+        // Only pane 0 visible or both hidden
+        createPaneFieldsets(0);
+      }
+    }, 50);
   }
 
   const legendTop = createLegend();
@@ -466,9 +397,6 @@ export function createChart({
   /** @type {Map<number, Map<string, FieldsetConfig>>} */
   const paneFieldsetConfigs = new Map();
 
-  /** @type {Set<number>} */
-  const panesWithFieldsets = new Set();
-
   /**
    * Create all fieldsets for a logical pane on a physical pane
    * @param {number} configPaneIndex - which pane's config to use
@@ -503,8 +431,6 @@ export function createChart({
       parent.appendChild(fieldset);
       fieldset.append(createChild(pane));
     }
-
-    panesWithFieldsets.add(configPaneIndex);
   }
 
   /**
@@ -659,7 +585,7 @@ export function createChart({
           }
         });
         if (value && !wasActive) _fetch?.();
-        updatePaneVisibility(paneIndex);
+        updatePaneVisibility();
       },
       setOrder,
       show,

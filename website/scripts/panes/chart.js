@@ -222,8 +222,6 @@ export function init({ option, brk }) {
       orderStart,
       legend,
     }) {
-      console.log("createSeriesFromBlueprints paneIndex:", paneIndex);
-
       legend.removeFrom(orderStart);
       seriesList.splice(orderStart).forEach((series) => series.remove());
 

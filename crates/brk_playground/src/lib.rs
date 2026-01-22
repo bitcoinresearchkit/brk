@@ -23,6 +23,6 @@ pub use oracle::{
     HeightPriceResult, OracleConfig, OracleResult, derive_daily_ohlc,
     derive_daily_ohlc_with_confidence, derive_height_price, derive_height_price_with_confidence,
     derive_ohlc_from_height_prices, derive_ohlc_from_height_prices_with_confidence,
-    derive_price_fast, derive_price_from_histogram,
+    derive_price_fast, derive_price_fast_with_confidence, derive_price_from_histogram,
 };
 pub use signal::{compute_expected_bins_per_day, usd_to_bin};
