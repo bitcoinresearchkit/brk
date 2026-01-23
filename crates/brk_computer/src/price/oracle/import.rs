@@ -46,6 +46,24 @@ impl Vecs {
             |di: DateIndex, iter| iter.get(di).map(|o: OHLCCents| OHLCDollars::from(o)),
         );
 
+        // Daily OHLC from height close only
+        let close_ohlc_cents = BytesVec::forced_import(db, "close_ohlc_cents", version)?;
+        let close_ohlc_dollars = LazyVecFrom1::init(
+            "close_ohlc_dollars",
+            version,
+            close_ohlc_cents.boxed_clone(),
+            |di: DateIndex, iter| iter.get(di).map(|o: OHLCCents| OHLCDollars::from(o)),
+        );
+
+        // Daily OHLC from height mid price ((open+close)/2)
+        let mid_ohlc_cents = BytesVec::forced_import(db, "mid_ohlc_cents", version)?;
+        let mid_ohlc_dollars = LazyVecFrom1::init(
+            "mid_ohlc_dollars",
+            version,
+            mid_ohlc_cents.boxed_clone(),
+            |di: DateIndex, iter| iter.get(di).map(|o: OHLCCents| OHLCDollars::from(o)),
+        );
+
         // Phase Oracle V2 (round USD template matching)
         // v3: Peak prices use 100 bins (downsampled from 200)
         let phase_v2_version = version + Version::new(3);
@@ -111,6 +129,10 @@ impl Vecs {
             ohlc_cents,
             ohlc_dollars,
             tx_count,
+            close_ohlc_cents,
+            close_ohlc_dollars,
+            mid_ohlc_cents,
+            mid_ohlc_dollars,
             phase_v2_histogram,
             phase_v2_price_cents,
             phase_v2_peak_price_cents,

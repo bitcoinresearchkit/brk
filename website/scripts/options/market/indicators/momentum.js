@@ -1,6 +1,7 @@
 /** Momentum indicators (RSI, StochRSI, Stochastic, MACD) */
 
 import { Unit } from "../../../utils/units.js";
+import { priceLine, priceLines } from "../../constants.js";
 import { line, histogram } from "../../series.js";
 
 /**
@@ -9,14 +10,14 @@ import { line, histogram } from "../../series.js";
  * @param {Market["indicators"]} indicators
  */
 export function createMomentumSection(ctx, indicators) {
-  const { colors, createPriceLine } = ctx;
+  const { colors } = ctx;
 
   return {
     name: "Momentum",
     tree: [
       {
         name: "RSI",
-        title: "Relative Strength Index (14d)",
+        title: "RSI (14d)",
         bottom: [
           line({
             metric: indicators.rsi14d,
@@ -38,13 +39,14 @@ export function createMomentumSection(ctx, indicators) {
             defaultActive: false,
             unit: Unit.index,
           }),
-          createPriceLine({ unit: Unit.index, number: 70 }),
-          createPriceLine({
+          priceLine({ ctx, unit: Unit.index, number: 70 }),
+          priceLine({
+            ctx,
             unit: Unit.index,
             number: 50,
             defaultActive: false,
           }),
-          createPriceLine({ unit: Unit.index, number: 30 }),
+          priceLine({ ctx, unit: Unit.index, number: 30 }),
         ],
       },
       {
@@ -69,8 +71,7 @@ export function createMomentumSection(ctx, indicators) {
             color: colors.orange,
             unit: Unit.index,
           }),
-          createPriceLine({ unit: Unit.index, number: 80 }),
-          createPriceLine({ unit: Unit.index, number: 20 }),
+          ...priceLines({ ctx, unit: Unit.index, numbers: [80, 20] }),
         ],
       },
       // {
@@ -79,13 +80,12 @@ export function createMomentumSection(ctx, indicators) {
       //   bottom: [
       //     line({ metric: indicators.stochK, name: "K", color: colors.blue, unit: Unit.index }),
       //     line({ metric: indicators.stochD, name: "D", color: colors.orange, unit: Unit.index }),
-      //     createPriceLine({ unit: Unit.index, number: 80 }),
-      //     createPriceLine({ unit: Unit.index, number: 20 }),
+      //     priceLines({ ctx, unit: Unit.index, numbers: [80, 20] }),
       //   ],
       // },
       {
         name: "MACD",
-        title: "Moving Average Convergence Divergence",
+        title: "MACD",
         bottom: [
           line({
             metric: indicators.macdLine,
@@ -104,7 +104,7 @@ export function createMomentumSection(ctx, indicators) {
             name: "Histogram",
             unit: Unit.usd,
           }),
-          createPriceLine({ unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.usd }),
         ],
       },
     ],

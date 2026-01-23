@@ -1,7 +1,8 @@
 /** On-chain indicators (Pi Cycle, Puell, NVT, Gini) */
 
 import { Unit } from "../../../utils/units.js";
-import { line } from "../../series.js";
+import { priceLine } from "../../constants.js";
+import { baseline, line } from "../../series.js";
 
 /**
  * Create On-chain section
@@ -11,14 +12,14 @@ import { line } from "../../series.js";
  * @param {Market["movingAverage"]} args.movingAverage
  */
 export function createOnchainSection(ctx, { indicators, movingAverage }) {
-  const { colors, createPriceLine } = ctx;
+  const { colors } = ctx;
 
   return {
     name: "On-chain",
     tree: [
       {
         name: "Pi Cycle",
-        title: "Pi Cycle Top Indicator",
+        title: "Pi Cycle",
         top: [
           line({
             metric: movingAverage.price111dSma.price,
@@ -34,13 +35,13 @@ export function createOnchainSection(ctx, { indicators, movingAverage }) {
           }),
         ],
         bottom: [
-          line({
+          baseline({
             metric: indicators.piCycle,
             name: "Pi Cycle",
-            color: colors.purple,
             unit: Unit.ratio,
+            base: 1,
           }),
-          createPriceLine({ unit: Unit.ratio, number: 1 }),
+          priceLine({ ctx, unit: Unit.ratio, number: 1 }),
         ],
       },
       {
@@ -57,7 +58,7 @@ export function createOnchainSection(ctx, { indicators, movingAverage }) {
       },
       {
         name: "NVT",
-        title: "Network Value to Transactions Ratio",
+        title: "NVT Ratio",
         bottom: [
           line({
             metric: indicators.nvt,

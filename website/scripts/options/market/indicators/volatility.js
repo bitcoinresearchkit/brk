@@ -1,6 +1,7 @@
 /** Volatility indicators (Index, True Range, Choppiness, Sharpe, Sortino) */
 
 import { Unit } from "../../../utils/units.js";
+import { priceLine, priceLines } from "../../constants.js";
 import { line } from "../../series.js";
 
 /**
@@ -11,14 +12,14 @@ import { line } from "../../series.js";
  * @param {Market["range"]} args.range
  */
 export function createVolatilitySection(ctx, { volatility, range }) {
-  const { colors, createPriceLine } = ctx;
+  const { colors } = ctx;
 
   return {
     name: "Volatility",
     tree: [
       {
         name: "Index",
-        title: "Bitcoin Price Volatility Index",
+        title: "Volatility Index",
         bottom: [
           line({
             metric: volatility.price1wVolatility,
@@ -42,7 +43,7 @@ export function createVolatilitySection(ctx, { volatility, range }) {
       },
       {
         name: "True Range",
-        title: "Bitcoin Price True Range",
+        title: "True Range",
         bottom: [
           line({
             metric: range.priceTrueRange,
@@ -54,7 +55,7 @@ export function createVolatilitySection(ctx, { volatility, range }) {
       },
       {
         name: "Choppiness",
-        title: "Bitcoin Price Choppiness Index",
+        title: "Choppiness Index",
         bottom: [
           line({
             metric: range.price2wChoppinessIndex,
@@ -62,8 +63,7 @@ export function createVolatilitySection(ctx, { volatility, range }) {
             color: colors.red,
             unit: Unit.index,
           }),
-          createPriceLine({ unit: Unit.index, number: 61.8 }),
-          createPriceLine({ unit: Unit.index, number: 38.2 }),
+          ...priceLines({ ctx, unit: Unit.index, numbers: [61.8, 38.2] }),
         ],
       },
       {
@@ -88,7 +88,7 @@ export function createVolatilitySection(ctx, { volatility, range }) {
             color: colors.lime,
             unit: Unit.ratio,
           }),
-          createPriceLine({ unit: Unit.ratio }),
+          priceLine({ ctx, unit: Unit.ratio }),
         ],
       },
       {
@@ -113,7 +113,7 @@ export function createVolatilitySection(ctx, { volatility, range }) {
             color: colors.lime,
             unit: Unit.ratio,
           }),
-          createPriceLine({ unit: Unit.ratio }),
+          priceLine({ ctx, unit: Unit.ratio }),
         ],
       },
     ],

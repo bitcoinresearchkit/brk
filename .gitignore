@@ -23,6 +23,7 @@ _*
 /heatmaps*
 /oracle*
 /playground
+/*.txt
 
 # Logs
 *.log*

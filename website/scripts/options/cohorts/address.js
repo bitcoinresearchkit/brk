@@ -5,6 +5,7 @@
  */
 
 import { Unit } from "../../utils/units.js";
+import { priceLine } from "../constants.js";
 import { line, baseline } from "../series.js";
 import {
   createSingleSupplySeries,
@@ -102,7 +103,7 @@ export function createAddressCohortFolder(ctx, args) {
               )),
           {
             name: "capitalization",
-            title: `Realized Capitalization ${title}`,
+            title: `Realized Cap ${title}`,
             bottom: createRealizedCapWithExtras(ctx, list, args, useGroupName),
           },
           ...(!useGroupName
@@ -134,7 +135,7 @@ export function createAddressCohortFolder(ctx, args) {
  * @returns {PartialOptionsTree}
  */
 function createRealizedPriceOptions(args, title) {
-    const { tree, color } = args;
+  const { tree, color } = args;
 
   return [
     {
@@ -161,7 +162,6 @@ function createRealizedPriceOptions(args, title) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
-  const { createPriceLine } = ctx;
   const isSingle = !("list" in args);
 
   return list.flatMap(({ color, name, tree }) => [
@@ -179,7 +179,7 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
             unit: Unit.usd,
             defaultActive: false,
           }),
-          createPriceLine({ unit: Unit.usd, defaultActive: false }),
+          priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
         ]
       : []),
     // RealizedPattern (address cohorts) doesn't have realizedCapRelToOwnMarketCap
@@ -200,7 +200,7 @@ function createRealizedPnlSection(ctx, args, title) {
   return [
     {
       name: "pnl",
-      title: `Realized Profit And Loss ${title}`,
+      title: `Realized P&L ${title}`,
       bottom: [
         line({
           metric: realized.realizedProfit.sum,
@@ -257,7 +257,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
       tree: [
         {
           name: "nupl",
-          title: `Net Unrealized Profit/Loss ${title}`,
+          title: `Net Unrealized P&L ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
             baseline({
               metric: tree.unrealized.netUnrealizedPnl,

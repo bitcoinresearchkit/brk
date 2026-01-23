@@ -412,6 +412,7 @@ dependencies = [
  "brk_server",
  "brk_types",
  "lexopt",
+ "owo-colors",
  "serde",
  "tokio",
  "toml",
@@ -570,6 +571,7 @@ dependencies = [
  "brk_indexer",
  "brk_logger",
  "brk_types",
+ "jiff",
  "memmap2",
  "plotters",
  "tracing",
@@ -716,6 +718,7 @@ dependencies = [
  "brk_logger",
  "importmap",
  "include_dir",
+ "serde",
  "tokio",
  "tower-http",
  "tower-layer",
@@ -1749,7 +1752,9 @@ dependencies = [
 
 [[package]]
 name = "importmap"
-version = "0.3.1"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "689654b51e7a463f6d1009c18e784a43d287d82296b67f27411f01c38ab5adb7"
 dependencies = [
  "include_dir",
  "rapidhash",

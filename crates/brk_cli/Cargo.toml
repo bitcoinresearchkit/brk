@@ -23,6 +23,7 @@ brk_rpc = { workspace = true }
 brk_server = { workspace = true }
 brk_types = { workspace = true }
 lexopt = "0.3"
+owo-colors = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }

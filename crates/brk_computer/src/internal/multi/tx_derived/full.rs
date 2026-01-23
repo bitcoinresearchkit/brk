@@ -30,7 +30,7 @@ where
     pub dates: LazyDateDerivedFull<T>,
 }
 
-const VERSION: Version = Version::ZERO;
+const VERSION: Version = Version::ONE;
 
 impl<T> TxDerivedFull<T>
 where
@@ -111,7 +111,7 @@ where
 
         self.dateindex.compute(
             starting_indexes.dateindex,
-            &self.height.average().0,
+            &self.height.sum().0,
             &indexes.dateindex.first_height,
             &indexes.dateindex.height_count,
             exit,

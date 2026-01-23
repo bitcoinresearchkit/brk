@@ -56,6 +56,20 @@ pub struct Vecs {
     /// Number of qualifying transactions per day (for confidence)
     pub tx_count: PcoVec<DateIndex, StoredU32>,
 
+    // ========== Daily OHLC from height close only ==========
+    /// Daily OHLC computed from height close prices only
+    pub close_ohlc_cents: BytesVec<DateIndex, OHLCCents>,
+
+    /// Daily OHLC from close in dollars (lazy conversion)
+    pub close_ohlc_dollars: LazyVecFrom1<DateIndex, OHLCDollars, DateIndex, OHLCCents>,
+
+    // ========== Daily OHLC from height mid price (open+close)/2 ==========
+    /// Daily OHLC computed from height mid prices ((open+close)/2)
+    pub mid_ohlc_cents: BytesVec<DateIndex, OHLCCents>,
+
+    /// Daily OHLC from mid in dollars (lazy conversion)
+    pub mid_ohlc_dollars: LazyVecFrom1<DateIndex, OHLCDollars, DateIndex, OHLCCents>,
+
     // ========== Phase Oracle V2 (round USD template matching) ==========
     /// Per-block 200-bin phase histogram
     pub phase_v2_histogram: BytesVec<Height, OracleBinsV2>,

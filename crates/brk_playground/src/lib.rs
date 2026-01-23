@@ -16,7 +16,7 @@ pub mod signal;
 
 pub use anchors::{Ohlc, get_anchor_ohlc, get_anchor_range};
 pub use conditions::{MappedOutputConditions, out_bits, tx_bits};
-pub use constants::{NUM_BINS, OutputFilter, ROUND_USD_AMOUNTS};
+pub use constants::{NUM_BINS, OutputFilter, ROUND_USD_AMOUNTS, START_HEIGHT};
 pub use filters::FILTERS;
 pub use histogram::load_or_compute_output_conditions;
 pub use oracle::{

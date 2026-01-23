@@ -9,7 +9,7 @@ import { line } from "./series.js";
  * @param {number} num
  * @returns {AnyMetricPattern}
  */
-export function getConstant(constants, num) {
+function getConstant(constants, num) {
   const key =
     num >= 0
       ? `constant${String(num).replace(".", "")}`
@@ -23,96 +23,31 @@ export function getConstant(constants, num) {
 
 /**
  * Create a price line series (horizontal reference line)
- * @param {Object} args
- * @param {BrkClient["metrics"]["constants"]} args.constants
- * @param {Colors} args.colors
- * @param {number} [args.number]
- * @param {string} [args.name]
- * @param {boolean} [args.defaultActive]
- * @param {number} [args.lineStyle]
- * @param {Color} [args.color]
- * @param {Unit} args.unit
- * @returns {FetchedLineSeriesBlueprint}
+ * @param {{ ctx: PartialContext, number?: number, name?: string } & Omit<(Parameters<typeof line>)[0], 'name' | 'metric'>} args
  */
-export function createPriceLine({
-  constants,
-  colors,
-  number = 0,
-  unit,
-  defaultActive,
-  color,
-  name,
-  lineStyle,
-}) {
-  return {
-    metric: getConstant(constants, number),
-    title: name ?? `${number}`,
-    unit,
-    defaultActive,
-    color: color ?? colors.gray,
-    options: {
-      lineStyle: lineStyle ?? 4,
-      lastValueVisible: false,
-      crosshairMarkerVisible: false,
-    },
-  };
-}
-
-/**
- * Create multiple price lines from an array of numbers
- * @param {Object} args
- * @param {BrkClient["metrics"]["constants"]} args.constants
- * @param {Colors} args.colors
- * @param {number[]} args.numbers
- * @param {Unit} args.unit
- * @returns {FetchedLineSeriesBlueprint[]}
- */
-export function createPriceLines({ constants, colors, numbers, unit }) {
-  return numbers.map((number) => ({
-    metric: getConstant(constants, number),
-    title: `${number}`,
-    unit,
-    defaultActive: !number,
-    color: colors.gray,
-    options: {
-      lineStyle: 4,
-      lastValueVisible: false,
-      crosshairMarkerVisible: false,
-    },
-  }));
-}
-
-/**
- * Create a constant line series
- * @param {Object} args
- * @param {Colors} args.colors
- * @param {AnyMetricPattern} args.constant
- * @param {string} args.name
- * @param {Unit} args.unit
- * @param {Color} [args.color]
- * @param {number} [args.lineStyle]
- * @param {boolean} [args.defaultActive]
- * @returns {FetchedLineSeriesBlueprint}
- */
-export function constantLine({
-  colors,
-  constant,
-  name,
-  unit,
-  color,
-  lineStyle,
-  defaultActive,
-}) {
+export function priceLine(args) {
   return line({
-    metric: constant,
-    name,
-    unit,
-    defaultActive,
-    color: color ?? colors.gray,
+    ...args,
+    metric: getConstant(args.ctx.brk.metrics.constants, args.number || 0),
+    name: args.name || `${args.number ?? 0}`,
+    color: args.color ?? args.ctx.colors.gray,
     options: {
-      lineStyle: lineStyle ?? 4,
+      lineStyle: args.style ?? 4,
       lastValueVisible: false,
       crosshairMarkerVisible: false,
+      ...args.options,
     },
   });
+}
+
+/**
+ * @param {{ numbers: number[] } & Omit<(Parameters<typeof priceLine>)[0], 'number'>} args
+ */
+export function priceLines(args) {
+  return args.numbers.map((number) =>
+    priceLine({
+      ...args,
+      number,
+    }),
+  );
 }

@@ -8,19 +8,34 @@ import { Unit } from "../utils/units.js";
  * @param {AnyMetricPattern} args.metric
  * @param {string} args.name
  * @param {Unit} args.unit
+ * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
+ * @param {LineStyle} [args.style]
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]
  * @param {LineSeriesPartialOptions} [args.options]
  * @returns {FetchedLineSeriesBlueprint}
  */
-export function line({ metric, name, color, defaultActive, unit, options }) {
+export function line({
+  metric,
+  name,
+  key,
+  style,
+  color,
+  defaultActive,
+  unit,
+  options,
+}) {
   return {
     metric,
     title: name,
+    key,
     color,
     unit,
     defaultActive,
-    options,
+    options: {
+      lineStyle: style,
+      ...options,
+    },
   };
 }
 
@@ -30,16 +45,26 @@ export function line({ metric, name, color, defaultActive, unit, options }) {
  * @param {AnyMetricPattern} args.metric
  * @param {string} args.name
  * @param {Unit} args.unit
+ * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]
  * @param {LineSeriesPartialOptions} [args.options]
  * @returns {FetchedDotsSeriesBlueprint}
  */
-export function dots({ metric, name, color, defaultActive, unit, options }) {
+export function dots({
+  metric,
+  name,
+  key,
+  color,
+  defaultActive,
+  unit,
+  options,
+}) {
   return {
     type: /** @type {const} */ ("Dots"),
     metric,
     title: name,
+    key,
     color,
     unit,
     defaultActive,
@@ -53,6 +78,7 @@ export function dots({ metric, name, color, defaultActive, unit, options }) {
  * @param {AnyMetricPattern} args.metric
  * @param {string} args.name
  * @param {Unit} args.unit
+ * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
  * @param {[Color, Color]} [args.colors] - [upColor, downColor] for legend
  * @param {boolean} [args.defaultActive]
  * @param {CandlestickSeriesPartialOptions} [args.options]
@@ -61,6 +87,7 @@ export function dots({ metric, name, color, defaultActive, unit, options }) {
 export function candlestick({
   metric,
   name,
+  key,
   colors,
   defaultActive,
   unit,
@@ -70,6 +97,7 @@ export function candlestick({
     type: /** @type {const} */ ("Candlestick"),
     metric,
     title: name,
+    key,
     colors,
     unit,
     defaultActive,
@@ -83,8 +111,8 @@ export function candlestick({
  * @param {AnyMetricPattern} args.metric
  * @param {string} args.name
  * @param {Unit} args.unit
+ * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
  * @param {Color | [Color, Color]} [args.color]
- * @param {boolean} [args.defaultActive]
  * @param {boolean} [args.defaultActive]
  * @param {number | undefined} [args.base]
  * @param {BaselineSeriesPartialOptions} [args.options]
@@ -93,6 +121,7 @@ export function candlestick({
 export function baseline({
   metric,
   name,
+  key,
   color,
   defaultActive,
   unit,
@@ -104,6 +133,7 @@ export function baseline({
     type: /** @type {const} */ ("Baseline"),
     metric,
     title: name,
+    key,
     color: isTuple ? undefined : color,
     colors: isTuple ? color : undefined,
     unit,
@@ -123,6 +153,7 @@ export function baseline({
  * @param {AnyMetricPattern} args.metric
  * @param {string} args.name
  * @param {Unit} args.unit
+ * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
  * @param {Color | [Color, Color]} [args.color]
  * @param {boolean} [args.defaultActive]
  * @param {HistogramSeriesPartialOptions} [args.options]
@@ -131,6 +162,7 @@ export function baseline({
 export function histogram({
   metric,
   name,
+  key,
   color,
   defaultActive,
   unit,
@@ -140,6 +172,7 @@ export function histogram({
     type: /** @type {const} */ ("Histogram"),
     metric,
     title: name,
+    key,
     color,
     unit,
     defaultActive,
@@ -238,7 +271,7 @@ export function fromBlockSize(colors, pattern, title, color) {
     { metric: pattern.average, title: "Average", defaultActive: false },
     {
       metric: pattern.cumulative,
-      title: `${title} (cum.)`,
+      title: `Cumulative`,
       color: colors.cyan,
       defaultActive: false,
     },
@@ -291,72 +324,72 @@ export function fromBlockSize(colors, pattern, title, color) {
  * Create series from a SizePattern ({ average, sum, cumulative, min, max, percentiles })
  * @param {Colors} colors
  * @param {AnyStatsPattern} pattern
- * @param {string} title
  * @param {Unit} unit
+ * @param {string} [title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromSizePattern(colors, pattern, title, unit) {
+export function fromSizePattern(colors, pattern, unit, title = "") {
   return [
-    { metric: pattern.average, title: `${title} avg`, unit },
+    { metric: pattern.average, title: `${title} avg`.trim(), unit },
     {
       metric: pattern.sum,
-      title: `${title} sum`,
+      title: `${title} sum`.trim(),
       color: colors.blue,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.cumulative,
-      title: `${title} cumulative`,
+      title: `${title} cumulative`.trim(),
       color: colors.indigo,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.min,
-      title: `${title} min`,
+      title: `${title} min`.trim(),
       color: colors.red,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.max,
-      title: `${title} max`,
+      title: `${title} max`.trim(),
       color: colors.green,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct10,
-      title: `${title} pct10`,
+      title: `${title} pct10`.trim(),
       color: colors.rose,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct25,
-      title: `${title} pct25`,
+      title: `${title} pct25`.trim(),
       color: colors.pink,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.median,
-      title: `${title} median`,
+      title: `${title} median`.trim(),
       color: colors.purple,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct75,
-      title: `${title} pct75`,
+      title: `${title} pct75`.trim(),
       color: colors.violet,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct90,
-      title: `${title} pct90`,
+      title: `${title} pct90`.trim(),
       color: colors.fuchsia,
       unit,
       defaultActive: false,
@@ -368,65 +401,148 @@ export function fromSizePattern(colors, pattern, title, unit) {
  * Create series from a FullnessPattern ({ base, average, sum, cumulative, min, max, percentiles })
  * @param {Colors} colors
  * @param {FullnessPattern<any>} pattern
- * @param {string} title
  * @param {Unit} unit
+ * @param {string} [title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromFullnessPattern(colors, pattern, title, unit) {
+export function fromFullnessPattern(colors, pattern, unit, title = "") {
   return [
-    { metric: pattern.base, title, unit },
+    { metric: pattern.base, title: title || "base", unit },
     {
       metric: pattern.average,
-      title: `${title} avg`,
+      title: `${title} avg`.trim(),
       color: colors.purple,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.min,
-      title: `${title} min`,
+      title: `${title} min`.trim(),
       color: colors.red,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.max,
-      title: `${title} max`,
+      title: `${title} max`.trim(),
       color: colors.green,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct10,
-      title: `${title} pct10`,
+      title: `${title} pct10`.trim(),
       color: colors.rose,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct25,
-      title: `${title} pct25`,
+      title: `${title} pct25`.trim(),
       color: colors.pink,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.median,
-      title: `${title} median`,
+      title: `${title} median`.trim(),
       color: colors.violet,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct75,
-      title: `${title} pct75`,
+      title: `${title} pct75`.trim(),
       color: colors.fuchsia,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct90,
-      title: `${title} pct90`,
+      title: `${title} pct90`.trim(),
+      color: colors.amber,
+      unit,
+      defaultActive: false,
+    },
+  ];
+}
+
+/**
+ * Create series from a DollarsPattern ({ base, sum, cumulative, average, min, max, percentiles })
+ * @param {Colors} colors
+ * @param {DollarsPattern<any>} pattern
+ * @param {Unit} unit
+ * @param {string} [title]
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function fromDollarsPattern(colors, pattern, unit, title = "") {
+  return [
+    { metric: pattern.base, title: title || "base", unit },
+    {
+      metric: pattern.sum,
+      title: `${title} sum`.trim(),
+      color: colors.blue,
+      unit,
+    },
+    {
+      metric: pattern.cumulative,
+      title: `${title} cumulative`.trim(),
+      color: colors.cyan,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.average,
+      title: `${title} avg`.trim(),
+      color: colors.purple,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.min,
+      title: `${title} min`.trim(),
+      color: colors.red,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.max,
+      title: `${title} max`.trim(),
+      color: colors.green,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct10,
+      title: `${title} pct10`.trim(),
+      color: colors.rose,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct25,
+      title: `${title} pct25`.trim(),
+      color: colors.pink,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.median,
+      title: `${title} median`.trim(),
+      color: colors.violet,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct75,
+      title: `${title} pct75`.trim(),
+      color: colors.fuchsia,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct90,
+      title: `${title} pct90`.trim(),
       color: colors.amber,
       unit,
       defaultActive: false,
@@ -438,58 +554,58 @@ export function fromFullnessPattern(colors, pattern, title, unit) {
  * Create series from a FeeRatePattern ({ average, min, max, percentiles })
  * @param {Colors} colors
  * @param {FeeRatePattern<any>} pattern
- * @param {string} title
  * @param {Unit} unit
+ * @param {string} [title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromFeeRatePattern(colors, pattern, title, unit) {
+export function fromFeeRatePattern(colors, pattern, unit, title = "") {
   return [
-    { metric: pattern.average, title: `${title} avg`, unit },
+    { metric: pattern.average, title: `${title} avg`.trim(), unit },
     {
       metric: pattern.min,
-      title: `${title} min`,
+      title: `${title} min`.trim(),
       color: colors.red,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.max,
-      title: `${title} max`,
+      title: `${title} max`.trim(),
       color: colors.green,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct10,
-      title: `${title} pct10`,
+      title: `${title} pct10`.trim(),
       color: colors.rose,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct25,
-      title: `${title} pct25`,
+      title: `${title} pct25`.trim(),
       color: colors.pink,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.median,
-      title: `${title} median`,
+      title: `${title} median`.trim(),
       color: colors.purple,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct75,
-      title: `${title} pct75`,
+      title: `${title} pct75`.trim(),
       color: colors.violet,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct90,
-      title: `${title} pct90`,
+      title: `${title} pct90`.trim(),
       color: colors.fuchsia,
       unit,
       defaultActive: false,
@@ -506,9 +622,9 @@ export function fromFeeRatePattern(colors, pattern, title, unit) {
  */
 export function fromCoinbasePattern(colors, pattern, title) {
   return [
-    ...fromFullnessPattern(colors, pattern.sats, title, Unit.sats),
-    ...fromFullnessPattern(colors, pattern.bitcoin, title, Unit.btc),
-    ...fromFullnessPattern(colors, pattern.dollars, title, Unit.usd),
+    ...fromFullnessPattern(colors, pattern.sats, Unit.sats, title),
+    ...fromFullnessPattern(colors, pattern.bitcoin, Unit.btc, title),
+    ...fromFullnessPattern(colors, pattern.dollars, Unit.usd, title),
   ];
 }
 
@@ -610,8 +726,8 @@ export function fromBitcoinPatternWithUnit(
  * Create sum/cumulative series from a BlockCountPattern with explicit unit and colors
  * @param {Colors} colors
  * @param {BlockCountPattern<any>} pattern
- * @param {string} title
  * @param {Unit} unit
+ * @param {string} [title]
  * @param {Color} [sumColor]
  * @param {Color} [cumulativeColor]
  * @returns {AnyFetchedSeriesBlueprint[]}
@@ -619,21 +735,21 @@ export function fromBitcoinPatternWithUnit(
 export function fromBlockCountWithUnit(
   colors,
   pattern,
-  title,
   unit,
+  title,
   sumColor,
   cumulativeColor,
 ) {
   return [
     {
       metric: pattern.sum,
-      title: `${title} sum`,
+      title: `${title} sum`.trim(),
       color: sumColor,
       unit,
     },
     {
       metric: pattern.cumulative,
-      title: `${title} cumulative`,
+      title: `${title} cumulative`.trim(),
       color: cumulativeColor ?? colors.blue,
       unit,
       defaultActive: false,
@@ -645,66 +761,66 @@ export function fromBlockCountWithUnit(
  * Create series from an IntervalPattern (base + average/min/max/median/percentiles, no sum/cumulative)
  * @param {Colors} colors
  * @param {IntervalPattern} pattern
- * @param {string} title
  * @param {Unit} unit
+ * @param {string} [title]
  * @param {Color} [color]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromIntervalPattern(colors, pattern, title, unit, color) {
+export function fromIntervalPattern(colors, pattern, unit, title = "", color) {
   return [
-    { metric: pattern.base, title, color, unit },
+    { metric: pattern.base, title: title ?? "base", color, unit },
     {
       metric: pattern.average,
-      title: `${title} avg`,
-      color: colors.purple,
+      title: `${title} avg`.trim(),
+      color: colors.cyan,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.min,
-      title: `${title} min`,
+      title: `${title} min`.trim(),
       color: colors.red,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.max,
-      title: `${title} max`,
+      title: `${title} max`.trim(),
       color: colors.green,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.median,
-      title: `${title} median`,
+      title: `${title} median`.trim(),
       color: colors.violet,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct10,
-      title: `${title} pct10`,
+      title: `${title} pct10`.trim(),
       color: colors.rose,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct25,
-      title: `${title} pct25`,
+      title: `${title} pct25`.trim(),
       color: colors.pink,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct75,
-      title: `${title} pct75`,
+      title: `${title} pct75`.trim(),
       color: colors.fuchsia,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct90,
-      title: `${title} pct90`,
+      title: `${title} pct90`.trim(),
       color: colors.amber,
       unit,
       defaultActive: false,

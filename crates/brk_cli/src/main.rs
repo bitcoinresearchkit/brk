@@ -14,15 +14,14 @@ use brk_iterator::Blocks;
 use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
-use brk_server::{Server, Website};
+use brk_server::Server;
 use tracing::info;
 use vecdb::Exit;
 
 mod config;
 mod paths;
-mod website;
 
-use crate::{config::Config, paths::*, website::WebsiteArg};
+use crate::{config::Config, paths::*};
 
 pub fn main() -> anyhow::Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread
@@ -80,11 +79,7 @@ pub fn run() -> anyhow::Result<()> {
 
     let data_path = config.brkdir();
 
-    let website = match config.website() {
-        WebsiteArg::Enabled(false) => Website::Disabled,
-        WebsiteArg::Enabled(true) => Website::Default,
-        WebsiteArg::Path(p) => Website::Filesystem(p),
-    };
+    let website = config.website();
 
     let port = config.brkport();
 
@@ -111,7 +106,7 @@ pub fn run() -> anyhow::Result<()> {
 
         info!("{} blocks found.", u32::from(last_height) + 1);
 
-        let starting_indexes = if config.check_collisions() {
+        let starting_indexes = if cfg!(debug_assertions) {
             indexer.checked_index(&blocks, &client, &exit)?
         } else {
             indexer.index(&blocks, &client, &exit)?

@@ -41,7 +41,8 @@ a {
     color: var(--off-color);
     content: "↗";
     align-self: baseline;
-    font-size: 75%;
+    font-weight: 300;
+
     margin-left: 0.25rem;
     line-height: 1;
 

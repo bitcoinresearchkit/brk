@@ -45,17 +45,19 @@ export function createBandsSection(ctx, { range, movingAverage }) {
           },
         ].map(({ id, title, min, max }) => ({
           name: id,
-          title: `Bitcoin Price ${title} MinMax Bands`,
+          title: `${title} MinMax`,
           top: [
             line({
               metric: min,
               name: "Min",
+              key: `price-min`,
               color: colors.red,
               unit: Unit.usd,
             }),
             line({
               metric: max,
               name: "Max",
+              key: `price-max`,
               color: colors.green,
               unit: Unit.usd,
             }),

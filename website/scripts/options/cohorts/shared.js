@@ -1,6 +1,7 @@
 /** Shared cohort chart section builders */
 
 import { Unit } from "../../utils/units.js";
+import { priceLine } from "../constants.js";
 import { line } from "../series.js";
 import { satsBtcUsd } from "../shared.js";
 
@@ -11,11 +12,11 @@ import { satsBtcUsd } from "../shared.js";
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createSingleSupplySeries(ctx, cohort) {
-  const { colors, createPriceLine } = ctx;
+  const { colors } = ctx;
   const { tree } = cohort;
 
   return [
-    ...satsBtcUsd( tree.supply.total, "Supply", colors.default),
+    ...satsBtcUsd(tree.supply.total, "Supply", colors.default),
     ...("supplyRelToCirculatingSupply" in tree.relative
       ? [
           line({
@@ -26,9 +27,9 @@ export function createSingleSupplySeries(ctx, cohort) {
           }),
         ]
       : []),
-    ...satsBtcUsd( tree.unrealized.supplyInProfit, "In Profit", colors.green),
-    ...satsBtcUsd( tree.unrealized.supplyInLoss, "In Loss", colors.red),
-    ...satsBtcUsd( tree.supply.halved, "half", colors.gray).map((s) => ({
+    ...satsBtcUsd(tree.unrealized.supplyInProfit, "In Profit", colors.green),
+    ...satsBtcUsd(tree.unrealized.supplyInLoss, "In Loss", colors.red),
+    ...satsBtcUsd(tree.supply.halved, "half", colors.gray).map((s) => ({
       ...s,
       options: { lineStyle: 4 },
     })),
@@ -60,13 +61,14 @@ export function createSingleSupplySeries(ctx, cohort) {
       color: colors.red,
       unit: Unit.pctOwn,
     }),
-    createPriceLine({
+    priceLine({
+      ctx,
       unit: Unit.pctOwn,
       number: 100,
-      lineStyle: 0,
+      style: 0,
       color: colors.default,
     }),
-    createPriceLine({ unit: Unit.pctOwn, number: 50 }),
+    priceLine({ ctx, unit: Unit.pctOwn, number: 50 }),
   ];
 }
 
@@ -81,7 +83,7 @@ export function createGroupedSupplyTotalSeries(ctx, list) {
   const constant100 = brk.metrics.constants.constant100;
 
   return list.flatMap(({ color, name, tree }) => [
-    ...satsBtcUsd( tree.supply.total, name, color),
+    ...satsBtcUsd(tree.supply.total, name, color),
     line({
       metric:
         "supplyRelToCirculatingSupply" in tree.relative
@@ -100,9 +102,8 @@ export function createGroupedSupplyTotalSeries(ctx, list) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createGroupedSupplyInProfitSeries(list) {
-  
   return list.flatMap(({ color, name, tree }) => [
-    ...satsBtcUsd( tree.unrealized.supplyInProfit, name, color),
+    ...satsBtcUsd(tree.unrealized.supplyInProfit, name, color),
     ...("supplyInProfitRelToCirculatingSupply" in tree.relative
       ? [
           line({
@@ -122,9 +123,8 @@ export function createGroupedSupplyInProfitSeries(list) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createGroupedSupplyInLossSeries(list) {
-  
   return list.flatMap(({ color, name, tree }) => [
-    ...satsBtcUsd( tree.unrealized.supplyInLoss, name, color),
+    ...satsBtcUsd(tree.unrealized.supplyInLoss, name, color),
     ...("supplyInLossRelToCirculatingSupply" in tree.relative
       ? [
           line({
@@ -193,8 +193,6 @@ export function createRealizedPriceSeries(list) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createRealizedPriceRatioSeries(ctx, list) {
-  const { createPriceLine } = ctx;
-
   return [
     ...list.map(({ color, name, tree }) =>
       line({
@@ -204,7 +202,7 @@ export function createRealizedPriceRatioSeries(ctx, list) {
         unit: Unit.ratio,
       }),
     ),
-    createPriceLine({ unit: Unit.ratio, number: 1 }),
+    priceLine({ ctx, unit: Unit.ratio, number: 1 }),
   ];
 }
 

@@ -35,6 +35,7 @@ import {
 } from "./shared.js";
 import { Unit } from "../../utils/units.js";
 import { line, baseline } from "../series.js";
+import { priceLine } from "../constants.js";
 
 // ============================================================================
 // Folder Builders (4 variants based on pattern capabilities)
@@ -260,7 +261,7 @@ function createSingleUtxoCountChart(cohort, title) {
   return {
     name: "utxo count",
     title: `UTXO Count ${title}`,
-    bottom: createUtxoCountSeries( [cohort], false),
+    bottom: createUtxoCountSeries([cohort], false),
   };
 }
 
@@ -274,7 +275,7 @@ function createGroupedUtxoCountChart(list, title) {
   return {
     name: "utxo count",
     title: `UTXO Count ${title}`,
-    bottom: createUtxoCountSeries( list, true),
+    bottom: createUtxoCountSeries(list, true),
   };
 }
 
@@ -292,7 +293,7 @@ function createSingleRealizedSectionWithAdjusted(ctx, cohort, title) {
       createSingleRealizedPriceChart(cohort, title),
       {
         name: "capitalization",
-        title: `Realized Capitalization ${title}`,
+        title: `Realized Cap ${title}`,
         bottom: createSingleRealizedCapSeries(ctx, cohort),
       },
       ...createSingleRealizedPnlSection(ctx, cohort, title),
@@ -324,7 +325,7 @@ function createGroupedRealizedSectionWithAdjusted(ctx, list, title) {
       },
       {
         name: "capitalization",
-        title: `Realized Capitalization ${title}`,
+        title: `Realized Cap ${title}`,
         bottom: createGroupedRealizedCapSeries(list),
       },
       ...createGroupedRealizedPnlSections(ctx, list, title),
@@ -347,7 +348,7 @@ function createSingleRealizedSectionBasic(ctx, cohort, title) {
       createSingleRealizedPriceChart(cohort, title),
       {
         name: "capitalization",
-        title: `Realized Capitalization ${title}`,
+        title: `Realized Cap ${title}`,
         bottom: createSingleRealizedCapSeries(ctx, cohort),
       },
       ...createSingleRealizedPnlSection(ctx, cohort, title),
@@ -379,7 +380,7 @@ function createGroupedRealizedSectionBasic(ctx, list, title) {
       },
       {
         name: "capitalization",
-        title: `Realized Capitalization ${title}`,
+        title: `Realized Cap ${title}`,
         bottom: createGroupedRealizedCapSeries(list),
       },
       ...createGroupedRealizedPnlSections(ctx, list, title),
@@ -395,7 +396,7 @@ function createGroupedRealizedSectionBasic(ctx, list, title) {
  * @returns {PartialChartOption}
  */
 function createSingleRealizedPriceChart(cohort, title) {
-    const { tree, color } = cohort;
+  const { tree, color } = cohort;
 
   return {
     name: "price",
@@ -418,7 +419,7 @@ function createSingleRealizedPriceChart(cohort, title) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function createSingleRealizedCapSeries(ctx, cohort) {
-  const { colors, createPriceLine } = ctx;
+  const { colors } = ctx;
   const { color, tree } = cohort;
 
   return [
@@ -434,7 +435,7 @@ function createSingleRealizedCapSeries(ctx, cohort) {
       unit: Unit.usd,
       defaultActive: false,
     }),
-    createPriceLine({ unit: Unit.usd, defaultActive: false }),
+    priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
     ...("realizedCapRelToOwnMarketCap" in tree.realized
       ? [
           baseline({
@@ -444,7 +445,8 @@ function createSingleRealizedCapSeries(ctx, cohort) {
             options: { baseValue: { price: 100 } },
             color: [colors.red, colors.green],
           }),
-          createPriceLine({
+          priceLine({
+            ctx,
             unit: Unit.pctOwnMcap,
             defaultActive: true,
             number: 100,
@@ -478,29 +480,24 @@ function createGroupedRealizedCapSeries(list) {
  * @returns {PartialOptionsTree}
  */
 function createSingleRealizedPnlSection(ctx, cohort, title) {
-  const {
-    colors,
-    createPriceLine,
-    fromBlockCountWithUnit,
-    fromBitcoinPatternWithUnit,
-  } = ctx;
+  const { colors, fromBlockCountWithUnit, fromBitcoinPatternWithUnit } = ctx;
   const { tree } = cohort;
 
   return [
     {
       name: "pnl",
-      title: `Realized Profit And Loss ${title}`,
+      title: `Realized P&L ${title}`,
       bottom: [
         ...fromBlockCountWithUnit(
           tree.realized.realizedProfit,
-          "Profit",
           Unit.usd,
+          "Profit",
           colors.green,
         ),
         ...fromBlockCountWithUnit(
           tree.realized.realizedLoss,
-          "Loss",
           Unit.usd,
+          "Loss",
           colors.red,
         ),
         ...fromBitcoinPatternWithUnit(
@@ -538,18 +535,18 @@ function createSingleRealizedPnlSection(ctx, cohort, title) {
           color: colors.red,
           unit: Unit.pctRcap,
         }),
-        createPriceLine({ unit: Unit.pctRcap }),
-        createPriceLine({ unit: Unit.usd, defaultActive: false }),
+        priceLine({ ctx, unit: Unit.pctRcap }),
+        priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
       ],
     },
     {
       name: "Net pnl",
-      title: `Net Realized Profit And Loss ${title}`,
+      title: `Net Realized P&L ${title}`,
       bottom: [
         ...fromBlockCountWithUnit(
           tree.realized.netRealizedPnl,
-          "Net",
           Unit.usd,
+          "Net",
         ),
         baseline({
           metric: tree.realized.netRealizedPnlCumulative30dDelta,
@@ -574,9 +571,9 @@ function createSingleRealizedPnlSection(ctx, cohort, title) {
           name: "Cumulative 30d change",
           unit: Unit.pctMcap,
         }),
-        createPriceLine({ unit: Unit.pctMcap }),
-        createPriceLine({ unit: Unit.pctRcap }),
-        createPriceLine({ unit: Unit.usd }),
+        priceLine({ ctx, unit: Unit.pctMcap }),
+        priceLine({ ctx, unit: Unit.pctRcap }),
+        priceLine({ ctx, unit: Unit.usd }),
       ],
     },
   ];
@@ -590,8 +587,6 @@ function createSingleRealizedPnlSection(ctx, cohort, title) {
  * @returns {PartialOptionsTree}
  */
 function createGroupedRealizedPnlSections(ctx, list, title) {
-  const { createPriceLine } = ctx;
-
   return [
     {
       name: "profit",
@@ -611,7 +606,7 @@ function createGroupedRealizedPnlSections(ctx, list, title) {
             unit: Unit.pctRcap,
           }),
         ]),
-        createPriceLine({ unit: Unit.usd }),
+        priceLine({ ctx, unit: Unit.usd }),
       ],
     },
     {
@@ -632,12 +627,12 @@ function createGroupedRealizedPnlSections(ctx, list, title) {
             unit: Unit.pctRcap,
           }),
         ]),
-        createPriceLine({ unit: Unit.usd }),
+        priceLine({ ctx, unit: Unit.usd }),
       ],
     },
     {
       name: "Total pnl",
-      title: `Total Realized Profit And Loss ${title}`,
+      title: `Total Realized P&L ${title}`,
       bottom: [
         ...list.flatMap(({ color, name, tree }) => [
           line({
@@ -661,7 +656,7 @@ function createGroupedRealizedPnlSections(ctx, list, title) {
     },
     {
       name: "Net pnl",
-      title: `Net Realized Profit And Loss ${title}`,
+      title: `Net Realized P&L ${title}`,
       bottom: [
         ...list.flatMap(({ color, name, tree }) => [
           baseline({
@@ -677,8 +672,8 @@ function createGroupedRealizedPnlSections(ctx, list, title) {
             unit: Unit.pctRcap,
           }),
         ]),
-        createPriceLine({ unit: Unit.usd }),
-        createPriceLine({ unit: Unit.pctRcap }),
+        priceLine({ ctx, unit: Unit.usd }),
+        priceLine({ ctx, unit: Unit.pctRcap }),
       ],
     },
     {
@@ -710,7 +705,7 @@ function createGroupedRealizedPnlSections(ctx, list, title) {
         },
         {
           name: "Net pnl",
-          title: `Cumulative Net Realized Profit And Loss ${title}`,
+          title: `Cumulative Net Realized P&L ${title}`,
           bottom: [
             ...list.flatMap(({ color, name, tree }) => [
               baseline({
@@ -721,12 +716,12 @@ function createGroupedRealizedPnlSections(ctx, list, title) {
                 defaultActive: false,
               }),
             ]),
-            createPriceLine({ unit: Unit.usd }),
+            priceLine({ ctx, unit: Unit.usd }),
           ],
         },
         {
           name: "Net pnl 30d change",
-          title: `Cumulative Net Realized Profit And Loss 30 Day Change ${title}`,
+          title: `Net Realized P&L 30d Change ${title}`,
           bottom: [
             ...list.flatMap(({ color, name, tree }) => [
               baseline({
@@ -751,9 +746,9 @@ function createGroupedRealizedPnlSections(ctx, list, title) {
                 unit: Unit.pctMcap,
               }),
             ]),
-            createPriceLine({ unit: Unit.usd }),
-            createPriceLine({ unit: Unit.pctMcap }),
-            createPriceLine({ unit: Unit.pctRcap }),
+            priceLine({ ctx, unit: Unit.usd }),
+            priceLine({ ctx, unit: Unit.pctMcap }),
+            priceLine({ ctx, unit: Unit.pctRcap }),
           ],
         },
       ],
@@ -787,12 +782,12 @@ function createGroupedRealizedPnlSections(ctx, list, title) {
  * @returns {PartialChartOption}
  */
 function createSingleBaseSoprChart(ctx, cohort, title) {
-  const { colors, createPriceLine } = ctx;
+  const { colors } = ctx;
   const { tree } = cohort;
 
   return {
     name: "Normal",
-    title: `Spent Output Profit Ratio ${title}`,
+    title: `SOPR ${title}`,
     bottom: [
       baseline({
         metric: tree.realized.sopr,
@@ -816,7 +811,7 @@ function createSingleBaseSoprChart(ctx, cohort, title) {
         defaultActive: false,
         options: { baseValue: { price: 1 } },
       }),
-      createPriceLine({ number: 1, unit: Unit.ratio }),
+      priceLine({ ctx, number: 1, unit: Unit.ratio }),
     ],
   };
 }
@@ -829,12 +824,12 @@ function createSingleBaseSoprChart(ctx, cohort, title) {
  * @returns {PartialChartOption}
  */
 function createSingleAdjustedSoprChart(ctx, cohort, title) {
-  const { colors, createPriceLine } = ctx;
+  const { colors } = ctx;
   const { tree } = cohort;
 
   return {
     name: "Adjusted",
-    title: `Adjusted Spent Output Profit Ratio ${title}`,
+    title: `aSOPR ${title}`,
     bottom: [
       baseline({
         metric: tree.realized.adjustedSopr,
@@ -859,7 +854,7 @@ function createSingleAdjustedSoprChart(ctx, cohort, title) {
         defaultActive: false,
         options: { baseValue: { price: 1 } },
       }),
-      createPriceLine({ number: 1, unit: Unit.ratio }),
+      priceLine({ ctx, number: 1, unit: Unit.ratio }),
     ],
   };
 }
@@ -872,11 +867,9 @@ function createSingleAdjustedSoprChart(ctx, cohort, title) {
  * @returns {PartialChartOption}
  */
 function createGroupedBaseSoprChart(ctx, list, title) {
-  const { createPriceLine } = ctx;
-
   return {
     name: "Normal",
-    title: `Spent Output Profit Ratio ${title}`,
+    title: `SOPR ${title}`,
     bottom: [
       ...list.flatMap(({ color, name, tree }) => [
         baseline({
@@ -903,7 +896,7 @@ function createGroupedBaseSoprChart(ctx, list, title) {
           options: { baseValue: { price: 1 } },
         }),
       ]),
-      createPriceLine({ number: 1, unit: Unit.ratio }),
+      priceLine({ ctx, number: 1, unit: Unit.ratio }),
     ],
   };
 }
@@ -916,11 +909,9 @@ function createGroupedBaseSoprChart(ctx, list, title) {
  * @returns {PartialChartOption}
  */
 function createGroupedAdjustedSoprChart(ctx, list, title) {
-  const { createPriceLine } = ctx;
-
   return {
     name: "Adjusted",
-    title: `Adjusted Spent Output Profit Ratio ${title}`,
+    title: `aSOPR ${title}`,
     bottom: [
       ...list.flatMap(({ color, name, tree }) => [
         baseline({
@@ -947,7 +938,7 @@ function createGroupedAdjustedSoprChart(ctx, list, title) {
           options: { baseValue: { price: 1 } },
         }),
       ]),
-      createPriceLine({ number: 1, unit: Unit.ratio }),
+      priceLine({ ctx, number: 1, unit: Unit.ratio }),
     ],
   };
 }
@@ -1056,7 +1047,7 @@ function createUnrealizedPnlRelToMarketCapMetrics(ctx, rel) {
  * @param {RelativeWithOwnMarketCap} rel
  */
 function createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, rel) {
-  const { colors, createPriceLine } = ctx;
+  const { colors } = ctx;
   return [
     line({
       metric: rel.unrealizedProfitRelToOwnMarketCap,
@@ -1077,8 +1068,8 @@ function createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, rel) {
       color: colors.red,
       unit: Unit.pctOwnMcap,
     }),
-    createPriceLine({ unit: Unit.pctOwnMcap, number: 100 }),
-    createPriceLine({ unit: Unit.pctOwnMcap }),
+    priceLine({ ctx, unit: Unit.pctOwnMcap, number: 100 }),
+    priceLine({ ctx, unit: Unit.pctOwnMcap }),
   ];
 }
 
@@ -1087,7 +1078,7 @@ function createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, rel) {
  * @param {RelativeWithOwnPnl} rel
  */
 function createUnrealizedPnlRelToOwnPnlMetrics(ctx, rel) {
-  const { colors, createPriceLine } = ctx;
+  const { colors } = ctx;
   return [
     line({
       metric: rel.unrealizedProfitRelToOwnTotalUnrealizedPnl,
@@ -1108,8 +1099,8 @@ function createUnrealizedPnlRelToOwnPnlMetrics(ctx, rel) {
       color: colors.red,
       unit: Unit.pctOwnPnl,
     }),
-    createPriceLine({ unit: Unit.pctOwnPnl, number: 100 }),
-    createPriceLine({ unit: Unit.pctOwnPnl }),
+    priceLine({ ctx, unit: Unit.pctOwnPnl, number: 100 }),
+    priceLine({ ctx, unit: Unit.pctOwnPnl }),
   ];
 }
 
@@ -1117,7 +1108,7 @@ function createUnrealizedPnlRelToOwnPnlMetrics(ctx, rel) {
  * @param {RelativeWithMarketCap} rel
  */
 function createNetUnrealizedPnlRelToMarketCapMetrics(rel) {
-    return [
+  return [
     baseline({
       metric: rel.netUnrealizedPnlRelToMarketCap,
       name: "Net",
@@ -1131,14 +1122,13 @@ function createNetUnrealizedPnlRelToMarketCapMetrics(rel) {
  * @param {RelativeWithOwnMarketCap} rel
  */
 function createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, rel) {
-  const { createPriceLine } = ctx;
   return [
     baseline({
       metric: rel.netUnrealizedPnlRelToOwnMarketCap,
       name: "Net",
       unit: Unit.pctOwnMcap,
     }),
-    createPriceLine({ unit: Unit.pctOwnMcap }),
+    priceLine({ ctx, unit: Unit.pctOwnMcap }),
   ];
 }
 
@@ -1147,14 +1137,13 @@ function createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, rel) {
  * @param {RelativeWithOwnPnl} rel
  */
 function createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, rel) {
-  const { createPriceLine } = ctx;
   return [
     baseline({
       metric: rel.netUnrealizedPnlRelToOwnTotalUnrealizedPnl,
       name: "Net",
       unit: Unit.pctOwnPnl,
     }),
-    createPriceLine({ unit: Unit.pctOwnPnl }),
+    priceLine({ ctx, unit: Unit.pctOwnPnl }),
   ];
 }
 
@@ -1199,7 +1188,7 @@ function createUnrealizedPnlBaseMetrics(ctx, tree) {
  * @param {{ unrealized: { netUnrealizedPnl: AnyMetricPattern } }} tree
  */
 function createNetUnrealizedPnlBaseMetric(tree) {
-    return baseline({
+  return baseline({
     metric: tree.unrealized.netUnrealizedPnl,
     name: "Net",
     unit: Unit.ratio,
@@ -1219,27 +1208,26 @@ function createNetUnrealizedPnlBaseMetric(tree) {
  * @returns {PartialOptionsGroup}
  */
 function createSingleUnrealizedSectionAll(ctx, cohort, title) {
-  const { createPriceLine } = ctx;
   const { tree } = cohort;
   return {
     name: "Unrealized",
     tree: [
       {
         name: "pnl",
-        title: `Unrealized Profit And Loss ${title}`,
+        title: `Unrealized P&L ${title}`,
         bottom: [
           ...createUnrealizedPnlBaseMetrics(ctx, tree),
           ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
-          createPriceLine({ unit: Unit.usd, defaultActive: false }),
+          priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
         ],
       },
       {
         name: "Net pnl",
-        title: `Net Unrealized Profit And Loss ${title}`,
+        title: `Net Unrealized P&L ${title}`,
         bottom: [
           createNetUnrealizedPnlBaseMetric(tree),
           ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
-          createPriceLine({ unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.usd }),
         ],
       },
     ],
@@ -1254,33 +1242,32 @@ function createSingleUnrealizedSectionAll(ctx, cohort, title) {
  * @returns {PartialOptionsGroup}
  */
 function createSingleUnrealizedSectionFull(ctx, cohort, title) {
-  const { createPriceLine } = ctx;
   const { tree } = cohort;
   return {
     name: "Unrealized",
     tree: [
       {
         name: "pnl",
-        title: `Unrealized Profit And Loss ${title}`,
+        title: `Unrealized P&L ${title}`,
         bottom: [
           ...createUnrealizedPnlBaseMetrics(ctx, tree),
           ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
           ...createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
           ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
-          createPriceLine({ unit: Unit.usd, defaultActive: false }),
-          createPriceLine({ unit: Unit.pctMcap, defaultActive: false }),
+          priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
+          priceLine({ ctx, unit: Unit.pctMcap, defaultActive: false }),
         ],
       },
       {
         name: "Net pnl",
-        title: `Net Unrealized Profit And Loss ${title}`,
+        title: `Net Unrealized P&L ${title}`,
         bottom: [
           createNetUnrealizedPnlBaseMetric(tree),
           ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
           ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
           ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
-          createPriceLine({ unit: Unit.usd }),
-          createPriceLine({ unit: Unit.pctMcap }),
+          priceLine({ ctx, unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.pctMcap }),
         ],
       },
     ],
@@ -1295,29 +1282,28 @@ function createSingleUnrealizedSectionFull(ctx, cohort, title) {
  * @returns {PartialOptionsGroup}
  */
 function createSingleUnrealizedSectionWithMarketCap(ctx, cohort, title) {
-  const { createPriceLine } = ctx;
   const { tree } = cohort;
   return {
     name: "Unrealized",
     tree: [
       {
         name: "pnl",
-        title: `Unrealized Profit And Loss ${title}`,
+        title: `Unrealized P&L ${title}`,
         bottom: [
           ...createUnrealizedPnlBaseMetrics(ctx, tree),
           ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
-          createPriceLine({ unit: Unit.usd, defaultActive: false }),
-          createPriceLine({ unit: Unit.pctMcap, defaultActive: false }),
+          priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
+          priceLine({ ctx, unit: Unit.pctMcap, defaultActive: false }),
         ],
       },
       {
         name: "Net pnl",
-        title: `Net Unrealized Profit And Loss ${title}`,
+        title: `Net Unrealized P&L ${title}`,
         bottom: [
           createNetUnrealizedPnlBaseMetric(tree),
           ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
-          createPriceLine({ unit: Unit.usd }),
-          createPriceLine({ unit: Unit.pctMcap }),
+          priceLine({ ctx, unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.pctMcap }),
         ],
       },
     ],
@@ -1333,29 +1319,28 @@ function createSingleUnrealizedSectionWithMarketCap(ctx, cohort, title) {
  * @returns {PartialOptionsGroup}
  */
 function createSingleUnrealizedSectionWithOwnCaps(ctx, cohort, title) {
-  const { createPriceLine } = ctx;
   const { tree } = cohort;
   return {
     name: "Unrealized",
     tree: [
       {
         name: "pnl",
-        title: `Unrealized Profit And Loss ${title}`,
+        title: `Unrealized P&L ${title}`,
         bottom: [
           ...createUnrealizedPnlBaseMetrics(ctx, tree),
           ...createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
           ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
-          createPriceLine({ unit: Unit.usd, defaultActive: false }),
+          priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
         ],
       },
       {
         name: "Net pnl",
-        title: `Net Unrealized Profit And Loss ${title}`,
+        title: `Net Unrealized P&L ${title}`,
         bottom: [
           createNetUnrealizedPnlBaseMetric(tree),
           ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
           ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
-          createPriceLine({ unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.usd }),
         ],
       },
     ],
@@ -1371,25 +1356,24 @@ function createSingleUnrealizedSectionWithOwnCaps(ctx, cohort, title) {
  * @returns {PartialOptionsGroup}
  */
 function createSingleUnrealizedSectionBase(ctx, cohort, title) {
-  const { createPriceLine } = ctx;
   const { tree } = cohort;
   return {
     name: "Unrealized",
     tree: [
       {
         name: "pnl",
-        title: `Unrealized Profit And Loss ${title}`,
+        title: `Unrealized P&L ${title}`,
         bottom: [
           ...createUnrealizedPnlBaseMetrics(ctx, tree),
-          createPriceLine({ unit: Unit.usd, defaultActive: false }),
+          priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
         ],
       },
       {
         name: "Net pnl",
-        title: `Net Unrealized Profit And Loss ${title}`,
+        title: `Net Unrealized P&L ${title}`,
         bottom: [
           createNetUnrealizedPnlBaseMetric(tree),
-          createPriceLine({ unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.usd }),
         ],
       },
     ],
@@ -1402,7 +1386,7 @@ function createSingleUnrealizedSectionBase(ctx, cohort, title) {
  * @param {string} title
  */
 function createGroupedUnrealizedBaseCharts(list, title) {
-    return [
+  return [
     {
       name: "profit",
       title: `Unrealized Profit ${title}`,
@@ -1429,7 +1413,7 @@ function createGroupedUnrealizedBaseCharts(list, title) {
     },
     {
       name: "total pnl",
-      title: `Unrealized Total Profit And Loss ${title}`,
+      title: `Unrealized Total P&L ${title}`,
       bottom: list.flatMap(({ color, name, tree }) => [
         line({
           metric: tree.unrealized.totalUnrealizedPnl,
@@ -1450,14 +1434,13 @@ function createGroupedUnrealizedBaseCharts(list, title) {
  * @returns {PartialOptionsGroup}
  */
 function createGroupedUnrealizedSectionFull(ctx, list, title) {
-  const { createPriceLine } = ctx;
   return {
     name: "Unrealized",
     tree: [
       ...createGroupedUnrealizedBaseCharts(list, title),
       {
         name: "Net pnl",
-        title: `Net Unrealized Profit And Loss ${title}`,
+        title: `Net Unrealized P&L ${title}`,
         bottom: [
           ...list.flatMap(({ color, name, tree }) => [
             baseline({
@@ -1485,10 +1468,10 @@ function createGroupedUnrealizedSectionFull(ctx, list, title) {
               unit: Unit.pctOwnPnl,
             }),
           ]),
-          createPriceLine({ unit: Unit.usd }),
-          createPriceLine({ unit: Unit.pctMcap }),
-          createPriceLine({ unit: Unit.pctOwnMcap }),
-          createPriceLine({ unit: Unit.pctOwnPnl }),
+          priceLine({ ctx, unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.pctMcap }),
+          priceLine({ ctx, unit: Unit.pctOwnMcap }),
+          priceLine({ ctx, unit: Unit.pctOwnPnl }),
         ],
       },
     ],
@@ -1503,14 +1486,13 @@ function createGroupedUnrealizedSectionFull(ctx, list, title) {
  * @returns {PartialOptionsGroup}
  */
 function createGroupedUnrealizedSectionWithMarketCap(ctx, list, title) {
-  const { createPriceLine } = ctx;
   return {
     name: "Unrealized",
     tree: [
       ...createGroupedUnrealizedBaseCharts(list, title),
       {
         name: "Net pnl",
-        title: `Net Unrealized Profit And Loss ${title}`,
+        title: `Net Unrealized P&L ${title}`,
         bottom: [
           ...list.flatMap(({ color, name, tree }) => [
             baseline({
@@ -1526,8 +1508,8 @@ function createGroupedUnrealizedSectionWithMarketCap(ctx, list, title) {
               unit: Unit.pctMcap,
             }),
           ]),
-          createPriceLine({ unit: Unit.usd }),
-          createPriceLine({ unit: Unit.pctMcap }),
+          priceLine({ ctx, unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.pctMcap }),
         ],
       },
     ],
@@ -1542,14 +1524,13 @@ function createGroupedUnrealizedSectionWithMarketCap(ctx, list, title) {
  * @returns {PartialOptionsGroup}
  */
 function createGroupedUnrealizedSectionWithOwnCaps(ctx, list, title) {
-  const { createPriceLine } = ctx;
   return {
     name: "Unrealized",
     tree: [
       ...createGroupedUnrealizedBaseCharts(list, title),
       {
         name: "Net pnl",
-        title: `Net Unrealized Profit And Loss ${title}`,
+        title: `Net Unrealized P&L ${title}`,
         bottom: [
           ...list.flatMap(({ color, name, tree }) => [
             baseline({
@@ -1571,9 +1552,9 @@ function createGroupedUnrealizedSectionWithOwnCaps(ctx, list, title) {
               unit: Unit.pctOwnPnl,
             }),
           ]),
-          createPriceLine({ unit: Unit.usd }),
-          createPriceLine({ unit: Unit.pctOwnMcap }),
-          createPriceLine({ unit: Unit.pctOwnPnl }),
+          priceLine({ ctx, unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.pctOwnMcap }),
+          priceLine({ ctx, unit: Unit.pctOwnPnl }),
         ],
       },
     ],
@@ -1588,14 +1569,13 @@ function createGroupedUnrealizedSectionWithOwnCaps(ctx, list, title) {
  * @returns {PartialOptionsGroup}
  */
 function createGroupedUnrealizedSectionBase(ctx, list, title) {
-  const { createPriceLine } = ctx;
   return {
     name: "Unrealized",
     tree: [
       ...createGroupedUnrealizedBaseCharts(list, title),
       {
         name: "Net pnl",
-        title: `Net Unrealized Profit And Loss ${title}`,
+        title: `Net Unrealized P&L ${title}`,
         bottom: [
           ...list.flatMap(({ color, name, tree }) => [
             baseline({
@@ -1605,7 +1585,7 @@ function createGroupedUnrealizedSectionBase(ctx, list, title) {
               unit: Unit.ratio,
             }),
           ]),
-          createPriceLine({ unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.usd }),
         ],
       },
     ],
@@ -1619,7 +1599,7 @@ function createGroupedUnrealizedSectionBase(ctx, list, title) {
  * @returns {PartialOptionsGroup}
  */
 function createSingleCostBasisSectionWithPercentiles(cohort, title) {
-    const { color, tree } = cohort;
+  const { color, tree } = cohort;
 
   return {
     name: "Cost Basis",
@@ -1652,7 +1632,7 @@ function createSingleCostBasisSectionWithPercentiles(cohort, title) {
       {
         name: "percentiles",
         title: `Cost Basis Percentiles ${title}`,
-        top: createCostBasisPercentilesSeries( [cohort], false),
+        top: createCostBasisPercentilesSeries([cohort], false),
       },
     ],
   };
@@ -1705,7 +1685,7 @@ function createGroupedCostBasisSectionWithPercentiles(list, title) {
  * @returns {PartialOptionsGroup}
  */
 function createSingleCostBasisSection(cohort, title) {
-    const { color, tree } = cohort;
+  const { color, tree } = cohort;
 
   return {
     name: "Cost Basis",
@@ -2083,7 +2063,7 @@ function createGroupedActivitySectionWithAdjusted(list, title) {
       tree: [
         {
           name: "Sum",
-          title: `Sum of Coins Destroyed ${title}`,
+          title: `Coins Destroyed ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
             line({
               metric: tree.activity.coinblocksDestroyed.sum,
@@ -2176,7 +2156,7 @@ function createGroupedActivitySectionBasic(list, title) {
       tree: [
         {
           name: "Sum",
-          title: `Sum of Coins Destroyed ${title}`,
+          title: `Coins Destroyed ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
             line({
               metric: tree.activity.coinblocksDestroyed.sum,

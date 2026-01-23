@@ -1,11 +1,13 @@
 use std::{
     fs,
     path::{Path, PathBuf},
+    str::FromStr,
     sync::OnceLock,
 };
 
 use importmap::ImportMap;
 use include_dir::{Dir, include_dir};
+use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
 use crate::{Error, Result};
@@ -16,8 +18,11 @@ pub static EMBEDDED_WEBSITE: Dir = include_dir!("$CARGO_MANIFEST_DIR/website");
 /// Cached index.html with importmap injected
 static INDEX_HTML: OnceLock<String> = OnceLock::new();
 
-/// Source for serving the website
-#[derive(Debug, Clone, Default)]
+/// Website configuration:
+/// - `true` or omitted: serve embedded website
+/// - `false`: disable website serving
+/// - `"/path/to/website"`: serve custom website from path
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Website {
     Disabled,
     #[default]
@@ -179,5 +184,61 @@ impl Website {
             error!("{e}");
             Error::not_found("File not found")
         })
+    }
+}
+
+impl FromStr for Website {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        Ok(match s.to_lowercase().as_str() {
+            "true" | "1" | "yes" | "on" => Self::Default,
+            "false" | "0" | "no" | "off" => Self::Disabled,
+            _ => Self::Filesystem(PathBuf::from(s)),
+        })
+    }
+}
+
+impl Serialize for Website {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+        match self {
+            Self::Disabled => serializer.serialize_bool(false),
+            Self::Default => serializer.serialize_bool(true),
+            Self::Filesystem(p) => p.serialize(serializer),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Website {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {
+        use serde::de::{self, Visitor};
+
+        struct WebsiteVisitor;
+
+        impl<'de> Visitor<'de> for WebsiteVisitor {
+            type Value = Website;
+
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str("a boolean or a path string")
+            }
+
+            fn visit_bool<E: de::Error>(self, v: bool) -> std::result::Result<Self::Value, E> {
+                Ok(if v {
+                    Website::Default
+                } else {
+                    Website::Disabled
+                })
+            }
+
+            fn visit_str<E: de::Error>(self, v: &str) -> std::result::Result<Self::Value, E> {
+                Ok(Website::Filesystem(PathBuf::from(v)))
+            }
+
+            fn visit_string<E: de::Error>(self, v: String) -> std::result::Result<Self::Value, E> {
+                Ok(Website::Filesystem(PathBuf::from(v)))
+            }
+        }
+
+        deserializer.deserialize_any(WebsiteVisitor)
     }
 }

@@ -4,12 +4,14 @@ use std::{
 };
 
 use brk_error::{Error, Result};
+use owo_colors::OwoColorize;
 use brk_fetcher::Fetcher;
 use brk_rpc::{Auth, Client};
+use brk_server::Website;
 use brk_types::Port;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::{default_brk_path, dot_brk_path, fix_user_path, website::WebsiteArg};
+use crate::{default_brk_path, dot_brk_path, fix_user_path};
 
 #[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct Config {
@@ -20,7 +22,7 @@ pub struct Config {
     brkport: Option<Port>,
 
     #[serde(default, deserialize_with = "default_on_error")]
-    website: Option<WebsiteArg>,
+    website: Option<Website>,
 
     #[serde(default, deserialize_with = "default_on_error")]
     fetch: Option<bool>,
@@ -45,9 +47,6 @@ pub struct Config {
 
     #[serde(default, deserialize_with = "default_on_error")]
     rpcpassword: Option<String>,
-
-    #[serde(default, deserialize_with = "default_on_error")]
-    check_collisions: Option<bool>,
 }
 
 impl Config {
@@ -95,9 +94,6 @@ impl Config {
         if let Some(v) = config_args.rpcpassword {
             config.rpcpassword = Some(v);
         }
-        if let Some(v) = config_args.check_collisions {
-            config.check_collisions = Some(v);
-        }
 
         config.check();
 
@@ -126,14 +122,23 @@ impl Config {
                 Long("brkport") => config.brkport = Some(parser.value().unwrap().parse().unwrap()),
                 Long("website") => config.website = Some(parser.value().unwrap().parse().unwrap()),
                 Long("fetch") => config.fetch = Some(parser.value().unwrap().parse().unwrap()),
-                Long("bitcoindir") => config.bitcoindir = Some(parser.value().unwrap().parse().unwrap()),
-                Long("blocksdir") => config.blocksdir = Some(parser.value().unwrap().parse().unwrap()),
-                Long("rpcconnect") => config.rpcconnect = Some(parser.value().unwrap().parse().unwrap()),
+                Long("bitcoindir") => {
+                    config.bitcoindir = Some(parser.value().unwrap().parse().unwrap())
+                }
+                Long("blocksdir") => {
+                    config.blocksdir = Some(parser.value().unwrap().parse().unwrap())
+                }
+                Long("rpcconnect") => {
+                    config.rpcconnect = Some(parser.value().unwrap().parse().unwrap())
+                }
                 Long("rpcport") => config.rpcport = Some(parser.value().unwrap().parse().unwrap()),
-                Long("rpccookiefile") => config.rpccookiefile = Some(parser.value().unwrap().parse().unwrap()),
+                Long("rpccookiefile") => {
+                    config.rpccookiefile = Some(parser.value().unwrap().parse().unwrap())
+                }
                 Long("rpcuser") => config.rpcuser = Some(parser.value().unwrap().parse().unwrap()),
-                Long("rpcpassword") => config.rpcpassword = Some(parser.value().unwrap().parse().unwrap()),
-                Long("check-collisions") => config.check_collisions = Some(parser.value().unwrap().parse().unwrap()),
+                Long("rpcpassword") => {
+                    config.rpcpassword = Some(parser.value().unwrap().parse().unwrap())
+                }
                 _ => {
                     eprintln!("{}", arg.unexpected());
                     std::process::exit(1);
@@ -145,32 +150,31 @@ impl Config {
     }
 
     fn print_help() {
-        println!(
-            "brk {}
-Bitcoin Research Kit
+        let v = env!("CARGO_PKG_VERSION");
 
-USAGE:
-    brk [OPTIONS]
-
-OPTIONS:
-    -h, --help                   Print help
-    -V, --version                Print version
-
-    --brkdir <PATH>              Output directory [~/.brk]
-    --brkport <PORT>             Server port [3110]
-    --website <BOOL|PATH>        Website: true, false, or path [true]
-    --fetch <BOOL>               Fetch prices [true]
-
-    --bitcoindir <PATH>          Bitcoin directory [~/.bitcoin, ~/Library/Application Support/Bitcoin]
-    --blocksdir <PATH>           Blocks directory [<bitcoindir>/blocks]
-
-    --rpcconnect <IP>            RPC host [localhost]
-    --rpcport <PORT>             RPC port [8332]
-    --rpccookiefile <PATH>       RPC cookie file [<bitcoindir>/.cookie]
-    --rpcuser <USERNAME>         RPC username
-    --rpcpassword <PASSWORD>     RPC password",
-            env!("CARGO_PKG_VERSION")
-        );
+        println!("{} {}", "brk".bold(), v.bright_black());
+        println!("Bitcoin Research Kit");
+        println!();
+        println!("{}", "USAGE:".bold());
+        println!("    brk {}", "[OPTIONS]".bright_black());
+        println!();
+        println!("{}", "OPTIONS:".bold());
+        println!("    -h, --help                   Print help");
+        println!("    -V, --version                Print version");
+        println!();
+        println!("    --brkdir {}              Output directory {}", "<PATH>".bright_black(), "[~/.brk]".bright_black());
+        println!("    --brkport {}              Server port {}", "<PORT>".bright_black(), "[3110]".bright_black());
+        println!("    --website {}        Website: true, false, or path {}", "<BOOL|PATH>".bright_black(), "[true]".bright_black());
+        println!("    --fetch {}               Fetch prices {}", "<BOOL>".bright_black(), "[true]".bright_black());
+        println!();
+        println!("    --bitcoindir {}          Bitcoin directory {}", "<PATH>".bright_black(), "[~/.bitcoin, ~/Library/...]".bright_black());
+        println!("    --blocksdir {}           Blocks directory {}", "<PATH>".bright_black(), "[<bitcoindir>/blocks]".bright_black());
+        println!();
+        println!("    --rpcconnect {}            RPC host {}", "<IP>".bright_black(), "[localhost]".bright_black());
+        println!("    --rpcport {}             RPC port {}", "<PORT>".bright_black(), "[8332]".bright_black());
+        println!("    --rpccookiefile {}       RPC cookie file {}", "<PATH>".bright_black(), "[<bitcoindir>/.cookie]".bright_black());
+        println!("    --rpcuser {}         RPC username", "<USERNAME>".bright_black());
+        println!("    --rpcpassword {}     RPC password", "<PASSWORD>".bright_black());
     }
 
     fn check(&self) {
@@ -280,7 +284,7 @@ Finally, you can run the program with '-h' for help."
         )
     }
 
-    pub fn website(&self) -> WebsiteArg {
+    pub fn website(&self) -> Website {
         self.website.clone().unwrap_or_default()
     }
 
@@ -297,9 +301,6 @@ Finally, you can run the program with '-h' for help."
             .then(|| Fetcher::import(Some(self.harsdir().as_path())).unwrap())
     }
 
-    pub fn check_collisions(&self) -> bool {
-        self.check_collisions.is_some_and(|b| b)
-    }
 }
 
 fn default_on_error<'de, D, T>(deserializer: D) -> Result<T, D::Error>

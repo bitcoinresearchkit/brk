@@ -56,8 +56,9 @@ export function createLegend() {
         inputValue: "value",
         title: "Click to toggle",
         inputChecked: series.active.value,
-        onClick: () => {
-          series.setActive(input.checked);
+        onClick: (event) => {
+          event.preventDefault();
+          series.setActive(!series.active.value);
         },
         type: "checkbox",
       });

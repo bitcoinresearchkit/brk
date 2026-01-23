@@ -33,6 +33,18 @@ impl Vecs {
                 Ok(())
             })?;
 
+        self.received_sum
+            .compute_all(indexes, starting_indexes, exit, |v| {
+                v.compute_sum_from_indexes(
+                    starting_indexes.height,
+                    &indexer.vecs.transactions.first_txindex,
+                    &indexes.height.txindex_count,
+                    &fees_vecs.output_value,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
         self.annualized_volume.compute_sats(|v| {
             v.compute_sum(
                 starting_indexes.dateindex,

@@ -2,7 +2,7 @@
 
 import { localhost } from "../../utils/env.js";
 import { Unit } from "../../utils/units.js";
-import { line } from "../series.js";
+import { candlestick, line } from "../series.js";
 import { buildAverages, createAveragesSection } from "./averages.js";
 import { createPerformanceSection } from "./performance.js";
 import { createIndicatorsSection } from "./indicators/index.js";
@@ -43,6 +43,16 @@ export function createMarketSection(ctx) {
               name: "Oracle",
               title: "Oracle Price",
               top: [
+                candlestick({
+                  metric: price.oracle.closeOhlcDollars,
+                  name: "close",
+                  unit: Unit.usd,
+                }),
+                candlestick({
+                  metric: price.oracle.midOhlcDollars,
+                  name: "mid",
+                  unit: Unit.usd,
+                }),
                 line({
                   metric: price.oracle.phaseDailyDollars.median,
                   name: "o. p50",
@@ -105,7 +115,7 @@ export function createMarketSection(ctx) {
       // Capitalization
       {
         name: "Capitalization",
-        title: "Market Capitalization",
+        title: "Market Cap",
         bottom: [
           line({
             metric: supply.marketCap,

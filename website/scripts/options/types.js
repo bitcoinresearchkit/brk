@@ -1,6 +1,7 @@
 /**
  * @typedef {Object} BaseSeriesBlueprint
  * @property {string} title
+ * @property {string} [key] - Optional key for persistence (derived from title if not provided)
  * @property {boolean} [defaultActive]
  *
  * @typedef {Object} BaselineSeriesBlueprintSpecific
@@ -239,18 +240,16 @@
  * @property {(pattern: BlockCountPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockCount
  * @property {(pattern: FullnessPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBitcoin
  * @property {(pattern: AnyStatsPattern, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockSize
- * @property {(pattern: AnyStatsPattern, title: string, unit: Unit) => AnyFetchedSeriesBlueprint[]} fromSizePattern
- * @property {(pattern: FullnessPattern<any>, title: string, unit: Unit) => AnyFetchedSeriesBlueprint[]} fromFullnessPattern
- * @property {(pattern: FeeRatePattern<any>, title: string, unit: Unit) => AnyFetchedSeriesBlueprint[]} fromFeeRatePattern
+ * @property {(pattern: AnyStatsPattern, unit: Unit, title?: string) => AnyFetchedSeriesBlueprint[]} fromSizePattern
+ * @property {(pattern: FullnessPattern<any>, unit: Unit, title?: string) => AnyFetchedSeriesBlueprint[]} fromFullnessPattern
+ * @property {(pattern: DollarsPattern<any>, unit: Unit, title?: string) => AnyFetchedSeriesBlueprint[]} fromDollarsPattern
+ * @property {(pattern: FeeRatePattern<any>, unit: Unit, title?: string) => AnyFetchedSeriesBlueprint[]} fromFeeRatePattern
  * @property {(pattern: CoinbasePattern, title: string) => AnyFetchedSeriesBlueprint[]} fromCoinbasePattern
  * @property {(pattern: ValuePattern, title: string, sumColor?: Color, cumulativeColor?: Color) => AnyFetchedSeriesBlueprint[]} fromValuePattern
  * @property {(pattern: { sum: AnyMetricPattern, cumulative: AnyMetricPattern }, title: string, unit: Unit, sumColor?: Color, cumulativeColor?: Color) => AnyFetchedSeriesBlueprint[]} fromBitcoinPatternWithUnit
- * @property {(pattern: BlockCountPattern<any>, title: string, unit: Unit, sumColor?: Color, cumulativeColor?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockCountWithUnit
- * @property {(pattern: IntervalPattern, title: string, unit: Unit, color?: Color) => AnyFetchedSeriesBlueprint[]} fromIntervalPattern
+ * @property {(pattern: BlockCountPattern<any>, unit: Unit, title?: string, sumColor?: Color, cumulativeColor?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockCountWithUnit
+ * @property {(pattern: IntervalPattern, unit: Unit, title?: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromIntervalPattern
  * @property {(pattern: SupplyPattern, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromSupplyPattern
- * @property {(args: { number?: number, name?: string, defaultActive?: boolean, lineStyle?: LineStyle, color?: Color, unit: Unit }) => FetchedLineSeriesBlueprint} createPriceLine
- * @property {(args: { numbers: number[], unit: Unit }) => FetchedLineSeriesBlueprint[]} createPriceLines
- * @property {(args: { constant: AnyMetricPattern, name: string, unit: Unit, color?: Color, lineStyle?: number, defaultActive?: boolean }) => FetchedLineSeriesBlueprint} constantLine
  */
 
 // Re-export for type consumers

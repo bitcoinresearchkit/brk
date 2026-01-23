@@ -7,6 +7,7 @@ use crate::internal::{ComputedFromDateLast, ValueFromHeightSum, ValueFromDateLas
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     pub sent_sum: ValueFromHeightSum,
+    pub received_sum: ValueFromHeightSum,
     pub annualized_volume: ValueFromDateLast,
     pub tx_per_sec: ComputedFromDateLast<StoredF32>,
     pub outputs_per_sec: ComputedFromDateLast<StoredF32>,

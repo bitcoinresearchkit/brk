@@ -23,6 +23,13 @@ impl Vecs {
                 indexes,
                 price,
             )?,
+            received_sum: ValueFromHeightSum::forced_import(
+                db,
+                "received_sum",
+                version,
+                indexes,
+                price,
+            )?,
             annualized_volume: ValueFromDateLast::forced_import(
                 db,
                 "annualized_volume",

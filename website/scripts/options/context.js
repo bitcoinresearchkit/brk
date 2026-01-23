@@ -4,6 +4,7 @@ import {
   fromBlockSize,
   fromSizePattern,
   fromFullnessPattern,
+  fromDollarsPattern,
   fromFeeRatePattern,
   fromCoinbasePattern,
   fromValuePattern,
@@ -12,11 +13,6 @@ import {
   fromIntervalPattern,
   fromSupplyPattern,
 } from "./series.js";
-import {
-  createPriceLine,
-  createPriceLines,
-  constantLine,
-} from "./constants.js";
 import { colors } from "../chart/colors.js";
 
 /**
@@ -26,8 +22,6 @@ import { colors } from "../chart/colors.js";
  * @returns {PartialContext}
  */
 export function createContext({ brk }) {
-  const constants = brk.metrics.constants;
-
   return {
     colors,
     brk,
@@ -38,12 +32,14 @@ export function createContext({ brk }) {
       fromBitcoin(colors, pattern, title, color),
     fromBlockSize: (pattern, title, color) =>
       fromBlockSize(colors, pattern, title, color),
-    fromSizePattern: (pattern, title, unit) =>
-      fromSizePattern(colors, pattern, title, unit),
-    fromFullnessPattern: (pattern, title, unit) =>
-      fromFullnessPattern(colors, pattern, title, unit),
-    fromFeeRatePattern: (pattern, title, unit) =>
-      fromFeeRatePattern(colors, pattern, title, unit),
+    fromSizePattern: (pattern, unit, title) =>
+      fromSizePattern(colors, pattern, unit, title),
+    fromFullnessPattern: (pattern, unit, title) =>
+      fromFullnessPattern(colors, pattern, unit, title),
+    fromDollarsPattern: (pattern, unit, title) =>
+      fromDollarsPattern(colors, pattern, unit, title),
+    fromFeeRatePattern: (pattern, unit, title) =>
+      fromFeeRatePattern(colors, pattern, unit, title),
     fromCoinbasePattern: (pattern, title) =>
       fromCoinbasePattern(colors, pattern, title),
     fromValuePattern: (pattern, title, sumColor, cumulativeColor) =>
@@ -63,23 +59,18 @@ export function createContext({ brk }) {
         sumColor,
         cumulativeColor,
       ),
-    fromBlockCountWithUnit: (pattern, title, unit, sumColor, cumulativeColor) =>
+    fromBlockCountWithUnit: (pattern, unit, title, sumColor, cumulativeColor) =>
       fromBlockCountWithUnit(
         colors,
         pattern,
-        title,
         unit,
+        title,
         sumColor,
         cumulativeColor,
       ),
-    fromIntervalPattern: (pattern, title, unit, color) =>
-      fromIntervalPattern(colors, pattern, title, unit, color),
+    fromIntervalPattern: (pattern, unit, title, color) =>
+      fromIntervalPattern(colors, pattern, unit, title, color),
     fromSupplyPattern: (pattern, title, color) =>
       fromSupplyPattern(colors, pattern, title, color),
-
-    createPriceLine: (args) => createPriceLine({ constants, colors, ...args }),
-    createPriceLines: (args) =>
-      createPriceLines({ constants, colors, ...args }),
-    constantLine: (args) => constantLine({ colors, ...args }),
   };
 }

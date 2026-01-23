@@ -77,12 +77,7 @@ const lineWidth = /** @type {any} */ (1.5);
  * @param {BrkClient} args.brk
  * @param {true} [args.fitContent]
  */
-export function createChart({
-  parent,
-  id: chartId,
-  brk,
-  fitContent,
-}) {
+export function createChart({ parent, id: chartId, brk, fitContent }) {
   const baseUrl = brk.baseUrl.replace(/\/$/, "");
 
   /** @param {ChartableIndex} idx */
@@ -468,6 +463,8 @@ export function createChart({
      * @param {Color[]} args.colors
      * @param {AnyMetricPattern} args.metric
      * @param {number} args.paneIndex
+     * @param {Unit} args.unit
+     * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {boolean} [args.defaultActive]
      * @param {(order: number) => void} args.setOrder
      * @param {() => void} args.show
@@ -484,6 +481,8 @@ export function createChart({
       name,
       order,
       paneIndex,
+      unit,
+      key: customKey,
       defaultActive,
       colors,
       setOrder,
@@ -496,16 +495,16 @@ export function createChart({
       update,
       onRemove,
     }) {
-      const key = stringToId(name);
-      const id = `${key}-${paneIndex}`;
+      const key = customKey ?? stringToId(name);
+      const id = `${unit.id}-${key}`;
 
-      // Reuse existing state if same name (links legends across panes)
+      // Reuse existing state if same name (links legends across panes, regardless of unit)
       const existingActive = serieses.activeStates.get(key);
       const active =
         existingActive ??
         createPersistedValue({
           defaultValue: defaultActive ?? true,
-          storageKey: id,
+          storageKey: key,
           urlKey: key,
           ...serdeBool,
         });
@@ -517,6 +516,8 @@ export function createChart({
 
       let hasData = false;
       let lastTime = -Infinity;
+      /** @type {string | null} */
+      let lastStamp = null;
 
       /** @type {VoidFunction | null} */
       let _fetch = null;
@@ -527,7 +528,8 @@ export function createChart({
         setActive(value) {
           const wasActive = active.value;
           active.set(value);
-          serieses.byKey.get(key)?.forEach((s) => {
+          const linkedSeries = serieses.byKey.get(key);
+          linkedSeries?.forEach((s) => {
             value ? s.show() : s.hide();
           });
           document.querySelectorAll(`[data-series="${key}"]`).forEach((el) => {
@@ -535,7 +537,10 @@ export function createChart({
               el.checked = value;
             }
           });
-          if (value && !wasActive) _fetch?.();
+          // Fetch data for ALL linked series, not just this one
+          if (value && !wasActive) {
+            linkedSeries?.forEach((s) => s.fetch?.());
+          }
           panes.updateVisibility();
         },
         setOrder,
@@ -558,7 +563,7 @@ export function createChart({
         },
       };
 
-      // Register series for cross-pane linking
+      // Register series for cross-pane linking (by name only)
       let keySet = serieses.byKey.get(key);
       if (!keySet) {
         keySet = new Set();
@@ -698,7 +703,11 @@ export function createChart({
             getTimeEndpoint(idx).slice(-10000).fetch(),
             valuesEndpoint.slice(-10000).fetch(),
           ]);
-          if (timeResult?.data?.length && valuesResult?.data?.length) {
+          if (valuesResult.stamp === lastStamp) {
+            return;
+          }
+          lastStamp = valuesResult.stamp;
+          if (timeResult.data.length && valuesResult.data.length) {
             processData(timeResult.data, valuesResult.data);
           }
         }
@@ -724,6 +733,8 @@ export function createChart({
      * @param {string} args.name
      * @param {number} args.order
      * @param {AnyMetricPattern} args.metric
+     * @param {Unit} args.unit
+     * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {number} [args.paneIndex]
      * @param {[Color, Color]} [args.colors] - [upColor, downColor] for legend
      * @param {boolean} [args.defaultActive]
@@ -732,7 +743,9 @@ export function createChart({
     addCandlestick({
       metric,
       name,
+      key,
       order,
+      unit,
       paneIndex = 0,
       colors: customColors,
       defaultActive,
@@ -804,8 +817,10 @@ export function createChart({
       const series = serieses.create({
         colors: [upColor, downColor],
         name,
+        key,
         order,
         paneIndex,
+        unit,
         defaultActive,
         metric,
         setOrder(order) {
@@ -866,6 +881,8 @@ export function createChart({
      * @param {string} args.name
      * @param {number} args.order
      * @param {AnyMetricPattern} args.metric
+     * @param {Unit} args.unit
+     * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {Color | [Color, Color]} [args.color] - Single color or [positive, negative] colors
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
@@ -874,8 +891,10 @@ export function createChart({
     addHistogram({
       metric,
       name,
+      key,
       color = [colors.green, colors.red],
       order,
+      unit,
       paneIndex = 0,
       defaultActive,
       options,
@@ -912,8 +931,10 @@ export function createChart({
       const series = serieses.create({
         colors: isDualColor ? [positiveColor, negativeColor] : [positiveColor],
         name,
+        key,
         order,
         paneIndex,
+        unit,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -969,6 +990,8 @@ export function createChart({
      * @param {string} args.name
      * @param {number} args.order
      * @param {AnyMetricPattern} args.metric
+     * @param {Unit} args.unit
+     * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {Color} args.color
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
@@ -977,8 +1000,10 @@ export function createChart({
     addLine({
       metric,
       name,
+      key,
       order,
       color,
+      unit,
       paneIndex = 0,
       defaultActive,
       options,
@@ -1012,8 +1037,10 @@ export function createChart({
       const series = serieses.create({
         colors: [color],
         name,
+        key,
         order,
         paneIndex,
+        unit,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -1055,6 +1082,8 @@ export function createChart({
      * @param {string} args.name
      * @param {number} args.order
      * @param {AnyMetricPattern} args.metric
+     * @param {Unit} args.unit
+     * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {Color} args.color
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
@@ -1063,8 +1092,10 @@ export function createChart({
     addDots({
       metric,
       name,
+      key,
       order,
       color,
+      unit,
       paneIndex = 0,
       defaultActive,
       options,
@@ -1111,8 +1142,10 @@ export function createChart({
       const series = serieses.create({
         colors: [color],
         name,
+        key,
         order,
         paneIndex,
+        unit,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -1155,6 +1188,8 @@ export function createChart({
      * @param {string} args.name
      * @param {number} args.order
      * @param {AnyMetricPattern} args.metric
+     * @param {Unit} args.unit
+     * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
      * @param {Color} [args.topColor]
@@ -1164,7 +1199,9 @@ export function createChart({
     addBaseline({
       metric,
       name,
+      key,
       order,
+      unit,
       paneIndex: _paneIndex,
       defaultActive,
       topColor = colors.green,
@@ -1211,8 +1248,10 @@ export function createChart({
       const series = serieses.create({
         colors: [topColor, bottomColor],
         name,
+        key,
         order,
         paneIndex,
+        unit,
         defaultActive,
         metric,
         setOrder: (order) => iseries.setSeriesOrder(order),
@@ -1345,15 +1384,13 @@ export function createChart({
                 serieses.addBaseline({
                   metric: blueprint.metric,
                   name: blueprint.title,
+                  key: blueprint.key,
                   defaultActive: blueprint.defaultActive,
                   paneIndex,
-                  options: {
-                    ...options,
-                    topLineColor:
-                      blueprint.color?.() ?? blueprint.colors?.[0](),
-                    bottomLineColor:
-                      blueprint.color?.() ?? blueprint.colors?.[1](),
-                  },
+                  unit,
+                  topColor: blueprint.colors?.[0] ?? blueprint.color,
+                  bottomColor: blueprint.colors?.[1] ?? blueprint.color,
+                  options,
                   order,
                 }),
               );
@@ -1364,9 +1401,11 @@ export function createChart({
                 serieses.addHistogram({
                   metric: blueprint.metric,
                   name: blueprint.title,
+                  key: blueprint.key,
                   color: blueprint.color,
                   defaultActive: blueprint.defaultActive,
                   paneIndex,
+                  unit,
                   options,
                   order,
                 }),
@@ -1378,9 +1417,11 @@ export function createChart({
                 serieses.addCandlestick({
                   metric: blueprint.metric,
                   name: blueprint.title,
+                  key: blueprint.key,
                   colors: blueprint.colors,
                   defaultActive: blueprint.defaultActive,
                   paneIndex,
+                  unit,
                   options,
                   order,
                 }),
@@ -1393,8 +1434,10 @@ export function createChart({
                   metric: blueprint.metric,
                   color: blueprint.color ?? defaultColor,
                   name: blueprint.title,
+                  key: blueprint.key,
                   defaultActive: blueprint.defaultActive,
                   paneIndex,
+                  unit,
                   options,
                   order,
                 }),
@@ -1408,8 +1451,10 @@ export function createChart({
                   metric: blueprint.metric,
                   color: blueprint.color ?? defaultColor,
                   name: blueprint.title,
+                  key: blueprint.key,
                   defaultActive: blueprint.defaultActive,
                   paneIndex,
+                  unit,
                   options,
                   order,
                 }),

@@ -1,6 +1,7 @@
 /** Performance section */
 
 import { Unit } from "../../utils/units.js";
+import { priceLine } from "../constants.js";
 import { baseline } from "../series.js";
 import { periodIdToName } from "./utils.js";
 
@@ -10,7 +11,7 @@ import { periodIdToName } from "./utils.js";
  * @param {Market["returns"]} returns
  */
 export function createPerformanceSection(ctx, returns) {
-  const { colors, createPriceLine } = ctx;
+  const { colors } = ctx;
 
   return {
     name: "Performance",
@@ -34,7 +35,7 @@ export function createPerformanceSection(ctx, returns) {
       const name = periodIdToName(id, true);
       return {
         name,
-        title: `${name} Performance`,
+        title: `${name} Returns`,
         bottom: [
           baseline({
             metric: priceReturns,
@@ -46,12 +47,12 @@ export function createPerformanceSection(ctx, returns) {
                 baseline({
                   metric: cagr,
                   name: "CAGR",
-                  color: [colors.lime, colors.pink],
+                  color: [colors.cyan, colors.orange],
                   unit: Unit.percentage,
                 }),
               ]
             : []),
-          createPriceLine({ unit: Unit.percentage }),
+          priceLine({ ctx, unit: Unit.percentage }),
         ],
       };
     }),

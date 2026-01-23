@@ -83,6 +83,10 @@
  */
 /**
  * @template T
+ * @typedef {Brk.DollarsPattern<T>} DollarsPattern
+ */
+/**
+ * @template T
  * @typedef {Brk.CountPattern2<T>} CountStatsPattern
  */
 /**

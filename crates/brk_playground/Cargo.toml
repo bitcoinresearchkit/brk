@@ -15,6 +15,7 @@ brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
 brk_types = { workspace = true }
+jiff = { workspace = true }
 memmap2 = "0.9"
 plotters = "0.3"
 tracing = { workspace = true }
@@ -27,3 +28,15 @@ path = "examples/heatmap.rs"
 [[example]]
 name = "oracle"
 path = "examples/oracle.rs"
+
+[[example]]
+name = "plot_oracle"
+path = "examples/plot_oracle.rs"
+
+[[example]]
+name = "tune_smooth"
+path = "examples/tune_smooth.rs"
+
+[[example]]
+name = "debug_oracle"
+path = "examples/debug_oracle.rs"

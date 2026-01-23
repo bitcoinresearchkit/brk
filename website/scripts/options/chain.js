@@ -1,6 +1,7 @@
 /** Chain section builder - typed tree-based patterns */
 
 import { Unit } from "../utils/units.js";
+import { priceLine } from "./constants.js";
 import { line, baseline, dots } from "./series.js";
 import { satsBtcUsd } from "./shared.js";
 
@@ -13,9 +14,9 @@ export function createChainSection(ctx) {
   const {
     colors,
     brk,
-    createPriceLine,
     fromSizePattern,
     fromFullnessPattern,
+    fromDollarsPattern,
     fromFeeRatePattern,
     fromCoinbasePattern,
     fromValuePattern,
@@ -46,7 +47,7 @@ export function createChainSection(ctx) {
       tree: [
         {
           name: "Dominance",
-          title: `Mining Dominance of ${poolName}`,
+          title: `${poolName} Dominance`,
           bottom: [
             line({
               metric: pool._24hDominance,
@@ -85,7 +86,7 @@ export function createChainSection(ctx) {
         },
         {
           name: "Blocks mined",
-          title: `Blocks mined by ${poolName}`,
+          title: `${poolName} Blocks`,
           bottom: [
             line({
               metric: pool.blocksMined.sum,
@@ -123,7 +124,7 @@ export function createChainSection(ctx) {
         },
         {
           name: "Rewards",
-          title: `Rewards collected by ${poolName}`,
+          title: `${poolName} Rewards`,
           bottom: [
             ...fromValuePattern(
               pool.coinbase,
@@ -142,7 +143,7 @@ export function createChainSection(ctx) {
         },
         {
           name: "Days since block",
-          title: `Days since ${poolName} mined a block`,
+          title: `${poolName} Last Block`,
           bottom: [
             line({
               metric: pool.daysSinceBlock,
@@ -166,11 +167,7 @@ export function createChainSection(ctx) {
             name: "Count",
             title: "Block Count",
             bottom: [
-              ...fromBlockCountWithUnit(
-                blocks.count.blockCount,
-                "Block",
-                Unit.count,
-              ),
+              ...fromBlockCountWithUnit(blocks.count.blockCount, Unit.count),
               line({
                 metric: blocks.count.blockCountTarget,
                 name: "Target",
@@ -205,17 +202,17 @@ export function createChainSection(ctx) {
             name: "Interval",
             title: "Block Interval",
             bottom: [
-              ...fromIntervalPattern(blocks.interval, "Interval", Unit.secs),
-              createPriceLine({ unit: Unit.secs, name: "Target", number: 600 }),
+              ...fromIntervalPattern(blocks.interval, Unit.secs),
+              priceLine({ ctx, unit: Unit.secs, name: "Target", number: 600 }),
             ],
           },
           {
             name: "Size",
             title: "Block Size",
             bottom: [
-              ...fromSizePattern(blocks.size, "Size", Unit.bytes),
-              ...fromFullnessPattern(blocks.vbytes, "Vbytes", Unit.vb),
-              ...fromFullnessPattern(blocks.weight, "Weight", Unit.wu),
+              ...fromSizePattern(blocks.size, Unit.bytes),
+              ...fromFullnessPattern(blocks.vbytes, Unit.vb),
+              ...fromFullnessPattern(blocks.weight, Unit.wu),
             ],
           },
         ],
@@ -228,17 +225,16 @@ export function createChainSection(ctx) {
           {
             name: "Count",
             title: "Transaction Count",
-            bottom: fromFullnessPattern(
-              transactions.count.txCount,
-              "Count",
-              Unit.count,
-            ),
+            bottom: fromDollarsPattern(transactions.count.txCount, Unit.count),
           },
           {
             name: "Volume",
             title: "Transaction Volume",
             bottom: [
-              ...satsBtcUsd( transactions.volume.sentSum, "Sent"),
+              ...satsBtcUsd(transactions.volume.sentSum, "Sent"),
+              ...satsBtcUsd(transactions.volume.receivedSum, "Received", colors.cyan, {
+                defaultActive: false,
+              }),
               line({
                 metric: transactions.volume.annualizedVolume.sats,
                 name: "annualized",
@@ -266,12 +262,8 @@ export function createChainSection(ctx) {
             name: "Size",
             title: "Transaction Size",
             bottom: [
-              ...fromFeeRatePattern(
-                transactions.size.weight,
-                "weight",
-                Unit.wu,
-              ),
-              ...fromFeeRatePattern(transactions.size.vsize, "vsize", Unit.vb),
+              ...fromFeeRatePattern(transactions.size.weight, Unit.wu),
+              ...fromFeeRatePattern(transactions.size.vsize, Unit.vb),
             ],
           },
           {
@@ -280,22 +272,22 @@ export function createChainSection(ctx) {
             bottom: [
               ...fromBlockCountWithUnit(
                 transactions.versions.v1,
-                "v1",
                 Unit.count,
+                "v1",
                 colors.orange,
                 colors.red,
               ),
               ...fromBlockCountWithUnit(
                 transactions.versions.v2,
-                "v2",
                 Unit.count,
+                "v2",
                 colors.cyan,
                 colors.blue,
               ),
               ...fromBlockCountWithUnit(
                 transactions.versions.v3,
-                "v3",
                 Unit.count,
+                "v3",
                 colors.lime,
                 colors.green,
               ),
@@ -322,7 +314,7 @@ export function createChainSection(ctx) {
             name: "Speed",
             title: "Transactions Per Second",
             bottom: [
-              line({
+              dots({
                 metric: transactions.volume.txPerSec,
                 name: "Transactions",
                 unit: Unit.perSec,
@@ -338,14 +330,14 @@ export function createChainSection(ctx) {
         tree: [
           {
             name: "Count",
-            title: "Transaction Input Count",
-            bottom: [...fromSizePattern(inputs.count, "Input", Unit.count)],
+            title: "Input Count",
+            bottom: [...fromSizePattern(inputs.count, Unit.count)],
           },
           {
             name: "Speed",
             title: "Inputs Per Second",
             bottom: [
-              line({
+              dots({
                 metric: transactions.volume.inputsPerSec,
                 name: "Inputs",
                 unit: Unit.perSec,
@@ -361,20 +353,14 @@ export function createChainSection(ctx) {
         tree: [
           {
             name: "Count",
-            title: "Transaction Output Count",
-            bottom: [
-              ...fromSizePattern(
-                outputs.count.totalCount,
-                "Output",
-                Unit.count,
-              ),
-            ],
+            title: "Output Count",
+            bottom: [...fromSizePattern(outputs.count.totalCount, Unit.count)],
           },
           {
             name: "Speed",
             title: "Outputs Per Second",
             bottom: [
-              line({
+              dots({
                 metric: transactions.volume.outputsPerSec,
                 name: "Outputs",
                 unit: Unit.perSec,
@@ -713,22 +699,22 @@ export function createChainSection(ctx) {
           },
           {
             name: "Halving",
-            title: "Halving Info",
+            title: "Halving",
             bottom: [
               line({
                 metric: blocks.halving.blocksBeforeNextHalving,
-                name: "Blocks until halving",
+                name: "Blocks before next",
                 unit: Unit.blocks,
               }),
               line({
                 metric: blocks.halving.daysBeforeNextHalving,
-                name: "Days until halving",
+                name: "Days before next",
                 color: colors.orange,
                 unit: Unit.days,
               }),
               line({
                 metric: blocks.halving.epoch,
-                name: "Halving epoch",
+                name: "Epoch",
                 color: colors.purple,
                 unit: Unit.epoch,
                 defaultActive: false,
@@ -744,7 +730,7 @@ export function createChainSection(ctx) {
                 name: "Puell Multiple",
                 unit: Unit.ratio,
               }),
-              createPriceLine({ unit: Unit.ratio, number: 1 }),
+              priceLine({ ctx, unit: Unit.ratio, number: 1 }),
             ],
           },
         ],
@@ -771,11 +757,7 @@ export function createChainSection(ctx) {
               {
                 name: "Outputs",
                 title: "OP_RETURN Outputs",
-                bottom: fromFullnessPattern(
-                  scripts.count.opreturn,
-                  "Count",
-                  Unit.count,
-                ),
+                bottom: fromFullnessPattern(scripts.count.opreturn, Unit.count),
               },
               {
                 name: "Supply",
@@ -810,7 +792,7 @@ export function createChainSection(ctx) {
       // Unclaimed Rewards
       {
         name: "Unclaimed Rewards",
-        title: "Unclaimed Block Rewards",
+        title: "Unclaimed Rewards",
         bottom: fromValuePattern(blocks.rewards.unclaimedRewards, "Unclaimed"),
       },
     ],

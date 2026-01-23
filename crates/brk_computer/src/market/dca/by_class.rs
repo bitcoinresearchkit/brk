@@ -14,6 +14,7 @@ pub const DCA_CLASS_YEARS: ByDcaClass<u16> = ByDcaClass {
     _2023: 2023,
     _2024: 2024,
     _2025: 2025,
+    _2026: 2026,
 };
 
 /// DCA class names
@@ -29,6 +30,7 @@ pub const DCA_CLASS_NAMES: ByDcaClass<&'static str> = ByDcaClass {
     _2023: "dca_class_2023",
     _2024: "dca_class_2024",
     _2025: "dca_class_2025",
+    _2026: "dca_class_2026",
 };
 
 /// Generic wrapper for DCA year class data
@@ -45,6 +47,7 @@ pub struct ByDcaClass<T> {
     pub _2023: T,
     pub _2024: T,
     pub _2025: T,
+    pub _2026: T,
 }
 
 impl<T> ByDcaClass<T> {
@@ -66,6 +69,7 @@ impl<T> ByDcaClass<T> {
             _2023: create(n._2023, y._2023, Self::dateindex(y._2023)),
             _2024: create(n._2024, y._2024, Self::dateindex(y._2024)),
             _2025: create(n._2025, y._2025, Self::dateindex(y._2025)),
+            _2026: create(n._2026, y._2026, Self::dateindex(y._2026)),
         }
     }
 
@@ -87,6 +91,7 @@ impl<T> ByDcaClass<T> {
             _2023: create(n._2023, y._2023, Self::dateindex(y._2023))?,
             _2024: create(n._2024, y._2024, Self::dateindex(y._2024))?,
             _2025: create(n._2025, y._2025, Self::dateindex(y._2025))?,
+            _2026: create(n._2026, y._2026, Self::dateindex(y._2026))?,
         })
     }
 
@@ -107,6 +112,7 @@ impl<T> ByDcaClass<T> {
             &self._2023,
             &self._2024,
             &self._2025,
+            &self._2026,
         ]
         .into_iter()
     }
@@ -124,6 +130,7 @@ impl<T> ByDcaClass<T> {
             &mut self._2023,
             &mut self._2024,
             &mut self._2025,
+            &mut self._2026,
         ]
         .into_iter()
     }
@@ -142,11 +149,12 @@ impl<T> ByDcaClass<T> {
             (&mut self._2023, Self::dateindex(y._2023)),
             (&mut self._2024, Self::dateindex(y._2024)),
             (&mut self._2025, Self::dateindex(y._2025)),
+            (&mut self._2026, Self::dateindex(y._2026)),
         ]
         .into_iter()
     }
 
-    pub fn dateindexes() -> [DateIndex; 11] {
+    pub fn dateindexes() -> [DateIndex; 12] {
         let y = DCA_CLASS_YEARS;
         [
             Self::dateindex(y._2015),
@@ -160,6 +168,7 @@ impl<T> ByDcaClass<T> {
             Self::dateindex(y._2023),
             Self::dateindex(y._2024),
             Self::dateindex(y._2025),
+            Self::dateindex(y._2026),
         ]
     }
 
@@ -176,6 +185,7 @@ impl<T> ByDcaClass<T> {
             _2023: (self._2023, other._2023),
             _2024: (self._2024, other._2024),
             _2025: (self._2025, other._2025),
+            _2026: (self._2026, other._2026),
         }
     }
 
@@ -192,6 +202,7 @@ impl<T> ByDcaClass<T> {
             _2023: (&self._2023, &other._2023),
             _2024: (&self._2024, &other._2024),
             _2025: (&self._2025, &other._2025),
+            _2026: (&self._2026, &other._2026),
         }
     }
 
@@ -208,6 +219,7 @@ impl<T> ByDcaClass<T> {
             _2023: f(self._2023),
             _2024: f(self._2024),
             _2025: f(self._2025),
+            _2026: f(self._2026),
         }
     }
 }

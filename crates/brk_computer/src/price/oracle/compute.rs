@@ -102,6 +102,9 @@ impl Vecs {
         // Step 7: Aggregate to daily OHLC
         self.compute_daily_ohlc(indexes, starting_indexes, exit)?;
 
+        // Step 7b: Compute close-only and mid-price daily OHLC
+        self.compute_close_and_mid_ohlc(indexes, price_cents, starting_indexes, exit)?;
+
         // Step 8: Compute Phase Oracle V2 (round USD template matching)
         // 8a: Per-block 200-bin histograms (uses ALL outputs, not pair-filtered)
         self.compute_phase_v2_histograms(indexer, indexes, starting_indexes, exit)?;
@@ -1115,6 +1118,143 @@ impl Vecs {
             let _lock = exit.lock();
             self.ohlc_cents.write()?;
             self.tx_count.write()?;
+        }
+
+        Ok(())
+    }
+
+    /// Compute daily OHLC from height close only and mid price ((open+close)/2)
+    fn compute_close_and_mid_ohlc(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price_cents: &cents::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        let last_dateindex = DateIndex::from(indexes.dateindex.date.len());
+        let start_dateindex = starting_indexes
+            .dateindex
+            .min(DateIndex::from(self.close_ohlc_cents.len()))
+            .min(DateIndex::from(self.mid_ohlc_cents.len()));
+
+        if start_dateindex >= last_dateindex {
+            return Ok(());
+        }
+
+        let last_height = Height::from(price_cents.ohlc.height.len());
+        let mut close_iter = price_cents.split.height.close.iter();
+        let mut open_iter = price_cents.split.height.open.iter();
+        let mut dateindex_to_first_height_iter = indexes.dateindex.first_height.iter();
+        let mut height_count_iter = indexes.dateindex.height_count.iter();
+
+        for dateindex in start_dateindex.to_usize()..last_dateindex.to_usize() {
+            let dateindex = DateIndex::from(dateindex);
+            let first_height = dateindex_to_first_height_iter.get_unwrap(dateindex);
+            let count = height_count_iter.get_unwrap(dateindex);
+
+            if *count == 0 || first_height >= last_height {
+                continue;
+            }
+
+            let count = *count as usize;
+
+            // Close-only OHLC
+            let mut close_open = None;
+            let mut close_high = Cents::from(0i64);
+            let mut close_low = Cents::from(i64::MAX);
+            let mut close_close = Cents::from(0i64);
+
+            // Mid-price OHLC
+            let mut mid_open = None;
+            let mut mid_high = Cents::from(0i64);
+            let mut mid_low = Cents::from(i64::MAX);
+            let mut mid_close = Cents::from(0i64);
+
+            for i in 0..count {
+                let height = first_height + Height::from(i);
+                if height >= last_height {
+                    break;
+                }
+
+                // Get close price for this height
+                if let Some(close_price) = close_iter.get(height) {
+                    let close_cents = Cents::from(*close_price);
+
+                    // Close-only OHLC
+                    if close_open.is_none() {
+                        close_open = Some(close_cents);
+                    }
+                    if close_cents > close_high {
+                        close_high = close_cents;
+                    }
+                    if close_cents < close_low {
+                        close_low = close_cents;
+                    }
+                    close_close = close_cents;
+
+                    // Mid-price OHLC
+                    if let Some(open_price) = open_iter.get(height) {
+                        let open_cents = Cents::from(*open_price);
+                        let mid_cents =
+                            Cents::from((i64::from(open_cents) + i64::from(close_cents)) / 2);
+
+                        if mid_open.is_none() {
+                            mid_open = Some(mid_cents);
+                        }
+                        if mid_cents > mid_high {
+                            mid_high = mid_cents;
+                        }
+                        if mid_cents < mid_low {
+                            mid_low = mid_cents;
+                        }
+                        mid_close = mid_cents;
+                    }
+                }
+            }
+
+            // Build close-only OHLC
+            let close_ohlc = if let Some(open_price) = close_open {
+                OHLCCents {
+                    open: Open::new(open_price),
+                    high: High::new(close_high),
+                    low: Low::new(close_low),
+                    close: Close::new(close_close),
+                }
+            } else if dateindex > DateIndex::from(0usize) {
+                self.close_ohlc_cents
+                    .iter()?
+                    .get(dateindex.decremented().unwrap())
+                    .unwrap_or_default()
+            } else {
+                OHLCCents::default()
+            };
+
+            // Build mid-price OHLC
+            let mid_ohlc = if let Some(open_price) = mid_open {
+                OHLCCents {
+                    open: Open::new(open_price),
+                    high: High::new(mid_high),
+                    low: Low::new(mid_low),
+                    close: Close::new(mid_close),
+                }
+            } else if dateindex > DateIndex::from(0usize) {
+                self.mid_ohlc_cents
+                    .iter()?
+                    .get(dateindex.decremented().unwrap())
+                    .unwrap_or_default()
+            } else {
+                OHLCCents::default()
+            };
+
+            self.close_ohlc_cents.truncate_push(dateindex, close_ohlc)?;
+            self.mid_ohlc_cents.truncate_push(dateindex, mid_ohlc)?;
+        }
+
+        // Write daily data
+        {
+            let _lock = exit.lock();
+            self.close_ohlc_cents.write()?;
+            self.mid_ohlc_cents.write()?;
         }
 
         Ok(())
