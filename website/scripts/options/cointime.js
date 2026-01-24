@@ -6,7 +6,8 @@ import {
   percentileUsdMap,
   percentileMap,
   sdPatterns,
-  sdBands,
+  sdBandsUsd,
+  sdBandsRatio,
 } from "./shared.js";
 
 /**
@@ -56,8 +57,8 @@ function createCointimePriceWithRatioOptions(
         baseline({
           metric: ratio.ratio,
           name: "Ratio",
-          color,
           unit: Unit.ratio,
+          base: 1,
         }),
         line({
           metric: ratio.ratio1wSma,
@@ -191,7 +192,7 @@ function createCointimePriceWithRatioOptions(
           title: `${title} ${titleAddon} Z-Score`,
           top: [
             line({ metric: price, name: legend, color, unit: Unit.usd }),
-            ...sdBands(colors, sd).map(
+            ...sdBandsUsd(colors, sd).map(
               ({ name: bandName, prop, color: bandColor }) =>
                 line({
                   metric: prop,
@@ -203,7 +204,33 @@ function createCointimePriceWithRatioOptions(
             ),
           ],
           bottom: [
-            line({ metric: sd.zscore, name: "Z-Score", color, unit: Unit.sd }),
+            baseline({
+              metric: sd.zscore,
+              name: "Z-Score",
+              unit: Unit.sd,
+            }),
+            baseline({
+              metric: ratio.ratio,
+              name: "Ratio",
+              unit: Unit.ratio,
+              base: 1,
+            }),
+            line({
+              metric: sd.sd,
+              name: "Volatility",
+              color: colors.gray,
+              unit: Unit.percentage,
+            }),
+            ...sdBandsRatio(colors, sd).map(
+              ({ name: bandName, prop, color: bandColor }) =>
+                line({
+                  metric: prop,
+                  name: bandName,
+                  color: bandColor,
+                  unit: Unit.ratio,
+                  defaultActive: false,
+                }),
+            ),
             ...priceLines({
               ctx,
               unit: Unit.sd,

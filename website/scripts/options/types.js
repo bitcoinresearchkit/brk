@@ -160,6 +160,7 @@
  * @property {string} title
  * @property {Color} color
  * @property {PatternAll} tree
+ * @property {Brk.MetricPattern1<Brk.StoredU64>} addrCount
  *
  * Full cohort: adjustedSopr + percentiles + RelToMarketCap (term.short)
  * @typedef {Object} CohortFull
@@ -188,6 +189,13 @@
  * @property {string} title
  * @property {Color} color
  * @property {PatternBasic} tree
+ *
+ * ============================================================================
+ * Extended Cohort Types (with address count)
+ * ============================================================================
+ *
+ * Basic cohort with address count (for "type" cohorts)
+ * @typedef {CohortBasic & { addrCount: Brk.MetricPattern1<Brk.StoredU64> }} CohortAddress
  *
  * ============================================================================
  * Cohort Group Types (by capability)
@@ -233,23 +241,6 @@
  * @property {readonly AddressCohortObject[]} list
  *
  * @typedef {UtxoCohortGroupObject | AddressCohortGroupObject} CohortGroupObject
- *
- * @typedef {Object} PartialContext
- * @property {Colors} colors
- * @property {BrkClient} brk
- * @property {(pattern: BlockCountPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockCount
- * @property {(pattern: FullnessPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBitcoin
- * @property {(pattern: AnyStatsPattern, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockSize
- * @property {(pattern: AnyStatsPattern, unit: Unit, title?: string) => AnyFetchedSeriesBlueprint[]} fromSizePattern
- * @property {(pattern: FullnessPattern<any>, unit: Unit, title?: string) => AnyFetchedSeriesBlueprint[]} fromFullnessPattern
- * @property {(pattern: DollarsPattern<any>, unit: Unit, title?: string) => AnyFetchedSeriesBlueprint[]} fromDollarsPattern
- * @property {(pattern: FeeRatePattern<any>, unit: Unit, title?: string) => AnyFetchedSeriesBlueprint[]} fromFeeRatePattern
- * @property {(pattern: CoinbasePattern, title: string) => AnyFetchedSeriesBlueprint[]} fromCoinbasePattern
- * @property {(pattern: ValuePattern, title: string, sumColor?: Color, cumulativeColor?: Color) => AnyFetchedSeriesBlueprint[]} fromValuePattern
- * @property {(pattern: { sum: AnyMetricPattern, cumulative: AnyMetricPattern }, title: string, unit: Unit, sumColor?: Color, cumulativeColor?: Color) => AnyFetchedSeriesBlueprint[]} fromBitcoinPatternWithUnit
- * @property {(pattern: BlockCountPattern<any>, unit: Unit, title?: string, sumColor?: Color, cumulativeColor?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockCountWithUnit
- * @property {(pattern: IntervalPattern, unit: Unit, title?: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromIntervalPattern
- * @property {(pattern: SupplyPattern, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromSupplyPattern
  */
 
 // Re-export for type consumers

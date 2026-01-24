@@ -14,7 +14,7 @@
  *
  * @import { WebSockets } from "./utils/ws.js"
  *
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedBaselineSeriesBlueprint, FetchedHistogramSeriesBlueprint, PartialContext, PatternAll, PatternFull, PatternWithAdjusted, PatternWithPercentiles, PatternBasic, CohortAll, CohortFull, CohortWithAdjusted, CohortWithPercentiles, CohortBasic, CohortGroupFull, CohortGroupWithAdjusted, CohortGroupWithPercentiles, CohortGroupBasic, UtxoCohortGroupObject, AddressCohortGroupObject, FetchedDotsSeriesBlueprint, FetchedCandlestickSeriesBlueprint } from "./options/partial.js"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedBaselineSeriesBlueprint, FetchedHistogramSeriesBlueprint, PartialContext, PatternAll, PatternFull, PatternWithAdjusted, PatternWithPercentiles, PatternBasic, CohortAll, CohortFull, CohortWithAdjusted, CohortWithPercentiles, CohortBasic, CohortAddress, CohortGroupFull, CohortGroupWithAdjusted, CohortGroupWithPercentiles, CohortGroupBasic, UtxoCohortGroupObject, AddressCohortGroupObject, FetchedDotsSeriesBlueprint, FetchedCandlestickSeriesBlueprint } from "./options/partial.js"
  *
  *
  * @import { UnitObject as Unit } from "./utils/units.js"
@@ -41,7 +41,7 @@
  * @typedef {Brk._10yTo12yPattern} AgeRangePattern
  * @typedef {Brk._0satsPattern2} UtxoAmountPattern
  * @typedef {Brk._0satsPattern} AddressAmountPattern
- * @typedef {Brk._100btcPattern} BasicUtxoPattern
+ * @typedef {Brk._0Pattern} BasicUtxoPattern
  * @typedef {Brk._0satsPattern2} EpochPattern
  * @typedef {Brk.Ratio1ySdPattern} Ratio1ySdPattern
  * @typedef {Brk.Dollars} Dollars
@@ -53,6 +53,8 @@
  * @typedef {Brk.AnyMetricEndpointBuilder} AnyMetricEndpoint
  * @typedef {Brk.AnyMetricData} AnyMetricData
  * @typedef {Brk.AddrCountPattern} AddrCountPattern
+ * @typedef {keyof Brk.MetricsTree_Distribution_UtxoCohorts_Type} SpendableType
+ * @typedef {keyof Brk.MetricsTree_Distribution_AnyAddressIndexes} AddressableType
  * @typedef {FullnessPattern<any>} IntervalPattern
  * @typedef {Brk.MetricsTree_Supply_Circulating} SupplyPattern
  * @typedef {Brk.RelativePattern} GlobalRelativePattern

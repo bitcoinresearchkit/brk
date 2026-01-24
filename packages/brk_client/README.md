@@ -2,6 +2,8 @@
 
 Python client for the [Bitcoin Research Kit](https://github.com/bitcoinresearchkit/brk) API.
 
+Requires Python 3.9+. Zero dependencies.
+
 [PyPI](https://pypi.org/project/brk-client/) | [API Reference](https://github.com/bitcoinresearchkit/brk/blob/main/packages/brk_client/DOCS.md)
 
 ## Installation
@@ -11,6 +13,8 @@ pip install brk-client
 # or
 uv add brk-client
 ```
+
+Or just copy [`brk_client/__init__.py`](./brk_client/__init__.py) into your project - it's a single file with no dependencies.
 
 ## Quick Start
 

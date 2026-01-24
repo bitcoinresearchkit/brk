@@ -16,7 +16,7 @@ export const Unit = /** @type {const} */ ({
   sd: { id: "sd", name: "Std Dev" },
 
   // Relative percentages
-  pctSupply: { id: "pct-supply", name: "% of Supply" },
+  pctSupply: { id: "pct-supply", name: "% of circulating Supply" },
   pctOwn: { id: "pct-own", name: "% of Own Supply" },
   pctMcap: { id: "pct-mcap", name: "% of Market Cap" },
   pctRcap: { id: "pct-rcap", name: "% of Realized Cap" },

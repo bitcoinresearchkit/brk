@@ -7,7 +7,8 @@ import {
   percentileUsdMap,
   percentileMap,
   sdPatterns,
-  sdBands,
+  sdBandsUsd,
+  sdBandsRatio,
 } from "../shared.js";
 import { periodIdToName } from "./utils.js";
 
@@ -90,7 +91,6 @@ export function createPriceWithRatioOptions(
           metric: ratio.ratio,
           name: "Ratio",
           base: 1,
-          color,
           unit: Unit.ratio,
         }),
         .../** @type {const} */ ([
@@ -222,7 +222,7 @@ export function createPriceWithRatioOptions(
           title: `${title} ${titleAddon} Z-Score`,
           top: [
             line({ metric: priceMetric, name: legend, color, unit: Unit.usd }),
-            ...sdBands(colors, sd).map(
+            ...sdBandsUsd(colors, sd).map(
               ({ name: bandName, prop, color: bandColor }) =>
                 line({
                   metric: prop,
@@ -237,9 +237,31 @@ export function createPriceWithRatioOptions(
             baseline({
               metric: sd.zscore,
               name: "Z-Score",
-              color,
               unit: Unit.sd,
             }),
+            baseline({
+              metric: ratio.ratio,
+              name: "Ratio",
+              unit: Unit.ratio,
+              base: 1,
+            }),
+            line({
+              metric: sd.sd,
+              name: "Volatility",
+              color: colors.gray,
+              unit: Unit.percentage,
+            }),
+            ...sdBandsRatio(colors, sd).map(
+              ({ name: bandName, prop, color: bandColor }) =>
+                line({
+                  metric: prop,
+                  name: bandName,
+                  color: bandColor,
+                  unit: Unit.ratio,
+                  defaultActive: false,
+                }),
+            ),
+            priceLine({ ctx, unit: Unit.ratio, number: 1 }),
             priceLine({
               ctx,
               unit: Unit.sd,

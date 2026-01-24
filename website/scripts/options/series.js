@@ -193,8 +193,8 @@ export function fromBlockCount(colors, pattern, title, color) {
     { metric: pattern.sum, title, color: color ?? colors.default },
     {
       metric: pattern.cumulative,
-      title: `${title} (cum.)`,
-      color: colors.cyan,
+      title: `${title} cumulative`,
+      color: colors.stat.cumulative,
       defaultActive: false,
     },
   ];
@@ -209,49 +209,55 @@ export function fromBlockCount(colors, pattern, title, color) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function fromBitcoin(colors, pattern, title, color) {
+  const { stat } = colors;
   return [
     { metric: pattern.base, title, color: color ?? colors.default },
-    { metric: pattern.average, title: "Average", defaultActive: false },
+    {
+      metric: pattern.average,
+      title: `${title} avg`,
+      color: stat.avg,
+      defaultActive: false,
+    },
     {
       metric: pattern.max,
-      title: "Max",
-      color: colors.pink,
+      title: `${title} max`,
+      color: stat.max,
       defaultActive: false,
     },
     {
       metric: pattern.min,
-      title: "Min",
-      color: colors.green,
+      title: `${title} min`,
+      color: stat.min,
       defaultActive: false,
     },
     {
       metric: pattern.median,
-      title: "Median",
-      color: colors.amber,
+      title: `${title} median`,
+      color: stat.median,
       defaultActive: false,
     },
     {
       metric: pattern.pct75,
-      title: "pct75",
-      color: colors.red,
+      title: `${title} pct75`,
+      color: stat.pct75,
       defaultActive: false,
     },
     {
       metric: pattern.pct25,
-      title: "pct25",
-      color: colors.yellow,
+      title: `${title} pct25`,
+      color: stat.pct25,
       defaultActive: false,
     },
     {
       metric: pattern.pct90,
-      title: "pct90",
-      color: colors.rose,
+      title: `${title} pct90`,
+      color: stat.pct90,
       defaultActive: false,
     },
     {
       metric: pattern.pct10,
-      title: "pct10",
-      color: colors.lime,
+      title: `${title} pct10`,
+      color: stat.pct10,
       defaultActive: false,
     },
   ];
@@ -266,55 +272,61 @@ export function fromBitcoin(colors, pattern, title, color) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function fromBlockSize(colors, pattern, title, color) {
+  const { stat } = colors;
   return [
     { metric: pattern.sum, title, color: color ?? colors.default },
-    { metric: pattern.average, title: "Average", defaultActive: false },
+    {
+      metric: pattern.average,
+      title: `${title} avg`,
+      color: stat.avg,
+      defaultActive: false,
+    },
     {
       metric: pattern.cumulative,
-      title: `Cumulative`,
-      color: colors.cyan,
+      title: `${title} cumulative`,
+      color: stat.cumulative,
       defaultActive: false,
     },
     {
       metric: pattern.max,
-      title: "Max",
-      color: colors.pink,
+      title: `${title} max`,
+      color: stat.max,
       defaultActive: false,
     },
     {
       metric: pattern.min,
-      title: "Min",
-      color: colors.green,
+      title: `${title} min`,
+      color: stat.min,
       defaultActive: false,
     },
     {
       metric: pattern.median,
-      title: "Median",
-      color: colors.amber,
+      title: `${title} median`,
+      color: stat.median,
       defaultActive: false,
     },
     {
       metric: pattern.pct75,
-      title: "pct75",
-      color: colors.red,
+      title: `${title} pct75`,
+      color: stat.pct75,
       defaultActive: false,
     },
     {
       metric: pattern.pct25,
-      title: "pct25",
-      color: colors.yellow,
+      title: `${title} pct25`,
+      color: stat.pct25,
       defaultActive: false,
     },
     {
       metric: pattern.pct90,
-      title: "pct90",
-      color: colors.rose,
+      title: `${title} pct90`,
+      color: stat.pct90,
       defaultActive: false,
     },
     {
       metric: pattern.pct10,
-      title: "pct10",
-      color: colors.lime,
+      title: `${title} pct10`,
+      color: stat.pct10,
       defaultActive: false,
     },
   ];
@@ -329,68 +341,69 @@ export function fromBlockSize(colors, pattern, title, color) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function fromSizePattern(colors, pattern, unit, title = "") {
+  const { stat } = colors;
   return [
     { metric: pattern.average, title: `${title} avg`.trim(), unit },
     {
       metric: pattern.sum,
       title: `${title} sum`.trim(),
-      color: colors.blue,
+      color: stat.sum,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.cumulative,
       title: `${title} cumulative`.trim(),
-      color: colors.indigo,
-      unit,
-      defaultActive: false,
-    },
-    {
-      metric: pattern.min,
-      title: `${title} min`.trim(),
-      color: colors.red,
+      color: stat.cumulative,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.max,
       title: `${title} max`.trim(),
-      color: colors.green,
+      color: stat.max,
       unit,
       defaultActive: false,
     },
     {
-      metric: pattern.pct10,
-      title: `${title} pct10`.trim(),
-      color: colors.rose,
-      unit,
-      defaultActive: false,
-    },
-    {
-      metric: pattern.pct25,
-      title: `${title} pct25`.trim(),
-      color: colors.pink,
+      metric: pattern.min,
+      title: `${title} min`.trim(),
+      color: stat.min,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.median,
       title: `${title} median`.trim(),
-      color: colors.purple,
+      color: stat.median,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct75,
       title: `${title} pct75`.trim(),
-      color: colors.violet,
+      color: stat.pct75,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct25,
+      title: `${title} pct25`.trim(),
+      color: stat.pct25,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct90,
       title: `${title} pct90`.trim(),
-      color: colors.fuchsia,
+      color: stat.pct90,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct10,
+      title: `${title} pct10`.trim(),
+      color: stat.pct10,
       unit,
       defaultActive: false,
     },
@@ -406,61 +419,61 @@ export function fromSizePattern(colors, pattern, unit, title = "") {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function fromFullnessPattern(colors, pattern, unit, title = "") {
+  const { stat } = colors;
   return [
     { metric: pattern.base, title: title || "base", unit },
     {
       metric: pattern.average,
       title: `${title} avg`.trim(),
-      color: colors.purple,
+      color: stat.avg,
+      unit,
+    },
+    {
+      metric: pattern.max,
+      title: `${title} max`.trim(),
+      color: stat.max,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.min,
       title: `${title} min`.trim(),
-      color: colors.red,
-      unit,
-      defaultActive: false,
-    },
-    {
-      metric: pattern.max,
-      title: `${title} max`.trim(),
-      color: colors.green,
-      unit,
-      defaultActive: false,
-    },
-    {
-      metric: pattern.pct10,
-      title: `${title} pct10`.trim(),
-      color: colors.rose,
-      unit,
-      defaultActive: false,
-    },
-    {
-      metric: pattern.pct25,
-      title: `${title} pct25`.trim(),
-      color: colors.pink,
+      color: stat.min,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.median,
       title: `${title} median`.trim(),
-      color: colors.violet,
+      color: stat.median,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct75,
       title: `${title} pct75`.trim(),
-      color: colors.fuchsia,
+      color: stat.pct75,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct25,
+      title: `${title} pct25`.trim(),
+      color: stat.pct25,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct90,
       title: `${title} pct90`.trim(),
-      color: colors.amber,
+      color: stat.pct90,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct10,
+      title: `${title} pct10`.trim(),
+      color: stat.pct10,
       unit,
       defaultActive: false,
     },
@@ -476,74 +489,75 @@ export function fromFullnessPattern(colors, pattern, unit, title = "") {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function fromDollarsPattern(colors, pattern, unit, title = "") {
+  const { stat } = colors;
   return [
     { metric: pattern.base, title: title || "base", unit },
     {
       metric: pattern.sum,
       title: `${title} sum`.trim(),
-      color: colors.blue,
+      color: stat.sum,
       unit,
     },
     {
       metric: pattern.cumulative,
       title: `${title} cumulative`.trim(),
-      color: colors.cyan,
+      color: stat.cumulative,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.average,
       title: `${title} avg`.trim(),
-      color: colors.purple,
-      unit,
-      defaultActive: false,
-    },
-    {
-      metric: pattern.min,
-      title: `${title} min`.trim(),
-      color: colors.red,
+      color: stat.avg,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.max,
       title: `${title} max`.trim(),
-      color: colors.green,
+      color: stat.max,
       unit,
       defaultActive: false,
     },
     {
-      metric: pattern.pct10,
-      title: `${title} pct10`.trim(),
-      color: colors.rose,
-      unit,
-      defaultActive: false,
-    },
-    {
-      metric: pattern.pct25,
-      title: `${title} pct25`.trim(),
-      color: colors.pink,
+      metric: pattern.min,
+      title: `${title} min`.trim(),
+      color: stat.min,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.median,
       title: `${title} median`.trim(),
-      color: colors.violet,
+      color: stat.median,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct75,
       title: `${title} pct75`.trim(),
-      color: colors.fuchsia,
+      color: stat.pct75,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct25,
+      title: `${title} pct25`.trim(),
+      color: stat.pct25,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct90,
       title: `${title} pct90`.trim(),
-      color: colors.amber,
+      color: stat.pct90,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct10,
+      title: `${title} pct10`.trim(),
+      color: stat.pct10,
       unit,
       defaultActive: false,
     },
@@ -559,54 +573,67 @@ export function fromDollarsPattern(colors, pattern, unit, title = "") {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function fromFeeRatePattern(colors, pattern, unit, title = "") {
+  const { stat } = colors;
   return [
-    { metric: pattern.average, title: `${title} avg`.trim(), unit },
     {
-      metric: pattern.min,
-      title: `${title} min`.trim(),
-      color: colors.red,
+      type: "Dots",
+      metric: pattern.average,
+      title: `${title} avg`.trim(),
       unit,
-      defaultActive: false,
     },
     {
+      type: "Dots",
       metric: pattern.max,
       title: `${title} max`.trim(),
-      color: colors.green,
+      color: stat.max,
       unit,
       defaultActive: false,
     },
     {
-      metric: pattern.pct10,
-      title: `${title} pct10`.trim(),
-      color: colors.rose,
+      type: "Dots",
+      metric: pattern.min,
+      title: `${title} min`.trim(),
+      color: stat.min,
       unit,
       defaultActive: false,
     },
     {
-      metric: pattern.pct25,
-      title: `${title} pct25`.trim(),
-      color: colors.pink,
-      unit,
-      defaultActive: false,
-    },
-    {
+      type: "Dots",
       metric: pattern.median,
       title: `${title} median`.trim(),
-      color: colors.purple,
+      color: stat.median,
       unit,
       defaultActive: false,
     },
     {
+      type: "Dots",
       metric: pattern.pct75,
       title: `${title} pct75`.trim(),
-      color: colors.violet,
+      color: stat.pct75,
       unit,
       defaultActive: false,
     },
     {
+      type: "Dots",
+      metric: pattern.pct25,
+      title: `${title} pct25`.trim(),
+      color: stat.pct25,
+      unit,
+      defaultActive: false,
+    },
+    {
+      type: "Dots",
       metric: pattern.pct90,
       title: `${title} pct90`.trim(),
-      color: colors.fuchsia,
+      color: stat.pct90,
+      unit,
+      defaultActive: false,
+    },
+    {
+      type: "Dots",
+      metric: pattern.pct10,
+      title: `${title} pct10`.trim(),
+      color: stat.pct10,
       unit,
       defaultActive: false,
     },
@@ -617,13 +644,13 @@ export function fromFeeRatePattern(colors, pattern, unit, title = "") {
  * Create series from a CoinbasePattern ({ sats, bitcoin, dollars } each as FullnessPattern)
  * @param {Colors} colors
  * @param {CoinbasePattern} pattern
- * @param {string} title
+ * @param {string} [title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function fromCoinbasePattern(colors, pattern, title) {
   return [
-    ...fromFullnessPattern(colors, pattern.sats, Unit.sats, title),
     ...fromFullnessPattern(colors, pattern.bitcoin, Unit.btc, title),
+    ...fromFullnessPattern(colors, pattern.sats, Unit.sats, title),
     ...fromFullnessPattern(colors, pattern.dollars, Unit.usd, title),
   ];
 }
@@ -632,7 +659,7 @@ export function fromCoinbasePattern(colors, pattern, title) {
  * Create series from a ValuePattern ({ sats, bitcoin, dollars } each as BlockCountPattern with sum + cumulative)
  * @param {Colors} colors
  * @param {ValuePattern} pattern
- * @param {string} title
+ * @param {string} [title]
  * @param {Color} [sumColor]
  * @param {Color} [cumulativeColor]
  * @returns {AnyFetchedSeriesBlueprint[]}
@@ -640,47 +667,47 @@ export function fromCoinbasePattern(colors, pattern, title) {
 export function fromValuePattern(
   colors,
   pattern,
-  title,
+  title = "",
   sumColor,
   cumulativeColor,
 ) {
   return [
     {
-      metric: pattern.sats.sum,
-      title,
-      color: sumColor,
-      unit: Unit.sats,
-    },
-    {
-      metric: pattern.sats.cumulative,
-      title: `${title} cumulative`,
-      color: cumulativeColor ?? colors.blue,
-      unit: Unit.sats,
-      defaultActive: false,
-    },
-    {
       metric: pattern.bitcoin.sum,
-      title,
+      title: title || "sum",
       color: sumColor,
       unit: Unit.btc,
     },
     {
       metric: pattern.bitcoin.cumulative,
-      title: `${title} cumulative`,
-      color: cumulativeColor ?? colors.blue,
+      title: `${title} cumulative`.trim(),
+      color: cumulativeColor ?? colors.stat.cumulative,
       unit: Unit.btc,
       defaultActive: false,
     },
     {
+      metric: pattern.sats.sum,
+      title: title || "sum",
+      color: sumColor,
+      unit: Unit.sats,
+    },
+    {
+      metric: pattern.sats.cumulative,
+      title: `${title} cumulative`.trim(),
+      color: cumulativeColor ?? colors.stat.cumulative,
+      unit: Unit.sats,
+      defaultActive: false,
+    },
+    {
       metric: pattern.dollars.sum,
-      title,
+      title: title || "sum",
       color: sumColor,
       unit: Unit.usd,
     },
     {
       metric: pattern.dollars.cumulative,
-      title: `${title} cumulative`,
-      color: cumulativeColor ?? colors.blue,
+      title: `${title} cumulative`.trim(),
+      color: cumulativeColor ?? colors.stat.cumulative,
       unit: Unit.usd,
       defaultActive: false,
     },
@@ -715,7 +742,7 @@ export function fromBitcoinPatternWithUnit(
     {
       metric: pattern.cumulative,
       title: `${title} cumulative`,
-      color: cumulativeColor ?? colors.blue,
+      color: cumulativeColor ?? colors.stat.cumulative,
       unit,
       defaultActive: false,
     },
@@ -750,7 +777,7 @@ export function fromBlockCountWithUnit(
     {
       metric: pattern.cumulative,
       title: `${title} cumulative`.trim(),
-      color: cumulativeColor ?? colors.blue,
+      color: cumulativeColor ?? colors.stat.cumulative,
       unit,
       defaultActive: false,
     },
@@ -767,61 +794,62 @@ export function fromBlockCountWithUnit(
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function fromIntervalPattern(colors, pattern, unit, title = "", color) {
+  const { stat } = colors;
   return [
     { metric: pattern.base, title: title ?? "base", color, unit },
     {
       metric: pattern.average,
       title: `${title} avg`.trim(),
-      color: colors.cyan,
-      unit,
-      defaultActive: false,
-    },
-    {
-      metric: pattern.min,
-      title: `${title} min`.trim(),
-      color: colors.red,
+      color: stat.avg,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.max,
       title: `${title} max`.trim(),
-      color: colors.green,
+      color: stat.max,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.min,
+      title: `${title} min`.trim(),
+      color: stat.min,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.median,
       title: `${title} median`.trim(),
-      color: colors.violet,
-      unit,
-      defaultActive: false,
-    },
-    {
-      metric: pattern.pct10,
-      title: `${title} pct10`.trim(),
-      color: colors.rose,
-      unit,
-      defaultActive: false,
-    },
-    {
-      metric: pattern.pct25,
-      title: `${title} pct25`.trim(),
-      color: colors.pink,
+      color: stat.median,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct75,
       title: `${title} pct75`.trim(),
-      color: colors.fuchsia,
+      color: stat.pct75,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct25,
+      title: `${title} pct25`.trim(),
+      color: stat.pct25,
       unit,
       defaultActive: false,
     },
     {
       metric: pattern.pct90,
       title: `${title} pct90`.trim(),
-      color: colors.amber,
+      color: stat.pct90,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct10,
+      title: `${title} pct10`.trim(),
+      color: stat.pct10,
       unit,
       defaultActive: false,
     },
@@ -830,30 +858,29 @@ export function fromIntervalPattern(colors, pattern, unit, title = "", color) {
 
 /**
  * Create series from a SupplyPattern (sats/bitcoin/dollars, no sum/cumulative)
- * @param {Colors} colors
  * @param {SupplyPattern} pattern
  * @param {string} title
  * @param {Color} [color]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromSupplyPattern(colors, pattern, title, color) {
+export function fromSupplyPattern(pattern, title, color) {
   return [
-    {
-      metric: pattern.sats,
-      title,
-      color: color ?? colors.default,
-      unit: Unit.sats,
-    },
     {
       metric: pattern.bitcoin,
       title,
-      color: color ?? colors.default,
+      color,
       unit: Unit.btc,
+    },
+    {
+      metric: pattern.sats,
+      title,
+      color,
+      unit: Unit.sats,
     },
     {
       metric: pattern.dollars,
       title,
-      color: color ?? colors.default,
+      color,
       unit: Unit.usd,
     },
   ];

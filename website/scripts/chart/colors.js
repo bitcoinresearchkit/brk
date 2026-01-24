@@ -67,32 +67,65 @@ function getLightDarkValue(property) {
   return dark ? _dark : light;
 }
 
+const red = createColor(() => getColor("red"));
+const orange = createColor(() => getColor("orange"));
+const amber = createColor(() => getColor("amber"));
+const yellow = createColor(() => getColor("yellow"));
+const avocado = createColor(() => getColor("avocado"));
+const lime = createColor(() => getColor("lime"));
+const green = createColor(() => getColor("green"));
+const emerald = createColor(() => getColor("emerald"));
+const teal = createColor(() => getColor("teal"));
+const cyan = createColor(() => getColor("cyan"));
+const sky = createColor(() => getColor("sky"));
+const blue = createColor(() => getColor("blue"));
+const indigo = createColor(() => getColor("indigo"));
+const violet = createColor(() => getColor("violet"));
+const purple = createColor(() => getColor("purple"));
+const fuchsia = createColor(() => getColor("fuchsia"));
+const pink = createColor(() => getColor("pink"));
+const rose = createColor(() => getColor("rose"));
+
 export const colors = {
   default: createColor(() => getLightDarkValue("--color")),
   gray: createColor(() => getColor("gray")),
   border: createColor(() => getLightDarkValue("--border-color")),
 
-  red: createColor(() => getColor("red")),
-  orange: createColor(() => getColor("orange")),
-  amber: createColor(() => getColor("amber")),
-  yellow: createColor(() => getColor("yellow")),
-  avocado: createColor(() => getColor("avocado")),
-  lime: createColor(() => getColor("lime")),
-  green: createColor(() => getColor("green")),
-  emerald: createColor(() => getColor("emerald")),
-  teal: createColor(() => getColor("teal")),
-  cyan: createColor(() => getColor("cyan")),
-  sky: createColor(() => getColor("sky")),
-  blue: createColor(() => getColor("blue")),
-  indigo: createColor(() => getColor("indigo")),
-  violet: createColor(() => getColor("violet")),
-  purple: createColor(() => getColor("purple")),
-  fuchsia: createColor(() => getColor("fuchsia")),
-  pink: createColor(() => getColor("pink")),
-  rose: createColor(() => getColor("rose")),
+  red,
+  orange,
+  amber,
+  yellow,
+  avocado,
+  lime,
+  green,
+  emerald,
+  teal,
+  cyan,
+  sky,
+  blue,
+  indigo,
+  violet,
+  purple,
+  fuchsia,
+  pink,
+  rose,
+
+  /** Semantic stat colors for pattern helpers */
+  stat: {
+    sum: blue,
+    cumulative: indigo,
+    avg: orange,
+    max: green,
+    pct90: cyan,
+    pct75: blue,
+    median: yellow,
+    pct25: violet,
+    pct10: fuchsia,
+    min: red,
+  },
 };
 
 /**
  * @typedef {typeof colors} Colors
- * @typedef {keyof Colors} ColorName
+ * @typedef {Exclude<keyof Colors, "stat">} ColorName
  */

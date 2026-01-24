@@ -2,7 +2,7 @@
 
 import { Unit } from "../../utils/units.js";
 import { priceLine } from "../constants.js";
-import { line } from "../series.js";
+import { baseline, line } from "../series.js";
 import { satsBtcUsd } from "../shared.js";
 
 /**
@@ -74,25 +74,22 @@ export function createSingleSupplySeries(ctx, cohort) {
 
 /**
  * Create supply total series for grouped cohorts
- * @param {PartialContext} ctx
  * @param {readonly CohortObject[]} list
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createGroupedSupplyTotalSeries(ctx, list) {
-  const { brk } = ctx;
-  const constant100 = brk.metrics.constants.constant100;
-
+export function createGroupedSupplyTotalSeries(list) {
   return list.flatMap(({ color, name, tree }) => [
     ...satsBtcUsd(tree.supply.total, name, color),
-    line({
-      metric:
-        "supplyRelToCirculatingSupply" in tree.relative
-          ? tree.relative.supplyRelToCirculatingSupply
-          : constant100,
-      name,
-      color,
-      unit: Unit.pctSupply,
-    }),
+    ...("supplyRelToCirculatingSupply" in tree.relative
+      ? [
+          line({
+            metric: tree.relative.supplyRelToCirculatingSupply,
+            name,
+            color,
+            unit: Unit.pctSupply,
+          }),
+        ]
+      : []),
   ]);
 }
 
@@ -194,12 +191,12 @@ export function createRealizedPriceSeries(list) {
  */
 export function createRealizedPriceRatioSeries(ctx, list) {
   return [
-    ...list.map(({ color, name, tree }) =>
-      line({
+    ...list.map(({ name, tree }) =>
+      baseline({
         metric: tree.realized.realizedPriceExtra.ratio,
         name,
-        color,
         unit: Unit.ratio,
+        base: 1,
       }),
     ),
     priceLine({ ctx, unit: Unit.ratio, number: 1 }),

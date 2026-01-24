@@ -1,7 +1,8 @@
 /** Shared helpers for options */
 
 import { Unit } from "../utils/units.js";
-import { line } from "./series.js";
+import { line, baseline } from "./series.js";
+import { priceLine, priceLines } from "./constants.js";
 
 /**
  * Create sats/btc/usd line series from a pattern with .sats/.bitcoin/.dollars
@@ -14,7 +15,6 @@ import { line } from "./series.js";
 export function satsBtcUsd(pattern, name, color, options) {
   const { defaultActive } = options || {};
   return [
-    line({ metric: pattern.sats, name, color, unit: Unit.sats, defaultActive }),
     line({
       metric: pattern.bitcoin,
       name,
@@ -22,6 +22,7 @@ export function satsBtcUsd(pattern, name, color, options) {
       unit: Unit.btc,
       defaultActive,
     }),
+    line({ metric: pattern.sats, name, color, unit: Unit.sats, defaultActive }),
     line({
       metric: pattern.dollars,
       name,
@@ -82,7 +83,7 @@ export function sdPatterns(ratio) {
  * @param {Colors} colors
  * @param {Ratio1ySdPattern} sd
  */
-export function sdBands(colors, sd) {
+export function sdBandsUsd(colors, sd) {
   return /** @type {const} */ ([
     { name: "0σ", prop: sd._0sdUsd, color: colors.lime },
     { name: "+0.5σ", prop: sd.p05sdUsd, color: colors.yellow },
@@ -95,7 +96,249 @@ export function sdBands(colors, sd) {
     { name: "−2σ", prop: sd.m2sdUsd, color: colors.blue },
     { name: "+2.5σ", prop: sd.p25sdUsd, color: colors.rose },
     { name: "−2.5σ", prop: sd.m25sdUsd, color: colors.indigo },
+    { name: "+3σ", prop: sd.p3sdUsd, color: colors.pink },
+    { name: "−3σ", prop: sd.m3sdUsd, color: colors.violet },
+  ]);
+}
+
+/**
+ * Build SD band mappings (ratio) from an SD pattern
+ * @param {Colors} colors
+ * @param {Ratio1ySdPattern} sd
+ */
+export function sdBandsRatio(colors, sd) {
+  return /** @type {const} */ ([
+    { name: "0σ", prop: sd.sma, color: colors.lime },
+    { name: "+0.5σ", prop: sd.p05sd, color: colors.yellow },
+    { name: "−0.5σ", prop: sd.m05sd, color: colors.teal },
+    { name: "+1σ", prop: sd.p1sd, color: colors.amber },
+    { name: "−1σ", prop: sd.m1sd, color: colors.cyan },
+    { name: "+1.5σ", prop: sd.p15sd, color: colors.orange },
+    { name: "−1.5σ", prop: sd.m15sd, color: colors.sky },
+    { name: "+2σ", prop: sd.p2sd, color: colors.red },
+    { name: "−2σ", prop: sd.m2sd, color: colors.blue },
+    { name: "+2.5σ", prop: sd.p25sd, color: colors.rose },
+    { name: "−2.5σ", prop: sd.m25sd, color: colors.indigo },
     { name: "+3σ", prop: sd.p3sd, color: colors.pink },
     { name: "−3σ", prop: sd.m3sd, color: colors.violet },
   ]);
+}
+
+/**
+ * Build ratio SMA series from a ratio pattern
+ * @param {Colors} colors
+ * @param {ActivePriceRatioPattern} ratio
+ */
+export function ratioSmas(colors, ratio) {
+  return /** @type {const} */ ([
+    { name: "1w SMA", metric: ratio.ratio1wSma, color: colors.lime },
+    { name: "1m SMA", metric: ratio.ratio1mSma, color: colors.teal },
+    { name: "1y SMA", metric: ratio.ratio1ySd.sma, color: colors.sky },
+    { name: "2y SMA", metric: ratio.ratio2ySd.sma, color: colors.indigo },
+    { name: "4y SMA", metric: ratio.ratio4ySd.sma, color: colors.purple },
+    { name: "All SMA", metric: ratio.ratioSd.sma, color: colors.rose },
+  ]);
+}
+
+/**
+ * Create ratio chart from ActivePriceRatioPattern
+ * @param {PartialContext} ctx
+ * @param {Object} args
+ * @param {string} args.title
+ * @param {AnyMetricPattern} args.price - The price metric to show in top pane
+ * @param {ActivePriceRatioPattern} args.ratio - The ratio pattern
+ * @param {Color} args.color
+ * @returns {PartialChartOption}
+ */
+export function createRatioChart(ctx, { title, price, ratio, color }) {
+  const { colors } = ctx;
+
+  return {
+    name: "ratio",
+    title: `${title} Ratio`,
+    top: [
+      line({ metric: price, name: "price", color, unit: Unit.usd }),
+      ...percentileUsdMap(colors, ratio).map(({ name, prop, color }) =>
+        line({
+          metric: prop,
+          name,
+          color,
+          defaultActive: false,
+          unit: Unit.usd,
+          options: { lineStyle: 1 },
+        }),
+      ),
+    ],
+    bottom: [
+      baseline({
+        metric: ratio.ratio,
+        name: "Ratio",
+        unit: Unit.ratio,
+        base: 1,
+      }),
+      ...ratioSmas(colors, ratio).map(({ name, metric, color }) =>
+        line({ metric, name, color, unit: Unit.ratio, defaultActive: false }),
+      ),
+      ...percentileMap(colors, ratio).map(({ name, prop, color }) =>
+        line({
+          metric: prop,
+          name,
+          color,
+          defaultActive: false,
+          unit: Unit.ratio,
+          options: { lineStyle: 1 },
+        }),
+      ),
+      priceLine({ ctx, unit: Unit.ratio, number: 1 }),
+    ],
+  };
+}
+
+/**
+ * Create ZScores folder from ActivePriceRatioPattern
+ * @param {PartialContext} ctx
+ * @param {Object} args
+ * @param {string} args.title
+ * @param {string} args.legend
+ * @param {AnyMetricPattern} args.price - The price metric to show in top pane
+ * @param {ActivePriceRatioPattern} args.ratio - The ratio pattern
+ * @param {Color} args.color
+ * @returns {PartialOptionsGroup}
+ */
+export function createZScoresFolder(
+  ctx,
+  { title, legend, price, ratio, color },
+) {
+  const { colors } = ctx;
+  const sdPats = sdPatterns(ratio);
+
+  return {
+    name: "ZScores",
+    tree: [
+      {
+        name: "Compare",
+        title: `${title} Z-Scores`,
+        top: [
+          line({ metric: price, name: legend, color, unit: Unit.usd }),
+          line({
+            metric: ratio.ratio1ySd._0sdUsd,
+            name: "1y 0σ",
+            color: colors.orange,
+            defaultActive: false,
+            unit: Unit.usd,
+          }),
+          line({
+            metric: ratio.ratio2ySd._0sdUsd,
+            name: "2y 0σ",
+            color: colors.yellow,
+            defaultActive: false,
+            unit: Unit.usd,
+          }),
+          line({
+            metric: ratio.ratio4ySd._0sdUsd,
+            name: "4y 0σ",
+            color: colors.lime,
+            defaultActive: false,
+            unit: Unit.usd,
+          }),
+          line({
+            metric: ratio.ratioSd._0sdUsd,
+            name: "all 0σ",
+            color: colors.blue,
+            defaultActive: false,
+            unit: Unit.usd,
+          }),
+        ],
+        bottom: [
+          line({
+            metric: ratio.ratioSd.zscore,
+            name: "all",
+            color: colors.blue,
+            unit: Unit.sd,
+          }),
+          line({
+            metric: ratio.ratio4ySd.zscore,
+            name: "4y",
+            color: colors.lime,
+            unit: Unit.sd,
+          }),
+          line({
+            metric: ratio.ratio2ySd.zscore,
+            name: "2y",
+            color: colors.yellow,
+            unit: Unit.sd,
+          }),
+          line({
+            metric: ratio.ratio1ySd.zscore,
+            name: "1y",
+            color: colors.orange,
+            unit: Unit.sd,
+          }),
+          ...priceLines({
+            ctx,
+            unit: Unit.sd,
+            numbers: [0, 1, -1, 2, -2, 3, -3],
+            defaultActive: false,
+          }),
+        ],
+      },
+      ...sdPats.map(({ nameAddon, titleAddon, sd }) => ({
+        name: nameAddon,
+        title: `${title} ${titleAddon} Z-Score`,
+        top: [
+          line({ metric: price, name: legend, color, unit: Unit.usd }),
+          ...sdBandsUsd(colors, sd).map(
+            ({ name: bandName, prop, color: bandColor }) =>
+              line({
+                metric: prop,
+                name: bandName,
+                color: bandColor,
+                unit: Unit.usd,
+                defaultActive: false,
+              }),
+          ),
+        ],
+        bottom: [
+          baseline({
+            metric: sd.zscore,
+            name: "Z-Score",
+            unit: Unit.sd,
+          }),
+          baseline({
+            metric: ratio.ratio,
+            name: "Ratio",
+            unit: Unit.ratio,
+            base: 1,
+          }),
+          line({
+            metric: sd.sd,
+            name: "Volatility",
+            color: colors.gray,
+            unit: Unit.percentage,
+          }),
+          ...sdBandsRatio(colors, sd).map(
+            ({ name: bandName, prop, color: bandColor }) =>
+              line({
+                metric: prop,
+                name: bandName,
+                color: bandColor,
+                unit: Unit.ratio,
+                defaultActive: false,
+              }),
+          ),
+          priceLine({ ctx, unit: Unit.ratio, number: 1 }),
+          priceLine({
+            ctx,
+            unit: Unit.sd,
+          }),
+          ...priceLines({
+            ctx,
+            unit: Unit.sd,
+            numbers: [1, -1, 2, -2, 3, -3],
+            defaultActive: false,
+          }),
+        ],
+      })),
+    ],
+  };
 }

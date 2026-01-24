@@ -219,6 +219,10 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
     ? initialRange.to - initialRange.from
     : Infinity;
 
+  /** @param {number} count */
+  const getDotsRadius = (count) =>
+    count > 1000 ? 1 : count > 200 ? 1.5 : count > 100 ? 2 : 3;
+
   /** @type {Set<ZoomChangeCallback>} */
   const onZoomChange = new Set();
 
@@ -1023,11 +1027,12 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
       let active = defaultActive !== false;
       let highlighted = true;
+      const showLastValue = options?.lastValueVisible !== false;
 
       function update() {
         iseries.applyOptions({
           visible: active,
-          lastValueVisible: highlighted,
+          lastValueVisible: showLastValue && highlighted,
           color: color.highlight(highlighted),
         });
       }
@@ -1117,21 +1122,21 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
       let active = defaultActive !== false;
       let highlighted = true;
-      let radius =
-        visibleBarsCount > 1000 ? 1 : visibleBarsCount > 200 ? 1.5 : 2;
+      let radius = getDotsRadius(visibleBarsCount);
 
       function update() {
         iseries.applyOptions({
           visible: active,
           lastValueVisible: highlighted,
           color: color.highlight(highlighted),
+          pointMarkersRadius: radius,
         });
       }
       update();
 
       /** @type {ZoomChangeCallback} */
       function handleZoom(count) {
-        const newRadius = count > 1000 ? 1 : count > 200 ? 1.5 : 2;
+        const newRadius = getDotsRadius(count);
         if (newRadius === radius) return;
         radius = newRadius;
         iseries.applyOptions({ pointMarkersRadius: radius });
@@ -1507,8 +1512,13 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         }
 
         const defaultUnit = units[0];
+        const sortedUnitIds = units
+          .map((u) => u.id)
+          .sort()
+          .join(",");
         const persistedUnit = createPersistedValue({
           defaultValue: /** @type {string} */ (defaultUnit.id),
+          storageKey: `unit-${sortedUnitIds}`,
           urlKey: paneIndex === 0 ? "u0" : "u1",
           serialize: (v) => v,
           deserialize: (s) => s,

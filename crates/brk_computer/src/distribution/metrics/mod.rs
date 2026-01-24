@@ -333,6 +333,28 @@ impl CohortMetrics {
         Ok(())
     }
 
+    /// Add relative-to-circulating-supply metrics in a second step.
+    /// Called after the "all" cohort is available.
+    pub fn add_rel_to_circulating(
+        &mut self,
+        full_name: &str,
+        version: Version,
+        all_supply: &SupplyMetrics,
+    ) {
+        if let (Some(relative), Some(unrealized)) =
+            (self.relative.as_mut(), self.unrealized.as_ref())
+        {
+            relative.add_rel_to_circulating(
+                &self.filter,
+                full_name,
+                version,
+                unrealized,
+                &self.supply,
+                all_supply,
+            );
+        }
+    }
+
     /// Second phase of computed metrics (ratios, relative values).
     #[allow(clippy::too_many_arguments)]
     pub fn compute_rest_part2(

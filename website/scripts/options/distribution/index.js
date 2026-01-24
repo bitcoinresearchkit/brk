@@ -12,6 +12,7 @@ export {
   createCohortFolderWithAdjusted,
   createCohortFolderWithPercentiles,
   createCohortFolderBasic,
+  createCohortFolderAddress,
 } from "./utxo.js";
 export { createAddressCohortFolder } from "./address.js";
 

@@ -34,6 +34,7 @@ pub struct Vecs {
     pub _1w_dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
     pub _1m_dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
     pub _1y_dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
+    pub blocks_since_block: ComputedFromHeightLast<StoredU32>,
     pub days_since_block: ComputedFromDateLast<StoredU16>,
 }
 
@@ -128,6 +129,12 @@ impl Vecs {
             >(&suffix("coinbase"), version, &subsidy, &fee),
             subsidy,
             fee,
+            blocks_since_block: ComputedFromHeightLast::forced_import(
+                db,
+                &suffix("blocks_since_block"),
+                version,
+                indexes,
+            )?,
             days_since_block: ComputedFromDateLast::forced_import(
                 db,
                 &suffix("days_since_block"),
@@ -210,6 +217,26 @@ impl Vecs {
         self.subsidy.derive_from(indexes, starting_indexes, exit)?;
 
         self.fee.derive_from(indexes, starting_indexes, exit)?;
+
+        self.blocks_since_block
+            .compute_all(indexes, starting_indexes, exit, |v| {
+                let mut prev = StoredU32::ZERO;
+                v.compute_transform(
+                    starting_indexes.height,
+                    blocks_mined_height,
+                    |(h, mined, ..)| {
+                        let blocks = if mined.is_zero() {
+                            prev + StoredU32::ONE
+                        } else {
+                            StoredU32::ZERO
+                        };
+                        prev = blocks;
+                        (h, blocks)
+                    },
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
         self.days_since_block
             .compute_all(starting_indexes, exit, |v| {

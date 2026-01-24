@@ -33,6 +33,7 @@ export function createChainSection(ctx) {
     market,
     scripts,
     supply,
+    distribution,
   } = brk.metrics;
 
   // Build pools tree dynamically
@@ -49,10 +50,10 @@ export function createChainSection(ctx) {
           name: "Dominance",
           title: `${poolName} Dominance`,
           bottom: [
-            line({
+            dots({
               metric: pool._24hDominance,
               name: "24h",
-              color: colors.orange,
+              color: colors.pink,
               unit: Unit.percentage,
               defaultActive: false,
             }),
@@ -88,7 +89,7 @@ export function createChainSection(ctx) {
           name: "Blocks mined",
           title: `${poolName} Blocks`,
           bottom: [
-            line({
+            dots({
               metric: pool.blocksMined.sum,
               name: "Sum",
               unit: Unit.count,
@@ -98,6 +99,14 @@ export function createChainSection(ctx) {
               name: "Cumulative",
               color: colors.blue,
               unit: Unit.count,
+              defaultActive: false,
+            }),
+            line({
+              metric: pool._24hBlocksMined,
+              name: "24h Sum",
+              color: colors.pink,
+              unit: Unit.count,
+              defaultActive: false,
             }),
             line({
               metric: pool._1wBlocksMined,
@@ -142,12 +151,17 @@ export function createChainSection(ctx) {
           ],
         },
         {
-          name: "Days since block",
-          title: `${poolName} Last Block`,
+          name: "Since last block",
+          title: `${poolName} Since Last Block`,
           bottom: [
             line({
+              metric: pool.blocksSinceBlock,
+              name: "Blocks",
+              unit: Unit.count,
+            }),
+            line({
               metric: pool.daysSinceBlock,
-              name: "Since block",
+              name: "Days",
               unit: Unit.days,
             }),
           ],
@@ -228,11 +242,34 @@ export function createChainSection(ctx) {
             bottom: fromDollarsPattern(transactions.count.txCount, Unit.count),
           },
           {
+            name: "Speed",
+            title: "Transactions Per Second",
+            bottom: [
+              dots({
+                metric: transactions.volume.txPerSec,
+                name: "Transactions",
+                unit: Unit.perSec,
+              }),
+            ],
+          },
+          {
             name: "Volume",
             title: "Transaction Volume",
             bottom: [
               ...satsBtcUsd(transactions.volume.sentSum, "Sent"),
-              ...satsBtcUsd(transactions.volume.receivedSum, "Received", colors.cyan, {
+              ...satsBtcUsd(
+                transactions.volume.receivedSum,
+                "Received",
+                colors.cyan,
+                {
+                  defaultActive: false,
+                },
+              ),
+              line({
+                metric: transactions.volume.annualizedVolume.bitcoin,
+                name: "annualized",
+                color: colors.red,
+                unit: Unit.btc,
                 defaultActive: false,
               }),
               line({
@@ -240,13 +277,6 @@ export function createChainSection(ctx) {
                 name: "annualized",
                 color: colors.red,
                 unit: Unit.sats,
-                defaultActive: false,
-              }),
-              line({
-                metric: transactions.volume.annualizedVolume.bitcoin,
-                name: "annualized",
-                color: colors.red,
-                unit: Unit.btc,
                 defaultActive: false,
               }),
               line({
@@ -265,6 +295,11 @@ export function createChainSection(ctx) {
               ...fromFeeRatePattern(transactions.size.weight, Unit.wu),
               ...fromFeeRatePattern(transactions.size.vsize, Unit.vb),
             ],
+          },
+          {
+            name: "Fee Rate",
+            title: "Fee Rate",
+            bottom: fromFeeRatePattern(transactions.fees.feeRate, Unit.feeRate),
           },
           {
             name: "Versions",
@@ -310,17 +345,6 @@ export function createChainSection(ctx) {
               }),
             ],
           },
-          {
-            name: "Speed",
-            title: "Transactions Per Second",
-            bottom: [
-              dots({
-                metric: transactions.volume.txPerSec,
-                name: "Transactions",
-                unit: Unit.perSec,
-              }),
-            ],
-          },
         ],
       },
 
@@ -357,6 +381,11 @@ export function createChainSection(ctx) {
             bottom: [...fromSizePattern(outputs.count.totalCount, Unit.count)],
           },
           {
+            name: "OP_RETURN",
+            title: "OP_RETURN Outputs",
+            bottom: fromFullnessPattern(scripts.count.opreturn, Unit.count),
+          },
+          {
             name: "Speed",
             title: "Outputs Per Second",
             bottom: [
@@ -387,70 +416,99 @@ export function createChainSection(ctx) {
         ],
       },
 
-      // Coinbase
+      // Supply
       {
-        name: "Coinbase",
-        title: "Coinbase Rewards",
-        bottom: fromCoinbasePattern(blocks.rewards.coinbase, "Coinbase"),
-      },
-
-      // Subsidy
-      {
-        name: "Subsidy",
-        title: "Block Subsidy",
-        bottom: [
-          ...fromCoinbasePattern(blocks.rewards.subsidy, "Subsidy"),
-          line({
-            metric: blocks.rewards.subsidyDominance,
-            name: "Dominance",
-            color: colors.purple,
-            unit: Unit.percentage,
-            defaultActive: false,
-          }),
+        name: "Supply",
+        tree: [
+          {
+            name: "Circulating",
+            title: "Circulating Supply",
+            bottom: fromSupplyPattern(supply.circulating, "Supply"),
+          },
+          {
+            name: "Inflation",
+            title: "Inflation Rate",
+            bottom: [
+              dots({
+                metric: supply.inflation,
+                name: "Rate",
+                unit: Unit.percentage,
+              }),
+            ],
+          },
+          {
+            name: "Unspendable",
+            title: "Unspendable Supply",
+            bottom: fromValuePattern(supply.burned.unspendable),
+          },
+          {
+            name: "OP_RETURN",
+            title: "OP_RETURN Supply",
+            bottom: fromValuePattern(supply.burned.opreturn),
+          },
         ],
       },
 
-      // Fee
+      // Rewards
       {
-        name: "Fee",
+        name: "Rewards",
         tree: [
           {
-            name: "Total",
+            name: "Coinbase",
+            title: "Coinbase Rewards",
+            bottom: fromCoinbasePattern(blocks.rewards.coinbase),
+          },
+          {
+            name: "Subsidy",
+            title: "Block Subsidy",
+            bottom: [
+              ...fromCoinbasePattern(blocks.rewards.subsidy),
+              line({
+                metric: blocks.rewards.subsidyDominance,
+                name: "Dominance",
+                color: colors.purple,
+                unit: Unit.percentage,
+                defaultActive: false,
+              }),
+            ],
+          },
+          {
+            name: "Fee",
             title: "Transaction Fees",
             bottom: [
               line({
-                metric: transactions.fees.fee.sats.sum,
-                name: "Sum",
-                unit: Unit.sats,
-              }),
-              line({
-                metric: transactions.fees.fee.sats.cumulative,
-                name: "Cumulative",
-                color: colors.blue,
-                unit: Unit.sats,
-                defaultActive: false,
-              }),
-              line({
                 metric: transactions.fees.fee.bitcoin.sum,
-                name: "Sum",
+                name: "sum",
                 unit: Unit.btc,
               }),
               line({
                 metric: transactions.fees.fee.bitcoin.cumulative,
-                name: "Cumulative",
-                color: colors.blue,
+                name: "cumulative",
+                color: colors.stat.cumulative,
                 unit: Unit.btc,
                 defaultActive: false,
               }),
               line({
+                metric: transactions.fees.fee.sats.sum,
+                name: "sum",
+                unit: Unit.sats,
+              }),
+              line({
+                metric: transactions.fees.fee.sats.cumulative,
+                name: "cumulative",
+                color: colors.stat.cumulative,
+                unit: Unit.sats,
+                defaultActive: false,
+              }),
+              line({
                 metric: transactions.fees.fee.dollars.sum,
-                name: "Sum",
+                name: "sum",
                 unit: Unit.usd,
               }),
               line({
                 metric: transactions.fees.fee.dollars.cumulative,
-                name: "Cumulative",
-                color: colors.blue,
+                name: "cumulative",
+                color: colors.stat.cumulative,
                 unit: Unit.usd,
                 defaultActive: false,
               }),
@@ -464,64 +522,98 @@ export function createChainSection(ctx) {
             ],
           },
           {
-            name: "Rate",
-            title: "Fee Rate",
-            bottom: [
-              line({
-                metric: transactions.fees.feeRate.median,
-                name: "Median",
-                color: colors.purple,
-                unit: Unit.feeRate,
-              }),
-              line({
-                metric: transactions.fees.feeRate.average,
-                name: "Average",
-                color: colors.blue,
-                unit: Unit.feeRate,
-                defaultActive: false,
-              }),
-              line({
-                metric: transactions.fees.feeRate.min,
-                name: "Min",
-                color: colors.red,
-                unit: Unit.feeRate,
-                defaultActive: false,
-              }),
-              line({
-                metric: transactions.fees.feeRate.max,
-                name: "Max",
-                color: colors.green,
-                unit: Unit.feeRate,
-                defaultActive: false,
-              }),
-              line({
-                metric: transactions.fees.feeRate.pct10,
-                name: "pct10",
-                color: colors.rose,
-                unit: Unit.feeRate,
-                defaultActive: false,
-              }),
-              line({
-                metric: transactions.fees.feeRate.pct25,
-                name: "pct25",
-                color: colors.pink,
-                unit: Unit.feeRate,
-                defaultActive: false,
-              }),
-              line({
-                metric: transactions.fees.feeRate.pct75,
-                name: "pct75",
-                color: colors.violet,
-                unit: Unit.feeRate,
-                defaultActive: false,
-              }),
-              line({
-                metric: transactions.fees.feeRate.pct90,
-                name: "pct90",
-                color: colors.fuchsia,
-                unit: Unit.feeRate,
-                defaultActive: false,
-              }),
+            name: "Unclaimed",
+            title: "Unclaimed Rewards",
+            bottom: fromValuePattern(
+              blocks.rewards.unclaimedRewards,
+              "Unclaimed",
+            ),
+          },
+        ],
+      },
+
+      // Addresses
+      {
+        name: "Addresses",
+        tree: [
+          {
+            name: "Count",
+            tree: [
+              {
+                name: "All",
+                title: "Total Address Count",
+                bottom: [
+                  line({
+                    metric: distribution.addrCount.all,
+                    name: "Loaded",
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: distribution.emptyAddrCount.all,
+                    name: "Empty",
+                    color: colors.gray,
+                    unit: Unit.count,
+                    defaultActive: false,
+                  }),
+                ],
+              },
+              {
+                name: "By Type",
+                title: "Address Count by Type",
+                bottom: [
+                  line({
+                    metric: distribution.addrCount.p2pkh,
+                    name: "P2PKH",
+                    color: colors.orange,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: distribution.addrCount.p2sh,
+                    name: "P2SH",
+                    color: colors.yellow,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: distribution.addrCount.p2wpkh,
+                    name: "P2WPKH",
+                    color: colors.green,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: distribution.addrCount.p2wsh,
+                    name: "P2WSH",
+                    color: colors.teal,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: distribution.addrCount.p2tr,
+                    name: "P2TR",
+                    color: colors.purple,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: distribution.addrCount.p2pk65,
+                    name: "P2PK65",
+                    color: colors.pink,
+                    unit: Unit.count,
+                    defaultActive: false,
+                  }),
+                  line({
+                    metric: distribution.addrCount.p2pk33,
+                    name: "P2PK33",
+                    color: colors.red,
+                    unit: Unit.count,
+                    defaultActive: false,
+                  }),
+                  line({
+                    metric: distribution.addrCount.p2a,
+                    name: "P2A",
+                    color: colors.blue,
+                    unit: Unit.count,
+                    defaultActive: false,
+                  }),
+                ],
+              },
             ],
           },
         ],
@@ -568,6 +660,13 @@ export function createChainSection(ctx) {
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
+              line({
+                metric: blocks.difficulty.asHash,
+                name: "Difficulty",
+                color: colors.default,
+                unit: Unit.hashRate,
+                options: { lineStyle: 1 },
+              }),
             ],
           },
           {
@@ -580,33 +679,16 @@ export function createChainSection(ctx) {
                 unit: Unit.difficulty,
               }),
               line({
-                metric: blocks.difficulty.adjustment,
-                name: "Adjustment",
-                color: colors.orange,
-                unit: Unit.percentage,
-                defaultActive: false,
-              }),
-              line({
-                metric: blocks.difficulty.asHash,
-                name: "As hash",
-                color: colors.default,
-                unit: Unit.hashRate,
-                defaultActive: false,
-                options: { lineStyle: 1 },
-              }),
-              line({
                 metric: blocks.difficulty.blocksBeforeNextAdjustment,
-                name: "Blocks until adj.",
+                name: "before next",
                 color: colors.indigo,
                 unit: Unit.blocks,
-                defaultActive: false,
               }),
               line({
                 metric: blocks.difficulty.daysBeforeNextAdjustment,
-                name: "Days until adj.",
+                name: "before next",
                 color: colors.purple,
                 unit: Unit.days,
-                defaultActive: false,
               }),
             ],
           },
@@ -619,6 +701,7 @@ export function createChainSection(ctx) {
                 name: "Difficulty Change",
                 unit: Unit.percentage,
               }),
+              priceLine({ ctx, number: 0, unit: Unit.percentage }),
             ],
           },
           {
@@ -702,22 +785,21 @@ export function createChainSection(ctx) {
             title: "Halving",
             bottom: [
               line({
-                metric: blocks.halving.blocksBeforeNextHalving,
-                name: "Blocks before next",
-                unit: Unit.blocks,
-              }),
-              line({
-                metric: blocks.halving.daysBeforeNextHalving,
-                name: "Days before next",
-                color: colors.orange,
-                unit: Unit.days,
-              }),
-              line({
                 metric: blocks.halving.epoch,
                 name: "Epoch",
                 color: colors.purple,
                 unit: Unit.epoch,
-                defaultActive: false,
+              }),
+              line({
+                metric: blocks.halving.blocksBeforeNextHalving,
+                name: "before next",
+                unit: Unit.blocks,
+              }),
+              line({
+                metric: blocks.halving.daysBeforeNextHalving,
+                name: "before next",
+                color: colors.blue,
+                unit: Unit.days,
               }),
             ],
           },
@@ -725,10 +807,11 @@ export function createChainSection(ctx) {
             name: "Puell Multiple",
             title: "Puell Multiple",
             bottom: [
-              line({
+              baseline({
                 metric: market.indicators.puellMultiple,
                 name: "Puell Multiple",
                 unit: Unit.ratio,
+                base: 1,
               }),
               priceLine({ ctx, unit: Unit.ratio, number: 1 }),
             ],
@@ -740,60 +823,6 @@ export function createChainSection(ctx) {
       {
         name: "Pools",
         tree: poolsTree,
-      },
-
-      // Unspendable
-      {
-        name: "Unspendable",
-        tree: [
-          {
-            name: "Supply",
-            title: "Unspendable Supply",
-            bottom: fromValuePattern(supply.burned.unspendable, "Supply"),
-          },
-          {
-            name: "OP_RETURN",
-            tree: [
-              {
-                name: "Outputs",
-                title: "OP_RETURN Outputs",
-                bottom: fromFullnessPattern(scripts.count.opreturn, Unit.count),
-              },
-              {
-                name: "Supply",
-                title: "OP_RETURN Supply",
-                bottom: fromValuePattern(supply.burned.opreturn, "Supply"),
-              },
-            ],
-          },
-        ],
-      },
-
-      // Supply
-      {
-        name: "Supply",
-        title: "Circulating Supply",
-        bottom: fromSupplyPattern(supply.circulating, "Supply"),
-      },
-
-      // Inflation
-      {
-        name: "Inflation",
-        title: "Inflation Rate",
-        bottom: [
-          line({
-            metric: supply.inflation,
-            name: "Rate",
-            unit: Unit.percentage,
-          }),
-        ],
-      },
-
-      // Unclaimed Rewards
-      {
-        name: "Unclaimed Rewards",
-        title: "Unclaimed Rewards",
-        bottom: fromValuePattern(blocks.rewards.unclaimedRewards, "Unclaimed"),
       },
     ],
   };

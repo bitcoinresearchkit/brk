@@ -40,3 +40,15 @@ path = "examples/tune_smooth.rs"
 [[example]]
 name = "debug_oracle"
 path = "examples/debug_oracle.rs"
+
+[[example]]
+name = "filters"
+path = "examples/filters.rs"
+
+[[example]]
+name = "stencil"
+path = "examples/stencil.rs"
+
+[[example]]
+name = "epoch5_test"
+path = "examples/epoch5_test.rs"

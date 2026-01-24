@@ -2,6 +2,8 @@
 
 JavaScript/TypeScript client for the [Bitcoin Research Kit](https://github.com/bitcoinresearchkit/brk) API.
 
+Zero dependencies.
+
 [npm](https://www.npmjs.com/package/brk-client) | [API Reference](https://github.com/bitcoinresearchkit/brk/blob/main/modules/brk-client/docs/globals.md)
 
 ## Installation
@@ -9,6 +11,8 @@ JavaScript/TypeScript client for the [Bitcoin Research Kit](https://github.com/b
 ```bash
 npm install brk-client
 ```
+
+Or just copy [`index.js`](./index.js) into your project - it's a single file with no dependencies.
 
 ## Quick Start
 

@@ -131,7 +131,8 @@ def _p(prefix: str, acc: str) -> str:
 pub fn generate_endpoint_class(output: &mut String) {
     writeln!(
         output,
-        r#"class MetricData(TypedDict, Generic[T]):
+        r#"@dataclass
+class MetricData(Generic[T]):
     """Metric data with range information."""
     version: int
     total: int
@@ -176,8 +177,9 @@ class _EndpointConfig:
         p = self.path()
         return f"{{p}}?{{query}}" if query else p
 
-    def get_json(self) -> Any:
-        return self.client.get_json(self._build_path())
+    def get_json(self) -> MetricData:
+        data = self.client.get_json(self._build_path())
+        return MetricData(**data)
 
     def get_csv(self) -> str:
         return self.client.get_text(self._build_path(format='csv'))
@@ -376,7 +378,7 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
     // Generate helper function
     writeln!(
         output,
-        r#"def _ep(c: BrkClientBase, n: str, i: Index) -> MetricEndpointBuilder:
+        r#"def _ep(c: BrkClientBase, n: str, i: Index) -> MetricEndpointBuilder[Any]:
     return MetricEndpointBuilder(c, n, i)
 "#
     )
@@ -409,6 +411,7 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
 
         // Generate the main accessor class
         writeln!(output, "class {}(Generic[T]):", pattern.name).unwrap();
+        writeln!(output, "    by: {}[T]", by_class_name).unwrap();
         writeln!(
             output,
             "    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, {}(c, n)",

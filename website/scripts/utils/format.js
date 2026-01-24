@@ -31,7 +31,7 @@ export const numberToPercentage = new Intl.NumberFormat("en-US", {
 export function numberToShortUSFormat(value, digits) {
   const absoluteValue = Math.abs(value);
 
-  if (isNaN(value)) {
+  if (isNaN(value) || !isFinite(value)) {
     return "";
   } else if (absoluteValue < 10) {
     return numberToUSNumber(value, Math.min(3, digits || 10));
@@ -41,13 +41,13 @@ export function numberToShortUSFormat(value, digits) {
     return numberToUSNumber(value, Math.min(1, digits || 10));
   } else if (absoluteValue < 1_000_000) {
     return numberToUSNumber(value, 0);
-  } else if (absoluteValue >= 1_000_000_000_000_000_000_000) {
+  } else if (absoluteValue >= 1e27) {
     return "Inf.";
   }
 
   const log = Math.floor(Math.log10(absoluteValue) - 6);
 
-  const suffices = ["M", "B", "T", "P", "E", "Z"];
+  const suffices = ["M", "B", "T", "P", "E", "Z", "Y"];
   const letterIndex = Math.floor(log / 3);
   const letter = suffices[letterIndex];
 

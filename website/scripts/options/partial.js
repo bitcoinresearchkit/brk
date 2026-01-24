@@ -8,8 +8,9 @@ import {
   createCohortFolderWithAdjusted,
   createCohortFolderWithPercentiles,
   createCohortFolderBasic,
+  createCohortFolderAddress,
   createAddressCohortFolder,
-} from "./cohorts/index.js";
+} from "./distribution/index.js";
 import { createMarketSection } from "./market/index.js";
 import { createChainSection } from "./chain.js";
 import { createCointimeSection } from "./cointime.js";
@@ -17,6 +18,7 @@ import { colors } from "../chart/colors.js";
 
 // Re-export types for external consumers
 export * from "./types.js";
+export * from "./context.js";
 
 /**
  * Create partial options tree
@@ -43,17 +45,22 @@ export function createPartialOptions({ brk }) {
     addressesUnderAmount,
     utxosAmountRanges,
     addressesAmountRanges,
-    type,
+    typeAddressable,
+    typeOther,
     year,
   } = buildCohortData(colors, brk);
 
   // Helpers to map cohorts by capability type
   /** @param {CohortWithAdjusted} cohort */
-  const mapWithAdjusted = (cohort) => createCohortFolderWithAdjusted(ctx, cohort);
+  const mapWithAdjusted = (cohort) =>
+    createCohortFolderWithAdjusted(ctx, cohort);
   /** @param {CohortWithPercentiles} cohort */
-  const mapWithPercentiles = (cohort) => createCohortFolderWithPercentiles(ctx, cohort);
+  const mapWithPercentiles = (cohort) =>
+    createCohortFolderWithPercentiles(ctx, cohort);
   /** @param {CohortBasic} cohort */
   const mapBasic = (cohort) => createCohortFolderBasic(ctx, cohort);
+  /** @param {CohortAddress} cohort */
+  const mapAddress = (cohort) => createCohortFolderAddress(ctx, cohort);
   /** @param {AddressCohortObject} cohort */
   const mapAddressCohorts = (cohort) => createAddressCohortFolder(ctx, cohort);
 
@@ -81,7 +88,7 @@ export function createPartialOptions({ brk }) {
 
         // Cohorts section
         {
-          name: "Cohorts",
+          name: "Distribution",
           tree: [
             // All UTXOs - CohortAll (adjustedSopr + percentiles but no RelToMarketCap)
             createCohortFolderAll(ctx, cohortAll),
@@ -90,22 +97,29 @@ export function createPartialOptions({ brk }) {
             {
               name: "Terms",
               tree: [
+                // Compare folder uses WithPercentiles (common capabilities)
+                createCohortFolderWithPercentiles(ctx, {
+                  name: "Compare",
+                  title: "Term",
+                  list: [termShort, termLong],
+                }),
                 // Individual cohorts with their specific capabilities
                 createCohortFolderFull(ctx, termShort),
                 createCohortFolderWithPercentiles(ctx, termLong),
               ],
             },
 
-            // Types - CohortBasic
+            // Types - addressable types have addrCount, others don't
             {
               name: "Types",
               tree: [
-                createCohortFolderBasic(ctx, {
+                createCohortFolderAddress(ctx, {
                   name: "Compare",
                   title: "Type",
-                  list: type,
+                  list: typeAddressable,
                 }),
-                ...type.map(mapBasic),
+                ...typeAddressable.map(mapAddress),
+                ...typeOther.map(mapBasic),
               ],
             },
 

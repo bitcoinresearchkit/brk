@@ -51,7 +51,7 @@ export function createAddressCohortFolder(ctx, args) {
               {
                 name: "total",
                 title: `Supply ${title}`,
-                bottom: createGroupedSupplyTotalSeries(ctx, list),
+                bottom: createGroupedSupplyTotalSeries(list),
               },
               {
                 name: "in profit",

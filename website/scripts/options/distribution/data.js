@@ -23,6 +23,12 @@ const entries = (obj) =>
     Object.entries(obj)
   );
 
+/** @type {readonly AddressableType[]} */
+const ADDRESSABLE_TYPES = ["p2pk65", "p2pk33", "p2pkh", "p2sh", "p2wpkh", "p2wsh", "p2tr", "p2a"];
+
+/** @type {(key: SpendableType) => key is AddressableType} */
+const isAddressable = (key) => ADDRESSABLE_TYPES.includes(/** @type {any} */ (key));
+
 /**
  * Build all cohort data from brk tree
  * @param {Colors} colors
@@ -31,6 +37,7 @@ const entries = (obj) =>
 export function buildCohortData(colors, brk) {
   const utxoCohorts = brk.metrics.distribution.utxoCohorts;
   const addressCohorts = brk.metrics.distribution.addressCohorts;
+  const { addrCount } = brk.metrics.distribution;
   const {
     TERM_NAMES,
     EPOCH_NAMES,
@@ -51,6 +58,7 @@ export function buildCohortData(colors, brk) {
     title: "",
     color: colors.orange,
     tree: utxoCohorts.all,
+    addrCount: addrCount.all,
   };
 
   // Term cohorts - split because short is CohortFull, long is CohortWithPercentiles
@@ -200,17 +208,31 @@ export function buildCohortData(colors, brk) {
     },
   );
 
-  // Spendable type cohorts - CohortBasic (neither adjustedSopr nor percentiles)
-  /** @type {readonly CohortBasic[]} */
-  const type = entries(utxoCohorts.type).map(([key, tree]) => {
+  // Spendable type cohorts - split by addressability
+  /** @type {readonly CohortAddress[]} */
+  const typeAddressable = ADDRESSABLE_TYPES.map((key) => {
     const names = SPENDABLE_TYPE_NAMES[key];
     return {
       name: names.short,
       title: names.long,
       color: colors[spendableTypeColors[key]],
-      tree,
+      tree: utxoCohorts.type[key],
+      addrCount: addrCount[key],
     };
   });
+
+  /** @type {readonly CohortBasic[]} */
+  const typeOther = entries(utxoCohorts.type)
+    .filter(([key]) => !isAddressable(key))
+    .map(([key, tree]) => {
+      const names = SPENDABLE_TYPE_NAMES[key];
+      return {
+        name: names.short,
+        title: names.long,
+        color: colors[spendableTypeColors[key]],
+        tree,
+      };
+    });
 
   // Year cohorts - CohortBasic (neither adjustedSopr nor percentiles)
   /** @type {readonly CohortBasic[]} */
@@ -238,7 +260,8 @@ export function buildCohortData(colors, brk) {
     addressesUnderAmount,
     utxosAmountRanges,
     addressesAmountRanges,
-    type,
+    typeAddressable,
+    typeOther,
     year,
   };
 }
