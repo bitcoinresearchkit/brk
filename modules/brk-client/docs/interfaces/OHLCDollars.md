@@ -6,7 +6,7 @@
 
 # Interface: OHLCDollars
 
-Defined in: [Developer/brk/modules/brk-client/index.js:437](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L437)
+Defined in: [Developer/brk/modules/brk-client/index.js:437](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L437)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:437](https://github.com/b
 
 > **close**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:441](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L441)
+Defined in: [Developer/brk/modules/brk-client/index.js:441](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L441)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:441](https://github.com/b
 
 > **high**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:439](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L439)
+Defined in: [Developer/brk/modules/brk-client/index.js:439](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L439)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:439](https://github.com/b
 
 > **low**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:440](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L440)
+Defined in: [Developer/brk/modules/brk-client/index.js:440](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L440)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:440](https://github.com/b
 
 > **open**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:438](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L438)
+Defined in: [Developer/brk/modules/brk-client/index.js:438](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L438)

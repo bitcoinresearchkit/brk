@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Indexes\_Halvingepoch
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3583](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3583)
+Defined in: [Developer/brk/modules/brk-client/index.js:3598](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3598)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3583](https://github.com/
 
 > **firstHeight**: [`MetricPattern10`](../type-aliases/MetricPattern10.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3584](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3584)
+Defined in: [Developer/brk/modules/brk-client/index.js:3599](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3599)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3584](https://github.com/
 
 > **identity**: [`MetricPattern10`](../type-aliases/MetricPattern10.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3585](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3585)
+Defined in: [Developer/brk/modules/brk-client/index.js:3600](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3600)

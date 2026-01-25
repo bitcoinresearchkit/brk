@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Transactions\_Count
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4199](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4199)
+Defined in: [Developer/brk/modules/brk-client/index.js:4220](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4220)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4199](https://github.com/
 
 > **isCoinbase**: [`MetricPattern27`](../type-aliases/MetricPattern27.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4200](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4200)
+Defined in: [Developer/brk/modules/brk-client/index.js:4221](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4221)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4200](https://github.com/
 
 > **txCount**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4201](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4201)
+Defined in: [Developer/brk/modules/brk-client/index.js:4222](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4222)

@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Distribution\_AddressCohorts\_AmountRange
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3154](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3154)
+Defined in: [Developer/brk/modules/brk-client/index.js:3169](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3169)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3154](https://github.com/
 
 > **\_0sats**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3155](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3155)
+Defined in: [Developer/brk/modules/brk-client/index.js:3170](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3170)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3155](https://github.com/
 
 > **\_100btcTo1kBtc**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3156](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3156)
+Defined in: [Developer/brk/modules/brk-client/index.js:3171](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3171)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3156](https://github.com/
 
 > **\_100kBtcOrMore**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3157](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3157)
+Defined in: [Developer/brk/modules/brk-client/index.js:3172](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3172)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3157](https://github.com/
 
 > **\_100kSatsTo1mSats**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3158](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3158)
+Defined in: [Developer/brk/modules/brk-client/index.js:3173](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3173)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3158](https://github.com/
 
 > **\_100satsTo1kSats**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3159](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3159)
+Defined in: [Developer/brk/modules/brk-client/index.js:3174](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3174)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3159](https://github.com/
 
 > **\_10btcTo100btc**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3160](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3160)
+Defined in: [Developer/brk/modules/brk-client/index.js:3175](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3175)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3160](https://github.com/
 
 > **\_10kBtcTo100kBtc**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3161](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3161)
+Defined in: [Developer/brk/modules/brk-client/index.js:3176](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3176)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3161](https://github.com/
 
 > **\_10kSatsTo100kSats**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3162](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3162)
+Defined in: [Developer/brk/modules/brk-client/index.js:3177](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3177)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3162](https://github.com/
 
 > **\_10mSatsTo1btc**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3163](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3163)
+Defined in: [Developer/brk/modules/brk-client/index.js:3178](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3178)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3163](https://github.com/
 
 > **\_10satsTo100sats**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3164](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3164)
+Defined in: [Developer/brk/modules/brk-client/index.js:3179](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3179)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3164](https://github.com/
 
 > **\_1btcTo10btc**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3165](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3165)
+Defined in: [Developer/brk/modules/brk-client/index.js:3180](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3180)
 
 ***
 
@@ -102,7 +102,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3165](https://github.com/
 
 > **\_1kBtcTo10kBtc**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3166](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3166)
+Defined in: [Developer/brk/modules/brk-client/index.js:3181](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3181)
 
 ***
 
@@ -110,7 +110,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3166](https://github.com/
 
 > **\_1kSatsTo10kSats**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3167](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3167)
+Defined in: [Developer/brk/modules/brk-client/index.js:3182](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3182)
 
 ***
 
@@ -118,7 +118,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3167](https://github.com/
 
 > **\_1mSatsTo10mSats**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3168](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3168)
+Defined in: [Developer/brk/modules/brk-client/index.js:3183](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3183)
 
 ***
 
@@ -126,4 +126,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3168](https://github.com/
 
 > **\_1satTo10sats**: [`_0satsPattern`](0satsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3169](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3169)
+Defined in: [Developer/brk/modules/brk-client/index.js:3184](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3184)

@@ -6,7 +6,7 @@
 
 # Interface: \_1dReturns1mSdPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2732](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2732)
+Defined in: [Developer/brk/modules/brk-client/index.js:2738](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2738)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2732](https://github.com/
 
 > **sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2733](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2733)
+Defined in: [Developer/brk/modules/brk-client/index.js:2739](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2739)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2733](https://github.com/
 
 > **sma**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2734](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2734)
+Defined in: [Developer/brk/modules/brk-client/index.js:2740](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2740)

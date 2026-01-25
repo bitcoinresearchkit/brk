@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Indexes\_Txindex
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3625](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3625)
+Defined in: [Developer/brk/modules/brk-client/index.js:3640](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3640)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3625](https://github.com/
 
 > **identity**: [`MetricPattern27`](../type-aliases/MetricPattern27.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3626](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3626)
+Defined in: [Developer/brk/modules/brk-client/index.js:3641](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3641)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3626](https://github.com/
 
 > **inputCount**: [`MetricPattern27`](../type-aliases/MetricPattern27.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3627](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3627)
+Defined in: [Developer/brk/modules/brk-client/index.js:3642](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3642)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3627](https://github.com/
 
 > **outputCount**: [`MetricPattern27`](../type-aliases/MetricPattern27.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3628](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3628)
+Defined in: [Developer/brk/modules/brk-client/index.js:3643](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3643)

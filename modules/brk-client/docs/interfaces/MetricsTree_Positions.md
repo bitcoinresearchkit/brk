@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Positions
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4050](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4050)
+Defined in: [Developer/brk/modules/brk-client/index.js:4067](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4067)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4050](https://github.com/
 
 > **blockPosition**: [`MetricPattern11`](../type-aliases/MetricPattern11.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4051](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4051)
+Defined in: [Developer/brk/modules/brk-client/index.js:4068](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4068)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4051](https://github.com/
 
 > **txPosition**: [`MetricPattern27`](../type-aliases/MetricPattern27.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4052](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4052)
+Defined in: [Developer/brk/modules/brk-client/index.js:4069](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4069)

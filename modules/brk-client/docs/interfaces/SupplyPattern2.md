@@ -6,7 +6,7 @@
 
 # Interface: SupplyPattern2
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2789](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2789)
+Defined in: [Developer/brk/modules/brk-client/index.js:2776](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2776)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2789](https://github.com/
 
 > **halved**: [`ActiveSupplyPattern`](ActiveSupplyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2790](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2790)
+Defined in: [Developer/brk/modules/brk-client/index.js:2777](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2777)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2790](https://github.com/
 
 > **total**: [`ActiveSupplyPattern`](ActiveSupplyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2791](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2791)
+Defined in: [Developer/brk/modules/brk-client/index.js:2778](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2778)

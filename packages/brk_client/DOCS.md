@@ -91,7 +91,8 @@ Custom error class for BRK client errors.
 ## MetricData Objects
 
 ```python
-class MetricData(TypedDict, Generic[T])
+@dataclass
+class MetricData(Generic[T])
 ```
 
 Metric data with range information.

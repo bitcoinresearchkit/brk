@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Supply\_Burned
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4161](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4161)
+Defined in: [Developer/brk/modules/brk-client/index.js:4182](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4182)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4161](https://github.com/
 
 > **opreturn**: [`UnclaimedRewardsPattern`](UnclaimedRewardsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4162](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4162)
+Defined in: [Developer/brk/modules/brk-client/index.js:4183](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4183)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4162](https://github.com/
 
 > **unspendable**: [`UnclaimedRewardsPattern`](UnclaimedRewardsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4163](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4163)
+Defined in: [Developer/brk/modules/brk-client/index.js:4184](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4184)

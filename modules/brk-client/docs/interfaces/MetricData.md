@@ -6,7 +6,7 @@
 
 # Interface: MetricData\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:841](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L841)
+Defined in: [Developer/brk/modules/brk-client/index.js:841](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L841)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:841](https://github.com/b
 
 > **data**: `T`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:845](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L845)
+Defined in: [Developer/brk/modules/brk-client/index.js:847](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L847)
 
 The metric data
 
@@ -30,9 +30,19 @@ The metric data
 
 > **end**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:844](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L844)
+Defined in: [Developer/brk/modules/brk-client/index.js:845](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L845)
 
 End index (exclusive)
+
+***
+
+### stamp
+
+> **stamp**: `string`
+
+Defined in: [Developer/brk/modules/brk-client/index.js:846](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L846)
+
+ISO 8601 timestamp of when the response was generated
 
 ***
 
@@ -40,7 +50,7 @@ End index (exclusive)
 
 > **start**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:843](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L843)
+Defined in: [Developer/brk/modules/brk-client/index.js:844](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L844)
 
 Start index (inclusive)
 
@@ -50,6 +60,16 @@ Start index (inclusive)
 
 > **total**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:842](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L842)
+Defined in: [Developer/brk/modules/brk-client/index.js:843](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L843)
 
 Total number of data points
+
+***
+
+### version
+
+> **version**: `number`
+
+Defined in: [Developer/brk/modules/brk-client/index.js:842](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L842)
+
+Version of the metric data

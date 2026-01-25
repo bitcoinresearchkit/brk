@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Cointime\_Value
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3105](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3105)
+Defined in: [Developer/brk/modules/brk-client/index.js:3119](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3119)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3105](https://github.com/
 
 > **cointimeValueCreated**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3106](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3106)
+Defined in: [Developer/brk/modules/brk-client/index.js:3120](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3120)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3106](https://github.com/
 
 > **cointimeValueDestroyed**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3107](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3107)
+Defined in: [Developer/brk/modules/brk-client/index.js:3121](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3121)
 
 ***
 
@@ -30,4 +30,12 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3107](https://github.com/
 
 > **cointimeValueStored**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3108](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3108)
+Defined in: [Developer/brk/modules/brk-client/index.js:3122](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3122)
+
+***
+
+### vocdd
+
+> **vocdd**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:3123](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3123)

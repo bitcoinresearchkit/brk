@@ -6,7 +6,7 @@
 
 # Interface: TxOut
 
-Defined in: [Developer/brk/modules/brk-client/index.js:712](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L712)
+Defined in: [Developer/brk/modules/brk-client/index.js:712](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L712)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:712](https://github.com/b
 
 > **scriptpubkey**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:713](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L713)
+Defined in: [Developer/brk/modules/brk-client/index.js:713](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L713)
 
 Script pubkey (locking script)
 
@@ -24,6 +24,6 @@ Script pubkey (locking script)
 
 > **value**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:714](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L714)
+Defined in: [Developer/brk/modules/brk-client/index.js:714](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L714)
 
 Value of the output in satoshis

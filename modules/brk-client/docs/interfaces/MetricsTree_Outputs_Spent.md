@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Outputs\_Spent
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3877](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3877)
+Defined in: [Developer/brk/modules/brk-client/index.js:3894](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3894)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3877](https://github.com/
 
 > **txinindex**: [`MetricPattern15`](../type-aliases/MetricPattern15.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3878](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3878)
+Defined in: [Developer/brk/modules/brk-client/index.js:3895](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3895)

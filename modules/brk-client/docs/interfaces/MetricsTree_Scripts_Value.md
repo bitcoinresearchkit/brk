@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Scripts\_Value
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4147](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4147)
+Defined in: [Developer/brk/modules/brk-client/index.js:4168](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4168)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4147](https://github.com/
 
 > **opreturn**: [`CoinbasePattern`](CoinbasePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4148](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4148)
+Defined in: [Developer/brk/modules/brk-client/index.js:4169](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4169)

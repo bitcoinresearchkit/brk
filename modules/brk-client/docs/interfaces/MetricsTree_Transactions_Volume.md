@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Transactions\_Volume
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4249](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4249)
+Defined in: [Developer/brk/modules/brk-client/index.js:4270](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4270)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4249](https://github.com/
 
 > **annualizedVolume**: [`_2015Pattern`](2015Pattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4250](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4250)
+Defined in: [Developer/brk/modules/brk-client/index.js:4271](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4271)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4250](https://github.com/
 
 > **inputsPerSec**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4251](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4251)
+Defined in: [Developer/brk/modules/brk-client/index.js:4272](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4272)
 
 ***
 
@@ -30,7 +30,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4251](https://github.com/
 
 > **outputsPerSec**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4252](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4252)
+Defined in: [Developer/brk/modules/brk-client/index.js:4273](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4273)
+
+***
+
+### receivedSum
+
+> **receivedSum**: [`ActiveSupplyPattern`](ActiveSupplyPattern.md)
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4274](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4274)
 
 ***
 
@@ -38,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4252](https://github.com/
 
 > **sentSum**: [`ActiveSupplyPattern`](ActiveSupplyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4253](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4253)
+Defined in: [Developer/brk/modules/brk-client/index.js:4275](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4275)
 
 ***
 
@@ -46,4 +54,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4253](https://github.com/
 
 > **txPerSec**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4254](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L4254)
+Defined in: [Developer/brk/modules/brk-client/index.js:4276](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L4276)

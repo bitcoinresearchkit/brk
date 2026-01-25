@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Indexes\_Txoutindex
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3637](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3637)
+Defined in: [Developer/brk/modules/brk-client/index.js:3652](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3652)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3637](https://github.com/
 
 > **identity**: [`MetricPattern15`](../type-aliases/MetricPattern15.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3638](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L3638)
+Defined in: [Developer/brk/modules/brk-client/index.js:3653](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3653)

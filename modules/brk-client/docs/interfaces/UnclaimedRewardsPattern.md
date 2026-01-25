@@ -6,7 +6,7 @@
 
 # Interface: UnclaimedRewardsPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2648](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2648)
+Defined in: [Developer/brk/modules/brk-client/index.js:2591](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2591)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2648](https://github.com/
 
 > **bitcoin**: [`BitcoinPattern2`](BitcoinPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2649](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2649)
+Defined in: [Developer/brk/modules/brk-client/index.js:2592](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2592)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2649](https://github.com/
 
 > **dollars**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2650](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2650)
+Defined in: [Developer/brk/modules/brk-client/index.js:2593](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2593)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2650](https://github.com/
 
 > **sats**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2651](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2651)
+Defined in: [Developer/brk/modules/brk-client/index.js:2594](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2594)

@@ -6,7 +6,7 @@
 
 # Interface: BitcoinPattern2\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2809](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2809)
+Defined in: [Developer/brk/modules/brk-client/index.js:2815](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2815)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2809](https://github.com/
 
 > **cumulative**: [`MetricPattern2`](../type-aliases/MetricPattern2.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2810](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2810)
+Defined in: [Developer/brk/modules/brk-client/index.js:2816](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2816)
 
 ***
 
@@ -28,4 +28,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2810](https://github.com/
 
 > **sum**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2811](https://github.com/bitcoinresearchkit/brk/blob/64b90dd67834dd5b6acaff4f9a227efc18ccfed0/modules/brk-client/index.js#L2811)
+Defined in: [Developer/brk/modules/brk-client/index.js:2817](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L2817)
