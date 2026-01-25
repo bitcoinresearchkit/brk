@@ -20,6 +20,17 @@ import { colors } from "../chart/colors.js";
 /** @typedef {ReturnType<typeof createContext>} PartialContext */
 
 /**
+ * @template {(colors: Colors, ...args: any[]) => any} T
+ * @param {T} fn
+ * @returns {OmitFirstArg<T>}
+ */
+const bind = (fn) =>
+  /** @type {any} */ (
+    // @ts-ignore
+    (...args) => fn(colors, ...args)
+  );
+
+/**
  * Create a context object with all dependencies for building partial options
  * @param {Object} args
  * @param {BrkClient} args.brk
@@ -28,43 +39,15 @@ export function createContext({ brk }) {
   return {
     colors,
     brk,
-
-    /** @type {OmitFirstArg<typeof fromSizePattern>} */
-    fromSizePattern: (pattern, unit, title) =>
-      fromSizePattern(colors, pattern, unit, title),
-    /** @type {OmitFirstArg<typeof fromFullnessPattern>} */
-    fromFullnessPattern: (pattern, unit, title) =>
-      fromFullnessPattern(colors, pattern, unit, title),
-    /** @type {OmitFirstArg<typeof fromDollarsPattern>} */
-    fromDollarsPattern: (pattern, unit, title) =>
-      fromDollarsPattern(colors, pattern, unit, title),
-    /** @type {OmitFirstArg<typeof fromFeeRatePattern>} */
-    fromFeeRatePattern: (pattern, unit, title) =>
-      fromFeeRatePattern(colors, pattern, unit, title),
-    /** @type {OmitFirstArg<typeof fromCoinbasePattern>} */
-    fromCoinbasePattern: (pattern, title) =>
-      fromCoinbasePattern(colors, pattern, title),
-    /** @type {OmitFirstArg<typeof fromValuePattern>} */
-    fromValuePattern: (pattern, title, sumColor, cumulativeColor) =>
-      fromValuePattern(colors, pattern, title, sumColor, cumulativeColor),
-    /** @type {OmitFirstArg<typeof fromBitcoinPatternWithUnit>} */
-    fromBitcoinPatternWithUnit: (pattern, unit, title, sumColor, cumulativeColor) =>
-      fromBitcoinPatternWithUnit(colors, pattern, unit, title, sumColor, cumulativeColor),
-    /** @type {OmitFirstArg<typeof fromBlockCountWithUnit>} */
-    fromBlockCountWithUnit: (pattern, unit, title, sumColor, cumulativeColor) =>
-      fromBlockCountWithUnit(
-        colors,
-        pattern,
-        unit,
-        title,
-        sumColor,
-        cumulativeColor,
-      ),
-    /** @type {OmitFirstArg<typeof fromIntervalPattern>} */
-    fromIntervalPattern: (pattern, unit, title, color) =>
-      fromIntervalPattern(colors, pattern, unit, title, color),
-    /** @type {fromSupplyPattern} */
-    fromSupplyPattern: (pattern, title, color) =>
-      fromSupplyPattern(pattern, title, color),
+    fromSizePattern: bind(fromSizePattern),
+    fromFullnessPattern: bind(fromFullnessPattern),
+    fromDollarsPattern: bind(fromDollarsPattern),
+    fromFeeRatePattern: bind(fromFeeRatePattern),
+    fromCoinbasePattern: bind(fromCoinbasePattern),
+    fromValuePattern: bind(fromValuePattern),
+    fromBitcoinPatternWithUnit: bind(fromBitcoinPatternWithUnit),
+    fromBlockCountWithUnit: bind(fromBlockCountWithUnit),
+    fromIntervalPattern: bind(fromIntervalPattern),
+    fromSupplyPattern,
   };
 }

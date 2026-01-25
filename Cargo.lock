@@ -562,23 +562,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "brk_playground"
-version = "0.1.0-beta.0"
-dependencies = [
- "brk_computer",
- "brk_error",
- "brk_fetcher",
- "brk_indexer",
- "brk_logger",
- "brk_types",
- "jiff",
- "memmap2",
- "plotters",
- "tracing",
- "vecdb",
-]
-
-[[package]]
 name = "brk_query"
 version = "0.1.0-beta.0"
 dependencies = [

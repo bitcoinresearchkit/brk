@@ -1,7 +1,6 @@
 /** On-chain indicators (Pi Cycle, Puell, NVT, Gini) */
 
 import { Unit } from "../../../utils/units.js";
-import { priceLine } from "../../constants.js";
 import { baseline, line } from "../../series.js";
 
 /**

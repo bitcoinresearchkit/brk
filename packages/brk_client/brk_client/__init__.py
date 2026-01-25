@@ -2054,24 +2054,6 @@ class PeriodLumpSumStackPattern:
         self._6y: _2015Pattern = _2015Pattern(client, _p('6y', acc))
         self._8y: _2015Pattern = _2015Pattern(client, _p('8y', acc))
 
-class ClassAveragePricePattern(Generic[T]):
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self._2015: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2015_returns'))
-        self._2016: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2016_returns'))
-        self._2017: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2017_returns'))
-        self._2018: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2018_returns'))
-        self._2019: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2019_returns'))
-        self._2020: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2020_returns'))
-        self._2021: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2021_returns'))
-        self._2022: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2022_returns'))
-        self._2023: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2023_returns'))
-        self._2024: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2024_returns'))
-        self._2025: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2025_returns'))
-        self._2026: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2026_returns'))
-
 class PeriodAveragePricePattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
@@ -2089,6 +2071,24 @@ class PeriodAveragePricePattern(Generic[T]):
         self._6m: MetricPattern4[T] = MetricPattern4(client, _p('6m', acc))
         self._6y: MetricPattern4[T] = MetricPattern4(client, _p('6y', acc))
         self._8y: MetricPattern4[T] = MetricPattern4(client, _p('8y', acc))
+
+class ClassAveragePricePattern(Generic[T]):
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self._2015: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2015_average_price'))
+        self._2016: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2016_average_price'))
+        self._2017: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2017_average_price'))
+        self._2018: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2018_average_price'))
+        self._2019: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2019_average_price'))
+        self._2020: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2020_average_price'))
+        self._2021: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2021_average_price'))
+        self._2022: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2022_average_price'))
+        self._2023: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2023_average_price'))
+        self._2024: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2024_average_price'))
+        self._2025: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2025_average_price'))
+        self._2026: MetricPattern4[T] = MetricPattern4(client, _m(acc, '2026_average_price'))
 
 class BitcoinPattern:
     """Pattern struct for repeated tree structure."""
@@ -2245,6 +2245,32 @@ class PhaseDailyCentsPattern(Generic[T]):
         self.pct75: MetricPattern6[T] = MetricPattern6(client, _m(acc, 'pct75'))
         self.pct90: MetricPattern6[T] = MetricPattern6(client, _m(acc, 'pct90'))
 
+class _100btcPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.activity: ActivityPattern2 = ActivityPattern2(client, acc)
+        self.cost_basis: CostBasisPattern = CostBasisPattern(client, acc)
+        self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, 'utxo_count'))
+        self.realized: RealizedPattern = RealizedPattern(client, acc)
+        self.relative: RelativePattern = RelativePattern(client, acc)
+        self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
+        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
+
+class PeriodCagrPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self._10y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('10y', acc))
+        self._2y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('2y', acc))
+        self._3y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('3y', acc))
+        self._4y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('4y', acc))
+        self._5y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('5y', acc))
+        self._6y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('6y', acc))
+        self._8y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('8y', acc))
+
 class _0satsPattern2:
     """Pattern struct for repeated tree structure."""
     
@@ -2270,19 +2296,6 @@ class _10yTo12yPattern:
         self.relative: RelativePattern2 = RelativePattern2(client, acc)
         self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
         self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
-
-class PeriodCagrPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self._10y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('10y', acc))
-        self._2y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('2y', acc))
-        self._3y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('3y', acc))
-        self._4y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('4y', acc))
-        self._5y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('5y', acc))
-        self._6y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('6y', acc))
-        self._8y: MetricPattern4[StoredF32] = MetricPattern4(client, _p('8y', acc))
 
 class UnrealizedPattern:
     """Pattern struct for repeated tree structure."""
@@ -2310,19 +2323,6 @@ class _10yPattern:
         self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
         self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
 
-class _100btcPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.activity: ActivityPattern2 = ActivityPattern2(client, acc)
-        self.cost_basis: CostBasisPattern = CostBasisPattern(client, acc)
-        self.outputs: OutputsPattern = OutputsPattern(client, _m(acc, 'utxo_count'))
-        self.realized: RealizedPattern = RealizedPattern(client, acc)
-        self.relative: RelativePattern = RelativePattern(client, acc)
-        self.supply: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
-        self.unrealized: UnrealizedPattern = UnrealizedPattern(client, acc)
-
 class ActivityPattern2:
     """Pattern struct for repeated tree structure."""
     
@@ -2343,15 +2343,6 @@ class SplitPattern2(Generic[T]):
         self.high: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'high'))
         self.low: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'low'))
         self.open: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'open'))
-
-class _2015Pattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.bitcoin: MetricPattern4[Bitcoin] = MetricPattern4(client, _m(acc, 'btc'))
-        self.dollars: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'usd'))
-        self.sats: MetricPattern4[Sats] = MetricPattern4(client, acc)
 
 class CostBasisPattern2:
     """Pattern struct for repeated tree structure."""
@@ -2380,15 +2371,6 @@ class CoinbasePattern2:
         self.dollars: BlockCountPattern[Dollars] = BlockCountPattern(client, _m(acc, 'usd'))
         self.sats: BlockCountPattern[Sats] = BlockCountPattern(client, acc)
 
-class SegwitAdoptionPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.base: MetricPattern11[StoredF32] = MetricPattern11(client, acc)
-        self.cumulative: MetricPattern2[StoredF32] = MetricPattern2(client, _m(acc, 'cumulative'))
-        self.sum: MetricPattern2[StoredF32] = MetricPattern2(client, _m(acc, 'sum'))
-
 class ActiveSupplyPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2398,6 +2380,15 @@ class ActiveSupplyPattern:
         self.dollars: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'usd'))
         self.sats: MetricPattern1[Sats] = MetricPattern1(client, acc)
 
+class SegwitAdoptionPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.base: MetricPattern11[StoredF32] = MetricPattern11(client, acc)
+        self.cumulative: MetricPattern2[StoredF32] = MetricPattern2(client, _m(acc, 'cumulative'))
+        self.sum: MetricPattern2[StoredF32] = MetricPattern2(client, _m(acc, 'sum'))
+
 class UnclaimedRewardsPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2406,6 +2397,15 @@ class UnclaimedRewardsPattern:
         self.bitcoin: BitcoinPattern2[Bitcoin] = BitcoinPattern2(client, _m(acc, 'btc'))
         self.dollars: BlockCountPattern[Dollars] = BlockCountPattern(client, _m(acc, 'usd'))
         self.sats: BlockCountPattern[Sats] = BlockCountPattern(client, acc)
+
+class _2015Pattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.bitcoin: MetricPattern4[Bitcoin] = MetricPattern4(client, _m(acc, 'btc'))
+        self.dollars: MetricPattern4[Dollars] = MetricPattern4(client, _m(acc, 'usd'))
+        self.sats: MetricPattern4[Sats] = MetricPattern4(client, acc)
 
 class SupplyPattern2:
     """Pattern struct for repeated tree structure."""
@@ -2439,13 +2439,13 @@ class _1dReturns1mSdPattern:
         self.sd: MetricPattern4[StoredF32] = MetricPattern4(client, _m(acc, 'sd'))
         self.sma: MetricPattern4[StoredF32] = MetricPattern4(client, _m(acc, 'sma'))
 
-class SatsPattern(Generic[T]):
+class BitcoinPattern2(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.ohlc: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'ohlc'))
-        self.split: SplitPattern2[T] = SplitPattern2(client, acc)
+        self.cumulative: MetricPattern2[T] = MetricPattern2(client, _m(acc, 'cumulative'))
+        self.sum: MetricPattern1[T] = MetricPattern1(client, acc)
 
 class BlockCountPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
@@ -2455,13 +2455,13 @@ class BlockCountPattern(Generic[T]):
         self.cumulative: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'cumulative'))
         self.sum: MetricPattern1[T] = MetricPattern1(client, acc)
 
-class BitcoinPattern2(Generic[T]):
+class SatsPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.cumulative: MetricPattern2[T] = MetricPattern2(client, _m(acc, 'cumulative'))
-        self.sum: MetricPattern1[T] = MetricPattern1(client, acc)
+        self.ohlc: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'ohlc'))
+        self.split: SplitPattern2[T] = SplitPattern2(client, acc)
 
 class RealizedPriceExtraPattern:
     """Pattern struct for repeated tree structure."""
@@ -2739,19 +2739,19 @@ class MetricsTree_Distribution_AddressCohorts_GeAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._100btc: _0satsPattern = _0satsPattern(client, 'addrs_above_100btc')
-        self._100k_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_100k_sats')
-        self._100sats: _0satsPattern = _0satsPattern(client, 'addrs_above_100sats')
-        self._10btc: _0satsPattern = _0satsPattern(client, 'addrs_above_10btc')
-        self._10k_btc: _0satsPattern = _0satsPattern(client, 'addrs_above_10k_btc')
-        self._10k_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_10k_sats')
-        self._10m_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_10m_sats')
-        self._10sats: _0satsPattern = _0satsPattern(client, 'addrs_above_10sats')
-        self._1btc: _0satsPattern = _0satsPattern(client, 'addrs_above_1btc')
-        self._1k_btc: _0satsPattern = _0satsPattern(client, 'addrs_above_1k_btc')
-        self._1k_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_1k_sats')
-        self._1m_sats: _0satsPattern = _0satsPattern(client, 'addrs_above_1m_sats')
-        self._1sat: _0satsPattern = _0satsPattern(client, 'addrs_above_1sat')
+        self._100btc: _0satsPattern = _0satsPattern(client, 'addrs_over_100btc')
+        self._100k_sats: _0satsPattern = _0satsPattern(client, 'addrs_over_100k_sats')
+        self._100sats: _0satsPattern = _0satsPattern(client, 'addrs_over_100sats')
+        self._10btc: _0satsPattern = _0satsPattern(client, 'addrs_over_10btc')
+        self._10k_btc: _0satsPattern = _0satsPattern(client, 'addrs_over_10k_btc')
+        self._10k_sats: _0satsPattern = _0satsPattern(client, 'addrs_over_10k_sats')
+        self._10m_sats: _0satsPattern = _0satsPattern(client, 'addrs_over_10m_sats')
+        self._10sats: _0satsPattern = _0satsPattern(client, 'addrs_over_10sats')
+        self._1btc: _0satsPattern = _0satsPattern(client, 'addrs_over_1btc')
+        self._1k_btc: _0satsPattern = _0satsPattern(client, 'addrs_over_1k_btc')
+        self._1k_sats: _0satsPattern = _0satsPattern(client, 'addrs_over_1k_sats')
+        self._1m_sats: _0satsPattern = _0satsPattern(client, 'addrs_over_1m_sats')
+        self._1sat: _0satsPattern = _0satsPattern(client, 'addrs_over_1sat')
 
 class MetricsTree_Distribution_AddressCohorts_LtAmount:
     """Metrics tree node."""
@@ -2803,27 +2803,27 @@ class MetricsTree_Distribution_UtxoCohorts_AgeRange:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._10y_to_12y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_10y_up_to_12y_old')
-        self._12y_to_15y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_12y_up_to_15y_old')
-        self._1d_to_1w: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_1d_up_to_1w_old')
-        self._1h_to_1d: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_1h_up_to_1d_old')
-        self._1m_to_2m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_1m_up_to_2m_old')
-        self._1w_to_1m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_1w_up_to_1m_old')
-        self._1y_to_2y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_1y_up_to_2y_old')
-        self._2m_to_3m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_2m_up_to_3m_old')
-        self._2y_to_3y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_2y_up_to_3y_old')
-        self._3m_to_4m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_3m_up_to_4m_old')
-        self._3y_to_4y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_3y_up_to_4y_old')
-        self._4m_to_5m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_4m_up_to_5m_old')
-        self._4y_to_5y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_4y_up_to_5y_old')
-        self._5m_to_6m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_5m_up_to_6m_old')
-        self._5y_to_6y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_5y_up_to_6y_old')
-        self._6m_to_1y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_6m_up_to_1y_old')
-        self._6y_to_7y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_6y_up_to_7y_old')
-        self._7y_to_8y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_7y_up_to_8y_old')
-        self._8y_to_10y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_8y_up_to_10y_old')
-        self.from_15y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_at_least_15y_old')
-        self.up_to_1h: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_up_to_1h_old')
+        self._10y_to_12y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_10y_to_12y_old')
+        self._12y_to_15y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_12y_to_15y_old')
+        self._1d_to_1w: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_1d_to_1w_old')
+        self._1h_to_1d: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_1h_to_1d_old')
+        self._1m_to_2m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_1m_to_2m_old')
+        self._1w_to_1m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_1w_to_1m_old')
+        self._1y_to_2y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_1y_to_2y_old')
+        self._2m_to_3m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_2m_to_3m_old')
+        self._2y_to_3y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_2y_to_3y_old')
+        self._3m_to_4m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_3m_to_4m_old')
+        self._3y_to_4y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_3y_to_4y_old')
+        self._4m_to_5m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_4m_to_5m_old')
+        self._4y_to_5y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_4y_to_5y_old')
+        self._5m_to_6m: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_5m_to_6m_old')
+        self._5y_to_6y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_5y_to_6y_old')
+        self._6m_to_1y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_6m_to_1y_old')
+        self._6y_to_7y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_6y_to_7y_old')
+        self._7y_to_8y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_7y_to_8y_old')
+        self._8y_to_10y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_8y_to_10y_old')
+        self.from_15y: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_over_15y_old')
+        self.up_to_1h: _10yTo12yPattern = _10yTo12yPattern(client, 'utxos_under_1h_old')
 
 class MetricsTree_Distribution_UtxoCohorts_All_CostBasis:
     """Metrics tree node."""
@@ -2890,19 +2890,19 @@ class MetricsTree_Distribution_UtxoCohorts_GeAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._100btc: _100btcPattern = _100btcPattern(client, 'utxos_above_100btc')
-        self._100k_sats: _100btcPattern = _100btcPattern(client, 'utxos_above_100k_sats')
-        self._100sats: _100btcPattern = _100btcPattern(client, 'utxos_above_100sats')
-        self._10btc: _100btcPattern = _100btcPattern(client, 'utxos_above_10btc')
-        self._10k_btc: _100btcPattern = _100btcPattern(client, 'utxos_above_10k_btc')
-        self._10k_sats: _100btcPattern = _100btcPattern(client, 'utxos_above_10k_sats')
-        self._10m_sats: _100btcPattern = _100btcPattern(client, 'utxos_above_10m_sats')
-        self._10sats: _100btcPattern = _100btcPattern(client, 'utxos_above_10sats')
-        self._1btc: _100btcPattern = _100btcPattern(client, 'utxos_above_1btc')
-        self._1k_btc: _100btcPattern = _100btcPattern(client, 'utxos_above_1k_btc')
-        self._1k_sats: _100btcPattern = _100btcPattern(client, 'utxos_above_1k_sats')
-        self._1m_sats: _100btcPattern = _100btcPattern(client, 'utxos_above_1m_sats')
-        self._1sat: _100btcPattern = _100btcPattern(client, 'utxos_above_1sat')
+        self._100btc: _100btcPattern = _100btcPattern(client, 'utxos_over_100btc')
+        self._100k_sats: _100btcPattern = _100btcPattern(client, 'utxos_over_100k_sats')
+        self._100sats: _100btcPattern = _100btcPattern(client, 'utxos_over_100sats')
+        self._10btc: _100btcPattern = _100btcPattern(client, 'utxos_over_10btc')
+        self._10k_btc: _100btcPattern = _100btcPattern(client, 'utxos_over_10k_btc')
+        self._10k_sats: _100btcPattern = _100btcPattern(client, 'utxos_over_10k_sats')
+        self._10m_sats: _100btcPattern = _100btcPattern(client, 'utxos_over_10m_sats')
+        self._10sats: _100btcPattern = _100btcPattern(client, 'utxos_over_10sats')
+        self._1btc: _100btcPattern = _100btcPattern(client, 'utxos_over_1btc')
+        self._1k_btc: _100btcPattern = _100btcPattern(client, 'utxos_over_1k_btc')
+        self._1k_sats: _100btcPattern = _100btcPattern(client, 'utxos_over_1k_sats')
+        self._1m_sats: _100btcPattern = _100btcPattern(client, 'utxos_over_1m_sats')
+        self._1sat: _100btcPattern = _100btcPattern(client, 'utxos_over_1sat')
 
 class MetricsTree_Distribution_UtxoCohorts_LtAmount:
     """Metrics tree node."""
@@ -2926,47 +2926,47 @@ class MetricsTree_Distribution_UtxoCohorts_MaxAge:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._10y: _10yPattern = _10yPattern(client, 'utxos_up_to_10y_old')
-        self._12y: _10yPattern = _10yPattern(client, 'utxos_up_to_12y_old')
-        self._15y: _10yPattern = _10yPattern(client, 'utxos_up_to_15y_old')
-        self._1m: _10yPattern = _10yPattern(client, 'utxos_up_to_1m_old')
-        self._1w: _10yPattern = _10yPattern(client, 'utxos_up_to_1w_old')
-        self._1y: _10yPattern = _10yPattern(client, 'utxos_up_to_1y_old')
-        self._2m: _10yPattern = _10yPattern(client, 'utxos_up_to_2m_old')
-        self._2y: _10yPattern = _10yPattern(client, 'utxos_up_to_2y_old')
-        self._3m: _10yPattern = _10yPattern(client, 'utxos_up_to_3m_old')
-        self._3y: _10yPattern = _10yPattern(client, 'utxos_up_to_3y_old')
-        self._4m: _10yPattern = _10yPattern(client, 'utxos_up_to_4m_old')
-        self._4y: _10yPattern = _10yPattern(client, 'utxos_up_to_4y_old')
-        self._5m: _10yPattern = _10yPattern(client, 'utxos_up_to_5m_old')
-        self._5y: _10yPattern = _10yPattern(client, 'utxos_up_to_5y_old')
-        self._6m: _10yPattern = _10yPattern(client, 'utxos_up_to_6m_old')
-        self._6y: _10yPattern = _10yPattern(client, 'utxos_up_to_6y_old')
-        self._7y: _10yPattern = _10yPattern(client, 'utxos_up_to_7y_old')
-        self._8y: _10yPattern = _10yPattern(client, 'utxos_up_to_8y_old')
+        self._10y: _10yPattern = _10yPattern(client, 'utxos_under_10y_old')
+        self._12y: _10yPattern = _10yPattern(client, 'utxos_under_12y_old')
+        self._15y: _10yPattern = _10yPattern(client, 'utxos_under_15y_old')
+        self._1m: _10yPattern = _10yPattern(client, 'utxos_under_1m_old')
+        self._1w: _10yPattern = _10yPattern(client, 'utxos_under_1w_old')
+        self._1y: _10yPattern = _10yPattern(client, 'utxos_under_1y_old')
+        self._2m: _10yPattern = _10yPattern(client, 'utxos_under_2m_old')
+        self._2y: _10yPattern = _10yPattern(client, 'utxos_under_2y_old')
+        self._3m: _10yPattern = _10yPattern(client, 'utxos_under_3m_old')
+        self._3y: _10yPattern = _10yPattern(client, 'utxos_under_3y_old')
+        self._4m: _10yPattern = _10yPattern(client, 'utxos_under_4m_old')
+        self._4y: _10yPattern = _10yPattern(client, 'utxos_under_4y_old')
+        self._5m: _10yPattern = _10yPattern(client, 'utxos_under_5m_old')
+        self._5y: _10yPattern = _10yPattern(client, 'utxos_under_5y_old')
+        self._6m: _10yPattern = _10yPattern(client, 'utxos_under_6m_old')
+        self._6y: _10yPattern = _10yPattern(client, 'utxos_under_6y_old')
+        self._7y: _10yPattern = _10yPattern(client, 'utxos_under_7y_old')
+        self._8y: _10yPattern = _10yPattern(client, 'utxos_under_8y_old')
 
 class MetricsTree_Distribution_UtxoCohorts_MinAge:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._10y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_10y_old')
-        self._12y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_12y_old')
-        self._1d: _100btcPattern = _100btcPattern(client, 'utxos_at_least_1d_old')
-        self._1m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_1m_old')
-        self._1w: _100btcPattern = _100btcPattern(client, 'utxos_at_least_1w_old')
-        self._1y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_1y_old')
-        self._2m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_2m_old')
-        self._2y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_2y_old')
-        self._3m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_3m_old')
-        self._3y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_3y_old')
-        self._4m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_4m_old')
-        self._4y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_4y_old')
-        self._5m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_5m_old')
-        self._5y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_5y_old')
-        self._6m: _100btcPattern = _100btcPattern(client, 'utxos_at_least_6m_old')
-        self._6y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_6y_old')
-        self._7y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_7y_old')
-        self._8y: _100btcPattern = _100btcPattern(client, 'utxos_at_least_8y_old')
+        self._10y: _100btcPattern = _100btcPattern(client, 'utxos_over_10y_old')
+        self._12y: _100btcPattern = _100btcPattern(client, 'utxos_over_12y_old')
+        self._1d: _100btcPattern = _100btcPattern(client, 'utxos_over_1d_old')
+        self._1m: _100btcPattern = _100btcPattern(client, 'utxos_over_1m_old')
+        self._1w: _100btcPattern = _100btcPattern(client, 'utxos_over_1w_old')
+        self._1y: _100btcPattern = _100btcPattern(client, 'utxos_over_1y_old')
+        self._2m: _100btcPattern = _100btcPattern(client, 'utxos_over_2m_old')
+        self._2y: _100btcPattern = _100btcPattern(client, 'utxos_over_2y_old')
+        self._3m: _100btcPattern = _100btcPattern(client, 'utxos_over_3m_old')
+        self._3y: _100btcPattern = _100btcPattern(client, 'utxos_over_3y_old')
+        self._4m: _100btcPattern = _100btcPattern(client, 'utxos_over_4m_old')
+        self._4y: _100btcPattern = _100btcPattern(client, 'utxos_over_4y_old')
+        self._5m: _100btcPattern = _100btcPattern(client, 'utxos_over_5m_old')
+        self._5y: _100btcPattern = _100btcPattern(client, 'utxos_over_5y_old')
+        self._6m: _100btcPattern = _100btcPattern(client, 'utxos_over_6m_old')
+        self._6y: _100btcPattern = _100btcPattern(client, 'utxos_over_6y_old')
+        self._7y: _100btcPattern = _100btcPattern(client, 'utxos_over_7y_old')
+        self._8y: _100btcPattern = _100btcPattern(client, 'utxos_over_8y_old')
 
 class MetricsTree_Distribution_UtxoCohorts_Term_Long:
     """Metrics tree node."""
@@ -3320,22 +3320,22 @@ class MetricsTree_Market_Ath:
         self.price_drawdown: MetricPattern3[StoredF32] = MetricPattern3(client, 'price_drawdown')
         self.years_since_price_ath: MetricPattern4[StoredF32] = MetricPattern4(client, 'years_since_price_ath')
 
-class MetricsTree_Market_Dca_ClassAveragePrice:
+class MetricsTree_Market_Dca_ClassReturns:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._2015: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2015_average_price')
-        self._2016: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2016_average_price')
-        self._2017: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2017_average_price')
-        self._2018: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2018_average_price')
-        self._2019: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2019_average_price')
-        self._2020: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2020_average_price')
-        self._2021: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2021_average_price')
-        self._2022: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2022_average_price')
-        self._2023: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2023_average_price')
-        self._2024: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2024_average_price')
-        self._2025: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2025_average_price')
-        self._2026: MetricPattern4[Dollars] = MetricPattern4(client, 'dca_class_2026_average_price')
+        self._2015: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2015_returns')
+        self._2016: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2016_returns')
+        self._2017: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2017_returns')
+        self._2018: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2018_returns')
+        self._2019: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2019_returns')
+        self._2020: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2020_returns')
+        self._2021: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2021_returns')
+        self._2022: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2022_returns')
+        self._2023: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2023_returns')
+        self._2024: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2024_returns')
+        self._2025: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2025_returns')
+        self._2026: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2026_returns')
 
 class MetricsTree_Market_Dca_ClassStack:
     """Metrics tree node."""
@@ -3358,8 +3358,8 @@ class MetricsTree_Market_Dca:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.class_average_price: MetricsTree_Market_Dca_ClassAveragePrice = MetricsTree_Market_Dca_ClassAveragePrice(client)
-        self.class_returns: ClassAveragePricePattern[StoredF32] = ClassAveragePricePattern(client, 'dca_class')
+        self.class_average_price: ClassAveragePricePattern[Dollars] = ClassAveragePricePattern(client, 'dca_class')
+        self.class_returns: MetricsTree_Market_Dca_ClassReturns = MetricsTree_Market_Dca_ClassReturns(client)
         self.class_stack: MetricsTree_Market_Dca_ClassStack = MetricsTree_Market_Dca_ClassStack(client)
         self.period_average_price: PeriodAveragePricePattern[Dollars] = PeriodAveragePricePattern(client, 'dca_average_price')
         self.period_cagr: PeriodCagrPattern = PeriodCagrPattern(client, 'dca_cagr')
@@ -3855,28 +3855,12 @@ class MetricsTree_Transactions_Count:
         self.is_coinbase: MetricPattern27[StoredBool] = MetricPattern27(client, 'is_coinbase')
         self.tx_count: DollarsPattern[StoredU64] = DollarsPattern(client, 'tx_count')
 
-class MetricsTree_Transactions_Fees_Fee_Dollars:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.average: MetricPattern1[Dollars] = MetricPattern1(client, 'fee_usd_average')
-        self.cumulative: MetricPattern2[Dollars] = MetricPattern2(client, 'fee_usd_cumulative')
-        self.height_cumulative: MetricPattern11[Dollars] = MetricPattern11(client, 'fee_usd_cumulative')
-        self.max: MetricPattern1[Dollars] = MetricPattern1(client, 'fee_usd_max')
-        self.median: MetricPattern11[Dollars] = MetricPattern11(client, 'fee_usd_median')
-        self.min: MetricPattern1[Dollars] = MetricPattern1(client, 'fee_usd_min')
-        self.pct10: MetricPattern11[Dollars] = MetricPattern11(client, 'fee_usd_pct10')
-        self.pct25: MetricPattern11[Dollars] = MetricPattern11(client, 'fee_usd_pct25')
-        self.pct75: MetricPattern11[Dollars] = MetricPattern11(client, 'fee_usd_pct75')
-        self.pct90: MetricPattern11[Dollars] = MetricPattern11(client, 'fee_usd_pct90')
-        self.sum: MetricPattern1[Dollars] = MetricPattern1(client, 'fee_usd_sum')
-
 class MetricsTree_Transactions_Fees_Fee:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.bitcoin: CountPattern2[Bitcoin] = CountPattern2(client, 'fee_btc')
-        self.dollars: MetricsTree_Transactions_Fees_Fee_Dollars = MetricsTree_Transactions_Fees_Fee_Dollars(client)
+        self.dollars: CountPattern2[Dollars] = CountPattern2(client, 'fee_usd')
         self.sats: CountPattern2[Sats] = CountPattern2(client, 'fee')
         self.txindex: MetricPattern27[Sats] = MetricPattern27(client, 'fee')
 
@@ -4346,107 +4330,107 @@ class BrkClient(BrkClientBase):
 
     AGE_RANGE_NAMES = {
       "up_to_1h": {
-        "id": "up_to_1h_old",
+        "id": "under_1h_old",
         "short": "<1h",
-        "long": "Up to 1 Hour Old"
+        "long": "Under 1 Hour Old"
       },
       "_1h_to_1d": {
-        "id": "at_least_1h_up_to_1d_old",
+        "id": "1h_to_1d_old",
         "short": "1h-1d",
         "long": "1 Hour to 1 Day Old"
       },
       "_1d_to_1w": {
-        "id": "at_least_1d_up_to_1w_old",
+        "id": "1d_to_1w_old",
         "short": "1d-1w",
         "long": "1 Day to 1 Week Old"
       },
       "_1w_to_1m": {
-        "id": "at_least_1w_up_to_1m_old",
+        "id": "1w_to_1m_old",
         "short": "1w-1m",
         "long": "1 Week to 1 Month Old"
       },
       "_1m_to_2m": {
-        "id": "at_least_1m_up_to_2m_old",
+        "id": "1m_to_2m_old",
         "short": "1m-2m",
         "long": "1 to 2 Months Old"
       },
       "_2m_to_3m": {
-        "id": "at_least_2m_up_to_3m_old",
+        "id": "2m_to_3m_old",
         "short": "2m-3m",
         "long": "2 to 3 Months Old"
       },
       "_3m_to_4m": {
-        "id": "at_least_3m_up_to_4m_old",
+        "id": "3m_to_4m_old",
         "short": "3m-4m",
         "long": "3 to 4 Months Old"
       },
       "_4m_to_5m": {
-        "id": "at_least_4m_up_to_5m_old",
+        "id": "4m_to_5m_old",
         "short": "4m-5m",
         "long": "4 to 5 Months Old"
       },
       "_5m_to_6m": {
-        "id": "at_least_5m_up_to_6m_old",
+        "id": "5m_to_6m_old",
         "short": "5m-6m",
         "long": "5 to 6 Months Old"
       },
       "_6m_to_1y": {
-        "id": "at_least_6m_up_to_1y_old",
+        "id": "6m_to_1y_old",
         "short": "6m-1y",
         "long": "6 Months to 1 Year Old"
       },
       "_1y_to_2y": {
-        "id": "at_least_1y_up_to_2y_old",
+        "id": "1y_to_2y_old",
         "short": "1y-2y",
         "long": "1 to 2 Years Old"
       },
       "_2y_to_3y": {
-        "id": "at_least_2y_up_to_3y_old",
+        "id": "2y_to_3y_old",
         "short": "2y-3y",
         "long": "2 to 3 Years Old"
       },
       "_3y_to_4y": {
-        "id": "at_least_3y_up_to_4y_old",
+        "id": "3y_to_4y_old",
         "short": "3y-4y",
         "long": "3 to 4 Years Old"
       },
       "_4y_to_5y": {
-        "id": "at_least_4y_up_to_5y_old",
+        "id": "4y_to_5y_old",
         "short": "4y-5y",
         "long": "4 to 5 Years Old"
       },
       "_5y_to_6y": {
-        "id": "at_least_5y_up_to_6y_old",
+        "id": "5y_to_6y_old",
         "short": "5y-6y",
         "long": "5 to 6 Years Old"
       },
       "_6y_to_7y": {
-        "id": "at_least_6y_up_to_7y_old",
+        "id": "6y_to_7y_old",
         "short": "6y-7y",
         "long": "6 to 7 Years Old"
       },
       "_7y_to_8y": {
-        "id": "at_least_7y_up_to_8y_old",
+        "id": "7y_to_8y_old",
         "short": "7y-8y",
         "long": "7 to 8 Years Old"
       },
       "_8y_to_10y": {
-        "id": "at_least_8y_up_to_10y_old",
+        "id": "8y_to_10y_old",
         "short": "8y-10y",
         "long": "8 to 10 Years Old"
       },
       "_10y_to_12y": {
-        "id": "at_least_10y_up_to_12y_old",
+        "id": "10y_to_12y_old",
         "short": "10y-12y",
         "long": "10 to 12 Years Old"
       },
       "_12y_to_15y": {
-        "id": "at_least_12y_up_to_15y_old",
+        "id": "12y_to_15y_old",
         "short": "12y-15y",
         "long": "12 to 15 Years Old"
       },
       "from_15y": {
-        "id": "at_least_15y_old",
+        "id": "over_15y_old",
         "short": "15y+",
         "long": "15+ Years Old"
       }
@@ -4454,187 +4438,187 @@ class BrkClient(BrkClientBase):
 
     MAX_AGE_NAMES = {
       "_1w": {
-        "id": "up_to_1w_old",
+        "id": "under_1w_old",
         "short": "<1w",
-        "long": "Up to 1 Week Old"
+        "long": "Under 1 Week Old"
       },
       "_1m": {
-        "id": "up_to_1m_old",
+        "id": "under_1m_old",
         "short": "<1m",
-        "long": "Up to 1 Month Old"
+        "long": "Under 1 Month Old"
       },
       "_2m": {
-        "id": "up_to_2m_old",
+        "id": "under_2m_old",
         "short": "<2m",
-        "long": "Up to 2 Months Old"
+        "long": "Under 2 Months Old"
       },
       "_3m": {
-        "id": "up_to_3m_old",
+        "id": "under_3m_old",
         "short": "<3m",
-        "long": "Up to 3 Months Old"
+        "long": "Under 3 Months Old"
       },
       "_4m": {
-        "id": "up_to_4m_old",
+        "id": "under_4m_old",
         "short": "<4m",
-        "long": "Up to 4 Months Old"
+        "long": "Under 4 Months Old"
       },
       "_5m": {
-        "id": "up_to_5m_old",
+        "id": "under_5m_old",
         "short": "<5m",
-        "long": "Up to 5 Months Old"
+        "long": "Under 5 Months Old"
       },
       "_6m": {
-        "id": "up_to_6m_old",
+        "id": "under_6m_old",
         "short": "<6m",
-        "long": "Up to 6 Months Old"
+        "long": "Under 6 Months Old"
       },
       "_1y": {
-        "id": "up_to_1y_old",
+        "id": "under_1y_old",
         "short": "<1y",
-        "long": "Up to 1 Year Old"
+        "long": "Under 1 Year Old"
       },
       "_2y": {
-        "id": "up_to_2y_old",
+        "id": "under_2y_old",
         "short": "<2y",
-        "long": "Up to 2 Years Old"
+        "long": "Under 2 Years Old"
       },
       "_3y": {
-        "id": "up_to_3y_old",
+        "id": "under_3y_old",
         "short": "<3y",
-        "long": "Up to 3 Years Old"
+        "long": "Under 3 Years Old"
       },
       "_4y": {
-        "id": "up_to_4y_old",
+        "id": "under_4y_old",
         "short": "<4y",
-        "long": "Up to 4 Years Old"
+        "long": "Under 4 Years Old"
       },
       "_5y": {
-        "id": "up_to_5y_old",
+        "id": "under_5y_old",
         "short": "<5y",
-        "long": "Up to 5 Years Old"
+        "long": "Under 5 Years Old"
       },
       "_6y": {
-        "id": "up_to_6y_old",
+        "id": "under_6y_old",
         "short": "<6y",
-        "long": "Up to 6 Years Old"
+        "long": "Under 6 Years Old"
       },
       "_7y": {
-        "id": "up_to_7y_old",
+        "id": "under_7y_old",
         "short": "<7y",
-        "long": "Up to 7 Years Old"
+        "long": "Under 7 Years Old"
       },
       "_8y": {
-        "id": "up_to_8y_old",
+        "id": "under_8y_old",
         "short": "<8y",
-        "long": "Up to 8 Years Old"
+        "long": "Under 8 Years Old"
       },
       "_10y": {
-        "id": "up_to_10y_old",
+        "id": "under_10y_old",
         "short": "<10y",
-        "long": "Up to 10 Years Old"
+        "long": "Under 10 Years Old"
       },
       "_12y": {
-        "id": "up_to_12y_old",
+        "id": "under_12y_old",
         "short": "<12y",
-        "long": "Up to 12 Years Old"
+        "long": "Under 12 Years Old"
       },
       "_15y": {
-        "id": "up_to_15y_old",
+        "id": "under_15y_old",
         "short": "<15y",
-        "long": "Up to 15 Years Old"
+        "long": "Under 15 Years Old"
       }
     }
 
     MIN_AGE_NAMES = {
       "_1d": {
-        "id": "at_least_1d_old",
+        "id": "over_1d_old",
         "short": "1d+",
-        "long": "At Least 1 Day Old"
+        "long": "Over 1 Day Old"
       },
       "_1w": {
-        "id": "at_least_1w_old",
+        "id": "over_1w_old",
         "short": "1w+",
-        "long": "At Least 1 Week Old"
+        "long": "Over 1 Week Old"
       },
       "_1m": {
-        "id": "at_least_1m_old",
+        "id": "over_1m_old",
         "short": "1m+",
-        "long": "At Least 1 Month Old"
+        "long": "Over 1 Month Old"
       },
       "_2m": {
-        "id": "at_least_2m_old",
+        "id": "over_2m_old",
         "short": "2m+",
-        "long": "At Least 2 Months Old"
+        "long": "Over 2 Months Old"
       },
       "_3m": {
-        "id": "at_least_3m_old",
+        "id": "over_3m_old",
         "short": "3m+",
-        "long": "At Least 3 Months Old"
+        "long": "Over 3 Months Old"
       },
       "_4m": {
-        "id": "at_least_4m_old",
+        "id": "over_4m_old",
         "short": "4m+",
-        "long": "At Least 4 Months Old"
+        "long": "Over 4 Months Old"
       },
       "_5m": {
-        "id": "at_least_5m_old",
+        "id": "over_5m_old",
         "short": "5m+",
-        "long": "At Least 5 Months Old"
+        "long": "Over 5 Months Old"
       },
       "_6m": {
-        "id": "at_least_6m_old",
+        "id": "over_6m_old",
         "short": "6m+",
-        "long": "At Least 6 Months Old"
+        "long": "Over 6 Months Old"
       },
       "_1y": {
-        "id": "at_least_1y_old",
+        "id": "over_1y_old",
         "short": "1y+",
-        "long": "At Least 1 Year Old"
+        "long": "Over 1 Year Old"
       },
       "_2y": {
-        "id": "at_least_2y_old",
+        "id": "over_2y_old",
         "short": "2y+",
-        "long": "At Least 2 Years Old"
+        "long": "Over 2 Years Old"
       },
       "_3y": {
-        "id": "at_least_3y_old",
+        "id": "over_3y_old",
         "short": "3y+",
-        "long": "At Least 3 Years Old"
+        "long": "Over 3 Years Old"
       },
       "_4y": {
-        "id": "at_least_4y_old",
+        "id": "over_4y_old",
         "short": "4y+",
-        "long": "At Least 4 Years Old"
+        "long": "Over 4 Years Old"
       },
       "_5y": {
-        "id": "at_least_5y_old",
+        "id": "over_5y_old",
         "short": "5y+",
-        "long": "At Least 5 Years Old"
+        "long": "Over 5 Years Old"
       },
       "_6y": {
-        "id": "at_least_6y_old",
+        "id": "over_6y_old",
         "short": "6y+",
-        "long": "At Least 6 Years Old"
+        "long": "Over 6 Years Old"
       },
       "_7y": {
-        "id": "at_least_7y_old",
+        "id": "over_7y_old",
         "short": "7y+",
-        "long": "At Least 7 Years Old"
+        "long": "Over 7 Years Old"
       },
       "_8y": {
-        "id": "at_least_8y_old",
+        "id": "over_8y_old",
         "short": "8y+",
-        "long": "At Least 8 Years Old"
+        "long": "Over 8 Years Old"
       },
       "_10y": {
-        "id": "at_least_10y_old",
+        "id": "over_10y_old",
         "short": "10y+",
-        "long": "At Least 10 Years Old"
+        "long": "Over 10 Years Old"
       },
       "_12y": {
-        "id": "at_least_12y_old",
+        "id": "over_12y_old",
         "short": "12y+",
-        "long": "At Least 12 Years Old"
+        "long": "Over 12 Years Old"
       }
     }
 
@@ -4718,69 +4702,69 @@ class BrkClient(BrkClientBase):
 
     GE_AMOUNT_NAMES = {
       "_1sat": {
-        "id": "above_1sat",
+        "id": "over_1sat",
         "short": "1+ sats",
-        "long": "Above 1 Sat"
+        "long": "Over 1 Sat"
       },
       "_10sats": {
-        "id": "above_10sats",
+        "id": "over_10sats",
         "short": "10+ sats",
-        "long": "Above 10 Sats"
+        "long": "Over 10 Sats"
       },
       "_100sats": {
-        "id": "above_100sats",
+        "id": "over_100sats",
         "short": "100+ sats",
-        "long": "Above 100 Sats"
+        "long": "Over 100 Sats"
       },
       "_1k_sats": {
-        "id": "above_1k_sats",
+        "id": "over_1k_sats",
         "short": "1k+ sats",
-        "long": "Above 1K Sats"
+        "long": "Over 1K Sats"
       },
       "_10k_sats": {
-        "id": "above_10k_sats",
+        "id": "over_10k_sats",
         "short": "10k+ sats",
-        "long": "Above 10K Sats"
+        "long": "Over 10K Sats"
       },
       "_100k_sats": {
-        "id": "above_100k_sats",
+        "id": "over_100k_sats",
         "short": "100k+ sats",
-        "long": "Above 100K Sats"
+        "long": "Over 100K Sats"
       },
       "_1m_sats": {
-        "id": "above_1m_sats",
+        "id": "over_1m_sats",
         "short": "1M+ sats",
-        "long": "Above 1M Sats"
+        "long": "Over 1M Sats"
       },
       "_10m_sats": {
-        "id": "above_10m_sats",
+        "id": "over_10m_sats",
         "short": "0.1+ BTC",
-        "long": "Above 0.1 BTC"
+        "long": "Over 0.1 BTC"
       },
       "_1btc": {
-        "id": "above_1btc",
+        "id": "over_1btc",
         "short": "1+ BTC",
-        "long": "Above 1 BTC"
+        "long": "Over 1 BTC"
       },
       "_10btc": {
-        "id": "above_10btc",
+        "id": "over_10btc",
         "short": "10+ BTC",
-        "long": "Above 10 BTC"
+        "long": "Over 10 BTC"
       },
       "_100btc": {
-        "id": "above_100btc",
+        "id": "over_100btc",
         "short": "100+ BTC",
-        "long": "Above 100 BTC"
+        "long": "Over 100 BTC"
       },
       "_1k_btc": {
-        "id": "above_1k_btc",
+        "id": "over_1k_btc",
         "short": "1k+ BTC",
-        "long": "Above 1K BTC"
+        "long": "Over 1K BTC"
       },
       "_10k_btc": {
-        "id": "above_10k_btc",
+        "id": "over_10k_btc",
         "short": "10k+ BTC",
-        "long": "Above 10K BTC"
+        "long": "Over 10K BTC"
       }
     }
 

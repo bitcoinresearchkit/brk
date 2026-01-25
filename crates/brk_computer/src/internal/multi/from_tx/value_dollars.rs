@@ -43,6 +43,7 @@ pub struct ValueDollarsFromTxFull {
     pub txindex: LazyDollarsTxIndex,
     #[traversable(flatten)]
     pub height: LazyDollarsHeightFull,
+    #[traversable(rename = "cumulative")]
     pub height_cumulative: CumulativeVec<Height, Dollars>,
     pub difficultyepoch: LazyFull<DifficultyEpoch, Dollars, Height, DifficultyEpoch>,
     pub dateindex: Stats<DateIndex, Dollars>,

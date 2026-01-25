@@ -1933,47 +1933,6 @@ function createPeriodLumpSumStackPattern(client, acc) {
 
 /**
  * @template T
- * @typedef {Object} ClassAveragePricePattern
- * @property {MetricPattern4<T>} _2015
- * @property {MetricPattern4<T>} _2016
- * @property {MetricPattern4<T>} _2017
- * @property {MetricPattern4<T>} _2018
- * @property {MetricPattern4<T>} _2019
- * @property {MetricPattern4<T>} _2020
- * @property {MetricPattern4<T>} _2021
- * @property {MetricPattern4<T>} _2022
- * @property {MetricPattern4<T>} _2023
- * @property {MetricPattern4<T>} _2024
- * @property {MetricPattern4<T>} _2025
- * @property {MetricPattern4<T>} _2026
- */
-
-/**
- * Create a ClassAveragePricePattern pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {ClassAveragePricePattern<T>}
- */
-function createClassAveragePricePattern(client, acc) {
-  return {
-    _2015: createMetricPattern4(client, _m(acc, '2015_returns')),
-    _2016: createMetricPattern4(client, _m(acc, '2016_returns')),
-    _2017: createMetricPattern4(client, _m(acc, '2017_returns')),
-    _2018: createMetricPattern4(client, _m(acc, '2018_returns')),
-    _2019: createMetricPattern4(client, _m(acc, '2019_returns')),
-    _2020: createMetricPattern4(client, _m(acc, '2020_returns')),
-    _2021: createMetricPattern4(client, _m(acc, '2021_returns')),
-    _2022: createMetricPattern4(client, _m(acc, '2022_returns')),
-    _2023: createMetricPattern4(client, _m(acc, '2023_returns')),
-    _2024: createMetricPattern4(client, _m(acc, '2024_returns')),
-    _2025: createMetricPattern4(client, _m(acc, '2025_returns')),
-    _2026: createMetricPattern4(client, _m(acc, '2026_returns')),
-  };
-}
-
-/**
- * @template T
  * @typedef {Object} PeriodAveragePricePattern
  * @property {MetricPattern4<T>} _10y
  * @property {MetricPattern4<T>} _1m
@@ -2010,6 +1969,47 @@ function createPeriodAveragePricePattern(client, acc) {
     _6m: createMetricPattern4(client, _p('6m', acc)),
     _6y: createMetricPattern4(client, _p('6y', acc)),
     _8y: createMetricPattern4(client, _p('8y', acc)),
+  };
+}
+
+/**
+ * @template T
+ * @typedef {Object} ClassAveragePricePattern
+ * @property {MetricPattern4<T>} _2015
+ * @property {MetricPattern4<T>} _2016
+ * @property {MetricPattern4<T>} _2017
+ * @property {MetricPattern4<T>} _2018
+ * @property {MetricPattern4<T>} _2019
+ * @property {MetricPattern4<T>} _2020
+ * @property {MetricPattern4<T>} _2021
+ * @property {MetricPattern4<T>} _2022
+ * @property {MetricPattern4<T>} _2023
+ * @property {MetricPattern4<T>} _2024
+ * @property {MetricPattern4<T>} _2025
+ * @property {MetricPattern4<T>} _2026
+ */
+
+/**
+ * Create a ClassAveragePricePattern pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {ClassAveragePricePattern<T>}
+ */
+function createClassAveragePricePattern(client, acc) {
+  return {
+    _2015: createMetricPattern4(client, _m(acc, '2015_average_price')),
+    _2016: createMetricPattern4(client, _m(acc, '2016_average_price')),
+    _2017: createMetricPattern4(client, _m(acc, '2017_average_price')),
+    _2018: createMetricPattern4(client, _m(acc, '2018_average_price')),
+    _2019: createMetricPattern4(client, _m(acc, '2019_average_price')),
+    _2020: createMetricPattern4(client, _m(acc, '2020_average_price')),
+    _2021: createMetricPattern4(client, _m(acc, '2021_average_price')),
+    _2022: createMetricPattern4(client, _m(acc, '2022_average_price')),
+    _2023: createMetricPattern4(client, _m(acc, '2023_average_price')),
+    _2024: createMetricPattern4(client, _m(acc, '2024_average_price')),
+    _2025: createMetricPattern4(client, _m(acc, '2025_average_price')),
+    _2026: createMetricPattern4(client, _m(acc, '2026_average_price')),
   };
 }
 
@@ -2364,6 +2364,64 @@ function createPhaseDailyCentsPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} _100btcPattern
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a _100btcPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_100btcPattern}
+ */
+function create_100btcPattern(client, acc) {
+  return {
+    activity: createActivityPattern2(client, acc),
+    costBasis: createCostBasisPattern(client, acc),
+    outputs: createOutputsPattern(client, _m(acc, 'utxo_count')),
+    realized: createRealizedPattern(client, acc),
+    relative: createRelativePattern(client, acc),
+    supply: createSupplyPattern2(client, _m(acc, 'supply')),
+    unrealized: createUnrealizedPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} PeriodCagrPattern
+ * @property {MetricPattern4<StoredF32>} _10y
+ * @property {MetricPattern4<StoredF32>} _2y
+ * @property {MetricPattern4<StoredF32>} _3y
+ * @property {MetricPattern4<StoredF32>} _4y
+ * @property {MetricPattern4<StoredF32>} _5y
+ * @property {MetricPattern4<StoredF32>} _6y
+ * @property {MetricPattern4<StoredF32>} _8y
+ */
+
+/**
+ * Create a PeriodCagrPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {PeriodCagrPattern}
+ */
+function createPeriodCagrPattern(client, acc) {
+  return {
+    _10y: createMetricPattern4(client, _p('10y', acc)),
+    _2y: createMetricPattern4(client, _p('2y', acc)),
+    _3y: createMetricPattern4(client, _p('3y', acc)),
+    _4y: createMetricPattern4(client, _p('4y', acc)),
+    _5y: createMetricPattern4(client, _p('5y', acc)),
+    _6y: createMetricPattern4(client, _p('6y', acc)),
+    _8y: createMetricPattern4(client, _p('8y', acc)),
+  };
+}
+
+/**
  * @typedef {Object} _0satsPattern2
  * @property {ActivityPattern2} activity
  * @property {CostBasisPattern} costBasis
@@ -2418,35 +2476,6 @@ function create_10yTo12yPattern(client, acc) {
     relative: createRelativePattern2(client, acc),
     supply: createSupplyPattern2(client, _m(acc, 'supply')),
     unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} PeriodCagrPattern
- * @property {MetricPattern4<StoredF32>} _10y
- * @property {MetricPattern4<StoredF32>} _2y
- * @property {MetricPattern4<StoredF32>} _3y
- * @property {MetricPattern4<StoredF32>} _4y
- * @property {MetricPattern4<StoredF32>} _5y
- * @property {MetricPattern4<StoredF32>} _6y
- * @property {MetricPattern4<StoredF32>} _8y
- */
-
-/**
- * Create a PeriodCagrPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {PeriodCagrPattern}
- */
-function createPeriodCagrPattern(client, acc) {
-  return {
-    _10y: createMetricPattern4(client, _p('10y', acc)),
-    _2y: createMetricPattern4(client, _p('2y', acc)),
-    _3y: createMetricPattern4(client, _p('3y', acc)),
-    _4y: createMetricPattern4(client, _p('4y', acc)),
-    _5y: createMetricPattern4(client, _p('5y', acc)),
-    _6y: createMetricPattern4(client, _p('6y', acc)),
-    _8y: createMetricPattern4(client, _p('8y', acc)),
   };
 }
 
@@ -2509,35 +2538,6 @@ function create_10yPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} _100btcPattern
- * @property {ActivityPattern2} activity
- * @property {CostBasisPattern} costBasis
- * @property {OutputsPattern} outputs
- * @property {RealizedPattern} realized
- * @property {RelativePattern} relative
- * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
- */
-
-/**
- * Create a _100btcPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_100btcPattern}
- */
-function create_100btcPattern(client, acc) {
-  return {
-    activity: createActivityPattern2(client, acc),
-    costBasis: createCostBasisPattern(client, acc),
-    outputs: createOutputsPattern(client, _m(acc, 'utxo_count')),
-    realized: createRealizedPattern(client, acc),
-    relative: createRelativePattern(client, acc),
-    supply: createSupplyPattern2(client, _m(acc, 'supply')),
-    unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
  * @typedef {Object} ActivityPattern2
  * @property {BlockCountPattern<StoredF64>} coinblocksDestroyed
  * @property {BlockCountPattern<StoredF64>} coindaysDestroyed
@@ -2584,27 +2584,6 @@ function createSplitPattern2(client, acc) {
     high: createMetricPattern1(client, _m(acc, 'high')),
     low: createMetricPattern1(client, _m(acc, 'low')),
     open: createMetricPattern1(client, _m(acc, 'open')),
-  };
-}
-
-/**
- * @typedef {Object} _2015Pattern
- * @property {MetricPattern4<Bitcoin>} bitcoin
- * @property {MetricPattern4<Dollars>} dollars
- * @property {MetricPattern4<Sats>} sats
- */
-
-/**
- * Create a _2015Pattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_2015Pattern}
- */
-function create_2015Pattern(client, acc) {
-  return {
-    bitcoin: createMetricPattern4(client, _m(acc, 'btc')),
-    dollars: createMetricPattern4(client, _m(acc, 'usd')),
-    sats: createMetricPattern4(client, acc),
   };
 }
 
@@ -2672,27 +2651,6 @@ function createCoinbasePattern2(client, acc) {
 }
 
 /**
- * @typedef {Object} SegwitAdoptionPattern
- * @property {MetricPattern11<StoredF32>} base
- * @property {MetricPattern2<StoredF32>} cumulative
- * @property {MetricPattern2<StoredF32>} sum
- */
-
-/**
- * Create a SegwitAdoptionPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {SegwitAdoptionPattern}
- */
-function createSegwitAdoptionPattern(client, acc) {
-  return {
-    base: createMetricPattern11(client, acc),
-    cumulative: createMetricPattern2(client, _m(acc, 'cumulative')),
-    sum: createMetricPattern2(client, _m(acc, 'sum')),
-  };
-}
-
-/**
  * @typedef {Object} ActiveSupplyPattern
  * @property {MetricPattern1<Bitcoin>} bitcoin
  * @property {MetricPattern1<Dollars>} dollars
@@ -2714,6 +2672,27 @@ function createActiveSupplyPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} SegwitAdoptionPattern
+ * @property {MetricPattern11<StoredF32>} base
+ * @property {MetricPattern2<StoredF32>} cumulative
+ * @property {MetricPattern2<StoredF32>} sum
+ */
+
+/**
+ * Create a SegwitAdoptionPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {SegwitAdoptionPattern}
+ */
+function createSegwitAdoptionPattern(client, acc) {
+  return {
+    base: createMetricPattern11(client, acc),
+    cumulative: createMetricPattern2(client, _m(acc, 'cumulative')),
+    sum: createMetricPattern2(client, _m(acc, 'sum')),
+  };
+}
+
+/**
  * @typedef {Object} UnclaimedRewardsPattern
  * @property {BitcoinPattern2<Bitcoin>} bitcoin
  * @property {BlockCountPattern<Dollars>} dollars
@@ -2731,6 +2710,27 @@ function createUnclaimedRewardsPattern(client, acc) {
     bitcoin: createBitcoinPattern2(client, _m(acc, 'btc')),
     dollars: createBlockCountPattern(client, _m(acc, 'usd')),
     sats: createBlockCountPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} _2015Pattern
+ * @property {MetricPattern4<Bitcoin>} bitcoin
+ * @property {MetricPattern4<Dollars>} dollars
+ * @property {MetricPattern4<Sats>} sats
+ */
+
+/**
+ * Create a _2015Pattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_2015Pattern}
+ */
+function create_2015Pattern(client, acc) {
+  return {
+    bitcoin: createMetricPattern4(client, _m(acc, 'btc')),
+    dollars: createMetricPattern4(client, _m(acc, 'usd')),
+    sats: createMetricPattern4(client, acc),
   };
 }
 
@@ -2812,22 +2812,22 @@ function create_1dReturns1mSdPattern(client, acc) {
 
 /**
  * @template T
- * @typedef {Object} SatsPattern
- * @property {MetricPattern1<T>} ohlc
- * @property {SplitPattern2<T>} split
+ * @typedef {Object} BitcoinPattern2
+ * @property {MetricPattern2<T>} cumulative
+ * @property {MetricPattern1<T>} sum
  */
 
 /**
- * Create a SatsPattern pattern node
+ * Create a BitcoinPattern2 pattern node
  * @template T
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {SatsPattern<T>}
+ * @returns {BitcoinPattern2<T>}
  */
-function createSatsPattern(client, acc) {
+function createBitcoinPattern2(client, acc) {
   return {
-    ohlc: createMetricPattern1(client, _m(acc, 'ohlc')),
-    split: createSplitPattern2(client, acc),
+    cumulative: createMetricPattern2(client, _m(acc, 'cumulative')),
+    sum: createMetricPattern1(client, acc),
   };
 }
 
@@ -2854,22 +2854,22 @@ function createBlockCountPattern(client, acc) {
 
 /**
  * @template T
- * @typedef {Object} BitcoinPattern2
- * @property {MetricPattern2<T>} cumulative
- * @property {MetricPattern1<T>} sum
+ * @typedef {Object} SatsPattern
+ * @property {MetricPattern1<T>} ohlc
+ * @property {SplitPattern2<T>} split
  */
 
 /**
- * Create a BitcoinPattern2 pattern node
+ * Create a SatsPattern pattern node
  * @template T
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {BitcoinPattern2<T>}
+ * @returns {SatsPattern<T>}
  */
-function createBitcoinPattern2(client, acc) {
+function createSatsPattern(client, acc) {
   return {
-    cumulative: createMetricPattern2(client, _m(acc, 'cumulative')),
-    sum: createMetricPattern1(client, acc),
+    ohlc: createMetricPattern1(client, _m(acc, 'ohlc')),
+    split: createSplitPattern2(client, acc),
   };
 }
 
@@ -3711,8 +3711,8 @@ function createOutputsPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Market_Dca
- * @property {MetricsTree_Market_Dca_ClassAveragePrice} classAveragePrice
- * @property {ClassAveragePricePattern<StoredF32>} classReturns
+ * @property {ClassAveragePricePattern<Dollars>} classAveragePrice
+ * @property {MetricsTree_Market_Dca_ClassReturns} classReturns
  * @property {MetricsTree_Market_Dca_ClassStack} classStack
  * @property {PeriodAveragePricePattern<Dollars>} periodAveragePrice
  * @property {PeriodCagrPattern} periodCagr
@@ -3722,19 +3722,19 @@ function createOutputsPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Market_Dca_ClassAveragePrice
- * @property {MetricPattern4<Dollars>} _2015
- * @property {MetricPattern4<Dollars>} _2016
- * @property {MetricPattern4<Dollars>} _2017
- * @property {MetricPattern4<Dollars>} _2018
- * @property {MetricPattern4<Dollars>} _2019
- * @property {MetricPattern4<Dollars>} _2020
- * @property {MetricPattern4<Dollars>} _2021
- * @property {MetricPattern4<Dollars>} _2022
- * @property {MetricPattern4<Dollars>} _2023
- * @property {MetricPattern4<Dollars>} _2024
- * @property {MetricPattern4<Dollars>} _2025
- * @property {MetricPattern4<Dollars>} _2026
+ * @typedef {Object} MetricsTree_Market_Dca_ClassReturns
+ * @property {MetricPattern4<StoredF32>} _2015
+ * @property {MetricPattern4<StoredF32>} _2016
+ * @property {MetricPattern4<StoredF32>} _2017
+ * @property {MetricPattern4<StoredF32>} _2018
+ * @property {MetricPattern4<StoredF32>} _2019
+ * @property {MetricPattern4<StoredF32>} _2020
+ * @property {MetricPattern4<StoredF32>} _2021
+ * @property {MetricPattern4<StoredF32>} _2022
+ * @property {MetricPattern4<StoredF32>} _2023
+ * @property {MetricPattern4<StoredF32>} _2024
+ * @property {MetricPattern4<StoredF32>} _2025
+ * @property {MetricPattern4<StoredF32>} _2026
  */
 
 /**
@@ -4233,24 +4233,9 @@ function createOutputsPattern(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Transactions_Fees_Fee
  * @property {CountPattern2<Bitcoin>} bitcoin
- * @property {MetricsTree_Transactions_Fees_Fee_Dollars} dollars
+ * @property {CountPattern2<Dollars>} dollars
  * @property {CountPattern2<Sats>} sats
  * @property {MetricPattern27<Sats>} txindex
- */
-
-/**
- * @typedef {Object} MetricsTree_Transactions_Fees_Fee_Dollars
- * @property {MetricPattern1<Dollars>} average
- * @property {MetricPattern2<Dollars>} cumulative
- * @property {MetricPattern11<Dollars>} heightCumulative
- * @property {MetricPattern1<Dollars>} max
- * @property {MetricPattern11<Dollars>} median
- * @property {MetricPattern1<Dollars>} min
- * @property {MetricPattern11<Dollars>} pct10
- * @property {MetricPattern11<Dollars>} pct25
- * @property {MetricPattern11<Dollars>} pct75
- * @property {MetricPattern11<Dollars>} pct90
- * @property {MetricPattern1<Dollars>} sum
  */
 
 /**
@@ -4669,107 +4654,107 @@ class BrkClient extends BrkClientBase {
 
   AGE_RANGE_NAMES = /** @type {const} */ ({
     "upTo1h": {
-      "id": "up_to_1h_old",
+      "id": "under_1h_old",
       "short": "<1h",
-      "long": "Up to 1 Hour Old"
+      "long": "Under 1 Hour Old"
     },
     "_1hTo1d": {
-      "id": "at_least_1h_up_to_1d_old",
+      "id": "1h_to_1d_old",
       "short": "1h-1d",
       "long": "1 Hour to 1 Day Old"
     },
     "_1dTo1w": {
-      "id": "at_least_1d_up_to_1w_old",
+      "id": "1d_to_1w_old",
       "short": "1d-1w",
       "long": "1 Day to 1 Week Old"
     },
     "_1wTo1m": {
-      "id": "at_least_1w_up_to_1m_old",
+      "id": "1w_to_1m_old",
       "short": "1w-1m",
       "long": "1 Week to 1 Month Old"
     },
     "_1mTo2m": {
-      "id": "at_least_1m_up_to_2m_old",
+      "id": "1m_to_2m_old",
       "short": "1m-2m",
       "long": "1 to 2 Months Old"
     },
     "_2mTo3m": {
-      "id": "at_least_2m_up_to_3m_old",
+      "id": "2m_to_3m_old",
       "short": "2m-3m",
       "long": "2 to 3 Months Old"
     },
     "_3mTo4m": {
-      "id": "at_least_3m_up_to_4m_old",
+      "id": "3m_to_4m_old",
       "short": "3m-4m",
       "long": "3 to 4 Months Old"
     },
     "_4mTo5m": {
-      "id": "at_least_4m_up_to_5m_old",
+      "id": "4m_to_5m_old",
       "short": "4m-5m",
       "long": "4 to 5 Months Old"
     },
     "_5mTo6m": {
-      "id": "at_least_5m_up_to_6m_old",
+      "id": "5m_to_6m_old",
       "short": "5m-6m",
       "long": "5 to 6 Months Old"
     },
     "_6mTo1y": {
-      "id": "at_least_6m_up_to_1y_old",
+      "id": "6m_to_1y_old",
       "short": "6m-1y",
       "long": "6 Months to 1 Year Old"
     },
     "_1yTo2y": {
-      "id": "at_least_1y_up_to_2y_old",
+      "id": "1y_to_2y_old",
       "short": "1y-2y",
       "long": "1 to 2 Years Old"
     },
     "_2yTo3y": {
-      "id": "at_least_2y_up_to_3y_old",
+      "id": "2y_to_3y_old",
       "short": "2y-3y",
       "long": "2 to 3 Years Old"
     },
     "_3yTo4y": {
-      "id": "at_least_3y_up_to_4y_old",
+      "id": "3y_to_4y_old",
       "short": "3y-4y",
       "long": "3 to 4 Years Old"
     },
     "_4yTo5y": {
-      "id": "at_least_4y_up_to_5y_old",
+      "id": "4y_to_5y_old",
       "short": "4y-5y",
       "long": "4 to 5 Years Old"
     },
     "_5yTo6y": {
-      "id": "at_least_5y_up_to_6y_old",
+      "id": "5y_to_6y_old",
       "short": "5y-6y",
       "long": "5 to 6 Years Old"
     },
     "_6yTo7y": {
-      "id": "at_least_6y_up_to_7y_old",
+      "id": "6y_to_7y_old",
       "short": "6y-7y",
       "long": "6 to 7 Years Old"
     },
     "_7yTo8y": {
-      "id": "at_least_7y_up_to_8y_old",
+      "id": "7y_to_8y_old",
       "short": "7y-8y",
       "long": "7 to 8 Years Old"
     },
     "_8yTo10y": {
-      "id": "at_least_8y_up_to_10y_old",
+      "id": "8y_to_10y_old",
       "short": "8y-10y",
       "long": "8 to 10 Years Old"
     },
     "_10yTo12y": {
-      "id": "at_least_10y_up_to_12y_old",
+      "id": "10y_to_12y_old",
       "short": "10y-12y",
       "long": "10 to 12 Years Old"
     },
     "_12yTo15y": {
-      "id": "at_least_12y_up_to_15y_old",
+      "id": "12y_to_15y_old",
       "short": "12y-15y",
       "long": "12 to 15 Years Old"
     },
     "from15y": {
-      "id": "at_least_15y_old",
+      "id": "over_15y_old",
       "short": "15y+",
       "long": "15+ Years Old"
     }
@@ -4777,187 +4762,187 @@ class BrkClient extends BrkClientBase {
 
   MAX_AGE_NAMES = /** @type {const} */ ({
     "_1w": {
-      "id": "up_to_1w_old",
+      "id": "under_1w_old",
       "short": "<1w",
-      "long": "Up to 1 Week Old"
+      "long": "Under 1 Week Old"
     },
     "_1m": {
-      "id": "up_to_1m_old",
+      "id": "under_1m_old",
       "short": "<1m",
-      "long": "Up to 1 Month Old"
+      "long": "Under 1 Month Old"
     },
     "_2m": {
-      "id": "up_to_2m_old",
+      "id": "under_2m_old",
       "short": "<2m",
-      "long": "Up to 2 Months Old"
+      "long": "Under 2 Months Old"
     },
     "_3m": {
-      "id": "up_to_3m_old",
+      "id": "under_3m_old",
       "short": "<3m",
-      "long": "Up to 3 Months Old"
+      "long": "Under 3 Months Old"
     },
     "_4m": {
-      "id": "up_to_4m_old",
+      "id": "under_4m_old",
       "short": "<4m",
-      "long": "Up to 4 Months Old"
+      "long": "Under 4 Months Old"
     },
     "_5m": {
-      "id": "up_to_5m_old",
+      "id": "under_5m_old",
       "short": "<5m",
-      "long": "Up to 5 Months Old"
+      "long": "Under 5 Months Old"
     },
     "_6m": {
-      "id": "up_to_6m_old",
+      "id": "under_6m_old",
       "short": "<6m",
-      "long": "Up to 6 Months Old"
+      "long": "Under 6 Months Old"
     },
     "_1y": {
-      "id": "up_to_1y_old",
+      "id": "under_1y_old",
       "short": "<1y",
-      "long": "Up to 1 Year Old"
+      "long": "Under 1 Year Old"
     },
     "_2y": {
-      "id": "up_to_2y_old",
+      "id": "under_2y_old",
       "short": "<2y",
-      "long": "Up to 2 Years Old"
+      "long": "Under 2 Years Old"
     },
     "_3y": {
-      "id": "up_to_3y_old",
+      "id": "under_3y_old",
       "short": "<3y",
-      "long": "Up to 3 Years Old"
+      "long": "Under 3 Years Old"
     },
     "_4y": {
-      "id": "up_to_4y_old",
+      "id": "under_4y_old",
       "short": "<4y",
-      "long": "Up to 4 Years Old"
+      "long": "Under 4 Years Old"
     },
     "_5y": {
-      "id": "up_to_5y_old",
+      "id": "under_5y_old",
       "short": "<5y",
-      "long": "Up to 5 Years Old"
+      "long": "Under 5 Years Old"
     },
     "_6y": {
-      "id": "up_to_6y_old",
+      "id": "under_6y_old",
       "short": "<6y",
-      "long": "Up to 6 Years Old"
+      "long": "Under 6 Years Old"
     },
     "_7y": {
-      "id": "up_to_7y_old",
+      "id": "under_7y_old",
       "short": "<7y",
-      "long": "Up to 7 Years Old"
+      "long": "Under 7 Years Old"
     },
     "_8y": {
-      "id": "up_to_8y_old",
+      "id": "under_8y_old",
       "short": "<8y",
-      "long": "Up to 8 Years Old"
+      "long": "Under 8 Years Old"
     },
     "_10y": {
-      "id": "up_to_10y_old",
+      "id": "under_10y_old",
       "short": "<10y",
-      "long": "Up to 10 Years Old"
+      "long": "Under 10 Years Old"
     },
     "_12y": {
-      "id": "up_to_12y_old",
+      "id": "under_12y_old",
       "short": "<12y",
-      "long": "Up to 12 Years Old"
+      "long": "Under 12 Years Old"
     },
     "_15y": {
-      "id": "up_to_15y_old",
+      "id": "under_15y_old",
       "short": "<15y",
-      "long": "Up to 15 Years Old"
+      "long": "Under 15 Years Old"
     }
   });
 
   MIN_AGE_NAMES = /** @type {const} */ ({
     "_1d": {
-      "id": "at_least_1d_old",
+      "id": "over_1d_old",
       "short": "1d+",
-      "long": "At Least 1 Day Old"
+      "long": "Over 1 Day Old"
     },
     "_1w": {
-      "id": "at_least_1w_old",
+      "id": "over_1w_old",
       "short": "1w+",
-      "long": "At Least 1 Week Old"
+      "long": "Over 1 Week Old"
     },
     "_1m": {
-      "id": "at_least_1m_old",
+      "id": "over_1m_old",
       "short": "1m+",
-      "long": "At Least 1 Month Old"
+      "long": "Over 1 Month Old"
     },
     "_2m": {
-      "id": "at_least_2m_old",
+      "id": "over_2m_old",
       "short": "2m+",
-      "long": "At Least 2 Months Old"
+      "long": "Over 2 Months Old"
     },
     "_3m": {
-      "id": "at_least_3m_old",
+      "id": "over_3m_old",
       "short": "3m+",
-      "long": "At Least 3 Months Old"
+      "long": "Over 3 Months Old"
     },
     "_4m": {
-      "id": "at_least_4m_old",
+      "id": "over_4m_old",
       "short": "4m+",
-      "long": "At Least 4 Months Old"
+      "long": "Over 4 Months Old"
     },
     "_5m": {
-      "id": "at_least_5m_old",
+      "id": "over_5m_old",
       "short": "5m+",
-      "long": "At Least 5 Months Old"
+      "long": "Over 5 Months Old"
     },
     "_6m": {
-      "id": "at_least_6m_old",
+      "id": "over_6m_old",
       "short": "6m+",
-      "long": "At Least 6 Months Old"
+      "long": "Over 6 Months Old"
     },
     "_1y": {
-      "id": "at_least_1y_old",
+      "id": "over_1y_old",
       "short": "1y+",
-      "long": "At Least 1 Year Old"
+      "long": "Over 1 Year Old"
     },
     "_2y": {
-      "id": "at_least_2y_old",
+      "id": "over_2y_old",
       "short": "2y+",
-      "long": "At Least 2 Years Old"
+      "long": "Over 2 Years Old"
     },
     "_3y": {
-      "id": "at_least_3y_old",
+      "id": "over_3y_old",
       "short": "3y+",
-      "long": "At Least 3 Years Old"
+      "long": "Over 3 Years Old"
     },
     "_4y": {
-      "id": "at_least_4y_old",
+      "id": "over_4y_old",
       "short": "4y+",
-      "long": "At Least 4 Years Old"
+      "long": "Over 4 Years Old"
     },
     "_5y": {
-      "id": "at_least_5y_old",
+      "id": "over_5y_old",
       "short": "5y+",
-      "long": "At Least 5 Years Old"
+      "long": "Over 5 Years Old"
     },
     "_6y": {
-      "id": "at_least_6y_old",
+      "id": "over_6y_old",
       "short": "6y+",
-      "long": "At Least 6 Years Old"
+      "long": "Over 6 Years Old"
     },
     "_7y": {
-      "id": "at_least_7y_old",
+      "id": "over_7y_old",
       "short": "7y+",
-      "long": "At Least 7 Years Old"
+      "long": "Over 7 Years Old"
     },
     "_8y": {
-      "id": "at_least_8y_old",
+      "id": "over_8y_old",
       "short": "8y+",
-      "long": "At Least 8 Years Old"
+      "long": "Over 8 Years Old"
     },
     "_10y": {
-      "id": "at_least_10y_old",
+      "id": "over_10y_old",
       "short": "10y+",
-      "long": "At Least 10 Years Old"
+      "long": "Over 10 Years Old"
     },
     "_12y": {
-      "id": "at_least_12y_old",
+      "id": "over_12y_old",
       "short": "12y+",
-      "long": "At Least 12 Years Old"
+      "long": "Over 12 Years Old"
     }
   });
 
@@ -5041,69 +5026,69 @@ class BrkClient extends BrkClientBase {
 
   GE_AMOUNT_NAMES = /** @type {const} */ ({
     "_1sat": {
-      "id": "above_1sat",
+      "id": "over_1sat",
       "short": "1+ sats",
-      "long": "Above 1 Sat"
+      "long": "Over 1 Sat"
     },
     "_10sats": {
-      "id": "above_10sats",
+      "id": "over_10sats",
       "short": "10+ sats",
-      "long": "Above 10 Sats"
+      "long": "Over 10 Sats"
     },
     "_100sats": {
-      "id": "above_100sats",
+      "id": "over_100sats",
       "short": "100+ sats",
-      "long": "Above 100 Sats"
+      "long": "Over 100 Sats"
     },
     "_1kSats": {
-      "id": "above_1k_sats",
+      "id": "over_1k_sats",
       "short": "1k+ sats",
-      "long": "Above 1K Sats"
+      "long": "Over 1K Sats"
     },
     "_10kSats": {
-      "id": "above_10k_sats",
+      "id": "over_10k_sats",
       "short": "10k+ sats",
-      "long": "Above 10K Sats"
+      "long": "Over 10K Sats"
     },
     "_100kSats": {
-      "id": "above_100k_sats",
+      "id": "over_100k_sats",
       "short": "100k+ sats",
-      "long": "Above 100K Sats"
+      "long": "Over 100K Sats"
     },
     "_1mSats": {
-      "id": "above_1m_sats",
+      "id": "over_1m_sats",
       "short": "1M+ sats",
-      "long": "Above 1M Sats"
+      "long": "Over 1M Sats"
     },
     "_10mSats": {
-      "id": "above_10m_sats",
+      "id": "over_10m_sats",
       "short": "0.1+ BTC",
-      "long": "Above 0.1 BTC"
+      "long": "Over 0.1 BTC"
     },
     "_1btc": {
-      "id": "above_1btc",
+      "id": "over_1btc",
       "short": "1+ BTC",
-      "long": "Above 1 BTC"
+      "long": "Over 1 BTC"
     },
     "_10btc": {
-      "id": "above_10btc",
+      "id": "over_10btc",
       "short": "10+ BTC",
-      "long": "Above 10 BTC"
+      "long": "Over 10 BTC"
     },
     "_100btc": {
-      "id": "above_100btc",
+      "id": "over_100btc",
       "short": "100+ BTC",
-      "long": "Above 100 BTC"
+      "long": "Over 100 BTC"
     },
     "_1kBtc": {
-      "id": "above_1k_btc",
+      "id": "over_1k_btc",
       "short": "1k+ BTC",
-      "long": "Above 1K BTC"
+      "long": "Over 1K BTC"
     },
     "_10kBtc": {
-      "id": "above_10k_btc",
+      "id": "over_10k_btc",
       "short": "10k+ BTC",
-      "long": "Above 10K BTC"
+      "long": "Over 10K BTC"
     }
   });
 
@@ -5376,19 +5361,19 @@ class BrkClient extends BrkClientBase {
             _1satTo10sats: create_0satsPattern(this, 'addrs_above_1sat_under_10sats'),
           },
           geAmount: {
-            _100btc: create_0satsPattern(this, 'addrs_above_100btc'),
-            _100kSats: create_0satsPattern(this, 'addrs_above_100k_sats'),
-            _100sats: create_0satsPattern(this, 'addrs_above_100sats'),
-            _10btc: create_0satsPattern(this, 'addrs_above_10btc'),
-            _10kBtc: create_0satsPattern(this, 'addrs_above_10k_btc'),
-            _10kSats: create_0satsPattern(this, 'addrs_above_10k_sats'),
-            _10mSats: create_0satsPattern(this, 'addrs_above_10m_sats'),
-            _10sats: create_0satsPattern(this, 'addrs_above_10sats'),
-            _1btc: create_0satsPattern(this, 'addrs_above_1btc'),
-            _1kBtc: create_0satsPattern(this, 'addrs_above_1k_btc'),
-            _1kSats: create_0satsPattern(this, 'addrs_above_1k_sats'),
-            _1mSats: create_0satsPattern(this, 'addrs_above_1m_sats'),
-            _1sat: create_0satsPattern(this, 'addrs_above_1sat'),
+            _100btc: create_0satsPattern(this, 'addrs_over_100btc'),
+            _100kSats: create_0satsPattern(this, 'addrs_over_100k_sats'),
+            _100sats: create_0satsPattern(this, 'addrs_over_100sats'),
+            _10btc: create_0satsPattern(this, 'addrs_over_10btc'),
+            _10kBtc: create_0satsPattern(this, 'addrs_over_10k_btc'),
+            _10kSats: create_0satsPattern(this, 'addrs_over_10k_sats'),
+            _10mSats: create_0satsPattern(this, 'addrs_over_10m_sats'),
+            _10sats: create_0satsPattern(this, 'addrs_over_10sats'),
+            _1btc: create_0satsPattern(this, 'addrs_over_1btc'),
+            _1kBtc: create_0satsPattern(this, 'addrs_over_1k_btc'),
+            _1kSats: create_0satsPattern(this, 'addrs_over_1k_sats'),
+            _1mSats: create_0satsPattern(this, 'addrs_over_1m_sats'),
+            _1sat: create_0satsPattern(this, 'addrs_over_1sat'),
           },
           ltAmount: {
             _100btc: create_0satsPattern(this, 'addrs_under_100btc'),
@@ -5426,27 +5411,27 @@ class BrkClient extends BrkClientBase {
         loadedaddressindex: createMetricPattern31(this, 'loadedaddressindex'),
         utxoCohorts: {
           ageRange: {
-            _10yTo12y: create_10yTo12yPattern(this, 'utxos_at_least_10y_up_to_12y_old'),
-            _12yTo15y: create_10yTo12yPattern(this, 'utxos_at_least_12y_up_to_15y_old'),
-            _1dTo1w: create_10yTo12yPattern(this, 'utxos_at_least_1d_up_to_1w_old'),
-            _1hTo1d: create_10yTo12yPattern(this, 'utxos_at_least_1h_up_to_1d_old'),
-            _1mTo2m: create_10yTo12yPattern(this, 'utxos_at_least_1m_up_to_2m_old'),
-            _1wTo1m: create_10yTo12yPattern(this, 'utxos_at_least_1w_up_to_1m_old'),
-            _1yTo2y: create_10yTo12yPattern(this, 'utxos_at_least_1y_up_to_2y_old'),
-            _2mTo3m: create_10yTo12yPattern(this, 'utxos_at_least_2m_up_to_3m_old'),
-            _2yTo3y: create_10yTo12yPattern(this, 'utxos_at_least_2y_up_to_3y_old'),
-            _3mTo4m: create_10yTo12yPattern(this, 'utxos_at_least_3m_up_to_4m_old'),
-            _3yTo4y: create_10yTo12yPattern(this, 'utxos_at_least_3y_up_to_4y_old'),
-            _4mTo5m: create_10yTo12yPattern(this, 'utxos_at_least_4m_up_to_5m_old'),
-            _4yTo5y: create_10yTo12yPattern(this, 'utxos_at_least_4y_up_to_5y_old'),
-            _5mTo6m: create_10yTo12yPattern(this, 'utxos_at_least_5m_up_to_6m_old'),
-            _5yTo6y: create_10yTo12yPattern(this, 'utxos_at_least_5y_up_to_6y_old'),
-            _6mTo1y: create_10yTo12yPattern(this, 'utxos_at_least_6m_up_to_1y_old'),
-            _6yTo7y: create_10yTo12yPattern(this, 'utxos_at_least_6y_up_to_7y_old'),
-            _7yTo8y: create_10yTo12yPattern(this, 'utxos_at_least_7y_up_to_8y_old'),
-            _8yTo10y: create_10yTo12yPattern(this, 'utxos_at_least_8y_up_to_10y_old'),
-            from15y: create_10yTo12yPattern(this, 'utxos_at_least_15y_old'),
-            upTo1h: create_10yTo12yPattern(this, 'utxos_up_to_1h_old'),
+            _10yTo12y: create_10yTo12yPattern(this, 'utxos_10y_to_12y_old'),
+            _12yTo15y: create_10yTo12yPattern(this, 'utxos_12y_to_15y_old'),
+            _1dTo1w: create_10yTo12yPattern(this, 'utxos_1d_to_1w_old'),
+            _1hTo1d: create_10yTo12yPattern(this, 'utxos_1h_to_1d_old'),
+            _1mTo2m: create_10yTo12yPattern(this, 'utxos_1m_to_2m_old'),
+            _1wTo1m: create_10yTo12yPattern(this, 'utxos_1w_to_1m_old'),
+            _1yTo2y: create_10yTo12yPattern(this, 'utxos_1y_to_2y_old'),
+            _2mTo3m: create_10yTo12yPattern(this, 'utxos_2m_to_3m_old'),
+            _2yTo3y: create_10yTo12yPattern(this, 'utxos_2y_to_3y_old'),
+            _3mTo4m: create_10yTo12yPattern(this, 'utxos_3m_to_4m_old'),
+            _3yTo4y: create_10yTo12yPattern(this, 'utxos_3y_to_4y_old'),
+            _4mTo5m: create_10yTo12yPattern(this, 'utxos_4m_to_5m_old'),
+            _4yTo5y: create_10yTo12yPattern(this, 'utxos_4y_to_5y_old'),
+            _5mTo6m: create_10yTo12yPattern(this, 'utxos_5m_to_6m_old'),
+            _5yTo6y: create_10yTo12yPattern(this, 'utxos_5y_to_6y_old'),
+            _6mTo1y: create_10yTo12yPattern(this, 'utxos_6m_to_1y_old'),
+            _6yTo7y: create_10yTo12yPattern(this, 'utxos_6y_to_7y_old'),
+            _7yTo8y: create_10yTo12yPattern(this, 'utxos_7y_to_8y_old'),
+            _8yTo10y: create_10yTo12yPattern(this, 'utxos_8y_to_10y_old'),
+            from15y: create_10yTo12yPattern(this, 'utxos_over_15y_old'),
+            upTo1h: create_10yTo12yPattern(this, 'utxos_under_1h_old'),
           },
           all: {
             activity: createActivityPattern2(this, ''),
@@ -5493,19 +5478,19 @@ class BrkClient extends BrkClientBase {
             _4: create_0satsPattern2(this, 'epoch_4'),
           },
           geAmount: {
-            _100btc: create_100btcPattern(this, 'utxos_above_100btc'),
-            _100kSats: create_100btcPattern(this, 'utxos_above_100k_sats'),
-            _100sats: create_100btcPattern(this, 'utxos_above_100sats'),
-            _10btc: create_100btcPattern(this, 'utxos_above_10btc'),
-            _10kBtc: create_100btcPattern(this, 'utxos_above_10k_btc'),
-            _10kSats: create_100btcPattern(this, 'utxos_above_10k_sats'),
-            _10mSats: create_100btcPattern(this, 'utxos_above_10m_sats'),
-            _10sats: create_100btcPattern(this, 'utxos_above_10sats'),
-            _1btc: create_100btcPattern(this, 'utxos_above_1btc'),
-            _1kBtc: create_100btcPattern(this, 'utxos_above_1k_btc'),
-            _1kSats: create_100btcPattern(this, 'utxos_above_1k_sats'),
-            _1mSats: create_100btcPattern(this, 'utxos_above_1m_sats'),
-            _1sat: create_100btcPattern(this, 'utxos_above_1sat'),
+            _100btc: create_100btcPattern(this, 'utxos_over_100btc'),
+            _100kSats: create_100btcPattern(this, 'utxos_over_100k_sats'),
+            _100sats: create_100btcPattern(this, 'utxos_over_100sats'),
+            _10btc: create_100btcPattern(this, 'utxos_over_10btc'),
+            _10kBtc: create_100btcPattern(this, 'utxos_over_10k_btc'),
+            _10kSats: create_100btcPattern(this, 'utxos_over_10k_sats'),
+            _10mSats: create_100btcPattern(this, 'utxos_over_10m_sats'),
+            _10sats: create_100btcPattern(this, 'utxos_over_10sats'),
+            _1btc: create_100btcPattern(this, 'utxos_over_1btc'),
+            _1kBtc: create_100btcPattern(this, 'utxos_over_1k_btc'),
+            _1kSats: create_100btcPattern(this, 'utxos_over_1k_sats'),
+            _1mSats: create_100btcPattern(this, 'utxos_over_1m_sats'),
+            _1sat: create_100btcPattern(this, 'utxos_over_1sat'),
           },
           ltAmount: {
             _100btc: create_100btcPattern(this, 'utxos_under_100btc'),
@@ -5523,44 +5508,44 @@ class BrkClient extends BrkClientBase {
             _1mSats: create_100btcPattern(this, 'utxos_under_1m_sats'),
           },
           maxAge: {
-            _10y: create_10yPattern(this, 'utxos_up_to_10y_old'),
-            _12y: create_10yPattern(this, 'utxos_up_to_12y_old'),
-            _15y: create_10yPattern(this, 'utxos_up_to_15y_old'),
-            _1m: create_10yPattern(this, 'utxos_up_to_1m_old'),
-            _1w: create_10yPattern(this, 'utxos_up_to_1w_old'),
-            _1y: create_10yPattern(this, 'utxos_up_to_1y_old'),
-            _2m: create_10yPattern(this, 'utxos_up_to_2m_old'),
-            _2y: create_10yPattern(this, 'utxos_up_to_2y_old'),
-            _3m: create_10yPattern(this, 'utxos_up_to_3m_old'),
-            _3y: create_10yPattern(this, 'utxos_up_to_3y_old'),
-            _4m: create_10yPattern(this, 'utxos_up_to_4m_old'),
-            _4y: create_10yPattern(this, 'utxos_up_to_4y_old'),
-            _5m: create_10yPattern(this, 'utxos_up_to_5m_old'),
-            _5y: create_10yPattern(this, 'utxos_up_to_5y_old'),
-            _6m: create_10yPattern(this, 'utxos_up_to_6m_old'),
-            _6y: create_10yPattern(this, 'utxos_up_to_6y_old'),
-            _7y: create_10yPattern(this, 'utxos_up_to_7y_old'),
-            _8y: create_10yPattern(this, 'utxos_up_to_8y_old'),
+            _10y: create_10yPattern(this, 'utxos_under_10y_old'),
+            _12y: create_10yPattern(this, 'utxos_under_12y_old'),
+            _15y: create_10yPattern(this, 'utxos_under_15y_old'),
+            _1m: create_10yPattern(this, 'utxos_under_1m_old'),
+            _1w: create_10yPattern(this, 'utxos_under_1w_old'),
+            _1y: create_10yPattern(this, 'utxos_under_1y_old'),
+            _2m: create_10yPattern(this, 'utxos_under_2m_old'),
+            _2y: create_10yPattern(this, 'utxos_under_2y_old'),
+            _3m: create_10yPattern(this, 'utxos_under_3m_old'),
+            _3y: create_10yPattern(this, 'utxos_under_3y_old'),
+            _4m: create_10yPattern(this, 'utxos_under_4m_old'),
+            _4y: create_10yPattern(this, 'utxos_under_4y_old'),
+            _5m: create_10yPattern(this, 'utxos_under_5m_old'),
+            _5y: create_10yPattern(this, 'utxos_under_5y_old'),
+            _6m: create_10yPattern(this, 'utxos_under_6m_old'),
+            _6y: create_10yPattern(this, 'utxos_under_6y_old'),
+            _7y: create_10yPattern(this, 'utxos_under_7y_old'),
+            _8y: create_10yPattern(this, 'utxos_under_8y_old'),
           },
           minAge: {
-            _10y: create_100btcPattern(this, 'utxos_at_least_10y_old'),
-            _12y: create_100btcPattern(this, 'utxos_at_least_12y_old'),
-            _1d: create_100btcPattern(this, 'utxos_at_least_1d_old'),
-            _1m: create_100btcPattern(this, 'utxos_at_least_1m_old'),
-            _1w: create_100btcPattern(this, 'utxos_at_least_1w_old'),
-            _1y: create_100btcPattern(this, 'utxos_at_least_1y_old'),
-            _2m: create_100btcPattern(this, 'utxos_at_least_2m_old'),
-            _2y: create_100btcPattern(this, 'utxos_at_least_2y_old'),
-            _3m: create_100btcPattern(this, 'utxos_at_least_3m_old'),
-            _3y: create_100btcPattern(this, 'utxos_at_least_3y_old'),
-            _4m: create_100btcPattern(this, 'utxos_at_least_4m_old'),
-            _4y: create_100btcPattern(this, 'utxos_at_least_4y_old'),
-            _5m: create_100btcPattern(this, 'utxos_at_least_5m_old'),
-            _5y: create_100btcPattern(this, 'utxos_at_least_5y_old'),
-            _6m: create_100btcPattern(this, 'utxos_at_least_6m_old'),
-            _6y: create_100btcPattern(this, 'utxos_at_least_6y_old'),
-            _7y: create_100btcPattern(this, 'utxos_at_least_7y_old'),
-            _8y: create_100btcPattern(this, 'utxos_at_least_8y_old'),
+            _10y: create_100btcPattern(this, 'utxos_over_10y_old'),
+            _12y: create_100btcPattern(this, 'utxos_over_12y_old'),
+            _1d: create_100btcPattern(this, 'utxos_over_1d_old'),
+            _1m: create_100btcPattern(this, 'utxos_over_1m_old'),
+            _1w: create_100btcPattern(this, 'utxos_over_1w_old'),
+            _1y: create_100btcPattern(this, 'utxos_over_1y_old'),
+            _2m: create_100btcPattern(this, 'utxos_over_2m_old'),
+            _2y: create_100btcPattern(this, 'utxos_over_2y_old'),
+            _3m: create_100btcPattern(this, 'utxos_over_3m_old'),
+            _3y: create_100btcPattern(this, 'utxos_over_3y_old'),
+            _4m: create_100btcPattern(this, 'utxos_over_4m_old'),
+            _4y: create_100btcPattern(this, 'utxos_over_4y_old'),
+            _5m: create_100btcPattern(this, 'utxos_over_5m_old'),
+            _5y: create_100btcPattern(this, 'utxos_over_5y_old'),
+            _6m: create_100btcPattern(this, 'utxos_over_6m_old'),
+            _6y: create_100btcPattern(this, 'utxos_over_6y_old'),
+            _7y: create_100btcPattern(this, 'utxos_over_7y_old'),
+            _8y: create_100btcPattern(this, 'utxos_over_8y_old'),
           },
           term: {
             long: {
@@ -5754,21 +5739,21 @@ class BrkClient extends BrkClientBase {
           yearsSincePriceAth: createMetricPattern4(this, 'years_since_price_ath'),
         },
         dca: {
-          classAveragePrice: {
-            _2015: createMetricPattern4(this, 'dca_class_2015_average_price'),
-            _2016: createMetricPattern4(this, 'dca_class_2016_average_price'),
-            _2017: createMetricPattern4(this, 'dca_class_2017_average_price'),
-            _2018: createMetricPattern4(this, 'dca_class_2018_average_price'),
-            _2019: createMetricPattern4(this, 'dca_class_2019_average_price'),
-            _2020: createMetricPattern4(this, 'dca_class_2020_average_price'),
-            _2021: createMetricPattern4(this, 'dca_class_2021_average_price'),
-            _2022: createMetricPattern4(this, 'dca_class_2022_average_price'),
-            _2023: createMetricPattern4(this, 'dca_class_2023_average_price'),
-            _2024: createMetricPattern4(this, 'dca_class_2024_average_price'),
-            _2025: createMetricPattern4(this, 'dca_class_2025_average_price'),
-            _2026: createMetricPattern4(this, 'dca_class_2026_average_price'),
+          classAveragePrice: createClassAveragePricePattern(this, 'dca_class'),
+          classReturns: {
+            _2015: createMetricPattern4(this, 'dca_class_2015_returns'),
+            _2016: createMetricPattern4(this, 'dca_class_2016_returns'),
+            _2017: createMetricPattern4(this, 'dca_class_2017_returns'),
+            _2018: createMetricPattern4(this, 'dca_class_2018_returns'),
+            _2019: createMetricPattern4(this, 'dca_class_2019_returns'),
+            _2020: createMetricPattern4(this, 'dca_class_2020_returns'),
+            _2021: createMetricPattern4(this, 'dca_class_2021_returns'),
+            _2022: createMetricPattern4(this, 'dca_class_2022_returns'),
+            _2023: createMetricPattern4(this, 'dca_class_2023_returns'),
+            _2024: createMetricPattern4(this, 'dca_class_2024_returns'),
+            _2025: createMetricPattern4(this, 'dca_class_2025_returns'),
+            _2026: createMetricPattern4(this, 'dca_class_2026_returns'),
           },
-          classReturns: createClassAveragePricePattern(this, 'dca_class'),
           classStack: {
             _2015: create_2015Pattern(this, 'dca_class_2015_stack'),
             _2016: create_2015Pattern(this, 'dca_class_2016_stack'),
@@ -6183,19 +6168,7 @@ class BrkClient extends BrkClientBase {
         fees: {
           fee: {
             bitcoin: createCountPattern2(this, 'fee_btc'),
-            dollars: {
-              average: createMetricPattern1(this, 'fee_usd_average'),
-              cumulative: createMetricPattern2(this, 'fee_usd_cumulative'),
-              heightCumulative: createMetricPattern11(this, 'fee_usd_cumulative'),
-              max: createMetricPattern1(this, 'fee_usd_max'),
-              median: createMetricPattern11(this, 'fee_usd_median'),
-              min: createMetricPattern1(this, 'fee_usd_min'),
-              pct10: createMetricPattern11(this, 'fee_usd_pct10'),
-              pct25: createMetricPattern11(this, 'fee_usd_pct25'),
-              pct75: createMetricPattern11(this, 'fee_usd_pct75'),
-              pct90: createMetricPattern11(this, 'fee_usd_pct90'),
-              sum: createMetricPattern1(this, 'fee_usd_sum'),
-            },
+            dollars: createCountPattern2(this, 'fee_usd'),
             sats: createCountPattern2(this, 'fee'),
             txindex: createMetricPattern27(this, 'fee'),
           },

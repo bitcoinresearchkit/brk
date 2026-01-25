@@ -295,11 +295,10 @@ export function createRealizedPriceSeries(list) {
 
 /**
  * Create realized price ratio series for grouped cohorts
- * @param {PartialContext} ctx
  * @param {readonly CohortObject[]} list
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createRealizedPriceRatioSeries(ctx, list) {
+export function createRealizedPriceRatioSeries(list) {
   return list.map(({ name, tree }) =>
     baseline({
       metric: tree.realized.realizedPriceExtra.ratio,

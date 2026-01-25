@@ -86,7 +86,7 @@ export function createAddressCohortFolder(ctx, args) {
                 {
                   name: "Ratio",
                   title: title("Realized Price Ratio"),
-                  bottom: createRealizedPriceRatioSeries(ctx, list),
+                  bottom: createRealizedPriceRatioSeries(list),
                 },
               ]
             : createRealizedPriceOptions(

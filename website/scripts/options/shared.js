@@ -198,7 +198,6 @@ export function createRatioChart(ctx, { title, price, ratio, color, name }) {
           options: { lineStyle: 1 },
         }),
       ),
-      priceLine({ ctx, unit: Unit.ratio, number: 1 }),
     ],
   };
 }
@@ -335,7 +334,6 @@ export function createZScoresFolder(
                 defaultActive: false,
               }),
           ),
-          priceLine({ ctx, unit: Unit.ratio, number: 1 }),
           priceLine({
             ctx,
             unit: Unit.sd,
