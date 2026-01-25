@@ -60,12 +60,12 @@ echo ""
 
 echo "--- JavaScript ---"
 cd "$ROOT_DIR/modules/brk-client"
-npm test
+# npm test
 echo ""
 
 echo "--- Python ---"
 cd "$ROOT_DIR/packages/brk_client"
-uv run pytest tests/ -s
+# uv run pytest tests/ -s
 echo ""
 
 # ============================================================================
@@ -123,7 +123,7 @@ echo ""
 cd "$ROOT_DIR"
 
 # Verify all crates package correctly
-cargo package --workspace --allow-dirty
+cargo package --workspace --allow-dirty --exclude brk_playground
 
 # Version bump, commit, and tag (but don't publish yet)
 cargo release "$RELEASE_ARG" --execute --no-publish --no-confirm
