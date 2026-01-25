@@ -300,17 +300,14 @@ export function createRealizedPriceSeries(list) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createRealizedPriceRatioSeries(ctx, list) {
-  return [
-    ...list.map(({ name, tree }) =>
-      baseline({
-        metric: tree.realized.realizedPriceExtra.ratio,
-        name,
-        unit: Unit.ratio,
-        base: 1,
-      }),
-    ),
-    priceLine({ ctx, unit: Unit.ratio, number: 1 }),
-  ];
+  return list.map(({ name, tree }) =>
+    baseline({
+      metric: tree.realized.realizedPriceExtra.ratio,
+      name,
+      unit: Unit.ratio,
+      base: 1,
+    }),
+  );
 }
 
 /**

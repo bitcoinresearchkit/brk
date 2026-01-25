@@ -5,6 +5,8 @@ import { readStored, writeToStorage } from "../utils/storage.js";
 import { stringToId } from "../utils/format.js";
 import { collect, markUsed, logUnused } from "./unused.js";
 import { setQr } from "../panes/share.js";
+import { getConstant } from "./constants.js";
+import { colors } from "../chart/colors.js";
 
 /**
  * @param {BrkClient} brk
@@ -86,6 +88,9 @@ export function initOptions(brk) {
   function arrayToMap(arr = []) {
     /** @type {Map<Unit, AnyFetchedSeriesBlueprint[]>} */
     const map = new Map();
+    /** @type {Map<Unit, Set<number>>} */
+    const priceLines = new Map();
+
     for (const blueprint of arr || []) {
       if (!blueprint.metric) {
         throw new Error(
@@ -101,7 +106,38 @@ export function initOptions(brk) {
         map.set(unit, []);
       }
       map.get(unit)?.push(blueprint);
+
+      // Track baseline base values for auto price lines
+      if (blueprint.type === "Baseline") {
+        const baseValue = blueprint.options?.baseValue?.price ?? 0;
+        if (!priceLines.has(unit)) priceLines.set(unit, new Set());
+        priceLines.get(unit)?.add(baseValue);
+      }
+
+      // Remove from set if manual price line already exists
+      if (blueprint.type === "Line") {
+        const path = Object.values(blueprint.metric.by)[0]?.path ?? "";
+        if (path.includes("constant_")) {
+          priceLines.get(unit)?.delete(parseFloat(blueprint.title));
+        }
+      }
     }
+
+    // Add price lines at end for remaining values
+    for (const [unit, values] of priceLines) {
+      for (const baseValue of values) {
+        const metric = getConstant(brk.metrics.constants, baseValue);
+        markUsed(metric);
+        map.get(unit)?.push({
+          metric,
+          title: `${baseValue}`,
+          color: colors.gray,
+          unit,
+          options: { lineStyle: 4, lastValueVisible: false, crosshairMarkerVisible: false },
+        });
+      }
+    }
+
     return map;
   }
 

@@ -9,7 +9,7 @@ import { line } from "./series.js";
  * @param {number} num
  * @returns {AnyMetricPattern}
  */
-function getConstant(constants, num) {
+export function getConstant(constants, num) {
   const key =
     num >= 0
       ? `constant${String(num).replace(".", "")}`

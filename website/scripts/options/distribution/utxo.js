@@ -1106,7 +1106,6 @@ function createSingleBaseSoprChart(ctx, cohort, title) {
         defaultActive: false,
         base: 1,
       }),
-      priceLine({ ctx, number: 1, unit: Unit.ratio }),
     ],
   };
 }

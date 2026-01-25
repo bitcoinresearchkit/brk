@@ -41,7 +41,6 @@ export function createOnchainSection(ctx, { indicators, movingAverage }) {
             unit: Unit.ratio,
             base: 1,
           }),
-          priceLine({ ctx, unit: Unit.ratio, number: 1 }),
         ],
       },
       {

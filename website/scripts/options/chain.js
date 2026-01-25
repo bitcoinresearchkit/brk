@@ -968,7 +968,6 @@ export function createChainSection(ctx) {
                 unit: Unit.ratio,
                 base: 1,
               }),
-              priceLine({ ctx, unit: Unit.ratio, number: 1 }),
             ],
           },
         ],
