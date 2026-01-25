@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Distribution\_AddressesData
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3222](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3222)
+Defined in: [Developer/brk/modules/brk-client/index.js:3222](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L3222)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3222](https://github.com/
 
 > **empty**: [`MetricPattern32`](../type-aliases/MetricPattern32.md)\<[`EmptyAddressData`](EmptyAddressData.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3223](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3223)
+Defined in: [Developer/brk/modules/brk-client/index.js:3223](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L3223)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3223](https://github.com/
 
 > **loaded**: [`MetricPattern31`](../type-aliases/MetricPattern31.md)\<[`LoadedAddressData`](LoadedAddressData.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3224](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L3224)
+Defined in: [Developer/brk/modules/brk-client/index.js:3224](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L3224)

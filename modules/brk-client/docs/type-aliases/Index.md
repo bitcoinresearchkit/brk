@@ -8,6 +8,6 @@
 
 > **Index**\<\> = `"dateindex"` \| `"decadeindex"` \| `"difficultyepoch"` \| `"emptyoutputindex"` \| `"halvingepoch"` \| `"height"` \| `"txinindex"` \| `"monthindex"` \| `"opreturnindex"` \| `"txoutindex"` \| `"p2aaddressindex"` \| `"p2msoutputindex"` \| `"p2pk33addressindex"` \| `"p2pk65addressindex"` \| `"p2pkhaddressindex"` \| `"p2shaddressindex"` \| `"p2traddressindex"` \| `"p2wpkhaddressindex"` \| `"p2wshaddressindex"` \| `"quarterindex"` \| `"semesterindex"` \| `"txindex"` \| `"unknownoutputindex"` \| `"weekindex"` \| `"yearindex"` \| `"loadedaddressindex"` \| `"emptyaddressindex"` \| `"pairoutputindex"`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:311](https://github.com/bitcoinresearchkit/brk/blob/36b56a400c96653daf373f383aeefb915799495a/modules/brk-client/index.js#L311)
+Defined in: [Developer/brk/modules/brk-client/index.js:311](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L311)
 
 ## Type Parameters
