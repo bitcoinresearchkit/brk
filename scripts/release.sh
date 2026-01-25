@@ -60,12 +60,12 @@ echo ""
 
 echo "--- JavaScript ---"
 cd "$ROOT_DIR/modules/brk-client"
-# npm test
+npm test
 echo ""
 
 echo "--- Python ---"
 cd "$ROOT_DIR/packages/brk_client"
-# uv run pytest tests/ -s
+uv run pytest tests/ -s
 echo ""
 
 # ============================================================================
