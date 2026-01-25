@@ -55,7 +55,7 @@ echo ""
 
 echo "--- Rust ---"
 cd "$ROOT_DIR"
-cargo test --workspace
+cargo test --workspace --exclude brk_playground
 echo ""
 
 echo "--- JavaScript ---"
