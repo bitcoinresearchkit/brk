@@ -189,6 +189,20 @@
  * @property {Color} color
  * @property {PatternWithPercentiles} tree
  *
+ * Long term cohort (term.long) - has nupl via RelativePattern5
+ * @typedef {Object} CohortLongTerm
+ * @property {string} name
+ * @property {string} title
+ * @property {Color} color
+ * @property {LongTermPattern} tree
+ *
+ * Age range cohort (ageRange.*) - no nupl via RelativePattern2
+ * @typedef {Object} CohortAgeRange
+ * @property {string} name
+ * @property {string} title
+ * @property {Color} color
+ * @property {AgeRangePattern} tree
+ *
  * Basic cohort WITH RelToMarketCap (minAge.*, geAmount.*, ltAmount.*)
  * @typedef {Object} CohortBasicWithMarketCap
  * @property {string} name
@@ -231,6 +245,16 @@
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortWithPercentiles[]} list
+ *
+ * @typedef {Object} CohortGroupLongTerm
+ * @property {string} name
+ * @property {string} title
+ * @property {readonly CohortLongTerm[]} list
+ *
+ * @typedef {Object} CohortGroupAgeRange
+ * @property {string} name
+ * @property {string} title
+ * @property {readonly CohortAgeRange[]} list
  *
  * @typedef {Object} CohortGroupBasicWithMarketCap
  * @property {string} name

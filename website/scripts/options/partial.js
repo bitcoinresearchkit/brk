@@ -7,6 +7,8 @@ import {
   createCohortFolderFull,
   createCohortFolderWithAdjusted,
   createCohortFolderWithPercentiles,
+  createCohortFolderLongTerm,
+  createCohortFolderAgeRange,
   createCohortFolderBasicWithMarketCap,
   createCohortFolderBasicWithoutMarketCap,
   createCohortFolderAddress,
@@ -55,9 +57,8 @@ export function createPartialOptions({ brk }) {
   /** @param {CohortWithAdjusted} cohort */
   const mapWithAdjusted = (cohort) =>
     createCohortFolderWithAdjusted(ctx, cohort);
-  /** @param {CohortWithPercentiles} cohort */
-  const mapWithPercentiles = (cohort) =>
-    createCohortFolderWithPercentiles(ctx, cohort);
+  /** @param {CohortAgeRange} cohort */
+  const mapAgeRange = (cohort) => createCohortFolderAgeRange(ctx, cohort);
   /** @param {CohortBasicWithMarketCap} cohort */
   const mapBasicWithMarketCap = (cohort) =>
     createCohortFolderBasicWithMarketCap(ctx, cohort);
@@ -98,7 +99,7 @@ export function createPartialOptions({ brk }) {
             // All UTXOs - CohortAll (adjustedSopr + percentiles but no RelToMarketCap)
             createCohortFolderAll(ctx, cohortAll),
 
-            // Terms (STH/LTH) - Short is Full, Long is WithPercentiles
+            // Terms (STH/LTH) - Short is Full, Long is LongTerm
             {
               name: "Terms",
               tree: [
@@ -110,7 +111,7 @@ export function createPartialOptions({ brk }) {
                 }),
                 // Individual cohorts with their specific capabilities
                 createCohortFolderFull(ctx, termShort),
-                createCohortFolderWithPercentiles(ctx, termLong),
+                createCohortFolderLongTerm(ctx, termLong),
               ],
             },
 
@@ -160,12 +161,12 @@ export function createPartialOptions({ brk }) {
                 {
                   name: "Range",
                   tree: [
-                    createCohortFolderWithPercentiles(ctx, {
+                    createCohortFolderAgeRange(ctx, {
                       name: "Compare",
                       title: "Age Range",
                       list: dateRange,
                     }),
-                    ...dateRange.map(mapWithPercentiles),
+                    ...dateRange.map(mapAgeRange),
                   ],
                 },
               ],

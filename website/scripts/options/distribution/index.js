@@ -11,6 +11,8 @@ export {
   createCohortFolderFull,
   createCohortFolderWithAdjusted,
   createCohortFolderWithPercentiles,
+  createCohortFolderLongTerm,
+  createCohortFolderAgeRange,
   createCohortFolderBasicWithMarketCap,
   createCohortFolderBasicWithoutMarketCap,
   createCohortFolderAddress,

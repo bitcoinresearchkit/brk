@@ -72,7 +72,6 @@ export function buildCohortData(colors, brk) {
   };
 
   const longNames = TERM_NAMES.long;
-  /** @type {CohortWithPercentiles} */
   const termLong = {
     name: longNames.short,
     title: longNames.long,
@@ -104,8 +103,7 @@ export function buildCohortData(colors, brk) {
     };
   });
 
-  // Age range cohorts - CohortWithPercentiles (percentiles only)
-  /** @type {readonly CohortWithPercentiles[]} */
+  // Age range cohorts - CohortAgeRange (no nupl)
   const dateRange = entries(utxoCohorts.ageRange).map(([key, tree]) => {
     const names = AGE_RANGE_NAMES[key];
     return {

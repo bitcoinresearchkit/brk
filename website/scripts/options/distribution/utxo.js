@@ -137,6 +137,79 @@ export function createCohortFolderWithAdjusted(ctx, args) {
 }
 
 /**
+ * Long term folder: term.long (has nupl via RelativePattern5)
+ * @param {PartialContext} ctx
+ * @param {CohortLongTerm | CohortGroupLongTerm} args
+ * @returns {PartialOptionsGroup}
+ */
+export function createCohortFolderLongTerm(ctx, args) {
+  if ("list" in args) {
+    const { list } = args;
+    const title = args.title ? `by ${args.title}` : "";
+    return {
+      name: args.name || "all",
+      tree: [
+        createGroupedSupplySection(list, title),
+        createGroupedUtxoCountChart(list, title),
+        createGroupedRealizedSectionBasic(ctx, list, title),
+        createGroupedUnrealizedSectionLongTerm(ctx, list, title),
+        createGroupedCostBasisSectionWithPercentiles(ctx, list, title),
+        createGroupedActivitySectionBasic(list, title),
+      ],
+    };
+  }
+  const title = args.title ? `of ${args.title}` : "";
+  return {
+    name: args.name || "all",
+    tree: [
+      createSingleSupplyChart(ctx, args, title),
+      createSingleUtxoCountChart(args, title),
+      createSingleRealizedSectionWithPercentiles(ctx, args, title),
+      createSingleUnrealizedSectionLongTerm(ctx, args, title),
+      createSingleCostBasisSectionWithPercentiles(ctx, args, title),
+      createSingleActivitySectionBasic(ctx, args, title),
+    ],
+  };
+}
+
+/**
+ * Age range folder: ageRange.* (no nupl via RelativePattern2)
+ * @param {PartialContext} ctx
+ * @param {CohortAgeRange | CohortGroupAgeRange} args
+ * @returns {PartialOptionsGroup}
+ */
+export function createCohortFolderAgeRange(ctx, args) {
+  if ("list" in args) {
+    const { list } = args;
+    const title = args.title ? `by ${args.title}` : "";
+    return {
+      name: args.name || "all",
+      tree: [
+        createGroupedSupplySection(list, title),
+        createGroupedUtxoCountChart(list, title),
+        createGroupedRealizedSectionBasic(ctx, list, title),
+        createGroupedUnrealizedSectionAgeRange(ctx, list, title),
+        createGroupedCostBasisSectionWithPercentiles(ctx, list, title),
+        createGroupedActivitySectionBasic(list, title),
+      ],
+    };
+  }
+  const title = args.title ? `of ${args.title}` : "";
+  return {
+    name: args.name || "all",
+    tree: [
+      createSingleSupplyChart(ctx, args, title),
+      createSingleUtxoCountChart(args, title),
+      createSingleRealizedSectionWithPercentiles(ctx, args, title),
+      createSingleUnrealizedSectionAgeRange(ctx, args, title),
+      createSingleCostBasisSectionWithPercentiles(ctx, args, title),
+      createSingleActivitySectionBasic(ctx, args, title),
+    ],
+  };
+}
+
+/**
+ * @deprecated Use createCohortFolderLongTerm or createCohortFolderAgeRange instead
  * Percentiles folder: percentiles only, no adjustedSopr (term.long, ageRange.*)
  * @param {PartialContext} ctx
  * @param {CohortWithPercentiles | CohortGroupWithPercentiles} args
@@ -1401,7 +1474,7 @@ function createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, rel) {
 /**
  * Base unrealized metrics (always present)
  * @param {PartialContext} ctx
- * @param {{ unrealized: { totalUnrealizedPnl: AnyMetricPattern, unrealizedProfit: AnyMetricPattern, unrealizedLoss: AnyMetricPattern, negUnrealizedLoss: AnyMetricPattern } }} tree
+ * @param {{ unrealized: UnrealizedPattern }} tree
  */
 function createUnrealizedPnlBaseMetrics(ctx, tree) {
   const { colors } = ctx;
@@ -1436,7 +1509,7 @@ function createUnrealizedPnlBaseMetrics(ctx, tree) {
 
 /**
  * Base net unrealized metric (always present)
- * @param {{ unrealized: { netUnrealizedPnl: AnyMetricPattern } }} tree
+ * @param {{ unrealized: UnrealizedPattern }} tree
  */
 function createNetUnrealizedPnlBaseMetric(tree) {
   return baseline({
@@ -1444,6 +1517,57 @@ function createNetUnrealizedPnlBaseMetric(tree) {
     name: "Net",
     unit: Unit.usd,
   });
+}
+
+// ============================================================================
+// Unrealized Chart Builders (composable charts)
+// ============================================================================
+
+/**
+ * Create NUPL chart for single cohort
+ * @param {PartialContext} ctx
+ * @param {RelativeWithNupl} rel
+ * @param {string} title
+ * @returns {PartialChartOption}
+ */
+function createNuplChart(ctx, rel, title) {
+  return {
+    name: "nupl",
+    title: `NUPL ${title}`,
+    bottom: [
+      baseline({
+        metric: rel.nupl,
+        name: "NUPL",
+        unit: Unit.ratio,
+      }),
+      priceLine({ ctx, unit: Unit.ratio }),
+    ],
+  };
+}
+
+/**
+ * Create NUPL chart for grouped cohorts
+ * @param {PartialContext} ctx
+ * @param {readonly { name: string, color: Color, tree: { relative: RelativeWithNupl } }[]} list
+ * @param {string} title
+ * @returns {PartialChartOption}
+ */
+function createGroupedNuplChart(ctx, list, title) {
+  return {
+    name: "nupl",
+    title: `NUPL ${title}`,
+    bottom: [
+      ...list.map(({ color, name, tree }) =>
+        baseline({
+          metric: tree.relative.nupl,
+          name,
+          color,
+          unit: Unit.ratio,
+        }),
+      ),
+      priceLine({ ctx, unit: Unit.ratio }),
+    ],
+  };
 }
 
 // ============================================================================
@@ -1520,18 +1644,7 @@ function createSingleUnrealizedSectionFull(ctx, cohort, title) {
           priceLine({ ctx, unit: Unit.pctMcap }),
         ],
       },
-      {
-        name: "nupl",
-        title: `NUPL ${title}`,
-        bottom: [
-          baseline({
-            metric: tree.relative.nupl,
-            name: "NUPL",
-            unit: Unit.ratio,
-          }),
-          priceLine({ ctx, unit: Unit.ratio }),
-        ],
-      },
+      createNuplChart(ctx, tree.relative, title),
     ],
   };
 }
@@ -1569,20 +1682,7 @@ function createSingleUnrealizedSectionWithMarketCap(ctx, cohort, title) {
         ],
       },
       ...("nupl" in tree.relative
-        ? [
-            {
-              name: "nupl",
-              title: `NUPL ${title}`,
-              bottom: [
-                baseline({
-                  metric: tree.relative.nupl,
-                  name: "NUPL",
-                  unit: Unit.ratio,
-                }),
-                priceLine({ ctx, unit: Unit.ratio }),
-              ],
-            },
-          ]
+        ? [createNuplChart(ctx, tree.relative, title)]
         : []),
     ],
   };
@@ -1622,20 +1722,7 @@ function createSingleUnrealizedSectionWithOwnCaps(ctx, cohort, title) {
         ],
       },
       ...("nupl" in tree.relative
-        ? [
-            {
-              name: "nupl",
-              title: `NUPL ${title}`,
-              bottom: [
-                baseline({
-                  metric: tree.relative.nupl,
-                  name: "NUPL",
-                  unit: Unit.ratio,
-                }),
-                priceLine({ ctx, unit: Unit.ratio }),
-              ],
-            },
-          ]
+        ? [createNuplChart(ctx, tree.relative, title)]
         : []),
     ],
   };
@@ -1676,20 +1763,7 @@ function createSingleUnrealizedSectionWithMarketCapOnly(ctx, cohort, title) {
         ],
       },
       ...("nupl" in tree.relative
-        ? [
-            {
-              name: "nupl",
-              title: `NUPL ${title}`,
-              bottom: [
-                baseline({
-                  metric: tree.relative.nupl,
-                  name: "NUPL",
-                  unit: Unit.ratio,
-                }),
-                priceLine({ ctx, unit: Unit.ratio }),
-              ],
-            },
-          ]
+        ? [createNuplChart(ctx, tree.relative, title)]
         : []),
     ],
   };
@@ -1823,21 +1897,7 @@ function createGroupedUnrealizedSectionFull(ctx, list, title) {
           priceLine({ ctx, unit: Unit.pctOwnPnl }),
         ],
       },
-      {
-        name: "nupl",
-        title: `NUPL ${title}`,
-        bottom: [
-          ...list.flatMap(({ color, name, tree }) => [
-            baseline({
-              metric: tree.relative.nupl,
-              name,
-              color,
-              unit: Unit.ratio,
-            }),
-          ]),
-          priceLine({ ctx, unit: Unit.ratio }),
-        ],
-      },
+      createGroupedNuplChart(ctx, list, title),
     ],
   };
 }
@@ -1876,21 +1936,7 @@ function createGroupedUnrealizedSectionWithMarketCap(ctx, list, title) {
           priceLine({ ctx, unit: Unit.pctMcap }),
         ],
       },
-      {
-        name: "nupl",
-        title: `NUPL ${title}`,
-        bottom: [
-          ...list.flatMap(({ color, name, tree }) => [
-            baseline({
-              metric: tree.relative.nupl,
-              name,
-              color,
-              unit: Unit.ratio,
-            }),
-          ]),
-          priceLine({ ctx, unit: Unit.ratio }),
-        ],
-      },
+      createGroupedNuplChart(ctx, list, title),
     ],
   };
 }
@@ -1903,7 +1949,10 @@ function createGroupedUnrealizedSectionWithMarketCap(ctx, list, title) {
  * @returns {PartialOptionsGroup}
  */
 function createGroupedUnrealizedSectionWithOwnCaps(ctx, list, title) {
-  const cohortsWithNupl = list.filter(({ tree }) => "nupl" in tree.relative);
+  const cohortsWithNupl =
+    /** @type {CohortLongTerm[]} */ (
+      list.filter(({ tree }) => "nupl" in tree.relative)
+    );
   return {
     name: "Unrealized",
     tree: [
@@ -1938,25 +1987,7 @@ function createGroupedUnrealizedSectionWithOwnCaps(ctx, list, title) {
         ],
       },
       ...(cohortsWithNupl.length > 0
-        ? [
-            {
-              name: "nupl",
-              title: `NUPL ${title}`,
-              bottom: [
-                ...cohortsWithNupl.flatMap(({ color, name, tree }) => [
-                  baseline({
-                    metric: /** @type {{ nupl: AnyMetricPattern }} */ (
-                      tree.relative
-                    ).nupl,
-                    name,
-                    color,
-                    unit: Unit.ratio,
-                  }),
-                ]),
-                priceLine({ ctx, unit: Unit.ratio }),
-              ],
-            },
-          ]
+        ? [createGroupedNuplChart(ctx, cohortsWithNupl, title)]
         : []),
     ],
   };
@@ -1997,21 +2028,7 @@ function createGroupedUnrealizedSectionWithMarketCapOnly(ctx, list, title) {
           priceLine({ ctx, unit: Unit.pctMcap }),
         ],
       },
-      {
-        name: "nupl",
-        title: `NUPL ${title}`,
-        bottom: [
-          ...list.flatMap(({ color, name, tree }) => [
-            baseline({
-              metric: tree.relative.nupl,
-              name,
-              color,
-              unit: Unit.ratio,
-            }),
-          ]),
-          priceLine({ ctx, unit: Unit.ratio }),
-        ],
-      },
+      createGroupedNuplChart(ctx, list, title),
     ],
   };
 }
@@ -2041,6 +2058,170 @@ function createGroupedUnrealizedSectionBase(ctx, list, title) {
             }),
           ]),
           priceLine({ ctx, unit: Unit.usd }),
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * Unrealized section for LongTerm cohort (has nupl via RelativePattern5)
+ * @param {PartialContext} ctx
+ * @param {CohortLongTerm} cohort
+ * @param {string} title
+ * @returns {PartialOptionsGroup}
+ */
+function createSingleUnrealizedSectionLongTerm(ctx, cohort, title) {
+  const { tree } = cohort;
+  return {
+    name: "Unrealized",
+    tree: [
+      {
+        name: "pnl",
+        title: `Unrealized P&L ${title}`,
+        bottom: [
+          ...createUnrealizedPnlBaseMetrics(ctx, tree),
+          ...createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
+          ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+          priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
+        ],
+      },
+      {
+        name: "Net pnl",
+        title: `Net Unrealized P&L ${title}`,
+        bottom: [
+          createNetUnrealizedPnlBaseMetric(tree),
+          ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
+          ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+          priceLine({ ctx, unit: Unit.usd }),
+        ],
+      },
+      createNuplChart(ctx, tree.relative, title),
+    ],
+  };
+}
+
+/**
+ * Grouped unrealized section for LongTerm cohorts (has nupl via RelativePattern5)
+ * @param {PartialContext} ctx
+ * @param {readonly CohortLongTerm[]} list
+ * @param {string} title
+ * @returns {PartialOptionsGroup}
+ */
+function createGroupedUnrealizedSectionLongTerm(ctx, list, title) {
+  return {
+    name: "Unrealized",
+    tree: [
+      ...createGroupedUnrealizedBaseCharts(list, title),
+      {
+        name: "Net pnl",
+        title: `Net Unrealized P&L ${title}`,
+        bottom: [
+          ...list.flatMap(({ color, name, tree }) => [
+            baseline({
+              metric: tree.unrealized.netUnrealizedPnl,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
+            baseline({
+              metric: tree.relative.netUnrealizedPnlRelToOwnMarketCap,
+              name,
+              color,
+              unit: Unit.pctOwnMcap,
+            }),
+            baseline({
+              metric: tree.relative.netUnrealizedPnlRelToOwnTotalUnrealizedPnl,
+              name,
+              color,
+              unit: Unit.pctOwnPnl,
+            }),
+          ]),
+          priceLine({ ctx, unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.pctOwnMcap }),
+          priceLine({ ctx, unit: Unit.pctOwnPnl }),
+        ],
+      },
+      createGroupedNuplChart(ctx, list, title),
+    ],
+  };
+}
+
+/**
+ * Unrealized section for AgeRange cohort (no nupl via RelativePattern2)
+ * @param {PartialContext} ctx
+ * @param {CohortAgeRange} cohort
+ * @param {string} title
+ * @returns {PartialOptionsGroup}
+ */
+function createSingleUnrealizedSectionAgeRange(ctx, cohort, title) {
+  const { tree } = cohort;
+  return {
+    name: "Unrealized",
+    tree: [
+      {
+        name: "pnl",
+        title: `Unrealized P&L ${title}`,
+        bottom: [
+          ...createUnrealizedPnlBaseMetrics(ctx, tree),
+          ...createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
+          ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+          priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
+        ],
+      },
+      {
+        name: "Net pnl",
+        title: `Net Unrealized P&L ${title}`,
+        bottom: [
+          createNetUnrealizedPnlBaseMetric(tree),
+          ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
+          ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+          priceLine({ ctx, unit: Unit.usd }),
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * Grouped unrealized section for AgeRange cohorts (no nupl via RelativePattern2)
+ * @param {PartialContext} ctx
+ * @param {readonly CohortAgeRange[]} list
+ * @param {string} title
+ * @returns {PartialOptionsGroup}
+ */
+function createGroupedUnrealizedSectionAgeRange(ctx, list, title) {
+  return {
+    name: "Unrealized",
+    tree: [
+      ...createGroupedUnrealizedBaseCharts(list, title),
+      {
+        name: "Net pnl",
+        title: `Net Unrealized P&L ${title}`,
+        bottom: [
+          ...list.flatMap(({ color, name, tree }) => [
+            baseline({
+              metric: tree.unrealized.netUnrealizedPnl,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
+            baseline({
+              metric: tree.relative.netUnrealizedPnlRelToOwnMarketCap,
+              name,
+              color,
+              unit: Unit.pctOwnMcap,
+            }),
+            baseline({
+              metric: tree.relative.netUnrealizedPnlRelToOwnTotalUnrealizedPnl,
+              name,
+              color,
+              unit: Unit.pctOwnPnl,
+            }),
+          ]),
+          priceLine({ ctx, unit: Unit.usd }),
+          priceLine({ ctx, unit: Unit.pctOwnMcap }),
+          priceLine({ ctx, unit: Unit.pctOwnPnl }),
         ],
       },
     ],

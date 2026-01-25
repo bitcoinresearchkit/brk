@@ -106,8 +106,8 @@ function initFrameSelectors() {
 }
 initFrameSelectors();
 
-const brk = new BrkClient("https://next.bitview.space");
-// const brk = new BrkClient("/");
+// const brk = new BrkClient("https://next.bitview.space");
+const brk = new BrkClient("/");
 
 console.log(`VERSION = ${brk.VERSION}`);
 
