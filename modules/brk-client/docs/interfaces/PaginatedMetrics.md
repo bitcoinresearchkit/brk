@@ -6,7 +6,7 @@
 
 # Interface: PaginatedMetrics
 
-Defined in: [Developer/brk/modules/brk-client/index.js:486](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L486)
+Defined in: [Developer/brk/modules/brk-client/index.js:486](https://github.com/bitcoinresearchkit/brk/blob/79f7e89740d35d2bbc56505cbbcf3e6a4fe4a0f3/modules/brk-client/index.js#L486)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:486](https://github.com/b
 
 > **currentPage**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:487](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L487)
+Defined in: [Developer/brk/modules/brk-client/index.js:487](https://github.com/bitcoinresearchkit/brk/blob/79f7e89740d35d2bbc56505cbbcf3e6a4fe4a0f3/modules/brk-client/index.js#L487)
 
 Current page number (0-indexed)
 
@@ -24,7 +24,7 @@ Current page number (0-indexed)
 
 > **maxPage**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:488](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L488)
+Defined in: [Developer/brk/modules/brk-client/index.js:488](https://github.com/bitcoinresearchkit/brk/blob/79f7e89740d35d2bbc56505cbbcf3e6a4fe4a0f3/modules/brk-client/index.js#L488)
 
 Maximum valid page index (0-indexed)
 
@@ -34,6 +34,6 @@ Maximum valid page index (0-indexed)
 
 > **metrics**: `string`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:489](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L489)
+Defined in: [Developer/brk/modules/brk-client/index.js:489](https://github.com/bitcoinresearchkit/brk/blob/79f7e89740d35d2bbc56505cbbcf3e6a4fe4a0f3/modules/brk-client/index.js#L489)
 
 List of metric names (max 1000 per page)

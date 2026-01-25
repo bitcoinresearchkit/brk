@@ -6,7 +6,7 @@
 
 # Interface: Pagination
 
-Defined in: [Developer/brk/modules/brk-client/index.js:494](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L494)
+Defined in: [Developer/brk/modules/brk-client/index.js:494](https://github.com/bitcoinresearchkit/brk/blob/79f7e89740d35d2bbc56505cbbcf3e6a4fe4a0f3/modules/brk-client/index.js#L494)
 
 ## Properties
 
@@ -14,6 +14,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:494](https://github.com/b
 
 > `optional` **page**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:495](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L495)
+Defined in: [Developer/brk/modules/brk-client/index.js:495](https://github.com/bitcoinresearchkit/brk/blob/79f7e89740d35d2bbc56505cbbcf3e6a4fe4a0f3/modules/brk-client/index.js#L495)
 
 Pagination index

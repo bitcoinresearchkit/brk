@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Price
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4073](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L4073)
+Defined in: [Developer/brk/modules/brk-client/index.js:4073](https://github.com/bitcoinresearchkit/brk/blob/79f7e89740d35d2bbc56505cbbcf3e6a4fe4a0f3/modules/brk-client/index.js#L4073)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4073](https://github.com/
 
 > **cents**: [`MetricsTree_Price_Cents`](MetricsTree_Price_Cents.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4074](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L4074)
+Defined in: [Developer/brk/modules/brk-client/index.js:4074](https://github.com/bitcoinresearchkit/brk/blob/79f7e89740d35d2bbc56505cbbcf3e6a4fe4a0f3/modules/brk-client/index.js#L4074)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4074](https://github.com/
 
 > **oracle**: [`MetricsTree_Price_Oracle`](MetricsTree_Price_Oracle.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4075](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L4075)
+Defined in: [Developer/brk/modules/brk-client/index.js:4075](https://github.com/bitcoinresearchkit/brk/blob/79f7e89740d35d2bbc56505cbbcf3e6a4fe4a0f3/modules/brk-client/index.js#L4075)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4075](https://github.com/
 
 > **sats**: [`MetricsTree_Price_Sats`](MetricsTree_Price_Sats.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4076](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L4076)
+Defined in: [Developer/brk/modules/brk-client/index.js:4076](https://github.com/bitcoinresearchkit/brk/blob/79f7e89740d35d2bbc56505cbbcf3e6a4fe4a0f3/modules/brk-client/index.js#L4076)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4076](https://github.com/
 
 > **usd**: [`SatsPattern`](SatsPattern.md)\<[`OHLCDollars`](OHLCDollars.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4077](https://github.com/bitcoinresearchkit/brk/blob/1e76e137abea038ab55fde16571abe1d31a780c4/modules/brk-client/index.js#L4077)
+Defined in: [Developer/brk/modules/brk-client/index.js:4077](https://github.com/bitcoinresearchkit/brk/blob/79f7e89740d35d2bbc56505cbbcf3e6a4fe4a0f3/modules/brk-client/index.js#L4077)
