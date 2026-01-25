@@ -24,10 +24,20 @@ const entries = (obj) =>
   );
 
 /** @type {readonly AddressableType[]} */
-const ADDRESSABLE_TYPES = ["p2pk65", "p2pk33", "p2pkh", "p2sh", "p2wpkh", "p2wsh", "p2tr", "p2a"];
+const ADDRESSABLE_TYPES = [
+  "p2pk65",
+  "p2pk33",
+  "p2pkh",
+  "p2sh",
+  "p2wpkh",
+  "p2wsh",
+  "p2tr",
+  "p2a",
+];
 
 /** @type {(key: SpendableType) => key is AddressableType} */
-const isAddressable = (key) => ADDRESSABLE_TYPES.includes(/** @type {any} */ (key));
+const isAddressable = (key) =>
+  ADDRESSABLE_TYPES.includes(/** @type {any} */ (key));
 
 /**
  * Build all cohort data from brk tree
@@ -51,8 +61,7 @@ export function buildCohortData(colors, brk) {
     YEAR_NAMES,
   } = brk;
 
-  // Base cohort representing "all" - CohortAll (adjustedSopr + percentiles but no RelToMarketCap)
-  /** @type {CohortAll} */
+  // Base cohort representing "all"
   const cohortAll = {
     name: "",
     title: "",
@@ -61,9 +70,8 @@ export function buildCohortData(colors, brk) {
     addrCount: addrCount.all,
   };
 
-  // Term cohorts - split because short is CohortFull, long is CohortWithPercentiles
+  // Term cohorts
   const shortNames = TERM_NAMES.short;
-  /** @type {CohortFull} */
   const termShort = {
     name: shortNames.short,
     title: shortNames.long,
@@ -79,43 +87,40 @@ export function buildCohortData(colors, brk) {
     tree: utxoCohorts.term.long,
   };
 
-  // Max age cohorts (up to X time) - CohortWithAdjusted (adjustedSopr only)
-  /** @type {readonly CohortWithAdjusted[]} */
+  // Max age cohorts (up to X time)
   const upToDate = entries(utxoCohorts.maxAge).map(([key, tree]) => {
     const names = MAX_AGE_NAMES[key];
     return {
       name: names.short,
-      title: names.long,
+      title: `UTXOs ${names.long}`,
       color: colors[maxAgeColors[key]],
       tree,
     };
   });
 
-  // Min age cohorts (from X time) - CohortBasicWithMarketCap (has RelToMarketCap)
-  /** @type {readonly CohortBasicWithMarketCap[]} */
+  // Min age cohorts (from X time)
   const fromDate = entries(utxoCohorts.minAge).map(([key, tree]) => {
     const names = MIN_AGE_NAMES[key];
     return {
       name: names.short,
-      title: names.long,
+      title: `UTXOs ${names.long}`,
       color: colors[minAgeColors[key]],
       tree,
     };
   });
 
-  // Age range cohorts - CohortAgeRange (no nupl)
+  // Age range cohorts
   const dateRange = entries(utxoCohorts.ageRange).map(([key, tree]) => {
     const names = AGE_RANGE_NAMES[key];
     return {
       name: names.short,
-      title: names.long,
+      title: `UTXOs ${names.long}`,
       color: colors[ageRangeColors[key]],
       tree,
     };
   });
 
-  // Epoch cohorts - CohortBasicWithoutMarketCap (no RelToMarketCap)
-  /** @type {readonly CohortBasicWithoutMarketCap[]} */
+  // Epoch cohorts
   const epoch = entries(utxoCohorts.epoch).map(([key, tree]) => {
     const names = EPOCH_NAMES[key];
     return {
@@ -126,66 +131,61 @@ export function buildCohortData(colors, brk) {
     };
   });
 
-  // UTXOs above amount - CohortBasicWithMarketCap (has RelToMarketCap)
-  /** @type {readonly CohortBasicWithMarketCap[]} */
+  // UTXOs above amount
   const utxosAboveAmount = entries(utxoCohorts.geAmount).map(([key, tree]) => {
     const names = GE_AMOUNT_NAMES[key];
     return {
       name: names.short,
-      title: names.long,
+      title: `UTXOs ${names.long}`,
       color: colors[geAmountColors[key]],
       tree,
     };
   });
 
   // Addresses above amount
-  /** @type {readonly AddressCohortObject[]} */
   const addressesAboveAmount = entries(addressCohorts.geAmount).map(
     ([key, tree]) => {
       const names = GE_AMOUNT_NAMES[key];
       return {
         name: names.short,
-        title: names.long,
+        title: `Addresses ${names.long}`,
         color: colors[geAmountColors[key]],
         tree,
       };
     },
   );
 
-  // UTXOs under amount - CohortBasicWithMarketCap (has RelToMarketCap)
-  /** @type {readonly CohortBasicWithMarketCap[]} */
+  // UTXOs under amount
   const utxosUnderAmount = entries(utxoCohorts.ltAmount).map(([key, tree]) => {
     const names = LT_AMOUNT_NAMES[key];
     return {
       name: names.short,
-      title: names.long,
+      title: `UTXOs ${names.long}`,
       color: colors[ltAmountColors[key]],
       tree,
     };
   });
 
   // Addresses under amount
-  /** @type {readonly AddressCohortObject[]} */
   const addressesUnderAmount = entries(addressCohorts.ltAmount).map(
     ([key, tree]) => {
       const names = LT_AMOUNT_NAMES[key];
       return {
         name: names.short,
-        title: names.long,
+        title: `Addresses ${names.long}`,
         color: colors[ltAmountColors[key]],
         tree,
       };
     },
   );
 
-  // UTXOs amount ranges - CohortBasicWithoutMarketCap (no RelToMarketCap)
-  /** @type {readonly CohortBasicWithoutMarketCap[]} */
+  // UTXOs amount ranges
   const utxosAmountRanges = entries(utxoCohorts.amountRange).map(
     ([key, tree]) => {
       const names = AMOUNT_RANGE_NAMES[key];
       return {
         name: names.short,
-        title: names.long,
+        title: `UTXOs ${names.long}`,
         color: colors[amountRangeColors[key]],
         tree,
       };
@@ -193,13 +193,12 @@ export function buildCohortData(colors, brk) {
   );
 
   // Addresses amount ranges
-  /** @type {readonly AddressCohortObject[]} */
   const addressesAmountRanges = entries(addressCohorts.amountRange).map(
     ([key, tree]) => {
       const names = AMOUNT_RANGE_NAMES[key];
       return {
         name: names.short,
-        title: names.long,
+        title: `Addresses ${names.long}`,
         color: colors[amountRangeColors[key]],
         tree,
       };
@@ -207,33 +206,30 @@ export function buildCohortData(colors, brk) {
   );
 
   // Spendable type cohorts - split by addressability
-  /** @type {readonly CohortAddress[]} */
   const typeAddressable = ADDRESSABLE_TYPES.map((key) => {
     const names = SPENDABLE_TYPE_NAMES[key];
     return {
       name: names.short,
-      title: names.long,
+      title: names.short,
       color: colors[spendableTypeColors[key]],
       tree: utxoCohorts.type[key],
       addrCount: addrCount[key],
     };
   });
 
-  /** @type {readonly CohortBasicWithoutMarketCap[]} */
   const typeOther = entries(utxoCohorts.type)
     .filter(([key]) => !isAddressable(key))
     .map(([key, tree]) => {
       const names = SPENDABLE_TYPE_NAMES[key];
       return {
         name: names.short,
-        title: names.long,
+        title: names.short,
         color: colors[spendableTypeColors[key]],
         tree,
       };
     });
 
-  // Year cohorts - CohortBasicWithoutMarketCap (no RelToMarketCap)
-  /** @type {readonly CohortBasicWithoutMarketCap[]} */
+  // Year cohorts
   const year = entries(utxoCohorts.year).map(([key, tree]) => {
     const names = YEAR_NAMES[key];
     return {

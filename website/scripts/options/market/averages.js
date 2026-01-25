@@ -2,7 +2,7 @@
 
 import { Unit } from "../../utils/units.js";
 import { line } from "../series.js";
-import { createRatioChart, createZScoresFolder } from "../shared.js";
+import { createRatioChart, createZScoresFolder, formatCohortTitle } from "../shared.js";
 import { periodIdToName } from "./utils.js";
 
 /**
@@ -89,7 +89,7 @@ export function createPriceWithRatioOptions(
       title,
       top: [line({ metric: priceMetric, name: legend, color, unit: Unit.usd })],
     },
-    createRatioChart(ctx, { title, price: priceMetric, ratio, color }),
+    createRatioChart(ctx, { title: formatCohortTitle(title), price: priceMetric, ratio, color }),
     createZScoresFolder(ctx, {
       title,
       legend,

@@ -47,83 +47,104 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
   const { colors } = ctx;
   const dcaClasses = buildDcaClasses(colors, dca);
 
+  /**
+   * @param {string} id
+   * @param {ShortPeriodKey} key
+   */
+  const createPeriodTree = (id, key) => {
+    const name = periodIdToName(id, true);
+    return {
+      name,
+      tree: [
+        {
+          name: "Cost basis",
+          title: `${name} Cost Basis`,
+          top: [
+            line({ metric: dca.periodAveragePrice[key], name: "DCA", color: colors.green, unit: Unit.usd }),
+            line({ metric: lookback[key], name: "Lump sum", color: colors.orange, unit: Unit.usd }),
+          ],
+        },
+        {
+          name: "Returns",
+          title: `${name} Returns`,
+          bottom: [
+            baseline({ metric: dca.periodReturns[key], name: "DCA", unit: Unit.percentage }),
+            baseline({ metric: returns.priceReturns[key], name: "Lump sum", color: [colors.cyan, colors.orange], unit: Unit.percentage }),
+            priceLine({ ctx, unit: Unit.percentage }),
+          ],
+        },
+        {
+          name: "Stack",
+          title: `${name} Stack`,
+          bottom: [
+            ...satsBtcUsd(dca.periodStack[key], "DCA", colors.green),
+            ...satsBtcUsd(dca.periodLumpSumStack[key], "Lump sum", colors.orange),
+          ],
+        },
+      ],
+    };
+  };
+
+  /**
+   * @param {string} id
+   * @param {LongPeriodKey} key
+   */
+  const createPeriodTreeWithCagr = (id, key) => {
+    const name = periodIdToName(id, true);
+    return {
+      name,
+      tree: [
+        {
+          name: "Cost basis",
+          title: `${name} Cost Basis`,
+          top: [
+            line({ metric: dca.periodAveragePrice[key], name: "DCA", color: colors.green, unit: Unit.usd }),
+            line({ metric: lookback[key], name: "Lump sum", color: colors.orange, unit: Unit.usd }),
+          ],
+        },
+        {
+          name: "Returns",
+          title: `${name} Returns`,
+          bottom: [
+            baseline({ metric: dca.periodReturns[key], name: "DCA", unit: Unit.percentage }),
+            baseline({ metric: returns.priceReturns[key], name: "Lump sum", color: [colors.cyan, colors.orange], unit: Unit.percentage }),
+            line({ metric: dca.periodCagr[key], name: "DCA CAGR", color: colors.purple, unit: Unit.percentage, defaultActive: false }),
+            line({ metric: returns.cagr[key], name: "Lump sum CAGR", color: colors.indigo, unit: Unit.percentage, defaultActive: false }),
+            priceLine({ ctx, unit: Unit.percentage }),
+          ],
+        },
+        {
+          name: "Stack",
+          title: `${name} Stack`,
+          bottom: [
+            ...satsBtcUsd(dca.periodStack[key], "DCA", colors.green),
+            ...satsBtcUsd(dca.periodLumpSumStack[key], "Lump sum", colors.orange),
+          ],
+        },
+      ],
+    };
+  };
+
   return {
     name: "Investing",
     tree: [
       // DCA vs Lump sum
       {
         name: "DCA vs Lump sum",
-        tree: /** @type {const} */ ([
-          ["1w", "_1w"],
-          ["1m", "_1m"],
-          ["3m", "_3m"],
-          ["6m", "_6m"],
-          ["1y", "_1y"],
-          ["2y", "_2y"],
-          ["3y", "_3y"],
-          ["4y", "_4y"],
-          ["5y", "_5y"],
-          ["6y", "_6y"],
-          ["8y", "_8y"],
-          ["10y", "_10y"],
-        ]).map(([id, key]) => {
-          const name = periodIdToName(id, true);
-          const priceAgo = lookback[key];
-          const priceReturns = returns.priceReturns[key];
-          const dcaCostBasis = dca.periodAveragePrice[key];
-          const dcaReturns = dca.periodReturns[key];
-          const dcaStack = dca.periodStack[key];
-          const lumpSumStack = dca.periodLumpSumStack[key];
-          return {
-            name,
-            tree: [
-              {
-                name: "Cost basis",
-                title: `${name} Cost Basis`,
-                top: [
-                  line({
-                    metric: dcaCostBasis,
-                    name: "DCA",
-                    color: colors.green,
-                    unit: Unit.usd,
-                  }),
-                  line({
-                    metric: priceAgo,
-                    name: "Lump sum",
-                    color: colors.orange,
-                    unit: Unit.usd,
-                  }),
-                ],
-              },
-              {
-                name: "Returns",
-                title: `${name} Returns`,
-                bottom: [
-                  baseline({
-                    metric: dcaReturns,
-                    name: "DCA",
-                    unit: Unit.percentage,
-                  }),
-                  baseline({
-                    metric: priceReturns,
-                    name: "Lump sum",
-                    color: [colors.cyan, colors.orange],
-                    unit: Unit.percentage,
-                  }),
-                  priceLine({ ctx, unit: Unit.percentage }),
-                ],
-              },
-              {
-                name: "Stack",
-                title: `${name} Stack`,
-                bottom: [
-                  ...satsBtcUsd(dcaStack, "DCA", colors.green),
-                  ...satsBtcUsd(lumpSumStack, "Lump sum", colors.orange),
-                ],
-              },
-            ],
-          };
-        }),
+        tree: [
+          createPeriodTree("1w", "_1w"),
+          createPeriodTree("1m", "_1m"),
+          createPeriodTree("3m", "_3m"),
+          createPeriodTree("6m", "_6m"),
+          createPeriodTree("1y", "_1y"),
+          createPeriodTreeWithCagr("2y", "_2y"),
+          createPeriodTreeWithCagr("3y", "_3y"),
+          createPeriodTreeWithCagr("4y", "_4y"),
+          createPeriodTreeWithCagr("5y", "_5y"),
+          createPeriodTreeWithCagr("6y", "_6y"),
+          createPeriodTreeWithCagr("8y", "_8y"),
+          createPeriodTreeWithCagr("10y", "_10y"),
+        ],
       },
 
       // DCA classes

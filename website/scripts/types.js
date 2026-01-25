@@ -14,7 +14,7 @@
  *
  * @import { WebSockets } from "./utils/ws.js"
  *
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedBaselineSeriesBlueprint, FetchedHistogramSeriesBlueprint, PartialContext, PatternAll, PatternFull, PatternWithAdjusted, PatternWithPercentiles, PatternBasic, PatternBasicWithMarketCap, PatternBasicWithoutMarketCap, CohortAll, CohortFull, CohortWithAdjusted, CohortWithPercentiles, CohortBasic, CohortBasicWithMarketCap, CohortBasicWithoutMarketCap, CohortAddress, CohortLongTerm, CohortAgeRange, CohortGroupFull, CohortGroupWithAdjusted, CohortGroupWithPercentiles, CohortGroupLongTerm, CohortGroupAgeRange, CohortGroupBasic, CohortGroupBasicWithMarketCap, CohortGroupBasicWithoutMarketCap, UtxoCohortGroupObject, AddressCohortGroupObject, FetchedDotsSeriesBlueprint, FetchedCandlestickSeriesBlueprint } from "./options/partial.js"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedBaselineSeriesBlueprint, FetchedHistogramSeriesBlueprint, PartialContext, PatternAll, PatternFull, PatternWithAdjusted, PatternWithPercentiles, PatternBasic, PatternBasicWithMarketCap, PatternBasicWithoutMarketCap, CohortAll, CohortFull, CohortWithAdjusted, CohortWithPercentiles, CohortBasic, CohortBasicWithMarketCap, CohortBasicWithoutMarketCap, CohortAddress, CohortLongTerm, CohortAgeRange, CohortGroupFull, CohortGroupWithAdjusted, CohortGroupWithPercentiles, CohortGroupLongTerm, CohortGroupAgeRange, CohortGroupBasic, CohortGroupBasicWithMarketCap, CohortGroupBasicWithoutMarketCap, CohortGroupAddress, UtxoCohortGroupObject, AddressCohortGroupObject, FetchedDotsSeriesBlueprint, FetchedCandlestickSeriesBlueprint } from "./options/partial.js"
  *
  *
  * @import { UnitObject as Unit } from "./utils/units.js"
@@ -111,6 +111,12 @@
  * @typedef {Brk.MetricsTree_Market} Market
  * @typedef {Brk.MetricsTree_Market_MovingAverage} MarketMovingAverage
  * @typedef {Brk.MetricsTree_Market_Dca} MarketDca
+ * @typedef {Brk.PeriodCagrPattern} PeriodCagrPattern
+ * @typedef {Brk.BitcoinPattern | Brk.DollarsPattern<any>} FullnessPatternWithSumCumulative
+ *
+ * DCA period keys
+ * @typedef {"_1w" | "_1m" | "_3m" | "_6m" | "_1y"} ShortPeriodKey
+ * @typedef {keyof PeriodCagrPattern} LongPeriodKey
  *
  * Pattern unions by cohort type
  * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} UtxoCohortPattern
@@ -122,6 +128,9 @@
  * @typedef {OwnRelativePattern | FullRelativePattern} RelativeWithOwnMarketCap
  * @typedef {OwnRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithOwnPnl
  * @typedef {GlobalRelativePattern | FullRelativePattern} RelativeWithNupl
+ *
+ * Realized pattern capability types (RealizedPattern2 and RealizedPattern3 have extra metrics)
+ * @typedef {Brk.RealizedPattern2 | Brk.RealizedPattern3} RealizedWithExtras
  *
  * Capability-based pattern groupings (patterns that have specific properties)
  * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} PatternWithRealizedPrice
@@ -138,6 +147,23 @@
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithCostBasis }} CohortWithCostBasis
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithActivity }} CohortWithActivity
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithCostBasisPercentiles }} CohortWithCostBasisPercentiles
+ *
+ * Cohorts with nupl + percentiles (CohortFull and CohortLongTerm both have nupl and percentiles)
+ * @typedef {CohortFull | CohortLongTerm} CohortWithNuplPercentiles
+ * @typedef {{ name: string, title: string, list: readonly CohortWithNuplPercentiles[] }} CohortGroupWithNuplPercentiles
+ *
+ * Cohorts with RealizedWithExtras (realizedCapRelToOwnMarketCap + realizedProfitToLossRatio)
+ * @typedef {CohortAll | CohortFull | CohortWithPercentiles} CohortWithRealizedExtras
+ *
+ * Cohorts with circulating supply relative metrics (supplyRelToCirculatingSupply etc.)
+ * These have GlobalRelativePattern or FullRelativePattern (same as RelativeWithMarketCap/RelativeWithNupl)
+ * @typedef {CohortFull | CohortLongTerm | CohortWithAdjusted | CohortBasicWithMarketCap} UtxoCohortWithCirculatingSupplyRelative
+ *
+ * Address cohorts with circulating supply relative metrics (all address amount cohorts have these)
+ * @typedef {AddressCohortObject} AddressCohortWithCirculatingSupplyRelative
+ *
+ * All cohorts with circulating supply relative metrics
+ * @typedef {UtxoCohortWithCirculatingSupplyRelative | AddressCohortWithCirculatingSupplyRelative} CohortWithCirculatingSupplyRelative
  *
  * Generic tree node type for walking
  * @typedef {AnyMetricPattern | Record<string, unknown>} TreeNode

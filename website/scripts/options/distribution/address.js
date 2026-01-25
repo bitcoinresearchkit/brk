@@ -7,11 +7,10 @@
 import { Unit } from "../../utils/units.js";
 import { priceLine } from "../constants.js";
 import { line, baseline } from "../series.js";
+import { formatCohortTitle } from "../shared.js";
 import {
   createSingleSupplySeries,
-  createGroupedSupplyTotalSeries,
-  createGroupedSupplyInProfitSeries,
-  createGroupedSupplyInLossSeries,
+  createGroupedSupplySection,
   createUtxoCountSeries,
   createAddressCountSeries,
   createRealizedPriceSeries,
@@ -25,6 +24,8 @@ import {
   createGroupedSentSatsSeries,
   createGroupedSentBitcoinSeries,
   createGroupedSentDollarsSeries,
+  groupedSupplyRelativeGenerators,
+  createSingleSupplyRelativeOptions,
 } from "./shared.js";
 
 /**
@@ -39,7 +40,7 @@ export function createAddressCohortFolder(ctx, args) {
   const useGroupName = "list" in args;
   const isSingle = !("list" in args);
 
-  const title = args.title ? `${useGroupName ? "by" : "of"} ${args.title}` : "";
+  const title = formatCohortTitle(args.title);
 
   return {
     name: args.name || "all",
@@ -48,44 +49,26 @@ export function createAddressCohortFolder(ctx, args) {
       isSingle
         ? {
             name: "supply",
-            title: `Supply ${title}`,
+            title: title("Supply"),
             bottom: createSingleSupplySeries(
               ctx,
               /** @type {AddressCohortObject} */ (args),
+              createSingleSupplyRelativeOptions(ctx, /** @type {AddressCohortObject} */ (args)),
             ),
           }
-        : {
-            name: "supply",
-            tree: [
-              {
-                name: "total",
-                title: `Supply ${title}`,
-                bottom: createGroupedSupplyTotalSeries(list),
-              },
-              {
-                name: "in profit",
-                title: `Supply In Profit ${title}`,
-                bottom: createGroupedSupplyInProfitSeries(list),
-              },
-              {
-                name: "in loss",
-                title: `Supply In Loss ${title}`,
-                bottom: createGroupedSupplyInLossSeries(list),
-              },
-            ],
-          },
+        : createGroupedSupplySection(list, title, groupedSupplyRelativeGenerators),
 
       // UTXO count
       {
         name: "utxo count",
-        title: `UTXO Count ${title}`,
+        title: title("UTXO Count"),
         bottom: createUtxoCountSeries(list, useGroupName),
       },
 
       // Address count (ADDRESS COHORTS ONLY - fully type safe!)
       {
         name: "address count",
-        title: `Address Count ${title}`,
+        title: title("Address Count"),
         bottom: createAddressCountSeries(ctx, list, useGroupName),
       },
 
@@ -97,12 +80,12 @@ export function createAddressCohortFolder(ctx, args) {
             ? [
                 {
                   name: "Price",
-                  title: `Realized Price ${title}`,
+                  title: title("Realized Price"),
                   top: createRealizedPriceSeries(list),
                 },
                 {
                   name: "Ratio",
-                  title: `Realized Price Ratio ${title}`,
+                  title: title("Realized Price Ratio"),
                   bottom: createRealizedPriceRatioSeries(ctx, list),
                 },
               ]
@@ -112,8 +95,20 @@ export function createAddressCohortFolder(ctx, args) {
               )),
           {
             name: "capitalization",
-            title: `Realized Cap ${title}`,
+            title: title("Realized Cap"),
             bottom: createRealizedCapWithExtras(ctx, list, args, useGroupName),
+          },
+          {
+            name: "value",
+            title: title("Realized Value"),
+            bottom: list.map(({ color, name, tree }) =>
+              line({
+                metric: tree.realized.realizedValue,
+                name: useGroupName ? name : "Realized Value",
+                color,
+                unit: Unit.usd,
+              }),
+            ),
           },
           ...(!useGroupName
             ? createRealizedPnlSection(
@@ -140,7 +135,7 @@ export function createAddressCohortFolder(ctx, args) {
 /**
  * Create realized price options for single cohort
  * @param {AddressCohortObject} args
- * @param {string} title
+ * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
 function createRealizedPriceOptions(args, title) {
@@ -149,7 +144,7 @@ function createRealizedPriceOptions(args, title) {
   return [
     {
       name: "price",
-      title: `Realized Price ${title}`,
+      title: title("Realized Price"),
       top: [
         line({
           metric: tree.realized.realizedPrice,
@@ -199,7 +194,7 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
  * Create realized PnL section for single cohort
  * @param {PartialContext} ctx
  * @param {AddressCohortObject} args
- * @param {string} title
+ * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
 function createRealizedPnlSection(ctx, args, title) {
@@ -209,7 +204,7 @@ function createRealizedPnlSection(ctx, args, title) {
   return [
     {
       name: "pnl",
-      title: `Realized P&L ${title}`,
+      title: title("Realized P&L"),
       bottom: [
         line({
           metric: realized.realizedProfit.sum,
@@ -287,7 +282,7 @@ function createRealizedPnlSection(ctx, args, title) {
     },
     {
       name: "Net pnl",
-      title: `Net Realized P&L ${title}`,
+      title: title("Net Realized P&L"),
       bottom: [
         baseline({
           metric: realized.netRealizedPnl.sum,
@@ -345,7 +340,7 @@ function createRealizedPnlSection(ctx, args, title) {
     },
     {
       name: "sopr",
-      title: `SOPR ${title}`,
+      title: title("SOPR"),
       bottom: [
         baseline({
           metric: realized.sopr,
@@ -378,7 +373,7 @@ function createRealizedPnlSection(ctx, args, title) {
     },
     {
       name: "Sell Side Risk",
-      title: `Sell Side Risk Ratio ${title}`,
+      title: title("Sell Side Risk Ratio"),
       bottom: [
         line({
           metric: realized.sellSideRiskRatio,
@@ -404,7 +399,7 @@ function createRealizedPnlSection(ctx, args, title) {
     },
     {
       name: "value",
-      title: `Value Created & Destroyed ${title}`,
+      title: title("Value Created & Destroyed"),
       bottom: [
         line({
           metric: realized.valueCreated,
@@ -428,7 +423,7 @@ function createRealizedPnlSection(ctx, args, title) {
  * @param {PartialContext} ctx
  * @param {readonly AddressCohortObject[]} list
  * @param {boolean} useGroupName
- * @param {string} title
+ * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
 function createUnrealizedSection(ctx, list, useGroupName, title) {
@@ -440,7 +435,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
       tree: [
         {
           name: "profit",
-          title: `Unrealized Profit ${title}`,
+          title: title("Unrealized Profit"),
           bottom: list.flatMap(({ color, name, tree }) => [
             line({
               metric: tree.unrealized.unrealizedProfit,
@@ -452,7 +447,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
         },
         {
           name: "loss",
-          title: `Unrealized Loss ${title}`,
+          title: title("Unrealized Loss"),
           bottom: list.flatMap(({ color, name, tree }) => [
             line({
               metric: tree.unrealized.unrealizedLoss,
@@ -464,7 +459,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
         },
         {
           name: "total pnl",
-          title: `Total Unrealized P&L ${title}`,
+          title: title("Total Unrealized P&L"),
           bottom: list.flatMap(({ color, name, tree }) => [
             baseline({
               metric: tree.unrealized.totalUnrealizedPnl,
@@ -476,7 +471,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
         },
         {
           name: "negative loss",
-          title: `Negative Unrealized Loss ${title}`,
+          title: title("Negative Unrealized Loss"),
           bottom: list.flatMap(({ color, name, tree }) => [
             line({
               metric: tree.unrealized.negUnrealizedLoss,
@@ -491,7 +486,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
           tree: [
             {
               name: "nupl",
-              title: `NUPL (Rel to Market Cap) ${title}`,
+              title: title("NUPL (Rel to Market Cap)"),
               bottom: list.flatMap(({ color, name, tree }) => [
                 baseline({
                   metric: tree.relative.nupl,
@@ -504,7 +499,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
             },
             {
               name: "profit",
-              title: `Unrealized Profit (% of Market Cap) ${title}`,
+              title: title("Unrealized Profit (% of Market Cap)"),
               bottom: list.flatMap(({ color, name, tree }) => [
                 line({
                   metric: tree.relative.unrealizedProfitRelToMarketCap,
@@ -516,7 +511,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
             },
             {
               name: "loss",
-              title: `Unrealized Loss (% of Market Cap) ${title}`,
+              title: title("Unrealized Loss (% of Market Cap)"),
               bottom: list.flatMap(({ color, name, tree }) => [
                 line({
                   metric: tree.relative.unrealizedLossRelToMarketCap,
@@ -528,7 +523,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
             },
             {
               name: "net pnl",
-              title: `Net Unrealized P&L (% of Market Cap) ${title}`,
+              title: title("Net Unrealized P&L (% of Market Cap)"),
               bottom: list.flatMap(({ color, name, tree }) => [
                 baseline({
                   metric: tree.relative.netUnrealizedPnlRelToMarketCap,
@@ -540,7 +535,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
             },
             {
               name: "negative loss",
-              title: `Negative Unrealized Loss (% of Market Cap) ${title}`,
+              title: title("Negative Unrealized Loss (% of Market Cap)"),
               bottom: list.flatMap(({ color, name, tree }) => [
                 line({
                   metric: tree.relative.negUnrealizedLossRelToMarketCap,
@@ -554,7 +549,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
         },
         {
           name: "nupl",
-          title: `Net Unrealized P&L ${title}`,
+          title: title("Net Unrealized P&L"),
           bottom: list.flatMap(({ color, name, tree }) => [
             baseline({
               metric: tree.unrealized.netUnrealizedPnl,
@@ -577,7 +572,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
  * Create cost basis section (no percentiles for address cohorts)
  * @param {readonly AddressCohortObject[]} list
  * @param {boolean} useGroupName
- * @param {string} title
+ * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
 function createCostBasisSection(list, useGroupName, title) {
@@ -587,7 +582,7 @@ function createCostBasisSection(list, useGroupName, title) {
       tree: [
         {
           name: "min",
-          title: `Min Cost Basis ${title}`,
+          title: title("Min Cost Basis"),
           top: list.map(({ color, name, tree }) =>
             line({
               metric: tree.costBasis.min,
@@ -599,7 +594,7 @@ function createCostBasisSection(list, useGroupName, title) {
         },
         {
           name: "max",
-          title: `Max Cost Basis ${title}`,
+          title: title("Max Cost Basis"),
           top: list.map(({ color, name, tree }) =>
             line({
               metric: tree.costBasis.max,
@@ -617,7 +612,7 @@ function createCostBasisSection(list, useGroupName, title) {
 /**
  * Create activity section
  * @param {AddressCohortObject | AddressCohortGroupObject} args
- * @param {string} title
+ * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
 function createActivitySection(args, title) {
@@ -633,12 +628,12 @@ function createActivitySection(args, title) {
         tree: [
           {
             name: "Coins Destroyed",
-            title: `Coins Destroyed ${title}`,
+            title: title("Coins Destroyed"),
             bottom: createSingleCoinsDestroyedSeries(cohort),
           },
           {
             name: "Sent",
-            title: `Sent ${title}`,
+            title: title("Sent"),
             bottom: createSingleSentSeries(cohort),
           },
         ],
@@ -653,22 +648,22 @@ function createActivitySection(args, title) {
       tree: [
         {
           name: "coinblocks destroyed",
-          title: `Coinblocks Destroyed ${title}`,
+          title: title("Coinblocks Destroyed"),
           bottom: createGroupedCoinblocksDestroyedSeries(list),
         },
         {
           name: "coindays destroyed",
-          title: `Coindays Destroyed ${title}`,
+          title: title("Coindays Destroyed"),
           bottom: createGroupedCoindaysDestroyedSeries(list),
         },
         {
           name: "satblocks destroyed",
-          title: `Satblocks Destroyed ${title}`,
+          title: title("Satblocks Destroyed"),
           bottom: createGroupedSatblocksDestroyedSeries(list),
         },
         {
           name: "satdays destroyed",
-          title: `Satdays Destroyed ${title}`,
+          title: title("Satdays Destroyed"),
           bottom: createGroupedSatdaysDestroyedSeries(list),
         },
         {
@@ -676,17 +671,17 @@ function createActivitySection(args, title) {
           tree: [
             {
               name: "sats",
-              title: `Sent (Sats) ${title}`,
+              title: title("Sent (Sats)"),
               bottom: createGroupedSentSatsSeries(list),
             },
             {
               name: "bitcoin",
-              title: `Sent (BTC) ${title}`,
+              title: title("Sent (BTC)"),
               bottom: createGroupedSentBitcoinSeries(list),
             },
             {
               name: "dollars",
-              title: `Sent ($) ${title}`,
+              title: title("Sent ($)"),
               bottom: createGroupedSentDollarsSeries(list),
             },
           ],

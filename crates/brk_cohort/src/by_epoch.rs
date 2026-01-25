@@ -25,11 +25,11 @@ pub const EPOCH_FILTERS: ByEpoch<Filter> = ByEpoch {
 
 /// Epoch names
 pub const EPOCH_NAMES: ByEpoch<CohortName> = ByEpoch {
-    _0: CohortName::new("epoch_0", "Epoch 0", "Epoch 0"),
-    _1: CohortName::new("epoch_1", "Epoch 1", "Epoch 1"),
-    _2: CohortName::new("epoch_2", "Epoch 2", "Epoch 2"),
-    _3: CohortName::new("epoch_3", "Epoch 3", "Epoch 3"),
-    _4: CohortName::new("epoch_4", "Epoch 4", "Epoch 4"),
+    _0: CohortName::new("epoch_0", "0", "Epoch 0"),
+    _1: CohortName::new("epoch_1", "1", "Epoch 1"),
+    _2: CohortName::new("epoch_2", "2", "Epoch 2"),
+    _3: CohortName::new("epoch_3", "3", "Epoch 3"),
+    _4: CohortName::new("epoch_4", "4", "Epoch 4"),
 };
 
 #[derive(Default, Clone, Traversable, Serialize)]

@@ -15,9 +15,8 @@ html,
   -webkit-text-size-adjust: 100%;
   tab-size: 4;
   font-family:
-    "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Lilex", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
-  font-feature-settings: "ss03";
   -webkit-tap-highlight-color: transparent;
 }
 

@@ -289,6 +289,11 @@
  * @property {readonly AddressCohortObject[]} list
  *
  * @typedef {UtxoCohortGroupObject | AddressCohortGroupObject} CohortGroupObject
+ *
+ * @typedef {Object} CohortGroupAddress
+ * @property {string} name
+ * @property {string} title
+ * @property {readonly CohortAddress[]} list
  */
 
 // Re-export for type consumers

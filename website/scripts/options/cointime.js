@@ -4,6 +4,7 @@ import {
   satsBtcUsd,
   createRatioChart,
   createZScoresFolder,
+  formatCohortTitle,
 } from "./shared.js";
 
 /**
@@ -27,7 +28,7 @@ function createCointimePriceWithRatioOptions(
       title,
       top: [line({ metric: price, name: legend, color, unit: Unit.usd })],
     },
-    createRatioChart(ctx, { title, price, ratio, color }),
+    createRatioChart(ctx, { title: formatCohortTitle(title), price, ratio, color }),
     createZScoresFolder(ctx, { title, legend, price, ratio, color }),
   ];
 }
@@ -40,7 +41,15 @@ function createCointimePriceWithRatioOptions(
 export function createCointimeSection(ctx) {
   const { colors, brk } = ctx;
   const { cointime, distribution, supply } = brk.metrics;
-  const { pricing, cap, activity, supply: cointimeSupply, adjusted, reserveRisk, value } = cointime;
+  const {
+    pricing,
+    cap,
+    activity,
+    supply: cointimeSupply,
+    adjusted,
+    reserveRisk,
+    value,
+  } = cointime;
   const { all } = distribution.utxoCohorts;
 
   // Cointime prices data

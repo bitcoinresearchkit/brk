@@ -5,6 +5,14 @@ import { line, baseline } from "./series.js";
 import { priceLine, priceLines } from "./constants.js";
 
 /**
+ * Create a title formatter for chart titles
+ * @param {string} [cohortTitle]
+ * @returns {(metric: string) => string}
+ */
+export const formatCohortTitle = (cohortTitle) =>
+  (metric) => cohortTitle ? `${metric}: ${cohortTitle}` : metric;
+
+/**
  * Create sats/btc/usd line series from a pattern with .sats/.bitcoin/.dollars
  * @param {{ sats: AnyMetricPattern, bitcoin: AnyMetricPattern, dollars: AnyMetricPattern }} pattern
  * @param {string} name
@@ -144,7 +152,7 @@ export function ratioSmas(colors, ratio) {
  * Create ratio chart from ActivePriceRatioPattern
  * @param {PartialContext} ctx
  * @param {Object} args
- * @param {string} args.title
+ * @param {(metric: string) => string} args.title
  * @param {AnyMetricPattern} args.price - The price metric to show in top pane
  * @param {ActivePriceRatioPattern} args.ratio - The ratio pattern
  * @param {Color} args.color
@@ -156,7 +164,7 @@ export function createRatioChart(ctx, { title, price, ratio, color, name }) {
 
   return {
     name: name ?? "ratio",
-    title: name ? (title ? `${name} - ${title}` : name) : `${title} Ratio`,
+    title: title(name ?? "Ratio"),
     top: [
       line({ metric: price, name: "price", color, unit: Unit.usd }),
       ...percentileUsdMap(colors, ratio).map(({ name, prop, color }) =>

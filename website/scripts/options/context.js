@@ -1,7 +1,4 @@
 import {
-  fromBlockCount,
-  fromBitcoin,
-  fromBlockSize,
   fromSizePattern,
   fromFullnessPattern,
   fromDollarsPattern,
@@ -32,15 +29,6 @@ export function createContext({ brk }) {
     colors,
     brk,
 
-    /** @type {OmitFirstArg<typeof fromBlockCount>} */
-    fromBlockCount: (pattern, title, color) =>
-      fromBlockCount(colors, pattern, title, color),
-    /** @type {OmitFirstArg<typeof fromBitcoin>} */
-    fromBitcoin: (pattern, title, color) =>
-      fromBitcoin(colors, pattern, title, color),
-    /** @type {OmitFirstArg<typeof fromBlockSize>} */
-    fromBlockSize: (pattern, title, color) =>
-      fromBlockSize(colors, pattern, title, color),
     /** @type {OmitFirstArg<typeof fromSizePattern>} */
     fromSizePattern: (pattern, unit, title) =>
       fromSizePattern(colors, pattern, unit, title),

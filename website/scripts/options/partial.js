@@ -6,8 +6,7 @@ import {
   createCohortFolderAll,
   createCohortFolderFull,
   createCohortFolderWithAdjusted,
-  createCohortFolderWithPercentiles,
-  createCohortFolderLongTerm,
+  createCohortFolderWithNupl,
   createCohortFolderAgeRange,
   createCohortFolderBasicWithMarketCap,
   createCohortFolderBasicWithoutMarketCap,
@@ -99,19 +98,19 @@ export function createPartialOptions({ brk }) {
             // All UTXOs - CohortAll (adjustedSopr + percentiles but no RelToMarketCap)
             createCohortFolderAll(ctx, cohortAll),
 
-            // Terms (STH/LTH) - Short is Full, Long is LongTerm
+            // Terms (STH/LTH) - Short is Full, Long has nupl
             {
               name: "Terms",
               tree: [
-                // Compare folder uses WithPercentiles (common capabilities)
-                createCohortFolderWithPercentiles(ctx, {
+                // Compare folder - both have nupl + percentiles
+                createCohortFolderWithNupl(ctx, {
                   name: "Compare",
                   title: "Term",
                   list: [termShort, termLong],
                 }),
                 // Individual cohorts with their specific capabilities
                 createCohortFolderFull(ctx, termShort),
-                createCohortFolderLongTerm(ctx, termLong),
+                createCohortFolderWithNupl(ctx, termLong),
               ],
             },
 

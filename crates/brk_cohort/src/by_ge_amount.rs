@@ -24,19 +24,19 @@ pub const GE_AMOUNT_THRESHOLDS: ByGreatEqualAmount<Sats> = ByGreatEqualAmount {
 
 /// Greater-or-equal amount names
 pub const GE_AMOUNT_NAMES: ByGreatEqualAmount<CohortName> = ByGreatEqualAmount {
-    _1sat: CohortName::new("above_1sat", "1+ sats", "Above 1 Sat"),
-    _10sats: CohortName::new("above_10sats", "10+ sats", "Above 10 Sats"),
-    _100sats: CohortName::new("above_100sats", "100+ sats", "Above 100 Sats"),
-    _1k_sats: CohortName::new("above_1k_sats", "1k+ sats", "Above 1K Sats"),
-    _10k_sats: CohortName::new("above_10k_sats", "10k+ sats", "Above 10K Sats"),
-    _100k_sats: CohortName::new("above_100k_sats", "100k+ sats", "Above 100K Sats"),
-    _1m_sats: CohortName::new("above_1m_sats", "1M+ sats", "Above 1M Sats"),
-    _10m_sats: CohortName::new("above_10m_sats", "0.1+ BTC", "Above 0.1 BTC"),
-    _1btc: CohortName::new("above_1btc", "1+ BTC", "Above 1 BTC"),
-    _10btc: CohortName::new("above_10btc", "10+ BTC", "Above 10 BTC"),
-    _100btc: CohortName::new("above_100btc", "100+ BTC", "Above 100 BTC"),
-    _1k_btc: CohortName::new("above_1k_btc", "1k+ BTC", "Above 1K BTC"),
-    _10k_btc: CohortName::new("above_10k_btc", "10k+ BTC", "Above 10K BTC"),
+    _1sat: CohortName::new("over_1sat", "1+ sats", "Over 1 Sat"),
+    _10sats: CohortName::new("over_10sats", "10+ sats", "Over 10 Sats"),
+    _100sats: CohortName::new("over_100sats", "100+ sats", "Over 100 Sats"),
+    _1k_sats: CohortName::new("over_1k_sats", "1k+ sats", "Over 1K Sats"),
+    _10k_sats: CohortName::new("over_10k_sats", "10k+ sats", "Over 10K Sats"),
+    _100k_sats: CohortName::new("over_100k_sats", "100k+ sats", "Over 100K Sats"),
+    _1m_sats: CohortName::new("over_1m_sats", "1M+ sats", "Over 1M Sats"),
+    _10m_sats: CohortName::new("over_10m_sats", "0.1+ BTC", "Over 0.1 BTC"),
+    _1btc: CohortName::new("over_1btc", "1+ BTC", "Over 1 BTC"),
+    _10btc: CohortName::new("over_10btc", "10+ BTC", "Over 10 BTC"),
+    _100btc: CohortName::new("over_100btc", "100+ BTC", "Over 100 BTC"),
+    _1k_btc: CohortName::new("over_1k_btc", "1k+ BTC", "Over 1K BTC"),
+    _10k_btc: CohortName::new("over_10k_btc", "10k+ BTC", "Over 10K BTC"),
 };
 
 /// Greater-or-equal amount filters

@@ -1,7 +1,18 @@
 import { localhost } from "../utils/env.js";
+import { serdeChartableIndex } from "../utils/serde.js";
 
 /** @type {Map<AnyMetricPattern, string[]> | null} */
 export const unused = localhost ? new Map() : null;
+
+/**
+ * Check if a metric pattern has at least one chartable index
+ * @param {AnyMetricPattern} node
+ * @returns {boolean}
+ */
+function hasChartableIndex(node) {
+  const indexes = node.indexes();
+  return indexes.some((idx) => serdeChartableIndex.serialize(idx) !== null);
+}
 
 /**
  * @param {TreeNode | null | undefined} node
@@ -10,7 +21,9 @@ export const unused = localhost ? new Map() : null;
  */
 function walk(node, map, path) {
   if (node && "by" in node) {
-    map.set(/** @type {AnyMetricPattern} */ (node), path);
+    const metricNode = /** @type {AnyMetricPattern} */ (node);
+    if (!hasChartableIndex(metricNode)) return;
+    map.set(metricNode, path);
   } else if (node && typeof node === "object") {
     for (const [key, value] of Object.entries(node)) {
       const kn = key.toLowerCase();
@@ -19,12 +32,16 @@ function walk(node, map, path) {
         kn === "time" ||
         kn === "height" ||
         kn === "constants" ||
+        kn === "blockhash" ||
         kn === "oracle" ||
         kn === "split" ||
+        kn === "ohlc" ||
         kn === "outpoint" ||
         kn === "positions" ||
         kn === "outputtype" ||
         kn === "heighttopool" ||
+        kn === "txid" ||
+        kn.endsWith("state") ||
         kn.endsWith("index") ||
         kn.endsWith("indexes") ||
         kn.endsWith("bytes") ||

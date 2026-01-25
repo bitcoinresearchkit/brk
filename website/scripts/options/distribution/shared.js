@@ -9,46 +9,25 @@ import { satsBtcUsd } from "../shared.js";
  * Create supply section for a single cohort
  * @param {PartialContext} ctx
  * @param {CohortObject} cohort
+ * @param {Object} [options]
+ * @param {AnyFetchedSeriesBlueprint[]} [options.supplyRelative] - Supply relative to circulating supply metrics
+ * @param {AnyFetchedSeriesBlueprint[]} [options.pnlRelative] - Supply in profit/loss relative to circulating supply metrics
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSingleSupplySeries(ctx, cohort) {
+export function createSingleSupplySeries(ctx, cohort, { supplyRelative = [], pnlRelative = [] } = {}) {
   const { colors } = ctx;
   const { tree } = cohort;
 
   return [
     ...satsBtcUsd(tree.supply.total, "Supply", colors.default),
-    ...("supplyRelToCirculatingSupply" in tree.relative
-      ? [
-          line({
-            metric: tree.relative.supplyRelToCirculatingSupply,
-            name: "Supply",
-            color: colors.default,
-            unit: Unit.pctSupply,
-          }),
-        ]
-      : []),
+    ...supplyRelative,
     ...satsBtcUsd(tree.unrealized.supplyInProfit, "In Profit", colors.green),
     ...satsBtcUsd(tree.unrealized.supplyInLoss, "In Loss", colors.red),
     ...satsBtcUsd(tree.supply.halved, "half", colors.gray).map((s) => ({
       ...s,
       options: { lineStyle: 4 },
     })),
-    ...("supplyInProfitRelToCirculatingSupply" in tree.relative
-      ? [
-          line({
-            metric: tree.relative.supplyInProfitRelToCirculatingSupply,
-            name: "In Profit",
-            color: colors.green,
-            unit: Unit.pctSupply,
-          }),
-          line({
-            metric: tree.relative.supplyInLossRelToCirculatingSupply,
-            name: "In Loss",
-            color: colors.red,
-            unit: Unit.pctSupply,
-          }),
-        ]
-      : []),
+    ...pnlRelative,
     line({
       metric: tree.relative.supplyInProfitRelToOwnSupply,
       name: "In Profit",
@@ -74,65 +53,196 @@ export function createSingleSupplySeries(ctx, cohort) {
 
 /**
  * Create supply total series for grouped cohorts
- * @param {readonly CohortObject[]} list
+ * @template {readonly CohortObject[]} T
+ * @param {T} list
+ * @param {Object} [options]
+ * @param {(cohort: T[number]) => AnyFetchedSeriesBlueprint[]} [options.relativeMetrics] - Generator for relative supply metrics
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createGroupedSupplyTotalSeries(list) {
-  return list.flatMap(({ color, name, tree }) => [
-    ...satsBtcUsd(tree.supply.total, name, color),
-    ...("supplyRelToCirculatingSupply" in tree.relative
-      ? [
-          line({
-            metric: tree.relative.supplyRelToCirculatingSupply,
-            name,
-            color,
-            unit: Unit.pctSupply,
-          }),
-        ]
-      : []),
+export function createGroupedSupplyTotalSeries(list, { relativeMetrics } = {}) {
+  return list.flatMap((cohort) => [
+    ...satsBtcUsd(cohort.tree.supply.total, cohort.name, cohort.color),
+    ...(relativeMetrics ? relativeMetrics(cohort) : []),
   ]);
 }
 
 /**
  * Create supply in profit series for grouped cohorts
- * @param {readonly CohortObject[]} list
+ * @template {readonly CohortObject[]} T
+ * @param {T} list
+ * @param {Object} [options]
+ * @param {(cohort: T[number]) => AnyFetchedSeriesBlueprint[]} [options.relativeMetrics] - Generator for relative supply metrics
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createGroupedSupplyInProfitSeries(list) {
-  return list.flatMap(({ color, name, tree }) => [
-    ...satsBtcUsd(tree.unrealized.supplyInProfit, name, color),
-    ...("supplyInProfitRelToCirculatingSupply" in tree.relative
-      ? [
-          line({
-            metric: tree.relative.supplyInProfitRelToCirculatingSupply,
-            name,
-            color,
-            unit: Unit.pctSupply,
-          }),
-        ]
-      : []),
+export function createGroupedSupplyInProfitSeries(list, { relativeMetrics } = {}) {
+  return list.flatMap((cohort) => [
+    ...satsBtcUsd(cohort.tree.unrealized.supplyInProfit, cohort.name, cohort.color),
+    ...(relativeMetrics ? relativeMetrics(cohort) : []),
   ]);
 }
 
 /**
  * Create supply in loss series for grouped cohorts
- * @param {readonly CohortObject[]} list
+ * @template {readonly CohortObject[]} T
+ * @param {T} list
+ * @param {Object} [options]
+ * @param {(cohort: T[number]) => AnyFetchedSeriesBlueprint[]} [options.relativeMetrics] - Generator for relative supply metrics
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createGroupedSupplyInLossSeries(list) {
-  return list.flatMap(({ color, name, tree }) => [
-    ...satsBtcUsd(tree.unrealized.supplyInLoss, name, color),
-    ...("supplyInLossRelToCirculatingSupply" in tree.relative
-      ? [
-          line({
-            metric: tree.relative.supplyInLossRelToCirculatingSupply,
-            name,
-            color,
-            unit: Unit.pctSupply,
-          }),
-        ]
-      : []),
+export function createGroupedSupplyInLossSeries(list, { relativeMetrics } = {}) {
+  return list.flatMap((cohort) => [
+    ...satsBtcUsd(cohort.tree.unrealized.supplyInLoss, cohort.name, cohort.color),
+    ...(relativeMetrics ? relativeMetrics(cohort) : []),
   ]);
+}
+
+/**
+ * Create supply section for grouped cohorts
+ * @template {readonly CohortObject[]} T
+ * @param {T} list
+ * @param {(metric: string) => string} title
+ * @param {Object} [options]
+ * @param {(cohort: T[number]) => AnyFetchedSeriesBlueprint[]} [options.supplyRelativeMetrics] - Generator for supply relative metrics
+ * @param {(cohort: T[number]) => AnyFetchedSeriesBlueprint[]} [options.profitRelativeMetrics] - Generator for supply in profit relative metrics
+ * @param {(cohort: T[number]) => AnyFetchedSeriesBlueprint[]} [options.lossRelativeMetrics] - Generator for supply in loss relative metrics
+ * @returns {PartialOptionsGroup}
+ */
+export function createGroupedSupplySection(list, title, { supplyRelativeMetrics, profitRelativeMetrics, lossRelativeMetrics } = {}) {
+  return {
+    name: "supply",
+    tree: [
+      {
+        name: "total",
+        title: title("Supply"),
+        bottom: createGroupedSupplyTotalSeries(list, { relativeMetrics: supplyRelativeMetrics }),
+      },
+      {
+        name: "in profit",
+        title: title("Supply In Profit"),
+        bottom: createGroupedSupplyInProfitSeries(list, { relativeMetrics: profitRelativeMetrics }),
+      },
+      {
+        name: "in loss",
+        title: title("Supply In Loss"),
+        bottom: createGroupedSupplyInLossSeries(list, { relativeMetrics: lossRelativeMetrics }),
+      },
+    ],
+  };
+}
+
+// ============================================================================
+// Circulating Supply Relative Metrics Generators
+// ============================================================================
+
+/**
+ * Create supply relative to circulating supply series for single cohort
+ * @param {PartialContext} ctx
+ * @param {CohortWithCirculatingSupplyRelative} cohort
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSupplyRelativeToCirculatingSeries(ctx, cohort) {
+  return [
+    line({
+      metric: cohort.tree.relative.supplyRelToCirculatingSupply,
+      name: "Supply",
+      color: ctx.colors.default,
+      unit: Unit.pctSupply,
+    }),
+  ];
+}
+
+/**
+ * Create supply in profit/loss relative to circulating supply series for single cohort
+ * @param {PartialContext} ctx
+ * @param {CohortWithCirculatingSupplyRelative} cohort
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSupplyPnlRelativeToCirculatingSeries(ctx, cohort) {
+  return [
+    line({
+      metric: cohort.tree.relative.supplyInProfitRelToCirculatingSupply,
+      name: "In Profit",
+      color: ctx.colors.green,
+      unit: Unit.pctSupply,
+    }),
+    line({
+      metric: cohort.tree.relative.supplyInLossRelToCirculatingSupply,
+      name: "In Loss",
+      color: ctx.colors.red,
+      unit: Unit.pctSupply,
+    }),
+  ];
+}
+
+/**
+ * Create supply relative to circulating supply metrics generator for grouped cohorts
+ * @param {CohortWithCirculatingSupplyRelative} cohort
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedSupplyRelativeMetrics(cohort) {
+  return [
+    line({
+      metric: cohort.tree.relative.supplyRelToCirculatingSupply,
+      name: cohort.name,
+      color: cohort.color,
+      unit: Unit.pctSupply,
+    }),
+  ];
+}
+
+/**
+ * Create supply in profit relative to circulating supply metrics generator for grouped cohorts
+ * @param {CohortWithCirculatingSupplyRelative} cohort
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedSupplyInProfitRelativeMetrics(cohort) {
+  return [
+    line({
+      metric: cohort.tree.relative.supplyInProfitRelToCirculatingSupply,
+      name: cohort.name,
+      color: cohort.color,
+      unit: Unit.pctSupply,
+    }),
+  ];
+}
+
+/**
+ * Create supply in loss relative to circulating supply metrics generator for grouped cohorts
+ * @param {CohortWithCirculatingSupplyRelative} cohort
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedSupplyInLossRelativeMetrics(cohort) {
+  return [
+    line({
+      metric: cohort.tree.relative.supplyInLossRelToCirculatingSupply,
+      name: cohort.name,
+      color: cohort.color,
+      unit: Unit.pctSupply,
+    }),
+  ];
+}
+
+/**
+ * Grouped supply relative generators object for cohorts with circulating supply relative
+ * @type {{ supplyRelativeMetrics: typeof createGroupedSupplyRelativeMetrics, profitRelativeMetrics: typeof createGroupedSupplyInProfitRelativeMetrics, lossRelativeMetrics: typeof createGroupedSupplyInLossRelativeMetrics }}
+ */
+export const groupedSupplyRelativeGenerators = {
+  supplyRelativeMetrics: createGroupedSupplyRelativeMetrics,
+  profitRelativeMetrics: createGroupedSupplyInProfitRelativeMetrics,
+  lossRelativeMetrics: createGroupedSupplyInLossRelativeMetrics,
+};
+
+/**
+ * Create single cohort supply relative options for cohorts with circulating supply relative
+ * @param {PartialContext} ctx
+ * @param {CohortWithCirculatingSupplyRelative} cohort
+ * @returns {{ supplyRelative: AnyFetchedSeriesBlueprint[], pnlRelative: AnyFetchedSeriesBlueprint[] }}
+ */
+export function createSingleSupplyRelativeOptions(ctx, cohort) {
+  return {
+    supplyRelative: createSupplyRelativeToCirculatingSeries(ctx, cohort),
+    pnlRelative: createSupplyPnlRelativeToCirculatingSeries(ctx, cohort),
+  };
 }
 
 /**

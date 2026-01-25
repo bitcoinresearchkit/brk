@@ -190,6 +190,13 @@ export function createChainSection(ctx) {
                 options: { lineStyle: 4 },
               }),
               line({
+                metric: blocks.count._24hBlockCount,
+                name: "24h sum",
+                color: colors.pink,
+                unit: Unit.count,
+                defaultActive: false,
+              }),
+              line({
                 metric: blocks.count._1wBlockCount,
                 name: "1w sum",
                 color: colors.red,
@@ -199,7 +206,7 @@ export function createChainSection(ctx) {
               line({
                 metric: blocks.count._1mBlockCount,
                 name: "1m sum",
-                color: colors.pink,
+                color: colors.orange,
                 unit: Unit.count,
                 defaultActive: false,
               }),
@@ -225,9 +232,35 @@ export function createChainSection(ctx) {
             title: "Block Size",
             bottom: [
               ...fromSizePattern(blocks.size, Unit.bytes),
+              line({
+                metric: blocks.totalSize,
+                name: "total",
+                color: colors.purple,
+                unit: Unit.bytes,
+                defaultActive: false,
+              }),
               ...fromFullnessPattern(blocks.vbytes, Unit.vb),
               ...fromFullnessPattern(blocks.weight, Unit.wu),
+              line({
+                metric: blocks.weight.sum,
+                name: "sum",
+                color: colors.stat.sum,
+                unit: Unit.wu,
+                defaultActive: false,
+              }),
+              line({
+                metric: blocks.weight.cumulative,
+                name: "cumulative",
+                color: colors.stat.cumulative,
+                unit: Unit.wu,
+                defaultActive: false,
+              }),
             ],
+          },
+          {
+            name: "Fullness",
+            title: "Block Fullness",
+            bottom: fromFullnessPattern(blocks.fullness, Unit.percentage),
           },
         ],
       },
@@ -381,11 +414,6 @@ export function createChainSection(ctx) {
             bottom: [...fromSizePattern(outputs.count.totalCount, Unit.count)],
           },
           {
-            name: "OP_RETURN",
-            title: "OP_RETURN Outputs",
-            bottom: fromFullnessPattern(scripts.count.opreturn, Unit.count),
-          },
-          {
             name: "Speed",
             title: "Outputs Per Second",
             bottom: [
@@ -411,6 +439,60 @@ export function createChainSection(ctx) {
                 name: "Count",
                 unit: Unit.count,
               }),
+            ],
+          },
+        ],
+      },
+
+      // Scripts
+      {
+        name: "Scripts",
+        tree: [
+          {
+            name: "Count",
+            tree: [
+              { name: "P2PKH", title: "P2PKH Output Count", bottom: fromDollarsPattern(scripts.count.p2pkh, Unit.count) },
+              { name: "P2SH", title: "P2SH Output Count", bottom: fromDollarsPattern(scripts.count.p2sh, Unit.count) },
+              { name: "P2WPKH", title: "P2WPKH Output Count", bottom: fromDollarsPattern(scripts.count.p2wpkh, Unit.count) },
+              { name: "P2WSH", title: "P2WSH Output Count", bottom: fromDollarsPattern(scripts.count.p2wsh, Unit.count) },
+              { name: "P2TR", title: "P2TR Output Count", bottom: fromDollarsPattern(scripts.count.p2tr, Unit.count) },
+              { name: "P2PK33", title: "P2PK33 Output Count", bottom: fromDollarsPattern(scripts.count.p2pk33, Unit.count) },
+              { name: "P2PK65", title: "P2PK65 Output Count", bottom: fromDollarsPattern(scripts.count.p2pk65, Unit.count) },
+              { name: "P2MS", title: "P2MS Output Count", bottom: fromDollarsPattern(scripts.count.p2ms, Unit.count) },
+              { name: "P2A", title: "P2A Output Count", bottom: fromDollarsPattern(scripts.count.p2a, Unit.count) },
+              { name: "OP_RETURN", title: "OP_RETURN Output Count", bottom: fromDollarsPattern(scripts.count.opreturn, Unit.count) },
+              { name: "SegWit", title: "SegWit Output Count", bottom: fromDollarsPattern(scripts.count.segwit, Unit.count) },
+              { name: "Empty", title: "Empty Output Count", bottom: fromDollarsPattern(scripts.count.emptyoutput, Unit.count) },
+              { name: "Unknown", title: "Unknown Output Count", bottom: fromDollarsPattern(scripts.count.unknownoutput, Unit.count) },
+            ],
+          },
+          {
+            name: "Adoption",
+            tree: [
+              {
+                name: "SegWit",
+                title: "SegWit Adoption",
+                bottom: [
+                  line({ metric: scripts.count.segwitAdoption.base, name: "base", unit: Unit.percentage }),
+                  line({ metric: scripts.count.segwitAdoption.sum, name: "sum", color: colors.stat.sum, unit: Unit.percentage }),
+                  line({ metric: scripts.count.segwitAdoption.cumulative, name: "cumulative", color: colors.stat.cumulative, unit: Unit.percentage, defaultActive: false }),
+                ],
+              },
+              {
+                name: "Taproot",
+                title: "Taproot Adoption",
+                bottom: [
+                  line({ metric: scripts.count.taprootAdoption.base, name: "base", unit: Unit.percentage }),
+                  line({ metric: scripts.count.taprootAdoption.sum, name: "sum", color: colors.stat.sum, unit: Unit.percentage }),
+                  line({ metric: scripts.count.taprootAdoption.cumulative, name: "cumulative", color: colors.stat.cumulative, unit: Unit.percentage, defaultActive: false }),
+                ],
+              },
+            ],
+          },
+          {
+            name: "Value",
+            tree: [
+              { name: "OP_RETURN", title: "OP_RETURN Value", bottom: fromCoinbasePattern(scripts.value.opreturn) },
             ],
           },
         ],
@@ -456,7 +538,10 @@ export function createChainSection(ctx) {
           {
             name: "Coinbase",
             title: "Coinbase Rewards",
-            bottom: fromCoinbasePattern(blocks.rewards.coinbase),
+            bottom: [
+              ...fromCoinbasePattern(blocks.rewards.coinbase),
+              ...satsBtcUsd(blocks.rewards._24hCoinbaseSum, "24h sum", colors.pink, { defaultActive: false }),
+            ],
           },
           {
             name: "Subsidy",
@@ -468,6 +553,13 @@ export function createChainSection(ctx) {
                 name: "Dominance",
                 color: colors.purple,
                 unit: Unit.percentage,
+                defaultActive: false,
+              }),
+              line({
+                metric: blocks.rewards.subsidyUsd1ySma,
+                name: "1y SMA",
+                color: colors.lime,
+                unit: Unit.usd,
                 defaultActive: false,
               }),
             ],
@@ -552,6 +644,63 @@ export function createChainSection(ctx) {
                     metric: distribution.emptyAddrCount.all,
                     name: "Empty",
                     color: colors.gray,
+                    unit: Unit.count,
+                    defaultActive: false,
+                  }),
+                ],
+              },
+              {
+                name: "Empty by Type",
+                title: "Empty Address Count by Type",
+                bottom: [
+                  line({
+                    metric: distribution.emptyAddrCount.p2pkh,
+                    name: "P2PKH",
+                    color: colors.orange,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: distribution.emptyAddrCount.p2sh,
+                    name: "P2SH",
+                    color: colors.yellow,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: distribution.emptyAddrCount.p2wpkh,
+                    name: "P2WPKH",
+                    color: colors.green,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: distribution.emptyAddrCount.p2wsh,
+                    name: "P2WSH",
+                    color: colors.teal,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: distribution.emptyAddrCount.p2tr,
+                    name: "P2TR",
+                    color: colors.purple,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: distribution.emptyAddrCount.p2pk65,
+                    name: "P2PK65",
+                    color: colors.pink,
+                    unit: Unit.count,
+                    defaultActive: false,
+                  }),
+                  line({
+                    metric: distribution.emptyAddrCount.p2pk33,
+                    name: "P2PK33",
+                    color: colors.red,
+                    unit: Unit.count,
+                    defaultActive: false,
+                  }),
+                  line({
+                    metric: distribution.emptyAddrCount.p2a,
+                    name: "P2A",
+                    color: colors.blue,
                     unit: Unit.count,
                     defaultActive: false,
                   }),
@@ -677,6 +826,12 @@ export function createChainSection(ctx) {
                 metric: blocks.difficulty.raw,
                 name: "Difficulty",
                 unit: Unit.difficulty,
+              }),
+              line({
+                metric: blocks.difficulty.epoch,
+                name: "Epoch",
+                color: colors.teal,
+                unit: Unit.epoch,
               }),
               line({
                 metric: blocks.difficulty.blocksBeforeNextAdjustment,
