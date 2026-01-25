@@ -1,13 +1,9 @@
 import { Unit } from "../utils/units.js";
-import { priceLine, priceLines } from "./constants.js";
-import { line, baseline } from "./series.js";
+import { line } from "./series.js";
 import {
   satsBtcUsd,
-  percentileUsdMap,
-  percentileMap,
-  sdPatterns,
-  sdBandsUsd,
-  sdBandsRatio,
+  createRatioChart,
+  createZScoresFolder,
 } from "./shared.js";
 
 /**
@@ -18,229 +14,21 @@ import {
  * @param {string} args.legend
  * @param {AnyMetricPattern} args.price
  * @param {ActivePriceRatioPattern} args.ratio
- * @param {Color} [args.color]
+ * @param {Color} args.color
  * @returns {PartialOptionsTree}
  */
 function createCointimePriceWithRatioOptions(
   ctx,
   { title, legend, price, ratio, color },
 ) {
-  const { colors } = ctx;
-
-  const pctUsdMap = percentileUsdMap(colors, ratio);
-  const pctMap = percentileMap(colors, ratio);
-  const sdPats = sdPatterns(ratio);
-
   return [
     {
       name: "price",
       title,
       top: [line({ metric: price, name: legend, color, unit: Unit.usd })],
     },
-    {
-      name: "Ratio",
-      title: `${title} Ratio`,
-      top: [
-        line({ metric: price, name: legend, color, unit: Unit.usd }),
-        ...pctUsdMap.map(({ name: pctName, prop, color: pctColor }) =>
-          line({
-            metric: prop,
-            name: pctName,
-            color: pctColor,
-            defaultActive: false,
-            unit: Unit.usd,
-            options: { lineStyle: 1 },
-          }),
-        ),
-      ],
-      bottom: [
-        baseline({
-          metric: ratio.ratio,
-          name: "Ratio",
-          unit: Unit.ratio,
-          base: 1,
-        }),
-        line({
-          metric: ratio.ratio1wSma,
-          name: "1w SMA",
-          color: colors.lime,
-          unit: Unit.ratio,
-          defaultActive: false,
-        }),
-        line({
-          metric: ratio.ratio1mSma,
-          name: "1m SMA",
-          color: colors.teal,
-          unit: Unit.ratio,
-          defaultActive: false,
-        }),
-        line({
-          metric: ratio.ratio1ySd.sma,
-          name: "1y SMA",
-          color: colors.sky,
-          unit: Unit.ratio,
-          defaultActive: false,
-        }),
-        line({
-          metric: ratio.ratio2ySd.sma,
-          name: "2y SMA",
-          color: colors.indigo,
-          unit: Unit.ratio,
-          defaultActive: false,
-        }),
-        line({
-          metric: ratio.ratio4ySd.sma,
-          name: "4y SMA",
-          color: colors.purple,
-          unit: Unit.ratio,
-          defaultActive: false,
-        }),
-        line({
-          metric: ratio.ratioSd.sma,
-          name: "All SMA",
-          color: colors.rose,
-          unit: Unit.ratio,
-          defaultActive: false,
-        }),
-        ...pctMap.map(({ name: pctName, prop, color: pctColor }) =>
-          line({
-            metric: prop,
-            name: pctName,
-            color: pctColor,
-            defaultActive: false,
-            unit: Unit.ratio,
-            options: { lineStyle: 1 },
-          }),
-        ),
-        priceLine({ ctx, unit: Unit.ratio, number: 1 }),
-      ],
-    },
-    {
-      name: "ZScores",
-      tree: [
-        // Compare all Z-Scores
-        {
-          name: "Compare",
-          title: `${title} Z-Scores`,
-          top: [
-            line({ metric: price, name: legend, color, unit: Unit.usd }),
-            line({
-              metric: ratio.ratio1ySd._0sdUsd,
-              name: "1y 0σ",
-              color: colors.orange,
-              defaultActive: false,
-              unit: Unit.usd,
-            }),
-            line({
-              metric: ratio.ratio2ySd._0sdUsd,
-              name: "2y 0σ",
-              color: colors.yellow,
-              defaultActive: false,
-              unit: Unit.usd,
-            }),
-            line({
-              metric: ratio.ratio4ySd._0sdUsd,
-              name: "4y 0σ",
-              color: colors.lime,
-              defaultActive: false,
-              unit: Unit.usd,
-            }),
-            line({
-              metric: ratio.ratioSd._0sdUsd,
-              name: "all 0σ",
-              color: colors.blue,
-              defaultActive: false,
-              unit: Unit.usd,
-            }),
-          ],
-          bottom: [
-            line({
-              metric: ratio.ratioSd.zscore,
-              name: "all",
-              color: colors.blue,
-              unit: Unit.sd,
-            }),
-            line({
-              metric: ratio.ratio4ySd.zscore,
-              name: "4y",
-              color: colors.lime,
-              unit: Unit.sd,
-            }),
-            line({
-              metric: ratio.ratio2ySd.zscore,
-              name: "2y",
-              color: colors.yellow,
-              unit: Unit.sd,
-            }),
-            line({
-              metric: ratio.ratio1ySd.zscore,
-              name: "1y",
-              color: colors.orange,
-              unit: Unit.sd,
-            }),
-            ...priceLines({
-              ctx,
-              unit: Unit.sd,
-              numbers: [0, 1, -1, 2, -2, 3, -3, 4, -4],
-              defaultActive: false,
-            }),
-          ],
-        },
-        // Individual Z-Score charts
-        ...sdPats.map(({ nameAddon, titleAddon, sd }) => ({
-          name: nameAddon,
-          title: `${title} ${titleAddon} Z-Score`,
-          top: [
-            line({ metric: price, name: legend, color, unit: Unit.usd }),
-            ...sdBandsUsd(colors, sd).map(
-              ({ name: bandName, prop, color: bandColor }) =>
-                line({
-                  metric: prop,
-                  name: bandName,
-                  color: bandColor,
-                  unit: Unit.usd,
-                  defaultActive: false,
-                }),
-            ),
-          ],
-          bottom: [
-            baseline({
-              metric: sd.zscore,
-              name: "Z-Score",
-              unit: Unit.sd,
-            }),
-            baseline({
-              metric: ratio.ratio,
-              name: "Ratio",
-              unit: Unit.ratio,
-              base: 1,
-            }),
-            line({
-              metric: sd.sd,
-              name: "Volatility",
-              color: colors.gray,
-              unit: Unit.percentage,
-            }),
-            ...sdBandsRatio(colors, sd).map(
-              ({ name: bandName, prop, color: bandColor }) =>
-                line({
-                  metric: prop,
-                  name: bandName,
-                  color: bandColor,
-                  unit: Unit.ratio,
-                  defaultActive: false,
-                }),
-            ),
-            ...priceLines({
-              ctx,
-              unit: Unit.sd,
-              numbers: [0, 1, -1, 2, -2, 3, -3],
-              defaultActive: false,
-            }),
-          ],
-        })),
-      ],
-    },
+    createRatioChart(ctx, { title, price, ratio, color }),
+    createZScoresFolder(ctx, { title, legend, price, ratio, color }),
   ];
 }
 
@@ -252,7 +40,7 @@ function createCointimePriceWithRatioOptions(
 export function createCointimeSection(ctx) {
   const { colors, brk } = ctx;
   const { cointime, distribution, supply } = brk.metrics;
-  const { pricing, cap, activity, supply: cointimeSupply, adjusted } = cointime;
+  const { pricing, cap, activity, supply: cointimeSupply, adjusted, reserveRisk, value } = cointime;
   const { all } = distribution.utxoCohorts;
 
   // Cointime prices data
@@ -478,6 +266,132 @@ export function createCointimeSection(ctx) {
             defaultActive: false,
             unit: Unit.coinblocks,
           }),
+        ],
+      },
+
+      // Reserve Risk
+      {
+        name: "Reserve Risk",
+        tree: [
+          {
+            name: "reserve risk",
+            title: "Reserve Risk",
+            bottom: [
+              line({
+                metric: reserveRisk.reserveRisk,
+                name: "Reserve Risk",
+                color: colors.orange,
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+          {
+            name: "hodl bank",
+            title: "HODL Bank",
+            bottom: [
+              line({
+                metric: reserveRisk.hodlBank,
+                name: "HODL Bank",
+                color: colors.blue,
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+          {
+            name: "vocdd 365d sma",
+            title: "VOCDD 365d SMA",
+            bottom: [
+              line({
+                metric: reserveRisk.vocdd365dSma,
+                name: "VOCDD 365d SMA",
+                color: colors.purple,
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+        ],
+      },
+
+      // Cointime Value
+      {
+        name: "Value",
+        tree: [
+          {
+            name: "created",
+            title: "Cointime Value Created",
+            bottom: [
+              line({
+                metric: value.cointimeValueCreated.sum,
+                name: "Created",
+                color: colors.green,
+                unit: Unit.usd,
+              }),
+              line({
+                metric: value.cointimeValueCreated.cumulative,
+                name: "Cumulative",
+                color: colors.green,
+                unit: Unit.usd,
+                defaultActive: false,
+              }),
+            ],
+          },
+          {
+            name: "destroyed",
+            title: "Cointime Value Destroyed",
+            bottom: [
+              line({
+                metric: value.cointimeValueDestroyed.sum,
+                name: "Destroyed",
+                color: colors.red,
+                unit: Unit.usd,
+              }),
+              line({
+                metric: value.cointimeValueDestroyed.cumulative,
+                name: "Cumulative",
+                color: colors.red,
+                unit: Unit.usd,
+                defaultActive: false,
+              }),
+            ],
+          },
+          {
+            name: "stored",
+            title: "Cointime Value Stored",
+            bottom: [
+              line({
+                metric: value.cointimeValueStored.sum,
+                name: "Stored",
+                color: colors.blue,
+                unit: Unit.usd,
+              }),
+              line({
+                metric: value.cointimeValueStored.cumulative,
+                name: "Cumulative",
+                color: colors.blue,
+                unit: Unit.usd,
+                defaultActive: false,
+              }),
+            ],
+          },
+          {
+            name: "vocdd",
+            title: "VOCDD (Value of Coin Days Destroyed)",
+            bottom: [
+              line({
+                metric: value.vocdd.sum,
+                name: "VOCDD",
+                color: colors.orange,
+                unit: Unit.usd,
+              }),
+              line({
+                metric: value.vocdd.cumulative,
+                name: "Cumulative",
+                color: colors.orange,
+                unit: Unit.usd,
+                defaultActive: false,
+              }),
+            ],
+          },
         ],
       },
 

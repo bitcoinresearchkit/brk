@@ -13,6 +13,34 @@ function walk(node, map, path) {
     map.set(/** @type {AnyMetricPattern} */ (node), path);
   } else if (node && typeof node === "object") {
     for (const [key, value] of Object.entries(node)) {
+      const kn = key.toLowerCase();
+      if (
+        kn === "mvrv" ||
+        kn === "time" ||
+        kn === "height" ||
+        kn === "constants" ||
+        kn === "oracle" ||
+        kn === "split" ||
+        kn === "outpoint" ||
+        kn === "positions" ||
+        kn === "outputtype" ||
+        kn === "heighttopool" ||
+        kn.endsWith("index") ||
+        kn.endsWith("indexes") ||
+        kn.endsWith("bytes") ||
+        (kn.startsWith("_") && kn.endsWith("start"))
+      )
+        continue;
+      // if (
+      // kn === "mvrv" ||
+      // kn.endsWith("index") ||
+      // kn.endsWith("indexes") ||
+      // kn.endsWith("start") ||
+      // kn.endsWith("hash") ||
+      // kn.endsWith("data") ||
+      // kn.endsWith("constants")
+      // )
+      //   return;
       walk(/** @type {TreeNode | null | undefined} */ (value), map, [
         ...path,
         key,

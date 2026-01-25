@@ -3,7 +3,7 @@
 import { localhost } from "../../utils/env.js";
 import { Unit } from "../../utils/units.js";
 import { candlestick, line } from "../series.js";
-import { buildAverages, createAveragesSection } from "./averages.js";
+import { createAveragesSection } from "./averages.js";
 import { createPerformanceSection } from "./performance.js";
 import { createIndicatorsSection } from "./indicators/index.js";
 import { createInvestingSection } from "./investing.js";
@@ -27,7 +27,6 @@ export function createMarketSection(ctx) {
     indicators,
   } = market;
 
-  const averages = buildAverages(colors, movingAverage);
 
   return {
     name: "Market",
@@ -163,7 +162,7 @@ export function createMarketSection(ctx) {
       },
 
       // Averages
-      createAveragesSection(ctx, averages),
+      createAveragesSection(ctx, movingAverage),
 
       // Performance
       createPerformanceSection(ctx, returns),

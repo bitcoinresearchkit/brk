@@ -11,7 +11,8 @@ export {
   createCohortFolderFull,
   createCohortFolderWithAdjusted,
   createCohortFolderWithPercentiles,
-  createCohortFolderBasic,
+  createCohortFolderBasicWithMarketCap,
+  createCohortFolderBasicWithoutMarketCap,
   createCohortFolderAddress,
 } from "./utxo.js";
 export { createAddressCohortFolder } from "./address.js";
@@ -27,6 +28,5 @@ export {
   createRealizedPriceSeries,
   createRealizedPriceRatioSeries,
   createRealizedCapSeries,
-  createCostBasisMinMaxSeries,
   createCostBasisPercentilesSeries,
 } from "./shared.js";

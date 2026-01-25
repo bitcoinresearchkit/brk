@@ -51,6 +51,8 @@ export const Unit = /** @type {const} */ ({
   // Cointime
   coinblocks: { id: "coinblocks", name: "Coinblocks" },
   coindays: { id: "coindays", name: "Coindays" },
+  satblocks: { id: "satblocks", name: "Satblocks" },
+  satdays: { id: "satdays", name: "Satdays" },
 
   // Hash price/value
   usdPerThsPerDay: { id: "usd-ths-day", name: "USD/TH/s/Day" },

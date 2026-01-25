@@ -92,8 +92,8 @@ export function buildCohortData(colors, brk) {
     };
   });
 
-  // Min age cohorts (from X time) - CohortBasic (neither adjustedSopr nor percentiles)
-  /** @type {readonly CohortBasic[]} */
+  // Min age cohorts (from X time) - CohortBasicWithMarketCap (has RelToMarketCap)
+  /** @type {readonly CohortBasicWithMarketCap[]} */
   const fromDate = entries(utxoCohorts.minAge).map(([key, tree]) => {
     const names = MIN_AGE_NAMES[key];
     return {
@@ -116,8 +116,8 @@ export function buildCohortData(colors, brk) {
     };
   });
 
-  // Epoch cohorts - CohortBasic (neither adjustedSopr nor percentiles)
-  /** @type {readonly CohortBasic[]} */
+  // Epoch cohorts - CohortBasicWithoutMarketCap (no RelToMarketCap)
+  /** @type {readonly CohortBasicWithoutMarketCap[]} */
   const epoch = entries(utxoCohorts.epoch).map(([key, tree]) => {
     const names = EPOCH_NAMES[key];
     return {
@@ -128,8 +128,8 @@ export function buildCohortData(colors, brk) {
     };
   });
 
-  // UTXOs above amount - CohortBasic (neither adjustedSopr nor percentiles)
-  /** @type {readonly CohortBasic[]} */
+  // UTXOs above amount - CohortBasicWithMarketCap (has RelToMarketCap)
+  /** @type {readonly CohortBasicWithMarketCap[]} */
   const utxosAboveAmount = entries(utxoCohorts.geAmount).map(([key, tree]) => {
     const names = GE_AMOUNT_NAMES[key];
     return {
@@ -154,8 +154,8 @@ export function buildCohortData(colors, brk) {
     },
   );
 
-  // UTXOs under amount - CohortBasic (neither adjustedSopr nor percentiles)
-  /** @type {readonly CohortBasic[]} */
+  // UTXOs under amount - CohortBasicWithMarketCap (has RelToMarketCap)
+  /** @type {readonly CohortBasicWithMarketCap[]} */
   const utxosUnderAmount = entries(utxoCohorts.ltAmount).map(([key, tree]) => {
     const names = LT_AMOUNT_NAMES[key];
     return {
@@ -180,8 +180,8 @@ export function buildCohortData(colors, brk) {
     },
   );
 
-  // UTXOs amount ranges - CohortBasic (neither adjustedSopr nor percentiles)
-  /** @type {readonly CohortBasic[]} */
+  // UTXOs amount ranges - CohortBasicWithoutMarketCap (no RelToMarketCap)
+  /** @type {readonly CohortBasicWithoutMarketCap[]} */
   const utxosAmountRanges = entries(utxoCohorts.amountRange).map(
     ([key, tree]) => {
       const names = AMOUNT_RANGE_NAMES[key];
@@ -221,7 +221,7 @@ export function buildCohortData(colors, brk) {
     };
   });
 
-  /** @type {readonly CohortBasic[]} */
+  /** @type {readonly CohortBasicWithoutMarketCap[]} */
   const typeOther = entries(utxoCohorts.type)
     .filter(([key]) => !isAddressable(key))
     .map(([key, tree]) => {
@@ -234,8 +234,8 @@ export function buildCohortData(colors, brk) {
       };
     });
 
-  // Year cohorts - CohortBasic (neither adjustedSopr nor percentiles)
-  /** @type {readonly CohortBasic[]} */
+  // Year cohorts - CohortBasicWithoutMarketCap (no RelToMarketCap)
+  /** @type {readonly CohortBasicWithoutMarketCap[]} */
   const year = entries(utxoCohorts.year).map(([key, tree]) => {
     const names = YEAR_NAMES[key];
     return {

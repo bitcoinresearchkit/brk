@@ -148,14 +148,15 @@ export function ratioSmas(colors, ratio) {
  * @param {AnyMetricPattern} args.price - The price metric to show in top pane
  * @param {ActivePriceRatioPattern} args.ratio - The ratio pattern
  * @param {Color} args.color
+ * @param {string} [args.name] - Optional name override (default: "ratio")
  * @returns {PartialChartOption}
  */
-export function createRatioChart(ctx, { title, price, ratio, color }) {
+export function createRatioChart(ctx, { title, price, ratio, color, name }) {
   const { colors } = ctx;
 
   return {
-    name: "ratio",
-    title: `${title} Ratio`,
+    name: name ?? "ratio",
+    title: name ? (title ? `${name} - ${title}` : name) : `${title} Ratio`,
     top: [
       line({ metric: price, name: "price", color, unit: Unit.usd }),
       ...percentileUsdMap(colors, ratio).map(({ name, prop, color }) =>

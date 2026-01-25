@@ -60,21 +60,8 @@ export function createContext({ brk }) {
     fromValuePattern: (pattern, title, sumColor, cumulativeColor) =>
       fromValuePattern(colors, pattern, title, sumColor, cumulativeColor),
     /** @type {OmitFirstArg<typeof fromBitcoinPatternWithUnit>} */
-    fromBitcoinPatternWithUnit: (
-      pattern,
-      title,
-      unit,
-      sumColor,
-      cumulativeColor,
-    ) =>
-      fromBitcoinPatternWithUnit(
-        colors,
-        pattern,
-        title,
-        unit,
-        sumColor,
-        cumulativeColor,
-      ),
+    fromBitcoinPatternWithUnit: (pattern, unit, title, sumColor, cumulativeColor) =>
+      fromBitcoinPatternWithUnit(colors, pattern, unit, title, sumColor, cumulativeColor),
     /** @type {OmitFirstArg<typeof fromBlockCountWithUnit>} */
     fromBlockCountWithUnit: (pattern, unit, title, sumColor, cumulativeColor) =>
       fromBlockCountWithUnit(

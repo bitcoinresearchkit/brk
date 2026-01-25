@@ -7,7 +7,8 @@ import {
   createCohortFolderFull,
   createCohortFolderWithAdjusted,
   createCohortFolderWithPercentiles,
-  createCohortFolderBasic,
+  createCohortFolderBasicWithMarketCap,
+  createCohortFolderBasicWithoutMarketCap,
   createCohortFolderAddress,
   createAddressCohortFolder,
 } from "./distribution/index.js";
@@ -57,8 +58,12 @@ export function createPartialOptions({ brk }) {
   /** @param {CohortWithPercentiles} cohort */
   const mapWithPercentiles = (cohort) =>
     createCohortFolderWithPercentiles(ctx, cohort);
-  /** @param {CohortBasic} cohort */
-  const mapBasic = (cohort) => createCohortFolderBasic(ctx, cohort);
+  /** @param {CohortBasicWithMarketCap} cohort */
+  const mapBasicWithMarketCap = (cohort) =>
+    createCohortFolderBasicWithMarketCap(ctx, cohort);
+  /** @param {CohortBasicWithoutMarketCap} cohort */
+  const mapBasicWithoutMarketCap = (cohort) =>
+    createCohortFolderBasicWithoutMarketCap(ctx, cohort);
   /** @param {CohortAddress} cohort */
   const mapAddress = (cohort) => createCohortFolderAddress(ctx, cohort);
   /** @param {AddressCohortObject} cohort */
@@ -119,7 +124,7 @@ export function createPartialOptions({ brk }) {
                   list: typeAddressable,
                 }),
                 ...typeAddressable.map(mapAddress),
-                ...typeOther.map(mapBasic),
+                ...typeOther.map(mapBasicWithoutMarketCap),
               ],
             },
 
@@ -143,12 +148,12 @@ export function createPartialOptions({ brk }) {
                 {
                   name: "At Least",
                   tree: [
-                    createCohortFolderBasic(ctx, {
+                    createCohortFolderBasicWithMarketCap(ctx, {
                       name: "Compare",
                       title: "Age At Least",
                       list: fromDate,
                     }),
-                    ...fromDate.map(mapBasic),
+                    ...fromDate.map(mapBasicWithMarketCap),
                   ],
                 },
                 // Range
@@ -174,36 +179,36 @@ export function createPartialOptions({ brk }) {
                 {
                   name: "Under",
                   tree: [
-                    createCohortFolderBasic(ctx, {
+                    createCohortFolderBasicWithMarketCap(ctx, {
                       name: "Compare",
                       title: "Amount Under",
                       list: utxosUnderAmount,
                     }),
-                    ...utxosUnderAmount.map(mapBasic),
+                    ...utxosUnderAmount.map(mapBasicWithMarketCap),
                   ],
                 },
                 // Above (≥ X sats)
                 {
                   name: "Above",
                   tree: [
-                    createCohortFolderBasic(ctx, {
+                    createCohortFolderBasicWithMarketCap(ctx, {
                       name: "Compare",
                       title: "Amount Above",
                       list: utxosAboveAmount,
                     }),
-                    ...utxosAboveAmount.map(mapBasic),
+                    ...utxosAboveAmount.map(mapBasicWithMarketCap),
                   ],
                 },
                 // Range
                 {
                   name: "Range",
                   tree: [
-                    createCohortFolderBasic(ctx, {
+                    createCohortFolderBasicWithoutMarketCap(ctx, {
                       name: "Compare",
                       title: "Amount Range",
                       list: utxosAmountRanges,
                     }),
-                    ...utxosAmountRanges.map(mapBasic),
+                    ...utxosAmountRanges.map(mapBasicWithoutMarketCap),
                   ],
                 },
               ],
@@ -252,29 +257,29 @@ export function createPartialOptions({ brk }) {
               ],
             },
 
-            // Epochs - CohortBasic
+            // Epochs - CohortBasicWithoutMarketCap (no RelToMarketCap)
             {
               name: "Epochs",
               tree: [
-                createCohortFolderBasic(ctx, {
+                createCohortFolderBasicWithoutMarketCap(ctx, {
                   name: "Compare",
                   title: "Epoch",
                   list: epoch,
                 }),
-                ...epoch.map(mapBasic),
+                ...epoch.map(mapBasicWithoutMarketCap),
               ],
             },
 
-            // Years - CohortBasic
+            // Years - CohortBasicWithoutMarketCap (no RelToMarketCap)
             {
               name: "Years",
               tree: [
-                createCohortFolderBasic(ctx, {
+                createCohortFolderBasicWithoutMarketCap(ctx, {
                   name: "Compare",
                   title: "Year",
                   list: year,
                 }),
-                ...year.map(mapBasic),
+                ...year.map(mapBasicWithoutMarketCap),
               ],
             },
           ],

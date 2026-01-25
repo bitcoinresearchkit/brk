@@ -38,8 +38,8 @@ impl UTXOCohorts {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        // Phase 1: Import base cohorts for overlapping computations (age_range, amount_range).
-        // These are the source cohorts and must be imported before "all" to provide up_to_1h.
+        // Phase 1: Import base cohorts that don't need adjusted (age_range, amount_range, etc.)
+        // These are the source cohorts for overlapping computations.
         let base = |f: Filter, name: &'static str| {
             UTXOCohortVecs::forced_import(
                 db,
@@ -57,6 +57,9 @@ impl UTXOCohorts {
 
         let age_range = ByAgeRange::try_new(&base)?;
         let amount_range = ByAmountRange::try_new(&base)?;
+        let epoch = ByEpoch::try_new(&base)?;
+        let year = ByYear::try_new(&base)?;
+        let type_ = BySpendableType::try_new(&base)?;
 
         // Get up_to_1h realized for adjusted computation (cohort - up_to_1h)
         let up_to_1h_realized = age_range.up_to_1h.metrics.realized.as_ref();
@@ -77,27 +80,7 @@ impl UTXOCohorts {
 
         let all_supply = Some(&all.metrics.supply);
 
-        // Phase 3: Import cohorts that need all_supply but not adjusted (epoch, year, type)
-        let base_with_all_supply = |f: Filter, name: &'static str| {
-            UTXOCohortVecs::forced_import(
-                db,
-                f,
-                name,
-                v,
-                indexes,
-                price,
-                states_path,
-                StateLevel::Full,
-                all_supply,
-                None,
-            )
-        };
-
-        let epoch = ByEpoch::try_new(&base_with_all_supply)?;
-        let year = ByYear::try_new(&base_with_all_supply)?;
-        let type_ = BySpendableType::try_new(&base_with_all_supply)?;
-
-        // Phase 4: Import cohorts that need all_supply and up_to_1h for adjusted
+        // Phase 3: Import cohorts that need adjusted and/or all_supply
         let price_only_adjusted = |f: Filter, name: &'static str| {
             UTXOCohortVecs::forced_import(
                 db,
@@ -132,17 +115,7 @@ impl UTXOCohorts {
 
         let max_age = ByMaxAge::try_new(&none_adjusted)?;
 
-        // Phase 5: Add rel_to_circulating metrics to base cohorts now that up_to_1h_realized is no longer borrowed
-        let mut age_range = age_range;
-        let mut amount_range = amount_range;
-        for (vecs, name) in age_range.iter_mut().zip(ByAgeRange::names().iter()) {
-            vecs.add_rel_to_circulating(name.id, v, all_supply.unwrap());
-        }
-        for (vecs, name) in amount_range.iter_mut().zip(ByAmountRange::names().iter()) {
-            vecs.add_rel_to_circulating(name.id, v, all_supply.unwrap());
-        }
-
-        // Phase 6: Import remaining cohorts (no adjusted needed)
+        // Phase 4: Import remaining cohorts (no adjusted needed)
         let none = |f: Filter, name: &'static str| {
             UTXOCohortVecs::forced_import(
                 db,

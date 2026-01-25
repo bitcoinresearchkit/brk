@@ -718,8 +718,8 @@ export function fromValuePattern(
  * Create sum/cumulative series from a BitcoinPattern ({ sum, cumulative }) with explicit unit and colors
  * @param {Colors} colors
  * @param {{ sum: AnyMetricPattern, cumulative: AnyMetricPattern }} pattern
- * @param {string} title
  * @param {Unit} unit
+ * @param {string} [title]
  * @param {Color} [sumColor]
  * @param {Color} [cumulativeColor]
  * @returns {AnyFetchedSeriesBlueprint[]}
@@ -727,21 +727,21 @@ export function fromValuePattern(
 export function fromBitcoinPatternWithUnit(
   colors,
   pattern,
-  title,
   unit,
+  title = "",
   sumColor,
   cumulativeColor,
 ) {
   return [
     {
       metric: pattern.sum,
-      title: `${title} sum`,
+      title: `${title} sum`.trim(),
       color: sumColor,
       unit,
     },
     {
       metric: pattern.cumulative,
-      title: `${title} cumulative`,
+      title: `${title} cumulative`.trim(),
       color: cumulativeColor ?? colors.stat.cumulative,
       unit,
       defaultActive: false,
@@ -763,7 +763,7 @@ export function fromBlockCountWithUnit(
   colors,
   pattern,
   unit,
-  title,
+  title = "",
   sumColor,
   cumulativeColor,
 ) {

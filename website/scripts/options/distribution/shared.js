@@ -221,72 +221,256 @@ export function createRealizedCapSeries(list, useGroupName) {
 }
 
 /**
- * Create cost basis min/max series (available on all cohorts)
- * @param {readonly CohortObject[]} list
+ * Create cost basis percentile series (only for cohorts with CostBasisPattern2)
+ * Includes min (p0) and max (p100) with full rainbow coloring
+ * @param {Colors} colors
+ * @param {readonly CohortWithCostBasisPercentiles[]} list
  * @param {boolean} useGroupName
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createCostBasisMinMaxSeries(list, useGroupName) {
-  return list.flatMap(({ color, name, tree }) => [
+export function createCostBasisPercentilesSeries(colors, list, useGroupName) {
+  return list.flatMap(({ name, tree }) => {
+    const cb = tree.costBasis;
+    const p = cb.percentiles;
+    const n = (/** @type {number} */ pct) => (useGroupName ? `${name} p${pct}` : `p${pct}`);
+    return [
+      line({ metric: cb.max, name: n(100), color: colors.purple, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct95, name: n(95), color: colors.fuchsia, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct90, name: n(90), color: colors.pink, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct85, name: n(85), color: colors.pink, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct80, name: n(80), color: colors.rose, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct75, name: n(75), color: colors.red, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct70, name: n(70), color: colors.orange, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct65, name: n(65), color: colors.amber, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct60, name: n(60), color: colors.yellow, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct55, name: n(55), color: colors.yellow, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct50, name: n(50), color: colors.avocado, unit: Unit.usd }),
+      line({ metric: p.pct45, name: n(45), color: colors.lime, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct40, name: n(40), color: colors.green, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct35, name: n(35), color: colors.emerald, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct30, name: n(30), color: colors.teal, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct25, name: n(25), color: colors.teal, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct20, name: n(20), color: colors.cyan, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct15, name: n(15), color: colors.sky, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct10, name: n(10), color: colors.blue, unit: Unit.usd, defaultActive: false }),
+      line({ metric: p.pct05, name: n(5), color: colors.indigo, unit: Unit.usd, defaultActive: false }),
+      line({ metric: cb.min, name: n(0), color: colors.violet, unit: Unit.usd, defaultActive: false }),
+    ];
+  });
+}
+
+// ============================================================================
+// Activity Section Helpers
+// ============================================================================
+
+/**
+ * Create coins destroyed series (coinblocks, coindays, satblocks, satdays) for single cohort
+ * All metrics on one chart
+ * @param {CohortObject} cohort
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleCoinsDestroyedSeries(cohort) {
+  const { tree, color } = cohort;
+  return [
     line({
-      metric: tree.costBasis.min,
-      name: useGroupName ? `${name} min` : "Min",
+      metric: tree.activity.coinblocksDestroyed.sum,
+      name: "Coinblocks",
       color,
-      unit: Unit.usd,
+      unit: Unit.coinblocks,
     }),
     line({
-      metric: tree.costBasis.max,
-      name: useGroupName ? `${name} max` : "Max",
+      metric: tree.activity.coinblocksDestroyed.cumulative,
+      name: "Coinblocks Cumulative",
       color,
-      unit: Unit.usd,
+      unit: Unit.coinblocks,
+      defaultActive: false,
+    }),
+    line({
+      metric: tree.activity.coindaysDestroyed.sum,
+      name: "Coindays",
+      color,
+      unit: Unit.coindays,
+    }),
+    line({
+      metric: tree.activity.coindaysDestroyed.cumulative,
+      name: "Coindays Cumulative",
+      color,
+      unit: Unit.coindays,
+      defaultActive: false,
+    }),
+    line({
+      metric: tree.activity.satblocksDestroyed,
+      name: "Satblocks",
+      color,
+      unit: Unit.satblocks,
+    }),
+    line({
+      metric: tree.activity.satdaysDestroyed,
+      name: "Satdays",
+      color,
+      unit: Unit.satdays,
+    }),
+  ];
+}
+
+/**
+ * Create coinblocks destroyed series for grouped cohorts (comparison)
+ * @param {readonly CohortObject[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedCoinblocksDestroyedSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.activity.coinblocksDestroyed.sum,
+      name,
+      color,
+      unit: Unit.coinblocks,
     }),
   ]);
 }
 
 /**
- * Create cost basis percentile series (only for cohorts with CostBasisPattern2)
- * @param {readonly CohortWithCostBasisPercentiles[]} list
- * @param {boolean} useGroupName
+ * Create coindays destroyed series for grouped cohorts (comparison)
+ * @param {readonly CohortObject[]} list
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createCostBasisPercentilesSeries(list, useGroupName) {
-  return list.flatMap(({ color, name, tree }) => {
-    const percentiles = tree.costBasis.percentiles;
-    return [
-      line({
-        metric: percentiles.pct10,
-        name: useGroupName ? `${name} p10` : "p10",
-        color,
-        unit: Unit.usd,
-        defaultActive: false,
-      }),
-      line({
-        metric: percentiles.pct25,
-        name: useGroupName ? `${name} p25` : "p25",
-        color,
-        unit: Unit.usd,
-        defaultActive: false,
-      }),
-      line({
-        metric: percentiles.pct50,
-        name: useGroupName ? `${name} p50` : "p50",
-        color,
-        unit: Unit.usd,
-      }),
-      line({
-        metric: percentiles.pct75,
-        name: useGroupName ? `${name} p75` : "p75",
-        color,
-        unit: Unit.usd,
-        defaultActive: false,
-      }),
-      line({
-        metric: percentiles.pct90,
-        name: useGroupName ? `${name} p90` : "p90",
-        color,
-        unit: Unit.usd,
-        defaultActive: false,
-      }),
-    ];
-  });
+export function createGroupedCoindaysDestroyedSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.activity.coindaysDestroyed.sum,
+      name,
+      color,
+      unit: Unit.coindays,
+    }),
+  ]);
+}
+
+/**
+ * Create satblocks destroyed series for grouped cohorts (comparison)
+ * @param {readonly CohortObject[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedSatblocksDestroyedSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.activity.satblocksDestroyed,
+      name,
+      color,
+      unit: Unit.satblocks,
+    }),
+  ]);
+}
+
+/**
+ * Create satdays destroyed series for grouped cohorts (comparison)
+ * @param {readonly CohortObject[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedSatdaysDestroyedSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.activity.satdaysDestroyed,
+      name,
+      color,
+      unit: Unit.satdays,
+    }),
+  ]);
+}
+
+/**
+ * Create sent series (sats, btc, usd) for single cohort - all on one chart
+ * @param {CohortObject} cohort
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleSentSeries(cohort) {
+  const { tree, color } = cohort;
+  return [
+    line({
+      metric: tree.activity.sent.sats.sum,
+      name: "Sent",
+      color,
+      unit: Unit.sats,
+    }),
+    line({
+      metric: tree.activity.sent.sats.cumulative,
+      name: "Cumulative",
+      color,
+      unit: Unit.sats,
+      defaultActive: false,
+    }),
+    line({
+      metric: tree.activity.sent.bitcoin.sum,
+      name: "Sent",
+      color,
+      unit: Unit.btc,
+    }),
+    line({
+      metric: tree.activity.sent.bitcoin.cumulative,
+      name: "Cumulative",
+      color,
+      unit: Unit.btc,
+      defaultActive: false,
+    }),
+    line({
+      metric: tree.activity.sent.dollars.sum,
+      name: "Sent",
+      color,
+      unit: Unit.usd,
+    }),
+    line({
+      metric: tree.activity.sent.dollars.cumulative,
+      name: "Cumulative",
+      color,
+      unit: Unit.usd,
+      defaultActive: false,
+    }),
+  ];
+}
+
+/**
+ * Create sent (sats) series for grouped cohorts (comparison)
+ * @param {readonly CohortObject[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedSentSatsSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.activity.sent.sats.sum,
+      name,
+      color,
+      unit: Unit.sats,
+    }),
+  ]);
+}
+
+/**
+ * Create sent (bitcoin) series for grouped cohorts (comparison)
+ * @param {readonly CohortObject[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedSentBitcoinSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.activity.sent.bitcoin.sum,
+      name,
+      color,
+      unit: Unit.btc,
+    }),
+  ]);
+}
+
+/**
+ * Create sent (dollars) series for grouped cohorts (comparison)
+ * @param {readonly CohortObject[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedSentDollarsSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.activity.sent.dollars.sum,
+      name,
+      color,
+      unit: Unit.usd,
+    }),
+  ]);
 }

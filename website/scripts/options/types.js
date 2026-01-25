@@ -145,10 +145,16 @@
  *   - AgeRangePattern (ageRange.*)
  * @typedef {LongTermPattern | AgeRangePattern} PatternWithPercentiles
  *
- * Patterns with neither (RealizedPattern/2, CostBasisPattern):
+ * Patterns with RelToMarketCap in relative (RelativePattern):
  *   - BasicUtxoPattern (minAge.*, geAmount.*, ltAmount.*)
- *   - EpochPattern (epoch.*)
- * @typedef {BasicUtxoPattern | EpochPattern} PatternBasic
+ * @typedef {BasicUtxoPattern} PatternBasicWithMarketCap
+ *
+ * Patterns without RelToMarketCap in relative (RelativePattern4):
+ *   - EpochPattern (epoch.*, amountRange.*, year.*, type.*)
+ * @typedef {EpochPattern} PatternBasicWithoutMarketCap
+ *
+ * Union of basic patterns (for backwards compat)
+ * @typedef {PatternBasicWithMarketCap | PatternBasicWithoutMarketCap} PatternBasic
  *
  * ============================================================================
  * Cohort Object Types (by capability)
@@ -183,19 +189,29 @@
  * @property {Color} color
  * @property {PatternWithPercentiles} tree
  *
- * Basic cohort: neither (minAge.*, epoch.*, amount cohorts)
- * @typedef {Object} CohortBasic
+ * Basic cohort WITH RelToMarketCap (minAge.*, geAmount.*, ltAmount.*)
+ * @typedef {Object} CohortBasicWithMarketCap
  * @property {string} name
  * @property {string} title
  * @property {Color} color
- * @property {PatternBasic} tree
+ * @property {PatternBasicWithMarketCap} tree
+ *
+ * Basic cohort WITHOUT RelToMarketCap (epoch.*, amountRange.*, year.*, type.*)
+ * @typedef {Object} CohortBasicWithoutMarketCap
+ * @property {string} name
+ * @property {string} title
+ * @property {Color} color
+ * @property {PatternBasicWithoutMarketCap} tree
+ *
+ * Union of basic cohort types
+ * @typedef {CohortBasicWithMarketCap | CohortBasicWithoutMarketCap} CohortBasic
  *
  * ============================================================================
  * Extended Cohort Types (with address count)
  * ============================================================================
  *
- * Basic cohort with address count (for "type" cohorts)
- * @typedef {CohortBasic & { addrCount: Brk.MetricPattern1<Brk.StoredU64> }} CohortAddress
+ * Addressable cohort with address count (for "type" cohorts - no RelToMarketCap)
+ * @typedef {CohortBasicWithoutMarketCap & { addrCount: Brk.MetricPattern1<Brk.StoredU64> }} CohortAddress
  *
  * ============================================================================
  * Cohort Group Types (by capability)
@@ -216,10 +232,18 @@
  * @property {string} title
  * @property {readonly CohortWithPercentiles[]} list
  *
- * @typedef {Object} CohortGroupBasic
+ * @typedef {Object} CohortGroupBasicWithMarketCap
  * @property {string} name
  * @property {string} title
- * @property {readonly CohortBasic[]} list
+ * @property {readonly CohortBasicWithMarketCap[]} list
+ *
+ * @typedef {Object} CohortGroupBasicWithoutMarketCap
+ * @property {string} name
+ * @property {string} title
+ * @property {readonly CohortBasicWithoutMarketCap[]} list
+ *
+ * Union of basic cohort group types
+ * @typedef {CohortGroupBasicWithMarketCap | CohortGroupBasicWithoutMarketCap} CohortGroupBasic
  *
  * @typedef {Object} UtxoCohortGroupObject
  * @property {string} name

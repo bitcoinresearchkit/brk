@@ -80,19 +80,6 @@ impl UTXOCohortVecs {
         })
     }
 
-    /// Add relative-to-circulating-supply metrics in a second step.
-    /// Called after the "all" cohort is available.
-    pub fn add_rel_to_circulating(
-        &mut self,
-        name: &str,
-        version: Version,
-        all_supply: &SupplyMetrics,
-    ) {
-        let full_name = CohortContext::Utxo.full_name(self.filter(), name);
-        self.metrics
-            .add_rel_to_circulating(&full_name, version, all_supply);
-    }
-
     /// Get the starting height when state was imported.
     pub fn state_starting_height(&self) -> Option<Height> {
         self.state_starting_height
