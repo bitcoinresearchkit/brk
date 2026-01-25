@@ -123,7 +123,9 @@ echo ""
 cd "$ROOT_DIR"
 
 # Verify all crates package correctly
-cargo package --workspace --allow-dirty --exclude brk_playground
+# Note: --no-verify skips rebuild check due to version collision with crates.io
+# The cargo build --workspace --release step above already verified compilation
+cargo package --workspace --allow-dirty --exclude brk_playground --no-verify
 
 # Version bump, commit, and tag (but don't publish yet)
 cargo release "$RELEASE_ARG" --execute --no-publish --no-confirm
