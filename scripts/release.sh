@@ -55,6 +55,10 @@ echo ""
 
 echo "--- Rust ---"
 cd "$ROOT_DIR"
+# Verify all crates package correctly
+# Note: --no-verify skips rebuild check due to version collision with crates.io
+# The cargo build --workspace --release step above already verified compilation
+cargo package --workspace --allow-dirty --no-verify
 cargo test --workspace
 echo ""
 
@@ -121,11 +125,6 @@ echo "=== Rust release ==="
 echo ""
 
 cd "$ROOT_DIR"
-
-# Verify all crates package correctly
-# Note: --no-verify skips rebuild check due to version collision with crates.io
-# The cargo build --workspace --release step above already verified compilation
-cargo package --workspace --allow-dirty --no-verify
 
 # Version bump, commit, and tag (but don't publish yet)
 cargo release "$RELEASE_ARG" --execute --no-publish --no-confirm
