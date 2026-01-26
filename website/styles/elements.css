@@ -40,10 +40,11 @@ a {
   &[target="_blank"]::after {
     color: var(--off-color);
     content: "↗";
-    align-self: baseline;
-    font-weight: 300;
+    font-weight: 400;
+    font-size: 1rem;
 
-    margin-left: 0.25rem;
+    margin-top: 0.1rem;
+    margin-left: 0.375rem;
     line-height: 1;
 
     &:hover {

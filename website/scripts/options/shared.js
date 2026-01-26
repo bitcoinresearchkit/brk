@@ -166,7 +166,7 @@ export function createRatioChart(ctx, { title, price, ratio, color, name }) {
     name: name ?? "ratio",
     title: title(name ?? "Ratio"),
     top: [
-      line({ metric: price, name: "price", color, unit: Unit.usd }),
+      line({ metric: price, name: "Price", color, unit: Unit.usd }),
       ...percentileUsdMap(colors, ratio).map(({ name, prop, color }) =>
         line({
           metric: prop,
@@ -221,7 +221,7 @@ export function createZScoresFolder(
   const sdPats = sdPatterns(ratio);
 
   return {
-    name: "ZScores",
+    name: "Z-Scores",
     tree: [
       {
         name: "Compare",

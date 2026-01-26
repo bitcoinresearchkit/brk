@@ -18,8 +18,6 @@ import {
   createSingleCoinsDestroyedSeries,
   createGroupedCoinblocksDestroyedSeries,
   createGroupedCoindaysDestroyedSeries,
-  createGroupedSatblocksDestroyedSeries,
-  createGroupedSatdaysDestroyedSeries,
   createSingleSentSeries,
   createGroupedSentSatsSeries,
   createGroupedSentBitcoinSeries,
@@ -48,7 +46,7 @@ export function createAddressCohortFolder(ctx, args) {
       // Supply section
       isSingle
         ? {
-            name: "supply",
+            name: "Supply",
             title: title("Supply"),
             bottom: createSingleSupplySeries(
               ctx,
@@ -60,14 +58,14 @@ export function createAddressCohortFolder(ctx, args) {
 
       // UTXO count
       {
-        name: "utxo count",
+        name: "UTXO Count",
         title: title("UTXO Count"),
         bottom: createUtxoCountSeries(list, useGroupName),
       },
 
       // Address count (ADDRESS COHORTS ONLY - fully type safe!)
       {
-        name: "address count",
+        name: "Address Count",
         title: title("Address Count"),
         bottom: createAddressCountSeries(ctx, list, useGroupName),
       },
@@ -94,12 +92,12 @@ export function createAddressCohortFolder(ctx, args) {
                 title,
               )),
           {
-            name: "capitalization",
+            name: "Capitalization",
             title: title("Realized Cap"),
             bottom: createRealizedCapWithExtras(ctx, list, args, useGroupName),
           },
           {
-            name: "value",
+            name: "Value",
             title: title("Realized Value"),
             bottom: list.map(({ color, name, tree }) =>
               line({
@@ -143,7 +141,7 @@ function createRealizedPriceOptions(args, title) {
 
   return [
     {
-      name: "price",
+      name: "Price",
       title: title("Realized Price"),
       top: [
         line({
@@ -179,7 +177,7 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
       ? [
           baseline({
             metric: tree.realized.realizedCap30dDelta,
-            name: "30d Change",
+            name: "1m Change",
             unit: Unit.usd,
             defaultActive: false,
           }),
@@ -203,7 +201,7 @@ function createRealizedPnlSection(ctx, args, title) {
 
   return [
     {
-      name: "pnl",
+      name: "P&L",
       title: title("Realized P&L"),
       bottom: [
         line({
@@ -297,7 +295,7 @@ function createRealizedPnlSection(ctx, args, title) {
         }),
         baseline({
           metric: realized.netRealizedPnlCumulative30dDelta,
-          name: "Cumulative 30d change",
+          name: "Cumulative 1m Change",
           unit: Unit.usd,
           defaultActive: false,
         }),
@@ -314,13 +312,13 @@ function createRealizedPnlSection(ctx, args, title) {
         }),
         baseline({
           metric: realized.netRealizedPnlCumulative30dDeltaRelToRealizedCap,
-          name: "Cumulative 30d change",
+          name: "Cumulative 1m Change",
           unit: Unit.pctRcap,
           defaultActive: false,
         }),
         baseline({
           metric: realized.netRealizedPnlCumulative30dDeltaRelToMarketCap,
-          name: "Cumulative 30d change",
+          name: "Cumulative 1m Change",
           unit: Unit.pctMcap,
         }),
         priceLine({
@@ -339,7 +337,7 @@ function createRealizedPnlSection(ctx, args, title) {
       ],
     },
     {
-      name: "sopr",
+      name: "SOPR",
       title: title("SOPR"),
       bottom: [
         baseline({
@@ -398,7 +396,7 @@ function createRealizedPnlSection(ctx, args, title) {
       ],
     },
     {
-      name: "value",
+      name: "Value",
       title: title("Value Created & Destroyed"),
       bottom: [
         line({
@@ -434,7 +432,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
       name: "Unrealized",
       tree: [
         {
-          name: "profit",
+          name: "Profit",
           title: title("Unrealized Profit"),
           bottom: list.flatMap(({ color, name, tree }) => [
             line({
@@ -446,7 +444,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
           ]),
         },
         {
-          name: "loss",
+          name: "Loss",
           title: title("Unrealized Loss"),
           bottom: list.flatMap(({ color, name, tree }) => [
             line({
@@ -458,7 +456,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
           ]),
         },
         {
-          name: "total pnl",
+          name: "Total P&L",
           title: title("Total Unrealized P&L"),
           bottom: list.flatMap(({ color, name, tree }) => [
             baseline({
@@ -470,7 +468,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
           ]),
         },
         {
-          name: "negative loss",
+          name: "Negative Loss",
           title: title("Negative Unrealized Loss"),
           bottom: list.flatMap(({ color, name, tree }) => [
             line({
@@ -485,7 +483,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
           name: "Relative",
           tree: [
             {
-              name: "nupl",
+              name: "NUPL",
               title: title("NUPL (Rel to Market Cap)"),
               bottom: list.flatMap(({ color, name, tree }) => [
                 baseline({
@@ -498,7 +496,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
               ]),
             },
             {
-              name: "profit",
+              name: "Profit",
               title: title("Unrealized Profit (% of Market Cap)"),
               bottom: list.flatMap(({ color, name, tree }) => [
                 line({
@@ -510,7 +508,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
               ]),
             },
             {
-              name: "loss",
+              name: "Loss",
               title: title("Unrealized Loss (% of Market Cap)"),
               bottom: list.flatMap(({ color, name, tree }) => [
                 line({
@@ -522,7 +520,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
               ]),
             },
             {
-              name: "net pnl",
+              name: "Net P&L",
               title: title("Net Unrealized P&L (% of Market Cap)"),
               bottom: list.flatMap(({ color, name, tree }) => [
                 baseline({
@@ -534,7 +532,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
               ]),
             },
             {
-              name: "negative loss",
+              name: "Negative Loss",
               title: title("Negative Unrealized Loss (% of Market Cap)"),
               bottom: list.flatMap(({ color, name, tree }) => [
                 line({
@@ -548,7 +546,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
           ],
         },
         {
-          name: "nupl",
+          name: "NUPL",
           title: title("Net Unrealized P&L"),
           bottom: list.flatMap(({ color, name, tree }) => [
             baseline({
@@ -581,7 +579,7 @@ function createCostBasisSection(list, useGroupName, title) {
       name: "Cost Basis",
       tree: [
         {
-          name: "min",
+          name: "Min",
           title: title("Min Cost Basis"),
           top: list.map(({ color, name, tree }) =>
             line({
@@ -655,16 +653,6 @@ function createActivitySection(args, title) {
           name: "coindays destroyed",
           title: title("Coindays Destroyed"),
           bottom: createGroupedCoindaysDestroyedSeries(list),
-        },
-        {
-          name: "satblocks destroyed",
-          title: title("Satblocks Destroyed"),
-          bottom: createGroupedSatblocksDestroyedSeries(list),
-        },
-        {
-          name: "satdays destroyed",
-          title: title("Satdays Destroyed"),
-          bottom: createGroupedSatdaysDestroyedSeries(list),
         },
         {
           name: "Sent",

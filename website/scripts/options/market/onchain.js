@@ -1,20 +1,20 @@
 /** On-chain indicators (Pi Cycle, Puell, NVT, Gini) */
 
-import { Unit } from "../../../utils/units.js";
-import { baseline, line } from "../../series.js";
+import { Unit } from "../../utils/units.js";
+import { baseline, line } from "../series.js";
 
 /**
- * Create On-chain section
+ * Create Valuation section
  * @param {PartialContext} ctx
  * @param {Object} args
  * @param {Market["indicators"]} args.indicators
  * @param {Market["movingAverage"]} args.movingAverage
  */
-export function createOnchainSection(ctx, { indicators, movingAverage }) {
+export function createValuationSection(ctx, { indicators, movingAverage }) {
   const { colors } = ctx;
 
   return {
-    name: "On-chain",
+    name: "Valuation",
     tree: [
       {
         name: "Pi Cycle",

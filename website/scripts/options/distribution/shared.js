@@ -109,20 +109,20 @@ export function createGroupedSupplyInLossSeries(list, { relativeMetrics } = {}) 
  */
 export function createGroupedSupplySection(list, title, { supplyRelativeMetrics, profitRelativeMetrics, lossRelativeMetrics } = {}) {
   return {
-    name: "supply",
+    name: "Supply",
     tree: [
       {
-        name: "total",
+        name: "Total",
         title: title("Supply"),
         bottom: createGroupedSupplyTotalSeries(list, { relativeMetrics: supplyRelativeMetrics }),
       },
       {
-        name: "in profit",
+        name: "In Profit",
         title: title("Supply In Profit"),
         bottom: createGroupedSupplyInProfitSeries(list, { relativeMetrics: profitRelativeMetrics }),
       },
       {
-        name: "in loss",
+        name: "In Loss",
         title: title("Supply In Loss"),
         bottom: createGroupedSupplyInLossSeries(list, { relativeMetrics: lossRelativeMetrics }),
       },
@@ -404,18 +404,6 @@ export function createSingleCoinsDestroyedSeries(cohort) {
       unit: Unit.coindays,
       defaultActive: false,
     }),
-    line({
-      metric: tree.activity.satblocksDestroyed,
-      name: "Satblocks",
-      color,
-      unit: Unit.satblocks,
-    }),
-    line({
-      metric: tree.activity.satdaysDestroyed,
-      name: "Satdays",
-      color,
-      unit: Unit.satdays,
-    }),
   ];
 }
 
@@ -447,38 +435,6 @@ export function createGroupedCoindaysDestroyedSeries(list) {
       name,
       color,
       unit: Unit.coindays,
-    }),
-  ]);
-}
-
-/**
- * Create satblocks destroyed series for grouped cohorts (comparison)
- * @param {readonly CohortObject[]} list
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function createGroupedSatblocksDestroyedSeries(list) {
-  return list.flatMap(({ color, name, tree }) => [
-    line({
-      metric: tree.activity.satblocksDestroyed,
-      name,
-      color,
-      unit: Unit.satblocks,
-    }),
-  ]);
-}
-
-/**
- * Create satdays destroyed series for grouped cohorts (comparison)
- * @param {readonly CohortObject[]} list
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function createGroupedSatdaysDestroyedSeries(list) {
-  return list.flatMap(({ color, name, tree }) => [
-    line({
-      metric: tree.activity.satdaysDestroyed,
-      name,
-      color,
-      unit: Unit.satdays,
     }),
   ]);
 }

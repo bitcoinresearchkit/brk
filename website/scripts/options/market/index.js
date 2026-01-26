@@ -4,9 +4,12 @@ import { localhost } from "../../utils/env.js";
 import { Unit } from "../../utils/units.js";
 import { candlestick, line } from "../series.js";
 import { createAveragesSection } from "./averages.js";
-import { createPerformanceSection } from "./performance.js";
-import { createIndicatorsSection } from "./indicators/index.js";
-import { createInvestingSection } from "./investing.js";
+import { createReturnsSection } from "./performance.js";
+import { createMomentumSection } from "./momentum.js";
+import { createVolatilitySection } from "./volatility.js";
+import { createBandsSection } from "./bands.js";
+import { createValuationSection } from "./onchain.js";
+import { createDcaVsLumpSumSection, createDcaByYearSection } from "./investing.js";
 
 /**
  * Create Market section
@@ -161,22 +164,29 @@ export function createMarketSection(ctx) {
         ],
       },
 
-      // Averages
+      // Moving Averages
       createAveragesSection(ctx, movingAverage),
 
-      // Performance
-      createPerformanceSection(ctx, returns),
+      // Returns
+      createReturnsSection(ctx, returns),
 
-      // Indicators
-      createIndicatorsSection(ctx, {
-        volatility,
-        range,
-        movingAverage,
-        indicators,
-      }),
+      // Volatility
+      createVolatilitySection(ctx, { volatility, range }),
 
-      // Investing
-      createInvestingSection(ctx, { dca, lookback, returns }),
+      // Momentum
+      createMomentumSection(ctx, indicators),
+
+      // Bands
+      createBandsSection(ctx, { range, movingAverage }),
+
+      // Valuation
+      createValuationSection(ctx, { indicators, movingAverage }),
+
+      // DCA vs Lump Sum
+      createDcaVsLumpSumSection(ctx, { dca, lookback, returns }),
+
+      // DCA by Year
+      createDcaByYearSection(ctx, { dca }),
     ],
   };
 }

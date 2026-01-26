@@ -161,6 +161,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
     /** @satisfies {DeepPartial<ChartOptions>} */ ({
       autoSize: true,
       layout: {
+        // fontSize: 14,
         fontFamily: style.fontFamily,
         background: { color: "transparent" },
         attributionLogo: false,

@@ -85,7 +85,7 @@ export function createPriceWithRatioOptions(
 
   return [
     {
-      name: "price",
+      name: "Price",
       title,
       top: [line({ metric: priceMetric, name: legend, color, unit: Unit.usd })],
     },
@@ -100,6 +100,9 @@ export function createPriceWithRatioOptions(
   ];
 }
 
+/** Common period IDs to show at top level */
+const COMMON_PERIODS = ["1w", "1m", "200d", "1y", "200w", "4y"];
+
 /**
  * @param {PartialContext} ctx
  * @param {MarketMovingAverage} movingAverage
@@ -113,35 +116,54 @@ export function createAveragesSection(ctx, movingAverage) {
    * @param {string} label
    * @param {ReturnType<typeof buildSmaAverages> | ReturnType<typeof buildEmaAverages>} averages
    */
-  const createSubSection = (label, averages) => ({
-    name: label,
-    tree: [
-      {
-        name: "Compare",
-        title: `Price ${label}s`,
-        top: averages.map(({ id, color, ratio }) =>
-          line({
-            metric: ratio.price,
-            name: id,
+  const createSubSection = (label, averages) => {
+    const commonAverages = averages.filter(({ id }) => COMMON_PERIODS.includes(id));
+    const moreAverages = averages.filter(({ id }) => !COMMON_PERIODS.includes(id));
+
+    return {
+      name: label,
+      tree: [
+        {
+          name: "Compare",
+          title: `Price ${label}s`,
+          top: averages.map(({ id, color, ratio }) =>
+            line({
+              metric: ratio.price,
+              name: id,
+              color,
+              unit: Unit.usd,
+            }),
+          ),
+        },
+        // Common periods at top level
+        ...commonAverages.map(({ name, color, ratio }) => ({
+          name,
+          tree: createPriceWithRatioOptions(ctx, {
+            ratio,
+            title: `${name} ${label}`,
+            legend: "average",
             color,
-            unit: Unit.usd,
           }),
-        ),
-      },
-      ...averages.map(({ name, color, ratio }) => ({
-        name,
-        tree: createPriceWithRatioOptions(ctx, {
-          ratio,
-          title: `${name} ${label}`,
-          legend: "average",
-          color,
-        }),
-      })),
-    ],
-  });
+        })),
+        // Less common periods in "More..." folder
+        {
+          name: "More...",
+          tree: moreAverages.map(({ name, color, ratio }) => ({
+            name,
+            tree: createPriceWithRatioOptions(ctx, {
+              ratio,
+              title: `${name} ${label}`,
+              legend: "average",
+              color,
+            }),
+          })),
+        },
+      ],
+    };
+  };
 
   return {
-    name: "Averages",
+    name: "Moving Averages",
     tree: [
       createSubSection("SMA", smaAverages),
       createSubSection("EMA", emaAverages),

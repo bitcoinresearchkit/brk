@@ -115,7 +115,8 @@ export function initOptions(brk) {
       }
 
       // Remove from set if manual price line already exists
-      if (blueprint.type === "Line") {
+      // Note: line() doesn't set type, so undefined means Line
+      if (blueprint.type === "Line" || blueprint.type === undefined) {
         const path = Object.values(blueprint.metric.by)[0]?.path ?? "";
         if (path.includes("constant_")) {
           priceLines.get(unit)?.delete(parseFloat(blueprint.title));

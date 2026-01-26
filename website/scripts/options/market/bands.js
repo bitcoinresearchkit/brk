@@ -1,7 +1,7 @@
 /** Bands indicators (MinMax, Mayer Multiple) */
 
-import { Unit } from "../../../utils/units.js";
-import { line } from "../../series.js";
+import { Unit } from "../../utils/units.js";
+import { line } from "../series.js";
 
 /**
  * Create Bands section

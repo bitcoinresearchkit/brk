@@ -41,6 +41,8 @@ function walk(node, map, path) {
         kn === "outputtype" ||
         kn === "heighttopool" ||
         kn === "txid" ||
+        kn.startsWith("satblocks") ||
+        kn.startsWith("satdays") ||
         kn.endsWith("state") ||
         kn.endsWith("index") ||
         kn.endsWith("indexes") ||

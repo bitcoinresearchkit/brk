@@ -24,7 +24,7 @@ function createCointimePriceWithRatioOptions(
 ) {
   return [
     {
-      name: "price",
+      name: "Price",
       title,
       top: [line({ metric: price, name: legend, color, unit: Unit.usd })],
     },
@@ -78,7 +78,7 @@ export function createCointimeSection(ctx) {
     {
       price: pricing.cointimePrice,
       ratio: pricing.cointimePriceRatio,
-      name: "cointime",
+      name: "Cointime",
       title: "Cointime Price",
       color: colors.yellow,
     },
@@ -88,31 +88,31 @@ export function createCointimeSection(ctx) {
   const cointimeCapitalizations = [
     {
       metric: cap.vaultedCap,
-      name: "vaulted",
+      name: "Vaulted",
       title: "Vaulted Cap",
       color: colors.lime,
     },
     {
       metric: cap.activeCap,
-      name: "active",
+      name: "Active",
       title: "Active Cap",
       color: colors.rose,
     },
     {
       metric: cap.cointimeCap,
-      name: "cointime",
+      name: "Cointime",
       title: "Cointime Cap",
       color: colors.yellow,
     },
     {
       metric: cap.investorCap,
-      name: "investor",
+      name: "Investor",
       title: "Investor Cap",
       color: colors.fuchsia,
     },
     {
       metric: cap.thermoCap,
-      name: "thermo",
+      name: "Thermo",
       title: "Thermo Cap",
       color: colors.emerald,
     },
@@ -283,7 +283,7 @@ export function createCointimeSection(ctx) {
         name: "Reserve Risk",
         tree: [
           {
-            name: "reserve risk",
+            name: "Ratio",
             title: "Reserve Risk",
             bottom: [
               line({
@@ -295,7 +295,7 @@ export function createCointimeSection(ctx) {
             ],
           },
           {
-            name: "hodl bank",
+            name: "HODL Bank",
             title: "HODL Bank",
             bottom: [
               line({
@@ -307,7 +307,7 @@ export function createCointimeSection(ctx) {
             ],
           },
           {
-            name: "vocdd 365d sma",
+            name: "VOCDD 365d SMA",
             title: "VOCDD 365d SMA",
             bottom: [
               line({
@@ -326,7 +326,7 @@ export function createCointimeSection(ctx) {
         name: "Value",
         tree: [
           {
-            name: "created",
+            name: "Created",
             title: "Cointime Value Created",
             bottom: [
               line({
@@ -345,7 +345,7 @@ export function createCointimeSection(ctx) {
             ],
           },
           {
-            name: "destroyed",
+            name: "Destroyed",
             title: "Cointime Value Destroyed",
             bottom: [
               line({
@@ -364,7 +364,7 @@ export function createCointimeSection(ctx) {
             ],
           },
           {
-            name: "stored",
+            name: "Stored",
             title: "Cointime Value Stored",
             bottom: [
               line({
@@ -383,7 +383,7 @@ export function createCointimeSection(ctx) {
             ],
           },
           {
-            name: "vocdd",
+            name: "VOCDD",
             title: "VOCDD (Value of Coin Days Destroyed)",
             bottom: [
               line({

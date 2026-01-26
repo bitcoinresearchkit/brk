@@ -1,8 +1,8 @@
 /** Volatility indicators (Index, True Range, Choppiness, Sharpe, Sortino) */
 
-import { Unit } from "../../../utils/units.js";
-import { priceLine, priceLines } from "../../constants.js";
-import { line } from "../../series.js";
+import { Unit } from "../../utils/units.js";
+import { priceLine, priceLines } from "../constants.js";
+import { line } from "../series.js";
 
 /**
  * Create Volatility section

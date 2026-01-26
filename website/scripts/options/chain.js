@@ -30,7 +30,6 @@ export function createChainSection(ctx) {
     pools,
     inputs,
     outputs,
-    market,
     scripts,
     supply,
     distribution,
@@ -381,17 +380,22 @@ export function createChainSection(ctx) {
         ],
       },
 
-      // Input
+      // UTXO Set (merged Input, Output, UTXO)
       {
-        name: "Input",
+        name: "UTXO Set",
         tree: [
           {
-            name: "Count",
+            name: "Input Count",
             title: "Input Count",
             bottom: [...fromSizePattern(inputs.count, Unit.count)],
           },
           {
-            name: "Speed",
+            name: "Output Count",
+            title: "Output Count",
+            bottom: [...fromSizePattern(outputs.count.totalCount, Unit.count)],
+          },
+          {
+            name: "Inputs/sec",
             title: "Inputs Per Second",
             bottom: [
               dots({
@@ -401,20 +405,8 @@ export function createChainSection(ctx) {
               }),
             ],
           },
-        ],
-      },
-
-      // Output
-      {
-        name: "Output",
-        tree: [
           {
-            name: "Count",
-            title: "Output Count",
-            bottom: [...fromSizePattern(outputs.count.totalCount, Unit.count)],
-          },
-          {
-            name: "Speed",
+            name: "Outputs/sec",
             title: "Outputs Per Second",
             bottom: [
               dots({
@@ -424,14 +416,8 @@ export function createChainSection(ctx) {
               }),
             ],
           },
-        ],
-      },
-
-      {
-        name: "UTXO",
-        tree: [
           {
-            name: "Count",
+            name: "UTXO Count",
             title: "UTXO Count",
             bottom: [
               line({
@@ -451,19 +437,49 @@ export function createChainSection(ctx) {
           {
             name: "Count",
             tree: [
-              { name: "P2PKH", title: "P2PKH Output Count", bottom: fromDollarsPattern(scripts.count.p2pkh, Unit.count) },
-              { name: "P2SH", title: "P2SH Output Count", bottom: fromDollarsPattern(scripts.count.p2sh, Unit.count) },
-              { name: "P2WPKH", title: "P2WPKH Output Count", bottom: fromDollarsPattern(scripts.count.p2wpkh, Unit.count) },
-              { name: "P2WSH", title: "P2WSH Output Count", bottom: fromDollarsPattern(scripts.count.p2wsh, Unit.count) },
-              { name: "P2TR", title: "P2TR Output Count", bottom: fromDollarsPattern(scripts.count.p2tr, Unit.count) },
-              { name: "P2PK33", title: "P2PK33 Output Count", bottom: fromDollarsPattern(scripts.count.p2pk33, Unit.count) },
-              { name: "P2PK65", title: "P2PK65 Output Count", bottom: fromDollarsPattern(scripts.count.p2pk65, Unit.count) },
-              { name: "P2MS", title: "P2MS Output Count", bottom: fromDollarsPattern(scripts.count.p2ms, Unit.count) },
-              { name: "P2A", title: "P2A Output Count", bottom: fromDollarsPattern(scripts.count.p2a, Unit.count) },
-              { name: "OP_RETURN", title: "OP_RETURN Output Count", bottom: fromDollarsPattern(scripts.count.opreturn, Unit.count) },
-              { name: "SegWit", title: "SegWit Output Count", bottom: fromDollarsPattern(scripts.count.segwit, Unit.count) },
-              { name: "Empty", title: "Empty Output Count", bottom: fromDollarsPattern(scripts.count.emptyoutput, Unit.count) },
-              { name: "Unknown", title: "Unknown Output Count", bottom: fromDollarsPattern(scripts.count.unknownoutput, Unit.count) },
+              // Legacy scripts
+              {
+                name: "Legacy",
+                tree: [
+                  { name: "P2PKH", title: "P2PKH Output Count", bottom: fromDollarsPattern(scripts.count.p2pkh, Unit.count) },
+                  { name: "P2PK33", title: "P2PK33 Output Count", bottom: fromDollarsPattern(scripts.count.p2pk33, Unit.count) },
+                  { name: "P2PK65", title: "P2PK65 Output Count", bottom: fromDollarsPattern(scripts.count.p2pk65, Unit.count) },
+                ],
+              },
+              // Script Hash
+              {
+                name: "Script Hash",
+                tree: [
+                  { name: "P2SH", title: "P2SH Output Count", bottom: fromDollarsPattern(scripts.count.p2sh, Unit.count) },
+                  { name: "P2MS", title: "P2MS Output Count", bottom: fromDollarsPattern(scripts.count.p2ms, Unit.count) },
+                ],
+              },
+              // SegWit scripts
+              {
+                name: "SegWit",
+                tree: [
+                  { name: "All SegWit", title: "SegWit Output Count", bottom: fromDollarsPattern(scripts.count.segwit, Unit.count) },
+                  { name: "P2WPKH", title: "P2WPKH Output Count", bottom: fromDollarsPattern(scripts.count.p2wpkh, Unit.count) },
+                  { name: "P2WSH", title: "P2WSH Output Count", bottom: fromDollarsPattern(scripts.count.p2wsh, Unit.count) },
+                ],
+              },
+              // Taproot scripts
+              {
+                name: "Taproot",
+                tree: [
+                  { name: "P2TR", title: "P2TR Output Count", bottom: fromDollarsPattern(scripts.count.p2tr, Unit.count) },
+                  { name: "P2A", title: "P2A Output Count", bottom: fromDollarsPattern(scripts.count.p2a, Unit.count) },
+                ],
+              },
+              // Other scripts
+              {
+                name: "Other",
+                tree: [
+                  { name: "OP_RETURN", title: "OP_RETURN Output Count", bottom: fromDollarsPattern(scripts.count.opreturn, Unit.count) },
+                  { name: "Empty", title: "Empty Output Count", bottom: fromDollarsPattern(scripts.count.emptyoutput, Unit.count) },
+                  { name: "Unknown", title: "Unknown Output Count", bottom: fromDollarsPattern(scripts.count.unknownoutput, Unit.count) },
+                ],
+              },
             ],
           },
           {
@@ -489,12 +505,7 @@ export function createChainSection(ctx) {
               },
             ],
           },
-          {
-            name: "Value",
-            tree: [
-              { name: "OP_RETURN", title: "OP_RETURN Value", bottom: fromCoinbasePattern(scripts.value.opreturn) },
-            ],
-          },
+          { name: "OP_RETURN Value", title: "OP_RETURN Value", bottom: fromCoinbasePattern(scripts.value.opreturn) },
         ],
       },
 
@@ -922,18 +933,6 @@ export function createChainSection(ctx) {
                 name: "before next",
                 color: colors.blue,
                 unit: Unit.days,
-              }),
-            ],
-          },
-          {
-            name: "Puell Multiple",
-            title: "Puell Multiple",
-            bottom: [
-              baseline({
-                metric: market.indicators.puellMultiple,
-                name: "Puell Multiple",
-                unit: Unit.ratio,
-                base: 1,
               }),
             ],
           },

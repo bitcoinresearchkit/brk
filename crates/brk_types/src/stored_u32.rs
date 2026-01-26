@@ -49,6 +49,13 @@ impl From<u32> for StoredU32 {
     }
 }
 
+impl From<StoredU32> for u32 {
+    #[inline]
+    fn from(value: StoredU32) -> Self {
+        value.0
+    }
+}
+
 impl From<StoredU32> for f32 {
     #[inline]
     fn from(value: StoredU32) -> Self {

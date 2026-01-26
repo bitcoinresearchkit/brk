@@ -1,8 +1,8 @@
 /** Momentum indicators (RSI, StochRSI, Stochastic, MACD) */
 
-import { Unit } from "../../../utils/units.js";
-import { priceLine, priceLines } from "../../constants.js";
-import { line, histogram } from "../../series.js";
+import { Unit } from "../../utils/units.js";
+import { priceLine, priceLines } from "../constants.js";
+import { line, histogram } from "../series.js";
 
 /**
  * Create Momentum section

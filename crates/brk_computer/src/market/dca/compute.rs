@@ -1,9 +1,11 @@
 use brk_error::Result;
+use brk_types::{Close, Dollars, StoredF32, StoredU32};
 use vecdb::Exit;
 
-use super::Vecs;
+use super::{ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     ComputeIndexes,
+    internal::{ComputedFromDateLast, LazyBinaryFromDateLast},
     market::lookback,
     price,
     traits::{ComputeDCAAveragePriceViaLen, ComputeDCAStackViaLen, ComputeLumpSumStackViaLen},
@@ -61,6 +63,17 @@ impl Vecs {
             })?;
         }
 
+        // DCA by period - profitability
+        compute_period_profitability(
+            &mut self.period_days_in_profit,
+            &mut self.period_days_in_loss,
+            &mut self.period_max_drawdown,
+            &mut self.period_max_return,
+            &self.period_returns,
+            starting_indexes,
+            exit,
+        )?;
+
         // Lump sum by period - stack (for comparison with DCA)
         let lookback_dca = lookback.price_ago.as_dca_period();
         for (stack, lookback_price, days) in
@@ -77,6 +90,17 @@ impl Vecs {
                 Ok(())
             })?;
         }
+
+        // Lump sum by period - profitability
+        compute_period_profitability(
+            &mut self.period_lump_sum_days_in_profit,
+            &mut self.period_lump_sum_days_in_loss,
+            &mut self.period_lump_sum_max_drawdown,
+            &mut self.period_lump_sum_max_return,
+            &self.period_lump_sum_returns,
+            starting_indexes,
+            exit,
+        )?;
 
         // DCA by year class - stack and average_price
         let dateindexes = super::ByDcaClass::<()>::dateindexes();
@@ -102,6 +126,134 @@ impl Vecs {
             })?;
         }
 
+        // DCA by year class - profitability
+        compute_class_profitability(
+            &mut self.class_days_in_profit,
+            &mut self.class_days_in_loss,
+            &mut self.class_max_drawdown,
+            &mut self.class_max_return,
+            &self.class_returns,
+            starting_indexes,
+            exit,
+        )?;
+
         Ok(())
     }
+}
+
+fn compute_period_profitability(
+    days_in_profit: &mut ByDcaPeriod<ComputedFromDateLast<StoredU32>>,
+    days_in_loss: &mut ByDcaPeriod<ComputedFromDateLast<StoredU32>>,
+    max_drawdown: &mut ByDcaPeriod<ComputedFromDateLast<StoredF32>>,
+    max_return: &mut ByDcaPeriod<ComputedFromDateLast<StoredF32>>,
+    returns: &ByDcaPeriod<LazyBinaryFromDateLast<StoredF32, Close<Dollars>, Dollars>>,
+    starting_indexes: &ComputeIndexes,
+    exit: &Exit,
+) -> Result<()> {
+    for ((((dip, dil), md), mr), (ret, days)) in days_in_profit
+        .iter_mut()
+        .zip(days_in_loss.iter_mut())
+        .zip(max_drawdown.iter_mut())
+        .zip(max_return.iter_mut())
+        .zip(returns.iter_with_days())
+    {
+        dip.compute_all(starting_indexes, exit, |v| {
+            Ok(v.compute_rolling_count(
+                starting_indexes.dateindex,
+                &ret.dateindex,
+                days as usize,
+                |r| f32::from(*r) > 0.0,
+                exit,
+            )?)
+        })?;
+
+        dil.compute_all(starting_indexes, exit, |v| {
+            Ok(v.compute_rolling_count(
+                starting_indexes.dateindex,
+                &ret.dateindex,
+                days as usize,
+                |r| f32::from(*r) < 0.0,
+                exit,
+            )?)
+        })?;
+
+        md.compute_all(starting_indexes, exit, |v| {
+            Ok(v.compute_min(
+                starting_indexes.dateindex,
+                &ret.dateindex,
+                days as usize,
+                exit,
+            )?)
+        })?;
+
+        mr.compute_all(starting_indexes, exit, |v| {
+            Ok(v.compute_max(
+                starting_indexes.dateindex,
+                &ret.dateindex,
+                days as usize,
+                exit,
+            )?)
+        })?;
+    }
+    Ok(())
+}
+
+fn compute_class_profitability(
+    days_in_profit: &mut ByDcaClass<ComputedFromDateLast<StoredU32>>,
+    days_in_loss: &mut ByDcaClass<ComputedFromDateLast<StoredU32>>,
+    max_drawdown: &mut ByDcaClass<ComputedFromDateLast<StoredF32>>,
+    max_return: &mut ByDcaClass<ComputedFromDateLast<StoredF32>>,
+    returns: &ByDcaClass<LazyBinaryFromDateLast<StoredF32, Close<Dollars>, Dollars>>,
+    starting_indexes: &ComputeIndexes,
+    exit: &Exit,
+) -> Result<()> {
+    let dateindexes = ByDcaClass::<()>::dateindexes();
+
+    for (((((dip, dil), md), mr), ret), from) in days_in_profit
+        .iter_mut()
+        .zip(days_in_loss.iter_mut())
+        .zip(max_drawdown.iter_mut())
+        .zip(max_return.iter_mut())
+        .zip(returns.iter())
+        .zip(dateindexes)
+    {
+        dip.compute_all(starting_indexes, exit, |v| {
+            Ok(v.compute_cumulative_count_from(
+                starting_indexes.dateindex,
+                &ret.dateindex,
+                from,
+                |r| f32::from(*r) > 0.0,
+                exit,
+            )?)
+        })?;
+
+        dil.compute_all(starting_indexes, exit, |v| {
+            Ok(v.compute_cumulative_count_from(
+                starting_indexes.dateindex,
+                &ret.dateindex,
+                from,
+                |r| f32::from(*r) < 0.0,
+                exit,
+            )?)
+        })?;
+
+        md.compute_all(starting_indexes, exit, |v| {
+            Ok(v.compute_all_time_low_from(
+                starting_indexes.dateindex,
+                &ret.dateindex,
+                from,
+                exit,
+            )?)
+        })?;
+
+        mr.compute_all(starting_indexes, exit, |v| {
+            Ok(v.compute_all_time_high_from(
+                starting_indexes.dateindex,
+                &ret.dateindex,
+                from,
+                exit,
+            )?)
+        })?;
+    }
+    Ok(())
 }

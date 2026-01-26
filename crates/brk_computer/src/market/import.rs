@@ -34,7 +34,7 @@ impl Vecs {
         let volatility = VolatilityVecs::forced_import(version, &returns);
         let range = RangeVecs::forced_import(&db, version, indexes)?;
         let moving_average = MovingAverageVecs::forced_import(&db, version, indexes, Some(price))?;
-        let dca = DcaVecs::forced_import(&db, version, indexes, price)?;
+        let dca = DcaVecs::forced_import(&db, version, indexes, price, &lookback)?;
         let indicators = IndicatorsVecs::forced_import(
             &db,
             version,
