@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Blocks\_Halving
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2993](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L2993)
+Defined in: [Developer/brk/modules/brk-client/index.js:2980](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L2980)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2993](https://github.com/
 
 > **blocksBeforeNextHalving**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2994](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L2994)
+Defined in: [Developer/brk/modules/brk-client/index.js:2981](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L2981)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2994](https://github.com/
 
 > **daysBeforeNextHalving**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2995](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L2995)
+Defined in: [Developer/brk/modules/brk-client/index.js:2982](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L2982)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2995](https://github.com/
 
 > **epoch**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2996](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L2996)
+Defined in: [Developer/brk/modules/brk-client/index.js:2983](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L2983)

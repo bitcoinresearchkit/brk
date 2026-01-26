@@ -6,7 +6,7 @@
 
 # Interface: ActivityPattern2
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2541](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L2541)
+Defined in: [Developer/brk/modules/brk-client/index.js:2490](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L2490)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2541](https://github.com/
 
 > **coinblocksDestroyed**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2542](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L2542)
+Defined in: [Developer/brk/modules/brk-client/index.js:2491](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L2491)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2542](https://github.com/
 
 > **coindaysDestroyed**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2543](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L2543)
+Defined in: [Developer/brk/modules/brk-client/index.js:2492](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L2492)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2543](https://github.com/
 
 > **satblocksDestroyed**: [`MetricPattern11`](../type-aliases/MetricPattern11.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2544](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L2544)
+Defined in: [Developer/brk/modules/brk-client/index.js:2493](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L2493)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2544](https://github.com/
 
 > **satdaysDestroyed**: [`MetricPattern11`](../type-aliases/MetricPattern11.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2545](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L2545)
+Defined in: [Developer/brk/modules/brk-client/index.js:2494](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L2494)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2545](https://github.com/
 
 > **sent**: [`UnclaimedRewardsPattern`](UnclaimedRewardsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2546](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L2546)
+Defined in: [Developer/brk/modules/brk-client/index.js:2495](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L2495)

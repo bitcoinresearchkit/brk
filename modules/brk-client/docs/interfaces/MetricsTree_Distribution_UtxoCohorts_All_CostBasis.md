@@ -6,23 +6,23 @@
 
 # Interface: MetricsTree\_Distribution\_UtxoCohorts\_All\_CostBasis
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3291](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3291)
+Defined in: [Developer/brk/modules/brk-client/index.js:3321](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3321)
 
 ## Properties
 
 ### max
 
-> **max**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+> **max**: [`ActivePricePattern`](ActivePricePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3292](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3292)
+Defined in: [Developer/brk/modules/brk-client/index.js:3322](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3322)
 
 ***
 
 ### min
 
-> **min**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+> **min**: [`ActivePricePattern`](ActivePricePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3293](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3293)
+Defined in: [Developer/brk/modules/brk-client/index.js:3323](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3323)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3293](https://github.com/
 
 > **percentiles**: [`PercentilesPattern`](PercentilesPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3294](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3294)
+Defined in: [Developer/brk/modules/brk-client/index.js:3324](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3324)

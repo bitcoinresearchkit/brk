@@ -6,7 +6,7 @@
 
 # Interface: BlockFeesEntry
 
-Defined in: [Developer/brk/modules/brk-client/index.js:87](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L87)
+Defined in: [Developer/brk/modules/brk-client/index.js:87](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L87)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:87](https://github.com/bi
 
 > **avgFees**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:90](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L90)
+Defined in: [Developer/brk/modules/brk-client/index.js:90](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L90)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:90](https://github.com/bi
 
 > **avgHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:88](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L88)
+Defined in: [Developer/brk/modules/brk-client/index.js:88](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L88)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:88](https://github.com/bi
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:89](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L89)
+Defined in: [Developer/brk/modules/brk-client/index.js:89](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L89)

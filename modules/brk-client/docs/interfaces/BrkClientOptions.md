@@ -6,7 +6,7 @@
 
 # Interface: BrkClientOptions
 
-Defined in: [Developer/brk/modules/brk-client/index.js:804](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L804)
+Defined in: [Developer/brk/modules/brk-client/index.js:806](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L806)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:804](https://github.com/b
 
 > **baseUrl**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:805](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L805)
+Defined in: [Developer/brk/modules/brk-client/index.js:807](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L807)
 
 Base URL for the API
 
@@ -24,7 +24,7 @@ Base URL for the API
 
 > `optional` **cache**: `string` \| `boolean`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:807](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L807)
+Defined in: [Developer/brk/modules/brk-client/index.js:809](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L809)
 
 Enable browser cache with default name (true), custom name (string), or disable (false). No effect in Node.js. Default: true
 
@@ -34,6 +34,6 @@ Enable browser cache with default name (true), custom name (string), or disable 
 
 > `optional` **timeout**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:806](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L806)
+Defined in: [Developer/brk/modules/brk-client/index.js:808](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L808)
 
 Request timeout in milliseconds

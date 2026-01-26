@@ -6,7 +6,7 @@
 
 # Interface: TimestampParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:670](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L670)
+Defined in: [Developer/brk/modules/brk-client/index.js:672](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L672)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:670](https://github.com/b
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:671](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L671)
+Defined in: [Developer/brk/modules/brk-client/index.js:673](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L673)

@@ -6,15 +6,15 @@
 
 # Interface: Ratio1ySdPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1391](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1391)
+Defined in: [Developer/brk/modules/brk-client/index.js:1389](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1389)
 
 ## Properties
 
 ### \_0sdUsd
 
-> **\_0sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **\_0sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1392](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1392)
+Defined in: [Developer/brk/modules/brk-client/index.js:1390](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1390)
 
 ***
 
@@ -22,15 +22,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1392](https://github.com/
 
 > **m05sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1393](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1393)
+Defined in: [Developer/brk/modules/brk-client/index.js:1391](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1391)
 
 ***
 
 ### m05sdUsd
 
-> **m05sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **m05sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1394](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1394)
+Defined in: [Developer/brk/modules/brk-client/index.js:1392](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1392)
 
 ***
 
@@ -38,15 +38,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1394](https://github.com/
 
 > **m15sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1395](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1395)
+Defined in: [Developer/brk/modules/brk-client/index.js:1393](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1393)
 
 ***
 
 ### m15sdUsd
 
-> **m15sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **m15sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1396](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1396)
+Defined in: [Developer/brk/modules/brk-client/index.js:1394](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1394)
 
 ***
 
@@ -54,15 +54,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1396](https://github.com/
 
 > **m1sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1397](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1397)
+Defined in: [Developer/brk/modules/brk-client/index.js:1395](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1395)
 
 ***
 
 ### m1sdUsd
 
-> **m1sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **m1sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1398](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1398)
+Defined in: [Developer/brk/modules/brk-client/index.js:1396](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1396)
 
 ***
 
@@ -70,15 +70,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1398](https://github.com/
 
 > **m25sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1399](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1399)
+Defined in: [Developer/brk/modules/brk-client/index.js:1397](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1397)
 
 ***
 
 ### m25sdUsd
 
-> **m25sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **m25sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1400](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1400)
+Defined in: [Developer/brk/modules/brk-client/index.js:1398](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1398)
 
 ***
 
@@ -86,15 +86,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1400](https://github.com/
 
 > **m2sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1401](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1401)
+Defined in: [Developer/brk/modules/brk-client/index.js:1399](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1399)
 
 ***
 
 ### m2sdUsd
 
-> **m2sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **m2sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1402](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1402)
+Defined in: [Developer/brk/modules/brk-client/index.js:1400](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1400)
 
 ***
 
@@ -102,15 +102,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1402](https://github.com/
 
 > **m3sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1403](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1403)
+Defined in: [Developer/brk/modules/brk-client/index.js:1401](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1401)
 
 ***
 
 ### m3sdUsd
 
-> **m3sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **m3sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1404](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1404)
+Defined in: [Developer/brk/modules/brk-client/index.js:1402](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1402)
 
 ***
 
@@ -118,15 +118,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1404](https://github.com/
 
 > **p05sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1405](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1405)
+Defined in: [Developer/brk/modules/brk-client/index.js:1403](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1403)
 
 ***
 
 ### p05sdUsd
 
-> **p05sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **p05sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1406](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1406)
+Defined in: [Developer/brk/modules/brk-client/index.js:1404](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1404)
 
 ***
 
@@ -134,15 +134,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1406](https://github.com/
 
 > **p15sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1407](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1407)
+Defined in: [Developer/brk/modules/brk-client/index.js:1405](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1405)
 
 ***
 
 ### p15sdUsd
 
-> **p15sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **p15sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1408](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1408)
+Defined in: [Developer/brk/modules/brk-client/index.js:1406](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1406)
 
 ***
 
@@ -150,15 +150,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1408](https://github.com/
 
 > **p1sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1409](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1409)
+Defined in: [Developer/brk/modules/brk-client/index.js:1407](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1407)
 
 ***
 
 ### p1sdUsd
 
-> **p1sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **p1sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1410](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1410)
+Defined in: [Developer/brk/modules/brk-client/index.js:1408](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1408)
 
 ***
 
@@ -166,15 +166,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1410](https://github.com/
 
 > **p25sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1411](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1411)
+Defined in: [Developer/brk/modules/brk-client/index.js:1409](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1409)
 
 ***
 
 ### p25sdUsd
 
-> **p25sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **p25sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1412](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1412)
+Defined in: [Developer/brk/modules/brk-client/index.js:1410](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1410)
 
 ***
 
@@ -182,15 +182,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1412](https://github.com/
 
 > **p2sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1413](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1413)
+Defined in: [Developer/brk/modules/brk-client/index.js:1411](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1411)
 
 ***
 
 ### p2sdUsd
 
-> **p2sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **p2sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1414](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1414)
+Defined in: [Developer/brk/modules/brk-client/index.js:1412](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1412)
 
 ***
 
@@ -198,15 +198,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1414](https://github.com/
 
 > **p3sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1415](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1415)
+Defined in: [Developer/brk/modules/brk-client/index.js:1413](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1413)
 
 ***
 
 ### p3sdUsd
 
-> **p3sdUsd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **p3sdUsd**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1416](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1416)
+Defined in: [Developer/brk/modules/brk-client/index.js:1414](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1414)
 
 ***
 
@@ -214,7 +214,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1416](https://github.com/
 
 > **sd**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1417](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1417)
+Defined in: [Developer/brk/modules/brk-client/index.js:1415](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1415)
 
 ***
 
@@ -222,7 +222,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1417](https://github.com/
 
 > **sma**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1418](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1418)
+Defined in: [Developer/brk/modules/brk-client/index.js:1416](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1416)
 
 ***
 
@@ -230,4 +230,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1418](https://github.com/
 
 > **zscore**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1419](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1419)
+Defined in: [Developer/brk/modules/brk-client/index.js:1417](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1417)

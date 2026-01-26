@@ -6,156 +6,156 @@
 
 # Interface: PercentilesPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1704](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1704)
+Defined in: [Developer/brk/modules/brk-client/index.js:1649](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1649)
 
 ## Properties
 
 ### pct05
 
-> **pct05**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct05**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1705](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1705)
+Defined in: [Developer/brk/modules/brk-client/index.js:1650](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1650)
 
 ***
 
 ### pct10
 
-> **pct10**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct10**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1706](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1706)
+Defined in: [Developer/brk/modules/brk-client/index.js:1651](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1651)
 
 ***
 
 ### pct15
 
-> **pct15**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct15**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1707](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1707)
+Defined in: [Developer/brk/modules/brk-client/index.js:1652](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1652)
 
 ***
 
 ### pct20
 
-> **pct20**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct20**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1708](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1708)
+Defined in: [Developer/brk/modules/brk-client/index.js:1653](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1653)
 
 ***
 
 ### pct25
 
-> **pct25**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct25**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1709](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1709)
+Defined in: [Developer/brk/modules/brk-client/index.js:1654](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1654)
 
 ***
 
 ### pct30
 
-> **pct30**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct30**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1710](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1710)
+Defined in: [Developer/brk/modules/brk-client/index.js:1655](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1655)
 
 ***
 
 ### pct35
 
-> **pct35**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct35**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1711](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1711)
+Defined in: [Developer/brk/modules/brk-client/index.js:1656](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1656)
 
 ***
 
 ### pct40
 
-> **pct40**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct40**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1712](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1712)
+Defined in: [Developer/brk/modules/brk-client/index.js:1657](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1657)
 
 ***
 
 ### pct45
 
-> **pct45**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct45**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1713](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1713)
+Defined in: [Developer/brk/modules/brk-client/index.js:1658](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1658)
 
 ***
 
 ### pct50
 
-> **pct50**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct50**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1714](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1714)
+Defined in: [Developer/brk/modules/brk-client/index.js:1659](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1659)
 
 ***
 
 ### pct55
 
-> **pct55**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct55**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1715](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1715)
+Defined in: [Developer/brk/modules/brk-client/index.js:1660](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1660)
 
 ***
 
 ### pct60
 
-> **pct60**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct60**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1716](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1716)
+Defined in: [Developer/brk/modules/brk-client/index.js:1661](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1661)
 
 ***
 
 ### pct65
 
-> **pct65**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct65**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1717](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1717)
+Defined in: [Developer/brk/modules/brk-client/index.js:1662](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1662)
 
 ***
 
 ### pct70
 
-> **pct70**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct70**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1718](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1718)
+Defined in: [Developer/brk/modules/brk-client/index.js:1663](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1663)
 
 ***
 
 ### pct75
 
-> **pct75**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct75**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1719](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1719)
+Defined in: [Developer/brk/modules/brk-client/index.js:1664](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1664)
 
 ***
 
 ### pct80
 
-> **pct80**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct80**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1720](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1720)
+Defined in: [Developer/brk/modules/brk-client/index.js:1665](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1665)
 
 ***
 
 ### pct85
 
-> **pct85**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct85**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1721](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1721)
+Defined in: [Developer/brk/modules/brk-client/index.js:1666](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1666)
 
 ***
 
 ### pct90
 
-> **pct90**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct90**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1722](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1722)
+Defined in: [Developer/brk/modules/brk-client/index.js:1667](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1667)
 
 ***
 
 ### pct95
 
-> **pct95**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **pct95**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1723](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L1723)
+Defined in: [Developer/brk/modules/brk-client/index.js:1668](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L1668)

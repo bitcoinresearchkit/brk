@@ -8,6 +8,6 @@
 
 > **P2PK33Bytes**\<\> = [`U8x33`](U8x33.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:470](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L470)
+Defined in: [Developer/brk/modules/brk-client/index.js:468](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L468)
 
 ## Type Parameters

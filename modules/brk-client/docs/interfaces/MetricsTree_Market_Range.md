@@ -6,55 +6,55 @@
 
 # Interface: MetricsTree\_Market\_Range
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3896](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3896)
+Defined in: [Developer/brk/modules/brk-client/index.js:3959](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3959)
 
 ## Properties
 
 ### price1mMax
 
-> **price1mMax**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **price1mMax**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3897](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3897)
+Defined in: [Developer/brk/modules/brk-client/index.js:3960](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3960)
 
 ***
 
 ### price1mMin
 
-> **price1mMin**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **price1mMin**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3898](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3898)
+Defined in: [Developer/brk/modules/brk-client/index.js:3961](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3961)
 
 ***
 
 ### price1wMax
 
-> **price1wMax**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **price1wMax**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3899](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3899)
+Defined in: [Developer/brk/modules/brk-client/index.js:3962](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3962)
 
 ***
 
 ### price1wMin
 
-> **price1wMin**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **price1wMin**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3900](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3900)
+Defined in: [Developer/brk/modules/brk-client/index.js:3963](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3963)
 
 ***
 
 ### price1yMax
 
-> **price1yMax**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **price1yMax**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3901](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3901)
+Defined in: [Developer/brk/modules/brk-client/index.js:3964](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3964)
 
 ***
 
 ### price1yMin
 
-> **price1yMin**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **price1yMin**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3902](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3902)
+Defined in: [Developer/brk/modules/brk-client/index.js:3965](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3965)
 
 ***
 
@@ -62,23 +62,23 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3902](https://github.com/
 
 > **price2wChoppinessIndex**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3903](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3903)
+Defined in: [Developer/brk/modules/brk-client/index.js:3966](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3966)
 
 ***
 
 ### price2wMax
 
-> **price2wMax**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **price2wMax**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3904](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3904)
+Defined in: [Developer/brk/modules/brk-client/index.js:3967](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3967)
 
 ***
 
 ### price2wMin
 
-> **price2wMin**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+> **price2wMin**: [`_0sdUsdPattern`](0sdUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3905](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3905)
+Defined in: [Developer/brk/modules/brk-client/index.js:3968](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3968)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3905](https://github.com/
 
 > **priceTrueRange**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3906](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3906)
+Defined in: [Developer/brk/modules/brk-client/index.js:3969](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3969)
 
 ***
 
@@ -94,4 +94,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3906](https://github.com/
 
 > **priceTrueRange2wSum**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3907](https://github.com/bitcoinresearchkit/brk/blob/616a97d242fb82081d065cfef39ccee8acd45c28/modules/brk-client/index.js#L3907)
+Defined in: [Developer/brk/modules/brk-client/index.js:3970](https://github.com/bitcoinresearchkit/brk/blob/ec1f2de5cfe92fbc8dc9dc980bbf7787003b4572/modules/brk-client/index.js#L3970)
