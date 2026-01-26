@@ -4,17 +4,18 @@ import { Unit } from "../utils/units.js";
 import { priceLine } from "./constants.js";
 import { line, baseline, dots } from "./series.js";
 import { satsBtcUsd } from "./shared.js";
+import { spendableTypeColors } from "./colors/index.js";
 
 /** Major pools to show in Compare section (by current hashrate dominance) */
 const MAJOR_POOL_IDS = [
-  "foundryusa",   // ~32% - largest pool
-  "antpool",      // ~18% - Bitmain-owned
-  "viabtc",       // ~14% - independent
-  "f2pool",       // ~10% - one of the oldest pools
-  "marapool",     // MARA Holdings
-  "braiinspool",  // formerly Slush Pool
-  "spiderpool",   // growing Asian pool
-  "ocean",        // decentralization-focused
+  "foundryusa", // ~32% - largest pool
+  "antpool", // ~18% - Bitmain-owned
+  "viabtc", // ~14% - independent
+  "f2pool", // ~10% - one of the oldest pools
+  "marapool", // MARA Holdings
+  "braiinspool", // formerly Slush Pool
+  "spiderpool", // growing Asian pool
+  "ocean", // decentralization-focused
 ];
 
 /**
@@ -23,16 +24,16 @@ const MAJOR_POOL_IDS = [
  * Collectively ~35-40% of network hashrate
  */
 const ANTPOOL_AND_FRIENDS_IDS = [
-  "antpool",      // Bitmain-owned, template source
-  "poolin",       // shares AntPool templates
-  "btccom",       // CloverPool (formerly BTC.com)
-  "braiinspool",  // shares AntPool templates
-  "ultimuspool",  // shares AntPool templates
-  "binancepool",  // shares AntPool templates
-  "secpool",      // shares AntPool templates
+  "antpool", // Bitmain-owned, template source
+  "poolin", // shares AntPool templates
+  "btccom", // CloverPool (formerly BTC.com)
+  "braiinspool", // shares AntPool templates
+  "ultimuspool", // shares AntPool templates
+  "binancepool", // shares AntPool templates
+  "secpool", // shares AntPool templates
   "sigmapoolcom", // SigmaPool
-  "rawpool",      // shares AntPool templates
-  "luxor",        // shares AntPool templates
+  "rawpool", // shares AntPool templates
+  "luxor", // shares AntPool templates
 ];
 
 /**
@@ -64,6 +65,92 @@ export function createChainSection(ctx) {
     supply,
     distribution,
   } = brk.metrics;
+
+  // Address types for mapping (using spendableTypeColors for consistency)
+  /** @type {ReadonlyArray<{key: AddressableType, name: string, color: Color, defaultActive?: boolean}>} */
+  const addressTypes = [
+    { key: "p2pkh", name: "P2PKH", color: colors[spendableTypeColors.p2pkh] },
+    { key: "p2sh", name: "P2SH", color: colors[spendableTypeColors.p2sh] },
+    { key: "p2wpkh", name: "P2WPKH", color: colors[spendableTypeColors.p2wpkh] },
+    { key: "p2wsh", name: "P2WSH", color: colors[spendableTypeColors.p2wsh] },
+    { key: "p2tr", name: "P2TR", color: colors[spendableTypeColors.p2tr] },
+    { key: "p2pk65", name: "P2PK65", color: colors[spendableTypeColors.p2pk65], defaultActive: false },
+    { key: "p2pk33", name: "P2PK33", color: colors[spendableTypeColors.p2pk33], defaultActive: false },
+    { key: "p2a", name: "P2A", color: colors[spendableTypeColors.p2a], defaultActive: false },
+  ];
+
+  // Activity types for mapping
+  /** @type {ReadonlyArray<{key: "sending" | "receiving" | "both" | "reactivated" | "balanceIncreased" | "balanceDecreased", name: string, title: string, compareTitle: string}>} */
+  const activityTypes = [
+    { key: "sending", name: "Sending", title: "Sending Address Count", compareTitle: "Sending Address Count by Type" },
+    { key: "receiving", name: "Receiving", title: "Receiving Address Count", compareTitle: "Receiving Address Count by Type" },
+    { key: "both", name: "Both", title: "Addresses Sending & Receiving (Same Block)", compareTitle: "Addresses Sending & Receiving by Type" },
+    { key: "reactivated", name: "Reactivated", title: "Reactivated Address Count (Was Empty)", compareTitle: "Reactivated Address Count by Type" },
+    { key: "balanceIncreased", name: "Balance Increased", title: "Addresses with Increased Balance", compareTitle: "Addresses with Increased Balance by Type" },
+    { key: "balanceDecreased", name: "Balance Decreased", title: "Addresses with Decreased Balance", compareTitle: "Addresses with Decreased Balance by Type" },
+  ];
+
+  // Count types for comparison charts
+  /** @type {ReadonlyArray<{key: "addrCount" | "emptyAddrCount" | "totalAddrCount", name: string, title: string}>} */
+  const countTypes = [
+    { key: "addrCount", name: "Loaded", title: "Address Count by Type" },
+    { key: "emptyAddrCount", name: "Empty", title: "Empty Address Count by Type" },
+    { key: "totalAddrCount", name: "Total", title: "Total Address Count by Type" },
+  ];
+
+  /**
+   * Create address metrics tree for a given type key
+   * @param {AddressableType | "all"} key
+   * @param {string} titlePrefix
+   */
+  const createAddressMetricsTree = (key, titlePrefix) => [
+    {
+      name: "Count",
+      title: `${titlePrefix}Address Count`,
+      bottom: [
+        line({
+          metric: distribution.addrCount[key],
+          name: "Loaded",
+          unit: Unit.count,
+        }),
+        line({
+          metric: distribution.totalAddrCount[key],
+          name: "Total",
+          color: colors.default,
+          unit: Unit.count,
+          defaultActive: false,
+        }),
+        line({
+          metric: distribution.emptyAddrCount[key],
+          name: "Empty",
+          color: colors.gray,
+          unit: Unit.count,
+          defaultActive: false,
+        }),
+      ],
+    },
+    {
+      name: "New",
+      title: `${titlePrefix}New Address Count`,
+      bottom: fromDollarsPattern(distribution.newAddrCount[key], Unit.count),
+    },
+    {
+      name: "Growth Rate",
+      title: `${titlePrefix}Address Growth Rate`,
+      bottom: fromFullnessPattern(distribution.growthRate[key], Unit.ratio),
+    },
+    {
+      name: "Activity",
+      tree: activityTypes.map((a) => ({
+        name: a.name,
+        title: `${titlePrefix}${a.name} Address Count`,
+        bottom: fromFullnessPattern(
+          distribution.addressActivity[key][a.key],
+          Unit.count,
+        ),
+      })),
+    },
+  ];
 
   // Build pools tree dynamically
   const poolEntries = Object.entries(pools.vecs);
@@ -327,7 +414,12 @@ export function createChainSection(ctx) {
                   defaultActive: false,
                 },
               ),
-              ...satsBtcUsd(transactions.volume.annualizedVolume, "Annualized", colors.red, { defaultActive: false }),
+              ...satsBtcUsd(
+                transactions.volume.annualizedVolume,
+                "Annualized",
+                colors.red,
+                { defaultActive: false },
+              ),
             ],
           },
           {
@@ -451,43 +543,116 @@ export function createChainSection(ctx) {
               {
                 name: "Legacy",
                 tree: [
-                  { name: "P2PKH", title: "P2PKH Output Count", bottom: fromDollarsPattern(scripts.count.p2pkh, Unit.count) },
-                  { name: "P2PK33", title: "P2PK33 Output Count", bottom: fromDollarsPattern(scripts.count.p2pk33, Unit.count) },
-                  { name: "P2PK65", title: "P2PK65 Output Count", bottom: fromDollarsPattern(scripts.count.p2pk65, Unit.count) },
+                  {
+                    name: "P2PKH",
+                    title: "P2PKH Output Count",
+                    bottom: fromDollarsPattern(scripts.count.p2pkh, Unit.count),
+                  },
+                  {
+                    name: "P2PK33",
+                    title: "P2PK33 Output Count",
+                    bottom: fromDollarsPattern(
+                      scripts.count.p2pk33,
+                      Unit.count,
+                    ),
+                  },
+                  {
+                    name: "P2PK65",
+                    title: "P2PK65 Output Count",
+                    bottom: fromDollarsPattern(
+                      scripts.count.p2pk65,
+                      Unit.count,
+                    ),
+                  },
                 ],
               },
               // Script Hash
               {
                 name: "Script Hash",
                 tree: [
-                  { name: "P2SH", title: "P2SH Output Count", bottom: fromDollarsPattern(scripts.count.p2sh, Unit.count) },
-                  { name: "P2MS", title: "P2MS Output Count", bottom: fromDollarsPattern(scripts.count.p2ms, Unit.count) },
+                  {
+                    name: "P2SH",
+                    title: "P2SH Output Count",
+                    bottom: fromDollarsPattern(scripts.count.p2sh, Unit.count),
+                  },
+                  {
+                    name: "P2MS",
+                    title: "P2MS Output Count",
+                    bottom: fromDollarsPattern(scripts.count.p2ms, Unit.count),
+                  },
                 ],
               },
               // SegWit scripts
               {
                 name: "SegWit",
                 tree: [
-                  { name: "All SegWit", title: "SegWit Output Count", bottom: fromDollarsPattern(scripts.count.segwit, Unit.count) },
-                  { name: "P2WPKH", title: "P2WPKH Output Count", bottom: fromDollarsPattern(scripts.count.p2wpkh, Unit.count) },
-                  { name: "P2WSH", title: "P2WSH Output Count", bottom: fromDollarsPattern(scripts.count.p2wsh, Unit.count) },
+                  {
+                    name: "All SegWit",
+                    title: "SegWit Output Count",
+                    bottom: fromDollarsPattern(
+                      scripts.count.segwit,
+                      Unit.count,
+                    ),
+                  },
+                  {
+                    name: "P2WPKH",
+                    title: "P2WPKH Output Count",
+                    bottom: fromDollarsPattern(
+                      scripts.count.p2wpkh,
+                      Unit.count,
+                    ),
+                  },
+                  {
+                    name: "P2WSH",
+                    title: "P2WSH Output Count",
+                    bottom: fromDollarsPattern(scripts.count.p2wsh, Unit.count),
+                  },
                 ],
               },
               // Taproot scripts
               {
                 name: "Taproot",
                 tree: [
-                  { name: "P2TR", title: "P2TR Output Count", bottom: fromDollarsPattern(scripts.count.p2tr, Unit.count) },
-                  { name: "P2A", title: "P2A Output Count", bottom: fromDollarsPattern(scripts.count.p2a, Unit.count) },
+                  {
+                    name: "P2TR",
+                    title: "P2TR Output Count",
+                    bottom: fromDollarsPattern(scripts.count.p2tr, Unit.count),
+                  },
+                  {
+                    name: "P2A",
+                    title: "P2A Output Count",
+                    bottom: fromDollarsPattern(scripts.count.p2a, Unit.count),
+                  },
                 ],
               },
               // Other scripts
               {
                 name: "Other",
                 tree: [
-                  { name: "OP_RETURN", title: "OP_RETURN Output Count", bottom: fromDollarsPattern(scripts.count.opreturn, Unit.count) },
-                  { name: "Empty", title: "Empty Output Count", bottom: fromDollarsPattern(scripts.count.emptyoutput, Unit.count) },
-                  { name: "Unknown", title: "Unknown Output Count", bottom: fromDollarsPattern(scripts.count.unknownoutput, Unit.count) },
+                  {
+                    name: "OP_RETURN",
+                    title: "OP_RETURN Output Count",
+                    bottom: fromDollarsPattern(
+                      scripts.count.opreturn,
+                      Unit.count,
+                    ),
+                  },
+                  {
+                    name: "Empty",
+                    title: "Empty Output Count",
+                    bottom: fromDollarsPattern(
+                      scripts.count.emptyoutput,
+                      Unit.count,
+                    ),
+                  },
+                  {
+                    name: "Unknown",
+                    title: "Unknown Output Count",
+                    bottom: fromDollarsPattern(
+                      scripts.count.unknownoutput,
+                      Unit.count,
+                    ),
+                  },
                 ],
               },
             ],
@@ -499,23 +664,57 @@ export function createChainSection(ctx) {
                 name: "SegWit",
                 title: "SegWit Adoption",
                 bottom: [
-                  line({ metric: scripts.count.segwitAdoption.base, name: "Base", unit: Unit.percentage }),
-                  line({ metric: scripts.count.segwitAdoption.sum, name: "Sum", color: colors.stat.sum, unit: Unit.percentage }),
-                  line({ metric: scripts.count.segwitAdoption.cumulative, name: "Cumulative", color: colors.stat.cumulative, unit: Unit.percentage, defaultActive: false }),
+                  line({
+                    metric: scripts.count.segwitAdoption.base,
+                    name: "Base",
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: scripts.count.segwitAdoption.sum,
+                    name: "Sum",
+                    color: colors.stat.sum,
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: scripts.count.segwitAdoption.cumulative,
+                    name: "Cumulative",
+                    color: colors.stat.cumulative,
+                    unit: Unit.percentage,
+                    defaultActive: false,
+                  }),
                 ],
               },
               {
                 name: "Taproot",
                 title: "Taproot Adoption",
                 bottom: [
-                  line({ metric: scripts.count.taprootAdoption.base, name: "Base", unit: Unit.percentage }),
-                  line({ metric: scripts.count.taprootAdoption.sum, name: "Sum", color: colors.stat.sum, unit: Unit.percentage }),
-                  line({ metric: scripts.count.taprootAdoption.cumulative, name: "Cumulative", color: colors.stat.cumulative, unit: Unit.percentage, defaultActive: false }),
+                  line({
+                    metric: scripts.count.taprootAdoption.base,
+                    name: "Base",
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: scripts.count.taprootAdoption.sum,
+                    name: "Sum",
+                    color: colors.stat.sum,
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: scripts.count.taprootAdoption.cumulative,
+                    name: "Cumulative",
+                    color: colors.stat.cumulative,
+                    unit: Unit.percentage,
+                    defaultActive: false,
+                  }),
                 ],
               },
             ],
           },
-          { name: "OP_RETURN Value", title: "OP_RETURN Value", bottom: fromCoinbasePattern(scripts.value.opreturn) },
+          {
+            name: "OP_RETURN Value",
+            title: "OP_RETURN Value",
+            bottom: fromCoinbasePattern(scripts.value.opreturn),
+          },
         ],
       },
 
@@ -561,7 +760,12 @@ export function createChainSection(ctx) {
             title: "Coinbase Rewards",
             bottom: [
               ...fromCoinbasePattern(blocks.rewards.coinbase),
-              ...satsBtcUsd(blocks.rewards._24hCoinbaseSum, "24h sum", colors.pink, { defaultActive: false }),
+              ...satsBtcUsd(
+                blocks.rewards._24hCoinbaseSum,
+                "24h sum",
+                colors.pink,
+                { defaultActive: false },
+              ),
             ],
           },
           {
@@ -616,143 +820,100 @@ export function createChainSection(ctx) {
       {
         name: "Addresses",
         tree: [
+          // Overview - global metrics for all addresses
+          { name: "Overview", tree: createAddressMetricsTree("all", "") },
+
+          // Compare - cross-type comparisons (base + average, system selects appropriate one)
           {
-            name: "Count",
+            name: "Compare",
             tree: [
               {
-                name: "All",
-                title: "Total Address Count",
-                bottom: [
-                  line({
-                    metric: distribution.addrCount.all,
-                    name: "Loaded",
-                    unit: Unit.count,
-                  }),
-                  line({
-                    metric: distribution.emptyAddrCount.all,
-                    name: "Empty",
-                    color: colors.gray,
-                    unit: Unit.count,
-                    defaultActive: false,
-                  }),
-                ],
+                name: "Count",
+                tree: countTypes.map((c) => ({
+                  name: c.name,
+                  title: c.title,
+                  bottom: addressTypes.map((t) =>
+                    line({
+                      metric: distribution[c.key][t.key],
+                      name: t.name,
+                      color: t.color,
+                      unit: Unit.count,
+                      defaultActive: t.defaultActive,
+                    }),
+                  ),
+                })),
               },
               {
-                name: "Empty by Type",
-                title: "Empty Address Count by Type",
-                bottom: [
+                name: "New",
+                title: "New Address Count by Type",
+                bottom: addressTypes.flatMap((t) => [
                   line({
-                    metric: distribution.emptyAddrCount.p2pkh,
-                    name: "P2PKH",
-                    color: colors.orange,
+                    metric: distribution.newAddrCount[t.key].base,
+                    name: t.name,
+                    color: t.color,
                     unit: Unit.count,
+                    defaultActive: t.defaultActive,
                   }),
                   line({
-                    metric: distribution.emptyAddrCount.p2sh,
-                    name: "P2SH",
-                    color: colors.yellow,
+                    metric: distribution.newAddrCount[t.key].average,
+                    name: t.name,
+                    color: t.color,
                     unit: Unit.count,
+                    defaultActive: t.defaultActive,
                   }),
-                  line({
-                    metric: distribution.emptyAddrCount.p2wpkh,
-                    name: "P2WPKH",
-                    color: colors.green,
-                    unit: Unit.count,
-                  }),
-                  line({
-                    metric: distribution.emptyAddrCount.p2wsh,
-                    name: "P2WSH",
-                    color: colors.teal,
-                    unit: Unit.count,
-                  }),
-                  line({
-                    metric: distribution.emptyAddrCount.p2tr,
-                    name: "P2TR",
-                    color: colors.purple,
-                    unit: Unit.count,
-                  }),
-                  line({
-                    metric: distribution.emptyAddrCount.p2pk65,
-                    name: "P2PK65",
-                    color: colors.pink,
-                    unit: Unit.count,
-                    defaultActive: false,
-                  }),
-                  line({
-                    metric: distribution.emptyAddrCount.p2pk33,
-                    name: "P2PK33",
-                    color: colors.red,
-                    unit: Unit.count,
-                    defaultActive: false,
-                  }),
-                  line({
-                    metric: distribution.emptyAddrCount.p2a,
-                    name: "P2A",
-                    color: colors.blue,
-                    unit: Unit.count,
-                    defaultActive: false,
-                  }),
-                ],
+                ]),
               },
               {
-                name: "By Type",
-                title: "Address Count by Type",
-                bottom: [
+                name: "Growth Rate",
+                title: "Address Growth Rate by Type",
+                bottom: addressTypes.flatMap((t) => [
                   line({
-                    metric: distribution.addrCount.p2pkh,
-                    name: "P2PKH",
-                    color: colors.orange,
-                    unit: Unit.count,
+                    metric: distribution.growthRate[t.key].base,
+                    name: t.name,
+                    color: t.color,
+                    unit: Unit.ratio,
+                    defaultActive: t.defaultActive,
                   }),
                   line({
-                    metric: distribution.addrCount.p2sh,
-                    name: "P2SH",
-                    color: colors.yellow,
-                    unit: Unit.count,
+                    metric: distribution.growthRate[t.key].average,
+                    name: t.name,
+                    color: t.color,
+                    unit: Unit.ratio,
+                    defaultActive: t.defaultActive,
                   }),
-                  line({
-                    metric: distribution.addrCount.p2wpkh,
-                    name: "P2WPKH",
-                    color: colors.green,
-                    unit: Unit.count,
-                  }),
-                  line({
-                    metric: distribution.addrCount.p2wsh,
-                    name: "P2WSH",
-                    color: colors.teal,
-                    unit: Unit.count,
-                  }),
-                  line({
-                    metric: distribution.addrCount.p2tr,
-                    name: "P2TR",
-                    color: colors.purple,
-                    unit: Unit.count,
-                  }),
-                  line({
-                    metric: distribution.addrCount.p2pk65,
-                    name: "P2PK65",
-                    color: colors.pink,
-                    unit: Unit.count,
-                    defaultActive: false,
-                  }),
-                  line({
-                    metric: distribution.addrCount.p2pk33,
-                    name: "P2PK33",
-                    color: colors.red,
-                    unit: Unit.count,
-                    defaultActive: false,
-                  }),
-                  line({
-                    metric: distribution.addrCount.p2a,
-                    name: "P2A",
-                    color: colors.blue,
-                    unit: Unit.count,
-                    defaultActive: false,
-                  }),
-                ],
+                ]),
+              },
+              {
+                name: "Activity",
+                tree: activityTypes.map((a) => ({
+                  name: a.name,
+                  title: a.compareTitle,
+                  bottom: addressTypes.flatMap((t) => [
+                    line({
+                      metric: distribution.addressActivity[t.key][a.key].base,
+                      name: t.name,
+                      color: t.color,
+                      unit: Unit.count,
+                      defaultActive: t.defaultActive,
+                    }),
+                    line({
+                      metric: distribution.addressActivity[t.key][a.key].average,
+                      name: t.name,
+                      color: t.color,
+                      unit: Unit.count,
+                      defaultActive: t.defaultActive,
+                    }),
+                  ]),
+                })),
               },
             ],
           },
+
+          // Individual address types - each with same structure as Overview
+          ...addressTypes.map((t) => ({
+            name: t.name,
+            tree: createAddressMetricsTree(t.key, `${t.name} `),
+          })),
         ],
       },
 
@@ -988,7 +1149,9 @@ export function createChainSection(ctx) {
                   .map(([key, pool]) => {
                     const poolName =
                       brk.POOL_ID_TO_POOL_NAME[
-                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (key.toLowerCase())
+                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (
+                          key.toLowerCase()
+                        )
                       ] || key;
                     return line({
                       metric: pool._1mDominance,
@@ -1005,7 +1168,9 @@ export function createChainSection(ctx) {
                   .map(([key, pool]) => {
                     const poolName =
                       brk.POOL_ID_TO_POOL_NAME[
-                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (key.toLowerCase())
+                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (
+                          key.toLowerCase()
+                        )
                       ] || key;
                     return line({
                       metric: pool._1mBlocksMined,
@@ -1024,11 +1189,15 @@ export function createChainSection(ctx) {
                 name: "Dominance",
                 title: "AntPool & Friends Dominance",
                 bottom: poolEntries
-                  .filter(([key]) => ANTPOOL_AND_FRIENDS_IDS.includes(key.toLowerCase()))
+                  .filter(([key]) =>
+                    ANTPOOL_AND_FRIENDS_IDS.includes(key.toLowerCase()),
+                  )
                   .map(([key, pool]) => {
                     const poolName =
                       brk.POOL_ID_TO_POOL_NAME[
-                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (key.toLowerCase())
+                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (
+                          key.toLowerCase()
+                        )
                       ] || key;
                     return line({
                       metric: pool._1mDominance,
@@ -1041,11 +1210,15 @@ export function createChainSection(ctx) {
                 name: "Blocks Mined",
                 title: "AntPool & Friends Blocks Mined (1m)",
                 bottom: poolEntries
-                  .filter(([key]) => ANTPOOL_AND_FRIENDS_IDS.includes(key.toLowerCase()))
+                  .filter(([key]) =>
+                    ANTPOOL_AND_FRIENDS_IDS.includes(key.toLowerCase()),
+                  )
                   .map(([key, pool]) => {
                     const poolName =
                       brk.POOL_ID_TO_POOL_NAME[
-                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (key.toLowerCase())
+                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (
+                          key.toLowerCase()
+                        )
                       ] || key;
                     return line({
                       metric: pool._1mBlocksMined,

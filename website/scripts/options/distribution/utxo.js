@@ -863,6 +863,8 @@ function createSingleRealizedPnlSection(
           Unit.usd,
           "Negative Loss",
           colors.red,
+          undefined,
+          false,
         ),
         ...extra,
         line({
@@ -1357,6 +1359,7 @@ function createUnrealizedPnlRelToMarketCapMetrics(ctx, rel) {
       name: "Negative Loss",
       color: colors.red,
       unit: Unit.pctMcap,
+      defaultActive: false,
     }),
   ];
 }
@@ -1386,6 +1389,7 @@ function createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, rel) {
       name: "Negative Loss",
       color: colors.red,
       unit: Unit.pctOwnMcap,
+      defaultActive: false,
     }),
     priceLine({ ctx, unit: Unit.pctOwnMcap, number: 100 }),
     priceLine({ ctx, unit: Unit.pctOwnMcap }),
@@ -1417,6 +1421,7 @@ function createUnrealizedPnlRelToOwnPnlMetrics(ctx, rel) {
       name: "Negative Loss",
       color: colors.red,
       unit: Unit.pctOwnPnl,
+      defaultActive: false,
     }),
     priceLine({ ctx, unit: Unit.pctOwnPnl, number: 100 }),
     priceLine({ ctx, unit: Unit.pctOwnPnl }),
@@ -1498,6 +1503,7 @@ function createUnrealizedPnlBaseMetrics(ctx, tree) {
       name: "Negative Loss",
       color: colors.red,
       unit: Unit.usd,
+      defaultActive: false,
     }),
   ];
 }

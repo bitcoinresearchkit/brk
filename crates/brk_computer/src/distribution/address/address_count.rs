@@ -106,7 +106,7 @@ impl AddressTypeToAddrCountVecs {
         ))
     }
 
-    pub fn min_len(&self) -> usize {
+    pub fn min_stateful_height(&self) -> usize {
         self.p2pk65
             .height
             .len()
@@ -242,8 +242,8 @@ impl AddrCountVecs {
         })
     }
 
-    pub fn min_len(&self) -> usize {
-        self.all.height.len().min(self.by_addresstype.min_len())
+    pub fn min_stateful_height(&self) -> usize {
+        self.all.height.len().min(self.by_addresstype.min_stateful_height())
     }
 
     pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {

@@ -19,17 +19,17 @@ impl Vecs {
         self.sats.compute(starting_indexes, &self.usd, exit)?;
 
         // Oracle price computation is slow and still WIP, only run in dev builds
-        #[cfg(debug_assertions)]
-        {
-            use std::time::Instant;
-            use tracing::info;
-
-            info!("Computing oracle prices...");
-            let i = Instant::now();
-            self.oracle
-                .compute(indexer, indexes, &self.cents, starting_indexes, exit)?;
-            info!("Computed oracle prices in {:?}", i.elapsed());
-        }
+        // #[cfg(debug_assertions)]
+        // {
+        //     use std::time::Instant;
+        //     use tracing::info;
+        //
+        //     info!("Computing oracle prices...");
+        //     let i = Instant::now();
+        //     self.oracle
+        //         .compute(indexer, indexes, &self.cents, starting_indexes, exit)?;
+        //     info!("Computed oracle prices in {:?}", i.elapsed());
+        // }
 
         let _lock = exit.lock();
         self.db().compact()?;

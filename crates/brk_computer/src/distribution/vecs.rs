@@ -23,7 +23,10 @@ use crate::{
 };
 
 use super::{
-    AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, UTXOCohorts, address::AddrCountVecs,
+    AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, UTXOCohorts,
+    address::{
+        AddrCountVecs, AddressActivityVecs, GrowthRateVecs, NewAddrCountVecs, TotalAddrCountVecs,
+    },
     compute::aggregates,
 };
 
@@ -43,6 +46,15 @@ pub struct Vecs {
 
     pub addr_count: AddrCountVecs,
     pub empty_addr_count: AddrCountVecs,
+    pub address_activity: AddressActivityVecs,
+
+    /// Total addresses ever seen (addr_count + empty_addr_count) - lazy, global + per-type
+    pub total_addr_count: TotalAddrCountVecs,
+    /// New addresses per block (delta of total) - lazy height, stored dateindex stats, global + per-type
+    pub new_addr_count: NewAddrCountVecs,
+    /// Growth rate (new / addr_count) - lazy ratio with distribution stats, global + per-type
+    pub growth_rate: GrowthRateVecs,
+
     pub loadedaddressindex:
         LazyVecFrom1<LoadedAddressIndex, LoadedAddressIndex, LoadedAddressIndex, LoadedAddressData>,
     pub emptyaddressindex:
@@ -103,19 +115,41 @@ impl Vecs {
             |index, _| Some(index),
         );
 
+        let addr_count = AddrCountVecs::forced_import(&db, "addr_count", version, indexes)?;
+        let empty_addr_count =
+            AddrCountVecs::forced_import(&db, "empty_addr_count", version, indexes)?;
+        let address_activity =
+            AddressActivityVecs::forced_import(&db, "address_activity", version, indexes)?;
+
+        // Lazy total = addr_count + empty_addr_count (global + per-type, with all derived indexes)
+        let total_addr_count = TotalAddrCountVecs::forced_import(
+            &db,
+            version,
+            indexes,
+            &addr_count,
+            &empty_addr_count,
+        )?;
+
+        // Lazy delta of total (global + per-type)
+        let new_addr_count =
+            NewAddrCountVecs::forced_import(&db, version, indexes, &total_addr_count)?;
+
+        // Growth rate: new / addr_count (global + per-type)
+        let growth_rate =
+            GrowthRateVecs::forced_import(&db, version, indexes, &new_addr_count, &addr_count)?;
+
         let this = Self {
             chain_state: BytesVec::forced_import_with(
                 vecdb::ImportOptions::new(&db, "chain", version)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
-            addr_count: AddrCountVecs::forced_import(&db, "addr_count", version, indexes)?,
-            empty_addr_count: AddrCountVecs::forced_import(
-                &db,
-                "empty_addr_count",
-                version,
-                indexes,
-            )?,
+            addr_count,
+            empty_addr_count,
+            address_activity,
+            total_addr_count,
+            new_addr_count,
+            growth_rate,
 
             utxo_cohorts,
             address_cohorts,
@@ -210,6 +244,7 @@ impl Vecs {
             self.chain_state.reset()?;
             self.addr_count.reset_height()?;
             self.empty_addr_count.reset_height()?;
+            self.address_activity.reset_height()?;
             reset_state(
                 &mut self.any_address_indexes,
                 &mut self.addresses_data,
@@ -306,6 +341,20 @@ impl Vecs {
             .compute_rest(indexes, starting_indexes, exit)?;
         self.empty_addr_count
             .compute_rest(indexes, starting_indexes, exit)?;
+        self.address_activity
+            .compute_rest(indexes, starting_indexes, exit)?;
+
+        // 6c. Derive total_addr_count dateindex stats (height is lazy sum)
+        self.total_addr_count
+            .derive_from(indexes, starting_indexes, exit)?;
+
+        // 6d. Derive new_addr_count dateindex stats (height is lazy delta)
+        self.new_addr_count
+            .derive_from(indexes, starting_indexes, exit)?;
+
+        // 6e. Derive growth_rate dateindex stats (height is lazy ratio)
+        self.growth_rate
+            .derive_from(indexes, starting_indexes, exit)?;
 
         // 7. Compute rest part2 (relative metrics)
         let supply_metrics = &self.utxo_cohorts.all.metrics.supply;
@@ -354,8 +403,9 @@ impl Vecs {
             .min(Height::from(self.chain_state.len()))
             .min(self.any_address_indexes.min_stamped_height())
             .min(self.addresses_data.min_stamped_height())
-            .min(Height::from(self.addr_count.min_len()))
-            .min(Height::from(self.empty_addr_count.min_len()))
+            .min(Height::from(self.addr_count.min_stateful_height()))
+            .min(Height::from(self.empty_addr_count.min_stateful_height()))
+            .min(Height::from(self.address_activity.min_stateful_height()))
     }
 
     /// Get minimum length across all dateindex-indexed stateful vectors.

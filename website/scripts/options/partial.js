@@ -107,7 +107,7 @@ export function createPartialOptions({ brk }) {
             // STH vs LTH - Direct comparison
             createCohortFolderWithNupl(ctx, {
               name: "STH vs LTH",
-              title: "Term",
+              title: "Holders",
               list: [termShort, termLong],
             }),
 
@@ -285,9 +285,7 @@ export function createPartialOptions({ brk }) {
         // Frameworks section
         {
           name: "Frameworks",
-          tree: [
-            createCointimeSection(ctx),
-          ],
+          tree: [createCointimeSection(ctx)],
         },
       ],
     },

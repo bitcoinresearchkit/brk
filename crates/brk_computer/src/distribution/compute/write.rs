@@ -76,6 +76,7 @@ pub fn write(
         .chain(vecs.addresses_data.par_iter_mut())
         .chain(vecs.addr_count.par_iter_height_mut())
         .chain(vecs.empty_addr_count.par_iter_height_mut())
+        .chain(vecs.address_activity.par_iter_height_mut())
         .chain(rayon::iter::once(
             &mut vecs.chain_state as &mut dyn AnyStoredVec,
         ))

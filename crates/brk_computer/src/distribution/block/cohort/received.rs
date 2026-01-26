@@ -2,10 +2,14 @@ use brk_cohort::{AmountBucket, ByAddressType};
 use brk_types::{Dollars, Sats, TypeIndex};
 use rustc_hash::FxHashMap;
 
-use crate::distribution::{address::AddressTypeToVec, cohorts::AddressCohorts};
+use crate::distribution::{
+    address::{AddressTypeToActivityCounts, AddressTypeToVec},
+    cohorts::AddressCohorts,
+};
 
 use super::super::cache::{AddressLookup, TrackingStatus};
 
+#[allow(clippy::too_many_arguments)]
 pub fn process_received(
     received_data: AddressTypeToVec<(TypeIndex, Sats)>,
     cohorts: &mut AddressCohorts,
@@ -13,6 +17,7 @@ pub fn process_received(
     price: Option<Dollars>,
     addr_count: &mut ByAddressType<u64>,
     empty_addr_count: &mut ByAddressType<u64>,
+    activity_counts: &mut AddressTypeToActivityCounts,
 ) {
     for (output_type, vec) in received_data.unwrap().into_iter() {
         if vec.is_empty() {
@@ -22,6 +27,7 @@ pub fn process_received(
         // Cache mutable refs for this address type
         let type_addr_count = addr_count.get_mut(output_type).unwrap();
         let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
+        let type_activity = activity_counts.get_mut_unwrap(output_type);
 
         // Aggregate receives by address - each address processed exactly once
         // Track (total_value, output_count) for correct UTXO counting
@@ -35,6 +41,9 @@ pub fn process_received(
         for (type_index, (total_value, output_count)) in aggregated {
             let (addr_data, status) = lookup.get_or_create_for_receive(output_type, type_index);
 
+            // Track receiving activity - each address in receive aggregation
+            type_activity.receiving += 1;
+
             match status {
                 TrackingStatus::New => {
                     *type_addr_count += 1;
@@ -42,6 +51,8 @@ pub fn process_received(
                 TrackingStatus::WasEmpty => {
                     *type_addr_count += 1;
                     *type_empty_count -= 1;
+                    // Reactivated - was empty, now has funds
+                    type_activity.reactivated += 1;
                 }
                 TrackingStatus::Tracked => {}
             }

@@ -9,7 +9,10 @@ import { createMomentumSection } from "./momentum.js";
 import { createVolatilitySection } from "./volatility.js";
 import { createBandsSection } from "./bands.js";
 import { createValuationSection } from "./onchain.js";
-import { createDcaVsLumpSumSection, createDcaByYearSection } from "./investing.js";
+import {
+  createDcaVsLumpSumSection,
+  createDcaByYearSection,
+} from "./investing.js";
 
 /**
  * Create Market section
@@ -30,7 +33,6 @@ export function createMarketSection(ctx) {
     indicators,
   } = market;
 
-
   return {
     name: "Market",
     tree: [
@@ -40,80 +42,80 @@ export function createMarketSection(ctx) {
         title: "Bitcoin Price",
       },
       // Oracle section is localhost-only debug - uses non-price-pattern metrics
-      ...(localhost
-        ? /** @type {PartialOptionsTree} */ ([
-            {
-              name: "Oracle",
-              title: "Oracle Price",
-              top: /** @type {any} */ ([
-                candlestick({
-                  metric: priceMetrics.oracle.closeOhlcDollars,
-                  name: "Close",
-                  unit: Unit.usd,
-                }),
-                candlestick({
-                  metric: priceMetrics.oracle.midOhlcDollars,
-                  name: "Mid",
-                  unit: Unit.usd,
-                }),
-                line({
-                  metric: priceMetrics.oracle.phaseDailyDollars.median,
-                  name: "o. p50",
-                  unit: Unit.usd,
-                  color: colors.yellow,
-                }),
-                line({
-                  metric: priceMetrics.oracle.phaseV2DailyDollars.median,
-                  name: "o2. p50",
-                  unit: Unit.usd,
-                  color: colors.orange,
-                }),
-                line({
-                  metric: priceMetrics.oracle.phaseV2PeakDailyDollars.median,
-                  name: "o2.2 p50",
-                  unit: Unit.usd,
-                  color: colors.orange,
-                }),
-                line({
-                  metric: priceMetrics.oracle.phaseV3DailyDollars.median,
-                  name: "o3. p50",
-                  unit: Unit.usd,
-                  color: colors.red,
-                }),
-                line({
-                  metric: priceMetrics.oracle.phaseV3PeakDailyDollars.median,
-                  name: "o3.2 p50",
-                  unit: Unit.usd,
-                  color: colors.red,
-                }),
-                line({
-                  metric: priceMetrics.oracle.phaseDailyDollars.max,
-                  name: "o. max",
-                  unit: Unit.usd,
-                  color: colors.lime,
-                }),
-                line({
-                  metric: priceMetrics.oracle.phaseV2DailyDollars.max,
-                  name: "o.2 max",
-                  unit: Unit.usd,
-                  color: colors.emerald,
-                }),
-                line({
-                  metric: priceMetrics.oracle.phaseDailyDollars.min,
-                  name: "o. min",
-                  unit: Unit.usd,
-                  color: colors.rose,
-                }),
-                line({
-                  metric: priceMetrics.oracle.phaseV2DailyDollars.min,
-                  name: "o.2 min",
-                  unit: Unit.usd,
-                  color: colors.purple,
-                }),
-              ]),
-            },
-          ])
-        : []),
+      // ...(localhost
+      //   ? /** @type {PartialOptionsTree} */ ([
+      //       {
+      //         name: "Oracle",
+      //         title: "Oracle Price",
+      //         top: /** @type {any} */ ([
+      //           candlestick({
+      //             metric: priceMetrics.oracle.closeOhlcDollars,
+      //             name: "Close",
+      //             unit: Unit.usd,
+      //           }),
+      //           candlestick({
+      //             metric: priceMetrics.oracle.midOhlcDollars,
+      //             name: "Mid",
+      //             unit: Unit.usd,
+      //           }),
+      //           line({
+      //             metric: priceMetrics.oracle.phaseDailyDollars.median,
+      //             name: "o. p50",
+      //             unit: Unit.usd,
+      //             color: colors.yellow,
+      //           }),
+      //           line({
+      //             metric: priceMetrics.oracle.phaseV2DailyDollars.median,
+      //             name: "o2. p50",
+      //             unit: Unit.usd,
+      //             color: colors.orange,
+      //           }),
+      //           line({
+      //             metric: priceMetrics.oracle.phaseV2PeakDailyDollars.median,
+      //             name: "o2.2 p50",
+      //             unit: Unit.usd,
+      //             color: colors.orange,
+      //           }),
+      //           line({
+      //             metric: priceMetrics.oracle.phaseV3DailyDollars.median,
+      //             name: "o3. p50",
+      //             unit: Unit.usd,
+      //             color: colors.red,
+      //           }),
+      //           line({
+      //             metric: priceMetrics.oracle.phaseV3PeakDailyDollars.median,
+      //             name: "o3.2 p50",
+      //             unit: Unit.usd,
+      //             color: colors.red,
+      //           }),
+      //           line({
+      //             metric: priceMetrics.oracle.phaseDailyDollars.max,
+      //             name: "o. max",
+      //             unit: Unit.usd,
+      //             color: colors.lime,
+      //           }),
+      //           line({
+      //             metric: priceMetrics.oracle.phaseV2DailyDollars.max,
+      //             name: "o.2 max",
+      //             unit: Unit.usd,
+      //             color: colors.emerald,
+      //           }),
+      //           line({
+      //             metric: priceMetrics.oracle.phaseDailyDollars.min,
+      //             name: "o. min",
+      //             unit: Unit.usd,
+      //             color: colors.rose,
+      //           }),
+      //           line({
+      //             metric: priceMetrics.oracle.phaseV2DailyDollars.min,
+      //             name: "o.2 min",
+      //             unit: Unit.usd,
+      //             color: colors.purple,
+      //           }),
+      //         ]),
+      //       },
+      //     ])
+      //   : []),
 
       // Capitalization
       {

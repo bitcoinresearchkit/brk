@@ -58,13 +58,55 @@ function percentileSeries(colors, pattern, unit, title, { type } = {}) {
   const { stat } = colors;
   const base = { unit, defaultActive: false };
   return [
-    { type, metric: pattern.max, title: `${title} max`.trim(), color: stat.max, ...base },
-    { type, metric: pattern.min, title: `${title} min`.trim(), color: stat.min, ...base },
-    { type, metric: pattern.median, title: `${title} median`.trim(), color: stat.median, ...base },
-    { type, metric: pattern.pct75, title: `${title} pct75`.trim(), color: stat.pct75, ...base },
-    { type, metric: pattern.pct25, title: `${title} pct25`.trim(), color: stat.pct25, ...base },
-    { type, metric: pattern.pct90, title: `${title} pct90`.trim(), color: stat.pct90, ...base },
-    { type, metric: pattern.pct10, title: `${title} pct10`.trim(), color: stat.pct10, ...base },
+    {
+      type,
+      metric: pattern.max,
+      title: `${title} max`.trim(),
+      color: stat.max,
+      ...base,
+    },
+    {
+      type,
+      metric: pattern.min,
+      title: `${title} min`.trim(),
+      color: stat.min,
+      ...base,
+    },
+    {
+      type,
+      metric: pattern.median,
+      title: `${title} median`.trim(),
+      color: stat.median,
+      ...base,
+    },
+    {
+      type,
+      metric: pattern.pct75,
+      title: `${title} pct75`.trim(),
+      color: stat.pct75,
+      ...base,
+    },
+    {
+      type,
+      metric: pattern.pct25,
+      title: `${title} pct25`.trim(),
+      color: stat.pct25,
+      ...base,
+    },
+    {
+      type,
+      metric: pattern.pct90,
+      title: `${title} pct90`.trim(),
+      color: stat.pct90,
+      ...base,
+    },
+    {
+      type,
+      metric: pattern.pct10,
+      title: `${title} pct10`.trim(),
+      color: stat.pct10,
+      ...base,
+    },
   ];
 }
 
@@ -258,8 +300,20 @@ export function fromSizePattern(colors, pattern, unit, title = "") {
   const { stat } = colors;
   return [
     { metric: pattern.average, title: `${title} avg`.trim(), unit },
-    { metric: pattern.sum, title: `${title} sum`.trim(), color: stat.sum, unit, defaultActive: false },
-    { metric: pattern.cumulative, title: `${title} cumulative`.trim(), color: stat.cumulative, unit, defaultActive: false },
+    {
+      metric: pattern.sum,
+      title: `${title} sum`.trim(),
+      color: stat.sum,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.cumulative,
+      title: `${title} cumulative`.trim(),
+      color: stat.cumulative,
+      unit,
+      defaultActive: false,
+    },
     ...percentileSeries(colors, pattern, unit, title),
   ];
 }
@@ -276,7 +330,12 @@ export function fromFullnessPattern(colors, pattern, unit, title = "") {
   const { stat } = colors;
   return [
     { metric: pattern.base, title: title || "base", unit },
-    { metric: pattern.average, title: `${title} avg`.trim(), color: stat.avg, unit },
+    {
+      metric: pattern.average,
+      title: `${title} avg`.trim(),
+      color: stat.avg,
+      unit,
+    },
     ...percentileSeries(colors, pattern, unit, title),
   ];
 }
@@ -293,9 +352,26 @@ export function fromDollarsPattern(colors, pattern, unit, title = "") {
   const { stat } = colors;
   return [
     { metric: pattern.base, title: title || "base", unit },
-    { metric: pattern.sum, title: `${title} sum`.trim(), color: stat.sum, unit },
-    { metric: pattern.cumulative, title: `${title} cumulative`.trim(), color: stat.cumulative, unit, defaultActive: false },
-    { metric: pattern.average, title: `${title} avg`.trim(), color: stat.avg, unit, defaultActive: false },
+    {
+      metric: pattern.sum,
+      title: `${title} sum`.trim(),
+      color: stat.sum,
+      unit,
+    },
+    {
+      metric: pattern.cumulative,
+      title: `${title} cumulative`.trim(),
+      color: stat.cumulative,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.average,
+      title: `${title} avg`.trim(),
+      color: stat.avg,
+      unit,
+      defaultActive: false,
+    },
     ...percentileSeries(colors, pattern, unit, title),
   ];
 }
@@ -310,7 +386,12 @@ export function fromDollarsPattern(colors, pattern, unit, title = "") {
  */
 export function fromFeeRatePattern(colors, pattern, unit, title = "") {
   return [
-    { type: "Dots", metric: pattern.average, title: `${title} avg`.trim(), unit },
+    {
+      type: "Dots",
+      metric: pattern.average,
+      title: `${title} avg`.trim(),
+      unit,
+    },
     ...percentileSeries(colors, pattern, unit, title, { type: "Dots" }),
   ];
 }
@@ -323,12 +404,28 @@ export function fromFeeRatePattern(colors, pattern, unit, title = "") {
  * @param {string} [title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromFullnessPatternWithSumCumulative(colors, pattern, unit, title = "") {
+export function fromFullnessPatternWithSumCumulative(
+  colors,
+  pattern,
+  unit,
+  title = "",
+) {
   const { stat } = colors;
   return [
     ...fromFullnessPattern(colors, pattern, unit, title),
-    { metric: pattern.sum, title: `${title} sum`.trim(), color: stat.sum, unit },
-    { metric: pattern.cumulative, title: `${title} cumulative`.trim(), color: stat.cumulative, unit, defaultActive: false },
+    {
+      metric: pattern.sum,
+      title: `${title} sum`.trim(),
+      color: stat.sum,
+      unit,
+    },
+    {
+      metric: pattern.cumulative,
+      title: `${title} cumulative`.trim(),
+      color: stat.cumulative,
+      unit,
+      defaultActive: false,
+    },
   ];
 }
 
@@ -341,9 +438,24 @@ export function fromFullnessPatternWithSumCumulative(colors, pattern, unit, titl
  */
 export function fromCoinbasePattern(colors, pattern, title = "") {
   return [
-    ...fromFullnessPatternWithSumCumulative(colors, pattern.bitcoin, Unit.btc, title),
-    ...fromFullnessPatternWithSumCumulative(colors, pattern.sats, Unit.sats, title),
-    ...fromFullnessPatternWithSumCumulative(colors, pattern.dollars, Unit.usd, title),
+    ...fromFullnessPatternWithSumCumulative(
+      colors,
+      pattern.bitcoin,
+      Unit.btc,
+      title,
+    ),
+    ...fromFullnessPatternWithSumCumulative(
+      colors,
+      pattern.sats,
+      Unit.sats,
+      title,
+    ),
+    ...fromFullnessPatternWithSumCumulative(
+      colors,
+      pattern.dollars,
+      Unit.usd,
+      title,
+    ),
   ];
 }
 
@@ -414,6 +526,7 @@ export function fromValuePattern(
  * @param {string} [title]
  * @param {Color} [sumColor]
  * @param {Color} [cumulativeColor]
+ * @param {boolean} [defaultActive]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function fromBitcoinPatternWithUnit(
@@ -423,6 +536,7 @@ export function fromBitcoinPatternWithUnit(
   title = "",
   sumColor,
   cumulativeColor,
+  defaultActive,
 ) {
   return [
     {
@@ -430,6 +544,7 @@ export function fromBitcoinPatternWithUnit(
       title: `${title} sum`.trim(),
       color: sumColor,
       unit,
+      defaultActive,
     },
     {
       metric: pattern.cumulative,
@@ -489,7 +604,13 @@ export function fromIntervalPattern(colors, pattern, unit, title = "", color) {
   const { stat } = colors;
   return [
     { metric: pattern.base, title: title ?? "base", color, unit },
-    { metric: pattern.average, title: `${title} avg`.trim(), color: stat.avg, unit, defaultActive: false },
+    {
+      metric: pattern.average,
+      title: `${title} avg`.trim(),
+      color: stat.avg,
+      unit,
+      defaultActive: false,
+    },
     ...percentileSeries(colors, pattern, unit, title),
   ];
 }

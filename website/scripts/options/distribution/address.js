@@ -244,6 +244,7 @@ function createRealizedPnlSection(ctx, args, title) {
           name: "Negative Loss",
           color: colors.red,
           unit: Unit.usd,
+          defaultActive: false,
         }),
         line({
           metric: realized.negRealizedLoss.cumulative,

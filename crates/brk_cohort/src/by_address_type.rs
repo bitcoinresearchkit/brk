@@ -77,22 +77,6 @@ impl<T> ByAddressType<T> {
         })
     }
 
-    pub fn try_zip_with_name<S, R, F>(other: &ByAddressType<S>, f: F) -> Result<ByAddressType<R>>
-    where
-        F: Fn(&'static str, &S) -> Result<R>,
-    {
-        Ok(ByAddressType {
-            p2pk65: f(P2PK65, &other.p2pk65)?,
-            p2pk33: f(P2PK33, &other.p2pk33)?,
-            p2pkh: f(P2PKH, &other.p2pkh)?,
-            p2sh: f(P2SH, &other.p2sh)?,
-            p2wpkh: f(P2WPKH, &other.p2wpkh)?,
-            p2wsh: f(P2WSH, &other.p2wsh)?,
-            p2tr: f(P2TR, &other.p2tr)?,
-            p2a: f(P2A, &other.p2a)?,
-        })
-    }
-
     #[inline]
     pub fn get_unwrap(&self, addresstype: OutputType) -> &T {
         self.get(addresstype).unwrap()
@@ -287,4 +271,42 @@ impl<T> ByAddressType<Option<T>> {
             opt.take();
         });
     }
+}
+
+/// Zip one ByAddressType with a function, producing a new ByAddressType.
+pub fn zip_by_addresstype<S, R, F>(source: &ByAddressType<S>, f: F) -> Result<ByAddressType<R>>
+where
+    F: Fn(&'static str, &S) -> Result<R>,
+{
+    Ok(ByAddressType {
+        p2pk65: f(P2PK65, &source.p2pk65)?,
+        p2pk33: f(P2PK33, &source.p2pk33)?,
+        p2pkh: f(P2PKH, &source.p2pkh)?,
+        p2sh: f(P2SH, &source.p2sh)?,
+        p2wpkh: f(P2WPKH, &source.p2wpkh)?,
+        p2wsh: f(P2WSH, &source.p2wsh)?,
+        p2tr: f(P2TR, &source.p2tr)?,
+        p2a: f(P2A, &source.p2a)?,
+    })
+}
+
+/// Zip two ByAddressTypes with a function, producing a new ByAddressType.
+pub fn zip2_by_addresstype<S1, S2, R, F>(
+    a: &ByAddressType<S1>,
+    b: &ByAddressType<S2>,
+    f: F,
+) -> Result<ByAddressType<R>>
+where
+    F: Fn(&'static str, &S1, &S2) -> Result<R>,
+{
+    Ok(ByAddressType {
+        p2pk65: f(P2PK65, &a.p2pk65, &b.p2pk65)?,
+        p2pk33: f(P2PK33, &a.p2pk33, &b.p2pk33)?,
+        p2pkh: f(P2PKH, &a.p2pkh, &b.p2pkh)?,
+        p2sh: f(P2SH, &a.p2sh, &b.p2sh)?,
+        p2wpkh: f(P2WPKH, &a.p2wpkh, &b.p2wpkh)?,
+        p2wsh: f(P2WSH, &a.p2wsh, &b.p2wsh)?,
+        p2tr: f(P2TR, &a.p2tr, &b.p2tr)?,
+        p2a: f(P2A, &a.p2a, &b.p2a)?,
+    })
 }

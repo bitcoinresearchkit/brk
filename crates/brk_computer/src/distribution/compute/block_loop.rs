@@ -5,13 +5,14 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{DateIndex, Height, OutputType, Sats, TxIndex, TypeIndex};
 use rayon::prelude::*;
+use rustc_hash::FxHashSet;
 use tracing::info;
 use vecdb::{Exit, IterableVec, TypedVecIterator, VecIndex};
 
 use crate::{
     blocks,
     distribution::{
-        address::AddressTypeToAddressCount,
+        address::{AddressTypeToActivityCounts, AddressTypeToAddressCount},
         block::{
             AddressCache, InputsResult, process_inputs, process_outputs, process_received,
             process_sent,
@@ -139,6 +140,9 @@ pub fn process_blocks(
         )
     };
 
+    // Track activity counts - reset each block
+    let mut activity_counts = AddressTypeToActivityCounts::default();
+
     let mut cache = AddressCache::new();
 
     // Main block iteration
@@ -183,6 +187,9 @@ pub fn process_blocks(
 
         // Reset per-block values for all separate cohorts
         reset_block_values(&mut vecs.utxo_cohorts, &mut vecs.address_cohorts);
+
+        // Reset per-block activity counts
+        activity_counts.reset();
 
         // Collect output/input data using reusable iterators (16KB buffered reads)
         // Must be done before thread::scope since iterators aren't Send
@@ -284,6 +291,18 @@ pub fn process_blocks(
             timestamp,
         });
 
+        // Build set of addresses that received this block (for detecting "both" in sent)
+        let received_addresses: ByAddressType<FxHashSet<TypeIndex>> = {
+            let mut sets = ByAddressType::<FxHashSet<TypeIndex>>::default();
+            for (output_type, vec) in outputs_result.received_data.iter() {
+                let set = sets.get_mut_unwrap(output_type);
+                for (type_index, _) in vec {
+                    set.insert(*type_index);
+                }
+            }
+            sets
+        };
+
         // Process UTXO cohorts and Address cohorts in parallel
         // - Main thread: UTXO cohorts receive/send
         // - Spawned thread: Address cohorts process_received/process_sent
@@ -300,6 +319,7 @@ pub fn process_blocks(
                     block_price,
                     &mut addr_counts,
                     &mut empty_addr_counts,
+                    &mut activity_counts,
                 );
 
                 // Process sent inputs (addresses sending funds)
@@ -311,6 +331,8 @@ pub fn process_blocks(
                     block_price,
                     &mut addr_counts,
                     &mut empty_addr_counts,
+                    &mut activity_counts,
+                    &received_addresses,
                     height_to_price_vec.as_deref(),
                     height_to_timestamp_vec,
                     height,
@@ -333,6 +355,8 @@ pub fn process_blocks(
             empty_addr_counts.sum(),
             &empty_addr_counts,
         )?;
+        vecs.address_activity
+            .truncate_push_height(height, &activity_counts)?;
 
         // Get date info for unrealized state computation
         let date = height_to_date_iter.get_unwrap(height);

@@ -1,9 +1,13 @@
 use brk_cohort::{AmountBucket, ByAddressType};
 use brk_error::Result;
 use brk_types::{Age, CheckedSub, Dollars, Height, Sats, Timestamp, TypeIndex};
+use rustc_hash::FxHashSet;
 use vecdb::{unlikely, VecIndex};
 
-use crate::distribution::{address::HeightToAddressTypeToVec, cohorts::AddressCohorts};
+use crate::distribution::{
+    address::{AddressTypeToActivityCounts, HeightToAddressTypeToVec},
+    cohorts::AddressCohorts,
+};
 
 use super::super::cache::AddressLookup;
 
@@ -25,11 +29,16 @@ pub fn process_sent(
     current_price: Option<Dollars>,
     addr_count: &mut ByAddressType<u64>,
     empty_addr_count: &mut ByAddressType<u64>,
+    activity_counts: &mut AddressTypeToActivityCounts,
+    received_addresses: &ByAddressType<FxHashSet<TypeIndex>>,
     height_to_price: Option<&[Dollars]>,
     height_to_timestamp: &[Timestamp],
     current_height: Height,
     current_timestamp: Timestamp,
 ) -> Result<()> {
+    // Track unique senders per address type (simple set, no extra data needed)
+    let mut seen_senders: ByAddressType<FxHashSet<TypeIndex>> = ByAddressType::default();
+
     for (prev_height, by_type) in sent_data.into_iter() {
         let prev_price = height_to_price.map(|v| v[prev_height.to_usize()]);
         let prev_timestamp = height_to_timestamp[prev_height.to_usize()];
@@ -40,12 +49,26 @@ pub fn process_sent(
             // Cache mutable refs for this address type
             let type_addr_count = addr_count.get_mut(output_type).unwrap();
             let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
+            let type_activity = activity_counts.get_mut_unwrap(output_type);
+            let type_received = received_addresses.get_unwrap(output_type);
+            let type_seen = seen_senders.get_mut_unwrap(output_type);
 
             for (type_index, value) in vec {
                 let addr_data = lookup.get_for_send(output_type, type_index);
 
                 let prev_balance = addr_data.balance();
                 let new_balance = prev_balance.checked_sub(value).unwrap();
+
+                // On first encounter of this address this block, track activity
+                if type_seen.insert(type_index) {
+                    type_activity.sending += 1;
+
+                    // Track "both" - addresses that sent AND received this block
+                    if type_received.contains(&type_index) {
+                        type_activity.both += 1;
+                    }
+                }
+
                 let will_be_empty = addr_data.has_1_utxos();
 
                 // Compute buckets once
