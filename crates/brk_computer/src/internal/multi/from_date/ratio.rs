@@ -9,19 +9,19 @@ use vecdb::{
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        ComputedFromDateStdDev, LazyBinaryFromDateLast, PriceTimesRatio,
+        ComputedFromDateStdDev, LazyBinaryPrice, PriceTimesRatio,
         StandardDeviationVecsOptions,
     },
     price,
     utils::get_percentile,
 };
 
-use super::ComputedFromDateLast;
+use super::{ComputedFromDateLast, Price};
 use crate::internal::ComputedFromHeightLast;
 
 #[derive(Clone, Traversable)]
 pub struct ComputedFromDateRatio {
-    pub price: Option<ComputedFromDateLast<Dollars>>,
+    pub price: Option<Price>,
 
     pub ratio: ComputedFromDateLast<StoredF32>,
     pub ratio_1w_sma: Option<ComputedFromDateLast<StoredF32>>,
@@ -32,12 +32,12 @@ pub struct ComputedFromDateRatio {
     pub ratio_pct5: Option<ComputedFromDateLast<StoredF32>>,
     pub ratio_pct2: Option<ComputedFromDateLast<StoredF32>>,
     pub ratio_pct1: Option<ComputedFromDateLast<StoredF32>>,
-    pub ratio_pct99_usd: Option<LazyBinaryFromDateLast<Dollars, Dollars, StoredF32>>,
-    pub ratio_pct98_usd: Option<LazyBinaryFromDateLast<Dollars, Dollars, StoredF32>>,
-    pub ratio_pct95_usd: Option<LazyBinaryFromDateLast<Dollars, Dollars, StoredF32>>,
-    pub ratio_pct5_usd: Option<LazyBinaryFromDateLast<Dollars, Dollars, StoredF32>>,
-    pub ratio_pct2_usd: Option<LazyBinaryFromDateLast<Dollars, Dollars, StoredF32>>,
-    pub ratio_pct1_usd: Option<LazyBinaryFromDateLast<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct99_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub ratio_pct98_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub ratio_pct95_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub ratio_pct5_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub ratio_pct2_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub ratio_pct1_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
 
     pub ratio_sd: Option<ComputedFromDateStdDev>,
     pub ratio_4y_sd: Option<ComputedFromDateStdDev>,
@@ -70,7 +70,7 @@ impl ComputedFromDateRatio {
         // Only compute internally when metric_price is None
         let price = metric_price
             .is_none()
-            .then(|| ComputedFromDateLast::forced_import(db, name, v, indexes).unwrap());
+            .then(|| Price::forced_import(db, name, v, indexes).unwrap());
 
         macro_rules! import_sd {
             ($suffix:expr, $days:expr) => {
@@ -98,7 +98,7 @@ impl ComputedFromDateRatio {
             ($ratio:expr, $suffix:expr) => {
                 if let Some(mp) = metric_price {
                     $ratio.as_ref().map(|r| {
-                        LazyBinaryFromDateLast::from_height_and_dateindex_last::<PriceTimesRatio>(
+                        LazyBinaryPrice::from_height_and_dateindex_last::<PriceTimesRatio>(
                             &format!("{name}_{}", $suffix),
                             v,
                             mp,
@@ -107,7 +107,7 @@ impl ComputedFromDateRatio {
                     })
                 } else {
                     price.as_ref().zip($ratio.as_ref()).map(|(p, r)| {
-                        LazyBinaryFromDateLast::from_computed_both_last::<PriceTimesRatio>(
+                        LazyBinaryPrice::from_computed_both_last::<PriceTimesRatio>(
                             &format!("{name}_{}", $suffix),
                             v,
                             p,

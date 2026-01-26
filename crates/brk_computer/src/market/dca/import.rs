@@ -6,7 +6,7 @@ use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, DCA_CLASS_NAMES, DCA_PERIOD_NAME
 use crate::{
     indexes,
     internal::{
-        ComputedFromDateLast, LazyBinaryFromDateLast, PercentageDiffCloseDollars,
+        ComputedFromDateLast, LazyBinaryFromDateLast, PercentageDiffCloseDollars, Price,
         ValueFromDateLast,
     },
     market::lookback,
@@ -28,12 +28,7 @@ impl Vecs {
 
         // DCA by period - average price
         let period_average_price = ByDcaPeriod::try_new(|name, _days| {
-            ComputedFromDateLast::forced_import(
-                db,
-                &format!("{name}_dca_average_price"),
-                version,
-                indexes,
-            )
+            Price::forced_import(db, &format!("{name}_dca_average_price"), version, indexes)
         })?;
 
         let period_returns =
@@ -160,7 +155,7 @@ impl Vecs {
 
         // DCA by year class - average price
         let class_average_price = ByDcaClass::try_new(|name, _year, _dateindex| {
-            ComputedFromDateLast::forced_import(db, &format!("{name}_average_price"), version, indexes)
+            Price::forced_import(db, &format!("{name}_average_price"), version, indexes)
         })?;
 
         let class_returns =

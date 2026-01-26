@@ -1,7 +1,4 @@
-/** Bands indicators (MinMax, Mayer Multiple) */
-
-import { Unit } from "../../utils/units.js";
-import { line } from "../series.js";
+import { price } from "../series.js";
 
 /**
  * Create Bands section
@@ -47,19 +44,17 @@ export function createBandsSection(ctx, { range, movingAverage }) {
           name: id,
           title: `${title} MinMax`,
           top: [
-            line({
+            price({
               metric: min,
               name: "Min",
               key: `price-min`,
               color: colors.red,
-              unit: Unit.usd,
             }),
-            line({
+            price({
               metric: max,
               name: "Max",
               key: `price-max`,
               color: colors.green,
-              unit: Unit.usd,
             }),
           ],
         })),
@@ -68,23 +63,20 @@ export function createBandsSection(ctx, { range, movingAverage }) {
         name: "Mayer Multiple",
         title: "Mayer Multiple",
         top: [
-          line({
+          price({
             metric: movingAverage.price200dSma.price,
             name: "200d SMA",
             color: colors.yellow,
-            unit: Unit.usd,
           }),
-          line({
+          price({
             metric: movingAverage.price200dSmaX24,
             name: "200d SMA x2.4",
             color: colors.green,
-            unit: Unit.usd,
           }),
-          line({
+          price({
             metric: movingAverage.price200dSmaX08,
             name: "200d SMA x0.8",
             color: colors.red,
-            unit: Unit.usd,
           }),
         ],
       },

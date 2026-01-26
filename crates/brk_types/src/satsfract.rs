@@ -26,6 +26,7 @@ pub struct SatsFract(f64);
 impl SatsFract {
     pub const ZERO: Self = Self(0.0);
     pub const NAN: Self = Self(f64::NAN);
+    pub const ONE_BTC: Self = Self(100_000_000.0);
     pub const SATS_PER_BTC: f64 = 100_000_000.0;
 
     pub const fn new(sats: f64) -> Self {
@@ -189,5 +190,24 @@ impl Formattable for SatsFract {
     #[inline(always)]
     fn may_need_escaping() -> bool {
         false
+    }
+}
+
+impl Div<Dollars> for SatsFract {
+    type Output = Self;
+    fn div(self, rhs: Dollars) -> Self::Output {
+        let rhs = f64::from(rhs);
+        if rhs == 0.0 {
+            Self::NAN
+        } else {
+            Self(self.0 / rhs)
+        }
+    }
+}
+
+impl Div<Close<Dollars>> for SatsFract {
+    type Output = Self;
+    fn div(self, rhs: Close<Dollars>) -> Self::Output {
+        self / *rhs
     }
 }

@@ -6,6 +6,8 @@ mod last;
 mod lazy_ohlc;
 mod max;
 mod min;
+mod price;
+mod unary_last;
 mod value_last;
 
 pub use binary_last::*;
@@ -16,4 +18,6 @@ pub use last::*;
 pub use lazy_ohlc::*;
 pub use max::*;
 pub use min::*;
+pub use price::*;
+pub use unary_last::*;
 pub use value_last::*;

@@ -6,7 +6,7 @@
 
 import { Unit } from "../../utils/units.js";
 import { priceLine } from "../constants.js";
-import { line, baseline } from "../series.js";
+import { line, baseline, price } from "../series.js";
 import { formatCohortTitle } from "../shared.js";
 import {
   createSingleSupplySeries,
@@ -24,6 +24,9 @@ import {
   createGroupedSentDollarsSeries,
   groupedSupplyRelativeGenerators,
   createSingleSupplyRelativeOptions,
+  createSingleSellSideRiskSeries,
+  createSingleValueCreatedDestroyedSeries,
+  createSingleSoprSeries,
 } from "./shared.js";
 
 /**
@@ -51,10 +54,17 @@ export function createAddressCohortFolder(ctx, args) {
             bottom: createSingleSupplySeries(
               ctx,
               /** @type {AddressCohortObject} */ (args),
-              createSingleSupplyRelativeOptions(ctx, /** @type {AddressCohortObject} */ (args)),
+              createSingleSupplyRelativeOptions(
+                ctx,
+                /** @type {AddressCohortObject} */ (args),
+              ),
             ),
           }
-        : createGroupedSupplySection(list, title, groupedSupplyRelativeGenerators),
+        : createGroupedSupplySection(
+            list,
+            title,
+            groupedSupplyRelativeGenerators,
+          ),
 
       // UTXO count
       {
@@ -144,11 +154,10 @@ function createRealizedPriceOptions(args, title) {
       name: "Price",
       title: title("Realized Price"),
       top: [
-        line({
+        price({
           metric: tree.realized.realizedPrice,
           name: "Realized",
           color,
-          unit: Unit.usd,
         }),
       ],
     },
@@ -177,7 +186,7 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
       ? [
           baseline({
             metric: tree.realized.realizedCap30dDelta,
-            name: "1m Change",
+            name: "30d Change",
             unit: Unit.usd,
             defaultActive: false,
           }),
@@ -295,7 +304,7 @@ function createRealizedPnlSection(ctx, args, title) {
         }),
         baseline({
           metric: realized.netRealizedPnlCumulative30dDelta,
-          name: "Cumulative 1m Change",
+          name: "Cumulative 30d Change",
           unit: Unit.usd,
           defaultActive: false,
         }),
@@ -312,13 +321,13 @@ function createRealizedPnlSection(ctx, args, title) {
         }),
         baseline({
           metric: realized.netRealizedPnlCumulative30dDeltaRelToRealizedCap,
-          name: "Cumulative 1m Change",
+          name: "Cumulative 30d Change",
           unit: Unit.pctRcap,
           defaultActive: false,
         }),
         baseline({
           metric: realized.netRealizedPnlCumulative30dDeltaRelToMarketCap,
-          name: "Cumulative 1m Change",
+          name: "Cumulative 30d Change",
           unit: Unit.pctMcap,
         }),
         priceLine({
@@ -340,28 +349,7 @@ function createRealizedPnlSection(ctx, args, title) {
       name: "SOPR",
       title: title("SOPR"),
       bottom: [
-        baseline({
-          metric: realized.sopr,
-          name: "SOPR",
-          unit: Unit.ratio,
-          base: 1,
-        }),
-        baseline({
-          metric: realized.sopr7dEma,
-          name: "7d EMA",
-          color: [colors.lime, colors.rose],
-          unit: Unit.ratio,
-          defaultActive: false,
-          base: 1,
-        }),
-        baseline({
-          metric: realized.sopr30dEma,
-          name: "30d EMA",
-          color: [colors.avocado, colors.pink],
-          unit: Unit.ratio,
-          defaultActive: false,
-          base: 1,
-        }),
+        ...createSingleSoprSeries(colors, args.tree),
         priceLine({
           ctx,
           unit: Unit.ratio,
@@ -372,46 +360,12 @@ function createRealizedPnlSection(ctx, args, title) {
     {
       name: "Sell Side Risk",
       title: title("Sell Side Risk Ratio"),
-      bottom: [
-        line({
-          metric: realized.sellSideRiskRatio,
-          name: "Raw",
-          color: colors.orange,
-          unit: Unit.ratio,
-        }),
-        line({
-          metric: realized.sellSideRiskRatio7dEma,
-          name: "7d EMA",
-          color: colors.red,
-          unit: Unit.ratio,
-          defaultActive: false,
-        }),
-        line({
-          metric: realized.sellSideRiskRatio30dEma,
-          name: "30d EMA",
-          color: colors.rose,
-          unit: Unit.ratio,
-          defaultActive: false,
-        }),
-      ],
+      bottom: createSingleSellSideRiskSeries(colors, args.tree),
     },
     {
       name: "Value",
       title: title("Value Created & Destroyed"),
-      bottom: [
-        line({
-          metric: realized.valueCreated,
-          name: "Created",
-          color: colors.emerald,
-          unit: Unit.usd,
-        }),
-        line({
-          metric: realized.valueDestroyed,
-          name: "Destroyed",
-          color: colors.red,
-          unit: Unit.usd,
-        }),
-      ],
+      bottom: createSingleValueCreatedDestroyedSeries(colors, args.tree),
     },
   ];
 }
@@ -582,23 +536,21 @@ function createCostBasisSection(list, useGroupName, title) {
           name: "Min",
           title: title("Min Cost Basis"),
           top: list.map(({ color, name, tree }) =>
-            line({
+            price({
               metric: tree.costBasis.min,
               name: useGroupName ? name : "Min",
               color,
-              unit: Unit.usd,
             }),
           ),
         },
         {
-          name: "max",
+          name: "Max",
           title: title("Max Cost Basis"),
           top: list.map(({ color, name, tree }) =>
-            line({
+            price({
               metric: tree.costBasis.max,
               name: useGroupName ? name : "Max",
               color,
-              unit: Unit.usd,
             }),
           ),
         },
@@ -645,12 +597,12 @@ function createActivitySection(args, title) {
       name: "Activity",
       tree: [
         {
-          name: "coinblocks destroyed",
+          name: "Coinblocks Destroyed",
           title: title("Coinblocks Destroyed"),
           bottom: createGroupedCoinblocksDestroyedSeries(list),
         },
         {
-          name: "coindays destroyed",
+          name: "Coindays Destroyed",
           title: title("Coindays Destroyed"),
           bottom: createGroupedCoindaysDestroyedSeries(list),
         },
@@ -658,17 +610,17 @@ function createActivitySection(args, title) {
           name: "Sent",
           tree: [
             {
-              name: "sats",
+              name: "Sats",
               title: title("Sent (Sats)"),
               bottom: createGroupedSentSatsSeries(list),
             },
             {
-              name: "bitcoin",
+              name: "Bitcoin",
               title: title("Sent (BTC)"),
               bottom: createGroupedSentBitcoinSeries(list),
             },
             {
-              name: "dollars",
+              name: "Dollars",
               title: title("Sent ($)"),
               bottom: createGroupedSentDollarsSeries(list),
             },

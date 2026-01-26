@@ -1,7 +1,7 @@
 /** Shared helpers for options */
 
 import { Unit } from "../utils/units.js";
-import { line, baseline } from "./series.js";
+import { line, baseline, price } from "./series.js";
 import { priceLine, priceLines } from "./constants.js";
 
 /**
@@ -153,27 +153,26 @@ export function ratioSmas(colors, ratio) {
  * @param {PartialContext} ctx
  * @param {Object} args
  * @param {(metric: string) => string} args.title
- * @param {AnyMetricPattern} args.price - The price metric to show in top pane
+ * @param {AnyPricePattern} args.pricePattern - The price pattern to show in top pane
  * @param {ActivePriceRatioPattern} args.ratio - The ratio pattern
  * @param {Color} args.color
  * @param {string} [args.name] - Optional name override (default: "ratio")
  * @returns {PartialChartOption}
  */
-export function createRatioChart(ctx, { title, price, ratio, color, name }) {
+export function createRatioChart(ctx, { title, pricePattern, ratio, color, name }) {
   const { colors } = ctx;
 
   return {
     name: name ?? "ratio",
     title: title(name ?? "Ratio"),
     top: [
-      line({ metric: price, name: "Price", color, unit: Unit.usd }),
+      price({ metric: pricePattern, name: "Price", color }),
       ...percentileUsdMap(colors, ratio).map(({ name, prop, color }) =>
-        line({
+        price({
           metric: prop,
           name,
           color,
           defaultActive: false,
-          unit: Unit.usd,
           options: { lineStyle: 1 },
         }),
       ),
@@ -208,14 +207,14 @@ export function createRatioChart(ctx, { title, price, ratio, color, name }) {
  * @param {Object} args
  * @param {string} args.title
  * @param {string} args.legend
- * @param {AnyMetricPattern} args.price - The price metric to show in top pane
+ * @param {AnyPricePattern} args.pricePattern - The price pattern to show in top pane
  * @param {ActivePriceRatioPattern} args.ratio - The ratio pattern
  * @param {Color} args.color
  * @returns {PartialOptionsGroup}
  */
 export function createZScoresFolder(
   ctx,
-  { title, legend, price, ratio, color },
+  { title, legend, pricePattern, ratio, color },
 ) {
   const { colors } = ctx;
   const sdPats = sdPatterns(ratio);
@@ -227,40 +226,36 @@ export function createZScoresFolder(
         name: "Compare",
         title: `${title} Z-Scores`,
         top: [
-          line({ metric: price, name: legend, color, unit: Unit.usd }),
-          line({
+          price({ metric: pricePattern, name: legend, color }),
+          price({
             metric: ratio.ratio1ySd._0sdUsd,
             name: "1y 0σ",
             color: colors.orange,
             defaultActive: false,
-            unit: Unit.usd,
           }),
-          line({
+          price({
             metric: ratio.ratio2ySd._0sdUsd,
             name: "2y 0σ",
             color: colors.yellow,
             defaultActive: false,
-            unit: Unit.usd,
           }),
-          line({
+          price({
             metric: ratio.ratio4ySd._0sdUsd,
             name: "4y 0σ",
             color: colors.lime,
             defaultActive: false,
-            unit: Unit.usd,
           }),
-          line({
+          price({
             metric: ratio.ratioSd._0sdUsd,
             name: "all 0σ",
             color: colors.blue,
             defaultActive: false,
-            unit: Unit.usd,
           }),
         ],
         bottom: [
           line({
             metric: ratio.ratioSd.zscore,
-            name: "all",
+            name: "All",
             color: colors.blue,
             unit: Unit.sd,
           }),
@@ -294,14 +289,13 @@ export function createZScoresFolder(
         name: nameAddon,
         title: `${title} ${titleAddon} Z-Score`,
         top: [
-          line({ metric: price, name: legend, color, unit: Unit.usd }),
+          price({ metric: pricePattern, name: legend, color }),
           ...sdBandsUsd(colors, sd).map(
             ({ name: bandName, prop, color: bandColor }) =>
-              line({
+              price({
                 metric: prop,
                 name: bandName,
                 color: bandColor,
-                unit: Unit.usd,
                 defaultActive: false,
               }),
           ),

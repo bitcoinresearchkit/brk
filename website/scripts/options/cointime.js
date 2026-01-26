@@ -1,5 +1,5 @@
 import { Unit } from "../utils/units.js";
-import { line } from "./series.js";
+import { line, price } from "./series.js";
 import {
   satsBtcUsd,
   createRatioChart,
@@ -13,23 +13,23 @@ import {
  * @param {Object} args
  * @param {string} args.title
  * @param {string} args.legend
- * @param {AnyMetricPattern} args.price
+ * @param {AnyPricePattern} args.pricePattern
  * @param {ActivePriceRatioPattern} args.ratio
  * @param {Color} args.color
  * @returns {PartialOptionsTree}
  */
 function createCointimePriceWithRatioOptions(
   ctx,
-  { title, legend, price, ratio, color },
+  { title, legend, pricePattern, ratio, color },
 ) {
   return [
     {
       name: "Price",
       title,
-      top: [line({ metric: price, name: legend, color, unit: Unit.usd })],
+      top: [price({ metric: pricePattern, name: legend, color })],
     },
-    createRatioChart(ctx, { title: formatCohortTitle(title), price, ratio, color }),
-    createZScoresFolder(ctx, { title, legend, price, ratio, color }),
+    createRatioChart(ctx, { title: formatCohortTitle(title), pricePattern, ratio, color }),
+    createZScoresFolder(ctx, { title, legend, pricePattern, ratio, color }),
   ];
 }
 
@@ -55,28 +55,28 @@ export function createCointimeSection(ctx) {
   // Cointime prices data
   const cointimePrices = [
     {
-      price: pricing.trueMarketMean,
+      pricePattern: pricing.trueMarketMean,
       ratio: pricing.trueMarketMeanRatio,
-      name: "True market mean",
+      name: "True Market Mean",
       title: "True Market Mean",
       color: colors.blue,
     },
     {
-      price: pricing.vaultedPrice,
+      pricePattern: pricing.vaultedPrice,
       ratio: pricing.vaultedPriceRatio,
       name: "Vaulted",
       title: "Vaulted Price",
       color: colors.lime,
     },
     {
-      price: pricing.activePrice,
+      pricePattern: pricing.activePrice,
       ratio: pricing.activePriceRatio,
       name: "Active",
       title: "Active Price",
       color: colors.rose,
     },
     {
-      price: pricing.cointimePrice,
+      pricePattern: pricing.cointimePrice,
       ratio: pricing.cointimePriceRatio,
       name: "Cointime",
       title: "Cointime Price",
@@ -128,14 +128,14 @@ export function createCointimeSection(ctx) {
           {
             name: "Compare",
             title: "Cointime Prices",
-            top: cointimePrices.map(({ price, name, color }) =>
-              line({ metric: price, name, color, unit: Unit.usd }),
+            top: cointimePrices.map(({ pricePattern, name, color }) =>
+              price({ metric: pricePattern, name, color }),
             ),
           },
-          ...cointimePrices.map(({ price, ratio, name, color, title }) => ({
+          ...cointimePrices.map(({ pricePattern, ratio, name, color, title }) => ({
             name,
             tree: createCointimePriceWithRatioOptions(ctx, {
-              price,
+              pricePattern,
               ratio,
               legend: name,
               color,

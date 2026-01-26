@@ -48,6 +48,13 @@
  * @typedef {DotsSeriesBlueprint & FetchedAnySeriesOptions} FetchedDotsSeriesBlueprint
  * @typedef {AnySeriesBlueprint & FetchedAnySeriesOptions} AnyFetchedSeriesBlueprint
  *
+ * Any pattern with dollars and sats sub-metrics (auto-expands to USD + sats)
+ * @typedef {{ dollars: AnyMetricPattern, sats: AnyMetricPattern }} AnyPricePattern
+ *
+ * Top pane price series - requires a price pattern with dollars/sats, auto-expands to USD + sats
+ * @typedef {{ metric: AnyPricePattern }} FetchedPriceSeriesOptions
+ * @typedef {LineSeriesBlueprint & FetchedPriceSeriesOptions} FetchedPriceSeriesBlueprint
+ *
  * @typedef {Object} PartialOption
  * @property {string} name
  *
@@ -66,7 +73,7 @@
  * @typedef {Object} PartialChartOptionSpecific
  * @property {"chart"} [kind]
  * @property {string} title
- * @property {AnyFetchedSeriesBlueprint[]} [top]
+ * @property {FetchedPriceSeriesBlueprint[]} [top]
  * @property {AnyFetchedSeriesBlueprint[]} [bottom]
  *
  * @typedef {PartialOption & PartialChartOptionSpecific} PartialChartOption

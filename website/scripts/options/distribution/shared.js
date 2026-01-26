@@ -2,7 +2,7 @@
 
 import { Unit } from "../../utils/units.js";
 import { priceLine } from "../constants.js";
-import { baseline, line } from "../series.js";
+import { baseline, dots, line, price } from "../series.js";
 import { satsBtcUsd } from "../shared.js";
 
 /**
@@ -285,11 +285,11 @@ export function createAddressCountSeries(ctx, list, useGroupName) {
 /**
  * Create realized price series for grouped cohorts
  * @param {readonly CohortObject[]} list
- * @returns {AnyFetchedSeriesBlueprint[]}
+ * @returns {FetchedPriceSeriesBlueprint[]}
  */
 export function createRealizedPriceSeries(list) {
   return list.map(({ color, name, tree }) =>
-    line({ metric: tree.realized.realizedPrice, name, color, unit: Unit.usd }),
+    price({ metric: tree.realized.realizedPrice, name, color }),
   );
 }
 
@@ -332,7 +332,7 @@ export function createRealizedCapSeries(list, useGroupName) {
  * @param {Colors} colors
  * @param {readonly CohortWithCostBasisPercentiles[]} list
  * @param {boolean} useGroupName
- * @returns {AnyFetchedSeriesBlueprint[]}
+ * @returns {FetchedPriceSeriesBlueprint[]}
  */
 export function createCostBasisPercentilesSeries(colors, list, useGroupName) {
   return list.flatMap(({ name, tree }) => {
@@ -340,27 +340,27 @@ export function createCostBasisPercentilesSeries(colors, list, useGroupName) {
     const p = cb.percentiles;
     const n = (/** @type {number} */ pct) => (useGroupName ? `${name} p${pct}` : `p${pct}`);
     return [
-      line({ metric: cb.max, name: n(100), color: colors.purple, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct95, name: n(95), color: colors.fuchsia, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct90, name: n(90), color: colors.pink, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct85, name: n(85), color: colors.pink, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct80, name: n(80), color: colors.rose, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct75, name: n(75), color: colors.red, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct70, name: n(70), color: colors.orange, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct65, name: n(65), color: colors.amber, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct60, name: n(60), color: colors.yellow, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct55, name: n(55), color: colors.yellow, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct50, name: n(50), color: colors.avocado, unit: Unit.usd }),
-      line({ metric: p.pct45, name: n(45), color: colors.lime, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct40, name: n(40), color: colors.green, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct35, name: n(35), color: colors.emerald, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct30, name: n(30), color: colors.teal, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct25, name: n(25), color: colors.teal, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct20, name: n(20), color: colors.cyan, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct15, name: n(15), color: colors.sky, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct10, name: n(10), color: colors.blue, unit: Unit.usd, defaultActive: false }),
-      line({ metric: p.pct05, name: n(5), color: colors.indigo, unit: Unit.usd, defaultActive: false }),
-      line({ metric: cb.min, name: n(0), color: colors.violet, unit: Unit.usd, defaultActive: false }),
+      price({ metric: cb.max, name: n(100), color: colors.purple, defaultActive: false }),
+      price({ metric: p.pct95, name: n(95), color: colors.fuchsia, defaultActive: false }),
+      price({ metric: p.pct90, name: n(90), color: colors.pink, defaultActive: false }),
+      price({ metric: p.pct85, name: n(85), color: colors.pink, defaultActive: false }),
+      price({ metric: p.pct80, name: n(80), color: colors.rose, defaultActive: false }),
+      price({ metric: p.pct75, name: n(75), color: colors.red, defaultActive: false }),
+      price({ metric: p.pct70, name: n(70), color: colors.orange, defaultActive: false }),
+      price({ metric: p.pct65, name: n(65), color: colors.amber, defaultActive: false }),
+      price({ metric: p.pct60, name: n(60), color: colors.yellow, defaultActive: false }),
+      price({ metric: p.pct55, name: n(55), color: colors.yellow, defaultActive: false }),
+      price({ metric: p.pct50, name: n(50), color: colors.avocado }),
+      price({ metric: p.pct45, name: n(45), color: colors.lime, defaultActive: false }),
+      price({ metric: p.pct40, name: n(40), color: colors.green, defaultActive: false }),
+      price({ metric: p.pct35, name: n(35), color: colors.emerald, defaultActive: false }),
+      price({ metric: p.pct30, name: n(30), color: colors.teal, defaultActive: false }),
+      price({ metric: p.pct25, name: n(25), color: colors.teal, defaultActive: false }),
+      price({ metric: p.pct20, name: n(20), color: colors.cyan, defaultActive: false }),
+      price({ metric: p.pct15, name: n(15), color: colors.sky, defaultActive: false }),
+      price({ metric: p.pct10, name: n(10), color: colors.blue, defaultActive: false }),
+      price({ metric: p.pct05, name: n(5), color: colors.indigo, defaultActive: false }),
+      price({ metric: cb.min, name: n(0), color: colors.violet, defaultActive: false }),
     ];
   });
 }
@@ -535,4 +535,117 @@ export function createGroupedSentDollarsSeries(list) {
       unit: Unit.usd,
     }),
   ]);
+}
+
+// ============================================================================
+// Sell Side Risk Ratio Helpers
+// ============================================================================
+
+/**
+ * Create sell side risk ratio series for single cohort
+ * @param {Colors} colors
+ * @param {{ realized: AnyRealizedPattern }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleSellSideRiskSeries(colors, tree) {
+  return [
+    dots({
+      metric: tree.realized.sellSideRiskRatio,
+      name: "Raw",
+      color: colors.orange,
+      unit: Unit.ratio,
+    }),
+    line({
+      metric: tree.realized.sellSideRiskRatio7dEma,
+      name: "7d EMA",
+      color: colors.red,
+      unit: Unit.ratio,
+    }),
+    line({
+      metric: tree.realized.sellSideRiskRatio30dEma,
+      name: "30d EMA",
+      color: colors.pink,
+      unit: Unit.ratio,
+    }),
+  ];
+}
+
+/**
+ * Create sell side risk ratio series for grouped cohorts
+ * @param {readonly CohortObject[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedSellSideRiskSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.realized.sellSideRiskRatio,
+      name,
+      color,
+      unit: Unit.ratio,
+    }),
+  ]);
+}
+
+// ============================================================================
+// Value Created & Destroyed Helpers
+// ============================================================================
+
+/**
+ * Create value created & destroyed series for single cohort
+ * @param {Colors} colors
+ * @param {{ realized: AnyRealizedPattern }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleValueCreatedDestroyedSeries(colors, tree) {
+  return [
+    line({
+      metric: tree.realized.valueCreated,
+      name: "Created",
+      color: colors.emerald,
+      unit: Unit.usd,
+    }),
+    line({
+      metric: tree.realized.valueDestroyed,
+      name: "Destroyed",
+      color: colors.red,
+      unit: Unit.usd,
+    }),
+  ];
+}
+
+// ============================================================================
+// SOPR Helpers
+// ============================================================================
+
+/**
+ * Create base SOPR series for single cohort (all cohorts have base SOPR)
+ * @param {Colors} colors
+ * @param {{ realized: AnyRealizedPattern }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleSoprSeries(colors, tree) {
+  return [
+    baseline({
+      metric: tree.realized.sopr,
+      name: "SOPR",
+      unit: Unit.ratio,
+      base: 1,
+    }),
+    baseline({
+      metric: tree.realized.sopr7dEma,
+      name: "7d EMA",
+      color: [colors.lime, colors.rose],
+      unit: Unit.ratio,
+      defaultActive: false,
+      base: 1,
+    }),
+    baseline({
+      metric: tree.realized.sopr30dEma,
+      name: "30d EMA",
+      color: [colors.avocado, colors.pink],
+      unit: Unit.ratio,
+      defaultActive: false,
+      base: 1,
+    }),
+  ];
 }

@@ -14,7 +14,8 @@ use crate::{
     internal::{
         ComputedFromHeightLast, ComputedFromHeightSum, ComputedFromHeightSumCum, ComputedFromDateLast,
         ComputedFromDateRatio, DollarsMinus, LazyBinaryFromHeightSum, LazyBinaryFromHeightSumCum,
-        LazyFromHeightSum, LazyFromHeightSumCum, LazyFromDateLast, PercentageDollarsF32, StoredF32Identity,
+        LazyFromHeightSum, LazyFromHeightSumCum, LazyFromDateLast, PercentageDollarsF32,
+        PriceFromHeight, StoredF32Identity,
     },
     price,
 };
@@ -26,7 +27,7 @@ use super::ImportConfig;
 pub struct RealizedMetrics {
     // === Realized Cap ===
     pub realized_cap: ComputedFromHeightLast<Dollars>,
-    pub realized_price: ComputedFromHeightLast<Dollars>,
+    pub realized_price: PriceFromHeight,
     pub realized_price_extra: ComputedFromDateRatio,
     pub realized_cap_rel_to_own_market_cap: Option<ComputedFromHeightLast<StoredF32>>,
     pub realized_cap_30d_delta: ComputedFromDateLast<Dollars>,
@@ -169,7 +170,7 @@ impl RealizedMetrics {
                 &realized_cap,
             );
 
-        let realized_price = ComputedFromHeightLast::forced_import(
+        let realized_price = PriceFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_price"),
             cfg.version + v1,

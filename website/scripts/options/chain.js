@@ -5,6 +5,36 @@ import { priceLine } from "./constants.js";
 import { line, baseline, dots } from "./series.js";
 import { satsBtcUsd } from "./shared.js";
 
+/** Major pools to show in Compare section (by current hashrate dominance) */
+const MAJOR_POOL_IDS = [
+  "foundryusa",   // ~32% - largest pool
+  "antpool",      // ~18% - Bitmain-owned
+  "viabtc",       // ~14% - independent
+  "f2pool",       // ~10% - one of the oldest pools
+  "marapool",     // MARA Holdings
+  "braiinspool",  // formerly Slush Pool
+  "spiderpool",   // growing Asian pool
+  "ocean",        // decentralization-focused
+];
+
+/**
+ * AntPool & friends - pools sharing AntPool's block templates
+ * Based on b10c's research: https://b10c.me/blog/015-bitcoin-mining-centralization/
+ * Collectively ~35-40% of network hashrate
+ */
+const ANTPOOL_AND_FRIENDS_IDS = [
+  "antpool",      // Bitmain-owned, template source
+  "poolin",       // shares AntPool templates
+  "btccom",       // CloverPool (formerly BTC.com)
+  "braiinspool",  // shares AntPool templates
+  "ultimuspool",  // shares AntPool templates
+  "binancepool",  // shares AntPool templates
+  "secpool",      // shares AntPool templates
+  "sigmapoolcom", // SigmaPool
+  "rawpool",      // shares AntPool templates
+  "luxor",        // shares AntPool templates
+];
+
 /**
  * Create Chain section
  * @param {PartialContext} ctx
@@ -77,7 +107,7 @@ export function createChainSection(ctx) {
             }),
             line({
               metric: pool.dominance,
-              name: "all time",
+              name: "All Time",
               color: colors.teal,
               unit: Unit.percentage,
               defaultActive: false,
@@ -233,7 +263,7 @@ export function createChainSection(ctx) {
               ...fromSizePattern(blocks.size, Unit.bytes),
               line({
                 metric: blocks.totalSize,
-                name: "total",
+                name: "Total",
                 color: colors.purple,
                 unit: Unit.bytes,
                 defaultActive: false,
@@ -242,14 +272,14 @@ export function createChainSection(ctx) {
               ...fromFullnessPattern(blocks.weight, Unit.wu),
               line({
                 metric: blocks.weight.sum,
-                name: "sum",
+                name: "Sum",
                 color: colors.stat.sum,
                 unit: Unit.wu,
                 defaultActive: false,
               }),
               line({
                 metric: blocks.weight.cumulative,
-                name: "cumulative",
+                name: "Cumulative",
                 color: colors.stat.cumulative,
                 unit: Unit.wu,
                 defaultActive: false,
@@ -297,27 +327,7 @@ export function createChainSection(ctx) {
                   defaultActive: false,
                 },
               ),
-              line({
-                metric: transactions.volume.annualizedVolume.bitcoin,
-                name: "annualized",
-                color: colors.red,
-                unit: Unit.btc,
-                defaultActive: false,
-              }),
-              line({
-                metric: transactions.volume.annualizedVolume.sats,
-                name: "annualized",
-                color: colors.red,
-                unit: Unit.sats,
-                defaultActive: false,
-              }),
-              line({
-                metric: transactions.volume.annualizedVolume.dollars,
-                name: "annualized",
-                color: colors.lime,
-                unit: Unit.usd,
-                defaultActive: false,
-              }),
+              ...satsBtcUsd(transactions.volume.annualizedVolume, "Annualized", colors.red, { defaultActive: false }),
             ],
           },
           {
@@ -366,12 +376,12 @@ export function createChainSection(ctx) {
             bottom: [
               line({
                 metric: supply.velocity.btc,
-                name: "bitcoin",
+                name: "Bitcoin",
                 unit: Unit.ratio,
               }),
               line({
                 metric: supply.velocity.usd,
-                name: "dollars",
+                name: "Dollars",
                 color: colors.emerald,
                 unit: Unit.ratio,
               }),
@@ -489,18 +499,18 @@ export function createChainSection(ctx) {
                 name: "SegWit",
                 title: "SegWit Adoption",
                 bottom: [
-                  line({ metric: scripts.count.segwitAdoption.base, name: "base", unit: Unit.percentage }),
-                  line({ metric: scripts.count.segwitAdoption.sum, name: "sum", color: colors.stat.sum, unit: Unit.percentage }),
-                  line({ metric: scripts.count.segwitAdoption.cumulative, name: "cumulative", color: colors.stat.cumulative, unit: Unit.percentage, defaultActive: false }),
+                  line({ metric: scripts.count.segwitAdoption.base, name: "Base", unit: Unit.percentage }),
+                  line({ metric: scripts.count.segwitAdoption.sum, name: "Sum", color: colors.stat.sum, unit: Unit.percentage }),
+                  line({ metric: scripts.count.segwitAdoption.cumulative, name: "Cumulative", color: colors.stat.cumulative, unit: Unit.percentage, defaultActive: false }),
                 ],
               },
               {
                 name: "Taproot",
                 title: "Taproot Adoption",
                 bottom: [
-                  line({ metric: scripts.count.taprootAdoption.base, name: "base", unit: Unit.percentage }),
-                  line({ metric: scripts.count.taprootAdoption.sum, name: "sum", color: colors.stat.sum, unit: Unit.percentage }),
-                  line({ metric: scripts.count.taprootAdoption.cumulative, name: "cumulative", color: colors.stat.cumulative, unit: Unit.percentage, defaultActive: false }),
+                  line({ metric: scripts.count.taprootAdoption.base, name: "Base", unit: Unit.percentage }),
+                  line({ metric: scripts.count.taprootAdoption.sum, name: "Sum", color: colors.stat.sum, unit: Unit.percentage }),
+                  line({ metric: scripts.count.taprootAdoption.cumulative, name: "Cumulative", color: colors.stat.cumulative, unit: Unit.percentage, defaultActive: false }),
                 ],
               },
             ],
@@ -750,6 +760,7 @@ export function createChainSection(ctx) {
       {
         name: "Mining",
         tree: [
+          // Hashrate
           {
             name: "Hashrate",
             title: "Network Hashrate",
@@ -796,123 +807,145 @@ export function createChainSection(ctx) {
               }),
             ],
           },
+
+          // Difficulty group
           {
             name: "Difficulty",
-            title: "Network Difficulty",
-            bottom: [
-              line({
-                metric: blocks.difficulty.raw,
-                name: "Difficulty",
-                unit: Unit.difficulty,
-              }),
-              line({
-                metric: blocks.difficulty.epoch,
-                name: "Epoch",
-                color: colors.teal,
-                unit: Unit.epoch,
-              }),
-              line({
-                metric: blocks.difficulty.blocksBeforeNextAdjustment,
-                name: "before next",
-                color: colors.indigo,
-                unit: Unit.blocks,
-              }),
-              line({
-                metric: blocks.difficulty.daysBeforeNextAdjustment,
-                name: "before next",
-                color: colors.purple,
-                unit: Unit.days,
-              }),
+            tree: [
+              {
+                name: "Level",
+                title: "Network Difficulty",
+                bottom: [
+                  line({
+                    metric: blocks.difficulty.raw,
+                    name: "Difficulty",
+                    unit: Unit.difficulty,
+                  }),
+                  line({
+                    metric: blocks.difficulty.epoch,
+                    name: "Epoch",
+                    color: colors.teal,
+                    unit: Unit.epoch,
+                  }),
+                ],
+              },
+              {
+                name: "Adjustment",
+                title: "Difficulty Adjustment",
+                bottom: [
+                  baseline({
+                    metric: blocks.difficulty.adjustment,
+                    name: "Difficulty Change",
+                    unit: Unit.percentage,
+                  }),
+                  priceLine({ ctx, number: 0, unit: Unit.percentage }),
+                ],
+              },
+              {
+                name: "Countdown",
+                title: "Next Adjustment",
+                bottom: [
+                  line({
+                    metric: blocks.difficulty.blocksBeforeNextAdjustment,
+                    name: "Before Next",
+                    color: colors.indigo,
+                    unit: Unit.blocks,
+                  }),
+                  line({
+                    metric: blocks.difficulty.daysBeforeNextAdjustment,
+                    name: "Before Next",
+                    color: colors.purple,
+                    unit: Unit.days,
+                  }),
+                ],
+              },
             ],
           },
+
+          // Economics group
           {
-            name: "Adjustment",
-            title: "Difficulty Adjustment",
-            bottom: [
-              baseline({
-                metric: blocks.difficulty.adjustment,
-                name: "Difficulty Change",
-                unit: Unit.percentage,
-              }),
-              priceLine({ ctx, number: 0, unit: Unit.percentage }),
+            name: "Economics",
+            tree: [
+              {
+                name: "Hash Price",
+                title: "Hash Price",
+                bottom: [
+                  line({
+                    metric: blocks.mining.hashPriceThs,
+                    name: "TH/s",
+                    color: colors.emerald,
+                    unit: Unit.usdPerThsPerDay,
+                  }),
+                  line({
+                    metric: blocks.mining.hashPricePhs,
+                    name: "PH/s",
+                    color: colors.emerald,
+                    unit: Unit.usdPerPhsPerDay,
+                  }),
+                  line({
+                    metric: blocks.mining.hashPriceRebound,
+                    name: "Rebound",
+                    color: colors.yellow,
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: blocks.mining.hashPriceThsMin,
+                    name: "TH/s Min",
+                    color: colors.red,
+                    unit: Unit.usdPerThsPerDay,
+                    options: { lineStyle: 1 },
+                  }),
+                  line({
+                    metric: blocks.mining.hashPricePhsMin,
+                    name: "PH/s Min",
+                    color: colors.red,
+                    unit: Unit.usdPerPhsPerDay,
+                    options: { lineStyle: 1 },
+                  }),
+                ],
+              },
+              {
+                name: "Hash Value",
+                title: "Hash Value",
+                bottom: [
+                  line({
+                    metric: blocks.mining.hashValueThs,
+                    name: "TH/s",
+                    color: colors.orange,
+                    unit: Unit.satsPerThsPerDay,
+                  }),
+                  line({
+                    metric: blocks.mining.hashValuePhs,
+                    name: "PH/s",
+                    color: colors.orange,
+                    unit: Unit.satsPerPhsPerDay,
+                  }),
+                  line({
+                    metric: blocks.mining.hashValueRebound,
+                    name: "Rebound",
+                    color: colors.yellow,
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: blocks.mining.hashValueThsMin,
+                    name: "TH/s Min",
+                    color: colors.red,
+                    unit: Unit.satsPerThsPerDay,
+                    options: { lineStyle: 1 },
+                  }),
+                  line({
+                    metric: blocks.mining.hashValuePhsMin,
+                    name: "PH/s Min",
+                    color: colors.red,
+                    unit: Unit.satsPerPhsPerDay,
+                    options: { lineStyle: 1 },
+                  }),
+                ],
+              },
             ],
           },
-          {
-            name: "Hash Price",
-            title: "Hash Price",
-            bottom: [
-              line({
-                metric: blocks.mining.hashPriceThs,
-                name: "TH/s",
-                color: colors.emerald,
-                unit: Unit.usdPerThsPerDay,
-              }),
-              line({
-                metric: blocks.mining.hashPricePhs,
-                name: "PH/s",
-                color: colors.emerald,
-                unit: Unit.usdPerPhsPerDay,
-              }),
-              line({
-                metric: blocks.mining.hashPriceRebound,
-                name: "Rebound",
-                color: colors.yellow,
-                unit: Unit.percentage,
-              }),
-              line({
-                metric: blocks.mining.hashPriceThsMin,
-                name: "TH/s Min",
-                color: colors.red,
-                unit: Unit.usdPerThsPerDay,
-                options: { lineStyle: 1 },
-              }),
-              line({
-                metric: blocks.mining.hashPricePhsMin,
-                name: "PH/s Min",
-                color: colors.red,
-                unit: Unit.usdPerPhsPerDay,
-                options: { lineStyle: 1 },
-              }),
-            ],
-          },
-          {
-            name: "Hash Value",
-            title: "Hash Value",
-            bottom: [
-              line({
-                metric: blocks.mining.hashValueThs,
-                name: "TH/s",
-                color: colors.orange,
-                unit: Unit.satsPerThsPerDay,
-              }),
-              line({
-                metric: blocks.mining.hashValuePhs,
-                name: "PH/s",
-                color: colors.orange,
-                unit: Unit.satsPerPhsPerDay,
-              }),
-              line({
-                metric: blocks.mining.hashValueRebound,
-                name: "Rebound",
-                color: colors.yellow,
-                unit: Unit.percentage,
-              }),
-              line({
-                metric: blocks.mining.hashValueThsMin,
-                name: "TH/s Min",
-                color: colors.red,
-                unit: Unit.satsPerThsPerDay,
-                options: { lineStyle: 1 },
-              }),
-              line({
-                metric: blocks.mining.hashValuePhsMin,
-                name: "PH/s Min",
-                color: colors.red,
-                unit: Unit.satsPerPhsPerDay,
-                options: { lineStyle: 1 },
-              }),
-            ],
-          },
+
+          // Halving (at top level for quick access)
           {
             name: "Halving",
             title: "Halving",
@@ -925,12 +958,12 @@ export function createChainSection(ctx) {
               }),
               line({
                 metric: blocks.halving.blocksBeforeNextHalving,
-                name: "before next",
+                name: "Before Next",
                 unit: Unit.blocks,
               }),
               line({
                 metric: blocks.halving.daysBeforeNextHalving,
-                name: "before next",
+                name: "Before Next",
                 color: colors.blue,
                 unit: Unit.days,
               }),
@@ -942,7 +975,90 @@ export function createChainSection(ctx) {
       // Pools
       {
         name: "Pools",
-        tree: poolsTree,
+        tree: [
+          // Compare section (major pools only)
+          {
+            name: "Compare",
+            tree: [
+              {
+                name: "Dominance",
+                title: "Pool Dominance (Major Pools)",
+                bottom: poolEntries
+                  .filter(([key]) => MAJOR_POOL_IDS.includes(key.toLowerCase()))
+                  .map(([key, pool]) => {
+                    const poolName =
+                      brk.POOL_ID_TO_POOL_NAME[
+                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (key.toLowerCase())
+                      ] || key;
+                    return line({
+                      metric: pool._1mDominance,
+                      name: poolName,
+                      unit: Unit.percentage,
+                    });
+                  }),
+              },
+              {
+                name: "Blocks Mined",
+                title: "Blocks Mined - 1m (Major Pools)",
+                bottom: poolEntries
+                  .filter(([key]) => MAJOR_POOL_IDS.includes(key.toLowerCase()))
+                  .map(([key, pool]) => {
+                    const poolName =
+                      brk.POOL_ID_TO_POOL_NAME[
+                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (key.toLowerCase())
+                      ] || key;
+                    return line({
+                      metric: pool._1mBlocksMined,
+                      name: poolName,
+                      unit: Unit.count,
+                    });
+                  }),
+              },
+            ],
+          },
+          // AntPool & friends - pools sharing block templates
+          {
+            name: "AntPool & Friends",
+            tree: [
+              {
+                name: "Dominance",
+                title: "AntPool & Friends Dominance",
+                bottom: poolEntries
+                  .filter(([key]) => ANTPOOL_AND_FRIENDS_IDS.includes(key.toLowerCase()))
+                  .map(([key, pool]) => {
+                    const poolName =
+                      brk.POOL_ID_TO_POOL_NAME[
+                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (key.toLowerCase())
+                      ] || key;
+                    return line({
+                      metric: pool._1mDominance,
+                      name: poolName,
+                      unit: Unit.percentage,
+                    });
+                  }),
+              },
+              {
+                name: "Blocks Mined",
+                title: "AntPool & Friends Blocks Mined (1m)",
+                bottom: poolEntries
+                  .filter(([key]) => ANTPOOL_AND_FRIENDS_IDS.includes(key.toLowerCase()))
+                  .map(([key, pool]) => {
+                    const poolName =
+                      brk.POOL_ID_TO_POOL_NAME[
+                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (key.toLowerCase())
+                      ] || key;
+                    return line({
+                      metric: pool._1mBlocksMined,
+                      name: poolName,
+                      unit: Unit.count,
+                    });
+                  }),
+              },
+            ],
+          },
+          // Individual pools
+          ...poolsTree,
+        ],
       },
     ],
   };

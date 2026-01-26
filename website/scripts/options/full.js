@@ -7,6 +7,7 @@ import { collect, markUsed, logUnused } from "./unused.js";
 import { setQr } from "../panes/share.js";
 import { getConstant } from "./constants.js";
 import { colors } from "../chart/colors.js";
+import { Unit } from "../utils/units.js";
 
 /**
  * @param {BrkClient} brk
@@ -83,7 +84,23 @@ export function initOptions(brk) {
   }
 
   /**
-   * @param {AnyFetchedSeriesBlueprint[]} [arr]
+   * Check if a metric is an ActivePricePattern (has dollars and sats sub-metrics)
+   * @param {any} metric
+   * @returns {metric is ActivePricePattern}
+   */
+  function isActivePricePattern(metric) {
+    return (
+      metric &&
+      typeof metric === "object" &&
+      "dollars" in metric &&
+      "sats" in metric &&
+      metric.dollars?.by &&
+      metric.sats?.by
+    );
+  }
+
+  /**
+   * @param {(AnyFetchedSeriesBlueprint | FetchedPriceSeriesBlueprint)[]} [arr]
    */
   function arrayToMap(arr = []) {
     /** @type {Map<Unit, AnyFetchedSeriesBlueprint[]>} */
@@ -97,29 +114,50 @@ export function initOptions(brk) {
           `Blueprint missing metric: ${JSON.stringify(blueprint)}`,
         );
       }
-      if (!blueprint.unit) {
-        throw new Error(`Blueprint missing unit: ${blueprint.title}`);
+
+      // Auto-expand ActivePricePattern into USD and sats versions
+      if (isActivePricePattern(blueprint.metric)) {
+        const pricePattern = /** @type {AnyPricePattern} */ (blueprint.metric);
+
+        // USD version
+        markUsed(pricePattern.dollars);
+        if (!map.has(Unit.usd)) map.set(Unit.usd, []);
+        map.get(Unit.usd)?.push({ ...blueprint, metric: pricePattern.dollars, unit: Unit.usd });
+
+        // Sats version
+        markUsed(pricePattern.sats);
+        if (!map.has(Unit.sats)) map.set(Unit.sats, []);
+        map.get(Unit.sats)?.push({ ...blueprint, metric: pricePattern.sats, unit: Unit.sats });
+
+        continue;
       }
-      markUsed(blueprint.metric);
-      const unit = blueprint.unit;
+
+      // At this point, blueprint is definitely an AnyFetchedSeriesBlueprint (not a price pattern)
+      const regularBlueprint = /** @type {AnyFetchedSeriesBlueprint} */ (blueprint);
+
+      if (!regularBlueprint.unit) {
+        throw new Error(`Blueprint missing unit: ${regularBlueprint.title}`);
+      }
+      markUsed(regularBlueprint.metric);
+      const unit = regularBlueprint.unit;
       if (!map.has(unit)) {
         map.set(unit, []);
       }
-      map.get(unit)?.push(blueprint);
+      map.get(unit)?.push(regularBlueprint);
 
       // Track baseline base values for auto price lines
-      if (blueprint.type === "Baseline") {
-        const baseValue = blueprint.options?.baseValue?.price ?? 0;
+      if (regularBlueprint.type === "Baseline") {
+        const baseValue = regularBlueprint.options?.baseValue?.price ?? 0;
         if (!priceLines.has(unit)) priceLines.set(unit, new Set());
         priceLines.get(unit)?.add(baseValue);
       }
 
       // Remove from set if manual price line already exists
       // Note: line() doesn't set type, so undefined means Line
-      if (blueprint.type === "Line" || blueprint.type === undefined) {
-        const path = Object.values(blueprint.metric.by)[0]?.path ?? "";
+      if (regularBlueprint.type === "Line" || regularBlueprint.type === undefined) {
+        const path = Object.values(regularBlueprint.metric.by)[0]?.path ?? "";
         if (path.includes("constant_")) {
-          priceLines.get(unit)?.delete(parseFloat(blueprint.title));
+          priceLines.get(unit)?.delete(parseFloat(regularBlueprint.title));
         }
       }
     }

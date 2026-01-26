@@ -10,7 +10,7 @@ use vecdb::{
 
 use crate::{ComputeIndexes, indexes, price};
 
-use crate::internal::{ClosePriceTimesRatio, ComputedFromDateLast, LazyBinaryFromDateLast};
+use crate::internal::{ClosePriceTimesRatio, ComputedFromDateLast, LazyBinaryPrice};
 
 #[derive(Clone, Traversable)]
 pub struct ComputedFromDateStdDev {
@@ -35,19 +35,19 @@ pub struct ComputedFromDateStdDev {
     pub m2_5sd: Option<ComputedFromDateLast<StoredF32>>,
     pub m3sd: Option<ComputedFromDateLast<StoredF32>>,
 
-    pub _0sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p0_5sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p1sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p1_5sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p2sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p2_5sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p3sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m0_5sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m1sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m1_5sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m2sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m2_5sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m3sd_usd: Option<LazyBinaryFromDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub _0sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub p0_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub p1sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub p1_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub p2sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub p2_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub p3sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub m0_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub m1sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub m1_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub m2sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub m2_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub m3sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
 }
 
 #[derive(Debug, Default)]
@@ -140,7 +140,7 @@ impl ComputedFromDateStdDev {
                     .zip($band.as_ref())
                     .filter(|_| options.price_bands())
                     .map(|(p, b)| {
-                        LazyBinaryFromDateLast::from_computed_both_last::<ClosePriceTimesRatio>(
+                        LazyBinaryPrice::from_computed_both_last::<ClosePriceTimesRatio>(
                             &format!("{name}_{}", $suffix),
                             version,
                             p,

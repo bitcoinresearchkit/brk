@@ -1,7 +1,7 @@
 /** On-chain indicators (Pi Cycle, Puell, NVT, Gini) */
 
 import { Unit } from "../../utils/units.js";
-import { baseline, line } from "../series.js";
+import { baseline, line, price } from "../series.js";
 
 /**
  * Create Valuation section
@@ -20,17 +20,15 @@ export function createValuationSection(ctx, { indicators, movingAverage }) {
         name: "Pi Cycle",
         title: "Pi Cycle",
         top: [
-          line({
+          price({
             metric: movingAverage.price111dSma.price,
             name: "111d SMA",
             color: colors.green,
-            unit: Unit.usd,
           }),
-          line({
+          price({
             metric: movingAverage.price350dSmaX2,
             name: "350d SMA x2",
             color: colors.red,
-            unit: Unit.usd,
           }),
         ],
         bottom: [

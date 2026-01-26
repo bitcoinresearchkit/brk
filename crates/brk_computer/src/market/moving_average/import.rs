@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromDateRatio, DollarsTimesTenths, LazyFromDateLast},
+    internal::{ComputedFromDateRatio, DollarsTimesTenths, LazyPrice},
     price,
 };
 
@@ -307,19 +307,19 @@ impl Vecs {
         )?;
 
         let price_200d_sma_source = price_200d_sma.price.as_ref().unwrap();
-        let price_200d_sma_x2_4 = LazyFromDateLast::from_source::<DollarsTimesTenths<24>>(
+        let price_200d_sma_x2_4 = LazyPrice::from_source::<DollarsTimesTenths<24>>(
             "price_200d_sma_x2_4",
             version,
             price_200d_sma_source,
         );
-        let price_200d_sma_x0_8 = LazyFromDateLast::from_source::<DollarsTimesTenths<8>>(
+        let price_200d_sma_x0_8 = LazyPrice::from_source::<DollarsTimesTenths<8>>(
             "price_200d_sma_x0_8",
             version,
             price_200d_sma_source,
         );
 
         let price_350d_sma_source = price_350d_sma.price.as_ref().unwrap();
-        let price_350d_sma_x2 = LazyFromDateLast::from_source::<DollarsTimesTenths<20>>(
+        let price_350d_sma_x2 = LazyPrice::from_source::<DollarsTimesTenths<20>>(
             "price_350d_sma_x2",
             version,
             price_350d_sma_source,

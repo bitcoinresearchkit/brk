@@ -8,7 +8,7 @@ use vecdb::{
 
 use crate::{ComputeIndexes, indexes};
 
-use super::ComputedFromDateLast;
+use super::Price;
 
 pub const PERCENTILES: [u8; 19] = [
     5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95,
@@ -17,7 +17,7 @@ pub const PERCENTILES_LEN: usize = PERCENTILES.len();
 
 #[derive(Clone)]
 pub struct CostBasisPercentiles {
-    pub vecs: [Option<ComputedFromDateLast<Dollars>>; PERCENTILES_LEN],
+    pub vecs: [Option<Price>; PERCENTILES_LEN],
 }
 
 const VERSION: Version = Version::ZERO;
@@ -37,8 +37,7 @@ impl CostBasisPercentiles {
                 } else {
                     format!("{name}_cost_basis_pct{p:02}")
                 };
-                ComputedFromDateLast::forced_import(db, &metric_name, version + VERSION, indexes)
-                    .unwrap()
+                Price::forced_import(db, &metric_name, version + VERSION, indexes).unwrap()
             })
         });
 
@@ -81,7 +80,7 @@ impl CostBasisPercentiles {
         Ok(())
     }
 
-    pub fn get(&self, percentile: u8) -> Option<&ComputedFromDateLast<Dollars>> {
+    pub fn get(&self, percentile: u8) -> Option<&Price> {
         PERCENTILES
             .iter()
             .position(|&p| p == percentile)

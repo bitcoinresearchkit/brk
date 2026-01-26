@@ -3,6 +3,44 @@
 import { Unit } from "../utils/units.js";
 
 // ============================================================================
+// Price helper for top pane (auto-expands to USD + sats)
+// ============================================================================
+
+/**
+ * Create a price series for the top pane (auto-expands to USD + sats versions)
+ * @param {Object} args
+ * @param {AnyPricePattern} args.metric - Price pattern with dollars and sats
+ * @param {string} args.name
+ * @param {string} [args.key]
+ * @param {LineStyle} [args.style]
+ * @param {Color} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @param {LineSeriesPartialOptions} [args.options]
+ * @returns {FetchedPriceSeriesBlueprint}
+ */
+export function price({
+  metric,
+  name,
+  key,
+  style,
+  color,
+  defaultActive,
+  options,
+}) {
+  return {
+    metric,
+    title: name,
+    key,
+    color,
+    defaultActive,
+    options: {
+      lineStyle: style,
+      ...options,
+    },
+  };
+}
+
+// ============================================================================
 // Shared percentile helper
 // ============================================================================
 

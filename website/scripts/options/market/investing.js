@@ -2,7 +2,7 @@
 
 import { Unit } from "../../utils/units.js";
 import { priceLine } from "../constants.js";
-import { line, baseline } from "../series.js";
+import { line, baseline, price } from "../series.js";
 import { satsBtcUsd } from "../shared.js";
 import { periodIdToName } from "./utils.js";
 
@@ -58,17 +58,15 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     name: "Cost Basis",
     title: `${name} Cost Basis`,
     top: [
-      line({
+      price({
         metric: dca.periodAveragePrice[key],
         name: "DCA",
         color: colors.green,
-        unit: Unit.usd,
       }),
-      line({
+      price({
         metric: lookback[key],
         name: "Lump sum",
         color: colors.orange,
-        unit: Unit.usd,
       }),
     ],
   });
@@ -78,8 +76,8 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     name: "Days in Profit",
     title: `${name} Days in Profit`,
     top: [
-      line({ metric: dca.periodAveragePrice[key], name: "DCA", color: colors.green, unit: Unit.usd }),
-      line({ metric: lookback[key], name: "Lump sum", color: colors.orange, unit: Unit.usd }),
+      price({ metric: dca.periodAveragePrice[key], name: "DCA", color: colors.green }),
+      price({ metric: lookback[key], name: "Lump sum", color: colors.orange }),
     ],
     bottom: [
       line({ metric: dca.periodDaysInProfit[key], name: "DCA", color: colors.green, unit: Unit.days }),
@@ -92,8 +90,8 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     name: "Days in Loss",
     title: `${name} Days in Loss`,
     top: [
-      line({ metric: dca.periodAveragePrice[key], name: "DCA", color: colors.green, unit: Unit.usd }),
-      line({ metric: lookback[key], name: "Lump sum", color: colors.orange, unit: Unit.usd }),
+      price({ metric: dca.periodAveragePrice[key], name: "DCA", color: colors.green }),
+      price({ metric: lookback[key], name: "Lump sum", color: colors.orange }),
     ],
     bottom: [
       line({ metric: dca.periodDaysInLoss[key], name: "DCA", color: colors.red, unit: Unit.days }),
@@ -106,8 +104,8 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     name: "Max Drawdown",
     title: `${name} Max Drawdown`,
     top: [
-      line({ metric: dca.periodAveragePrice[key], name: "DCA", color: colors.green, unit: Unit.usd }),
-      line({ metric: lookback[key], name: "Lump sum", color: colors.orange, unit: Unit.usd }),
+      price({ metric: dca.periodAveragePrice[key], name: "DCA", color: colors.green }),
+      price({ metric: lookback[key], name: "Lump sum", color: colors.orange }),
     ],
     bottom: [
       line({ metric: dca.periodMaxDrawdown[key], name: "DCA", color: colors.green, unit: Unit.percentage }),
@@ -120,8 +118,8 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     name: "Max Return",
     title: `${name} Max Return`,
     top: [
-      line({ metric: dca.periodAveragePrice[key], name: "DCA", color: colors.green, unit: Unit.usd }),
-      line({ metric: lookback[key], name: "Lump sum", color: colors.orange, unit: Unit.usd }),
+      price({ metric: dca.periodAveragePrice[key], name: "DCA", color: colors.green }),
+      price({ metric: lookback[key], name: "Lump sum", color: colors.orange }),
     ],
     bottom: [
       line({ metric: dca.periodMaxReturn[key], name: "DCA", color: colors.green, unit: Unit.percentage }),
@@ -279,12 +277,11 @@ export function createDcaByYearSection(ctx, { dca }) {
             name: "Cost basis",
             title: "DCA Cost Basis",
             top: dcaClasses.map(({ year, color, defaultActive, costBasis }) =>
-              line({
+              price({
                 metric: costBasis,
                 name: `${year}`,
                 color,
                 defaultActive,
-                unit: Unit.usd,
               }),
             ),
           },
@@ -353,11 +350,10 @@ export function createDcaByYearSection(ctx, { dca }) {
               name: "Cost Basis",
               title: `${year} Cost Basis`,
               top: [
-                line({
+                price({
                   metric: costBasis,
                   name: "Cost Basis",
                   color,
-                  unit: Unit.usd,
                 }),
               ],
             },

@@ -2,7 +2,7 @@
 
 import { localhost } from "../../utils/env.js";
 import { Unit } from "../../utils/units.js";
-import { candlestick, line } from "../series.js";
+import { candlestick, line, price } from "../series.js";
 import { createAveragesSection } from "./averages.js";
 import { createReturnsSection } from "./performance.js";
 import { createMomentumSection } from "./momentum.js";
@@ -18,7 +18,7 @@ import { createDcaVsLumpSumSection, createDcaByYearSection } from "./investing.j
  */
 export function createMarketSection(ctx) {
   const { colors, brk } = ctx;
-  const { market, supply, price } = brk.metrics;
+  const { market, supply, price: priceMetrics } = brk.metrics;
   const {
     movingAverage,
     ath,
@@ -39,79 +39,80 @@ export function createMarketSection(ctx) {
         name: "Price",
         title: "Bitcoin Price",
       },
+      // Oracle section is localhost-only debug - uses non-price-pattern metrics
       ...(localhost
-        ? [
+        ? /** @type {PartialOptionsTree} */ ([
             {
               name: "Oracle",
               title: "Oracle Price",
-              top: [
+              top: /** @type {any} */ ([
                 candlestick({
-                  metric: price.oracle.closeOhlcDollars,
-                  name: "close",
+                  metric: priceMetrics.oracle.closeOhlcDollars,
+                  name: "Close",
                   unit: Unit.usd,
                 }),
                 candlestick({
-                  metric: price.oracle.midOhlcDollars,
-                  name: "mid",
+                  metric: priceMetrics.oracle.midOhlcDollars,
+                  name: "Mid",
                   unit: Unit.usd,
                 }),
                 line({
-                  metric: price.oracle.phaseDailyDollars.median,
+                  metric: priceMetrics.oracle.phaseDailyDollars.median,
                   name: "o. p50",
                   unit: Unit.usd,
                   color: colors.yellow,
                 }),
                 line({
-                  metric: price.oracle.phaseV2DailyDollars.median,
+                  metric: priceMetrics.oracle.phaseV2DailyDollars.median,
                   name: "o2. p50",
                   unit: Unit.usd,
                   color: colors.orange,
                 }),
                 line({
-                  metric: price.oracle.phaseV2PeakDailyDollars.median,
+                  metric: priceMetrics.oracle.phaseV2PeakDailyDollars.median,
                   name: "o2.2 p50",
                   unit: Unit.usd,
                   color: colors.orange,
                 }),
                 line({
-                  metric: price.oracle.phaseV3DailyDollars.median,
+                  metric: priceMetrics.oracle.phaseV3DailyDollars.median,
                   name: "o3. p50",
                   unit: Unit.usd,
                   color: colors.red,
                 }),
                 line({
-                  metric: price.oracle.phaseV3PeakDailyDollars.median,
+                  metric: priceMetrics.oracle.phaseV3PeakDailyDollars.median,
                   name: "o3.2 p50",
                   unit: Unit.usd,
                   color: colors.red,
                 }),
                 line({
-                  metric: price.oracle.phaseDailyDollars.max,
+                  metric: priceMetrics.oracle.phaseDailyDollars.max,
                   name: "o. max",
                   unit: Unit.usd,
                   color: colors.lime,
                 }),
                 line({
-                  metric: price.oracle.phaseV2DailyDollars.max,
+                  metric: priceMetrics.oracle.phaseV2DailyDollars.max,
                   name: "o.2 max",
                   unit: Unit.usd,
                   color: colors.emerald,
                 }),
                 line({
-                  metric: price.oracle.phaseDailyDollars.min,
+                  metric: priceMetrics.oracle.phaseDailyDollars.min,
                   name: "o. min",
                   unit: Unit.usd,
                   color: colors.rose,
                 }),
                 line({
-                  metric: price.oracle.phaseV2DailyDollars.min,
+                  metric: priceMetrics.oracle.phaseV2DailyDollars.min,
                   name: "o.2 min",
                   unit: Unit.usd,
                   color: colors.purple,
                 }),
-              ],
+              ]),
             },
-          ]
+          ])
         : []),
 
       // Capitalization
@@ -131,7 +132,7 @@ export function createMarketSection(ctx) {
       {
         name: "All Time High",
         title: "All Time High",
-        top: [line({ metric: ath.priceAth, name: "ATH", unit: Unit.usd })],
+        top: [price({ metric: ath.priceAth, name: "ATH" })],
         bottom: [
           line({
             metric: ath.priceDrawdown,

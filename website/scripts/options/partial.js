@@ -282,9 +282,9 @@ export function createPartialOptions({ brk }) {
           ],
         },
 
-        // Research section
+        // Frameworks section
         {
-          name: "Research",
+          name: "Frameworks",
           tree: [
             createCointimeSection(ctx),
           ],

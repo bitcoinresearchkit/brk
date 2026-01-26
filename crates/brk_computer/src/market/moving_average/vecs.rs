@@ -1,7 +1,7 @@
 use brk_traversable::Traversable;
 use brk_types::Dollars;
 
-use crate::internal::{ComputedFromDateRatio, LazyFromDateLast};
+use crate::internal::{ComputedFromDateRatio, LazyPrice};
 
 /// Simple and exponential moving average metrics
 #[derive(Clone, Traversable)]
@@ -40,7 +40,7 @@ pub struct Vecs {
     pub price_200w_ema: ComputedFromDateRatio,
     pub price_4y_ema: ComputedFromDateRatio,
 
-    pub price_200d_sma_x2_4: LazyFromDateLast<Dollars>,
-    pub price_200d_sma_x0_8: LazyFromDateLast<Dollars>,
-    pub price_350d_sma_x2: LazyFromDateLast<Dollars>,
+    pub price_200d_sma_x2_4: LazyPrice<Dollars>,
+    pub price_200d_sma_x0_8: LazyPrice<Dollars>,
+    pub price_350d_sma_x2: LazyPrice<Dollars>,
 }

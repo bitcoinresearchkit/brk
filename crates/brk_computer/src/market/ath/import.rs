@@ -6,8 +6,8 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ComputedFromDateLast, ComputedFromHeightAndDateLast, LazyBinaryFromHeightAndDateLast, LazyFromDateLast,
-        PercentageDiffCloseDollars, StoredU16ToYears,
+        ComputedFromDateLast, LazyBinaryFromHeightAndDateLast, LazyFromDateLast,
+        PercentageDiffCloseDollars, PriceFromHeightAndDate, StoredU16ToYears,
     },
     price,
 };
@@ -19,7 +19,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: &price::Vecs,
     ) -> Result<Self> {
-        let price_ath = ComputedFromHeightAndDateLast::forced_import(db, "price_ath", version, indexes)?;
+        let price_ath = PriceFromHeightAndDate::forced_import(db, "price_ath", version, indexes)?;
 
         let max_days_between_price_aths =
             ComputedFromDateLast::forced_import(db, "max_days_between_price_aths", version, indexes)?;
