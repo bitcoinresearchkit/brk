@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Transactions\_Size
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4257](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L4257)
+Defined in: [Developer/brk/modules/brk-client/index.js:4319](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L4319)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4257](https://github.com/
 
 > **vsize**: [`FeeRatePattern`](FeeRatePattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4258](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L4258)
+Defined in: [Developer/brk/modules/brk-client/index.js:4320](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L4320)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4258](https://github.com/
 
 > **weight**: [`FeeRatePattern`](FeeRatePattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4259](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L4259)
+Defined in: [Developer/brk/modules/brk-client/index.js:4321](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L4321)

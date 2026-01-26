@@ -6,7 +6,7 @@
 
 # Interface: TxIn
 
-Defined in: [Developer/brk/modules/brk-client/index.js:697](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L697)
+Defined in: [Developer/brk/modules/brk-client/index.js:697](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L697)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:697](https://github.com/b
 
 > `optional` **innerRedeemscriptAsm**: `string` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:705](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L705)
+Defined in: [Developer/brk/modules/brk-client/index.js:705](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L705)
 
 Inner redeemscript in assembly format (for P2SH-wrapped SegWit)
 
@@ -24,7 +24,7 @@ Inner redeemscript in assembly format (for P2SH-wrapped SegWit)
 
 > **isCoinbase**: `boolean`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:703](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L703)
+Defined in: [Developer/brk/modules/brk-client/index.js:703](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L703)
 
 Whether this input is a coinbase (block reward) input
 
@@ -34,7 +34,7 @@ Whether this input is a coinbase (block reward) input
 
 > `optional` **prevout**: [`TxOut`](TxOut.md) \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:700](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L700)
+Defined in: [Developer/brk/modules/brk-client/index.js:700](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L700)
 
 Information about the previous output being spent
 
@@ -44,7 +44,7 @@ Information about the previous output being spent
 
 > **scriptsig**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:701](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L701)
+Defined in: [Developer/brk/modules/brk-client/index.js:701](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L701)
 
 Signature script (for non-SegWit inputs)
 
@@ -54,7 +54,7 @@ Signature script (for non-SegWit inputs)
 
 > **scriptsigAsm**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:702](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L702)
+Defined in: [Developer/brk/modules/brk-client/index.js:702](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L702)
 
 Signature script in assembly format
 
@@ -64,7 +64,7 @@ Signature script in assembly format
 
 > **sequence**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:704](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L704)
+Defined in: [Developer/brk/modules/brk-client/index.js:704](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L704)
 
 Input sequence number
 
@@ -74,7 +74,7 @@ Input sequence number
 
 > **txid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:698](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L698)
+Defined in: [Developer/brk/modules/brk-client/index.js:698](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L698)
 
 Transaction ID of the output being spent
 
@@ -84,4 +84,4 @@ Transaction ID of the output being spent
 
 > **vout**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:699](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L699)
+Defined in: [Developer/brk/modules/brk-client/index.js:699](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L699)

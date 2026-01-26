@@ -6,7 +6,7 @@
 
 # Interface: SatsPattern\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2836](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L2836)
+Defined in: [Developer/brk/modules/brk-client/index.js:2857](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L2857)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2836](https://github.com/
 
 > **ohlc**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2837](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L2837)
+Defined in: [Developer/brk/modules/brk-client/index.js:2858](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L2858)
 
 ***
 
@@ -28,4 +28,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2837](https://github.com/
 
 > **split**: [`SplitPattern2`](SplitPattern2.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2838](https://github.com/bitcoinresearchkit/brk/blob/247d3c758bf072fffa634188454ed826d0eba9f2/modules/brk-client/index.js#L2838)
+Defined in: [Developer/brk/modules/brk-client/index.js:2859](https://github.com/bitcoinresearchkit/brk/blob/d9dabb4a9615d9bac1b5bdd580e55bb81adc67b6/modules/brk-client/index.js#L2859)

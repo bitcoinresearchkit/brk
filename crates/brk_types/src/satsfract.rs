@@ -10,6 +10,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco};
 
+use crate::{Close, Dollars};
+
 /// Fractional satoshis (f64) - for representing USD prices in sats
 ///
 /// Formula: `sats_fract = usd_value * 100_000_000 / btc_price`
