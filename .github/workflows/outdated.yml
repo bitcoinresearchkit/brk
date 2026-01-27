@@ -1,0 +1,15 @@
+name: Check outdated dependencies
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  outdated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install cargo-outdated
+      - run: cargo outdated --exit-code 1 --depth 1

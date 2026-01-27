@@ -1,5 +1,8 @@
+use std::net::SocketAddr;
+
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
+    Extension,
     extract::{Path, Query, State},
     http::{HeaderMap, Uri},
     response::{IntoResponse, Response},
@@ -22,6 +25,16 @@ mod legacy;
 const MAX_WEIGHT: usize = 65 * 10_000;
 /// Cache control header for metric data responses
 const CACHE_CONTROL: &str = "public, max-age=1, must-revalidate";
+
+/// Returns the max weight for a request based on the client address.
+/// Localhost requests have no weight limit.
+fn max_weight(addr: &SocketAddr) -> usize {
+    if addr.ip().is_loopback() {
+        usize::MAX
+    } else {
+        MAX_WEIGHT
+    }
+}
 
 pub trait ApiMetricsRoutes {
     fn add_metrics_routes(self) -> Self;
@@ -159,6 +172,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
+                       addr: Extension<SocketAddr>,
                        state: State<AppState>,
                        Path(path): Path<MetricWithIndex>,
                        Query(range): Query<DataRangeFormat>|
@@ -166,6 +180,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     data::handler(
                         uri,
                         headers,
+                        addr,
                         Query(MetricSelection::from((path.index, path.metric, range))),
                         state,
                     )
@@ -189,8 +204,8 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/metrics/bulk",
             get_with(
-                |uri, headers, query, state| async move {
-                    bulk::handler(uri, headers, query, state).await.into_response()
+                |uri, headers, addr, query, state| async move {
+                    bulk::handler(uri, headers, addr, query, state).await.into_response()
                 },
                 |op| op
                     .id("get_metrics")
@@ -210,6 +225,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
+                       addr: Extension<SocketAddr>,
                        Path(variant): Path<String>,
                        Query(range): Query<DataRangeFormat>,
                        state: State<AppState>|
@@ -228,7 +244,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                         Metrics::from(split.collect::<Vec<_>>().join(separator)),
                         range,
                     ));
-                    legacy::handler(uri, headers, Query(params), state)
+                    legacy::handler(uri, headers, addr, Query(params), state)
                         .await
                         .into_response()
                 },
@@ -251,11 +267,12 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
+                       addr: Extension<SocketAddr>,
                        Query(params): Query<MetricSelectionLegacy>,
                        state: State<AppState>|
                        -> Response {
                     let params: MetricSelection = params.into();
-                    legacy::handler(uri, headers, Query(params), state)
+                    legacy::handler(uri, headers, addr, Query(params), state)
                         .await
                         .into_response()
                 },

@@ -18,7 +18,7 @@ Command-line interface for running a Bitcoin Research Kit instance.
 
 ```bash
 rustup update
-RUSTFLAGS="-C target-cpu=native -C target-feature=+bmi1,+bmi2,+avx2" cargo install --locked brk_cli --version "$(cargo search brk_cli | head -1 | awk -F'"' '{print $2}')"
+RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli --version "$(cargo search brk_cli | head -1 | awk -F'"' '{print $2}')"
 ```
 
 The SIMD flags (`bmi1`, `bmi2`, `avx2`) significantly improve pcodec decompression performance.

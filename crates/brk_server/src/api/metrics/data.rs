@@ -1,6 +1,7 @@
-use std::time::Duration;
+use std::{net::SocketAddr, time::Duration};
 
 use axum::{
+    Extension,
     body::Body,
     extract::{Query, State},
     http::{HeaderMap, StatusCode, Uri},
@@ -11,7 +12,7 @@ use quick_cache::sync::GuardResult;
 
 use crate::{
     Result,
-    api::metrics::{CACHE_CONTROL, MAX_WEIGHT},
+    api::metrics::{CACHE_CONTROL, max_weight},
     extended::HeaderMapExtended,
 };
 
@@ -20,11 +21,12 @@ use super::AppState;
 pub async fn handler(
     uri: Uri,
     headers: HeaderMap,
+    Extension(addr): Extension<SocketAddr>,
     Query(params): Query<MetricSelection>,
     State(AppState { query, cache, .. }): State<AppState>,
 ) -> Result<Response> {
     // Phase 1: Search and resolve metadata (cheap)
-    let resolved = query.run(move |q| q.resolve(params, MAX_WEIGHT)).await?;
+    let resolved = query.run(move |q| q.resolve(params, max_weight(&addr))).await?;
 
     let format = resolved.format();
     let etag = resolved.etag();

@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 
 use std::{
+    net::SocketAddr,
     path::PathBuf,
     sync::Arc,
     time::{Duration, Instant},
@@ -8,7 +9,7 @@ use std::{
 
 use aide::axum::ApiRouter;
 use axum::{
-    Extension, ServiceExt,
+    Extension,
     body::Body,
     http::{Request, Response, StatusCode, Uri},
     middleware::Next,
@@ -24,7 +25,6 @@ use tower_http::{
     compression::CompressionLayer, cors::CorsLayer, normalize_path::NormalizePathLayer,
     timeout::TimeoutLayer, trace::TraceLayer,
 };
-use tower_layer::Layer;
 use tracing::{error, info};
 
 mod api;
@@ -65,6 +65,16 @@ impl Server {
         let vecs = state.query.inner().vecs();
 
         let compression_layer = CompressionLayer::new().br(true).gzip(true).zstd(true);
+
+        let connect_info_layer = axum::middleware::from_fn(
+            async |connect_info: axum::extract::ConnectInfo<SocketAddr>,
+                   mut request: Request<Body>,
+                   next: Next|
+                   -> Response<Body> {
+                request.extensions_mut().insert(connect_info.0);
+                next.run(request).await
+            },
+        );
 
         let response_uri_layer = axum::middleware::from_fn(
             async |request: Request<Body>, next: Next| -> Response<Body> {
@@ -114,7 +124,9 @@ impl Server {
                 StatusCode::GATEWAY_TIMEOUT,
                 Duration::from_secs(5),
             ))
-            .layer(CorsLayer::permissive());
+            .layer(CorsLayer::permissive())
+            .layer(connect_info_layer)
+            .layer(NormalizePathLayer::trim_trailing_slash());
 
         let (listener, port) = match port {
             Some(port) => {
@@ -173,11 +185,9 @@ impl Server {
             .layer(Extension(Arc::new(openapi)))
             .layer(Extension(api_json));
 
-        let service = NormalizePathLayer::trim_trailing_slash().layer(router);
-
         serve(
             listener,
-            ServiceExt::<Request<Body>>::into_make_service(service),
+            router.into_make_service_with_connect_info::<SocketAddr>(),
         )
         .await?;
 

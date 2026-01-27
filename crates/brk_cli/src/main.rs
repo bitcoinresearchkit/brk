@@ -57,8 +57,10 @@ pub fn run() -> anyhow::Result<()> {
         let indexed_height = indexer.vecs.starting_height();
         let blocks_behind = chain_height.saturating_sub(*indexed_height);
         if blocks_behind > 10_000 {
+            info!("---");
             info!("Indexing {blocks_behind} blocks before starting server...");
-            sleep(Duration::from_secs(3));
+            info!("---");
+            sleep(Duration::from_secs(10));
             indexer.index(&blocks, &client, &exit)?;
             drop(indexer);
             Mimalloc::collect();
