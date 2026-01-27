@@ -164,7 +164,7 @@ Main BRK client with metrics tree and API methods.
 #### \_\_init\_\_
 
 ```python
-def __init__(base_url: str = "http://localhost:3000", timeout: float = 30.0)
+def __init__(base_url: str = 'http://localhost:3000', timeout: float = 30.0)
 ```
 
 <a id="brk_client.BrkClient.metric"></a>
