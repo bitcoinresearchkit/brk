@@ -23,13 +23,17 @@ fn serve(website: &Website, path: &str) -> Result<Response<Body>> {
     let headers = response.headers_mut();
 
     // Empty path or no extension = index.html (SPA fallback)
-    if path.is_empty() || Path::new(&path).extension().is_none() {
+    let is_html = path.is_empty()
+        || Path::new(&path).extension().is_none()
+        || path.ends_with(".html");
+
+    if is_html {
         headers.insert_content_type_text_html();
     } else {
         headers.insert_content_type(Path::new(&path));
     }
 
-    if cfg!(debug_assertions) {
+    if cfg!(debug_assertions) || is_html {
         headers.insert_cache_control_must_revalidate();
     } else {
         headers.insert_cache_control_immutable();

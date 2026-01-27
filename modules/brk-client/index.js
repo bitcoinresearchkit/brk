@@ -1953,18 +1953,18 @@ function createPeriodDaysInLossPattern(client, acc) {
  */
 function createClassDaysInLossPattern(client, acc) {
   return {
-    _2015: createMetricPattern4(client, _m(acc, '2015_max_drawdown')),
-    _2016: createMetricPattern4(client, _m(acc, '2016_max_drawdown')),
-    _2017: createMetricPattern4(client, _m(acc, '2017_max_drawdown')),
-    _2018: createMetricPattern4(client, _m(acc, '2018_max_drawdown')),
-    _2019: createMetricPattern4(client, _m(acc, '2019_max_drawdown')),
-    _2020: createMetricPattern4(client, _m(acc, '2020_max_drawdown')),
-    _2021: createMetricPattern4(client, _m(acc, '2021_max_drawdown')),
-    _2022: createMetricPattern4(client, _m(acc, '2022_max_drawdown')),
-    _2023: createMetricPattern4(client, _m(acc, '2023_max_drawdown')),
-    _2024: createMetricPattern4(client, _m(acc, '2024_max_drawdown')),
-    _2025: createMetricPattern4(client, _m(acc, '2025_max_drawdown')),
-    _2026: createMetricPattern4(client, _m(acc, '2026_max_drawdown')),
+    _2015: createMetricPattern4(client, _m(acc, '2015_days_in_profit')),
+    _2016: createMetricPattern4(client, _m(acc, '2016_days_in_profit')),
+    _2017: createMetricPattern4(client, _m(acc, '2017_days_in_profit')),
+    _2018: createMetricPattern4(client, _m(acc, '2018_days_in_profit')),
+    _2019: createMetricPattern4(client, _m(acc, '2019_days_in_profit')),
+    _2020: createMetricPattern4(client, _m(acc, '2020_days_in_profit')),
+    _2021: createMetricPattern4(client, _m(acc, '2021_days_in_profit')),
+    _2022: createMetricPattern4(client, _m(acc, '2022_days_in_profit')),
+    _2023: createMetricPattern4(client, _m(acc, '2023_days_in_profit')),
+    _2024: createMetricPattern4(client, _m(acc, '2024_days_in_profit')),
+    _2025: createMetricPattern4(client, _m(acc, '2025_days_in_profit')),
+    _2026: createMetricPattern4(client, _m(acc, '2026_days_in_profit')),
   };
 }
 
@@ -2286,93 +2286,6 @@ function create_0satsPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} _0satsPattern2
- * @property {ActivityPattern2} activity
- * @property {CostBasisPattern} costBasis
- * @property {OutputsPattern} outputs
- * @property {RealizedPattern} realized
- * @property {RelativePattern4} relative
- * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
- */
-
-/**
- * Create a _0satsPattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_0satsPattern2}
- */
-function create_0satsPattern2(client, acc) {
-  return {
-    activity: createActivityPattern2(client, acc),
-    costBasis: createCostBasisPattern(client, acc),
-    outputs: createOutputsPattern(client, _m(acc, 'utxo_count')),
-    realized: createRealizedPattern(client, acc),
-    relative: createRelativePattern4(client, _m(acc, 'supply_in')),
-    supply: createSupplyPattern2(client, _m(acc, 'supply')),
-    unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} PeriodCagrPattern
- * @property {MetricPattern4<StoredF32>} _10y
- * @property {MetricPattern4<StoredF32>} _2y
- * @property {MetricPattern4<StoredF32>} _3y
- * @property {MetricPattern4<StoredF32>} _4y
- * @property {MetricPattern4<StoredF32>} _5y
- * @property {MetricPattern4<StoredF32>} _6y
- * @property {MetricPattern4<StoredF32>} _8y
- */
-
-/**
- * Create a PeriodCagrPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {PeriodCagrPattern}
- */
-function createPeriodCagrPattern(client, acc) {
-  return {
-    _10y: createMetricPattern4(client, _p('10y', acc)),
-    _2y: createMetricPattern4(client, _p('2y', acc)),
-    _3y: createMetricPattern4(client, _p('3y', acc)),
-    _4y: createMetricPattern4(client, _p('4y', acc)),
-    _5y: createMetricPattern4(client, _p('5y', acc)),
-    _6y: createMetricPattern4(client, _p('6y', acc)),
-    _8y: createMetricPattern4(client, _p('8y', acc)),
-  };
-}
-
-/**
- * @typedef {Object} _10yTo12yPattern
- * @property {ActivityPattern2} activity
- * @property {CostBasisPattern2} costBasis
- * @property {OutputsPattern} outputs
- * @property {RealizedPattern2} realized
- * @property {RelativePattern2} relative
- * @property {SupplyPattern2} supply
- * @property {UnrealizedPattern} unrealized
- */
-
-/**
- * Create a _10yTo12yPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_10yTo12yPattern}
- */
-function create_10yTo12yPattern(client, acc) {
-  return {
-    activity: createActivityPattern2(client, acc),
-    costBasis: createCostBasisPattern2(client, acc),
-    outputs: createOutputsPattern(client, _m(acc, 'utxo_count')),
-    realized: createRealizedPattern2(client, acc),
-    relative: createRelativePattern2(client, acc),
-    supply: createSupplyPattern2(client, _m(acc, 'supply')),
-    unrealized: createUnrealizedPattern(client, acc),
-  };
-}
-
-/**
  * @typedef {Object} _100btcPattern
  * @property {ActivityPattern2} activity
  * @property {CostBasisPattern} costBasis
@@ -2396,6 +2309,35 @@ function create_100btcPattern(client, acc) {
     outputs: createOutputsPattern(client, _m(acc, 'utxo_count')),
     realized: createRealizedPattern(client, acc),
     relative: createRelativePattern(client, acc),
+    supply: createSupplyPattern2(client, _m(acc, 'supply')),
+    unrealized: createUnrealizedPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} _0satsPattern2
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern} realized
+ * @property {RelativePattern4} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a _0satsPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_0satsPattern2}
+ */
+function create_0satsPattern2(client, acc) {
+  return {
+    activity: createActivityPattern2(client, acc),
+    costBasis: createCostBasisPattern(client, acc),
+    outputs: createOutputsPattern(client, _m(acc, 'utxo_count')),
+    realized: createRealizedPattern(client, acc),
+    relative: createRelativePattern4(client, _m(acc, 'supply_in')),
     supply: createSupplyPattern2(client, _m(acc, 'supply')),
     unrealized: createUnrealizedPattern(client, acc),
   };
@@ -2456,6 +2398,64 @@ function createUnrealizedPattern(client, acc) {
     totalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'total_unrealized_pnl')),
     unrealizedLoss: createMetricPattern1(client, _m(acc, 'unrealized_loss')),
     unrealizedProfit: createMetricPattern1(client, _m(acc, 'unrealized_profit')),
+  };
+}
+
+/**
+ * @typedef {Object} PeriodCagrPattern
+ * @property {MetricPattern4<StoredF32>} _10y
+ * @property {MetricPattern4<StoredF32>} _2y
+ * @property {MetricPattern4<StoredF32>} _3y
+ * @property {MetricPattern4<StoredF32>} _4y
+ * @property {MetricPattern4<StoredF32>} _5y
+ * @property {MetricPattern4<StoredF32>} _6y
+ * @property {MetricPattern4<StoredF32>} _8y
+ */
+
+/**
+ * Create a PeriodCagrPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {PeriodCagrPattern}
+ */
+function createPeriodCagrPattern(client, acc) {
+  return {
+    _10y: createMetricPattern4(client, _p('10y', acc)),
+    _2y: createMetricPattern4(client, _p('2y', acc)),
+    _3y: createMetricPattern4(client, _p('3y', acc)),
+    _4y: createMetricPattern4(client, _p('4y', acc)),
+    _5y: createMetricPattern4(client, _p('5y', acc)),
+    _6y: createMetricPattern4(client, _p('6y', acc)),
+    _8y: createMetricPattern4(client, _p('8y', acc)),
+  };
+}
+
+/**
+ * @typedef {Object} _10yTo12yPattern
+ * @property {ActivityPattern2} activity
+ * @property {CostBasisPattern2} costBasis
+ * @property {OutputsPattern} outputs
+ * @property {RealizedPattern2} realized
+ * @property {RelativePattern2} relative
+ * @property {SupplyPattern2} supply
+ * @property {UnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a _10yTo12yPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_10yTo12yPattern}
+ */
+function create_10yTo12yPattern(client, acc) {
+  return {
+    activity: createActivityPattern2(client, acc),
+    costBasis: createCostBasisPattern2(client, acc),
+    outputs: createOutputsPattern(client, _m(acc, 'utxo_count')),
+    realized: createRealizedPattern2(client, acc),
+    relative: createRelativePattern2(client, acc),
+    supply: createSupplyPattern2(client, _m(acc, 'supply')),
+    unrealized: createUnrealizedPattern(client, acc),
   };
 }
 
@@ -2537,6 +2537,69 @@ function createSplitPattern2(client, acc) {
 }
 
 /**
+ * @typedef {Object} UnclaimedRewardsPattern
+ * @property {BitcoinPattern2<Bitcoin>} bitcoin
+ * @property {BlockCountPattern<Dollars>} dollars
+ * @property {BlockCountPattern<Sats>} sats
+ */
+
+/**
+ * Create a UnclaimedRewardsPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {UnclaimedRewardsPattern}
+ */
+function createUnclaimedRewardsPattern(client, acc) {
+  return {
+    bitcoin: createBitcoinPattern2(client, _m(acc, 'btc')),
+    dollars: createBlockCountPattern(client, _m(acc, 'usd')),
+    sats: createBlockCountPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} _2015Pattern
+ * @property {MetricPattern4<Bitcoin>} bitcoin
+ * @property {MetricPattern4<Dollars>} dollars
+ * @property {MetricPattern4<Sats>} sats
+ */
+
+/**
+ * Create a _2015Pattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_2015Pattern}
+ */
+function create_2015Pattern(client, acc) {
+  return {
+    bitcoin: createMetricPattern4(client, _m(acc, 'btc')),
+    dollars: createMetricPattern4(client, _m(acc, 'usd')),
+    sats: createMetricPattern4(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} ActiveSupplyPattern
+ * @property {MetricPattern1<Bitcoin>} bitcoin
+ * @property {MetricPattern1<Dollars>} dollars
+ * @property {MetricPattern1<Sats>} sats
+ */
+
+/**
+ * Create a ActiveSupplyPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {ActiveSupplyPattern}
+ */
+function createActiveSupplyPattern(client, acc) {
+  return {
+    bitcoin: createMetricPattern1(client, _m(acc, 'btc')),
+    dollars: createMetricPattern1(client, _m(acc, 'usd')),
+    sats: createMetricPattern1(client, acc),
+  };
+}
+
+/**
  * @typedef {Object} CoinbasePattern
  * @property {BitcoinPattern} bitcoin
  * @property {DollarsPattern<Dollars>} dollars
@@ -2554,6 +2617,27 @@ function createCoinbasePattern(client, acc) {
     bitcoin: createBitcoinPattern(client, _m(acc, 'btc')),
     dollars: createDollarsPattern(client, _m(acc, 'usd')),
     sats: createDollarsPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} SegwitAdoptionPattern
+ * @property {MetricPattern11<StoredF32>} base
+ * @property {MetricPattern2<StoredF32>} cumulative
+ * @property {MetricPattern2<StoredF32>} sum
+ */
+
+/**
+ * Create a SegwitAdoptionPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {SegwitAdoptionPattern}
+ */
+function createSegwitAdoptionPattern(client, acc) {
+  return {
+    base: createMetricPattern11(client, acc),
+    cumulative: createMetricPattern2(client, _m(acc, 'cumulative')),
+    sum: createMetricPattern2(client, _m(acc, 'sum')),
   };
 }
 
@@ -2600,86 +2684,21 @@ function createCoinbasePattern2(client, acc) {
 }
 
 /**
- * @typedef {Object} SegwitAdoptionPattern
- * @property {MetricPattern11<StoredF32>} base
- * @property {MetricPattern2<StoredF32>} cumulative
- * @property {MetricPattern2<StoredF32>} sum
+ * @typedef {Object} RelativePattern4
+ * @property {MetricPattern1<StoredF64>} supplyInLossRelToOwnSupply
+ * @property {MetricPattern1<StoredF64>} supplyInProfitRelToOwnSupply
  */
 
 /**
- * Create a SegwitAdoptionPattern pattern node
+ * Create a RelativePattern4 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {SegwitAdoptionPattern}
+ * @returns {RelativePattern4}
  */
-function createSegwitAdoptionPattern(client, acc) {
+function createRelativePattern4(client, acc) {
   return {
-    base: createMetricPattern11(client, acc),
-    cumulative: createMetricPattern2(client, _m(acc, 'cumulative')),
-    sum: createMetricPattern2(client, _m(acc, 'sum')),
-  };
-}
-
-/**
- * @typedef {Object} UnclaimedRewardsPattern
- * @property {BitcoinPattern2<Bitcoin>} bitcoin
- * @property {BlockCountPattern<Dollars>} dollars
- * @property {BlockCountPattern<Sats>} sats
- */
-
-/**
- * Create a UnclaimedRewardsPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {UnclaimedRewardsPattern}
- */
-function createUnclaimedRewardsPattern(client, acc) {
-  return {
-    bitcoin: createBitcoinPattern2(client, _m(acc, 'btc')),
-    dollars: createBlockCountPattern(client, _m(acc, 'usd')),
-    sats: createBlockCountPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} ActiveSupplyPattern
- * @property {MetricPattern1<Bitcoin>} bitcoin
- * @property {MetricPattern1<Dollars>} dollars
- * @property {MetricPattern1<Sats>} sats
- */
-
-/**
- * Create a ActiveSupplyPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {ActiveSupplyPattern}
- */
-function createActiveSupplyPattern(client, acc) {
-  return {
-    bitcoin: createMetricPattern1(client, _m(acc, 'btc')),
-    dollars: createMetricPattern1(client, _m(acc, 'usd')),
-    sats: createMetricPattern1(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} _2015Pattern
- * @property {MetricPattern4<Bitcoin>} bitcoin
- * @property {MetricPattern4<Dollars>} dollars
- * @property {MetricPattern4<Sats>} sats
- */
-
-/**
- * Create a _2015Pattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_2015Pattern}
- */
-function create_2015Pattern(client, acc) {
-  return {
-    bitcoin: createMetricPattern4(client, _m(acc, 'btc')),
-    dollars: createMetricPattern4(client, _m(acc, 'usd')),
-    sats: createMetricPattern4(client, acc),
+    supplyInLossRelToOwnSupply: createMetricPattern1(client, _m(acc, 'loss_rel_to_own_supply')),
+    supplyInProfitRelToOwnSupply: createMetricPattern1(client, _m(acc, 'profit_rel_to_own_supply')),
   };
 }
 
@@ -2703,21 +2722,40 @@ function createActivePricePattern(client, acc) {
 }
 
 /**
- * @typedef {Object} CostBasisPattern
- * @property {ActivePricePattern} max
- * @property {ActivePricePattern} min
+ * @typedef {Object} _1dReturns1mSdPattern
+ * @property {MetricPattern4<StoredF32>} sd
+ * @property {MetricPattern4<StoredF32>} sma
  */
 
 /**
- * Create a CostBasisPattern pattern node
+ * Create a _1dReturns1mSdPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {CostBasisPattern}
+ * @returns {_1dReturns1mSdPattern}
  */
-function createCostBasisPattern(client, acc) {
+function create_1dReturns1mSdPattern(client, acc) {
   return {
-    max: createActivePricePattern(client, _m(acc, 'max_cost_basis')),
-    min: createActivePricePattern(client, _m(acc, 'min_cost_basis')),
+    sd: createMetricPattern4(client, _m(acc, 'sd')),
+    sma: createMetricPattern4(client, _m(acc, 'sma')),
+  };
+}
+
+/**
+ * @typedef {Object} SupplyPattern2
+ * @property {ActiveSupplyPattern} halved
+ * @property {ActiveSupplyPattern} total
+ */
+
+/**
+ * Create a SupplyPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {SupplyPattern2}
+ */
+function createSupplyPattern2(client, acc) {
+  return {
+    halved: createActiveSupplyPattern(client, _m(acc, 'halved')),
+    total: createActiveSupplyPattern(client, acc),
   };
 }
 
@@ -2741,59 +2779,21 @@ function create_0sdUsdPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} _1dReturns1mSdPattern
- * @property {MetricPattern4<StoredF32>} sd
- * @property {MetricPattern4<StoredF32>} sma
+ * @typedef {Object} CostBasisPattern
+ * @property {ActivePricePattern} max
+ * @property {ActivePricePattern} min
  */
 
 /**
- * Create a _1dReturns1mSdPattern pattern node
+ * Create a CostBasisPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {_1dReturns1mSdPattern}
+ * @returns {CostBasisPattern}
  */
-function create_1dReturns1mSdPattern(client, acc) {
+function createCostBasisPattern(client, acc) {
   return {
-    sd: createMetricPattern4(client, _m(acc, 'sd')),
-    sma: createMetricPattern4(client, _m(acc, 'sma')),
-  };
-}
-
-/**
- * @typedef {Object} RelativePattern4
- * @property {MetricPattern1<StoredF64>} supplyInLossRelToOwnSupply
- * @property {MetricPattern1<StoredF64>} supplyInProfitRelToOwnSupply
- */
-
-/**
- * Create a RelativePattern4 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {RelativePattern4}
- */
-function createRelativePattern4(client, acc) {
-  return {
-    supplyInLossRelToOwnSupply: createMetricPattern1(client, _m(acc, 'loss_rel_to_own_supply')),
-    supplyInProfitRelToOwnSupply: createMetricPattern1(client, _m(acc, 'profit_rel_to_own_supply')),
-  };
-}
-
-/**
- * @typedef {Object} SupplyPattern2
- * @property {ActiveSupplyPattern} halved
- * @property {ActiveSupplyPattern} total
- */
-
-/**
- * Create a SupplyPattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {SupplyPattern2}
- */
-function createSupplyPattern2(client, acc) {
-  return {
-    halved: createActiveSupplyPattern(client, _m(acc, 'halved')),
-    total: createActiveSupplyPattern(client, acc),
+    max: createActivePricePattern(client, _m(acc, 'max_cost_basis')),
+    min: createActivePricePattern(client, _m(acc, 'min_cost_basis')),
   };
 }
 
@@ -2820,27 +2820,6 @@ function createBlockCountPattern(client, acc) {
 
 /**
  * @template T
- * @typedef {Object} SatsPattern
- * @property {MetricPattern1<T>} ohlc
- * @property {SplitPattern2<T>} split
- */
-
-/**
- * Create a SatsPattern pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {SatsPattern<T>}
- */
-function createSatsPattern(client, acc) {
-  return {
-    ohlc: createMetricPattern1(client, _m(acc, 'ohlc')),
-    split: createSplitPattern2(client, acc),
-  };
-}
-
-/**
- * @template T
  * @typedef {Object} BitcoinPattern2
  * @property {MetricPattern2<T>} cumulative
  * @property {MetricPattern1<T>} sum
@@ -2857,6 +2836,27 @@ function createBitcoinPattern2(client, acc) {
   return {
     cumulative: createMetricPattern2(client, _m(acc, 'cumulative')),
     sum: createMetricPattern1(client, acc),
+  };
+}
+
+/**
+ * @template T
+ * @typedef {Object} SatsPattern
+ * @property {MetricPattern1<T>} ohlc
+ * @property {SplitPattern2<T>} split
+ */
+
+/**
+ * Create a SatsPattern pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {SatsPattern<T>}
+ */
+function createSatsPattern(client, acc) {
+  return {
+    ohlc: createMetricPattern1(client, _m(acc, 'ohlc_sats')),
+    split: createSplitPattern2(client, _m(acc, 'sats')),
   };
 }
 
@@ -3743,8 +3743,8 @@ function createRealizedPriceExtraPattern(client, acc) {
  * @typedef {Object} MetricsTree_Market_Dca
  * @property {MetricsTree_Market_Dca_ClassAveragePrice} classAveragePrice
  * @property {MetricsTree_Market_Dca_ClassDaysInLoss} classDaysInLoss
- * @property {MetricsTree_Market_Dca_ClassDaysInProfit} classDaysInProfit
- * @property {ClassDaysInLossPattern<StoredF32>} classMaxDrawdown
+ * @property {ClassDaysInLossPattern<StoredU32>} classDaysInProfit
+ * @property {MetricsTree_Market_Dca_ClassMaxDrawdown} classMaxDrawdown
  * @property {MetricsTree_Market_Dca_ClassMaxReturn} classMaxReturn
  * @property {MetricsTree_Market_Dca_ClassReturns} classReturns
  * @property {MetricsTree_Market_Dca_ClassStack} classStack
@@ -3797,19 +3797,19 @@ function createRealizedPriceExtraPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Market_Dca_ClassDaysInProfit
- * @property {MetricPattern4<StoredU32>} _2015
- * @property {MetricPattern4<StoredU32>} _2016
- * @property {MetricPattern4<StoredU32>} _2017
- * @property {MetricPattern4<StoredU32>} _2018
- * @property {MetricPattern4<StoredU32>} _2019
- * @property {MetricPattern4<StoredU32>} _2020
- * @property {MetricPattern4<StoredU32>} _2021
- * @property {MetricPattern4<StoredU32>} _2022
- * @property {MetricPattern4<StoredU32>} _2023
- * @property {MetricPattern4<StoredU32>} _2024
- * @property {MetricPattern4<StoredU32>} _2025
- * @property {MetricPattern4<StoredU32>} _2026
+ * @typedef {Object} MetricsTree_Market_Dca_ClassMaxDrawdown
+ * @property {MetricPattern4<StoredF32>} _2015
+ * @property {MetricPattern4<StoredF32>} _2016
+ * @property {MetricPattern4<StoredF32>} _2017
+ * @property {MetricPattern4<StoredF32>} _2018
+ * @property {MetricPattern4<StoredF32>} _2019
+ * @property {MetricPattern4<StoredF32>} _2020
+ * @property {MetricPattern4<StoredF32>} _2021
+ * @property {MetricPattern4<StoredF32>} _2022
+ * @property {MetricPattern4<StoredF32>} _2023
+ * @property {MetricPattern4<StoredF32>} _2024
+ * @property {MetricPattern4<StoredF32>} _2025
+ * @property {MetricPattern4<StoredF32>} _2026
  */
 
 /**
@@ -4212,8 +4212,8 @@ function createRealizedPriceExtraPattern(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Price
  * @property {MetricsTree_Price_Cents} cents
- * @property {MetricsTree_Price_Sats} sats
- * @property {SatsPattern<OHLCDollars>} usd
+ * @property {SatsPattern<OHLCSats>} sats
+ * @property {MetricsTree_Price_Usd} usd
  */
 
 /**
@@ -4231,9 +4231,9 @@ function createRealizedPriceExtraPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Price_Sats
- * @property {MetricPattern1<OHLCSats>} ohlc
- * @property {SplitPattern2<Sats>} split
+ * @typedef {Object} MetricsTree_Price_Usd
+ * @property {MetricPattern1<OHLCDollars>} ohlc
+ * @property {SplitPattern2<Dollars>} split
  */
 
 /**
@@ -4371,7 +4371,7 @@ function createRealizedPriceExtraPattern(client, acc) {
  * @extends BrkClientBase
  */
 class BrkClient extends BrkClientBase {
-  VERSION = "v0.1.0-beta.1";
+  VERSION = "v0.1.0";
 
   INDEXES = /** @type {const} */ ([
     "dateindex",
@@ -5906,21 +5906,21 @@ class BrkClient extends BrkClientBase {
             _2025: createMetricPattern4(this, 'dca_class_2025_days_in_loss'),
             _2026: createMetricPattern4(this, 'dca_class_2026_days_in_loss'),
           },
-          classDaysInProfit: {
-            _2015: createMetricPattern4(this, 'dca_class_2015_days_in_profit'),
-            _2016: createMetricPattern4(this, 'dca_class_2016_days_in_profit'),
-            _2017: createMetricPattern4(this, 'dca_class_2017_days_in_profit'),
-            _2018: createMetricPattern4(this, 'dca_class_2018_days_in_profit'),
-            _2019: createMetricPattern4(this, 'dca_class_2019_days_in_profit'),
-            _2020: createMetricPattern4(this, 'dca_class_2020_days_in_profit'),
-            _2021: createMetricPattern4(this, 'dca_class_2021_days_in_profit'),
-            _2022: createMetricPattern4(this, 'dca_class_2022_days_in_profit'),
-            _2023: createMetricPattern4(this, 'dca_class_2023_days_in_profit'),
-            _2024: createMetricPattern4(this, 'dca_class_2024_days_in_profit'),
-            _2025: createMetricPattern4(this, 'dca_class_2025_days_in_profit'),
-            _2026: createMetricPattern4(this, 'dca_class_2026_days_in_profit'),
+          classDaysInProfit: createClassDaysInLossPattern(this, 'dca_class'),
+          classMaxDrawdown: {
+            _2015: createMetricPattern4(this, 'dca_class_2015_max_drawdown'),
+            _2016: createMetricPattern4(this, 'dca_class_2016_max_drawdown'),
+            _2017: createMetricPattern4(this, 'dca_class_2017_max_drawdown'),
+            _2018: createMetricPattern4(this, 'dca_class_2018_max_drawdown'),
+            _2019: createMetricPattern4(this, 'dca_class_2019_max_drawdown'),
+            _2020: createMetricPattern4(this, 'dca_class_2020_max_drawdown'),
+            _2021: createMetricPattern4(this, 'dca_class_2021_max_drawdown'),
+            _2022: createMetricPattern4(this, 'dca_class_2022_max_drawdown'),
+            _2023: createMetricPattern4(this, 'dca_class_2023_max_drawdown'),
+            _2024: createMetricPattern4(this, 'dca_class_2024_max_drawdown'),
+            _2025: createMetricPattern4(this, 'dca_class_2025_max_drawdown'),
+            _2026: createMetricPattern4(this, 'dca_class_2026_max_drawdown'),
           },
-          classMaxDrawdown: createClassDaysInLossPattern(this, 'dca_class'),
           classMaxReturn: {
             _2015: createMetricPattern4(this, 'dca_class_2015_max_return'),
             _2016: createMetricPattern4(this, 'dca_class_2016_max_return'),
@@ -6305,11 +6305,11 @@ class BrkClient extends BrkClientBase {
             open: createMetricPattern5(this, 'price_open_cents'),
           },
         },
-        sats: {
-          ohlc: createMetricPattern1(this, 'price_ohlc_sats'),
-          split: createSplitPattern2(this, 'price_sats'),
+        sats: createSatsPattern(this, 'price'),
+        usd: {
+          ohlc: createMetricPattern1(this, 'price_ohlc'),
+          split: createSplitPattern2(this, 'price'),
         },
-        usd: createSatsPattern(this, 'price'),
       },
       scripts: {
         count: {
