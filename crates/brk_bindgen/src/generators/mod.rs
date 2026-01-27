@@ -7,7 +7,7 @@
 //! - `api.rs` - API method generation
 //! - `mod.rs` - Entry point
 
-use std::fmt::Write;
+use std::{fmt::Write, fs, io, path::Path};
 
 pub mod javascript;
 pub mod python;
@@ -40,4 +40,15 @@ pub fn normalize_return_type(return_type: &str) -> String {
         result = result.replace(type_name, &format!("Any{}", type_name));
     }
     result
+}
+
+/// Write content to a file only if it differs from existing content.
+/// Preserves mtime when unchanged, avoiding unnecessary cargo rebuilds.
+pub fn write_if_changed(path: &Path, content: &str) -> io::Result<()> {
+    if let Ok(existing) = fs::read_to_string(path)
+        && existing == content
+    {
+        return Ok(());
+    }
+    fs::write(path, content)
 }

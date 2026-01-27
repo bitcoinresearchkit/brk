@@ -1,6 +1,6 @@
 //! Python tree structure generation.
 
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::fmt::Write;
 
 use brk_types::TreeNode;
@@ -15,7 +15,7 @@ pub fn generate_tree_classes(output: &mut String, catalog: &TreeNode, metadata: 
     writeln!(output, "# Metrics tree classes\n").unwrap();
 
     let pattern_lookup = metadata.pattern_lookup();
-    let mut generated = HashSet::new();
+    let mut generated = BTreeSet::new();
     generate_tree_class(
         output,
         "MetricsTree",
@@ -33,9 +33,9 @@ fn generate_tree_class(
     name: &str,
     path: &str,
     node: &TreeNode,
-    pattern_lookup: &std::collections::HashMap<Vec<PatternField>, String>,
+    pattern_lookup: &std::collections::BTreeMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
-    generated: &mut HashSet<String>,
+    generated: &mut BTreeSet<String>,
 ) {
     let Some(ctx) = prepare_tree_node(node, name, path, pattern_lookup, metadata, generated) else {
         return;
@@ -74,7 +74,9 @@ fn generate_tree_class(
 
         if child.is_leaf {
             if let TreeNode::Leaf(leaf) = child.node {
-                generate_leaf_field(output, &syntax, "client", child.name, leaf, metadata, "        ");
+                generate_leaf_field(
+                    output, &syntax, "client", child.name, leaf, metadata, "        ",
+                );
             }
         } else if child.should_inline {
             // Inline class

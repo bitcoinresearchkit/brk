@@ -1,6 +1,6 @@
 //! Structural pattern and field types.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 
 use brk_types::Index;
 
@@ -37,7 +37,9 @@ impl StructuralPattern {
     /// Get the field part (relative name or prefix) for a given field.
     pub fn get_field_part(&self, field_name: &str) -> Option<&str> {
         match &self.mode {
-            Some(PatternMode::Suffix { relatives }) => relatives.get(field_name).map(|s| s.as_str()),
+            Some(PatternMode::Suffix { relatives }) => {
+                relatives.get(field_name).map(|s| s.as_str())
+            }
             Some(PatternMode::Prefix { prefixes }) => prefixes.get(field_name).map(|s| s.as_str()),
             None => None,
         }
@@ -50,7 +52,7 @@ impl StructuralPattern {
 
     /// Check if the given instance field parts match this pattern's field parts.
     /// Returns true if all field parts in the pattern match the instance's field parts.
-    pub fn field_parts_match(&self, instance_field_parts: &HashMap<String, String>) -> bool {
+    pub fn field_parts_match(&self, instance_field_parts: &BTreeMap<String, String>) -> bool {
         match &self.mode {
             Some(PatternMode::Suffix { relatives }) => {
                 // For each field in the pattern, check if the instance has the same suffix

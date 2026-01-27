@@ -1,6 +1,6 @@
 //! Rust tree structure generation.
 
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::fmt::Write;
 
 use brk_types::TreeNode;
@@ -15,7 +15,7 @@ pub fn generate_tree(output: &mut String, catalog: &TreeNode, metadata: &ClientM
     writeln!(output, "// Metrics tree\n").unwrap();
 
     let pattern_lookup = metadata.pattern_lookup();
-    let mut generated = HashSet::new();
+    let mut generated = BTreeSet::new();
     generate_tree_node(
         output,
         "MetricsTree",
@@ -32,9 +32,9 @@ fn generate_tree_node(
     name: &str,
     path: &str,
     node: &TreeNode,
-    pattern_lookup: &std::collections::HashMap<Vec<PatternField>, String>,
+    pattern_lookup: &std::collections::BTreeMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
-    generated: &mut HashSet<String>,
+    generated: &mut BTreeSet<String>,
 ) {
     let Some(ctx) = prepare_tree_node(node, name, path, pattern_lookup, metadata, generated) else {
         return;

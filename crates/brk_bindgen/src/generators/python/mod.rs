@@ -7,8 +7,9 @@ pub mod client;
 pub mod tree;
 pub mod types;
 
-use std::{fmt::Write, fs, io, path::Path};
+use std::{fmt::Write, io, path::Path};
 
+use super::write_if_changed;
 use crate::{ClientMetadata, Endpoint, TypeSchemas};
 
 /// Generate Python client from metadata and OpenAPI endpoints.
@@ -48,7 +49,7 @@ pub fn generate_python_client(
     tree::generate_tree_classes(&mut output, &metadata.catalog, metadata);
     api::generate_main_client(&mut output, endpoints);
 
-    fs::write(output_path, output)?;
+    write_if_changed(output_path, &output)?;
 
     Ok(())
 }

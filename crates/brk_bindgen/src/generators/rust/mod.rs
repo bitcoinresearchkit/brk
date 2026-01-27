@@ -7,8 +7,9 @@ pub mod client;
 pub mod tree;
 mod types;
 
-use std::{fmt::Write, fs, io, path::Path};
+use std::{fmt::Write, io, path::Path};
 
+use super::write_if_changed;
 use crate::{ClientMetadata, Endpoint};
 
 /// Generate Rust client from metadata and OpenAPI endpoints.
@@ -38,7 +39,7 @@ pub fn generate_rust_client(
     tree::generate_tree(&mut output, &metadata.catalog, metadata);
     api::generate_main_client(&mut output, endpoints);
 
-    fs::write(output_path, output)?;
+    write_if_changed(output_path, &output)?;
 
     Ok(())
 }

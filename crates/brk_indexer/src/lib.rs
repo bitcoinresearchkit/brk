@@ -7,7 +7,7 @@ use brk_iterator::Blocks;
 use brk_rpc::Client;
 use brk_types::Height;
 use tracing::{debug, info};
-use vecdb::Exit;
+use vecdb::{Exit, TypedVecIterator};
 mod constants;
 mod indexes;
 mod processor;

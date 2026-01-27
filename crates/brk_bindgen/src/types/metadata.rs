@@ -1,6 +1,6 @@
 //! Client metadata extracted from brk_query.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 
 use brk_query::Vecs;
 use brk_types::{Index, MetricLeafWithSchema};
@@ -18,11 +18,11 @@ pub struct ClientMetadata {
     /// Index set patterns - sets of indexes that appear together on metrics
     pub index_set_patterns: Vec<IndexSetPattern>,
     /// Maps concrete field signatures to pattern names
-    concrete_to_pattern: HashMap<Vec<PatternField>, String>,
+    concrete_to_pattern: BTreeMap<Vec<PatternField>, String>,
     /// Maps concrete field signatures to their type parameter (for generic patterns)
-    concrete_to_type_param: HashMap<Vec<PatternField>, String>,
+    concrete_to_type_param: BTreeMap<Vec<PatternField>, String>,
     /// Maps tree paths to their computed PatternBaseResult
-    node_bases: HashMap<String, PatternBaseResult>,
+    node_bases: BTreeMap<String, PatternBaseResult>,
 }
 
 impl ClientMetadata {
@@ -134,7 +134,7 @@ impl ClientMetadata {
     }
 
     /// Build a lookup map from field signatures to pattern names.
-    pub fn pattern_lookup(&self) -> HashMap<Vec<PatternField>, String> {
+    pub fn pattern_lookup(&self) -> BTreeMap<Vec<PatternField>, String> {
         let mut lookup = self.concrete_to_pattern.clone();
         for p in &self.structural_patterns {
             lookup.insert(p.fields.clone(), p.name.clone());

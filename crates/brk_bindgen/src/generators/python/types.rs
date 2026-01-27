@@ -1,11 +1,14 @@
 //! Python type definitions generation.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write;
 
 use serde_json::Value;
 
-use crate::{TypeSchemas, escape_python_keyword, generators::MANUAL_GENERIC_TYPES, get_union_variants, ref_to_type_name};
+use crate::{
+    TypeSchemas, escape_python_keyword, generators::MANUAL_GENERIC_TYPES, get_union_variants,
+    ref_to_type_name,
+};
 
 /// Generate type definitions from schemas.
 pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
@@ -32,7 +35,7 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
 
     // Generate simple type aliases first
     // Quote references to TypedDicts since they're defined after
-    let typed_dict_set: HashSet<_> = typed_dicts.iter().cloned().collect();
+    let typed_dict_set: BTreeSet<_> = typed_dicts.iter().cloned().collect();
     for name in type_aliases {
         let schema = &schemas[&name];
         let type_desc = schema.get("description").and_then(|d| d.as_str());
@@ -49,7 +52,10 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
     for name in typed_dicts {
         let schema = &schemas[&name];
         let type_desc = schema.get("description").and_then(|d| d.as_str());
-        let props = schema.get("properties").and_then(|p| p.as_object()).unwrap();
+        let props = schema
+            .get("properties")
+            .and_then(|p| p.as_object())
+            .unwrap();
 
         writeln!(output, "class {}(TypedDict):", name).unwrap();
 
@@ -100,9 +106,9 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
 /// Types that reference other types (via $ref) must be defined after their dependencies.
 fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
     // Build dependency graph
-    let mut deps: HashMap<String, HashSet<String>> = HashMap::new();
+    let mut deps: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     for (name, schema) in schemas {
-        let mut type_deps = HashSet::new();
+        let mut type_deps = BTreeSet::new();
         collect_schema_refs(schema, &mut type_deps);
         // Only keep deps that are in our schemas
         type_deps.retain(|d| schemas.contains_key(d));
@@ -110,7 +116,7 @@ fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
     }
 
     // Kahn's algorithm for topological sort
-    let mut in_degree: HashMap<String, usize> = HashMap::new();
+    let mut in_degree: BTreeMap<String, usize> = BTreeMap::new();
     for name in schemas.keys() {
         in_degree.insert(name.clone(), 0);
     }
@@ -148,7 +154,7 @@ fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
     result.reverse();
 
     // Add any types that weren't processed (e.g., due to circular refs or other edge cases)
-    let result_set: HashSet<_> = result.iter().cloned().collect();
+    let result_set: BTreeSet<_> = result.iter().cloned().collect();
     let mut missing: Vec<_> = schemas
         .keys()
         .filter(|k| !result_set.contains(*k))
@@ -161,7 +167,7 @@ fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
 }
 
 /// Collect all type references ($ref) from a schema
-fn collect_schema_refs(schema: &Value, refs: &mut HashSet<String>) {
+fn collect_schema_refs(schema: &Value, refs: &mut BTreeSet<String>) {
     match schema {
         Value::Object(map) => {
             if let Some(ref_path) = map.get("$ref").and_then(|r| r.as_str())
@@ -215,7 +221,7 @@ fn json_type_to_python(ty: &str, schema: &Value, current_type: Option<&str>) -> 
 pub fn schema_to_python_type(
     schema: &Value,
     current_type: Option<&str>,
-    quote_types: Option<&HashSet<String>>,
+    quote_types: Option<&BTreeSet<String>>,
 ) -> String {
     if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
         for item in all_of {
@@ -230,8 +236,8 @@ pub fn schema_to_python_type(
     if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
         let type_name = ref_to_type_name(ref_path).unwrap_or("Any");
         // Quote self-references or types in quote_types set
-        let should_quote = current_type == Some(type_name)
-            || quote_types.is_some_and(|qt| qt.contains(type_name));
+        let should_quote =
+            current_type == Some(type_name) || quote_types.is_some_and(|qt| qt.contains(type_name));
         if should_quote {
             return format!("\"{}\"", type_name);
         }

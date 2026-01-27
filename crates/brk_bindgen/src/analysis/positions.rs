@@ -4,7 +4,7 @@
 //! suffix mode (fields append to acc) or prefix mode (fields prepend to acc),
 //! and extracts the field parts (relatives or prefixes) for code generation.
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use brk_types::TreeNode;
 
@@ -18,7 +18,7 @@ struct InstanceAnalysis {
     base: String,
     /// For suffix mode: field -> relative name
     /// For prefix mode: field -> prefix
-    field_parts: HashMap<String, String>,
+    field_parts: BTreeMap<String, String>,
     /// Whether this instance appears to be suffix mode
     is_suffix_mode: bool,
 }
@@ -34,12 +34,12 @@ struct InstanceAnalysis {
 pub fn analyze_pattern_modes(
     tree: &TreeNode,
     patterns: &mut [StructuralPattern],
-    pattern_lookup: &HashMap<Vec<PatternField>, String>,
-) -> HashMap<String, PatternBaseResult> {
+    pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
+) -> BTreeMap<String, PatternBaseResult> {
     // Collect analyses from all instances, keyed by pattern name
-    let mut all_analyses: HashMap<String, Vec<InstanceAnalysis>> = HashMap::new();
+    let mut all_analyses: BTreeMap<String, Vec<InstanceAnalysis>> = BTreeMap::new();
     // Also collect base results for each node, keyed by tree path
-    let mut node_bases: HashMap<String, PatternBaseResult> = HashMap::new();
+    let mut node_bases: BTreeMap<String, PatternBaseResult> = BTreeMap::new();
 
     // Bottom-up traversal
     collect_instance_analyses(tree, "", pattern_lookup, &mut all_analyses, &mut node_bases);
@@ -61,9 +61,9 @@ pub fn analyze_pattern_modes(
 fn collect_instance_analyses(
     node: &TreeNode,
     path: &str,
-    pattern_lookup: &HashMap<Vec<PatternField>, String>,
-    all_analyses: &mut HashMap<String, Vec<InstanceAnalysis>>,
-    node_bases: &mut HashMap<String, PatternBaseResult>,
+    pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
+    all_analyses: &mut BTreeMap<String, Vec<InstanceAnalysis>>,
+    node_bases: &mut BTreeMap<String, PatternBaseResult>,
 ) -> Option<String> {
     match node {
         TreeNode::Leaf(leaf) => {
@@ -72,7 +72,7 @@ fn collect_instance_analyses(
         }
         TreeNode::Branch(children) => {
             // First, process all children recursively (bottom-up)
-            let mut child_bases: HashMap<String, String> = HashMap::new();
+            let mut child_bases: BTreeMap<String, String> = BTreeMap::new();
             for (field_name, child_node) in children {
                 let child_path = build_child_path(path, field_name);
                 if let Some(base) = collect_instance_analyses(
@@ -122,13 +122,13 @@ fn collect_instance_analyses(
 }
 
 /// Analyze a single pattern instance from its child bases.
-fn analyze_instance(child_bases: &HashMap<String, String>) -> InstanceAnalysis {
+fn analyze_instance(child_bases: &BTreeMap<String, String>) -> InstanceAnalysis {
     let bases: Vec<&str> = child_bases.values().map(|s| s.as_str()).collect();
 
     // Try suffix mode first: look for common prefix among children
     if let Some(common_prefix) = find_common_prefix(&bases) {
         let base = common_prefix.trim_end_matches('_').to_string();
-        let mut field_parts = HashMap::new();
+        let mut field_parts = BTreeMap::new();
 
         for (field_name, child_base) in child_bases {
             // Relative = child_base with common prefix stripped
@@ -154,7 +154,7 @@ fn analyze_instance(child_bases: &HashMap<String, String>) -> InstanceAnalysis {
     // Try prefix mode: look for common suffix among children
     if let Some(common_suffix) = find_common_suffix(&bases) {
         let base = common_suffix.trim_start_matches('_').to_string();
-        let mut field_parts = HashMap::new();
+        let mut field_parts = BTreeMap::new();
 
         for (field_name, child_base) in child_bases {
             // Prefix = child_base with common suffix stripped, normalized to end with _
@@ -214,8 +214,8 @@ fn determine_pattern_mode(
     }
 
     // Find the most common field_parts within the majority group
-    // Convert to sorted Vec for comparison since HashMap isn't hashable
-    let mut parts_counts: HashMap<Vec<(String, String)>, usize> = HashMap::new();
+    // Convert to sorted Vec for comparison since BTreeMap isn't hashable
+    let mut parts_counts: BTreeMap<Vec<(String, String)>, usize> = BTreeMap::new();
     for analysis in &majority_instances {
         let mut sorted: Vec<_> = analysis
             .field_parts
@@ -227,7 +227,7 @@ fn determine_pattern_mode(
     }
 
     let (best_parts_vec, _count) = parts_counts.into_iter().max_by_key(|(_, count)| *count)?;
-    let best_parts: HashMap<String, String> = best_parts_vec.into_iter().collect();
+    let best_parts: BTreeMap<String, String> = best_parts_vec.into_iter().collect();
 
     // Verify all required fields have parts
     for field in fields {
@@ -255,7 +255,7 @@ mod tests {
 
     #[test]
     fn test_analyze_instance_suffix_mode() {
-        let mut child_bases = HashMap::new();
+        let mut child_bases = BTreeMap::new();
         child_bases.insert("max".to_string(), "lth_cost_basis_max".to_string());
         child_bases.insert("min".to_string(), "lth_cost_basis_min".to_string());
         child_bases.insert("percentiles".to_string(), "lth_cost_basis".to_string());
@@ -276,7 +276,7 @@ mod tests {
     fn test_analyze_instance_prefix_mode() {
         // Period-prefixed metrics like "1y_lump_sum_stack", "1m_lump_sum_stack"
         // share a common suffix "_lump_sum_stack" with different period prefixes
-        let mut child_bases = HashMap::new();
+        let mut child_bases = BTreeMap::new();
         child_bases.insert("_1y".to_string(), "1y_lump_sum_stack".to_string());
         child_bases.insert("_1m".to_string(), "1m_lump_sum_stack".to_string());
         child_bases.insert("_1w".to_string(), "1w_lump_sum_stack".to_string());
@@ -293,7 +293,7 @@ mod tests {
     #[test]
     fn test_analyze_instance_root_suffix() {
         // At root level with suffix naming convention
-        let mut child_bases = HashMap::new();
+        let mut child_bases = BTreeMap::new();
         child_bases.insert("max".to_string(), "cost_basis_max".to_string());
         child_bases.insert("min".to_string(), "cost_basis_min".to_string());
         child_bases.insert("percentiles".to_string(), "cost_basis".to_string());

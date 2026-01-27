@@ -1,6 +1,6 @@
 //! Tests that verify pattern analysis using the real catalog.
 
-use std::collections::HashSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write;
 
 use brk_bindgen::ClientMetadata;
@@ -26,7 +26,7 @@ fn load_metadata() -> ClientMetadata {
 }
 
 /// Collect all leaf metric names from a tree.
-fn collect_leaf_names(node: &TreeNode, names: &mut HashSet<String>) {
+fn collect_leaf_names(node: &TreeNode, names: &mut BTreeSet<String>) {
     match node {
         TreeNode::Leaf(leaf) => {
             names.insert(leaf.name().to_string());
@@ -63,7 +63,7 @@ fn test_catalog_loads() {
 #[test]
 fn test_all_leaves_have_names() {
     let catalog = load_catalog();
-    let mut names = HashSet::new();
+    let mut names = BTreeSet::new();
     collect_leaf_names(&catalog, &mut names);
 
     println!("Catalog has {} unique metric names", names.len());
@@ -246,11 +246,11 @@ fn test_parameterizable_patterns_have_mode() {
     // Verify all parameterizable patterns have valid modes with all fields
     for pattern in &parameterizable {
         let mode = pattern.mode.as_ref().unwrap();
-        let field_names: HashSet<_> = pattern.fields.iter().map(|f| f.name.clone()).collect();
+        let field_names: BTreeSet<_> = pattern.fields.iter().map(|f| f.name.clone()).collect();
 
         match mode {
             brk_bindgen::PatternMode::Suffix { relatives } => {
-                let mode_fields: HashSet<_> = relatives.keys().cloned().collect();
+                let mode_fields: BTreeSet<_> = relatives.keys().cloned().collect();
                 assert_eq!(
                     field_names, mode_fields,
                     "Pattern {} suffix mode should have all fields",
@@ -258,7 +258,7 @@ fn test_parameterizable_patterns_have_mode() {
                 );
             }
             brk_bindgen::PatternMode::Prefix { prefixes } => {
-                let mode_fields: HashSet<_> = prefixes.keys().cloned().collect();
+                let mode_fields: BTreeSet<_> = prefixes.keys().cloned().collect();
                 assert_eq!(
                     field_names, mode_fields,
                     "Pattern {} prefix mode should have all fields",
@@ -333,7 +333,7 @@ fn test_generated_rust_output() {
     let metadata = ClientMetadata::from_catalog(catalog.clone());
 
     // Collect all metric names from the catalog
-    let mut all_metrics = HashSet::new();
+    let mut all_metrics = BTreeSet::new();
     collect_leaf_names(&catalog, &mut all_metrics);
 
     // Generate Rust client output
@@ -416,7 +416,7 @@ fn test_generated_javascript_output() {
     let metadata = ClientMetadata::from_catalog(catalog.clone());
 
     // Collect all metric names from the catalog
-    let mut all_metrics = HashSet::new();
+    let mut all_metrics = BTreeSet::new();
     collect_leaf_names(&catalog, &mut all_metrics);
 
     // Load schemas from OpenAPI spec only (catalog schemas require runtime data)
@@ -507,7 +507,7 @@ fn test_generated_python_output() {
     let metadata = ClientMetadata::from_catalog(catalog.clone());
 
     // Collect all metric names from the catalog
-    let mut all_metrics = HashSet::new();
+    let mut all_metrics = BTreeSet::new();
     collect_leaf_names(&catalog, &mut all_metrics);
 
     // Load schemas from OpenAPI spec only (catalog schemas require runtime data)
@@ -665,8 +665,8 @@ fn test_cost_basis_relatives() {
 
         // For leaves (max, min), the base is the metric name
         // For branches (percentiles), the base is the common prefix of its children
-        let mut child_bases: std::collections::HashMap<String, String> =
-            std::collections::HashMap::new();
+        let mut child_bases: std::collections::BTreeMap<String, String> =
+            std::collections::BTreeMap::new();
         for (field, metric) in metrics {
             if field.starts_with("percentiles.") {
                 // This is a percentile metric - compute what the percentiles branch would return
@@ -721,20 +721,20 @@ fn test_debug_cost_basis_pattern2_mode() {
     #[derive(Debug, Clone)]
     struct DebugInstanceAnalysis {
         base: String,
-        field_parts: std::collections::HashMap<String, String>,
+        field_parts: std::collections::BTreeMap<String, String>,
         is_suffix_mode: bool,
     }
 
     fn collect_debug(
         node: &TreeNode,
-        pattern_lookup: &std::collections::HashMap<Vec<brk_bindgen::PatternField>, String>,
-        all_analyses: &mut std::collections::HashMap<String, Vec<DebugInstanceAnalysis>>,
+        pattern_lookup: &std::collections::BTreeMap<Vec<brk_bindgen::PatternField>, String>,
+        all_analyses: &mut std::collections::BTreeMap<String, Vec<DebugInstanceAnalysis>>,
     ) -> Option<String> {
         match node {
             TreeNode::Leaf(leaf) => Some(leaf.name().to_string()),
             TreeNode::Branch(children) => {
-                let mut child_bases: std::collections::HashMap<String, String> =
-                    std::collections::HashMap::new();
+                let mut child_bases: std::collections::BTreeMap<String, String> =
+                    std::collections::BTreeMap::new();
                 for (field_name, child_node) in children {
                     if let Some(base) = collect_debug(child_node, pattern_lookup, all_analyses) {
                         child_bases.insert(field_name.clone(), base);
@@ -750,7 +750,7 @@ fn test_debug_cost_basis_pattern2_mode() {
                 let (base, field_parts, is_suffix_mode) =
                     if let Some(common_prefix) = brk_bindgen::find_common_prefix(&bases) {
                         let base = common_prefix.trim_end_matches('_').to_string();
-                        let mut parts = std::collections::HashMap::new();
+                        let mut parts = std::collections::BTreeMap::new();
                         for (field_name, child_base) in &child_bases {
                             let relative = if *child_base == base {
                                 String::new()
@@ -792,8 +792,7 @@ fn test_debug_cost_basis_pattern2_mode() {
         }
     }
 
-    let mut all_analyses: std::collections::HashMap<String, Vec<DebugInstanceAnalysis>> =
-        std::collections::HashMap::new();
+    let mut all_analyses: BTreeMap<String, Vec<DebugInstanceAnalysis>> = BTreeMap::new();
     collect_debug(&catalog, &pattern_lookup, &mut all_analyses);
 
     if let Some(analyses) = all_analyses.get("CostBasisPattern2") {

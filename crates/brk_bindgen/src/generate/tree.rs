@@ -1,10 +1,12 @@
 //! Shared tree generation helpers.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 
 use brk_types::TreeNode;
 
-use crate::{ClientMetadata, PatternBaseResult, PatternField, child_type_name, get_fields_with_child_info};
+use crate::{
+    ClientMetadata, PatternBaseResult, PatternField, child_type_name, get_fields_with_child_info,
+};
 
 /// Build a child path by appending a child name to a parent path.
 /// Uses "/" as separator. If parent is empty, returns just the child name.
@@ -53,9 +55,9 @@ pub fn prepare_tree_node<'a>(
     node: &'a TreeNode,
     name: &str,
     path: &str,
-    pattern_lookup: &HashMap<Vec<PatternField>, String>,
+    pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
-    generated: &mut HashSet<String>,
+    generated: &mut BTreeSet<String>,
 ) -> Option<TreeNodeContext<'a>> {
     let TreeNode::Branch(branch_children) = node else {
         return None;
@@ -127,8 +129,8 @@ pub fn prepare_tree_node<'a>(
 
             // should_inline determines if we generate an inline struct type
             // We inline if: it's a branch AND (doesn't match any pattern OR pattern incompatible OR has outlier)
-            let should_inline =
-                !is_leaf && (!matches_any_pattern || !pattern_compatible || base_result.has_outlier);
+            let should_inline = !is_leaf
+                && (!matches_any_pattern || !pattern_compatible || base_result.has_outlier);
 
             // Inline type name (only used when should_inline is true)
             let inline_type_name = if should_inline {

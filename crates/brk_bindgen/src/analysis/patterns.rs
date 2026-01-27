@@ -3,7 +3,7 @@
 //! This module detects repeating tree structures and analyzes them
 //! using the bottom-up name deconstruction algorithm.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 
 use brk_types::{TreeNode, extract_json_type};
 
@@ -13,25 +13,25 @@ use crate::{PatternBaseResult, PatternField, StructuralPattern, to_pascal_case};
 /// Context for pattern detection, holding all intermediate state.
 struct PatternContext {
     /// Maps field signatures to pattern names
-    signature_to_pattern: HashMap<Vec<PatternField>, String>,
+    signature_to_pattern: BTreeMap<Vec<PatternField>, String>,
     /// Counts how many times each signature appears
-    signature_counts: HashMap<Vec<PatternField>, usize>,
+    signature_counts: BTreeMap<Vec<PatternField>, usize>,
     /// Maps normalized signatures to pattern names (for naming consistency)
-    normalized_to_name: HashMap<Vec<PatternField>, String>,
+    normalized_to_name: BTreeMap<Vec<PatternField>, String>,
     /// Counts pattern name usage (for unique naming)
-    name_counts: HashMap<String, usize>,
+    name_counts: BTreeMap<String, usize>,
     /// Maps signatures to their child field lists
-    signature_to_child_fields: HashMap<Vec<PatternField>, Vec<Vec<PatternField>>>,
+    signature_to_child_fields: BTreeMap<Vec<PatternField>, Vec<Vec<PatternField>>>,
 }
 
 impl PatternContext {
     fn new() -> Self {
         Self {
-            signature_to_pattern: HashMap::new(),
-            signature_counts: HashMap::new(),
-            normalized_to_name: HashMap::new(),
-            name_counts: HashMap::new(),
-            signature_to_child_fields: HashMap::new(),
+            signature_to_pattern: BTreeMap::new(),
+            signature_counts: BTreeMap::new(),
+            normalized_to_name: BTreeMap::new(),
+            name_counts: BTreeMap::new(),
+            signature_to_child_fields: BTreeMap::new(),
         }
     }
 }
@@ -45,9 +45,9 @@ pub fn detect_structural_patterns(
     tree: &TreeNode,
 ) -> (
     Vec<StructuralPattern>,
-    HashMap<Vec<PatternField>, String>,
-    HashMap<Vec<PatternField>, String>,
-    HashMap<String, PatternBaseResult>,
+    BTreeMap<Vec<PatternField>, String>,
+    BTreeMap<Vec<PatternField>, String>,
+    BTreeMap<String, PatternBaseResult>,
 ) {
     let mut ctx = PatternContext::new();
     resolve_branch_patterns(tree, "root", &mut ctx);
@@ -90,7 +90,7 @@ pub fn detect_structural_patterns(
     patterns.extend(generic_patterns);
 
     // Build pattern lookup for mode analysis (patterns appearing 2+ times)
-    let mut pattern_lookup: HashMap<Vec<PatternField>, String> = HashMap::new();
+    let mut pattern_lookup: BTreeMap<Vec<PatternField>, String> = BTreeMap::new();
     for (sig, name) in &ctx.signature_to_pattern {
         if ctx.signature_counts.get(sig).copied().unwrap_or(0) >= 2 {
             pattern_lookup.insert(sig.clone(), name.clone());
@@ -110,29 +110,30 @@ pub fn detect_structural_patterns(
 
 /// Detect generic patterns by grouping signatures by their normalized form.
 fn detect_generic_patterns(
-    signature_to_pattern: &HashMap<Vec<PatternField>, String>,
+    signature_to_pattern: &BTreeMap<Vec<PatternField>, String>,
 ) -> (
     Vec<StructuralPattern>,
-    HashMap<Vec<PatternField>, String>,
-    HashMap<Vec<PatternField>, String>,
+    BTreeMap<Vec<PatternField>, String>,
+    BTreeMap<Vec<PatternField>, String>,
 ) {
-    let mut normalized_groups: HashMap<
+    let mut normalized_groups: BTreeMap<
         Vec<PatternField>,
         Vec<(Vec<PatternField>, String, String)>,
-    > = HashMap::new();
+    > = BTreeMap::new();
 
     for (fields, name) in signature_to_pattern {
         if let Some((normalized, extracted_type)) = normalize_fields_for_generic(fields) {
-            normalized_groups
-                .entry(normalized)
-                .or_default()
-                .push((fields.clone(), name.clone(), extracted_type));
+            normalized_groups.entry(normalized).or_default().push((
+                fields.clone(),
+                name.clone(),
+                extracted_type,
+            ));
         }
     }
 
     let mut patterns = Vec::new();
-    let mut pattern_mappings: HashMap<Vec<PatternField>, String> = HashMap::new();
-    let mut type_mappings: HashMap<Vec<PatternField>, String> = HashMap::new();
+    let mut pattern_mappings: BTreeMap<Vec<PatternField>, String> = BTreeMap::new();
+    let mut type_mappings: BTreeMap<Vec<PatternField>, String> = BTreeMap::new();
 
     for (normalized_fields, group) in normalized_groups {
         if group.len() >= 2 {
@@ -205,7 +206,10 @@ fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<(Vec<PatternF
     // Only proceed if inner types differ from originals (meaning they had wrappers)
     // and all inner types are the same
     if inner_types.iter().all(|t| t == first_inner)
-        && inner_types.iter().zip(leaf_types.iter()).any(|(inner, orig)| inner != *orig)
+        && inner_types
+            .iter()
+            .zip(leaf_types.iter())
+            .any(|(inner, orig)| inner != *orig)
     {
         let normalized = fields
             .iter()
@@ -301,7 +305,8 @@ fn resolve_branch_patterns(
             .entry(normalized)
             .or_insert_with(|| generate_pattern_name(field_name, &mut ctx.name_counts))
             .clone();
-        ctx.signature_to_pattern.insert(fields.clone(), name.clone());
+        ctx.signature_to_pattern
+            .insert(fields.clone(), name.clone());
         name
     };
 
@@ -329,7 +334,7 @@ fn normalize_fields_for_naming(fields: &[PatternField]) -> Vec<PatternField> {
 }
 
 /// Generate a unique pattern name.
-fn generate_pattern_name(field_name: &str, name_counts: &mut HashMap<String, usize>) -> String {
+fn generate_pattern_name(field_name: &str, name_counts: &mut BTreeMap<String, usize>) -> String {
     let pascal = to_pascal_case(field_name);
     let sanitized = if pascal.chars().next().is_some_and(|c| c.is_ascii_digit()) {
         format!("_{}", pascal)

@@ -1,6 +1,6 @@
 //! JavaScript tree structure generation.
 
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::fmt::Write;
 
 use brk_types::TreeNode;
@@ -18,7 +18,7 @@ pub fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata:
     writeln!(output, "// Catalog tree typedefs\n").unwrap();
 
     let pattern_lookup = metadata.pattern_lookup();
-    let mut generated = HashSet::new();
+    let mut generated = BTreeSet::new();
     generate_tree_typedef(
         output,
         "MetricsTree",
@@ -35,9 +35,9 @@ fn generate_tree_typedef(
     name: &str,
     path: &str,
     node: &TreeNode,
-    pattern_lookup: &std::collections::HashMap<Vec<PatternField>, String>,
+    pattern_lookup: &std::collections::BTreeMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
-    generated: &mut HashSet<String>,
+    generated: &mut BTreeSet<String>,
 ) {
     let Some(ctx) = prepare_tree_node(node, name, path, pattern_lookup, metadata, generated) else {
         return;
@@ -124,7 +124,7 @@ pub fn generate_main_client(
     writeln!(output, "   */").unwrap();
     writeln!(output, "  _buildTree(basePath) {{").unwrap();
     writeln!(output, "    return {{").unwrap();
-    let mut generated = HashSet::new();
+    let mut generated = BTreeSet::new();
     generate_tree_initializer(
         output,
         catalog,
@@ -178,9 +178,9 @@ fn generate_tree_initializer(
     name: &str,
     path: &str,
     indent: usize,
-    pattern_lookup: &std::collections::HashMap<Vec<PatternField>, String>,
+    pattern_lookup: &std::collections::BTreeMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
-    generated: &mut HashSet<String>,
+    generated: &mut BTreeSet<String>,
 ) {
     let indent_str = "  ".repeat(indent);
 

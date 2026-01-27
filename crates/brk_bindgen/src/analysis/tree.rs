@@ -3,7 +3,7 @@
 //! This module provides utilities for working with the TreeNode structure,
 //! including leaf name extraction and index pattern detection.
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 
 use brk_types::{Index, TreeNode, extract_json_type};
 
@@ -28,7 +28,7 @@ fn get_shortest_leaf_name(node: &TreeNode) -> Option<String> {
 /// Get the field signature for a branch node's children.
 pub fn get_node_fields(
     children: &BTreeMap<String, TreeNode>,
-    pattern_lookup: &HashMap<Vec<PatternField>, String>,
+    pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
 ) -> Vec<PatternField> {
     let mut fields: Vec<PatternField> = children
         .iter()
@@ -117,7 +117,7 @@ pub struct PatternBaseResult {
     pub is_suffix_mode: bool,
     /// The field parts (suffix in suffix mode, prefix in prefix mode) for each field.
     /// Used to check if instance field parts match the pattern's field parts.
-    pub field_parts: HashMap<String, String>,
+    pub field_parts: BTreeMap<String, String>,
 }
 
 impl PatternBaseResult {
@@ -128,7 +128,7 @@ impl PatternBaseResult {
             base: String::new(),
             has_outlier: true,
             is_suffix_mode: true,
-            field_parts: HashMap::new(),
+            field_parts: BTreeMap::new(),
         }
     }
 
@@ -139,7 +139,7 @@ impl PatternBaseResult {
             base: String::new(),
             has_outlier: false,
             is_suffix_mode: true,
-            field_parts: HashMap::new(),
+            field_parts: BTreeMap::new(),
         }
     }
 }
@@ -200,7 +200,7 @@ struct FindBaseResult {
     base: String,
     has_outlier: bool,
     is_suffix_mode: bool,
-    field_parts: HashMap<String, String>,
+    field_parts: BTreeMap<String, String>,
 }
 
 /// Try to find a common base from child names using prefix/suffix detection.
@@ -214,7 +214,7 @@ fn try_find_base(
     // Try common prefix first (suffix mode)
     if let Some(prefix) = find_common_prefix(&leaf_names) {
         let base = prefix.trim_end_matches('_').to_string();
-        let mut field_parts = HashMap::new();
+        let mut field_parts = BTreeMap::new();
         for (field_name, leaf_name) in child_names {
             // Compute the suffix part for this field
             let suffix = if leaf_name == &base {
@@ -238,7 +238,7 @@ fn try_find_base(
     // Try common suffix (prefix mode)
     if let Some(suffix) = find_common_suffix(&leaf_names) {
         let base = suffix.trim_start_matches('_').to_string();
-        let mut field_parts = HashMap::new();
+        let mut field_parts = BTreeMap::new();
         for (field_name, leaf_name) in child_names {
             // Compute the prefix part for this field, normalized to end with _
             let prefix_part = leaf_name
@@ -300,7 +300,7 @@ pub fn infer_accumulated_name(parent_acc: &str, field_name: &str, descendant_lea
 pub fn get_fields_with_child_info(
     children: &BTreeMap<String, TreeNode>,
     parent_name: &str,
-    pattern_lookup: &HashMap<Vec<PatternField>, String>,
+    pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
 ) -> Vec<(PatternField, Option<Vec<PatternField>>)> {
     children
         .iter()

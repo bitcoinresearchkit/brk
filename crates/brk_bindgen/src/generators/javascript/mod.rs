@@ -11,6 +11,7 @@ use std::{fmt::Write, fs, io, path::Path};
 
 use serde_json::json;
 
+use super::write_if_changed;
 use crate::{ClientMetadata, Endpoint, TypeSchemas, VERSION};
 
 /// Generate JavaScript + JSDoc client from metadata and OpenAPI endpoints.
@@ -34,7 +35,7 @@ pub fn generate_javascript_client(
     tree::generate_tree_typedefs(&mut output, &metadata.catalog, metadata);
     tree::generate_main_client(&mut output, &metadata.catalog, metadata, endpoints);
 
-    fs::write(output_path, output)?;
+    write_if_changed(output_path, &output)?;
 
     // Update package.json version if it exists in the same directory
     if let Some(parent) = output_path.parent() {
@@ -59,7 +60,7 @@ fn update_package_json_version(package_json_path: &Path) -> io::Result<()> {
     let updated = serde_json::to_string_pretty(&package)
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-    fs::write(package_json_path, updated + "\n")?;
+    write_if_changed(package_json_path, &(updated + "\n"))?;
 
     Ok(())
 }

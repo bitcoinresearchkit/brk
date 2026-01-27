@@ -1,5 +1,7 @@
 use std::{fs, path::Path, time::Instant};
 
+use rustc_hash::FxHashSet;
+
 use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_store::{AnyStore, Kind, Mode, Store};
@@ -228,6 +230,7 @@ impl Stores {
                 });
 
             // Remove address hashes for all address types starting from rollback height
+            // (each address only appears once in bytes vec, so no dedup needed)
             for address_type in [
                 OutputType::P2PK65,
                 OutputType::P2PK33,
@@ -280,6 +283,11 @@ impl Stores {
             let mut txoutindex_to_outputtype_iter = vecs.outputs.outputtype.iter()?;
             let mut txoutindex_to_typeindex_iter = vecs.outputs.typeindex.iter()?;
 
+            // Collect unique (addresstype, addressindex, txindex) to avoid double deletion
+            // when same address receives multiple outputs in same transaction
+            let mut addressindex_txindex_to_remove: FxHashSet<(OutputType, TypeIndex, TxIndex)> =
+                FxHashSet::default();
+
             for txoutindex in
                 starting_indexes.txoutindex.to_usize()..vecs.outputs.outputtype.len()
             {
@@ -292,9 +300,7 @@ impl Stores {
                 let addressindex = txoutindex_to_typeindex_iter.get_at_unwrap(txoutindex);
                 let txindex = txoutindex_to_txindex_iter.get_at_unwrap(txoutindex);
 
-                self.addresstype_to_addressindex_and_txindex
-                    .get_mut_unwrap(addresstype)
-                    .remove(AddressIndexTxIndex::from((addressindex, txindex)));
+                addressindex_txindex_to_remove.insert((addresstype, addressindex, txindex));
 
                 let vout = Vout::from(
                     txoutindex
@@ -304,10 +310,13 @@ impl Stores {
                 );
                 let outpoint = OutPoint::new(txindex, vout);
 
+                // OutPoints are unique per output, no dedup needed
                 self.addresstype_to_addressindex_and_unspentoutpoint
                     .get_mut_unwrap(addresstype)
                     .remove(AddressIndexOutPoint::from((addressindex, outpoint)));
             }
+
+            // Don't remove yet - merge with second loop's set first
 
             // Collect outputs that were spent after the rollback point
             // We need to: 1) reset their spend status, 2) restore address stores
@@ -349,20 +358,29 @@ impl Stores {
                 .collect();
 
             // Now process the collected outputs (iterators dropped, can mutate vecs)
+            // Add spending tx entries to the same set (avoid double deletion when same tx
+            // both creates output to address A and spends output from address A)
             for (outpoint, outputtype, typeindex, spending_txindex) in outputs_to_unspend {
                 // Restore address stores if this is an address output
                 if outputtype.is_address() {
                     let addresstype = outputtype;
                     let addressindex = typeindex;
 
-                    self.addresstype_to_addressindex_and_txindex
-                        .get_mut_unwrap(addresstype)
-                        .remove(AddressIndexTxIndex::from((addressindex, spending_txindex)));
+                    // Add to same set as first loop
+                    addressindex_txindex_to_remove.insert((addresstype, addressindex, spending_txindex));
 
+                    // OutPoints are unique, no dedup needed for insert
                     self.addresstype_to_addressindex_and_unspentoutpoint
                         .get_mut_unwrap(addresstype)
                         .insert(AddressIndexOutPoint::from((addressindex, outpoint)), Unit);
                 }
+            }
+
+            // Now remove all deduplicated addressindex_txindex entries (from both loops)
+            for (addresstype, addressindex, txindex) in addressindex_txindex_to_remove {
+                self.addresstype_to_addressindex_and_txindex
+                    .get_mut_unwrap(addresstype)
+                    .remove(AddressIndexTxIndex::from((addressindex, txindex)));
             }
         } else {
             unreachable!();
