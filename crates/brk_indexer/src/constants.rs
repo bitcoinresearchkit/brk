@@ -1,12 +1,11 @@
 use std::str::FromStr;
 
-use brk_types::{Height, TxIndex, Txid, TxidPrefix, Version};
+use brk_types::{TxIndex, Txid, TxidPrefix, Version};
 
 // One version for all data sources
 // Increment on **change _OR_ addition**
 pub const VERSION: Version = Version::new(24);
 pub const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
-pub const COLLISIONS_CHECKED_UP_TO: Height = Height::new(0);
 
 /// Known duplicate Bitcoin transactions (BIP30)
 /// https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki

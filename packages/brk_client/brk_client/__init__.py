@@ -3,10 +3,15 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol, overload
+from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol, overload, Iterator, Tuple, TYPE_CHECKING
 from http.client import HTTPSConnection, HTTPConnection
 from urllib.parse import urlparse
+from datetime import date, timedelta
 import json
+
+if TYPE_CHECKING:
+    import pandas as pd  # type: ignore[import-not-found]
+    import polars as pl  # type: ignore[import-not-found]
 
 T = TypeVar('T')
 
@@ -1043,15 +1048,113 @@ def _p(prefix: str, acc: str) -> str:
     return f"{prefix}_{acc}" if acc else prefix
 
 
+# Date conversion constants
+_GENESIS = date(2009, 1, 3)  # dateindex 0, weekindex 0
+_DAY_ONE = date(2009, 1, 9)  # dateindex 1 (6 day gap after genesis)
+_DATE_INDEXES = frozenset(['dateindex', 'weekindex', 'monthindex', 'yearindex', 'quarterindex', 'semesterindex', 'decadeindex'])
+
+def is_date_index(index: str) -> bool:
+    """Check if an index type is date-based."""
+    return index in _DATE_INDEXES
+
+def index_to_date(index: str, i: int) -> date:
+    """Convert an index value to a date for date-based indexes."""
+    if index == 'dateindex':
+        return _GENESIS if i == 0 else _DAY_ONE + timedelta(days=i - 1)
+    elif index == 'weekindex':
+        return _GENESIS + timedelta(weeks=i)
+    elif index == 'monthindex':
+        return date(2009 + i // 12, i % 12 + 1, 1)
+    elif index == 'yearindex':
+        return date(2009 + i, 1, 1)
+    elif index == 'quarterindex':
+        m = i * 3
+        return date(2009 + m // 12, m % 12 + 1, 1)
+    elif index == 'semesterindex':
+        m = i * 6
+        return date(2009 + m // 12, m % 12 + 1, 1)
+    elif index == 'decadeindex':
+        return date(2009 + i * 10, 1, 1)
+    else:
+        raise ValueError(f"{index} is not a date-based index")
+
+
 @dataclass
 class MetricData(Generic[T]):
     """Metric data with range information."""
     version: int
+    index: Index
     total: int
     start: int
     end: int
     stamp: str
     data: List[T]
+
+    def dates(self) -> List[date]:
+        """Convert index range to dates. Only works for date-based indexes."""
+        return [index_to_date(self.index, i) for i in range(self.start, self.end)]
+
+    def indexes(self) -> List[int]:
+        """Get index range as list."""
+        return list(range(self.start, self.end))
+
+    def to_date_dict(self) -> dict[date, T]:
+        """Return data as {date: value} dict. Only works for date-based indexes."""
+        return dict(zip(self.dates(), self.data))
+
+    def to_index_dict(self) -> dict[int, T]:
+        """Return data as {index: value} dict."""
+        return dict(zip(range(self.start, self.end), self.data))
+
+    def date_items(self) -> List[Tuple[date, T]]:
+        """Return data as [(date, value), ...] pairs. Only works for date-based indexes."""
+        return list(zip(self.dates(), self.data))
+
+    def index_items(self) -> List[Tuple[int, T]]:
+        """Return data as [(index, value), ...] pairs."""
+        return list(zip(range(self.start, self.end), self.data))
+
+    def iter(self) -> Iterator[Tuple[int, T]]:
+        """Iterate over (index, value) pairs."""
+        return iter(zip(range(self.start, self.end), self.data))
+
+    def iter_dates(self) -> Iterator[Tuple[date, T]]:
+        """Iterate over (date, value) pairs. Date-based indexes only."""
+        return iter(zip(self.dates(), self.data))
+
+    def __iter__(self) -> Iterator[Tuple[int, T]]:
+        """Default iteration over (index, value) pairs."""
+        return self.iter()
+
+    def to_polars(self, with_dates: bool = True) -> pl.DataFrame:
+        """Convert to Polars DataFrame. Requires polars to be installed.
+
+        Returns a DataFrame with columns:
+        - 'date' (date) and 'value' (T) if with_dates=True and index is date-based
+        - 'index' (int) and 'value' (T) otherwise
+        """
+        try:
+            import polars as pl  # type: ignore[import-not-found]
+        except ImportError:
+            raise ImportError("polars is required: pip install polars")
+        if with_dates and self.index in _DATE_INDEXES:
+            return pl.DataFrame({"date": self.dates(), "value": self.data})
+        return pl.DataFrame({"index": list(range(self.start, self.end)), "value": self.data})
+
+    def to_pandas(self, with_dates: bool = True) -> pd.DataFrame:
+        """Convert to Pandas DataFrame. Requires pandas to be installed.
+
+        Returns a DataFrame with columns:
+        - 'date' (date) and 'value' (T) if with_dates=True and index is date-based
+        - 'index' (int) and 'value' (T) otherwise
+        """
+        try:
+            import pandas as pd  # type: ignore[import-not-found]
+        except ImportError:
+            raise ImportError("pandas is required: pip install pandas")
+        if with_dates and self.index in _DATE_INDEXES:
+            return pd.DataFrame({"date": self.dates(), "value": self.data})
+        return pd.DataFrame({"index": list(range(self.start, self.end)), "value": self.data})
 
 
 # Type alias for non-generic usage
@@ -1089,9 +1192,8 @@ class _EndpointConfig:
         p = self.path()
         return f"{p}?{query}" if query else p
 
-    def get_json(self) -> MetricData:
-        data = self.client.get_json(self._build_path())
-        return MetricData(**data)
+    def get_metric(self) -> MetricData:
+        return MetricData(**self.client.get_json(self._build_path()))
 
     def get_csv(self) -> str:
         return self.client.get_text(self._build_path(format='csv'))
@@ -1105,7 +1207,7 @@ class RangeBuilder(Generic[T]):
 
     def fetch(self) -> MetricData[T]:
         """Fetch the range as parsed JSON."""
-        return self._config.get_json()
+        return self._config.get_metric()
 
     def fetch_csv(self) -> str:
         """Fetch the range as CSV string."""
@@ -1120,7 +1222,7 @@ class SingleItemBuilder(Generic[T]):
 
     def fetch(self) -> MetricData[T]:
         """Fetch the single item."""
-        return self._config.get_json()
+        return self._config.get_metric()
 
     def fetch_csv(self) -> str:
         """Fetch as CSV."""
@@ -1143,7 +1245,7 @@ class SkippedBuilder(Generic[T]):
 
     def fetch(self) -> MetricData[T]:
         """Fetch from skipped position to end."""
-        return self._config.get_json()
+        return self._config.get_metric()
 
     def fetch_csv(self) -> str:
         """Fetch as CSV."""
@@ -1227,7 +1329,7 @@ class MetricEndpointBuilder(Generic[T]):
 
     def fetch(self) -> MetricData[T]:
         """Fetch all data as parsed JSON."""
-        return self._config.get_json()
+        return self._config.get_metric()
 
     def fetch_csv(self) -> str:
         """Fetch all data as CSV string."""
@@ -4957,6 +5059,14 @@ class BrkClient(BrkClientBase):
         For type-safe access, use the `metrics` tree instead.
         """
         return MetricEndpointBuilder(self, metric, index)
+
+    def index_to_date(self, index: Index, i: int) -> date:
+        """Convert an index value to a date for date-based indexes."""
+        return index_to_date(index, i)
+
+    def is_date_index(self, index: Index) -> bool:
+        """Check if an index type is date-based."""
+        return is_date_index(index)
 
     def get_api(self) -> Any:
         """Compact OpenAPI specification.

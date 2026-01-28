@@ -112,16 +112,18 @@ pub fn load_uncached_address_data(
     Some(match anyaddressindex.to_enum() {
         AnyAddressDataIndexEnum::Loaded(loaded_index) => {
             let reader = &vr.anyaddressindex_to_anyaddressdata.loaded;
+            // Use get_any_or_read_unwrap to check updated layer (needed after rollback)
             let loaded_data = addresses_data
                 .loaded
-                .get_pushed_or_read_unwrap(loaded_index, reader);
+                .get_any_or_read_unwrap(loaded_index, reader);
             WithAddressDataSource::FromLoaded(loaded_index, loaded_data)
         }
         AnyAddressDataIndexEnum::Empty(empty_index) => {
             let reader = &vr.anyaddressindex_to_anyaddressdata.empty;
+            // Use get_any_or_read_unwrap to check updated layer (needed after rollback)
             let empty_data = addresses_data
                 .empty
-                .get_pushed_or_read_unwrap(empty_index, reader);
+                .get_any_or_read_unwrap(empty_index, reader);
             WithAddressDataSource::FromEmpty(empty_index, empty_data.into())
         }
     })

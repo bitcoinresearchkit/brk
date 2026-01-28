@@ -838,15 +838,120 @@ class BrkError extends Error {
   }
 }
 
+// Date conversion constants and helpers
+const _GENESIS = new Date(2009, 0, 3);  // dateindex 0, weekindex 0
+const _DAY_ONE = new Date(2009, 0, 9);  // dateindex 1 (6 day gap after genesis)
+const _MS_PER_DAY = 24 * 60 * 60 * 1000;
+const _MS_PER_WEEK = 7 * _MS_PER_DAY;
+const _DATE_INDEXES = new Set(['dateindex', 'weekindex', 'monthindex', 'yearindex', 'quarterindex', 'semesterindex', 'decadeindex']);
+
+/** @param {number} months @returns {globalThis.Date} */
+const _addMonths = (months) => new Date(2009, months, 1);
+
+/**
+ * Convert an index value to a Date for date-based indexes.
+ * @param {Index} index - The index type
+ * @param {number} i - The index value
+ * @returns {globalThis.Date}
+ */
+function indexToDate(index, i) {
+  switch (index) {
+    case 'dateindex': return i === 0 ? _GENESIS : new Date(_DAY_ONE.getTime() + (i - 1) * _MS_PER_DAY);
+    case 'weekindex': return new Date(_GENESIS.getTime() + i * _MS_PER_WEEK);
+    case 'monthindex': return _addMonths(i);
+    case 'yearindex': return new Date(2009 + i, 0, 1);
+    case 'quarterindex': return _addMonths(i * 3);
+    case 'semesterindex': return _addMonths(i * 6);
+    case 'decadeindex': return new Date(2009 + i * 10, 0, 1);
+    default: throw new Error(`${index} is not a date-based index`);
+  }
+}
+
+/**
+ * Check if an index type is date-based.
+ * @param {Index} index
+ * @returns {boolean}
+ */
+function isDateIndex(index) {
+  return _DATE_INDEXES.has(index);
+}
+
+/**
+ * Wrap raw metric data with helper methods.
+ * @template T
+ * @param {MetricData<T>} raw - Raw JSON response
+ * @returns {MetricData<T>}
+ */
+function _wrapMetricData(raw) {
+  const { index, start, end, data } = raw;
+  return /** @type {MetricData<T>} */ ({
+    ...raw,
+    dates() {
+      /** @type {globalThis.Date[]} */
+      const result = [];
+      for (let i = start; i < end; i++) result.push(indexToDate(index, i));
+      return result;
+    },
+    indexes() {
+      /** @type {number[]} */
+      const result = [];
+      for (let i = start; i < end; i++) result.push(i);
+      return result;
+    },
+    toDateMap() {
+      /** @type {Map<globalThis.Date, T>} */
+      const map = new Map();
+      for (let i = 0; i < data.length; i++) map.set(indexToDate(index, start + i), data[i]);
+      return map;
+    },
+    toIndexMap() {
+      /** @type {Map<number, T>} */
+      const map = new Map();
+      for (let i = 0; i < data.length; i++) map.set(start + i, data[i]);
+      return map;
+    },
+    dateEntries() {
+      /** @type {Array<[globalThis.Date, T]>} */
+      const result = [];
+      for (let i = 0; i < data.length; i++) result.push([indexToDate(index, start + i), data[i]]);
+      return result;
+    },
+    indexEntries() {
+      /** @type {Array<[number, T]>} */
+      const result = [];
+      for (let i = 0; i < data.length; i++) result.push([start + i, data[i]]);
+      return result;
+    },
+    *iter() {
+      for (let i = 0; i < data.length; i++) yield [start + i, data[i]];
+    },
+    *iterDates() {
+      for (let i = 0; i < data.length; i++) yield [indexToDate(index, start + i), data[i]];
+    },
+    [Symbol.iterator]() {
+      return this.iter();
+    },
+  });
+}
+
 /**
  * @template T
  * @typedef {Object} MetricData
  * @property {number} version - Version of the metric data
+ * @property {Index} index - The index type used for this query
  * @property {number} total - Total number of data points
  * @property {number} start - Start index (inclusive)
  * @property {number} end - End index (exclusive)
  * @property {string} stamp - ISO 8601 timestamp of when the response was generated
  * @property {T[]} data - The metric data
+ * @property {() => globalThis.Date[]} dates - Convert index range to dates (date-based indexes only)
+ * @property {() => number[]} indexes - Get index range as array
+ * @property {() => Map<globalThis.Date, T>} toDateMap - Return data as Map keyed by date (date-based only)
+ * @property {() => Map<number, T>} toIndexMap - Return data as Map keyed by index
+ * @property {() => Array<[globalThis.Date, T]>} dateEntries - Return data as [date, value] pairs (date-based only)
+ * @property {() => Array<[number, T]>} indexEntries - Return data as [index, value] pairs
+ * @property {() => IterableIterator<[number, T]>} iter - Iterate over [index, value] pairs
+ * @property {() => IterableIterator<[globalThis.Date, T]>} iterDates - Iterate over [date, value] pairs (date-based only)
  */
 /** @typedef {MetricData<any>} AnyMetricData */
 
@@ -940,18 +1045,18 @@ function _endpoint(client, name, index) {
    * @returns {RangeBuilder<T>}
    */
   const rangeBuilder = (start, end) => ({
-    fetch(onUpdate) { return client.getJson(buildPath(start, end), onUpdate); },
+    fetch(onUpdate) { return client._fetchMetricData(buildPath(start, end), onUpdate); },
     fetchCsv() { return client.getText(buildPath(start, end, 'csv')); },
     then(resolve, reject) { return this.fetch().then(resolve, reject); },
   });
 
   /**
-   * @param {number} index
+   * @param {number} idx
    * @returns {SingleItemBuilder<T>}
    */
-  const singleItemBuilder = (index) => ({
-    fetch(onUpdate) { return client.getJson(buildPath(index, index + 1), onUpdate); },
-    fetchCsv() { return client.getText(buildPath(index, index + 1, 'csv')); },
+  const singleItemBuilder = (idx) => ({
+    fetch(onUpdate) { return client._fetchMetricData(buildPath(idx, idx + 1), onUpdate); },
+    fetchCsv() { return client.getText(buildPath(idx, idx + 1, 'csv')); },
     then(resolve, reject) { return this.fetch().then(resolve, reject); },
   });
 
@@ -961,19 +1066,19 @@ function _endpoint(client, name, index) {
    */
   const skippedBuilder = (start) => ({
     take(n) { return rangeBuilder(start, start + n); },
-    fetch(onUpdate) { return client.getJson(buildPath(start, undefined), onUpdate); },
+    fetch(onUpdate) { return client._fetchMetricData(buildPath(start, undefined), onUpdate); },
     fetchCsv() { return client.getText(buildPath(start, undefined, 'csv')); },
     then(resolve, reject) { return this.fetch().then(resolve, reject); },
   });
 
   /** @type {MetricEndpointBuilder<T>} */
   const endpoint = {
-    get(index) { return singleItemBuilder(index); },
+    get(idx) { return singleItemBuilder(idx); },
     slice(start, end) { return rangeBuilder(start, end); },
     first(n) { return rangeBuilder(undefined, n); },
     last(n) { return n === 0 ? rangeBuilder(undefined, 0) : rangeBuilder(-n, undefined); },
     skip(n) { return skippedBuilder(n); },
-    fetch(onUpdate) { return client.getJson(buildPath(), onUpdate); },
+    fetch(onUpdate) { return client._fetchMetricData(buildPath(), onUpdate); },
     fetchCsv() { return client.getText(buildPath(undefined, undefined, 'csv')); },
     then(resolve, reject) { return this.fetch().then(resolve, reject); },
     get path() { return p; },
@@ -1052,6 +1157,19 @@ class BrkClientBase {
   async getText(path) {
     const res = await this.get(path);
     return res.text();
+  }
+
+  /**
+   * Fetch metric data and wrap with helper methods (internal)
+   * @template T
+   * @param {string} path
+   * @param {(value: MetricData<T>) => void} [onUpdate]
+   * @returns {Promise<MetricData<T>>}
+   */
+  async _fetchMetricData(path, onUpdate) {
+    const wrappedOnUpdate = onUpdate ? (/** @type {MetricData<T>} */ raw) => onUpdate(_wrapMetricData(raw)) : undefined;
+    const raw = await this.getJson(path, wrappedOnUpdate);
+    return _wrapMetricData(raw);
   }
 }
 
@@ -5264,6 +5382,25 @@ class BrkClient extends BrkClientBase {
       "long": "Under 100K BTC"
     }
   });
+
+  /**
+   * Convert an index value to a Date for date-based indexes.
+   * @param {Index} index - The index type
+   * @param {number} i - The index value
+   * @returns {globalThis.Date}
+   */
+  indexToDate(index, i) {
+    return indexToDate(index, i);
+  }
+
+  /**
+   * Check if an index type is date-based.
+   * @param {Index} index
+   * @returns {boolean}
+   */
+  isDateIndex(index) {
+    return isDateIndex(index);
+  }
 
   /**
    * @param {BrkClientOptions|string} options

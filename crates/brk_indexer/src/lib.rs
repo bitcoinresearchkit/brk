@@ -102,6 +102,15 @@ impl Indexer {
 
         let (starting_indexes, prev_hash) = if let Some(hash) = last_blockhash {
             let (height, hash) = client.get_closest_valid_height(hash)?;
+            // TEST: force rollback 5 blocks (only if we have enough blocks)
+            let (height, hash) = if *height > 10 {
+                let height = Height::from(height.checked_sub(1).unwrap());
+                let hash = self.vecs.blocks.blockhash.iter()?.get(height).unwrap();
+                (height, hash)
+            } else {
+                (height, hash)
+            };
+            // END TEST
             match Indexes::from_vecs_and_stores(height.incremented(), &mut self.vecs, &self.stores)
             {
                 Some(starting_indexes) => {
@@ -177,13 +186,10 @@ impl Indexer {
 
             indexes.height = height;
 
-            // Used to check rapidhash collisions
-            let block_check_collisions = check_collisions && height > COLLISIONS_CHECKED_UP_TO;
-
             let mut processor = BlockProcessor {
                 block: &block,
                 height,
-                check_collisions: block_check_collisions,
+                check_collisions,
                 indexes: &mut indexes,
                 vecs,
                 stores,

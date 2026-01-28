@@ -29,7 +29,7 @@ pub fn generate_python_client(
     writeln!(output, "from dataclasses import dataclass").unwrap();
     writeln!(
         output,
-        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol, overload"
+        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol, overload, Iterator, Tuple, TYPE_CHECKING"
     )
     .unwrap();
     writeln!(
@@ -38,7 +38,11 @@ pub fn generate_python_client(
     )
     .unwrap();
     writeln!(output, "from urllib.parse import urlparse").unwrap();
+    writeln!(output, "from datetime import date, timedelta").unwrap();
     writeln!(output, "import json\n").unwrap();
+    writeln!(output, "if TYPE_CHECKING:").unwrap();
+    writeln!(output, "    import pandas as pd  # type: ignore[import-not-found]").unwrap();
+    writeln!(output, "    import polars as pl  # type: ignore[import-not-found]\n").unwrap();
     writeln!(output, "T = TypeVar('T')\n").unwrap();
 
     types::generate_type_definitions(&mut output, schemas);

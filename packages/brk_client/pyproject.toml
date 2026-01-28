@@ -25,6 +25,8 @@ Repository = "https://github.com/bitcoinresearchkit/brk"
 
 [dependency-groups]
 dev = [
+    "pandas>=2.3.3",
+    "polars>=1.36.1",
     "pydoc-markdown>=4.8.2",
     "pytest",
 ]

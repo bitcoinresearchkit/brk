@@ -58,9 +58,10 @@ macro_rules! define_any_address_indexes_vecs {
             }
 
             /// Get address index for a given type and typeindex.
+            /// Uses get_any_or_read_at_unwrap to check updated layer (needed after rollback).
             pub fn get(&self, address_type: OutputType, typeindex: TypeIndex, reader: &Reader) -> AnyAddressIndex {
                 match address_type {
-                    $(OutputType::$variant => self.$field.get_pushed_or_read_at_unwrap(typeindex.into(), reader),)*
+                    $(OutputType::$variant => self.$field.get_any_or_read_at_unwrap(typeindex.into(), reader),)*
                     _ => unreachable!("Invalid address type: {:?}", address_type),
                 }
             }

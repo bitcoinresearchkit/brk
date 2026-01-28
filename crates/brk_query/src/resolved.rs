@@ -1,4 +1,4 @@
-use brk_types::{Etag, Format};
+use brk_types::{Etag, Format, Index};
 use vecdb::AnyExportableVec;
 
 /// A resolved metric query ready for formatting.
@@ -6,6 +6,7 @@ use vecdb::AnyExportableVec;
 pub struct ResolvedQuery {
     pub(crate) vecs: Vec<&'static dyn AnyExportableVec>,
     pub(crate) format: Format,
+    pub(crate) index: Index,
     pub(crate) version: u64,
     pub(crate) total: usize,
     pub(crate) start: usize,

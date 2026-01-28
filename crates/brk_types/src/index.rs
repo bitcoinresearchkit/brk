@@ -8,7 +8,7 @@ use vecdb::PrintableIndex;
 use crate::PairOutputIndex;
 
 use super::{
-    DateIndex, DecadeIndex, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
+    Date, DateIndex, DecadeIndex, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
     Height, LoadedAddressIndex, MonthIndex, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex,
     P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
     P2WPKHAddressIndex, P2WSHAddressIndex, QuarterIndex, SemesterIndex, TxInIndex, TxIndex,
@@ -144,6 +144,35 @@ impl Index {
             _ => 1,
         }
     }
+
+    /// Returns true if this index type is date-based.
+    pub const fn is_date_based(&self) -> bool {
+        matches!(
+            self,
+            Self::DateIndex
+                | Self::WeekIndex
+                | Self::MonthIndex
+                | Self::YearIndex
+                | Self::QuarterIndex
+                | Self::SemesterIndex
+                | Self::DecadeIndex
+        )
+    }
+
+    /// Convert an index value to a date for date-based indexes.
+    /// Returns None for non-date-based indexes.
+    pub fn index_to_date(&self, i: usize) -> Option<Date> {
+        match self {
+            Self::DateIndex => Some(Date::from(DateIndex::from(i))),
+            Self::WeekIndex => Some(Date::from(WeekIndex::from(i))),
+            Self::MonthIndex => Some(Date::from(MonthIndex::from(i))),
+            Self::YearIndex => Some(Date::from(YearIndex::from(i))),
+            Self::QuarterIndex => Some(Date::from(QuarterIndex::from(i))),
+            Self::SemesterIndex => Some(Date::from(SemesterIndex::from(i))),
+            Self::DecadeIndex => Some(Date::from(DecadeIndex::from(i))),
+            _ => None,
+        }
+    }
 }
 
 impl TryFrom<&str> for Index {
@@ -217,5 +246,113 @@ impl<'de> Deserialize<'de> for Index {
         } else {
             Err(serde::de::Error::custom("Bad index"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_date_based_dateindex() {
+        assert!(Index::DateIndex.is_date_based());
+    }
+
+    #[test]
+    fn test_is_date_based_weekindex() {
+        assert!(Index::WeekIndex.is_date_based());
+    }
+
+    #[test]
+    fn test_is_date_based_monthindex() {
+        assert!(Index::MonthIndex.is_date_based());
+    }
+
+    #[test]
+    fn test_is_date_based_yearindex() {
+        assert!(Index::YearIndex.is_date_based());
+    }
+
+    #[test]
+    fn test_is_date_based_quarterindex() {
+        assert!(Index::QuarterIndex.is_date_based());
+    }
+
+    #[test]
+    fn test_is_date_based_semesterindex() {
+        assert!(Index::SemesterIndex.is_date_based());
+    }
+
+    #[test]
+    fn test_is_date_based_decadeindex() {
+        assert!(Index::DecadeIndex.is_date_based());
+    }
+
+    #[test]
+    fn test_is_not_date_based_height() {
+        assert!(!Index::Height.is_date_based());
+    }
+
+    #[test]
+    fn test_is_not_date_based_txindex() {
+        assert!(!Index::TxIndex.is_date_based());
+    }
+
+    #[test]
+    fn test_index_to_date_dateindex_zero() {
+        let date = Index::DateIndex.index_to_date(0).unwrap();
+        assert_eq!(date, Date::from(DateIndex::from(0_usize)));
+    }
+
+    #[test]
+    fn test_index_to_date_dateindex_one() {
+        let date = Index::DateIndex.index_to_date(1).unwrap();
+        assert_eq!(date, Date::from(DateIndex::from(1_usize)));
+    }
+
+    #[test]
+    fn test_index_to_date_weekindex() {
+        let date = Index::WeekIndex.index_to_date(1).unwrap();
+        assert_eq!(date, Date::from(WeekIndex::from(1_usize)));
+    }
+
+    #[test]
+    fn test_index_to_date_monthindex() {
+        let date = Index::MonthIndex.index_to_date(12).unwrap();
+        assert_eq!(date, Date::from(MonthIndex::from(12_usize)));
+    }
+
+    #[test]
+    fn test_index_to_date_yearindex() {
+        let date = Index::YearIndex.index_to_date(5).unwrap();
+        assert_eq!(date, Date::from(YearIndex::from(5_usize)));
+    }
+
+    #[test]
+    fn test_index_to_date_quarterindex() {
+        let date = Index::QuarterIndex.index_to_date(4).unwrap();
+        assert_eq!(date, Date::from(QuarterIndex::from(4_usize)));
+    }
+
+    #[test]
+    fn test_index_to_date_semesterindex() {
+        let date = Index::SemesterIndex.index_to_date(2).unwrap();
+        assert_eq!(date, Date::from(SemesterIndex::from(2_usize)));
+    }
+
+    #[test]
+    fn test_index_to_date_decadeindex() {
+        let date = Index::DecadeIndex.index_to_date(1).unwrap();
+        assert_eq!(date, Date::from(DecadeIndex::from(1_usize)));
+    }
+
+    #[test]
+    fn test_index_to_date_height_returns_none() {
+        assert!(Index::Height.index_to_date(100).is_none());
+    }
+
+    #[test]
+    fn test_index_to_date_txindex_returns_none() {
+        assert!(Index::TxIndex.index_to_date(100).is_none());
     }
 }

@@ -212,6 +212,14 @@ where
         }
     }
 
+    /// Clear all caches. Call after bulk removals (e.g., rollback) to prevent stale reads.
+    #[inline]
+    pub fn clear_caches(&mut self) {
+        for cache in &mut self.caches {
+            cache.clear();
+        }
+    }
+
     #[inline]
     pub fn iter(&self) -> impl Iterator<Item = (K, V)> {
         self.keyspace

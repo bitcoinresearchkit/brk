@@ -518,13 +518,18 @@ fn test_generated_python_output() {
     let mut py_output = String::new();
     writeln!(py_output, "# Auto-generated BRK Python client").unwrap();
     writeln!(py_output, "# Do not edit manually\n").unwrap();
-    writeln!(py_output, "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol, overload").unwrap();
+    writeln!(py_output, "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol, overload, Iterator, Tuple, TYPE_CHECKING").unwrap();
+    writeln!(py_output, "\nif TYPE_CHECKING:").unwrap();
+    writeln!(py_output, "    import pandas as pd  # type: ignore[import-not-found]").unwrap();
+    writeln!(py_output, "    import polars as pl  # type: ignore[import-not-found]").unwrap();
     writeln!(
         py_output,
         "from http.client import HTTPSConnection, HTTPConnection"
     )
     .unwrap();
     writeln!(py_output, "from urllib.parse import urlparse").unwrap();
+    writeln!(py_output, "from datetime import date, timedelta").unwrap();
+    writeln!(py_output, "from dataclasses import dataclass").unwrap();
     writeln!(py_output, "import json\n").unwrap();
     writeln!(py_output, "T = TypeVar('T')\n").unwrap();
 

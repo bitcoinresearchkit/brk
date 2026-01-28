@@ -39,6 +39,16 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     writeln!(output, "        return MetricEndpointBuilder(self, metric, index)").unwrap();
     writeln!(output).unwrap();
 
+    // Generate helper methods
+    writeln!(output, "    def index_to_date(self, index: Index, i: int) -> date:").unwrap();
+    writeln!(output, "        \"\"\"Convert an index value to a date for date-based indexes.\"\"\"").unwrap();
+    writeln!(output, "        return index_to_date(index, i)").unwrap();
+    writeln!(output).unwrap();
+    writeln!(output, "    def is_date_index(self, index: Index) -> bool:").unwrap();
+    writeln!(output, "        \"\"\"Check if an index type is date-based.\"\"\"").unwrap();
+    writeln!(output, "        return is_date_index(index)").unwrap();
+    writeln!(output).unwrap();
+
     // Generate API methods
     generate_api_methods(output, endpoints);
 }

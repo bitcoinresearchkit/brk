@@ -56,7 +56,7 @@ fn run() -> Result<()> {
     // Pre-run indexer if too far behind, then drop and reimport to reduce memory
     let chain_height = client.get_last_height()?;
     let indexed_height = indexer.vecs.starting_height();
-    if u32::from(chain_height) - u32::from(indexed_height) > 1000 {
+    if u32::from(chain_height).saturating_sub(u32::from(indexed_height)) > 1000 {
         indexer.checked_index(&blocks, &client, &exit)?;
         drop(indexer);
         Mimalloc::collect();

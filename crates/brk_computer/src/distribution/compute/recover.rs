@@ -2,6 +2,7 @@ use std::{cmp::Ordering, collections::BTreeSet};
 
 use brk_error::Result;
 use brk_types::Height;
+use tracing::{debug, warn};
 use vecdb::Stamp;
 
 use super::super::{
@@ -44,27 +45,49 @@ pub fn recover_state(
 
     // If rollbacks are inconsistent, start fresh
     if consistent_height.is_zero() {
+        warn!("Rollback consistency check failed: inconsistent heights");
         return Ok(RecoveredState {
             starting_height: Height::ZERO,
         });
     }
 
+    // Rollback can land at an earlier height (multi-block change file), which is fine.
+    // But if it lands AHEAD of target, that means rollback failed (missing change files).
+    if consistent_height > height {
+        warn!(
+            "Rollback failed: still at {} but target was {}, falling back to fresh start",
+            consistent_height, height
+        );
+        return Ok(RecoveredState {
+            starting_height: Height::ZERO,
+        });
+    }
+
+    if consistent_height != height {
+        debug!(
+            "Rollback landed at {} instead of {}, will resume from there",
+            consistent_height, height
+        );
+    }
+
     // Import UTXO cohort states - all must succeed
-    if !utxo_cohorts.import_separate_states(height) {
+    if !utxo_cohorts.import_separate_states(consistent_height) {
+        warn!("UTXO cohort state import failed at height {}", consistent_height);
         return Ok(RecoveredState {
             starting_height: Height::ZERO,
         });
     }
 
     // Import address cohort states - all must succeed
-    if !address_cohorts.import_separate_states(height) {
+    if !address_cohorts.import_separate_states(consistent_height) {
+        warn!("Address cohort state import failed at height {}", consistent_height);
         return Ok(RecoveredState {
             starting_height: Height::ZERO,
         });
     }
 
     Ok(RecoveredState {
-        starting_height: height,
+        starting_height: consistent_height,
     })
 }
 
@@ -132,28 +155,38 @@ fn rollback_states(
 
     // All rollbacks must succeed - any error means fresh start
     let Ok(s) = chain_state_rollback else {
+        warn!("chain_state rollback failed: {:?}", chain_state_rollback);
         return Height::ZERO;
     };
-    heights.insert(Height::from(s).incremented());
+    let chain_height = Height::from(s).incremented();
+    debug!("chain_state rolled back to stamp {:?}, height {}", s, chain_height);
+    heights.insert(chain_height);
 
     let Ok(stamps) = address_indexes_rollbacks else {
+        warn!("address_indexes rollback failed: {:?}", address_indexes_rollbacks);
         return Height::ZERO;
     };
-    for s in stamps {
-        heights.insert(Height::from(s).incremented());
+    for (i, s) in stamps.iter().enumerate() {
+        let h = Height::from(*s).incremented();
+        debug!("address_indexes[{}] rolled back to stamp {:?}, height {}", i, s, h);
+        heights.insert(h);
     }
 
     let Ok(stamps) = address_data_rollbacks else {
+        warn!("address_data rollback failed: {:?}", address_data_rollbacks);
         return Height::ZERO;
     };
-    for s in stamps {
-        heights.insert(Height::from(s).incremented());
+    for (i, s) in stamps.iter().enumerate() {
+        let h = Height::from(*s).incremented();
+        debug!("address_data[{}] rolled back to stamp {:?}, height {}", i, s, h);
+        heights.insert(h);
     }
 
     // All must agree on the same height
     if heights.len() == 1 {
         heights.pop_first().unwrap()
     } else {
+        warn!("Rollback heights inconsistent: {:?}", heights);
         Height::ZERO
     }
 }

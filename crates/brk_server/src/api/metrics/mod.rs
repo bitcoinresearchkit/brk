@@ -23,14 +23,16 @@ mod legacy;
 
 /// Maximum allowed request weight in bytes (650KB)
 const MAX_WEIGHT: usize = 65 * 10_000;
+/// Maximum allowed request weight for localhost (50MB)
+const MAX_WEIGHT_LOCALHOST: usize = 50 * 1_000_000;
 /// Cache control header for metric data responses
 const CACHE_CONTROL: &str = "public, max-age=1, must-revalidate";
 
 /// Returns the max weight for a request based on the client address.
-/// Localhost requests have no weight limit.
+/// Localhost requests get a generous limit, external requests get a stricter one.
 fn max_weight(addr: &SocketAddr) -> usize {
     if addr.ip().is_loopback() {
-        usize::MAX
+        MAX_WEIGHT_LOCALHOST
     } else {
         MAX_WEIGHT
     }

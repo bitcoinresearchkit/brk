@@ -1,6 +1,6 @@
 use std::ops::Bound;
 
-use brk_types::{Dollars, Sats};
+use brk_types::{CentsUnsigned, Dollars, Sats};
 use vecdb::CheckedSub;
 
 use super::price_to_amount::PriceToAmount;
@@ -11,6 +11,10 @@ pub struct UnrealizedState {
     pub supply_in_loss: Sats,
     pub unrealized_profit: Dollars,
     pub unrealized_loss: Dollars,
+    /// Invested capital in profit: Σ(sats × price) where price <= spot
+    pub invested_capital_in_profit: Dollars,
+    /// Invested capital in loss: Σ(sats × price) where price > spot
+    pub invested_capital_in_loss: Dollars,
 }
 
 impl UnrealizedState {
@@ -19,6 +23,8 @@ impl UnrealizedState {
         supply_in_loss: Sats::ZERO,
         unrealized_profit: Dollars::NAN,
         unrealized_loss: Dollars::NAN,
+        invested_capital_in_profit: Dollars::NAN,
+        invested_capital_in_loss: Dollars::NAN,
     };
 
     pub const ZERO: Self = Self {
@@ -26,6 +32,8 @@ impl UnrealizedState {
         supply_in_loss: Sats::ZERO,
         unrealized_profit: Dollars::ZERO,
         unrealized_loss: Dollars::ZERO,
+        invested_capital_in_profit: Dollars::ZERO,
+        invested_capital_in_loss: Dollars::ZERO,
     };
 }
 
@@ -62,14 +70,17 @@ impl CachedUnrealizedState {
     /// Update cached state when a receive happens.
     /// Determines profit/loss classification relative to cached price.
     pub fn on_receive(&mut self, purchase_price: Dollars, sats: Sats) {
+        let invested_capital = purchase_price * sats;
         if purchase_price <= self.at_price {
             self.state.supply_in_profit += sats;
+            self.state.invested_capital_in_profit += invested_capital;
             if purchase_price < self.at_price {
                 let diff = self.at_price.checked_sub(purchase_price).unwrap();
                 self.state.unrealized_profit += diff * sats;
             }
         } else {
             self.state.supply_in_loss += sats;
+            self.state.invested_capital_in_loss += invested_capital;
             let diff = purchase_price.checked_sub(self.at_price).unwrap();
             self.state.unrealized_loss += diff * sats;
         }
@@ -77,9 +88,15 @@ impl CachedUnrealizedState {
 
     /// Update cached state when a send happens from historical price.
     pub fn on_send(&mut self, historical_price: Dollars, sats: Sats) {
+        let invested_capital = historical_price * sats;
         if historical_price <= self.at_price {
             // Was in profit
             self.state.supply_in_profit -= sats;
+            self.state.invested_capital_in_profit = self
+                .state
+                .invested_capital_in_profit
+                .checked_sub(invested_capital)
+                .unwrap();
             if historical_price < self.at_price {
                 let diff = self.at_price.checked_sub(historical_price).unwrap();
                 let profit_removed = diff * sats;
@@ -92,6 +109,11 @@ impl CachedUnrealizedState {
         } else {
             // Was in loss
             self.state.supply_in_loss -= sats;
+            self.state.invested_capital_in_loss = self
+                .state
+                .invested_capital_in_loss
+                .checked_sub(invested_capital)
+                .unwrap();
             let diff = historical_price.checked_sub(self.at_price).unwrap();
             let loss_removed = diff * sats;
             self.state.unrealized_loss = self
@@ -210,14 +232,17 @@ impl CachedUnrealizedState {
         let mut state = UnrealizedState::ZERO;
 
         for (price, &sats) in price_to_amount.iter() {
+            let invested_capital = price * sats;
             if price <= current_price {
                 state.supply_in_profit += sats;
+                state.invested_capital_in_profit += invested_capital;
                 if price < current_price {
                     let diff = current_price.checked_sub(price).unwrap();
                     state.unrealized_profit += diff * sats;
                 }
             } else {
                 state.supply_in_loss += sats;
+                state.invested_capital_in_loss += invested_capital;
                 let diff = price.checked_sub(current_price).unwrap();
                 state.unrealized_loss += diff * sats;
             }

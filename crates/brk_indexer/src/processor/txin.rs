@@ -81,6 +81,11 @@ impl<'a> BlockProcessor<'a> {
                     {
                         txindex
                     } else {
+                        let store_result = self.stores.txidprefix_to_txindex.get(&txid_prefix)?;
+                        tracing::error!(
+                            "UnknownTxid: txid={}, prefix={:?}, store_result={:?}, current_txindex={:?}",
+                            txid, txid_prefix, store_result, self.indexes.txindex
+                        );
                         return Err(Error::UnknownTxid);
                     };
 

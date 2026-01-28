@@ -156,6 +156,7 @@ impl Query {
         Ok(ResolvedQuery {
             vecs,
             format: params.format(),
+            index: params.index,
             version,
             total,
             start,
@@ -170,6 +171,7 @@ impl Query {
         let ResolvedQuery {
             vecs,
             format,
+            index,
             version,
             total,
             start,
@@ -182,7 +184,7 @@ impl Query {
             Format::JSON => {
                 if vecs.len() == 1 {
                     let mut buf = Vec::new();
-                    MetricData::serialize(vecs[0], start, end, &mut buf)?;
+                    MetricData::serialize(vecs[0], index, start, end, &mut buf)?;
                     Output::Json(buf)
                 } else {
                     let mut buf = Vec::new();
@@ -191,7 +193,7 @@ impl Query {
                         if i > 0 {
                             buf.push(b',');
                         }
-                        MetricData::serialize(*vec, start, end, &mut buf)?;
+                        MetricData::serialize(*vec, index, start, end, &mut buf)?;
                     }
                     buf.push(b']');
                     Output::Json(buf)

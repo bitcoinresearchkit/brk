@@ -252,6 +252,14 @@ impl Stores {
         }
 
         if starting_indexes.txindex != TxIndex::ZERO {
+            let txid_vec_len = vecs.transactions.txid.len();
+            let skip_count = starting_indexes.txindex.to_usize();
+            let remove_count = txid_vec_len.saturating_sub(skip_count);
+            tracing::debug!(
+                "Rollback TXIDs: vec_len={}, skip={}, removing={}",
+                txid_vec_len, skip_count, remove_count
+            );
+
             vecs.transactions
                 .txid
                 .iter()?
@@ -272,6 +280,9 @@ impl Stores {
                         self.txidprefix_to_txindex.remove(txidprefix);
                     }
                 });
+
+            // Clear caches to prevent stale reads after rollback
+            self.txidprefix_to_txindex.clear_caches();
         } else {
             unreachable!();
         }
