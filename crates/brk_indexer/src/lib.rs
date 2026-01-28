@@ -7,7 +7,7 @@ use brk_iterator::Blocks;
 use brk_rpc::Client;
 use brk_types::Height;
 use tracing::{debug, info};
-use vecdb::{Exit, TypedVecIterator};
+use vecdb::Exit;
 mod constants;
 mod indexes;
 mod processor;
@@ -102,15 +102,6 @@ impl Indexer {
 
         let (starting_indexes, prev_hash) = if let Some(hash) = last_blockhash {
             let (height, hash) = client.get_closest_valid_height(hash)?;
-            // TEST: force rollback 5 blocks (only if we have enough blocks)
-            let (height, hash) = if *height > 10 {
-                let height = Height::from(height.checked_sub(1).unwrap());
-                let hash = self.vecs.blocks.blockhash.iter()?.get(height).unwrap();
-                (height, hash)
-            } else {
-                (height, hash)
-            };
-            // END TEST
             match Indexes::from_vecs_and_stores(height.incremented(), &mut self.vecs, &self.stores)
             {
                 Some(starting_indexes) => {
