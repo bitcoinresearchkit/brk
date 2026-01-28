@@ -1595,9 +1595,9 @@ dependencies = [
 
 [[package]]
 name = "iana-time-zone"
-version = "0.1.64"
+version = "0.1.65"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33e57f83510bb73707521ebaffa789ec8caf86f9657cad665b092b581d40e9fb"
+checksum = "e31bc9ad994ba00e440a8aa5c9ef0ec67d5cb5e5cb0cc7f8b744a35b389cc470"
 dependencies = [
  "android_system_properties",
  "core-foundation-sys",
@@ -2432,7 +2432,9 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.6.2"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bf9c16af7a93d15280ceb0d502657f9ec524cce61c946a1c98390740270820d"
 dependencies = [
  "libc",
  "log",
@@ -3250,7 +3252,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.6.2"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "66b361b0614c0d367441dcbc7c28a885b7b088a8d379e23ad845d81324f2c5f6"
 dependencies = [
  "ctrlc",
  "log",
@@ -3269,7 +3273,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.6.2"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "962dfcd7fc848c27f6ee051cf1a4dfd55d72a37d443fb525268eff41da9cacf8"
 dependencies = [
  "quote",
  "syn",
