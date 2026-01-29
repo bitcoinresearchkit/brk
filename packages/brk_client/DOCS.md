@@ -19,6 +19,8 @@
     * [LT\_AMOUNT\_NAMES](#brk_client.BrkClient.LT_AMOUNT_NAMES)
     * [\_\_init\_\_](#brk_client.BrkClient.__init__)
     * [metric](#brk_client.BrkClient.metric)
+    * [index\_to\_date](#brk_client.BrkClient.index_to_date)
+    * [is\_date\_index](#brk_client.BrkClient.is_date_index)
     * [get\_api](#brk_client.BrkClient.get_api)
     * [get\_address](#brk_client.BrkClient.get_address)
     * [get\_address\_txs](#brk_client.BrkClient.get_address_txs)
@@ -179,6 +181,26 @@ Create a dynamic metric endpoint builder for any metric/index combination.
 
 Use this for programmatic access when the metric name is determined at runtime.
 For type-safe access, use the `metrics` tree instead.
+
+<a id="brk_client.BrkClient.index_to_date"></a>
+
+#### index\_to\_date
+
+```python
+def index_to_date(index: Index, i: int) -> date
+```
+
+Convert an index value to a date for date-based indexes.
+
+<a id="brk_client.BrkClient.is_date_index"></a>
+
+#### is\_date\_index
+
+```python
+def is_date_index(index: Index) -> bool
+```
+
+Check if an index type is date-based.
 
 <a id="brk_client.BrkClient.get_api"></a>
 
