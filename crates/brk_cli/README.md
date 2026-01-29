@@ -18,7 +18,7 @@ Command-line interface for running a Bitcoin Research Kit instance.
 
 ```bash
 rustup update
-RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli"
+RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli
 ```
 
 Portable build (without native CPU optimizations):
