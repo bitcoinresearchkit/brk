@@ -23,9 +23,11 @@ pub fn init(path: Option<&Path>) -> io::Result<()> {
     #[cfg(not(debug_assertions))]
     const DEFAULT_LEVEL: &str = "info";
 
+    let level = std::env::var("LOG").unwrap_or_else(|_| DEFAULT_LEVEL.to_string());
+
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
         EnvFilter::new(format!(
-            "{DEFAULT_LEVEL},bitcoin=off,bitcoincore-rpc=off,fjall=off,brk_fjall=off,lsm_tree=off,brk_rolldown=off,rolldown=off,tracing=off,aide=off,rustls=off,notify=off,oxc_resolver=off,tower_http=off"
+            "{level},bitcoin=off,bitcoincore-rpc=off,fjall=off,brk_fjall=off,lsm_tree=off,brk_rolldown=off,rolldown=off,tracing=off,aide=off,rustls=off,notify=off,oxc_resolver=off,tower_http=off"
         ))
     });
 

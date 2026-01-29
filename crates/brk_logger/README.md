@@ -13,6 +13,11 @@ Drop-in logging initialization that silences noisy dependencies (bitcoin, fjall,
 - **Sensible defaults**: Pre-configured filters silence common verbose libraries
 - **Timestamp formatting**: Uses system timezone via jiff
 
+## Environment Variables
+
+- `LOG` - Set log level (default: `info` in release, `debug` in dev). Example: `LOG=debug brk`
+- `RUST_LOG` - Full control over filtering (overrides all defaults)
+
 ## Core API
 
 ```rust,ignore

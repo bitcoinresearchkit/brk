@@ -11,17 +11,15 @@ Command-line interface for running a Bitcoin Research Kit instance.
 
 - Bitcoin Core running with RPC enabled
 - Access to `blk*.dat` files
-- ~400 GB disk space
-- 12+ GB RAM
+- [~400 GB disk space](https://bitview.space/api/server/disk)
+- [12+ GB RAM](https://github.com/bitcoinresearchkit/benches#benchmarks)
 
 ## Install
 
 ```bash
 rustup update
-RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli --version "$(cargo search brk_cli | head -1 | awk -F'"' '{print $2}')"
+RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli"
 ```
-
-The SIMD flags (`bmi1`, `bmi2`, `avx2`) significantly improve pcodec decompression performance.
 
 Portable build (without native CPU optimizations):
 
@@ -46,7 +44,21 @@ brk -h       # Show all options
 brk -V       # Show version
 ```
 
-Options are saved to `~/.brk/config.toml` after first use.
+Command-line options override `~/.brk/config.toml` for that run only. Edit the file directly to persist settings:
+
+```toml
+brkdir = "/path/to/data"
+bitcoindir = "/path/to/.bitcoin"
+```
+
+All fields are optional. See `brk -h` for the full list.
+
+## Environment Variables
+
+```bash
+LOG=debug brk    # Enable debug logging (keeps noise filters)
+RUST_LOG=... brk # Full control over log filtering (overrides all defaults)
+```
 
 ## Files
 

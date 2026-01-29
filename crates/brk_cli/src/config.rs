@@ -4,11 +4,11 @@ use std::{
 };
 
 use brk_error::{Error, Result};
-use owo_colors::OwoColorize;
 use brk_fetcher::Fetcher;
 use brk_rpc::{Auth, Client};
 use brk_server::Website;
 use brk_types::Port;
+use owo_colors::OwoColorize;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{default_brk_path, dot_brk_path, fix_user_path};
@@ -97,8 +97,6 @@ impl Config {
 
         config.check();
 
-        config.write(&path)?;
-
         Ok(config)
     }
 
@@ -156,25 +154,96 @@ impl Config {
         println!("Bitcoin Research Kit");
         println!();
         println!("{}", "USAGE:".bold());
-        println!("    brk {}", "[OPTIONS]".bright_black());
+        println!(
+            "    {} brk {}",
+            "[ENV]".bright_black(),
+            "[OPTIONS]".bright_black()
+        );
         println!();
         println!("{}", "OPTIONS:".bold());
-        println!("    -h, --help                   Print help");
-        println!("    -V, --version                Print version");
+        println!("    -h, --help                Print help");
+        println!("    -V, --version             Print version");
         println!();
-        println!("    --brkdir {}              Output directory {}", "<PATH>".bright_black(), "[~/.brk]".bright_black());
-        println!("    --brkport {}              Server port {}", "<PORT>".bright_black(), "[3110]".bright_black());
-        println!("    --website {}        Website: true, false, or path {}", "<BOOL|PATH>".bright_black(), "[true]".bright_black());
-        println!("    --fetch {}               Fetch prices {}", "<BOOL>".bright_black(), "[true]".bright_black());
+        println!(
+            "    --brkdir {}           Output directory {}",
+            "<PATH>".bright_black(),
+            "[~/.brk]".bright_black()
+        );
+        println!(
+            "    --brkport {}          Server port {}",
+            "<PORT>".bright_black(),
+            "[3110]".bright_black()
+        );
+        println!(
+            "    --website {}     Website {}",
+            "<BOOL|PATH>".bright_black(),
+            "[true]".bright_black()
+        );
+        println!(
+            "    --fetch {}            Fetch prices {}",
+            "<BOOL>".bright_black(),
+            "[true]".bright_black()
+        );
         println!();
-        println!("    --bitcoindir {}          Bitcoin directory {}", "<PATH>".bright_black(), "[~/.bitcoin, ~/Library/...]".bright_black());
-        println!("    --blocksdir {}           Blocks directory {}", "<PATH>".bright_black(), "[<bitcoindir>/blocks]".bright_black());
+        println!(
+            "    --bitcoindir {}       Bitcoin directory {}",
+            "<PATH>".bright_black(),
+            "[OS default]".bright_black()
+        );
+        println!(
+            "    --blocksdir {}        Blocks directory {}",
+            "<PATH>".bright_black(),
+            "[<bitcoindir>/blocks]".bright_black()
+        );
         println!();
-        println!("    --rpcconnect {}            RPC host {}", "<IP>".bright_black(), "[localhost]".bright_black());
-        println!("    --rpcport {}             RPC port {}", "<PORT>".bright_black(), "[8332]".bright_black());
-        println!("    --rpccookiefile {}       RPC cookie file {}", "<PATH>".bright_black(), "[<bitcoindir>/.cookie]".bright_black());
-        println!("    --rpcuser {}         RPC username", "<USERNAME>".bright_black());
-        println!("    --rpcpassword {}     RPC password", "<PASSWORD>".bright_black());
+        println!(
+            "    --rpcconnect {}         RPC host {}",
+            "<IP>".bright_black(),
+            "[localhost]".bright_black()
+        );
+        println!(
+            "    --rpcport {}          RPC port {}",
+            "<PORT>".bright_black(),
+            "[8332]".bright_black()
+        );
+        println!(
+            "    --rpccookiefile {}    RPC cookie file {}",
+            "<PATH>".bright_black(),
+            "[<bitcoindir>/.cookie]".bright_black()
+        );
+        println!(
+            "    --rpcuser {}      RPC username",
+            "<USERNAME>".bright_black()
+        );
+        println!(
+            "    --rpcpassword {}  RPC password",
+            "<PASSWORD>".bright_black()
+        );
+        println!();
+        println!("{}", "ENVIRONMENT:".bold());
+        println!(
+            "    LOG={}               Log level {}",
+            "<LEVEL>".bright_black(),
+            "[info]".bright_black()
+        );
+        println!(
+            "    RUST_LOG={}          Full log filter",
+            "<RULES>".bright_black()
+        );
+        println!();
+        println!("{}", "CONFIG:".bold());
+        println!(
+            "    Edit {} to persist settings:",
+            "~/.brk/config.toml".bright_black()
+        );
+        println!(
+            "    {}",
+            "brkdir = \"/path/to/data\"".bright_black()
+        );
+        println!(
+            "    {}",
+            "bitcoindir = \"/path/to/.bitcoin\"".bright_black()
+        );
     }
 
     fn check(&self) {
@@ -214,10 +283,6 @@ Finally, you can run the program with '-h' for help."
             |_| Config::default(),
             |contents| toml::from_str(&contents).unwrap_or_default(),
         )
-    }
-
-    fn write(&self, path: &Path) -> std::io::Result<()> {
-        fs::write(path, toml::to_string(self).unwrap())
     }
 
     pub fn rpc(&self) -> Result<Client> {
@@ -300,7 +365,6 @@ Finally, you can run the program with '-h' for help."
         self.fetch()
             .then(|| Fetcher::import(Some(self.harsdir().as_path())).unwrap())
     }
-
 }
 
 fn default_on_error<'de, D, T>(deserializer: D) -> Result<T, D::Error>

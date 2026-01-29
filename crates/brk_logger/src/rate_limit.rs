@@ -43,7 +43,7 @@ impl Inner {
             .to_zoned(tz::TimeZone::system())
             .strftime("%Y-%m-%d")
             .to_string();
-        self.dir.join(format!("{}.{}", self.prefix, date))
+        self.dir.join(format!("{}_{}.txt", self.prefix, date))
     }
 }
 
