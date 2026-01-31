@@ -14,14 +14,14 @@ export const formatCohortTitle = (cohortTitle) =>
 
 /**
  * Create sats/btc/usd line series from a pattern with .sats/.bitcoin/.dollars
- * @param {{ sats: AnyMetricPattern, bitcoin: AnyMetricPattern, dollars: AnyMetricPattern }} pattern
- * @param {string} name
- * @param {Color} [color]
- * @param {{ defaultActive?: boolean }} [options]
+ * @param {Object} args
+ * @param {{ sats: AnyMetricPattern, bitcoin: AnyMetricPattern, dollars: AnyMetricPattern }} args.pattern
+ * @param {string} args.name
+ * @param {Color} [args.color]
+ * @param {boolean} [args.defaultActive]
  * @returns {FetchedLineSeriesBlueprint[]}
  */
-export function satsBtcUsd(pattern, name, color, options) {
-  const { defaultActive } = options || {};
+export function satsBtcUsd({ pattern, name, color, defaultActive }) {
   return [
     line({
       metric: pattern.bitcoin,

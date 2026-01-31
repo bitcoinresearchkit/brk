@@ -124,10 +124,10 @@ function createSingleSupplySeriesBase(ctx, cohort) {
   const { tree } = cohort;
 
   return [
-    ...satsBtcUsd(tree.supply.total, "Supply", colors.default),
-    ...satsBtcUsd(tree.unrealized.supplyInProfit, "In Profit", colors.green),
-    ...satsBtcUsd(tree.unrealized.supplyInLoss, "In Loss", colors.red),
-    ...satsBtcUsd(tree.supply.halved, "half", colors.gray).map((s) => ({
+    ...satsBtcUsd({ pattern: tree.supply.total, name: "Supply", color: colors.default }),
+    ...satsBtcUsd({ pattern: tree.unrealized.supplyInProfit, name: "In Profit", color: colors.green }),
+    ...satsBtcUsd({ pattern: tree.unrealized.supplyInLoss, name: "In Loss", color: colors.red }),
+    ...satsBtcUsd({ pattern: tree.supply.halved, name: "half", color: colors.gray }).map((s) => ({
       ...s,
       options: { lineStyle: 4 },
     })),
@@ -206,7 +206,7 @@ export function createSingleSupplySeriesWithoutRelative(ctx, cohort) {
  */
 export function createGroupedSupplyTotalSeries(list, { relativeMetrics } = {}) {
   return list.flatMap((cohort) => [
-    ...satsBtcUsd(cohort.tree.supply.total, cohort.name, cohort.color),
+    ...satsBtcUsd({ pattern: cohort.tree.supply.total, name: cohort.name, color: cohort.color }),
     ...(relativeMetrics ? relativeMetrics(cohort) : []),
   ]);
 }
@@ -221,7 +221,7 @@ export function createGroupedSupplyTotalSeries(list, { relativeMetrics } = {}) {
  */
 export function createGroupedSupplyInProfitSeries(list, { relativeMetrics } = {}) {
   return list.flatMap((cohort) => [
-    ...satsBtcUsd(cohort.tree.unrealized.supplyInProfit, cohort.name, cohort.color),
+    ...satsBtcUsd({ pattern: cohort.tree.unrealized.supplyInProfit, name: cohort.name, color: cohort.color }),
     ...(relativeMetrics ? relativeMetrics(cohort) : []),
   ]);
 }
@@ -236,7 +236,7 @@ export function createGroupedSupplyInProfitSeries(list, { relativeMetrics } = {}
  */
 export function createGroupedSupplyInLossSeries(list, { relativeMetrics } = {}) {
   return list.flatMap((cohort) => [
-    ...satsBtcUsd(cohort.tree.unrealized.supplyInLoss, cohort.name, cohort.color),
+    ...satsBtcUsd({ pattern: cohort.tree.unrealized.supplyInLoss, name: cohort.name, color: cohort.color }),
     ...(relativeMetrics ? relativeMetrics(cohort) : []),
   ]);
 }

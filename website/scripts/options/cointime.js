@@ -166,9 +166,9 @@ export function createCointimeSection(ctx) {
         name: "Supply",
         title: "Cointime Supply",
         bottom: [
-          ...satsBtcUsd(all.supply.total, "All", colors.orange),
-          ...satsBtcUsd(cointimeSupply.vaultedSupply, "Vaulted", colors.lime),
-          ...satsBtcUsd(cointimeSupply.activeSupply, "Active", colors.rose),
+          ...satsBtcUsd({ pattern: all.supply.total, name: "All", color: colors.orange }),
+          ...satsBtcUsd({ pattern: cointimeSupply.vaultedSupply, name: "Vaulted", color: colors.lime }),
+          ...satsBtcUsd({ pattern: cointimeSupply.activeSupply, name: "Active", color: colors.rose }),
         ],
       },
 

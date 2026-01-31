@@ -290,12 +290,13 @@ export function histogram({
 /**
  * Create series from patterns with sum + cumulative + percentiles (NO base)
  * @param {Colors} colors
- * @param {AnyStatsPattern} pattern
- * @param {Unit} unit
- * @param {string} [title]
+ * @param {Object} args
+ * @param {AnyStatsPattern} args.pattern
+ * @param {Unit} args.unit
+ * @param {string} [args.title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromSumStatsPattern(colors, pattern, unit, title = "") {
+export function fromSumStatsPattern(colors, { pattern, unit, title = "" }) {
   const { stat } = colors;
   return [
     { metric: pattern.average, title: `${title} avg`.trim(), unit },
@@ -320,15 +321,16 @@ export function fromSumStatsPattern(colors, pattern, unit, title = "") {
 /**
  * Create series from a BaseStatsPattern (base + avg + percentiles, NO sum)
  * @param {Colors} colors
- * @param {BaseStatsPattern<any>} pattern
- * @param {Unit} unit
- * @param {string} [title]
- * @param {{ baseColor?: Color, avgActive?: boolean }} [options]
+ * @param {Object} args
+ * @param {BaseStatsPattern<any>} args.pattern
+ * @param {Unit} args.unit
+ * @param {string} [args.title]
+ * @param {Color} [args.baseColor]
+ * @param {boolean} [args.avgActive]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromBaseStatsPattern(colors, pattern, unit, title = "", options) {
+export function fromBaseStatsPattern(colors, { pattern, unit, title = "", baseColor, avgActive = true }) {
   const { stat } = colors;
-  const { baseColor, avgActive = true } = options || {};
   return [
     { metric: pattern.base, title: title || "base", color: baseColor, unit },
     {
@@ -345,12 +347,13 @@ export function fromBaseStatsPattern(colors, pattern, unit, title = "", options)
 /**
  * Create series from a FullStatsPattern (base + sum + cumulative + avg + percentiles)
  * @param {Colors} colors
- * @param {FullStatsPattern<any>} pattern
- * @param {Unit} unit
- * @param {string} [title]
+ * @param {Object} args
+ * @param {FullStatsPattern<any>} args.pattern
+ * @param {Unit} args.unit
+ * @param {string} [args.title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromFullStatsPattern(colors, pattern, unit, title = "") {
+export function fromFullStatsPattern(colors, { pattern, unit, title = "" }) {
   const { stat } = colors;
   return [
     { metric: pattern.base, title: title || "base", unit },
@@ -379,14 +382,15 @@ export function fromFullStatsPattern(colors, pattern, unit, title = "") {
 }
 
 /**
- * Create series from a StatsPattern ({ average, min, max, percentiles })
+ * Create series from a StatsPattern (avg + percentiles, NO base)
  * @param {Colors} colors
- * @param {StatsPattern<any>} pattern
- * @param {Unit} unit
- * @param {string} [title]
+ * @param {Object} args
+ * @param {StatsPattern<any>} args.pattern
+ * @param {Unit} args.unit
+ * @param {string} [args.title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromStatsPattern(colors, pattern, unit, title = "") {
+export function fromStatsPattern(colors, { pattern, unit, title = "" }) {
   return [
     {
       type: "Dots",
@@ -401,20 +405,16 @@ export function fromStatsPattern(colors, pattern, unit, title = "") {
 /**
  * Create series from AnyFullStatsPattern (base + sum + cumulative + avg + percentiles)
  * @param {Colors} colors
- * @param {AnyFullStatsPattern} pattern
- * @param {Unit} unit
- * @param {string} [title]
+ * @param {Object} args
+ * @param {AnyFullStatsPattern} args.pattern
+ * @param {Unit} args.unit
+ * @param {string} [args.title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromAnyFullStatsPattern(
-  colors,
-  pattern,
-  unit,
-  title = "",
-) {
+export function fromAnyFullStatsPattern(colors, { pattern, unit, title = "" }) {
   const { stat } = colors;
   return [
-    ...fromBaseStatsPattern(colors, pattern, unit, title),
+    ...fromBaseStatsPattern(colors, { pattern, unit, title }),
     {
       metric: pattern.sum,
       title: `${title} sum`.trim(),
@@ -434,49 +434,30 @@ export function fromAnyFullStatsPattern(
 /**
  * Create series from a CoinbasePattern ({ sats, bitcoin, dollars } each with stats + sum + cumulative)
  * @param {Colors} colors
- * @param {CoinbasePattern} pattern
- * @param {string} [title]
+ * @param {Object} args
+ * @param {CoinbasePattern} args.pattern
+ * @param {string} [args.title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromCoinbasePattern(colors, pattern, title = "") {
+export function fromCoinbasePattern(colors, { pattern, title = "" }) {
   return [
-    ...fromAnyFullStatsPattern(
-      colors,
-      pattern.bitcoin,
-      Unit.btc,
-      title,
-    ),
-    ...fromAnyFullStatsPattern(
-      colors,
-      pattern.sats,
-      Unit.sats,
-      title,
-    ),
-    ...fromAnyFullStatsPattern(
-      colors,
-      pattern.dollars,
-      Unit.usd,
-      title,
-    ),
+    ...fromAnyFullStatsPattern(colors, { pattern: pattern.bitcoin, unit: Unit.btc, title }),
+    ...fromAnyFullStatsPattern(colors, { pattern: pattern.sats, unit: Unit.sats, title }),
+    ...fromAnyFullStatsPattern(colors, { pattern: pattern.dollars, unit: Unit.usd, title }),
   ];
 }
 
 /**
  * Create series from a ValuePattern ({ sats, bitcoin, dollars } each as CountPattern with sum + cumulative)
  * @param {Colors} colors
- * @param {ValuePattern} pattern
- * @param {string} [title]
- * @param {Color} [sumColor]
- * @param {Color} [cumulativeColor]
+ * @param {Object} args
+ * @param {ValuePattern} args.pattern
+ * @param {string} [args.title]
+ * @param {Color} [args.sumColor]
+ * @param {Color} [args.cumulativeColor]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromValuePattern(
-  colors,
-  pattern,
-  title = "",
-  sumColor,
-  cumulativeColor,
-) {
+export function fromValuePattern(colors, { pattern, title = "", sumColor, cumulativeColor }) {
   return [
     {
       metric: pattern.bitcoin.sum,
@@ -523,23 +504,16 @@ export function fromValuePattern(
 /**
  * Create sum/cumulative series from a BitcoinPattern ({ sum, cumulative }) with explicit unit and colors
  * @param {Colors} colors
- * @param {{ sum: AnyMetricPattern, cumulative: AnyMetricPattern }} pattern
- * @param {Unit} unit
- * @param {string} [title]
- * @param {Color} [sumColor]
- * @param {Color} [cumulativeColor]
- * @param {boolean} [defaultActive]
+ * @param {Object} args
+ * @param {{ sum: AnyMetricPattern, cumulative: AnyMetricPattern }} args.pattern
+ * @param {Unit} args.unit
+ * @param {string} [args.title]
+ * @param {Color} [args.sumColor]
+ * @param {Color} [args.cumulativeColor]
+ * @param {boolean} [args.defaultActive]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromBitcoinPatternWithUnit(
-  colors,
-  pattern,
-  unit,
-  title = "",
-  sumColor,
-  cumulativeColor,
-  defaultActive,
-) {
+export function fromBitcoinPatternWithUnit(colors, { pattern, unit, title = "", sumColor, cumulativeColor, defaultActive }) {
   return [
     {
       metric: pattern.sum,
@@ -561,21 +535,15 @@ export function fromBitcoinPatternWithUnit(
 /**
  * Create sum/cumulative series from a CountPattern with explicit unit and colors
  * @param {Colors} colors
- * @param {CountPattern<any>} pattern
- * @param {Unit} unit
- * @param {string} [title]
- * @param {Color} [sumColor]
- * @param {Color} [cumulativeColor]
+ * @param {Object} args
+ * @param {CountPattern<any>} args.pattern
+ * @param {Unit} args.unit
+ * @param {string} [args.title]
+ * @param {Color} [args.sumColor]
+ * @param {Color} [args.cumulativeColor]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromCountPattern(
-  colors,
-  pattern,
-  unit,
-  title = "",
-  sumColor,
-  cumulativeColor,
-) {
+export function fromCountPattern(colors, { pattern, unit, title = "", sumColor, cumulativeColor }) {
   return [
     {
       metric: pattern.sum,
@@ -595,12 +563,13 @@ export function fromCountPattern(
 
 /**
  * Create series from a SupplyPattern (sats/bitcoin/dollars, no sum/cumulative)
- * @param {SupplyPattern} pattern
- * @param {string} title
- * @param {Color} [color]
+ * @param {Object} args
+ * @param {SupplyPattern} args.pattern
+ * @param {string} args.title
+ * @param {Color} [args.color]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromSupplyPattern(pattern, title, color) {
+export function fromSupplyPattern({ pattern, title, color }) {
   return [
     {
       metric: pattern.bitcoin,

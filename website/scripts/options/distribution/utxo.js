@@ -947,26 +947,25 @@ function createSingleRealizedPnlSection(
       name: "P&L",
       title: title("Realized P&L"),
       bottom: [
-        ...fromCountPattern(
-          tree.realized.realizedProfit,
-          Unit.usd,
-          "Profit",
-          colors.green,
-        ),
-        ...fromCountPattern(
-          tree.realized.realizedLoss,
-          Unit.usd,
-          "Loss",
-          colors.red,
-        ),
-        ...fromBitcoinPatternWithUnit(
-          tree.realized.negRealizedLoss,
-          Unit.usd,
-          "Negative Loss",
-          colors.red,
-          undefined,
-          false,
-        ),
+        ...fromCountPattern({
+          pattern: tree.realized.realizedProfit,
+          unit: Unit.usd,
+          title: "Profit",
+          sumColor: colors.green,
+        }),
+        ...fromCountPattern({
+          pattern: tree.realized.realizedLoss,
+          unit: Unit.usd,
+          title: "Loss",
+          sumColor: colors.red,
+        }),
+        ...fromBitcoinPatternWithUnit({
+          pattern: tree.realized.negRealizedLoss,
+          unit: Unit.usd,
+          title: "Negative Loss",
+          sumColor: colors.red,
+          defaultActive: false,
+        }),
         ...extra,
         line({
           metric: tree.realized.totalRealizedPnl,
@@ -1009,11 +1008,11 @@ function createSingleRealizedPnlSection(
       name: "Net P&L",
       title: title("Net Realized P&L"),
       bottom: [
-        ...fromCountPattern(
-          tree.realized.netRealizedPnl,
-          Unit.usd,
-          "Net",
-        ),
+        ...fromCountPattern({
+          pattern: tree.realized.netRealizedPnl,
+          unit: Unit.usd,
+          title: "Net",
+        }),
         baseline({
           metric: tree.realized.netRealizedPnlCumulative30dDelta,
           name: "Cumulative 30d Change",
@@ -2618,24 +2617,21 @@ function createActivitySection({ ctx, cohort, title, valueMetrics = [] }) {
         name: "Sent",
         title: title("Sent"),
         bottom: [
-          ...fromCountPattern(
-            tree.activity.sent.sats,
-            Unit.sats,
-            undefined,
-            color,
-          ),
-          ...fromBitcoinPatternWithUnit(
-            tree.activity.sent.bitcoin,
-            Unit.btc,
-            undefined,
-            color,
-          ),
-          ...fromCountPattern(
-            tree.activity.sent.dollars,
-            Unit.usd,
-            undefined,
-            color,
-          ),
+          ...fromCountPattern({
+            pattern: tree.activity.sent.sats,
+            unit: Unit.sats,
+            sumColor: color,
+          }),
+          ...fromBitcoinPatternWithUnit({
+            pattern: tree.activity.sent.bitcoin,
+            unit: Unit.btc,
+            sumColor: color,
+          }),
+          ...fromCountPattern({
+            pattern: tree.activity.sent.dollars,
+            unit: Unit.usd,
+            sumColor: color,
+          }),
         ],
       },
       {

@@ -147,8 +147,8 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     name: "Stack",
     title: `${name} Stack`,
     bottom: [
-      ...satsBtcUsd(dca.periodStack[key], "DCA", colors.green),
-      ...satsBtcUsd(dca.periodLumpSumStack[key], "Lump sum", colors.orange),
+      ...satsBtcUsd({ pattern: dca.periodStack[key], name: "DCA", color: colors.green }),
+      ...satsBtcUsd({ pattern: dca.periodLumpSumStack[key], name: "Lump sum", color: colors.orange }),
     ],
   });
 
@@ -338,7 +338,7 @@ export function createDcaByYearSection(ctx, { dca }) {
             title: "DCA Stack",
             bottom: dcaClasses.flatMap(
               ({ year, color, defaultActive, stack }) =>
-                satsBtcUsd(stack, `${year}`, color, { defaultActive }),
+                satsBtcUsd({ pattern: stack, name: `${year}`, color, defaultActive }),
             ),
           },
         ],
@@ -415,7 +415,7 @@ export function createDcaByYearSection(ctx, { dca }) {
             {
               name: "Stack",
               title: `${year} Stack`,
-              bottom: satsBtcUsd(stack, "Stack", color),
+              bottom: satsBtcUsd({ pattern: stack, name: "Stack", color }),
             },
           ],
         }),
