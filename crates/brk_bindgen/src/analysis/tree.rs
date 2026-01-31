@@ -6,6 +6,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use brk_types::{Index, TreeNode, extract_json_type};
+use indexmap::IndexMap;
 
 use crate::{IndexSetPattern, PatternField, child_type_name};
 
@@ -26,8 +27,9 @@ fn get_shortest_leaf_name(node: &TreeNode) -> Option<String> {
 }
 
 /// Get the field signature for a branch node's children.
+/// Fields are sorted alphabetically for consistent pattern matching.
 pub fn get_node_fields(
-    children: &BTreeMap<String, TreeNode>,
+    children: &IndexMap<String, TreeNode>,
     pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
 ) -> Vec<PatternField> {
     let mut fields: Vec<PatternField> = children
@@ -57,6 +59,7 @@ pub fn get_node_fields(
             }
         })
         .collect();
+    // Sort for consistent pattern matching (display order preserved in IndexMap)
     fields.sort_by(|a, b| a.name.cmp(&b.name));
     fields
 }
@@ -298,7 +301,7 @@ pub fn infer_accumulated_name(parent_acc: &str, field_name: &str, descendant_lea
 
 /// Get fields with child field information for generic pattern lookup.
 pub fn get_fields_with_child_info(
-    children: &BTreeMap<String, TreeNode>,
+    children: &IndexMap<String, TreeNode>,
     parent_name: &str,
     pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
 ) -> Vec<(PatternField, Option<Vec<PatternField>>)> {
@@ -344,7 +347,6 @@ pub fn get_fields_with_child_info(
 mod tests {
     use super::*;
     use brk_types::{MetricLeaf, MetricLeafWithSchema, TreeNode};
-    use std::collections::BTreeMap;
 
     fn make_leaf(name: &str) -> TreeNode {
         let leaf = MetricLeaf {
@@ -356,7 +358,7 @@ mod tests {
     }
 
     fn make_branch(children: Vec<(&str, TreeNode)>) -> TreeNode {
-        let map: BTreeMap<String, TreeNode> = children
+        let map: IndexMap<String, TreeNode> = children
             .into_iter()
             .map(|(k, v)| (k.to_string(), v))
             .collect();

@@ -1,11 +1,11 @@
 use std::collections::BTreeMap;
 
 use brk_error::{Error, Result};
-use brk_types::{Cents, Close, Date, Dollars, High, Low, OHLCCents, Open, Timestamp};
+use brk_types::{CentsUnsigned, Close, Date, Dollars, High, Low, OHLCCentsUnsigned, Open, Timestamp};
 
 /// Parse OHLC value from a JSON array element at given index
-pub fn parse_cents(array: &[serde_json::Value], index: usize) -> Cents {
-    Cents::from(Dollars::from(
+pub fn parse_cents(array: &[serde_json::Value], index: usize) -> CentsUnsigned {
+    CentsUnsigned::from(Dollars::from(
         array
             .get(index)
             .and_then(|v| v.as_str())
@@ -14,9 +14,9 @@ pub fn parse_cents(array: &[serde_json::Value], index: usize) -> Cents {
     ))
 }
 
-/// Build OHLCCents from array indices 1-4 (open, high, low, close)
-pub fn ohlc_from_array(array: &[serde_json::Value]) -> OHLCCents {
-    OHLCCents::from((
+/// Build OHLCCentsUnsigned from array indices 1-4 (open, high, low, close)
+pub fn ohlc_from_array(array: &[serde_json::Value]) -> OHLCCentsUnsigned {
+    OHLCCentsUnsigned::from((
         Open::new(parse_cents(array, 1)),
         High::new(parse_cents(array, 2)),
         Low::new(parse_cents(array, 3)),
@@ -27,13 +27,13 @@ pub fn ohlc_from_array(array: &[serde_json::Value]) -> OHLCCents {
 /// Compute OHLC for a block from a time series of minute data.
 /// Aggregates all candles between previous_timestamp and timestamp.
 pub fn compute_ohlc_from_range(
-    tree: &BTreeMap<Timestamp, OHLCCents>,
+    tree: &BTreeMap<Timestamp, OHLCCentsUnsigned>,
     timestamp: Timestamp,
     previous_timestamp: Option<Timestamp>,
     source_name: &str,
-) -> Result<OHLCCents> {
+) -> Result<OHLCCentsUnsigned> {
     let previous_ohlc = previous_timestamp
-        .map_or(Some(OHLCCents::default()), |t| tree.get(&t).cloned());
+        .map_or(Some(OHLCCentsUnsigned::default()), |t| tree.get(&t).cloned());
 
     let last_ohlc = tree.get(&timestamp);
 
@@ -44,7 +44,7 @@ pub fn compute_ohlc_from_range(
     }
 
     let previous_ohlc = previous_ohlc.unwrap();
-    let mut result = OHLCCents::from(previous_ohlc.close);
+    let mut result = OHLCCentsUnsigned::from(previous_ohlc.close);
 
     let start = previous_timestamp.unwrap_or(Timestamp::new(0));
     let end = timestamp;

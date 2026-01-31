@@ -94,7 +94,7 @@ pub fn derive_traversable(input: TokenStream) -> TokenStream {
         return TokenStream::from(quote! {
             impl #impl_generics Traversable for #name #ty_generics {
                 fn to_tree_node(&self) -> brk_traversable::TreeNode {
-                    brk_traversable::TreeNode::Branch(std::collections::BTreeMap::new())
+                    brk_traversable::TreeNode::Branch(brk_traversable::IndexMap::new())
                 }
 
                 fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
@@ -362,8 +362,8 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
         // No flatten fields - use merge_entry for each to handle duplicates
         (
             quote! {
-                let mut collected: std::collections::BTreeMap<String, brk_traversable::TreeNode> =
-                    std::collections::BTreeMap::new();
+                let mut collected: brk_traversable::IndexMap<String, brk_traversable::TreeNode> =
+                    brk_traversable::IndexMap::new();
                 for entry in [#(#normal_entries,)*].into_iter().flatten() {
                     brk_traversable::TreeNode::merge_node(&mut collected, entry.0, entry.1)
                         .expect("Conflicting values for same key");
@@ -375,8 +375,8 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
         // Only flatten fields - explicit type annotation needed
         (
             quote! {
-                let mut collected: std::collections::BTreeMap<String, brk_traversable::TreeNode> =
-                    std::collections::BTreeMap::new();
+                let mut collected: brk_traversable::IndexMap<String, brk_traversable::TreeNode> =
+                    brk_traversable::IndexMap::new();
             },
             quote! { #(#flatten_entries)* },
         )
@@ -384,8 +384,8 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
         // Both normal and flatten fields - use merge_entry for normal fields
         (
             quote! {
-                let mut collected: std::collections::BTreeMap<String, brk_traversable::TreeNode> =
-                    std::collections::BTreeMap::new();
+                let mut collected: brk_traversable::IndexMap<String, brk_traversable::TreeNode> =
+                    brk_traversable::IndexMap::new();
                 for entry in [#(#normal_entries,)*].into_iter().flatten() {
                     brk_traversable::TreeNode::merge_node(&mut collected, entry.0, entry.1)
                         .expect("Conflicting values for same key");

@@ -34,7 +34,7 @@ fn main() -> Result<()> {
             .fetch()?;
 
         for ohlc in ohlcs.data {
-            let avg = (*ohlc.open + *ohlc.close) / 2;
+            let avg = (u64::from(*ohlc.open) + u64::from(*ohlc.close)) / 2;
             let avg = Dollars::from(avg);
             writeln!(writer, "{avg}").map_err(|e| brk_client::BrkError {
                 message: e.to_string(),

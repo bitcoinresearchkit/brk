@@ -3,31 +3,148 @@
 import { Unit } from "../../utils/units.js";
 import { priceLine } from "../constants.js";
 import { baseline, dots, line, price } from "../series.js";
-import { satsBtcUsd } from "../shared.js";
+import { satsBtcUsd, createPriceRatioCharts, formatCohortTitle } from "../shared.js";
+
+// ============================================================================
+// Generic Price Helpers
+// ============================================================================
 
 /**
- * Create supply section for a single cohort
+ * Create price folder (price + ratio + z-scores wrapped in folder)
+ * For cohorts with full extended ratio metrics (ActivePriceRatioPattern)
  * @param {PartialContext} ctx
- * @param {CohortObject} cohort
- * @param {Object} [options]
- * @param {AnyFetchedSeriesBlueprint[]} [options.supplyRelative] - Supply relative to circulating supply metrics
- * @param {AnyFetchedSeriesBlueprint[]} [options.pnlRelative] - Supply in profit/loss relative to circulating supply metrics
+ * @param {{ name: string, cohortTitle?: string, priceMetric: ActivePricePattern, ratioPattern: AnyRatioPattern, color: Color }} args
+ * @returns {PartialOptionsGroup}
+ */
+export function createPriceFolder(ctx, { name, cohortTitle, priceMetric, ratioPattern, color }) {
+  const context = cohortTitle ? `${cohortTitle} ${name}` : name;
+  return {
+    name,
+    tree: createPriceRatioCharts(ctx, {
+      context,
+      legend: name,
+      pricePattern: priceMetric,
+      ratio: ratioPattern,
+      color,
+    }),
+  };
+}
+
+/**
+ * Create basic price charts (price + ratio only, no z-scores) - flat array
+ * For cohorts with basic ratio metrics (only .ratio field)
+ * @template {AnyMetricPattern} R
+ * @param {{ name: string, context: string, priceMetric: ActivePricePattern, ratioMetric: R, color: Color }} args
+ * @returns {PartialOptionsTree}
+ */
+export function createBasicPriceCharts({ name, context, priceMetric, ratioMetric, color }) {
+  return [
+    {
+      name: "Price",
+      title: context,
+      top: [price({ metric: priceMetric, name, color })],
+    },
+    {
+      name: "Ratio",
+      title: formatCohortTitle(context)("Ratio"),
+      bottom: [
+        baseline({
+          metric: ratioMetric,
+          name: "Ratio",
+          color,
+          unit: Unit.ratio,
+          base: 1,
+        }),
+      ],
+    },
+  ];
+}
+
+/**
+ * Create basic price folder (price + ratio wrapped in folder, no z-scores)
+ * For cohorts with basic ratio metrics (only .ratio field)
+ * @template {AnyMetricPattern} R
+ * @param {{ name: string, cohortTitle?: string, priceMetric: ActivePricePattern, ratioMetric: R, color: Color }} args
+ * @returns {PartialOptionsGroup}
+ */
+export function createBasicPriceFolder({ name, cohortTitle, priceMetric, ratioMetric, color }) {
+  const context = cohortTitle ? `${cohortTitle} ${name}` : name;
+  return {
+    name,
+    tree: createBasicPriceCharts({ name, context, priceMetric, ratioMetric, color }),
+  };
+}
+
+/**
+ * Create grouped price charts (price + ratio) - flat array, no z-scores
+ * @template {{ color: Color, name: string, tree: { realized: AnyRealizedPattern } }} T
+ * @param {{ name: string, title: (metric: string) => string, list: readonly T[], getPrice: (tree: T['tree']) => ActivePricePattern, getRatio: (tree: T['tree']) => AnyMetricPattern }} args
+ * @returns {PartialOptionsTree}
+ */
+export function createGroupedPriceCharts({ name, title, list, getPrice, getRatio }) {
+  return [
+    {
+      name: "Price",
+      title: title(name),
+      top: list.map(({ color, name: cohortName, tree }) =>
+        price({ metric: getPrice(tree), name: cohortName, color }),
+      ),
+    },
+    {
+      name: "Ratio",
+      title: title(`${name} Ratio`),
+      bottom: list.map(({ color, name: cohortName, tree }) =>
+        baseline({ metric: getRatio(tree), name: cohortName, color, unit: Unit.ratio, base: 1 }),
+      ),
+    },
+  ];
+}
+
+/**
+ * Create grouped price folder (price + ratio wrapped in folder)
+ * @template {{ color: Color, name: string, tree: { realized: AnyRealizedPattern } }} T
+ * @param {{ name: string, title: (metric: string) => string, list: readonly T[], getPrice: (tree: T['tree']) => ActivePricePattern, getRatio: (tree: T['tree']) => AnyMetricPattern }} args
+ * @returns {PartialOptionsGroup}
+ */
+export function createGroupedPriceFolder({ name, title, list, getPrice, getRatio }) {
+  return {
+    name,
+    tree: createGroupedPriceCharts({ name, title, list, getPrice, getRatio }),
+  };
+}
+
+/**
+ * Create base supply series (without relative metrics)
+ * @param {PartialContext} ctx
+ * @param {CohortObject | CohortWithoutRelative} cohort
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSingleSupplySeries(ctx, cohort, { supplyRelative = [], pnlRelative = [] } = {}) {
+function createSingleSupplySeriesBase(ctx, cohort) {
   const { colors } = ctx;
   const { tree } = cohort;
 
   return [
     ...satsBtcUsd(tree.supply.total, "Supply", colors.default),
-    ...supplyRelative,
     ...satsBtcUsd(tree.unrealized.supplyInProfit, "In Profit", colors.green),
     ...satsBtcUsd(tree.unrealized.supplyInLoss, "In Loss", colors.red),
     ...satsBtcUsd(tree.supply.halved, "half", colors.gray).map((s) => ({
       ...s,
       options: { lineStyle: 4 },
     })),
-    ...pnlRelative,
+  ];
+}
+
+/**
+ * Create supply relative to own supply metrics
+ * @param {PartialContext} ctx
+ * @param {UtxoCohortObject | AddressCohortObject} cohort
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function createSingleSupplyRelativeToOwnMetrics(ctx, cohort) {
+  const { colors } = ctx;
+  const { tree } = cohort;
+
+  return [
     line({
       metric: tree.relative.supplyInProfitRelToOwnSupply,
       name: "In Profit",
@@ -49,6 +166,34 @@ export function createSingleSupplySeries(ctx, cohort, { supplyRelative = [], pnl
     }),
     priceLine({ ctx, unit: Unit.pctOwn, number: 50 }),
   ];
+}
+
+/**
+ * Create supply section for a single cohort (with relative metrics)
+ * @param {PartialContext} ctx
+ * @param {UtxoCohortObject | AddressCohortObject} cohort
+ * @param {Object} [options]
+ * @param {AnyFetchedSeriesBlueprint[]} [options.supplyRelative] - Supply relative to circulating supply metrics
+ * @param {AnyFetchedSeriesBlueprint[]} [options.pnlRelative] - Supply in profit/loss relative to circulating supply metrics
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleSupplySeries(ctx, cohort, { supplyRelative = [], pnlRelative = [] } = {}) {
+  return [
+    ...createSingleSupplySeriesBase(ctx, cohort),
+    ...supplyRelative,
+    ...pnlRelative,
+    ...createSingleSupplyRelativeToOwnMetrics(ctx, cohort),
+  ];
+}
+
+/**
+ * Create supply series for cohorts WITHOUT relative metrics
+ * @param {PartialContext} ctx
+ * @param {CohortWithoutRelative} cohort
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleSupplySeriesWithoutRelative(ctx, cohort) {
+  return createSingleSupplySeriesBase(ctx, cohort);
 }
 
 /**
@@ -98,7 +243,7 @@ export function createGroupedSupplyInLossSeries(list, { relativeMetrics } = {}) 
 
 /**
  * Create supply section for grouped cohorts
- * @template {readonly CohortObject[]} T
+ * @template {readonly (CohortObject | CohortWithoutRelative)[]} T
  * @param {T} list
  * @param {(metric: string) => string} title
  * @param {Object} [options]
@@ -365,6 +510,67 @@ export function createCostBasisPercentilesSeries(colors, list, useGroupName) {
   });
 }
 
+/**
+ * Create invested capital percentile series (only for cohorts with CostBasisPattern2)
+ * Shows invested capital at each percentile level
+ * @param {Colors} colors
+ * @param {readonly CohortWithCostBasisPercentiles[]} list
+ * @param {boolean} useGroupName
+ * @returns {FetchedPriceSeriesBlueprint[]}
+ */
+export function createInvestedCapitalPercentilesSeries(colors, list, useGroupName) {
+  return list.flatMap(({ name, tree }) => {
+    const ic = tree.costBasis.investedCapital;
+    const n = (/** @type {number} */ pct) => (useGroupName ? `${name} p${pct}` : `p${pct}`);
+    return [
+      price({ metric: ic.pct95, name: n(95), color: colors.fuchsia, defaultActive: false }),
+      price({ metric: ic.pct90, name: n(90), color: colors.pink, defaultActive: false }),
+      price({ metric: ic.pct85, name: n(85), color: colors.pink, defaultActive: false }),
+      price({ metric: ic.pct80, name: n(80), color: colors.rose, defaultActive: false }),
+      price({ metric: ic.pct75, name: n(75), color: colors.red, defaultActive: false }),
+      price({ metric: ic.pct70, name: n(70), color: colors.orange, defaultActive: false }),
+      price({ metric: ic.pct65, name: n(65), color: colors.amber, defaultActive: false }),
+      price({ metric: ic.pct60, name: n(60), color: colors.yellow, defaultActive: false }),
+      price({ metric: ic.pct55, name: n(55), color: colors.yellow, defaultActive: false }),
+      price({ metric: ic.pct50, name: n(50), color: colors.avocado }),
+      price({ metric: ic.pct45, name: n(45), color: colors.lime, defaultActive: false }),
+      price({ metric: ic.pct40, name: n(40), color: colors.green, defaultActive: false }),
+      price({ metric: ic.pct35, name: n(35), color: colors.emerald, defaultActive: false }),
+      price({ metric: ic.pct30, name: n(30), color: colors.teal, defaultActive: false }),
+      price({ metric: ic.pct25, name: n(25), color: colors.teal, defaultActive: false }),
+      price({ metric: ic.pct20, name: n(20), color: colors.cyan, defaultActive: false }),
+      price({ metric: ic.pct15, name: n(15), color: colors.sky, defaultActive: false }),
+      price({ metric: ic.pct10, name: n(10), color: colors.blue, defaultActive: false }),
+      price({ metric: ic.pct05, name: n(5), color: colors.indigo, defaultActive: false }),
+    ];
+  });
+}
+
+/**
+ * Create spot percentile series (shows current percentile of price relative to cost basis/invested capital)
+ * @param {Colors} colors
+ * @param {readonly CohortWithCostBasisPercentiles[]} list
+ * @param {boolean} useGroupName
+ * @returns {FetchedBaselineSeriesBlueprint[]}
+ */
+export function createSpotPercentileSeries(colors, list, useGroupName) {
+  return list.flatMap(({ name, color, tree }) => [
+    baseline({
+      metric: tree.costBasis.spotCostBasisPercentile,
+      name: useGroupName ? `${name} Cost Basis` : "Cost Basis",
+      color: useGroupName ? color : colors.default,
+      unit: Unit.ratio,
+    }),
+    baseline({
+      metric: tree.costBasis.spotInvestedCapitalPercentile,
+      name: useGroupName ? `${name} Invested Capital` : "Invested Capital",
+      color: useGroupName ? color : colors.orange,
+      unit: Unit.ratio,
+      defaultActive: false,
+    }),
+  ]);
+}
+
 // ============================================================================
 // Activity Section Helpers
 // ============================================================================
@@ -613,6 +819,67 @@ export function createSingleValueCreatedDestroyedSeries(colors, tree) {
   ];
 }
 
+/**
+ * Create profit/loss value breakdown series for single cohort
+ * Shows profit value created/destroyed and loss value created/destroyed
+ * @param {Colors} colors
+ * @param {{ realized: AnyRealizedPattern }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleValueFlowBreakdownSeries(colors, tree) {
+  return [
+    line({
+      metric: tree.realized.profitValueCreated,
+      name: "Profit Created",
+      color: colors.green,
+      unit: Unit.usd,
+    }),
+    line({
+      metric: tree.realized.profitValueDestroyed,
+      name: "Profit Destroyed",
+      color: colors.lime,
+      unit: Unit.usd,
+      defaultActive: false,
+    }),
+    line({
+      metric: tree.realized.lossValueCreated,
+      name: "Loss Created",
+      color: colors.orange,
+      unit: Unit.usd,
+      defaultActive: false,
+    }),
+    line({
+      metric: tree.realized.lossValueDestroyed,
+      name: "Loss Destroyed",
+      color: colors.red,
+      unit: Unit.usd,
+    }),
+  ];
+}
+
+/**
+ * Create capitulation & profit flow series for single cohort
+ * @param {Colors} colors
+ * @param {{ realized: AnyRealizedPattern }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleCapitulationProfitFlowSeries(colors, tree) {
+  return [
+    line({
+      metric: tree.realized.profitFlow,
+      name: "Profit Flow",
+      color: colors.green,
+      unit: Unit.usd,
+    }),
+    line({
+      metric: tree.realized.capitulationFlow,
+      name: "Capitulation Flow",
+      color: colors.red,
+      unit: Unit.usd,
+    }),
+  ];
+}
+
 // ============================================================================
 // SOPR Helpers
 // ============================================================================
@@ -648,4 +915,279 @@ export function createSingleSoprSeries(colors, tree) {
       base: 1,
     }),
   ];
+}
+
+// ============================================================================
+// Investor Price Helpers
+// ============================================================================
+
+/**
+ * Create investor price series for single cohort
+ * @param {{ realized: AnyRealizedPattern }} tree
+ * @param {Color} color
+ * @returns {FetchedPriceSeriesBlueprint[]}
+ */
+export function createSingleInvestorPriceSeries(tree, color) {
+  return [
+    price({
+      metric: tree.realized.investorPrice,
+      name: "Investor",
+      color,
+    }),
+  ];
+}
+
+/**
+ * Create investor price ratio series for single cohort
+ * @param {{ realized: AnyRealizedPattern }} tree
+ * @param {Color} color
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleInvestorPriceRatioSeries(tree, color) {
+  return [
+    baseline({
+      metric: tree.realized.investorPriceExtra.ratio,
+      name: "Investor Ratio",
+      color,
+      unit: Unit.ratio,
+      base: 1,
+    }),
+  ];
+}
+
+/**
+ * Create investor price series for grouped cohorts
+ * @param {readonly CohortObject[]} list
+ * @returns {FetchedPriceSeriesBlueprint[]}
+ */
+export function createInvestorPriceSeries(list) {
+  return list.map(({ color, name, tree }) =>
+    price({ metric: tree.realized.investorPrice, name, color }),
+  );
+}
+
+/**
+ * Create investor price ratio series for grouped cohorts
+ * @param {readonly CohortObject[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createInvestorPriceRatioSeries(list) {
+  return list.map(({ name, tree }) =>
+    baseline({
+      metric: tree.realized.investorPriceExtra.ratio,
+      name,
+      unit: Unit.ratio,
+      base: 1,
+    }),
+  );
+}
+
+/**
+ * Create investor price folder for extended cohorts (with full Z-scores)
+ * For cohorts with ActivePriceRatioPattern (all, term.*, ageRange.* UTXO cohorts)
+ * @param {PartialContext} ctx
+ * @param {{ tree: { realized: RealizedWithExtras }, color: Color }} cohort
+ * @param {string} [cohortTitle] - Cohort title (e.g., "STH")
+ * @returns {PartialOptionsGroup}
+ */
+export function createInvestorPriceFolderFull(ctx, cohort, cohortTitle) {
+  const { tree, color } = cohort;
+  return createPriceFolder(ctx, {
+    name: "Investor Price",
+    cohortTitle,
+    priceMetric: tree.realized.investorPrice,
+    ratioPattern: tree.realized.investorPriceExtra,
+    color,
+  });
+}
+
+/**
+ * Create investor price folder for basic cohorts (price + ratio only)
+ * For cohorts with InvestorPriceExtraPattern (only .ratio field)
+ * @param {{ tree: { realized: AnyRealizedPattern }, color: Color }} cohort
+ * @param {string} [cohortTitle] - Cohort title (e.g., "STH")
+ * @returns {PartialOptionsGroup}
+ */
+export function createInvestorPriceFolderBasic(cohort, cohortTitle) {
+  const { tree, color } = cohort;
+  return createBasicPriceFolder({
+    name: "Investor Price",
+    cohortTitle,
+    priceMetric: tree.realized.investorPrice,
+    ratioMetric: tree.realized.investorPriceExtra.ratio,
+    color,
+  });
+}
+
+/**
+ * Create investor price folder for grouped cohorts
+ * @param {readonly CohortObject[]} list
+ * @param {(metric: string) => string} title
+ * @returns {PartialOptionsGroup}
+ */
+export function createGroupedInvestorPriceFolder(list, title) {
+  return createGroupedPriceFolder({
+    name: "Investor Price",
+    title,
+    list,
+    getPrice: (tree) => tree.realized.investorPrice,
+    getRatio: (tree) => tree.realized.investorPriceExtra.ratio,
+  });
+}
+
+// ============================================================================
+// ATH Regret Helpers
+// ============================================================================
+
+/**
+ * Create realized ATH regret series for single cohort
+ * @param {{ realized: AnyRealizedPattern }} tree
+ * @param {Color} color
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleRealizedAthRegretSeries(tree, color) {
+  return [
+    line({
+      metric: tree.realized.athRegret.sum,
+      name: "ATH Regret",
+      color,
+      unit: Unit.usd,
+    }),
+    line({
+      metric: tree.realized.athRegret.cumulative,
+      name: "Cumulative",
+      color,
+      unit: Unit.usd,
+      defaultActive: false,
+    }),
+  ];
+}
+
+/**
+ * Create unrealized ATH regret series for single cohort
+ * @param {{ unrealized: UnrealizedPattern }} tree
+ * @param {Color} color
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleUnrealizedAthRegretSeries(tree, color) {
+  return [
+    line({
+      metric: tree.unrealized.athRegret,
+      name: "ATH Regret",
+      color,
+      unit: Unit.usd,
+    }),
+  ];
+}
+
+/**
+ * Create realized ATH regret series for grouped cohorts
+ * @param {readonly CohortObject[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedRealizedAthRegretSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.realized.athRegret.sum,
+      name,
+      color,
+      unit: Unit.usd,
+    }),
+  ]);
+}
+
+/**
+ * Create unrealized ATH regret series for grouped cohorts
+ * @param {readonly { color: Color, name: string, tree: { unrealized: UnrealizedPattern } }[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedUnrealizedAthRegretSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.unrealized.athRegret,
+      name,
+      color,
+      unit: Unit.usd,
+    }),
+  ]);
+}
+
+// ============================================================================
+// Sentiment Helpers (greedIndex, painIndex, netSentiment)
+// ============================================================================
+
+/**
+ * Create sentiment series for single cohort
+ * @param {Colors} colors
+ * @param {{ unrealized: UnrealizedPattern }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createSingleSentimentSeries(colors, tree) {
+  return [
+    baseline({
+      metric: tree.unrealized.netSentiment,
+      name: "Net Sentiment",
+      unit: Unit.usd,
+    }),
+    line({
+      metric: tree.unrealized.greedIndex,
+      name: "Greed Index",
+      color: colors.green,
+      unit: Unit.usd,
+    }),
+    line({
+      metric: tree.unrealized.painIndex,
+      name: "Pain Index",
+      color: colors.red,
+      unit: Unit.usd,
+    }),
+  ];
+}
+
+/**
+ * Create net sentiment series for grouped cohorts
+ * @param {readonly { color: Color, name: string, tree: { unrealized: UnrealizedPattern } }[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedNetSentimentSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    baseline({
+      metric: tree.unrealized.netSentiment,
+      name,
+      color,
+      unit: Unit.usd,
+    }),
+  ]);
+}
+
+/**
+ * Create greed index series for grouped cohorts
+ * @param {readonly { color: Color, name: string, tree: { unrealized: UnrealizedPattern } }[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedGreedIndexSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.unrealized.greedIndex,
+      name,
+      color,
+      unit: Unit.usd,
+    }),
+  ]);
+}
+
+/**
+ * Create pain index series for grouped cohorts
+ * @param {readonly { color: Color, name: string, tree: { unrealized: UnrealizedPattern } }[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function createGroupedPainIndexSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.unrealized.painIndex,
+      name,
+      color,
+      unit: Unit.usd,
+    }),
+  ]);
 }

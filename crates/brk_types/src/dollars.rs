@@ -13,7 +13,7 @@ use vecdb::{CheckedSub, Formattable, Pco};
 
 use crate::{Low, Open};
 
-use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
+use super::{Bitcoin, CentsSigned, Close, High, Sats, StoredF32, StoredF64};
 
 /// US Dollar amount as floating point
 #[derive(Debug, Default, Clone, Copy, Deref, Serialize, Deserialize, Pco, JsonSchema)]
@@ -38,7 +38,7 @@ impl Dollars {
     }
 
     pub fn round_to(self, digits: i32) -> Self {
-        Self::from(Cents::from(self).round_to(digits))
+        Self::from(CentsSigned::from(self).round_to(digits))
     }
 
     pub fn is_negative(&self) -> bool {
@@ -65,13 +65,6 @@ impl From<f64> for Dollars {
     #[inline]
     fn from(value: f64) -> Self {
         Self(value)
-    }
-}
-
-impl From<Cents> for Dollars {
-    #[inline]
-    fn from(value: Cents) -> Self {
-        Self(f64::from(value) / 100.0)
     }
 }
 
@@ -127,14 +120,14 @@ impl From<usize> for Dollars {
 impl Add for Dollars {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
-        Self::from(Cents::from(self) + Cents::from(rhs))
+        Self::from(CentsSigned::from(self) + CentsSigned::from(rhs))
     }
 }
 
 impl Sub for Dollars {
     type Output = Self;
     fn sub(self, rhs: Self) -> Self::Output {
-        Self::from(Cents::from(self) - Cents::from(rhs))
+        Self::from(CentsSigned::from(self) - CentsSigned::from(rhs))
     }
 }
 
@@ -177,7 +170,7 @@ impl Div<usize> for Dollars {
         if self.is_nan() || rhs == 0 {
             Dollars::NAN
         } else {
-            Self::from(Cents::from(self) / rhs)
+            Self::from(CentsSigned::from(self) / rhs)
         }
     }
 }
@@ -195,7 +188,7 @@ impl Div<f64> for Dollars {
         if self.is_nan() || rhs == 0.0 {
             Dollars::NAN
         } else {
-            Dollars::from(Cents::from(Self::from(self.0 / rhs)))
+            Dollars::from(CentsSigned::from(Self::from(self.0 / rhs)))
         }
     }
 }
@@ -214,28 +207,28 @@ impl Div<Bitcoin> for Dollars {
 impl Mul<Dollars> for Dollars {
     type Output = Self;
     fn mul(self, rhs: Dollars) -> Self::Output {
-        Self::from(Cents::from(self) * Cents::from(rhs))
+        Self::from(CentsSigned::from(self) * CentsSigned::from(rhs))
     }
 }
 
 impl Mul<Close<Dollars>> for Dollars {
     type Output = Self;
     fn mul(self, rhs: Close<Dollars>) -> Self::Output {
-        Self::from(Cents::from(self) * Cents::from(*rhs))
+        Self::from(CentsSigned::from(self) * CentsSigned::from(*rhs))
     }
 }
 
 impl Mul<Dollars> for Close<Dollars> {
     type Output = Dollars;
     fn mul(self, rhs: Dollars) -> Self::Output {
-        Dollars::from(Cents::from(*self) * Cents::from(rhs))
+        Dollars::from(CentsSigned::from(*self) * CentsSigned::from(rhs))
     }
 }
 
 impl Mul<usize> for Close<Dollars> {
     type Output = Dollars;
     fn mul(self, rhs: usize) -> Self::Output {
-        Dollars::from(Cents::from(*self) * rhs)
+        Dollars::from(CentsSigned::from(*self) * rhs)
     }
 }
 
@@ -277,8 +270,8 @@ impl Mul<Sats> for Dollars {
         if self.is_nan() {
             self
         } else {
-            Self::from(Cents::from(
-                u128::from(rhs) * u128::from(Cents::from(self)) / Sats::ONE_BTC_U128,
+            Self::from(CentsSigned::from(
+                u128::from(rhs) * u128::from(CentsSigned::from(self)) / Sats::ONE_BTC_U128,
             ))
         }
     }
@@ -301,7 +294,7 @@ impl Mul<StoredF64> for Dollars {
 impl Mul<i64> for Dollars {
     type Output = Self;
     fn mul(self, rhs: i64) -> Self::Output {
-        Self::from(Cents::from(self) * rhs)
+        Self::from(CentsSigned::from(self) * rhs)
     }
 }
 
@@ -311,15 +304,22 @@ impl Mul<usize> for Dollars {
         if self.is_nan() {
             self
         } else {
-            Self::from(Cents::from(self) * rhs)
+            Self::from(CentsSigned::from(self) * rhs)
         }
+    }
+}
+
+impl From<u64> for Dollars {
+    #[inline]
+    fn from(value: u64) -> Self {
+        Self::from(CentsSigned::from(value))
     }
 }
 
 impl From<u128> for Dollars {
     #[inline]
     fn from(value: u128) -> Self {
-        Self::from(Cents::from(value))
+        Self::from(CentsSigned::from(value))
     }
 }
 
@@ -340,13 +340,13 @@ impl From<Close<Dollars>> for u128 {
 impl From<Dollars> for u128 {
     #[inline]
     fn from(value: Dollars) -> Self {
-        u128::from(Cents::from(value))
+        u128::from(CentsSigned::from(value))
     }
 }
 
 impl AddAssign for Dollars {
     fn add_assign(&mut self, rhs: Self) {
-        *self = Dollars::from(Cents::from(*self) + Cents::from(rhs));
+        *self = Dollars::from(CentsSigned::from(*self) + CentsSigned::from(rhs));
     }
 }
 
@@ -355,8 +355,8 @@ impl CheckedSub for Dollars {
         if self.is_nan() {
             Some(self)
         } else {
-            Cents::from(self)
-                .checked_sub(Cents::from(rhs))
+            CentsSigned::from(self)
+                .checked_sub(CentsSigned::from(rhs))
                 .map(Dollars::from)
         }
     }
@@ -365,7 +365,9 @@ impl CheckedSub for Dollars {
 impl CheckedSub<usize> for Dollars {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
         Some(Dollars::from(
-            Cents::from(self).checked_sub(Cents::from(rhs)).unwrap(),
+            CentsSigned::from(self)
+                .checked_sub(CentsSigned::from(rhs))
+                .unwrap(),
         ))
     }
 }

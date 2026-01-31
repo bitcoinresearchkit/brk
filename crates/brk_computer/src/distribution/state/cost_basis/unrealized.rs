@@ -1,253 +1,328 @@
 use std::ops::Bound;
 
-use brk_types::{CentsUnsigned, Dollars, Sats};
-use vecdb::CheckedSub;
+use brk_types::{CentsUnsigned, CentsUnsignedCompact, Sats};
 
-use super::price_to_amount::PriceToAmount;
+use super::cost_basis_data::CostBasisData;
 
 #[derive(Debug, Default, Clone)]
 pub struct UnrealizedState {
     pub supply_in_profit: Sats,
     pub supply_in_loss: Sats,
-    pub unrealized_profit: Dollars,
-    pub unrealized_loss: Dollars,
-    /// Invested capital in profit: Σ(sats × price) where price <= spot
-    pub invested_capital_in_profit: Dollars,
-    /// Invested capital in loss: Σ(sats × price) where price > spot
-    pub invested_capital_in_loss: Dollars,
+    pub unrealized_profit: CentsUnsigned,
+    pub unrealized_loss: CentsUnsigned,
+    pub invested_capital_in_profit: CentsUnsigned,
+    pub invested_capital_in_loss: CentsUnsigned,
+    /// Raw Σ(price² × sats) for UTXOs in profit. Used for aggregation.
+    pub investor_cap_in_profit_raw: u128,
+    /// Raw Σ(price² × sats) for UTXOs in loss. Used for aggregation.
+    pub investor_cap_in_loss_raw: u128,
+    /// Raw Σ(price × sats) for UTXOs in profit. Used for aggregation.
+    pub invested_capital_in_profit_raw: u128,
+    /// Raw Σ(price × sats) for UTXOs in loss. Used for aggregation.
+    pub invested_capital_in_loss_raw: u128,
 }
 
 impl UnrealizedState {
-    pub const NAN: Self = Self {
-        supply_in_profit: Sats::ZERO,
-        supply_in_loss: Sats::ZERO,
-        unrealized_profit: Dollars::NAN,
-        unrealized_loss: Dollars::NAN,
-        invested_capital_in_profit: Dollars::NAN,
-        invested_capital_in_loss: Dollars::NAN,
-    };
-
     pub const ZERO: Self = Self {
         supply_in_profit: Sats::ZERO,
         supply_in_loss: Sats::ZERO,
-        unrealized_profit: Dollars::ZERO,
-        unrealized_loss: Dollars::ZERO,
-        invested_capital_in_profit: Dollars::ZERO,
-        invested_capital_in_loss: Dollars::ZERO,
+        unrealized_profit: CentsUnsigned::ZERO,
+        unrealized_loss: CentsUnsigned::ZERO,
+        invested_capital_in_profit: CentsUnsigned::ZERO,
+        invested_capital_in_loss: CentsUnsigned::ZERO,
+        investor_cap_in_profit_raw: 0,
+        investor_cap_in_loss_raw: 0,
+        invested_capital_in_profit_raw: 0,
+        invested_capital_in_loss_raw: 0,
     };
+
+    /// Compute pain_index from raw values.
+    /// pain_index = investor_price_of_losers - spot
+    #[inline]
+    pub fn pain_index(&self, spot: CentsUnsigned) -> CentsUnsigned {
+        if self.invested_capital_in_loss_raw == 0 {
+            return CentsUnsigned::ZERO;
+        }
+        let investor_price_losers =
+            self.investor_cap_in_loss_raw / self.invested_capital_in_loss_raw;
+        CentsUnsigned::new((investor_price_losers - spot.as_u128()) as u64)
+    }
+
+    /// Compute greed_index from raw values.
+    /// greed_index = spot - investor_price_of_winners
+    #[inline]
+    pub fn greed_index(&self, spot: CentsUnsigned) -> CentsUnsigned {
+        if self.invested_capital_in_profit_raw == 0 {
+            return CentsUnsigned::ZERO;
+        }
+        let investor_price_winners =
+            self.investor_cap_in_profit_raw / self.invested_capital_in_profit_raw;
+        CentsUnsigned::new((spot.as_u128() - investor_price_winners) as u64)
+    }
 }
 
-/// Cached unrealized state for O(k) incremental updates.
-/// k = number of entries in price flip range (typically tiny).
+/// Internal cache state using u128 for raw cent*sat values.
+/// This avoids rounding errors from premature division by ONE_BTC.
+/// Division happens only when converting to UnrealizedState output.
+#[derive(Debug, Default, Clone)]
+struct CachedStateRaw {
+    supply_in_profit: Sats,
+    supply_in_loss: Sats,
+    /// Raw value: sum of (price_cents * sats) for UTXOs in profit
+    unrealized_profit: u128,
+    /// Raw value: sum of (price_cents * sats) for UTXOs in loss
+    unrealized_loss: u128,
+    /// Raw value: sum of (price_cents * sats) for UTXOs in profit
+    invested_capital_in_profit: u128,
+    /// Raw value: sum of (price_cents * sats) for UTXOs in loss
+    invested_capital_in_loss: u128,
+    /// Raw value: sum of (price_cents² * sats) for UTXOs in profit
+    investor_cap_in_profit: u128,
+    /// Raw value: sum of (price_cents² * sats) for UTXOs in loss
+    investor_cap_in_loss: u128,
+}
+
+impl CachedStateRaw {
+    /// Convert raw values to final output by dividing by ONE_BTC.
+    fn to_output(&self) -> UnrealizedState {
+        UnrealizedState {
+            supply_in_profit: self.supply_in_profit,
+            supply_in_loss: self.supply_in_loss,
+            unrealized_profit: CentsUnsigned::new(
+                (self.unrealized_profit / Sats::ONE_BTC_U128) as u64,
+            ),
+            unrealized_loss: CentsUnsigned::new(
+                (self.unrealized_loss / Sats::ONE_BTC_U128) as u64,
+            ),
+            invested_capital_in_profit: CentsUnsigned::new(
+                (self.invested_capital_in_profit / Sats::ONE_BTC_U128) as u64,
+            ),
+            invested_capital_in_loss: CentsUnsigned::new(
+                (self.invested_capital_in_loss / Sats::ONE_BTC_U128) as u64,
+            ),
+            investor_cap_in_profit_raw: self.investor_cap_in_profit,
+            investor_cap_in_loss_raw: self.investor_cap_in_loss,
+            invested_capital_in_profit_raw: self.invested_capital_in_profit,
+            invested_capital_in_loss_raw: self.invested_capital_in_loss,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CachedUnrealizedState {
-    pub state: UnrealizedState,
-    at_price: Dollars,
+    state: CachedStateRaw,
+    at_price: CentsUnsignedCompact,
 }
 
 impl CachedUnrealizedState {
-    /// Create new cache by computing from scratch. O(n).
-    pub fn compute_fresh(price: Dollars, price_to_amount: &PriceToAmount) -> Self {
-        let state = Self::compute_full_standalone(price, price_to_amount);
-        Self {
-            state,
-            at_price: price,
-        }
+    pub fn compute_fresh(price: CentsUnsigned, cost_basis_data: &CostBasisData) -> Self {
+        let price: CentsUnsignedCompact = price.into();
+        let state = Self::compute_raw(price, cost_basis_data);
+        Self { state, at_price: price }
     }
 
-    /// Get unrealized state at new_price. O(k) where k = flip range size.
+    /// Get the current cached state as output (without price update).
+    pub fn current_state(&self) -> UnrealizedState {
+        self.state.to_output()
+    }
+
     pub fn get_at_price(
         &mut self,
-        new_price: Dollars,
-        price_to_amount: &PriceToAmount,
-    ) -> &UnrealizedState {
+        new_price: CentsUnsigned,
+        cost_basis_data: &CostBasisData,
+    ) -> UnrealizedState {
+        let new_price: CentsUnsignedCompact = new_price.into();
         if new_price != self.at_price {
-            self.update_for_price_change(new_price, price_to_amount);
+            self.update_for_price_change(new_price, cost_basis_data);
         }
-        &self.state
+        self.state.to_output()
     }
 
-    /// Update cached state when a receive happens.
-    /// Determines profit/loss classification relative to cached price.
-    pub fn on_receive(&mut self, purchase_price: Dollars, sats: Sats) {
-        let invested_capital = purchase_price * sats;
-        if purchase_price <= self.at_price {
+    pub fn on_receive(&mut self, price: CentsUnsigned, sats: Sats) {
+        let price: CentsUnsignedCompact = price.into();
+        let sats_u128 = sats.as_u128();
+        let price_u128 = price.as_u128();
+        let invested_capital = price_u128 * sats_u128;
+        let investor_cap = price_u128 * invested_capital;
+
+        if price <= self.at_price {
             self.state.supply_in_profit += sats;
             self.state.invested_capital_in_profit += invested_capital;
-            if purchase_price < self.at_price {
-                let diff = self.at_price.checked_sub(purchase_price).unwrap();
-                self.state.unrealized_profit += diff * sats;
+            self.state.investor_cap_in_profit += investor_cap;
+            if price < self.at_price {
+                let diff = (self.at_price - price).as_u128();
+                self.state.unrealized_profit += diff * sats_u128;
             }
         } else {
             self.state.supply_in_loss += sats;
             self.state.invested_capital_in_loss += invested_capital;
-            let diff = purchase_price.checked_sub(self.at_price).unwrap();
-            self.state.unrealized_loss += diff * sats;
+            self.state.investor_cap_in_loss += investor_cap;
+            let diff = (price - self.at_price).as_u128();
+            self.state.unrealized_loss += diff * sats_u128;
         }
     }
 
-    /// Update cached state when a send happens from historical price.
-    pub fn on_send(&mut self, historical_price: Dollars, sats: Sats) {
-        let invested_capital = historical_price * sats;
-        if historical_price <= self.at_price {
-            // Was in profit
+    pub fn on_send(&mut self, price: CentsUnsigned, sats: Sats) {
+        let price: CentsUnsignedCompact = price.into();
+        let sats_u128 = sats.as_u128();
+        let price_u128 = price.as_u128();
+        let invested_capital = price_u128 * sats_u128;
+        let investor_cap = price_u128 * invested_capital;
+
+        if price <= self.at_price {
             self.state.supply_in_profit -= sats;
-            self.state.invested_capital_in_profit = self
-                .state
-                .invested_capital_in_profit
-                .checked_sub(invested_capital)
-                .unwrap();
-            if historical_price < self.at_price {
-                let diff = self.at_price.checked_sub(historical_price).unwrap();
-                let profit_removed = diff * sats;
-                self.state.unrealized_profit = self
-                    .state
-                    .unrealized_profit
-                    .checked_sub(profit_removed)
-                    .unwrap_or(Dollars::ZERO);
+            self.state.invested_capital_in_profit -= invested_capital;
+            self.state.investor_cap_in_profit -= investor_cap;
+            if price < self.at_price {
+                let diff = (self.at_price - price).as_u128();
+                self.state.unrealized_profit -= diff * sats_u128;
             }
         } else {
-            // Was in loss
             self.state.supply_in_loss -= sats;
-            self.state.invested_capital_in_loss = self
-                .state
-                .invested_capital_in_loss
-                .checked_sub(invested_capital)
-                .unwrap();
-            let diff = historical_price.checked_sub(self.at_price).unwrap();
-            let loss_removed = diff * sats;
-            self.state.unrealized_loss = self
-                .state
-                .unrealized_loss
-                .checked_sub(loss_removed)
-                .unwrap_or(Dollars::ZERO);
+            self.state.invested_capital_in_loss -= invested_capital;
+            self.state.investor_cap_in_loss -= investor_cap;
+            let diff = (price - self.at_price).as_u128();
+            self.state.unrealized_loss -= diff * sats_u128;
         }
     }
 
-    /// Incremental update for price change. O(k) where k = entries in flip range.
-    fn update_for_price_change(&mut self, new_price: Dollars, price_to_amount: &PriceToAmount) {
+    fn update_for_price_change(
+        &mut self,
+        new_price: CentsUnsignedCompact,
+        cost_basis_data: &CostBasisData,
+    ) {
         let old_price = self.at_price;
-        let delta_f64 = f64::from(new_price) - f64::from(old_price);
 
-        // Update profit/loss for entries that DON'T flip
-        // Profit changes by delta * supply_in_profit
-        // Loss changes by -delta * supply_in_loss
-        if delta_f64 > 0.0 {
-            // Price went up: profits increase, losses decrease
-            self.state.unrealized_profit += Dollars::from(delta_f64) * self.state.supply_in_profit;
-            let loss_decrease = Dollars::from(delta_f64) * self.state.supply_in_loss;
-            self.state.unrealized_loss = self
-                .state
-                .unrealized_loss
-                .checked_sub(loss_decrease)
-                .unwrap_or(Dollars::ZERO);
-        } else if delta_f64 < 0.0 {
-            // Price went down: profits decrease, losses increase
-            let profit_decrease = Dollars::from(-delta_f64) * self.state.supply_in_profit;
-            self.state.unrealized_profit = self
-                .state
-                .unrealized_profit
-                .checked_sub(profit_decrease)
-                .unwrap_or(Dollars::ZERO);
-            self.state.unrealized_loss += Dollars::from(-delta_f64) * self.state.supply_in_loss;
-        }
-
-        // Handle flipped entries (only iterate the small range between prices)
         if new_price > old_price {
-            // Price went up: entries where old < price <= new flip from loss to profit
+            let delta = (new_price - old_price).as_u128();
+
+            // Save original supply for delta calculation (before crossing UTXOs move)
+            let original_supply_in_profit = self.state.supply_in_profit.as_u128();
+
+            // First, process UTXOs crossing from loss to profit
+            // Range (old_price, new_price] means: old_price < price <= new_price
             for (price, &sats) in
-                price_to_amount.range((Bound::Excluded(old_price), Bound::Included(new_price)))
+                cost_basis_data.range((Bound::Excluded(old_price), Bound::Included(new_price)))
             {
-                // Move from loss to profit
+                let sats_u128 = sats.as_u128();
+                let price_u128 = price.as_u128();
+                let invested_capital = price_u128 * sats_u128;
+                let investor_cap = price_u128 * invested_capital;
+
+                // Move between buckets
                 self.state.supply_in_loss -= sats;
                 self.state.supply_in_profit += sats;
+                self.state.invested_capital_in_loss -= invested_capital;
+                self.state.invested_capital_in_profit += invested_capital;
+                self.state.investor_cap_in_loss -= investor_cap;
+                self.state.investor_cap_in_profit += investor_cap;
 
-                // Undo the loss adjustment applied above for this entry
-                // We decreased loss by delta * sats, but this entry should be removed entirely
-                // Original loss: (price - old_price) * sats
-                // After global adjustment: original - delta * sats (negative, wrong)
-                // Correct: 0 (removed from loss)
-                // Correction: add back delta * sats, then add original loss
-                let delta_adj = Dollars::from(delta_f64) * sats;
-                self.state.unrealized_loss += delta_adj;
-                if price > old_price {
-                    let original_loss = price.checked_sub(old_price).unwrap() * sats;
-                    self.state.unrealized_loss += original_loss;
-                }
+                // Remove their original contribution to unrealized_loss
+                // (price > old_price is always true due to Bound::Excluded)
+                let original_loss = (price - old_price).as_u128();
+                self.state.unrealized_loss -= original_loss * sats_u128;
 
-                // Undo the profit adjustment applied above for this entry
-                // We increased profit by delta * sats, but this entry was not in profit before
-                // Correct profit: (new_price - price) * sats
-                // Correction: subtract delta * sats, add correct profit
-                let profit_adj = Dollars::from(delta_f64) * sats;
-                self.state.unrealized_profit = self
-                    .state
-                    .unrealized_profit
-                    .checked_sub(profit_adj)
-                    .unwrap_or(Dollars::ZERO);
-                if new_price > price {
-                    let correct_profit = new_price.checked_sub(price).unwrap() * sats;
-                    self.state.unrealized_profit += correct_profit;
+                // Add their new contribution to unrealized_profit (if not at boundary)
+                if price < new_price {
+                    let new_profit = (new_price - price).as_u128();
+                    self.state.unrealized_profit += new_profit * sats_u128;
                 }
             }
+
+            // Apply delta to non-crossing UTXOs only
+            // Non-crossing profit UTXOs: their profit increases by delta
+            self.state.unrealized_profit += delta * original_supply_in_profit;
+            // Non-crossing loss UTXOs: their loss decreases by delta
+            let non_crossing_loss_sats =
+                self.state.supply_in_loss.as_u128(); // Already excludes crossing
+            self.state.unrealized_loss -= delta * non_crossing_loss_sats;
         } else if new_price < old_price {
-            // Price went down: entries where new < price <= old flip from profit to loss
+            let delta = (old_price - new_price).as_u128();
+
+            // Save original supply for delta calculation (before crossing UTXOs move)
+            let original_supply_in_loss = self.state.supply_in_loss.as_u128();
+
+            // First, process UTXOs crossing from profit to loss
+            // Range (new_price, old_price] means: new_price < price <= old_price
             for (price, &sats) in
-                price_to_amount.range((Bound::Excluded(new_price), Bound::Included(old_price)))
+                cost_basis_data.range((Bound::Excluded(new_price), Bound::Included(old_price)))
             {
-                // Move from profit to loss
+                let sats_u128 = sats.as_u128();
+                let price_u128 = price.as_u128();
+                let invested_capital = price_u128 * sats_u128;
+                let investor_cap = price_u128 * invested_capital;
+
+                // Move between buckets
                 self.state.supply_in_profit -= sats;
                 self.state.supply_in_loss += sats;
+                self.state.invested_capital_in_profit -= invested_capital;
+                self.state.invested_capital_in_loss += invested_capital;
+                self.state.investor_cap_in_profit -= investor_cap;
+                self.state.investor_cap_in_loss += investor_cap;
 
-                // Undo the profit adjustment applied above for this entry
-                let delta_adj = Dollars::from(-delta_f64) * sats;
-                self.state.unrealized_profit += delta_adj;
-                if old_price > price {
-                    let original_profit = old_price.checked_sub(price).unwrap() * sats;
-                    self.state.unrealized_profit += original_profit;
+                // Remove their original contribution to unrealized_profit (if not at boundary)
+                if price < old_price {
+                    let original_profit = (old_price - price).as_u128();
+                    self.state.unrealized_profit -= original_profit * sats_u128;
                 }
 
-                // Undo the loss adjustment applied above for this entry
-                let loss_adj = Dollars::from(-delta_f64) * sats;
-                self.state.unrealized_loss = self
-                    .state
-                    .unrealized_loss
-                    .checked_sub(loss_adj)
-                    .unwrap_or(Dollars::ZERO);
-                if price > new_price {
-                    let correct_loss = price.checked_sub(new_price).unwrap() * sats;
-                    self.state.unrealized_loss += correct_loss;
-                }
+                // Add their new contribution to unrealized_loss
+                // (price > new_price is always true due to Bound::Excluded)
+                let new_loss = (price - new_price).as_u128();
+                self.state.unrealized_loss += new_loss * sats_u128;
             }
+
+            // Apply delta to non-crossing UTXOs only
+            // Non-crossing loss UTXOs: their loss increases by delta
+            self.state.unrealized_loss += delta * original_supply_in_loss;
+            // Non-crossing profit UTXOs: their profit decreases by delta
+            let non_crossing_profit_sats =
+                self.state.supply_in_profit.as_u128(); // Already excludes crossing
+            self.state.unrealized_profit -= delta * non_crossing_profit_sats;
         }
 
         self.at_price = new_price;
     }
 
-    /// Full computation from scratch (no cache). O(n).
-    pub fn compute_full_standalone(
-        current_price: Dollars,
-        price_to_amount: &PriceToAmount,
-    ) -> UnrealizedState {
-        let mut state = UnrealizedState::ZERO;
+    /// Compute raw cached state from cost_basis_data.
+    fn compute_raw(
+        current_price: CentsUnsignedCompact,
+        cost_basis_data: &CostBasisData,
+    ) -> CachedStateRaw {
+        let mut state = CachedStateRaw::default();
 
-        for (price, &sats) in price_to_amount.iter() {
-            let invested_capital = price * sats;
+        for (price, &sats) in cost_basis_data.iter() {
+            let sats_u128 = sats.as_u128();
+            let price_u128 = price.as_u128();
+            let invested_capital = price_u128 * sats_u128;
+            let investor_cap = price_u128 * invested_capital;
+
             if price <= current_price {
                 state.supply_in_profit += sats;
                 state.invested_capital_in_profit += invested_capital;
+                state.investor_cap_in_profit += investor_cap;
                 if price < current_price {
-                    let diff = current_price.checked_sub(price).unwrap();
-                    state.unrealized_profit += diff * sats;
+                    let diff = (current_price - price).as_u128();
+                    state.unrealized_profit += diff * sats_u128;
                 }
             } else {
                 state.supply_in_loss += sats;
                 state.invested_capital_in_loss += invested_capital;
-                let diff = price.checked_sub(current_price).unwrap();
-                state.unrealized_loss += diff * sats;
+                state.investor_cap_in_loss += investor_cap;
+                let diff = (price - current_price).as_u128();
+                state.unrealized_loss += diff * sats_u128;
             }
         }
 
         state
+    }
+
+    /// Compute final UnrealizedState directly (not cached).
+    /// Used for date_state which doesn't use the cache.
+    pub fn compute_full_standalone(
+        current_price: CentsUnsignedCompact,
+        cost_basis_data: &CostBasisData,
+    ) -> UnrealizedState {
+        Self::compute_raw(current_price, cost_basis_data).to_output()
     }
 }

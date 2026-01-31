@@ -8,7 +8,7 @@ use crate::internal::{
     PercentageDollarsF32, PercentageSatsF64, Ratio32,
 };
 
-use super::{ImportConfig, SupplyMetrics, UnrealizedMetrics};
+use super::{ImportConfig, RealizedMetrics, SupplyMetrics, UnrealizedMetrics};
 
 /// Relative metrics comparing cohort values to global values.
 /// All `rel_to_` vecs are lazy - computed on-demand from their sources.
@@ -58,6 +58,12 @@ pub struct RelativeMetrics {
         Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
     pub net_unrealized_pnl_rel_to_own_total_unrealized_pnl:
         Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
+
+    // === Invested Capital in Profit/Loss as % of Realized Cap ===
+    pub invested_capital_in_profit_pct:
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
+    pub invested_capital_in_loss_pct:
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
 }
 
 impl RelativeMetrics {
@@ -65,11 +71,13 @@ impl RelativeMetrics {
     ///
     /// All `rel_to_` metrics are lazy - computed on-demand from their sources.
     /// `all_supply` provides global sources for `*_rel_to_market_cap` and `*_rel_to_circulating_supply`.
+    /// `realized` provides realized_cap for invested capital percentage metrics.
     pub fn forced_import(
         cfg: &ImportConfig,
         unrealized: &UnrealizedMetrics,
         supply: &SupplyMetrics,
         all_supply: Option<&SupplyMetrics>,
+        realized: Option<&RealizedMetrics>,
     ) -> Result<Self> {
         let v1 = Version::ONE;
         let v2 = Version::new(2);
@@ -348,6 +356,30 @@ impl RelativeMetrics {
                     cfg.version + v1,
                     &unrealized.net_unrealized_pnl,
                     &unrealized.total_unrealized_pnl,
+                )
+            }),
+
+            // === Invested Capital in Profit/Loss as % of Realized Cap ===
+            invested_capital_in_profit_pct: realized.map(|r| {
+                LazyBinaryFromHeightLast::from_computed_height_date_and_lazy_block_last::<
+                    PercentageDollarsF32,
+                    _,
+                >(
+                    &cfg.name("invested_capital_in_profit_pct"),
+                    cfg.version,
+                    &unrealized.invested_capital_in_profit,
+                    &r.realized_cap,
+                )
+            }),
+            invested_capital_in_loss_pct: realized.map(|r| {
+                LazyBinaryFromHeightLast::from_computed_height_date_and_lazy_block_last::<
+                    PercentageDollarsF32,
+                    _,
+                >(
+                    &cfg.name("invested_capital_in_loss_pct"),
+                    cfg.version,
+                    &unrealized.invested_capital_in_loss,
+                    &r.realized_cap,
                 )
             }),
         })

@@ -102,4 +102,14 @@ impl Filter {
             ),
         }
     }
+
+    /// Whether to compute relative metrics (invested capital %, NUPL ratios, etc.)
+    /// Returns false for edge-case output types (Empty, P2MS, Unknown) which have
+    /// too little volume for meaningful ratio/percentage analysis.
+    pub fn compute_relative(&self) -> bool {
+        !matches!(
+            self,
+            Filter::Type(OutputType::Empty | OutputType::P2MS | OutputType::Unknown)
+        )
+    }
 }

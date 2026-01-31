@@ -1,37 +1,6 @@
 import { Unit } from "../utils/units.js";
 import { line, price } from "./series.js";
-import {
-  satsBtcUsd,
-  createRatioChart,
-  createZScoresFolder,
-  formatCohortTitle,
-} from "./shared.js";
-
-/**
- * Create price with ratio options for cointime prices
- * @param {PartialContext} ctx
- * @param {Object} args
- * @param {string} args.title
- * @param {string} args.legend
- * @param {AnyPricePattern} args.pricePattern
- * @param {ActivePriceRatioPattern} args.ratio
- * @param {Color} args.color
- * @returns {PartialOptionsTree}
- */
-function createCointimePriceWithRatioOptions(
-  ctx,
-  { title, legend, pricePattern, ratio, color },
-) {
-  return [
-    {
-      name: "Price",
-      title,
-      top: [price({ metric: pricePattern, name: legend, color })],
-    },
-    createRatioChart(ctx, { title: formatCohortTitle(title), pricePattern, ratio, color }),
-    createZScoresFolder(ctx, { title, legend, pricePattern, ratio, color }),
-  ];
-}
+import { satsBtcUsd, createPriceRatioCharts } from "./shared.js";
 
 /**
  * Create Cointime section
@@ -134,12 +103,12 @@ export function createCointimeSection(ctx) {
           },
           ...cointimePrices.map(({ pricePattern, ratio, name, color, title }) => ({
             name,
-            tree: createCointimePriceWithRatioOptions(ctx, {
+            tree: createPriceRatioCharts(ctx, {
+              context: title,
+              legend: name,
               pricePattern,
               ratio,
-              legend: name,
               color,
-              title,
             }),
           })),
         ],

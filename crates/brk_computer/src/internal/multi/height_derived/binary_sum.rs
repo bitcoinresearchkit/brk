@@ -48,4 +48,36 @@ where
             ),
         }
     }
+
+    /// Create from two LazyBinaryHeightDerivedSum sources.
+    pub fn from_binary<F, S1aT, S1bT, S2aT, S2bT>(
+        name: &str,
+        version: Version,
+        source1: &LazyBinaryHeightDerivedSum<S1T, S1aT, S1bT>,
+        source2: &LazyBinaryHeightDerivedSum<S2T, S2aT, S2bT>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S1aT: ComputedVecValue + JsonSchema,
+        S1bT: ComputedVecValue + JsonSchema,
+        S2aT: ComputedVecValue + JsonSchema,
+        S2bT: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        Self {
+            dates: LazyBinaryFromDateSum::from_binary::<F, _, _, _, _>(
+                name,
+                v,
+                &source1.dates,
+                &source2.dates,
+            ),
+            difficultyepoch: LazyBinaryTransformSum::from_boxed::<F>(
+                name,
+                v,
+                source1.difficultyepoch.boxed_clone(),
+                source2.difficultyepoch.boxed_clone(),
+            ),
+        }
+    }
 }

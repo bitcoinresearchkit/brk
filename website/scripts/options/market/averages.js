@@ -1,7 +1,7 @@
 /** Moving averages section */
 
 import { price } from "../series.js";
-import { createRatioChart, createZScoresFolder, formatCohortTitle } from "../shared.js";
+import { createPriceRatioCharts } from "../shared.js";
 import { periodIdToName } from "./utils.js";
 
 /**
@@ -64,39 +64,6 @@ function buildEmaAverages(colors, ma) {
     color: colors[colorKey],
     ratio,
   }));
-}
-
-/**
- * Create price with ratio options (for moving averages)
- * @param {PartialContext} ctx
- * @param {Object} args
- * @param {string} args.title
- * @param {string} args.legend
- * @param {EmaRatioPattern} args.ratio
- * @param {Color} args.color
- * @returns {PartialOptionsTree}
- */
-export function createPriceWithRatioOptions(
-  ctx,
-  { title, legend, ratio, color },
-) {
-  const pricePattern = ratio.price;
-
-  return [
-    {
-      name: "Price",
-      title,
-      top: [price({ metric: pricePattern, name: legend, color })],
-    },
-    createRatioChart(ctx, { title: formatCohortTitle(title), pricePattern, ratio, color }),
-    createZScoresFolder(ctx, {
-      title,
-      legend,
-      pricePattern,
-      ratio,
-      color,
-    }),
-  ];
 }
 
 /** Common period IDs to show at top level */
@@ -176,10 +143,11 @@ export function createAveragesSection(ctx, movingAverage) {
         // Common periods at top level
         ...commonAverages.map(({ name, color, ratio }) => ({
           name,
-          tree: createPriceWithRatioOptions(ctx, {
-            ratio,
-            title: `${name} ${label}`,
+          tree: createPriceRatioCharts(ctx, {
+            context: `${name} ${label}`,
             legend: "average",
+            pricePattern: ratio.price,
+            ratio,
             color,
           }),
         })),
@@ -188,10 +156,11 @@ export function createAveragesSection(ctx, movingAverage) {
           name: "More...",
           tree: moreAverages.map(({ name, color, ratio }) => ({
             name,
-            tree: createPriceWithRatioOptions(ctx, {
-              ratio,
-              title: `${name} ${label}`,
+            tree: createPriceRatioCharts(ctx, {
+              context: `${name} ${label}`,
               legend: "average",
+              pricePattern: ratio.price,
+              ratio,
               color,
             }),
           })),

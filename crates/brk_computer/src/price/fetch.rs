@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{DateIndex, Height, OHLCCents};
+use brk_types::{DateIndex, Height, OHLCCentsUnsigned};
 use vecdb::{
     AnyStoredVec, AnyVec, Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex,
 };
@@ -61,7 +61,7 @@ impl Vecs {
         let index = starting_indexes
             .dateindex
             .min(DateIndex::from(self.cents.ohlc.dateindex.len()));
-        let mut prev = Some(index.decremented().map_or(OHLCCents::default(), |prev_i| {
+        let mut prev = Some(index.decremented().map_or(OHLCCentsUnsigned::default(), |prev_i| {
             self.cents.ohlc.dateindex.iter().unwrap().get_unwrap(prev_i)
         }));
         indexes

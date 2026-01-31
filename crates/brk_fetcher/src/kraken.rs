@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use brk_error::{Error, Result};
-use brk_types::{Date, Height, OHLCCents, Timestamp};
+use brk_types::{Date, Height, OHLCCentsUnsigned, Timestamp};
 use serde_json::Value;
 use tracing::info;
 
@@ -12,8 +12,8 @@ use crate::{
 
 #[derive(Default, Clone)]
 pub struct Kraken {
-    _1mn: Option<BTreeMap<Timestamp, OHLCCents>>,
-    _1d: Option<BTreeMap<Date, OHLCCents>>,
+    _1mn: Option<BTreeMap<Timestamp, OHLCCentsUnsigned>>,
+    _1d: Option<BTreeMap<Date, OHLCCentsUnsigned>>,
 }
 
 impl Kraken {
@@ -21,7 +21,7 @@ impl Kraken {
         &mut self,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> Result<OHLCCents> {
+    ) -> Result<OHLCCentsUnsigned> {
         if self._1mn.is_none()
             || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp
         {
@@ -35,7 +35,7 @@ impl Kraken {
         )
     }
 
-    pub fn fetch_1mn() -> Result<BTreeMap<Timestamp, OHLCCents>> {
+    pub fn fetch_1mn() -> Result<BTreeMap<Timestamp, OHLCCentsUnsigned>> {
         default_retry(|_| {
             let url = Self::url(1);
             info!("Fetching {url} ...");
@@ -45,7 +45,7 @@ impl Kraken {
         })
     }
 
-    fn get_from_1d(&mut self, date: &Date) -> Result<OHLCCents> {
+    fn get_from_1d(&mut self, date: &Date) -> Result<OHLCCentsUnsigned> {
         if self._1d.is_none() || self._1d.as_ref().unwrap().last_key_value().unwrap().0 <= date {
             self._1d.replace(Self::fetch_1d()?);
         }
@@ -57,7 +57,7 @@ impl Kraken {
             .ok_or(Error::NotFound("Couldn't find date".into()))
     }
 
-    pub fn fetch_1d() -> Result<BTreeMap<Date, OHLCCents>> {
+    pub fn fetch_1d() -> Result<BTreeMap<Date, OHLCCentsUnsigned>> {
         default_retry(|_| {
             let url = Self::url(1440);
             info!("Fetching {url} ...");
@@ -68,7 +68,7 @@ impl Kraken {
     }
 
     /// Parse Kraken's nested JSON response: { result: { XXBTZUSD: [...] } }
-    fn parse_ohlc_response(json: &Value) -> Result<BTreeMap<Timestamp, OHLCCents>> {
+    fn parse_ohlc_response(json: &Value) -> Result<BTreeMap<Timestamp, OHLCCentsUnsigned>> {
         let result = json
             .get("result")
             .and_then(|r| r.get("XXBTZUSD"))
@@ -84,7 +84,7 @@ impl Kraken {
         Ok(result)
     }
 
-    fn parse_date_ohlc_response(json: &Value) -> Result<BTreeMap<Date, OHLCCents>> {
+    fn parse_date_ohlc_response(json: &Value) -> Result<BTreeMap<Date, OHLCCentsUnsigned>> {
         Self::parse_ohlc_response(json).map(|map| {
             map.into_iter()
                 .map(|(ts, ohlc)| (date_from_timestamp(ts), ohlc))
@@ -109,7 +109,7 @@ impl PriceSource for Kraken {
         "Kraken"
     }
 
-    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCents>> {
+    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCentsUnsigned>> {
         Some(self.get_from_1d(&date))
     }
 
@@ -117,11 +117,11 @@ impl PriceSource for Kraken {
         &mut self,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> Option<Result<OHLCCents>> {
+    ) -> Option<Result<OHLCCentsUnsigned>> {
         Some(self.get_from_1mn(timestamp, previous_timestamp))
     }
 
-    fn get_height(&mut self, _height: Height) -> Option<Result<OHLCCents>> {
+    fn get_height(&mut self, _height: Height) -> Option<Result<OHLCCentsUnsigned>> {
         None // Kraken doesn't support height-based queries
     }
 

@@ -1,9 +1,35 @@
 use brk_error::{Error, Result};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{Bytes, CheckedSub, Formattable};
+use vecdb::{Bytes, Formattable};
 
-use crate::{Bitcoin, Dollars, EmptyAddressData, Sats};
+use crate::{CentsSats, CentsSquaredSats, CentsUnsigned, EmptyAddressData, Sats, SupplyState};
+
+/// Snapshot of cost basis related state.
+/// Uses CentsSats (u64) for single-UTXO values, CentsSquaredSats (u128) for investor cap.
+#[derive(Clone, Debug)]
+pub struct CostBasisSnapshot {
+    pub realized_price: CentsUnsigned,
+    pub supply_state: SupplyState,
+    /// price × sats (fits u64 for individual UTXOs)
+    pub price_sats: CentsSats,
+    /// price² × sats (needs u128)
+    pub investor_cap: CentsSquaredSats,
+}
+
+impl CostBasisSnapshot {
+    /// Create from a single UTXO (computes caps from price × value)
+    #[inline]
+    pub fn from_utxo(price: CentsUnsigned, supply: &SupplyState) -> Self {
+        let price_sats = CentsSats::from_price_sats(price, supply.value);
+        Self {
+            realized_price: price,
+            supply_state: supply.clone(),
+            price_sats,
+            investor_cap: price_sats.to_investor_cap(price),
+        }
+    }
+}
 
 /// Data for a loaded (non-empty) address with current balance
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
@@ -21,8 +47,10 @@ pub struct LoadedAddressData {
     pub received: Sats,
     /// Satoshis sent by this address
     pub sent: Sats,
-    /// The realized capitalization of this address
-    pub realized_cap: Dollars,
+    /// The realized capitalization: Σ(price × sats)
+    pub realized_cap_raw: CentsSats,
+    /// The investor capitalization: Σ(price² × sats)
+    pub investor_cap_raw: CentsSquaredSats,
 }
 
 impl LoadedAddressData {
@@ -30,21 +58,22 @@ impl LoadedAddressData {
         (u64::from(self.received) - u64::from(self.sent)).into()
     }
 
-    /// Max realized price for CentsCompact (i32::MAX / 100)
-    const MAX_REALIZED_PRICE: f64 = 21_000_000.0;
+    pub fn realized_price(&self) -> CentsUnsigned {
+        self.realized_cap_raw.realized_price(self.balance())
+    }
 
-    pub fn realized_price(&self) -> Dollars {
-        let p = (self.realized_cap / Bitcoin::from(self.balance())).round_to(4);
-        if p.is_negative() {
-            dbg!((
-                self.realized_cap,
-                self.balance(),
-                Bitcoin::from(self.balance()),
-                p
-            ));
-            panic!("");
+    pub fn cost_basis_snapshot(&self) -> CostBasisSnapshot {
+        let realized_price = self.realized_price();
+        CostBasisSnapshot {
+            realized_price,
+            supply_state: SupplyState {
+                utxo_count: self.utxo_count() as u64,
+                value: self.balance(),
+            },
+            // Use exact value to avoid rounding errors from realized_price × balance
+            price_sats: CentsSats::new(self.realized_cap_raw.inner()),
+            investor_cap: self.investor_cap_raw,
         }
-        p.min(Dollars::from(Self::MAX_REALIZED_PRICE))
     }
 
     #[inline]
@@ -75,44 +104,35 @@ impl LoadedAddressData {
         self.funded_txo_count == self.spent_txo_count
     }
 
-    pub fn receive(&mut self, amount: Sats, price: Option<Dollars>) {
+    pub fn receive(&mut self, amount: Sats, price: Option<CentsUnsigned>) {
         self.receive_outputs(amount, price, 1);
     }
 
-    pub fn receive_outputs(&mut self, amount: Sats, price: Option<Dollars>, output_count: u32) {
+    pub fn receive_outputs(
+        &mut self,
+        amount: Sats,
+        price: Option<CentsUnsigned>,
+        output_count: u32,
+    ) {
         self.received += amount;
         self.funded_txo_count += output_count;
         if let Some(price) = price {
-            let added = price * amount;
-            self.realized_cap += added;
-            if added.is_negative() || self.realized_cap.is_negative() {
-                dbg!((self.realized_cap, price, amount, added));
-                panic!();
-            }
+            let ps = CentsSats::from_price_sats(price, amount);
+            self.realized_cap_raw += ps;
+            self.investor_cap_raw += ps.to_investor_cap(price);
         }
     }
 
-    pub fn send(&mut self, amount: Sats, previous_price: Option<Dollars>) -> Result<()> {
+    pub fn send(&mut self, amount: Sats, previous_price: Option<CentsUnsigned>) -> Result<()> {
         if self.balance() < amount {
             return Err(Error::Internal("Previous amount smaller than sent amount"));
         }
         self.sent += amount;
         self.spent_txo_count += 1;
-        if let Some(previous_price) = previous_price {
-            let subtracted = previous_price * amount;
-            let realized_cap = self.realized_cap.checked_sub(subtracted).unwrap();
-            if self.realized_cap.is_negative() || realized_cap.is_negative() {
-                dbg!((
-                    self,
-                    realized_cap,
-                    previous_price,
-                    amount,
-                    previous_price * amount,
-                    subtracted
-                ));
-                panic!();
-            }
-            self.realized_cap = realized_cap;
+        if let Some(price) = previous_price {
+            let ps = CentsSats::from_price_sats(price, amount);
+            self.realized_cap_raw -= ps;
+            self.investor_cap_raw -= ps.to_investor_cap(price);
         }
         Ok(())
     }
@@ -135,7 +155,8 @@ impl From<&EmptyAddressData> for LoadedAddressData {
             padding: 0,
             received: value.transfered,
             sent: value.transfered,
-            realized_cap: Dollars::ZERO,
+            realized_cap_raw: CentsSats::ZERO,
+            investor_cap_raw: CentsSquaredSats::ZERO,
         }
     }
 }
@@ -144,13 +165,14 @@ impl std::fmt::Display for LoadedAddressData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "tx_count: {}, funded_txo_count: {}, spent_txo_count: {}, received: {}, sent: {}, realized_cap: {}",
+            "tx_count: {}, funded_txo_count: {}, spent_txo_count: {}, received: {}, sent: {}, realized_cap_raw: {}, investor_cap_raw: {}",
             self.tx_count,
             self.funded_txo_count,
             self.spent_txo_count,
             self.received,
             self.sent,
-            self.realized_cap,
+            self.realized_cap_raw,
+            self.investor_cap_raw,
         )
     }
 }
@@ -173,7 +195,8 @@ impl Bytes for LoadedAddressData {
         arr[12..16].copy_from_slice(self.padding.to_bytes().as_ref());
         arr[16..24].copy_from_slice(self.received.to_bytes().as_ref());
         arr[24..32].copy_from_slice(self.sent.to_bytes().as_ref());
-        arr[32..40].copy_from_slice(self.realized_cap.to_bytes().as_ref());
+        arr[32..48].copy_from_slice(self.realized_cap_raw.to_bytes().as_ref());
+        arr[48..64].copy_from_slice(self.investor_cap_raw.to_bytes().as_ref());
         arr
     }
 
@@ -185,7 +208,8 @@ impl Bytes for LoadedAddressData {
             padding: u32::from_bytes(&bytes[12..16])?,
             received: Sats::from_bytes(&bytes[16..24])?,
             sent: Sats::from_bytes(&bytes[24..32])?,
-            realized_cap: Dollars::from_bytes(&bytes[32..40])?,
+            realized_cap_raw: CentsSats::from_bytes(&bytes[32..48])?,
+            investor_cap_raw: CentsSquaredSats::from_bytes(&bytes[48..64])?,
         })
     }
 }

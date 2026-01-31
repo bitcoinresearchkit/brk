@@ -1,6 +1,8 @@
+use std::ops::Sub;
+
 use serde::{Deserialize, Serialize};
 
-use super::Dollars;
+use super::{CentsUnsigned, Dollars};
 
 /// Compact unsigned cents (u32) - memory-efficient for map keys.
 /// Supports values from $0.00 to $42,949,672.95 (u32::MAX / 100).
@@ -19,6 +21,11 @@ impl CentsUnsignedCompact {
     #[inline]
     pub const fn inner(self) -> u32 {
         self.0
+    }
+
+    #[inline(always)]
+    pub const fn as_u128(self) -> u128 {
+        self.0 as u128
     }
 
     #[inline]
@@ -80,6 +87,34 @@ impl From<CentsUnsignedCompact> for f64 {
     #[inline]
     fn from(value: CentsUnsignedCompact) -> Self {
         value.0 as f64
+    }
+}
+
+impl From<CentsUnsigned> for CentsUnsignedCompact {
+    #[inline]
+    fn from(value: CentsUnsigned) -> Self {
+        let v = value.inner();
+        debug_assert!(
+            v <= u32::MAX as u64,
+            "CentsUnsigned {} exceeds CentsUnsignedCompact max",
+            v
+        );
+        Self(v as u32)
+    }
+}
+
+impl From<CentsUnsignedCompact> for CentsUnsigned {
+    #[inline]
+    fn from(value: CentsUnsignedCompact) -> Self {
+        CentsUnsigned::new(value.0 as u64)
+    }
+}
+
+impl Sub for CentsUnsignedCompact {
+    type Output = Self;
+    #[inline(always)]
+    fn sub(self, rhs: Self) -> Self {
+        Self(self.0 - rhs.0)
     }
 }
 

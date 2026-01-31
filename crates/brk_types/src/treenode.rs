@@ -1,5 +1,6 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
+use indexmap::IndexMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -130,7 +131,7 @@ impl Eq for MetricLeafWithSchema {}
 #[serde(untagged)]
 pub enum TreeNode {
     /// Branch node containing subcategories
-    Branch(BTreeMap<String, TreeNode>),
+    Branch(IndexMap<String, TreeNode>),
     /// Leaf node containing metric metadata with schema
     Leaf(MetricLeafWithSchema),
 }
@@ -146,7 +147,7 @@ impl TreeNode {
         }
     }
 
-    pub fn as_mut_branch(&mut self) -> &mut BTreeMap<String, TreeNode> {
+    pub fn as_mut_branch(&mut self) -> &mut IndexMap<String, TreeNode> {
         match self {
             Self::Branch(b) => b,
             _ => panic!(),
@@ -156,7 +157,7 @@ impl TreeNode {
     /// Wraps a node in a Branch with the given key.
     /// Used by #[traversable(wrap = "...")] to produce Branch { key: inner }.
     pub fn wrap(key: &str, inner: Self) -> Self {
-        let mut map = BTreeMap::new();
+        let mut map = IndexMap::new();
         map.insert(key.to_string(), inner);
         Self::Branch(map)
     }
@@ -171,7 +172,7 @@ impl TreeNode {
             return Some(self);
         };
 
-        let mut merged: BTreeMap<String, TreeNode> = BTreeMap::new();
+        let mut merged: IndexMap<String, TreeNode> = IndexMap::new();
 
         for (key, node) in tree {
             match node {
@@ -194,7 +195,7 @@ impl TreeNode {
 
     /// If all entries in the map are leaves with the same metric name,
     /// collapse them into a single leaf with merged indexes.
-    fn try_collapse_same_name_leaves(map: BTreeMap<String, TreeNode>) -> Self {
+    fn try_collapse_same_name_leaves(map: IndexMap<String, TreeNode>) -> Self {
         if map.is_empty() {
             return Self::Branch(map);
         }
@@ -238,7 +239,7 @@ impl TreeNode {
     /// Merges a node into the target map at the given key (consuming version).
     /// Returns None if there's a conflict.
     pub fn merge_node(
-        target: &mut BTreeMap<String, TreeNode>,
+        target: &mut IndexMap<String, TreeNode>,
         key: String,
         node: TreeNode,
     ) -> Option<()> {
@@ -261,7 +262,7 @@ impl TreeNode {
                     }
                     (existing @ Self::Leaf(_), Self::Branch(branch)) => {
                         let Self::Leaf(leaf) =
-                            std::mem::replace(existing, Self::Branch(BTreeMap::new()))
+                            std::mem::replace(existing, Self::Branch(IndexMap::new()))
                         else {
                             unreachable!()
                         };

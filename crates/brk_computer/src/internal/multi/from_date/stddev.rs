@@ -2,15 +2,19 @@ use std::mem;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Close, Date, DateIndex, Dollars, StoredF32, Version};
+use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
+use schemars::JsonSchema;
 use vecdb::{
     AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec, IterableVec,
     PcoVec, VecIndex,
 };
 
-use crate::{ComputeIndexes, indexes, price};
+use crate::{ComputeIndexes, indexes};
 
-use crate::internal::{ClosePriceTimesRatio, ComputedFromDateLast, LazyBinaryPrice};
+use crate::internal::{
+    ComputedFromDateLast, ComputedFromHeightLast, ComputedVecValue, LazyBinaryPrice,
+    LazyFromHeightLast, PriceTimesRatio,
+};
 
 #[derive(Clone, Traversable)]
 pub struct ComputedFromDateStdDev {
@@ -35,19 +39,19 @@ pub struct ComputedFromDateStdDev {
     pub m2_5sd: Option<ComputedFromDateLast<StoredF32>>,
     pub m3sd: Option<ComputedFromDateLast<StoredF32>>,
 
-    pub _0sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub p0_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub p1sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub p1_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub p2sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub p2_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub p3sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub m0_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub m1sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub m1_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub m2sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub m2_5sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
-    pub m3sd_usd: Option<LazyBinaryPrice<Close<Dollars>, StoredF32>>,
+    pub _0sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub p0_5sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub p1sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub p1_5sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub p2sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub p2_5sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub p3sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub m0_5sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub m1sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub m1_5sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub m2sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub m2_5sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
+    pub m3sd_usd: Option<LazyBinaryPrice<Dollars, StoredF32>>,
 }
 
 #[derive(Debug, Default)]
@@ -103,9 +107,10 @@ impl ComputedFromDateStdDev {
         parent_version: Version,
         indexes: &indexes::Vecs,
         options: StandardDeviationVecsOptions,
-        price_vecs: Option<&price::Vecs>,
+        metric_price: Option<&ComputedFromHeightLast<Dollars>>,
+        date_price: Option<&ComputedFromDateLast<Dollars>>,
     ) -> Result<Self> {
-        let version = parent_version + Version::ONE;
+        let version = parent_version + Version::TWO;
 
         macro_rules! import {
             ($suffix:expr) => {
@@ -133,20 +138,33 @@ impl ComputedFromDateStdDev {
         let m2_5sd = options.bands().then(|| import!("m2_5sd"));
         let m3sd = options.bands().then(|| import!("m3sd"));
 
+        // Create USD bands using the metric price (the denominator of the ratio).
+        // This converts ratio bands back to USD: usd_band = metric_price * ratio_band
         macro_rules! lazy_usd {
             ($band:expr, $suffix:expr) => {
-                price_vecs
-                    .map(|p| &p.usd.split.close)
-                    .zip($band.as_ref())
-                    .filter(|_| options.price_bands())
-                    .map(|(p, b)| {
-                        LazyBinaryPrice::from_computed_both_last::<ClosePriceTimesRatio>(
+                if !options.price_bands() {
+                    None
+                } else if let Some(mp) = metric_price {
+                    $band.as_ref().map(|b| {
+                        LazyBinaryPrice::from_height_and_dateindex_last::<PriceTimesRatio>(
                             &format!("{name}_{}", $suffix),
                             version,
-                            p,
+                            mp,
                             b,
                         )
                     })
+                } else if let Some(dp) = date_price {
+                    $band.as_ref().map(|b| {
+                        LazyBinaryPrice::from_computed_both_last::<PriceTimesRatio>(
+                            &format!("{name}_{}", $suffix),
+                            version,
+                            dp,
+                            b,
+                        )
+                    })
+                } else {
+                    None
+                }
             };
         }
 
@@ -394,5 +412,92 @@ impl ComputedFromDateStdDev {
         &mut self,
     ) -> impl Iterator<Item = &mut EagerVec<PcoVec<DateIndex, StoredF32>>> {
         self.mut_stateful_computed().map(|c| &mut c.dateindex)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn forced_import_from_lazy<S1T: ComputedVecValue + JsonSchema>(
+        db: &Database,
+        name: &str,
+        days: usize,
+        parent_version: Version,
+        indexes: &indexes::Vecs,
+        options: StandardDeviationVecsOptions,
+        metric_price: Option<&LazyFromHeightLast<Dollars, S1T>>,
+    ) -> Result<Self> {
+        let version = parent_version + Version::TWO;
+
+        macro_rules! import {
+            ($suffix:expr) => {
+                ComputedFromDateLast::forced_import(
+                    db,
+                    &format!("{name}_{}", $suffix),
+                    version,
+                    indexes,
+                )
+                .unwrap()
+            };
+        }
+
+        let sma_vec = Some(import!("sma"));
+        let p0_5sd = options.bands().then(|| import!("p0_5sd"));
+        let p1sd = options.bands().then(|| import!("p1sd"));
+        let p1_5sd = options.bands().then(|| import!("p1_5sd"));
+        let p2sd = options.bands().then(|| import!("p2sd"));
+        let p2_5sd = options.bands().then(|| import!("p2_5sd"));
+        let p3sd = options.bands().then(|| import!("p3sd"));
+        let m0_5sd = options.bands().then(|| import!("m0_5sd"));
+        let m1sd = options.bands().then(|| import!("m1sd"));
+        let m1_5sd = options.bands().then(|| import!("m1_5sd"));
+        let m2sd = options.bands().then(|| import!("m2sd"));
+        let m2_5sd = options.bands().then(|| import!("m2_5sd"));
+        let m3sd = options.bands().then(|| import!("m3sd"));
+
+        macro_rules! lazy_usd {
+            ($band:expr, $suffix:expr) => {
+                metric_price
+                    .zip($band.as_ref())
+                    .filter(|_| options.price_bands())
+                    .map(|(mp, b)| {
+                        LazyBinaryPrice::from_lazy_height_and_dateindex_last::<PriceTimesRatio, S1T>(
+                            &format!("{name}_{}", $suffix),
+                            version,
+                            mp,
+                            b,
+                        )
+                    })
+            };
+        }
+
+        Ok(Self {
+            days,
+            sd: import!("sd"),
+            zscore: options.zscore().then(|| import!("zscore")),
+            _0sd_usd: lazy_usd!(&sma_vec, "0sd_usd"),
+            p0_5sd_usd: lazy_usd!(&p0_5sd, "p0_5sd_usd"),
+            p1sd_usd: lazy_usd!(&p1sd, "p1sd_usd"),
+            p1_5sd_usd: lazy_usd!(&p1_5sd, "p1_5sd_usd"),
+            p2sd_usd: lazy_usd!(&p2sd, "p2sd_usd"),
+            p2_5sd_usd: lazy_usd!(&p2_5sd, "p2_5sd_usd"),
+            p3sd_usd: lazy_usd!(&p3sd, "p3sd_usd"),
+            m0_5sd_usd: lazy_usd!(&m0_5sd, "m0_5sd_usd"),
+            m1sd_usd: lazy_usd!(&m1sd, "m1sd_usd"),
+            m1_5sd_usd: lazy_usd!(&m1_5sd, "m1_5sd_usd"),
+            m2sd_usd: lazy_usd!(&m2sd, "m2sd_usd"),
+            m2_5sd_usd: lazy_usd!(&m2_5sd, "m2_5sd_usd"),
+            m3sd_usd: lazy_usd!(&m3sd, "m3sd_usd"),
+            sma: sma_vec,
+            p0_5sd,
+            p1sd,
+            p1_5sd,
+            p2sd,
+            p2_5sd,
+            p3sd,
+            m0_5sd,
+            m1sd,
+            m1_5sd,
+            m2sd,
+            m2_5sd,
+            m3sd,
+        })
     }
 }

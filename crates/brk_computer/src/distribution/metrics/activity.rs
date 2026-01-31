@@ -96,14 +96,6 @@ impl ActivityMetrics {
         Ok(())
     }
 
-    /// Write height-indexed vectors to disk.
-    pub fn write(&mut self) -> Result<()> {
-        self.sent.sats.height.write()?;
-        self.satblocks_destroyed.write()?;
-        self.satdays_destroyed.write()?;
-        Ok(())
-    }
-
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         vec![

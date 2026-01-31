@@ -49,6 +49,7 @@ impl Vecs {
             indexes,
             StandardDeviationVecsOptions::default(),
             None,
+            None,
         )?;
         let _1d_returns_1m_sd = ComputedFromDateStdDev::forced_import(
             db,
@@ -58,6 +59,7 @@ impl Vecs {
             indexes,
             StandardDeviationVecsOptions::default(),
             None,
+            None,
         )?;
         let _1d_returns_1y_sd = ComputedFromDateStdDev::forced_import(
             db,
@@ -66,6 +68,7 @@ impl Vecs {
             version + v1,
             indexes,
             StandardDeviationVecsOptions::default(),
+            None,
             None,
         )?;
 
@@ -78,6 +81,7 @@ impl Vecs {
             indexes,
             StandardDeviationVecsOptions::default(),
             None,
+            None,
         )?;
         let downside_1m_sd = ComputedFromDateStdDev::forced_import(
             db,
@@ -87,6 +91,7 @@ impl Vecs {
             indexes,
             StandardDeviationVecsOptions::default(),
             None,
+            None,
         )?;
         let downside_1y_sd = ComputedFromDateStdDev::forced_import(
             db,
@@ -95,6 +100,7 @@ impl Vecs {
             version + v1,
             indexes,
             StandardDeviationVecsOptions::default(),
+            None,
             None,
         )?;
 

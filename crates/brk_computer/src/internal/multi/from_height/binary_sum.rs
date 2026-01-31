@@ -68,4 +68,36 @@ where
             rest: LazyBinaryHeightDerivedSum::from_derived::<F>(name, v, &source1.rest, &source2.rest),
         }
     }
+
+    /// Create from two LazyBinaryFromHeightSum sources.
+    pub fn from_binary<F, S1aT, S1bT, S2aT, S2bT>(
+        name: &str,
+        version: Version,
+        source1: &LazyBinaryFromHeightSum<S1T, S1aT, S1bT>,
+        source2: &LazyBinaryFromHeightSum<S2T, S2aT, S2bT>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S1aT: ComputedVecValue + JsonSchema,
+        S1bT: ComputedVecValue + JsonSchema,
+        S2aT: ComputedVecValue + JsonSchema,
+        S2bT: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        Self {
+            height: LazyVecFrom2::transformed::<F>(
+                name,
+                v,
+                source1.height.boxed_clone(),
+                source2.height.boxed_clone(),
+            ),
+            rest: LazyBinaryHeightDerivedSum::from_binary::<F, _, _, _, _>(
+                name,
+                v,
+                &source1.rest,
+                &source2.rest,
+            ),
+        }
+    }
 }

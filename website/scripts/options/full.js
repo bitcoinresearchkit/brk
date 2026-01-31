@@ -24,7 +24,6 @@ export function initOptions(brk) {
   const savedPath = /** @type {string[]} */ (
     JSON.parse(readStored(LS_SELECTED_KEY) || "[]") || []
   ).filter((v) => v);
-  console.log(savedPath);
 
   const partialOptions = createPartialOptions({
     brk,
@@ -84,90 +83,79 @@ export function initOptions(brk) {
   }
 
   /**
-   * Check if a metric is an ActivePricePattern (has dollars and sats sub-metrics)
-   * @param {any} metric
-   * @returns {metric is ActivePricePattern}
-   */
-  function isActivePricePattern(metric) {
-    return (
-      metric &&
-      typeof metric === "object" &&
-      "dollars" in metric &&
-      "sats" in metric &&
-      metric.dollars?.by &&
-      metric.sats?.by
-    );
-  }
-
-  /**
    * @param {(AnyFetchedSeriesBlueprint | FetchedPriceSeriesBlueprint)[]} [arr]
    */
-  function arrayToMap(arr = []) {
+  function arrayToMap(arr) {
     /** @type {Map<Unit, AnyFetchedSeriesBlueprint[]>} */
     const map = new Map();
     /** @type {Map<Unit, Set<number>>} */
     const priceLines = new Map();
 
-    for (const blueprint of arr || []) {
-      if (!blueprint.metric) {
-        throw new Error(
-          `Blueprint missing metric: ${JSON.stringify(blueprint)}`,
-        );
-      }
+    if (!arr) return map;
 
-      // Auto-expand ActivePricePattern into USD and sats versions
-      if (isActivePricePattern(blueprint.metric)) {
-        const pricePattern = /** @type {AnyPricePattern} */ (blueprint.metric);
+    // Cache arrays for common units outside loop
+    /** @type {AnyFetchedSeriesBlueprint[] | undefined} */
+    let usdArr;
+    /** @type {AnyFetchedSeriesBlueprint[] | undefined} */
+    let satsArr;
 
-        // USD version
-        markUsed(pricePattern.dollars);
-        if (!map.has(Unit.usd)) map.set(Unit.usd, []);
-        map.get(Unit.usd)?.push({ ...blueprint, metric: pricePattern.dollars, unit: Unit.usd });
+    for (let i = 0; i < arr.length; i++) {
+      const blueprint = arr[i];
 
-        // Sats version
-        markUsed(pricePattern.sats);
-        if (!map.has(Unit.sats)) map.set(Unit.sats, []);
-        map.get(Unit.sats)?.push({ ...blueprint, metric: pricePattern.sats, unit: Unit.sats });
+      // Check for price pattern blueprint (has dollars/sats sub-metrics)
+      // Use unknown cast for safe property access check
+      const maybePriceMetric = /** @type {{ dollars?: AnyMetricPattern, sats?: AnyMetricPattern }} */ (
+        /** @type {unknown} */ (blueprint.metric)
+      );
+      if (maybePriceMetric.dollars?.by && maybePriceMetric.sats?.by) {
+        const { dollars, sats } = maybePriceMetric;
+        markUsed(dollars);
+        if (!usdArr) map.set(Unit.usd, (usdArr = []));
+        usdArr.push({ ...blueprint, metric: dollars, unit: Unit.usd });
 
+        markUsed(sats);
+        if (!satsArr) map.set(Unit.sats, (satsArr = []));
+        satsArr.push({ ...blueprint, metric: sats, unit: Unit.sats });
         continue;
       }
 
-      // At this point, blueprint is definitely an AnyFetchedSeriesBlueprint (not a price pattern)
+      // After continue, we know this is a regular metric blueprint
       const regularBlueprint = /** @type {AnyFetchedSeriesBlueprint} */ (blueprint);
-
-      if (!regularBlueprint.unit) {
-        throw new Error(`Blueprint missing unit: ${regularBlueprint.title}`);
-      }
-      markUsed(regularBlueprint.metric);
+      const metric = regularBlueprint.metric;
       const unit = regularBlueprint.unit;
-      if (!map.has(unit)) {
-        map.set(unit, []);
-      }
-      map.get(unit)?.push(regularBlueprint);
+      if (!unit) continue;
+
+      markUsed(metric);
+      let unitArr = map.get(unit);
+      if (!unitArr) map.set(unit, (unitArr = []));
+      unitArr.push(regularBlueprint);
 
       // Track baseline base values for auto price lines
-      if (regularBlueprint.type === "Baseline") {
-        const baseValue = regularBlueprint.options?.baseValue?.price ?? 0;
-        if (!priceLines.has(unit)) priceLines.set(unit, new Set());
-        priceLines.get(unit)?.add(baseValue);
-      }
-
-      // Remove from set if manual price line already exists
-      // Note: line() doesn't set type, so undefined means Line
-      if (regularBlueprint.type === "Line" || regularBlueprint.type === undefined) {
-        const path = Object.values(regularBlueprint.metric.by)[0]?.path ?? "";
-        if (path.includes("constant_")) {
-          priceLines.get(unit)?.delete(parseFloat(regularBlueprint.title));
+      const type = regularBlueprint.type;
+      if (type === "Baseline") {
+        let priceSet = priceLines.get(unit);
+        if (!priceSet) priceLines.set(unit, (priceSet = new Set()));
+        priceSet.add(regularBlueprint.options?.baseValue?.price ?? 0);
+      } else if (!type || type === "Line") {
+        // Check if manual price line - avoid Object.values() array allocation
+        const by = metric.by;
+        for (const k in by) {
+          if (by[/** @type {Index} */ (k)]?.path?.includes("constant_")) {
+            priceLines.get(unit)?.delete(parseFloat(regularBlueprint.title));
+          }
+          break;
         }
       }
     }
 
     // Add price lines at end for remaining values
     for (const [unit, values] of priceLines) {
+      const arr = map.get(unit);
+      if (!arr) continue;
       for (const baseValue of values) {
         const metric = getConstant(brk.metrics.constants, baseValue);
         markUsed(metric);
-        map.get(unit)?.push({
+        arr.push({
           metric,
           title: `${baseValue}`,
           color: colors.gray,
@@ -238,30 +226,33 @@ export function initOptions(brk) {
    * @typedef {ProcessedGroup | ProcessedOption} ProcessedNode
    */
 
+  // Pre-compute path strings for faster comparison
+  const urlPathStr = urlPath?.join("/");
+  const savedPathStr = savedPath?.join("/");
+
   /**
    * @param {PartialOptionsTree} partialTree
    * @param {string[]} parentPath
-   * @returns {ProcessedNode[]}
+   * @param {string} parentPathStr
+   * @returns {{ nodes: ProcessedNode[], count: number }}
    */
-  function processPartialTree(partialTree, parentPath = []) {
+  function processPartialTree(partialTree, parentPath = [], parentPathStr = "") {
     /** @type {ProcessedNode[]} */
     const nodes = [];
+    let totalCount = 0;
 
-    for (const anyPartial of partialTree) {
+    for (let i = 0; i < partialTree.length; i++) {
+      const anyPartial = partialTree[i];
       if ("tree" in anyPartial) {
         const serName = stringToId(anyPartial.name);
-        const path = [...parentPath, serName];
-        const children = processPartialTree(anyPartial.tree, path);
-
-        // Compute count from children
-        const count = children.reduce(
-          (sum, child) => sum + (child.type === "group" ? child.count : 1),
-          0,
-        );
+        const pathStr = parentPathStr ? `${parentPathStr}/${serName}` : serName;
+        const path = parentPath.concat(serName);
+        const { nodes: children, count } = processPartialTree(anyPartial.tree, path, pathStr);
 
         // Skip groups with no children
         if (count === 0) continue;
 
+        totalCount += count;
         nodes.push({
           type: "group",
           name: anyPartial.name,
@@ -273,39 +264,23 @@ export function initOptions(brk) {
       } else {
         const option = /** @type {Option} */ (anyPartial);
         const name = option.name;
-        const path = [...parentPath, stringToId(option.name)];
+        const serName = stringToId(name);
+        const pathStr = parentPathStr ? `${parentPathStr}/${serName}` : serName;
+        const path = parentPath.concat(serName);
 
         // Transform partial to full option
         if ("kind" in anyPartial && anyPartial.kind === "explorer") {
-          Object.assign(
-            option,
-            /** @satisfies {ExplorerOption} */ ({
-              kind: anyPartial.kind,
-              path,
-              name,
-              title: option.title,
-            }),
-          );
+          option.kind = anyPartial.kind;
+          option.path = path;
+          option.name = name;
         } else if ("kind" in anyPartial && anyPartial.kind === "table") {
-          Object.assign(
-            option,
-            /** @satisfies {TableOption} */ ({
-              kind: anyPartial.kind,
-              path,
-              name,
-              title: option.title,
-            }),
-          );
+          option.kind = anyPartial.kind;
+          option.path = path;
+          option.name = name;
         } else if ("kind" in anyPartial && anyPartial.kind === "simulation") {
-          Object.assign(
-            option,
-            /** @satisfies {SimulationOption} */ ({
-              kind: anyPartial.kind,
-              path,
-              name,
-              title: anyPartial.title,
-            }),
-          );
+          option.kind = anyPartial.kind;
+          option.path = path;
+          option.name = name;
         } else if ("url" in anyPartial) {
           Object.assign(
             option,
@@ -319,7 +294,7 @@ export function initOptions(brk) {
             }),
           );
         } else {
-          const title = option.title || option.name;
+          const title = option.title || name;
           Object.assign(
             option,
             /** @satisfies {ChartOption} */ ({
@@ -334,22 +309,13 @@ export function initOptions(brk) {
         }
 
         list.push(option);
+        totalCount++;
 
-        // Check if this matches URL or saved path
-        if (urlPath) {
-          const sameAsURLPath =
-            urlPath.length === path.length &&
-            urlPath.every((val, i) => val === path[i]);
-          if (sameAsURLPath) {
-            selected.set(option);
-          }
-        } else if (savedPath) {
-          const sameAsSavedPath =
-            savedPath.length === path.length &&
-            savedPath.every((val, i) => val === path[i]);
-          if (sameAsSavedPath) {
-            savedOption = option;
-          }
+        // Check if this matches URL or saved path (string comparison is faster)
+        if (urlPathStr && pathStr === urlPathStr) {
+          selected.set(option);
+        } else if (savedPathStr && pathStr === savedPathStr) {
+          savedOption = option;
         }
 
         nodes.push({
@@ -360,10 +326,10 @@ export function initOptions(brk) {
       }
     }
 
-    return nodes;
+    return { nodes, count: totalCount };
   }
 
-  const processedTree = processPartialTree(partialOptions);
+  const { nodes: processedTree } = processPartialTree(partialOptions);
   logUnused();
 
   /**

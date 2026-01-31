@@ -1,5 +1,6 @@
 use std::{collections::BTreeMap, fmt::Display};
 
+pub use indexmap::IndexMap;
 pub use brk_types::{Index, MetricLeaf, MetricLeafWithSchema, TreeNode};
 
 #[cfg(feature = "derive")]
@@ -197,7 +198,7 @@ impl<T: Traversable> Traversable for Option<T> {
     fn to_tree_node(&self) -> TreeNode {
         match self {
             Some(inner) => inner.to_tree_node(),
-            None => TreeNode::Branch(BTreeMap::new()),
+            None => TreeNode::Branch(IndexMap::new()),
         }
     }
 
@@ -233,7 +234,7 @@ impl<K: Display, V: Traversable> Traversable for BTreeMap<K, V> {
 /// (e.g., Unpriced variants where dollar fields are not needed)
 impl Traversable for () {
     fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Branch(BTreeMap::new())
+        TreeNode::Branch(IndexMap::new())
     }
 
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {

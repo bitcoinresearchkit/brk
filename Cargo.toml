@@ -66,13 +66,14 @@ byteview = "0.10.0"
 color-eyre = "0.6.5"
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
 fjall = "3.0.1"
+indexmap = { version = "2.13.0", features = ["serde"] }
 jiff = { version = "0.2.18", features = ["perf-inline", "tz-system"], default-features = false }
 minreq = { version = "2.14.1", features = ["https", "json-using-serde"] }
 owo-colors = "4.2.3"
 parking_lot = "0.12.5"
 rayon = "1.11.0"
 rustc-hash = "2.1.1"
-schemars = "1.2.0"
+schemars = { version = "1.2.0", features = ["indexmap2"] }
 serde = "1.0.228"
 serde_bytes = "0.11.19"
 serde_derive = "1.0.228"
@@ -82,7 +83,7 @@ tokio = { version = "1.49.0", features = ["rt-multi-thread"] }
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 tower-http = { version = "0.6.8", features = ["catch-panic", "compression-br", "compression-gzip", "compression-zstd", "cors", "normalize-path", "timeout", "trace"] }
 tower-layer = "0.3"
-vecdb = { version = "0.6.3", features = ["derive", "serde_json", "pco", "schemars"] }
+vecdb = { version = "0.6.4", features = ["derive", "serde_json", "pco", "schemars"] }
 # vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
 
 [workspace.metadata.release]

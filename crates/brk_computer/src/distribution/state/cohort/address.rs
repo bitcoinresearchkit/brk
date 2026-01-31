@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_types::{Age, Dollars, Height, LoadedAddressData, Sats, SupplyState};
+use brk_types::{Age, CentsUnsigned, Height, LoadedAddressData, Sats, SupplyState};
 use vecdb::unlikely;
 
 use super::{super::cost_basis::RealizedState, base::CohortState};
@@ -28,12 +28,12 @@ impl AddressCohortState {
         self.inner.satblocks_destroyed = Sats::ZERO;
         self.inner.satdays_destroyed = Sats::ZERO;
         if let Some(realized) = self.inner.realized.as_mut() {
-            *realized = RealizedState::NAN;
+            *realized = RealizedState::default();
         }
     }
 
-    pub fn reset_price_to_amount_if_needed(&mut self) -> Result<()> {
-        self.inner.reset_price_to_amount_if_needed()
+    pub fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
+        self.inner.reset_cost_basis_data_if_needed()
     }
 
     pub fn reset_single_iteration_values(&mut self) {
@@ -44,35 +44,23 @@ impl AddressCohortState {
         &mut self,
         addressdata: &mut LoadedAddressData,
         value: Sats,
-        current_price: Option<Dollars>,
-        prev_price: Option<Dollars>,
+        current_price: CentsUnsigned,
+        prev_price: CentsUnsigned,
+        ath: CentsUnsigned,
         age: Age,
     ) -> Result<()> {
-        let compute_price = current_price.is_some();
+        let prev = addressdata.cost_basis_snapshot();
+        addressdata.send(value, Some(prev_price))?;
+        let current = addressdata.cost_basis_snapshot();
 
-        let prev_realized_price = compute_price.then(|| addressdata.realized_price());
-        let prev_supply_state = SupplyState {
-            utxo_count: addressdata.utxo_count() as u64,
-            value: addressdata.balance(),
-        };
-
-        addressdata.send(value, prev_price)?;
-
-        let supply_state = SupplyState {
-            utxo_count: addressdata.utxo_count() as u64,
-            value: addressdata.balance(),
-        };
-
-        self.inner.send_(
-            &SupplyState {
-                utxo_count: 1,
-                value,
-            },
+        self.inner.send_address(
+            &SupplyState { utxo_count: 1, value },
             current_price,
             prev_price,
+            ath,
             age,
-            compute_price.then(|| (addressdata.realized_price(), &supply_state)),
-            prev_realized_price.map(|prev_price| (prev_price, &prev_supply_state)),
+            &current,
+            &prev,
         );
 
         Ok(())
@@ -82,7 +70,7 @@ impl AddressCohortState {
         &mut self,
         address_data: &mut LoadedAddressData,
         value: Sats,
-        price: Option<Dollars>,
+        price: CentsUnsigned,
     ) {
         self.receive_outputs(address_data, value, price, 1);
     }
@@ -91,50 +79,31 @@ impl AddressCohortState {
         &mut self,
         address_data: &mut LoadedAddressData,
         value: Sats,
-        price: Option<Dollars>,
+        price: CentsUnsigned,
         output_count: u32,
     ) {
-        let compute_price = price.is_some();
+        let prev = address_data.cost_basis_snapshot();
+        address_data.receive_outputs(value, Some(price), output_count);
+        let current = address_data.cost_basis_snapshot();
 
-        let prev_realized_price = compute_price.then(|| address_data.realized_price());
-        let prev_supply_state = SupplyState {
-            utxo_count: address_data.utxo_count() as u64,
-            value: address_data.balance(),
-        };
-
-        address_data.receive_outputs(value, price, output_count);
-
-        let supply_state = SupplyState {
-            utxo_count: address_data.utxo_count() as u64,
-            value: address_data.balance(),
-        };
-
-        self.inner.receive_(
-            &SupplyState {
-                utxo_count: output_count as u64,
-                value,
-            },
+        self.inner.receive_address(
+            &SupplyState { utxo_count: output_count as u64, value },
             price,
-            compute_price.then(|| (address_data.realized_price(), &supply_state)),
-            prev_realized_price.map(|prev_price| (prev_price, &prev_supply_state)),
+            &current,
+            &prev,
         );
     }
 
     pub fn add(&mut self, addressdata: &LoadedAddressData) {
         self.addr_count += 1;
-        self.inner.increment_(
-            &addressdata.into(),
-            addressdata.realized_cap,
-            addressdata.realized_price(),
-        );
+        self.inner.increment_snapshot(&addressdata.cost_basis_snapshot());
     }
 
     pub fn subtract(&mut self, addressdata: &LoadedAddressData) {
-        let addr_supply: SupplyState = addressdata.into();
-        let realized_price = addressdata.realized_price();
+        let snapshot = addressdata.cost_basis_snapshot();
 
         // Check for potential underflow before it happens
-        if unlikely(self.inner.supply.utxo_count < addr_supply.utxo_count) {
+        if unlikely(self.inner.supply.utxo_count < snapshot.supply_state.utxo_count) {
             panic!(
                 "AddressCohortState::subtract underflow!\n\
                 Cohort state: addr_count={}, supply={}\n\
@@ -142,10 +111,10 @@ impl AddressCohortState {
                 Address supply: {}\n\
                 Realized price: {}\n\
                 This means the address is not properly tracked in this cohort.",
-                self.addr_count, self.inner.supply, addressdata, addr_supply, realized_price
+                self.addr_count, self.inner.supply, addressdata, snapshot.supply_state, snapshot.realized_price
             );
         }
-        if unlikely(self.inner.supply.value < addr_supply.value) {
+        if unlikely(self.inner.supply.value < snapshot.supply_state.value) {
             panic!(
                 "AddressCohortState::subtract value underflow!\n\
                 Cohort state: addr_count={}, supply={}\n\
@@ -153,7 +122,7 @@ impl AddressCohortState {
                 Address supply: {}\n\
                 Realized price: {}\n\
                 This means the address is not properly tracked in this cohort.",
-                self.addr_count, self.inner.supply, addressdata, addr_supply, realized_price
+                self.addr_count, self.inner.supply, addressdata, snapshot.supply_state, snapshot.realized_price
             );
         }
 
@@ -162,12 +131,11 @@ impl AddressCohortState {
                 "AddressCohortState::subtract addr_count underflow! addr_count=0\n\
                 Address being subtracted: {}\n\
                 Realized price: {}",
-                addressdata, realized_price
+                addressdata, snapshot.realized_price
             )
         });
 
-        self.inner
-            .decrement_(&addr_supply, addressdata.realized_cap, realized_price);
+        self.inner.decrement_snapshot(&snapshot);
     }
 
     pub fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {

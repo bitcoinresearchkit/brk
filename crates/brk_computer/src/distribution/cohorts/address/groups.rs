@@ -191,11 +191,11 @@ impl AddressCohorts {
         });
     }
 
-    /// Reset price_to_amount for all separate cohorts (called during fresh start).
-    pub fn reset_separate_price_to_amount(&mut self) -> Result<()> {
+    /// Reset cost_basis_data for all separate cohorts (called during fresh start).
+    pub fn reset_separate_cost_basis_data(&mut self) -> Result<()> {
         self.par_iter_separate_mut().try_for_each(|v| {
             if let Some(state) = v.state.as_mut() {
-                state.reset_price_to_amount_if_needed()?;
+                state.reset_cost_basis_data_if_needed()?;
             }
             Ok(())
         })

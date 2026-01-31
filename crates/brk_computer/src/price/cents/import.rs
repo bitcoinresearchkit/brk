@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{DateIndex, Height, OHLCCents, Version};
+use brk_types::{DateIndex, Height, OHLCCentsUnsigned, Version};
 use vecdb::{Database, IterableCloneableVec, LazyVecFrom1};
 
 use super::Vecs;
@@ -7,7 +7,7 @@ use crate::internal::{ComputedHeightAndDateBytes, LazyHeightAndDateOHLC, LazyOHL
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
-        let ohlc: ComputedHeightAndDateBytes<OHLCCents> =
+        let ohlc: ComputedHeightAndDateBytes<OHLCCentsUnsigned> =
             ComputedHeightAndDateBytes::forced_import(db, "ohlc_cents", version)?;
 
         let components = LazyHeightAndDateOHLC {
@@ -16,25 +16,25 @@ impl Vecs {
                     "price_open_cents",
                     version,
                     ohlc.height.boxed_clone(),
-                    |h: Height, iter| iter.get(h).map(|o: OHLCCents| o.open),
+                    |h: Height, iter| iter.get(h).map(|o: OHLCCentsUnsigned| o.open),
                 ),
                 high: LazyVecFrom1::init(
                     "price_high_cents",
                     version,
                     ohlc.height.boxed_clone(),
-                    |h: Height, iter| iter.get(h).map(|o: OHLCCents| o.high),
+                    |h: Height, iter| iter.get(h).map(|o: OHLCCentsUnsigned| o.high),
                 ),
                 low: LazyVecFrom1::init(
                     "price_low_cents",
                     version,
                     ohlc.height.boxed_clone(),
-                    |h: Height, iter| iter.get(h).map(|o: OHLCCents| o.low),
+                    |h: Height, iter| iter.get(h).map(|o: OHLCCentsUnsigned| o.low),
                 ),
                 close: LazyVecFrom1::init(
                     "price_close_cents",
                     version,
                     ohlc.height.boxed_clone(),
-                    |h: Height, iter| iter.get(h).map(|o: OHLCCents| o.close),
+                    |h: Height, iter| iter.get(h).map(|o: OHLCCentsUnsigned| o.close),
                 ),
             },
             dateindex: LazyOHLC {
@@ -42,25 +42,25 @@ impl Vecs {
                     "price_open_cents",
                     version,
                     ohlc.dateindex.boxed_clone(),
-                    |di: DateIndex, iter| iter.get(di).map(|o: OHLCCents| o.open),
+                    |di: DateIndex, iter| iter.get(di).map(|o: OHLCCentsUnsigned| o.open),
                 ),
                 high: LazyVecFrom1::init(
                     "price_high_cents",
                     version,
                     ohlc.dateindex.boxed_clone(),
-                    |di: DateIndex, iter| iter.get(di).map(|o: OHLCCents| o.high),
+                    |di: DateIndex, iter| iter.get(di).map(|o: OHLCCentsUnsigned| o.high),
                 ),
                 low: LazyVecFrom1::init(
                     "price_low_cents",
                     version,
                     ohlc.dateindex.boxed_clone(),
-                    |di: DateIndex, iter| iter.get(di).map(|o: OHLCCents| o.low),
+                    |di: DateIndex, iter| iter.get(di).map(|o: OHLCCentsUnsigned| o.low),
                 ),
                 close: LazyVecFrom1::init(
                     "price_close_cents",
                     version,
                     ohlc.dateindex.boxed_clone(),
-                    |di: DateIndex, iter| iter.get(di).map(|o: OHLCCents| o.close),
+                    |di: DateIndex, iter| iter.get(di).map(|o: OHLCCentsUnsigned| o.close),
                 ),
             },
         };

@@ -12,6 +12,7 @@ bitcoin = { workspace = true }
 brk_error = { workspace = true, features = ["bitcoin", "jiff", "serde_json", "vecdb"] }
 byteview = { workspace = true }
 derive_more = { workspace = true }
+indexmap = { workspace = true }
 itoa = "1.0.17"
 jiff = { workspace = true }
 rapidhash = "4.2.1"

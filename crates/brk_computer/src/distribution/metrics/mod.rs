@@ -19,7 +19,7 @@ pub use unrealized::*;
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Dollars, Height, Version};
+use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, IterableVec};
 
@@ -69,9 +69,20 @@ impl CohortMetrics {
             .then(|| UnrealizedMetrics::forced_import(cfg))
             .transpose()?;
 
-        let relative = unrealized
-            .as_ref()
-            .map(|u| RelativeMetrics::forced_import(cfg, u, &supply, all_supply))
+        let realized = compute_dollars
+            .then(|| RealizedMetrics::forced_import(cfg))
+            .transpose()?;
+
+        let relative = (cfg.compute_relative() && unrealized.is_some())
+            .then(|| {
+                RelativeMetrics::forced_import(
+                    cfg,
+                    unrealized.as_ref().unwrap(),
+                    &supply,
+                    all_supply,
+                    realized.as_ref(),
+                )
+            })
             .transpose()?;
 
         Ok(Self {
@@ -79,9 +90,7 @@ impl CohortMetrics {
             supply,
             outputs,
             activity: ActivityMetrics::forced_import(cfg)?,
-            realized: compute_dollars
-                .then(|| RealizedMetrics::forced_import(cfg))
-                .transpose()?,
+            realized,
             cost_basis: compute_dollars
                 .then(|| CostBasisMetrics::forced_import(cfg))
                 .transpose()?,
@@ -146,27 +155,6 @@ impl CohortMetrics {
         Ok(())
     }
 
-    /// Write height-indexed vectors to disk.
-    pub fn write(&mut self) -> Result<()> {
-        self.supply.write()?;
-        self.outputs.write()?;
-        self.activity.write()?;
-
-        if let Some(realized) = self.realized.as_mut() {
-            realized.write()?;
-        }
-
-        if let Some(unrealized) = self.unrealized.as_mut() {
-            unrealized.write()?;
-        }
-
-        if let Some(cost_basis) = self.cost_basis.as_mut() {
-            cost_basis.write()?;
-        }
-
-        Ok(())
-    }
-
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
@@ -211,9 +199,9 @@ impl CohortMetrics {
     pub fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
-        height_price: Option<Dollars>,
+        height_price: Option<CentsUnsigned>,
         dateindex: Option<DateIndex>,
-        date_price: Option<Option<Dollars>>,
+        date_price: Option<Option<CentsUnsigned>>,
         state: &mut CohortState,
     ) -> Result<()> {
         // Apply pending updates before reading
@@ -238,7 +226,11 @@ impl CohortMetrics {
 
             // Only compute expensive percentiles at date boundaries (~144x reduction)
             if let Some(dateindex) = dateindex {
-                cost_basis.truncate_push_percentiles(dateindex, state)?;
+                let spot = date_price
+                    .unwrap()
+                    .map(|c| c.to_dollars())
+                    .unwrap_or(Dollars::NAN);
+                cost_basis.truncate_push_percentiles(dateindex, state, spot)?;
             }
         }
 
@@ -323,7 +315,7 @@ impl CohortMetrics {
         }
 
         if let Some(unrealized) = self.unrealized.as_mut() {
-            unrealized.compute_rest_part1(price, starting_indexes, exit)?;
+            unrealized.compute_rest(indexes, price, starting_indexes, exit)?;
         }
 
         if let Some(cost_basis) = self.cost_basis.as_mut() {

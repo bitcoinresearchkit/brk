@@ -3,7 +3,7 @@ use std::thread;
 use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{DateIndex, Height, OutputType, Sats, TxIndex, TypeIndex};
+use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, OutputType, Sats, TxIndex, TypeIndex};
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use tracing::info;
@@ -75,9 +75,9 @@ pub fn process_blocks(
     let txindex_to_output_count = &indexes.txindex.output_count;
     let txindex_to_input_count = &indexes.txindex.input_count;
 
-    // From price (optional):
-    let height_to_price = price.map(|p| &p.usd.split.close.height);
-    let dateindex_to_price = price.map(|p| &p.usd.split.close.dateindex);
+    // From price (optional) - use cents for computation:
+    let height_to_price = price.map(|p| &p.cents.split.height.close);
+    let dateindex_to_price = price.map(|p| &p.cents.split.dateindex.close);
 
     // Access pre-computed vectors from context for thread-safe access
     let height_to_price_vec = &ctx.height_to_price;
@@ -329,6 +329,7 @@ pub fn process_blocks(
                     &mut vecs.address_cohorts,
                     &mut lookup,
                     block_price,
+                    ctx.price_range_max.as_ref(),
                     &mut addr_counts,
                     &mut empty_addr_counts,
                     &mut activity_counts,
@@ -344,7 +345,8 @@ pub fn process_blocks(
             // Main thread: Update UTXO cohorts
             vecs.utxo_cohorts
                 .receive(transacted, height, timestamp, block_price);
-            vecs.utxo_cohorts.send(height_to_sent, chain_state);
+            vecs.utxo_cohorts
+                .send(height_to_sent, chain_state, ctx.price_range_max.as_ref());
         });
 
         // Push to height-indexed vectors
@@ -382,8 +384,12 @@ pub fn process_blocks(
 
         // Compute and push percentiles for aggregate cohorts (all, sth, lth)
         if let Some(dateindex) = dateindex_opt {
+            let spot = date_price
+                .flatten()
+                .map(|c| c.to_dollars())
+                .unwrap_or(Dollars::NAN);
             vecs.utxo_cohorts
-                .truncate_push_aggregate_percentiles(dateindex)?;
+                .truncate_push_aggregate_percentiles(dateindex, spot)?;
         }
 
         // Periodic checkpoint flush
@@ -456,9 +462,9 @@ fn push_cohort_states(
     utxo_cohorts: &mut UTXOCohorts,
     address_cohorts: &mut AddressCohorts,
     height: Height,
-    height_price: Option<brk_types::Dollars>,
+    height_price: Option<CentsUnsigned>,
     dateindex: Option<DateIndex>,
-    date_price: Option<Option<brk_types::Dollars>>,
+    date_price: Option<Option<CentsUnsigned>>,
 ) -> Result<()> {
     // utxo_cohorts.iter_separate_mut().try_for_each(|v| {
     utxo_cohorts.par_iter_separate_mut().try_for_each(|v| {

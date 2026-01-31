@@ -40,12 +40,6 @@ impl OutputsMetrics {
         Ok(())
     }
 
-    /// Write height-indexed vectors to disk.
-    pub fn write(&mut self) -> Result<()> {
-        self.utxo_count.height.write()?;
-        Ok(())
-    }
-
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         vec![&mut self.utxo_count.height as &mut dyn AnyStoredVec].into_par_iter()

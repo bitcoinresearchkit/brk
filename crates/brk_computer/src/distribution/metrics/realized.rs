@@ -1,10 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredF32, StoredF64, Version};
+use brk_types::{
+    Bitcoin, CentsSats, CentsSquaredSats, CentsUnsigned, DateIndex, Dollars, Height, StoredF32,
+    StoredF64, Version,
+};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, Ident, ImportableVec,
-    IterableCloneableVec, IterableVec, Negate, PcoVec,
+    AnyStoredVec, AnyVec, BytesVec, EagerVec, Exit, GenericStoredVec, Ident, ImportableVec,
+    IterableCloneableVec, IterableVec, Negate, PcoVec, TypedVecIterator,
 };
 
 use crate::{
@@ -12,10 +15,11 @@ use crate::{
     distribution::state::RealizedState,
     indexes,
     internal::{
-        ComputedFromHeightLast, ComputedFromHeightSum, ComputedFromHeightSumCum, ComputedFromDateLast,
-        ComputedFromDateRatio, DollarsMinus, LazyBinaryFromHeightSum, LazyBinaryFromHeightSumCum,
-        LazyFromHeightSum, LazyFromHeightSumCum, LazyFromDateLast, PercentageDollarsF32,
-        PriceFromHeight, StoredF32Identity,
+        CentsUnsignedToDollars, ComputedFromDateLast, ComputedFromDateRatio,
+        ComputedFromHeightLast, ComputedFromHeightSum, ComputedFromHeightSumCum, DollarsMinus,
+        DollarsPlus, LazyBinaryFromHeightSum, LazyBinaryFromHeightSumCum, LazyFromDateLast,
+        LazyFromHeightLast, LazyFromHeightSum, LazyFromHeightSumCum, LazyPriceFromCents,
+        PercentageDollarsF32, PriceFromHeight, StoredF32Identity,
     },
     price,
 };
@@ -26,11 +30,23 @@ use super::ImportConfig;
 #[derive(Clone, Traversable)]
 pub struct RealizedMetrics {
     // === Realized Cap ===
-    pub realized_cap: ComputedFromHeightLast<Dollars>,
+    pub realized_cap_cents: ComputedFromHeightLast<CentsUnsigned>,
+    pub realized_cap: LazyFromHeightLast<Dollars, CentsUnsigned>,
     pub realized_price: PriceFromHeight,
     pub realized_price_extra: ComputedFromDateRatio,
     pub realized_cap_rel_to_own_market_cap: Option<ComputedFromHeightLast<StoredF32>>,
     pub realized_cap_30d_delta: ComputedFromDateLast<Dollars>,
+
+    // === Investor Price (dollar-weighted average acquisition price) ===
+    pub investor_price_cents: ComputedFromHeightLast<CentsUnsigned>,
+    pub investor_price: LazyPriceFromCents,
+    pub investor_price_extra: ComputedFromDateRatio,
+
+    // === Raw values for aggregation (needed to compute investor_price for aggregated cohorts) ===
+    /// Raw Σ(price × sats) for realized cap aggregation
+    pub cap_raw: BytesVec<Height, CentsSats>,
+    /// Raw Σ(price² × sats) for investor_price aggregation
+    pub investor_cap_raw: BytesVec<Height, CentsSquaredSats>,
 
     // === MVRV (Market Value to Realized Value) ===
     // Proxy for realized_price_extra.ratio (close / realized_price = market_cap / realized_cap)
@@ -44,17 +60,29 @@ pub struct RealizedMetrics {
     pub realized_value: ComputedFromHeightSum<Dollars>,
 
     // === Realized vs Realized Cap Ratios (lazy) ===
-    pub realized_profit_rel_to_realized_cap: LazyBinaryFromHeightSumCum<StoredF32, Dollars, Dollars>,
+    pub realized_profit_rel_to_realized_cap:
+        LazyBinaryFromHeightSumCum<StoredF32, Dollars, Dollars>,
     pub realized_loss_rel_to_realized_cap: LazyBinaryFromHeightSumCum<StoredF32, Dollars, Dollars>,
-    pub net_realized_pnl_rel_to_realized_cap: LazyBinaryFromHeightSumCum<StoredF32, Dollars, Dollars>,
+    pub net_realized_pnl_rel_to_realized_cap:
+        LazyBinaryFromHeightSumCum<StoredF32, Dollars, Dollars>,
 
     // === Total Realized PnL ===
     pub total_realized_pnl: LazyFromHeightSum<Dollars>,
     pub realized_profit_to_loss_ratio: Option<EagerVec<PcoVec<DateIndex, StoredF64>>>,
 
-    // === Value Created/Destroyed ===
-    pub value_created: ComputedFromHeightSum<Dollars>,
-    pub value_destroyed: ComputedFromHeightSum<Dollars>,
+    // === Value Created/Destroyed Splits (stored) ===
+    pub profit_value_created: ComputedFromHeightSum<Dollars>,
+    pub profit_value_destroyed: ComputedFromHeightSum<Dollars>,
+    pub loss_value_created: ComputedFromHeightSum<Dollars>,
+    pub loss_value_destroyed: ComputedFromHeightSum<Dollars>,
+
+    // === Value Created/Destroyed Totals (lazy: profit + loss) ===
+    pub value_created: LazyBinaryFromHeightSum<Dollars, Dollars, Dollars>,
+    pub value_destroyed: LazyBinaryFromHeightSum<Dollars, Dollars, Dollars>,
+
+    // === Capitulation/Profit Flow (lazy aliases) ===
+    pub capitulation_flow: LazyFromHeightSum<Dollars>,
+    pub profit_flow: LazyFromHeightSum<Dollars>,
 
     // === Adjusted Value (lazy: cohort - up_to_1h) ===
     pub adjusted_value_created: Option<LazyBinaryFromHeightSum<Dollars, Dollars, Dollars>>,
@@ -77,23 +105,36 @@ pub struct RealizedMetrics {
     pub net_realized_pnl_cumulative_30d_delta: ComputedFromDateLast<Dollars>,
     pub net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap: ComputedFromDateLast<StoredF32>,
     pub net_realized_pnl_cumulative_30d_delta_rel_to_market_cap: ComputedFromDateLast<StoredF32>,
+
+    // === ATH Regret ===
+    /// Realized ATH regret: Σ((ath - sell_price) × sats)
+    /// "How much more could have been made by selling at ATH instead"
+    pub ath_regret: ComputedFromHeightSumCum<Dollars>,
 }
 
 impl RealizedMetrics {
     /// Import realized metrics from database.
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
+        let v2 = Version::new(2);
         let v3 = Version::new(3);
         let extended = cfg.extended();
         let compute_adjusted = cfg.compute_adjusted();
 
         // Import combined types using forced_import which handles height + derived
-        let realized_cap = ComputedFromHeightLast::forced_import(
+        let realized_cap_cents = ComputedFromHeightLast::forced_import(
             cfg.db,
-            &cfg.name("realized_cap"),
+            &cfg.name("realized_cap_cents"),
             cfg.version,
             cfg.indexes,
         )?;
+
+        let realized_cap = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
+            &cfg.name("realized_cap"),
+            cfg.version,
+            realized_cap_cents.height.boxed_clone(),
+            &realized_cap_cents,
+        );
 
         let realized_profit = ComputedFromHeightSumCum::forced_import(
             cfg.db,
@@ -141,7 +182,7 @@ impl RealizedMetrics {
 
         // Construct lazy ratio vecs
         let realized_profit_rel_to_realized_cap =
-            LazyBinaryFromHeightSumCum::from_computed_last::<PercentageDollarsF32>(
+            LazyBinaryFromHeightSumCum::from_computed_lazy_last::<PercentageDollarsF32, _>(
                 &cfg.name("realized_profit_rel_to_realized_cap"),
                 cfg.version + v1,
                 realized_profit.height.boxed_clone(),
@@ -151,7 +192,7 @@ impl RealizedMetrics {
             );
 
         let realized_loss_rel_to_realized_cap =
-            LazyBinaryFromHeightSumCum::from_computed_last::<PercentageDollarsF32>(
+            LazyBinaryFromHeightSumCum::from_computed_lazy_last::<PercentageDollarsF32, _>(
                 &cfg.name("realized_loss_rel_to_realized_cap"),
                 cfg.version + v1,
                 realized_loss.height.boxed_clone(),
@@ -161,7 +202,7 @@ impl RealizedMetrics {
             );
 
         let net_realized_pnl_rel_to_realized_cap =
-            LazyBinaryFromHeightSumCum::from_computed_last::<PercentageDollarsF32>(
+            LazyBinaryFromHeightSumCum::from_computed_lazy_last::<PercentageDollarsF32, _>(
                 &cfg.name("net_realized_pnl_rel_to_realized_cap"),
                 cfg.version + v1,
                 net_realized_pnl.height.boxed_clone(),
@@ -177,25 +218,104 @@ impl RealizedMetrics {
             cfg.indexes,
         )?;
 
-        let value_created = ComputedFromHeightSum::forced_import(
+        // Investor price (dollar-weighted average acquisition price)
+        let investor_price_cents = ComputedFromHeightLast::forced_import(
             cfg.db,
-            &cfg.name("value_created"),
+            &cfg.name("investor_price_cents"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let value_destroyed = ComputedFromHeightSum::forced_import(
+        let investor_price = LazyPriceFromCents::from_computed(
+            &cfg.name("investor_price"),
+            cfg.version,
+            &investor_price_cents,
+        );
+
+        let investor_price_extra = ComputedFromDateRatio::forced_import_from_lazy(
             cfg.db,
-            &cfg.name("value_destroyed"),
+            &cfg.name("investor_price"),
+            &investor_price.dollars,
+            cfg.version,
+            cfg.indexes,
+            extended,
+        )?;
+
+        // Raw values for aggregation
+        let cap_raw = BytesVec::forced_import(cfg.db, &cfg.name("cap_raw"), cfg.version)?;
+        let investor_cap_raw =
+            BytesVec::forced_import(cfg.db, &cfg.name("investor_cap_raw"), cfg.version)?;
+
+        // Import the 4 splits (stored)
+        let profit_value_created = ComputedFromHeightSum::forced_import(
+            cfg.db,
+            &cfg.name("profit_value_created"),
             cfg.version,
             cfg.indexes,
         )?;
+
+        let profit_value_destroyed = ComputedFromHeightSum::forced_import(
+            cfg.db,
+            &cfg.name("profit_value_destroyed"),
+            cfg.version,
+            cfg.indexes,
+        )?;
+
+        let loss_value_created = ComputedFromHeightSum::forced_import(
+            cfg.db,
+            &cfg.name("loss_value_created"),
+            cfg.version,
+            cfg.indexes,
+        )?;
+
+        let loss_value_destroyed = ComputedFromHeightSum::forced_import(
+            cfg.db,
+            &cfg.name("loss_value_destroyed"),
+            cfg.version,
+            cfg.indexes,
+        )?;
+
+        // Create lazy totals (profit + loss)
+        let value_created = LazyBinaryFromHeightSum::from_computed::<DollarsPlus>(
+            &cfg.name("value_created"),
+            cfg.version,
+            &profit_value_created,
+            &loss_value_created,
+        );
+
+        let value_destroyed = LazyBinaryFromHeightSum::from_computed::<DollarsPlus>(
+            &cfg.name("value_destroyed"),
+            cfg.version,
+            &profit_value_destroyed,
+            &loss_value_destroyed,
+        );
+
+        // Create lazy aliases
+        let capitulation_flow = LazyFromHeightSum::from_computed::<Ident>(
+            &cfg.name("capitulation_flow"),
+            cfg.version,
+            loss_value_destroyed.height.boxed_clone(),
+            &loss_value_destroyed,
+        );
+
+        let profit_flow = LazyFromHeightSum::from_computed::<Ident>(
+            &cfg.name("profit_flow"),
+            cfg.version,
+            profit_value_destroyed.height.boxed_clone(),
+            &profit_value_destroyed,
+        );
 
         // Create lazy adjusted vecs if compute_adjusted and up_to_1h is available
         let adjusted_value_created =
             (compute_adjusted && cfg.up_to_1h_realized.is_some()).then(|| {
                 let up_to_1h = cfg.up_to_1h_realized.unwrap();
-                LazyBinaryFromHeightSum::from_computed::<DollarsMinus>(
+                LazyBinaryFromHeightSum::from_binary::<
+                    DollarsMinus,
+                    Dollars,
+                    Dollars,
+                    Dollars,
+                    Dollars,
+                >(
                     &cfg.name("adjusted_value_created"),
                     cfg.version,
                     &value_created,
@@ -205,7 +325,13 @@ impl RealizedMetrics {
         let adjusted_value_destroyed =
             (compute_adjusted && cfg.up_to_1h_realized.is_some()).then(|| {
                 let up_to_1h = cfg.up_to_1h_realized.unwrap();
-                LazyBinaryFromHeightSum::from_computed::<DollarsMinus>(
+                LazyBinaryFromHeightSum::from_binary::<
+                    DollarsMinus,
+                    Dollars,
+                    Dollars,
+                    Dollars,
+                    Dollars,
+                >(
                     &cfg.name("adjusted_value_destroyed"),
                     cfg.version,
                     &value_destroyed,
@@ -221,7 +347,6 @@ impl RealizedMetrics {
             cfg.version + v1,
             cfg.indexes,
             extended,
-            cfg.price,
         )?;
 
         // MVRV is a lazy proxy for realized_price_extra.ratio
@@ -234,6 +359,7 @@ impl RealizedMetrics {
 
         Ok(Self {
             // === Realized Cap ===
+            realized_cap_cents,
             realized_cap,
             realized_price,
             realized_price_extra,
@@ -253,6 +379,13 @@ impl RealizedMetrics {
                 cfg.version,
                 cfg.indexes,
             )?,
+
+            // === Investor Price ===
+            investor_price_cents,
+            investor_price,
+            investor_price_extra,
+            cap_raw,
+            investor_cap_raw,
 
             // === MVRV ===
             mvrv,
@@ -281,9 +414,19 @@ impl RealizedMetrics {
                 })
                 .transpose()?,
 
-            // === Value Created/Destroyed ===
+            // === Value Created/Destroyed Splits (stored) ===
+            profit_value_created,
+            profit_value_destroyed,
+            loss_value_created,
+            loss_value_destroyed,
+
+            // === Value Created/Destroyed Totals (lazy: profit + loss) ===
             value_created,
             value_destroyed,
+
+            // === Capitulation/Profit Flow (lazy aliases) ===
+            capitulation_flow,
+            profit_flow,
 
             // === Adjusted Value (lazy: cohort - up_to_1h) ===
             adjusted_value_created,
@@ -291,7 +434,11 @@ impl RealizedMetrics {
 
             // === SOPR ===
             sopr: EagerVec::forced_import(cfg.db, &cfg.name("sopr"), cfg.version + v1)?,
-            sopr_7d_ema: EagerVec::forced_import(cfg.db, &cfg.name("sopr_7d_ema"), cfg.version + v1)?,
+            sopr_7d_ema: EagerVec::forced_import(
+                cfg.db,
+                &cfg.name("sopr_7d_ema"),
+                cfg.version + v1,
+            )?,
             sopr_30d_ema: EagerVec::forced_import(
                 cfg.db,
                 &cfg.name("sopr_30d_ema"),
@@ -359,6 +506,15 @@ impl RealizedMetrics {
                     cfg.version + v3,
                     cfg.indexes,
                 )?,
+
+            // === ATH Regret ===
+            // v2: Changed to use max HIGH price during holding period instead of global ATH at send time
+            ath_regret: ComputedFromHeightSumCum::forced_import(
+                cfg.db,
+                &cfg.name("realized_ath_regret"),
+                cfg.version + v2,
+                cfg.indexes,
+            )?,
         })
     }
 
@@ -369,47 +525,73 @@ impl RealizedMetrics {
             .len()
             .min(self.realized_profit.height.len())
             .min(self.realized_loss.height.len())
-            .min(self.value_created.height.len())
-            .min(self.value_destroyed.height.len())
+            .min(self.investor_price_cents.height.len())
+            .min(self.cap_raw.len())
+            .min(self.investor_cap_raw.len())
+            .min(self.profit_value_created.height.len())
+            .min(self.profit_value_destroyed.height.len())
+            .min(self.loss_value_created.height.len())
+            .min(self.loss_value_destroyed.height.len())
+            .min(self.ath_regret.height.len())
     }
 
     /// Push realized state values to height-indexed vectors.
+    /// State values are CentsUnsigned (deterministic), converted to Dollars for storage.
     pub fn truncate_push(&mut self, height: Height, state: &RealizedState) -> Result<()> {
-        self.realized_cap.height.truncate_push(height, state.cap)?;
+        self.realized_cap_cents
+            .height
+            .truncate_push(height, state.cap())?;
         self.realized_profit
             .height
-            .truncate_push(height, state.profit)?;
+            .truncate_push(height, state.profit().to_dollars())?;
         self.realized_loss
             .height
-            .truncate_push(height, state.loss)?;
-        self.value_created
+            .truncate_push(height, state.loss().to_dollars())?;
+        self.investor_price_cents
             .height
-            .truncate_push(height, state.value_created)?;
-        self.value_destroyed
+            .truncate_push(height, state.investor_price())?;
+        // Push raw values for aggregation
+        self.cap_raw.truncate_push(height, state.cap_raw())?;
+        self.investor_cap_raw
+            .truncate_push(height, state.investor_cap_raw())?;
+        // Push the 4 splits (totals are derived lazily)
+        self.profit_value_created
             .height
-            .truncate_push(height, state.value_destroyed)?;
+            .truncate_push(height, state.profit_value_created().to_dollars())?;
+        self.profit_value_destroyed
+            .height
+            .truncate_push(height, state.profit_value_destroyed().to_dollars())?;
+        self.loss_value_created
+            .height
+            .truncate_push(height, state.loss_value_created().to_dollars())?;
+        self.loss_value_destroyed
+            .height
+            .truncate_push(height, state.loss_value_destroyed().to_dollars())?;
+        // ATH regret
+        self.ath_regret
+            .height
+            .truncate_push(height, state.ath_regret().to_dollars())?;
 
-        Ok(())
-    }
-
-    /// Write height-indexed vectors to disk.
-    pub fn write(&mut self) -> Result<()> {
-        self.realized_cap.height.write()?;
-        self.realized_profit.height.write()?;
-        self.realized_loss.height.write()?;
-        self.value_created.height.write()?;
-        self.value_destroyed.height.write()?;
         Ok(())
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        [
-            &mut self.realized_cap.height as &mut dyn AnyStoredVec,
+        vec![
+            &mut self.realized_cap_cents.height as &mut dyn AnyStoredVec,
             &mut self.realized_profit.height,
             &mut self.realized_loss.height,
-            &mut self.value_created.height,
-            &mut self.value_destroyed.height,
+            &mut self.investor_price_cents.height,
+            // Raw values for aggregation
+            &mut self.cap_raw as &mut dyn AnyStoredVec,
+            &mut self.investor_cap_raw as &mut dyn AnyStoredVec,
+            // The 4 splits (totals are derived lazily)
+            &mut self.profit_value_created.height,
+            &mut self.profit_value_destroyed.height,
+            &mut self.loss_value_created.height,
+            &mut self.loss_value_destroyed.height,
+            // ATH regret
+            &mut self.ath_regret.height,
         ]
         .into_par_iter()
     }
@@ -427,11 +609,11 @@ impl RealizedMetrics {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.realized_cap.height.compute_sum_of_others(
+        self.realized_cap_cents.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.realized_cap.height)
+                .map(|v| &v.realized_cap_cents.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
@@ -451,19 +633,103 @@ impl RealizedMetrics {
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        self.value_created.height.compute_sum_of_others(
+
+        // Aggregate raw values for investor_price computation
+        // (BytesVec doesn't have compute_sum_of_others, so we manually iterate)
+        // Validate version for investor_price_cents (same pattern as compute_sum_of_others)
+        let investor_price_dep_version = others
+            .iter()
+            .map(|o| o.investor_price_cents.height.version())
+            .fold(vecdb::Version::ZERO, |acc, v| acc + v);
+        self.investor_price_cents
+            .height
+            .validate_computed_version_or_reset(investor_price_dep_version)?;
+
+        let mut iters: Vec<_> = others
+            .iter()
+            .filter_map(|o| Some((o.cap_raw.iter().ok()?, o.investor_cap_raw.iter().ok()?)))
+            .collect();
+
+        // Start from where the target vecs left off (handles fresh/reset vecs)
+        let start = self
+            .cap_raw
+            .len()
+            .min(self.investor_cap_raw.len())
+            .min(self.investor_price_cents.height.len());
+        // End at the minimum length across all source vecs
+        let end = others.iter().map(|o| o.cap_raw.len()).min().unwrap_or(0);
+
+        for i in start..end {
+            let height = Height::from(i);
+
+            let mut sum_cap = CentsSats::ZERO;
+            let mut sum_investor_cap = CentsSquaredSats::ZERO;
+
+            for (cap_iter, investor_cap_iter) in &mut iters {
+                sum_cap += cap_iter.get_unwrap(height);
+                sum_investor_cap += investor_cap_iter.get_unwrap(height);
+            }
+
+            self.cap_raw.truncate_push(height, sum_cap)?;
+            self.investor_cap_raw
+                .truncate_push(height, sum_investor_cap)?;
+
+            // Compute investor_price from aggregated raw values
+            let investor_price = if sum_cap.inner() == 0 {
+                CentsUnsigned::ZERO
+            } else {
+                CentsUnsigned::new((sum_investor_cap / sum_cap.inner()) as u64)
+            };
+            self.investor_price_cents
+                .height
+                .truncate_push(height, investor_price)?;
+        }
+
+        // Write to persist computed_version (same pattern as compute_sum_of_others)
+        {
+            let _lock = exit.lock();
+            self.investor_price_cents.height.write()?;
+        }
+
+        // Aggregate the 4 splits (totals are derived lazily)
+        self.profit_value_created.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.value_created.height)
+                .map(|v| &v.profit_value_created.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        self.value_destroyed.height.compute_sum_of_others(
+        self.profit_value_destroyed.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.value_destroyed.height)
+                .map(|v| &v.profit_value_destroyed.height)
+                .collect::<Vec<_>>(),
+            exit,
+        )?;
+        self.loss_value_created.height.compute_sum_of_others(
+            starting_indexes.height,
+            &others
+                .iter()
+                .map(|v| &v.loss_value_created.height)
+                .collect::<Vec<_>>(),
+            exit,
+        )?;
+        self.loss_value_destroyed.height.compute_sum_of_others(
+            starting_indexes.height,
+            &others
+                .iter()
+                .map(|v| &v.loss_value_destroyed.height)
+                .collect::<Vec<_>>(),
+            exit,
+        )?;
+        // ATH regret
+        self.ath_regret.height.compute_sum_of_others(
+            starting_indexes.height,
+            &others
+                .iter()
+                .map(|v| &v.ath_regret.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
@@ -478,9 +744,14 @@ impl RealizedMetrics {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.realized_cap.compute_rest(indexes, starting_indexes, exit)?;
-        self.realized_profit.compute_rest(indexes, starting_indexes, exit)?;
-        self.realized_loss.compute_rest(indexes, starting_indexes, exit)?;
+        self.realized_cap_cents
+            .compute_rest(indexes, starting_indexes, exit)?;
+        self.realized_profit
+            .compute_rest(indexes, starting_indexes, exit)?;
+        self.realized_loss
+            .compute_rest(indexes, starting_indexes, exit)?;
+        self.investor_price_cents
+            .compute_rest(indexes, starting_indexes, exit)?;
 
         // net_realized_pnl = profit - loss
         self.net_realized_pnl
@@ -508,8 +779,19 @@ impl RealizedMetrics {
                 Ok(())
             })?;
 
-        self.value_created.compute_rest(indexes, starting_indexes, exit)?;
-        self.value_destroyed.compute_rest(indexes, starting_indexes, exit)?;
+        // Compute derived aggregations for the 4 splits
+        // (value_created, value_destroyed, capitulation_flow, profit_flow are derived lazily)
+        self.profit_value_created
+            .compute_rest(indexes, starting_indexes, exit)?;
+        self.profit_value_destroyed
+            .compute_rest(indexes, starting_indexes, exit)?;
+        self.loss_value_created
+            .compute_rest(indexes, starting_indexes, exit)?;
+        self.loss_value_destroyed
+            .compute_rest(indexes, starting_indexes, exit)?;
+        // ATH regret
+        self.ath_regret
+            .compute_rest(indexes, starting_indexes, exit)?;
 
         Ok(())
     }
@@ -544,6 +826,13 @@ impl RealizedMetrics {
                 starting_indexes,
                 exit,
                 Some(&self.realized_price.dateindex.0),
+            )?;
+
+            self.investor_price_extra.compute_rest(
+                price,
+                starting_indexes,
+                exit,
+                Some(&self.investor_price.dateindex.0),
             )?;
         }
 
@@ -613,8 +902,12 @@ impl RealizedMetrics {
             exit,
         )?;
 
-        self.sell_side_risk_ratio_7d_ema
-            .compute_ema(starting_indexes.dateindex, &self.sell_side_risk_ratio, 7, exit)?;
+        self.sell_side_risk_ratio_7d_ema.compute_ema(
+            starting_indexes.dateindex,
+            &self.sell_side_risk_ratio,
+            7,
+            exit,
+        )?;
 
         self.sell_side_risk_ratio_30d_ema.compute_ema(
             starting_indexes.dateindex,

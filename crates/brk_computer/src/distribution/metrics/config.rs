@@ -41,6 +41,11 @@ impl<'a> ImportConfig<'a> {
         self.filter.compute_adjusted(self.context)
     }
 
+    /// Whether to compute relative metrics (invested capital %, NUPL ratios, etc.).
+    pub fn compute_relative(&self) -> bool {
+        self.filter.compute_relative()
+    }
+
     /// Get full metric name with filter prefix.
     pub fn name(&self, suffix: &str) -> String {
         if self.full_name.is_empty() {

@@ -46,9 +46,8 @@ export function price({
 
 /**
  * Create percentile series (max/min/median/pct75/pct25/pct90/pct10) from any stats pattern
- * Works with FullnessPattern, FeeRatePattern, AnyStatsPattern, DollarsPattern, etc.
  * @param {Colors} colors
- * @param {FullnessPattern<any> | FeeRatePattern<any> | AnyStatsPattern | DollarsPattern<any>} pattern
+ * @param {StatsPattern<any> | BaseStatsPattern<any> | FullStatsPattern<any> | AnyStatsPattern} pattern
  * @param {Unit} unit
  * @param {string} title
  * @param {{ type?: "Dots" }} [options]
@@ -289,14 +288,14 @@ export function histogram({
 }
 
 /**
- * Create series from a SizePattern ({ average, sum, cumulative, min, max, percentiles })
+ * Create series from patterns with sum + cumulative + percentiles (NO base)
  * @param {Colors} colors
  * @param {AnyStatsPattern} pattern
  * @param {Unit} unit
  * @param {string} [title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromSizePattern(colors, pattern, unit, title = "") {
+export function fromSumStatsPattern(colors, pattern, unit, title = "") {
   const { stat } = colors;
   return [
     { metric: pattern.average, title: `${title} avg`.trim(), unit },
@@ -319,36 +318,39 @@ export function fromSizePattern(colors, pattern, unit, title = "") {
 }
 
 /**
- * Create series from a FullnessPattern ({ base, average, sum, cumulative, min, max, percentiles })
+ * Create series from a BaseStatsPattern (base + avg + percentiles, NO sum)
  * @param {Colors} colors
- * @param {FullnessPattern<any>} pattern
+ * @param {BaseStatsPattern<any>} pattern
  * @param {Unit} unit
  * @param {string} [title]
+ * @param {{ baseColor?: Color, avgActive?: boolean }} [options]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromFullnessPattern(colors, pattern, unit, title = "") {
+export function fromBaseStatsPattern(colors, pattern, unit, title = "", options) {
   const { stat } = colors;
+  const { baseColor, avgActive = true } = options || {};
   return [
-    { metric: pattern.base, title: title || "base", unit },
+    { metric: pattern.base, title: title || "base", color: baseColor, unit },
     {
       metric: pattern.average,
       title: `${title} avg`.trim(),
       color: stat.avg,
       unit,
+      defaultActive: avgActive,
     },
     ...percentileSeries(colors, pattern, unit, title),
   ];
 }
 
 /**
- * Create series from a DollarsPattern ({ base, sum, cumulative, average, min, max, percentiles })
+ * Create series from a FullStatsPattern (base + sum + cumulative + avg + percentiles)
  * @param {Colors} colors
- * @param {DollarsPattern<any>} pattern
+ * @param {FullStatsPattern<any>} pattern
  * @param {Unit} unit
  * @param {string} [title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromDollarsPattern(colors, pattern, unit, title = "") {
+export function fromFullStatsPattern(colors, pattern, unit, title = "") {
   const { stat } = colors;
   return [
     { metric: pattern.base, title: title || "base", unit },
@@ -377,14 +379,14 @@ export function fromDollarsPattern(colors, pattern, unit, title = "") {
 }
 
 /**
- * Create series from a FeeRatePattern ({ average, min, max, percentiles })
+ * Create series from a StatsPattern ({ average, min, max, percentiles })
  * @param {Colors} colors
- * @param {FeeRatePattern<any>} pattern
+ * @param {StatsPattern<any>} pattern
  * @param {Unit} unit
  * @param {string} [title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromFeeRatePattern(colors, pattern, unit, title = "") {
+export function fromStatsPattern(colors, pattern, unit, title = "") {
   return [
     {
       type: "Dots",
@@ -397,14 +399,14 @@ export function fromFeeRatePattern(colors, pattern, unit, title = "") {
 }
 
 /**
- * Create series from a pattern with sum and cumulative (fullness stats + sum + cumulative)
+ * Create series from AnyFullStatsPattern (base + sum + cumulative + avg + percentiles)
  * @param {Colors} colors
- * @param {FullnessPatternWithSumCumulative} pattern
+ * @param {AnyFullStatsPattern} pattern
  * @param {Unit} unit
  * @param {string} [title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromFullnessPatternWithSumCumulative(
+export function fromAnyFullStatsPattern(
   colors,
   pattern,
   unit,
@@ -412,7 +414,7 @@ export function fromFullnessPatternWithSumCumulative(
 ) {
   const { stat } = colors;
   return [
-    ...fromFullnessPattern(colors, pattern, unit, title),
+    ...fromBaseStatsPattern(colors, pattern, unit, title),
     {
       metric: pattern.sum,
       title: `${title} sum`.trim(),
@@ -438,19 +440,19 @@ export function fromFullnessPatternWithSumCumulative(
  */
 export function fromCoinbasePattern(colors, pattern, title = "") {
   return [
-    ...fromFullnessPatternWithSumCumulative(
+    ...fromAnyFullStatsPattern(
       colors,
       pattern.bitcoin,
       Unit.btc,
       title,
     ),
-    ...fromFullnessPatternWithSumCumulative(
+    ...fromAnyFullStatsPattern(
       colors,
       pattern.sats,
       Unit.sats,
       title,
     ),
-    ...fromFullnessPatternWithSumCumulative(
+    ...fromAnyFullStatsPattern(
       colors,
       pattern.dollars,
       Unit.usd,
@@ -460,7 +462,7 @@ export function fromCoinbasePattern(colors, pattern, title = "") {
 }
 
 /**
- * Create series from a ValuePattern ({ sats, bitcoin, dollars } each as BlockCountPattern with sum + cumulative)
+ * Create series from a ValuePattern ({ sats, bitcoin, dollars } each as CountPattern with sum + cumulative)
  * @param {Colors} colors
  * @param {ValuePattern} pattern
  * @param {string} [title]
@@ -557,16 +559,16 @@ export function fromBitcoinPatternWithUnit(
 }
 
 /**
- * Create sum/cumulative series from a BlockCountPattern with explicit unit and colors
+ * Create sum/cumulative series from a CountPattern with explicit unit and colors
  * @param {Colors} colors
- * @param {BlockCountPattern<any>} pattern
+ * @param {CountPattern<any>} pattern
  * @param {Unit} unit
  * @param {string} [title]
  * @param {Color} [sumColor]
  * @param {Color} [cumulativeColor]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromBlockCountWithUnit(
+export function fromCountPattern(
   colors,
   pattern,
   unit,
@@ -588,30 +590,6 @@ export function fromBlockCountWithUnit(
       unit,
       defaultActive: false,
     },
-  ];
-}
-
-/**
- * Create series from an IntervalPattern (base + average/min/max/median/percentiles, no sum/cumulative)
- * @param {Colors} colors
- * @param {IntervalPattern} pattern
- * @param {Unit} unit
- * @param {string} [title]
- * @param {Color} [color]
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function fromIntervalPattern(colors, pattern, unit, title = "", color) {
-  const { stat } = colors;
-  return [
-    { metric: pattern.base, title: title ?? "base", color, unit },
-    {
-      metric: pattern.average,
-      title: `${title} avg`.trim(),
-      color: stat.avg,
-      unit,
-      defaultActive: false,
-    },
-    ...percentileSeries(colors, pattern, unit, title),
   ];
 }
 

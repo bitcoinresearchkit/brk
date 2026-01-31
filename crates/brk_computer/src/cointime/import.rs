@@ -29,7 +29,7 @@ impl Vecs {
         let supply = SupplyVecs::forced_import(&db, v1, indexes, price)?;
         let value = ValueVecs::forced_import(&db, v1, indexes)?;
         let cap = CapVecs::forced_import(&db, v1, indexes)?;
-        let pricing = PricingVecs::forced_import(&db, version, indexes, price)?;
+        let pricing = PricingVecs::forced_import(&db, version, indexes)?;
         let adjusted = AdjustedVecs::forced_import(&db, version, indexes)?;
         let reserve_risk = ReserveRiskVecs::forced_import(&db, v1, indexes, compute_dollars)?;
 

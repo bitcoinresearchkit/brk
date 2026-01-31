@@ -1,93 +1,78 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_types::{Age, Dollars, Height, Sats, SupplyState};
-
-use crate::internal::PERCENTILES_LEN;
+use brk_types::{Age, CentsSats, CentsUnsigned, CostBasisSnapshot, Height, Sats, SupplyState};
 
 use super::super::cost_basis::{
-    CachedUnrealizedState, PriceToAmount, RealizedState, UnrealizedState,
+    CachedUnrealizedState, Percentiles, CostBasisData, RealizedState, UnrealizedState,
 };
 
-/// State tracked for each cohort during computation.
 #[derive(Clone)]
 pub struct CohortState {
-    /// Current supply in this cohort
     pub supply: SupplyState,
-
-    /// Realized cap and profit/loss (requires price data)
     pub realized: Option<RealizedState>,
-
-    /// Amount sent in current block
     pub sent: Sats,
-
-    /// Satoshi-blocks destroyed (supply * blocks_old when spent)
     pub satblocks_destroyed: Sats,
-
-    /// Satoshi-days destroyed (supply * days_old when spent)
     pub satdays_destroyed: Sats,
-
-    /// Price distribution for percentile calculations (requires price data)
-    price_to_amount: Option<PriceToAmount>,
-
-    /// Cached unrealized state for O(k) incremental updates.
+    cost_basis_data: Option<CostBasisData>,
     cached_unrealized: Option<CachedUnrealizedState>,
 }
 
 impl CohortState {
-    /// Create new cohort state.
     pub fn new(path: &Path, name: &str, compute_dollars: bool) -> Self {
         Self {
             supply: SupplyState::default(),
-            realized: compute_dollars.then_some(RealizedState::NAN),
+            realized: compute_dollars.then_some(RealizedState::default()),
             sent: Sats::ZERO,
             satblocks_destroyed: Sats::ZERO,
             satdays_destroyed: Sats::ZERO,
-            price_to_amount: compute_dollars.then_some(PriceToAmount::create(path, name)),
+            cost_basis_data: compute_dollars.then_some(CostBasisData::create(path, name)),
             cached_unrealized: None,
         }
     }
 
-    /// Import state from checkpoint.
     pub fn import_at_or_before(&mut self, height: Height) -> Result<Height> {
-        // Invalidate cache when importing new data
         self.cached_unrealized = None;
-
-        match self.price_to_amount.as_mut() {
+        match self.cost_basis_data.as_mut() {
             Some(p) => p.import_at_or_before(height),
             None => Ok(height),
         }
     }
 
-    /// Reset price_to_amount if needed (for starting fresh).
-    pub fn reset_price_to_amount_if_needed(&mut self) -> Result<()> {
-        if let Some(p) = self.price_to_amount.as_mut() {
+    /// Restore realized cap from cost_basis_data after import.
+    /// Uses the exact persisted values instead of recomputing from the map.
+    pub fn restore_realized_cap(&mut self) {
+        if let Some(cost_basis_data) = self.cost_basis_data.as_ref()
+            && let Some(realized) = self.realized.as_mut()
+        {
+            realized.set_cap_raw(cost_basis_data.cap_raw());
+            realized.set_investor_cap_raw(cost_basis_data.investor_cap_raw());
+        }
+    }
+
+    pub fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
+        if let Some(p) = self.cost_basis_data.as_mut() {
             p.clean()?;
             p.init();
         }
-        // Invalidate cache when data is reset
         self.cached_unrealized = None;
         Ok(())
     }
 
-    /// Apply pending price_to_amount updates. Must be called before reads.
     pub fn apply_pending(&mut self) {
-        if let Some(p) = self.price_to_amount.as_mut() {
+        if let Some(p) = self.cost_basis_data.as_mut() {
             p.apply_pending();
         }
     }
 
-    /// Get first (lowest) price entry in distribution.
-    pub fn price_to_amount_first_key_value(&self) -> Option<(Dollars, &Sats)> {
-        self.price_to_amount.as_ref()?.first_key_value()
+    pub fn cost_basis_data_first_key_value(&self) -> Option<(CentsUnsigned, &Sats)> {
+        self.cost_basis_data.as_ref()?.first_key_value().map(|(k, v)| (k.into(), v))
     }
 
-    /// Get last (highest) price entry in distribution.
-    pub fn price_to_amount_last_key_value(&self) -> Option<(Dollars, &Sats)> {
-        self.price_to_amount.as_ref()?.last_key_value()
+    pub fn cost_basis_data_last_key_value(&self) -> Option<(CentsUnsigned, &Sats)> {
+        self.cost_basis_data.as_ref()?.last_key_value().map(|(k, v)| (k.into(), v))
     }
 
-    /// Reset per-block values before processing next block.
     pub fn reset_single_iteration_values(&mut self) {
         self.sent = Sats::ZERO;
         self.satdays_destroyed = Sats::ZERO;
@@ -97,177 +82,137 @@ impl CohortState {
         }
     }
 
-    /// Add supply to this cohort (e.g., when UTXO ages into cohort).
-    pub fn increment(&mut self, supply: &SupplyState, price: Option<Dollars>) {
+    pub fn increment(&mut self, supply: &SupplyState, price: Option<CentsUnsigned>) {
+        match price {
+            Some(p) => self.increment_snapshot(&CostBasisSnapshot::from_utxo(p, supply)),
+            None => self.supply += supply,
+        }
+    }
+
+    pub fn increment_snapshot(&mut self, s: &CostBasisSnapshot) {
+        self.supply += &s.supply_state;
+
+        if s.supply_state.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut()
+        {
+            realized.increment_snapshot(s.price_sats, s.investor_cap);
+            self.cost_basis_data.as_mut().unwrap().increment(
+                s.realized_price,
+                s.supply_state.value,
+                s.price_sats,
+                s.investor_cap,
+            );
+
+            if let Some(cache) = self.cached_unrealized.as_mut() {
+                cache.on_receive(s.realized_price, s.supply_state.value);
+            }
+        }
+    }
+
+    pub fn decrement(&mut self, supply: &SupplyState, price: Option<CentsUnsigned>) {
+        match price {
+            Some(p) => self.decrement_snapshot(&CostBasisSnapshot::from_utxo(p, supply)),
+            None => self.supply -= supply,
+        }
+    }
+
+    pub fn decrement_snapshot(&mut self, s: &CostBasisSnapshot) {
+        self.supply -= &s.supply_state;
+
+        if s.supply_state.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut()
+        {
+            realized.decrement_snapshot(s.price_sats, s.investor_cap);
+            self.cost_basis_data.as_mut().unwrap().decrement(
+                s.realized_price,
+                s.supply_state.value,
+                s.price_sats,
+                s.investor_cap,
+            );
+
+            if let Some(cache) = self.cached_unrealized.as_mut() {
+                cache.on_send(s.realized_price, s.supply_state.value);
+            }
+        }
+    }
+
+    pub fn receive_utxo(&mut self, supply: &SupplyState, price: Option<CentsUnsigned>) {
         self.supply += supply;
 
         if supply.value > Sats::ZERO
             && let Some(realized) = self.realized.as_mut()
         {
             let price = price.unwrap();
-            realized.increment(supply, price);
-            self.price_to_amount
-                .as_mut()
-                .unwrap()
-                .increment(price, supply);
+            let sats = supply.value;
 
-            // Update cache for added supply
+            // Compute once using typed values
+            let price_sats = CentsSats::from_price_sats(price, sats);
+            let investor_cap = price_sats.to_investor_cap(price);
+
+            realized.receive(price, sats);
+
+            self.cost_basis_data.as_mut().unwrap().increment(
+                price,
+                sats,
+                price_sats,
+                investor_cap,
+            );
+
             if let Some(cache) = self.cached_unrealized.as_mut() {
-                cache.on_receive(price, supply.value);
+                cache.on_receive(price, sats);
             }
         }
     }
 
-    /// Add supply with pre-computed realized cap (for address cohorts).
-    pub fn increment_(
+    pub fn receive_address(
         &mut self,
         supply: &SupplyState,
-        realized_cap: Dollars,
-        realized_price: Dollars,
+        price: CentsUnsigned,
+        current: &CostBasisSnapshot,
+        prev: &CostBasisSnapshot,
     ) {
         self.supply += supply;
 
         if supply.value > Sats::ZERO
             && let Some(realized) = self.realized.as_mut()
         {
-            realized.increment_(realized_cap);
-            self.price_to_amount
-                .as_mut()
-                .unwrap()
-                .increment(realized_price, supply);
+            realized.receive(price, supply.value);
 
-            // Update cache for added supply
-            if let Some(cache) = self.cached_unrealized.as_mut() {
-                cache.on_receive(realized_price, supply.value);
-            }
-        }
-    }
+            if current.supply_state.value.is_not_zero() {
+                self.cost_basis_data.as_mut().unwrap().increment(
+                    current.realized_price,
+                    current.supply_state.value,
+                    current.price_sats,
+                    current.investor_cap,
+                );
 
-    /// Remove supply from this cohort (e.g., when UTXO ages out of cohort).
-    pub fn decrement(&mut self, supply: &SupplyState, price: Option<Dollars>) {
-        self.supply -= supply;
-
-        if supply.value > Sats::ZERO
-            && let Some(realized) = self.realized.as_mut()
-        {
-            let price = price.unwrap();
-            realized.decrement(supply, price);
-            self.price_to_amount
-                .as_mut()
-                .unwrap()
-                .decrement(price, supply);
-
-            // Update cache for removed supply
-            if let Some(cache) = self.cached_unrealized.as_mut() {
-                cache.on_send(price, supply.value);
-            }
-        }
-    }
-
-    /// Remove supply with pre-computed realized cap (for address cohorts).
-    pub fn decrement_(
-        &mut self,
-        supply: &SupplyState,
-        realized_cap: Dollars,
-        realized_price: Dollars,
-    ) {
-        self.supply -= supply;
-
-        if supply.value > Sats::ZERO
-            && let Some(realized) = self.realized.as_mut()
-        {
-            realized.decrement_(realized_cap);
-            self.price_to_amount
-                .as_mut()
-                .unwrap()
-                .decrement(realized_price, supply);
-
-            // Update cache for removed supply
-            if let Some(cache) = self.cached_unrealized.as_mut() {
-                cache.on_send(realized_price, supply.value);
-            }
-        }
-    }
-
-    /// Process received output (new UTXO in cohort).
-    pub fn receive(&mut self, supply: &SupplyState, price: Option<Dollars>) {
-        self.receive_(supply, price, price.map(|price| (price, supply)), None);
-    }
-
-    /// Process received output with custom price_to_amount updates (for address cohorts).
-    pub fn receive_(
-        &mut self,
-        supply: &SupplyState,
-        price: Option<Dollars>,
-        price_to_amount_increment: Option<(Dollars, &SupplyState)>,
-        price_to_amount_decrement: Option<(Dollars, &SupplyState)>,
-    ) {
-        self.supply += supply;
-
-        if supply.value > Sats::ZERO
-            && let Some(realized) = self.realized.as_mut()
-        {
-            let price = price.unwrap();
-            realized.receive(supply, price);
-
-            if let Some((price, supply)) = price_to_amount_increment
-                && supply.value.is_not_zero()
-            {
-                self.price_to_amount
-                    .as_mut()
-                    .unwrap()
-                    .increment(price, supply);
-
-                // Update cache for added supply
                 if let Some(cache) = self.cached_unrealized.as_mut() {
-                    cache.on_receive(price, supply.value);
+                    cache.on_receive(current.realized_price, current.supply_state.value);
                 }
             }
 
-            if let Some((price, supply)) = price_to_amount_decrement
-                && supply.value.is_not_zero()
-            {
-                self.price_to_amount
-                    .as_mut()
-                    .unwrap()
-                    .decrement(price, supply);
+            if prev.supply_state.value.is_not_zero() {
+                self.cost_basis_data.as_mut().unwrap().decrement(
+                    prev.realized_price,
+                    prev.supply_state.value,
+                    prev.price_sats,
+                    prev.investor_cap,
+                );
 
-                // Update cache for removed supply
                 if let Some(cache) = self.cached_unrealized.as_mut() {
-                    cache.on_send(price, supply.value);
+                    cache.on_send(prev.realized_price, prev.supply_state.value);
                 }
             }
         }
     }
 
-    /// Process spent input (UTXO leaving cohort).
-    pub fn send(
+    pub fn send_utxo(
         &mut self,
         supply: &SupplyState,
-        current_price: Option<Dollars>,
-        prev_price: Option<Dollars>,
+        current_price: Option<CentsUnsigned>,
+        prev_price: Option<CentsUnsigned>,
+        ath: Option<CentsUnsigned>,
         age: Age,
-    ) {
-        self.send_(
-            supply,
-            current_price,
-            prev_price,
-            age,
-            None,
-            prev_price.map(|prev_price| (prev_price, supply)),
-        );
-    }
-
-    /// Process spent input with custom price_to_amount updates (for address cohorts).
-    #[allow(clippy::too_many_arguments)]
-    pub fn send_(
-        &mut self,
-        supply: &SupplyState,
-        current_price: Option<Dollars>,
-        prev_price: Option<Dollars>,
-        age: Age,
-        price_to_amount_increment: Option<(Dollars, &SupplyState)>,
-        price_to_amount_decrement: Option<(Dollars, &SupplyState)>,
     ) {
         if supply.utxo_count == 0 {
             return;
@@ -281,77 +226,118 @@ impl CohortState {
             self.satdays_destroyed += age.satdays_destroyed(supply.value);
 
             if let Some(realized) = self.realized.as_mut() {
-                let current_price = current_price.unwrap();
-                let prev_price = prev_price.unwrap();
-                realized.send(supply, current_price, prev_price);
+                let cp = current_price.unwrap();
+                let pp = prev_price.unwrap();
+                let ath_price = ath.unwrap();
+                let sats = supply.value;
 
-                if let Some((price, supply)) = price_to_amount_increment
-                    && supply.value.is_not_zero()
-                {
-                    self.price_to_amount
-                        .as_mut()
-                        .unwrap()
-                        .increment(price, supply);
+                // Compute ONCE using typed values
+                let current_ps = CentsSats::from_price_sats(cp, sats);
+                let prev_ps = CentsSats::from_price_sats(pp, sats);
+                let ath_ps = CentsSats::from_price_sats(ath_price, sats);
+                let prev_investor_cap = prev_ps.to_investor_cap(pp);
 
-                    // Update cache for added supply
+                realized.send(current_ps, prev_ps, ath_ps, prev_investor_cap);
+
+                self.cost_basis_data.as_mut().unwrap().decrement(
+                    pp,
+                    sats,
+                    prev_ps,
+                    prev_investor_cap,
+                );
+
+                if let Some(cache) = self.cached_unrealized.as_mut() {
+                    cache.on_send(pp, sats);
+                }
+            }
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn send_address(
+        &mut self,
+        supply: &SupplyState,
+        current_price: CentsUnsigned,
+        prev_price: CentsUnsigned,
+        ath: CentsUnsigned,
+        age: Age,
+        current: &CostBasisSnapshot,
+        prev: &CostBasisSnapshot,
+    ) {
+        if supply.utxo_count == 0 {
+            return;
+        }
+
+        self.supply -= supply;
+
+        if supply.value > Sats::ZERO {
+            self.sent += supply.value;
+            self.satblocks_destroyed += age.satblocks_destroyed(supply.value);
+            self.satdays_destroyed += age.satdays_destroyed(supply.value);
+
+            if let Some(realized) = self.realized.as_mut() {
+                let sats = supply.value;
+
+                // Compute once for realized.send using typed values
+                let current_ps = CentsSats::from_price_sats(current_price, sats);
+                let prev_ps = CentsSats::from_price_sats(prev_price, sats);
+                let ath_ps = CentsSats::from_price_sats(ath, sats);
+                let prev_investor_cap = prev_ps.to_investor_cap(prev_price);
+
+                realized.send(current_ps, prev_ps, ath_ps, prev_investor_cap);
+
+                if current.supply_state.value.is_not_zero() {
+                    self.cost_basis_data.as_mut().unwrap().increment(
+                        current.realized_price,
+                        current.supply_state.value,
+                        current.price_sats,
+                        current.investor_cap,
+                    );
+
                     if let Some(cache) = self.cached_unrealized.as_mut() {
-                        cache.on_receive(price, supply.value);
+                        cache.on_receive(current.realized_price, current.supply_state.value);
                     }
                 }
 
-                if let Some((price, supply)) = price_to_amount_decrement
-                    && supply.value.is_not_zero()
-                {
-                    self.price_to_amount
-                        .as_mut()
-                        .unwrap()
-                        .decrement(price, supply);
+                if prev.supply_state.value.is_not_zero() {
+                    self.cost_basis_data.as_mut().unwrap().decrement(
+                        prev.realized_price,
+                        prev.supply_state.value,
+                        prev.price_sats,
+                        prev.investor_cap,
+                    );
 
-                    // Update cache for removed supply
                     if let Some(cache) = self.cached_unrealized.as_mut() {
-                        cache.on_send(price, supply.value);
+                        cache.on_send(prev.realized_price, prev.supply_state.value);
                     }
                 }
             }
         }
     }
 
-    /// Compute prices at percentile thresholds.
-    pub fn compute_percentile_prices(&self) -> [Dollars; PERCENTILES_LEN] {
-        match self.price_to_amount.as_ref() {
-            Some(p) if !p.is_empty() => p.compute_percentiles(),
-            _ => [Dollars::NAN; PERCENTILES_LEN],
-        }
+    pub fn compute_percentiles(&self) -> Option<Percentiles> {
+        self.cost_basis_data.as_ref()?.compute_percentiles()
     }
 
-    /// Compute unrealized profit/loss at current price.
-    /// Uses O(k) incremental updates for height_price where k = flip range size.
     pub fn compute_unrealized_states(
         &mut self,
-        height_price: Dollars,
-        date_price: Option<Dollars>,
+        height_price: CentsUnsigned,
+        date_price: Option<CentsUnsigned>,
     ) -> (UnrealizedState, Option<UnrealizedState>) {
-        let price_to_amount = match self.price_to_amount.as_ref() {
+        let cost_basis_data = match self.cost_basis_data.as_ref() {
             Some(p) if !p.is_empty() => p,
-            _ => {
-                return (
-                    UnrealizedState::NAN,
-                    date_price.map(|_| UnrealizedState::NAN),
-                );
-            }
+            _ => return (UnrealizedState::ZERO, date_price.map(|_| UnrealizedState::ZERO)),
         };
 
-        // Date unrealized: compute from scratch (only at date boundaries, ~144x less frequent)
         let date_state = date_price.map(|date_price| {
-            CachedUnrealizedState::compute_full_standalone(date_price, price_to_amount)
+            CachedUnrealizedState::compute_full_standalone(date_price.into(), cost_basis_data)
         });
 
-        // Height unrealized: use incremental cache (O(k) where k = flip range)
         let height_state = if let Some(cache) = self.cached_unrealized.as_mut() {
-            cache.get_at_price(height_price, price_to_amount).clone()
+            cache.get_at_price(height_price, cost_basis_data)
         } else {
-            let cache = CachedUnrealizedState::compute_fresh(height_price, price_to_amount);
-            let state = cache.state.clone();
+            let cache = CachedUnrealizedState::compute_fresh(height_price, cost_basis_data);
+            let state = cache.current_state();
             self.cached_unrealized = Some(cache);
             state
         };
@@ -359,33 +345,24 @@ impl CohortState {
         (height_state, date_state)
     }
 
-    /// Flush state to disk at checkpoint.
     pub fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {
-        if let Some(p) = self.price_to_amount.as_mut() {
+        if let Some(p) = self.cost_basis_data.as_mut() {
             p.write(height, cleanup)?;
         }
         Ok(())
     }
 
-    /// Get first (lowest) price in distribution.
-    pub fn min_price(&self) -> Option<Dollars> {
-        self.price_to_amount
-            .as_ref()?
-            .first_key_value()
-            .map(|(k, _)| k)
+    pub fn min_price(&self) -> Option<CentsUnsigned> {
+        self.cost_basis_data.as_ref()?.first_key_value().map(|(k, _)| k.into())
     }
 
-    /// Get last (highest) price in distribution.
-    pub fn max_price(&self) -> Option<Dollars> {
-        self.price_to_amount
-            .as_ref()?
-            .last_key_value()
-            .map(|(k, _)| k)
+    pub fn max_price(&self) -> Option<CentsUnsigned> {
+        self.cost_basis_data.as_ref()?.last_key_value().map(|(k, _)| k.into())
     }
 
-    /// Get iterator over price_to_amount for merged percentile computation.
-    /// Returns None if price data is not tracked for this cohort.
-    pub fn price_to_amount_iter(&self) -> Option<impl Iterator<Item = (Dollars, &Sats)>> {
-        self.price_to_amount.as_ref().map(|p| p.iter())
+    pub fn cost_basis_data_iter(
+        &self,
+    ) -> Option<impl Iterator<Item = (CentsUnsigned, &Sats)>> {
+        self.cost_basis_data.as_ref().map(|p| p.iter().map(|(k, v)| (k.into(), v)))
     }
 }

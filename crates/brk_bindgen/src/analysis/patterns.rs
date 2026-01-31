@@ -50,7 +50,7 @@ pub fn detect_structural_patterns(
     BTreeMap<String, PatternBaseResult>,
 ) {
     let mut ctx = PatternContext::new();
-    resolve_branch_patterns(tree, "root", &mut ctx);
+    resolve_branch_patterns(tree, &mut ctx);
 
     let (generic_patterns, generic_mappings, type_mappings) =
         detect_generic_patterns(&ctx.signature_to_pattern);
@@ -249,17 +249,19 @@ fn replace_inner_type(type_str: &str, replacement: &str) -> String {
 /// Recursively resolve branch patterns bottom-up.
 fn resolve_branch_patterns(
     node: &TreeNode,
-    field_name: &str,
     ctx: &mut PatternContext,
 ) -> Option<(String, Vec<PatternField>)> {
     let TreeNode::Branch(children) = node else {
         return None;
     };
 
+    // Convert to sorted BTreeMap for consistent pattern detection
+    let sorted_children: BTreeMap<_, _> = children.iter().collect();
+
     let mut fields: Vec<PatternField> = Vec::new();
     let mut child_fields_vec: Vec<Vec<PatternField>> = Vec::new();
 
-    for (child_name, child_node) in children {
+    for (child_name, child_node) in sorted_children {
         let (rust_type, json_type, indexes, child_fields) = match child_node {
             TreeNode::Leaf(leaf) => (
                 leaf.kind().to_string(),
@@ -268,9 +270,8 @@ fn resolve_branch_patterns(
                 Vec::new(),
             ),
             TreeNode::Branch(_) => {
-                let (pattern_name, child_pattern_fields) =
-                    resolve_branch_patterns(child_node, child_name, ctx)
-                        .unwrap_or_else(|| ("Unknown".to_string(), Vec::new()));
+                let (pattern_name, child_pattern_fields) = resolve_branch_patterns(child_node, ctx)
+                    .unwrap_or_else(|| ("Unknown".to_string(), Vec::new()));
                 (
                     pattern_name.clone(),
                     pattern_name,
@@ -289,7 +290,7 @@ fn resolve_branch_patterns(
         child_fields_vec.push(child_fields);
     }
 
-    fields.sort_by(|a, b| a.name.cmp(&b.name));
+    // Fields are already sorted since we iterated over BTreeMap
     *ctx.signature_counts.entry(fields.clone()).or_insert(0) += 1;
 
     ctx.signature_to_child_fields
@@ -300,10 +301,17 @@ fn resolve_branch_patterns(
         existing.clone()
     } else {
         let normalized = normalize_fields_for_naming(&fields);
+        // Generate stable name from first word of each field (deduped, sorted)
+        let first_words: BTreeSet<String> = fields
+            .iter()
+            .filter_map(|f| f.name.split('_').next())
+            .map(to_pascal_case)
+            .collect();
+        let combined: String = first_words.into_iter().collect();
         let name = ctx
             .normalized_to_name
             .entry(normalized)
-            .or_insert_with(|| generate_pattern_name(field_name, &mut ctx.name_counts))
+            .or_insert_with(|| generate_pattern_name(&combined, &mut ctx.name_counts))
             .clone();
         ctx.signature_to_pattern
             .insert(fields.clone(), name.clone());

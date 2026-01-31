@@ -10,7 +10,7 @@ use vecdb::{BinaryTransform, IterableCloneableVec};
 use crate::internal::{
     ComputedFromHeightLast, ComputedFromHeightSumCum, ComputedHeightDerivedLast,
     ComputedHeightDerivedSumCum, ComputedVecValue, LazyBinaryTransformSumCum, LazyDateDerivedFull,
-    LazyDateDerivedSumCum, NumericValue, SumCum,
+    LazyDateDerivedSumCum, LazyFromHeightLast, NumericValue, SumCum,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -269,6 +269,49 @@ where
         Self {
             dateindex: LazyBinaryTransformSumCum::from_sum_cum_last_sum_raw::<F>(
                 name, v, &source1.dateindex, &source2.dateindex,
+            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
+
+    // --- Methods accepting SumCum + LazyLast sources ---
+
+    pub fn from_computed_lazy_last<F, S2ST>(
+        name: &str,
+        version: Version,
+        source1: &ComputedFromHeightSumCum<S1T>,
+        source2: &LazyFromHeightLast<S2T, S2ST>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S1T: PartialOrd,
+        S2T: NumericValue,
+        S2ST: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyBinaryTransformSumCum::from_sources_last_sum_raw::<F>(
+                    name, v,
+                    source1.rest.$p.sum.boxed_clone(),
+                    source1.rest.$p.cumulative.boxed_clone(),
+                    source2.rest.dates.$p.boxed_clone(),
+                )
+            };
+        }
+
+        Self {
+            dateindex: LazyBinaryTransformSumCum::from_sources_last_sum_raw::<F>(
+                name, v,
+                source1.dateindex.boxed_sum(),
+                source1.dateindex.boxed_cumulative(),
+                source2.rest.dates.dateindex.boxed_clone(),
             ),
             weekindex: period!(weekindex),
             monthindex: period!(monthindex),

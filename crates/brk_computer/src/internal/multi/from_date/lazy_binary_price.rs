@@ -10,7 +10,7 @@ use schemars::JsonSchema;
 use vecdb::{BinaryTransform, IterableCloneableVec, LazyVecFrom1};
 
 use super::{ComputedFromDateLast, LazyBinaryFromDateLast};
-use crate::internal::{ComputedFromHeightLast, ComputedVecValue, DollarsToSatsFract, LazyTransformLast, NumericValue};
+use crate::internal::{ComputedFromHeightLast, ComputedVecValue, DollarsToSatsFract, LazyFromHeightLast, LazyTransformLast, NumericValue};
 
 /// Lazy binary price with both USD and sats representations.
 ///
@@ -66,6 +66,23 @@ where
         S1T: NumericValue,
     {
         let dollars = LazyBinaryFromDateLast::from_height_and_dateindex_last::<F>(
+            name, version, source1, source2,
+        );
+        Self::from_dollars(name, version, dollars)
+    }
+
+    /// Create from lazy height-based price and dateindex-based ratio sources.
+    pub fn from_lazy_height_and_dateindex_last<F, S1SourceT>(
+        name: &str,
+        version: Version,
+        source1: &LazyFromHeightLast<S1T, S1SourceT>,
+        source2: &ComputedFromDateLast<S2T>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, Dollars>,
+        S1SourceT: ComputedVecValue + JsonSchema,
+    {
+        let dollars = LazyBinaryFromDateLast::from_lazy_height_and_dateindex_last::<F, S1SourceT>(
             name, version, source1, source2,
         );
         Self::from_dollars(name, version, dollars)

@@ -160,6 +160,10 @@
  *   - EpochPattern (epoch.*, amountRange.*, year.*, type.*)
  * @typedef {EpochPattern} PatternBasicWithoutMarketCap
  *
+ * Patterns without relative section entirely (edge case output types):
+ *   - EmptyPattern (type.empty, type.p2ms, type.unknown)
+ * @typedef {EmptyPattern} PatternWithoutRelative
+ *
  * Union of basic patterns (for backwards compat)
  * @typedef {PatternBasicWithMarketCap | PatternBasicWithoutMarketCap} PatternBasic
  *
@@ -224,6 +228,13 @@
  * @property {Color} color
  * @property {PatternBasicWithoutMarketCap} tree
  *
+ * Cohort without relative section (edge case types: empty, p2ms, unknown)
+ * @typedef {Object} CohortWithoutRelative
+ * @property {string} name
+ * @property {string} title
+ * @property {Color} color
+ * @property {PatternWithoutRelative} tree
+ *
  * Union of basic cohort types
  * @typedef {CohortBasicWithMarketCap | CohortBasicWithoutMarketCap} CohortBasic
  *
@@ -273,6 +284,11 @@
  * @property {string} title
  * @property {readonly CohortBasicWithoutMarketCap[]} list
  *
+ * @typedef {Object} CohortGroupWithoutRelative
+ * @property {string} name
+ * @property {string} title
+ * @property {readonly CohortWithoutRelative[]} list
+ *
  * Union of basic cohort group types
  * @typedef {CohortGroupBasicWithMarketCap | CohortGroupBasicWithoutMarketCap} CohortGroupBasic
  *
@@ -287,7 +303,7 @@
  * @property {Color} color
  * @property {AddressCohortPattern} tree
  *
- * @typedef {UtxoCohortObject | AddressCohortObject} CohortObject
+ * @typedef {UtxoCohortObject | AddressCohortObject | CohortWithoutRelative} CohortObject
  *
  *
  * @typedef {Object} AddressCohortGroupObject

@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{DateIndex, Dollars, Height, Version};
+use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, Version};
 use vecdb::{Exit, IterableVec};
 
 use crate::{ComputeIndexes, indexes, price};
@@ -30,9 +30,9 @@ pub trait DynCohortVecs: Send + Sync {
     fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
-        height_price: Option<Dollars>,
+        height_price: Option<CentsUnsigned>,
         dateindex: Option<DateIndex>,
-        date_price: Option<Option<Dollars>>,
+        date_price: Option<Option<CentsUnsigned>>,
     ) -> Result<()>;
 
     /// First phase of post-processing computations.

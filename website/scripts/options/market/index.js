@@ -1,8 +1,7 @@
 /** Market section - Main entry point */
 
-import { localhost } from "../../utils/env.js";
 import { Unit } from "../../utils/units.js";
-import { candlestick, line, price } from "../series.js";
+import { line, price } from "../series.js";
 import { createAveragesSection } from "./averages.js";
 import { createReturnsSection } from "./performance.js";
 import { createMomentumSection } from "./momentum.js";
@@ -21,7 +20,7 @@ import {
  */
 export function createMarketSection(ctx) {
   const { colors, brk } = ctx;
-  const { market, supply, price: priceMetrics } = brk.metrics;
+  const { market, supply } = brk.metrics;
   const {
     movingAverage,
     ath,

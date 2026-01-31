@@ -45,14 +45,13 @@ export function createChainSection(ctx) {
   const {
     colors,
     brk,
-    fromSizePattern,
-    fromFullnessPattern,
-    fromDollarsPattern,
-    fromFeeRatePattern,
+    fromSumStatsPattern,
+    fromBaseStatsPattern,
+    fromFullStatsPattern,
+    fromStatsPattern,
     fromCoinbasePattern,
     fromValuePattern,
-    fromBlockCountWithUnit,
-    fromIntervalPattern,
+    fromCountPattern,
     fromSupplyPattern,
   } = ctx;
   const {
@@ -132,19 +131,19 @@ export function createChainSection(ctx) {
     {
       name: "New",
       title: `${titlePrefix}New Address Count`,
-      bottom: fromDollarsPattern(distribution.newAddrCount[key], Unit.count),
+      bottom: fromFullStatsPattern(distribution.newAddrCount[key], Unit.count),
     },
     {
       name: "Growth Rate",
       title: `${titlePrefix}Address Growth Rate`,
-      bottom: fromFullnessPattern(distribution.growthRate[key], Unit.ratio),
+      bottom: fromBaseStatsPattern(distribution.growthRate[key], Unit.ratio),
     },
     {
       name: "Activity",
       tree: activityTypes.map((a) => ({
         name: a.name,
         title: `${titlePrefix}${a.name} Address Count`,
-        bottom: fromFullnessPattern(
+        bottom: fromBaseStatsPattern(
           distribution.addressActivity[key][a.key],
           Unit.count,
         ),
@@ -297,7 +296,7 @@ export function createChainSection(ctx) {
             name: "Count",
             title: "Block Count",
             bottom: [
-              ...fromBlockCountWithUnit(blocks.count.blockCount, Unit.count),
+              ...fromCountPattern(blocks.count.blockCount, Unit.count),
               line({
                 metric: blocks.count.blockCountTarget,
                 name: "Target",
@@ -339,7 +338,7 @@ export function createChainSection(ctx) {
             name: "Interval",
             title: "Block Interval",
             bottom: [
-              ...fromIntervalPattern(blocks.interval, Unit.secs),
+              ...fromBaseStatsPattern(blocks.interval, Unit.secs, "", { avgActive: false }),
               priceLine({ ctx, unit: Unit.secs, name: "Target", number: 600 }),
             ],
           },
@@ -347,7 +346,7 @@ export function createChainSection(ctx) {
             name: "Size",
             title: "Block Size",
             bottom: [
-              ...fromSizePattern(blocks.size, Unit.bytes),
+              ...fromSumStatsPattern(blocks.size, Unit.bytes),
               line({
                 metric: blocks.totalSize,
                 name: "Total",
@@ -355,8 +354,8 @@ export function createChainSection(ctx) {
                 unit: Unit.bytes,
                 defaultActive: false,
               }),
-              ...fromFullnessPattern(blocks.vbytes, Unit.vb),
-              ...fromFullnessPattern(blocks.weight, Unit.wu),
+              ...fromBaseStatsPattern(blocks.vbytes, Unit.vb),
+              ...fromBaseStatsPattern(blocks.weight, Unit.wu),
               line({
                 metric: blocks.weight.sum,
                 name: "Sum",
@@ -376,7 +375,7 @@ export function createChainSection(ctx) {
           {
             name: "Fullness",
             title: "Block Fullness",
-            bottom: fromFullnessPattern(blocks.fullness, Unit.percentage),
+            bottom: fromBaseStatsPattern(blocks.fullness, Unit.percentage),
           },
         ],
       },
@@ -388,7 +387,7 @@ export function createChainSection(ctx) {
           {
             name: "Count",
             title: "Transaction Count",
-            bottom: fromDollarsPattern(transactions.count.txCount, Unit.count),
+            bottom: fromFullStatsPattern(transactions.count.txCount, Unit.count),
           },
           {
             name: "Speed",
@@ -426,34 +425,34 @@ export function createChainSection(ctx) {
             name: "Size",
             title: "Transaction Size",
             bottom: [
-              ...fromFeeRatePattern(transactions.size.weight, Unit.wu),
-              ...fromFeeRatePattern(transactions.size.vsize, Unit.vb),
+              ...fromStatsPattern(transactions.size.weight, Unit.wu),
+              ...fromStatsPattern(transactions.size.vsize, Unit.vb),
             ],
           },
           {
             name: "Fee Rate",
             title: "Fee Rate",
-            bottom: fromFeeRatePattern(transactions.fees.feeRate, Unit.feeRate),
+            bottom: fromStatsPattern(transactions.fees.feeRate, Unit.feeRate),
           },
           {
             name: "Versions",
             title: "Transaction Versions",
             bottom: [
-              ...fromBlockCountWithUnit(
+              ...fromCountPattern(
                 transactions.versions.v1,
                 Unit.count,
                 "v1",
                 colors.orange,
                 colors.red,
               ),
-              ...fromBlockCountWithUnit(
+              ...fromCountPattern(
                 transactions.versions.v2,
                 Unit.count,
                 "v2",
                 colors.cyan,
                 colors.blue,
               ),
-              ...fromBlockCountWithUnit(
+              ...fromCountPattern(
                 transactions.versions.v3,
                 Unit.count,
                 "v3",
@@ -489,12 +488,12 @@ export function createChainSection(ctx) {
           {
             name: "Input Count",
             title: "Input Count",
-            bottom: [...fromSizePattern(inputs.count, Unit.count)],
+            bottom: [...fromSumStatsPattern(inputs.count, Unit.count)],
           },
           {
             name: "Output Count",
             title: "Output Count",
-            bottom: [...fromSizePattern(outputs.count.totalCount, Unit.count)],
+            bottom: [...fromSumStatsPattern(outputs.count.totalCount, Unit.count)],
           },
           {
             name: "Inputs/sec",
@@ -546,12 +545,12 @@ export function createChainSection(ctx) {
                   {
                     name: "P2PKH",
                     title: "P2PKH Output Count",
-                    bottom: fromDollarsPattern(scripts.count.p2pkh, Unit.count),
+                    bottom: fromFullStatsPattern(scripts.count.p2pkh, Unit.count),
                   },
                   {
                     name: "P2PK33",
                     title: "P2PK33 Output Count",
-                    bottom: fromDollarsPattern(
+                    bottom: fromFullStatsPattern(
                       scripts.count.p2pk33,
                       Unit.count,
                     ),
@@ -559,7 +558,7 @@ export function createChainSection(ctx) {
                   {
                     name: "P2PK65",
                     title: "P2PK65 Output Count",
-                    bottom: fromDollarsPattern(
+                    bottom: fromFullStatsPattern(
                       scripts.count.p2pk65,
                       Unit.count,
                     ),
@@ -573,12 +572,12 @@ export function createChainSection(ctx) {
                   {
                     name: "P2SH",
                     title: "P2SH Output Count",
-                    bottom: fromDollarsPattern(scripts.count.p2sh, Unit.count),
+                    bottom: fromFullStatsPattern(scripts.count.p2sh, Unit.count),
                   },
                   {
                     name: "P2MS",
                     title: "P2MS Output Count",
-                    bottom: fromDollarsPattern(scripts.count.p2ms, Unit.count),
+                    bottom: fromFullStatsPattern(scripts.count.p2ms, Unit.count),
                   },
                 ],
               },
@@ -589,7 +588,7 @@ export function createChainSection(ctx) {
                   {
                     name: "All SegWit",
                     title: "SegWit Output Count",
-                    bottom: fromDollarsPattern(
+                    bottom: fromFullStatsPattern(
                       scripts.count.segwit,
                       Unit.count,
                     ),
@@ -597,7 +596,7 @@ export function createChainSection(ctx) {
                   {
                     name: "P2WPKH",
                     title: "P2WPKH Output Count",
-                    bottom: fromDollarsPattern(
+                    bottom: fromFullStatsPattern(
                       scripts.count.p2wpkh,
                       Unit.count,
                     ),
@@ -605,7 +604,7 @@ export function createChainSection(ctx) {
                   {
                     name: "P2WSH",
                     title: "P2WSH Output Count",
-                    bottom: fromDollarsPattern(scripts.count.p2wsh, Unit.count),
+                    bottom: fromFullStatsPattern(scripts.count.p2wsh, Unit.count),
                   },
                 ],
               },
@@ -616,12 +615,12 @@ export function createChainSection(ctx) {
                   {
                     name: "P2TR",
                     title: "P2TR Output Count",
-                    bottom: fromDollarsPattern(scripts.count.p2tr, Unit.count),
+                    bottom: fromFullStatsPattern(scripts.count.p2tr, Unit.count),
                   },
                   {
                     name: "P2A",
                     title: "P2A Output Count",
-                    bottom: fromDollarsPattern(scripts.count.p2a, Unit.count),
+                    bottom: fromFullStatsPattern(scripts.count.p2a, Unit.count),
                   },
                 ],
               },
@@ -632,7 +631,7 @@ export function createChainSection(ctx) {
                   {
                     name: "OP_RETURN",
                     title: "OP_RETURN Output Count",
-                    bottom: fromDollarsPattern(
+                    bottom: fromFullStatsPattern(
                       scripts.count.opreturn,
                       Unit.count,
                     ),
@@ -640,7 +639,7 @@ export function createChainSection(ctx) {
                   {
                     name: "Empty",
                     title: "Empty Output Count",
-                    bottom: fromDollarsPattern(
+                    bottom: fromFullStatsPattern(
                       scripts.count.emptyoutput,
                       Unit.count,
                     ),
@@ -648,7 +647,7 @@ export function createChainSection(ctx) {
                   {
                     name: "Unknown",
                     title: "Unknown Output Count",
-                    bottom: fromDollarsPattern(
+                    bottom: fromFullStatsPattern(
                       scripts.count.unknownoutput,
                       Unit.count,
                     ),
@@ -793,9 +792,9 @@ export function createChainSection(ctx) {
             name: "Fee",
             title: "Transaction Fees",
             bottom: [
-              ...fromSizePattern(transactions.fees.fee.bitcoin, Unit.btc),
-              ...fromSizePattern(transactions.fees.fee.sats, Unit.sats),
-              ...fromSizePattern(transactions.fees.fee.dollars, Unit.usd),
+              ...fromSumStatsPattern(transactions.fees.fee.bitcoin, Unit.btc),
+              ...fromSumStatsPattern(transactions.fees.fee.sats, Unit.sats),
+              ...fromSumStatsPattern(transactions.fees.fee.dollars, Unit.usd),
               line({
                 metric: blocks.rewards.feeDominance,
                 name: "Dominance",

@@ -8,7 +8,7 @@ use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom
 
 use crate::internal::{
     ComputedFromHeightLast, ComputedFromHeightSumCum, ComputedHeightDerivedLast, ComputedHeightDerivedSumCum,
-    ComputedVecValue, LazyBinaryHeightDerivedSumCum, NumericValue,
+    ComputedVecValue, LazyBinaryHeightDerivedSumCum, LazyFromHeightLast, NumericValue,
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -205,6 +205,35 @@ where
                 height_source2,
             ),
             rest: LazyBinaryHeightDerivedSumCum::from_computed_derived_last::<F>(name, v, source1, source2),
+        }
+    }
+
+    // --- Methods accepting SumCum + LazyLast sources ---
+
+    pub fn from_computed_lazy_last<F, S2ST>(
+        name: &str,
+        version: Version,
+        height_source1: IterableBoxedVec<Height, S1T>,
+        height_source2: IterableBoxedVec<Height, S2T>,
+        source1: &ComputedFromHeightSumCum<S1T>,
+        source2: &LazyFromHeightLast<S2T, S2ST>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S1T: PartialOrd,
+        S2T: NumericValue,
+        S2ST: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+        Self {
+            height: LazyVecFrom2::transformed::<F>(name, v, height_source1, height_source2),
+            height_cumulative: LazyVecFrom2::transformed::<F>(
+                &format!("{name}_cumulative"),
+                v,
+                source1.height_cumulative.boxed_clone(),
+                source2.height.boxed_clone(),
+            ),
+            rest: LazyBinaryHeightDerivedSumCum::from_computed_lazy_last::<F, S2ST>(name, v, source1, source2),
         }
     }
 }

@@ -1,6 +1,5 @@
 use brk_cohort::ByAddressType;
 use brk_types::{AnyAddressDataIndexEnum, LoadedAddressData, OutputType, TypeIndex};
-use vecdb::GenericStoredVec;
 
 use crate::distribution::{
     address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs},

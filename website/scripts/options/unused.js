@@ -44,8 +44,10 @@ function walk(node, map, path) {
         kn.startsWith("satblocks") ||
         kn.startsWith("satdays") ||
         kn.endsWith("state") ||
+        kn.endsWith("cents") ||
         kn.endsWith("index") ||
         kn.endsWith("indexes") ||
+        kn.endsWith("raw") ||
         kn.endsWith("bytes") ||
         (kn.startsWith("_") && kn.endsWith("start"))
       )

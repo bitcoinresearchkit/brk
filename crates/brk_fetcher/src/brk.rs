@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 
 use brk_error::{Error, Result};
 use brk_types::{
-    Cents, CheckedSub, Close, Date, DateIndex, Dollars, Height, High, Low, OHLCCents, Open,
-    Timestamp,
+    CentsUnsigned, CheckedSub, Close, Date, DateIndex, Dollars, Height, High, Low,
+    OHLCCentsUnsigned, Open, Timestamp,
 };
 use serde_json::Value;
 use tracing::info;
@@ -13,15 +13,15 @@ use crate::{PriceSource, check_response, default_retry};
 #[derive(Default, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub struct BRK {
-    height_to_ohlc: BTreeMap<Height, Vec<OHLCCents>>,
-    dateindex_to_ohlc: BTreeMap<DateIndex, Vec<OHLCCents>>,
+    height_to_ohlc: BTreeMap<Height, Vec<OHLCCentsUnsigned>>,
+    dateindex_to_ohlc: BTreeMap<DateIndex, Vec<OHLCCentsUnsigned>>,
 }
 
 const API_URL: &str = "https://bitview.space/api/vecs";
 const CHUNK_SIZE: usize = 10_000;
 
 impl BRK {
-    pub fn get_from_height(&mut self, height: Height) -> Result<OHLCCents> {
+    pub fn get_from_height(&mut self, height: Height) -> Result<OHLCCentsUnsigned> {
         let key = height.checked_sub(height % CHUNK_SIZE).unwrap();
 
         #[allow(clippy::map_entry)]
@@ -40,7 +40,7 @@ impl BRK {
             .ok_or(Error::NotFound("Couldn't find height in BRK".into()))
     }
 
-    fn fetch_height_prices(height: Height) -> Result<Vec<OHLCCents>> {
+    fn fetch_height_prices(height: Height) -> Result<Vec<OHLCCentsUnsigned>> {
         default_retry(|_| {
             let url = format!(
                 "{API_URL}/height-to-price-ohlc?from={}&to={}",
@@ -60,7 +60,7 @@ impl BRK {
         })
     }
 
-    pub fn get_from_date(&mut self, date: Date) -> Result<OHLCCents> {
+    pub fn get_from_date(&mut self, date: Date) -> Result<OHLCCentsUnsigned> {
         let dateindex = DateIndex::try_from(date)?;
 
         let key = dateindex.checked_sub(dateindex % CHUNK_SIZE).unwrap();
@@ -81,7 +81,7 @@ impl BRK {
             .ok_or(Error::NotFound("Couldn't find date in BRK".into()))
     }
 
-    fn fetch_date_prices(dateindex: DateIndex) -> Result<Vec<OHLCCents>> {
+    fn fetch_date_prices(dateindex: DateIndex) -> Result<Vec<OHLCCentsUnsigned>> {
         default_retry(|_| {
             let url = format!(
                 "{API_URL}/dateindex-to-price-ohlc?from={}&to={}",
@@ -101,13 +101,13 @@ impl BRK {
         })
     }
 
-    fn value_to_ohlc(value: &Value) -> Result<OHLCCents> {
+    fn value_to_ohlc(value: &Value) -> Result<OHLCCentsUnsigned> {
         let ohlc = value
             .as_array()
             .ok_or(Error::Parse("Expected OHLC array".into()))?;
 
         let get_value = |index: usize| -> Result<_> {
-            Ok(Cents::from(Dollars::from(
+            Ok(CentsUnsigned::from(Dollars::from(
                 ohlc.get(index)
                     .ok_or(Error::Parse("Missing OHLC value at index".into()))?
                     .as_f64()
@@ -115,7 +115,7 @@ impl BRK {
             )))
         };
 
-        Ok(OHLCCents::from((
+        Ok(OHLCCentsUnsigned::from((
             Open::new(get_value(0)?),
             High::new(get_value(1)?),
             Low::new(get_value(2)?),
@@ -134,7 +134,7 @@ impl PriceSource for BRK {
         "BRK"
     }
 
-    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCents>> {
+    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCentsUnsigned>> {
         Some(self.get_from_date(date))
     }
 
@@ -142,11 +142,11 @@ impl PriceSource for BRK {
         &mut self,
         _timestamp: Timestamp,
         _previous_timestamp: Option<Timestamp>,
-    ) -> Option<Result<OHLCCents>> {
+    ) -> Option<Result<OHLCCentsUnsigned>> {
         None // BRK doesn't support timestamp-based queries
     }
 
-    fn get_height(&mut self, height: Height) -> Option<Result<OHLCCents>> {
+    fn get_height(&mut self, height: Height) -> Option<Result<OHLCCentsUnsigned>> {
         Some(self.get_from_height(height))
     }
 

@@ -388,6 +388,7 @@ dependencies = [
  "brk_cohort",
  "brk_query",
  "brk_types",
+ "indexmap",
  "oas3",
  "serde",
  "serde_json",
@@ -658,6 +659,7 @@ version = "0.1.2"
 dependencies = [
  "brk_traversable_derive",
  "brk_types",
+ "indexmap",
  "schemars",
  "serde",
  "serde_json",
@@ -681,6 +683,7 @@ dependencies = [
  "brk_error",
  "byteview",
  "derive_more",
+ "indexmap",
  "itoa",
  "jiff",
  "rapidhash",
@@ -2432,9 +2435,9 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bf9c16af7a93d15280ceb0d502657f9ec524cce61c946a1c98390740270820d"
+checksum = "32158f67cfcd5359af3294b26cc4acbd8e412106ab1d6e470038b5284df362e7"
 dependencies = [
  "libc",
  "log",
@@ -3252,9 +3255,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66b361b0614c0d367441dcbc7c28a885b7b088a8d379e23ad845d81324f2c5f6"
+checksum = "05c9f596e212ac69076b58735d340dd944f83531b5a83061020d4a922b73016d"
 dependencies = [
  "ctrlc",
  "log",
@@ -3273,9 +3276,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "962dfcd7fc848c27f6ee051cf1a4dfd55d72a37d443fb525268eff41da9cacf8"
+checksum = "63c4ecf88e970a6275bad540fc68e022ed86987d817ef6711a7c57889aa2dfdf"
 dependencies = [
  "quote",
  "syn",

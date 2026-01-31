@@ -21,19 +21,54 @@ impl ApiJson {
 /// Removes redundant fields while preserving essential API information.
 ///
 /// Transformations applied (in order):
-/// 1. Remove error responses (304, 400, 404, 500)
-/// 2. Compact responses to "returns": "Type"
-/// 3. Remove per-endpoint tags and style
-/// 4. Simplify parameter schema to type, remove param descriptions
-/// 5. Remove summary
-/// 6. Remove examples, replace $ref with type
-/// 7. Flatten single-item allOf
-/// 8. Flatten anyOf to type array
-/// 9. Remove format
-/// 10. Remove property descriptions
-/// 11. Simplify properties to direct types
+/// 1. Remove deprecated endpoints
+/// 2. Remove contact/license from info
+/// 3. Remove *Param schemas
+/// 3. Remove error responses (304, 400, 404, 500)
+/// 4. Compact responses to "returns": "Type"
+/// 5. Remove per-endpoint tags and style
+/// 6. Simplify parameter schema to type, remove param descriptions
+/// 7. Remove summary and operationId
+/// 8. Remove examples, replace $ref with type
+/// 9. Flatten single-item allOf
+/// 10. Flatten anyOf to type array
+/// 11. Remove format
+/// 12. Remove property descriptions
+/// 13. Simplify properties to direct types
+/// 14. Remove min/max constraints
+/// 15. Trim descriptions to first paragraph, strip mempool.space links
+/// 16. Remove required arrays from schemas
+/// 17. Remove redundant "type": "object" when properties exist
+/// 18. Flatten single-element type arrays
+/// 19. Replace large enums (>20 values) with string type
 fn compact_json(json: &str) -> String {
     let mut spec: Value = serde_json::from_str(json).expect("Invalid OpenAPI JSON");
+
+    // Step 1: Remove deprecated endpoints from paths
+    if let Some(Value::Object(paths)) = spec.get_mut("paths") {
+        paths.retain(|_, v| {
+            if let Value::Object(path_obj) = v
+                && let Some(Value::Object(get_obj)) = path_obj.get("get")
+            {
+                return get_obj.get("deprecated") != Some(&Value::Bool(true));
+            }
+            true
+        });
+    }
+
+    // Step 2: Remove contact/license from info
+    if let Some(Value::Object(info)) = spec.get_mut("info") {
+        info.remove("contact");
+        info.remove("license");
+    }
+
+    // Step 3: Remove *Param schemas from components
+    if let Some(Value::Object(components)) = spec.get_mut("components")
+        && let Some(Value::Object(schemas)) = components.get_mut("schemas")
+    {
+        schemas.retain(|name, _| !name.ends_with("Param"));
+    }
+
     compact_value(&mut spec);
     serde_json::to_string(&spec).unwrap()
 }
@@ -70,8 +105,9 @@ fn compact_value(value: &mut Value) {
                 }
             }
 
-            // Step 5: Remove summary
+            // Step 7: Remove summary and operationId
             obj.remove("summary");
+            obj.remove("operationId");
 
             // Step 6: Remove examples, replace $ref with type
             obj.remove("example");
@@ -113,10 +149,45 @@ fn compact_value(value: &mut Value) {
                 }
             }
 
-            // Step 9: Remove format
+            // Step 11: Remove format
             obj.remove("format");
 
-            // Step 10 & 11: Simplify properties (remove descriptions, simplify to direct types)
+            // Step 14: Remove min/max constraints
+            obj.remove("minimum");
+            obj.remove("maximum");
+
+            // Step 16: Remove required arrays from schemas (but keep boolean required on params)
+            if let Some(Value::Array(_)) = obj.get("required") {
+                obj.remove("required");
+            }
+
+            // Step 17: Flatten single-element type arrays: ["object"] -> "object"
+            if let Some(Value::Array(arr)) = obj.get("type").cloned()
+                && arr.len() == 1
+            {
+                obj.insert("type".to_string(), arr.into_iter().next().unwrap());
+            }
+
+            // Step 18: Remove "type": "object" when properties exist (it's redundant)
+            if obj.contains_key("properties")
+                && obj.get("type") == Some(&Value::String("object".to_string()))
+            {
+                obj.remove("type");
+            }
+
+            // Step 19: Replace large enums (>20 values) with just string type
+            if let Some(Value::Array(enum_values)) = obj.get("enum")
+                && enum_values.len() > 20
+            {
+                obj.remove("enum");
+            }
+
+            // Step 15: Strip mempool.space links and keep only first paragraph of descriptions
+            if let Some(Value::String(desc)) = obj.get_mut("description") {
+                *desc = trim_description(desc);
+            }
+
+            // Step 12 & 13: Simplify properties (remove descriptions, simplify to direct types)
             if let Some(Value::Object(props)) = obj.get_mut("properties") {
                 simplify_properties(props);
             }
@@ -132,6 +203,23 @@ fn compact_value(value: &mut Value) {
             }
         }
         _ => {}
+    }
+}
+
+/// Trim description to first paragraph and strip mempool.space endpoint links.
+fn trim_description(desc: &str) -> String {
+    // First, strip mempool.space docs links (endpoint pattern with asterisks)
+    let desc = if let Some(idx) = desc.find("*[Mempool.space docs]") {
+        desc[..idx].trim()
+    } else {
+        desc
+    };
+
+    // Keep only the first paragraph (up to \n\n)
+    if let Some(idx) = desc.find("\n\n") {
+        desc[..idx].trim().to_string()
+    } else {
+        desc.trim().to_string()
     }
 }
 
@@ -226,9 +314,25 @@ fn simplify_properties(props: &mut Map<String, Value>) {
 }
 
 fn simplify_property_value(obj: &mut Map<String, Value>) -> Value {
-    // Remove validation constraints
-    for key in &["default", "minItems", "maxItems", "uniqueItems"] {
+    // Remove validation constraints, format, and examples
+    for key in &[
+        "default",
+        "minItems",
+        "maxItems",
+        "uniqueItems",
+        "minimum",
+        "maximum",
+        "format",
+        "examples",
+        "example",
+        "description",
+    ] {
         obj.remove(*key);
+    }
+
+    // Remove "items": true (means any type, not useful)
+    if obj.get("items") == Some(&Value::Bool(true)) {
+        obj.remove("items");
     }
 
     // Handle $ref - convert to type (runs before recursion would)

@@ -10,6 +10,7 @@ import {
   createCohortFolderAgeRange,
   createCohortFolderBasicWithMarketCap,
   createCohortFolderBasicWithoutMarketCap,
+  createCohortFolderWithoutRelative,
   createCohortFolderAddress,
   createAddressCohortFolder,
 } from "./distribution/index.js";
@@ -64,6 +65,9 @@ export function createPartialOptions({ brk }) {
   /** @param {CohortBasicWithoutMarketCap} cohort */
   const mapBasicWithoutMarketCap = (cohort) =>
     createCohortFolderBasicWithoutMarketCap(ctx, cohort);
+  /** @param {CohortWithoutRelative} cohort */
+  const mapWithoutRelative = (cohort) =>
+    createCohortFolderWithoutRelative(ctx, cohort);
   /** @param {CohortAddress} cohort */
   const mapAddress = (cohort) => createCohortFolderAddress(ctx, cohort);
   /** @param {AddressCohortObject} cohort */
@@ -107,7 +111,7 @@ export function createPartialOptions({ brk }) {
             // STH vs LTH - Direct comparison
             createCohortFolderWithNupl(ctx, {
               name: "STH vs LTH",
-              title: "Holders",
+              title: "STH vs LTH",
               list: [termShort, termLong],
             }),
 
@@ -121,7 +125,7 @@ export function createPartialOptions({ brk }) {
                   tree: [
                     createCohortFolderWithAdjusted(ctx, {
                       name: "Compare",
-                      title: "Age Younger Than",
+                      title: "Max Age",
                       list: upToDate,
                     }),
                     ...upToDate.map(mapWithAdjusted),
@@ -133,7 +137,7 @@ export function createPartialOptions({ brk }) {
                   tree: [
                     createCohortFolderBasicWithMarketCap(ctx, {
                       name: "Compare",
-                      title: "Age Older Than",
+                      title: "Min Age",
                       list: fromDate,
                     }),
                     ...fromDate.map(mapBasicWithMarketCap),
@@ -145,7 +149,7 @@ export function createPartialOptions({ brk }) {
                   tree: [
                     createCohortFolderAgeRange(ctx, {
                       name: "Compare",
-                      title: "Age Range",
+                      title: "Age Ranges",
                       list: dateRange,
                     }),
                     ...dateRange.map(mapAgeRange),
@@ -164,7 +168,7 @@ export function createPartialOptions({ brk }) {
                   tree: [
                     createCohortFolderBasicWithMarketCap(ctx, {
                       name: "Compare",
-                      title: "Size Less Than",
+                      title: "Max Size",
                       list: utxosUnderAmount,
                     }),
                     ...utxosUnderAmount.map(mapBasicWithMarketCap),
@@ -176,7 +180,7 @@ export function createPartialOptions({ brk }) {
                   tree: [
                     createCohortFolderBasicWithMarketCap(ctx, {
                       name: "Compare",
-                      title: "Size More Than",
+                      title: "Min Size",
                       list: utxosAboveAmount,
                     }),
                     ...utxosAboveAmount.map(mapBasicWithMarketCap),
@@ -188,7 +192,7 @@ export function createPartialOptions({ brk }) {
                   tree: [
                     createCohortFolderBasicWithoutMarketCap(ctx, {
                       name: "Compare",
-                      title: "Size Range",
+                      title: "Size Ranges",
                       list: utxosAmountRanges,
                     }),
                     ...utxosAmountRanges.map(mapBasicWithoutMarketCap),
@@ -207,7 +211,7 @@ export function createPartialOptions({ brk }) {
                   tree: [
                     createAddressCohortFolder(ctx, {
                       name: "Compare",
-                      title: "Balance Less Than",
+                      title: "Max Balance",
                       list: addressesUnderAmount,
                     }),
                     ...addressesUnderAmount.map(mapAddressCohorts),
@@ -219,7 +223,7 @@ export function createPartialOptions({ brk }) {
                   tree: [
                     createAddressCohortFolder(ctx, {
                       name: "Compare",
-                      title: "Balance More Than",
+                      title: "Min Balance",
                       list: addressesAboveAmount,
                     }),
                     ...addressesAboveAmount.map(mapAddressCohorts),
@@ -231,7 +235,7 @@ export function createPartialOptions({ brk }) {
                   tree: [
                     createAddressCohortFolder(ctx, {
                       name: "Compare",
-                      title: "Balance Range",
+                      title: "Balance Ranges",
                       list: addressesAmountRanges,
                     }),
                     ...addressesAmountRanges.map(mapAddressCohorts),
@@ -246,11 +250,11 @@ export function createPartialOptions({ brk }) {
               tree: [
                 createCohortFolderAddress(ctx, {
                   name: "Compare",
-                  title: "Script Type",
+                  title: "Script Types",
                   list: typeAddressable,
                 }),
                 ...typeAddressable.map(mapAddress),
-                ...typeOther.map(mapBasicWithoutMarketCap),
+                ...typeOther.map(mapWithoutRelative),
               ],
             },
 
@@ -260,7 +264,7 @@ export function createPartialOptions({ brk }) {
               tree: [
                 createCohortFolderBasicWithoutMarketCap(ctx, {
                   name: "Compare",
-                  title: "Epoch",
+                  title: "Epochs",
                   list: epoch,
                 }),
                 ...epoch.map(mapBasicWithoutMarketCap),
@@ -273,7 +277,7 @@ export function createPartialOptions({ brk }) {
               tree: [
                 createCohortFolderBasicWithoutMarketCap(ctx, {
                   name: "Compare",
-                  title: "Year",
+                  title: "Years",
                   list: year,
                 }),
                 ...year.map(mapBasicWithoutMarketCap),

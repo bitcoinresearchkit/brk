@@ -44,7 +44,7 @@ export function satsBtcUsd(pattern, name, color, options) {
 /**
  * Build percentile USD mappings from a ratio pattern
  * @param {Colors} colors
- * @param {ActivePriceRatioPattern} ratio
+ * @param {AnyRatioPattern} ratio
  */
 export function percentileUsdMap(colors, ratio) {
   return /** @type {const} */ ([
@@ -60,7 +60,7 @@ export function percentileUsdMap(colors, ratio) {
 /**
  * Build percentile ratio mappings from a ratio pattern
  * @param {Colors} colors
- * @param {ActivePriceRatioPattern} ratio
+ * @param {AnyRatioPattern} ratio
  */
 export function percentileMap(colors, ratio) {
   return /** @type {const} */ ([
@@ -75,7 +75,7 @@ export function percentileMap(colors, ratio) {
 
 /**
  * Build SD patterns from a ratio pattern
- * @param {ActivePriceRatioPattern} ratio
+ * @param {AnyRatioPattern} ratio
  */
 export function sdPatterns(ratio) {
   return /** @type {const} */ ([
@@ -135,7 +135,7 @@ export function sdBandsRatio(colors, sd) {
 /**
  * Build ratio SMA series from a ratio pattern
  * @param {Colors} colors
- * @param {ActivePriceRatioPattern} ratio
+ * @param {AnyRatioPattern} ratio
  */
 export function ratioSmas(colors, ratio) {
   return /** @type {const} */ ([
@@ -154,7 +154,7 @@ export function ratioSmas(colors, ratio) {
  * @param {Object} args
  * @param {(metric: string) => string} args.title
  * @param {AnyPricePattern} args.pricePattern - The price pattern to show in top pane
- * @param {ActivePriceRatioPattern} args.ratio - The ratio pattern
+ * @param {AnyRatioPattern} args.ratio - The ratio pattern
  * @param {Color} args.color
  * @param {string} [args.name] - Optional name override (default: "ratio")
  * @returns {PartialChartOption}
@@ -205,16 +205,16 @@ export function createRatioChart(ctx, { title, pricePattern, ratio, color, name 
  * Create ZScores folder from ActivePriceRatioPattern
  * @param {PartialContext} ctx
  * @param {Object} args
- * @param {string} args.title
+ * @param {(suffix: string) => string} args.formatTitle - Function that takes metric suffix and returns full title
  * @param {string} args.legend
  * @param {AnyPricePattern} args.pricePattern - The price pattern to show in top pane
- * @param {ActivePriceRatioPattern} args.ratio - The ratio pattern
+ * @param {AnyRatioPattern} args.ratio - The ratio pattern
  * @param {Color} args.color
  * @returns {PartialOptionsGroup}
  */
 export function createZScoresFolder(
   ctx,
-  { title, legend, pricePattern, ratio, color },
+  { formatTitle, legend, pricePattern, ratio, color },
 ) {
   const { colors } = ctx;
   const sdPats = sdPatterns(ratio);
@@ -224,7 +224,7 @@ export function createZScoresFolder(
     tree: [
       {
         name: "Compare",
-        title: `${title} Z-Scores`,
+        title: formatTitle("Z-Scores"),
         top: [
           price({ metric: pricePattern, name: legend, color }),
           price({
@@ -287,7 +287,7 @@ export function createZScoresFolder(
       },
       ...sdPats.map(({ nameAddon, titleAddon, sd }) => ({
         name: nameAddon,
-        title: `${title} ${titleAddon} Z-Score`,
+        title: formatTitle(`${titleAddon ? `${titleAddon} ` : ""}Z-Score`),
         top: [
           price({ metric: pricePattern, name: legend, color }),
           ...sdBandsUsd(colors, sd).map(
@@ -342,4 +342,45 @@ export function createZScoresFolder(
       })),
     ],
   };
+}
+
+/**
+ * Create price + ratio + z-scores charts - flat array
+ * Unified helper for averages, distribution, and other price-based metrics
+ * @param {PartialContext} ctx
+ * @param {Object} args
+ * @param {string} args.context - Context string for ratio/z-scores titles (e.g., "1 Week SMA", "STH")
+ * @param {string} args.legend - Legend name for the price series
+ * @param {AnyPricePattern} args.pricePattern - The price pattern
+ * @param {AnyRatioPattern} args.ratio - The ratio pattern
+ * @param {Color} args.color
+ * @param {string} [args.ratioName] - Optional custom name for ratio chart (default: "ratio")
+ * @param {string} [args.priceTitle] - Optional override for price chart title (default: context)
+ * @param {string} [args.zScoresSuffix] - Optional suffix appended to context for z-scores (e.g., "MVRV" gives "2y Z-Score: STH MVRV")
+ * @returns {PartialOptionsTree}
+ */
+export function createPriceRatioCharts(ctx, { context, legend, pricePattern, ratio, color, ratioName, priceTitle, zScoresSuffix }) {
+  const titleFn = formatCohortTitle(context);
+  const zScoresTitleFn = zScoresSuffix ? formatCohortTitle(`${context} ${zScoresSuffix}`) : titleFn;
+  return [
+    {
+      name: "Price",
+      title: priceTitle ?? context,
+      top: [price({ metric: pricePattern, name: legend, color })],
+    },
+    createRatioChart(ctx, {
+      title: titleFn,
+      pricePattern,
+      ratio,
+      color,
+      name: ratioName,
+    }),
+    createZScoresFolder(ctx, {
+      formatTitle: zScoresTitleFn,
+      legend,
+      pricePattern,
+      ratio,
+      color,
+    }),
+  ];
 }

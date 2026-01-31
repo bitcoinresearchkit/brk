@@ -26,7 +26,13 @@ import {
   createSingleSupplyRelativeOptions,
   createSingleSellSideRiskSeries,
   createSingleValueCreatedDestroyedSeries,
+  createSingleValueFlowBreakdownSeries,
+  createSingleCapitulationProfitFlowSeries,
   createSingleSoprSeries,
+  createSingleInvestorPriceSeries,
+  createSingleInvestorPriceRatioSeries,
+  createInvestorPriceSeries,
+  createInvestorPriceRatioSeries,
 } from "./shared.js";
 
 /**
@@ -41,7 +47,7 @@ export function createAddressCohortFolder(ctx, args) {
   const useGroupName = "list" in args;
   const isSingle = !("list" in args);
 
-  const title = formatCohortTitle(args.title);
+  const title = formatCohortTitle(args.name);
 
   return {
     name: args.name || "all",
@@ -95,6 +101,21 @@ export function createAddressCohortFolder(ctx, args) {
                   name: "Ratio",
                   title: title("Realized Price Ratio"),
                   bottom: createRealizedPriceRatioSeries(list),
+                },
+                {
+                  name: "Investor Price",
+                  tree: [
+                    {
+                      name: "Price",
+                      title: title("Investor Price"),
+                      top: createInvestorPriceSeries(list),
+                    },
+                    {
+                      name: "Ratio",
+                      title: title("Investor Price Ratio"),
+                      bottom: createInvestorPriceRatioSeries(list),
+                    },
+                  ],
                 },
               ]
             : createRealizedPriceOptions(
@@ -159,6 +180,21 @@ function createRealizedPriceOptions(args, title) {
           name: "Realized",
           color,
         }),
+      ],
+    },
+    {
+      name: "Investor Price",
+      tree: [
+        {
+          name: "Price",
+          title: title("Investor Price"),
+          top: createSingleInvestorPriceSeries(tree, color),
+        },
+        {
+          name: "Ratio",
+          title: title("Investor Price Ratio"),
+          bottom: createSingleInvestorPriceRatioSeries(tree, color),
+        },
       ],
     },
   ];
@@ -365,8 +401,23 @@ function createRealizedPnlSection(ctx, args, title) {
     },
     {
       name: "Value",
-      title: title("Value Created & Destroyed"),
-      bottom: createSingleValueCreatedDestroyedSeries(colors, args.tree),
+      tree: [
+        {
+          name: "Created & Destroyed",
+          title: title("Value Created & Destroyed"),
+          bottom: createSingleValueCreatedDestroyedSeries(colors, args.tree),
+        },
+        {
+          name: "Breakdown",
+          title: title("Value Flow Breakdown"),
+          bottom: createSingleValueFlowBreakdownSeries(colors, args.tree),
+        },
+        {
+          name: "Flow",
+          title: title("Capitulation & Profit Flow"),
+          bottom: createSingleCapitulationProfitFlowSeries(colors, args.tree),
+        },
+      ],
     },
   ];
 }
@@ -435,6 +486,35 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
           ]),
         },
         {
+          name: "Invested Capital",
+          tree: [
+            {
+              name: "In Profit",
+              title: title("Invested Capital In Profit"),
+              bottom: list.flatMap(({ color, name, tree }) => [
+                line({
+                  metric: tree.unrealized.investedCapitalInProfit,
+                  name: useGroupName ? name : "In Profit",
+                  color: useGroupName ? color : colors.green,
+                  unit: Unit.usd,
+                }),
+              ]),
+            },
+            {
+              name: "In Loss",
+              title: title("Invested Capital In Loss"),
+              bottom: list.flatMap(({ color, name, tree }) => [
+                line({
+                  metric: tree.unrealized.investedCapitalInLoss,
+                  name: useGroupName ? name : "In Loss",
+                  color: useGroupName ? color : colors.red,
+                  unit: Unit.usd,
+                }),
+              ]),
+            },
+          ],
+        },
+        {
           name: "Relative",
           tree: [
             {
@@ -495,6 +575,30 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
                   name: useGroupName ? name : "Negative Loss",
                   color: useGroupName ? color : colors.red,
                   unit: Unit.pctMcap,
+                }),
+              ]),
+            },
+            {
+              name: "Invested Capital In Profit",
+              title: title("Invested Capital In Profit"),
+              bottom: list.flatMap(({ color, name, tree }) => [
+                baseline({
+                  metric: tree.relative.investedCapitalInProfitPct,
+                  name: useGroupName ? name : "In Profit",
+                  color: useGroupName ? color : colors.green,
+                  unit: Unit.pctRcap,
+                }),
+              ]),
+            },
+            {
+              name: "Invested Capital In Loss",
+              title: title("Invested Capital In Loss"),
+              bottom: list.flatMap(({ color, name, tree }) => [
+                baseline({
+                  metric: tree.relative.investedCapitalInLossPct,
+                  name: useGroupName ? name : "In Loss",
+                  color: useGroupName ? color : colors.red,
+                  unit: Unit.pctRcap,
                 }),
               ]),
             },

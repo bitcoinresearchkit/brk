@@ -1,4 +1,5 @@
-mod close_price_times_ratio;
+mod cents_unsigned_to_dollars;
+mod cents_unsigned_to_sats_fract;
 mod close_price_times_sats;
 mod difference_f32;
 mod dollar_halve;
@@ -40,7 +41,8 @@ mod volatility_sqrt365;
 mod volatility_sqrt7;
 mod weight_to_fullness;
 
-pub use close_price_times_ratio::*;
+pub use cents_unsigned_to_dollars::*;
+pub use cents_unsigned_to_sats_fract::*;
 pub use close_price_times_sats::*;
 pub use difference_f32::*;
 pub use dollar_halve::*;

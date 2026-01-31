@@ -11,7 +11,7 @@ use vecdb::{CheckedSub, Formattable, Pco, SaturatingAdd};
 
 use crate::StoredF64;
 
-use super::{Bitcoin, Cents, Dollars, Height};
+use super::{Bitcoin, CentsUnsigned, Dollars, Height};
 
 /// Satoshis
 #[derive(
@@ -52,6 +52,7 @@ impl Sats {
     pub const MAX: Self = Self(u64::MAX);
     pub const COINBASE: Self = Self(u64::MAX);
     pub const FIFTY_BTC: Self = Self(50_00_000_000);
+    pub const ONE_BTC_U64: u64 = 1_00_000_000;
     pub const ONE_BTC_U128: u128 = 1_00_000_000;
 
     pub fn new(sats: u64) -> Self {
@@ -64,6 +65,11 @@ impl Sats {
 
     pub fn is_not_zero(&self) -> bool {
         *self != Self::ZERO
+    }
+
+    #[inline(always)]
+    pub const fn as_u128(self) -> u128 {
+        self.0 as u128
     }
 
     pub fn is_max(&self) -> bool {
@@ -210,7 +216,7 @@ impl Sum for Sats {
 impl Div<Dollars> for Sats {
     type Output = Self;
     fn div(self, rhs: Dollars) -> Self::Output {
-        let raw_cents = u64::from(Cents::from(rhs));
+        let raw_cents = u64::from(CentsUnsigned::from(rhs));
         if raw_cents != 0 {
             Self(self.0 * 100 / raw_cents)
         } else {

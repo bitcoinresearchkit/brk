@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{cmp::Reverse, collections::BinaryHeap, path::Path};
 
 use brk_cohort::{
     ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge, ByMinAge,
@@ -6,16 +6,16 @@ use brk_cohort::{
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Dollars, Height, Sats, Version};
+use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, Sats, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
+use vecdb::{AnyStoredVec, Database, Exit, GenericStoredVec, IterableVec};
 
 use crate::{
     ComputeIndexes,
     distribution::DynCohortVecs,
     indexes,
-    internal::{PERCENTILES, PERCENTILES_LEN},
+    internal::{PERCENTILES, PERCENTILES_LEN, compute_spot_percentile_rank},
     price,
 };
 
@@ -288,13 +288,12 @@ impl UTXOCohorts {
     }
 
     /// Get minimum dateindex from all aggregate cohorts' dateindex-indexed vectors.
-    /// This checks cost_basis percentiles which are only on aggregate cohorts.
+    /// This checks cost_basis metrics which are only on aggregate cohorts.
     pub fn min_aggregate_stateful_dateindex_len(&self) -> usize {
         self.0
             .iter_aggregate()
             .filter_map(|v| v.metrics.cost_basis.as_ref())
-            .filter_map(|cb| cb.percentiles.as_ref())
-            .map(|cbp| cbp.min_stateful_dateindex_len())
+            .map(|cb| cb.min_stateful_dateindex_len())
             .min()
             .unwrap_or(usize::MAX)
     }
@@ -314,35 +313,47 @@ impl UTXOCohorts {
         });
     }
 
-    /// Reset price_to_amount for all separate cohorts (called during fresh start).
-    pub fn reset_separate_price_to_amount(&mut self) -> Result<()> {
+    /// Reset cost_basis_data for all separate cohorts (called during fresh start).
+    pub fn reset_separate_cost_basis_data(&mut self) -> Result<()> {
         self.par_iter_separate_mut().try_for_each(|v| {
             if let Some(state) = v.state.as_mut() {
-                state.reset_price_to_amount_if_needed()?;
+                state.reset_cost_basis_data_if_needed()?;
             }
             Ok(())
         })
     }
 
     /// Compute and push percentiles for aggregate cohorts (all, sth, lth).
-    /// Computes on-demand by merging age_range cohorts' price_to_amount data.
-    /// This avoids maintaining redundant aggregate price_to_amount maps.
-    pub fn truncate_push_aggregate_percentiles(&mut self, dateindex: DateIndex) -> Result<()> {
-        use std::cmp::Reverse;
-        use std::collections::BinaryHeap;
-
-        // Collect (filter, supply, price_to_amount as Vec) from age_range cohorts
+    /// Computes on-demand by merging age_range cohorts' cost_basis_data data.
+    /// This avoids maintaining redundant aggregate cost_basis_data maps.
+    /// Computes both sat-weighted (percentiles) and USD-weighted (invested_capital) percentiles.
+    pub fn truncate_push_aggregate_percentiles(
+        &mut self,
+        dateindex: DateIndex,
+        spot: Dollars,
+    ) -> Result<()> {
+        // Collect (filter, entries, total_sats, total_usd) from age_range cohorts.
+        // Keep data in CentsUnsigned to avoid float conversions until output.
+        // Compute totals during collection to avoid a second pass.
         let age_range_data: Vec<_> = self
             .0
             .age_range
             .iter()
             .filter_map(|sub| {
                 let state = sub.state.as_ref()?;
-                let entries: Vec<(Dollars, Sats)> = state
-                    .price_to_amount_iter()?
-                    .map(|(p, &a)| (p, a))
+                let mut total_sats: u64 = 0;
+                let mut total_usd: u128 = 0;
+                let entries: Vec<(CentsUnsigned, Sats)> = state
+                    .cost_basis_data_iter()?
+                    .map(|(price, &sats)| {
+                        let sats_u64 = u64::from(sats);
+                        let price_u128 = price.as_u128();
+                        total_sats += sats_u64;
+                        total_usd += price_u128 * sats_u64 as u128;
+                        (price, sats)
+                    })
                     .collect();
-                Some((sub.filter().clone(), state.supply.value, entries))
+                Some((sub.filter().clone(), entries, total_sats, total_usd))
             })
             .collect();
 
@@ -350,72 +361,109 @@ impl UTXOCohorts {
         for aggregate in self.0.iter_aggregate_mut() {
             let filter = aggregate.filter().clone();
 
-            // Get cost_basis percentiles storage, skip if not configured
-            let Some(percentiles) = aggregate
-                .metrics
-                .cost_basis
-                .as_mut()
-                .and_then(|cb| cb.percentiles.as_mut())
-            else {
+            // Get cost_basis, skip if not configured
+            let Some(cost_basis) = aggregate.metrics.cost_basis.as_mut() else {
                 continue;
             };
 
-            // Collect relevant cohort data for this aggregate
+            // Collect relevant cohort data for this aggregate and sum totals
+            let mut total_sats: u64 = 0;
+            let mut total_usd: u128 = 0;
             let relevant: Vec<_> = age_range_data
                 .iter()
-                .filter(|(sub_filter, _, _)| filter.includes(sub_filter))
+                .filter(|(sub_filter, _, _, _)| filter.includes(sub_filter))
+                .map(|(_, entries, cohort_sats, cohort_usd)| {
+                    total_sats += cohort_sats;
+                    total_usd += cohort_usd;
+                    entries
+                })
                 .collect();
 
-            // Calculate total supply
-            let total_supply: u64 = relevant.iter().map(|(_, s, _)| u64::from(*s)).sum();
-
-            if total_supply == 0 {
-                percentiles.truncate_push(dateindex, &[Dollars::NAN; PERCENTILES_LEN])?;
+            if total_sats == 0 {
+                let nan_prices = [Dollars::NAN; PERCENTILES_LEN];
+                if let Some(percentiles) = cost_basis.percentiles.as_mut() {
+                    percentiles.truncate_push(dateindex, &nan_prices)?;
+                }
+                if let Some(invested_capital) = cost_basis.invested_capital.as_mut() {
+                    invested_capital.truncate_push(dateindex, &nan_prices)?;
+                }
+                if let Some(spot_pct) = cost_basis.spot_cost_basis_percentile.as_mut() {
+                    spot_pct
+                        .dateindex
+                        .truncate_push(dateindex, StoredF32::NAN)?;
+                }
+                if let Some(spot_pct) = cost_basis.spot_invested_capital_percentile.as_mut() {
+                    spot_pct
+                        .dateindex
+                        .truncate_push(dateindex, StoredF32::NAN)?;
+                }
                 continue;
             }
 
             // K-way merge using min-heap: O(n log k) where k = number of cohorts
-            // Each heap entry: (price, amount, cohort_idx, entry_idx)
-            let mut heap: BinaryHeap<Reverse<(Dollars, usize, usize)>> = BinaryHeap::new();
+            let mut heap: BinaryHeap<Reverse<(CentsUnsigned, usize, usize)>> = BinaryHeap::new();
 
             // Initialize heap with first entry from each cohort
-            for (cohort_idx, (_, _, entries)) in relevant.iter().enumerate() {
+            for (cohort_idx, entries) in relevant.iter().enumerate() {
                 if !entries.is_empty() {
                     heap.push(Reverse((entries[0].0, cohort_idx, 0)));
                 }
             }
 
-            let targets = PERCENTILES.map(|p| total_supply * u64::from(p) / 100);
-            let mut result = [Dollars::NAN; PERCENTILES_LEN];
-            let mut accumulated = 0u64;
-            let mut pct_idx = 0;
-            let mut current_price: Option<Dollars> = None;
-            let mut amount_at_price = 0u64;
+            // Compute both sat-weighted and USD-weighted percentiles in one pass
+            let sat_targets = PERCENTILES.map(|p| total_sats * u64::from(p) / 100);
+            let usd_targets = PERCENTILES.map(|p| total_usd * u128::from(p) / 100);
+
+            let mut sat_result = [Dollars::NAN; PERCENTILES_LEN];
+            let mut usd_result = [Dollars::NAN; PERCENTILES_LEN];
+
+            let mut cumsum_sats: u64 = 0;
+            let mut cumsum_usd: u128 = 0;
+            let mut sat_idx = 0;
+            let mut usd_idx = 0;
+
+            let mut current_price: Option<CentsUnsigned> = None;
+            let mut sats_at_price: u64 = 0;
+            let mut usd_at_price: u128 = 0;
 
             while let Some(Reverse((price, cohort_idx, entry_idx))) = heap.pop() {
-                let (_, _, entries) = relevant[cohort_idx];
+                let entries = relevant[cohort_idx];
                 let (_, amount) = entries[entry_idx];
+                let amount_u64 = u64::from(amount);
+                let price_u128 = price.as_u128();
 
                 // If price changed, finalize previous price
-                if let Some(current_price) = current_price
-                    && current_price != price
+                if let Some(prev_price) = current_price
+                    && prev_price != price
                 {
-                    accumulated += amount_at_price;
+                    cumsum_sats += sats_at_price;
+                    cumsum_usd += usd_at_price;
 
-                    while pct_idx < PERCENTILES_LEN && accumulated >= targets[pct_idx] {
-                        result[pct_idx] = current_price;
-                        pct_idx += 1;
+                    // Only convert to dollars if we still need percentiles
+                    if sat_idx < PERCENTILES_LEN || usd_idx < PERCENTILES_LEN {
+                        let prev_dollars = prev_price.to_dollars();
+                        while sat_idx < PERCENTILES_LEN && cumsum_sats >= sat_targets[sat_idx] {
+                            sat_result[sat_idx] = prev_dollars;
+                            sat_idx += 1;
+                        }
+                        while usd_idx < PERCENTILES_LEN && cumsum_usd >= usd_targets[usd_idx] {
+                            usd_result[usd_idx] = prev_dollars;
+                            usd_idx += 1;
+                        }
+
+                        // Early exit if all percentiles found
+                        if sat_idx >= PERCENTILES_LEN && usd_idx >= PERCENTILES_LEN {
+                            break;
+                        }
                     }
 
-                    if pct_idx >= PERCENTILES_LEN {
-                        break;
-                    }
-
-                    amount_at_price = 0;
+                    sats_at_price = 0;
+                    usd_at_price = 0;
                 }
 
                 current_price = Some(price);
-                amount_at_price += u64::from(amount);
+                sats_at_price += amount_u64;
+                usd_at_price += price_u128 * amount_u64 as u128;
 
                 // Push next entry from this cohort
                 let next_idx = entry_idx + 1;
@@ -424,16 +472,41 @@ impl UTXOCohorts {
                 }
             }
 
-            // Finalize last price
-            if let Some(price) = current_price {
-                accumulated += amount_at_price;
-                while pct_idx < PERCENTILES_LEN && accumulated >= targets[pct_idx] {
-                    result[pct_idx] = price;
-                    pct_idx += 1;
+            // Finalize last price (skip if we already found all percentiles via early exit)
+            if (sat_idx < PERCENTILES_LEN || usd_idx < PERCENTILES_LEN)
+                && let Some(price) = current_price
+            {
+                cumsum_sats += sats_at_price;
+                cumsum_usd += usd_at_price;
+
+                let price_dollars = price.to_dollars();
+                while sat_idx < PERCENTILES_LEN && cumsum_sats >= sat_targets[sat_idx] {
+                    sat_result[sat_idx] = price_dollars;
+                    sat_idx += 1;
+                }
+                while usd_idx < PERCENTILES_LEN && cumsum_usd >= usd_targets[usd_idx] {
+                    usd_result[usd_idx] = price_dollars;
+                    usd_idx += 1;
                 }
             }
 
-            percentiles.truncate_push(dateindex, &result)?;
+            // Push both sat-weighted and USD-weighted results
+            if let Some(percentiles) = cost_basis.percentiles.as_mut() {
+                percentiles.truncate_push(dateindex, &sat_result)?;
+            }
+            if let Some(invested_capital) = cost_basis.invested_capital.as_mut() {
+                invested_capital.truncate_push(dateindex, &usd_result)?;
+            }
+
+            // Compute and push spot percentile ranks
+            if let Some(spot_pct) = cost_basis.spot_cost_basis_percentile.as_mut() {
+                let rank = compute_spot_percentile_rank(&sat_result, spot);
+                spot_pct.dateindex.truncate_push(dateindex, rank)?;
+            }
+            if let Some(spot_pct) = cost_basis.spot_invested_capital_percentile.as_mut() {
+                let rank = compute_spot_percentile_rank(&usd_result, spot);
+                spot_pct.dateindex.truncate_push(dateindex, rank)?;
+            }
         }
 
         Ok(())

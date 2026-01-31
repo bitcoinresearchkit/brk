@@ -134,18 +134,6 @@ impl AddressTypeToAddrCountVecs {
         .into_par_iter()
     }
 
-    pub fn write_height(&mut self) -> Result<()> {
-        self.p2pk65.height.write()?;
-        self.p2pk33.height.write()?;
-        self.p2pkh.height.write()?;
-        self.p2sh.height.write()?;
-        self.p2wpkh.height.write()?;
-        self.p2wsh.height.write()?;
-        self.p2tr.height.write()?;
-        self.p2a.height.write()?;
-        Ok(())
-    }
-
     pub fn truncate_push_height(
         &mut self,
         height: Height,

@@ -14,6 +14,7 @@ export {
   createCohortFolderAgeRange,
   createCohortFolderBasicWithMarketCap,
   createCohortFolderBasicWithoutMarketCap,
+  createCohortFolderWithoutRelative,
   createCohortFolderAddress,
 } from "./utxo.js";
 export { createAddressCohortFolder } from "./address.js";

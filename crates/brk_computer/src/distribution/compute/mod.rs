@@ -6,7 +6,7 @@ mod recover;
 mod write;
 
 pub use block_loop::process_blocks;
-pub use context::ComputeContext;
+pub use context::{ComputeContext, PriceRangeMax};
 pub use readers::{
     TxInIterators, TxOutData, TxOutIterators, VecsReaders, build_txinindex_to_txindex,
     build_txoutindex_to_txindex,

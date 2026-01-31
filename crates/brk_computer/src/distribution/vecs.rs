@@ -30,7 +30,7 @@ use super::{
     compute::aggregates,
 };
 
-const VERSION: Version = Version::new(21);
+const VERSION: Version = Version::new(22);
 
 /// Main struct holding all computed vectors and state for stateful computation.
 #[derive(Clone, Traversable)]
@@ -257,7 +257,7 @@ impl Vecs {
         } else {
             // Recover chain_state from stored values
             let height_to_timestamp = &blocks.time.timestamp_monotonic;
-            let height_to_price = price.map(|p| &p.usd.split.close.height);
+            let height_to_price = price.map(|p| &p.cents.split.height.close);
 
             let mut height_to_timestamp_iter = height_to_timestamp.into_iter();
             let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
@@ -266,9 +266,10 @@ impl Vecs {
             let chain_state = (0..recovered_height.to_usize())
                 .map(|h| {
                     let h = Height::from(h);
+                    let price = height_to_price_iter.as_mut().map(|v| *v.get_unwrap(h));
                     BlockState {
                         supply: chain_state_iter.get_unwrap(h),
-                        price: height_to_price_iter.as_mut().map(|v| *v.get_unwrap(h)),
+                        price,
                         timestamp: height_to_timestamp_iter.get_unwrap(h),
                     }
                 })

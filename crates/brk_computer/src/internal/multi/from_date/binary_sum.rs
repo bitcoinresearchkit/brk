@@ -58,4 +58,37 @@ where
             decadeindex: period!(decadeindex),
         }
     }
+
+    /// Create from two LazyBinaryFromDateSum sources.
+    pub fn from_binary<F, S1aT, S1bT, S2aT, S2bT>(
+        name: &str,
+        version: Version,
+        source1: &LazyBinaryFromDateSum<S1T, S1aT, S1bT>,
+        source2: &LazyBinaryFromDateSum<S2T, S2aT, S2bT>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S1aT: ComputedVecValue + JsonSchema,
+        S1bT: ComputedVecValue + JsonSchema,
+        S2aT: ComputedVecValue + JsonSchema,
+        S2bT: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyBinaryTransformSum::from_boxed::<F>(name, v, source1.$p.boxed_clone(), source2.$p.boxed_clone())
+            };
+        }
+
+        Self {
+            dateindex: period!(dateindex),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
 }

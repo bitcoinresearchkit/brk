@@ -1,13 +1,12 @@
 import {
-  fromSizePattern,
-  fromFullnessPattern,
-  fromDollarsPattern,
-  fromFeeRatePattern,
+  fromSumStatsPattern,
+  fromBaseStatsPattern,
+  fromFullStatsPattern,
+  fromStatsPattern,
   fromCoinbasePattern,
   fromValuePattern,
   fromBitcoinPatternWithUnit,
-  fromBlockCountWithUnit,
-  fromIntervalPattern,
+  fromCountPattern,
   fromSupplyPattern,
 } from "./series.js";
 import { colors } from "../chart/colors.js";
@@ -39,15 +38,14 @@ export function createContext({ brk }) {
   return {
     colors,
     brk,
-    fromSizePattern: bind(fromSizePattern),
-    fromFullnessPattern: bind(fromFullnessPattern),
-    fromDollarsPattern: bind(fromDollarsPattern),
-    fromFeeRatePattern: bind(fromFeeRatePattern),
+    fromSumStatsPattern: bind(fromSumStatsPattern),
+    fromBaseStatsPattern: bind(fromBaseStatsPattern),
+    fromFullStatsPattern: bind(fromFullStatsPattern),
+    fromStatsPattern: bind(fromStatsPattern),
     fromCoinbasePattern: bind(fromCoinbasePattern),
     fromValuePattern: bind(fromValuePattern),
     fromBitcoinPatternWithUnit: bind(fromBitcoinPatternWithUnit),
-    fromBlockCountWithUnit: bind(fromBlockCountWithUnit),
-    fromIntervalPattern: bind(fromIntervalPattern),
+    fromCountPattern: bind(fromCountPattern),
     fromSupplyPattern,
   };
 }

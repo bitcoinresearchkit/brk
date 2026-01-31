@@ -1,7 +1,8 @@
 :root {
   color-scheme: light dark;
 
-  --white: oklch(99% 0.01 44);
+  /*--white: oklch(90% 0 0);*/
+  --white: oklch(95% 0.01 44);
   --light-gray: oklch(90% 0.01 44);
   --gray: oklch(60% 0.01 44);
   --dark-gray: oklch(30% 0.01 44);

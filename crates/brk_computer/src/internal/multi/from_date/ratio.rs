@@ -17,7 +17,8 @@ use crate::{
 };
 
 use super::{ComputedFromDateLast, Price};
-use crate::internal::ComputedFromHeightLast;
+use crate::internal::{ComputedFromHeightLast, ComputedVecValue, LazyFromHeightLast};
+use schemars::JsonSchema;
 
 #[derive(Clone, Traversable)]
 pub struct ComputedFromDateRatio {
@@ -56,7 +57,6 @@ impl ComputedFromDateRatio {
         version: Version,
         indexes: &indexes::Vecs,
         extended: bool,
-        price_vecs: Option<&price::Vecs>,
     ) -> Result<Self> {
         let v = version + VERSION;
 
@@ -81,7 +81,8 @@ impl ComputedFromDateRatio {
                     v,
                     indexes,
                     StandardDeviationVecsOptions::default().add_all(),
-                    price_vecs,
+                    metric_price,
+                    price.as_ref().map(|p| &p.dollars),
                 )
                 .unwrap()
             };
@@ -133,6 +134,82 @@ impl ComputedFromDateRatio {
             ratio_pct2_usd: lazy_usd!(&ratio_pct2, "ratio_pct2_usd"),
             ratio_pct1_usd: lazy_usd!(&ratio_pct1, "ratio_pct1_usd"),
             price,
+            ratio_pct99,
+            ratio_pct98,
+            ratio_pct95,
+            ratio_pct5,
+            ratio_pct2,
+            ratio_pct1,
+        })
+    }
+
+    pub fn forced_import_from_lazy<S1T: ComputedVecValue + JsonSchema>(
+        db: &Database,
+        name: &str,
+        metric_price: &LazyFromHeightLast<Dollars, S1T>,
+        version: Version,
+        indexes: &indexes::Vecs,
+        extended: bool,
+    ) -> Result<Self> {
+        let v = version + VERSION;
+
+        macro_rules! import {
+            ($suffix:expr) => {
+                ComputedFromDateLast::forced_import(db, &format!("{name}_{}", $suffix), v, indexes)
+                    .unwrap()
+            };
+        }
+
+        macro_rules! import_sd {
+            ($suffix:expr, $days:expr) => {
+                ComputedFromDateStdDev::forced_import_from_lazy(
+                    db,
+                    &format!("{name}_{}", $suffix),
+                    $days,
+                    v,
+                    indexes,
+                    StandardDeviationVecsOptions::default().add_all(),
+                    Some(metric_price),
+                )
+                .unwrap()
+            };
+        }
+
+        let ratio_pct99 = extended.then(|| import!("ratio_pct99"));
+        let ratio_pct98 = extended.then(|| import!("ratio_pct98"));
+        let ratio_pct95 = extended.then(|| import!("ratio_pct95"));
+        let ratio_pct5 = extended.then(|| import!("ratio_pct5"));
+        let ratio_pct2 = extended.then(|| import!("ratio_pct2"));
+        let ratio_pct1 = extended.then(|| import!("ratio_pct1"));
+
+        macro_rules! lazy_usd {
+            ($ratio:expr, $suffix:expr) => {
+                $ratio.as_ref().map(|r| {
+                    LazyBinaryPrice::from_lazy_height_and_dateindex_last::<PriceTimesRatio, S1T>(
+                        &format!("{name}_{}", $suffix),
+                        v,
+                        metric_price,
+                        r,
+                    )
+                })
+            };
+        }
+
+        Ok(Self {
+            ratio: import!("ratio"),
+            ratio_1w_sma: extended.then(|| import!("ratio_1w_sma")),
+            ratio_1m_sma: extended.then(|| import!("ratio_1m_sma")),
+            ratio_sd: extended.then(|| import_sd!("ratio", usize::MAX)),
+            ratio_1y_sd: extended.then(|| import_sd!("ratio_1y", 365)),
+            ratio_2y_sd: extended.then(|| import_sd!("ratio_2y", 2 * 365)),
+            ratio_4y_sd: extended.then(|| import_sd!("ratio_4y", 4 * 365)),
+            ratio_pct99_usd: lazy_usd!(&ratio_pct99, "ratio_pct99_usd"),
+            ratio_pct98_usd: lazy_usd!(&ratio_pct98, "ratio_pct98_usd"),
+            ratio_pct95_usd: lazy_usd!(&ratio_pct95, "ratio_pct95_usd"),
+            ratio_pct5_usd: lazy_usd!(&ratio_pct5, "ratio_pct5_usd"),
+            ratio_pct2_usd: lazy_usd!(&ratio_pct2, "ratio_pct2_usd"),
+            ratio_pct1_usd: lazy_usd!(&ratio_pct1, "ratio_pct1_usd"),
+            price: None,
             ratio_pct99,
             ratio_pct98,
             ratio_pct95,

@@ -1,5 +1,5 @@
 use brk_cohort::{AmountBucket, ByAddressType};
-use brk_types::{Dollars, Sats, TypeIndex};
+use brk_types::{CentsUnsigned, Sats, TypeIndex};
 use rustc_hash::FxHashMap;
 
 use crate::distribution::{
@@ -14,7 +14,7 @@ pub fn process_received(
     received_data: AddressTypeToVec<(TypeIndex, Sats)>,
     cohorts: &mut AddressCohorts,
     lookup: &mut AddressLookup<'_>,
-    price: Option<Dollars>,
+    price: Option<CentsUnsigned>,
     addr_count: &mut ByAddressType<u64>,
     empty_addr_count: &mut ByAddressType<u64>,
     activity_counts: &mut AddressTypeToActivityCounts,
@@ -118,7 +118,7 @@ pub fn process_received(
                         .state
                         .as_mut()
                         .unwrap()
-                        .receive_outputs(addr_data, total_value, price, output_count);
+                        .receive_outputs(addr_data, total_value, price.unwrap(), output_count);
                 }
             }
         }

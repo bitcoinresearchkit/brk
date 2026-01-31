@@ -10,7 +10,7 @@ use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom
 use crate::internal::{
     ComputedFromHeightLast, ComputedFromHeightSum, ComputedFromDateLast, ComputedVecValue,
     LazyBinaryComputedFromHeightLast, LazyBinaryComputedFromHeightSum, LazyBinaryTransformLast,
-    LazyDateDerivedLast, LazyDateDerivedSumCum, NumericValue,
+    LazyDateDerivedLast, LazyDateDerivedSumCum, LazyFromDateLast, LazyFromHeightLast, NumericValue,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -203,6 +203,45 @@ where
                     v,
                     &source1.$p,
                     &source2.$p,
+                )
+            };
+        }
+
+        Self {
+            dateindex: LazyVecFrom2::transformed::<F>(
+                name,
+                v,
+                source1.dateindex.boxed_clone(),
+                source2.dateindex.boxed_clone(),
+            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
+
+    pub fn from_lazy_height_and_dateindex_last<F, S1SourceT>(
+        name: &str,
+        version: Version,
+        source1: &LazyFromHeightLast<S1T, S1SourceT>,
+        source2: &ComputedFromDateLast<S2T>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S1SourceT: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyBinaryTransformLast::from_vecs::<F>(
+                    name,
+                    v,
+                    source1.$p.boxed_clone(),
+                    source2.$p.boxed_clone(),
                 )
             };
         }
@@ -744,6 +783,46 @@ where
                 v,
                 source1.rest.dateindex.boxed_clone(),
                 source2.rest.dateindex.boxed_clone(),
+            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
+
+    /// Create from a ComputedFromDateLast and a LazyFromDateLast.
+    pub fn from_computed_and_lazy_last<F, S2SourceT>(
+        name: &str,
+        version: Version,
+        source1: &ComputedFromDateLast<S1T>,
+        source2: &LazyFromDateLast<S2T, S2SourceT>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S2SourceT: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyBinaryTransformLast::from_vecs::<F>(
+                    name,
+                    v,
+                    source1.rest.$p.boxed_clone(),
+                    source2.$p.boxed_clone(),
+                )
+            };
+        }
+
+        Self {
+            dateindex: LazyVecFrom2::transformed::<F>(
+                name,
+                v,
+                source1.dateindex.boxed_clone(),
+                source2.dateindex.boxed_clone(),
             ),
             weekindex: period!(weekindex),
             monthindex: period!(monthindex),

@@ -33,7 +33,6 @@ import { style } from "../utils/elements.js";
 /**
  * @template T
  * @typedef {Object} Series
- * @property {string} key
  * @property {string} id
  * @property {number} paneIndex
  * @property {PersistedValue<boolean>} active
@@ -448,16 +447,12 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
   };
 
   const serieses = {
-    /** @type {Map<string, PersistedValue<boolean>>} */
-    activeStates: new Map(),
-    /** @type {Map<string, Set<AnySeries>>} */
-    byKey: new Map(),
+    /** @type {Set<AnySeries>} */
+    all: new Set(),
 
     refreshAll() {
-      serieses.byKey.forEach((set) => {
-        set.forEach((s) => {
-          if (s.active.value) s.fetch?.();
-        });
+      serieses.all.forEach((s) => {
+        if (s.active.value) s.fetch?.();
       });
     },
 
@@ -503,17 +498,12 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       const key = customKey ?? stringToId(name);
       const id = `${unit.id}-${key}`;
 
-      // Reuse existing state if same name (links legends across panes, regardless of unit)
-      const existingActive = serieses.activeStates.get(key);
-      const active =
-        existingActive ??
-        createPersistedValue({
-          defaultValue: defaultActive ?? true,
-          storageKey: key,
-          urlKey: key,
-          ...serdeBool,
-        });
-      if (!existingActive) serieses.activeStates.set(key, active);
+      const active = createPersistedValue({
+        defaultValue: defaultActive ?? true,
+        storageKey: `${chartId}-p${paneIndex}-${key}`,
+        urlKey: `${paneIndex === 0 ? "t" : "b"}-${key}`,
+        ...serdeBool,
+      });
 
       setOrder(-order);
 
@@ -533,18 +523,9 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         setActive(value) {
           const wasActive = active.value;
           active.set(value);
-          const linkedSeries = serieses.byKey.get(key);
-          linkedSeries?.forEach((s) => {
-            value ? s.show() : s.hide();
-          });
-          document.querySelectorAll(`[data-series="${key}"]`).forEach((el) => {
-            if (el instanceof HTMLInputElement && el.type === "checkbox") {
-              el.checked = value;
-            }
-          });
-          // Fetch data for ALL linked series, not just this one
+          value ? show() : hide();
           if (value && !wasActive) {
-            linkedSeries?.forEach((s) => s.fetch?.());
+            _fetch?.();
           }
           panes.updateVisibility();
         },
@@ -555,7 +536,6 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         tame,
         hasData: () => hasData,
         fetch: () => _fetch?.(),
-        key,
         id,
         paneIndex,
         url: null,
@@ -563,18 +543,12 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         update,
         remove() {
           onRemove();
-          serieses.byKey.get(key)?.delete(series);
+          serieses.all.delete(series);
           panes.seriesByHome.get(paneIndex)?.delete(series);
         },
       };
 
-      // Register series for cross-pane linking (by name only)
-      let keySet = serieses.byKey.get(key);
-      if (!keySet) {
-        keySet = new Set();
-        serieses.byKey.set(key, keySet);
-      }
-      keySet.add(series);
+      serieses.all.add(series);
 
       /** @param {ChartableIndex} idx */
       function setupIndexEffect(idx) {
@@ -1312,35 +1286,28 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       deserialize: (s) => /** @type {"lin" | "log"} */ (s),
     });
 
-    /** @param {"lin" | "log"} value */
-    const applyScale = (value) => {
-      panes.whenReady(paneIndex, () => {
-        try {
-          ichart
-            .panes()
-            .at(paneIndex)
-            ?.priceScale("right")
-            .applyOptions({
-              mode: value === "lin" ? 0 : 1,
-            });
-        } catch {}
-      });
+    /** @param {IPaneApi<Time>} pane @param {"lin" | "log"} value */
+    const applyScale = (pane, value) => {
+      try {
+        pane.priceScale("right").applyOptions({
+          mode: value === "lin" ? 0 : 1,
+        });
+      } catch {}
     };
-
-    applyScale(persisted.value);
 
     fieldsets.addIfNeeded({
       id,
       paneIndex,
       position: "sw",
-      createChild() {
+      createChild(pane) {
+        applyScale(pane, persisted.value);
         return createRadios({
           choices: /** @type {const} */ (["lin", "log"]),
           id: stringToId(`${id} ${paneIndex}`),
           initialValue: persisted.value,
           onChange(value) {
             persisted.set(value);
-            applyScale(value);
+            applyScale(pane, value);
           },
         });
       },
@@ -1472,12 +1439,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       // Remove old series AFTER adding new ones to prevent pane collapse
       oldSeries.forEach((s) => s.remove());
 
-      // Ensure other pane's series are in their correct pane before applying scale
-      // (they may have been collapsed when this pane was empty)
-      const otherPaneIndex = paneIndex === 0 ? 1 : 0;
-      panes.moveTo(otherPaneIndex, otherPaneIndex);
-
-      // Apply scale after series are created and panes are properly separated
+      // Store scale config - it will be applied when createForPane runs after updateVisibility
       applyScaleForUnit(paneIndex, unit);
     },
 

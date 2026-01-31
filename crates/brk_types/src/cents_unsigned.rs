@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Formattable, Pco};
 
-use super::Dollars;
+use super::{CentsSats, Dollars, Sats};
 
 /// Unsigned cents (u64) - for values that should never be negative.
 /// Used for invested capital, realized cap, etc.
@@ -33,9 +33,14 @@ impl CentsUnsigned {
         Self(value)
     }
 
-    #[inline]
+    #[inline(always)]
     pub const fn inner(self) -> u64 {
         self.0
+    }
+
+    #[inline(always)]
+    pub const fn as_u128(self) -> u128 {
+        self.0 as u128
     }
 
     #[inline]
@@ -84,6 +89,13 @@ impl From<u64> for CentsUnsigned {
     }
 }
 
+impl From<usize> for CentsUnsigned {
+    #[inline]
+    fn from(value: usize) -> Self {
+        Self(value as u64)
+    }
+}
+
 impl From<CentsUnsigned> for u64 {
     #[inline]
     fn from(value: CentsUnsigned) -> Self {
@@ -110,6 +122,17 @@ impl From<CentsUnsigned> for f64 {
     #[inline]
     fn from(value: CentsUnsigned) -> Self {
         value.0 as f64
+    }
+}
+
+impl From<f64> for CentsUnsigned {
+    #[inline]
+    fn from(value: f64) -> Self {
+        if value.is_nan() || value < 0.0 {
+            Self::ZERO
+        } else {
+            Self(value as u64)
+        }
     }
 }
 
@@ -164,6 +187,14 @@ impl Mul<usize> for CentsUnsigned {
     #[inline]
     fn mul(self, rhs: usize) -> Self::Output {
         Self(self.0 * rhs as u64)
+    }
+}
+
+impl Mul<Sats> for CentsUnsigned {
+    type Output = CentsSats;
+    #[inline]
+    fn mul(self, sats: Sats) -> CentsSats {
+        CentsSats::new(self.as_u128() * sats.as_u128())
     }
 }
 

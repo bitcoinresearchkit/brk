@@ -1,12 +1,13 @@
 use brk_cohort::{AmountBucket, ByAddressType};
 use brk_error::Result;
-use brk_types::{Age, CheckedSub, Dollars, Height, Sats, Timestamp, TypeIndex};
+use brk_types::{Age, CentsUnsigned, CheckedSub, Height, Sats, Timestamp, TypeIndex};
 use rustc_hash::FxHashSet;
 use vecdb::{unlikely, VecIndex};
 
 use crate::distribution::{
     address::{AddressTypeToActivityCounts, HeightToAddressTypeToVec},
     cohorts::AddressCohorts,
+    compute::PriceRangeMax,
 };
 
 use super::super::cache::AddressLookup;
@@ -21,17 +22,21 @@ use super::super::cache::AddressLookup;
 ///
 /// Note: Takes separate price/timestamp slices instead of chain_state to allow
 /// parallel execution with UTXO cohort processing (which mutates chain_state).
+///
+/// `price_range_max` is used to compute the peak price during each UTXO's holding period
+/// for accurate ATH regret calculation.
 #[allow(clippy::too_many_arguments)]
 pub fn process_sent(
     sent_data: HeightToAddressTypeToVec<(TypeIndex, Sats)>,
     cohorts: &mut AddressCohorts,
     lookup: &mut AddressLookup<'_>,
-    current_price: Option<Dollars>,
+    current_price: Option<CentsUnsigned>,
+    price_range_max: Option<&PriceRangeMax>,
     addr_count: &mut ByAddressType<u64>,
     empty_addr_count: &mut ByAddressType<u64>,
     activity_counts: &mut AddressTypeToActivityCounts,
     received_addresses: &ByAddressType<FxHashSet<TypeIndex>>,
-    height_to_price: Option<&[Dollars]>,
+    height_to_price: Option<&[CentsUnsigned]>,
     height_to_timestamp: &[Timestamp],
     current_height: Height,
     current_timestamp: Timestamp,
@@ -39,11 +44,16 @@ pub fn process_sent(
     // Track unique senders per address type (simple set, no extra data needed)
     let mut seen_senders: ByAddressType<FxHashSet<TypeIndex>> = ByAddressType::default();
 
-    for (prev_height, by_type) in sent_data.into_iter() {
-        let prev_price = height_to_price.map(|v| v[prev_height.to_usize()]);
-        let prev_timestamp = height_to_timestamp[prev_height.to_usize()];
-        let blocks_old = current_height.to_usize() - prev_height.to_usize();
+    for (receive_height, by_type) in sent_data.into_iter() {
+        let prev_price = height_to_price.map(|v| v[receive_height.to_usize()]);
+        let prev_timestamp = height_to_timestamp[receive_height.to_usize()];
+        let blocks_old = current_height.to_usize() - receive_height.to_usize();
         let age = Age::new(current_timestamp, prev_timestamp, blocks_old);
+
+        // Compute peak price during holding period for ATH regret
+        // This is the max HIGH price between receive and send heights
+        let peak_price: Option<CentsUnsigned> =
+            price_range_max.map(|t| t.max_between(receive_height, current_height));
 
         for (output_type, vec) in by_type.unwrap().into_iter() {
             // Cache mutable refs for this address type
@@ -91,11 +101,11 @@ pub fn process_sent(
                     ) {
                         panic!(
                             "process_sent: cohort underflow detected!\n\
-                            Block context: prev_height={:?}, output_type={:?}, type_index={:?}\n\
+                            Block context: receive_height={:?}, output_type={:?}, type_index={:?}\n\
                             prev_balance={}, new_balance={}, value={}\n\
                             will_be_empty={}, crossing_boundary={}\n\
                             Address: {:?}",
-                            prev_height,
+                            receive_height,
                             output_type,
                             type_index,
                             prev_balance,
@@ -141,7 +151,7 @@ pub fn process_sent(
                         .state
                         .as_mut()
                         .unwrap()
-                        .send(addr_data, value, current_price, prev_price, age)?;
+                        .send(addr_data, value, current_price.unwrap(), prev_price.unwrap(), peak_price.unwrap(), age)?;
                 }
             }
         }

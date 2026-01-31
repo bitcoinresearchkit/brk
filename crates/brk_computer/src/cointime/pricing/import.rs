@@ -6,7 +6,6 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{ComputedFromDateRatio, PriceFromHeight},
-    price,
 };
 
 impl Vecs {
@@ -14,7 +13,6 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
     ) -> Result<Self> {
         let vaulted_price = PriceFromHeight::forced_import(db, "vaulted_price", version, indexes)?;
         let vaulted_price_ratio = ComputedFromDateRatio::forced_import(
@@ -24,7 +22,6 @@ impl Vecs {
             version,
             indexes,
             true,
-            price,
         )?;
 
         let active_price = PriceFromHeight::forced_import(db, "active_price", version, indexes)?;
@@ -35,7 +32,6 @@ impl Vecs {
             version,
             indexes,
             true,
-            price,
         )?;
 
         let true_market_mean =
@@ -47,7 +43,6 @@ impl Vecs {
             version,
             indexes,
             true,
-            price,
         )?;
 
         let cointime_price =
@@ -59,7 +54,6 @@ impl Vecs {
             version,
             indexes,
             true,
-            price,
         )?;
 
         Ok(Self {

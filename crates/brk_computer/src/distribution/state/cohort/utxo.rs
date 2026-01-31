@@ -14,8 +14,8 @@ impl UTXOCohortState {
         Self(CohortState::new(path, name, compute_dollars))
     }
 
-    pub fn reset_price_to_amount_if_needed(&mut self) -> Result<()> {
-        self.0.reset_price_to_amount_if_needed()
+    pub fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
+        self.0.reset_cost_basis_data_if_needed()
     }
 
     /// Reset state for fresh start.
@@ -25,7 +25,7 @@ impl UTXOCohortState {
         self.0.satblocks_destroyed = Sats::ZERO;
         self.0.satdays_destroyed = Sats::ZERO;
         if let Some(realized) = self.0.realized.as_mut() {
-            *realized = RealizedState::NAN;
+            *realized = RealizedState::default();
         }
     }
 }

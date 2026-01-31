@@ -52,7 +52,7 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
 
   /**
    * @param {string} name
-   * @param {ShortPeriodKey | LongPeriodKey} key
+   * @param {AllPeriodKey} key
    */
   const costBasisChart = (name, key) => ({
     name: "Cost Basis",
@@ -71,7 +71,10 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     ],
   });
 
-  /** @param {string} name @param {ShortPeriodKey | LongPeriodKey} key */
+  /**
+   * @param {string} name
+   * @param {AllPeriodKey} key
+   */
   const daysInProfitChart = (name, key) => ({
     name: "Days in Profit",
     title: `${name} Days in Profit`,
@@ -85,7 +88,10 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     ],
   });
 
-  /** @param {string} name @param {ShortPeriodKey | LongPeriodKey} key */
+  /**
+   * @param {string} name
+   * @param {AllPeriodKey} key
+   */
   const daysInLossChart = (name, key) => ({
     name: "Days in Loss",
     title: `${name} Days in Loss`,
@@ -99,7 +105,10 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     ],
   });
 
-  /** @param {string} name @param {ShortPeriodKey | LongPeriodKey} key */
+  /**
+   * @param {string} name
+   * @param {AllPeriodKey} key
+   */
   const maxDrawdownChart = (name, key) => ({
     name: "Max Drawdown",
     title: `${name} Max Drawdown`,
@@ -113,7 +122,10 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     ],
   });
 
-  /** @param {string} name @param {ShortPeriodKey | LongPeriodKey} key */
+  /**
+   * @param {string} name
+   * @param {AllPeriodKey} key
+   */
   const maxReturnChart = (name, key) => ({
     name: "Max Return",
     title: `${name} Max Return`,
@@ -129,7 +141,7 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
 
   /**
    * @param {string} name
-   * @param {ShortPeriodKey | LongPeriodKey} key
+   * @param {AllPeriodKey} key
    */
   const stackChart = (name, key) => ({
     name: "Stack",

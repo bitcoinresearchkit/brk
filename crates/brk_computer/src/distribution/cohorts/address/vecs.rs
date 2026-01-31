@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_cohort::{CohortContext, Filter, Filtered};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Dollars, Height, StoredU64, Version};
+use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, IterableVec};
 
@@ -145,7 +145,7 @@ impl DynCohortVecs for AddressCohortVecs {
             // State files are saved AT height H, so to resume at H+1 we need to import at H
             // Decrement first, then increment result to match expected starting_height
             if let Some(mut prev_height) = starting_height.decremented() {
-                // Import price_to_amount state file (may adjust prev_height to actual file found)
+                // Import cost_basis_data state file (may adjust prev_height to actual file found)
                 prev_height = state.inner.import_at_or_before(prev_height)?;
 
                 // Restore supply state from height-indexed vectors
@@ -164,15 +164,8 @@ impl DynCohortVecs for AddressCohortVecs {
                     .read_once(prev_height)?;
                 state.addr_count = *self.addr_count.height.read_once(prev_height)?;
 
-                // Restore realized cap if present
-                if let Some(realized_metrics) = self.metrics.realized.as_mut()
-                    && let Some(realized_state) = state.inner.realized.as_mut()
-                {
-                    realized_state.cap = realized_metrics
-                        .realized_cap
-                        .height
-                        .read_once(prev_height)?;
-                }
+                // Restore realized cap from persisted exact values
+                state.inner.restore_realized_cap();
 
                 let result = prev_height.incremented();
                 self.starting_height = Some(result);
@@ -216,9 +209,9 @@ impl DynCohortVecs for AddressCohortVecs {
     fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
-        height_price: Option<Dollars>,
+        height_price: Option<CentsUnsigned>,
         dateindex: Option<DateIndex>,
-        date_price: Option<Option<Dollars>>,
+        date_price: Option<Option<CentsUnsigned>>,
     ) -> Result<()> {
         if let Some(state) = self.state.as_mut() {
             self.metrics.compute_then_truncate_push_unrealized_states(

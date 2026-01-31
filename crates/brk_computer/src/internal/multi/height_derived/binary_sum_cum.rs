@@ -9,7 +9,7 @@ use vecdb::{BinaryTransform, IterableCloneableVec};
 use crate::internal::{
     ComputedFromHeightLast, ComputedFromHeightSumCum, ComputedHeightDerivedLast, ComputedHeightDerivedSumCum,
     ComputedVecValue, LazyBinaryFromDateSumCum, LazyBinaryTransformSumCum, LazyFull, LazyDateDerivedFull,
-    LazyDateDerivedSumCum, LazySumCum, NumericValue, SumCum,
+    LazyDateDerivedSumCum, LazyFromHeightLast, LazySumCum, NumericValue, SumCum,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -218,6 +218,34 @@ where
                 source1.difficultyepoch.sum.boxed_clone(),
                 source1.difficultyepoch.cumulative.boxed_clone(),
                 source2.difficultyepoch.boxed_clone(),
+            ),
+        }
+    }
+
+    // --- Methods accepting SumCum + LazyLast sources ---
+
+    pub fn from_computed_lazy_last<F, S2ST>(
+        name: &str,
+        version: Version,
+        source1: &ComputedFromHeightSumCum<S1T>,
+        source2: &LazyFromHeightLast<S2T, S2ST>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S1T: PartialOrd,
+        S2T: NumericValue,
+        S2ST: ComputedVecValue + schemars::JsonSchema,
+    {
+        let v = version + VERSION;
+
+        Self {
+            dates: LazyBinaryFromDateSumCum::from_computed_lazy_last::<F, S2ST>(name, v, source1, source2),
+            difficultyepoch: LazyBinaryTransformSumCum::from_sources_last_sum_raw::<F>(
+                name,
+                v,
+                source1.difficultyepoch.sum.boxed_clone(),
+                source1.difficultyepoch.cumulative.boxed_clone(),
+                source2.rest.difficultyepoch.boxed_clone(),
             ),
         }
     }

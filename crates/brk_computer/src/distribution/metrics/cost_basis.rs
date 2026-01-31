@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Dollars, Height, Version};
+use brk_types::{DateIndex, Dollars, Height, StoredF32, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec};
 
@@ -8,7 +8,10 @@ use crate::{
     ComputeIndexes,
     distribution::state::CohortState,
     indexes,
-    internal::{CostBasisPercentiles, PriceFromHeight},
+    internal::{
+        ComputedFromDateLast, PERCENTILES_LEN, PercentilesVecs, PriceFromHeight,
+        compute_spot_percentile_rank,
+    },
 };
 
 use super::ImportConfig;
@@ -22,8 +25,17 @@ pub struct CostBasisMetrics {
     /// Maximum cost basis for any UTXO at this height
     pub max: PriceFromHeight,
 
-    /// Cost basis distribution percentiles (median, quartiles, etc.)
-    pub percentiles: Option<CostBasisPercentiles>,
+    /// Cost basis percentiles (sat-weighted)
+    pub percentiles: Option<PercentilesVecs>,
+
+    /// Invested capital percentiles (USD-weighted)
+    pub invested_capital: Option<PercentilesVecs>,
+
+    /// What percentile of cost basis is below spot (sat-weighted)
+    pub spot_cost_basis_percentile: Option<ComputedFromDateLast<StoredF32>>,
+
+    /// What percentile of invested capital is below spot (USD-weighted)
+    pub spot_invested_capital_percentile: Option<ComputedFromDateLast<StoredF32>>,
 }
 
 impl CostBasisMetrics {
@@ -46,12 +58,43 @@ impl CostBasisMetrics {
             )?,
             percentiles: extended
                 .then(|| {
-                    CostBasisPercentiles::forced_import(
+                    PercentilesVecs::forced_import(
                         cfg.db,
-                        &cfg.name(""),
+                        &cfg.name("cost_basis"),
                         cfg.version,
                         cfg.indexes,
                         true,
+                    )
+                })
+                .transpose()?,
+            invested_capital: extended
+                .then(|| {
+                    PercentilesVecs::forced_import(
+                        cfg.db,
+                        &cfg.name("invested_capital"),
+                        cfg.version,
+                        cfg.indexes,
+                        true,
+                    )
+                })
+                .transpose()?,
+            spot_cost_basis_percentile: extended
+                .then(|| {
+                    ComputedFromDateLast::forced_import(
+                        cfg.db,
+                        &cfg.name("spot_cost_basis_percentile"),
+                        cfg.version,
+                        cfg.indexes,
+                    )
+                })
+                .transpose()?,
+            spot_invested_capital_percentile: extended
+                .then(|| {
+                    ComputedFromDateLast::forced_import(
+                        cfg.db,
+                        &cfg.name("spot_invested_capital_percentile"),
+                        cfg.version,
+                        cfg.indexes,
                     )
                 })
                 .transpose()?,
@@ -69,6 +112,24 @@ impl CostBasisMetrics {
             .as_ref()
             .map(|p| p.min_stateful_dateindex_len())
             .unwrap_or(usize::MAX)
+            .min(
+                self.invested_capital
+                    .as_ref()
+                    .map(|p| p.min_stateful_dateindex_len())
+                    .unwrap_or(usize::MAX),
+            )
+            .min(
+                self.spot_cost_basis_percentile
+                    .as_ref()
+                    .map(|v| v.dateindex.len())
+                    .unwrap_or(usize::MAX),
+            )
+            .min(
+                self.spot_invested_capital_percentile
+                    .as_ref()
+                    .map(|v| v.dateindex.len())
+                    .unwrap_or(usize::MAX),
+            )
     }
 
     /// Push min/max cost basis from state.
@@ -76,15 +137,15 @@ impl CostBasisMetrics {
         self.min.height.truncate_push(
             height,
             state
-                .price_to_amount_first_key_value()
-                .map(|(dollars, _)| dollars)
+                .cost_basis_data_first_key_value()
+                .map(|(cents, _)| cents.into())
                 .unwrap_or(Dollars::NAN),
         )?;
         self.max.height.truncate_push(
             height,
             state
-                .price_to_amount_last_key_value()
-                .map(|(dollars, _)| dollars)
+                .cost_basis_data_last_key_value()
+                .map(|(cents, _)| cents.into())
                 .unwrap_or(Dollars::NAN),
         )?;
         Ok(())
@@ -96,21 +157,38 @@ impl CostBasisMetrics {
         &mut self,
         dateindex: DateIndex,
         state: &CohortState,
+        spot: Dollars,
     ) -> Result<()> {
-        if let Some(percentiles) = self.percentiles.as_mut() {
-            let percentile_prices = state.compute_percentile_prices();
-            percentiles.truncate_push(dateindex, &percentile_prices)?;
-        }
-        Ok(())
-    }
+        let computed = state.compute_percentiles();
 
-    /// Write height-indexed vectors to disk.
-    pub fn write(&mut self) -> Result<()> {
-        self.min.height.write()?;
-        self.max.height.write()?;
+        // Push sat-weighted percentiles and spot rank
+        let sat_prices = computed
+            .as_ref()
+            .map(|p| p.sat_weighted.map(|c| c.to_dollars()))
+            .unwrap_or([Dollars::NAN; PERCENTILES_LEN]);
+
         if let Some(percentiles) = self.percentiles.as_mut() {
-            percentiles.write()?;
+            percentiles.truncate_push(dateindex, &sat_prices)?;
         }
+        if let Some(spot_pct) = self.spot_cost_basis_percentile.as_mut() {
+            let rank = compute_spot_percentile_rank(&sat_prices, spot);
+            spot_pct.dateindex.truncate_push(dateindex, rank)?;
+        }
+
+        // Push USD-weighted percentiles and spot rank
+        let usd_prices = computed
+            .as_ref()
+            .map(|p| p.usd_weighted.map(|c| c.to_dollars()))
+            .unwrap_or([Dollars::NAN; PERCENTILES_LEN]);
+
+        if let Some(invested_capital) = self.invested_capital.as_mut() {
+            invested_capital.truncate_push(dateindex, &usd_prices)?;
+        }
+        if let Some(spot_pct) = self.spot_invested_capital_percentile.as_mut() {
+            let rank = compute_spot_percentile_rank(&usd_prices, spot);
+            spot_pct.dateindex.truncate_push(dateindex, rank)?;
+        }
+
         Ok(())
     }
 
@@ -126,6 +204,21 @@ impl CostBasisMetrics {
                     .map(|v| &mut v.dateindex as &mut dyn AnyStoredVec),
             );
         }
+        if let Some(invested_capital) = self.invested_capital.as_mut() {
+            vecs.extend(
+                invested_capital
+                    .vecs
+                    .iter_mut()
+                    .flatten()
+                    .map(|v| &mut v.dateindex as &mut dyn AnyStoredVec),
+            );
+        }
+        if let Some(v) = self.spot_cost_basis_percentile.as_mut() {
+            vecs.push(&mut v.dateindex);
+        }
+        if let Some(v) = self.spot_invested_capital_percentile.as_mut() {
+            vecs.push(&mut v.dateindex);
+        }
         vecs.into_par_iter()
     }
 
@@ -133,6 +226,15 @@ impl CostBasisMetrics {
     pub fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         if let Some(percentiles) = self.percentiles.as_mut() {
             percentiles.validate_computed_version_or_reset(base_version)?;
+        }
+        if let Some(invested_capital) = self.invested_capital.as_mut() {
+            invested_capital.validate_computed_version_or_reset(base_version)?;
+        }
+        if let Some(v) = self.spot_cost_basis_percentile.as_mut() {
+            v.dateindex.validate_computed_version_or_reset(base_version)?;
+        }
+        if let Some(v) = self.spot_invested_capital_percentile.as_mut() {
+            v.dateindex.validate_computed_version_or_reset(base_version)?;
         }
         Ok(())
     }

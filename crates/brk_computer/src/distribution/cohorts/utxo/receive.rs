@@ -1,4 +1,4 @@
-use brk_types::{Dollars, Height, Timestamp};
+use brk_types::{CentsUnsigned, Height, Timestamp};
 
 use crate::distribution::state::Transacted;
 
@@ -18,7 +18,7 @@ impl UTXOCohorts {
         received: Transacted,
         height: Height,
         timestamp: Timestamp,
-        price: Option<Dollars>,
+        price: Option<CentsUnsigned>,
     ) {
         let supply_state = received.spendable_supply;
 
@@ -30,7 +30,7 @@ impl UTXOCohorts {
         ]
         .into_iter()
         .for_each(|v| {
-            v.state.as_mut().unwrap().receive(&supply_state, price);
+            v.state.as_mut().unwrap().receive_utxo(&supply_state, price);
         });
 
         // Update output type cohorts
@@ -40,7 +40,7 @@ impl UTXOCohorts {
                 vecs.state
                     .as_mut()
                     .unwrap()
-                    .receive(received.by_type.get(output_type), price)
+                    .receive_utxo(received.by_type.get(output_type), price)
             });
 
         // Update amount range cohorts
@@ -53,7 +53,7 @@ impl UTXOCohorts {
                     .state
                     .as_mut()
                     .unwrap()
-                    .receive(supply_state, price);
+                    .receive_utxo(supply_state, price);
             });
     }
 }

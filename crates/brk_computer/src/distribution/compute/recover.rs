@@ -108,9 +108,9 @@ pub fn reset_state(
     utxo_cohorts.reset_separate_state_heights();
     address_cohorts.reset_separate_state_heights();
 
-    // Reset price_to_amount for all cohorts
-    utxo_cohorts.reset_separate_price_to_amount()?;
-    address_cohorts.reset_separate_price_to_amount()?;
+    // Reset cost_basis_data for all cohorts
+    utxo_cohorts.reset_separate_cost_basis_data()?;
+    address_cohorts.reset_separate_cost_basis_data()?;
 
     Ok(RecoveredState {
         starting_height: Height::ZERO,
