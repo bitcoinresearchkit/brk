@@ -268,6 +268,20 @@ impl From<usize> for Sats {
     }
 }
 
+impl From<f32> for Sats {
+    #[inline]
+    fn from(value: f32) -> Self {
+        Self(value.round() as u64)
+    }
+}
+
+impl From<Sats> for f32 {
+    #[inline]
+    fn from(value: Sats) -> Self {
+        value.0 as f32
+    }
+}
+
 impl From<f64> for Sats {
     #[inline]
     fn from(value: f64) -> Self {

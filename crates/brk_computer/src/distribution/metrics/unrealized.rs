@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{CentsSats, CentsSquaredSats, CentsUnsigned, DateIndex, Dollars, Height, Sats};
+use brk_types::{CentsSats, CentsSquaredSats, CentsUnsigned, DateIndex, Dollars, Height};
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, BytesVec, Exit, GenericStoredVec, ImportableVec, Negate,
-    TypedVecIterator, Version,
+    TypedVecIterator,
 };
 
 use crate::{
@@ -12,8 +12,8 @@ use crate::{
     distribution::state::UnrealizedState,
     indexes,
     internal::{
-        ComputedFromHeightAndDateLast, ComputedFromHeightLast, DollarsMinus, DollarsPlus,
-        LazyBinaryFromHeightLast, LazyFromHeightLast, ValueFromHeightAndDateLast,
+        ComputedFromDateLast, ComputedFromHeightAndDateLast, ComputedFromHeightLast, DollarsMinus,
+        DollarsPlus, LazyBinaryFromHeightLast, LazyFromHeightLast, ValueFromHeightAndDateLast,
     },
     price,
 };
@@ -60,10 +60,11 @@ pub struct UnrealizedMetrics {
     pub net_unrealized_pnl: LazyBinaryFromHeightLast<Dollars>,
     pub total_unrealized_pnl: LazyBinaryFromHeightLast<Dollars>,
 
-    // === ATH Regret ===
-    /// Unrealized ATH regret: (ATH - spot) × supply_in_profit + ATH × supply_in_loss - invested_capital_in_loss
-    /// "How much more I'd have if I sold at ATH instead of now" (refined formula accounting for cost basis)
-    pub ath_regret: ComputedFromHeightLast<Dollars>,
+    // === Peak Regret (age_range cohorts only) ===
+    /// Unrealized peak regret: sum of (peak_price - reference_price) × supply
+    /// where reference_price = max(spot, cost_basis) and peak = max price during holding period.
+    /// Only computed for age_range cohorts, then aggregated for overlapping cohorts.
+    pub peak_regret: Option<ComputedFromDateLast<Dollars>>,
 }
 
 impl UnrealizedMetrics {
@@ -176,16 +177,18 @@ impl UnrealizedMetrics {
                 &unrealized_loss,
             );
 
-        // === ATH Regret ===
-        // v2: Changed to use HIGH prices consistently for ATH instead of mixing HIGH/CLOSE
-        // v3: Changed to ComputedFromHeightLast to derive dateindex from height (avoids precision loss)
-        let v3 = Version::new(3);
-        let ath_regret = ComputedFromHeightLast::forced_import(
-            cfg.db,
-            &cfg.name("unrealized_ath_regret"),
-            cfg.version + v3,
-            cfg.indexes,
-        )?;
+        // Peak regret: only for age-based UTXO cohorts
+        let peak_regret = cfg
+            .compute_peak_regret()
+            .then(|| {
+                ComputedFromDateLast::forced_import(
+                    cfg.db,
+                    &cfg.name("unrealized_peak_regret"),
+                    cfg.version,
+                    cfg.indexes,
+                )
+            })
+            .transpose()?;
 
         Ok(Self {
             supply_in_profit,
@@ -204,7 +207,7 @@ impl UnrealizedMetrics {
             neg_unrealized_loss,
             net_unrealized_pnl,
             total_unrealized_pnl,
-            ath_regret,
+            peak_regret,
         })
     }
 
@@ -226,7 +229,8 @@ impl UnrealizedMetrics {
 
     /// Get minimum length across dateindex-indexed vectors written in block loop.
     pub fn min_stateful_dateindex_len(&self) -> usize {
-        self.supply_in_profit
+        let mut min = self
+            .supply_in_profit
             .indexes
             .sats_dateindex
             .len()
@@ -234,7 +238,11 @@ impl UnrealizedMetrics {
             .min(self.unrealized_profit.dateindex.len())
             .min(self.unrealized_loss.dateindex.len())
             .min(self.invested_capital_in_profit.dateindex.len())
-            .min(self.invested_capital_in_loss.dateindex.len())
+            .min(self.invested_capital_in_loss.dateindex.len());
+        if let Some(pr) = &self.peak_regret {
+            min = min.min(pr.dateindex.len());
+        }
+        min
     }
 
     /// Push unrealized state values to height-indexed vectors.
@@ -311,25 +319,28 @@ impl UnrealizedMetrics {
 
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        vec![
-            &mut self.supply_in_profit.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.height as &mut dyn AnyStoredVec,
-            &mut self.unrealized_profit.height as &mut dyn AnyStoredVec,
-            &mut self.unrealized_loss.height as &mut dyn AnyStoredVec,
-            &mut self.invested_capital_in_profit.height as &mut dyn AnyStoredVec,
-            &mut self.invested_capital_in_loss.height as &mut dyn AnyStoredVec,
-            &mut self.invested_capital_in_profit_raw as &mut dyn AnyStoredVec,
-            &mut self.invested_capital_in_loss_raw as &mut dyn AnyStoredVec,
-            &mut self.investor_cap_in_profit_raw as &mut dyn AnyStoredVec,
-            &mut self.investor_cap_in_loss_raw as &mut dyn AnyStoredVec,
-            &mut self.supply_in_profit.indexes.sats_dateindex as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.indexes.sats_dateindex as &mut dyn AnyStoredVec,
-            &mut self.unrealized_profit.rest.dateindex as &mut dyn AnyStoredVec,
-            &mut self.unrealized_loss.rest.dateindex as &mut dyn AnyStoredVec,
-            &mut self.invested_capital_in_profit.rest.dateindex as &mut dyn AnyStoredVec,
-            &mut self.invested_capital_in_loss.rest.dateindex as &mut dyn AnyStoredVec,
-        ]
-        .into_par_iter()
+        let mut vecs: Vec<&mut dyn AnyStoredVec> = vec![
+            &mut self.supply_in_profit.height,
+            &mut self.supply_in_loss.height,
+            &mut self.unrealized_profit.height,
+            &mut self.unrealized_loss.height,
+            &mut self.invested_capital_in_profit.height,
+            &mut self.invested_capital_in_loss.height,
+            &mut self.invested_capital_in_profit_raw,
+            &mut self.invested_capital_in_loss_raw,
+            &mut self.investor_cap_in_profit_raw,
+            &mut self.investor_cap_in_loss_raw,
+            &mut self.supply_in_profit.indexes.sats_dateindex,
+            &mut self.supply_in_loss.indexes.sats_dateindex,
+            &mut self.unrealized_profit.rest.dateindex,
+            &mut self.unrealized_loss.rest.dateindex,
+            &mut self.invested_capital_in_profit.rest.dateindex,
+            &mut self.invested_capital_in_loss.rest.dateindex,
+        ];
+        if let Some(pr) = &mut self.peak_regret {
+            vecs.push(&mut pr.dateindex);
+        }
+        vecs.into_par_iter()
     }
 
     /// Compute aggregate values from separate cohorts.
@@ -501,6 +512,22 @@ impl UnrealizedMetrics {
                     .collect::<Vec<_>>(),
                 exit,
             )?;
+
+        // Peak regret aggregation (only if this cohort has peak_regret)
+        if let Some(pr) = &mut self.peak_regret {
+            let other_prs: Vec<_> = others.iter().filter_map(|v| v.peak_regret.as_ref()).collect();
+            if !other_prs.is_empty() {
+                pr.dateindex.compute_sum_of_others(
+                    starting_indexes.dateindex,
+                    &other_prs
+                        .iter()
+                        .map(|v| &v.dateindex)
+                        .collect::<Vec<_>>(),
+                    exit,
+                )?;
+            }
+        }
+
         Ok(())
     }
 
@@ -581,58 +608,6 @@ impl UnrealizedMetrics {
                     exit,
                 )?)
             })?;
-
-        // ATH regret: (ATH - spot) × supply_in_profit + ATH × supply_in_loss - invested_capital_in_loss
-        // This is the refined formula that accounts for cost basis:
-        // - For UTXOs in profit: regret = ATH - spot (they could have sold at ATH instead of now)
-        // - For UTXOs in loss: regret = ATH - cost_basis (they could have sold at ATH instead of holding)
-        // ath = running max of high prices
-
-        // Height computation
-        {
-            // Pre-compute ATH as running max of high prices
-            let height_ath: Vec<CentsUnsigned> = {
-                let mut ath = CentsUnsigned::ZERO;
-                price
-                    .cents
-                    .split
-                    .height
-                    .high
-                    .into_iter()
-                    .map(|high| {
-                        if *high > ath {
-                            ath = *high;
-                        }
-                        ath
-                    })
-                    .collect()
-            };
-
-            self.ath_regret.height.compute_transform4(
-                starting_indexes.height,
-                &price.cents.split.height.close,
-                &self.supply_in_profit.height,
-                &self.supply_in_loss.height,
-                &self.invested_capital_in_loss_raw,
-                |(h, spot, supply_profit, supply_loss, invested_loss_raw, ..)| {
-                    let ath = height_ath[usize::from(h)];
-                    // (ATH - spot) × supply_in_profit + ATH × supply_in_loss - invested_capital_in_loss
-                    let ath_u128 = ath.as_u128();
-                    let spot_u128 = spot.as_u128();
-                    let profit_regret = (ath_u128 - spot_u128) * supply_profit.as_u128();
-                    // invested_loss_raw is CentsSats (already in cents*sats scale)
-                    let loss_regret = ath_u128 * supply_loss.as_u128() - invested_loss_raw.inner();
-                    let regret_raw = profit_regret + loss_regret;
-                    let regret_cents = CentsUnsigned::new((regret_raw / Sats::ONE_BTC_U128) as u64);
-                    (h, regret_cents.to_dollars())
-                },
-                exit,
-            )?;
-        }
-
-        // DateIndex computation: derive from height values using last-value aggregation
-        self.ath_regret
-            .compute_rest(indexes, starting_indexes, exit)?;
 
         Ok(())
     }

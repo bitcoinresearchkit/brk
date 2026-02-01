@@ -17,9 +17,10 @@ use crate::{
     internal::{
         CentsUnsignedToDollars, ComputedFromDateLast, ComputedFromDateRatio,
         ComputedFromHeightLast, ComputedFromHeightSum, ComputedFromHeightSumCum, DollarsMinus,
-        DollarsPlus, LazyBinaryFromHeightSum, LazyBinaryFromHeightSumCum, LazyFromDateLast,
-        LazyFromHeightLast, LazyFromHeightSum, LazyFromHeightSumCum, LazyPriceFromCents,
-        PercentageDollarsF32, PriceFromHeight, StoredF32Identity,
+        DollarsPlus, LazyBinaryFromHeightSum, LazyBinaryFromHeightSumCum,
+        LazyComputedValueFromHeightSumCum, LazyFromDateLast, LazyFromHeightLast, LazyFromHeightSum,
+        LazyFromHeightSumCum, LazyPriceFromCents, PercentageDollarsF32, PriceFromHeight,
+        StoredF32Identity, ValueFromDateLast,
     },
     price,
 };
@@ -54,9 +55,12 @@ pub struct RealizedMetrics {
 
     // === Realized Profit/Loss ===
     pub realized_profit: ComputedFromHeightSumCum<Dollars>,
+    pub realized_profit_7d_ema: ComputedFromDateLast<Dollars>,
     pub realized_loss: ComputedFromHeightSumCum<Dollars>,
+    pub realized_loss_7d_ema: ComputedFromDateLast<Dollars>,
     pub neg_realized_loss: LazyFromHeightSumCum<Dollars>,
     pub net_realized_pnl: ComputedFromHeightSumCum<Dollars>,
+    pub net_realized_pnl_7d_ema: ComputedFromDateLast<Dollars>,
     pub realized_value: ComputedFromHeightSum<Dollars>,
 
     // === Realized vs Realized Cap Ratios (lazy) ===
@@ -106,10 +110,23 @@ pub struct RealizedMetrics {
     pub net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap: ComputedFromDateLast<StoredF32>,
     pub net_realized_pnl_cumulative_30d_delta_rel_to_market_cap: ComputedFromDateLast<StoredF32>,
 
-    // === ATH Regret ===
-    /// Realized ATH regret: Σ((ath - sell_price) × sats)
-    /// "How much more could have been made by selling at ATH instead"
-    pub ath_regret: ComputedFromHeightSumCum<Dollars>,
+    // === Peak Regret ===
+    /// Realized peak regret: Σ((peak - sell_price) × sats)
+    /// where peak = max price during holding period.
+    /// "How much more could have been made by selling at peak instead"
+    pub peak_regret: ComputedFromHeightSumCum<Dollars>,
+    /// Peak regret as % of realized cap
+    pub peak_regret_rel_to_realized_cap: LazyBinaryFromHeightSum<StoredF32, Dollars, Dollars>,
+
+    // === Sent in Profit/Loss ===
+    /// Sats sent in profit (sats/btc/usd)
+    pub sent_in_profit: LazyComputedValueFromHeightSumCum,
+    /// 14-day EMA of sent in profit (sats, btc, usd)
+    pub sent_in_profit_14d_ema: ValueFromDateLast,
+    /// Sats sent in loss (sats/btc/usd)
+    pub sent_in_loss: LazyComputedValueFromHeightSumCum,
+    /// 14-day EMA of sent in loss (sats, btc, usd)
+    pub sent_in_loss_14d_ema: ValueFromDateLast,
 }
 
 impl RealizedMetrics {
@@ -143,9 +160,23 @@ impl RealizedMetrics {
             cfg.indexes,
         )?;
 
+        let realized_profit_7d_ema = ComputedFromDateLast::forced_import(
+            cfg.db,
+            &cfg.name("realized_profit_7d_ema"),
+            cfg.version,
+            cfg.indexes,
+        )?;
+
         let realized_loss = ComputedFromHeightSumCum::forced_import(
             cfg.db,
             &cfg.name("realized_loss"),
+            cfg.version,
+            cfg.indexes,
+        )?;
+
+        let realized_loss_7d_ema = ComputedFromDateLast::forced_import(
+            cfg.db,
+            &cfg.name("realized_loss_7d_ema"),
             cfg.version,
             cfg.indexes,
         )?;
@@ -161,6 +192,20 @@ impl RealizedMetrics {
             cfg.db,
             &cfg.name("net_realized_pnl"),
             cfg.version,
+            cfg.indexes,
+        )?;
+
+        let net_realized_pnl_7d_ema = ComputedFromDateLast::forced_import(
+            cfg.db,
+            &cfg.name("net_realized_pnl_7d_ema"),
+            cfg.version,
+            cfg.indexes,
+        )?;
+
+        let peak_regret = ComputedFromHeightSumCum::forced_import(
+            cfg.db,
+            &cfg.name("realized_peak_regret"),
+            cfg.version + v2,
             cfg.indexes,
         )?;
 
@@ -360,7 +405,7 @@ impl RealizedMetrics {
         Ok(Self {
             // === Realized Cap ===
             realized_cap_cents,
-            realized_cap,
+            realized_cap: realized_cap.clone(),
             realized_price,
             realized_price_extra,
             realized_cap_rel_to_own_market_cap: extended
@@ -392,9 +437,12 @@ impl RealizedMetrics {
 
             // === Realized Profit/Loss ===
             realized_profit,
+            realized_profit_7d_ema,
             realized_loss,
+            realized_loss_7d_ema,
             neg_realized_loss,
             net_realized_pnl,
+            net_realized_pnl_7d_ema,
             realized_value,
 
             // === Realized vs Realized Cap Ratios (lazy) ===
@@ -508,11 +556,46 @@ impl RealizedMetrics {
                 )?,
 
             // === ATH Regret ===
-            // v2: Changed to use max HIGH price during holding period instead of global ATH at send time
-            ath_regret: ComputedFromHeightSumCum::forced_import(
+            peak_regret: peak_regret.clone(),
+            peak_regret_rel_to_realized_cap: LazyBinaryFromHeightSum::from_sumcum_lazy_last::<
+                PercentageDollarsF32,
+                _,
+            >(
+                &cfg.name("peak_regret_rel_to_realized_cap"),
+                cfg.version + v1,
+                peak_regret.height.boxed_clone(),
+                realized_cap.height.boxed_clone(),
+                &peak_regret,
+                &realized_cap,
+            ),
+
+            // === Sent in Profit/Loss ===
+            sent_in_profit: LazyComputedValueFromHeightSumCum::forced_import(
                 cfg.db,
-                &cfg.name("realized_ath_regret"),
-                cfg.version + v2,
+                &cfg.name("sent_in_profit"),
+                cfg.version,
+                cfg.indexes,
+                cfg.price,
+            )?,
+            sent_in_profit_14d_ema: ValueFromDateLast::forced_import(
+                cfg.db,
+                &cfg.name("sent_in_profit_14d_ema"),
+                cfg.version,
+                cfg.compute_dollars(),
+                cfg.indexes,
+            )?,
+            sent_in_loss: LazyComputedValueFromHeightSumCum::forced_import(
+                cfg.db,
+                &cfg.name("sent_in_loss"),
+                cfg.version,
+                cfg.indexes,
+                cfg.price,
+            )?,
+            sent_in_loss_14d_ema: ValueFromDateLast::forced_import(
+                cfg.db,
+                &cfg.name("sent_in_loss_14d_ema"),
+                cfg.version,
+                cfg.compute_dollars(),
                 cfg.indexes,
             )?,
         })
@@ -532,7 +615,9 @@ impl RealizedMetrics {
             .min(self.profit_value_destroyed.height.len())
             .min(self.loss_value_created.height.len())
             .min(self.loss_value_destroyed.height.len())
-            .min(self.ath_regret.height.len())
+            .min(self.peak_regret.height.len())
+            .min(self.sent_in_profit.sats.height.len())
+            .min(self.sent_in_loss.sats.height.len())
     }
 
     /// Push realized state values to height-indexed vectors.
@@ -568,9 +653,19 @@ impl RealizedMetrics {
             .height
             .truncate_push(height, state.loss_value_destroyed().to_dollars())?;
         // ATH regret
-        self.ath_regret
+        self.peak_regret
             .height
-            .truncate_push(height, state.ath_regret().to_dollars())?;
+            .truncate_push(height, state.peak_regret().to_dollars())?;
+
+        // Volume at profit/loss
+        self.sent_in_profit
+            .sats
+            .height
+            .truncate_push(height, state.sent_in_profit())?;
+        self.sent_in_loss
+            .sats
+            .height
+            .truncate_push(height, state.sent_in_loss())?;
 
         Ok(())
     }
@@ -591,7 +686,10 @@ impl RealizedMetrics {
             &mut self.loss_value_created.height,
             &mut self.loss_value_destroyed.height,
             // ATH regret
-            &mut self.ath_regret.height,
+            &mut self.peak_regret.height,
+            // Sent in profit/loss
+            &mut self.sent_in_profit.sats.height,
+            &mut self.sent_in_loss.sats.height,
         ]
         .into_par_iter()
     }
@@ -725,11 +823,29 @@ impl RealizedMetrics {
             exit,
         )?;
         // ATH regret
-        self.ath_regret.height.compute_sum_of_others(
+        self.peak_regret.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.ath_regret.height)
+                .map(|v| &v.peak_regret.height)
+                .collect::<Vec<_>>(),
+            exit,
+        )?;
+
+        // Volume at profit/loss
+        self.sent_in_profit.sats.height.compute_sum_of_others(
+            starting_indexes.height,
+            &others
+                .iter()
+                .map(|v| &v.sent_in_profit.sats.height)
+                .collect::<Vec<_>>(),
+            exit,
+        )?;
+        self.sent_in_loss.sats.height.compute_sum_of_others(
+            starting_indexes.height,
+            &others
+                .iter()
+                .map(|v| &v.sent_in_loss.sats.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
@@ -790,7 +906,13 @@ impl RealizedMetrics {
         self.loss_value_destroyed
             .compute_rest(indexes, starting_indexes, exit)?;
         // ATH regret
-        self.ath_regret
+        self.peak_regret
+            .compute_rest(indexes, starting_indexes, exit)?;
+
+        // Volume at profit/loss
+        self.sent_in_profit
+            .compute_rest(indexes, starting_indexes, exit)?;
+        self.sent_in_loss
             .compute_rest(indexes, starting_indexes, exit)?;
 
         Ok(())
@@ -853,6 +975,52 @@ impl RealizedMetrics {
             starting_indexes.dateindex,
             &self.value_created.dateindex.0,
             &self.value_destroyed.dateindex.0,
+            exit,
+        )?;
+
+        // 7d EMA of realized profit/loss
+        self.realized_profit_7d_ema.compute_all(starting_indexes, exit, |v| {
+            Ok(v.compute_ema(
+                starting_indexes.dateindex,
+                &self.realized_profit.dateindex.sum.0,
+                7,
+                exit,
+            )?)
+        })?;
+
+        self.realized_loss_7d_ema.compute_all(starting_indexes, exit, |v| {
+            Ok(v.compute_ema(
+                starting_indexes.dateindex,
+                &self.realized_loss.dateindex.sum.0,
+                7,
+                exit,
+            )?)
+        })?;
+
+        self.net_realized_pnl_7d_ema.compute_all(starting_indexes, exit, |v| {
+            Ok(v.compute_ema(
+                starting_indexes.dateindex,
+                &self.net_realized_pnl.dateindex.sum.0,
+                7,
+                exit,
+            )?)
+        })?;
+
+        // 14-day EMA of sent in profit (sats and dollars)
+        self.sent_in_profit_14d_ema.compute_ema(
+            starting_indexes.dateindex,
+            &self.sent_in_profit.sats.dateindex.sum.0,
+            self.sent_in_profit.dollars.as_ref().map(|d| &d.dateindex.sum.0),
+            14,
+            exit,
+        )?;
+
+        // 14-day EMA of sent in loss (sats and dollars)
+        self.sent_in_loss_14d_ema.compute_ema(
+            starting_indexes.dateindex,
+            &self.sent_in_loss.sats.dateindex.sum.0,
+            self.sent_in_loss.dollars.as_ref().map(|d| &d.dateindex.sum.0),
+            14,
             exit,
         )?;
 

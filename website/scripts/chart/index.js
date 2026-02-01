@@ -79,6 +79,9 @@ const lineWidth = /** @type {any} */ (1.5);
 export function createChart({ parent, id: chartId, brk, fitContent }) {
   const baseUrl = brk.baseUrl.replace(/\/$/, "");
 
+  /** @type {string} */
+  let storageId = "";
+
   /** @param {ChartableIndex} idx */
   const getTimeEndpoint = (idx) =>
     idx === "height"
@@ -500,7 +503,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
       const active = createPersistedValue({
         defaultValue: defaultActive ?? true,
-        storageKey: `${chartId}-p${paneIndex}-${key}`,
+        storageKey: `${storageId}-p${paneIndex}-${key}`,
         urlKey: `${paneIndex === 0 ? "t" : "b"}-${key}`,
         ...serdeBool,
       });
@@ -1275,12 +1278,12 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
    * @param {Unit} unit
    */
   function applyScaleForUnit(paneIndex, unit) {
-    const id = `${chartId}-scale`;
-    const defaultValue = unit.id === "usd" ? "log" : "lin";
+    const id = `${storageId}-scale`;
+    const defaultValue = paneIndex === 0 ? "log" : "lin";
 
     const persisted = createPersistedValue({
       defaultValue: /** @type {"lin" | "log"} */ (defaultValue),
-      storageKey: `${id}-${paneIndex}-${unit.id}`,
+      storageKey: `${storageId}-p${paneIndex}-scale`,
       urlKey: paneIndex === 0 ? "price_scale" : "unit_scale",
       serialize: (v) => v,
       deserialize: (s) => /** @type {"lin" | "log"} */ (s),
@@ -1457,11 +1460,13 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
     /**
      * @param {Object} args
+     * @param {string} args.name
      * @param {Map<Unit, AnyFetchedSeriesBlueprint[]>} args.top
      * @param {Map<Unit, AnyFetchedSeriesBlueprint[]>} args.bottom
      * @param {VoidFunction} [args.onDataLoaded]
      */
-    setBlueprints({ top, bottom, onDataLoaded }) {
+    setBlueprints({ name, top, bottom, onDataLoaded }) {
+      storageId = stringToId(name);
       blueprints.panes[0].map = top;
       blueprints.panes[1].map = bottom;
       blueprints.onDataLoaded = onDataLoaded;
@@ -1481,7 +1486,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
           .join(",");
         const persistedUnit = createPersistedValue({
           defaultValue: /** @type {string} */ (defaultUnit.id),
-          storageKey: `unit-${sortedUnitIds}`,
+          storageKey: `${storageId}-p${paneIndex}-unit`,
           urlKey: paneIndex === 0 ? "u0" : "u1",
           serialize: (v) => v,
           deserialize: (s) => s,

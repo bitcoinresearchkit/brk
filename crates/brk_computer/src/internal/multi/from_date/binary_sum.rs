@@ -7,7 +7,10 @@ use brk_types::{
 use schemars::JsonSchema;
 use vecdb::{BinaryTransform, IterableCloneableVec};
 
-use crate::internal::{ComputedVecValue, ComputedHeightDerivedSum, LazyBinaryTransformSum, NumericValue};
+use crate::internal::{
+    ComputedFromHeightSumCum, ComputedHeightDerivedSum, ComputedVecValue, LazyBinaryTransformSum,
+    LazyFromHeightLast, NumericValue,
+};
 
 const VERSION: Version = Version::ZERO;
 
@@ -78,6 +81,43 @@ where
         macro_rules! period {
             ($p:ident) => {
                 LazyBinaryTransformSum::from_boxed::<F>(name, v, source1.$p.boxed_clone(), source2.$p.boxed_clone())
+            };
+        }
+
+        Self {
+            dateindex: period!(dateindex),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
+
+    /// Create from a SumCum source (using only sum) and a LazyLast source.
+    pub fn from_sumcum_lazy_last<F, S2ST>(
+        name: &str,
+        version: Version,
+        source1: &ComputedFromHeightSumCum<S1T>,
+        source2: &LazyFromHeightLast<S2T, S2ST>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S2ST: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        // source1 has SumCum pattern with .dateindex.sum, .weekindex.sum, etc.
+        // source2 has Last pattern via deref chain: .dates.dateindex, .dates.weekindex, etc.
+        macro_rules! period {
+            ($p:ident) => {
+                LazyBinaryTransformSum::from_boxed::<F>(
+                    name,
+                    v,
+                    source1.$p.sum.boxed_clone(),
+                    source2.dates.$p.boxed_clone(),
+                )
             };
         }
 

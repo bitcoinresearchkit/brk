@@ -23,8 +23,12 @@ pub struct RealizedState {
     loss_value_created_raw: u128,
     /// cost_basis × sats for loss cases (= capitulation_flow)
     loss_value_destroyed_raw: u128,
-    /// Raw realized ATH regret: Σ((ath - sell_price) × sats)
-    ath_regret_raw: u128,
+    /// Raw realized peak regret: Σ((peak - sell_price) × sats)
+    peak_regret_raw: u128,
+    /// Sats sent in profit
+    sent_in_profit: Sats,
+    /// Sats sent in loss
+    sent_in_loss: Sats,
 }
 
 impl RealizedState {
@@ -137,12 +141,24 @@ impl RealizedState {
         self.profit_value_destroyed()
     }
 
-    /// Get realized ATH regret as CentsUnsigned.
-    /// This is Σ((ath - sell_price) × sats) - how much more could have been made
-    /// by selling at ATH instead of when actually sold.
+    /// Get realized peak regret as CentsUnsigned.
+    /// This is Σ((peak - sell_price) × sats) - how much more could have been made
+    /// by selling at peak instead of when actually sold.
     #[inline]
-    pub fn ath_regret(&self) -> CentsUnsigned {
-        CentsUnsigned::new((self.ath_regret_raw / Sats::ONE_BTC_U128) as u64)
+    pub fn peak_regret(&self) -> CentsUnsigned {
+        CentsUnsigned::new((self.peak_regret_raw / Sats::ONE_BTC_U128) as u64)
+    }
+
+    /// Get sats sent in profit.
+    #[inline]
+    pub fn sent_in_profit(&self) -> Sats {
+        self.sent_in_profit
+    }
+
+    /// Get sats sent in loss.
+    #[inline]
+    pub fn sent_in_loss(&self) -> Sats {
+        self.sent_in_loss
     }
 
     pub fn reset_single_iteration_values(&mut self) {
@@ -152,7 +168,9 @@ impl RealizedState {
         self.profit_value_destroyed_raw = 0;
         self.loss_value_created_raw = 0;
         self.loss_value_destroyed_raw = 0;
-        self.ath_regret_raw = 0;
+        self.peak_regret_raw = 0;
+        self.sent_in_profit = Sats::ZERO;
+        self.sent_in_loss = Sats::ZERO;
     }
 
     /// Increment using pre-computed values (for UTXO path)
@@ -189,6 +207,7 @@ impl RealizedState {
     #[inline]
     pub fn send(
         &mut self,
+        sats: Sats,
         current_ps: CentsSats,
         prev_ps: CentsSats,
         ath_ps: CentsSats,
@@ -199,21 +218,24 @@ impl RealizedState {
                 self.profit_raw += (current_ps - prev_ps).as_u128();
                 self.profit_value_created_raw += current_ps.as_u128();
                 self.profit_value_destroyed_raw += prev_ps.as_u128();
+                self.sent_in_profit += sats;
             }
             Ordering::Less => {
                 self.loss_raw += (prev_ps - current_ps).as_u128();
                 self.loss_value_created_raw += current_ps.as_u128();
                 self.loss_value_destroyed_raw += prev_ps.as_u128();
+                self.sent_in_loss += sats;
             }
             Ordering::Equal => {
                 // Break-even: count as profit side (arbitrary but consistent)
                 self.profit_value_created_raw += current_ps.as_u128();
                 self.profit_value_destroyed_raw += prev_ps.as_u128();
+                self.sent_in_profit += sats;
             }
         }
 
-        // Track ATH regret: (ath - sell_price) × sats
-        self.ath_regret_raw += (ath_ps - current_ps).as_u128();
+        // Track peak regret: (peak - sell_price) × sats
+        self.peak_regret_raw += (ath_ps - current_ps).as_u128();
 
         // Inline decrement to avoid recomputation
         self.cap_raw -= prev_ps.as_u128();

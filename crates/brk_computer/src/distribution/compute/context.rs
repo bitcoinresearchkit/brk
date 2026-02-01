@@ -109,7 +109,7 @@ pub struct ComputeContext {
     pub height_to_price: Option<Vec<CentsUnsigned>>,
 
     /// Sparse table for O(1) range max queries on high prices.
-    /// Used for computing max price during UTXO holding periods (ATH regret).
+    /// Used for computing max price during UTXO holding periods (peak regret).
     pub price_range_max: Option<PriceRangeMax>,
 }
 
@@ -129,7 +129,7 @@ impl ComputeContext {
             .map(|v| v.into_iter().map(|c| *c).collect());
 
         // Build sparse table for O(1) range max queries on HIGH prices
-        // Used for computing peak price during UTXO holding periods (ATH regret)
+        // Used for computing peak price during UTXO holding periods (peak regret)
         let price_range_max = price
             .map(|p| &p.cents.split.height.high)
             .map(|v| v.into_iter().map(|c| *c).collect::<Vec<_>>())

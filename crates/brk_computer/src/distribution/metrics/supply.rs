@@ -10,7 +10,7 @@ use crate::{
     indexes,
     internal::{
         HalfClosePriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin,
-        LazyBinaryValueFromHeightLast, ValueFromHeightLast,
+        LazyBinaryValueFromHeightLast, ValueChangeFromDate, ValueFromHeightLast,
     },
 };
 
@@ -21,6 +21,8 @@ use super::ImportConfig;
 pub struct SupplyMetrics {
     pub total: ValueFromHeightLast,
     pub halved: LazyBinaryValueFromHeightLast,
+    /// 30-day change in supply (net position change) - sats, btc, usd
+    pub _30d_change: ValueChangeFromDate,
 }
 
 impl SupplyMetrics {
@@ -41,9 +43,18 @@ impl SupplyMetrics {
             HalveDollars,
         >(&cfg.name("supply_halved"), &supply, cfg.price, cfg.version);
 
+        let _30d_change = ValueChangeFromDate::forced_import(
+            cfg.db,
+            &cfg.name("_30d_change"),
+            cfg.version,
+            cfg.compute_dollars(),
+            cfg.indexes,
+        )?;
+
         Ok(Self {
             total: supply,
             halved: supply_halved,
+            _30d_change,
         })
     }
 
@@ -94,6 +105,17 @@ impl SupplyMetrics {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.total.compute_rest(indexes, starting_indexes, exit)
+        self.total.compute_rest(indexes, starting_indexes, exit)?;
+
+        // 30-day change in supply
+        self._30d_change.compute_change(
+            starting_indexes.dateindex,
+            &self.total.sats.dateindex.0,
+            self.total.dollars.as_ref().map(|d| &d.dateindex.0),
+            30,
+            exit,
+        )?;
+
+        Ok(())
     }
 }

@@ -83,8 +83,8 @@ tokio = { version = "1.49.0", features = ["rt-multi-thread"] }
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 tower-http = { version = "0.6.8", features = ["catch-panic", "compression-br", "compression-gzip", "compression-zstd", "cors", "normalize-path", "timeout", "trace"] }
 tower-layer = "0.3"
-vecdb = { version = "0.6.4", features = ["derive", "serde_json", "pco", "schemars"] }
-# vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
+# vecdb = { version = "0.6.4", features = ["derive", "serde_json", "pco", "schemars"] }
+vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
 
 [workspace.metadata.release]
 shared-version = true

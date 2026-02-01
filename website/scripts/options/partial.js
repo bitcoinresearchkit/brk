@@ -8,6 +8,7 @@ import {
   createCohortFolderWithAdjusted,
   createCohortFolderWithNupl,
   createCohortFolderAgeRange,
+  createCohortFolderMinAge,
   createCohortFolderBasicWithMarketCap,
   createCohortFolderBasicWithoutMarketCap,
   createCohortFolderWithoutRelative,
@@ -62,6 +63,8 @@ export function createPartialOptions({ brk }) {
   /** @param {CohortBasicWithMarketCap} cohort */
   const mapBasicWithMarketCap = (cohort) =>
     createCohortFolderBasicWithMarketCap(ctx, cohort);
+  /** @param {CohortMinAge} cohort */
+  const mapMinAge = (cohort) => createCohortFolderMinAge(ctx, cohort);
   /** @param {CohortBasicWithoutMarketCap} cohort */
   const mapBasicWithoutMarketCap = (cohort) =>
     createCohortFolderBasicWithoutMarketCap(ctx, cohort);
@@ -135,12 +138,12 @@ export function createPartialOptions({ brk }) {
                 {
                   name: "Older Than",
                   tree: [
-                    createCohortFolderBasicWithMarketCap(ctx, {
+                    createCohortFolderMinAge(ctx, {
                       name: "Compare",
                       title: "Min Age",
                       list: fromDate,
                     }),
-                    ...fromDate.map(mapBasicWithMarketCap),
+                    ...fromDate.map(mapMinAge),
                   ],
                 },
                 // Range

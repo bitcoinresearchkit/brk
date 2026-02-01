@@ -87,6 +87,13 @@ pub fn detect_structural_patterns(
         })
         .collect();
 
+    // Deduplicate patterns by name - different signatures can map to the same name
+    // when their normalized forms match but they can't be unified as generics
+    {
+        let mut seen_names: BTreeSet<String> = BTreeSet::new();
+        patterns.retain(|p| seen_names.insert(p.name.clone()));
+    }
+
     patterns.extend(generic_patterns);
 
     // Build pattern lookup for mode analysis (patterns appearing 2+ times)

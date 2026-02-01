@@ -19,7 +19,7 @@ impl UTXOCohorts {
     /// We need to update the cohort states based on when that UTXO was created.
     ///
     /// `price_range_max` is used to compute the peak price during each UTXO's holding period
-    /// for accurate ATH regret calculation.
+    /// for accurate peak regret calculation.
     pub fn send(
         &mut self,
         height_to_sent: FxHashMap<Height, Transacted>,
@@ -45,7 +45,7 @@ impl UTXOCohorts {
             let blocks_old = chain_len - 1 - receive_height.to_usize();
             let age = Age::new(last_timestamp, block_state.timestamp, blocks_old);
 
-            // Compute peak price during holding period for ATH regret
+            // Compute peak price during holding period for peak regret
             // This is the max HIGH price between receive and send heights
             let peak_price: Option<CentsUnsigned> =
                 price_range_max.map(|t| t.max_between(receive_height, send_height));

@@ -7,7 +7,7 @@ use brk_types::{
     DateIndex, EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex,
     SupplyState, Version,
 };
-use tracing::info;
+use tracing::{debug, info};
 use vecdb::{
     AnyVec, BytesVec, Database, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec,
     LazyVecFrom1, PAGE_SIZE, Stamp, TypedVecIterator, VecIndex,
@@ -38,7 +38,7 @@ pub struct Vecs {
     #[traversable(skip)]
     db: Database,
 
-    pub chain_state: BytesVec<Height, SupplyState>,
+    pub supply_state: BytesVec<Height, SupplyState>,
     pub any_address_indexes: AnyAddressIndexesVecs,
     pub addresses_data: AddressesDataVecs,
     pub utxo_cohorts: UTXOCohorts,
@@ -139,8 +139,8 @@ impl Vecs {
             GrowthRateVecs::forced_import(&db, version, indexes, &new_addr_count, &addr_count)?;
 
         let this = Self {
-            chain_state: BytesVec::forced_import_with(
-                vecdb::ImportOptions::new(&db, "chain", version)
+            supply_state: BytesVec::forced_import_with(
+                vecdb::ImportOptions::new(&db, "supply_state", version)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
@@ -197,7 +197,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         // 1. Find minimum height we have data for across stateful vecs
-        let current_height = Height::from(self.chain_state.len());
+        let current_height = Height::from(self.supply_state.len());
         let height_based_min = self.min_stateful_height_len();
         let dateindex_min = self.min_stateful_dateindex_len();
         let min_stateful = adjust_for_dateindex_gap(height_based_min, dateindex_min, indexes)?;
@@ -219,7 +219,7 @@ impl Vecs {
                 let stamp = Stamp::from(height);
 
                 // Rollback BytesVec state and capture results for validation
-                let chain_state_rollback = self.chain_state.rollback_before(stamp);
+                let chain_state_rollback = self.supply_state.rollback_before(stamp);
 
                 // Validate all rollbacks and imports are consistent
                 let recovered = recover_state(
@@ -234,14 +234,20 @@ impl Vecs {
                 if recovered.starting_height.is_zero() {
                     info!("State recovery validation failed, falling back to fresh start");
                 }
+                debug!(
+                    "recover_state completed, starting_height={}",
+                    recovered.starting_height
+                );
                 recovered.starting_height
             }
             StartMode::Fresh => Height::ZERO,
         };
 
+        debug!("recovered_height={}", recovered_height);
+
         // Fresh start: reset all state
         let (starting_height, mut chain_state) = if recovered_height.is_zero() {
-            self.chain_state.reset()?;
+            self.supply_state.reset()?;
             self.addr_count.reset_height()?;
             self.empty_addr_count.reset_height()?;
             self.address_activity.reset_height()?;
@@ -256,13 +262,15 @@ impl Vecs {
             (Height::ZERO, vec![])
         } else {
             // Recover chain_state from stored values
+            debug!("recovering chain_state from stored values");
             let height_to_timestamp = &blocks.time.timestamp_monotonic;
             let height_to_price = price.map(|p| &p.cents.split.height.close);
 
             let mut height_to_timestamp_iter = height_to_timestamp.into_iter();
             let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
-            let mut chain_state_iter = self.chain_state.into_iter();
+            let mut chain_state_iter = self.supply_state.into_iter();
 
+            debug!("building supply_state vec for {} heights", recovered_height);
             let chain_state = (0..recovered_height.to_usize())
                 .map(|h| {
                     let h = Height::from(h);
@@ -274,6 +282,7 @@ impl Vecs {
                     }
                 })
                 .collect();
+            debug!("chain_state vec built");
 
             (recovered_height, chain_state)
         };
@@ -293,16 +302,23 @@ impl Vecs {
         }
 
         // 2b. Validate computed versions
+        debug!("validating computed versions");
         let base_version = VERSION;
         self.utxo_cohorts.validate_computed_versions(base_version)?;
         self.address_cohorts
             .validate_computed_versions(base_version)?;
+        debug!("computed versions validated");
 
         // 3. Get last height from indexer
         let last_height = Height::from(indexer.vecs.blocks.blockhash.len().saturating_sub(1));
+        debug!(
+            "last_height={}, starting_height={}",
+            last_height, starting_height
+        );
 
         // 4. Process blocks
         if starting_height <= last_height {
+            debug!("calling process_blocks");
             process_blocks(
                 self,
                 indexer,
@@ -401,7 +417,7 @@ impl Vecs {
         self.utxo_cohorts
             .min_separate_stateful_height_len()
             .min(self.address_cohorts.min_separate_stateful_height_len())
-            .min(Height::from(self.chain_state.len()))
+            .min(Height::from(self.supply_state.len()))
             .min(self.any_address_indexes.min_stamped_height())
             .min(self.addresses_data.min_stamped_height())
             .min(Height::from(self.addr_count.min_stateful_height()))

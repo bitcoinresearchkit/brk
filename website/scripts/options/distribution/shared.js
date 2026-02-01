@@ -125,6 +125,7 @@ function createSingleSupplySeriesBase(ctx, cohort) {
 
   return [
     ...satsBtcUsd({ pattern: tree.supply.total, name: "Supply", color: colors.default }),
+    ...satsBtcUsd({ pattern: tree.supply._30dChange, name: "30d Change", color: colors.orange }),
     ...satsBtcUsd({ pattern: tree.unrealized.supplyInProfit, name: "In Profit", color: colors.green }),
     ...satsBtcUsd({ pattern: tree.unrealized.supplyInLoss, name: "In Loss", color: colors.red }),
     ...satsBtcUsd({ pattern: tree.supply.halved, name: "half", color: colors.gray }).map((s) => ({
@@ -260,6 +261,13 @@ export function createGroupedSupplySection(list, title, { supplyRelativeMetrics,
         name: "Total",
         title: title("Supply"),
         bottom: createGroupedSupplyTotalSeries(list, { relativeMetrics: supplyRelativeMetrics }),
+      },
+      {
+        name: "30d Change",
+        title: title("Supply 30d Change"),
+        bottom: list.flatMap(({ color, name, tree }) =>
+          satsBtcUsd({ pattern: tree.supply._30dChange, name, color }),
+        ),
       },
       {
         name: "In Profit",
@@ -692,55 +700,8 @@ export function createSingleSentSeries(cohort) {
       unit: Unit.usd,
       defaultActive: false,
     }),
+    ...satsBtcUsd({ pattern: tree.activity.sent14dEma, name: "14d EMA" }),
   ];
-}
-
-/**
- * Create sent (sats) series for grouped cohorts (comparison)
- * @param {readonly CohortObject[]} list
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function createGroupedSentSatsSeries(list) {
-  return list.flatMap(({ color, name, tree }) => [
-    line({
-      metric: tree.activity.sent.sats.sum,
-      name,
-      color,
-      unit: Unit.sats,
-    }),
-  ]);
-}
-
-/**
- * Create sent (bitcoin) series for grouped cohorts (comparison)
- * @param {readonly CohortObject[]} list
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function createGroupedSentBitcoinSeries(list) {
-  return list.flatMap(({ color, name, tree }) => [
-    line({
-      metric: tree.activity.sent.bitcoin.sum,
-      name,
-      color,
-      unit: Unit.btc,
-    }),
-  ]);
-}
-
-/**
- * Create sent (dollars) series for grouped cohorts (comparison)
- * @param {readonly CohortObject[]} list
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function createGroupedSentDollarsSeries(list) {
-  return list.flatMap(({ color, name, tree }) => [
-    line({
-      metric: tree.activity.sent.dollars.sum,
-      name,
-      color,
-      unit: Unit.usd,
-    }),
-  ]);
 }
 
 // ============================================================================
@@ -1036,11 +997,11 @@ export function createGroupedInvestorPriceFolder(list, title) {
 }
 
 // ============================================================================
-// ATH Regret Helpers
+// Peak Regret Helpers
 // ============================================================================
 
 /**
- * Create realized ATH regret series for single cohort
+ * Create realized peak regret series for single cohort
  * @param {{ realized: AnyRealizedPattern }} tree
  * @param {Color} color
  * @returns {AnyFetchedSeriesBlueprint[]}
@@ -1048,34 +1009,23 @@ export function createGroupedInvestorPriceFolder(list, title) {
 export function createSingleRealizedAthRegretSeries(tree, color) {
   return [
     line({
-      metric: tree.realized.athRegret.sum,
-      name: "ATH Regret",
+      metric: tree.realized.peakRegret.sum,
+      name: "Peak Regret",
       color,
       unit: Unit.usd,
     }),
     line({
-      metric: tree.realized.athRegret.cumulative,
+      metric: tree.realized.peakRegret.cumulative,
       name: "Cumulative",
       color,
       unit: Unit.usd,
       defaultActive: false,
     }),
-  ];
-}
-
-/**
- * Create unrealized ATH regret series for single cohort
- * @param {{ unrealized: UnrealizedPattern }} tree
- * @param {Color} color
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function createSingleUnrealizedAthRegretSeries(tree, color) {
-  return [
-    line({
-      metric: tree.unrealized.athRegret,
-      name: "ATH Regret",
+    baseline({
+      metric: tree.realized.peakRegretRelToRealizedCap,
+      name: "Rel. to Realized Cap",
       color,
-      unit: Unit.usd,
+      unit: Unit.pctRcap,
     }),
   ];
 }
@@ -1088,26 +1038,16 @@ export function createSingleUnrealizedAthRegretSeries(tree, color) {
 export function createGroupedRealizedAthRegretSeries(list) {
   return list.flatMap(({ color, name, tree }) => [
     line({
-      metric: tree.realized.athRegret.sum,
+      metric: tree.realized.peakRegret.sum,
       name,
       color,
       unit: Unit.usd,
     }),
-  ]);
-}
-
-/**
- * Create unrealized ATH regret series for grouped cohorts
- * @param {readonly { color: Color, name: string, tree: { unrealized: UnrealizedPattern } }[]} list
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function createGroupedUnrealizedAthRegretSeries(list) {
-  return list.flatMap(({ color, name, tree }) => [
-    line({
-      metric: tree.unrealized.athRegret,
+    baseline({
+      metric: tree.realized.peakRegretRelToRealizedCap,
       name,
       color,
-      unit: Unit.usd,
+      unit: Unit.pctRcap,
     }),
   ]);
 }

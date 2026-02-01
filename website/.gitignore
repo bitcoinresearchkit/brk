@@ -1,3 +1,4 @@
 */**/*.md
 !scripts/**/_*.js
 *_old.js
+_*.js

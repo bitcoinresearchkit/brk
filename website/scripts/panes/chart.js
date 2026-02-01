@@ -103,6 +103,7 @@ export function init(brk) {
     setChoices(computeChoices(opt));
 
     blueprints = chart.setBlueprints({
+      name: opt.title,
       top: buildTopBlueprints(opt.top),
       bottom: opt.bottom,
       onDataLoaded: updatePriceWithLatest,

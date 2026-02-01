@@ -1,3 +1,4 @@
+use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Sats, StoredF32, StoredF64, Version};
@@ -64,6 +65,10 @@ pub struct RelativeMetrics {
         Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
     pub invested_capital_in_loss_pct:
         Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
+
+    // === Unrealized Peak Regret Relative to Market Cap (date-only, lazy) ===
+    pub unrealized_peak_regret_rel_to_market_cap:
+        Option<LazyBinaryFromDateLast<StoredF32, Dollars, Dollars>>,
 }
 
 impl RelativeMetrics {
@@ -93,6 +98,11 @@ impl RelativeMetrics {
 
         // Own market cap source
         let own_market_cap = supply.total.dollars.as_ref();
+
+        // For "all" cohort, own_market_cap IS the global market cap
+        let market_cap = global_market_cap.or_else(|| {
+            matches!(cfg.filter, Filter::All).then_some(own_market_cap).flatten()
+        });
 
         Ok(Self {
             // === Supply Relative to Circulating Supply (lazy from global supply) ===
@@ -189,7 +199,7 @@ impl RelativeMetrics {
 
             // === Unrealized vs Market Cap (lazy from global market cap) ===
             unrealized_profit_rel_to_market_cap:
-                global_market_cap.map(|mc| {
+                market_cap.map(|mc| {
                     LazyBinaryFromHeightLast::from_computed_height_date_and_lazy_binary_block_last::<
                         PercentageDollarsF32,
                         _,
@@ -202,7 +212,7 @@ impl RelativeMetrics {
                     )
                 }),
             unrealized_loss_rel_to_market_cap:
-                global_market_cap.map(|mc| {
+                market_cap.map(|mc| {
                     LazyBinaryFromHeightLast::from_computed_height_date_and_lazy_binary_block_last::<
                         PercentageDollarsF32,
                         _,
@@ -214,7 +224,7 @@ impl RelativeMetrics {
                         mc,
                     )
                 }),
-            neg_unrealized_loss_rel_to_market_cap: global_market_cap.map(|mc| {
+            neg_unrealized_loss_rel_to_market_cap: market_cap.map(|mc| {
                 LazyBinaryFromHeightLast::from_computed_height_date_and_lazy_binary_block_last::<
                     NegPercentageDollarsF32,
                     _,
@@ -226,7 +236,7 @@ impl RelativeMetrics {
                     mc,
                 )
             }),
-            net_unrealized_pnl_rel_to_market_cap: global_market_cap.map(|mc| {
+            net_unrealized_pnl_rel_to_market_cap: market_cap.map(|mc| {
                 LazyBinaryFromHeightLast::from_binary_block_and_lazy_binary_block_last::<
                     PercentageDollarsF32,
                     _,
@@ -242,7 +252,7 @@ impl RelativeMetrics {
             }),
 
             // NUPL is a proxy for net_unrealized_pnl_rel_to_market_cap
-            nupl: global_market_cap.map(|mc| {
+            nupl: market_cap.map(|mc| {
                 LazyBinaryFromHeightLast::from_binary_block_and_lazy_binary_block_last::<
                     PercentageDollarsF32,
                     _,
@@ -382,6 +392,21 @@ impl RelativeMetrics {
                     &r.realized_cap,
                 )
             }),
+
+            // === Peak Regret Relative to Market Cap (date-only, lazy) ===
+            unrealized_peak_regret_rel_to_market_cap: unrealized
+                .peak_regret
+                .as_ref()
+                .zip(market_cap)
+                .map(|(pr, mc)| {
+                    LazyBinaryFromDateLast::from_computed_and_derived_last::<PercentageDollarsF32>(
+                        &cfg.name("unrealized_peak_regret_rel_to_market_cap"),
+                        cfg.version,
+                        pr,
+                        mc.rest.dateindex.boxed_clone(),
+                        &mc.rest.dates,
+                    )
+                }),
         })
     }
 }

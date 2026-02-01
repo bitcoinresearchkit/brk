@@ -24,7 +24,7 @@ use super::super::cache::AddressLookup;
 /// parallel execution with UTXO cohort processing (which mutates chain_state).
 ///
 /// `price_range_max` is used to compute the peak price during each UTXO's holding period
-/// for accurate ATH regret calculation.
+/// for accurate peak regret calculation.
 #[allow(clippy::too_many_arguments)]
 pub fn process_sent(
     sent_data: HeightToAddressTypeToVec<(TypeIndex, Sats)>,
@@ -50,7 +50,7 @@ pub fn process_sent(
         let blocks_old = current_height.to_usize() - receive_height.to_usize();
         let age = Age::new(current_timestamp, prev_timestamp, blocks_old);
 
-        // Compute peak price during holding period for ATH regret
+        // Compute peak price during holding period for peak regret
         // This is the max HIGH price between receive and send heights
         let peak_price: Option<CentsUnsigned> =
             price_range_max.map(|t| t.max_between(receive_height, current_height));

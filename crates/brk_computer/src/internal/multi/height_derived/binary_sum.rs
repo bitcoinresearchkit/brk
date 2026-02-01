@@ -6,7 +6,10 @@ use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{BinaryTransform, IterableCloneableVec};
 
-use crate::internal::{ComputedVecValue, ComputedHeightDerivedSum, LazyBinaryFromDateSum, LazyBinaryTransformSum, NumericValue};
+use crate::internal::{
+    ComputedFromHeightSumCum, ComputedHeightDerivedSum, ComputedVecValue, LazyBinaryFromDateSum,
+    LazyBinaryTransformSum, LazyFromHeightLast, NumericValue,
+};
 
 const VERSION: Version = Version::ZERO;
 
@@ -76,6 +79,35 @@ where
                 name,
                 v,
                 source1.difficultyepoch.boxed_clone(),
+                source2.difficultyepoch.boxed_clone(),
+            ),
+        }
+    }
+
+    /// Create from a SumCum source (using only sum) and a LazyLast source.
+    pub fn from_sumcum_lazy_last<F, S2ST>(
+        name: &str,
+        version: Version,
+        source1: &ComputedFromHeightSumCum<S1T>,
+        source2: &LazyFromHeightLast<S2T, S2ST>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S2ST: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        Self {
+            dates: LazyBinaryFromDateSum::from_sumcum_lazy_last::<F, S2ST>(
+                name,
+                v,
+                source1,
+                source2,
+            ),
+            difficultyepoch: LazyBinaryTransformSum::from_boxed::<F>(
+                name,
+                v,
+                source1.difficultyepoch.sum.boxed_clone(),
                 source2.difficultyepoch.boxed_clone(),
             ),
         }

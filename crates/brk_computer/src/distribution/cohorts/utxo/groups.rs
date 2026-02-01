@@ -1,19 +1,21 @@
 use std::{cmp::Reverse, collections::BinaryHeap, path::Path};
 
 use brk_cohort::{
-    ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge, ByMinAge,
-    BySpendableType, ByTerm, ByYear, Filter, Filtered, StateLevel, UTXOGroups,
+    AGE_BOUNDARIES, ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount,
+    ByMaxAge, ByMinAge, BySpendableType, ByTerm, ByYear, Filter, Filtered, StateLevel, UTXOGroups,
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, Sats, StoredF32, Version};
+use brk_types::{
+    CentsUnsigned, DateIndex, Dollars, Height, ONE_HOUR_IN_SEC, Sats, StoredF32, Timestamp, Version,
+};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, GenericStoredVec, IterableVec};
+use vecdb::{AnyStoredVec, Database, Exit, GenericStoredVec, IterableVec, VecIndex};
 
 use crate::{
     ComputeIndexes,
-    distribution::DynCohortVecs,
+    distribution::{DynCohortVecs, compute::PriceRangeMax, state::BlockState},
     indexes,
     internal::{PERCENTILES, PERCENTILES_LEN, compute_spot_percentile_rank},
     price,
@@ -357,13 +359,13 @@ impl UTXOCohorts {
             })
             .collect();
 
-        // Compute percentiles for each aggregate filter
-        for aggregate in self.0.iter_aggregate_mut() {
+        // Compute percentiles for each aggregate filter in parallel
+        self.0.par_iter_aggregate_mut().try_for_each(|aggregate| {
             let filter = aggregate.filter().clone();
 
             // Get cost_basis, skip if not configured
             let Some(cost_basis) = aggregate.metrics.cost_basis.as_mut() else {
-                continue;
+                return Ok(());
             };
 
             // Collect relevant cohort data for this aggregate and sum totals
@@ -397,7 +399,7 @@ impl UTXOCohorts {
                         .dateindex
                         .truncate_push(dateindex, StoredF32::NAN)?;
                 }
-                continue;
+                return Ok(());
             }
 
             // K-way merge using min-heap: O(n log k) where k = number of cohorts
@@ -507,9 +509,9 @@ impl UTXOCohorts {
                 let rank = compute_spot_percentile_rank(&usd_result, spot);
                 spot_pct.dateindex.truncate_push(dateindex, rank)?;
             }
-        }
 
-        Ok(())
+            Ok(())
+        })
     }
 
     /// Validate computed versions for all cohorts (separate and aggregate).
@@ -521,6 +523,114 @@ impl UTXOCohorts {
         // Validate aggregate cohorts' cost_basis percentiles
         for v in self.0.iter_aggregate_mut() {
             v.validate_computed_versions(base_version)?;
+        }
+
+        Ok(())
+    }
+
+    /// Compute and push peak regret for all age_range cohorts.
+    ///
+    /// Uses split points to efficiently compute regret per cohort.
+    /// All 21 cohorts are computed in parallel, then pushed sequentially.
+    /// Called once per day when dateindex changes.
+    pub fn compute_and_push_peak_regret(
+        &mut self,
+        chain_state: &[BlockState],
+        current_height: Height,
+        current_timestamp: Timestamp,
+        spot: CentsUnsigned,
+        price_range_max: &PriceRangeMax,
+        dateindex: DateIndex,
+    ) -> Result<()> {
+        const FIRST_PRICE_HEIGHT: usize = 68_195;
+
+        let start_height = FIRST_PRICE_HEIGHT;
+        let end_height = current_height.to_usize() + 1;
+
+        // Early return: push zeros if no price data yet
+        if end_height <= start_height {
+            for cohort in self.0.age_range.iter_mut() {
+                if let Some(unrealized) = cohort.metrics.unrealized.as_mut()
+                    && let Some(peak_regret) = unrealized.peak_regret.as_mut()
+                {
+                    peak_regret
+                        .dateindex
+                        .truncate_push(dateindex, Dollars::ZERO)?;
+                }
+            }
+            return Ok(());
+        }
+
+        let spot_u128 = spot.as_u128();
+        let current_ts = *current_timestamp;
+
+        // Compute split points: splits[k] = first index where age < AGE_BOUNDARIES[k]
+        let splits: [usize; 20] = std::array::from_fn(|k| {
+            let boundary_seconds = (AGE_BOUNDARIES[k] as u32) * ONE_HOUR_IN_SEC;
+            let threshold_ts = current_ts.saturating_sub(boundary_seconds);
+            chain_state[..end_height].partition_point(|b| *b.timestamp <= threshold_ts)
+        });
+
+        // Build ranges for all 21 cohorts
+        let ranges: [(usize, usize); 21] = std::array::from_fn(|i| {
+            if i == 0 {
+                (splits[0], end_height)
+            } else if i < 20 {
+                (splits[i], splits[i - 1])
+            } else {
+                (start_height, splits[19])
+            }
+        });
+
+        // Compute regret for all cohorts in parallel
+        let regrets: [Dollars; 21] = ranges
+            .into_par_iter()
+            .map(|(range_start, range_end)| {
+                let effective_start = range_start.max(start_height);
+                if effective_start >= range_end {
+                    return Dollars::ZERO;
+                }
+
+                let mut regret: u128 = 0;
+                for h in effective_start..range_end {
+                    let block = &chain_state[h];
+                    let supply = block.supply.value;
+
+                    if supply.is_zero() {
+                        continue;
+                    }
+
+                    let cost_basis = match block.price {
+                        Some(p) => p,
+                        None => continue,
+                    };
+
+                    let receive_height = Height::from(h);
+                    let peak = price_range_max.max_between(receive_height, current_height);
+                    let peak_u128 = peak.as_u128();
+                    let cost_u128 = cost_basis.as_u128();
+                    let supply_u128 = supply.as_u128();
+
+                    regret += if spot_u128 >= cost_u128 {
+                        (peak_u128 - spot_u128) * supply_u128
+                    } else {
+                        (peak_u128 - cost_u128) * supply_u128
+                    };
+                }
+
+                CentsUnsigned::new((regret / Sats::ONE_BTC_U128) as u64).to_dollars()
+            })
+            .collect::<Vec<_>>()
+            .try_into()
+            .unwrap();
+
+        // Push results to cohorts
+        for (cohort, regret) in self.0.age_range.iter_mut().zip(regrets) {
+            if let Some(unrealized) = cohort.metrics.unrealized.as_mut()
+                && let Some(peak_regret) = unrealized.peak_regret.as_mut()
+            {
+                peak_regret.dateindex.truncate_push(dateindex, regret)?;
+            }
         }
 
         Ok(())

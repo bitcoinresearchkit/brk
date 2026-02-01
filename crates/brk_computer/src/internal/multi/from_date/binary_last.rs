@@ -832,4 +832,41 @@ where
             decadeindex: period!(decadeindex),
         }
     }
+
+    /// Create from a ComputedFromDateLast and a LazyDateDerivedLast.
+    pub fn from_computed_and_derived_last<F: BinaryTransform<S1T, S2T, T>>(
+        name: &str,
+        version: Version,
+        source1: &ComputedFromDateLast<S1T>,
+        dateindex_source2: IterableBoxedVec<DateIndex, S2T>,
+        source2: &LazyDateDerivedLast<S2T>,
+    ) -> Self {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyBinaryTransformLast::from_lazy_last::<F, _, _, _, _>(
+                    name,
+                    v,
+                    &source1.$p,
+                    &source2.$p,
+                )
+            };
+        }
+
+        Self {
+            dateindex: LazyVecFrom2::transformed::<F>(
+                name,
+                v,
+                source1.dateindex.boxed_clone(),
+                dateindex_source2,
+            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
 }

@@ -6,7 +6,7 @@ use brk_indexer::Indexer;
 use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, OutputType, Sats, TxIndex, TypeIndex};
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
-use tracing::info;
+use tracing::{debug, info};
 use vecdb::{Exit, IterableVec, TypedVecIterator, VecIndex};
 
 use crate::{
@@ -51,7 +51,9 @@ pub fn process_blocks(
     exit: &Exit,
 ) -> Result<()> {
     // Create computation context with pre-computed vectors for thread-safe access
+    debug!("creating ComputeContext");
     let ctx = ComputeContext::new(starting_height, last_height, blocks, price);
+    debug!("ComputeContext created");
 
     if ctx.starting_height > ctx.last_height {
         return Ok(());
@@ -99,9 +101,12 @@ pub fn process_blocks(
     let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
     let mut dateindex_to_price_iter = dateindex_to_price.map(|v| v.into_iter());
 
+    debug!("creating VecsReaders");
     let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
+    debug!("VecsReaders created");
 
     // Build txindex -> height lookup map for efficient prev_height computation
+    debug!("building txindex_to_height RangeMap");
     let mut txindex_to_height: RangeMap<TxIndex, Height> = {
         let mut map = RangeMap::with_capacity(last_height.to_usize() + 1);
         for first_txindex in indexer.vecs.transactions.first_txindex.into_iter() {
@@ -109,6 +114,7 @@ pub fn process_blocks(
         }
         map
     };
+    debug!("txindex_to_height RangeMap built");
 
     // Create reusable iterators for sequential txout/txin reads (16KB buffered)
     let mut txout_iters = TxOutIterators::new(indexer);
@@ -125,6 +131,7 @@ pub fn process_blocks(
     let mut first_p2wsh_iter = indexer.vecs.addresses.first_p2wshaddressindex.into_iter();
 
     // Track running totals - recover from previous height if resuming
+    debug!("recovering addr_counts from height {}", starting_height);
     let (mut addr_counts, mut empty_addr_counts) = if starting_height > Height::ZERO {
         let addr_counts =
             AddressTypeToAddressCount::from((&vecs.addr_count.by_addresstype, starting_height));
@@ -139,11 +146,14 @@ pub fn process_blocks(
             AddressTypeToAddressCount::default(),
         )
     };
+    debug!("addr_counts recovered");
 
     // Track activity counts - reset each block
     let mut activity_counts = AddressTypeToActivityCounts::default();
 
+    debug!("creating AddressCache");
     let mut cache = AddressCache::new();
+    debug!("AddressCache created, entering main loop");
 
     // Main block iteration
     for height in starting_height.to_usize()..=last_height.to_usize() {
@@ -390,6 +400,21 @@ pub fn process_blocks(
                 .unwrap_or(Dollars::NAN);
             vecs.utxo_cohorts
                 .truncate_push_aggregate_percentiles(dateindex, spot)?;
+
+            // Compute unrealized peak regret by age range (once per day)
+            // Aggregate cohorts (all, term, etc.) get values via compute_from_stateful
+            if let Some(spot_cents) = block_price
+                && let Some(price_range_max) = ctx.price_range_max.as_ref()
+            {
+                vecs.utxo_cohorts.compute_and_push_peak_regret(
+                    chain_state,
+                    height,
+                    timestamp,
+                    spot_cents,
+                    price_range_max,
+                    dateindex,
+                )?;
+            }
         }
 
         // Periodic checkpoint flush

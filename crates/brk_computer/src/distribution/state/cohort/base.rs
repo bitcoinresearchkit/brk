@@ -237,7 +237,7 @@ impl CohortState {
                 let ath_ps = CentsSats::from_price_sats(ath_price, sats);
                 let prev_investor_cap = prev_ps.to_investor_cap(pp);
 
-                realized.send(current_ps, prev_ps, ath_ps, prev_investor_cap);
+                realized.send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
 
                 self.cost_basis_data.as_mut().unwrap().decrement(
                     pp,
@@ -284,7 +284,7 @@ impl CohortState {
                 let ath_ps = CentsSats::from_price_sats(ath, sats);
                 let prev_investor_cap = prev_ps.to_investor_cap(prev_price);
 
-                realized.send(current_ps, prev_ps, ath_ps, prev_investor_cap);
+                realized.send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
 
                 if current.supply_state.value.is_not_zero() {
                     self.cost_basis_data.as_mut().unwrap().increment(

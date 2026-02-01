@@ -52,16 +52,6 @@ function walk(node, map, path) {
         (kn.startsWith("_") && kn.endsWith("start"))
       )
         continue;
-      // if (
-      // kn === "mvrv" ||
-      // kn.endsWith("index") ||
-      // kn.endsWith("indexes") ||
-      // kn.endsWith("start") ||
-      // kn.endsWith("hash") ||
-      // kn.endsWith("data") ||
-      // kn.endsWith("constants")
-      // )
-      //   return;
       walk(/** @type {TreeNode | null | undefined} */ (value), map, [
         ...path,
         key,
@@ -107,4 +97,83 @@ export function logUnused() {
   }
 
   console.log("Unused metrics:", { count: unused.size, tree });
+}
+
+/**
+ * Extract tree structure from partial options (names + hierarchy, series grouped by unit)
+ * @param {PartialOptionsTree} options
+ * @returns {object[]}
+ */
+export function extractTreeStructure(options) {
+  /**
+   * Group series by unit
+   * @param {(AnyFetchedSeriesBlueprint | FetchedPriceSeriesBlueprint)[]} series
+   * @param {boolean} isTop
+   * @returns {Record<string, string[]>}
+   */
+  function groupByUnit(series, isTop) {
+    /** @type {Record<string, string[]>} */
+    const grouped = {};
+    for (const s of series) {
+      // Price patterns in top pane have dollars/sats sub-metrics
+      const metric = /** @type {any} */ (s.metric);
+      if (isTop && metric?.dollars && metric?.sats) {
+        const title = s.title || s.key || "unnamed";
+        (grouped["USD"] ??= []).push(title);
+        (grouped["sats"] ??= []).push(title);
+      } else {
+        const unit = /** @type {AnyFetchedSeriesBlueprint} */ (s).unit;
+        const unitName = unit?.name || "unknown";
+        const title = s.title || s.key || "unnamed";
+        (grouped[unitName] ??= []).push(title);
+      }
+    }
+    return grouped;
+  }
+
+  /**
+   * @param {AnyPartialOption | PartialOptionsGroup} node
+   * @returns {object}
+   */
+  function processNode(node) {
+    // Group with children
+    if ("tree" in node && node.tree) {
+      return {
+        name: node.name,
+        children: node.tree.map(processNode),
+      };
+    }
+    // Chart option
+    if ("top" in node || "bottom" in node) {
+      const chartNode = /** @type {PartialChartOption} */ (node);
+      const top = chartNode.top ? groupByUnit(chartNode.top, true) : undefined;
+      const bottom = chartNode.bottom
+        ? groupByUnit(chartNode.bottom, false)
+        : undefined;
+      return {
+        name: node.name,
+        title: chartNode.title,
+        ...(top && Object.keys(top).length > 0 ? { top } : {}),
+        ...(bottom && Object.keys(bottom).length > 0 ? { bottom } : {}),
+      };
+    }
+    // URL option
+    if ("url" in node) {
+      return { name: node.name, url: true };
+    }
+    // Other options (explorer, table, simulation)
+    return { name: node.name };
+  }
+
+  return options.map(processNode);
+}
+
+/**
+ * Log the options tree structure to console (localhost only)
+ * @param {PartialOptionsTree} options
+ */
+export function logTreeStructure(options) {
+  if (!localhost) return;
+  const structure = extractTreeStructure(options);
+  console.log("Options tree structure:", JSON.stringify(structure, null, 2));
 }

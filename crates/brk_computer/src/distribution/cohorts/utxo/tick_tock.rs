@@ -11,10 +11,10 @@ impl UTXOCohorts {
     /// UTXOs age with each block. When they cross hour boundaries,
     /// they move between age-based cohorts (e.g., from "0-1h" to "1h-1d").
     ///
-    /// Complexity: O(k * (log n + m)) where:
+    /// Complexity: O(k * log n) where:
     /// - k = 20 boundaries to check
     /// - n = total blocks in chain_state
-    /// - m = blocks crossing each boundary (typically 0-2 per boundary per block)
+    /// - Linear scan for end_idx is faster than binary search since typically 0-2 blocks cross each boundary
     pub fn tick_tock_next_block(&mut self, chain_state: &[BlockState], timestamp: Timestamp) {
         if chain_state.is_empty() {
             return;
@@ -49,9 +49,12 @@ impl UTXOCohorts {
                 continue;
             }
 
-            // Binary search to find blocks in the timestamp range (lower, upper]
+            // Binary search to find start, then linear scan for end (typically 0-2 blocks)
             let start_idx = chain_state.partition_point(|b| *b.timestamp <= lower_timestamp);
-            let end_idx = chain_state.partition_point(|b| *b.timestamp <= upper_timestamp);
+            let end_idx = chain_state[start_idx..]
+                .iter()
+                .position(|b| *b.timestamp > upper_timestamp)
+                .map_or(chain_state.len(), |pos| start_idx + pos);
 
             // Move supply from younger cohort to older cohort
             for block_state in &chain_state[start_idx..end_idx] {

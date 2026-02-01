@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVe
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ComputedFromHeightSumCum, LazyComputedValueFromHeightSumCum},
+    internal::{ComputedFromHeightSumCum, LazyComputedValueFromHeightSumCum, ValueFromDateLast},
 };
 
 use super::ImportConfig;
@@ -16,6 +16,9 @@ use super::ImportConfig;
 pub struct ActivityMetrics {
     /// Total satoshis sent at each height + derived indexes
     pub sent: LazyComputedValueFromHeightSumCum,
+
+    /// 14-day EMA of sent supply (sats, btc, usd)
+    pub sent_14d_ema: ValueFromDateLast,
 
     /// Satoshi-blocks destroyed (supply * blocks_old when spent)
     pub satblocks_destroyed: EagerVec<PcoVec<Height, Sats>>,
@@ -40,6 +43,14 @@ impl ActivityMetrics {
                 cfg.version,
                 cfg.indexes,
                 cfg.price,
+            )?,
+
+            sent_14d_ema: ValueFromDateLast::forced_import(
+                cfg.db,
+                &cfg.name("sent_14d_ema"),
+                cfg.version,
+                cfg.compute_dollars(),
+                cfg.indexes,
             )?,
 
             satblocks_destroyed: EagerVec::forced_import(
@@ -154,6 +165,15 @@ impl ActivityMetrics {
         exit: &Exit,
     ) -> Result<()> {
         self.sent.compute_rest(indexes, starting_indexes, exit)?;
+
+        // 14-day EMA of sent (sats and dollars)
+        self.sent_14d_ema.compute_ema(
+            starting_indexes.dateindex,
+            &self.sent.sats.dateindex.sum.0,
+            self.sent.dollars.as_ref().map(|d| &d.dateindex.sum.0),
+            14,
+            exit,
+        )?;
 
         self.coinblocks_destroyed
             .compute_all(indexes, starting_indexes, exit, |v| {

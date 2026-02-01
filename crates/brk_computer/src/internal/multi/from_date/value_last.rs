@@ -2,13 +2,13 @@
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Sats, Version};
+use brk_types::{DateIndex, Dollars, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, PcoVec};
+use vecdb::{CollectableVec, Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, PcoVec};
 
 use crate::{ComputeIndexes, indexes, price};
 
-use super::LazyValueDateDerivedLast;
+use super::{ComputedFromDateLast, LazyValueDateDerivedLast};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -70,7 +70,7 @@ impl ValueFromDateLast {
 
     pub fn compute_dollars<F>(&mut self, compute: F) -> Result<()>
     where
-        F: FnMut(&mut crate::internal::ComputedFromDateLast<brk_types::Dollars>) -> Result<()>,
+        F: FnMut(&mut ComputedFromDateLast<Dollars>) -> Result<()>,
     {
         self.rest.compute_dollars(compute)
     }
@@ -83,5 +83,64 @@ impl ValueFromDateLast {
     ) -> Result<()> {
         self.rest
             .compute_dollars_from_price(price, starting_indexes, exit)
+    }
+
+    /// Compute both sats and dollars using provided closures.
+    pub fn compute_both<S, D>(
+        &mut self,
+        compute_sats: S,
+        compute_dollars: D,
+    ) -> Result<()>
+    where
+        S: FnOnce(&mut EagerVec<PcoVec<DateIndex, Sats>>) -> Result<()>,
+        D: FnOnce(&mut ComputedFromDateLast<Dollars>) -> Result<()>,
+    {
+        compute_sats(&mut self.sats_dateindex)?;
+        if let Some(dollars) = self.rest.dollars.as_mut() {
+            compute_dollars(dollars)?;
+        }
+        Ok(())
+    }
+
+    /// Compute EMA for sats and optionally dollars from source vecs.
+    pub fn compute_ema(
+        &mut self,
+        starting_dateindex: DateIndex,
+        sats_source: &impl CollectableVec<DateIndex, Sats>,
+        dollars_source: Option<&impl CollectableVec<DateIndex, Dollars>>,
+        period: usize,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.sats_dateindex
+            .compute_ema(starting_dateindex, sats_source, period, exit)?;
+
+        if let (Some(dollars), Some(source)) = (self.rest.dollars.as_mut(), dollars_source) {
+            dollars
+                .dateindex
+                .compute_ema(starting_dateindex, source, period, exit)?;
+        }
+
+        Ok(())
+    }
+
+    /// Compute N-day change for sats and optionally dollars from source vecs.
+    pub fn compute_change(
+        &mut self,
+        starting_dateindex: DateIndex,
+        sats_source: &impl CollectableVec<DateIndex, Sats>,
+        dollars_source: Option<&impl CollectableVec<DateIndex, Dollars>>,
+        period: usize,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.sats_dateindex
+            .compute_change(starting_dateindex, sats_source, period, exit)?;
+
+        if let (Some(dollars), Some(source)) = (self.rest.dollars.as_mut(), dollars_source) {
+            dollars
+                .dateindex
+                .compute_change(starting_dateindex, source, period, exit)?;
+        }
+
+        Ok(())
     }
 }

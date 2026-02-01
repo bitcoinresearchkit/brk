@@ -3,7 +3,8 @@ import { createButtonElement, createAnchorElement } from "../utils/dom.js";
 import { pushHistory, resetParams } from "../utils/url.js";
 import { readStored, writeToStorage } from "../utils/storage.js";
 import { stringToId } from "../utils/format.js";
-import { collect, markUsed, logUnused } from "./unused.js";
+import { collect, markUsed, logUnused, extractTreeStructure } from "./unused.js";
+import { localhost } from "../utils/env.js";
 import { setQr } from "../panes/share.js";
 import { getConstant } from "./constants.js";
 import { colors } from "../chart/colors.js";
@@ -28,6 +29,11 @@ export function initOptions(brk) {
   const partialOptions = createPartialOptions({
     brk,
   });
+
+  // Log tree structure for analysis (localhost only)
+  if (localhost) {
+    console.log(extractTreeStructure(partialOptions));
+  }
 
   /** @type {Option[]} */
   const list = [];

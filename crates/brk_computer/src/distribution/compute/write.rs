@@ -66,9 +66,9 @@ pub fn write(
     let stamp = Stamp::from(height);
 
     // Prepare chain_state before parallel write
-    vecs.chain_state.truncate_if_needed(Height::ZERO)?;
+    vecs.supply_state.truncate_if_needed(Height::ZERO)?;
     for block_state in chain_state {
-        vecs.chain_state.push(block_state.supply.clone());
+        vecs.supply_state.push(block_state.supply.clone());
     }
 
     vecs.any_address_indexes
@@ -78,7 +78,7 @@ pub fn write(
         .chain(vecs.empty_addr_count.par_iter_height_mut())
         .chain(vecs.address_activity.par_iter_height_mut())
         .chain(rayon::iter::once(
-            &mut vecs.chain_state as &mut dyn AnyStoredVec,
+            &mut vecs.supply_state as &mut dyn AnyStoredVec,
         ))
         .chain(vecs.utxo_cohorts.par_iter_vecs_mut())
         .chain(vecs.address_cohorts.par_iter_vecs_mut())

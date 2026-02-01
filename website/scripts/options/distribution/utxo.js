@@ -46,9 +46,7 @@ import {
   createInvestorPriceFolderBasic,
   createGroupedInvestorPriceFolder,
   createSingleRealizedAthRegretSeries,
-  createSingleUnrealizedAthRegretSeries,
   createGroupedRealizedAthRegretSeries,
-  createGroupedUnrealizedAthRegretSeries,
   createSingleSentimentSeries,
   createGroupedNetSentimentSeries,
   createGroupedGreedIndexSeries,
@@ -57,6 +55,7 @@ import {
 import {
   createPriceRatioCharts,
   formatCohortTitle,
+  satsBtcUsd,
 } from "../shared.js";
 import { Unit } from "../../utils/units.js";
 import { line, baseline, price } from "../series.js";
@@ -67,7 +66,7 @@ import { priceLine } from "../constants.js";
 // ============================================================================
 
 /**
- * All folder: for the special "All" cohort (adjustedSopr + percentiles but no RelToMarketCap)
+ * All folder: for the special "All" cohort (adjustedSopr + percentiles + RelToMarketCap)
  * @param {PartialContext} ctx
  * @param {CohortAll} args
  * @returns {PartialOptionsGroup}
@@ -266,7 +265,52 @@ export function createCohortFolderAgeRange(ctx, args) {
 }
 
 /**
- * Basic folder WITH RelToMarketCap (minAge.*, geAmount.*, ltAmount.*, type.*)
+ * MinAge folder - has peakRegret in unrealized (minAge.*)
+ * @param {PartialContext} ctx
+ * @param {CohortMinAge | CohortGroupMinAge} args
+ * @returns {PartialOptionsGroup}
+ */
+export function createCohortFolderMinAge(ctx, args) {
+  if ("list" in args) {
+    const { list } = args;
+    const title = formatCohortTitle(args.title);
+    return {
+      name: args.name || "all",
+      tree: [
+        createGroupedSupplySection(
+          list,
+          title,
+          groupedSupplyRelativeGenerators,
+        ),
+        createGroupedUtxoCountChart(list, title),
+        createGroupedRealizedSectionBasic(ctx, list, title),
+        createGroupedUnrealizedSectionMinAge(ctx, list, title),
+        createGroupedCostBasisSection({ list, title }),
+        createGroupedActivitySection({ list, title }),
+      ],
+    };
+  }
+  const title = formatCohortTitle(args.name);
+  return {
+    name: args.name || "all",
+    tree: [
+      createSingleSupplyChart(
+        ctx,
+        args,
+        title,
+        createSingleSupplyRelativeOptions(ctx, args),
+      ),
+      createSingleUtxoCountChart(args, title),
+      createSingleRealizedSectionBasic(ctx, args, title),
+      createSingleUnrealizedSectionMinAge(ctx, args, title),
+      createCostBasisSection(ctx, { cohort: args, title }),
+      createActivitySection({ ctx, cohort: args, title }),
+    ],
+  };
+}
+
+/**
+ * Basic folder WITH RelToMarketCap (geAmount.*, ltAmount.*)
  * @param {PartialContext} ctx
  * @param {CohortBasicWithMarketCap | CohortGroupBasicWithMarketCap} args
  * @returns {PartialOptionsGroup}
@@ -546,8 +590,8 @@ function createSingleRealizedSectionFull(ctx, cohort, title) {
         extra: createRealizedPnlRatioSeries(colors, tree),
       }),
       {
-        name: "ATH Regret",
-        title: title("Realized ATH Regret"),
+        name: "Peak Regret",
+        title: title("Realized Peak Regret"),
         bottom: createSingleRealizedAthRegretSeries(tree, color),
       },
       createSingleSoprSectionWithAdjusted(ctx, cohort, title),
@@ -576,8 +620,8 @@ function createSingleRealizedSectionWithAdjusted(ctx, cohort, title) {
       },
       ...createSingleRealizedPnlSection(ctx, cohort, title),
       {
-        name: "ATH Regret",
-        title: title("Realized ATH Regret"),
+        name: "Peak Regret",
+        title: title("Realized Peak Regret"),
         bottom: createSingleRealizedAthRegretSeries(tree, color),
       },
       createSingleSoprSectionWithAdjusted(ctx, cohort, title),
@@ -622,8 +666,8 @@ function createGroupedRealizedSectionWithAdjusted(
       },
       ...createGroupedRealizedPnlSections(ctx, list, title, { ratioMetrics }),
       {
-        name: "ATH Regret",
-        title: title("Realized ATH Regret"),
+        name: "Peak Regret",
+        title: title("Realized Peak Regret"),
         bottom: createGroupedRealizedAthRegretSeries(list),
       },
       createGroupedSoprSectionWithAdjusted(list, title),
@@ -657,8 +701,8 @@ function createSingleRealizedSectionWithPercentiles(ctx, cohort, title) {
         extra: createRealizedPnlRatioSeries(colors, tree),
       }),
       {
-        name: "ATH Regret",
-        title: title("Realized ATH Regret"),
+        name: "Peak Regret",
+        title: title("Realized Peak Regret"),
         bottom: createSingleRealizedAthRegretSeries(tree, color),
       },
       createSingleSoprSectionBasic(ctx, cohort, title),
@@ -687,8 +731,8 @@ function createSingleRealizedSectionBasic(ctx, cohort, title) {
       },
       ...createSingleRealizedPnlSection(ctx, cohort, title),
       {
-        name: "ATH Regret",
-        title: title("Realized ATH Regret"),
+        name: "Peak Regret",
+        title: title("Realized Peak Regret"),
         bottom: createSingleRealizedAthRegretSeries(tree, color),
       },
       createSingleSoprSectionBasic(ctx, cohort, title),
@@ -733,8 +777,8 @@ function createGroupedRealizedSectionBasic(
       },
       ...createGroupedRealizedPnlSections(ctx, list, title, { ratioMetrics }),
       {
-        name: "ATH Regret",
-        title: title("Realized ATH Regret"),
+        name: "Peak Regret",
+        title: title("Realized Peak Regret"),
         bottom: createGroupedRealizedAthRegretSeries(list),
       },
       createGroupedSoprSectionBasic(list, title),
@@ -953,11 +997,23 @@ function createSingleRealizedPnlSection(
           title: "Profit",
           sumColor: colors.green,
         }),
+        line({
+          metric: tree.realized.realizedProfit7dEma,
+          name: "Profit 7d EMA",
+          color: colors.green,
+          unit: Unit.usd,
+        }),
         ...fromCountPattern({
           pattern: tree.realized.realizedLoss,
           unit: Unit.usd,
           title: "Loss",
           sumColor: colors.red,
+        }),
+        line({
+          metric: tree.realized.realizedLoss7dEma,
+          name: "Loss 7d EMA",
+          color: colors.red,
+          unit: Unit.usd,
         }),
         ...fromBitcoinPatternWithUnit({
           pattern: tree.realized.negRealizedLoss,
@@ -1014,6 +1070,11 @@ function createSingleRealizedPnlSection(
           title: "Net",
         }),
         baseline({
+          metric: tree.realized.netRealizedPnl7dEma,
+          name: "Net 7d EMA",
+          unit: Unit.usd,
+        }),
+        baseline({
           metric: tree.realized.netRealizedPnlCumulative30dDelta,
           name: "Cumulative 30d Change",
           unit: Unit.usd,
@@ -1047,6 +1108,45 @@ function createSingleRealizedPnlSection(
         priceLine({ ctx, unit: Unit.usd }),
       ],
     },
+    {
+      name: "Sent In P/L",
+      tree: [
+        {
+          name: "In Profit",
+          title: title("Sent In Profit"),
+          bottom: [
+            line({ metric: tree.realized.sentInProfit.bitcoin.sum, name: "Sum", color: colors.green, unit: Unit.btc }),
+            line({ metric: tree.realized.sentInProfit.bitcoin.cumulative, name: "Cumulative", color: colors.green, unit: Unit.btc, defaultActive: false }),
+            line({ metric: tree.realized.sentInProfit.sats.sum, name: "Sum", color: colors.green, unit: Unit.sats }),
+            line({ metric: tree.realized.sentInProfit.sats.cumulative, name: "Cumulative", color: colors.green, unit: Unit.sats, defaultActive: false }),
+            line({ metric: tree.realized.sentInProfit.dollars.sum, name: "Sum", color: colors.green, unit: Unit.usd }),
+            line({ metric: tree.realized.sentInProfit.dollars.cumulative, name: "Cumulative", color: colors.green, unit: Unit.usd, defaultActive: false }),
+          ],
+        },
+        {
+          name: "In Loss",
+          title: title("Sent In Loss"),
+          bottom: [
+            line({ metric: tree.realized.sentInLoss.bitcoin.sum, name: "Sum", color: colors.red, unit: Unit.btc }),
+            line({ metric: tree.realized.sentInLoss.bitcoin.cumulative, name: "Cumulative", color: colors.red, unit: Unit.btc, defaultActive: false }),
+            line({ metric: tree.realized.sentInLoss.sats.sum, name: "Sum", color: colors.red, unit: Unit.sats }),
+            line({ metric: tree.realized.sentInLoss.sats.cumulative, name: "Cumulative", color: colors.red, unit: Unit.sats, defaultActive: false }),
+            line({ metric: tree.realized.sentInLoss.dollars.sum, name: "Sum", color: colors.red, unit: Unit.usd }),
+            line({ metric: tree.realized.sentInLoss.dollars.cumulative, name: "Cumulative", color: colors.red, unit: Unit.usd, defaultActive: false }),
+          ],
+        },
+        {
+          name: "In Profit 14d EMA",
+          title: title("Sent In Profit 14d EMA"),
+          bottom: satsBtcUsd({ pattern: tree.realized.sentInProfit14dEma, name: "14d EMA", color: colors.green }),
+        },
+        {
+          name: "In Loss 14d EMA",
+          title: title("Sent In Loss 14d EMA"),
+          bottom: satsBtcUsd({ pattern: tree.realized.sentInLoss14dEma, name: "14d EMA", color: colors.red }),
+        },
+      ],
+    },
   ];
 }
 
@@ -1066,85 +1166,46 @@ function createGroupedRealizedPnlSections(
   title,
   { ratioMetrics } = {},
 ) {
+  const pnlConfigs = /** @type {const} */ ([
+    { name: "Profit", sum: "realizedProfit", ema: "realizedProfit7dEma", rel: "realizedProfitRelToRealizedCap", isNet: false },
+    { name: "Loss", sum: "realizedLoss", ema: "realizedLoss7dEma", rel: "realizedLossRelToRealizedCap", isNet: false },
+    { name: "Net P&L", sum: "netRealizedPnl", ema: "netRealizedPnl7dEma", rel: "netRealizedPnlRelToRealizedCap", isNet: true },
+  ]);
+
   return [
-    {
-      name: "Profit",
-      title: title("Realized Profit"),
-      bottom: [
-        ...list.flatMap(({ color, name, tree }) => [
-          line({
-            metric: tree.realized.realizedProfit.sum,
-            name,
-            color,
-            unit: Unit.usd,
-          }),
-          baseline({
-            metric: tree.realized.realizedProfitRelToRealizedCap.sum,
-            name,
-            color,
-            unit: Unit.pctRcap,
-          }),
-        ]),
-        priceLine({ ctx, unit: Unit.usd }),
+    ...pnlConfigs.map(({ name, sum, ema, rel, isNet }) => ({
+      name,
+      tree: [
+        {
+          name: "Sum",
+          title: title(`Realized ${name}`),
+          bottom: [
+            ...list.flatMap(({ color, name, tree }) => [
+              (isNet ? baseline : line)({ metric: tree.realized[sum].sum, name, color, unit: Unit.usd }),
+              baseline({ metric: tree.realized[rel].sum, name, color, unit: Unit.pctRcap }),
+            ]),
+            priceLine({ ctx, unit: Unit.usd }),
+          ],
+        },
+        {
+          name: "7d EMA",
+          title: title(`Realized ${name} 7d EMA`),
+          bottom: [
+            ...list.map(({ color, name, tree }) =>
+              (isNet ? baseline : line)({ metric: tree.realized[ema], name, color, unit: Unit.usd }),
+            ),
+            priceLine({ ctx, unit: Unit.usd }),
+          ],
+        },
       ],
-    },
-    {
-      name: "Loss",
-      title: title("Realized Loss"),
-      bottom: [
-        ...list.flatMap(({ color, name, tree }) => [
-          line({
-            metric: tree.realized.realizedLoss.sum,
-            name,
-            color,
-            unit: Unit.usd,
-          }),
-          baseline({
-            metric: tree.realized.realizedLossRelToRealizedCap.sum,
-            name,
-            color,
-            unit: Unit.pctRcap,
-          }),
-        ]),
-        priceLine({ ctx, unit: Unit.usd }),
-      ],
-    },
+    })),
     {
       name: "Total P&L",
       title: title("Total Realized P&L"),
-      bottom: [
-        ...list.flatMap((cohort) => [
-          line({
-            metric: cohort.tree.realized.totalRealizedPnl,
-            name: cohort.name,
-            color: cohort.color,
-            unit: Unit.usd,
-          }),
-          ...(ratioMetrics ? ratioMetrics(cohort) : []),
-        ]),
-      ],
-    },
-    {
-      name: "Net P&L",
-      title: title("Net Realized P&L"),
-      bottom: [
-        ...list.flatMap(({ color, name, tree }) => [
-          baseline({
-            metric: tree.realized.netRealizedPnl.sum,
-            name,
-            color,
-            unit: Unit.usd,
-          }),
-          baseline({
-            metric: tree.realized.netRealizedPnlRelToRealizedCap.sum,
-            name,
-            color,
-            unit: Unit.pctRcap,
-          }),
-        ]),
-        priceLine({ ctx, unit: Unit.usd }),
-        priceLine({ ctx, unit: Unit.pctRcap }),
-      ],
+      bottom: list.flatMap((cohort) => [
+        line({ metric: cohort.tree.realized.totalRealizedPnl, name: cohort.name, color: cohort.color, unit: Unit.usd }),
+        ...(ratioMetrics ? ratioMetrics(cohort) : []),
+      ]),
     },
     {
       name: "Cumulative",
@@ -1219,6 +1280,61 @@ function createGroupedRealizedPnlSections(
             priceLine({ ctx, unit: Unit.pctMcap }),
             priceLine({ ctx, unit: Unit.pctRcap }),
           ],
+        },
+      ],
+    },
+    {
+      name: "Sent In P/L",
+      tree: [
+        {
+          name: "In Profit",
+          title: title("Sent In Profit"),
+          bottom: list.flatMap(({ color, name, tree }) => [
+            line({ metric: tree.realized.sentInProfit.bitcoin.sum, name, color, unit: Unit.btc }),
+            line({ metric: tree.realized.sentInProfit.sats.sum, name, color, unit: Unit.sats }),
+            line({ metric: tree.realized.sentInProfit.dollars.sum, name, color, unit: Unit.usd }),
+          ]),
+        },
+        {
+          name: "In Profit Cumulative",
+          title: title("Sent In Profit Cumulative"),
+          bottom: list.flatMap(({ color, name, tree }) => [
+            line({ metric: tree.realized.sentInProfit.bitcoin.cumulative, name, color, unit: Unit.btc }),
+            line({ metric: tree.realized.sentInProfit.sats.cumulative, name, color, unit: Unit.sats }),
+            line({ metric: tree.realized.sentInProfit.dollars.cumulative, name, color, unit: Unit.usd }),
+          ]),
+        },
+        {
+          name: "In Loss",
+          title: title("Sent In Loss"),
+          bottom: list.flatMap(({ color, name, tree }) => [
+            line({ metric: tree.realized.sentInLoss.bitcoin.sum, name, color, unit: Unit.btc }),
+            line({ metric: tree.realized.sentInLoss.sats.sum, name, color, unit: Unit.sats }),
+            line({ metric: tree.realized.sentInLoss.dollars.sum, name, color, unit: Unit.usd }),
+          ]),
+        },
+        {
+          name: "In Loss Cumulative",
+          title: title("Sent In Loss Cumulative"),
+          bottom: list.flatMap(({ color, name, tree }) => [
+            line({ metric: tree.realized.sentInLoss.bitcoin.cumulative, name, color, unit: Unit.btc }),
+            line({ metric: tree.realized.sentInLoss.sats.cumulative, name, color, unit: Unit.sats }),
+            line({ metric: tree.realized.sentInLoss.dollars.cumulative, name, color, unit: Unit.usd }),
+          ]),
+        },
+        {
+          name: "In Profit 14d EMA",
+          title: title("Sent In Profit 14d EMA"),
+          bottom: list.flatMap(({ color, name, tree }) =>
+            satsBtcUsd({ pattern: tree.realized.sentInProfit14dEma, name, color }),
+          ),
+        },
+        {
+          name: "In Loss 14d EMA",
+          title: title("Sent In Loss 14d EMA"),
+          bottom: list.flatMap(({ color, name, tree }) =>
+            satsBtcUsd({ pattern: tree.realized.sentInLoss14dEma, name, color }),
+          ),
         },
       ],
     },
@@ -1671,6 +1787,56 @@ function createNuplChart(ctx, rel, title) {
 }
 
 /**
+ * Create peak regret chart (basic - just absolute value)
+ * @param {PartialContext} ctx
+ * @param {{ unrealized: UnrealizedFullPattern }} tree
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function createPeakRegretChart(ctx, tree, title) {
+  return {
+    name: "Peak Regret",
+    title: title("Unrealized Peak Regret"),
+    bottom: [
+      line({
+        metric: tree.unrealized.peakRegret,
+        name: "Peak Regret",
+        color: ctx.colors.orange,
+        unit: Unit.usd,
+      }),
+    ],
+  };
+}
+
+/**
+ * Create peak regret chart with RelToMarketCap metric
+ * @param {PartialContext} ctx
+ * @param {{ unrealized: UnrealizedFullPattern, relative: RelativeWithMarketCap }} tree
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function createPeakRegretChartWithMarketCap(ctx, tree, title) {
+  return {
+    name: "Peak Regret",
+    title: title("Unrealized Peak Regret"),
+    bottom: [
+      line({
+        metric: tree.unrealized.peakRegret,
+        name: "Peak Regret",
+        color: ctx.colors.orange,
+        unit: Unit.usd,
+      }),
+      baseline({
+        metric: tree.relative.unrealizedPeakRegretRelToMarketCap,
+        name: "Peak Regret",
+        color: ctx.colors.orange,
+        unit: Unit.pctMcap,
+      }),
+    ],
+  };
+}
+
+/**
  * Create invested capital absolute chart
  * @param {PartialContext} ctx
  * @param {{ unrealized: UnrealizedPattern }} tree
@@ -1773,6 +1939,54 @@ function createGroupedNuplChart(ctx, list, title) {
   };
 }
 
+/**
+ * Create grouped peak regret chart (basic - no RelToMarketCap)
+ * @param {readonly { color: Color, name: string, tree: { unrealized: UnrealizedFullPattern } }[]} list
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function createGroupedPeakRegretChartBasic(list, title) {
+  return {
+    name: "Peak Regret",
+    title: title("Unrealized Peak Regret"),
+    bottom: list.flatMap(({ color, name, tree }) => [
+      line({
+        metric: tree.unrealized.peakRegret,
+        name,
+        color,
+        unit: Unit.usd,
+      }),
+    ]),
+  };
+}
+
+/**
+ * Create grouped peak regret chart with RelToMarketCap metric
+ * @param {readonly { color: Color, name: string, tree: { unrealized: UnrealizedFullPattern, relative: RelativeWithMarketCap } }[]} list
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function createGroupedPeakRegretChart(list, title) {
+  return {
+    name: "Peak Regret",
+    title: title("Unrealized Peak Regret"),
+    bottom: list.flatMap(({ color, name, tree }) => [
+      line({
+        metric: tree.unrealized.peakRegret,
+        name,
+        color,
+        unit: Unit.usd,
+      }),
+      baseline({
+        metric: tree.relative.unrealizedPeakRegretRelToMarketCap,
+        name,
+        color,
+        unit: Unit.pctMcap,
+      }),
+    ]),
+  };
+}
+
 // ============================================================================
 // Unrealized Section Builder (generic, type-safe composition)
 // ============================================================================
@@ -1825,11 +2039,6 @@ function createUnrealizedSection({
         name: "Sentiment",
         title: title("Market Sentiment"),
         bottom: createSingleSentimentSeries(colors, tree),
-      },
-      {
-        name: "ATH Regret",
-        title: title("Unrealized ATH Regret"),
-        bottom: createSingleUnrealizedAthRegretSeries(tree, colors.orange),
       },
       ...charts,
     ],
@@ -1968,11 +2177,6 @@ function createGroupedUnrealizedSection({
           },
         ],
       },
-      {
-        name: "ATH Regret",
-        title: title("Unrealized ATH Regret"),
-        bottom: createGroupedUnrealizedAthRegretSeries(list),
-      },
       ...charts,
     ],
   };
@@ -2025,11 +2229,6 @@ function createGroupedUnrealizedSectionWithoutRelative(list, title) {
           },
         ],
       },
-      {
-        name: "ATH Regret",
-        title: title("Unrealized ATH Regret"),
-        bottom: createGroupedUnrealizedAthRegretSeries(list),
-      },
     ],
   };
 }
@@ -2050,9 +2249,21 @@ function createSingleUnrealizedSectionAll(ctx, cohort, title) {
     ctx,
     tree,
     title,
-    pnl: createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
-    netPnl: createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+    pnl: [
+      ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
+      ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+      priceLine({ ctx, unit: Unit.pctMcap, defaultActive: false }),
+    ],
+    netPnl: [
+      ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
+      ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+      priceLine({ ctx, unit: Unit.pctMcap }),
+    ],
     investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
+    charts: [
+      createNuplChart(ctx, tree.relative, title),
+      createPeakRegretChartWithMarketCap(ctx, tree, title),
+    ],
   });
 }
 
@@ -2081,7 +2292,10 @@ function createSingleUnrealizedSectionFull(ctx, cohort, title) {
       priceLine({ ctx, unit: Unit.pctMcap }),
     ],
     investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
-    charts: [createNuplChart(ctx, tree.relative, title)],
+    charts: [
+      createNuplChart(ctx, tree.relative, title),
+      createPeakRegretChartWithMarketCap(ctx, tree, title),
+    ],
   });
 }
 
@@ -2106,7 +2320,10 @@ function createSingleUnrealizedSectionWithMarketCap(ctx, cohort, title) {
       priceLine({ ctx, unit: Unit.pctMcap }),
     ],
     investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
-    charts: [createNuplChart(ctx, tree.relative, title)],
+    charts: [
+      createNuplChart(ctx, tree.relative, title),
+      createPeakRegretChartWithMarketCap(ctx, tree, title),
+    ],
   });
 }
 
@@ -2132,6 +2349,34 @@ function createSingleUnrealizedSectionWithMarketCapOnly(ctx, cohort, title) {
     ],
     investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
     charts: [createNuplChart(ctx, tree.relative, title)],
+  });
+}
+
+/**
+ * Unrealized section for minAge cohorts (has peakRegret)
+ * @param {PartialContext} ctx
+ * @param {CohortMinAge} cohort
+ * @param {(metric: string) => string} title
+ */
+function createSingleUnrealizedSectionMinAge(ctx, cohort, title) {
+  const { tree } = cohort;
+  return createUnrealizedSection({
+    ctx,
+    tree,
+    title,
+    pnl: [
+      ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
+      priceLine({ ctx, unit: Unit.pctMcap, defaultActive: false }),
+    ],
+    netPnl: [
+      ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
+      priceLine({ ctx, unit: Unit.pctMcap }),
+    ],
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
+    charts: [
+      createNuplChart(ctx, tree.relative, title),
+      createPeakRegretChartWithMarketCap(ctx, tree, title),
+    ],
   });
 }
 
@@ -2169,7 +2414,7 @@ function createSingleUnrealizedSectionWithoutRelative(ctx, cohort, title) {
 
 /**
  * Grouped unrealized base charts (profit, loss, total pnl)
- * @param {readonly { color: Color, name: string, tree: { unrealized: PatternAll["unrealized"] } }[]} list
+ * @param {readonly { color: Color, name: string, tree: { unrealized: UnrealizedPattern } }[]} list
  * @param {(metric: string) => string} title
  */
 function createGroupedUnrealizedBaseCharts(list, title) {
@@ -2243,7 +2488,10 @@ function createGroupedUnrealizedSectionFull(ctx, list, title) {
         unit: Unit.pctOwnPnl,
       }),
     ],
-    charts: [createGroupedNuplChart(ctx, list, title)],
+    charts: [
+      createGroupedNuplChart(ctx, list, title),
+      createGroupedPeakRegretChart(list, title),
+    ],
   });
 }
 
@@ -2265,7 +2513,10 @@ function createGroupedUnrealizedSectionWithMarketCap(ctx, list, title) {
         unit: Unit.pctMcap,
       }),
     ],
-    charts: [createGroupedNuplChart(ctx, list, title)],
+    charts: [
+      createGroupedNuplChart(ctx, list, title),
+      createGroupedPeakRegretChart(list, title),
+    ],
   });
 }
 
@@ -2288,6 +2539,31 @@ function createGroupedUnrealizedSectionWithMarketCapOnly(ctx, list, title) {
       }),
     ],
     charts: [createGroupedNuplChart(ctx, list, title)],
+  });
+}
+
+/**
+ * Grouped unrealized section for minAge cohorts (has peakRegret)
+ * @param {PartialContext} ctx
+ * @param {readonly CohortMinAge[]} list
+ * @param {(metric: string) => string} title
+ */
+function createGroupedUnrealizedSectionMinAge(ctx, list, title) {
+  return createGroupedUnrealizedSection({
+    list,
+    title,
+    netPnlMetrics: ({ color, name, tree }) => [
+      baseline({
+        metric: tree.relative.netUnrealizedPnlRelToMarketCap,
+        name,
+        color,
+        unit: Unit.pctMcap,
+      }),
+    ],
+    charts: [
+      createGroupedNuplChart(ctx, list, title),
+      createGroupedPeakRegretChart(list, title),
+    ],
   });
 }
 
@@ -2324,7 +2600,10 @@ function createSingleUnrealizedSectionWithNupl({ ctx, cohort, title }) {
       ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
     ],
     investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
-    charts: [createNuplChart(ctx, tree.relative, title)],
+    charts: [
+      createNuplChart(ctx, tree.relative, title),
+      createPeakRegretChartWithMarketCap(ctx, tree, title),
+    ],
   });
 }
 
@@ -2359,7 +2638,10 @@ function createGroupedUnrealizedSectionWithNupl({ ctx, list, title }) {
         unit: Unit.pctOwnPnl,
       }),
     ],
-    charts: [createGroupedNuplChart(ctx, list, title)],
+    charts: [
+      createGroupedNuplChart(ctx, list, title),
+      createGroupedPeakRegretChart(list, title),
+    ],
   });
 }
 
@@ -2384,6 +2666,7 @@ function createSingleUnrealizedSectionAgeRange(ctx, cohort, title) {
       ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
     ],
     investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
+    charts: [createPeakRegretChart(ctx, tree, title)],
   });
 }
 
@@ -2410,6 +2693,7 @@ function createGroupedUnrealizedSectionAgeRange(list, title) {
         unit: Unit.pctOwnPnl,
       }),
     ],
+    charts: [createGroupedPeakRegretChartBasic(list, title)],
   });
 }
 
@@ -2632,6 +2916,21 @@ function createActivitySection({ ctx, cohort, title, valueMetrics = [] }) {
             unit: Unit.usd,
             sumColor: color,
           }),
+          line({
+            metric: tree.activity.sent14dEma.sats,
+            name: "14d EMA",
+            unit: Unit.sats,
+          }),
+          line({
+            metric: tree.activity.sent14dEma.bitcoin,
+            name: "14d EMA",
+            unit: Unit.btc,
+          }),
+          line({
+            metric: tree.activity.sent14dEma.dollars,
+            name: "14d EMA",
+            unit: Unit.usd,
+          }),
         ],
       },
       {
@@ -2768,6 +3067,33 @@ function createGroupedActivitySection({ list, title, valueTree }) {
   return {
     name: "Activity",
     tree: [
+      {
+        name: "Sent",
+        tree: [
+          {
+            name: "Sum",
+            title: title("Sent"),
+            bottom: list.flatMap(({ color, name, tree }) =>
+              satsBtcUsd({
+                pattern: {
+                  sats: tree.activity.sent.sats.sum,
+                  bitcoin: tree.activity.sent.bitcoin.sum,
+                  dollars: tree.activity.sent.dollars.sum,
+                },
+                name,
+                color,
+              }),
+            ),
+          },
+          {
+            name: "14d EMA",
+            title: title("Sent 14d EMA"),
+            bottom: list.flatMap(({ color, name, tree }) =>
+              satsBtcUsd({ pattern: tree.activity.sent14dEma, name, color }),
+            ),
+          },
+        ],
+      },
       {
         name: "Sell Side Risk",
         title: title("Sell Side Risk Ratio"),

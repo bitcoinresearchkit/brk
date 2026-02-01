@@ -1,4 +1,4 @@
-use brk_cohort::{CohortContext, Filter};
+use brk_cohort::{CohortContext, Filter, TimeFilter};
 use brk_types::Version;
 use vecdb::Database;
 
@@ -55,5 +55,25 @@ impl<'a> ImportConfig<'a> {
         } else {
             format!("{}_{suffix}", self.full_name)
         }
+    }
+
+    /// Whether this cohort needs peak_regret metric.
+    /// True for UTXO cohorts with age-based filters (all, term, time).
+    /// age_range cohorts compute directly, others aggregate from age_range.
+    pub fn compute_peak_regret(&self) -> bool {
+        matches!(self.context, CohortContext::Utxo)
+            && matches!(
+                self.filter,
+                Filter::All | Filter::Term(_) | Filter::Time(_)
+            )
+    }
+
+    /// Whether this is an age_range cohort (UTXO context with Time::Range filter).
+    /// These cohorts have peak_regret computed directly from chain_state.
+    pub fn is_age_range(&self) -> bool {
+        matches!(
+            (&self.context, &self.filter),
+            (CohortContext::Utxo, Filter::Time(TimeFilter::Range(_)))
+        )
     }
 }

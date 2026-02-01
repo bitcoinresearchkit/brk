@@ -7,8 +7,8 @@ use schemars::JsonSchema;
 use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2};
 
 use crate::internal::{
-    ComputedFromHeightSum, ComputedHeightDerivedSum, ComputedVecValue, LazyBinaryHeightDerivedSum,
-    NumericValue,
+    ComputedFromHeightSum, ComputedFromHeightSumCum, ComputedHeightDerivedSum, ComputedVecValue,
+    LazyBinaryHeightDerivedSum, LazyFromHeightLast, NumericValue,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -97,6 +97,33 @@ where
                 v,
                 &source1.rest,
                 &source2.rest,
+            ),
+        }
+    }
+
+    /// Create from a SumCum source (using only sum) and a LazyLast source.
+    /// Produces sum-only output (no cumulative).
+    pub fn from_sumcum_lazy_last<F, S2ST>(
+        name: &str,
+        version: Version,
+        height_source1: IterableBoxedVec<Height, S1T>,
+        height_source2: IterableBoxedVec<Height, S2T>,
+        source1: &ComputedFromHeightSumCum<S1T>,
+        source2: &LazyFromHeightLast<S2T, S2ST>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S2ST: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        Self {
+            height: LazyVecFrom2::transformed::<F>(name, v, height_source1, height_source2),
+            rest: LazyBinaryHeightDerivedSum::from_sumcum_lazy_last::<F, S2ST>(
+                name,
+                v,
+                source1,
+                source2,
             ),
         }
     }

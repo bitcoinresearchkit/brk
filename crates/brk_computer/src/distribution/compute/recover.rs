@@ -71,20 +71,24 @@ pub fn recover_state(
     }
 
     // Import UTXO cohort states - all must succeed
+    debug!("importing UTXO cohort states at height {}", consistent_height);
     if !utxo_cohorts.import_separate_states(consistent_height) {
         warn!("UTXO cohort state import failed at height {}", consistent_height);
         return Ok(RecoveredState {
             starting_height: Height::ZERO,
         });
     }
+    debug!("UTXO cohort states imported");
 
     // Import address cohort states - all must succeed
+    debug!("importing address cohort states at height {}", consistent_height);
     if !address_cohorts.import_separate_states(consistent_height) {
         warn!("Address cohort state import failed at height {}", consistent_height);
         return Ok(RecoveredState {
             starting_height: Height::ZERO,
         });
     }
+    debug!("address cohort states imported");
 
     Ok(RecoveredState {
         starting_height: consistent_height,
