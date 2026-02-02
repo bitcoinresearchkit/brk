@@ -4,7 +4,7 @@ members = ["crates/*"]
 package.description = "The Bitcoin Research Kit is a suite of tools designed to extract, compute and display data stored on a Bitcoin Core node"
 package.license = "MIT"
 package.edition = "2024"
-package.version = "0.1.2"
+package.version = "0.1.3"
 package.homepage = "https://bitcoinresearchkit.org"
 package.repository = "https://github.com/bitcoinresearchkit/brk"
 package.readme = "README.md"
@@ -40,28 +40,28 @@ aide = { version = "0.16.0-alpha.2", features = ["axum-json", "axum-query"] }
 axum = { version = "0.8.8", default-features = false, features = ["http1", "json", "query", "tokio", "tracing"] }
 bitcoin = { version = "0.32.8", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
-brk_alloc = { version = "0.1.2", path = "crates/brk_alloc" }
-brk_bencher = { version = "0.1.2", path = "crates/brk_bencher" }
-brk_bindgen = { version = "0.1.2", path = "crates/brk_bindgen" }
-brk_cli = { version = "0.1.2", path = "crates/brk_cli" }
-brk_client = { version = "0.1.2", path = "crates/brk_client" }
-brk_cohort = { version = "0.1.2", path = "crates/brk_cohort" }
-brk_computer = { version = "0.1.2", path = "crates/brk_computer" }
-brk_error = { version = "0.1.2", path = "crates/brk_error" }
-brk_fetcher = { version = "0.1.2", path = "crates/brk_fetcher" }
-brk_indexer = { version = "0.1.2", path = "crates/brk_indexer" }
-brk_iterator = { version = "0.1.2", path = "crates/brk_iterator" }
-brk_logger = { version = "0.1.2", path = "crates/brk_logger" }
-brk_mempool = { version = "0.1.2", path = "crates/brk_mempool" }
-brk_query = { version = "0.1.2", path = "crates/brk_query", features = ["tokio"] }
-brk_reader = { version = "0.1.2", path = "crates/brk_reader" }
-brk_rpc = { version = "0.1.2", path = "crates/brk_rpc" }
-brk_server = { version = "0.1.2", path = "crates/brk_server" }
-brk_store = { version = "0.1.2", path = "crates/brk_store" }
-brk_traversable = { version = "0.1.2", path = "crates/brk_traversable", features = ["pco", "derive"] }
-brk_traversable_derive = { version = "0.1.2", path = "crates/brk_traversable_derive" }
-brk_types = { version = "0.1.2", path = "crates/brk_types" }
-brk_website = { version = "0.1.2", path = "crates/brk_website" }
+brk_alloc = { version = "0.1.3", path = "crates/brk_alloc" }
+brk_bencher = { version = "0.1.3", path = "crates/brk_bencher" }
+brk_bindgen = { version = "0.1.3", path = "crates/brk_bindgen" }
+brk_cli = { version = "0.1.3", path = "crates/brk_cli" }
+brk_client = { version = "0.1.3", path = "crates/brk_client" }
+brk_cohort = { version = "0.1.3", path = "crates/brk_cohort" }
+brk_computer = { version = "0.1.3", path = "crates/brk_computer" }
+brk_error = { version = "0.1.3", path = "crates/brk_error" }
+brk_fetcher = { version = "0.1.3", path = "crates/brk_fetcher" }
+brk_indexer = { version = "0.1.3", path = "crates/brk_indexer" }
+brk_iterator = { version = "0.1.3", path = "crates/brk_iterator" }
+brk_logger = { version = "0.1.3", path = "crates/brk_logger" }
+brk_mempool = { version = "0.1.3", path = "crates/brk_mempool" }
+brk_query = { version = "0.1.3", path = "crates/brk_query", features = ["tokio"] }
+brk_reader = { version = "0.1.3", path = "crates/brk_reader" }
+brk_rpc = { version = "0.1.3", path = "crates/brk_rpc" }
+brk_server = { version = "0.1.3", path = "crates/brk_server" }
+brk_store = { version = "0.1.3", path = "crates/brk_store" }
+brk_traversable = { version = "0.1.3", path = "crates/brk_traversable", features = ["pco", "derive"] }
+brk_traversable_derive = { version = "0.1.3", path = "crates/brk_traversable_derive" }
+brk_types = { version = "0.1.3", path = "crates/brk_types" }
+brk_website = { version = "0.1.3", path = "crates/brk_website" }
 byteview = "0.10.0"
 color-eyre = "0.6.5"
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
