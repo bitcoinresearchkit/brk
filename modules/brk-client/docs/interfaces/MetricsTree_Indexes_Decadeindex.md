@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Indexes\_Decadeindex
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3731](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3731)
+Defined in: [Developer/brk/modules/brk-client/index.js:3956](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3956)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3731](https://github.com/
 
 > **date**: [`MetricPattern7`](../type-aliases/MetricPattern7.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3732](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3732)
+Defined in: [Developer/brk/modules/brk-client/index.js:3958](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3958)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3732](https://github.com/
 
 > **firstYearindex**: [`MetricPattern7`](../type-aliases/MetricPattern7.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3733](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3733)
+Defined in: [Developer/brk/modules/brk-client/index.js:3959](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3959)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3733](https://github.com/
 
 > **identity**: [`MetricPattern7`](../type-aliases/MetricPattern7.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3734](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3734)
+Defined in: [Developer/brk/modules/brk-client/index.js:3957](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3957)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3734](https://github.com/
 
 > **yearindexCount**: [`MetricPattern7`](../type-aliases/MetricPattern7.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3735](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3735)
+Defined in: [Developer/brk/modules/brk-client/index.js:3960](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3960)

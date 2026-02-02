@@ -6,92 +6,92 @@
 
 # Interface: MetricsTree\_Distribution\_UtxoCohorts\_Type
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3590](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3590)
+Defined in: [Developer/brk/modules/brk-client/index.js:4693](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4693)
 
 ## Properties
 
 ### empty
 
-> **empty**: [`_0satsPattern2`](0satsPattern2.md)
+> **empty**: [`ActivityCostOutputsRealizedSupplyUnrealizedPattern`](ActivityCostOutputsRealizedSupplyUnrealizedPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3591](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3591)
+Defined in: [Developer/brk/modules/brk-client/index.js:4704](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4704)
 
 ***
 
 ### p2a
 
-> **p2a**: [`_0satsPattern2`](0satsPattern2.md)
+> **p2a**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3592](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3592)
+Defined in: [Developer/brk/modules/brk-client/index.js:4702](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4702)
 
 ***
 
 ### p2ms
 
-> **p2ms**: [`_0satsPattern2`](0satsPattern2.md)
+> **p2ms**: [`ActivityCostOutputsRealizedSupplyUnrealizedPattern`](ActivityCostOutputsRealizedSupplyUnrealizedPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3593](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3593)
+Defined in: [Developer/brk/modules/brk-client/index.js:4697](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4697)
 
 ***
 
 ### p2pk33
 
-> **p2pk33**: [`_0satsPattern2`](0satsPattern2.md)
+> **p2pk33**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3594](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3594)
+Defined in: [Developer/brk/modules/brk-client/index.js:4695](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4695)
 
 ***
 
 ### p2pk65
 
-> **p2pk65**: [`_0satsPattern2`](0satsPattern2.md)
+> **p2pk65**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3595](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3595)
+Defined in: [Developer/brk/modules/brk-client/index.js:4694](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4694)
 
 ***
 
 ### p2pkh
 
-> **p2pkh**: [`_0satsPattern2`](0satsPattern2.md)
+> **p2pkh**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3596](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3596)
+Defined in: [Developer/brk/modules/brk-client/index.js:4696](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4696)
 
 ***
 
 ### p2sh
 
-> **p2sh**: [`_0satsPattern2`](0satsPattern2.md)
+> **p2sh**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3597](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3597)
+Defined in: [Developer/brk/modules/brk-client/index.js:4698](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4698)
 
 ***
 
 ### p2tr
 
-> **p2tr**: [`_0satsPattern2`](0satsPattern2.md)
+> **p2tr**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3598](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3598)
+Defined in: [Developer/brk/modules/brk-client/index.js:4701](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4701)
 
 ***
 
 ### p2wpkh
 
-> **p2wpkh**: [`_0satsPattern2`](0satsPattern2.md)
+> **p2wpkh**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3599](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3599)
+Defined in: [Developer/brk/modules/brk-client/index.js:4699](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4699)
 
 ***
 
 ### p2wsh
 
-> **p2wsh**: [`_0satsPattern2`](0satsPattern2.md)
+> **p2wsh**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3600](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3600)
+Defined in: [Developer/brk/modules/brk-client/index.js:4700](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4700)
 
 ***
 
 ### unknown
 
-> **unknown**: [`_0satsPattern2`](0satsPattern2.md)
+> **unknown**: [`ActivityCostOutputsRealizedSupplyUnrealizedPattern`](ActivityCostOutputsRealizedSupplyUnrealizedPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3601](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3601)
+Defined in: [Developer/brk/modules/brk-client/index.js:4703](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4703)

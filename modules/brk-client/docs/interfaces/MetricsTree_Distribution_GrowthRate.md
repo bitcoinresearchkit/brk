@@ -6,76 +6,76 @@
 
 # Interface: MetricsTree\_Distribution\_GrowthRate
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3362](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3362)
+Defined in: [Developer/brk/modules/brk-client/index.js:4833](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4833)
 
 ## Properties
 
 ### all
 
-> **all**: [`FullnessPattern`](FullnessPattern.md)\<`number`\>
+> **all**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3363](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3363)
+Defined in: [Developer/brk/modules/brk-client/index.js:4834](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4834)
 
 ***
 
 ### p2a
 
-> **p2a**: [`FullnessPattern`](FullnessPattern.md)\<`number`\>
+> **p2a**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3364](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3364)
+Defined in: [Developer/brk/modules/brk-client/index.js:4842](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4842)
 
 ***
 
 ### p2pk33
 
-> **p2pk33**: [`FullnessPattern`](FullnessPattern.md)\<`number`\>
+> **p2pk33**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3365](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3365)
+Defined in: [Developer/brk/modules/brk-client/index.js:4836](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4836)
 
 ***
 
 ### p2pk65
 
-> **p2pk65**: [`FullnessPattern`](FullnessPattern.md)\<`number`\>
+> **p2pk65**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3366](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3366)
+Defined in: [Developer/brk/modules/brk-client/index.js:4835](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4835)
 
 ***
 
 ### p2pkh
 
-> **p2pkh**: [`FullnessPattern`](FullnessPattern.md)\<`number`\>
+> **p2pkh**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3367](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3367)
+Defined in: [Developer/brk/modules/brk-client/index.js:4837](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4837)
 
 ***
 
 ### p2sh
 
-> **p2sh**: [`FullnessPattern`](FullnessPattern.md)\<`number`\>
+> **p2sh**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3368](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3368)
+Defined in: [Developer/brk/modules/brk-client/index.js:4838](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4838)
 
 ***
 
 ### p2tr
 
-> **p2tr**: [`FullnessPattern`](FullnessPattern.md)\<`number`\>
+> **p2tr**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3369](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3369)
+Defined in: [Developer/brk/modules/brk-client/index.js:4841](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4841)
 
 ***
 
 ### p2wpkh
 
-> **p2wpkh**: [`FullnessPattern`](FullnessPattern.md)\<`number`\>
+> **p2wpkh**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3370](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3370)
+Defined in: [Developer/brk/modules/brk-client/index.js:4839](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4839)
 
 ***
 
 ### p2wsh
 
-> **p2wsh**: [`FullnessPattern`](FullnessPattern.md)\<`number`\>
+> **p2wsh**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3371](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3371)
+Defined in: [Developer/brk/modules/brk-client/index.js:4840](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4840)

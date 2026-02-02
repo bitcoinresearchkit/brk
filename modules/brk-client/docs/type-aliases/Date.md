@@ -8,6 +8,6 @@
 
 > **Date**\<\> = `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:188](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L188)
+Defined in: [Developer/brk/modules/brk-client/index.js:206](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L206)
 
 ## Type Parameters

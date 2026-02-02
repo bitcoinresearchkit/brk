@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Transactions\_Count
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4443](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L4443)
+Defined in: [Developer/brk/modules/brk-client/index.js:3547](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3547)
 
 ## Properties
 
@@ -14,12 +14,12 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4443](https://github.com/
 
 > **isCoinbase**: [`MetricPattern27`](../type-aliases/MetricPattern27.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4444](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L4444)
+Defined in: [Developer/brk/modules/brk-client/index.js:3549](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3549)
 
 ***
 
 ### txCount
 
-> **txCount**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
+> **txCount**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4445](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L4445)
+Defined in: [Developer/brk/modules/brk-client/index.js:3548](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3548)

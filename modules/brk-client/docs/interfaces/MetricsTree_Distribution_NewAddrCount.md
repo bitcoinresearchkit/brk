@@ -6,76 +6,76 @@
 
 # Interface: MetricsTree\_Distribution\_NewAddrCount
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3375](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3375)
+Defined in: [Developer/brk/modules/brk-client/index.js:4820](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4820)
 
 ## Properties
 
 ### all
 
-> **all**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
+> **all**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3376](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3376)
+Defined in: [Developer/brk/modules/brk-client/index.js:4821](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4821)
 
 ***
 
 ### p2a
 
-> **p2a**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
+> **p2a**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3377](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3377)
+Defined in: [Developer/brk/modules/brk-client/index.js:4829](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4829)
 
 ***
 
 ### p2pk33
 
-> **p2pk33**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
+> **p2pk33**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3378](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3378)
+Defined in: [Developer/brk/modules/brk-client/index.js:4823](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4823)
 
 ***
 
 ### p2pk65
 
-> **p2pk65**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
+> **p2pk65**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3379](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3379)
+Defined in: [Developer/brk/modules/brk-client/index.js:4822](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4822)
 
 ***
 
 ### p2pkh
 
-> **p2pkh**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
+> **p2pkh**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3380](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3380)
+Defined in: [Developer/brk/modules/brk-client/index.js:4824](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4824)
 
 ***
 
 ### p2sh
 
-> **p2sh**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
+> **p2sh**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3381](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3381)
+Defined in: [Developer/brk/modules/brk-client/index.js:4825](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4825)
 
 ***
 
 ### p2tr
 
-> **p2tr**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
+> **p2tr**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3382](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3382)
+Defined in: [Developer/brk/modules/brk-client/index.js:4828](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4828)
 
 ***
 
 ### p2wpkh
 
-> **p2wpkh**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
+> **p2wpkh**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3383](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3383)
+Defined in: [Developer/brk/modules/brk-client/index.js:4826](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4826)
 
 ***
 
 ### p2wsh
 
-> **p2wsh**: [`DollarsPattern`](DollarsPattern.md)\<`number`\>
+> **p2wsh**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3384](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3384)
+Defined in: [Developer/brk/modules/brk-client/index.js:4827](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4827)

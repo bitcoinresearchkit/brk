@@ -6,15 +6,47 @@
 
 # Interface: MetricsTree\_Distribution\_UtxoCohorts\_All\_Relative
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3446](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3446)
+Defined in: [Developer/brk/modules/brk-client/index.js:4533](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4533)
 
 ## Properties
+
+### investedCapitalInLossPct
+
+> **investedCapitalInLossPct**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4546](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4546)
+
+***
+
+### investedCapitalInProfitPct
+
+> **investedCapitalInProfitPct**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4545](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4545)
+
+***
+
+### negUnrealizedLossRelToMarketCap
+
+> **negUnrealizedLossRelToMarketCap**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4538](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4538)
+
+***
 
 ### negUnrealizedLossRelToOwnTotalUnrealizedPnl
 
 > **negUnrealizedLossRelToOwnTotalUnrealizedPnl**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3447](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3447)
+Defined in: [Developer/brk/modules/brk-client/index.js:4543](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4543)
+
+***
+
+### netUnrealizedPnlRelToMarketCap
+
+> **netUnrealizedPnlRelToMarketCap**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4539](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4539)
 
 ***
 
@@ -22,7 +54,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3447](https://github.com/
 
 > **netUnrealizedPnlRelToOwnTotalUnrealizedPnl**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3448](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3448)
+Defined in: [Developer/brk/modules/brk-client/index.js:4544](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4544)
+
+***
+
+### nupl
+
+> **nupl**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4540](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4540)
 
 ***
 
@@ -30,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3448](https://github.com/
 
 > **supplyInLossRelToOwnSupply**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3449](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3449)
+Defined in: [Developer/brk/modules/brk-client/index.js:4535](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4535)
 
 ***
 
@@ -38,7 +78,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3449](https://github.com/
 
 > **supplyInProfitRelToOwnSupply**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3450](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3450)
+Defined in: [Developer/brk/modules/brk-client/index.js:4534](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4534)
+
+***
+
+### unrealizedLossRelToMarketCap
+
+> **unrealizedLossRelToMarketCap**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4537](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4537)
 
 ***
 
@@ -46,7 +94,23 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3450](https://github.com/
 
 > **unrealizedLossRelToOwnTotalUnrealizedPnl**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3451](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3451)
+Defined in: [Developer/brk/modules/brk-client/index.js:4542](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4542)
+
+***
+
+### unrealizedPeakRegretRelToMarketCap
+
+> **unrealizedPeakRegretRelToMarketCap**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4547](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4547)
+
+***
+
+### unrealizedProfitRelToMarketCap
+
+> **unrealizedProfitRelToMarketCap**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4536](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4536)
 
 ***
 
@@ -54,4 +118,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3451](https://github.com/
 
 > **unrealizedProfitRelToOwnTotalUnrealizedPnl**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3452](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3452)
+Defined in: [Developer/brk/modules/brk-client/index.js:4541](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4541)

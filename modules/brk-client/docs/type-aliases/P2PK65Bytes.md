@@ -8,6 +8,6 @@
 
 > **P2PK65Bytes**\<\> = [`U8x65`](U8x65.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:470](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L470)
+Defined in: [Developer/brk/modules/brk-client/index.js:489](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L489)
 
 ## Type Parameters

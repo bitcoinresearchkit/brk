@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Distribution\_AddressesData
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3344](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3344)
+Defined in: [Developer/brk/modules/brk-client/index.js:4501](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4501)
 
 ## Properties
 
@@ -14,12 +14,12 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3344](https://github.com/
 
 > **empty**: [`MetricPattern32`](../type-aliases/MetricPattern32.md)\<[`EmptyAddressData`](EmptyAddressData.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3345](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3345)
+Defined in: [Developer/brk/modules/brk-client/index.js:4503](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4503)
 
 ***
 
-### loaded
+### funded
 
-> **loaded**: [`MetricPattern31`](../type-aliases/MetricPattern31.md)\<[`LoadedAddressData`](LoadedAddressData.md)\>
+> **funded**: [`MetricPattern31`](../type-aliases/MetricPattern31.md)\<[`FundedAddressData`](FundedAddressData.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3346](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3346)
+Defined in: [Developer/brk/modules/brk-client/index.js:4502](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4502)

@@ -6,7 +6,7 @@
 
 # Interface: SupplyState
 
-Defined in: [Developer/brk/modules/brk-client/index.js:640](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L640)
+Defined in: [Developer/brk/modules/brk-client/index.js:665](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L665)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:640](https://github.com/b
 
 > **utxoCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:641](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L641)
+Defined in: [Developer/brk/modules/brk-client/index.js:666](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L666)
 
 Number of unspent transaction outputs
 
@@ -24,6 +24,6 @@ Number of unspent transaction outputs
 
 > **value**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:642](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L642)
+Defined in: [Developer/brk/modules/brk-client/index.js:667](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L667)
 
 Total value in satoshis

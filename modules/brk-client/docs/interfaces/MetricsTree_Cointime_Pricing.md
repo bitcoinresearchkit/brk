@@ -6,68 +6,68 @@
 
 # Interface: MetricsTree\_Cointime\_Pricing
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3199](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3199)
+Defined in: [Developer/brk/modules/brk-client/index.js:3738](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3738)
 
 ## Properties
 
 ### activePrice
 
-> **activePrice**: [`ActivePricePattern`](ActivePricePattern.md)
+> **activePrice**: [`DollarsSatsPattern`](DollarsSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3200](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3200)
+Defined in: [Developer/brk/modules/brk-client/index.js:3741](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3741)
 
 ***
 
 ### activePriceRatio
 
-> **activePriceRatio**: [`ActivePriceRatioPattern`](ActivePriceRatioPattern.md)
+> **activePriceRatio**: [`RatioPattern`](RatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3201](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3201)
+Defined in: [Developer/brk/modules/brk-client/index.js:3742](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3742)
 
 ***
 
 ### cointimePrice
 
-> **cointimePrice**: [`ActivePricePattern`](ActivePricePattern.md)
+> **cointimePrice**: [`DollarsSatsPattern`](DollarsSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3202](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3202)
+Defined in: [Developer/brk/modules/brk-client/index.js:3745](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3745)
 
 ***
 
 ### cointimePriceRatio
 
-> **cointimePriceRatio**: [`ActivePriceRatioPattern`](ActivePriceRatioPattern.md)
+> **cointimePriceRatio**: [`RatioPattern`](RatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3203](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3203)
+Defined in: [Developer/brk/modules/brk-client/index.js:3746](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3746)
 
 ***
 
 ### trueMarketMean
 
-> **trueMarketMean**: [`ActivePricePattern`](ActivePricePattern.md)
+> **trueMarketMean**: [`DollarsSatsPattern`](DollarsSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3204](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3204)
+Defined in: [Developer/brk/modules/brk-client/index.js:3743](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3743)
 
 ***
 
 ### trueMarketMeanRatio
 
-> **trueMarketMeanRatio**: [`ActivePriceRatioPattern`](ActivePriceRatioPattern.md)
+> **trueMarketMeanRatio**: [`RatioPattern`](RatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3205](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3205)
+Defined in: [Developer/brk/modules/brk-client/index.js:3744](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3744)
 
 ***
 
 ### vaultedPrice
 
-> **vaultedPrice**: [`ActivePricePattern`](ActivePricePattern.md)
+> **vaultedPrice**: [`DollarsSatsPattern`](DollarsSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3206](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3206)
+Defined in: [Developer/brk/modules/brk-client/index.js:3739](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3739)
 
 ***
 
 ### vaultedPriceRatio
 
-> **vaultedPriceRatio**: [`ActivePriceRatioPattern`](ActivePriceRatioPattern.md)
+> **vaultedPriceRatio**: [`RatioPattern`](RatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3207](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3207)
+Defined in: [Developer/brk/modules/brk-client/index.js:3740](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3740)

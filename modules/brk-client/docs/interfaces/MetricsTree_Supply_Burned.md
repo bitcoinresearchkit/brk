@@ -6,20 +6,20 @@
 
 # Interface: MetricsTree\_Supply\_Burned
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4405](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L4405)
+Defined in: [Developer/brk/modules/brk-client/index.js:4862](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4862)
 
 ## Properties
 
 ### opreturn
 
-> **opreturn**: [`UnclaimedRewardsPattern`](UnclaimedRewardsPattern.md)
+> **opreturn**: [`BitcoinDollarsSatsPattern3`](BitcoinDollarsSatsPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4406](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L4406)
+Defined in: [Developer/brk/modules/brk-client/index.js:4863](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4863)
 
 ***
 
 ### unspendable
 
-> **unspendable**: [`UnclaimedRewardsPattern`](UnclaimedRewardsPattern.md)
+> **unspendable**: [`BitcoinDollarsSatsPattern3`](BitcoinDollarsSatsPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4407](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L4407)
+Defined in: [Developer/brk/modules/brk-client/index.js:4864](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4864)

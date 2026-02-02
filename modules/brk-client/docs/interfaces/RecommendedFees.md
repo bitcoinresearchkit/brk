@@ -6,7 +6,7 @@
 
 # Interface: RecommendedFees
 
-Defined in: [Developer/brk/modules/brk-client/index.js:575](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L575)
+Defined in: [Developer/brk/modules/brk-client/index.js:594](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L594)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:575](https://github.com/b
 
 > **economyFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:579](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L579)
+Defined in: [Developer/brk/modules/brk-client/index.js:598](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L598)
 
 Fee rate for economical confirmation
 
@@ -24,7 +24,7 @@ Fee rate for economical confirmation
 
 > **fastestFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:576](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L576)
+Defined in: [Developer/brk/modules/brk-client/index.js:595](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L595)
 
 Fee rate for fastest confirmation (next block)
 
@@ -34,7 +34,7 @@ Fee rate for fastest confirmation (next block)
 
 > **halfHourFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:577](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L577)
+Defined in: [Developer/brk/modules/brk-client/index.js:596](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L596)
 
 Fee rate for confirmation within ~30 minutes (3 blocks)
 
@@ -44,7 +44,7 @@ Fee rate for confirmation within ~30 minutes (3 blocks)
 
 > **hourFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:578](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L578)
+Defined in: [Developer/brk/modules/brk-client/index.js:597](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L597)
 
 Fee rate for confirmation within ~1 hour (6 blocks)
 
@@ -54,6 +54,6 @@ Fee rate for confirmation within ~1 hour (6 blocks)
 
 > **minimumFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:580](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L580)
+Defined in: [Developer/brk/modules/brk-client/index.js:599](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L599)
 
 Minimum relay fee rate

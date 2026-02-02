@@ -6,8 +6,8 @@
 
 # Type Alias: Index
 
-> **Index**\<\> = `"dateindex"` \| `"decadeindex"` \| `"difficultyepoch"` \| `"emptyoutputindex"` \| `"halvingepoch"` \| `"height"` \| `"txinindex"` \| `"monthindex"` \| `"opreturnindex"` \| `"txoutindex"` \| `"p2aaddressindex"` \| `"p2msoutputindex"` \| `"p2pk33addressindex"` \| `"p2pk65addressindex"` \| `"p2pkhaddressindex"` \| `"p2shaddressindex"` \| `"p2traddressindex"` \| `"p2wpkhaddressindex"` \| `"p2wshaddressindex"` \| `"quarterindex"` \| `"semesterindex"` \| `"txindex"` \| `"unknownoutputindex"` \| `"weekindex"` \| `"yearindex"` \| `"loadedaddressindex"` \| `"emptyaddressindex"` \| `"pairoutputindex"`
+> **Index**\<\> = `"dateindex"` \| `"decadeindex"` \| `"difficultyepoch"` \| `"emptyoutputindex"` \| `"halvingepoch"` \| `"height"` \| `"txinindex"` \| `"monthindex"` \| `"opreturnindex"` \| `"txoutindex"` \| `"p2aaddressindex"` \| `"p2msoutputindex"` \| `"p2pk33addressindex"` \| `"p2pk65addressindex"` \| `"p2pkhaddressindex"` \| `"p2shaddressindex"` \| `"p2traddressindex"` \| `"p2wpkhaddressindex"` \| `"p2wshaddressindex"` \| `"quarterindex"` \| `"semesterindex"` \| `"txindex"` \| `"unknownoutputindex"` \| `"weekindex"` \| `"yearindex"` \| `"fundedaddressindex"` \| `"emptyaddressindex"` \| `"pairoutputindex"`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:311](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L311)
+Defined in: [Developer/brk/modules/brk-client/index.js:342](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L342)
 
 ## Type Parameters

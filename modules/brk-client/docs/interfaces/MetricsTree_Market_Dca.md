@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Market\_Dca
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3861](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3861)
+Defined in: [Developer/brk/modules/brk-client/index.js:4117](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4117)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3861](https://github.com/
 
 > **classAveragePrice**: [`MetricsTree_Market_Dca_ClassAveragePrice`](MetricsTree_Market_Dca_ClassAveragePrice.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3862](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3862)
+Defined in: [Developer/brk/modules/brk-client/index.js:4133](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4133)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3862](https://github.com/
 
 > **classDaysInLoss**: [`MetricsTree_Market_Dca_ClassDaysInLoss`](MetricsTree_Market_Dca_ClassDaysInLoss.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3863](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3863)
+Defined in: [Developer/brk/modules/brk-client/index.js:4136](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4136)
 
 ***
 
@@ -30,15 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3863](https://github.com/
 
 > **classDaysInProfit**: [`MetricsTree_Market_Dca_ClassDaysInProfit`](MetricsTree_Market_Dca_ClassDaysInProfit.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3864](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3864)
-
-***
-
-### classMaxDrawdown
-
-> **classMaxDrawdown**: [`MetricsTree_Market_Dca_ClassMaxDrawdown`](MetricsTree_Market_Dca_ClassMaxDrawdown.md)
-
-Defined in: [Developer/brk/modules/brk-client/index.js:3865](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3865)
+Defined in: [Developer/brk/modules/brk-client/index.js:4135](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4135)
 
 ***
 
@@ -46,15 +38,23 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3865](https://github.com/
 
 > **classMaxReturn**: [`MetricsTree_Market_Dca_ClassMaxReturn`](MetricsTree_Market_Dca_ClassMaxReturn.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3866](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3866)
+Defined in: [Developer/brk/modules/brk-client/index.js:4138](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4138)
+
+***
+
+### classMinReturn
+
+> **classMinReturn**: [`MetricsTree_Market_Dca_ClassMinReturn`](MetricsTree_Market_Dca_ClassMinReturn.md)
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4137](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4137)
 
 ***
 
 ### classReturns
 
-> **classReturns**: [`ClassDaysInLossPattern`](ClassDaysInLossPattern.md)\<`number`\>
+> **classReturns**: [`_201520162017201820192020202120222023202420252026Pattern2`](201520162017201820192020202120222023202420252026Pattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3867](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3867)
+Defined in: [Developer/brk/modules/brk-client/index.js:4134](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4134)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3867](https://github.com/
 
 > **classStack**: [`MetricsTree_Market_Dca_ClassStack`](MetricsTree_Market_Dca_ClassStack.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3868](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3868)
+Defined in: [Developer/brk/modules/brk-client/index.js:4132](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4132)
 
 ***
 
@@ -70,108 +70,108 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3868](https://github.com/
 
 > **periodAveragePrice**: [`MetricsTree_Market_Dca_PeriodAveragePrice`](MetricsTree_Market_Dca_PeriodAveragePrice.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3869](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3869)
+Defined in: [Developer/brk/modules/brk-client/index.js:4119](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4119)
 
 ***
 
 ### periodCagr
 
-> **periodCagr**: [`PeriodCagrPattern`](PeriodCagrPattern.md)
+> **periodCagr**: [`_10y2y3y4y5y6y8yPattern`](10y2y3y4y5y6y8yPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3870](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3870)
+Defined in: [Developer/brk/modules/brk-client/index.js:4121](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4121)
 
 ***
 
 ### periodDaysInLoss
 
-> **periodDaysInLoss**: [`PeriodDaysInLossPattern`](PeriodDaysInLossPattern.md)\<`number`\>
+> **periodDaysInLoss**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3871](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3871)
+Defined in: [Developer/brk/modules/brk-client/index.js:4123](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4123)
 
 ***
 
 ### periodDaysInProfit
 
-> **periodDaysInProfit**: [`PeriodDaysInLossPattern`](PeriodDaysInLossPattern.md)\<`number`\>
+> **periodDaysInProfit**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3872](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3872)
+Defined in: [Developer/brk/modules/brk-client/index.js:4122](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4122)
 
 ***
 
 ### periodLumpSumDaysInLoss
 
-> **periodLumpSumDaysInLoss**: [`PeriodDaysInLossPattern`](PeriodDaysInLossPattern.md)\<`number`\>
+> **periodLumpSumDaysInLoss**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3873](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3873)
+Defined in: [Developer/brk/modules/brk-client/index.js:4129](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4129)
 
 ***
 
 ### periodLumpSumDaysInProfit
 
-> **periodLumpSumDaysInProfit**: [`PeriodDaysInLossPattern`](PeriodDaysInLossPattern.md)\<`number`\>
+> **periodLumpSumDaysInProfit**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3874](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3874)
-
-***
-
-### periodLumpSumMaxDrawdown
-
-> **periodLumpSumMaxDrawdown**: [`PeriodDaysInLossPattern`](PeriodDaysInLossPattern.md)\<`number`\>
-
-Defined in: [Developer/brk/modules/brk-client/index.js:3875](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3875)
+Defined in: [Developer/brk/modules/brk-client/index.js:4128](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4128)
 
 ***
 
 ### periodLumpSumMaxReturn
 
-> **periodLumpSumMaxReturn**: [`PeriodDaysInLossPattern`](PeriodDaysInLossPattern.md)\<`number`\>
+> **periodLumpSumMaxReturn**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3876](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3876)
+Defined in: [Developer/brk/modules/brk-client/index.js:4131](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4131)
+
+***
+
+### periodLumpSumMinReturn
+
+> **periodLumpSumMinReturn**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4130](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4130)
 
 ***
 
 ### periodLumpSumReturns
 
-> **periodLumpSumReturns**: [`PeriodDaysInLossPattern`](PeriodDaysInLossPattern.md)\<`number`\>
+> **periodLumpSumReturns**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3877](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3877)
+Defined in: [Developer/brk/modules/brk-client/index.js:4127](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4127)
 
 ***
 
 ### periodLumpSumStack
 
-> **periodLumpSumStack**: [`PeriodLumpSumStackPattern`](PeriodLumpSumStackPattern.md)
+> **periodLumpSumStack**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern3`](10y1m1w1y2y3m3y4y5y6m6y8yPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3878](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3878)
-
-***
-
-### periodMaxDrawdown
-
-> **periodMaxDrawdown**: [`PeriodDaysInLossPattern`](PeriodDaysInLossPattern.md)\<`number`\>
-
-Defined in: [Developer/brk/modules/brk-client/index.js:3879](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3879)
+Defined in: [Developer/brk/modules/brk-client/index.js:4126](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4126)
 
 ***
 
 ### periodMaxReturn
 
-> **periodMaxReturn**: [`PeriodDaysInLossPattern`](PeriodDaysInLossPattern.md)\<`number`\>
+> **periodMaxReturn**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3880](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3880)
+Defined in: [Developer/brk/modules/brk-client/index.js:4125](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4125)
+
+***
+
+### periodMinReturn
+
+> **periodMinReturn**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)\<`number`\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:4124](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4124)
 
 ***
 
 ### periodReturns
 
-> **periodReturns**: [`PeriodDaysInLossPattern`](PeriodDaysInLossPattern.md)\<`number`\>
+> **periodReturns**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3881](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3881)
+Defined in: [Developer/brk/modules/brk-client/index.js:4120](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4120)
 
 ***
 
 ### periodStack
 
-> **periodStack**: [`PeriodLumpSumStackPattern`](PeriodLumpSumStackPattern.md)
+> **periodStack**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern3`](10y1m1w1y2y3m3y4y5y6m6y8yPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3882](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3882)
+Defined in: [Developer/brk/modules/brk-client/index.js:4118](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4118)

@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Cointime\_Activity
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3174](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3174)
+Defined in: [Developer/brk/modules/brk-client/index.js:3706](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3706)
 
 ## Properties
 
@@ -14,23 +14,23 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3174](https://github.com/
 
 > **activityToVaultednessRatio**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3175](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3175)
+Defined in: [Developer/brk/modules/brk-client/index.js:3711](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3711)
 
 ***
 
 ### coinblocksCreated
 
-> **coinblocksCreated**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
+> **coinblocksCreated**: [`CumulativeSumPattern`](CumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3176](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3176)
+Defined in: [Developer/brk/modules/brk-client/index.js:3707](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3707)
 
 ***
 
 ### coinblocksStored
 
-> **coinblocksStored**: [`BlockCountPattern`](BlockCountPattern.md)\<`number`\>
+> **coinblocksStored**: [`CumulativeSumPattern`](CumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3177](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3177)
+Defined in: [Developer/brk/modules/brk-client/index.js:3708](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3708)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3177](https://github.com/
 
 > **liveliness**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3178](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3178)
+Defined in: [Developer/brk/modules/brk-client/index.js:3709](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3709)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3178](https://github.com/
 
 > **vaultedness**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3179](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L3179)
+Defined in: [Developer/brk/modules/brk-client/index.js:3710](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3710)

@@ -6,7 +6,7 @@
 
 # Interface: PoolDetail
 
-Defined in: [Developer/brk/modules/brk-client/index.js:514](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L514)
+Defined in: [Developer/brk/modules/brk-client/index.js:533](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L533)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:514](https://github.com/b
 
 > **blockCount**: [`PoolBlockCounts`](PoolBlockCounts.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:516](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L516)
+Defined in: [Developer/brk/modules/brk-client/index.js:535](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L535)
 
 Block counts for different time periods
 
@@ -24,7 +24,7 @@ Block counts for different time periods
 
 > **blockShare**: [`PoolBlockShares`](PoolBlockShares.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:517](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L517)
+Defined in: [Developer/brk/modules/brk-client/index.js:536](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L536)
 
 Pool's share of total blocks for different time periods
 
@@ -34,7 +34,7 @@ Pool's share of total blocks for different time periods
 
 > **estimatedHashrate**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:518](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L518)
+Defined in: [Developer/brk/modules/brk-client/index.js:537](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L537)
 
 Estimated hashrate based on blocks mined
 
@@ -44,7 +44,7 @@ Estimated hashrate based on blocks mined
 
 > **pool**: [`PoolDetailInfo`](PoolDetailInfo.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:515](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L515)
+Defined in: [Developer/brk/modules/brk-client/index.js:534](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L534)
 
 Pool information
 
@@ -54,6 +54,6 @@ Pool information
 
 > `optional` **reportedHashrate**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:519](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L519)
+Defined in: [Developer/brk/modules/brk-client/index.js:538](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L538)
 
 Self-reported hashrate (if available)

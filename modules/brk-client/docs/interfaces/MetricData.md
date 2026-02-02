@@ -6,7 +6,7 @@
 
 # Interface: MetricData\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:939](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L939)
+Defined in: [Developer/brk/modules/brk-client/index.js:964](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L964)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:939](https://github.com/b
 
 > **data**: `T`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:946](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L946)
+Defined in: [Developer/brk/modules/brk-client/index.js:971](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L971)
 
 The metric data
 
@@ -30,7 +30,7 @@ The metric data
 
 > **dateEntries**: () => \[`Date`, `T`\][]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:951](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L951)
+Defined in: [Developer/brk/modules/brk-client/index.js:976](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L976)
 
 Return data as [date, value] pairs (date-based only)
 
@@ -44,7 +44,7 @@ Return data as [date, value] pairs (date-based only)
 
 > **dates**: () => `Date`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:947](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L947)
+Defined in: [Developer/brk/modules/brk-client/index.js:972](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L972)
 
 Convert index range to dates (date-based indexes only)
 
@@ -58,7 +58,7 @@ Convert index range to dates (date-based indexes only)
 
 > **end**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:944](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L944)
+Defined in: [Developer/brk/modules/brk-client/index.js:969](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L969)
 
 End index (exclusive)
 
@@ -68,7 +68,7 @@ End index (exclusive)
 
 > **index**: [`Index`](../type-aliases/Index.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:941](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L941)
+Defined in: [Developer/brk/modules/brk-client/index.js:966](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L966)
 
 The index type used for this query
 
@@ -78,7 +78,7 @@ The index type used for this query
 
 > **indexEntries**: () => \[`number`, `T`\][]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:952](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L952)
+Defined in: [Developer/brk/modules/brk-client/index.js:977](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L977)
 
 Return data as [index, value] pairs
 
@@ -92,7 +92,7 @@ Return data as [index, value] pairs
 
 > **indexes**: () => `number`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:948](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L948)
+Defined in: [Developer/brk/modules/brk-client/index.js:973](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L973)
 
 Get index range as array
 
@@ -106,7 +106,7 @@ Get index range as array
 
 > **iter**: () => `IterableIterator`\<\[`number`, `T`\]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:953](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L953)
+Defined in: [Developer/brk/modules/brk-client/index.js:978](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L978)
 
 Iterate over [index, value] pairs
 
@@ -120,7 +120,7 @@ Iterate over [index, value] pairs
 
 > **iterDates**: () => `IterableIterator`\<\[`Date`, `T`\]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:954](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L954)
+Defined in: [Developer/brk/modules/brk-client/index.js:979](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L979)
 
 Iterate over [date, value] pairs (date-based only)
 
@@ -134,7 +134,7 @@ Iterate over [date, value] pairs (date-based only)
 
 > **stamp**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:945](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L945)
+Defined in: [Developer/brk/modules/brk-client/index.js:970](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L970)
 
 ISO 8601 timestamp of when the response was generated
 
@@ -144,7 +144,7 @@ ISO 8601 timestamp of when the response was generated
 
 > **start**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:943](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L943)
+Defined in: [Developer/brk/modules/brk-client/index.js:968](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L968)
 
 Start index (inclusive)
 
@@ -154,7 +154,7 @@ Start index (inclusive)
 
 > **toDateMap**: () => `Map`\<`Date`, `T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:949](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L949)
+Defined in: [Developer/brk/modules/brk-client/index.js:974](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L974)
 
 Return data as Map keyed by date (date-based only)
 
@@ -168,7 +168,7 @@ Return data as Map keyed by date (date-based only)
 
 > **toIndexMap**: () => `Map`\<`number`, `T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:950](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L950)
+Defined in: [Developer/brk/modules/brk-client/index.js:975](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L975)
 
 Return data as Map keyed by index
 
@@ -182,7 +182,7 @@ Return data as Map keyed by index
 
 > **total**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:942](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L942)
+Defined in: [Developer/brk/modules/brk-client/index.js:967](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L967)
 
 Total number of data points
 
@@ -192,6 +192,6 @@ Total number of data points
 
 > **version**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:940](https://github.com/bitcoinresearchkit/brk/blob/54827cd0a2357417adb8631eb8f53a78e848b39a/modules/brk-client/index.js#L940)
+Defined in: [Developer/brk/modules/brk-client/index.js:965](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L965)
 
 Version of the metric data
