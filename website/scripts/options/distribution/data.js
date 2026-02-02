@@ -12,16 +12,7 @@ import {
   spendableTypeColors,
   yearColors,
 } from "../colors/index.js";
-
-/**
- * @template {Record<string, any>} T
- * @param {T} obj
- * @returns {[keyof T & string, T[keyof T & string]][]}
- */
-const entries = (obj) =>
-  /** @type {[keyof T & string, T[keyof T & string]][]} */ (
-    Object.entries(obj)
-  );
+import { entries } from "../../utils/array.js";
 
 /** @type {readonly AddressableType[]} */
 const ADDRESSABLE_TYPES = [

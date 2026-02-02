@@ -223,7 +223,6 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
             unit: Unit.usd,
             defaultActive: false,
           }),
-          priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
         ]
       : []),
     // RealizedPattern (address cohorts) doesn't have realizedCapRelToOwnMarketCap
@@ -437,9 +436,25 @@ function createRealizedPnlSection(ctx, args, title) {
       name: "Peak Regret",
       title: title("Peak Regret"),
       bottom: [
-        line({ metric: realized.peakRegret.sum, name: "Sum", color: colors.red, unit: Unit.usd }),
-        line({ metric: realized.peakRegret.cumulative, name: "Cumulative", color: colors.red, unit: Unit.usd, defaultActive: false }),
-        baseline({ metric: realized.peakRegretRelToRealizedCap, name: "Rel. to Realized Cap", color: colors.orange, unit: Unit.pctRcap }),
+        line({
+          metric: realized.peakRegret.sum,
+          name: "Sum",
+          color: colors.red,
+          unit: Unit.usd,
+        }),
+        line({
+          metric: realized.peakRegret.cumulative,
+          name: "Cumulative",
+          color: colors.red,
+          unit: Unit.usd,
+          defaultActive: false,
+        }),
+        baseline({
+          metric: realized.peakRegretRelToRealizedCap,
+          name: "Rel. to Realized Cap",
+          color: colors.orange,
+          unit: Unit.pctRcap,
+        }),
       ],
     },
     {
@@ -449,35 +464,109 @@ function createRealizedPnlSection(ctx, args, title) {
           name: "In Profit",
           title: title("Sent In Profit"),
           bottom: [
-            line({ metric: realized.sentInProfit.bitcoin.sum, name: "Sum", color: colors.green, unit: Unit.btc }),
-            line({ metric: realized.sentInProfit.bitcoin.cumulative, name: "Cumulative", color: colors.green, unit: Unit.btc, defaultActive: false }),
-            line({ metric: realized.sentInProfit.sats.sum, name: "Sum", color: colors.green, unit: Unit.sats }),
-            line({ metric: realized.sentInProfit.sats.cumulative, name: "Cumulative", color: colors.green, unit: Unit.sats, defaultActive: false }),
-            line({ metric: realized.sentInProfit.dollars.sum, name: "Sum", color: colors.green, unit: Unit.usd }),
-            line({ metric: realized.sentInProfit.dollars.cumulative, name: "Cumulative", color: colors.green, unit: Unit.usd, defaultActive: false }),
+            line({
+              metric: realized.sentInProfit.bitcoin.sum,
+              name: "Sum",
+              color: colors.green,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: realized.sentInProfit.bitcoin.cumulative,
+              name: "Cumulative",
+              color: colors.green,
+              unit: Unit.btc,
+              defaultActive: false,
+            }),
+            line({
+              metric: realized.sentInProfit.sats.sum,
+              name: "Sum",
+              color: colors.green,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: realized.sentInProfit.sats.cumulative,
+              name: "Cumulative",
+              color: colors.green,
+              unit: Unit.sats,
+              defaultActive: false,
+            }),
+            line({
+              metric: realized.sentInProfit.dollars.sum,
+              name: "Sum",
+              color: colors.green,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: realized.sentInProfit.dollars.cumulative,
+              name: "Cumulative",
+              color: colors.green,
+              unit: Unit.usd,
+              defaultActive: false,
+            }),
           ],
         },
         {
           name: "In Loss",
           title: title("Sent In Loss"),
           bottom: [
-            line({ metric: realized.sentInLoss.bitcoin.sum, name: "Sum", color: colors.red, unit: Unit.btc }),
-            line({ metric: realized.sentInLoss.bitcoin.cumulative, name: "Cumulative", color: colors.red, unit: Unit.btc, defaultActive: false }),
-            line({ metric: realized.sentInLoss.sats.sum, name: "Sum", color: colors.red, unit: Unit.sats }),
-            line({ metric: realized.sentInLoss.sats.cumulative, name: "Cumulative", color: colors.red, unit: Unit.sats, defaultActive: false }),
-            line({ metric: realized.sentInLoss.dollars.sum, name: "Sum", color: colors.red, unit: Unit.usd }),
-            line({ metric: realized.sentInLoss.dollars.cumulative, name: "Cumulative", color: colors.red, unit: Unit.usd, defaultActive: false }),
+            line({
+              metric: realized.sentInLoss.bitcoin.sum,
+              name: "Sum",
+              color: colors.red,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: realized.sentInLoss.bitcoin.cumulative,
+              name: "Cumulative",
+              color: colors.red,
+              unit: Unit.btc,
+              defaultActive: false,
+            }),
+            line({
+              metric: realized.sentInLoss.sats.sum,
+              name: "Sum",
+              color: colors.red,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: realized.sentInLoss.sats.cumulative,
+              name: "Cumulative",
+              color: colors.red,
+              unit: Unit.sats,
+              defaultActive: false,
+            }),
+            line({
+              metric: realized.sentInLoss.dollars.sum,
+              name: "Sum",
+              color: colors.red,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: realized.sentInLoss.dollars.cumulative,
+              name: "Cumulative",
+              color: colors.red,
+              unit: Unit.usd,
+              defaultActive: false,
+            }),
           ],
         },
         {
           name: "In Profit 14d EMA",
           title: title("Sent In Profit 14d EMA"),
-          bottom: satsBtcUsd({ pattern: realized.sentInProfit14dEma, name: "14d EMA", color: colors.green }),
+          bottom: satsBtcUsd({
+            pattern: realized.sentInProfit14dEma,
+            name: "14d EMA",
+            color: colors.green,
+          }),
         },
         {
           name: "In Loss 14d EMA",
           title: title("Sent In Loss 14d EMA"),
-          bottom: satsBtcUsd({ pattern: realized.sentInLoss14dEma, name: "14d EMA", color: colors.red }),
+          bottom: satsBtcUsd({
+            pattern: realized.sentInLoss14dEma,
+            name: "14d EMA",
+            color: colors.red,
+          }),
         },
       ],
     },
@@ -493,9 +582,27 @@ function createRealizedPnlSection(ctx, args, title) {
  */
 function createGroupedRealizedPnlSection(ctx, list, title) {
   const pnlConfigs = /** @type {const} */ ([
-    { name: "Profit", sum: "realizedProfit", ema: "realizedProfit7dEma", rel: "realizedProfitRelToRealizedCap", isNet: false },
-    { name: "Loss", sum: "realizedLoss", ema: "realizedLoss7dEma", rel: "realizedLossRelToRealizedCap", isNet: false },
-    { name: "Net P&L", sum: "netRealizedPnl", ema: "netRealizedPnl7dEma", rel: "netRealizedPnlRelToRealizedCap", isNet: true },
+    {
+      name: "Profit",
+      sum: "realizedProfit",
+      ema: "realizedProfit7dEma",
+      rel: "realizedProfitRelToRealizedCap",
+      isNet: false,
+    },
+    {
+      name: "Loss",
+      sum: "realizedLoss",
+      ema: "realizedLoss7dEma",
+      rel: "realizedLossRelToRealizedCap",
+      isNet: false,
+    },
+    {
+      name: "Net P&L",
+      sum: "netRealizedPnl",
+      ema: "netRealizedPnl7dEma",
+      rel: "netRealizedPnlRelToRealizedCap",
+      isNet: true,
+    },
   ]);
 
   return [
@@ -507,10 +614,19 @@ function createGroupedRealizedPnlSection(ctx, list, title) {
           title: title(`Realized ${name}`),
           bottom: [
             ...list.flatMap(({ color, name, tree }) => [
-              (isNet ? baseline : line)({ metric: tree.realized[sum].sum, name, color, unit: Unit.usd }),
-              baseline({ metric: tree.realized[rel].sum, name, color, unit: Unit.pctRcap }),
+              (isNet ? baseline : line)({
+                metric: tree.realized[sum].sum,
+                name,
+                color,
+                unit: Unit.usd,
+              }),
+              baseline({
+                metric: tree.realized[rel].sum,
+                name,
+                color,
+                unit: Unit.pctRcap,
+              }),
             ]),
-            priceLine({ ctx, unit: Unit.usd }),
           ],
         },
         {
@@ -518,9 +634,13 @@ function createGroupedRealizedPnlSection(ctx, list, title) {
           title: title(`Realized ${name} 7d EMA`),
           bottom: [
             ...list.map(({ color, name, tree }) =>
-              (isNet ? baseline : line)({ metric: tree.realized[ema], name, color, unit: Unit.usd }),
+              (isNet ? baseline : line)({
+                metric: tree.realized[ema],
+                name,
+                color,
+                unit: Unit.usd,
+              }),
             ),
-            priceLine({ ctx, unit: Unit.usd }),
           ],
         },
       ],
@@ -532,21 +652,36 @@ function createGroupedRealizedPnlSection(ctx, list, title) {
           name: "Sum",
           title: title("Peak Regret"),
           bottom: list.flatMap(({ color, name, tree }) => [
-            line({ metric: tree.realized.peakRegret.sum, name, color, unit: Unit.usd }),
+            line({
+              metric: tree.realized.peakRegret.sum,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ]),
         },
         {
           name: "Cumulative",
           title: title("Peak Regret Cumulative"),
           bottom: list.flatMap(({ color, name, tree }) => [
-            line({ metric: tree.realized.peakRegret.cumulative, name, color, unit: Unit.usd }),
+            line({
+              metric: tree.realized.peakRegret.cumulative,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ]),
         },
         {
           name: "Rel. to Realized Cap",
           title: title("Peak Regret Rel. to Realized Cap"),
           bottom: list.flatMap(({ color, name, tree }) => [
-            baseline({ metric: tree.realized.peakRegretRelToRealizedCap, name, color, unit: Unit.pctRcap }),
+            baseline({
+              metric: tree.realized.peakRegretRelToRealizedCap,
+              name,
+              color,
+              unit: Unit.pctRcap,
+            }),
           ]),
         },
       ],
@@ -558,50 +693,118 @@ function createGroupedRealizedPnlSection(ctx, list, title) {
           name: "In Profit",
           title: title("Sent In Profit"),
           bottom: list.flatMap(({ color, name, tree }) => [
-            line({ metric: tree.realized.sentInProfit.bitcoin.sum, name, color, unit: Unit.btc }),
-            line({ metric: tree.realized.sentInProfit.sats.sum, name, color, unit: Unit.sats }),
-            line({ metric: tree.realized.sentInProfit.dollars.sum, name, color, unit: Unit.usd }),
+            line({
+              metric: tree.realized.sentInProfit.bitcoin.sum,
+              name,
+              color,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.sats.sum,
+              name,
+              color,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.dollars.sum,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ]),
         },
         {
           name: "In Profit Cumulative",
           title: title("Sent In Profit Cumulative"),
           bottom: list.flatMap(({ color, name, tree }) => [
-            line({ metric: tree.realized.sentInProfit.bitcoin.cumulative, name, color, unit: Unit.btc }),
-            line({ metric: tree.realized.sentInProfit.sats.cumulative, name, color, unit: Unit.sats }),
-            line({ metric: tree.realized.sentInProfit.dollars.cumulative, name, color, unit: Unit.usd }),
+            line({
+              metric: tree.realized.sentInProfit.bitcoin.cumulative,
+              name,
+              color,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.sats.cumulative,
+              name,
+              color,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.dollars.cumulative,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ]),
         },
         {
           name: "In Loss",
           title: title("Sent In Loss"),
           bottom: list.flatMap(({ color, name, tree }) => [
-            line({ metric: tree.realized.sentInLoss.bitcoin.sum, name, color, unit: Unit.btc }),
-            line({ metric: tree.realized.sentInLoss.sats.sum, name, color, unit: Unit.sats }),
-            line({ metric: tree.realized.sentInLoss.dollars.sum, name, color, unit: Unit.usd }),
+            line({
+              metric: tree.realized.sentInLoss.bitcoin.sum,
+              name,
+              color,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.sats.sum,
+              name,
+              color,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.dollars.sum,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ]),
         },
         {
           name: "In Loss Cumulative",
           title: title("Sent In Loss Cumulative"),
           bottom: list.flatMap(({ color, name, tree }) => [
-            line({ metric: tree.realized.sentInLoss.bitcoin.cumulative, name, color, unit: Unit.btc }),
-            line({ metric: tree.realized.sentInLoss.sats.cumulative, name, color, unit: Unit.sats }),
-            line({ metric: tree.realized.sentInLoss.dollars.cumulative, name, color, unit: Unit.usd }),
+            line({
+              metric: tree.realized.sentInLoss.bitcoin.cumulative,
+              name,
+              color,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.sats.cumulative,
+              name,
+              color,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.dollars.cumulative,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ]),
         },
         {
           name: "In Profit 14d EMA",
           title: title("Sent In Profit 14d EMA"),
           bottom: list.flatMap(({ color, name, tree }) =>
-            satsBtcUsd({ pattern: tree.realized.sentInProfit14dEma, name, color }),
+            satsBtcUsd({
+              pattern: tree.realized.sentInProfit14dEma,
+              name,
+              color,
+            }),
           ),
         },
         {
           name: "In Loss 14d EMA",
           title: title("Sent In Loss 14d EMA"),
           bottom: list.flatMap(({ color, name, tree }) =>
-            satsBtcUsd({ pattern: tree.realized.sentInLoss14dEma, name, color }),
+            satsBtcUsd({
+              pattern: tree.realized.sentInLoss14dEma,
+              name,
+              color,
+            }),
           ),
         },
       ],

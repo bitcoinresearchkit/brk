@@ -136,7 +136,7 @@ define_any_address_indexes_vecs!(
 
 impl AnyAddressIndexesVecs {
     /// Process index updates in parallel by address type.
-    /// Accepts two maps (e.g. from empty and loaded processing) and merges per-thread.
+    /// Accepts two maps (e.g. from empty and funded processing) and merges per-thread.
     /// Updates existing entries and pushes new ones (sorted).
     /// Returns (update_count, push_count).
     pub fn par_batch_update(

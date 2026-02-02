@@ -263,8 +263,8 @@ pub fn process_blocks(
         });
 
         // Merge new address data into current cache
-        cache.merge_loaded(outputs_result.address_data);
-        cache.merge_loaded(inputs_result.address_data);
+        cache.merge_funded(outputs_result.address_data);
+        cache.merge_funded(inputs_result.address_data);
 
         // Combine txindex_vecs from outputs and inputs, then update tx_count
         let combined_txindex_vecs = outputs_result
@@ -425,14 +425,14 @@ pub fn process_blocks(
             // Drop readers to release mmap handles
             drop(vr);
 
-            let (empty_updates, loaded_updates) = cache.take();
+            let (empty_updates, funded_updates) = cache.take();
 
             // Process address updates (mutations)
             process_address_updates(
                 &mut vecs.addresses_data,
                 &mut vecs.any_address_indexes,
                 empty_updates,
-                loaded_updates,
+                funded_updates,
             )?;
 
             let _lock = exit.lock();
@@ -451,14 +451,14 @@ pub fn process_blocks(
     let _lock = exit.lock();
     drop(vr);
 
-    let (empty_updates, loaded_updates) = cache.take();
+    let (empty_updates, funded_updates) = cache.take();
 
     // Process address updates (mutations)
     process_address_updates(
         &mut vecs.addresses_data,
         &mut vecs.any_address_indexes,
         empty_updates,
-        loaded_updates,
+        funded_updates,
     )?;
 
     // Write to disk (pure I/O) - save changes for rollback

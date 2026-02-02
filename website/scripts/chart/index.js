@@ -1351,7 +1351,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         const options = blueprint.options;
         const indexes = Object.keys(blueprint.metric.by);
 
-        const defaultColor = unit === Unit.usd || unit === Unit.usdCumulative ? colors.green : colors.orange;
+        const defaultColor = unit === Unit.usd ? colors.green : colors.orange;
 
         if (indexes.includes(idx)) {
           switch (blueprint.type) {

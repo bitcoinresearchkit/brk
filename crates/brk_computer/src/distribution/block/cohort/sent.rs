@@ -2,7 +2,7 @@ use brk_cohort::{AmountBucket, ByAddressType};
 use brk_error::Result;
 use brk_types::{Age, CentsUnsigned, CheckedSub, Height, Sats, Timestamp, TypeIndex};
 use rustc_hash::FxHashSet;
-use vecdb::{unlikely, VecIndex};
+use vecdb::{VecIndex, unlikely};
 
 use crate::distribution::{
     address::{AddressTypeToActivityCounts, HeightToAddressTypeToVec},
@@ -131,7 +131,7 @@ pub fn process_sent(
                         *type_addr_count -= 1;
                         *type_empty_count += 1;
 
-                        // Move from loaded to empty
+                        // Move from funded to empty
                         lookup.move_to_empty(output_type, type_index);
                     } else {
                         // Add to new cohort
@@ -151,7 +151,14 @@ pub fn process_sent(
                         .state
                         .as_mut()
                         .unwrap()
-                        .send(addr_data, value, current_price.unwrap(), prev_price.unwrap(), peak_price.unwrap(), age)?;
+                        .send(
+                            addr_data,
+                            value,
+                            current_price.unwrap(),
+                            prev_price.unwrap(),
+                            peak_price.unwrap(),
+                            age,
+                        )?;
                 }
             }
         }

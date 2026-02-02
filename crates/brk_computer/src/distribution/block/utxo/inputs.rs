@@ -13,7 +13,7 @@ use crate::distribution::address::HeightToAddressTypeToVec;
 
 use super::super::{
     cache::{AddressCache, load_uncached_address_data},
-    cohort::{LoadedAddressDataWithSource, TxIndexVec},
+    cohort::{FundedAddressDataWithSource, TxIndexVec},
 };
 
 /// Result of processing inputs for a block.
@@ -23,7 +23,7 @@ pub struct InputsResult {
     /// Per-height, per-address-type sent data: (typeindex, value) for each address.
     pub sent_data: HeightToAddressTypeToVec<(TypeIndex, Sats)>,
     /// Address data looked up during processing, keyed by (address_type, typeindex).
-    pub address_data: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
+    pub address_data: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
     /// Transaction indexes per address for tx_count tracking.
     pub txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>,
 }
@@ -100,7 +100,7 @@ pub fn process_inputs(
     );
     let mut sent_data = HeightToAddressTypeToVec::with_capacity(estimated_unique_heights);
     let mut address_data =
-        AddressTypeToTypeIndexMap::<LoadedAddressDataWithSource>::with_capacity(estimated_per_type);
+        AddressTypeToTypeIndexMap::<FundedAddressDataWithSource>::with_capacity(estimated_per_type);
     let mut txindex_vecs =
         AddressTypeToTypeIndexMap::<TxIndexVec>::with_capacity(estimated_per_type);
 

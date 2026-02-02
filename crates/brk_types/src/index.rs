@@ -9,7 +9,7 @@ use crate::PairOutputIndex;
 
 use super::{
     Date, DateIndex, DecadeIndex, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
-    Height, LoadedAddressIndex, MonthIndex, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex,
+    Height, FundedAddressIndex, MonthIndex, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex,
     P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
     P2WPKHAddressIndex, P2WSHAddressIndex, QuarterIndex, SemesterIndex, TxInIndex, TxIndex,
     TxOutIndex, UnknownOutputIndex, WeekIndex, YearIndex,
@@ -46,7 +46,7 @@ pub enum Index {
     UnknownOutputIndex,
     WeekIndex,
     YearIndex,
-    LoadedAddressIndex,
+    FundedAddressIndex,
     EmptyAddressIndex,
     PairOutputIndex,
 }
@@ -79,7 +79,7 @@ impl Index {
             Self::UnknownOutputIndex,
             Self::WeekIndex,
             Self::YearIndex,
-            Self::LoadedAddressIndex,
+            Self::FundedAddressIndex,
             Self::EmptyAddressIndex,
             Self::PairOutputIndex,
         ]
@@ -112,7 +112,7 @@ impl Index {
             Self::UnknownOutputIndex => UnknownOutputIndex::to_possible_strings(),
             Self::WeekIndex => WeekIndex::to_possible_strings(),
             Self::YearIndex => YearIndex::to_possible_strings(),
-            Self::LoadedAddressIndex => LoadedAddressIndex::to_possible_strings(),
+            Self::FundedAddressIndex => FundedAddressIndex::to_possible_strings(),
             Self::EmptyAddressIndex => EmptyAddressIndex::to_possible_strings(),
             Self::PairOutputIndex => PairOutputIndex::to_possible_strings(),
         }
@@ -216,8 +216,8 @@ impl TryFrom<&str> for Index {
             v if (Self::UnknownOutputIndex).possible_values().contains(&v) => {
                 Self::UnknownOutputIndex
             }
-            v if (Self::LoadedAddressIndex).possible_values().contains(&v) => {
-                Self::LoadedAddressIndex
+            v if (Self::FundedAddressIndex).possible_values().contains(&v) => {
+                Self::FundedAddressIndex
             }
             v if (Self::EmptyAddressIndex).possible_values().contains(&v) => {
                 Self::EmptyAddressIndex

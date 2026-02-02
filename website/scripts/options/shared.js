@@ -23,21 +23,65 @@ export const formatCohortTitle = (cohortTitle) =>
  */
 export function satsBtcUsd({ pattern, name, color, defaultActive }) {
   return [
-    line({
-      metric: pattern.bitcoin,
-      name,
-      color,
-      unit: Unit.btc,
-      defaultActive,
-    }),
+    line({ metric: pattern.bitcoin, name, color, unit: Unit.btc, defaultActive }),
     line({ metric: pattern.sats, name, color, unit: Unit.sats, defaultActive }),
-    line({
-      metric: pattern.dollars,
-      name,
-      color,
-      unit: Unit.usd,
-      defaultActive,
-    }),
+    line({ metric: pattern.dollars, name, color, unit: Unit.usd, defaultActive }),
+  ];
+}
+
+/**
+ * Create sats/btc/usd series from any value pattern using sum or cumulative key
+ * @param {Object} args
+ * @param {AnyValuePatternType} args.source
+ * @param {'sum' | 'cumulative'} args.key
+ * @param {string} args.name
+ * @param {Color} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @returns {FetchedLineSeriesBlueprint[]}
+ */
+export function satsBtcUsdFrom({ source, key, name, color, defaultActive }) {
+  return satsBtcUsd({
+    pattern: { bitcoin: source.bitcoin[key], sats: source.sats[key], dollars: source.dollars[key] },
+    name,
+    color,
+    defaultActive,
+  });
+}
+
+/**
+ * Create sats/btc/usd series from a full value pattern using base or average key
+ * @param {Object} args
+ * @param {FullValuePattern} args.source
+ * @param {'base' | 'average'} args.key
+ * @param {string} args.name
+ * @param {Color} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @returns {FetchedLineSeriesBlueprint[]}
+ */
+export function satsBtcUsdFromFull({ source, key, name, color, defaultActive }) {
+  return satsBtcUsd({
+    pattern: { bitcoin: source.bitcoin[key], sats: source.sats[key], dollars: source.dollars[key] },
+    name,
+    color,
+    defaultActive,
+  });
+}
+
+/**
+ * Create coinbase/subsidy/fee series from separate sources
+ * @param {Colors} colors
+ * @param {Object} args
+ * @param {AnyValuePatternType} args.coinbase
+ * @param {AnyValuePatternType} args.subsidy
+ * @param {AnyValuePatternType} args.fee
+ * @param {'sum' | 'cumulative'} args.key
+ * @returns {FetchedLineSeriesBlueprint[]}
+ */
+export function revenueBtcSatsUsd(colors, { coinbase, subsidy, fee, key }) {
+  return [
+    ...satsBtcUsdFrom({ source: coinbase, key, name: "Coinbase", color: colors.orange }),
+    ...satsBtcUsdFrom({ source: subsidy, key, name: "Subsidy", color: colors.lime }),
+    ...satsBtcUsdFrom({ source: fee, key, name: "Fees", color: colors.cyan }),
   ];
 }
 

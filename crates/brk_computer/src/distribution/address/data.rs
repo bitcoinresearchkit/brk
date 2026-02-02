@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex, Version,
+    EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, Height, Version,
 };
 use rayon::prelude::*;
 use vecdb::{
@@ -10,10 +10,10 @@ use vecdb::{
 
 const SAVED_STAMPED_CHANGES: u16 = 10;
 
-/// Storage for both loaded and empty address data.
+/// Storage for both funded and empty address data.
 #[derive(Clone, Traversable)]
 pub struct AddressesDataVecs {
-    pub loaded: BytesVec<LoadedAddressIndex, LoadedAddressData>,
+    pub funded: BytesVec<FundedAddressIndex, FundedAddressData>,
     pub empty: BytesVec<EmptyAddressIndex, EmptyAddressData>,
 }
 
@@ -21,8 +21,8 @@ impl AddressesDataVecs {
     /// Import from database.
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
         Ok(Self {
-            loaded: BytesVec::forced_import_with(
-                ImportOptions::new(db, "loadedaddressdata", version)
+            funded: BytesVec::forced_import_with(
+                ImportOptions::new(db, "fundedaddressdata", version)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
             empty: BytesVec::forced_import_with(
@@ -32,31 +32,31 @@ impl AddressesDataVecs {
         })
     }
 
-    /// Get minimum stamped height across loaded and empty data.
+    /// Get minimum stamped height across funded and empty data.
     pub fn min_stamped_height(&self) -> Height {
-        Height::from(self.loaded.stamp())
+        Height::from(self.funded.stamp())
             .incremented()
             .min(Height::from(self.empty.stamp()).incremented())
     }
 
-    /// Rollback both loaded and empty data to before the given stamp.
+    /// Rollback both funded and empty data to before the given stamp.
     pub fn rollback_before(&mut self, stamp: Stamp) -> Result<[Stamp; 2]> {
         Ok([
-            self.loaded.rollback_before(stamp)?,
+            self.funded.rollback_before(stamp)?,
             self.empty.rollback_before(stamp)?,
         ])
     }
 
-    /// Reset both loaded and empty data.
+    /// Reset both funded and empty data.
     pub fn reset(&mut self) -> Result<()> {
-        self.loaded.reset()?;
+        self.funded.reset()?;
         self.empty.reset()?;
         Ok(())
     }
 
-    /// Flush both loaded and empty data with stamp.
+    /// Flush both funded and empty data with stamp.
     pub fn write(&mut self, stamp: Stamp, with_changes: bool) -> Result<()> {
-        self.loaded
+        self.funded
             .stamped_write_maybe_with_changes(stamp, with_changes)?;
         self.empty
             .stamped_write_maybe_with_changes(stamp, with_changes)?;
@@ -66,7 +66,7 @@ impl AddressesDataVecs {
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         vec![
-            &mut self.loaded as &mut dyn AnyStoredVec,
+            &mut self.funded as &mut dyn AnyStoredVec,
             &mut self.empty as &mut dyn AnyStoredVec,
         ]
         .into_par_iter()

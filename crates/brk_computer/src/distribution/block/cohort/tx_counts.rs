@@ -1,6 +1,6 @@
 use crate::distribution::address::AddressTypeToTypeIndexMap;
 
-use super::with_source::{EmptyAddressDataWithSource, LoadedAddressDataWithSource, TxIndexVec};
+use super::with_source::{EmptyAddressDataWithSource, FundedAddressDataWithSource, TxIndexVec};
 
 /// Update tx_count for addresses based on unique transactions they participated in.
 ///
@@ -8,10 +8,10 @@ use super::with_source::{EmptyAddressDataWithSource, LoadedAddressDataWithSource
 /// 1. Deduplicate transaction indexes (an address may appear in multiple inputs/outputs of same tx)
 /// 2. Add the unique count to the address's tx_count field
 ///
-/// Addresses are looked up in loaded_cache first, then empty_cache.
-/// NOTE: This should be called AFTER merging parallel-fetched address data into loaded_cache.
+/// Addresses are looked up in funded_cache first, then empty_cache.
+/// NOTE: This should be called AFTER merging parallel-fetched address data into funded_cache.
 pub fn update_tx_counts(
-    loaded_cache: &mut AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
+    funded_cache: &mut AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
     empty_cache: &mut AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
     mut txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>,
 ) {
@@ -32,7 +32,7 @@ pub fn update_tx_counts(
     {
         let tx_count = txindex_vec.len() as u32;
 
-        if let Some(addr_data) = loaded_cache
+        if let Some(addr_data) = funded_cache
             .get_mut(address_type)
             .unwrap()
             .get_mut(&typeindex)

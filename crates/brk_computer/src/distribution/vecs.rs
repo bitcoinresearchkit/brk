@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    DateIndex, EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex,
+    DateIndex, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, Height,
     SupplyState, Version,
 };
 use tracing::{debug, info};
@@ -55,8 +55,8 @@ pub struct Vecs {
     /// Growth rate (new / addr_count) - lazy ratio with distribution stats, global + per-type
     pub growth_rate: GrowthRateVecs,
 
-    pub loadedaddressindex:
-        LazyVecFrom1<LoadedAddressIndex, LoadedAddressIndex, LoadedAddressIndex, LoadedAddressData>,
+    pub fundedaddressindex:
+        LazyVecFrom1<FundedAddressIndex, FundedAddressIndex, FundedAddressIndex, FundedAddressData>,
     pub emptyaddressindex:
         LazyVecFrom1<EmptyAddressIndex, EmptyAddressIndex, EmptyAddressIndex, EmptyAddressData>,
 }
@@ -92,8 +92,8 @@ impl Vecs {
         )?;
 
         // Create address data BytesVecs first so we can also use them for identity mappings
-        let loadedaddressindex_to_loadedaddressdata = BytesVec::forced_import_with(
-            vecdb::ImportOptions::new(&db, "loadedaddressdata", version)
+        let fundedaddressindex_to_fundedaddressdata = BytesVec::forced_import_with(
+            vecdb::ImportOptions::new(&db, "fundedaddressdata", version)
                 .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
         )?;
         let emptyaddressindex_to_emptyaddressdata = BytesVec::forced_import_with(
@@ -102,10 +102,10 @@ impl Vecs {
         )?;
 
         // Identity mappings for traversable
-        let loadedaddressindex = LazyVecFrom1::init(
-            "loadedaddressindex",
+        let fundedaddressindex = LazyVecFrom1::init(
+            "fundedaddressindex",
             version,
-            loadedaddressindex_to_loadedaddressdata.boxed_clone(),
+            fundedaddressindex_to_fundedaddressdata.boxed_clone(),
             |index, _| Some(index),
         );
         let emptyaddressindex = LazyVecFrom1::init(
@@ -156,10 +156,10 @@ impl Vecs {
 
             any_address_indexes: AnyAddressIndexesVecs::forced_import(&db, version)?,
             addresses_data: AddressesDataVecs {
-                loaded: loadedaddressindex_to_loadedaddressdata,
+                funded: fundedaddressindex_to_fundedaddressdata,
                 empty: emptyaddressindex_to_emptyaddressdata,
             },
-            loadedaddressindex,
+            fundedaddressindex,
             emptyaddressindex,
 
             db,

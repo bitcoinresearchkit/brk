@@ -61,8 +61,14 @@
  * @typedef {Brk.PriceRatioPattern} ActivePriceRatioPattern
  * AnyRatioPattern: full ratio patterns (with or without price) - has ratio, percentiles, z-scores
  * @typedef {Brk.RatioPattern | Brk.PriceRatioPattern} AnyRatioPattern
- * ValuePattern: patterns with {bitcoin.sum, bitcoin.cumulative, sats.sum, sats.cumulative, dollars.sum, dollars.cumulative}
- * @typedef {Brk.BitcoinDollarsSatsPattern6 | Brk.BitcoinDollarsSatsPattern3 | Brk.BitcoinDollarsSatsPattern2} ValuePattern
+ * ValuePattern: patterns with minimal stats (sum, cumulative only) for bitcoin/sats/dollars
+ * @typedef {Brk.BitcoinDollarsSatsPattern6 | Brk.BitcoinDollarsSatsPattern3} ValuePattern
+ * FullValuePattern: patterns with full stats (base, sum, cumulative, average, percentiles) for bitcoin/sats/dollars
+ * @typedef {Brk.BitcoinDollarsSatsPattern2} FullValuePattern
+ * SumValuePattern: patterns with sum stats (sum, cumulative, average, percentiles - no base) for bitcoin/sats/dollars
+ * @typedef {{bitcoin: SumStatsPattern<any>, sats: SumStatsPattern<any>, dollars: SumStatsPattern<any>}} SumValuePattern
+ * AnyValuePatternType: union of all value pattern types
+ * @typedef {ValuePattern | FullValuePattern} AnyValuePatternType
  * @typedef {Brk.AnyMetricPattern} AnyMetricPattern
  * @typedef {Brk.DollarsSatsPattern} ActivePricePattern
  * @typedef {Brk.AnyMetricEndpointBuilder} AnyMetricEndpoint

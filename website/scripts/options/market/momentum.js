@@ -104,7 +104,6 @@ export function createMomentumSection(ctx, indicators) {
             name: "Histogram",
             unit: Unit.usd,
           }),
-          priceLine({ ctx, unit: Unit.usd }),
         ],
       },
     ],

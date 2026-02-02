@@ -1,13 +1,18 @@
 /** Mining section - Network security and miner economics */
 
 import { Unit } from "../utils/units.js";
-import { priceLine } from "./constants.js";
+import { entries, includes } from "../utils/array.js";
+import { colorAt } from "../chart/colors.js";
 import { line, baseline, dots, dotted } from "./series.js";
-import { satsBtcUsd } from "./shared.js";
-import { fromCountPattern } from "./series.js";
+import {
+  satsBtcUsd,
+  satsBtcUsdFrom,
+  satsBtcUsdFromFull,
+  revenueBtcSatsUsd,
+} from "./shared.js";
 
 /** Major pools to show in Compare section (by current hashrate dominance) */
-const MAJOR_POOL_IDS = [
+const MAJOR_POOL_IDS = /** @type {const} */ ([
   "foundryusa", // ~32% - largest pool
   "antpool", // ~18% - Bitmain-owned
   "viabtc", // ~14% - independent
@@ -16,14 +21,14 @@ const MAJOR_POOL_IDS = [
   "braiinspool", // formerly Slush Pool
   "spiderpool", // growing Asian pool
   "ocean", // decentralization-focused
-];
+]);
 
 /**
  * AntPool & friends - pools sharing AntPool's block templates
  * Based on b10c's research: https://b10c.me/blog/015-bitcoin-mining-centralization/
  * Collectively ~35-40% of network hashrate
  */
-const ANTPOOL_AND_FRIENDS_IDS = [
+const ANTPOOL_AND_FRIENDS_IDS = /** @type {const} */ ([
   "antpool", // Bitmain-owned, template source
   "poolin", // shares AntPool templates
   "btccom", // CloverPool (formerly BTC.com)
@@ -34,7 +39,7 @@ const ANTPOOL_AND_FRIENDS_IDS = [
   "sigmapoolcom", // SigmaPool
   "rawpool", // shares AntPool templates
   "luxor", // shares AntPool templates
-];
+]);
 
 /**
  * Create Mining section
@@ -42,143 +47,164 @@ const ANTPOOL_AND_FRIENDS_IDS = [
  * @returns {PartialOptionsGroup}
  */
 export function createMiningSection(ctx) {
-  const {
-    colors,
-    brk,
-    fromSumStatsPattern,
-    fromCoinbasePattern,
-    fromValuePattern,
-  } = ctx;
+  const { colors, brk, distributionBtcSatsUsd } = ctx;
   const { blocks, transactions, pools } = brk.metrics;
 
-  // Build pools tree dynamically
-  const poolEntries = Object.entries(pools.vecs);
-  const poolsTree = poolEntries.map(([key, pool]) => {
-    const poolName =
-      brk.POOL_ID_TO_POOL_NAME[
-        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (key.toLowerCase())
-      ] || key;
-    return {
-      name: poolName,
-      tree: [
-        {
-          name: "Dominance",
-          title: `Dominance: ${poolName}`,
-          bottom: [
-            dots({
-              metric: pool._24hDominance,
-              name: "24h",
-              color: colors.pink,
-              unit: Unit.percentage,
-              defaultActive: false,
+  // Pre-compute pool entries with resolved names
+  const poolData = entries(pools.vecs).map(([id, pool]) => ({
+    id,
+    name: brk.POOL_ID_TO_POOL_NAME[id],
+    pool,
+  }));
+
+  // Filtered pool groups for comparisons
+  const majorPools = poolData.filter((p) => includes(MAJOR_POOL_IDS, p.id));
+  const antpoolFriends = poolData.filter((p) =>
+    includes(ANTPOOL_AND_FRIENDS_IDS, p.id),
+  );
+
+  // Build individual pool trees
+  const poolsTree = poolData.map(({ name, pool }) => ({
+    name,
+    tree: [
+      {
+        name: "Dominance",
+        title: `Dominance: ${name}`,
+        bottom: [
+          dots({
+            metric: pool._24hDominance,
+            name: "24h",
+            color: colors.time._24h,
+            unit: Unit.percentage,
+            defaultActive: false,
+          }),
+          line({
+            metric: pool._1wDominance,
+            name: "1w",
+            color: colors.time._1w,
+            unit: Unit.percentage,
+            defaultActive: false,
+          }),
+          line({
+            metric: pool._1mDominance,
+            name: "1m",
+            color: colors.time._1m,
+            unit: Unit.percentage,
+          }),
+          line({
+            metric: pool._1yDominance,
+            name: "1y",
+            color: colors.time._1y,
+            unit: Unit.percentage,
+            defaultActive: false,
+          }),
+          line({
+            metric: pool.dominance,
+            name: "All Time",
+            color: colors.time.all,
+            unit: Unit.percentage,
+            defaultActive: false,
+          }),
+        ],
+      },
+      {
+        name: "Blocks Mined",
+        tree: [
+          {
+            name: "Sum",
+            title: `Blocks Mined: ${name}`,
+            bottom: [
+              line({
+                metric: pool.blocksMined.sum,
+                name: "sum",
+                unit: Unit.count,
+              }),
+              line({
+                metric: pool._24hBlocksMined,
+                name: "24h",
+                color: colors.time._24h,
+                unit: Unit.count,
+                defaultActive: false,
+              }),
+              line({
+                metric: pool._1wBlocksMined,
+                name: "1w",
+                color: colors.time._1w,
+                unit: Unit.count,
+                defaultActive: false,
+              }),
+              line({
+                metric: pool._1mBlocksMined,
+                name: "1m",
+                color: colors.time._1m,
+                unit: Unit.count,
+                defaultActive: false,
+              }),
+              line({
+                metric: pool._1yBlocksMined,
+                name: "1y",
+                color: colors.time._1y,
+                unit: Unit.count,
+                defaultActive: false,
+              }),
+            ],
+          },
+          {
+            name: "Cumulative",
+            title: `Blocks Mined: ${name} (Total)`,
+            bottom: [
+              line({
+                metric: pool.blocksMined.cumulative,
+                name: "all-time",
+                unit: Unit.count,
+              }),
+            ],
+          },
+        ],
+      },
+      {
+        name: "Rewards",
+        tree: [
+          {
+            name: "Sum",
+            title: `Rewards: ${name}`,
+            bottom: revenueBtcSatsUsd(colors, {
+              coinbase: pool.coinbase,
+              subsidy: pool.subsidy,
+              fee: pool.fee,
+              key: "sum",
             }),
-            line({
-              metric: pool._1wDominance,
-              name: "1w",
-              color: colors.red,
-              unit: Unit.percentage,
-              defaultActive: false,
+          },
+          {
+            name: "Cumulative",
+            title: `Rewards: ${name} (Total)`,
+            bottom: revenueBtcSatsUsd(colors, {
+              coinbase: pool.coinbase,
+              subsidy: pool.subsidy,
+              fee: pool.fee,
+              key: "cumulative",
             }),
-            line({
-              metric: pool._1mDominance,
-              name: "1m",
-              unit: Unit.percentage,
-            }),
-            line({
-              metric: pool._1yDominance,
-              name: "1y",
-              color: colors.lime,
-              unit: Unit.percentage,
-              defaultActive: false,
-            }),
-            line({
-              metric: pool.dominance,
-              name: "All Time",
-              color: colors.teal,
-              unit: Unit.percentage,
-              defaultActive: false,
-            }),
-          ],
-        },
-        {
-          name: "Blocks Mined",
-          title: `Blocks Mined: ${poolName}`,
-          bottom: [
-            ...fromCountPattern({
-              pattern: pool.blocksMined,
-              unit: Unit.count,
-              cumulativeUnit: Unit.countCumulative,
-            }),
-            line({
-              metric: pool._24hBlocksMined,
-              name: "24h",
-              color: colors.pink,
-              unit: Unit.count,
-              defaultActive: false,
-            }),
-            line({
-              metric: pool._1wBlocksMined,
-              name: "1w",
-              color: colors.red,
-              unit: Unit.count,
-              defaultActive: false,
-            }),
-            line({
-              metric: pool._1mBlocksMined,
-              name: "1m",
-              color: colors.orange,
-              unit: Unit.count,
-              defaultActive: false,
-            }),
-            line({
-              metric: pool._1yBlocksMined,
-              name: "1y",
-              color: colors.purple,
-              unit: Unit.count,
-              defaultActive: false,
-            }),
-          ],
-        },
-        {
-          name: "Rewards",
-          title: `Rewards: ${poolName}`,
-          bottom: [
-            ...fromValuePattern({
-              pattern: pool.coinbase,
-              title: "coinbase",
-              color: colors.orange,
-            }),
-            ...fromValuePattern({
-              pattern: pool.subsidy,
-              title: "subsidy",
-              color: colors.lime,
-            }),
-            ...fromValuePattern({
-              pattern: pool.fee,
-              title: "fee",
-              color: colors.cyan,
-            }),
-          ],
-        },
-        {
-          name: "Since Last Block",
-          title: `Since Last Block: ${poolName}`,
-          bottom: [
-            line({
-              metric: pool.blocksSinceBlock,
-              name: "Elapsed",
-              unit: Unit.blocks,
-            }),
-            line({
-              metric: pool.daysSinceBlock,
-              name: "Elapsed",
-              unit: Unit.days,
-            }),
-          ],
-        },
-      ],
-    };
-  });
+          },
+        ],
+      },
+      {
+        name: "Since Last Block",
+        title: `Since Last Block: ${name}`,
+        bottom: [
+          line({
+            metric: pool.blocksSinceBlock,
+            name: "Elapsed",
+            unit: Unit.blocks,
+          }),
+          line({
+            metric: pool.daysSinceBlock,
+            name: "Elapsed",
+            unit: Unit.days,
+          }),
+        ],
+      },
+    ],
+  }));
 
   return {
     name: "Mining",
@@ -196,28 +222,28 @@ export function createMiningSection(ctx) {
           line({
             metric: blocks.mining.hashRate1wSma,
             name: "1w SMA",
-            color: colors.red,
+            color: colors.time._1w,
             unit: Unit.hashRate,
             defaultActive: false,
           }),
           line({
             metric: blocks.mining.hashRate1mSma,
             name: "1m SMA",
-            color: colors.orange,
+            color: colors.time._1m,
             unit: Unit.hashRate,
             defaultActive: false,
           }),
           line({
             metric: blocks.mining.hashRate2mSma,
             name: "2m SMA",
-            color: colors.yellow,
+            color: colors.orange,
             unit: Unit.hashRate,
             defaultActive: false,
           }),
           line({
             metric: blocks.mining.hashRate1ySma,
             name: "1y SMA",
-            color: colors.lime,
+            color: colors.time._1y,
             unit: Unit.hashRate,
             defaultActive: false,
           }),
@@ -265,7 +291,6 @@ export function createMiningSection(ctx) {
                 name: "Change",
                 unit: Unit.percentage,
               }),
-              priceLine({ ctx, number: 0, unit: Unit.percentage }),
             ],
           },
           {
@@ -294,71 +319,181 @@ export function createMiningSection(ctx) {
         name: "Revenue",
         tree: [
           {
+            name: "Compare",
+            tree: [
+              {
+                name: "Sum",
+                title: "Revenue Comparison",
+                bottom: revenueBtcSatsUsd(colors, {
+                  coinbase: blocks.rewards.coinbase,
+                  subsidy: blocks.rewards.subsidy,
+                  fee: transactions.fees.fee,
+                  key: "sum",
+                }),
+              },
+              {
+                name: "Cumulative",
+                title: "Revenue Comparison (Total)",
+                bottom: revenueBtcSatsUsd(colors, {
+                  coinbase: blocks.rewards.coinbase,
+                  subsidy: blocks.rewards.subsidy,
+                  fee: transactions.fees.fee,
+                  key: "cumulative",
+                }),
+              },
+            ],
+          },
+          {
             name: "Coinbase",
-            title: "Coinbase Rewards",
-            bottom: [
-              ...fromCoinbasePattern({ pattern: blocks.rewards.coinbase }),
-              ...satsBtcUsd({
-                pattern: blocks.rewards._24hCoinbaseSum,
-                name: "24h sum",
-                color: colors.pink,
-                defaultActive: false,
-              }),
+            tree: [
+              {
+                name: "Sum",
+                title: "Coinbase Rewards",
+                bottom: [
+                  ...satsBtcUsdFromFull({
+                    source: blocks.rewards.coinbase,
+                    key: "base",
+                    name: "sum",
+                  }),
+                  ...satsBtcUsdFrom({
+                    source: blocks.rewards.coinbase,
+                    key: "sum",
+                    name: "sum",
+                  }),
+                  ...satsBtcUsd({
+                    pattern: blocks.rewards._24hCoinbaseSum,
+                    name: "24h",
+                    color: colors.time._24h,
+                    defaultActive: false,
+                  }),
+                ],
+              },
+              {
+                name: "Distribution",
+                title: "Coinbase Rewards Distribution",
+                bottom: distributionBtcSatsUsd(blocks.rewards.coinbase),
+              },
+              {
+                name: "Cumulative",
+                title: "Coinbase Rewards (Total)",
+                bottom: satsBtcUsdFrom({
+                  source: blocks.rewards.coinbase,
+                  key: "cumulative",
+                  name: "all-time",
+                }),
+              },
             ],
           },
           {
             name: "Subsidy",
-            title: "Block Subsidy",
-            bottom: [
-              ...fromCoinbasePattern({ pattern: blocks.rewards.subsidy }),
-              line({
-                metric: blocks.rewards.subsidyDominance,
-                name: "Dominance",
-                color: colors.purple,
-                unit: Unit.percentage,
-              }),
-              line({
-                metric: blocks.rewards.subsidyUsd1ySma,
-                name: "1y SMA",
-                color: colors.lime,
-                unit: Unit.usd,
-                defaultActive: false,
-              }),
+            tree: [
+              {
+                name: "Sum",
+                title: "Block Subsidy",
+                bottom: [
+                  ...satsBtcUsdFromFull({
+                    source: blocks.rewards.subsidy,
+                    key: "base",
+                    name: "sum",
+                  }),
+                  ...satsBtcUsdFrom({
+                    source: blocks.rewards.subsidy,
+                    key: "sum",
+                    name: "sum",
+                  }),
+                  line({
+                    metric: blocks.rewards.subsidyUsd1ySma,
+                    name: "1y SMA",
+                    color: colors.time._1y,
+                    unit: Unit.usd,
+                    defaultActive: false,
+                  }),
+                ],
+              },
+              {
+                name: "Distribution",
+                title: "Block Subsidy Distribution",
+                bottom: distributionBtcSatsUsd(blocks.rewards.subsidy),
+              },
+              {
+                name: "Cumulative",
+                title: "Block Subsidy (Total)",
+                bottom: satsBtcUsdFrom({
+                  source: blocks.rewards.subsidy,
+                  key: "cumulative",
+                  name: "all-time",
+                }),
+              },
             ],
           },
           {
             name: "Fees",
-            title: "Transaction Fee Revenue",
+            tree: [
+              {
+                name: "Sum",
+                title: "Transaction Fee Revenue",
+                bottom: satsBtcUsdFrom({
+                  source: transactions.fees.fee,
+                  key: "sum",
+                  name: "sum",
+                }),
+              },
+              {
+                name: "Distribution",
+                title: "Transaction Fee Revenue Distribution",
+                bottom: distributionBtcSatsUsd(transactions.fees.fee),
+              },
+              {
+                name: "Cumulative",
+                title: "Transaction Fee Revenue (Total)",
+                bottom: satsBtcUsdFrom({
+                  source: transactions.fees.fee,
+                  key: "cumulative",
+                  name: "all-time",
+                }),
+              },
+            ],
+          },
+          {
+            name: "Dominance",
+            title: "Revenue Dominance",
             bottom: [
-              ...fromSumStatsPattern({
-                pattern: transactions.fees.fee.bitcoin,
-                unit: Unit.btc,
-                cumulativeUnit: Unit.btcCumulative,
-              }),
-              ...fromSumStatsPattern({
-                pattern: transactions.fees.fee.sats,
-                unit: Unit.sats,
-                cumulativeUnit: Unit.satsCumulative,
-              }),
-              ...fromSumStatsPattern({
-                pattern: transactions.fees.fee.dollars,
-                unit: Unit.usd,
-                cumulativeUnit: Unit.usdCumulative,
+              line({
+                metric: blocks.rewards.subsidyDominance,
+                name: "Subsidy",
+                color: colors.lime,
+                unit: Unit.percentage,
               }),
               line({
                 metric: blocks.rewards.feeDominance,
-                name: "Dominance",
-                color: colors.purple,
+                name: "Fees",
+                color: colors.cyan,
                 unit: Unit.percentage,
               }),
             ],
           },
           {
             name: "Unclaimed",
-            title: "Unclaimed Rewards",
-            bottom: fromValuePattern({
-              pattern: blocks.rewards.unclaimedRewards,
-            }),
+            tree: [
+              {
+                name: "Sum",
+                title: "Unclaimed Rewards",
+                bottom: satsBtcUsdFrom({
+                  source: blocks.rewards.unclaimedRewards,
+                  key: "sum",
+                  name: "sum",
+                }),
+              },
+              {
+                name: "Cumulative",
+                title: "Unclaimed Rewards (Total)",
+                bottom: satsBtcUsdFrom({
+                  source: blocks.rewards.unclaimedRewards,
+                  key: "cumulative",
+                  name: "all-time",
+                }),
+              },
+            ],
           },
         ],
       },
@@ -382,12 +517,6 @@ export function createMiningSection(ctx) {
                 name: "PH/s",
                 color: colors.emerald,
                 unit: Unit.usdPerPhsPerDay,
-              }),
-              line({
-                metric: blocks.mining.hashPriceRebound,
-                name: "Rebound",
-                color: colors.yellow,
-                unit: Unit.percentage,
               }),
               dotted({
                 metric: blocks.mining.hashPriceThsMin,
@@ -419,12 +548,6 @@ export function createMiningSection(ctx) {
                 color: colors.orange,
                 unit: Unit.satsPerPhsPerDay,
               }),
-              line({
-                metric: blocks.mining.hashValueRebound,
-                name: "Rebound",
-                color: colors.yellow,
-                unit: Unit.percentage,
-              }),
               dotted({
                 metric: blocks.mining.hashValueThsMin,
                 name: "TH/s Min",
@@ -436,6 +559,24 @@ export function createMiningSection(ctx) {
                 name: "PH/s Min",
                 color: colors.red,
                 unit: Unit.satsPerPhsPerDay,
+              }),
+            ],
+          },
+          {
+            name: "Recovery",
+            title: "Recovery",
+            bottom: [
+              line({
+                metric: blocks.mining.hashPriceRebound,
+                name: "Hash Price",
+                color: colors.emerald,
+                unit: Unit.percentage,
+              }),
+              line({
+                metric: blocks.mining.hashValueRebound,
+                name: "Hash Value",
+                color: colors.orange,
+                unit: Unit.percentage,
               }),
             ],
           },
@@ -458,7 +599,6 @@ export function createMiningSection(ctx) {
               line({
                 metric: blocks.halving.daysBeforeNextHalving,
                 name: "Remaining",
-                color: colors.blue,
                 unit: Unit.days,
               }),
             ],
@@ -487,41 +627,39 @@ export function createMiningSection(ctx) {
             tree: [
               {
                 name: "Dominance",
-                title: "Dominance: Major Pools",
-                bottom: poolEntries
-                  .filter(([key]) => MAJOR_POOL_IDS.includes(key.toLowerCase()))
-                  .map(([key, pool]) => {
-                    const poolName =
-                      brk.POOL_ID_TO_POOL_NAME[
-                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (
-                          key.toLowerCase()
-                        )
-                      ] || key;
-                    return line({
-                      metric: pool._1mDominance,
-                      name: poolName,
-                      unit: Unit.percentage,
-                    });
+                title: "Dominance: Major Pools (1m)",
+                bottom: majorPools.map((p, i) =>
+                  line({
+                    metric: p.pool._1mDominance,
+                    name: p.name,
+                    color: colorAt(i),
+                    unit: Unit.percentage,
                   }),
+                ),
               },
               {
                 name: "Blocks Mined",
                 title: "Blocks Mined: Major Pools (1m)",
-                bottom: poolEntries
-                  .filter(([key]) => MAJOR_POOL_IDS.includes(key.toLowerCase()))
-                  .map(([key, pool]) => {
-                    const poolName =
-                      brk.POOL_ID_TO_POOL_NAME[
-                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (
-                          key.toLowerCase()
-                        )
-                      ] || key;
-                    return line({
-                      metric: pool._1mBlocksMined,
-                      name: poolName,
-                      unit: Unit.count,
-                    });
+                bottom: majorPools.map((p, i) =>
+                  line({
+                    metric: p.pool._1mBlocksMined,
+                    name: p.name,
+                    color: colorAt(i),
+                    unit: Unit.count,
                   }),
+                ),
+              },
+              {
+                name: "Total Rewards",
+                title: "Total Rewards: Major Pools",
+                bottom: majorPools.flatMap((p, i) =>
+                  satsBtcUsdFrom({
+                    source: p.pool.coinbase,
+                    key: "sum",
+                    name: p.name,
+                    color: colorAt(i),
+                  }),
+                ),
               },
             ],
           },
@@ -531,51 +669,45 @@ export function createMiningSection(ctx) {
             tree: [
               {
                 name: "Dominance",
-                title: "Dominance: AntPool & Friends",
-                bottom: poolEntries
-                  .filter(([key]) =>
-                    ANTPOOL_AND_FRIENDS_IDS.includes(key.toLowerCase()),
-                  )
-                  .map(([key, pool]) => {
-                    const poolName =
-                      brk.POOL_ID_TO_POOL_NAME[
-                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (
-                          key.toLowerCase()
-                        )
-                      ] || key;
-                    return line({
-                      metric: pool._1mDominance,
-                      name: poolName,
-                      unit: Unit.percentage,
-                    });
+                title: "Dominance: AntPool & Friends (1m)",
+                bottom: antpoolFriends.map((p, i) =>
+                  line({
+                    metric: p.pool._1mDominance,
+                    name: p.name,
+                    color: colorAt(i),
+                    unit: Unit.percentage,
                   }),
+                ),
               },
               {
                 name: "Blocks Mined",
                 title: "Blocks Mined: AntPool & Friends (1m)",
-                bottom: poolEntries
-                  .filter(([key]) =>
-                    ANTPOOL_AND_FRIENDS_IDS.includes(key.toLowerCase()),
-                  )
-                  .map(([key, pool]) => {
-                    const poolName =
-                      brk.POOL_ID_TO_POOL_NAME[
-                        /** @type {keyof typeof brk.POOL_ID_TO_POOL_NAME} */ (
-                          key.toLowerCase()
-                        )
-                      ] || key;
-                    return line({
-                      metric: pool._1mBlocksMined,
-                      name: poolName,
-                      unit: Unit.count,
-                    });
+                bottom: antpoolFriends.map((p, i) =>
+                  line({
+                    metric: p.pool._1mBlocksMined,
+                    name: p.name,
+                    color: colorAt(i),
+                    unit: Unit.count,
                   }),
+                ),
+              },
+              {
+                name: "Total Rewards",
+                title: "Total Rewards: AntPool & Friends",
+                bottom: antpoolFriends.flatMap((p, i) =>
+                  satsBtcUsdFrom({
+                    source: p.pool.coinbase,
+                    key: "sum",
+                    name: p.name,
+                    color: colorAt(i),
+                  }),
+                ),
               },
             ],
           },
-          // Individual pools
+          // All pools
           {
-            name: "Individual",
+            name: "All Pools",
             tree: poolsTree,
           },
         ],

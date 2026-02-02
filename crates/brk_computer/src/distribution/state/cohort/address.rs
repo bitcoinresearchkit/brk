@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_types::{Age, CentsUnsigned, Height, LoadedAddressData, Sats, SupplyState};
+use brk_types::{Age, CentsUnsigned, FundedAddressData, Height, Sats, SupplyState};
 use vecdb::unlikely;
 
 use super::{super::cost_basis::RealizedState, base::CohortState};
@@ -42,7 +42,7 @@ impl AddressCohortState {
 
     pub fn send(
         &mut self,
-        addressdata: &mut LoadedAddressData,
+        addressdata: &mut FundedAddressData,
         value: Sats,
         current_price: CentsUnsigned,
         prev_price: CentsUnsigned,
@@ -54,7 +54,10 @@ impl AddressCohortState {
         let current = addressdata.cost_basis_snapshot();
 
         self.inner.send_address(
-            &SupplyState { utxo_count: 1, value },
+            &SupplyState {
+                utxo_count: 1,
+                value,
+            },
             current_price,
             prev_price,
             ath,
@@ -68,7 +71,7 @@ impl AddressCohortState {
 
     pub fn receive(
         &mut self,
-        address_data: &mut LoadedAddressData,
+        address_data: &mut FundedAddressData,
         value: Sats,
         price: CentsUnsigned,
     ) {
@@ -77,7 +80,7 @@ impl AddressCohortState {
 
     pub fn receive_outputs(
         &mut self,
-        address_data: &mut LoadedAddressData,
+        address_data: &mut FundedAddressData,
         value: Sats,
         price: CentsUnsigned,
         output_count: u32,
@@ -87,19 +90,23 @@ impl AddressCohortState {
         let current = address_data.cost_basis_snapshot();
 
         self.inner.receive_address(
-            &SupplyState { utxo_count: output_count as u64, value },
+            &SupplyState {
+                utxo_count: output_count as u64,
+                value,
+            },
             price,
             &current,
             &prev,
         );
     }
 
-    pub fn add(&mut self, addressdata: &LoadedAddressData) {
+    pub fn add(&mut self, addressdata: &FundedAddressData) {
         self.addr_count += 1;
-        self.inner.increment_snapshot(&addressdata.cost_basis_snapshot());
+        self.inner
+            .increment_snapshot(&addressdata.cost_basis_snapshot());
     }
 
-    pub fn subtract(&mut self, addressdata: &LoadedAddressData) {
+    pub fn subtract(&mut self, addressdata: &FundedAddressData) {
         let snapshot = addressdata.cost_basis_snapshot();
 
         // Check for potential underflow before it happens
@@ -111,7 +118,11 @@ impl AddressCohortState {
                 Address supply: {}\n\
                 Realized price: {}\n\
                 This means the address is not properly tracked in this cohort.",
-                self.addr_count, self.inner.supply, addressdata, snapshot.supply_state, snapshot.realized_price
+                self.addr_count,
+                self.inner.supply,
+                addressdata,
+                snapshot.supply_state,
+                snapshot.realized_price
             );
         }
         if unlikely(self.inner.supply.value < snapshot.supply_state.value) {
@@ -122,7 +133,11 @@ impl AddressCohortState {
                 Address supply: {}\n\
                 Realized price: {}\n\
                 This means the address is not properly tracked in this cohort.",
-                self.addr_count, self.inner.supply, addressdata, snapshot.supply_state, snapshot.realized_price
+                self.addr_count,
+                self.inner.supply,
+                addressdata,
+                snapshot.supply_state,
+                snapshot.realized_price
             );
         }
 

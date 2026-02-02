@@ -368,7 +368,7 @@ const _I27: &[Index] = &[Index::TxIndex];
 const _I28: &[Index] = &[Index::UnknownOutputIndex];
 const _I29: &[Index] = &[Index::WeekIndex];
 const _I30: &[Index] = &[Index::YearIndex];
-const _I31: &[Index] = &[Index::LoadedAddressIndex];
+const _I31: &[Index] = &[Index::FundedAddressIndex];
 const _I32: &[Index] = &[Index::EmptyAddressIndex];
 
 #[inline]
@@ -829,7 +829,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern30<T> { fn get(&self
 
 pub struct MetricPattern31By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern31By<T> {
-    pub fn loadedaddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::LoadedAddressIndex) }
+    pub fn loadedaddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::FundedAddressIndex) }
 }
 
 pub struct MetricPattern31<T> { name: Arc<str>, pub by: MetricPattern31By<T> }
@@ -5112,7 +5112,7 @@ pub struct MetricsTree_Distribution {
     pub total_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern,
     pub new_addr_count: MetricsTree_Distribution_NewAddrCount,
     pub growth_rate: MetricsTree_Distribution_GrowthRate,
-    pub loadedaddressindex: MetricPattern31<LoadedAddressIndex>,
+    pub loadedaddressindex: MetricPattern31<FundedAddressIndex>,
     pub emptyaddressindex: MetricPattern32<EmptyAddressIndex>,
 }
 
@@ -5165,7 +5165,7 @@ impl MetricsTree_Distribution_AnyAddressIndexes {
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_AddressesData {
-    pub loaded: MetricPattern31<LoadedAddressData>,
+    pub loaded: MetricPattern31<FundedAddressData>,
     pub empty: MetricPattern32<EmptyAddressData>,
 }
 

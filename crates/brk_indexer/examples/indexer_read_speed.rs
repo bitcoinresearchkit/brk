@@ -30,7 +30,7 @@ fn main() -> Result<()> {
 
     println!("Loading indexer from: {}", outputs_dir.display());
     let indexer = Indexer::forced_import(&outputs_dir)?;
-    println!("✅ Indexer loaded\n");
+    println!("✅ Indexer funded\n");
 
     // Warmup run
     println!("🔥 Warmup run...");

@@ -31,10 +31,10 @@ impl CostBasisSnapshot {
     }
 }
 
-/// Data for a loaded (non-empty) address with current balance
+/// Data for a funded (non-empty) address with current balance
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[repr(C)]
-pub struct LoadedAddressData {
+pub struct FundedAddressData {
     /// Total transaction count
     pub tx_count: u32,
     /// Number of transaction outputs funded to this address
@@ -53,7 +53,7 @@ pub struct LoadedAddressData {
     pub investor_cap_raw: CentsSquaredSats,
 }
 
-impl LoadedAddressData {
+impl FundedAddressData {
     pub fn balance(&self) -> Sats {
         (u64::from(self.received) - u64::from(self.sent)).into()
     }
@@ -87,7 +87,7 @@ impl LoadedAddressData {
             .checked_sub(self.spent_txo_count)
             .unwrap_or_else(|| {
                 panic!(
-                    "LoadedAddressData corruption: spent_txo_count ({}) > funded_txo_count ({}). \
+                    "FundedAddressData corruption: spent_txo_count ({}) > funded_txo_count ({}). \
                 Address data: {:?}",
                     self.spent_txo_count, self.funded_txo_count, self
                 )
@@ -138,14 +138,14 @@ impl LoadedAddressData {
     }
 }
 
-impl From<EmptyAddressData> for LoadedAddressData {
+impl From<EmptyAddressData> for FundedAddressData {
     #[inline]
     fn from(value: EmptyAddressData) -> Self {
         Self::from(&value)
     }
 }
 
-impl From<&EmptyAddressData> for LoadedAddressData {
+impl From<&EmptyAddressData> for FundedAddressData {
     #[inline]
     fn from(value: &EmptyAddressData) -> Self {
         Self {
@@ -161,7 +161,7 @@ impl From<&EmptyAddressData> for LoadedAddressData {
     }
 }
 
-impl std::fmt::Display for LoadedAddressData {
+impl std::fmt::Display for FundedAddressData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -177,14 +177,14 @@ impl std::fmt::Display for LoadedAddressData {
     }
 }
 
-impl Formattable for LoadedAddressData {
+impl Formattable for FundedAddressData {
     #[inline(always)]
     fn may_need_escaping() -> bool {
         true
     }
 }
 
-impl Bytes for LoadedAddressData {
+impl Bytes for FundedAddressData {
     type Array = [u8; size_of::<Self>()];
 
     fn to_bytes(&self) -> Self::Array {

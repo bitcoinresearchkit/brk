@@ -1,9 +1,9 @@
-use brk_types::{LoadedAddressData, OutputType, TypeIndex};
+use brk_types::{FundedAddressData, OutputType, TypeIndex};
 
 use crate::distribution::address::AddressTypeToTypeIndexMap;
 
 use super::super::cohort::{
-    EmptyAddressDataWithSource, LoadedAddressDataWithSource, WithAddressDataSource,
+    EmptyAddressDataWithSource, FundedAddressDataWithSource, WithAddressDataSource,
 };
 
 /// Tracking status of an address - determines cohort update strategy.
@@ -19,7 +19,7 @@ pub enum TrackingStatus {
 
 /// Context for looking up and storing address data during block processing.
 pub struct AddressLookup<'a> {
-    pub loaded: &'a mut AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
+    pub funded: &'a mut AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
     pub empty: &'a mut AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
 }
 
@@ -28,21 +28,21 @@ impl<'a> AddressLookup<'a> {
         &mut self,
         output_type: OutputType,
         type_index: TypeIndex,
-    ) -> (&mut LoadedAddressDataWithSource, TrackingStatus) {
+    ) -> (&mut FundedAddressDataWithSource, TrackingStatus) {
         use std::collections::hash_map::Entry;
 
-        let map = self.loaded.get_mut(output_type).unwrap();
+        let map = self.funded.get_mut(output_type).unwrap();
 
         match map.entry(type_index) {
             Entry::Occupied(entry) => {
                 // Address is in cache. Need to determine if it's been processed
-                // by process_received (added to a cohort) or just loaded this block.
+                // by process_received (added to a cohort) or just funded this block.
                 //
                 // - If wrapper is New AND funded_txo_count == 0: hasn't received yet,
                 //   was just created in process_outputs this block → New
                 // - If wrapper is New AND funded_txo_count > 0: received in previous
                 //   block but still in cache (no flush) → Tracked
-                // - If wrapper is FromLoaded: loaded from storage → Tracked
+                // - If wrapper is FromFunded: funded from storage → Tracked
                 // - If wrapper is FromEmpty AND utxo_count == 0: still empty → WasEmpty
                 // - If wrapper is FromEmpty AND utxo_count > 0: already received → Tracked
                 let status = match entry.get() {
@@ -53,7 +53,7 @@ impl<'a> AddressLookup<'a> {
                             TrackingStatus::Tracked
                         }
                     }
-                    WithAddressDataSource::FromLoaded(..) => TrackingStatus::Tracked,
+                    WithAddressDataSource::FromFunded(..) => TrackingStatus::Tracked,
                     WithAddressDataSource::FromEmpty(_, data) => {
                         if data.utxo_count() == 0 {
                             TrackingStatus::WasEmpty
@@ -71,7 +71,7 @@ impl<'a> AddressLookup<'a> {
                     return (entry.insert(empty_data.into()), TrackingStatus::WasEmpty);
                 }
                 (
-                    entry.insert(WithAddressDataSource::New(LoadedAddressData::default())),
+                    entry.insert(WithAddressDataSource::New(FundedAddressData::default())),
                     TrackingStatus::New,
                 )
             }
@@ -83,18 +83,18 @@ impl<'a> AddressLookup<'a> {
         &mut self,
         output_type: OutputType,
         type_index: TypeIndex,
-    ) -> &mut LoadedAddressDataWithSource {
-        self.loaded
+    ) -> &mut FundedAddressDataWithSource {
+        self.funded
             .get_mut(output_type)
             .unwrap()
             .get_mut(&type_index)
             .expect("Address must exist for send")
     }
 
-    /// Move address from loaded to empty set.
+    /// Move address from funded to empty set.
     pub fn move_to_empty(&mut self, output_type: OutputType, type_index: TypeIndex) {
         let data = self
-            .loaded
+            .funded
             .get_mut(output_type)
             .unwrap()
             .remove(&type_index)

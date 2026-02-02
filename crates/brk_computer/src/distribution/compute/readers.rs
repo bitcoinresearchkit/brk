@@ -140,7 +140,7 @@ impl VecsReaders {
                 p2wsh: any_address_indexes.p2wsh.create_reader(),
             },
             anyaddressindex_to_anyaddressdata: ByAnyAddress {
-                loaded: addresses_data.loaded.create_reader(),
+                funded: addresses_data.funded.create_reader(),
                 empty: addresses_data.empty.create_reader(),
             },
         }

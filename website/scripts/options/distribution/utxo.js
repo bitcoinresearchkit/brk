@@ -854,7 +854,6 @@ function createSingleRealizedPriceChartsBasic(ctx, cohort, title) {
           color,
           unit: Unit.ratio,
         }),
-        priceLine({ ctx, unit: Unit.ratio, number: 1 }),
       ],
     },
   ];
@@ -891,7 +890,6 @@ function createSingleRealizedCapSeries(ctx, cohort, { extra = [] } = {}) {
       unit: Unit.usd,
       defaultActive: false,
     }),
-    priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
     ...extra,
   ];
 }
@@ -983,56 +981,89 @@ function createSingleRealizedPnlSection(
   title,
   { extra = [] } = {},
 ) {
-  const { colors, fromCountPattern, fromBitcoinPatternWithUnit } = ctx;
+  const { colors } = ctx;
   const { tree } = cohort;
 
   return [
     {
       name: "P&L",
+      tree: [
+        {
+          name: "Sum",
+          title: title("Realized P&L"),
+          bottom: [
+            line({
+              metric: tree.realized.realizedProfit.sum,
+              name: "Profit",
+              color: colors.green,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: tree.realized.realizedProfit7dEma,
+              name: "Profit 7d EMA",
+              color: colors.green,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: tree.realized.realizedLoss.sum,
+              name: "Loss",
+              color: colors.red,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: tree.realized.realizedLoss7dEma,
+              name: "Loss 7d EMA",
+              color: colors.red,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: tree.realized.negRealizedLoss.sum,
+              name: "Negative Loss",
+              color: colors.red,
+              unit: Unit.usd,
+              defaultActive: false,
+            }),
+            ...extra,
+            line({
+              metric: tree.realized.totalRealizedPnl,
+              name: "Total",
+              color: colors.default,
+              unit: Unit.usd,
+              defaultActive: false,
+            }),
+          ],
+        },
+        {
+          name: "Cumulative",
+          title: title("Realized P&L (Total)"),
+          bottom: [
+            line({
+              metric: tree.realized.realizedProfit.cumulative,
+              name: "Profit",
+              color: colors.green,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: tree.realized.realizedLoss.cumulative,
+              name: "Loss",
+              color: colors.red,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: tree.realized.negRealizedLoss.cumulative,
+              name: "Negative Loss",
+              color: colors.red,
+              unit: Unit.usd,
+              defaultActive: false,
+            }),
+          ],
+        },
+      ],
+    },
+    {
+      name: "P&L Relative",
       title: title("Realized P&L"),
       bottom: [
-        ...fromCountPattern({
-          pattern: tree.realized.realizedProfit,
-          unit: Unit.usd,
-          cumulativeUnit: Unit.usdCumulative,
-          title: "Profit",
-          color: colors.green,
-        }),
-        line({
-          metric: tree.realized.realizedProfit7dEma,
-          name: "Profit 7d EMA",
-          color: colors.green,
-          unit: Unit.usd,
-        }),
-        ...fromCountPattern({
-          pattern: tree.realized.realizedLoss,
-          unit: Unit.usd,
-          cumulativeUnit: Unit.usdCumulative,
-          title: "Loss",
-          color: colors.red,
-        }),
-        line({
-          metric: tree.realized.realizedLoss7dEma,
-          name: "Loss 7d EMA",
-          color: colors.red,
-          unit: Unit.usd,
-        }),
-        ...fromBitcoinPatternWithUnit({
-          pattern: tree.realized.negRealizedLoss,
-          unit: Unit.usd,
-          cumulativeUnit: Unit.usdCumulative,
-          title: "Negative Loss",
-          color: colors.red,
-          defaultActive: false,
-        }),
-        ...extra,
-        line({
-          metric: tree.realized.totalRealizedPnl,
-          name: "Total",
-          color: colors.default,
-          unit: Unit.usd,
-          defaultActive: false,
-        }),
         baseline({
           metric: tree.realized.realizedProfitRelToRealizedCap.sum,
           name: "Profit",
@@ -1059,57 +1090,67 @@ function createSingleRealizedPnlSection(
           unit: Unit.pctRcap,
           defaultActive: false,
         }),
-        priceLine({ ctx, unit: Unit.pctRcap }),
-        priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
       ],
     },
     {
       name: "Net P&L",
-      title: title("Net Realized P&L"),
-      bottom: [
-        ...fromCountPattern({
-          pattern: tree.realized.netRealizedPnl,
-          unit: Unit.usd,
-          cumulativeUnit: Unit.usdCumulative,
-          title: "Net",
-        }),
-        baseline({
-          metric: tree.realized.netRealizedPnl7dEma,
-          name: "Net 7d EMA",
-          unit: Unit.usd,
-        }),
-        baseline({
-          metric: tree.realized.netRealizedPnlCumulative30dDelta,
-          name: "Cumulative 30d Change",
-          unit: Unit.usd,
-          defaultActive: false,
-        }),
-        baseline({
-          metric: tree.realized.netRealizedPnlRelToRealizedCap.sum,
-          name: "Net",
-          unit: Unit.pctRcap,
-        }),
-        baseline({
-          metric: tree.realized.netRealizedPnlRelToRealizedCap.cumulative,
-          name: "Net Cumulative",
-          unit: Unit.pctRcap,
-          defaultActive: false,
-        }),
-        baseline({
-          metric:
-            tree.realized.netRealizedPnlCumulative30dDeltaRelToRealizedCap,
-          name: "Cumulative 30d Change",
-          unit: Unit.pctRcap,
-          defaultActive: false,
-        }),
-        baseline({
-          metric: tree.realized.netRealizedPnlCumulative30dDeltaRelToMarketCap,
-          name: "Cumulative 30d Change",
-          unit: Unit.pctMcap,
-        }),
-        priceLine({ ctx, unit: Unit.pctMcap }),
-        priceLine({ ctx, unit: Unit.pctRcap }),
-        priceLine({ ctx, unit: Unit.usd }),
+      tree: [
+        {
+          name: "Sum",
+          title: title("Net Realized P&L"),
+          bottom: [
+            baseline({
+              metric: tree.realized.netRealizedPnl.sum,
+              name: "Net",
+              unit: Unit.usd,
+            }),
+            baseline({
+              metric: tree.realized.netRealizedPnl7dEma,
+              name: "Net 7d EMA",
+              unit: Unit.usd,
+            }),
+            baseline({
+              metric: tree.realized.netRealizedPnlRelToRealizedCap.sum,
+              name: "Net",
+              unit: Unit.pctRcap,
+            }),
+            baseline({
+              metric:
+                tree.realized.netRealizedPnlCumulative30dDeltaRelToMarketCap,
+              name: "30d Change",
+              unit: Unit.pctMcap,
+            }),
+          ],
+        },
+        {
+          name: "Cumulative",
+          title: title("Net Realized P&L (Total)"),
+          bottom: [
+            baseline({
+              metric: tree.realized.netRealizedPnl.cumulative,
+              name: "Net",
+              unit: Unit.usd,
+            }),
+            baseline({
+              metric: tree.realized.netRealizedPnlCumulative30dDelta,
+              name: "30d Change",
+              unit: Unit.usd,
+              defaultActive: false,
+            }),
+            baseline({
+              metric: tree.realized.netRealizedPnlRelToRealizedCap.cumulative,
+              name: "Net",
+              unit: Unit.pctRcap,
+            }),
+            baseline({
+              metric:
+                tree.realized.netRealizedPnlCumulative30dDeltaRelToRealizedCap,
+              name: "30d Change",
+              unit: Unit.pctRcap,
+              defaultActive: false,
+            }),
+          ],
+        },
       ],
     },
     {
@@ -1119,35 +1160,109 @@ function createSingleRealizedPnlSection(
           name: "In Profit",
           title: title("Sent In Profit"),
           bottom: [
-            line({ metric: tree.realized.sentInProfit.bitcoin.sum, name: "Sum", color: colors.green, unit: Unit.btc }),
-            line({ metric: tree.realized.sentInProfit.bitcoin.cumulative, name: "Cumulative", color: colors.green, unit: Unit.btc, defaultActive: false }),
-            line({ metric: tree.realized.sentInProfit.sats.sum, name: "Sum", color: colors.green, unit: Unit.sats }),
-            line({ metric: tree.realized.sentInProfit.sats.cumulative, name: "Cumulative", color: colors.green, unit: Unit.sats, defaultActive: false }),
-            line({ metric: tree.realized.sentInProfit.dollars.sum, name: "Sum", color: colors.green, unit: Unit.usd }),
-            line({ metric: tree.realized.sentInProfit.dollars.cumulative, name: "Cumulative", color: colors.green, unit: Unit.usd, defaultActive: false }),
+            line({
+              metric: tree.realized.sentInProfit.bitcoin.sum,
+              name: "Sum",
+              color: colors.green,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.bitcoin.cumulative,
+              name: "Cumulative",
+              color: colors.green,
+              unit: Unit.btc,
+              defaultActive: false,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.sats.sum,
+              name: "Sum",
+              color: colors.green,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.sats.cumulative,
+              name: "Cumulative",
+              color: colors.green,
+              unit: Unit.sats,
+              defaultActive: false,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.dollars.sum,
+              name: "Sum",
+              color: colors.green,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.dollars.cumulative,
+              name: "Cumulative",
+              color: colors.green,
+              unit: Unit.usd,
+              defaultActive: false,
+            }),
           ],
         },
         {
           name: "In Loss",
           title: title("Sent In Loss"),
           bottom: [
-            line({ metric: tree.realized.sentInLoss.bitcoin.sum, name: "Sum", color: colors.red, unit: Unit.btc }),
-            line({ metric: tree.realized.sentInLoss.bitcoin.cumulative, name: "Cumulative", color: colors.red, unit: Unit.btc, defaultActive: false }),
-            line({ metric: tree.realized.sentInLoss.sats.sum, name: "Sum", color: colors.red, unit: Unit.sats }),
-            line({ metric: tree.realized.sentInLoss.sats.cumulative, name: "Cumulative", color: colors.red, unit: Unit.sats, defaultActive: false }),
-            line({ metric: tree.realized.sentInLoss.dollars.sum, name: "Sum", color: colors.red, unit: Unit.usd }),
-            line({ metric: tree.realized.sentInLoss.dollars.cumulative, name: "Cumulative", color: colors.red, unit: Unit.usd, defaultActive: false }),
+            line({
+              metric: tree.realized.sentInLoss.bitcoin.sum,
+              name: "Sum",
+              color: colors.red,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.bitcoin.cumulative,
+              name: "Cumulative",
+              color: colors.red,
+              unit: Unit.btc,
+              defaultActive: false,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.sats.sum,
+              name: "Sum",
+              color: colors.red,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.sats.cumulative,
+              name: "Cumulative",
+              color: colors.red,
+              unit: Unit.sats,
+              defaultActive: false,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.dollars.sum,
+              name: "Sum",
+              color: colors.red,
+              unit: Unit.usd,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.dollars.cumulative,
+              name: "Cumulative",
+              color: colors.red,
+              unit: Unit.usd,
+              defaultActive: false,
+            }),
           ],
         },
         {
           name: "In Profit 14d EMA",
           title: title("Sent In Profit 14d EMA"),
-          bottom: satsBtcUsd({ pattern: tree.realized.sentInProfit14dEma, name: "14d EMA", color: colors.green }),
+          bottom: satsBtcUsd({
+            pattern: tree.realized.sentInProfit14dEma,
+            name: "14d EMA",
+            color: colors.green,
+          }),
         },
         {
           name: "In Loss 14d EMA",
           title: title("Sent In Loss 14d EMA"),
-          bottom: satsBtcUsd({ pattern: tree.realized.sentInLoss14dEma, name: "14d EMA", color: colors.red }),
+          bottom: satsBtcUsd({
+            pattern: tree.realized.sentInLoss14dEma,
+            name: "14d EMA",
+            color: colors.red,
+          }),
         },
       ],
     },
@@ -1171,9 +1286,27 @@ function createGroupedRealizedPnlSections(
   { ratioMetrics } = {},
 ) {
   const pnlConfigs = /** @type {const} */ ([
-    { name: "Profit", sum: "realizedProfit", ema: "realizedProfit7dEma", rel: "realizedProfitRelToRealizedCap", isNet: false },
-    { name: "Loss", sum: "realizedLoss", ema: "realizedLoss7dEma", rel: "realizedLossRelToRealizedCap", isNet: false },
-    { name: "Net P&L", sum: "netRealizedPnl", ema: "netRealizedPnl7dEma", rel: "netRealizedPnlRelToRealizedCap", isNet: true },
+    {
+      name: "Profit",
+      sum: "realizedProfit",
+      ema: "realizedProfit7dEma",
+      rel: "realizedProfitRelToRealizedCap",
+      isNet: false,
+    },
+    {
+      name: "Loss",
+      sum: "realizedLoss",
+      ema: "realizedLoss7dEma",
+      rel: "realizedLossRelToRealizedCap",
+      isNet: false,
+    },
+    {
+      name: "Net P&L",
+      sum: "netRealizedPnl",
+      ema: "netRealizedPnl7dEma",
+      rel: "netRealizedPnlRelToRealizedCap",
+      isNet: true,
+    },
   ]);
 
   return [
@@ -1185,10 +1318,19 @@ function createGroupedRealizedPnlSections(
           title: title(`Realized ${name}`),
           bottom: [
             ...list.flatMap(({ color, name, tree }) => [
-              (isNet ? baseline : line)({ metric: tree.realized[sum].sum, name, color, unit: Unit.usd }),
-              baseline({ metric: tree.realized[rel].sum, name, color, unit: Unit.pctRcap }),
+              (isNet ? baseline : line)({
+                metric: tree.realized[sum].sum,
+                name,
+                color,
+                unit: Unit.usd,
+              }),
+              baseline({
+                metric: tree.realized[rel].sum,
+                name,
+                color,
+                unit: Unit.pctRcap,
+              }),
             ]),
-            priceLine({ ctx, unit: Unit.usd }),
           ],
         },
         {
@@ -1196,9 +1338,13 @@ function createGroupedRealizedPnlSections(
           title: title(`Realized ${name} 7d EMA`),
           bottom: [
             ...list.map(({ color, name, tree }) =>
-              (isNet ? baseline : line)({ metric: tree.realized[ema], name, color, unit: Unit.usd }),
+              (isNet ? baseline : line)({
+                metric: tree.realized[ema],
+                name,
+                color,
+                unit: Unit.usd,
+              }),
             ),
-            priceLine({ ctx, unit: Unit.usd }),
           ],
         },
       ],
@@ -1207,7 +1353,12 @@ function createGroupedRealizedPnlSections(
       name: "Total P&L",
       title: title("Total Realized P&L"),
       bottom: list.flatMap((cohort) => [
-        line({ metric: cohort.tree.realized.totalRealizedPnl, name: cohort.name, color: cohort.color, unit: Unit.usd }),
+        line({
+          metric: cohort.tree.realized.totalRealizedPnl,
+          name: cohort.name,
+          color: cohort.color,
+          unit: Unit.usd,
+        }),
         ...(ratioMetrics ? ratioMetrics(cohort) : []),
       ]),
     },
@@ -1250,7 +1401,6 @@ function createGroupedRealizedPnlSections(
                 unit: Unit.usd,
               }),
             ]),
-            priceLine({ ctx, unit: Unit.usd }),
           ],
         },
         {
@@ -1280,9 +1430,6 @@ function createGroupedRealizedPnlSections(
                 unit: Unit.pctMcap,
               }),
             ]),
-            priceLine({ ctx, unit: Unit.usd }),
-            priceLine({ ctx, unit: Unit.pctMcap }),
-            priceLine({ ctx, unit: Unit.pctRcap }),
           ],
         },
       ],
@@ -1294,50 +1441,118 @@ function createGroupedRealizedPnlSections(
           name: "In Profit",
           title: title("Sent In Profit"),
           bottom: list.flatMap(({ color, name, tree }) => [
-            line({ metric: tree.realized.sentInProfit.bitcoin.sum, name, color, unit: Unit.btc }),
-            line({ metric: tree.realized.sentInProfit.sats.sum, name, color, unit: Unit.sats }),
-            line({ metric: tree.realized.sentInProfit.dollars.sum, name, color, unit: Unit.usd }),
+            line({
+              metric: tree.realized.sentInProfit.bitcoin.sum,
+              name,
+              color,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.sats.sum,
+              name,
+              color,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.dollars.sum,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ]),
         },
         {
           name: "In Profit Cumulative",
           title: title("Sent In Profit Cumulative"),
           bottom: list.flatMap(({ color, name, tree }) => [
-            line({ metric: tree.realized.sentInProfit.bitcoin.cumulative, name, color, unit: Unit.btc }),
-            line({ metric: tree.realized.sentInProfit.sats.cumulative, name, color, unit: Unit.sats }),
-            line({ metric: tree.realized.sentInProfit.dollars.cumulative, name, color, unit: Unit.usd }),
+            line({
+              metric: tree.realized.sentInProfit.bitcoin.cumulative,
+              name,
+              color,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.sats.cumulative,
+              name,
+              color,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: tree.realized.sentInProfit.dollars.cumulative,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ]),
         },
         {
           name: "In Loss",
           title: title("Sent In Loss"),
           bottom: list.flatMap(({ color, name, tree }) => [
-            line({ metric: tree.realized.sentInLoss.bitcoin.sum, name, color, unit: Unit.btc }),
-            line({ metric: tree.realized.sentInLoss.sats.sum, name, color, unit: Unit.sats }),
-            line({ metric: tree.realized.sentInLoss.dollars.sum, name, color, unit: Unit.usd }),
+            line({
+              metric: tree.realized.sentInLoss.bitcoin.sum,
+              name,
+              color,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.sats.sum,
+              name,
+              color,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.dollars.sum,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ]),
         },
         {
           name: "In Loss Cumulative",
           title: title("Sent In Loss Cumulative"),
           bottom: list.flatMap(({ color, name, tree }) => [
-            line({ metric: tree.realized.sentInLoss.bitcoin.cumulative, name, color, unit: Unit.btc }),
-            line({ metric: tree.realized.sentInLoss.sats.cumulative, name, color, unit: Unit.sats }),
-            line({ metric: tree.realized.sentInLoss.dollars.cumulative, name, color, unit: Unit.usd }),
+            line({
+              metric: tree.realized.sentInLoss.bitcoin.cumulative,
+              name,
+              color,
+              unit: Unit.btc,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.sats.cumulative,
+              name,
+              color,
+              unit: Unit.sats,
+            }),
+            line({
+              metric: tree.realized.sentInLoss.dollars.cumulative,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ]),
         },
         {
           name: "In Profit 14d EMA",
           title: title("Sent In Profit 14d EMA"),
           bottom: list.flatMap(({ color, name, tree }) =>
-            satsBtcUsd({ pattern: tree.realized.sentInProfit14dEma, name, color }),
+            satsBtcUsd({
+              pattern: tree.realized.sentInProfit14dEma,
+              name,
+              color,
+            }),
           ),
         },
         {
           name: "In Loss 14d EMA",
           title: title("Sent In Loss 14d EMA"),
           bottom: list.flatMap(({ color, name, tree }) =>
-            satsBtcUsd({ pattern: tree.realized.sentInLoss14dEma, name, color }),
+            satsBtcUsd({
+              pattern: tree.realized.sentInLoss14dEma,
+              name,
+              color,
+            }),
           ),
         },
       ],
@@ -1687,7 +1902,6 @@ function createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, rel) {
       name: "Net",
       unit: Unit.pctOwnPnl,
     }),
-    priceLine({ ctx, unit: Unit.pctOwnPnl }),
   ];
 }
 
@@ -1785,7 +1999,6 @@ function createNuplChart(ctx, rel, title) {
         name: "NUPL",
         unit: Unit.ratio,
       }),
-      priceLine({ ctx, unit: Unit.ratio }),
     ],
   };
 }
@@ -1880,10 +2093,7 @@ function createSingleInvestedCapitalRelativeChart(ctx, rel, title) {
   return {
     name: "Relative",
     title: title("Invested Capital In Profit & Loss %"),
-    bottom: [
-      ...createInvestedCapitalRelMetrics(ctx, rel),
-      priceLine({ ctx, unit: Unit.pctRcap }),
-    ],
+    bottom: [...createInvestedCapitalRelMetrics(ctx, rel)],
   };
 }
 
@@ -1938,7 +2148,6 @@ function createGroupedNuplChart(ctx, list, title) {
           unit: Unit.ratio,
         }),
       ),
-      priceLine({ ctx, unit: Unit.ratio }),
     ],
   };
 }
@@ -2023,20 +2232,12 @@ function createUnrealizedSection({
       {
         name: "P&L",
         title: title("Unrealized P&L"),
-        bottom: [
-          ...createUnrealizedPnlBaseMetrics(ctx, tree),
-          ...pnl,
-          priceLine({ ctx, unit: Unit.usd, defaultActive: false }),
-        ],
+        bottom: [...createUnrealizedPnlBaseMetrics(ctx, tree), ...pnl],
       },
       {
         name: "Net P&L",
         title: title("Net Unrealized P&L"),
-        bottom: [
-          createNetUnrealizedPnlBaseMetric(tree),
-          ...netPnl,
-          priceLine({ ctx, unit: Unit.usd }),
-        ],
+        bottom: [createNetUnrealizedPnlBaseMetric(tree), ...netPnl],
       },
       investedCapitalFolder,
       {
@@ -2256,14 +2457,16 @@ function createSingleUnrealizedSectionAll(ctx, cohort, title) {
     pnl: [
       ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
       ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
-      priceLine({ ctx, unit: Unit.pctMcap, defaultActive: false }),
     ],
     netPnl: [
       ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
       ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
-      priceLine({ ctx, unit: Unit.pctMcap }),
     ],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
+      ctx,
+      tree,
+      title,
+    ),
     charts: [
       createNuplChart(ctx, tree.relative, title),
       createPeakRegretChartWithMarketCap(ctx, tree, title),
@@ -2287,15 +2490,17 @@ function createSingleUnrealizedSectionFull(ctx, cohort, title) {
       ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
       ...createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
       ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
-      priceLine({ ctx, unit: Unit.pctMcap, defaultActive: false }),
     ],
     netPnl: [
       ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
       ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
       ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
-      priceLine({ ctx, unit: Unit.pctMcap }),
     ],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
+      ctx,
+      tree,
+      title,
+    ),
     charts: [
       createNuplChart(ctx, tree.relative, title),
       createPeakRegretChartWithMarketCap(ctx, tree, title),
@@ -2315,15 +2520,13 @@ function createSingleUnrealizedSectionWithMarketCap(ctx, cohort, title) {
     ctx,
     tree,
     title,
-    pnl: [
-      ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
-      priceLine({ ctx, unit: Unit.pctMcap, defaultActive: false }),
-    ],
-    netPnl: [
-      ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
-      priceLine({ ctx, unit: Unit.pctMcap }),
-    ],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
+    pnl: [...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative)],
+    netPnl: [...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative)],
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
+      ctx,
+      tree,
+      title,
+    ),
     charts: [
       createNuplChart(ctx, tree.relative, title),
       createPeakRegretChartWithMarketCap(ctx, tree, title),
@@ -2343,15 +2546,13 @@ function createSingleUnrealizedSectionWithMarketCapOnly(ctx, cohort, title) {
     ctx,
     tree,
     title,
-    pnl: [
-      ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
-      priceLine({ ctx, unit: Unit.pctMcap, defaultActive: false }),
-    ],
-    netPnl: [
-      ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
-      priceLine({ ctx, unit: Unit.pctMcap }),
-    ],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
+    pnl: [...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative)],
+    netPnl: [...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative)],
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
+      ctx,
+      tree,
+      title,
+    ),
     charts: [createNuplChart(ctx, tree.relative, title)],
   });
 }
@@ -2368,15 +2569,13 @@ function createSingleUnrealizedSectionMinAge(ctx, cohort, title) {
     ctx,
     tree,
     title,
-    pnl: [
-      ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
-      priceLine({ ctx, unit: Unit.pctMcap, defaultActive: false }),
-    ],
-    netPnl: [
-      ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
-      priceLine({ ctx, unit: Unit.pctMcap }),
-    ],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
+    pnl: [...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative)],
+    netPnl: [...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative)],
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
+      ctx,
+      tree,
+      title,
+    ),
     charts: [
       createNuplChart(ctx, tree.relative, title),
       createPeakRegretChartWithMarketCap(ctx, tree, title),
@@ -2603,7 +2802,11 @@ function createSingleUnrealizedSectionWithNupl({ ctx, cohort, title }) {
       ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
       ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
     ],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
+      ctx,
+      tree,
+      title,
+    ),
     charts: [
       createNuplChart(ctx, tree.relative, title),
       createPeakRegretChartWithMarketCap(ctx, tree, title),
@@ -2669,7 +2872,11 @@ function createSingleUnrealizedSectionAgeRange(ctx, cohort, title) {
       ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
       ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
     ],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(ctx, tree, title),
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
+      ctx,
+      tree,
+      title,
+    ),
     charts: [createPeakRegretChart(ctx, tree, title)],
   });
 }
@@ -2895,7 +3102,7 @@ function createGroupedCostBasisSectionWithPercentiles(ctx, list, title) {
  * @returns {PartialOptionsGroup}
  */
 function createActivitySection({ ctx, cohort, title, valueMetrics = [] }) {
-  const { colors, fromCountPattern, fromBitcoinPatternWithUnit } = ctx;
+  const { colors } = ctx;
   const { tree, color } = cohort;
 
   return {
@@ -2903,41 +3110,70 @@ function createActivitySection({ ctx, cohort, title, valueMetrics = [] }) {
     tree: [
       {
         name: "Sent",
-        title: title("Sent"),
-        bottom: [
-          ...fromCountPattern({
-            pattern: tree.activity.sent.sats,
-            unit: Unit.sats,
-            cumulativeUnit: Unit.satsCumulative,
-            color: color,
-          }),
-          ...fromBitcoinPatternWithUnit({
-            pattern: tree.activity.sent.bitcoin,
-            unit: Unit.btc,
-            cumulativeUnit: Unit.btcCumulative,
-            color: color,
-          }),
-          ...fromCountPattern({
-            pattern: tree.activity.sent.dollars,
-            unit: Unit.usd,
-            cumulativeUnit: Unit.usdCumulative,
-            color: color,
-          }),
-          line({
-            metric: tree.activity.sent14dEma.sats,
-            name: "14d EMA",
-            unit: Unit.sats,
-          }),
-          line({
-            metric: tree.activity.sent14dEma.bitcoin,
-            name: "14d EMA",
-            unit: Unit.btc,
-          }),
-          line({
-            metric: tree.activity.sent14dEma.dollars,
-            name: "14d EMA",
-            unit: Unit.usd,
-          }),
+        tree: [
+          {
+            name: "Sum",
+            title: title("Sent"),
+            bottom: [
+              line({
+                metric: tree.activity.sent.sats.sum,
+                name: "sum",
+                color,
+                unit: Unit.sats,
+              }),
+              line({
+                metric: tree.activity.sent.bitcoin.sum,
+                name: "sum",
+                color,
+                unit: Unit.btc,
+              }),
+              line({
+                metric: tree.activity.sent.dollars.sum,
+                name: "sum",
+                color,
+                unit: Unit.usd,
+              }),
+              line({
+                metric: tree.activity.sent14dEma.sats,
+                name: "14d EMA",
+                unit: Unit.sats,
+              }),
+              line({
+                metric: tree.activity.sent14dEma.bitcoin,
+                name: "14d EMA",
+                unit: Unit.btc,
+              }),
+              line({
+                metric: tree.activity.sent14dEma.dollars,
+                name: "14d EMA",
+                unit: Unit.usd,
+              }),
+            ],
+          },
+          {
+            name: "Cumulative",
+            title: title("Sent (Total)"),
+            bottom: [
+              line({
+                metric: tree.activity.sent.sats.cumulative,
+                name: "all-time",
+                color,
+                unit: Unit.sats,
+              }),
+              line({
+                metric: tree.activity.sent.bitcoin.cumulative,
+                name: "all-time",
+                color,
+                unit: Unit.btc,
+              }),
+              line({
+                metric: tree.activity.sent.dollars.cumulative,
+                name: "all-time",
+                color,
+                unit: Unit.usd,
+              }),
+            ],
+          },
         ],
       },
       {

@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
-use crate::{LoadedAddressData, Sats};
+use crate::{FundedAddressData, Sats};
 
 /// Data of an empty address
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
@@ -16,16 +16,16 @@ pub struct EmptyAddressData {
     pub transfered: Sats,
 }
 
-impl From<LoadedAddressData> for EmptyAddressData {
+impl From<FundedAddressData> for EmptyAddressData {
     #[inline]
-    fn from(value: LoadedAddressData) -> Self {
+    fn from(value: FundedAddressData) -> Self {
         Self::from(&value)
     }
 }
 
-impl From<&LoadedAddressData> for EmptyAddressData {
+impl From<&FundedAddressData> for EmptyAddressData {
     #[inline]
-    fn from(value: &LoadedAddressData) -> Self {
+    fn from(value: &FundedAddressData) -> Self {
         if value.sent != value.received {
             dbg!(&value);
             panic!("Trying to convert not empty wallet to empty !");

@@ -11,7 +11,7 @@ use crate::distribution::{
 
 use super::super::{
     cache::{AddressCache, load_uncached_address_data},
-    cohort::{LoadedAddressDataWithSource, TxIndexVec},
+    cohort::{FundedAddressDataWithSource, TxIndexVec},
 };
 
 /// Result of processing outputs for a block.
@@ -21,7 +21,7 @@ pub struct OutputsResult {
     /// Per-address-type received data: (typeindex, value) for each address.
     pub received_data: AddressTypeToVec<(TypeIndex, Sats)>,
     /// Address data looked up during processing, keyed by (address_type, typeindex).
-    pub address_data: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
+    pub address_data: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
     /// Transaction indexes per address for tx_count tracking.
     pub txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>,
 }
@@ -50,7 +50,7 @@ pub fn process_outputs(
     let mut transacted = Transacted::default();
     let mut received_data = AddressTypeToVec::with_capacity(estimated_per_type);
     let mut address_data =
-        AddressTypeToTypeIndexMap::<LoadedAddressDataWithSource>::with_capacity(estimated_per_type);
+        AddressTypeToTypeIndexMap::<FundedAddressDataWithSource>::with_capacity(estimated_per_type);
     let mut txindex_vecs =
         AddressTypeToTypeIndexMap::<TxIndexVec>::with_capacity(estimated_per_type);
 

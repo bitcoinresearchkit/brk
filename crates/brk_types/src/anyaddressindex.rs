@@ -4,11 +4,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
-use crate::{EmptyAddressIndex, LoadedAddressIndex, TypeIndex};
+use crate::{EmptyAddressIndex, FundedAddressIndex, TypeIndex};
 
 const MIN_EMPTY_INDEX: u32 = u32::MAX - 4_000_000_000;
 
-/// Unified index for any address type (loaded or empty)
+/// Unified index for any address type (funded or empty)
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Bytes, JsonSchema)]
 pub struct AnyAddressIndex(TypeIndex);
 
@@ -18,9 +18,9 @@ impl AnyAddressIndex {
     }
 }
 
-impl From<LoadedAddressIndex> for AnyAddressIndex {
+impl From<FundedAddressIndex> for AnyAddressIndex {
     #[inline]
-    fn from(value: LoadedAddressIndex) -> Self {
+    fn from(value: FundedAddressIndex) -> Self {
         if u32::from(value) >= MIN_EMPTY_INDEX {
             panic!("{value} is higher than MIN_EMPTY_INDEX ({MIN_EMPTY_INDEX})")
         }
@@ -70,7 +70,7 @@ impl Formattable for AnyAddressIndex {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum AnyAddressDataIndexEnum {
-    Loaded(LoadedAddressIndex),
+    Funded(FundedAddressIndex),
     Empty(EmptyAddressIndex),
 }
 
@@ -81,7 +81,7 @@ impl From<AnyAddressIndex> for AnyAddressDataIndexEnum {
         if uvalue >= MIN_EMPTY_INDEX {
             Self::Empty(EmptyAddressIndex::from(uvalue - MIN_EMPTY_INDEX))
         } else {
-            Self::Loaded(LoadedAddressIndex::from(value.0))
+            Self::Funded(FundedAddressIndex::from(value.0))
         }
     }
 }
@@ -90,7 +90,7 @@ impl From<AnyAddressDataIndexEnum> for AnyAddressIndex {
     #[inline]
     fn from(value: AnyAddressDataIndexEnum) -> Self {
         match value {
-            AnyAddressDataIndexEnum::Loaded(idx) => Self::from(idx),
+            AnyAddressDataIndexEnum::Funded(idx) => Self::from(idx),
             AnyAddressDataIndexEnum::Empty(idx) => Self::from(idx),
         }
     }

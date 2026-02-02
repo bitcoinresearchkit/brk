@@ -58,10 +58,10 @@ impl Query {
             .get_once(outputtype, type_index)?;
 
         let address_data = match any_address_index.to_enum() {
-            AnyAddressDataIndexEnum::Loaded(index) => computer
+            AnyAddressDataIndexEnum::Funded(index) => computer
                 .distribution
                 .addresses_data
-                .loaded
+                .funded
                 .iter()?
                 .get_unwrap(index),
             AnyAddressDataIndexEnum::Empty(index) => computer

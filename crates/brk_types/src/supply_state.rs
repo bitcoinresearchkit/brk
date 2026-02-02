@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
-use crate::{CheckedSub, LoadedAddressData, Sats};
+use crate::{CheckedSub, FundedAddressData, Sats};
 
 /// Current supply state tracking UTXO count and total value
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
@@ -65,9 +65,9 @@ impl SubAssign<&SupplyState> for SupplyState {
     }
 }
 
-impl From<&LoadedAddressData> for SupplyState {
+impl From<&FundedAddressData> for SupplyState {
     #[inline]
-    fn from(value: &LoadedAddressData) -> Self {
+    fn from(value: &FundedAddressData) -> Self {
         Self {
             utxo_count: value.utxo_count() as u64,
             value: value.balance(),

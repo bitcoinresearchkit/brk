@@ -86,10 +86,7 @@ const fuchsia = createColor(() => getColor("fuchsia"));
 const pink = createColor(() => getColor("pink"));
 const rose = createColor(() => getColor("rose"));
 
-const baseColors = {
-  default: createColor(() => getLightDarkValue("--color")),
-  gray: createColor(() => getColor("gray")),
-  border: createColor(() => getLightDarkValue("--border-color")),
+const spectrumColors = {
   red,
   orange,
   amber,
@@ -110,6 +107,13 @@ const baseColors = {
   rose,
 };
 
+const baseColors = {
+  default: createColor(() => getLightDarkValue("--color")),
+  gray: createColor(() => getColor("gray")),
+  border: createColor(() => getLightDarkValue("--border-color")),
+  ...spectrumColors,
+};
+
 export const colors = {
   ...baseColors,
 
@@ -125,6 +129,15 @@ export const colors = {
     pct25: violet,
     pct10: fuchsia,
     min: red,
+  },
+
+  /** Common time period colors */
+  time: {
+    _24h: pink,
+    _1w: red,
+    _1m: yellow,
+    _1y: lime,
+    all: teal,
   },
 
   /** DCA period colors by term */
@@ -170,3 +183,12 @@ export const colors = {
  * @typedef {typeof colors} Colors
  * @typedef {keyof typeof baseColors} ColorName
  */
+
+/** Palette for indexed series */
+const palette = Object.values(spectrumColors);
+
+/**
+ * Get a color by index (cycles through palette)
+ * @param {number} index
+ */
+export const colorAt = (index) => palette[index % palette.length];

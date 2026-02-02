@@ -64,7 +64,6 @@ export function createReturnsSection(ctx, returns) {
               }),
             ]
           : []),
-        priceLine({ ctx, unit: Unit.percentage }),
       ],
     };
   };
@@ -121,7 +120,6 @@ export function createReturnsSection(ctx, returns) {
             color: colors.blue,
             unit: Unit.percentage,
           }),
-          priceLine({ ctx, unit: Unit.percentage }),
         ],
       },
       // Short-term (1d, 1w, 1m)

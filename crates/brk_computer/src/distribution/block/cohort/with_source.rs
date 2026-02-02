@@ -1,8 +1,10 @@
-use brk_types::{EmptyAddressData, EmptyAddressIndex, LoadedAddressData, LoadedAddressIndex, TxIndex};
+use brk_types::{
+    EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, TxIndex,
+};
 use smallvec::SmallVec;
 
-/// Loaded address data with source tracking for flush operations.
-pub type LoadedAddressDataWithSource = WithAddressDataSource<LoadedAddressData>;
+/// Funded address data with source tracking for flush operations.
+pub type FundedAddressDataWithSource = WithAddressDataSource<FundedAddressData>;
 
 /// Empty address data with source tracking for flush operations.
 pub type EmptyAddressDataWithSource = WithAddressDataSource<EmptyAddressData>;
@@ -18,9 +20,9 @@ pub type TxIndexVec = SmallVec<[TxIndex; 4]>;
 pub enum WithAddressDataSource<T> {
     /// Brand new address (never seen before)
     New(T),
-    /// Loaded from loaded address storage (with original index)
-    FromLoaded(LoadedAddressIndex, T),
-    /// Loaded from empty address storage (with original index)
+    /// Funded from funded address storage (with original index)
+    FromFunded(FundedAddressIndex, T),
+    /// Funded from empty address storage (with original index)
     FromEmpty(EmptyAddressIndex, T),
 }
 
@@ -29,7 +31,7 @@ impl<T> std::ops::Deref for WithAddressDataSource<T> {
 
     fn deref(&self) -> &Self::Target {
         match self {
-            Self::New(v) | Self::FromLoaded(_, v) | Self::FromEmpty(_, v) => v,
+            Self::New(v) | Self::FromFunded(_, v) | Self::FromEmpty(_, v) => v,
         }
     }
 }
@@ -37,28 +39,28 @@ impl<T> std::ops::Deref for WithAddressDataSource<T> {
 impl<T> std::ops::DerefMut for WithAddressDataSource<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         match self {
-            Self::New(v) | Self::FromLoaded(_, v) | Self::FromEmpty(_, v) => v,
+            Self::New(v) | Self::FromFunded(_, v) | Self::FromEmpty(_, v) => v,
         }
     }
 }
 
-impl From<WithAddressDataSource<EmptyAddressData>> for WithAddressDataSource<LoadedAddressData> {
+impl From<WithAddressDataSource<EmptyAddressData>> for WithAddressDataSource<FundedAddressData> {
     #[inline]
     fn from(value: WithAddressDataSource<EmptyAddressData>) -> Self {
         match value {
             WithAddressDataSource::New(v) => Self::New(v.into()),
-            WithAddressDataSource::FromLoaded(i, v) => Self::FromLoaded(i, v.into()),
+            WithAddressDataSource::FromFunded(i, v) => Self::FromFunded(i, v.into()),
             WithAddressDataSource::FromEmpty(i, v) => Self::FromEmpty(i, v.into()),
         }
     }
 }
 
-impl From<WithAddressDataSource<LoadedAddressData>> for WithAddressDataSource<EmptyAddressData> {
+impl From<WithAddressDataSource<FundedAddressData>> for WithAddressDataSource<EmptyAddressData> {
     #[inline]
-    fn from(value: WithAddressDataSource<LoadedAddressData>) -> Self {
+    fn from(value: WithAddressDataSource<FundedAddressData>) -> Self {
         match value {
             WithAddressDataSource::New(v) => Self::New(v.into()),
-            WithAddressDataSource::FromLoaded(i, v) => Self::FromLoaded(i, v.into()),
+            WithAddressDataSource::FromFunded(i, v) => Self::FromFunded(i, v.into()),
             WithAddressDataSource::FromEmpty(i, v) => Self::FromEmpty(i, v.into()),
         }
     }

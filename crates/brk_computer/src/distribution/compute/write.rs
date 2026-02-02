@@ -9,8 +9,8 @@ use vecdb::{AnyStoredVec, GenericStoredVec, Stamp};
 use crate::distribution::{
     Vecs,
     block::{
-        EmptyAddressDataWithSource, LoadedAddressDataWithSource, process_empty_addresses,
-        process_loaded_addresses,
+        EmptyAddressDataWithSource, FundedAddressDataWithSource, process_empty_addresses,
+        process_funded_addresses,
     },
     state::BlockState,
 };
@@ -21,7 +21,7 @@ use super::super::address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAdd
 ///
 /// Applies all accumulated address changes to storage structures:
 /// - Processes empty address transitions
-/// - Processes loaded address transitions
+/// - Processes funded address transitions
 /// - Updates address indexes
 ///
 /// Call this before `flush()` to prepare data for writing.
@@ -29,14 +29,14 @@ pub fn process_address_updates(
     addresses_data: &mut AddressesDataVecs,
     address_indexes: &mut AnyAddressIndexesVecs,
     empty_updates: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
-    loaded_updates: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
+    funded_updates: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
 ) -> Result<()> {
     info!("Processing address updates...");
 
     let i = Instant::now();
     let empty_result = process_empty_addresses(addresses_data, empty_updates)?;
-    let loaded_result = process_loaded_addresses(addresses_data, loaded_updates)?;
-    address_indexes.par_batch_update(empty_result, loaded_result)?;
+    let funded_result = process_funded_addresses(addresses_data, funded_updates)?;
+    address_indexes.par_batch_update(empty_result, funded_result)?;
 
     info!("Processed address updates in {:?}", i.elapsed());
 

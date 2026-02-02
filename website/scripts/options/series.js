@@ -50,62 +50,18 @@ export function price({
  * @param {StatsPattern<any> | BaseStatsPattern<any> | FullStatsPattern<any> | AnyStatsPattern} pattern
  * @param {Unit} unit
  * @param {string} title
- * @param {{ type?: "Dots" }} [options]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function percentileSeries(colors, pattern, unit, title, { type } = {}) {
+function percentileSeries(colors, pattern, unit, title) {
   const { stat } = colors;
-  const base = { unit, defaultActive: false };
   return [
-    {
-      type,
-      metric: pattern.max,
-      title: `${title} max`.trim(),
-      color: stat.max,
-      ...base,
-    },
-    {
-      type,
-      metric: pattern.min,
-      title: `${title} min`.trim(),
-      color: stat.min,
-      ...base,
-    },
-    {
-      type,
-      metric: pattern.median,
-      title: `${title} median`.trim(),
-      color: stat.median,
-      ...base,
-    },
-    {
-      type,
-      metric: pattern.pct75,
-      title: `${title} pct75`.trim(),
-      color: stat.pct75,
-      ...base,
-    },
-    {
-      type,
-      metric: pattern.pct25,
-      title: `${title} pct25`.trim(),
-      color: stat.pct25,
-      ...base,
-    },
-    {
-      type,
-      metric: pattern.pct90,
-      title: `${title} pct90`.trim(),
-      color: stat.pct90,
-      ...base,
-    },
-    {
-      type,
-      metric: pattern.pct10,
-      title: `${title} pct10`.trim(),
-      color: stat.pct10,
-      ...base,
-    },
+    dots({ metric: pattern.max, name: `${title} max`.trim(), color: stat.max, unit, defaultActive: false }),
+    dots({ metric: pattern.min, name: `${title} min`.trim(), color: stat.min, unit, defaultActive: false }),
+    dots({ metric: pattern.median, name: `${title} median`.trim(), color: stat.median, unit, defaultActive: false }),
+    dots({ metric: pattern.pct75, name: `${title} pct75`.trim(), color: stat.pct75, unit, defaultActive: false }),
+    dots({ metric: pattern.pct25, name: `${title} pct25`.trim(), color: stat.pct25, unit, defaultActive: false }),
+    dots({ metric: pattern.pct90, name: `${title} pct90`.trim(), color: stat.pct90, unit, defaultActive: false }),
+    dots({ metric: pattern.pct10, name: `${title} pct10`.trim(), color: stat.pct10, unit, defaultActive: false }),
   ];
 }
 
@@ -306,36 +262,6 @@ export function histogram({
 }
 
 /**
- * Create series from patterns with sum + cumulative + percentiles (NO base)
- * @param {Colors} colors
- * @param {Object} args
- * @param {AnyStatsPattern} args.pattern
- * @param {Unit} args.unit
- * @param {Unit} args.cumulativeUnit
- * @param {string} [args.title]
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function fromSumStatsPattern(colors, { pattern, unit, cumulativeUnit, title = "" }) {
-  const { stat } = colors;
-  return [
-    { metric: pattern.average, title: `${title} avg`.trim(), unit },
-    {
-      metric: pattern.sum,
-      title: title || "sum",
-      color: stat.sum,
-      unit,
-      defaultActive: false,
-    },
-    {
-      metric: pattern.cumulative,
-      title: title || "cumulative",
-      unit: cumulativeUnit,
-    },
-    ...percentileSeries(colors, pattern, unit, title),
-  ];
-}
-
-/**
  * Create series from a BaseStatsPattern (base + avg + percentiles, NO sum)
  * @param {Colors} colors
  * @param {Object} args
@@ -352,59 +278,23 @@ export function fromBaseStatsPattern(
 ) {
   const { stat } = colors;
   return [
-    { metric: pattern.base, title: title || "base", color: baseColor, unit },
-    {
+    dots({ metric: pattern.base, name: title || "base", color: baseColor, unit }),
+    dots({
       metric: pattern.average,
-      title: `${title} avg`.trim(),
+      name: `${title} avg`.trim(),
       color: stat.avg,
       unit,
       defaultActive: avgActive,
-    },
+    }),
     ...percentileSeries(colors, pattern, unit, title),
   ];
 }
 
 /**
- * Create series from a FullStatsPattern (base + sum + cumulative + avg + percentiles)
+ * Create series from any pattern with avg + percentiles (works with StatsPattern, SumStatsPattern, etc.)
  * @param {Colors} colors
  * @param {Object} args
- * @param {FullStatsPattern<any>} args.pattern
- * @param {Unit} args.unit
- * @param {Unit} args.cumulativeUnit
- * @param {string} [args.title]
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function fromFullStatsPattern(colors, { pattern, unit, cumulativeUnit, title = "" }) {
-  const { stat } = colors;
-  return [
-    { metric: pattern.base, title: title || "base", unit },
-    {
-      metric: pattern.sum,
-      title: title || "sum",
-      color: stat.sum,
-      unit,
-    },
-    {
-      metric: pattern.cumulative,
-      title: title || "cumulative",
-      unit: cumulativeUnit,
-    },
-    {
-      metric: pattern.average,
-      title: `${title} avg`.trim(),
-      color: stat.avg,
-      unit,
-      defaultActive: false,
-    },
-    ...percentileSeries(colors, pattern, unit, title),
-  ];
-}
-
-/**
- * Create series from a StatsPattern (avg + percentiles, NO base)
- * @param {Colors} colors
- * @param {Object} args
- * @param {StatsPattern<any>} args.pattern
+ * @param {StatsPattern<any> | BaseStatsPattern<any> | FullStatsPattern<any> | AnyStatsPattern} args.pattern
  * @param {Unit} args.unit
  * @param {string} [args.title]
  * @returns {AnyFetchedSeriesBlueprint[]}
@@ -417,178 +307,7 @@ export function fromStatsPattern(colors, { pattern, unit, title = "" }) {
       title: `${title} avg`.trim(),
       unit,
     },
-    ...percentileSeries(colors, pattern, unit, title, { type: "Dots" }),
-  ];
-}
-
-/**
- * Create series from AnyFullStatsPattern (base + sum + cumulative + avg + percentiles)
- * @param {Colors} colors
- * @param {Object} args
- * @param {AnyFullStatsPattern} args.pattern
- * @param {Unit} args.unit
- * @param {Unit} args.cumulativeUnit
- * @param {string} [args.title]
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function fromAnyFullStatsPattern(colors, { pattern, unit, cumulativeUnit, title = "" }) {
-  const { stat } = colors;
-  return [
-    ...fromBaseStatsPattern(colors, { pattern, unit, title }),
-    {
-      metric: pattern.sum,
-      title: title || "sum",
-      color: stat.sum,
-      unit,
-    },
-    {
-      metric: pattern.cumulative,
-      title: title || "cumulative",
-      unit: cumulativeUnit,
-    },
-  ];
-}
-
-/**
- * Create series from a CoinbasePattern ({ sats, bitcoin, dollars } each with stats + sum + cumulative)
- * @param {Colors} colors
- * @param {Object} args
- * @param {CoinbasePattern} args.pattern
- * @param {string} [args.title]
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function fromCoinbasePattern(colors, { pattern, title = "" }) {
-  return [
-    ...fromAnyFullStatsPattern(colors, {
-      pattern: pattern.bitcoin,
-      unit: Unit.btc,
-      cumulativeUnit: Unit.btcCumulative,
-      title,
-    }),
-    ...fromAnyFullStatsPattern(colors, {
-      pattern: pattern.sats,
-      unit: Unit.sats,
-      cumulativeUnit: Unit.satsCumulative,
-      title,
-    }),
-    ...fromAnyFullStatsPattern(colors, {
-      pattern: pattern.dollars,
-      unit: Unit.usd,
-      cumulativeUnit: Unit.usdCumulative,
-      title,
-    }),
-  ];
-}
-
-/**
- * Create series from a ValuePattern ({ sats, bitcoin, dollars } each as CountPattern with sum + cumulative)
- * @param {Object} args
- * @param {ValuePattern} args.pattern
- * @param {string} [args.title]
- * @param {Color} [args.color]
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function fromValuePattern({ pattern, title = "", color }) {
-  return [
-    {
-      metric: pattern.bitcoin.sum,
-      title: title || "sum",
-      color,
-      unit: Unit.btc,
-    },
-    {
-      metric: pattern.bitcoin.cumulative,
-      title: title || "cumulative",
-      color,
-      unit: Unit.btcCumulative,
-    },
-    {
-      metric: pattern.sats.sum,
-      title: title || "sum",
-      color,
-      unit: Unit.sats,
-    },
-    {
-      metric: pattern.sats.cumulative,
-      title: title || "cumulative",
-      color,
-      unit: Unit.satsCumulative,
-    },
-    {
-      metric: pattern.dollars.sum,
-      title: title || "sum",
-      color,
-      unit: Unit.usd,
-    },
-    {
-      metric: pattern.dollars.cumulative,
-      title: title || "cumulative",
-      color,
-      unit: Unit.usdCumulative,
-    },
-  ];
-}
-
-/**
- * Create sum/cumulative series from a BitcoinPattern ({ sum, cumulative }) with explicit unit and colors
- * @param {Object} args
- * @param {{ sum: AnyMetricPattern, cumulative: AnyMetricPattern }} args.pattern
- * @param {Unit} args.unit
- * @param {Unit} args.cumulativeUnit
- * @param {string} [args.title]
- * @param {Color} [args.color]
- * @param {boolean} [args.defaultActive]
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function fromBitcoinPatternWithUnit({
-  pattern,
-  unit,
-  cumulativeUnit,
-  title = "",
-  color,
-  defaultActive,
-}) {
-  return [
-    {
-      metric: pattern.sum,
-      title: title || "sum",
-      color,
-      unit,
-      defaultActive,
-    },
-    {
-      metric: pattern.cumulative,
-      title: title || "cumulative",
-      color,
-      unit: cumulativeUnit,
-    },
-  ];
-}
-
-/**
- * Create sum/cumulative series from a CountPattern with explicit unit and colors
- * @param {Object} args
- * @param {CountPattern<any>} args.pattern
- * @param {Unit} args.unit
- * @param {Unit} args.cumulativeUnit
- * @param {string} [args.title]
- * @param {Color} [args.color]
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function fromCountPattern({ pattern, unit, cumulativeUnit, title = "", color }) {
-  return [
-    {
-      metric: pattern.sum,
-      title: title || "sum",
-      color,
-      unit,
-    },
-    {
-      metric: pattern.cumulative,
-      title: title || "cumulative",
-      color,
-      unit: cumulativeUnit,
-    },
+    ...percentileSeries(colors, pattern, unit, title),
   ];
 }
 
@@ -619,6 +338,210 @@ export function fromSupplyPattern({ pattern, title, color }) {
       title,
       color,
       unit: Unit.usd,
+    },
+  ];
+}
+
+// ============================================================================
+// Chart-generating helpers (return PartialOptionsTree for folder structures)
+// ============================================================================
+// These split patterns into separate Sum/Distribution/Cumulative charts
+
+/**
+ * Create distribution series (avg + percentiles)
+ * @param {Colors} colors
+ * @param {StatsPattern<any> | BaseStatsPattern<any> | FullStatsPattern<any> | AnyStatsPattern} pattern
+ * @param {Unit} unit
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function distributionSeries(colors, pattern, unit) {
+  const { stat } = colors;
+  return [
+    dots({ metric: pattern.average, name: "avg", color: stat.avg, unit }),
+    dots({ metric: pattern.median, name: "median", color: stat.median, unit, defaultActive: false }),
+    dots({ metric: pattern.max, name: "max", color: stat.max, unit, defaultActive: false }),
+    dots({ metric: pattern.min, name: "min", color: stat.min, unit, defaultActive: false }),
+    dots({ metric: pattern.pct75, name: "pct75", color: stat.pct75, unit, defaultActive: false }),
+    dots({ metric: pattern.pct25, name: "pct25", color: stat.pct25, unit, defaultActive: false }),
+    dots({ metric: pattern.pct90, name: "pct90", color: stat.pct90, unit, defaultActive: false }),
+    dots({ metric: pattern.pct10, name: "pct10", color: stat.pct10, unit, defaultActive: false }),
+  ];
+}
+
+/**
+ * Create btc/sats/usd series from metrics
+ * @param {Object} args
+ * @param {{ bitcoin: AnyMetricPattern, sats: AnyMetricPattern, dollars: AnyMetricPattern }} args.metrics
+ * @param {string} args.name
+ * @param {Color} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function btcSatsUsdSeries({ metrics, name, color, defaultActive }) {
+  return [
+    { metric: metrics.bitcoin, title: name, color, unit: Unit.btc, defaultActive },
+    { metric: metrics.sats, title: name, color, unit: Unit.sats, defaultActive },
+    { metric: metrics.dollars, title: name, color, unit: Unit.usd, defaultActive },
+  ];
+}
+
+/**
+ * Split pattern with base + sum + distribution + cumulative into 3 charts
+ * @param {Colors} colors
+ * @param {Object} args
+ * @param {FullStatsPattern<any>} args.pattern
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsTree}
+ */
+export function chartsFromFull(colors, { pattern, title, unit }) {
+  return [
+    {
+      name: "Sum",
+      title,
+      bottom: [
+        { metric: pattern.base, title: "sum", unit },
+        { metric: pattern.sum, title: "sum", unit },
+      ],
+    },
+    {
+      name: "Distribution",
+      title: `${title} Distribution`,
+      bottom: distributionSeries(colors, pattern, unit),
+    },
+    {
+      name: "Cumulative",
+      title: `${title} (Total)`,
+      bottom: [{ metric: pattern.cumulative, title: "all-time", unit }],
+    },
+  ];
+}
+
+/**
+ * Split pattern with sum + distribution + cumulative into 3 charts (no base)
+ * @param {Colors} colors
+ * @param {Object} args
+ * @param {AnyStatsPattern} args.pattern
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsTree}
+ */
+export function chartsFromSum(colors, { pattern, title, unit }) {
+  const { stat } = colors;
+  return [
+    {
+      name: "Sum",
+      title,
+      bottom: [{ metric: pattern.sum, title: "sum", color: stat.sum, unit }],
+    },
+    {
+      name: "Distribution",
+      title: `${title} Distribution`,
+      bottom: distributionSeries(colors, pattern, unit),
+    },
+    {
+      name: "Cumulative",
+      title: `${title} (Total)`,
+      bottom: [{ metric: pattern.cumulative, title: "all-time", unit }],
+    },
+  ];
+}
+
+/**
+ * Split pattern with sum + cumulative into 2 charts
+ * @param {Object} args
+ * @param {CountPattern<any>} args.pattern
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @param {Color} [args.color]
+ * @returns {PartialOptionsTree}
+ */
+export function chartsFromCount({ pattern, title, unit, color }) {
+  return [
+    {
+      name: "Sum",
+      title,
+      bottom: [{ metric: pattern.sum, title: "sum", color, unit }],
+    },
+    {
+      name: "Cumulative",
+      title: `${title} (Total)`,
+      bottom: [{ metric: pattern.cumulative, title: "all-time", color, unit }],
+    },
+  ];
+}
+
+/**
+ * Split value pattern (btc/sats/usd with sum + cumulative) into 2 charts
+ * @param {Object} args
+ * @param {ValuePattern} args.pattern
+ * @param {string} args.title
+ * @param {Color} [args.color]
+ * @returns {PartialOptionsTree}
+ */
+export function chartsFromValue({ pattern, title, color }) {
+  return [
+    {
+      name: "Sum",
+      title,
+      bottom: btcSatsUsdSeries({
+        metrics: { bitcoin: pattern.bitcoin.sum, sats: pattern.sats.sum, dollars: pattern.dollars.sum },
+        name: "sum",
+        color,
+      }),
+    },
+    {
+      name: "Cumulative",
+      title: `${title} (Total)`,
+      bottom: btcSatsUsdSeries({
+        metrics: { bitcoin: pattern.bitcoin.cumulative, sats: pattern.sats.cumulative, dollars: pattern.dollars.cumulative },
+        name: "all-time",
+        color,
+      }),
+    },
+  ];
+}
+
+/**
+ * Split btc/sats/usd pattern with full stats into 3 charts
+ * @param {Colors} colors
+ * @param {Object} args
+ * @param {CoinbasePattern} args.pattern
+ * @param {string} args.title
+ * @returns {PartialOptionsTree}
+ */
+export function chartsFromValueFull(colors, { pattern, title }) {
+  return [
+    {
+      name: "Sum",
+      title,
+      bottom: [
+        ...btcSatsUsdSeries({
+          metrics: { bitcoin: pattern.bitcoin.base, sats: pattern.sats.base, dollars: pattern.dollars.base },
+          name: "sum",
+        }),
+        ...btcSatsUsdSeries({
+          metrics: { bitcoin: pattern.bitcoin.sum, sats: pattern.sats.sum, dollars: pattern.dollars.sum },
+          name: "sum",
+        }),
+      ],
+    },
+    {
+      name: "Distribution",
+      title: `${title} Distribution`,
+      bottom: [
+        ...distributionSeries(colors, pattern.bitcoin, Unit.btc),
+        ...distributionSeries(colors, pattern.sats, Unit.sats),
+        ...distributionSeries(colors, pattern.dollars, Unit.usd),
+      ],
+    },
+    {
+      name: "Cumulative",
+      title: `${title} (Total)`,
+      bottom: btcSatsUsdSeries({
+        metrics: { bitcoin: pattern.bitcoin.cumulative, sats: pattern.sats.cumulative, dollars: pattern.dollars.cumulative },
+        name: "all-time",
+      }),
     },
   ];
 }

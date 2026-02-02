@@ -9,11 +9,6 @@ export const Unit = /** @type {const} */ ({
   btc: { id: "btc", name: "Bitcoin" },
   usd: { id: "usd", name: "US Dollars" },
 
-  // Cumulative value units (running totals)
-  satsCumulative: { id: "sats-total", name: "Satoshis (Total)" },
-  btcCumulative: { id: "btc-total", name: "Bitcoin (Total)" },
-  usdCumulative: { id: "usd-total", name: "US Dollars (Total)" },
-
   // Ratios & percentages
   percentage: { id: "percentage", name: "Percentage" },
   cagr: { id: "cagr", name: "CAGR (%/year)" },
@@ -36,15 +31,12 @@ export const Unit = /** @type {const} */ ({
 
   // Counts
   count: { id: "count", name: "Count" },
-  countCumulative: { id: "count-total", name: "Count (Total)" },
   blocks: { id: "blocks", name: "Blocks" },
 
   // Size
   bytes: { id: "bytes", name: "Bytes" },
-  bytesCumulative: { id: "bytes-total", name: "Bytes (Total)" },
   vb: { id: "vb", name: "Virtual Bytes" },
   wu: { id: "wu", name: "Weight Units" },
-  wuCumulative: { id: "wu-total", name: "Weight Units (Total)" },
 
   // Mining
   hashRate: { id: "hashrate", name: "Hash Rate" },

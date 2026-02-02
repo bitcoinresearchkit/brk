@@ -3,7 +3,7 @@
 import { Unit } from "../utils/units.js";
 import { priceLine } from "./constants.js";
 import { line, dots } from "./series.js";
-import { satsBtcUsd } from "./shared.js";
+import { satsBtcUsd, satsBtcUsdFrom } from "./shared.js";
 import { spendableTypeColors } from "./colors/index.js";
 
 /**
@@ -15,14 +15,12 @@ export function createNetworkSection(ctx) {
   const {
     colors,
     brk,
-    fromSumStatsPattern,
     fromBaseStatsPattern,
-    fromFullStatsPattern,
     fromStatsPattern,
-    fromCoinbasePattern,
-    fromValuePattern,
-    fromCountPattern,
     fromSupplyPattern,
+    chartsFromFull,
+    chartsFromSum,
+    chartsFromValueFull,
   } = ctx;
   const {
     blocks,
@@ -34,54 +32,214 @@ export function createNetworkSection(ctx) {
     distribution,
   } = brk.metrics;
 
-  // Address types for mapping (using spendableTypeColors for consistency)
-  /** @type {ReadonlyArray<{key: AddressableType, name: string, color: Color, defaultActive?: boolean}>} */
-  const addressTypes = [
-    { key: "p2pkh", name: "P2PKH", color: colors[spendableTypeColors.p2pkh] },
-    { key: "p2sh", name: "P2SH", color: colors[spendableTypeColors.p2sh] },
-    { key: "p2wpkh", name: "P2WPKH", color: colors[spendableTypeColors.p2wpkh] },
-    { key: "p2wsh", name: "P2WSH", color: colors[spendableTypeColors.p2wsh] },
-    { key: "p2tr", name: "P2TR", color: colors[spendableTypeColors.p2tr] },
-    { key: "p2pk65", name: "P2PK65", color: colors[spendableTypeColors.p2pk65], defaultActive: false },
-    { key: "p2pk33", name: "P2PK33", color: colors[spendableTypeColors.p2pk33], defaultActive: false },
-    { key: "p2a", name: "P2A", color: colors[spendableTypeColors.p2a], defaultActive: false },
-  ];
+  // Address types for mapping (newest to oldest)
+  const addressTypes = /** @type {const} */ ([
+    {
+      key: "p2a",
+      name: "P2A",
+      color: colors[spendableTypeColors.p2a],
+      defaultActive: false,
+    },
+    {
+      key: "p2tr",
+      name: "P2TR",
+      color: colors[spendableTypeColors.p2tr],
+      defaultActive: true,
+    },
+    {
+      key: "p2wsh",
+      name: "P2WSH",
+      color: colors[spendableTypeColors.p2wsh],
+      defaultActive: true,
+    },
+    {
+      key: "p2wpkh",
+      name: "P2WPKH",
+      color: colors[spendableTypeColors.p2wpkh],
+      defaultActive: true,
+    },
+    {
+      key: "p2sh",
+      name: "P2SH",
+      color: colors[spendableTypeColors.p2sh],
+      defaultActive: true,
+    },
+    {
+      key: "p2pkh",
+      name: "P2PKH",
+      color: colors[spendableTypeColors.p2pkh],
+      defaultActive: true,
+    },
+    {
+      key: "p2pk33",
+      name: "P2PK33",
+      color: colors[spendableTypeColors.p2pk33],
+      defaultActive: false,
+    },
+    {
+      key: "p2pk65",
+      name: "P2PK65",
+      color: colors[spendableTypeColors.p2pk65],
+      defaultActive: false,
+    },
+  ]);
 
-  // Script types for output count comparisons (address types + non-addressable scripts)
-  /** @type {ReadonlyArray<{key: AddressableType | "p2ms" | "opreturn" | "emptyoutput" | "unknownoutput", name: string, color: Color, defaultActive?: boolean}>} */
-  const scriptTypes = [
-    { key: "p2pkh", name: "P2PKH", color: colors[spendableTypeColors.p2pkh] },
+  // Address type groups (newest to oldest)
+  const legacyAddresses = /** @type {const} */ ([
     { key: "p2sh", name: "P2SH", color: colors[spendableTypeColors.p2sh] },
-    { key: "p2wpkh", name: "P2WPKH", color: colors[spendableTypeColors.p2wpkh] },
+    { key: "p2pkh", name: "P2PKH", color: colors[spendableTypeColors.p2pkh] },
+    {
+      key: "p2pk33",
+      name: "P2PK33",
+      color: colors[spendableTypeColors.p2pk33],
+    },
+    {
+      key: "p2pk65",
+      name: "P2PK65",
+      color: colors[spendableTypeColors.p2pk65],
+    },
+  ]);
+  const segwitAddresses = /** @type {const} */ ([
     { key: "p2wsh", name: "P2WSH", color: colors[spendableTypeColors.p2wsh] },
+    {
+      key: "p2wpkh",
+      name: "P2WPKH",
+      color: colors[spendableTypeColors.p2wpkh],
+    },
+  ]);
+  const taprootAddresses = /** @type {const} */ ([
+    { key: "p2a", name: "P2A", color: colors[spendableTypeColors.p2a] },
     { key: "p2tr", name: "P2TR", color: colors[spendableTypeColors.p2tr] },
-    { key: "p2pk65", name: "P2PK65", color: colors[spendableTypeColors.p2pk65], defaultActive: false },
-    { key: "p2pk33", name: "P2PK33", color: colors[spendableTypeColors.p2pk33], defaultActive: false },
-    { key: "p2a", name: "P2A", color: colors[spendableTypeColors.p2a], defaultActive: false },
-    { key: "p2ms", name: "P2MS", color: colors[spendableTypeColors.p2ms], defaultActive: false },
-    { key: "opreturn", name: "OP_RETURN", color: colors[spendableTypeColors.opreturn], defaultActive: false },
-    { key: "emptyoutput", name: "Empty", color: colors[spendableTypeColors.empty], defaultActive: false },
-    { key: "unknownoutput", name: "Unknown", color: colors[spendableTypeColors.unknown], defaultActive: false },
-  ];
+  ]);
 
-  // Activity types for mapping
-  /** @type {ReadonlyArray<{key: "sending" | "receiving" | "both" | "reactivated" | "balanceIncreased" | "balanceDecreased", name: string, title: string, compareTitle: string}>} */
-  const activityTypes = [
-    { key: "sending", name: "Sending", title: "Sending Address Count", compareTitle: "Sending Address Count by Type" },
-    { key: "receiving", name: "Receiving", title: "Receiving Address Count", compareTitle: "Receiving Address Count by Type" },
-    { key: "both", name: "Both", title: "Addresses Sending & Receiving (Same Block)", compareTitle: "Addresses Sending & Receiving by Type" },
-    { key: "reactivated", name: "Reactivated", title: "Reactivated Address Count (Was Empty)", compareTitle: "Reactivated Address Count by Type" },
-    { key: "balanceIncreased", name: "Balance Increased", title: "Addresses with Increased Balance", compareTitle: "Addresses with Increased Balance by Type" },
-    { key: "balanceDecreased", name: "Balance Decreased", title: "Addresses with Decreased Balance", compareTitle: "Addresses with Decreased Balance by Type" },
-  ];
+  // Script types for output count comparisons (newest to oldest, then non-addressable)
+  const scriptTypes = /** @type {const} */ ([
+    {
+      key: "p2a",
+      name: "P2A",
+      color: colors[spendableTypeColors.p2a],
+      defaultActive: false,
+    },
+    {
+      key: "p2tr",
+      name: "P2TR",
+      color: colors[spendableTypeColors.p2tr],
+      defaultActive: true,
+    },
+    {
+      key: "p2wsh",
+      name: "P2WSH",
+      color: colors[spendableTypeColors.p2wsh],
+      defaultActive: true,
+    },
+    {
+      key: "p2wpkh",
+      name: "P2WPKH",
+      color: colors[spendableTypeColors.p2wpkh],
+      defaultActive: true,
+    },
+    {
+      key: "p2sh",
+      name: "P2SH",
+      color: colors[spendableTypeColors.p2sh],
+      defaultActive: true,
+    },
+    {
+      key: "p2pkh",
+      name: "P2PKH",
+      color: colors[spendableTypeColors.p2pkh],
+      defaultActive: true,
+    },
+    {
+      key: "p2pk33",
+      name: "P2PK33",
+      color: colors[spendableTypeColors.p2pk33],
+      defaultActive: false,
+    },
+    {
+      key: "p2pk65",
+      name: "P2PK65",
+      color: colors[spendableTypeColors.p2pk65],
+      defaultActive: false,
+    },
+    {
+      key: "p2ms",
+      name: "P2MS",
+      color: colors[spendableTypeColors.p2ms],
+      defaultActive: false,
+    },
+    {
+      key: "opreturn",
+      name: "OP_RETURN",
+      color: colors[spendableTypeColors.opreturn],
+      defaultActive: false,
+    },
+    {
+      key: "emptyoutput",
+      name: "Empty",
+      color: colors[spendableTypeColors.empty],
+      defaultActive: false,
+    },
+    {
+      key: "unknownoutput",
+      name: "Unknown",
+      color: colors[spendableTypeColors.unknown],
+      defaultActive: false,
+    },
+  ]);
+
+  // Transacting types (transaction participation)
+  const transactingTypes = /** @type {const} */ ([
+    {
+      key: "sending",
+      name: "Sending",
+      title: "Sending Address Count",
+      compareTitle: "Sending Address Count by Type",
+    },
+    {
+      key: "receiving",
+      name: "Receiving",
+      title: "Receiving Address Count",
+      compareTitle: "Receiving Address Count by Type",
+    },
+    {
+      key: "both",
+      name: "Sending & Receiving",
+      title: "Addresses Sending & Receiving",
+      compareTitle: "Addresses Sending & Receiving by Type",
+    },
+  ]);
+
+  // Balance change types
+  const balanceTypes = /** @type {const} */ ([
+    {
+      key: "balanceIncreased",
+      name: "Increased",
+      title: "Addresses with Increased Balance",
+      compareTitle: "Addresses with Increased Balance by Type",
+    },
+    {
+      key: "balanceDecreased",
+      name: "Decreased",
+      title: "Addresses with Decreased Balance",
+      compareTitle: "Addresses with Decreased Balance by Type",
+    },
+  ]);
 
   // Count types for comparison charts
-  /** @type {ReadonlyArray<{key: "addrCount" | "emptyAddrCount" | "totalAddrCount", name: string, title: string}>} */
-  const countTypes = [
-    { key: "addrCount", name: "Loaded", title: "Address Count by Type" },
-    { key: "emptyAddrCount", name: "Empty", title: "Empty Address Count by Type" },
-    { key: "totalAddrCount", name: "Total", title: "Total Address Count by Type" },
-  ];
+  const countTypes = /** @type {const} */ ([
+    { key: "addrCount", name: "Funded", title: "Address Count by Type" },
+    {
+      key: "emptyAddrCount",
+      name: "Empty",
+      title: "Empty Address Count by Type",
+    },
+    {
+      key: "totalAddrCount",
+      name: "Total",
+      title: "Total Address Count by Type",
+    },
+  ]);
 
   /**
    * Create address metrics tree for a given type key
@@ -95,7 +253,7 @@ export function createNetworkSection(ctx) {
       bottom: [
         line({
           metric: distribution.addrCount[key],
-          name: "Loaded",
+          name: "Funded",
           unit: Unit.count,
         }),
         line({
@@ -116,26 +274,255 @@ export function createNetworkSection(ctx) {
     },
     {
       name: "New",
-      title: `${titlePrefix}New Address Count`,
-      bottom: fromFullStatsPattern({ pattern: distribution.newAddrCount[key], unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
+      tree: chartsFromFull({
+        pattern: distribution.newAddrCount[key],
+        title: `${titlePrefix}New Address Count`,
+        unit: Unit.count,
+      }),
+    },
+    {
+      name: "Reactivated",
+      title: `${titlePrefix}Reactivated Address Count`,
+      bottom: fromBaseStatsPattern({
+        pattern: distribution.addressActivity[key].reactivated,
+        unit: Unit.count,
+      }),
     },
     {
       name: "Growth Rate",
       title: `${titlePrefix}Address Growth Rate`,
-      bottom: fromBaseStatsPattern({ pattern: distribution.growthRate[key], unit: Unit.ratio }),
+      bottom: fromBaseStatsPattern({
+        pattern: distribution.growthRate[key],
+        unit: Unit.ratio,
+      }),
     },
     {
-      name: "Activity",
-      tree: activityTypes.map((a) => ({
-        name: a.name,
-        title: `${titlePrefix}${a.name} Address Count`,
+      name: "Transacting",
+      tree: transactingTypes.map((t) => ({
+        name: t.name,
+        title: `${titlePrefix}${t.title}`,
         bottom: fromBaseStatsPattern({
-          pattern: distribution.addressActivity[key][a.key],
+          pattern: distribution.addressActivity[key][t.key],
+          unit: Unit.count,
+        }),
+      })),
+    },
+    {
+      name: "Balance",
+      tree: balanceTypes.map((b) => ({
+        name: b.name,
+        title: `${titlePrefix}${b.title}`,
+        bottom: fromBaseStatsPattern({
+          pattern: distribution.addressActivity[key][b.key],
           unit: Unit.count,
         }),
       })),
     },
   ];
+
+  /**
+   * Create Compare charts for an address group
+   * @template {AddressableType} K
+   * @param {string} groupName
+   * @param {ReadonlyArray<{key: K, name: string, color: Color}>} types
+   */
+  const createAddressCompare = (groupName, types) => ({
+    name: "Compare",
+    tree: [
+      {
+        name: "Count",
+        tree: countTypes.map((c) => ({
+          name: c.name,
+          title: `${groupName} ${c.title}`,
+          bottom: types.map((t) =>
+            line({
+              metric: distribution[c.key][t.key],
+              name: t.name,
+              color: t.color,
+              unit: Unit.count,
+            }),
+          ),
+        })),
+      },
+      {
+        name: "New",
+        title: `${groupName} New Address Count`,
+        bottom: types.flatMap((t) => [
+          line({
+            metric: distribution.newAddrCount[t.key].base,
+            name: t.name,
+            color: t.color,
+            unit: Unit.count,
+          }),
+          line({
+            metric: distribution.newAddrCount[t.key].sum,
+            name: t.name,
+            color: t.color,
+            unit: Unit.count,
+          }),
+        ]),
+      },
+      {
+        name: "Reactivated",
+        title: `${groupName} Reactivated Address Count`,
+        bottom: types.flatMap((t) => [
+          line({
+            metric: distribution.addressActivity[t.key].reactivated.base,
+            name: t.name,
+            color: t.color,
+            unit: Unit.count,
+          }),
+          line({
+            metric: distribution.addressActivity[t.key].reactivated.average,
+            name: t.name,
+            color: t.color,
+            unit: Unit.count,
+          }),
+        ]),
+      },
+      {
+        name: "Growth Rate",
+        title: `${groupName} Address Growth Rate`,
+        bottom: types.flatMap((t) => [
+          dots({
+            metric: distribution.growthRate[t.key].base,
+            name: t.name,
+            color: t.color,
+            unit: Unit.ratio,
+          }),
+          dots({
+            metric: distribution.growthRate[t.key].average,
+            name: t.name,
+            color: t.color,
+            unit: Unit.ratio,
+          }),
+        ]),
+      },
+      {
+        name: "Transacting",
+        tree: transactingTypes.map((tr) => ({
+          name: tr.name,
+          title: `${groupName} ${tr.compareTitle}`,
+          bottom: types.flatMap((t) => [
+            line({
+              metric: distribution.addressActivity[t.key][tr.key].base,
+              name: t.name,
+              color: t.color,
+              unit: Unit.count,
+            }),
+            line({
+              metric: distribution.addressActivity[t.key][tr.key].average,
+              name: t.name,
+              color: t.color,
+              unit: Unit.count,
+            }),
+          ]),
+        })),
+      },
+      {
+        name: "Balance",
+        tree: balanceTypes.map((b) => ({
+          name: b.name,
+          title: `${groupName} ${b.compareTitle}`,
+          bottom: types.flatMap((t) => [
+            line({
+              metric: distribution.addressActivity[t.key][b.key].base,
+              name: t.name,
+              color: t.color,
+              unit: Unit.count,
+            }),
+            line({
+              metric: distribution.addressActivity[t.key][b.key].average,
+              name: t.name,
+              color: t.color,
+              unit: Unit.count,
+            }),
+          ]),
+        })),
+      },
+    ],
+  });
+
+  // Script type groups for Output Counts (newest to oldest)
+  const legacyScripts = /** @type {const} */ ([
+    { key: "p2pkh", name: "P2PKH", color: colors[spendableTypeColors.p2pkh] },
+    {
+      key: "p2pk33",
+      name: "P2PK33",
+      color: colors[spendableTypeColors.p2pk33],
+    },
+    {
+      key: "p2pk65",
+      name: "P2PK65",
+      color: colors[spendableTypeColors.p2pk65],
+    },
+  ]);
+  const scriptHashScripts = /** @type {const} */ ([
+    { key: "p2sh", name: "P2SH", color: colors[spendableTypeColors.p2sh] },
+    { key: "p2ms", name: "P2MS", color: colors[spendableTypeColors.p2ms] },
+  ]);
+  const segwitScripts = /** @type {const} */ ([
+    { key: "segwit", name: "All SegWit", color: colors.cyan },
+    { key: "p2wsh", name: "P2WSH", color: colors[spendableTypeColors.p2wsh] },
+    {
+      key: "p2wpkh",
+      name: "P2WPKH",
+      color: colors[spendableTypeColors.p2wpkh],
+    },
+  ]);
+  const otherScripts = /** @type {const} */ ([
+    {
+      key: "opreturn",
+      name: "OP_RETURN",
+      color: colors[spendableTypeColors.opreturn],
+    },
+    {
+      key: "emptyoutput",
+      name: "Empty",
+      color: colors[spendableTypeColors.empty],
+    },
+    {
+      key: "unknownoutput",
+      name: "Unknown",
+      color: colors[spendableTypeColors.unknown],
+    },
+  ]);
+
+  /**
+   * Create Compare charts for a script group
+   * @template {keyof typeof scripts.count} K
+   * @param {string} groupName
+   * @param {ReadonlyArray<{key: K, name: string, color: Color}>} types
+   */
+  const createScriptCompare = (groupName, types) => ({
+    name: "Compare",
+    tree: [
+      {
+        name: "Sum",
+        title: `${groupName} Output Count`,
+        bottom: types.map((t) =>
+          line({
+            metric: scripts.count[t.key].sum,
+            name: t.name,
+            color: t.color,
+            unit: Unit.count,
+          }),
+        ),
+      },
+      {
+        name: "Cumulative",
+        title: `${groupName} Output Count (Total)`,
+        bottom: types.map((t) =>
+          line({
+            metric: scripts.count[t.key].cumulative,
+            name: t.name,
+            color: t.color,
+            unit: Unit.count,
+          }),
+        ),
+      },
+    ],
+  });
 
   return {
     name: "Network",
@@ -147,7 +534,10 @@ export function createNetworkSection(ctx) {
           {
             name: "Circulating",
             title: "Circulating Supply",
-            bottom: fromSupplyPattern({ pattern: supply.circulating, title: "Supply" }),
+            bottom: fromSupplyPattern({
+              pattern: supply.circulating,
+              title: "Supply",
+            }),
           },
           {
             name: "Inflation",
@@ -162,13 +552,33 @@ export function createNetworkSection(ctx) {
           },
           {
             name: "Unspendable",
-            title: "Unspendable Supply",
-            bottom: fromValuePattern({ pattern: supply.burned.unspendable }),
+            tree: [
+              {
+                name: "Sum",
+                title: "Unspendable Supply",
+                bottom: satsBtcUsdFrom({
+                  source: supply.burned.unspendable,
+                  key: "sum",
+                  name: "sum",
+                }),
+              },
+              {
+                name: "Cumulative",
+                title: "Unspendable Supply (Total)",
+                bottom: satsBtcUsdFrom({
+                  source: supply.burned.unspendable,
+                  key: "cumulative",
+                  name: "all-time",
+                }),
+              },
+            ],
           },
           {
             name: "OP_RETURN",
-            title: "OP_RETURN Burned",
-            bottom: fromCoinbasePattern({ pattern: scripts.value.opreturn }),
+            tree: chartsFromValueFull({
+              pattern: scripts.value.opreturn,
+              title: "OP_RETURN Burned",
+            }),
           },
         ],
       },
@@ -179,77 +589,114 @@ export function createNetworkSection(ctx) {
         tree: [
           {
             name: "Count",
-            title: "Transaction Count",
-            bottom: fromFullStatsPattern({ pattern: transactions.count.txCount, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-          },
-          {
-            name: "Per Second",
-            title: "Transactions Per Second",
-            bottom: [
-              dots({
-                metric: transactions.volume.txPerSec,
-                name: "TPS",
-                unit: Unit.perSec,
-              }),
-            ],
+            tree: chartsFromFull({
+              pattern: transactions.count.txCount,
+              title: "Transaction Count",
+              unit: Unit.count,
+            }),
           },
           {
             name: "Fee Rate",
             title: "Fee Rate",
-            bottom: fromStatsPattern({ pattern: transactions.fees.feeRate, unit: Unit.feeRate }),
+            bottom: fromStatsPattern({
+              pattern: transactions.fees.feeRate,
+              unit: Unit.feeRate,
+            }),
           },
           {
             name: "Volume",
-            title: "Transaction Volume",
-            bottom: [
-              ...satsBtcUsd({ pattern: transactions.volume.sentSum, name: "Sent" }),
-              ...satsBtcUsd({
-                pattern: transactions.volume.receivedSum,
-                name: "Received",
-                color: colors.cyan,
-                defaultActive: false,
-              }),
-              ...satsBtcUsd({
-                pattern: transactions.volume.annualizedVolume,
+            tree: [
+              {
+                name: "Transferred",
+                title: "Transaction Volume",
+                bottom: [
+                  ...satsBtcUsd({
+                    pattern: transactions.volume.sentSum,
+                    name: "Sent",
+                  }),
+                  ...satsBtcUsd({
+                    pattern: transactions.volume.receivedSum,
+                    name: "Received",
+                    color: colors.cyan,
+                    defaultActive: false,
+                  }),
+                ],
+              },
+              {
                 name: "Annualized",
-                color: colors.red,
-                defaultActive: false,
-              }),
+                title: "Annualized Transaction Volume",
+                bottom: satsBtcUsd({
+                  pattern: transactions.volume.annualizedVolume,
+                  name: "Annualized",
+                }),
+              },
             ],
           },
           {
             name: "Size",
             title: "Transaction Size",
             bottom: [
-              ...fromStatsPattern({ pattern: transactions.size.weight, unit: Unit.wu }),
-              ...fromStatsPattern({ pattern: transactions.size.vsize, unit: Unit.vb }),
+              ...fromStatsPattern({
+                pattern: transactions.size.weight,
+                unit: Unit.wu,
+              }),
+              ...fromStatsPattern({
+                pattern: transactions.size.vsize,
+                unit: Unit.vb,
+              }),
             ],
           },
           {
             name: "Versions",
-            title: "Transaction Versions",
-            bottom: [
-              ...fromCountPattern({
-                pattern: transactions.versions.v1,
-                unit: Unit.count,
-                cumulativeUnit: Unit.countCumulative,
-                title: "v1",
-                color: colors.orange,
-              }),
-              ...fromCountPattern({
-                pattern: transactions.versions.v2,
-                unit: Unit.count,
-                cumulativeUnit: Unit.countCumulative,
-                title: "v2",
-                color: colors.cyan,
-              }),
-              ...fromCountPattern({
-                pattern: transactions.versions.v3,
-                unit: Unit.count,
-                cumulativeUnit: Unit.countCumulative,
-                title: "v3",
-                color: colors.lime,
-              }),
+            tree: [
+              {
+                name: "Sum",
+                title: "Transaction Versions",
+                bottom: [
+                  line({
+                    metric: transactions.versions.v1.sum,
+                    name: "v1",
+                    color: colors.orange,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: transactions.versions.v2.sum,
+                    name: "v2",
+                    color: colors.cyan,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: transactions.versions.v3.sum,
+                    name: "v3",
+                    color: colors.lime,
+                    unit: Unit.count,
+                  }),
+                ],
+              },
+              {
+                name: "Cumulative",
+                title: "Transaction Versions (Total)",
+                bottom: [
+                  line({
+                    metric: transactions.versions.v1.cumulative,
+                    name: "v1",
+                    color: colors.orange,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: transactions.versions.v2.cumulative,
+                    name: "v2",
+                    color: colors.cyan,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: transactions.versions.v3.cumulative,
+                    name: "v3",
+                    color: colors.lime,
+                    unit: Unit.count,
+                  }),
+                ],
+              },
             ],
           },
           {
@@ -258,12 +705,12 @@ export function createNetworkSection(ctx) {
             bottom: [
               line({
                 metric: supply.velocity.btc,
-                name: "Bitcoin",
+                name: "BTC",
                 unit: Unit.ratio,
               }),
               line({
                 metric: supply.velocity.usd,
-                name: "Dollars",
+                name: "USD",
                 color: colors.emerald,
                 unit: Unit.ratio,
               }),
@@ -278,74 +725,139 @@ export function createNetworkSection(ctx) {
         tree: [
           {
             name: "Count",
-            title: "Block Count",
-            bottom: [
-              ...fromCountPattern({ pattern: blocks.count.blockCount, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-              line({
-                metric: blocks.count.blockCountTarget,
-                name: "Target",
-                color: colors.gray,
-                unit: Unit.count,
-                options: { lineStyle: 4 },
-              }),
-              line({
-                metric: blocks.count._24hBlockCount,
-                name: "24h sum",
-                color: colors.pink,
-                unit: Unit.count,
-                defaultActive: false,
-              }),
-              line({
-                metric: blocks.count._1wBlockCount,
-                name: "1w sum",
-                color: colors.red,
-                unit: Unit.count,
-                defaultActive: false,
-              }),
-              line({
-                metric: blocks.count._1mBlockCount,
-                name: "1m sum",
-                color: colors.orange,
-                unit: Unit.count,
-                defaultActive: false,
-              }),
-              line({
-                metric: blocks.count._1yBlockCount,
-                name: "1y sum",
-                color: colors.purple,
-                unit: Unit.count,
-                defaultActive: false,
-              }),
+            tree: [
+              {
+                name: "Sum",
+                title: "Block Count",
+                bottom: [
+                  line({
+                    metric: blocks.count.blockCount.sum,
+                    name: "sum",
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: blocks.count.blockCountTarget,
+                    name: "Target",
+                    color: colors.gray,
+                    unit: Unit.count,
+                    options: { lineStyle: 4 },
+                  }),
+                ],
+              },
+              {
+                name: "Rolling",
+                title: "Block Count (Rolling)",
+                bottom: [
+                  line({
+                    metric: blocks.count._24hBlockCount,
+                    name: "24h",
+                    color: colors.pink,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: blocks.count._1wBlockCount,
+                    name: "1w",
+                    color: colors.red,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: blocks.count._1mBlockCount,
+                    name: "1m",
+                    color: colors.orange,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    metric: blocks.count._1yBlockCount,
+                    name: "1y",
+                    color: colors.purple,
+                    unit: Unit.count,
+                  }),
+                ],
+              },
+              {
+                name: "Cumulative",
+                title: "Block Count (Total)",
+                bottom: [
+                  line({
+                    metric: blocks.count.blockCount.cumulative,
+                    name: "all-time",
+                    unit: Unit.count,
+                  }),
+                ],
+              },
             ],
           },
           {
             name: "Interval",
             title: "Block Interval",
             bottom: [
-              ...fromBaseStatsPattern({ pattern: blocks.interval, unit: Unit.secs, avgActive: false }),
+              ...fromBaseStatsPattern({
+                pattern: blocks.interval,
+                unit: Unit.secs,
+                avgActive: false,
+              }),
               priceLine({ ctx, unit: Unit.secs, name: "Target", number: 600 }),
             ],
           },
           {
             name: "Size",
-            title: "Block Size",
-            bottom: [
-              ...fromSumStatsPattern({ pattern: blocks.size, unit: Unit.bytes, cumulativeUnit: Unit.bytesCumulative }),
-              line({
-                metric: blocks.totalSize,
-                name: "Total",
-                color: colors.purple,
-                unit: Unit.bytes,
-                defaultActive: false,
-              }),
-              ...fromBaseStatsPattern({ pattern: blocks.vbytes, unit: Unit.vb }),
-              ...fromBaseStatsPattern({ pattern: blocks.weight, unit: Unit.wu }),
+            tree: [
+              {
+                name: "Sum",
+                title: "Block Size",
+                bottom: [
+                  line({
+                    metric: blocks.size.sum,
+                    name: "sum",
+                    unit: Unit.bytes,
+                  }),
+                  line({
+                    metric: blocks.totalSize,
+                    name: "Blockchain",
+                    color: colors.purple,
+                    unit: Unit.bytes,
+                    defaultActive: false,
+                  }),
+                ],
+              },
+              {
+                name: "Distribution",
+                title: "Block Size Distribution",
+                bottom: [
+                  ...fromStatsPattern({
+                    pattern: blocks.size,
+                    unit: Unit.bytes,
+                  }),
+                  ...fromStatsPattern({
+                    pattern: blocks.vbytes,
+                    unit: Unit.vb,
+                  }),
+                  ...fromStatsPattern({
+                    pattern: blocks.weight,
+                    unit: Unit.wu,
+                  }),
+                ],
+              },
+              {
+                name: "Cumulative",
+                title: "Block Size (Total)",
+                bottom: [
+                  line({
+                    metric: blocks.size.cumulative,
+                    name: "all-time",
+                    unit: Unit.bytes,
+                  }),
+                ],
+              },
             ],
           },
           {
             name: "Fullness",
             title: "Block Fullness",
-            bottom: fromBaseStatsPattern({ pattern: blocks.fullness, unit: Unit.percentage }),
+            bottom: fromBaseStatsPattern({
+              pattern: blocks.fullness,
+              unit: Unit.percentage,
+            }),
           },
         ],
       },
@@ -353,60 +865,52 @@ export function createNetworkSection(ctx) {
       // UTXOs
       {
         name: "UTXOs",
-        tree: [
-          {
-            name: "UTXO Count",
-            title: "UTXO Count",
-            bottom: [
-              line({
-                metric: outputs.count.utxoCount,
-                name: "Count",
-                unit: Unit.count,
-              }),
-            ],
-          },
-          {
-            name: "Inputs",
-            tree: [
-              {
-                name: "Count",
-                title: "Input Count",
-                bottom: [...fromSumStatsPattern({ pattern: inputs.count, unit: Unit.count, cumulativeUnit: Unit.countCumulative })],
-              },
-              {
-                name: "Rate",
-                title: "Inputs Per Second",
-                bottom: [
-                  dots({
-                    metric: transactions.volume.inputsPerSec,
-                    name: "Inputs/sec",
-                    unit: Unit.perSec,
-                  }),
-                ],
-              },
-            ],
-          },
-          {
-            name: "Outputs",
-            tree: [
-              {
-                name: "Count",
-                title: "Output Count",
-                bottom: [...fromSumStatsPattern({ pattern: outputs.count.totalCount, unit: Unit.count, cumulativeUnit: Unit.countCumulative })],
-              },
-              {
-                name: "Rate",
-                title: "Outputs Per Second",
-                bottom: [
-                  dots({
-                    metric: transactions.volume.outputsPerSec,
-                    name: "Outputs/sec",
-                    unit: Unit.perSec,
-                  }),
-                ],
-              },
-            ],
-          },
+        title: "UTXO Count",
+        bottom: [
+          line({
+            metric: outputs.count.utxoCount,
+            name: "Count",
+            unit: Unit.count,
+          }),
+        ],
+      },
+      {
+        name: "Inputs",
+        tree: chartsFromSum({
+          pattern: inputs.count,
+          title: "Input Count",
+          unit: Unit.count,
+        }),
+      },
+      {
+        name: "Outputs",
+        tree: chartsFromSum({
+          pattern: outputs.count.totalCount,
+          title: "Output Count",
+          unit: Unit.count,
+        }),
+      },
+      {
+        name: "Throughput",
+        title: "Throughput",
+        bottom: [
+          dots({
+            metric: transactions.volume.txPerSec,
+            name: "TX/sec",
+            color: colors.red,
+            unit: Unit.perSec,
+          }),
+          dots({
+            metric: transactions.volume.inputsPerSec,
+            name: "Inputs/sec",
+            unit: Unit.perSec,
+          }),
+          dots({
+            metric: transactions.volume.outputsPerSec,
+            name: "Outputs/sec",
+            color: colors.cyan,
+            unit: Unit.perSec,
+          }),
         ],
       },
 
@@ -417,7 +921,7 @@ export function createNetworkSection(ctx) {
           // Overview - global metrics for all addresses
           { name: "Overview", tree: createAddressMetricsTree("all", "") },
 
-          // Compare - cross-type comparisons
+          // Top-level Compare - all types
           {
             name: "Compare",
             tree: [
@@ -441,7 +945,7 @@ export function createNetworkSection(ctx) {
                 name: "New",
                 title: "New Address Count by Type",
                 bottom: addressTypes.flatMap((t) => [
-                  dots({
+                  line({
                     metric: distribution.newAddrCount[t.key].base,
                     name: t.name,
                     color: t.color,
@@ -449,11 +953,33 @@ export function createNetworkSection(ctx) {
                     defaultActive: t.defaultActive,
                   }),
                   line({
-                    metric: distribution.newAddrCount[t.key].average,
-                    name: `${t.name} Avg`,
+                    metric: distribution.newAddrCount[t.key].sum,
+                    name: t.name,
                     color: t.color,
                     unit: Unit.count,
-                    defaultActive: false,
+                    defaultActive: t.defaultActive,
+                  }),
+                ]),
+              },
+              {
+                name: "Reactivated",
+                title: "Reactivated Address Count by Type",
+                bottom: addressTypes.flatMap((t) => [
+                  line({
+                    metric:
+                      distribution.addressActivity[t.key].reactivated.base,
+                    name: t.name,
+                    color: t.color,
+                    unit: Unit.count,
+                    defaultActive: t.defaultActive,
+                  }),
+                  line({
+                    metric:
+                      distribution.addressActivity[t.key].reactivated.average,
+                    name: t.name,
+                    color: t.color,
+                    unit: Unit.count,
+                    defaultActive: t.defaultActive,
                   }),
                 ]),
               },
@@ -468,34 +994,59 @@ export function createNetworkSection(ctx) {
                     unit: Unit.ratio,
                     defaultActive: t.defaultActive,
                   }),
-                  line({
+                  dots({
                     metric: distribution.growthRate[t.key].average,
-                    name: `${t.name} Avg`,
+                    name: t.name,
                     color: t.color,
                     unit: Unit.ratio,
-                    defaultActive: false,
+                    defaultActive: t.defaultActive,
                   }),
                 ]),
               },
               {
-                name: "Activity",
-                tree: activityTypes.map((a) => ({
-                  name: a.name,
-                  title: a.compareTitle,
+                name: "Transacting",
+                tree: transactingTypes.map((tr) => ({
+                  name: tr.name,
+                  title: tr.compareTitle,
                   bottom: addressTypes.flatMap((t) => [
-                    dots({
-                      metric: distribution.addressActivity[t.key][a.key].base,
+                    line({
+                      metric: distribution.addressActivity[t.key][tr.key].base,
                       name: t.name,
                       color: t.color,
                       unit: Unit.count,
                       defaultActive: t.defaultActive,
                     }),
                     line({
-                      metric: distribution.addressActivity[t.key][a.key].average,
-                      name: `${t.name} Avg`,
+                      metric:
+                        distribution.addressActivity[t.key][tr.key].average,
+                      name: t.name,
                       color: t.color,
                       unit: Unit.count,
-                      defaultActive: false,
+                      defaultActive: t.defaultActive,
+                    }),
+                  ]),
+                })),
+              },
+              {
+                name: "Balance",
+                tree: balanceTypes.map((b) => ({
+                  name: b.name,
+                  title: b.compareTitle,
+                  bottom: addressTypes.flatMap((t) => [
+                    line({
+                      metric: distribution.addressActivity[t.key][b.key].base,
+                      name: t.name,
+                      color: t.color,
+                      unit: Unit.count,
+                      defaultActive: t.defaultActive,
+                    }),
+                    line({
+                      metric:
+                        distribution.addressActivity[t.key][b.key].average,
+                      name: t.name,
+                      color: t.color,
+                      unit: Unit.count,
+                      defaultActive: t.defaultActive,
                     }),
                   ]),
                 })),
@@ -503,11 +1054,41 @@ export function createNetworkSection(ctx) {
             ],
           },
 
-          // Individual address types
-          ...addressTypes.map((t) => ({
-            name: t.name,
-            tree: createAddressMetricsTree(t.key, `${t.name} `),
-          })),
+          // Legacy (pre-SegWit)
+          {
+            name: "Legacy",
+            tree: [
+              createAddressCompare("Legacy", legacyAddresses),
+              ...legacyAddresses.map((t) => ({
+                name: t.name,
+                tree: createAddressMetricsTree(t.key, `${t.name} `),
+              })),
+            ],
+          },
+
+          // SegWit
+          {
+            name: "SegWit",
+            tree: [
+              createAddressCompare("SegWit", segwitAddresses),
+              ...segwitAddresses.map((t) => ({
+                name: t.name,
+                tree: createAddressMetricsTree(t.key, `${t.name} `),
+              })),
+            ],
+          },
+
+          // Taproot
+          {
+            name: "Taproot",
+            tree: [
+              createAddressCompare("Taproot", taprootAddresses),
+              ...taprootAddresses.map((t) => ({
+                name: t.name,
+                tree: createAddressMetricsTree(t.key, `${t.name} `),
+              })),
+            ],
+          },
         ],
       },
 
@@ -521,110 +1102,103 @@ export function createNetworkSection(ctx) {
               // Compare section
               {
                 name: "Compare",
-                title: "Output Count by Script Type",
-                bottom: scriptTypes.map((t) =>
-                  line({
-                    metric: scripts.count[t.key].cumulative,
-                    name: t.name,
-                    color: t.color,
-                    unit: Unit.countCumulative,
-                    defaultActive: t.defaultActive,
-                  }),
-                ),
+                tree: [
+                  {
+                    name: "Sum",
+                    title: "Output Count by Script Type",
+                    bottom: scriptTypes.map((t) =>
+                      line({
+                        metric: scripts.count[t.key].sum,
+                        name: t.name,
+                        color: t.color,
+                        unit: Unit.count,
+                        defaultActive: t.defaultActive,
+                      }),
+                    ),
+                  },
+                  {
+                    name: "Cumulative",
+                    title: "Output Count by Script Type (Total)",
+                    bottom: scriptTypes.map((t) =>
+                      line({
+                        metric: scripts.count[t.key].cumulative,
+                        name: t.name,
+                        color: t.color,
+                        unit: Unit.count,
+                        defaultActive: t.defaultActive,
+                      }),
+                    ),
+                  },
+                ],
               },
-              // Legacy scripts
               {
                 name: "Legacy",
                 tree: [
-                  {
-                    name: "P2PKH",
-                    title: "P2PKH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pkh, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
-                  {
-                    name: "P2PK33",
-                    title: "P2PK33 Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pk33, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
-                  {
-                    name: "P2PK65",
-                    title: "P2PK65 Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pk65, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
+                  createScriptCompare("Legacy", legacyScripts),
+                  ...legacyScripts.map((t) => ({
+                    name: t.name,
+                    tree: chartsFromFull({
+                      pattern: scripts.count[t.key],
+                      title: `${t.name} Output Count`,
+                      unit: Unit.count,
+                    }),
+                  })),
                 ],
               },
-              // Script Hash
               {
                 name: "Script Hash",
                 tree: [
-                  {
-                    name: "P2SH",
-                    title: "P2SH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2sh, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
-                  {
-                    name: "P2MS",
-                    title: "P2MS Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2ms, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
+                  createScriptCompare("Script Hash", scriptHashScripts),
+                  ...scriptHashScripts.map((t) => ({
+                    name: t.name,
+                    tree: chartsFromFull({
+                      pattern: scripts.count[t.key],
+                      title: `${t.name} Output Count`,
+                      unit: Unit.count,
+                    }),
+                  })),
                 ],
               },
-              // SegWit scripts
               {
                 name: "SegWit",
                 tree: [
-                  {
-                    name: "All SegWit",
-                    title: "SegWit Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.segwit, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
-                  {
-                    name: "P2WPKH",
-                    title: "P2WPKH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2wpkh, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
-                  {
-                    name: "P2WSH",
-                    title: "P2WSH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2wsh, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
+                  createScriptCompare("SegWit", segwitScripts),
+                  ...segwitScripts.map((t) => ({
+                    name: t.name,
+                    tree: chartsFromFull({
+                      pattern: scripts.count[t.key],
+                      title: `${t.name} Output Count`,
+                      unit: Unit.count,
+                    }),
+                  })),
                 ],
               },
-              // Taproot scripts
               {
                 name: "Taproot",
                 tree: [
-                  {
-                    name: "P2TR",
-                    title: "P2TR Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2tr, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
-                  {
-                    name: "P2A",
-                    title: "P2A Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2a, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
+                  createScriptCompare("Taproot", taprootAddresses),
+                  ...taprootAddresses.map((t) => ({
+                    name: t.name,
+                    tree: chartsFromFull({
+                      pattern: scripts.count[t.key],
+                      title: `${t.name} Output Count`,
+                      unit: Unit.count,
+                    }),
+                  })),
                 ],
               },
-              // Other scripts
               {
                 name: "Other",
                 tree: [
-                  {
-                    name: "OP_RETURN",
-                    title: "OP_RETURN Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.opreturn, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
-                  {
-                    name: "Empty",
-                    title: "Empty Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.emptyoutput, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
-                  {
-                    name: "Unknown",
-                    title: "Unknown Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.unknownoutput, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
-                  },
+                  createScriptCompare("Other", otherScripts),
+                  ...otherScripts.map((t) => ({
+                    name: t.name,
+                    tree: chartsFromFull({
+                      pattern: scripts.count[t.key],
+                      title: `${t.name} Output Count`,
+                      unit: Unit.count,
+                    }),
+                  })),
                 ],
               },
             ],
@@ -632,6 +1206,24 @@ export function createNetworkSection(ctx) {
           {
             name: "Adoption",
             tree: [
+              {
+                name: "Compare",
+                title: "Script Adoption",
+                bottom: [
+                  line({
+                    metric: scripts.count.segwitAdoption.cumulative,
+                    name: "SegWit",
+                    color: colors.cyan,
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: scripts.count.taprootAdoption.cumulative,
+                    name: "Taproot",
+                    color: colors.orange,
+                    unit: Unit.percentage,
+                  }),
+                ],
+              },
               {
                 name: "SegWit",
                 title: "SegWit Adoption",
@@ -648,7 +1240,7 @@ export function createNetworkSection(ctx) {
                   }),
                   line({
                     metric: scripts.count.segwitAdoption.cumulative,
-                    name: "Cumulative",
+                    name: "All-Time",
                     color: colors.red,
                     unit: Unit.percentage,
                   }),
@@ -670,7 +1262,7 @@ export function createNetworkSection(ctx) {
                   }),
                   line({
                     metric: scripts.count.taprootAdoption.cumulative,
-                    name: "Cumulative",
+                    name: "All-Time",
                     color: colors.red,
                     unit: Unit.percentage,
                   }),
@@ -680,7 +1272,6 @@ export function createNetworkSection(ctx) {
           },
         ],
       },
-
     ],
   };
 }

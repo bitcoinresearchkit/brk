@@ -88,7 +88,6 @@ export function createVolatilitySection(ctx, { volatility, range }) {
             color: colors.lime,
             unit: Unit.ratio,
           }),
-          priceLine({ ctx, unit: Unit.ratio }),
         ],
       },
       {
@@ -113,7 +112,6 @@ export function createVolatilitySection(ctx, { volatility, range }) {
             color: colors.lime,
             unit: Unit.ratio,
           }),
-          priceLine({ ctx, unit: Unit.ratio }),
         ],
       },
     ],
