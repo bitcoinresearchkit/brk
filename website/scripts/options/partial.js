@@ -15,7 +15,7 @@ import {
   createCohortFolderAddress,
   createAddressCohortFolder,
 } from "./distribution/index.js";
-import { createMarketSection } from "./market/index.js";
+import { createMarketSection } from "./market.js";
 import { createNetworkSection } from "./network.js";
 import { createMiningSection } from "./mining.js";
 import { createCointimeSection } from "./cointime.js";

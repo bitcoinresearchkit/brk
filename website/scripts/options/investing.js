@@ -5,8 +5,22 @@ import { line, baseline, price, dotted } from "./series.js";
 import { satsBtcUsd } from "./shared.js";
 import { periodIdToName } from "./utils.js";
 
-const SHORT_PERIODS = /** @type {const} */ (["_1w", "_1m", "_3m", "_6m", "_1y"]);
-const LONG_PERIODS = /** @type {const} */ (["_2y", "_3y", "_4y", "_5y", "_6y", "_8y", "_10y"]);
+const SHORT_PERIODS = /** @type {const} */ ([
+  "_1w",
+  "_1m",
+  "_3m",
+  "_6m",
+  "_1y",
+]);
+const LONG_PERIODS = /** @type {const} */ ([
+  "_2y",
+  "_3y",
+  "_4y",
+  "_5y",
+  "_6y",
+  "_8y",
+  "_10y",
+]);
 
 /** @typedef {typeof SHORT_PERIODS[number]} ShortPeriodKey */
 /** @typedef {typeof LONG_PERIODS[number]} LongPeriodKey */
@@ -20,7 +34,9 @@ const LONG_PERIODS = /** @type {const} */ (["_2y", "_3y", "_4y", "_5y", "_6y", "
  */
 const withCagr = (entry, cagr) => ({ ...entry, cagr });
 
-const YEARS_2020S = /** @type {const} */ ([2026, 2025, 2024, 2023, 2022, 2021, 2020]);
+const YEARS_2020S = /** @type {const} */ ([
+  2026, 2025, 2024, 2023, 2022, 2021, 2020,
+]);
 const YEARS_2010S = /** @type {const} */ ([2019, 2018, 2017, 2016, 2015]);
 
 /** @param {AllPeriodKey} key */
@@ -142,7 +158,12 @@ function createCompareFolder(context, items) {
         title: `Returns: ${context}`,
         top: topPane,
         bottom: items.map(({ name, color, returns }) =>
-          baseline({ metric: returns, name, color: [color, color], unit: Unit.percentage }),
+          baseline({
+            metric: returns,
+            name,
+            color: [color, color],
+            unit: Unit.percentage,
+          }),
         ),
       },
       createProfitabilityFolder(context, items),
@@ -165,23 +186,51 @@ function createCompareFolder(context, items) {
  * @param {object[]} returnsBottom - Bottom pane items for returns chart
  */
 function createSingleEntryTree(colors, item, returnsBottom) {
-  const { name, titlePrefix = name, color, costBasis, daysInProfit, daysInLoss, stack } = item;
+  const {
+    name,
+    titlePrefix = name,
+    color,
+    costBasis,
+    daysInProfit,
+    daysInLoss,
+    stack,
+  } = item;
   const top = [price({ metric: costBasis, name: "Cost Basis", color })];
   return {
     name,
     tree: [
       { name: "Cost Basis", title: `Cost Basis: ${titlePrefix}`, top },
-      { name: "Returns", title: `Returns: ${titlePrefix}`, top, bottom: returnsBottom },
+      {
+        name: "Returns",
+        title: `Returns: ${titlePrefix}`,
+        top,
+        bottom: returnsBottom,
+      },
       {
         name: "Profitability",
         title: `Profitability: ${titlePrefix}`,
         top,
         bottom: [
-          line({ metric: daysInProfit, name: "Days in Profit", color: colors.green, unit: Unit.days }),
-          line({ metric: daysInLoss, name: "Days in Loss", color: colors.red, unit: Unit.days }),
+          line({
+            metric: daysInProfit,
+            name: "Days in Profit",
+            color: colors.green,
+            unit: Unit.days,
+          }),
+          line({
+            metric: daysInLoss,
+            name: "Days in Loss",
+            color: colors.red,
+            unit: Unit.days,
+          }),
         ],
       },
-      { name: "Accumulated", title: `Accumulated Value: ${titlePrefix}`, top, bottom: satsBtcUsd({ pattern: stack, name: "Value" }) },
+      {
+        name: "Accumulated",
+        title: `Accumulated Value: ${titlePrefix}`,
+        top,
+        bottom: satsBtcUsd({ pattern: stack, name: "Value" }),
+      },
     ],
   };
 }
@@ -195,8 +244,20 @@ function createShortSingleEntry(colors, item) {
   const { returns, minReturn, maxReturn } = item;
   return createSingleEntryTree(colors, item, [
     baseline({ metric: returns, name: "Current", unit: Unit.percentage }),
-    dotted({ metric: maxReturn, name: "Max", color: colors.green, unit: Unit.percentage, defaultActive: false }),
-    dotted({ metric: minReturn, name: "Min", color: colors.red, unit: Unit.percentage, defaultActive: false }),
+    dotted({
+      metric: maxReturn,
+      name: "Max",
+      color: colors.green,
+      unit: Unit.percentage,
+      defaultActive: false,
+    }),
+    dotted({
+      metric: minReturn,
+      name: "Min",
+      color: colors.red,
+      unit: Unit.percentage,
+      defaultActive: false,
+    }),
   ]);
 }
 
@@ -210,8 +271,20 @@ function createLongSingleEntry(colors, item) {
   return createSingleEntryTree(colors, item, [
     baseline({ metric: returns, name: "Current", unit: Unit.percentage }),
     baseline({ metric: cagr, name: "CAGR", unit: Unit.cagr }),
-    dotted({ metric: maxReturn, name: "Max", color: colors.green, unit: Unit.percentage, defaultActive: false }),
-    dotted({ metric: minReturn, name: "Min", color: colors.red, unit: Unit.percentage, defaultActive: false }),
+    dotted({
+      metric: maxReturn,
+      name: "Max",
+      color: colors.green,
+      unit: Unit.percentage,
+      defaultActive: false,
+    }),
+    dotted({
+      metric: minReturn,
+      name: "Min",
+      color: colors.red,
+      unit: Unit.percentage,
+      defaultActive: false,
+    }),
   ]);
 }
 
@@ -228,7 +301,11 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
 
   /** @param {AllPeriodKey} key */
   const topPane = (key) => [
-    price({ metric: dca.periodAveragePrice[key], name: "DCA", color: colors.green }),
+    price({
+      metric: dca.periodAveragePrice[key],
+      name: "DCA",
+      color: colors.green,
+    }),
     price({ metric: lookback[key], name: "Lump Sum", color: colors.orange }),
   ];
 
@@ -246,8 +323,17 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
       title: `Max Return: ${name} DCA vs Lump Sum`,
       top: topPane(key),
       bottom: [
-        baseline({ metric: dca.periodMaxReturn[key], name: "DCA", unit: Unit.percentage }),
-        baseline({ metric: dca.periodLumpSumMaxReturn[key], name: "Lump Sum", color: [colors.cyan, colors.orange], unit: Unit.percentage }),
+        baseline({
+          metric: dca.periodMaxReturn[key],
+          name: "DCA",
+          unit: Unit.percentage,
+        }),
+        baseline({
+          metric: dca.periodLumpSumMaxReturn[key],
+          name: "Lump Sum",
+          color: [colors.cyan, colors.orange],
+          unit: Unit.percentage,
+        }),
       ],
     },
     {
@@ -255,8 +341,17 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
       title: `Min Return: ${name} DCA vs Lump Sum`,
       top: topPane(key),
       bottom: [
-        baseline({ metric: dca.periodMinReturn[key], name: "DCA", unit: Unit.percentage }),
-        baseline({ metric: dca.periodLumpSumMinReturn[key], name: "Lump Sum", color: [colors.cyan, colors.orange], unit: Unit.percentage }),
+        baseline({
+          metric: dca.periodMinReturn[key],
+          name: "DCA",
+          unit: Unit.percentage,
+        }),
+        baseline({
+          metric: dca.periodLumpSumMinReturn[key],
+          name: "Lump Sum",
+          color: [colors.cyan, colors.orange],
+          unit: Unit.percentage,
+        }),
       ],
     },
   ];
@@ -270,8 +365,17 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
         title: `Returns: ${name} DCA vs Lump Sum`,
         top: topPane(key),
         bottom: [
-          baseline({ metric: dca.periodReturns[key], name: "DCA", unit: Unit.percentage }),
-          baseline({ metric: dca.periodLumpSumReturns[key], name: "Lump Sum", color: [colors.cyan, colors.orange], unit: Unit.percentage }),
+          baseline({
+            metric: dca.periodReturns[key],
+            name: "DCA",
+            unit: Unit.percentage,
+          }),
+          baseline({
+            metric: dca.periodLumpSumReturns[key],
+            name: "Lump Sum",
+            color: [colors.cyan, colors.orange],
+            unit: Unit.percentage,
+          }),
         ],
       },
       ...returnsMinMax(name, key),
@@ -287,10 +391,28 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
         title: `Returns: ${name} DCA vs Lump Sum`,
         top: topPane(key),
         bottom: [
-          baseline({ metric: dca.periodReturns[key], name: "DCA", unit: Unit.percentage }),
-          baseline({ metric: dca.periodLumpSumReturns[key], name: "Lump Sum", color: [colors.cyan, colors.orange], unit: Unit.percentage }),
-          baseline({ metric: dca.periodCagr[key], name: "DCA CAGR", unit: Unit.cagr }),
-          baseline({ metric: returns.cagr[key], name: "Lump Sum CAGR", color: [colors.cyan, colors.orange], unit: Unit.cagr }),
+          baseline({
+            metric: dca.periodReturns[key],
+            name: "DCA",
+            unit: Unit.percentage,
+          }),
+          baseline({
+            metric: dca.periodLumpSumReturns[key],
+            name: "Lump Sum",
+            color: [colors.cyan, colors.orange],
+            unit: Unit.percentage,
+          }),
+          baseline({
+            metric: dca.periodCagr[key],
+            name: "DCA",
+            unit: Unit.cagr,
+          }),
+          baseline({
+            metric: returns.cagr[key],
+            name: "Lump Sum",
+            color: [colors.cyan, colors.orange],
+            unit: Unit.cagr,
+          }),
         ],
       },
       ...returnsMinMax(name, key),
@@ -306,8 +428,18 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
         title: `Days in Profit: ${name} DCA vs Lump Sum`,
         top: topPane(key),
         bottom: [
-          line({ metric: dca.periodDaysInProfit[key], name: "DCA", color: colors.green, unit: Unit.days }),
-          line({ metric: dca.periodLumpSumDaysInProfit[key], name: "Lump Sum", color: colors.orange, unit: Unit.days }),
+          line({
+            metric: dca.periodDaysInProfit[key],
+            name: "DCA",
+            color: colors.green,
+            unit: Unit.days,
+          }),
+          line({
+            metric: dca.periodLumpSumDaysInProfit[key],
+            name: "Lump Sum",
+            color: colors.orange,
+            unit: Unit.days,
+          }),
         ],
       },
       {
@@ -315,8 +447,18 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
         title: `Days in Loss: ${name} DCA vs Lump Sum`,
         top: topPane(key),
         bottom: [
-          line({ metric: dca.periodDaysInLoss[key], name: "DCA", color: colors.green, unit: Unit.days }),
-          line({ metric: dca.periodLumpSumDaysInLoss[key], name: "Lump Sum", color: colors.orange, unit: Unit.days }),
+          line({
+            metric: dca.periodDaysInLoss[key],
+            name: "DCA",
+            color: colors.green,
+            unit: Unit.days,
+          }),
+          line({
+            metric: dca.periodLumpSumDaysInLoss[key],
+            name: "Lump Sum",
+            color: colors.orange,
+            unit: Unit.days,
+          }),
         ],
       },
     ],
@@ -328,8 +470,16 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     title: `Accumulated Value ($100/day): ${name} DCA vs Lump Sum`,
     top: topPane(key),
     bottom: [
-      ...satsBtcUsd({ pattern: dca.periodStack[key], name: "DCA", color: colors.green }),
-      ...satsBtcUsd({ pattern: dca.periodLumpSumStack[key], name: "Lump Sum", color: colors.orange }),
+      ...satsBtcUsd({
+        pattern: dca.periodStack[key],
+        name: "DCA",
+        color: colors.green,
+      }),
+      ...satsBtcUsd({
+        pattern: dca.periodLumpSumStack[key],
+        name: "Lump Sum",
+        color: colors.orange,
+      }),
     ],
   });
 
@@ -338,7 +488,12 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     const name = periodName(key);
     return {
       name,
-      tree: [costBasisChart(name, key), shortReturnsFolder(name, key), profitabilityFolder(name, key), stackChart(name, key)],
+      tree: [
+        costBasisChart(name, key),
+        shortReturnsFolder(name, key),
+        profitabilityFolder(name, key),
+        stackChart(name, key),
+      ],
     };
   };
 
@@ -347,7 +502,12 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     const name = periodName(key);
     return {
       name,
-      tree: [costBasisChart(name, key), longReturnsFolder(name, key), profitabilityFolder(name, key), stackChart(name, key)],
+      tree: [
+        costBasisChart(name, key),
+        longReturnsFolder(name, key),
+        profitabilityFolder(name, key),
+        stackChart(name, key),
+      ],
     };
   };
 
@@ -355,8 +515,16 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
     name: "DCA vs Lump Sum",
     title: "Compare Investment Strategies",
     tree: [
-      { name: "Short Term", title: "Up to 1 Year", tree: SHORT_PERIODS.map(createShortPeriodEntry) },
-      { name: "Long Term", title: "2+ Years", tree: LONG_PERIODS.map(createLongPeriodEntry) },
+      {
+        name: "Short Term",
+        title: "Up to 1 Year",
+        tree: SHORT_PERIODS.map(createShortPeriodEntry),
+      },
+      {
+        name: "Long Term",
+        title: "2+ Years",
+        tree: LONG_PERIODS.map(createLongPeriodEntry),
+      },
     ],
   };
 }
@@ -380,26 +548,41 @@ function createPeriodSection(ctx, { dca, lookback, returns }) {
     color: colors.dcaPeriods[key],
     costBasis: isLumpSum ? lookback[key] : dca.periodAveragePrice[key],
     returns: isLumpSum ? dca.periodLumpSumReturns[key] : dca.periodReturns[key],
-    minReturn: isLumpSum ? dca.periodLumpSumMinReturn[key] : dca.periodMinReturn[key],
-    maxReturn: isLumpSum ? dca.periodLumpSumMaxReturn[key] : dca.periodMaxReturn[key],
-    daysInProfit: isLumpSum ? dca.periodLumpSumDaysInProfit[key] : dca.periodDaysInProfit[key],
-    daysInLoss: isLumpSum ? dca.periodLumpSumDaysInLoss[key] : dca.periodDaysInLoss[key],
+    minReturn: isLumpSum
+      ? dca.periodLumpSumMinReturn[key]
+      : dca.periodMinReturn[key],
+    maxReturn: isLumpSum
+      ? dca.periodLumpSumMaxReturn[key]
+      : dca.periodMaxReturn[key],
+    daysInProfit: isLumpSum
+      ? dca.periodLumpSumDaysInProfit[key]
+      : dca.periodDaysInProfit[key],
+    daysInLoss: isLumpSum
+      ? dca.periodLumpSumDaysInLoss[key]
+      : dca.periodDaysInLoss[key],
     stack: isLumpSum ? dca.periodLumpSumStack[key] : dca.periodStack[key],
   });
 
   /** @param {LongPeriodKey} key @returns {LongEntryItem} */
-  const buildLongEntry = (key) => withCagr(
-    buildBaseEntry(key),
-    isLumpSum ? returns.cagr[key] : dca.periodCagr[key],
-  );
+  const buildLongEntry = (key) =>
+    withCagr(
+      buildBaseEntry(key),
+      isLumpSum ? returns.cagr[key] : dca.periodCagr[key],
+    );
 
   /** @param {BaseEntryItem} entry */
   const createShortEntry = (entry) =>
-    createShortSingleEntry(colors, { ...entry, titlePrefix: `${entry.name} ${suffix}` });
+    createShortSingleEntry(colors, {
+      ...entry,
+      titlePrefix: `${entry.name} ${suffix}`,
+    });
 
   /** @param {LongEntryItem} entry */
   const createLongEntry = (entry) =>
-    createLongSingleEntry(colors, { ...entry, titlePrefix: `${entry.name} ${suffix}` });
+    createLongSingleEntry(colors, {
+      ...entry,
+      titlePrefix: `${entry.name} ${suffix}`,
+    });
 
   const shortEntries = SHORT_PERIODS.map(buildBaseEntry);
   const longEntries = LONG_PERIODS.map(buildLongEntry);
@@ -408,16 +591,25 @@ function createPeriodSection(ctx, { dca, lookback, returns }) {
     name: `${suffix} by Period`,
     title: `${suffix} Performance by Investment Period`,
     tree: [
-      createCompareFolder(`All Periods ${suffix}`, [...shortEntries, ...longEntries]),
+      createCompareFolder(`All Periods ${suffix}`, [
+        ...shortEntries,
+        ...longEntries,
+      ]),
       {
         name: "Short Term",
         title: "Up to 1 Year",
-        tree: [createCompareFolder(`Short Term ${suffix}`, shortEntries), ...shortEntries.map(createShortEntry)],
+        tree: [
+          createCompareFolder(`Short Term ${suffix}`, shortEntries),
+          ...shortEntries.map(createShortEntry),
+        ],
       },
       {
         name: "Long Term",
         title: "2+ Years",
-        tree: [createCompareFolder(`Long Term ${suffix}`, longEntries), ...longEntries.map(createLongEntry)],
+        tree: [
+          createCompareFolder(`Long Term ${suffix}`, longEntries),
+          ...longEntries.map(createLongEntry),
+        ],
       },
     ],
   };
@@ -461,12 +653,21 @@ export function createDcaByStartYearSection(ctx, { dca }) {
     title,
     tree: [
       createCompareFolder(`${name} DCA`, entries),
-      ...entries.map((entry) => createShortSingleEntry(colors, { ...entry, titlePrefix: `${entry.name} DCA` })),
+      ...entries.map((entry) =>
+        createShortSingleEntry(colors, {
+          ...entry,
+          titlePrefix: `${entry.name} DCA`,
+        }),
+      ),
     ],
   });
 
-  const entries2020s = YEARS_2020S.map((year) => buildYearEntry(colors, dca, year));
-  const entries2010s = YEARS_2010S.map((year) => buildYearEntry(colors, dca, year));
+  const entries2020s = YEARS_2020S.map((year) =>
+    buildYearEntry(colors, dca, year),
+  );
+  const entries2010s = YEARS_2010S.map((year) =>
+    buildYearEntry(colors, dca, year),
+  );
 
   return {
     name: "DCA by Start Year",

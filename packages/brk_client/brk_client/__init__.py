@@ -25,7 +25,7 @@ Sats = int
 TypeIndex = int
 # Transaction ID (hash)
 Txid = str
-# Unified index for any address type (loaded or empty)
+# Unified index for any address type (funded or empty)
 AnyAddressIndex = TypeIndex
 # Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
 Bitcoin = float
@@ -67,12 +67,12 @@ EmptyAddressIndex = TypeIndex
 EmptyOutputIndex = TypeIndex
 # Fee rate in sats/vB
 FeeRate = float
+FundedAddressIndex = TypeIndex
 HalvingEpoch = int
 # Hex-encoded string
 Hex = str
 # Highest price value for a time period
 High = CentsUnsigned
-LoadedAddressIndex = TypeIndex
 # Lowest price value for a time period
 Low = CentsUnsigned
 # Virtual size in vbytes (weight / 4, rounded up)
@@ -157,7 +157,7 @@ WeekIndex = int
 YearIndex = int
 # Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
 # block-based (height, txindex), and address/output type indexes.
-Index = Literal["dateindex", "decadeindex", "difficultyepoch", "emptyoutputindex", "halvingepoch", "height", "txinindex", "monthindex", "opreturnindex", "txoutindex", "p2aaddressindex", "p2msoutputindex", "p2pk33addressindex", "p2pk65addressindex", "p2pkhaddressindex", "p2shaddressindex", "p2traddressindex", "p2wpkhaddressindex", "p2wshaddressindex", "quarterindex", "semesterindex", "txindex", "unknownoutputindex", "weekindex", "yearindex", "loadedaddressindex", "emptyaddressindex", "pairoutputindex"]
+Index = Literal["dateindex", "decadeindex", "difficultyepoch", "emptyoutputindex", "halvingepoch", "height", "txinindex", "monthindex", "opreturnindex", "txoutindex", "p2aaddressindex", "p2msoutputindex", "p2pk33addressindex", "p2pk65addressindex", "p2pkhaddressindex", "p2shaddressindex", "p2traddressindex", "p2wpkhaddressindex", "p2wshaddressindex", "quarterindex", "semesterindex", "txindex", "unknownoutputindex", "weekindex", "yearindex", "fundedaddressindex", "emptyaddressindex", "pairoutputindex"]
 # Hierarchical tree node for organizing metrics into categories
 TreeNode = Union[dict[str, "TreeNode"], "MetricLeafWithSchema"]
 class AddressChainStats(TypedDict):
@@ -455,6 +455,27 @@ class EmptyAddressData(TypedDict):
     funded_txo_count: int
     transfered: Sats
 
+class FundedAddressData(TypedDict):
+    """
+    Data for a funded (non-empty) address with current balance
+
+    Attributes:
+        tx_count: Total transaction count
+        funded_txo_count: Number of transaction outputs funded to this address
+        spent_txo_count: Number of transaction outputs spent by this address
+        received: Satoshis received by this address
+        sent: Satoshis sent by this address
+        realized_cap_raw: The realized capitalization: Σ(price × sats)
+        investor_cap_raw: The investor capitalization: Σ(price² × sats)
+    """
+    tx_count: int
+    funded_txo_count: int
+    spent_txo_count: int
+    received: Sats
+    sent: Sats
+    realized_cap_raw: CentsSats
+    investor_cap_raw: CentsSquaredSats
+
 class HashrateEntry(TypedDict):
     """
     A single hashrate data point.
@@ -511,27 +532,6 @@ class IndexInfo(TypedDict):
 
 class LimitParam(TypedDict):
     limit: Limit
-
-class LoadedAddressData(TypedDict):
-    """
-    Data for a loaded (non-empty) address with current balance
-
-    Attributes:
-        tx_count: Total transaction count
-        funded_txo_count: Number of transaction outputs funded to this address
-        spent_txo_count: Number of transaction outputs spent by this address
-        received: Satoshis received by this address
-        sent: Satoshis sent by this address
-        realized_cap_raw: The realized capitalization: Σ(price × sats)
-        investor_cap_raw: The investor capitalization: Σ(price² × sats)
-    """
-    tx_count: int
-    funded_txo_count: int
-    spent_txo_count: int
-    received: Sats
-    sent: Sats
-    realized_cap_raw: CentsSats
-    investor_cap_raw: CentsSquaredSats
 
 class MempoolBlock(TypedDict):
     """
@@ -1406,7 +1406,7 @@ _i27 = ('txindex',)
 _i28 = ('unknownoutputindex',)
 _i29 = ('weekindex',)
 _i30 = ('yearindex',)
-_i31 = ('loadedaddressindex',)
+_i31 = ('fundedaddressindex',)
 _i32 = ('emptyaddressindex',)
 
 def _ep(c: BrkClientBase, n: str, i: Index) -> MetricEndpointBuilder[Any]:
@@ -1805,7 +1805,7 @@ class MetricPattern30(Generic[T]):
 
 class _MetricPattern31By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def loadedaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'loadedaddressindex')
+    def fundedaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'fundedaddressindex')
 
 class MetricPattern31(Generic[T]):
     by: _MetricPattern31By[T]
@@ -3905,7 +3905,7 @@ class MetricsTree_Distribution_AddressesData:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.loaded: MetricPattern31[LoadedAddressData] = MetricPattern31(client, 'loadedaddressdata')
+        self.funded: MetricPattern31[FundedAddressData] = MetricPattern31(client, 'fundedaddressdata')
         self.empty: MetricPattern32[EmptyAddressData] = MetricPattern32(client, 'emptyaddressdata')
 
 class MetricsTree_Distribution_UtxoCohorts_All_Relative:
@@ -4284,7 +4284,7 @@ class MetricsTree_Distribution:
         self.total_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern(client, 'total_addr_count')
         self.new_addr_count: MetricsTree_Distribution_NewAddrCount = MetricsTree_Distribution_NewAddrCount(client)
         self.growth_rate: MetricsTree_Distribution_GrowthRate = MetricsTree_Distribution_GrowthRate(client)
-        self.loadedaddressindex: MetricPattern31[LoadedAddressIndex] = MetricPattern31(client, 'loadedaddressindex')
+        self.fundedaddressindex: MetricPattern31[FundedAddressIndex] = MetricPattern31(client, 'fundedaddressindex')
         self.emptyaddressindex: MetricPattern32[EmptyAddressIndex] = MetricPattern32(client, 'emptyaddressindex')
 
 class MetricsTree_Supply_Circulating:
@@ -4370,7 +4370,7 @@ class BrkClient(BrkClientBase):
       "unknownoutputindex",
       "weekindex",
       "yearindex",
-      "loadedaddressindex",
+      "fundedaddressindex",
       "emptyaddressindex",
       "pairoutputindex"
     ]

@@ -28,28 +28,29 @@ function walk(node, map, path) {
     for (const [key, value] of Object.entries(node)) {
       const kn = key.toLowerCase();
       if (
-        kn === "mvrv" ||
-        kn === "time" ||
-        kn === "height" ||
-        kn === "constants" ||
+        //   kn === "mvrv" ||
+        //   kn === "time" ||
+        //   kn === "height" ||
+        //   kn === "constants" ||
         kn === "blockhash" ||
-        kn === "oracle" ||
-        kn === "split" ||
-        kn === "ohlc" ||
-        kn === "outpoint" ||
+        kn === "date" ||
+        //   kn === "oracle" ||
+        //   kn === "split" ||
+        //   kn === "ohlc" ||
+        //   kn === "outpoint" ||
         kn === "positions" ||
-        kn === "outputtype" ||
+        //   kn === "outputtype" ||
         kn === "heighttopool" ||
-        kn === "txid" ||
-        kn.startsWith("satblocks") ||
-        kn.startsWith("satdays") ||
-        kn.endsWith("state") ||
-        kn.endsWith("cents") ||
+        //   kn === "txid" ||
+        kn.startsWith("timestamp") ||
+        //   kn.startsWith("satdays") ||
+        //   kn.endsWith("state") ||
+        //   kn.endsWith("cents") ||
         kn.endsWith("index") ||
-        kn.endsWith("indexes") ||
-        kn.endsWith("raw") ||
-        kn.endsWith("bytes") ||
-        (kn.startsWith("_") && kn.endsWith("start"))
+        kn.endsWith("indexes")
+        //   kn.endsWith("raw") ||
+        //   kn.endsWith("bytes") ||
+        //   (kn.startsWith("_") && kn.endsWith("start"))
       )
         continue;
       walk(/** @type {TreeNode | null | undefined} */ (value), map, [

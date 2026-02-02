@@ -618,7 +618,6 @@ export function createNetworkSection(ctx) {
                     pattern: transactions.volume.receivedSum,
                     name: "Received",
                     color: colors.cyan,
-                    defaultActive: false,
                   }),
                 ],
               },
@@ -794,7 +793,6 @@ export function createNetworkSection(ctx) {
               ...fromBaseStatsPattern({
                 pattern: blocks.interval,
                 unit: Unit.secs,
-                avgActive: false,
               }),
               priceLine({ ctx, unit: Unit.secs, name: "Target", number: 600 }),
             ],
@@ -1003,8 +1001,8 @@ export function createNetworkSection(ctx) {
         }),
       },
       {
-        name: "Throughput",
-        title: "Throughput",
+        name: "Activity Rate",
+        title: "Activity Rate",
         bottom: [
           dots({
             metric: transactions.volume.txPerSec,

@@ -401,16 +401,17 @@ export function createZScoresFolder(
  * @param {string} [args.ratioName] - Optional custom name for ratio chart (default: "ratio")
  * @param {string} [args.priceTitle] - Optional override for price chart title (default: context)
  * @param {string} [args.zScoresSuffix] - Optional suffix appended to context for z-scores (e.g., "MVRV" gives "2y Z-Score: STH MVRV")
+ * @param {FetchedPriceSeriesBlueprint[]} [args.priceReferences] - Optional additional price series to show in Price chart
  * @returns {PartialOptionsTree}
  */
-export function createPriceRatioCharts(ctx, { context, legend, pricePattern, ratio, color, ratioName, priceTitle, zScoresSuffix }) {
+export function createPriceRatioCharts(ctx, { context, legend, pricePattern, ratio, color, ratioName, priceTitle, zScoresSuffix, priceReferences }) {
   const titleFn = formatCohortTitle(context);
   const zScoresTitleFn = zScoresSuffix ? formatCohortTitle(`${context} ${zScoresSuffix}`) : titleFn;
   return [
     {
       name: "Price",
       title: priceTitle ?? context,
-      top: [price({ metric: pricePattern, name: legend, color })],
+      top: [price({ metric: pricePattern, name: legend, color }), ...(priceReferences ?? [])],
     },
     createRatioChart(ctx, {
       title: titleFn,

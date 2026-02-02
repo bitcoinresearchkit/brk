@@ -829,7 +829,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern30<T> { fn get(&self
 
 pub struct MetricPattern31By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern31By<T> {
-    pub fn loadedaddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::FundedAddressIndex) }
+    pub fn fundedaddressindex(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::FundedAddressIndex) }
 }
 
 pub struct MetricPattern31<T> { name: Arc<str>, pub by: MetricPattern31By<T> }
@@ -5112,7 +5112,7 @@ pub struct MetricsTree_Distribution {
     pub total_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern,
     pub new_addr_count: MetricsTree_Distribution_NewAddrCount,
     pub growth_rate: MetricsTree_Distribution_GrowthRate,
-    pub loadedaddressindex: MetricPattern31<FundedAddressIndex>,
+    pub fundedaddressindex: MetricPattern31<FundedAddressIndex>,
     pub emptyaddressindex: MetricPattern32<EmptyAddressIndex>,
 }
 
@@ -5130,7 +5130,7 @@ impl MetricsTree_Distribution {
             total_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern::new(client.clone(), "total_addr_count".to_string()),
             new_addr_count: MetricsTree_Distribution_NewAddrCount::new(client.clone(), format!("{base_path}_new_addr_count")),
             growth_rate: MetricsTree_Distribution_GrowthRate::new(client.clone(), format!("{base_path}_growth_rate")),
-            loadedaddressindex: MetricPattern31::new(client.clone(), "loadedaddressindex".to_string()),
+            fundedaddressindex: MetricPattern31::new(client.clone(), "fundedaddressindex".to_string()),
             emptyaddressindex: MetricPattern32::new(client.clone(), "emptyaddressindex".to_string()),
         }
     }
@@ -5165,14 +5165,14 @@ impl MetricsTree_Distribution_AnyAddressIndexes {
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_AddressesData {
-    pub loaded: MetricPattern31<FundedAddressData>,
+    pub funded: MetricPattern31<FundedAddressData>,
     pub empty: MetricPattern32<EmptyAddressData>,
 }
 
 impl MetricsTree_Distribution_AddressesData {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            loaded: MetricPattern31::new(client.clone(), "loadedaddressdata".to_string()),
+            funded: MetricPattern31::new(client.clone(), "fundedaddressdata".to_string()),
             empty: MetricPattern32::new(client.clone(), "emptyaddressdata".to_string()),
         }
     }

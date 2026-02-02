@@ -177,6 +177,45 @@ export const colors = {
     _2016: red,
     _2015: pink,
   },
+
+  /** Returns/lookback colors by period */
+  returns: {
+    _1d: red,
+    _1w: orange,
+    _1m: yellow,
+    _3m: lime,
+    _6m: green,
+    _1y: teal,
+    _2y: cyan,
+    _3y: sky,
+    _4y: blue,
+    _5y: indigo,
+    _6y: violet,
+    _8y: purple,
+    _10y: fuchsia,
+  },
+
+  /** Moving average colors by period */
+  ma: {
+    _1w: red,
+    _8d: orange,
+    _12d: amber,
+    _13d: amber,
+    _21d: yellow,
+    _26d: lime,
+    _1m: lime,
+    _34d: green,
+    _55d: emerald,
+    _89d: teal,
+    _111d: cyan,
+    _144d: sky,
+    _200d: blue,
+    _350d: indigo,
+    _1y: violet,
+    _2y: purple,
+    _200w: fuchsia,
+    _4y: pink,
+  },
 };
 
 /**

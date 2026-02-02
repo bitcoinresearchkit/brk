@@ -63,7 +63,7 @@
  * @property {?string=} witnessProgram - Witness program in hex
  */
 /**
- * Unified index for any address type (loaded or empty)
+ * Unified index for any address type (funded or empty)
  *
  * @typedef {TypeIndex} AnyAddressIndex
  */
@@ -276,6 +276,19 @@
  *
  * @typedef {("json"|"csv")} Format
  */
+/**
+ * Data for a funded (non-empty) address with current balance
+ *
+ * @typedef {Object} FundedAddressData
+ * @property {number} txCount - Total transaction count
+ * @property {number} fundedTxoCount - Number of transaction outputs funded to this address
+ * @property {number} spentTxoCount - Number of transaction outputs spent by this address
+ * @property {Sats} received - Satoshis received by this address
+ * @property {Sats} sent - Satoshis sent by this address
+ * @property {CentsSats} realizedCapRaw - The realized capitalization: Σ(price × sats)
+ * @property {CentsSquaredSats} investorCapRaw - The investor capitalization: Σ(price² × sats)
+ */
+/** @typedef {TypeIndex} FundedAddressIndex */
 /** @typedef {number} HalvingEpoch */
 /**
  * A single hashrate data point.
@@ -326,7 +339,7 @@
  * Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
  * block-based (height, txindex), and address/output type indexes.
  *
- * @typedef {("dateindex"|"decadeindex"|"difficultyepoch"|"emptyoutputindex"|"halvingepoch"|"height"|"txinindex"|"monthindex"|"opreturnindex"|"txoutindex"|"p2aaddressindex"|"p2msoutputindex"|"p2pk33addressindex"|"p2pk65addressindex"|"p2pkhaddressindex"|"p2shaddressindex"|"p2traddressindex"|"p2wpkhaddressindex"|"p2wshaddressindex"|"quarterindex"|"semesterindex"|"txindex"|"unknownoutputindex"|"weekindex"|"yearindex"|"loadedaddressindex"|"emptyaddressindex"|"pairoutputindex")} Index
+ * @typedef {("dateindex"|"decadeindex"|"difficultyepoch"|"emptyoutputindex"|"halvingepoch"|"height"|"txinindex"|"monthindex"|"opreturnindex"|"txoutindex"|"p2aaddressindex"|"p2msoutputindex"|"p2pk33addressindex"|"p2pk65addressindex"|"p2pkhaddressindex"|"p2shaddressindex"|"p2traddressindex"|"p2wpkhaddressindex"|"p2wshaddressindex"|"quarterindex"|"semesterindex"|"txindex"|"unknownoutputindex"|"weekindex"|"yearindex"|"fundedaddressindex"|"emptyaddressindex"|"pairoutputindex")} Index
  */
 /**
  * Information about an available index and its query aliases
@@ -344,19 +357,6 @@
  * @typedef {Object} LimitParam
  * @property {Limit=} limit
  */
-/**
- * Data for a loaded (non-empty) address with current balance
- *
- * @typedef {Object} LoadedAddressData
- * @property {number} txCount - Total transaction count
- * @property {number} fundedTxoCount - Number of transaction outputs funded to this address
- * @property {number} spentTxoCount - Number of transaction outputs spent by this address
- * @property {Sats} received - Satoshis received by this address
- * @property {Sats} sent - Satoshis sent by this address
- * @property {CentsSats} realizedCapRaw - The realized capitalization: Σ(price × sats)
- * @property {CentsSquaredSats} investorCapRaw - The investor capitalization: Σ(price² × sats)
- */
-/** @typedef {TypeIndex} LoadedAddressIndex */
 /**
  * Lowest price value for a time period
  *
@@ -1247,7 +1247,7 @@ const _i27 = /** @type {const} */ (["txindex"]);
 const _i28 = /** @type {const} */ (["unknownoutputindex"]);
 const _i29 = /** @type {const} */ (["weekindex"]);
 const _i30 = /** @type {const} */ (["yearindex"]);
-const _i31 = /** @type {const} */ (["loadedaddressindex"]);
+const _i31 = /** @type {const} */ (["fundedaddressindex"]);
 const _i32 = /** @type {const} */ (["emptyaddressindex"]);
 
 /**
@@ -1365,7 +1365,7 @@ function createMetricPattern29(client, name) { return _mp(client, name, _i29); }
 /** @template T @typedef {{ name: string, by: { readonly yearindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern30 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern30<T>} */
 function createMetricPattern30(client, name) { return _mp(client, name, _i30); }
-/** @template T @typedef {{ name: string, by: { readonly loadedaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern31 */
+/** @template T @typedef {{ name: string, by: { readonly fundedaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern31 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern31<T>} */
 function createMetricPattern31(client, name) { return _mp(client, name, _i31); }
 /** @template T @typedef {{ name: string, by: { readonly emptyaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern32 */
@@ -4481,7 +4481,7 @@ function createUtxoPattern(client, acc) {
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern} totalAddrCount
  * @property {MetricsTree_Distribution_NewAddrCount} newAddrCount
  * @property {MetricsTree_Distribution_GrowthRate} growthRate
- * @property {MetricPattern31<LoadedAddressIndex>} loadedaddressindex
+ * @property {MetricPattern31<FundedAddressIndex>} fundedaddressindex
  * @property {MetricPattern32<EmptyAddressIndex>} emptyaddressindex
  */
 
@@ -4499,7 +4499,7 @@ function createUtxoPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_AddressesData
- * @property {MetricPattern31<LoadedAddressData>} loaded
+ * @property {MetricPattern31<FundedAddressData>} funded
  * @property {MetricPattern32<EmptyAddressData>} empty
  */
 
@@ -4903,7 +4903,7 @@ class BrkClient extends BrkClientBase {
     "unknownoutputindex",
     "weekindex",
     "yearindex",
-    "loadedaddressindex",
+    "fundedaddressindex",
     "emptyaddressindex",
     "pairoutputindex"
   ]);
@@ -6625,7 +6625,7 @@ class BrkClient extends BrkClientBase {
           p2wsh: createMetricPattern24(this, 'anyaddressindex'),
         },
         addressesData: {
-          loaded: createMetricPattern31(this, 'loadedaddressdata'),
+          funded: createMetricPattern31(this, 'fundedaddressdata'),
           empty: createMetricPattern32(this, 'emptyaddressdata'),
         },
         utxoCohorts: {
@@ -6909,7 +6909,7 @@ class BrkClient extends BrkClientBase {
           p2tr: createAverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern(this, 'p2tr_growth_rate'),
           p2a: createAverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern(this, 'p2a_growth_rate'),
         },
-        loadedaddressindex: createMetricPattern31(this, 'loadedaddressindex'),
+        fundedaddressindex: createMetricPattern31(this, 'fundedaddressindex'),
         emptyaddressindex: createMetricPattern32(this, 'emptyaddressindex'),
       },
       supply: {
