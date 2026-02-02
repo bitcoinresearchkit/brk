@@ -807,16 +807,14 @@ export function createNetworkSection(ctx) {
                 title: "Block Size",
                 bottom: [
                   line({
-                    metric: blocks.size.sum,
-                    name: "sum",
+                    metric: blocks.totalSize,
+                    name: "base",
                     unit: Unit.bytes,
                   }),
                   line({
-                    metric: blocks.totalSize,
-                    name: "Blockchain",
-                    color: colors.purple,
+                    metric: blocks.size.sum,
+                    name: "sum",
                     unit: Unit.bytes,
-                    defaultActive: false,
                   }),
                 ],
               },
@@ -824,17 +822,14 @@ export function createNetworkSection(ctx) {
                 name: "Distribution",
                 title: "Block Size Distribution",
                 bottom: [
-                  ...fromStatsPattern({
-                    pattern: blocks.size,
+                  line({
+                    metric: blocks.totalSize,
+                    name: "base",
                     unit: Unit.bytes,
                   }),
                   ...fromStatsPattern({
-                    pattern: blocks.vbytes,
-                    unit: Unit.vb,
-                  }),
-                  ...fromStatsPattern({
-                    pattern: blocks.weight,
-                    unit: Unit.wu,
+                    pattern: blocks.size,
+                    unit: Unit.bytes,
                   }),
                 ],
               },
@@ -846,6 +841,100 @@ export function createNetworkSection(ctx) {
                     metric: blocks.size.cumulative,
                     name: "all-time",
                     unit: Unit.bytes,
+                  }),
+                ],
+              },
+            ],
+          },
+          {
+            name: "Weight",
+            tree: [
+              {
+                name: "Sum",
+                title: "Block Weight",
+                bottom: [
+                  line({
+                    metric: blocks.weight.base,
+                    name: "base",
+                    unit: Unit.wu,
+                  }),
+                  line({
+                    metric: blocks.weight.sum,
+                    name: "sum",
+                    unit: Unit.wu,
+                  }),
+                ],
+              },
+              {
+                name: "Distribution",
+                title: "Block Weight Distribution",
+                bottom: [
+                  line({
+                    metric: blocks.weight.base,
+                    name: "base",
+                    unit: Unit.wu,
+                  }),
+                  ...fromStatsPattern({
+                    pattern: blocks.weight,
+                    unit: Unit.wu,
+                  }),
+                ],
+              },
+              {
+                name: "Cumulative",
+                title: "Block Weight (Total)",
+                bottom: [
+                  line({
+                    metric: blocks.weight.cumulative,
+                    name: "all-time",
+                    unit: Unit.wu,
+                  }),
+                ],
+              },
+            ],
+          },
+          {
+            name: "vBytes",
+            tree: [
+              {
+                name: "Sum",
+                title: "Block vBytes",
+                bottom: [
+                  line({
+                    metric: blocks.vbytes.base,
+                    name: "base",
+                    unit: Unit.vb,
+                  }),
+                  line({
+                    metric: blocks.vbytes.sum,
+                    name: "sum",
+                    unit: Unit.vb,
+                  }),
+                ],
+              },
+              {
+                name: "Distribution",
+                title: "Block vBytes Distribution",
+                bottom: [
+                  line({
+                    metric: blocks.vbytes.base,
+                    name: "base",
+                    unit: Unit.vb,
+                  }),
+                  ...fromStatsPattern({
+                    pattern: blocks.vbytes,
+                    unit: Unit.vb,
+                  }),
+                ],
+              },
+              {
+                name: "Cumulative",
+                title: "Block vBytes (Total)",
+                bottom: [
+                  line({
+                    metric: blocks.vbytes.cumulative,
+                    name: "all-time",
+                    unit: Unit.vb,
                   }),
                 ],
               },
@@ -865,13 +954,36 @@ export function createNetworkSection(ctx) {
       // UTXOs
       {
         name: "UTXOs",
-        title: "UTXO Count",
-        bottom: [
-          line({
-            metric: outputs.count.utxoCount,
+        tree: [
+          {
             name: "Count",
-            unit: Unit.count,
-          }),
+            title: "UTXO Count",
+            bottom: [
+              line({
+                metric: outputs.count.utxoCount,
+                name: "Count",
+                unit: Unit.count,
+              }),
+            ],
+          },
+          {
+            name: "Flow",
+            title: "UTXO Flow",
+            bottom: [
+              line({
+                metric: outputs.count.totalCount.sum,
+                name: "Created",
+                color: colors.lime,
+                unit: Unit.count,
+              }),
+              line({
+                metric: inputs.count.sum,
+                name: "Spent",
+                color: colors.red,
+                unit: Unit.count,
+              }),
+            ],
+          },
         ],
       },
       {
@@ -1097,7 +1209,7 @@ export function createNetworkSection(ctx) {
         name: "Scripts",
         tree: [
           {
-            name: "Output Counts",
+            name: "By Type",
             tree: [
               // Compare section
               {
