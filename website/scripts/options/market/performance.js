@@ -3,7 +3,7 @@
 import { Unit } from "../../utils/units.js";
 import { priceLine } from "../constants.js";
 import { baseline } from "../series.js";
-import { periodIdToName } from "./utils.js";
+import { periodIdToName } from "../utils.js";
 
 /**
  * Create Returns section
@@ -41,7 +41,9 @@ export function createReturnsSection(ctx, returns) {
    */
   const createPeriodChart = ([id, returnKey, cagrKey]) => {
     const priceReturns = returns.priceReturns[/** @type {K} */ (returnKey)];
-    const cagr = cagrKey ? returns.cagr[/** @type {keyof typeof returns.cagr} */ (cagrKey)] : undefined;
+    const cagr = cagrKey
+      ? returns.cagr[/** @type {keyof typeof returns.cagr} */ (cagrKey)]
+      : undefined;
     const name = periodIdToName(id, true);
     return {
       name,
@@ -75,13 +77,50 @@ export function createReturnsSection(ctx, returns) {
         name: "Compare",
         title: "Returns Comparison",
         bottom: [
-          baseline({ metric: returns.priceReturns._1d, name: "1d", color: colors.red, unit: Unit.percentage }),
-          baseline({ metric: returns.priceReturns._1w, name: "1w", color: colors.orange, unit: Unit.percentage }),
-          baseline({ metric: returns.priceReturns._1m, name: "1m", color: colors.yellow, unit: Unit.percentage }),
-          baseline({ metric: returns.priceReturns._3m, name: "3m", color: colors.lime, unit: Unit.percentage, defaultActive: false }),
-          baseline({ metric: returns.priceReturns._6m, name: "6m", color: colors.green, unit: Unit.percentage, defaultActive: false }),
-          baseline({ metric: returns.priceReturns._1y, name: "1y", color: colors.teal, unit: Unit.percentage }),
-          baseline({ metric: returns.priceReturns._4y, name: "4y", color: colors.blue, unit: Unit.percentage }),
+          baseline({
+            metric: returns.priceReturns._1d,
+            name: "1d",
+            color: colors.red,
+            unit: Unit.percentage,
+          }),
+          baseline({
+            metric: returns.priceReturns._1w,
+            name: "1w",
+            color: colors.orange,
+            unit: Unit.percentage,
+          }),
+          baseline({
+            metric: returns.priceReturns._1m,
+            name: "1m",
+            color: colors.yellow,
+            unit: Unit.percentage,
+          }),
+          baseline({
+            metric: returns.priceReturns._3m,
+            name: "3m",
+            color: colors.lime,
+            unit: Unit.percentage,
+            defaultActive: false,
+          }),
+          baseline({
+            metric: returns.priceReturns._6m,
+            name: "6m",
+            color: colors.green,
+            unit: Unit.percentage,
+            defaultActive: false,
+          }),
+          baseline({
+            metric: returns.priceReturns._1y,
+            name: "1y",
+            color: colors.teal,
+            unit: Unit.percentage,
+          }),
+          baseline({
+            metric: returns.priceReturns._4y,
+            name: "4y",
+            color: colors.blue,
+            unit: Unit.percentage,
+          }),
           priceLine({ ctx, unit: Unit.percentage }),
         ],
       },

@@ -4352,20 +4352,20 @@ pub struct MetricsTree_Market_Dca {
     pub period_cagr: _10y2y3y4y5y6y8yPattern,
     pub period_days_in_profit: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>,
     pub period_days_in_loss: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>,
-    pub period_max_drawdown: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>,
+    pub period_min_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>,
     pub period_max_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>,
     pub period_lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3,
     pub period_lump_sum_returns: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>,
     pub period_lump_sum_days_in_profit: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>,
     pub period_lump_sum_days_in_loss: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>,
-    pub period_lump_sum_max_drawdown: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>,
+    pub period_lump_sum_min_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>,
     pub period_lump_sum_max_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>,
     pub class_stack: MetricsTree_Market_Dca_ClassStack,
     pub class_average_price: MetricsTree_Market_Dca_ClassAveragePrice,
     pub class_returns: _201520162017201820192020202120222023202420252026Pattern2<StoredF32>,
     pub class_days_in_profit: MetricsTree_Market_Dca_ClassDaysInProfit,
     pub class_days_in_loss: MetricsTree_Market_Dca_ClassDaysInLoss,
-    pub class_max_drawdown: MetricsTree_Market_Dca_ClassMaxDrawdown,
+    pub class_min_return: MetricsTree_Market_Dca_ClassMinReturn,
     pub class_max_return: MetricsTree_Market_Dca_ClassMaxReturn,
 }
 
@@ -4378,20 +4378,20 @@ impl MetricsTree_Market_Dca {
             period_cagr: _10y2y3y4y5y6y8yPattern::new(client.clone(), "dca_cagr".to_string()),
             period_days_in_profit: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "dca_days_in_profit".to_string()),
             period_days_in_loss: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "dca_days_in_loss".to_string()),
-            period_max_drawdown: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "dca_max_drawdown".to_string()),
+            period_min_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "dca_min_return".to_string()),
             period_max_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "dca_max_return".to_string()),
             period_lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3::new(client.clone(), "lump_sum_stack".to_string()),
             period_lump_sum_returns: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "lump_sum_returns".to_string()),
             period_lump_sum_days_in_profit: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "lump_sum_days_in_profit".to_string()),
             period_lump_sum_days_in_loss: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "lump_sum_days_in_loss".to_string()),
-            period_lump_sum_max_drawdown: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "lump_sum_max_drawdown".to_string()),
+            period_lump_sum_min_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "lump_sum_min_return".to_string()),
             period_lump_sum_max_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "lump_sum_max_return".to_string()),
             class_stack: MetricsTree_Market_Dca_ClassStack::new(client.clone(), format!("{base_path}_class_stack")),
             class_average_price: MetricsTree_Market_Dca_ClassAveragePrice::new(client.clone(), format!("{base_path}_class_average_price")),
             class_returns: _201520162017201820192020202120222023202420252026Pattern2::new(client.clone(), "dca_class".to_string()),
             class_days_in_profit: MetricsTree_Market_Dca_ClassDaysInProfit::new(client.clone(), format!("{base_path}_class_days_in_profit")),
             class_days_in_loss: MetricsTree_Market_Dca_ClassDaysInLoss::new(client.clone(), format!("{base_path}_class_days_in_loss")),
-            class_max_drawdown: MetricsTree_Market_Dca_ClassMaxDrawdown::new(client.clone(), format!("{base_path}_class_max_drawdown")),
+            class_min_return: MetricsTree_Market_Dca_ClassMinReturn::new(client.clone(), format!("{base_path}_class_min_return")),
             class_max_return: MetricsTree_Market_Dca_ClassMaxReturn::new(client.clone(), format!("{base_path}_class_max_return")),
         }
     }
@@ -4573,7 +4573,7 @@ impl MetricsTree_Market_Dca_ClassDaysInLoss {
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Market_Dca_ClassMaxDrawdown {
+pub struct MetricsTree_Market_Dca_ClassMinReturn {
     pub _2015: MetricPattern4<StoredF32>,
     pub _2016: MetricPattern4<StoredF32>,
     pub _2017: MetricPattern4<StoredF32>,
@@ -4588,21 +4588,21 @@ pub struct MetricsTree_Market_Dca_ClassMaxDrawdown {
     pub _2026: MetricPattern4<StoredF32>,
 }
 
-impl MetricsTree_Market_Dca_ClassMaxDrawdown {
+impl MetricsTree_Market_Dca_ClassMinReturn {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _2015: MetricPattern4::new(client.clone(), "dca_class_2015_max_drawdown".to_string()),
-            _2016: MetricPattern4::new(client.clone(), "dca_class_2016_max_drawdown".to_string()),
-            _2017: MetricPattern4::new(client.clone(), "dca_class_2017_max_drawdown".to_string()),
-            _2018: MetricPattern4::new(client.clone(), "dca_class_2018_max_drawdown".to_string()),
-            _2019: MetricPattern4::new(client.clone(), "dca_class_2019_max_drawdown".to_string()),
-            _2020: MetricPattern4::new(client.clone(), "dca_class_2020_max_drawdown".to_string()),
-            _2021: MetricPattern4::new(client.clone(), "dca_class_2021_max_drawdown".to_string()),
-            _2022: MetricPattern4::new(client.clone(), "dca_class_2022_max_drawdown".to_string()),
-            _2023: MetricPattern4::new(client.clone(), "dca_class_2023_max_drawdown".to_string()),
-            _2024: MetricPattern4::new(client.clone(), "dca_class_2024_max_drawdown".to_string()),
-            _2025: MetricPattern4::new(client.clone(), "dca_class_2025_max_drawdown".to_string()),
-            _2026: MetricPattern4::new(client.clone(), "dca_class_2026_max_drawdown".to_string()),
+            _2015: MetricPattern4::new(client.clone(), "dca_class_2015_min_return".to_string()),
+            _2016: MetricPattern4::new(client.clone(), "dca_class_2016_min_return".to_string()),
+            _2017: MetricPattern4::new(client.clone(), "dca_class_2017_min_return".to_string()),
+            _2018: MetricPattern4::new(client.clone(), "dca_class_2018_min_return".to_string()),
+            _2019: MetricPattern4::new(client.clone(), "dca_class_2019_min_return".to_string()),
+            _2020: MetricPattern4::new(client.clone(), "dca_class_2020_min_return".to_string()),
+            _2021: MetricPattern4::new(client.clone(), "dca_class_2021_min_return".to_string()),
+            _2022: MetricPattern4::new(client.clone(), "dca_class_2022_min_return".to_string()),
+            _2023: MetricPattern4::new(client.clone(), "dca_class_2023_min_return".to_string()),
+            _2024: MetricPattern4::new(client.clone(), "dca_class_2024_min_return".to_string()),
+            _2025: MetricPattern4::new(client.clone(), "dca_class_2025_min_return".to_string()),
+            _2026: MetricPattern4::new(client.clone(), "dca_class_2026_min_return".to_string()),
         }
     }
 }

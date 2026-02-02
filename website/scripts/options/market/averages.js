@@ -2,7 +2,7 @@
 
 import { price } from "../series.js";
 import { createPriceRatioCharts } from "../shared.js";
-import { periodIdToName } from "./utils.js";
+import { periodIdToName } from "../utils.js";
 
 /**
  * @param {Colors} colors
@@ -79,12 +79,16 @@ const COMPARISON_PERIODS = ["1w", "1m", "200d", "1y", "200w", "4y"];
  */
 function createCompareSection(smaAverages, emaAverages) {
   // Find matching SMA/EMA pairs
-  const pairs = COMPARISON_PERIODS.map(id => {
-    const sma = smaAverages.find(a => a.id === id);
-    const ema = emaAverages.find(a => a.id === id);
+  const pairs = COMPARISON_PERIODS.map((id) => {
+    const sma = smaAverages.find((a) => a.id === id);
+    const ema = emaAverages.find((a) => a.id === id);
     if (!sma || !ema) return null;
     return { id, sma, ema };
-  }).filter(/** @type {(p: any) => p is { id: string, sma: ReturnType<typeof buildSmaAverages>[number], ema: ReturnType<typeof buildEmaAverages>[number] }} */ (p) => p !== null);
+  }).filter(
+    /** @type {(p: any) => p is { id: string, sma: ReturnType<typeof buildSmaAverages>[number], ema: ReturnType<typeof buildEmaAverages>[number] }} */ (
+      p,
+    ) => p !== null,
+  );
 
   return {
     name: "Compare",
@@ -93,8 +97,17 @@ function createCompareSection(smaAverages, emaAverages) {
         name: "All Periods",
         title: "SMA vs EMA Comparison",
         top: pairs.flatMap(({ sma, ema }) => [
-          price({ metric: sma.ratio.price, name: `${sma.id} SMA`, color: sma.color }),
-          price({ metric: ema.ratio.price, name: `${ema.id} EMA`, color: ema.color, options: { lineStyle: 1 } }),
+          price({
+            metric: sma.ratio.price,
+            name: `${sma.id} SMA`,
+            color: sma.color,
+          }),
+          price({
+            metric: ema.ratio.price,
+            name: `${ema.id} EMA`,
+            color: ema.color,
+            style: 1,
+          }),
         ]),
       },
       ...pairs.map(({ id, sma, ema }) => ({
@@ -102,7 +115,12 @@ function createCompareSection(smaAverages, emaAverages) {
         title: `${periodIdToName(id, true)} SMA vs EMA`,
         top: [
           price({ metric: sma.ratio.price, name: "SMA", color: sma.color }),
-          price({ metric: ema.ratio.price, name: "EMA", color: ema.color, options: { lineStyle: 1 } }),
+          price({
+            metric: ema.ratio.price,
+            name: "EMA",
+            color: ema.color,
+            style: 1,
+          }),
         ],
       })),
     ],
@@ -123,8 +141,12 @@ export function createAveragesSection(ctx, movingAverage) {
    * @param {ReturnType<typeof buildSmaAverages> | ReturnType<typeof buildEmaAverages>} averages
    */
   const createSubSection = (label, averages) => {
-    const commonAverages = averages.filter(({ id }) => COMMON_PERIODS.includes(id));
-    const moreAverages = averages.filter(({ id }) => !COMMON_PERIODS.includes(id));
+    const commonAverages = averages.filter(({ id }) =>
+      COMMON_PERIODS.includes(id),
+    );
+    const moreAverages = averages.filter(
+      ({ id }) => !COMMON_PERIODS.includes(id),
+    );
 
     return {
       name: label,

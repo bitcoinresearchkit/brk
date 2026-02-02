@@ -3590,22 +3590,22 @@ class MetricsTree_Market_Dca_ClassDaysInLoss:
         self._2025: MetricPattern4[StoredU32] = MetricPattern4(client, 'dca_class_2025_days_in_loss')
         self._2026: MetricPattern4[StoredU32] = MetricPattern4(client, 'dca_class_2026_days_in_loss')
 
-class MetricsTree_Market_Dca_ClassMaxDrawdown:
+class MetricsTree_Market_Dca_ClassMinReturn:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._2015: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2015_max_drawdown')
-        self._2016: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2016_max_drawdown')
-        self._2017: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2017_max_drawdown')
-        self._2018: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2018_max_drawdown')
-        self._2019: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2019_max_drawdown')
-        self._2020: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2020_max_drawdown')
-        self._2021: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2021_max_drawdown')
-        self._2022: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2022_max_drawdown')
-        self._2023: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2023_max_drawdown')
-        self._2024: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2024_max_drawdown')
-        self._2025: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2025_max_drawdown')
-        self._2026: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2026_max_drawdown')
+        self._2015: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2015_min_return')
+        self._2016: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2016_min_return')
+        self._2017: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2017_min_return')
+        self._2018: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2018_min_return')
+        self._2019: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2019_min_return')
+        self._2020: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2020_min_return')
+        self._2021: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2021_min_return')
+        self._2022: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2022_min_return')
+        self._2023: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2023_min_return')
+        self._2024: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2024_min_return')
+        self._2025: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2025_min_return')
+        self._2026: MetricPattern4[StoredF32] = MetricPattern4(client, 'dca_class_2026_min_return')
 
 class MetricsTree_Market_Dca_ClassMaxReturn:
     """Metrics tree node."""
@@ -3634,20 +3634,20 @@ class MetricsTree_Market_Dca:
         self.period_cagr: _10y2y3y4y5y6y8yPattern = _10y2y3y4y5y6y8yPattern(client, 'dca_cagr')
         self.period_days_in_profit: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredU32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_days_in_profit')
         self.period_days_in_loss: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredU32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_days_in_loss')
-        self.period_max_drawdown: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_max_drawdown')
+        self.period_min_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_min_return')
         self.period_max_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_max_return')
         self.period_lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'lump_sum_stack')
         self.period_lump_sum_returns: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_returns')
         self.period_lump_sum_days_in_profit: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredU32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_days_in_profit')
         self.period_lump_sum_days_in_loss: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredU32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_days_in_loss')
-        self.period_lump_sum_max_drawdown: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_max_drawdown')
+        self.period_lump_sum_min_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_min_return')
         self.period_lump_sum_max_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_max_return')
         self.class_stack: MetricsTree_Market_Dca_ClassStack = MetricsTree_Market_Dca_ClassStack(client)
         self.class_average_price: MetricsTree_Market_Dca_ClassAveragePrice = MetricsTree_Market_Dca_ClassAveragePrice(client)
         self.class_returns: _201520162017201820192020202120222023202420252026Pattern2[StoredF32] = _201520162017201820192020202120222023202420252026Pattern2(client, 'dca_class')
         self.class_days_in_profit: MetricsTree_Market_Dca_ClassDaysInProfit = MetricsTree_Market_Dca_ClassDaysInProfit(client)
         self.class_days_in_loss: MetricsTree_Market_Dca_ClassDaysInLoss = MetricsTree_Market_Dca_ClassDaysInLoss(client)
-        self.class_max_drawdown: MetricsTree_Market_Dca_ClassMaxDrawdown = MetricsTree_Market_Dca_ClassMaxDrawdown(client)
+        self.class_min_return: MetricsTree_Market_Dca_ClassMinReturn = MetricsTree_Market_Dca_ClassMinReturn(client)
         self.class_max_return: MetricsTree_Market_Dca_ClassMaxReturn = MetricsTree_Market_Dca_ClassMaxReturn(client)
 
 class MetricsTree_Market_Indicators:

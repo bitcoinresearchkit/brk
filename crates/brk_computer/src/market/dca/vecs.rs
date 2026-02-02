@@ -16,7 +16,7 @@ pub struct Vecs {
     // DCA by period - profitability
     pub period_days_in_profit: ByDcaPeriod<ComputedFromDateLast<StoredU32>>,
     pub period_days_in_loss: ByDcaPeriod<ComputedFromDateLast<StoredU32>>,
-    pub period_max_drawdown: ByDcaPeriod<ComputedFromDateLast<StoredF32>>,
+    pub period_min_return: ByDcaPeriod<ComputedFromDateLast<StoredF32>>,
     pub period_max_return: ByDcaPeriod<ComputedFromDateLast<StoredF32>>,
 
     // Lump sum by period (for comparison with DCA) - KISS types
@@ -26,7 +26,7 @@ pub struct Vecs {
     // Lump sum by period - profitability
     pub period_lump_sum_days_in_profit: ByDcaPeriod<ComputedFromDateLast<StoredU32>>,
     pub period_lump_sum_days_in_loss: ByDcaPeriod<ComputedFromDateLast<StoredU32>>,
-    pub period_lump_sum_max_drawdown: ByDcaPeriod<ComputedFromDateLast<StoredF32>>,
+    pub period_lump_sum_min_return: ByDcaPeriod<ComputedFromDateLast<StoredF32>>,
     pub period_lump_sum_max_return: ByDcaPeriod<ComputedFromDateLast<StoredF32>>,
 
     // DCA by year class - KISS types
@@ -37,6 +37,6 @@ pub struct Vecs {
     // DCA by year class - profitability
     pub class_days_in_profit: ByDcaClass<ComputedFromDateLast<StoredU32>>,
     pub class_days_in_loss: ByDcaClass<ComputedFromDateLast<StoredU32>>,
-    pub class_max_drawdown: ByDcaClass<ComputedFromDateLast<StoredF32>>,
+    pub class_min_return: ByDcaClass<ComputedFromDateLast<StoredF32>>,
     pub class_max_return: ByDcaClass<ComputedFromDateLast<StoredF32>>,
 }

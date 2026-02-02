@@ -51,6 +51,9 @@
  * Any pattern with dollars and sats sub-metrics (auto-expands to USD + sats)
  * @typedef {{ dollars: AnyMetricPattern, sats: AnyMetricPattern }} AnyPricePattern
  *
+ * Any pattern with sats, bitcoin, and dollars sub-metrics (value patterns like stack)
+ * @typedef {{ sats: AnyMetricPattern, bitcoin: AnyMetricPattern, dollars: AnyMetricPattern }} AnyValuePattern
+ *
  * Top pane price series - requires a price pattern with dollars/sats, auto-expands to USD + sats
  * @typedef {{ metric: AnyPricePattern }} FetchedPriceSeriesOptions
  * @typedef {LineSeriesBlueprint & FetchedPriceSeriesOptions} FetchedPriceSeriesBlueprint

@@ -67,10 +67,10 @@ impl Vecs {
             )
         })?;
 
-        let period_max_drawdown = ByDcaPeriod::try_new(|name, _days| {
+        let period_min_return = ByDcaPeriod::try_new(|name, _days| {
             ComputedFromDateLast::forced_import(
                 db,
-                &format!("{name}_dca_max_drawdown"),
+                &format!("{name}_dca_min_return"),
                 version,
                 indexes,
             )
@@ -130,10 +130,10 @@ impl Vecs {
             )
         })?;
 
-        let period_lump_sum_max_drawdown = ByDcaPeriod::try_new(|name, _days| {
+        let period_lump_sum_min_return = ByDcaPeriod::try_new(|name, _days| {
             ComputedFromDateLast::forced_import(
                 db,
-                &format!("{name}_lump_sum_max_drawdown"),
+                &format!("{name}_lump_sum_min_return"),
                 version,
                 indexes,
             )
@@ -189,10 +189,10 @@ impl Vecs {
             )
         })?;
 
-        let class_max_drawdown = ByDcaClass::try_new(|name, _year, _dateindex| {
+        let class_min_return = ByDcaClass::try_new(|name, _year, _dateindex| {
             ComputedFromDateLast::forced_import(
                 db,
-                &format!("{name}_max_drawdown"),
+                &format!("{name}_min_return"),
                 version,
                 indexes,
             )
@@ -214,20 +214,20 @@ impl Vecs {
             period_cagr,
             period_days_in_profit,
             period_days_in_loss,
-            period_max_drawdown,
+            period_min_return,
             period_max_return,
             period_lump_sum_stack,
             period_lump_sum_returns,
             period_lump_sum_days_in_profit,
             period_lump_sum_days_in_loss,
-            period_lump_sum_max_drawdown,
+            period_lump_sum_min_return,
             period_lump_sum_max_return,
             class_stack,
             class_average_price,
             class_returns,
             class_days_in_profit,
             class_days_in_loss,
-            class_max_drawdown,
+            class_min_return,
             class_max_return,
         })
     }

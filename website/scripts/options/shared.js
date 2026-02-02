@@ -15,7 +15,7 @@ export const formatCohortTitle = (cohortTitle) =>
 /**
  * Create sats/btc/usd line series from a pattern with .sats/.bitcoin/.dollars
  * @param {Object} args
- * @param {{ sats: AnyMetricPattern, bitcoin: AnyMetricPattern, dollars: AnyMetricPattern }} args.pattern
+ * @param {AnyValuePattern} args.pattern
  * @param {string} args.name
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]

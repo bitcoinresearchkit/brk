@@ -67,7 +67,7 @@ impl Vecs {
         compute_period_profitability(
             &mut self.period_days_in_profit,
             &mut self.period_days_in_loss,
-            &mut self.period_max_drawdown,
+            &mut self.period_min_return,
             &mut self.period_max_return,
             &self.period_returns,
             starting_indexes,
@@ -95,7 +95,7 @@ impl Vecs {
         compute_period_profitability(
             &mut self.period_lump_sum_days_in_profit,
             &mut self.period_lump_sum_days_in_loss,
-            &mut self.period_lump_sum_max_drawdown,
+            &mut self.period_lump_sum_min_return,
             &mut self.period_lump_sum_max_return,
             &self.period_lump_sum_returns,
             starting_indexes,
@@ -130,7 +130,7 @@ impl Vecs {
         compute_class_profitability(
             &mut self.class_days_in_profit,
             &mut self.class_days_in_loss,
-            &mut self.class_max_drawdown,
+            &mut self.class_min_return,
             &mut self.class_max_return,
             &self.class_returns,
             starting_indexes,
@@ -144,16 +144,16 @@ impl Vecs {
 fn compute_period_profitability(
     days_in_profit: &mut ByDcaPeriod<ComputedFromDateLast<StoredU32>>,
     days_in_loss: &mut ByDcaPeriod<ComputedFromDateLast<StoredU32>>,
-    max_drawdown: &mut ByDcaPeriod<ComputedFromDateLast<StoredF32>>,
+    min_return: &mut ByDcaPeriod<ComputedFromDateLast<StoredF32>>,
     max_return: &mut ByDcaPeriod<ComputedFromDateLast<StoredF32>>,
     returns: &ByDcaPeriod<LazyBinaryFromDateLast<StoredF32, Close<Dollars>, Dollars>>,
     starting_indexes: &ComputeIndexes,
     exit: &Exit,
 ) -> Result<()> {
-    for ((((dip, dil), md), mr), (ret, days)) in days_in_profit
+    for ((((dip, dil), minr), maxr), (ret, days)) in days_in_profit
         .iter_mut()
         .zip(days_in_loss.iter_mut())
-        .zip(max_drawdown.iter_mut())
+        .zip(min_return.iter_mut())
         .zip(max_return.iter_mut())
         .zip(returns.iter_with_days())
     {
@@ -177,7 +177,7 @@ fn compute_period_profitability(
             )?)
         })?;
 
-        md.compute_all(starting_indexes, exit, |v| {
+        minr.compute_all(starting_indexes, exit, |v| {
             Ok(v.compute_min(
                 starting_indexes.dateindex,
                 &ret.dateindex,
@@ -186,7 +186,7 @@ fn compute_period_profitability(
             )?)
         })?;
 
-        mr.compute_all(starting_indexes, exit, |v| {
+        maxr.compute_all(starting_indexes, exit, |v| {
             Ok(v.compute_max(
                 starting_indexes.dateindex,
                 &ret.dateindex,
@@ -201,7 +201,7 @@ fn compute_period_profitability(
 fn compute_class_profitability(
     days_in_profit: &mut ByDcaClass<ComputedFromDateLast<StoredU32>>,
     days_in_loss: &mut ByDcaClass<ComputedFromDateLast<StoredU32>>,
-    max_drawdown: &mut ByDcaClass<ComputedFromDateLast<StoredF32>>,
+    min_return: &mut ByDcaClass<ComputedFromDateLast<StoredF32>>,
     max_return: &mut ByDcaClass<ComputedFromDateLast<StoredF32>>,
     returns: &ByDcaClass<LazyBinaryFromDateLast<StoredF32, Close<Dollars>, Dollars>>,
     starting_indexes: &ComputeIndexes,
@@ -209,10 +209,10 @@ fn compute_class_profitability(
 ) -> Result<()> {
     let dateindexes = ByDcaClass::<()>::dateindexes();
 
-    for (((((dip, dil), md), mr), ret), from) in days_in_profit
+    for (((((dip, dil), minr), maxr), ret), from) in days_in_profit
         .iter_mut()
         .zip(days_in_loss.iter_mut())
-        .zip(max_drawdown.iter_mut())
+        .zip(min_return.iter_mut())
         .zip(max_return.iter_mut())
         .zip(returns.iter())
         .zip(dateindexes)
@@ -237,7 +237,7 @@ fn compute_class_profitability(
             )?)
         })?;
 
-        md.compute_all(starting_indexes, exit, |v| {
+        minr.compute_all(starting_indexes, exit, |v| {
             Ok(v.compute_all_time_low_from(
                 starting_indexes.dateindex,
                 &ret.dateindex,
@@ -246,7 +246,7 @@ fn compute_class_profitability(
             )?)
         })?;
 
-        mr.compute_all(starting_indexes, exit, |v| {
+        maxr.compute_all(starting_indexes, exit, |v| {
             Ok(v.compute_all_time_high_from(
                 starting_indexes.dateindex,
                 &ret.dateindex,

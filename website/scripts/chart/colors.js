@@ -86,11 +86,10 @@ const fuchsia = createColor(() => getColor("fuchsia"));
 const pink = createColor(() => getColor("pink"));
 const rose = createColor(() => getColor("rose"));
 
-export const colors = {
+const baseColors = {
   default: createColor(() => getLightDarkValue("--color")),
   gray: createColor(() => getColor("gray")),
   border: createColor(() => getLightDarkValue("--border-color")),
-
   red,
   orange,
   amber,
@@ -109,6 +108,10 @@ export const colors = {
   fuchsia,
   pink,
   rose,
+};
+
+export const colors = {
+  ...baseColors,
 
   /** Semantic stat colors for pattern helpers */
   stat: {
@@ -123,9 +126,47 @@ export const colors = {
     pct10: fuchsia,
     min: red,
   },
+
+  /** DCA period colors by term */
+  dcaPeriods: {
+    // Short term
+    _1w: red,
+    _1m: orange,
+    _3m: yellow,
+    _6m: lime,
+    // Medium term
+    _1y: green,
+    _2y: teal,
+    _3y: cyan,
+    // Long term
+    _4y: sky,
+    _5y: blue,
+    _6y: indigo,
+    _8y: violet,
+    _10y: purple,
+  },
+
+  /** DCA year colors by halving epoch */
+  dcaYears: {
+    // Epoch 5 (2024+)
+    _2026: rose,
+    _2025: fuchsia,
+    _2024: purple,
+    // Epoch 4 (2020-2023)
+    _2023: violet,
+    _2022: blue,
+    _2021: sky,
+    _2020: teal,
+    // Epoch 3 (2016-2019)
+    _2019: green,
+    _2018: yellow,
+    _2017: orange,
+    _2016: red,
+    _2015: pink,
+  },
 };
 
 /**
  * @typedef {typeof colors} Colors
- * @typedef {Exclude<keyof Colors, "stat">} ColorName
+ * @typedef {keyof typeof baseColors} ColorName
  */

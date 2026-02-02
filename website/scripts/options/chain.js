@@ -2,7 +2,7 @@
 
 import { Unit } from "../utils/units.js";
 import { priceLine } from "./constants.js";
-import { line, baseline, dots } from "./series.js";
+import { line, baseline, dots, dotted } from "./series.js";
 import { satsBtcUsd } from "./shared.js";
 import { spendableTypeColors } from "./colors/index.js";
 
@@ -70,31 +70,88 @@ export function createChainSection(ctx) {
   const addressTypes = [
     { key: "p2pkh", name: "P2PKH", color: colors[spendableTypeColors.p2pkh] },
     { key: "p2sh", name: "P2SH", color: colors[spendableTypeColors.p2sh] },
-    { key: "p2wpkh", name: "P2WPKH", color: colors[spendableTypeColors.p2wpkh] },
+    {
+      key: "p2wpkh",
+      name: "P2WPKH",
+      color: colors[spendableTypeColors.p2wpkh],
+    },
     { key: "p2wsh", name: "P2WSH", color: colors[spendableTypeColors.p2wsh] },
     { key: "p2tr", name: "P2TR", color: colors[spendableTypeColors.p2tr] },
-    { key: "p2pk65", name: "P2PK65", color: colors[spendableTypeColors.p2pk65], defaultActive: false },
-    { key: "p2pk33", name: "P2PK33", color: colors[spendableTypeColors.p2pk33], defaultActive: false },
-    { key: "p2a", name: "P2A", color: colors[spendableTypeColors.p2a], defaultActive: false },
+    {
+      key: "p2pk65",
+      name: "P2PK65",
+      color: colors[spendableTypeColors.p2pk65],
+      defaultActive: false,
+    },
+    {
+      key: "p2pk33",
+      name: "P2PK33",
+      color: colors[spendableTypeColors.p2pk33],
+      defaultActive: false,
+    },
+    {
+      key: "p2a",
+      name: "P2A",
+      color: colors[spendableTypeColors.p2a],
+      defaultActive: false,
+    },
   ];
 
   // Activity types for mapping
   /** @type {ReadonlyArray<{key: "sending" | "receiving" | "both" | "reactivated" | "balanceIncreased" | "balanceDecreased", name: string, title: string, compareTitle: string}>} */
   const activityTypes = [
-    { key: "sending", name: "Sending", title: "Sending Address Count", compareTitle: "Sending Address Count by Type" },
-    { key: "receiving", name: "Receiving", title: "Receiving Address Count", compareTitle: "Receiving Address Count by Type" },
-    { key: "both", name: "Both", title: "Addresses Sending & Receiving (Same Block)", compareTitle: "Addresses Sending & Receiving by Type" },
-    { key: "reactivated", name: "Reactivated", title: "Reactivated Address Count (Was Empty)", compareTitle: "Reactivated Address Count by Type" },
-    { key: "balanceIncreased", name: "Balance Increased", title: "Addresses with Increased Balance", compareTitle: "Addresses with Increased Balance by Type" },
-    { key: "balanceDecreased", name: "Balance Decreased", title: "Addresses with Decreased Balance", compareTitle: "Addresses with Decreased Balance by Type" },
+    {
+      key: "sending",
+      name: "Sending",
+      title: "Sending Address Count",
+      compareTitle: "Sending Address Count by Type",
+    },
+    {
+      key: "receiving",
+      name: "Receiving",
+      title: "Receiving Address Count",
+      compareTitle: "Receiving Address Count by Type",
+    },
+    {
+      key: "both",
+      name: "Both",
+      title: "Addresses Sending & Receiving (Same Block)",
+      compareTitle: "Addresses Sending & Receiving by Type",
+    },
+    {
+      key: "reactivated",
+      name: "Reactivated",
+      title: "Reactivated Address Count (Was Empty)",
+      compareTitle: "Reactivated Address Count by Type",
+    },
+    {
+      key: "balanceIncreased",
+      name: "Balance Increased",
+      title: "Addresses with Increased Balance",
+      compareTitle: "Addresses with Increased Balance by Type",
+    },
+    {
+      key: "balanceDecreased",
+      name: "Balance Decreased",
+      title: "Addresses with Decreased Balance",
+      compareTitle: "Addresses with Decreased Balance by Type",
+    },
   ];
 
   // Count types for comparison charts
   /** @type {ReadonlyArray<{key: "addrCount" | "emptyAddrCount" | "totalAddrCount", name: string, title: string}>} */
   const countTypes = [
     { key: "addrCount", name: "Loaded", title: "Address Count by Type" },
-    { key: "emptyAddrCount", name: "Empty", title: "Empty Address Count by Type" },
-    { key: "totalAddrCount", name: "Total", title: "Total Address Count by Type" },
+    {
+      key: "emptyAddrCount",
+      name: "Empty",
+      title: "Empty Address Count by Type",
+    },
+    {
+      key: "totalAddrCount",
+      name: "Total",
+      title: "Total Address Count by Type",
+    },
   ];
 
   /**
@@ -131,12 +188,18 @@ export function createChainSection(ctx) {
     {
       name: "New",
       title: `${titlePrefix}New Address Count`,
-      bottom: fromFullStatsPattern({ pattern: distribution.newAddrCount[key], unit: Unit.count }),
+      bottom: fromFullStatsPattern({
+        pattern: distribution.newAddrCount[key],
+        unit: Unit.count,
+      }),
     },
     {
       name: "Growth Rate",
       title: `${titlePrefix}Address Growth Rate`,
-      bottom: fromBaseStatsPattern({ pattern: distribution.growthRate[key], unit: Unit.ratio }),
+      bottom: fromBaseStatsPattern({
+        pattern: distribution.growthRate[key],
+        unit: Unit.ratio,
+      }),
     },
     {
       name: "Activity",
@@ -262,7 +325,12 @@ export function createChainSection(ctx) {
               sumColor: colors.lime,
               cumulativeColor: colors.emerald,
             }),
-            ...fromValuePattern({ pattern: pool.fee, title: "fee", sumColor: colors.cyan, cumulativeColor: colors.indigo }),
+            ...fromValuePattern({
+              pattern: pool.fee,
+              title: "fee",
+              sumColor: colors.cyan,
+              cumulativeColor: colors.indigo,
+            }),
           ],
         },
         {
@@ -296,7 +364,10 @@ export function createChainSection(ctx) {
             name: "Count",
             title: "Block Count",
             bottom: [
-              ...fromCountPattern({ pattern: blocks.count.blockCount, unit: Unit.count }),
+              ...fromCountPattern({
+                pattern: blocks.count.blockCount,
+                unit: Unit.count,
+              }),
               line({
                 metric: blocks.count.blockCountTarget,
                 name: "Target",
@@ -338,7 +409,11 @@ export function createChainSection(ctx) {
             name: "Interval",
             title: "Block Interval",
             bottom: [
-              ...fromBaseStatsPattern({ pattern: blocks.interval, unit: Unit.secs, avgActive: false }),
+              ...fromBaseStatsPattern({
+                pattern: blocks.interval,
+                unit: Unit.secs,
+                avgActive: false,
+              }),
               priceLine({ ctx, unit: Unit.secs, name: "Target", number: 600 }),
             ],
           },
@@ -346,7 +421,10 @@ export function createChainSection(ctx) {
             name: "Size",
             title: "Block Size",
             bottom: [
-              ...fromSumStatsPattern({ pattern: blocks.size, unit: Unit.bytes }),
+              ...fromSumStatsPattern({
+                pattern: blocks.size,
+                unit: Unit.bytes,
+              }),
               line({
                 metric: blocks.totalSize,
                 name: "Total",
@@ -354,8 +432,14 @@ export function createChainSection(ctx) {
                 unit: Unit.bytes,
                 defaultActive: false,
               }),
-              ...fromBaseStatsPattern({ pattern: blocks.vbytes, unit: Unit.vb }),
-              ...fromBaseStatsPattern({ pattern: blocks.weight, unit: Unit.wu }),
+              ...fromBaseStatsPattern({
+                pattern: blocks.vbytes,
+                unit: Unit.vb,
+              }),
+              ...fromBaseStatsPattern({
+                pattern: blocks.weight,
+                unit: Unit.wu,
+              }),
               line({
                 metric: blocks.weight.sum,
                 name: "Sum",
@@ -375,7 +459,10 @@ export function createChainSection(ctx) {
           {
             name: "Fullness",
             title: "Block Fullness",
-            bottom: fromBaseStatsPattern({ pattern: blocks.fullness, unit: Unit.percentage }),
+            bottom: fromBaseStatsPattern({
+              pattern: blocks.fullness,
+              unit: Unit.percentage,
+            }),
           },
         ],
       },
@@ -387,7 +474,10 @@ export function createChainSection(ctx) {
           {
             name: "Count",
             title: "Transaction Count",
-            bottom: fromFullStatsPattern({ pattern: transactions.count.txCount, unit: Unit.count }),
+            bottom: fromFullStatsPattern({
+              pattern: transactions.count.txCount,
+              unit: Unit.count,
+            }),
           },
           {
             name: "Speed",
@@ -404,7 +494,10 @@ export function createChainSection(ctx) {
             name: "Volume",
             title: "Transaction Volume",
             bottom: [
-              ...satsBtcUsd({ pattern: transactions.volume.sentSum, name: "Sent" }),
+              ...satsBtcUsd({
+                pattern: transactions.volume.sentSum,
+                name: "Sent",
+              }),
               ...satsBtcUsd({
                 pattern: transactions.volume.receivedSum,
                 name: "Received",
@@ -423,14 +516,23 @@ export function createChainSection(ctx) {
             name: "Size",
             title: "Transaction Size",
             bottom: [
-              ...fromStatsPattern({ pattern: transactions.size.weight, unit: Unit.wu }),
-              ...fromStatsPattern({ pattern: transactions.size.vsize, unit: Unit.vb }),
+              ...fromStatsPattern({
+                pattern: transactions.size.weight,
+                unit: Unit.wu,
+              }),
+              ...fromStatsPattern({
+                pattern: transactions.size.vsize,
+                unit: Unit.vb,
+              }),
             ],
           },
           {
             name: "Fee Rate",
             title: "Fee Rate",
-            bottom: fromStatsPattern({ pattern: transactions.fees.feeRate, unit: Unit.feeRate }),
+            bottom: fromStatsPattern({
+              pattern: transactions.fees.feeRate,
+              unit: Unit.feeRate,
+            }),
           },
           {
             name: "Versions",
@@ -486,12 +588,22 @@ export function createChainSection(ctx) {
           {
             name: "Input Count",
             title: "Input Count",
-            bottom: [...fromSumStatsPattern({ pattern: inputs.count, unit: Unit.count })],
+            bottom: [
+              ...fromSumStatsPattern({
+                pattern: inputs.count,
+                unit: Unit.count,
+              }),
+            ],
           },
           {
             name: "Output Count",
             title: "Output Count",
-            bottom: [...fromSumStatsPattern({ pattern: outputs.count.totalCount, unit: Unit.count })],
+            bottom: [
+              ...fromSumStatsPattern({
+                pattern: outputs.count.totalCount,
+                unit: Unit.count,
+              }),
+            ],
           },
           {
             name: "Inputs/sec",
@@ -543,17 +655,26 @@ export function createChainSection(ctx) {
                   {
                     name: "P2PKH",
                     title: "P2PKH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pkh, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.p2pkh,
+                      unit: Unit.count,
+                    }),
                   },
                   {
                     name: "P2PK33",
                     title: "P2PK33 Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pk33, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.p2pk33,
+                      unit: Unit.count,
+                    }),
                   },
                   {
                     name: "P2PK65",
                     title: "P2PK65 Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pk65, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.p2pk65,
+                      unit: Unit.count,
+                    }),
                   },
                 ],
               },
@@ -564,12 +685,18 @@ export function createChainSection(ctx) {
                   {
                     name: "P2SH",
                     title: "P2SH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2sh, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.p2sh,
+                      unit: Unit.count,
+                    }),
                   },
                   {
                     name: "P2MS",
                     title: "P2MS Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2ms, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.p2ms,
+                      unit: Unit.count,
+                    }),
                   },
                 ],
               },
@@ -580,17 +707,26 @@ export function createChainSection(ctx) {
                   {
                     name: "All SegWit",
                     title: "SegWit Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.segwit, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.segwit,
+                      unit: Unit.count,
+                    }),
                   },
                   {
                     name: "P2WPKH",
                     title: "P2WPKH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2wpkh, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.p2wpkh,
+                      unit: Unit.count,
+                    }),
                   },
                   {
                     name: "P2WSH",
                     title: "P2WSH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2wsh, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.p2wsh,
+                      unit: Unit.count,
+                    }),
                   },
                 ],
               },
@@ -601,12 +737,18 @@ export function createChainSection(ctx) {
                   {
                     name: "P2TR",
                     title: "P2TR Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2tr, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.p2tr,
+                      unit: Unit.count,
+                    }),
                   },
                   {
                     name: "P2A",
                     title: "P2A Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2a, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.p2a,
+                      unit: Unit.count,
+                    }),
                   },
                 ],
               },
@@ -617,17 +759,26 @@ export function createChainSection(ctx) {
                   {
                     name: "OP_RETURN",
                     title: "OP_RETURN Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.opreturn, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.opreturn,
+                      unit: Unit.count,
+                    }),
                   },
                   {
                     name: "Empty",
                     title: "Empty Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.emptyoutput, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.emptyoutput,
+                      unit: Unit.count,
+                    }),
                   },
                   {
                     name: "Unknown",
                     title: "Unknown Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.unknownoutput, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({
+                      pattern: scripts.count.unknownoutput,
+                      unit: Unit.count,
+                    }),
                   },
                 ],
               },
@@ -701,7 +852,10 @@ export function createChainSection(ctx) {
           {
             name: "Circulating",
             title: "Circulating Supply",
-            bottom: fromSupplyPattern({ pattern: supply.circulating, title: "Supply" }),
+            bottom: fromSupplyPattern({
+              pattern: supply.circulating,
+              title: "Supply",
+            }),
           },
           {
             name: "Inflation",
@@ -769,9 +923,18 @@ export function createChainSection(ctx) {
             name: "Fee",
             title: "Transaction Fees",
             bottom: [
-              ...fromSumStatsPattern({ pattern: transactions.fees.fee.bitcoin, unit: Unit.btc }),
-              ...fromSumStatsPattern({ pattern: transactions.fees.fee.sats, unit: Unit.sats }),
-              ...fromSumStatsPattern({ pattern: transactions.fees.fee.dollars, unit: Unit.usd }),
+              ...fromSumStatsPattern({
+                pattern: transactions.fees.fee.bitcoin,
+                unit: Unit.btc,
+              }),
+              ...fromSumStatsPattern({
+                pattern: transactions.fees.fee.sats,
+                unit: Unit.sats,
+              }),
+              ...fromSumStatsPattern({
+                pattern: transactions.fees.fee.dollars,
+                unit: Unit.usd,
+              }),
               line({
                 metric: blocks.rewards.feeDominance,
                 name: "Dominance",
@@ -873,7 +1036,8 @@ export function createChainSection(ctx) {
                       defaultActive: t.defaultActive,
                     }),
                     line({
-                      metric: distribution.addressActivity[t.key][a.key].average,
+                      metric:
+                        distribution.addressActivity[t.key][a.key].average,
                       name: t.name,
                       color: t.color,
                       unit: Unit.count,
@@ -935,12 +1099,11 @@ export function createChainSection(ctx) {
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
-              line({
+              dotted({
                 metric: blocks.difficulty.asHash,
                 name: "Difficulty",
                 color: colors.default,
                 unit: Unit.hashRate,
-                options: { lineStyle: 1 },
               }),
             ],
           },
@@ -1025,19 +1188,17 @@ export function createChainSection(ctx) {
                     color: colors.yellow,
                     unit: Unit.percentage,
                   }),
-                  line({
+                  dotted({
                     metric: blocks.mining.hashPriceThsMin,
                     name: "TH/s Min",
                     color: colors.red,
                     unit: Unit.usdPerThsPerDay,
-                    options: { lineStyle: 1 },
                   }),
-                  line({
+                  dotted({
                     metric: blocks.mining.hashPricePhsMin,
                     name: "PH/s Min",
                     color: colors.red,
                     unit: Unit.usdPerPhsPerDay,
-                    options: { lineStyle: 1 },
                   }),
                 ],
               },
@@ -1063,19 +1224,17 @@ export function createChainSection(ctx) {
                     color: colors.yellow,
                     unit: Unit.percentage,
                   }),
-                  line({
+                  dotted({
                     metric: blocks.mining.hashValueThsMin,
                     name: "TH/s Min",
                     color: colors.red,
                     unit: Unit.satsPerThsPerDay,
-                    options: { lineStyle: 1 },
                   }),
-                  line({
+                  dotted({
                     metric: blocks.mining.hashValuePhsMin,
                     name: "PH/s Min",
                     color: colors.red,
                     unit: Unit.satsPerPhsPerDay,
-                    options: { lineStyle: 1 },
                   }),
                 ],
               },

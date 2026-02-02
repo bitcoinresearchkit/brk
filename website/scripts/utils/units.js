@@ -9,6 +9,11 @@ export const Unit = /** @type {const} */ ({
   btc: { id: "btc", name: "Bitcoin" },
   usd: { id: "usd", name: "US Dollars" },
 
+  // Cumulative value units (running totals)
+  satsCumulative: { id: "sats-total", name: "Satoshis (Total)" },
+  btcCumulative: { id: "btc-total", name: "Bitcoin (Total)" },
+  usdCumulative: { id: "usd-total", name: "US Dollars (Total)" },
+
   // Ratios & percentages
   percentage: { id: "percentage", name: "Percentage" },
   ratio: { id: "ratio", name: "Ratio" },
@@ -30,6 +35,7 @@ export const Unit = /** @type {const} */ ({
 
   // Counts
   count: { id: "count", name: "Count" },
+  countCumulative: { id: "count-total", name: "Count (Total)" },
   blocks: { id: "blocks", name: "Blocks" },
 
   // Size

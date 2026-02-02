@@ -108,6 +108,11 @@ export function initOptions(brk) {
     for (let i = 0; i < arr.length; i++) {
       const blueprint = arr[i];
 
+      // Check for undefined metric
+      if (!blueprint.metric) {
+        throw new Error(`Blueprint has undefined metric: ${blueprint.title}`);
+      }
+
       // Check for price pattern blueprint (has dollars/sats sub-metrics)
       // Use unknown cast for safe property access check
       const maybePriceMetric = /** @type {{ dollars?: AnyMetricPattern, sats?: AnyMetricPattern }} */ (

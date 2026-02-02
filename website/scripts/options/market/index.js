@@ -8,10 +8,6 @@ import { createMomentumSection } from "./momentum.js";
 import { createVolatilitySection } from "./volatility.js";
 import { createBandsSection } from "./bands.js";
 import { createValuationSection } from "./onchain.js";
-import {
-  createDcaVsLumpSumSection,
-  createDcaByYearSection,
-} from "./investing.js";
 
 /**
  * Create Market section
@@ -21,16 +17,7 @@ import {
 export function createMarketSection(ctx) {
   const { colors, brk } = ctx;
   const { market, supply } = brk.metrics;
-  const {
-    movingAverage,
-    ath,
-    returns,
-    volatility,
-    range,
-    dca,
-    lookback,
-    indicators,
-  } = market;
+  const { movingAverage, ath, returns, volatility, range, indicators } = market;
 
   return {
     name: "Market",
@@ -183,12 +170,6 @@ export function createMarketSection(ctx) {
 
       // Valuation
       createValuationSection(ctx, { indicators, movingAverage }),
-
-      // DCA vs Lump Sum
-      createDcaVsLumpSumSection(ctx, { dca, lookback, returns }),
-
-      // DCA by Year
-      createDcaByYearSection(ctx, { dca }),
     ],
   };
 }

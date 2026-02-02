@@ -16,8 +16,10 @@ import {
   createAddressCohortFolder,
 } from "./distribution/index.js";
 import { createMarketSection } from "./market/index.js";
-import { createChainSection } from "./chain.js";
+import { createNetworkSection } from "./network.js";
+import { createMiningSection } from "./mining.js";
 import { createCointimeSection } from "./cointime.js";
+import { createInvestingSection } from "./investing.js";
 import { colors } from "../chart/colors.js";
 
 // Re-export types for external consumers
@@ -95,8 +97,11 @@ export function createPartialOptions({ brk }) {
         // Market section
         createMarketSection(ctx),
 
-        // Chain section
-        createChainSection(ctx),
+        // Network section (on-chain activity)
+        createNetworkSection(ctx),
+
+        // Mining section (security & economics)
+        createMiningSection(ctx),
 
         // Cohorts section
         {
@@ -294,6 +299,9 @@ export function createPartialOptions({ brk }) {
           name: "Frameworks",
           tree: [createCointimeSection(ctx)],
         },
+
+        // Investing section
+        createInvestingSection(ctx),
       ],
     },
 

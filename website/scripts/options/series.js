@@ -147,6 +147,24 @@ export function line({
 }
 
 /**
+ * @param {Omit<Parameters<typeof line>[0], 'style'>} args
+ */
+export function dotted(args) {
+  const _args = /** @type {Parameters<typeof line>[0]} */ (args);
+  _args.style = 1;
+  return line(_args);
+}
+
+/**
+ * @param {Omit<Parameters<typeof line>[0], 'style'>} args
+ */
+export function sparseDotted(args) {
+  const _args = /** @type {Parameters<typeof line>[0]} */ (args);
+  _args.style = 4;
+  return line(_args);
+}
+
+/**
  * Create a Dots series (line with only point markers visible)
  * @param {Object} args
  * @param {AnyMetricPattern} args.metric
@@ -329,7 +347,10 @@ export function fromSumStatsPattern(colors, { pattern, unit, title = "" }) {
  * @param {boolean} [args.avgActive]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromBaseStatsPattern(colors, { pattern, unit, title = "", baseColor, avgActive = true }) {
+export function fromBaseStatsPattern(
+  colors,
+  { pattern, unit, title = "", baseColor, avgActive = true },
+) {
   const { stat } = colors;
   return [
     { metric: pattern.base, title: title || "base", color: baseColor, unit },
@@ -441,9 +462,21 @@ export function fromAnyFullStatsPattern(colors, { pattern, unit, title = "" }) {
  */
 export function fromCoinbasePattern(colors, { pattern, title = "" }) {
   return [
-    ...fromAnyFullStatsPattern(colors, { pattern: pattern.bitcoin, unit: Unit.btc, title }),
-    ...fromAnyFullStatsPattern(colors, { pattern: pattern.sats, unit: Unit.sats, title }),
-    ...fromAnyFullStatsPattern(colors, { pattern: pattern.dollars, unit: Unit.usd, title }),
+    ...fromAnyFullStatsPattern(colors, {
+      pattern: pattern.bitcoin,
+      unit: Unit.btc,
+      title,
+    }),
+    ...fromAnyFullStatsPattern(colors, {
+      pattern: pattern.sats,
+      unit: Unit.sats,
+      title,
+    }),
+    ...fromAnyFullStatsPattern(colors, {
+      pattern: pattern.dollars,
+      unit: Unit.usd,
+      title,
+    }),
   ];
 }
 
@@ -457,7 +490,10 @@ export function fromCoinbasePattern(colors, { pattern, title = "" }) {
  * @param {Color} [args.cumulativeColor]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromValuePattern(colors, { pattern, title = "", sumColor, cumulativeColor }) {
+export function fromValuePattern(
+  colors,
+  { pattern, title = "", sumColor, cumulativeColor },
+) {
   return [
     {
       metric: pattern.bitcoin.sum,
@@ -469,7 +505,7 @@ export function fromValuePattern(colors, { pattern, title = "", sumColor, cumula
       metric: pattern.bitcoin.cumulative,
       title: `${title} cumulative`.trim(),
       color: cumulativeColor ?? colors.stat.cumulative,
-      unit: Unit.btc,
+      unit: Unit.btcCumulative,
       defaultActive: false,
     },
     {
@@ -482,7 +518,7 @@ export function fromValuePattern(colors, { pattern, title = "", sumColor, cumula
       metric: pattern.sats.cumulative,
       title: `${title} cumulative`.trim(),
       color: cumulativeColor ?? colors.stat.cumulative,
-      unit: Unit.sats,
+      unit: Unit.satsCumulative,
       defaultActive: false,
     },
     {
@@ -495,7 +531,7 @@ export function fromValuePattern(colors, { pattern, title = "", sumColor, cumula
       metric: pattern.dollars.cumulative,
       title: `${title} cumulative`.trim(),
       color: cumulativeColor ?? colors.stat.cumulative,
-      unit: Unit.usd,
+      unit: Unit.usdCumulative,
       defaultActive: false,
     },
   ];
@@ -513,7 +549,10 @@ export function fromValuePattern(colors, { pattern, title = "", sumColor, cumula
  * @param {boolean} [args.defaultActive]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromBitcoinPatternWithUnit(colors, { pattern, unit, title = "", sumColor, cumulativeColor, defaultActive }) {
+export function fromBitcoinPatternWithUnit(
+  colors,
+  { pattern, unit, title = "", sumColor, cumulativeColor, defaultActive },
+) {
   return [
     {
       metric: pattern.sum,
@@ -543,7 +582,10 @@ export function fromBitcoinPatternWithUnit(colors, { pattern, unit, title = "", 
  * @param {Color} [args.cumulativeColor]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromCountPattern(colors, { pattern, unit, title = "", sumColor, cumulativeColor }) {
+export function fromCountPattern(
+  colors,
+  { pattern, unit, title = "", sumColor, cumulativeColor },
+) {
   return [
     {
       metric: pattern.sum,

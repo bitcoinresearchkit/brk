@@ -4121,20 +4121,20 @@ function createUtxoPattern(client, acc) {
  * @property {_10y2y3y4y5y6y8yPattern} periodCagr
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>} periodDaysInProfit
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>} periodDaysInLoss
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodMaxDrawdown
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodMinReturn
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodMaxReturn
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} periodLumpSumStack
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodLumpSumReturns
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>} periodLumpSumDaysInProfit
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>} periodLumpSumDaysInLoss
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodLumpSumMaxDrawdown
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodLumpSumMinReturn
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodLumpSumMaxReturn
  * @property {MetricsTree_Market_Dca_ClassStack} classStack
  * @property {MetricsTree_Market_Dca_ClassAveragePrice} classAveragePrice
  * @property {_201520162017201820192020202120222023202420252026Pattern2<StoredF32>} classReturns
  * @property {MetricsTree_Market_Dca_ClassDaysInProfit} classDaysInProfit
  * @property {MetricsTree_Market_Dca_ClassDaysInLoss} classDaysInLoss
- * @property {MetricsTree_Market_Dca_ClassMaxDrawdown} classMaxDrawdown
+ * @property {MetricsTree_Market_Dca_ClassMinReturn} classMinReturn
  * @property {MetricsTree_Market_Dca_ClassMaxReturn} classMaxReturn
  */
 
@@ -4219,7 +4219,7 @@ function createUtxoPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Market_Dca_ClassMaxDrawdown
+ * @typedef {Object} MetricsTree_Market_Dca_ClassMinReturn
  * @property {MetricPattern4<StoredF32>} _2015
  * @property {MetricPattern4<StoredF32>} _2016
  * @property {MetricPattern4<StoredF32>} _2017
@@ -6317,13 +6317,13 @@ class BrkClient extends BrkClientBase {
           periodCagr: create_10y2y3y4y5y6y8yPattern(this, 'dca_cagr'),
           periodDaysInProfit: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_days_in_profit'),
           periodDaysInLoss: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_days_in_loss'),
-          periodMaxDrawdown: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_max_drawdown'),
+          periodMinReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_min_return'),
           periodMaxReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_max_return'),
           periodLumpSumStack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'lump_sum_stack'),
           periodLumpSumReturns: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_returns'),
           periodLumpSumDaysInProfit: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_days_in_profit'),
           periodLumpSumDaysInLoss: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_days_in_loss'),
-          periodLumpSumMaxDrawdown: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_max_drawdown'),
+          periodLumpSumMinReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_min_return'),
           periodLumpSumMaxReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_max_return'),
           classStack: {
             _2015: createBitcoinDollarsSatsPattern5(this, 'dca_class_2015_stack'),
@@ -6382,19 +6382,19 @@ class BrkClient extends BrkClientBase {
             _2025: createMetricPattern4(this, 'dca_class_2025_days_in_loss'),
             _2026: createMetricPattern4(this, 'dca_class_2026_days_in_loss'),
           },
-          classMaxDrawdown: {
-            _2015: createMetricPattern4(this, 'dca_class_2015_max_drawdown'),
-            _2016: createMetricPattern4(this, 'dca_class_2016_max_drawdown'),
-            _2017: createMetricPattern4(this, 'dca_class_2017_max_drawdown'),
-            _2018: createMetricPattern4(this, 'dca_class_2018_max_drawdown'),
-            _2019: createMetricPattern4(this, 'dca_class_2019_max_drawdown'),
-            _2020: createMetricPattern4(this, 'dca_class_2020_max_drawdown'),
-            _2021: createMetricPattern4(this, 'dca_class_2021_max_drawdown'),
-            _2022: createMetricPattern4(this, 'dca_class_2022_max_drawdown'),
-            _2023: createMetricPattern4(this, 'dca_class_2023_max_drawdown'),
-            _2024: createMetricPattern4(this, 'dca_class_2024_max_drawdown'),
-            _2025: createMetricPattern4(this, 'dca_class_2025_max_drawdown'),
-            _2026: createMetricPattern4(this, 'dca_class_2026_max_drawdown'),
+          classMinReturn: {
+            _2015: createMetricPattern4(this, 'dca_class_2015_min_return'),
+            _2016: createMetricPattern4(this, 'dca_class_2016_min_return'),
+            _2017: createMetricPattern4(this, 'dca_class_2017_min_return'),
+            _2018: createMetricPattern4(this, 'dca_class_2018_min_return'),
+            _2019: createMetricPattern4(this, 'dca_class_2019_min_return'),
+            _2020: createMetricPattern4(this, 'dca_class_2020_min_return'),
+            _2021: createMetricPattern4(this, 'dca_class_2021_min_return'),
+            _2022: createMetricPattern4(this, 'dca_class_2022_min_return'),
+            _2023: createMetricPattern4(this, 'dca_class_2023_min_return'),
+            _2024: createMetricPattern4(this, 'dca_class_2024_min_return'),
+            _2025: createMetricPattern4(this, 'dca_class_2025_min_return'),
+            _2026: createMetricPattern4(this, 'dca_class_2026_min_return'),
           },
           classMaxReturn: {
             _2015: createMetricPattern4(this, 'dca_class_2015_max_return'),
