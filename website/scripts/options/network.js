@@ -47,6 +47,23 @@ export function createNetworkSection(ctx) {
     { key: "p2a", name: "P2A", color: colors[spendableTypeColors.p2a], defaultActive: false },
   ];
 
+  // Script types for output count comparisons (address types + non-addressable scripts)
+  /** @type {ReadonlyArray<{key: AddressableType | "p2ms" | "opreturn" | "emptyoutput" | "unknownoutput", name: string, color: Color, defaultActive?: boolean}>} */
+  const scriptTypes = [
+    { key: "p2pkh", name: "P2PKH", color: colors[spendableTypeColors.p2pkh] },
+    { key: "p2sh", name: "P2SH", color: colors[spendableTypeColors.p2sh] },
+    { key: "p2wpkh", name: "P2WPKH", color: colors[spendableTypeColors.p2wpkh] },
+    { key: "p2wsh", name: "P2WSH", color: colors[spendableTypeColors.p2wsh] },
+    { key: "p2tr", name: "P2TR", color: colors[spendableTypeColors.p2tr] },
+    { key: "p2pk65", name: "P2PK65", color: colors[spendableTypeColors.p2pk65], defaultActive: false },
+    { key: "p2pk33", name: "P2PK33", color: colors[spendableTypeColors.p2pk33], defaultActive: false },
+    { key: "p2a", name: "P2A", color: colors[spendableTypeColors.p2a], defaultActive: false },
+    { key: "p2ms", name: "P2MS", color: colors[spendableTypeColors.p2ms], defaultActive: false },
+    { key: "opreturn", name: "OP_RETURN", color: colors[spendableTypeColors.opreturn], defaultActive: false },
+    { key: "emptyoutput", name: "Empty", color: colors[spendableTypeColors.empty], defaultActive: false },
+    { key: "unknownoutput", name: "Unknown", color: colors[spendableTypeColors.unknown], defaultActive: false },
+  ];
+
   // Activity types for mapping
   /** @type {ReadonlyArray<{key: "sending" | "receiving" | "both" | "reactivated" | "balanceIncreased" | "balanceDecreased", name: string, title: string, compareTitle: string}>} */
   const activityTypes = [
@@ -100,7 +117,7 @@ export function createNetworkSection(ctx) {
     {
       name: "New",
       title: `${titlePrefix}New Address Count`,
-      bottom: fromFullStatsPattern({ pattern: distribution.newAddrCount[key], unit: Unit.count }),
+      bottom: fromFullStatsPattern({ pattern: distribution.newAddrCount[key], unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
     },
     {
       name: "Growth Rate",
@@ -123,6 +140,39 @@ export function createNetworkSection(ctx) {
   return {
     name: "Network",
     tree: [
+      // Supply
+      {
+        name: "Supply",
+        tree: [
+          {
+            name: "Circulating",
+            title: "Circulating Supply",
+            bottom: fromSupplyPattern({ pattern: supply.circulating, title: "Supply" }),
+          },
+          {
+            name: "Inflation",
+            title: "Inflation Rate",
+            bottom: [
+              dots({
+                metric: supply.inflation,
+                name: "Rate",
+                unit: Unit.percentage,
+              }),
+            ],
+          },
+          {
+            name: "Unspendable",
+            title: "Unspendable Supply",
+            bottom: fromValuePattern({ pattern: supply.burned.unspendable }),
+          },
+          {
+            name: "OP_RETURN",
+            title: "OP_RETURN Burned",
+            bottom: fromCoinbasePattern({ pattern: scripts.value.opreturn }),
+          },
+        ],
+      },
+
       // Transactions
       {
         name: "Transactions",
@@ -130,7 +180,7 @@ export function createNetworkSection(ctx) {
           {
             name: "Count",
             title: "Transaction Count",
-            bottom: fromFullStatsPattern({ pattern: transactions.count.txCount, unit: Unit.count }),
+            bottom: fromFullStatsPattern({ pattern: transactions.count.txCount, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
           },
           {
             name: "Per Second",
@@ -142,6 +192,11 @@ export function createNetworkSection(ctx) {
                 unit: Unit.perSec,
               }),
             ],
+          },
+          {
+            name: "Fee Rate",
+            title: "Fee Rate",
+            bottom: fromStatsPattern({ pattern: transactions.fees.feeRate, unit: Unit.feeRate }),
           },
           {
             name: "Volume",
@@ -177,23 +232,23 @@ export function createNetworkSection(ctx) {
               ...fromCountPattern({
                 pattern: transactions.versions.v1,
                 unit: Unit.count,
+                cumulativeUnit: Unit.countCumulative,
                 title: "v1",
-                sumColor: colors.orange,
-                cumulativeColor: colors.red,
+                color: colors.orange,
               }),
               ...fromCountPattern({
                 pattern: transactions.versions.v2,
                 unit: Unit.count,
+                cumulativeUnit: Unit.countCumulative,
                 title: "v2",
-                sumColor: colors.cyan,
-                cumulativeColor: colors.blue,
+                color: colors.cyan,
               }),
               ...fromCountPattern({
                 pattern: transactions.versions.v3,
                 unit: Unit.count,
+                cumulativeUnit: Unit.countCumulative,
                 title: "v3",
-                sumColor: colors.lime,
-                cumulativeColor: colors.green,
+                color: colors.lime,
               }),
             ],
           },
@@ -217,27 +272,6 @@ export function createNetworkSection(ctx) {
         ],
       },
 
-      // Fees
-      {
-        name: "Fees",
-        tree: [
-          {
-            name: "Fee Rate",
-            title: "Fee Rate",
-            bottom: fromStatsPattern({ pattern: transactions.fees.feeRate, unit: Unit.feeRate }),
-          },
-          {
-            name: "Total",
-            title: "Total Fees",
-            bottom: [
-              ...fromSumStatsPattern({ pattern: transactions.fees.fee.bitcoin, unit: Unit.btc }),
-              ...fromSumStatsPattern({ pattern: transactions.fees.fee.sats, unit: Unit.sats }),
-              ...fromSumStatsPattern({ pattern: transactions.fees.fee.dollars, unit: Unit.usd }),
-            ],
-          },
-        ],
-      },
-
       // Blocks
       {
         name: "Blocks",
@@ -246,7 +280,7 @@ export function createNetworkSection(ctx) {
             name: "Count",
             title: "Block Count",
             bottom: [
-              ...fromCountPattern({ pattern: blocks.count.blockCount, unit: Unit.count }),
+              ...fromCountPattern({ pattern: blocks.count.blockCount, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
               line({
                 metric: blocks.count.blockCountTarget,
                 name: "Target",
@@ -296,7 +330,7 @@ export function createNetworkSection(ctx) {
             name: "Size",
             title: "Block Size",
             bottom: [
-              ...fromSumStatsPattern({ pattern: blocks.size, unit: Unit.bytes }),
+              ...fromSumStatsPattern({ pattern: blocks.size, unit: Unit.bytes, cumulativeUnit: Unit.bytesCumulative }),
               line({
                 metric: blocks.totalSize,
                 name: "Total",
@@ -306,20 +340,6 @@ export function createNetworkSection(ctx) {
               }),
               ...fromBaseStatsPattern({ pattern: blocks.vbytes, unit: Unit.vb }),
               ...fromBaseStatsPattern({ pattern: blocks.weight, unit: Unit.wu }),
-              line({
-                metric: blocks.weight.sum,
-                name: "Sum",
-                color: colors.stat.sum,
-                unit: Unit.wu,
-                defaultActive: false,
-              }),
-              line({
-                metric: blocks.weight.cumulative,
-                name: "Cumulative",
-                color: colors.stat.cumulative,
-                unit: Unit.wu,
-                defaultActive: false,
-              }),
             ],
           },
           {
@@ -330,9 +350,9 @@ export function createNetworkSection(ctx) {
         ],
       },
 
-      // UTXO Set
+      // UTXOs
       {
-        name: "UTXO Set",
+        name: "UTXOs",
         tree: [
           {
             name: "UTXO Count",
@@ -351,7 +371,7 @@ export function createNetworkSection(ctx) {
               {
                 name: "Count",
                 title: "Input Count",
-                bottom: [...fromSumStatsPattern({ pattern: inputs.count, unit: Unit.count })],
+                bottom: [...fromSumStatsPattern({ pattern: inputs.count, unit: Unit.count, cumulativeUnit: Unit.countCumulative })],
               },
               {
                 name: "Rate",
@@ -372,7 +392,7 @@ export function createNetworkSection(ctx) {
               {
                 name: "Count",
                 title: "Output Count",
-                bottom: [...fromSumStatsPattern({ pattern: outputs.count.totalCount, unit: Unit.count })],
+                bottom: [...fromSumStatsPattern({ pattern: outputs.count.totalCount, unit: Unit.count, cumulativeUnit: Unit.countCumulative })],
               },
               {
                 name: "Rate",
@@ -498,6 +518,20 @@ export function createNetworkSection(ctx) {
           {
             name: "Output Counts",
             tree: [
+              // Compare section
+              {
+                name: "Compare",
+                title: "Output Count by Script Type",
+                bottom: scriptTypes.map((t) =>
+                  line({
+                    metric: scripts.count[t.key].cumulative,
+                    name: t.name,
+                    color: t.color,
+                    unit: Unit.countCumulative,
+                    defaultActive: t.defaultActive,
+                  }),
+                ),
+              },
               // Legacy scripts
               {
                 name: "Legacy",
@@ -505,17 +539,17 @@ export function createNetworkSection(ctx) {
                   {
                     name: "P2PKH",
                     title: "P2PKH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pkh, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pkh, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                   {
                     name: "P2PK33",
                     title: "P2PK33 Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pk33, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pk33, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                   {
                     name: "P2PK65",
                     title: "P2PK65 Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pk65, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2pk65, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                 ],
               },
@@ -526,12 +560,12 @@ export function createNetworkSection(ctx) {
                   {
                     name: "P2SH",
                     title: "P2SH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2sh, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2sh, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                   {
                     name: "P2MS",
                     title: "P2MS Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2ms, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2ms, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                 ],
               },
@@ -542,17 +576,17 @@ export function createNetworkSection(ctx) {
                   {
                     name: "All SegWit",
                     title: "SegWit Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.segwit, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.segwit, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                   {
                     name: "P2WPKH",
                     title: "P2WPKH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2wpkh, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2wpkh, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                   {
                     name: "P2WSH",
                     title: "P2WSH Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2wsh, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2wsh, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                 ],
               },
@@ -563,12 +597,12 @@ export function createNetworkSection(ctx) {
                   {
                     name: "P2TR",
                     title: "P2TR Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2tr, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2tr, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                   {
                     name: "P2A",
                     title: "P2A Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2a, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.p2a, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                 ],
               },
@@ -579,17 +613,17 @@ export function createNetworkSection(ctx) {
                   {
                     name: "OP_RETURN",
                     title: "OP_RETURN Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.opreturn, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.opreturn, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                   {
                     name: "Empty",
                     title: "Empty Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.emptyoutput, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.emptyoutput, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                   {
                     name: "Unknown",
                     title: "Unknown Output Count",
-                    bottom: fromFullStatsPattern({ pattern: scripts.count.unknownoutput, unit: Unit.count }),
+                    bottom: fromFullStatsPattern({ pattern: scripts.count.unknownoutput, unit: Unit.count, cumulativeUnit: Unit.countCumulative }),
                   },
                 ],
               },
@@ -610,15 +644,13 @@ export function createNetworkSection(ctx) {
                   line({
                     metric: scripts.count.segwitAdoption.sum,
                     name: "Sum",
-                    color: colors.stat.sum,
                     unit: Unit.percentage,
                   }),
                   line({
                     metric: scripts.count.segwitAdoption.cumulative,
                     name: "Cumulative",
-                    color: colors.stat.cumulative,
+                    color: colors.red,
                     unit: Unit.percentage,
-                    defaultActive: false,
                   }),
                 ],
               },
@@ -634,15 +666,13 @@ export function createNetworkSection(ctx) {
                   line({
                     metric: scripts.count.taprootAdoption.sum,
                     name: "Sum",
-                    color: colors.stat.sum,
                     unit: Unit.percentage,
                   }),
                   line({
                     metric: scripts.count.taprootAdoption.cumulative,
                     name: "Cumulative",
-                    color: colors.stat.cumulative,
+                    color: colors.red,
                     unit: Unit.percentage,
-                    defaultActive: false,
                   }),
                 ],
               },
@@ -651,46 +681,6 @@ export function createNetworkSection(ctx) {
         ],
       },
 
-      // Supply
-      {
-        name: "Supply",
-        tree: [
-          {
-            name: "Circulating",
-            title: "Circulating Supply",
-            bottom: fromSupplyPattern({ pattern: supply.circulating, title: "Supply" }),
-          },
-          {
-            name: "Inflation",
-            title: "Inflation Rate",
-            bottom: [
-              dots({
-                metric: supply.inflation,
-                name: "Rate",
-                unit: Unit.percentage,
-              }),
-            ],
-          },
-          {
-            name: "Burned",
-            tree: [
-              {
-                name: "Unspendable",
-                title: "Unspendable Supply",
-                bottom: fromValuePattern({ pattern: supply.burned.unspendable }),
-              },
-              {
-                name: "OP_RETURN",
-                title: "OP_RETURN Burned",
-                bottom: [
-                  ...fromValuePattern({ pattern: supply.burned.opreturn }),
-                  ...fromCoinbasePattern({ pattern: scripts.value.opreturn }),
-                ],
-              },
-            ],
-          },
-        ],
-      },
     ],
   };
 }

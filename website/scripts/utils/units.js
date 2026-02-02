@@ -16,6 +16,7 @@ export const Unit = /** @type {const} */ ({
 
   // Ratios & percentages
   percentage: { id: "percentage", name: "Percentage" },
+  cagr: { id: "cagr", name: "CAGR (%/year)" },
   ratio: { id: "ratio", name: "Ratio" },
   index: { id: "index", name: "Index" },
   sd: { id: "sd", name: "Std Dev" },
@@ -40,8 +41,10 @@ export const Unit = /** @type {const} */ ({
 
   // Size
   bytes: { id: "bytes", name: "Bytes" },
+  bytesCumulative: { id: "bytes-total", name: "Bytes (Total)" },
   vb: { id: "vb", name: "Virtual Bytes" },
   wu: { id: "wu", name: "Weight Units" },
+  wuCumulative: { id: "wu-total", name: "Weight Units (Total)" },
 
   // Mining
   hashRate: { id: "hashrate", name: "Hash Rate" },

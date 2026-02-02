@@ -16,6 +16,7 @@ import { throttle, debounce } from "../utils/timing.js";
 import { serdeBool, serdeChartableIndex } from "../utils/serde.js";
 import { stringToId, numberToShortUSFormat } from "../utils/format.js";
 import { style } from "../utils/elements.js";
+import { Unit } from "../utils/units.js";
 
 /**
  * @typedef {_ISeriesApi<LCSeriesType>} ISeries
@@ -1275,9 +1276,8 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
   /**
    * @param {number} paneIndex
-   * @param {Unit} unit
    */
-  function applyScaleForUnit(paneIndex, unit) {
+  function applyScaleForUnit(paneIndex) {
     const id = `${storageId}-scale`;
     const defaultValue = paneIndex === 0 ? "log" : "lin";
 
@@ -1351,7 +1351,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         const options = blueprint.options;
         const indexes = Object.keys(blueprint.metric.by);
 
-        const defaultColor = unit.id === "usd" ? colors.green : colors.orange;
+        const defaultColor = unit === Unit.usd || unit === Unit.usdCumulative ? colors.green : colors.orange;
 
         if (indexes.includes(idx)) {
           switch (blueprint.type) {
@@ -1443,7 +1443,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       oldSeries.forEach((s) => s.remove());
 
       // Store scale config - it will be applied when createForPane runs after updateVisibility
-      applyScaleForUnit(paneIndex, unit);
+      applyScaleForUnit(paneIndex);
     },
 
     rebuild() {
@@ -1480,10 +1480,6 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         }
 
         const defaultUnit = units[0];
-        const sortedUnitIds = units
-          .map((u) => u.id)
-          .sort()
-          .join(",");
         const persistedUnit = createPersistedValue({
           defaultValue: /** @type {string} */ (defaultUnit.id),
           storageKey: `${storageId}-p${paneIndex}-unit`,

@@ -191,6 +191,7 @@ export function createChainSection(ctx) {
       bottom: fromFullStatsPattern({
         pattern: distribution.newAddrCount[key],
         unit: Unit.count,
+        cumulativeUnit: Unit.countCumulative,
       }),
     },
     {
@@ -316,20 +317,17 @@ export function createChainSection(ctx) {
             ...fromValuePattern({
               pattern: pool.coinbase,
               title: "coinbase",
-              sumColor: colors.orange,
-              cumulativeColor: colors.red,
+              color: colors.orange,
             }),
             ...fromValuePattern({
               pattern: pool.subsidy,
               title: "subsidy",
-              sumColor: colors.lime,
-              cumulativeColor: colors.emerald,
+              color: colors.lime,
             }),
             ...fromValuePattern({
               pattern: pool.fee,
               title: "fee",
-              sumColor: colors.cyan,
-              cumulativeColor: colors.indigo,
+              color: colors.cyan,
             }),
           ],
         },
@@ -367,6 +365,7 @@ export function createChainSection(ctx) {
               ...fromCountPattern({
                 pattern: blocks.count.blockCount,
                 unit: Unit.count,
+                cumulativeUnit: Unit.countCumulative,
               }),
               line({
                 metric: blocks.count.blockCountTarget,
@@ -424,6 +423,7 @@ export function createChainSection(ctx) {
               ...fromSumStatsPattern({
                 pattern: blocks.size,
                 unit: Unit.bytes,
+                cumulativeUnit: Unit.bytesCumulative,
               }),
               line({
                 metric: blocks.totalSize,
@@ -439,20 +439,6 @@ export function createChainSection(ctx) {
               ...fromBaseStatsPattern({
                 pattern: blocks.weight,
                 unit: Unit.wu,
-              }),
-              line({
-                metric: blocks.weight.sum,
-                name: "Sum",
-                color: colors.stat.sum,
-                unit: Unit.wu,
-                defaultActive: false,
-              }),
-              line({
-                metric: blocks.weight.cumulative,
-                name: "Cumulative",
-                color: colors.stat.cumulative,
-                unit: Unit.wu,
-                defaultActive: false,
               }),
             ],
           },
@@ -477,6 +463,7 @@ export function createChainSection(ctx) {
             bottom: fromFullStatsPattern({
               pattern: transactions.count.txCount,
               unit: Unit.count,
+              cumulativeUnit: Unit.countCumulative,
             }),
           },
           {
@@ -541,23 +528,23 @@ export function createChainSection(ctx) {
               ...fromCountPattern({
                 pattern: transactions.versions.v1,
                 unit: Unit.count,
+                cumulativeUnit: Unit.countCumulative,
                 title: "v1",
-                sumColor: colors.orange,
-                cumulativeColor: colors.red,
+                color: colors.orange,
               }),
               ...fromCountPattern({
                 pattern: transactions.versions.v2,
                 unit: Unit.count,
+                cumulativeUnit: Unit.countCumulative,
                 title: "v2",
-                sumColor: colors.cyan,
-                cumulativeColor: colors.blue,
+                color: colors.cyan,
               }),
               ...fromCountPattern({
                 pattern: transactions.versions.v3,
                 unit: Unit.count,
+                cumulativeUnit: Unit.countCumulative,
                 title: "v3",
-                sumColor: colors.lime,
-                cumulativeColor: colors.green,
+                color: colors.lime,
               }),
             ],
           },
@@ -592,6 +579,7 @@ export function createChainSection(ctx) {
               ...fromSumStatsPattern({
                 pattern: inputs.count,
                 unit: Unit.count,
+                cumulativeUnit: Unit.countCumulative,
               }),
             ],
           },
@@ -602,6 +590,7 @@ export function createChainSection(ctx) {
               ...fromSumStatsPattern({
                 pattern: outputs.count.totalCount,
                 unit: Unit.count,
+                cumulativeUnit: Unit.countCumulative,
               }),
             ],
           },
@@ -658,6 +647,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.p2pkh,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                   {
@@ -666,6 +656,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.p2pk33,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                   {
@@ -674,6 +665,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.p2pk65,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                 ],
@@ -688,6 +680,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.p2sh,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                   {
@@ -696,6 +689,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.p2ms,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                 ],
@@ -710,6 +704,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.segwit,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                   {
@@ -718,6 +713,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.p2wpkh,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                   {
@@ -726,6 +722,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.p2wsh,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                 ],
@@ -740,6 +737,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.p2tr,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                   {
@@ -748,6 +746,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.p2a,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                 ],
@@ -762,6 +761,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.opreturn,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                   {
@@ -770,6 +770,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.emptyoutput,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                   {
@@ -778,6 +779,7 @@ export function createChainSection(ctx) {
                     bottom: fromFullStatsPattern({
                       pattern: scripts.count.unknownoutput,
                       unit: Unit.count,
+                      cumulativeUnit: Unit.countCumulative,
                     }),
                   },
                 ],
@@ -799,15 +801,13 @@ export function createChainSection(ctx) {
                   line({
                     metric: scripts.count.segwitAdoption.sum,
                     name: "Sum",
-                    color: colors.stat.sum,
                     unit: Unit.percentage,
                   }),
                   line({
                     metric: scripts.count.segwitAdoption.cumulative,
                     name: "Cumulative",
-                    color: colors.stat.cumulative,
+                    color: colors.red,
                     unit: Unit.percentage,
-                    defaultActive: false,
                   }),
                 ],
               },
@@ -823,15 +823,13 @@ export function createChainSection(ctx) {
                   line({
                     metric: scripts.count.taprootAdoption.sum,
                     name: "Sum",
-                    color: colors.stat.sum,
                     unit: Unit.percentage,
                   }),
                   line({
                     metric: scripts.count.taprootAdoption.cumulative,
                     name: "Cumulative",
-                    color: colors.stat.cumulative,
+                    color: colors.red,
                     unit: Unit.percentage,
-                    defaultActive: false,
                   }),
                 ],
               },
@@ -926,14 +924,17 @@ export function createChainSection(ctx) {
               ...fromSumStatsPattern({
                 pattern: transactions.fees.fee.bitcoin,
                 unit: Unit.btc,
+                cumulativeUnit: Unit.btcCumulative,
               }),
               ...fromSumStatsPattern({
                 pattern: transactions.fees.fee.sats,
                 unit: Unit.sats,
+                cumulativeUnit: Unit.satsCumulative,
               }),
               ...fromSumStatsPattern({
                 pattern: transactions.fees.fee.dollars,
                 unit: Unit.usd,
+                cumulativeUnit: Unit.usdCumulative,
               }),
               line({
                 metric: blocks.rewards.feeDominance,
@@ -949,7 +950,6 @@ export function createChainSection(ctx) {
             title: "Unclaimed Rewards",
             bottom: fromValuePattern({
               pattern: blocks.rewards.unclaimedRewards,
-              title: "Unclaimed",
             }),
           },
         ],

@@ -994,8 +994,9 @@ function createSingleRealizedPnlSection(
         ...fromCountPattern({
           pattern: tree.realized.realizedProfit,
           unit: Unit.usd,
+          cumulativeUnit: Unit.usdCumulative,
           title: "Profit",
-          sumColor: colors.green,
+          color: colors.green,
         }),
         line({
           metric: tree.realized.realizedProfit7dEma,
@@ -1006,8 +1007,9 @@ function createSingleRealizedPnlSection(
         ...fromCountPattern({
           pattern: tree.realized.realizedLoss,
           unit: Unit.usd,
+          cumulativeUnit: Unit.usdCumulative,
           title: "Loss",
-          sumColor: colors.red,
+          color: colors.red,
         }),
         line({
           metric: tree.realized.realizedLoss7dEma,
@@ -1018,8 +1020,9 @@ function createSingleRealizedPnlSection(
         ...fromBitcoinPatternWithUnit({
           pattern: tree.realized.negRealizedLoss,
           unit: Unit.usd,
+          cumulativeUnit: Unit.usdCumulative,
           title: "Negative Loss",
-          sumColor: colors.red,
+          color: colors.red,
           defaultActive: false,
         }),
         ...extra,
@@ -1067,6 +1070,7 @@ function createSingleRealizedPnlSection(
         ...fromCountPattern({
           pattern: tree.realized.netRealizedPnl,
           unit: Unit.usd,
+          cumulativeUnit: Unit.usdCumulative,
           title: "Net",
         }),
         baseline({
@@ -2904,17 +2908,20 @@ function createActivitySection({ ctx, cohort, title, valueMetrics = [] }) {
           ...fromCountPattern({
             pattern: tree.activity.sent.sats,
             unit: Unit.sats,
-            sumColor: color,
+            cumulativeUnit: Unit.satsCumulative,
+            color: color,
           }),
           ...fromBitcoinPatternWithUnit({
             pattern: tree.activity.sent.bitcoin,
             unit: Unit.btc,
-            sumColor: color,
+            cumulativeUnit: Unit.btcCumulative,
+            color: color,
           }),
           ...fromCountPattern({
             pattern: tree.activity.sent.dollars,
             unit: Unit.usd,
-            sumColor: color,
+            cumulativeUnit: Unit.usdCumulative,
+            color: color,
           }),
           line({
             metric: tree.activity.sent14dEma.sats,

@@ -147,6 +147,7 @@ export const spendableTypeColors = {
   p2wsh: "blue",
   p2tr: "indigo",
   p2a: "purple",
+  opreturn: "pink",
   unknown: "violet",
   empty: "fuchsia",
 };

@@ -4,6 +4,7 @@ import { Unit } from "../utils/units.js";
 import { priceLine } from "./constants.js";
 import { line, baseline, dots, dotted } from "./series.js";
 import { satsBtcUsd } from "./shared.js";
+import { fromCountPattern } from "./series.js";
 
 /** Major pools to show in Compare section (by current hashrate dominance) */
 const MAJOR_POOL_IDS = [
@@ -103,42 +104,35 @@ export function createMiningSection(ctx) {
           name: "Blocks Mined",
           title: `Blocks Mined: ${poolName}`,
           bottom: [
-            dots({
-              metric: pool.blocksMined.sum,
-              name: "Sum",
+            ...fromCountPattern({
+              pattern: pool.blocksMined,
               unit: Unit.count,
-            }),
-            line({
-              metric: pool.blocksMined.cumulative,
-              name: "Cumulative",
-              color: colors.blue,
-              unit: Unit.count,
-              defaultActive: false,
+              cumulativeUnit: Unit.countCumulative,
             }),
             line({
               metric: pool._24hBlocksMined,
-              name: "24h sum",
+              name: "24h",
               color: colors.pink,
               unit: Unit.count,
               defaultActive: false,
             }),
             line({
               metric: pool._1wBlocksMined,
-              name: "1w sum",
+              name: "1w",
               color: colors.red,
               unit: Unit.count,
               defaultActive: false,
             }),
             line({
               metric: pool._1mBlocksMined,
-              name: "1m sum",
-              color: colors.pink,
+              name: "1m",
+              color: colors.orange,
               unit: Unit.count,
               defaultActive: false,
             }),
             line({
               metric: pool._1yBlocksMined,
-              name: "1y sum",
+              name: "1y",
               color: colors.purple,
               unit: Unit.count,
               defaultActive: false,
@@ -152,20 +146,17 @@ export function createMiningSection(ctx) {
             ...fromValuePattern({
               pattern: pool.coinbase,
               title: "coinbase",
-              sumColor: colors.orange,
-              cumulativeColor: colors.red,
+              color: colors.orange,
             }),
             ...fromValuePattern({
               pattern: pool.subsidy,
               title: "subsidy",
-              sumColor: colors.lime,
-              cumulativeColor: colors.emerald,
+              color: colors.lime,
             }),
             ...fromValuePattern({
               pattern: pool.fee,
               title: "fee",
-              sumColor: colors.cyan,
-              cumulativeColor: colors.indigo,
+              color: colors.cyan,
             }),
           ],
         },
@@ -342,14 +333,17 @@ export function createMiningSection(ctx) {
               ...fromSumStatsPattern({
                 pattern: transactions.fees.fee.bitcoin,
                 unit: Unit.btc,
+                cumulativeUnit: Unit.btcCumulative,
               }),
               ...fromSumStatsPattern({
                 pattern: transactions.fees.fee.sats,
                 unit: Unit.sats,
+                cumulativeUnit: Unit.satsCumulative,
               }),
               ...fromSumStatsPattern({
                 pattern: transactions.fees.fee.dollars,
                 unit: Unit.usd,
+                cumulativeUnit: Unit.usdCumulative,
               }),
               line({
                 metric: blocks.rewards.feeDominance,
@@ -364,7 +358,6 @@ export function createMiningSection(ctx) {
             title: "Unclaimed Rewards",
             bottom: fromValuePattern({
               pattern: blocks.rewards.unclaimedRewards,
-              title: "Unclaimed",
             }),
           },
         ],

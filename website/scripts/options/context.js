@@ -43,9 +43,9 @@ export function createContext({ brk }) {
     fromFullStatsPattern: bind(fromFullStatsPattern),
     fromStatsPattern: bind(fromStatsPattern),
     fromCoinbasePattern: bind(fromCoinbasePattern),
-    fromValuePattern: bind(fromValuePattern),
-    fromBitcoinPatternWithUnit: bind(fromBitcoinPatternWithUnit),
-    fromCountPattern: bind(fromCountPattern),
+    fromValuePattern,
+    fromBitcoinPatternWithUnit,
+    fromCountPattern,
     fromSupplyPattern,
   };
 }
