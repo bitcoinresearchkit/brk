@@ -68,12 +68,11 @@ const periodName = (key) => periodIdToName(key.slice(1), true);
 
 /**
  * Build DCA class entry from year
- * @param {Colors} colors
  * @param {MarketDca} dca
  * @param {DcaYear} year
  * @returns {BaseEntryItem}
  */
-function buildYearEntry(colors, dca, year) {
+function buildYearEntry(dca, year) {
   const key = /** @type {DcaYearKey} */ (`_${year}`);
   return {
     name: `${year}`,
@@ -184,11 +183,10 @@ function createCompareFolder(context, items) {
 
 /**
  * Create single entry tree structure
- * @param {Colors} colors
  * @param {BaseEntryItem & { titlePrefix?: string }} item
  * @param {object[]} returnsBottom - Bottom pane items for returns chart
  */
-function createSingleEntryTree(colors, item, returnsBottom) {
+function createSingleEntryTree(item, returnsBottom) {
   const {
     name,
     titlePrefix = name,
@@ -217,13 +215,13 @@ function createSingleEntryTree(colors, item, returnsBottom) {
           line({
             metric: daysInProfit,
             name: "Days in Profit",
-            color: colors.green,
+            color: colors.profit,
             unit: Unit.days,
           }),
           line({
             metric: daysInLoss,
             name: "Days in Loss",
-            color: colors.red,
+            color: colors.loss,
             unit: Unit.days,
           }),
         ],
@@ -240,24 +238,23 @@ function createSingleEntryTree(colors, item, returnsBottom) {
 
 /**
  * Create a single entry from a base item (no CAGR)
- * @param {Colors} colors
  * @param {BaseEntryItem & { titlePrefix?: string }} item
  */
-function createShortSingleEntry(colors, item) {
+function createShortSingleEntry(item) {
   const { returns, minReturn, maxReturn } = item;
-  return createSingleEntryTree(colors, item, [
+  return createSingleEntryTree(item, [
     baseline({ metric: returns, name: "Current", unit: Unit.percentage }),
     dotted({
       metric: maxReturn,
       name: "Max",
-      color: colors.green,
+      color: colors.profit,
       unit: Unit.percentage,
       defaultActive: false,
     }),
     dotted({
       metric: minReturn,
       name: "Min",
-      color: colors.red,
+      color: colors.loss,
       unit: Unit.percentage,
       defaultActive: false,
     }),
@@ -266,25 +263,24 @@ function createShortSingleEntry(colors, item) {
 
 /**
  * Create a single entry from a long item (with CAGR)
- * @param {Colors} colors
  * @param {LongEntryItem & { titlePrefix?: string }} item
  */
-function createLongSingleEntry(colors, item) {
+function createLongSingleEntry(item) {
   const { returns, minReturn, maxReturn, cagr } = item;
-  return createSingleEntryTree(colors, item, [
+  return createSingleEntryTree(item, [
     baseline({ metric: returns, name: "Current", unit: Unit.percentage }),
     baseline({ metric: cagr, name: "CAGR", unit: Unit.cagr }),
     dotted({
       metric: maxReturn,
       name: "Max",
-      color: colors.green,
+      color: colors.profit,
       unit: Unit.percentage,
       defaultActive: false,
     }),
     dotted({
       metric: minReturn,
       name: "Min",
-      color: colors.red,
+      color: colors.loss,
       unit: Unit.percentage,
       defaultActive: false,
     }),
@@ -304,9 +300,9 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
     price({
       metric: dca.periodAveragePrice[key],
       name: "DCA",
-      color: colors.green,
+      color: colors.profit,
     }),
-    price({ metric: lookback[key], name: "Lump Sum", color: colors.orange }),
+    price({ metric: lookback[key], name: "Lump Sum", color: colors.bitcoin }),
   ];
 
   /** @param {string} name @param {AllPeriodKey} key */
@@ -331,7 +327,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
         baseline({
           metric: dca.periodLumpSumMaxReturn[key],
           name: "Lump Sum",
-          color: [colors.cyan, colors.orange],
+          color: colors.bi.lumpSum,
           unit: Unit.percentage,
         }),
       ],
@@ -349,7 +345,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
         baseline({
           metric: dca.periodLumpSumMinReturn[key],
           name: "Lump Sum",
-          color: [colors.cyan, colors.orange],
+          color: colors.bi.lumpSum,
           unit: Unit.percentage,
         }),
       ],
@@ -373,7 +369,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
           baseline({
             metric: dca.periodLumpSumReturns[key],
             name: "Lump Sum",
-            color: [colors.cyan, colors.orange],
+            color: colors.bi.lumpSum,
             unit: Unit.percentage,
           }),
         ],
@@ -399,7 +395,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
           baseline({
             metric: dca.periodLumpSumReturns[key],
             name: "Lump Sum",
-            color: [colors.cyan, colors.orange],
+            color: colors.bi.lumpSum,
             unit: Unit.percentage,
           }),
           baseline({
@@ -410,7 +406,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
           baseline({
             metric: returns.cagr[key],
             name: "Lump Sum",
-            color: [colors.cyan, colors.orange],
+            color: colors.bi.lumpSum,
             unit: Unit.cagr,
           }),
         ],
@@ -431,13 +427,13 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
           line({
             metric: dca.periodDaysInProfit[key],
             name: "DCA",
-            color: colors.green,
+            color: colors.profit,
             unit: Unit.days,
           }),
           line({
             metric: dca.periodLumpSumDaysInProfit[key],
             name: "Lump Sum",
-            color: colors.orange,
+            color: colors.bitcoin,
             unit: Unit.days,
           }),
         ],
@@ -450,13 +446,13 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
           line({
             metric: dca.periodDaysInLoss[key],
             name: "DCA",
-            color: colors.green,
+            color: colors.profit,
             unit: Unit.days,
           }),
           line({
             metric: dca.periodLumpSumDaysInLoss[key],
             name: "Lump Sum",
-            color: colors.orange,
+            color: colors.bitcoin,
             unit: Unit.days,
           }),
         ],
@@ -473,12 +469,12 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
       ...satsBtcUsd({
         pattern: dca.periodStack[key],
         name: "DCA",
-        color: colors.green,
+        color: colors.profit,
       }),
       ...satsBtcUsd({
         pattern: dca.periodLumpSumStack[key],
         name: "Lump Sum",
-        color: colors.orange,
+        color: colors.bitcoin,
       }),
     ],
   });
@@ -570,14 +566,14 @@ function createPeriodSection({ dca, lookback, returns }) {
 
   /** @param {BaseEntryItem} entry */
   const createShortEntry = (entry) =>
-    createShortSingleEntry(colors, {
+    createShortSingleEntry({
       ...entry,
       titlePrefix: `${entry.name} ${suffix}`,
     });
 
   /** @param {LongEntryItem} entry */
   const createLongEntry = (entry) =>
-    createLongSingleEntry(colors, {
+    createLongSingleEntry({
       ...entry,
       titlePrefix: `${entry.name} ${suffix}`,
     });
@@ -647,7 +643,7 @@ export function createDcaByStartYearSection({ dca }) {
     tree: [
       createCompareFolder(`${name} DCA`, entries),
       ...entries.map((entry) =>
-        createShortSingleEntry(colors, {
+        createShortSingleEntry({
           ...entry,
           titlePrefix: `${entry.name} DCA`,
         }),
@@ -655,12 +651,8 @@ export function createDcaByStartYearSection({ dca }) {
     ],
   });
 
-  const entries2020s = YEARS_2020S.map((year) =>
-    buildYearEntry(colors, dca, year),
-  );
-  const entries2010s = YEARS_2010S.map((year) =>
-    buildYearEntry(colors, dca, year),
-  );
+  const entries2020s = YEARS_2020S.map((year) => buildYearEntry(dca, year));
+  const entries2010s = YEARS_2010S.map((year) => buildYearEntry(dca, year));
 
   return {
     name: "DCA by Start Year",

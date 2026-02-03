@@ -8,7 +8,7 @@ use vecdb::{Database, Exit, IterableCloneableVec};
 
 use crate::{ComputeIndexes, indexes, internal::{LazyBinaryComputedFromHeightLast, U64Plus}};
 
-use super::AddrCountVecs;
+use super::AddrCountsVecs;
 
 /// Total addresses by type - lazy sum with all derived indexes
 pub type TotalAddrCountByType =
@@ -27,15 +27,15 @@ impl TotalAddrCountVecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        addr_count: &AddrCountVecs,
-        empty_addr_count: &AddrCountVecs,
+        addr_count: &AddrCountsVecs,
+        empty_addr_count: &AddrCountsVecs,
     ) -> Result<Self> {
         let all = LazyBinaryComputedFromHeightLast::forced_import::<U64Plus>(
             db,
             "total_addr_count",
             version,
-            addr_count.all.height.boxed_clone(),
-            empty_addr_count.all.height.boxed_clone(),
+            addr_count.all.count.height.boxed_clone(),
+            empty_addr_count.all.count.height.boxed_clone(),
             indexes,
         )?;
 
@@ -47,8 +47,8 @@ impl TotalAddrCountVecs {
                     db,
                     &format!("{name}_total_addr_count"),
                     version,
-                    addr.height.boxed_clone(),
-                    empty.height.boxed_clone(),
+                    addr.count.height.boxed_clone(),
+                    empty.count.height.boxed_clone(),
                     indexes,
                 )
             },

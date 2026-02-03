@@ -1,7 +1,8 @@
 use brk_error::Result;
 use brk_types::{Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Sats, StoredF32};
 use vecdb::{
-    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, IterableVec, PcoVec, VecIndex, Version,
+    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, IterableVec, PcoVec, VecIndex, VecValue,
+    Version,
 };
 
 mod pricing;
@@ -295,37 +296,47 @@ where
 }
 
 pub trait ComputeDrawdown<I> {
-    fn compute_drawdown(
+    fn compute_drawdown<C, A>(
         &mut self,
         max_from: I,
-        close: &impl IterableVec<I, Close<Dollars>>,
-        ath: &impl IterableVec<I, Dollars>,
+        current: &impl IterableVec<I, C>,
+        ath: &impl IterableVec<I, A>,
         exit: &Exit,
-    ) -> Result<()>;
+    ) -> Result<()>
+    where
+        C: VecValue,
+        A: VecValue,
+        f64: From<C> + From<A>;
 }
 
 impl<I> ComputeDrawdown<I> for EagerVec<PcoVec<I, StoredF32>>
 where
     I: VecIndex,
 {
-    fn compute_drawdown(
+    fn compute_drawdown<C, A>(
         &mut self,
         max_from: I,
-        close: &impl IterableVec<I, Close<Dollars>>,
-        ath: &impl IterableVec<I, Dollars>,
+        current: &impl IterableVec<I, C>,
+        ath: &impl IterableVec<I, A>,
         exit: &Exit,
-    ) -> Result<()> {
+    ) -> Result<()>
+    where
+        C: VecValue,
+        A: VecValue,
+        f64: From<C> + From<A>,
+    {
         self.compute_transform2(
             max_from,
+            current,
             ath,
-            close,
-            |(i, ath, close, _)| {
-                if ath == Dollars::ZERO {
-                    (i, StoredF32::default())
+            |(i, current, ath, _)| {
+                let ath_f64 = f64::from(ath);
+                let drawdown = if ath_f64 == 0.0 {
+                    StoredF32::default()
                 } else {
-                    let drawdown = StoredF32::from((*ath - **close) / *ath * -100.0);
-                    (i, drawdown)
-                }
+                    StoredF32::from((f64::from(current) - ath_f64) / ath_f64 * 100.0)
+                };
+                (i, drawdown)
             },
             exit,
         )?;

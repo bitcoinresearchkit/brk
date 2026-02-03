@@ -6,7 +6,7 @@ use crate::internal::ComputedFromDateLast;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub vocdd_365d_sma: EagerVec<PcoVec<DateIndex, StoredF64>>,
+    pub vocdd_365d_median: EagerVec<PcoVec<DateIndex, StoredF64>>,
     pub hodl_bank: EagerVec<PcoVec<DateIndex, StoredF64>>,
     pub reserve_risk: Option<ComputedFromDateLast<StoredF64>>,
 }

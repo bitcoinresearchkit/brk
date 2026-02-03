@@ -61,7 +61,7 @@ export function init() {
       type: "Candlestick",
       title: "Price",
       metric: brk.metrics.price.sats.ohlc,
-      colors: [colors.red, colors.green],
+      colors: colors.bi.profitLoss,
     };
     result.set(Unit.sats, [satsPrice, ...(optionTop.get(Unit.sats) ?? [])]);
 

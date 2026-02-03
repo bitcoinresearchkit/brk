@@ -43,6 +43,18 @@ impl Vecs {
                 version,
                 indexes,
             )?,
+            hash_rate_ath: ComputedFromHeightLast::forced_import(
+                db,
+                "hash_rate_ath",
+                version,
+                indexes,
+            )?,
+            hash_rate_drawdown: ComputedFromHeightLast::forced_import(
+                db,
+                "hash_rate_drawdown",
+                version,
+                indexes,
+            )?,
             hash_price_ths: ComputedFromHeightLast::forced_import(
                 db,
                 "hash_price_ths",

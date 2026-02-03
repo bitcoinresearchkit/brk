@@ -2026,31 +2026,61 @@ impl<T: DeserializeOwned> AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPa
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern {
+    pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
+    pub addr_count: MetricPattern1<StoredU64>,
+    pub addr_count_30d_change: MetricPattern4<StoredF64>,
+    pub cost_basis: MaxMinPattern,
+    pub outputs: UtxoPattern,
+    pub realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
+    pub relative: InvestedNegNetNuplSupplyUnrealizedPattern,
+    pub supply: _30dHalvedTotalPattern,
+    pub unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern,
+}
+
+impl ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
+            addr_count: MetricPattern1::new(client.clone(), _m(&acc, "addr_count")),
+            addr_count_30d_change: MetricPattern4::new(client.clone(), _m(&acc, "addr_count_30d_change")),
+            cost_basis: MaxMinPattern::new(client.clone(), acc.clone()),
+            outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
+            realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
+            relative: InvestedNegNetNuplSupplyUnrealizedPattern::new(client.clone(), acc.clone()),
+            supply: _30dHalvedTotalPattern::new(client.clone(), acc.clone()),
+            unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern {
-    pub all: MetricPattern1<StoredU64>,
-    pub p2a: MetricPattern1<StoredU64>,
-    pub p2pk33: MetricPattern1<StoredU64>,
-    pub p2pk65: MetricPattern1<StoredU64>,
-    pub p2pkh: MetricPattern1<StoredU64>,
-    pub p2sh: MetricPattern1<StoredU64>,
-    pub p2tr: MetricPattern1<StoredU64>,
-    pub p2wpkh: MetricPattern1<StoredU64>,
-    pub p2wsh: MetricPattern1<StoredU64>,
+    pub all: _30dCountPattern,
+    pub p2a: _30dCountPattern,
+    pub p2pk33: _30dCountPattern,
+    pub p2pk65: _30dCountPattern,
+    pub p2pkh: _30dCountPattern,
+    pub p2sh: _30dCountPattern,
+    pub p2tr: _30dCountPattern,
+    pub p2wpkh: _30dCountPattern,
+    pub p2wsh: _30dCountPattern,
 }
 
 impl AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            all: MetricPattern1::new(client.clone(), acc.clone()),
-            p2a: MetricPattern1::new(client.clone(), _p("p2a", &acc)),
-            p2pk33: MetricPattern1::new(client.clone(), _p("p2pk33", &acc)),
-            p2pk65: MetricPattern1::new(client.clone(), _p("p2pk65", &acc)),
-            p2pkh: MetricPattern1::new(client.clone(), _p("p2pkh", &acc)),
-            p2sh: MetricPattern1::new(client.clone(), _p("p2sh", &acc)),
-            p2tr: MetricPattern1::new(client.clone(), _p("p2tr", &acc)),
-            p2wpkh: MetricPattern1::new(client.clone(), _p("p2wpkh", &acc)),
-            p2wsh: MetricPattern1::new(client.clone(), _p("p2wsh", &acc)),
+            all: _30dCountPattern::new(client.clone(), acc.clone()),
+            p2a: _30dCountPattern::new(client.clone(), _p("p2a", &acc)),
+            p2pk33: _30dCountPattern::new(client.clone(), _p("p2pk33", &acc)),
+            p2pk65: _30dCountPattern::new(client.clone(), _p("p2pk65", &acc)),
+            p2pkh: _30dCountPattern::new(client.clone(), _p("p2pkh", &acc)),
+            p2sh: _30dCountPattern::new(client.clone(), _p("p2sh", &acc)),
+            p2tr: _30dCountPattern::new(client.clone(), _p("p2tr", &acc)),
+            p2wpkh: _30dCountPattern::new(client.clone(), _p("p2wpkh", &acc)),
+            p2wsh: _30dCountPattern::new(client.clone(), _p("p2wsh", &acc)),
         }
     }
 }
@@ -2111,34 +2141,6 @@ impl<T: DeserializeOwned> AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern<T> 
             pct25: MetricPattern6::new(client.clone(), _m(&acc, "pct25")),
             pct75: MetricPattern6::new(client.clone(), _m(&acc, "pct75")),
             pct90: MetricPattern6::new(client.clone(), _m(&acc, "pct90")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern {
-    pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
-    pub addr_count: MetricPattern1<StoredU64>,
-    pub cost_basis: MaxMinPattern,
-    pub outputs: UtxoPattern,
-    pub realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
-    pub relative: InvestedNegNetNuplSupplyUnrealizedPattern,
-    pub supply: _30dHalvedTotalPattern,
-    pub unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern,
-}
-
-impl ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
-            addr_count: MetricPattern1::new(client.clone(), _m(&acc, "addr_count")),
-            cost_basis: MaxMinPattern::new(client.clone(), acc.clone()),
-            outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
-            relative: InvestedNegNetNuplSupplyUnrealizedPattern::new(client.clone(), acc.clone()),
-            supply: _30dHalvedTotalPattern::new(client.clone(), acc.clone()),
-            unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -2562,6 +2564,22 @@ impl BitcoinDollarsSatsPattern3 {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct _30dCountPattern {
+    pub _30d_change: MetricPattern4<StoredF64>,
+    pub count: MetricPattern1<StoredU64>,
+}
+
+impl _30dCountPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            _30d_change: MetricPattern4::new(client.clone(), _m(&acc, "30d_change")),
+            count: MetricPattern1::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct DollarsSatsPattern {
     pub dollars: MetricPattern1<Dollars>,
     pub sats: MetricPattern1<SatsFract>,
@@ -2626,6 +2644,22 @@ impl SdSmaPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct UtxoPattern {
+    pub utxo_count: MetricPattern1<StoredU64>,
+    pub utxo_count_30d_change: MetricPattern4<StoredF64>,
+}
+
+impl UtxoPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            utxo_count: MetricPattern1::new(client.clone(), acc.clone()),
+            utxo_count_30d_change: MetricPattern4::new(client.clone(), _m(&acc, "30d_change")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct CumulativeSumPattern<T> {
     pub cumulative: MetricPattern1<T>,
     pub sum: MetricPattern1<T>,
@@ -2683,20 +2717,6 @@ impl RatioPattern2 {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             ratio: MetricPattern4::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct UtxoPattern {
-    pub utxo_count: MetricPattern1<StoredU64>,
-}
-
-impl UtxoPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            utxo_count: MetricPattern1::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -2859,6 +2879,8 @@ pub struct MetricsTree_Blocks_Mining {
     pub hash_rate_1m_sma: MetricPattern4<StoredF32>,
     pub hash_rate_2m_sma: MetricPattern4<StoredF32>,
     pub hash_rate_1y_sma: MetricPattern4<StoredF32>,
+    pub hash_rate_ath: MetricPattern1<StoredF64>,
+    pub hash_rate_drawdown: MetricPattern1<StoredF32>,
     pub hash_price_ths: MetricPattern1<StoredF32>,
     pub hash_price_ths_min: MetricPattern1<StoredF32>,
     pub hash_price_phs: MetricPattern1<StoredF32>,
@@ -2879,6 +2901,8 @@ impl MetricsTree_Blocks_Mining {
             hash_rate_1m_sma: MetricPattern4::new(client.clone(), "hash_rate_1m_sma".to_string()),
             hash_rate_2m_sma: MetricPattern4::new(client.clone(), "hash_rate_2m_sma".to_string()),
             hash_rate_1y_sma: MetricPattern4::new(client.clone(), "hash_rate_1y_sma".to_string()),
+            hash_rate_ath: MetricPattern1::new(client.clone(), "hash_rate_ath".to_string()),
+            hash_rate_drawdown: MetricPattern1::new(client.clone(), "hash_rate_drawdown".to_string()),
             hash_price_ths: MetricPattern1::new(client.clone(), "hash_price_ths".to_string()),
             hash_price_ths_min: MetricPattern1::new(client.clone(), "hash_price_ths_min".to_string()),
             hash_price_phs: MetricPattern1::new(client.clone(), "hash_price_phs".to_string()),
@@ -3515,7 +3539,7 @@ impl MetricsTree_Cointime_Adjusted {
 
 /// Metrics tree node.
 pub struct MetricsTree_Cointime_ReserveRisk {
-    pub vocdd_365d_sma: MetricPattern6<StoredF64>,
+    pub vocdd_365d_median: MetricPattern6<StoredF64>,
     pub hodl_bank: MetricPattern6<StoredF64>,
     pub reserve_risk: MetricPattern4<StoredF64>,
 }
@@ -3523,7 +3547,7 @@ pub struct MetricsTree_Cointime_ReserveRisk {
 impl MetricsTree_Cointime_ReserveRisk {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            vocdd_365d_sma: MetricPattern6::new(client.clone(), "vocdd_365d_sma".to_string()),
+            vocdd_365d_median: MetricPattern6::new(client.clone(), "vocdd_365d_median".to_string()),
             hodl_bank: MetricPattern6::new(client.clone(), "hodl_bank".to_string()),
             reserve_risk: MetricPattern4::new(client.clone(), "reserve_risk".to_string()),
         }
@@ -5109,7 +5133,7 @@ pub struct MetricsTree_Distribution {
     pub addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern,
     pub empty_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern,
     pub address_activity: MetricsTree_Distribution_AddressActivity,
-    pub total_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern,
+    pub total_addr_count: MetricsTree_Distribution_TotalAddrCount,
     pub new_addr_count: MetricsTree_Distribution_NewAddrCount,
     pub growth_rate: MetricsTree_Distribution_GrowthRate,
     pub fundedaddressindex: MetricPattern31<FundedAddressIndex>,
@@ -5127,7 +5151,7 @@ impl MetricsTree_Distribution {
             addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern::new(client.clone(), "addr_count".to_string()),
             empty_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern::new(client.clone(), "empty_addr_count".to_string()),
             address_activity: MetricsTree_Distribution_AddressActivity::new(client.clone(), format!("{base_path}_address_activity")),
-            total_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern::new(client.clone(), "total_addr_count".to_string()),
+            total_addr_count: MetricsTree_Distribution_TotalAddrCount::new(client.clone(), format!("{base_path}_total_addr_count")),
             new_addr_count: MetricsTree_Distribution_NewAddrCount::new(client.clone(), format!("{base_path}_new_addr_count")),
             growth_rate: MetricsTree_Distribution_GrowthRate::new(client.clone(), format!("{base_path}_growth_rate")),
             fundedaddressindex: MetricPattern31::new(client.clone(), "fundedaddressindex".to_string()),
@@ -5865,6 +5889,35 @@ impl MetricsTree_Distribution_AddressActivity {
 }
 
 /// Metrics tree node.
+pub struct MetricsTree_Distribution_TotalAddrCount {
+    pub all: MetricPattern1<StoredU64>,
+    pub p2pk65: MetricPattern1<StoredU64>,
+    pub p2pk33: MetricPattern1<StoredU64>,
+    pub p2pkh: MetricPattern1<StoredU64>,
+    pub p2sh: MetricPattern1<StoredU64>,
+    pub p2wpkh: MetricPattern1<StoredU64>,
+    pub p2wsh: MetricPattern1<StoredU64>,
+    pub p2tr: MetricPattern1<StoredU64>,
+    pub p2a: MetricPattern1<StoredU64>,
+}
+
+impl MetricsTree_Distribution_TotalAddrCount {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            all: MetricPattern1::new(client.clone(), "total_addr_count".to_string()),
+            p2pk65: MetricPattern1::new(client.clone(), "p2pk65_total_addr_count".to_string()),
+            p2pk33: MetricPattern1::new(client.clone(), "p2pk33_total_addr_count".to_string()),
+            p2pkh: MetricPattern1::new(client.clone(), "p2pkh_total_addr_count".to_string()),
+            p2sh: MetricPattern1::new(client.clone(), "p2sh_total_addr_count".to_string()),
+            p2wpkh: MetricPattern1::new(client.clone(), "p2wpkh_total_addr_count".to_string()),
+            p2wsh: MetricPattern1::new(client.clone(), "p2wsh_total_addr_count".to_string()),
+            p2tr: MetricPattern1::new(client.clone(), "p2tr_total_addr_count".to_string()),
+            p2a: MetricPattern1::new(client.clone(), "p2a_total_addr_count".to_string()),
+        }
+    }
+}
+
+/// Metrics tree node.
 pub struct MetricsTree_Distribution_NewAddrCount {
     pub all: AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2<StoredU64>,
     pub p2pk65: AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2<StoredU64>,
@@ -5998,7 +6051,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.1.2";
+    pub const VERSION: &'static str = "v0.1.3";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {

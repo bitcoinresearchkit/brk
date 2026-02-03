@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, StoredU64};
+use brk_types::{Height, StoredF64, StoredU64};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec};
 
-use crate::{ComputeIndexes, indexes, internal::ComputedFromHeightLast};
+use crate::{ComputeIndexes, indexes, internal::{ComputedFromDateLast, ComputedFromHeightLast}};
 
 use super::ImportConfig;
 
@@ -12,6 +12,7 @@ use super::ImportConfig;
 #[derive(Clone, Traversable)]
 pub struct OutputsMetrics {
     pub utxo_count: ComputedFromHeightLast<StoredU64>,
+    pub utxo_count_30d_change: ComputedFromDateLast<StoredF64>,
 }
 
 impl OutputsMetrics {
@@ -21,6 +22,12 @@ impl OutputsMetrics {
             utxo_count: ComputedFromHeightLast::forced_import(
                 cfg.db,
                 &cfg.name("utxo_count"),
+                cfg.version,
+                cfg.indexes,
+            )?,
+            utxo_count_30d_change: ComputedFromDateLast::forced_import(
+                cfg.db,
+                &cfg.name("utxo_count_30d_change"),
                 cfg.version,
                 cfg.indexes,
             )?,
@@ -42,7 +49,11 @@ impl OutputsMetrics {
 
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        vec![&mut self.utxo_count.height as &mut dyn AnyStoredVec].into_par_iter()
+        vec![
+            &mut self.utxo_count.height as &mut dyn AnyStoredVec,
+            &mut self.utxo_count_30d_change.dateindex as &mut dyn AnyStoredVec,
+        ]
+        .into_par_iter()
     }
 
     /// Compute aggregate values from separate cohorts.
@@ -70,6 +81,20 @@ impl OutputsMetrics {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.utxo_count.compute_rest(indexes, starting_indexes, exit)
+        self.utxo_count
+            .compute_rest(indexes, starting_indexes, exit)?;
+
+        self.utxo_count_30d_change
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_change(
+                    starting_indexes.dateindex,
+                    &*self.utxo_count.dateindex,
+                    30,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        Ok(())
     }
 }

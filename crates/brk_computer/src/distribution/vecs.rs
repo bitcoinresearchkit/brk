@@ -25,7 +25,7 @@ use crate::{
 use super::{
     AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, UTXOCohorts,
     address::{
-        AddrCountVecs, AddressActivityVecs, GrowthRateVecs, NewAddrCountVecs, TotalAddrCountVecs,
+        AddrCountsVecs, AddressActivityVecs, GrowthRateVecs, NewAddrCountVecs, TotalAddrCountVecs,
     },
     compute::aggregates,
 };
@@ -44,8 +44,8 @@ pub struct Vecs {
     pub utxo_cohorts: UTXOCohorts,
     pub address_cohorts: AddressCohorts,
 
-    pub addr_count: AddrCountVecs,
-    pub empty_addr_count: AddrCountVecs,
+    pub addr_count: AddrCountsVecs,
+    pub empty_addr_count: AddrCountsVecs,
     pub address_activity: AddressActivityVecs,
 
     /// Total addresses ever seen (addr_count + empty_addr_count) - lazy, global + per-type
@@ -115,9 +115,9 @@ impl Vecs {
             |index, _| Some(index),
         );
 
-        let addr_count = AddrCountVecs::forced_import(&db, "addr_count", version, indexes)?;
+        let addr_count = AddrCountsVecs::forced_import(&db, "addr_count", version, indexes)?;
         let empty_addr_count =
-            AddrCountVecs::forced_import(&db, "empty_addr_count", version, indexes)?;
+            AddrCountsVecs::forced_import(&db, "empty_addr_count", version, indexes)?;
         let address_activity =
             AddressActivityVecs::forced_import(&db, "address_activity", version, indexes)?;
 

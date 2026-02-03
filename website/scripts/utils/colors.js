@@ -67,270 +67,381 @@ function getLightDarkValue(property) {
   return dark ? _dark : light;
 }
 
-const red = createColor(() => getColor("red"));
-const orange = createColor(() => getColor("orange"));
-const amber = createColor(() => getColor("amber"));
-const yellow = createColor(() => getColor("yellow"));
-const avocado = createColor(() => getColor("avocado"));
-const lime = createColor(() => getColor("lime"));
-const green = createColor(() => getColor("green"));
-const emerald = createColor(() => getColor("emerald"));
-const teal = createColor(() => getColor("teal"));
-const cyan = createColor(() => getColor("cyan"));
-const sky = createColor(() => getColor("sky"));
-const blue = createColor(() => getColor("blue"));
-const indigo = createColor(() => getColor("indigo"));
-const violet = createColor(() => getColor("violet"));
-const purple = createColor(() => getColor("purple"));
-const fuchsia = createColor(() => getColor("fuchsia"));
-const pink = createColor(() => getColor("pink"));
-const rose = createColor(() => getColor("rose"));
-
-const spectrumColors = {
-  red,
-  orange,
-  amber,
-  yellow,
-  avocado,
-  lime,
-  green,
-  emerald,
-  teal,
-  cyan,
-  sky,
-  blue,
-  indigo,
-  violet,
-  purple,
-  fuchsia,
-  pink,
-  rose,
-};
-
-const baseColors = {
-  default: createColor(() => getLightDarkValue("--color")),
-  gray: createColor(() => getColor("gray")),
-  border: createColor(() => getLightDarkValue("--border-color")),
-  ...spectrumColors,
+const palette = {
+  red: createColor(() => getColor("red")),
+  orange: createColor(() => getColor("orange")),
+  amber: createColor(() => getColor("amber")),
+  yellow: createColor(() => getColor("yellow")),
+  avocado: createColor(() => getColor("avocado")),
+  lime: createColor(() => getColor("lime")),
+  green: createColor(() => getColor("green")),
+  emerald: createColor(() => getColor("emerald")),
+  teal: createColor(() => getColor("teal")),
+  cyan: createColor(() => getColor("cyan")),
+  sky: createColor(() => getColor("sky")),
+  blue: createColor(() => getColor("blue")),
+  indigo: createColor(() => getColor("indigo")),
+  violet: createColor(() => getColor("violet")),
+  purple: createColor(() => getColor("purple")),
+  fuchsia: createColor(() => getColor("fuchsia")),
+  pink: createColor(() => getColor("pink")),
+  rose: createColor(() => getColor("rose")),
 };
 
 export const colors = {
-  ...baseColors,
+  default: createColor(() => getLightDarkValue("--color")),
+  gray: createColor(() => getColor("gray")),
+  border: createColor(() => getLightDarkValue("--border-color")),
+
+  // Directional
+  profit: palette.green,
+  loss: palette.red,
+  bitcoin: palette.orange,
+  usd: palette.green,
+
+  // Bi-color pairs for baselines
+  bi: {
+    /** @type {[Color, Color]} */
+    profitLoss: [palette.green, palette.red],
+    /** @type {[Color, Color]} */
+    sopr7d: [palette.lime, palette.rose],
+    /** @type {[Color, Color]} */
+    sopr30d: [palette.avocado, palette.pink],
+    /** @type {[Color, Color]} */
+    adjustedSopr: [palette.yellow, palette.fuchsia],
+    /** @type {[Color, Color]} */
+    adjustedSopr7d: [palette.amber, palette.purple],
+    /** @type {[Color, Color]} */
+    adjustedSopr30d: [palette.orange, palette.violet],
+    /** @type {[Color, Color]} */
+    lumpSum: [palette.cyan, palette.orange],
+  },
+
+
+  // Cointime economics
+  liveliness: palette.pink,
+  vaulted: palette.lime,
+  active: palette.rose,
+  activity: palette.purple,
+  cointime: palette.yellow,
+  destroyed: palette.red,
+  created: palette.orange,
+  stored: palette.green,
+
+  // Valuations
+  realized: palette.orange,
+  investor: palette.fuchsia,
+  thermo: palette.emerald,
+  trueMarketMean: palette.blue,
+  vocdd: palette.purple,
+  hodlBank: palette.blue,
+  reserveRisk: palette.orange,
+
+  // Comparisons (base vs adjusted)
+  base: palette.orange,
+  adjusted: palette.purple,
+  adjustedCreated: palette.lime,
+  adjustedDestroyed: palette.pink,
+
+  // Ratios
+  plRatio: palette.yellow,
+
+  // Mining
+  mining: {
+    coinbase: palette.orange,
+    subsidy: palette.lime,
+    fee: palette.cyan,
+  },
+
+  // Network
+  segwit: palette.cyan,
+
+  // Entity (transactions, inputs, outputs)
+  entity: {
+    tx: palette.orange,
+    input: palette.red,
+    output: palette.cyan,
+  },
+
+  // Technical indicators
+  indicator: {
+    main: palette.indigo,
+    fast: palette.blue,
+    slow: palette.orange,
+    upper: palette.green,
+    lower: palette.red,
+    mid: palette.yellow,
+  },
 
   stat: {
-    sum: blue,
-    cumulative: indigo,
-    avg: orange,
-    max: green,
-    pct90: cyan,
-    pct75: blue,
-    median: yellow,
-    pct25: violet,
-    pct10: fuchsia,
-    min: red,
+    sum: palette.blue,
+    cumulative: palette.indigo,
+    avg: palette.orange,
+    max: palette.green,
+    pct90: palette.cyan,
+    pct75: palette.blue,
+    median: palette.yellow,
+    pct25: palette.violet,
+    pct10: palette.fuchsia,
+    min: palette.red,
+  },
+
+  // Ratio percentile bands (extreme values)
+  ratioPct: {
+    _99: palette.rose,
+    _98: palette.pink,
+    _95: palette.fuchsia,
+    _5: palette.cyan,
+    _2: palette.sky,
+    _1: palette.blue,
+  },
+
+  // Standard deviation bands (warm = positive, cool = negative)
+  sd: {
+    _0: palette.lime,
+    p05: palette.yellow,
+    m05: palette.teal,
+    p1: palette.amber,
+    m1: palette.cyan,
+    p15: palette.orange,
+    m15: palette.sky,
+    p2: palette.red,
+    m2: palette.blue,
+    p25: palette.rose,
+    m25: palette.indigo,
+    p3: palette.pink,
+    m3: palette.violet,
+  },
+
+  // Transaction versions
+  txVersion: {
+    v1: palette.orange,
+    v2: palette.cyan,
+    v3: palette.lime,
+  },
+
+  pct: {
+    _100: palette.red,
+    _95: palette.orange,
+    _90: palette.amber,
+    _85: palette.yellow,
+    _80: palette.avocado,
+    _75: palette.lime,
+    _70: palette.green,
+    _65: palette.emerald,
+    _60: palette.teal,
+    _55: palette.cyan,
+    _50: palette.sky,
+    _45: palette.blue,
+    _40: palette.indigo,
+    _35: palette.violet,
+    _30: palette.purple,
+    _25: palette.fuchsia,
+    _20: palette.pink,
+    _15: palette.rose,
+    _10: palette.pink,
+    _05: palette.fuchsia,
+    _0: palette.purple,
   },
 
   time: {
-    _24h: pink,
-    _1w: red,
-    _1m: yellow,
-    _1y: lime,
-    all: teal,
+    _24h: palette.pink,
+    _1w: palette.red,
+    _1m: palette.yellow,
+    _1y: palette.lime,
+    all: palette.teal,
   },
 
   term: {
-    short: yellow,
-    long: fuchsia,
+    short: palette.yellow,
+    long: palette.fuchsia,
   },
 
   age: {
-    _1d: red,
-    _1w: orange,
-    _1m: yellow,
-    _2m: lime,
-    _3m: green,
-    _4m: teal,
-    _5m: cyan,
-    _6m: blue,
-    _1y: indigo,
-    _2y: violet,
-    _3y: purple,
-    _4y: fuchsia,
-    _5y: pink,
-    _6y: rose,
-    _7y: red,
-    _8y: orange,
-    _10y: yellow,
-    _12y: lime,
-    _15y: green,
+    _1d: palette.red,
+    _1w: palette.orange,
+    _1m: palette.yellow,
+    _2m: palette.lime,
+    _3m: palette.green,
+    _4m: palette.teal,
+    _5m: palette.cyan,
+    _6m: palette.blue,
+    _1y: palette.indigo,
+    _2y: palette.violet,
+    _3y: palette.purple,
+    _4y: palette.fuchsia,
+    _5y: palette.pink,
+    _6y: palette.rose,
+    _7y: palette.red,
+    _8y: palette.orange,
+    _10y: palette.yellow,
+    _12y: palette.lime,
+    _15y: palette.green,
   },
 
   ageRange: {
-    upTo1h: rose,
-    _1hTo1d: pink,
-    _1dTo1w: red,
-    _1wTo1m: orange,
-    _1mTo2m: yellow,
-    _2mTo3m: yellow,
-    _3mTo4m: lime,
-    _4mTo5m: lime,
-    _5mTo6m: lime,
-    _6mTo1y: green,
-    _1yTo2y: cyan,
-    _2yTo3y: blue,
-    _3yTo4y: indigo,
-    _4yTo5y: violet,
-    _5yTo6y: purple,
-    _6yTo7y: purple,
-    _7yTo8y: fuchsia,
-    _8yTo10y: fuchsia,
-    _10yTo12y: pink,
-    _12yTo15y: red,
-    from15y: orange,
+    upTo1h: palette.rose,
+    _1hTo1d: palette.pink,
+    _1dTo1w: palette.red,
+    _1wTo1m: palette.orange,
+    _1mTo2m: palette.yellow,
+    _2mTo3m: palette.yellow,
+    _3mTo4m: palette.lime,
+    _4mTo5m: palette.lime,
+    _5mTo6m: palette.lime,
+    _6mTo1y: palette.green,
+    _1yTo2y: palette.cyan,
+    _2yTo3y: palette.blue,
+    _3yTo4y: palette.indigo,
+    _4yTo5y: palette.violet,
+    _5yTo6y: palette.purple,
+    _6yTo7y: palette.purple,
+    _7yTo8y: palette.fuchsia,
+    _8yTo10y: palette.fuchsia,
+    _10yTo12y: palette.pink,
+    _12yTo15y: palette.red,
+    from15y: palette.orange,
   },
 
   amount: {
-    _1sat: orange,
-    _10sats: orange,
-    _100sats: yellow,
-    _1kSats: lime,
-    _10kSats: green,
-    _100kSats: cyan,
-    _1mSats: blue,
-    _10mSats: indigo,
-    _1btc: purple,
-    _10btc: violet,
-    _100btc: fuchsia,
-    _1kBtc: pink,
-    _10kBtc: red,
-    _100kBtc: orange,
+    _1sat: palette.orange,
+    _10sats: palette.orange,
+    _100sats: palette.yellow,
+    _1kSats: palette.lime,
+    _10kSats: palette.green,
+    _100kSats: palette.cyan,
+    _1mSats: palette.blue,
+    _10mSats: palette.indigo,
+    _1btc: palette.purple,
+    _10btc: palette.violet,
+    _100btc: palette.fuchsia,
+    _1kBtc: palette.pink,
+    _10kBtc: palette.red,
+    _100kBtc: palette.orange,
   },
 
   amountRange: {
-    _0sats: red,
-    _1satTo10sats: orange,
-    _10satsTo100sats: yellow,
-    _100satsTo1kSats: lime,
-    _1kSatsTo10kSats: green,
-    _10kSatsTo100kSats: cyan,
-    _100kSatsTo1mSats: blue,
-    _1mSatsTo10mSats: indigo,
-    _10mSatsTo1btc: purple,
-    _1btcTo10btc: violet,
-    _10btcTo100btc: fuchsia,
-    _100btcTo1kBtc: pink,
-    _1kBtcTo10kBtc: red,
-    _10kBtcTo100kBtc: orange,
-    _100kBtcOrMore: yellow,
+    _0sats: palette.red,
+    _1satTo10sats: palette.orange,
+    _10satsTo100sats: palette.yellow,
+    _100satsTo1kSats: palette.lime,
+    _1kSatsTo10kSats: palette.green,
+    _10kSatsTo100kSats: palette.cyan,
+    _100kSatsTo1mSats: palette.blue,
+    _1mSatsTo10mSats: palette.indigo,
+    _10mSatsTo1btc: palette.purple,
+    _1btcTo10btc: palette.violet,
+    _10btcTo100btc: palette.fuchsia,
+    _100btcTo1kBtc: palette.pink,
+    _1kBtcTo10kBtc: palette.red,
+    _10kBtcTo100kBtc: palette.orange,
+    _100kBtcOrMore: palette.yellow,
   },
 
   epoch: {
-    _0: red,
-    _1: yellow,
-    _2: orange,
-    _3: lime,
-    _4: green,
+    _0: palette.red,
+    _1: palette.yellow,
+    _2: palette.orange,
+    _3: palette.lime,
+    _4: palette.green,
   },
 
   year: {
-    _2009: red,
-    _2010: orange,
-    _2011: amber,
-    _2012: yellow,
-    _2013: lime,
-    _2014: green,
-    _2015: teal,
-    _2016: cyan,
-    _2017: sky,
-    _2018: blue,
-    _2019: indigo,
-    _2020: violet,
-    _2021: purple,
-    _2022: fuchsia,
-    _2023: pink,
-    _2024: rose,
-    _2025: red,
-    _2026: orange,
+    _2009: palette.red,
+    _2010: palette.orange,
+    _2011: palette.amber,
+    _2012: palette.yellow,
+    _2013: palette.lime,
+    _2014: palette.green,
+    _2015: palette.teal,
+    _2016: palette.cyan,
+    _2017: palette.sky,
+    _2018: palette.blue,
+    _2019: palette.indigo,
+    _2020: palette.violet,
+    _2021: palette.purple,
+    _2022: palette.fuchsia,
+    _2023: palette.pink,
+    _2024: palette.rose,
+    _2025: palette.red,
+    _2026: palette.orange,
   },
 
   returns: {
-    _1d: red,
-    _1w: orange,
-    _1m: yellow,
-    _3m: lime,
-    _6m: green,
-    _1y: teal,
-    _2y: cyan,
-    _3y: sky,
-    _4y: blue,
-    _5y: indigo,
-    _6y: violet,
-    _8y: purple,
-    _10y: fuchsia,
+    _1d: palette.red,
+    _1w: palette.orange,
+    _1m: palette.yellow,
+    _3m: palette.lime,
+    _6m: palette.green,
+    _1y: palette.teal,
+    _2y: palette.cyan,
+    _3y: palette.sky,
+    _4y: palette.blue,
+    _5y: palette.indigo,
+    _6y: palette.violet,
+    _8y: palette.purple,
+    _10y: palette.fuchsia,
   },
 
   ma: {
-    _1w: red,
-    _8d: orange,
-    _12d: amber,
-    _13d: yellow,
-    _21d: avocado,
-    _26d: lime,
-    _1m: green,
-    _34d: emerald,
-    _55d: teal,
-    _89d: cyan,
-    _111d: sky,
-    _144d: blue,
-    _200d: indigo,
-    _350d: violet,
-    _1y: purple,
-    _2y: fuchsia,
-    _200w: pink,
-    _4y: rose,
+    _1w: palette.red,
+    _8d: palette.orange,
+    _12d: palette.amber,
+    _13d: palette.yellow,
+    _21d: palette.avocado,
+    _26d: palette.lime,
+    _1m: palette.green,
+    _34d: palette.emerald,
+    _55d: palette.teal,
+    _2m: palette.cyan,
+    _89d: palette.sky,
+    _111d: palette.blue,
+    _144d: palette.indigo,
+    _200d: palette.violet,
+    _350d: palette.purple,
+    _1y: palette.fuchsia,
+    _2y: palette.pink,
+    _200w: palette.rose,
+    _4y: palette.red,
   },
 
   dca: {
-    _1w: red,
-    _1m: orange,
-    _3m: yellow,
-    _6m: lime,
-    _1y: green,
-    _2y: teal,
-    _3y: cyan,
-    _4y: sky,
-    _5y: blue,
-    _6y: indigo,
-    _8y: violet,
-    _10y: purple,
+    _1w: palette.red,
+    _1m: palette.orange,
+    _3m: palette.yellow,
+    _6m: palette.lime,
+    _1y: palette.green,
+    _2y: palette.teal,
+    _3y: palette.cyan,
+    _4y: palette.sky,
+    _5y: palette.blue,
+    _6y: palette.indigo,
+    _8y: palette.violet,
+    _10y: palette.purple,
   },
 
   scriptType: {
-    p2pk65: red,
-    p2pk33: orange,
-    p2pkh: yellow,
-    p2ms: lime,
-    p2sh: green,
-    p2wpkh: teal,
-    p2wsh: blue,
-    p2tr: indigo,
-    p2a: purple,
-    opreturn: pink,
-    unknown: violet,
-    empty: fuchsia,
+    p2pk65: palette.red,
+    p2pk33: palette.orange,
+    p2pkh: palette.yellow,
+    p2ms: palette.lime,
+    p2sh: palette.green,
+    p2wpkh: palette.teal,
+    p2wsh: palette.blue,
+    p2tr: palette.indigo,
+    p2a: palette.purple,
+    opreturn: palette.pink,
+    unknown: palette.violet,
+    empty: palette.fuchsia,
+  },
+
+  arr: Object.values(palette),
+
+  /**
+   * Get a color by index (cycles through palette)
+   * @param {number} index
+   */
+  at(index) {
+    return this.arr[index % this.arr.length];
   },
 };
-
-/**
- * @typedef {typeof colors} Colors
- * @typedef {keyof typeof baseColors} ColorName
- */
-
-/** Palette for indexed series */
-const palette = Object.values(spectrumColors);
-
-/**
- * Get a color by index (cycles through palette)
- * @param {number} index
- */
-export const colorAt = (index) => palette[index % palette.length];

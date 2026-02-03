@@ -10,7 +10,7 @@
  *
  * @import { SingleValueData, CandlestickData, Series, AnySeries, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, Chart, Legend } from "./chart/index.js"
  *
- * @import { Color, ColorName, Colors } from "./utils/colors.js"
+ * @import { Color } from "./utils/colors.js"
  *
  * @import { WebSockets } from "./utils/ws.js"
  *
@@ -77,20 +77,22 @@
  * Relative patterns by capability:
  * - BasicRelativePattern: minimal relative (investedCapitalIn*Pct, supplyIn*RelToOwnSupply only)
  * - GlobalRelativePattern: has RelToMarketCap metrics (netUnrealizedPnlRelToMarketCap, etc)
+ * - GlobalPeakRelativePattern: GlobalRelativePattern + unrealizedPeakRegretRelToMarketCap
  * - OwnRelativePattern: has RelToOwnMarketCap metrics (netUnrealizedPnlRelToOwnMarketCap, etc)
- * - FullRelativePattern: has BOTH RelToMarketCap AND RelToOwnMarketCap
+ * - FullRelativePattern: has BOTH RelToMarketCap AND RelToOwnMarketCap + unrealizedPeakRegretRelToMarketCap
  * @typedef {Brk.InvestedSupplyPattern} BasicRelativePattern
  * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern} GlobalRelativePattern
+ * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern3} GlobalPeakRelativePattern
  * @typedef {Brk.InvestedNegNetSupplyUnrealizedPattern} OwnRelativePattern
- * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern2} FullRelativePattern
+ * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern4} FullRelativePattern
  * @typedef {Brk.GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} UnrealizedPattern
  * @typedef {Brk.GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} UnrealizedFullPattern
  *
  * Realized patterns
- * @typedef {Brk.CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSoprTotalValuePattern} RealizedPattern
- * @typedef {Brk.CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSoprTotalValuePattern2} RealizedPattern2
- * @typedef {Brk.AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSoprTotalValuePattern} RealizedPattern3
- * @typedef {Brk.AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSoprTotalValuePattern2} RealizedPattern4
+ * @typedef {Brk.CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} RealizedPattern
+ * @typedef {Brk.CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2} RealizedPattern2
+ * @typedef {Brk.AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} RealizedPattern3
+ * @typedef {Brk.AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2} RealizedPattern4
  */
 
 /**
@@ -153,10 +155,11 @@
  * @typedef {UtxoCohortPattern | AddressCohortPattern} CohortPattern
  *
  * Relative pattern capability types
- * @typedef {GlobalRelativePattern | FullRelativePattern} RelativeWithMarketCap
+ * @typedef {GlobalRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithMarketCap
  * @typedef {OwnRelativePattern | FullRelativePattern} RelativeWithOwnMarketCap
  * @typedef {OwnRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithOwnPnl
- * @typedef {GlobalRelativePattern | FullRelativePattern} RelativeWithNupl
+ * @typedef {GlobalRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithNupl
+ * @typedef {GlobalPeakRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithPeakRegret
  * @typedef {BasicRelativePattern | GlobalRelativePattern | OwnRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithInvestedCapitalPct
  *
  * Realized pattern capability types
@@ -173,6 +176,7 @@
  * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} PatternWithCostBasis
  * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} PatternWithActivity
  * @typedef {AllUtxoPattern | AgeRangePattern} PatternWithCostBasisPercentiles
+ * @typedef {Brk.Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} PercentilesPattern
  *
  * Cohort objects with specific pattern capabilities
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithRealizedPrice }} CohortWithRealizedPrice

@@ -4,7 +4,7 @@ use vecdb::Exit;
 
 use super::super::{ONE_TERA_HASH, TARGET_BLOCKS_PER_DAY_F64, count, difficulty, rewards};
 use super::Vecs;
-use crate::{ComputeIndexes, indexes};
+use crate::{ComputeIndexes, indexes, traits::ComputeDrawdown};
 
 impl Vecs {
     pub fn compute(
@@ -75,6 +75,27 @@ impl Vecs {
                     starting_indexes.dateindex,
                     self.hash_rate.dateindex.inner(),
                     365,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.hash_rate_ath
+            .compute_all(indexes, starting_indexes, exit, |v| {
+                v.compute_all_time_high(
+                    starting_indexes.height,
+                    &self.hash_rate.height,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.hash_rate_drawdown
+            .compute_all(indexes, starting_indexes, exit, |v| {
+                v.compute_drawdown(
+                    starting_indexes.height,
+                    &self.hash_rate.height,
+                    &self.hash_rate_ath.height,
                     exit,
                 )?;
                 Ok(())

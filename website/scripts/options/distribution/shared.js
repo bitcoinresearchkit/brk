@@ -176,17 +176,17 @@ function createSingleSupplySeriesBase(cohort) {
     ...satsBtcUsd({
       pattern: tree.supply._30dChange,
       name: "30d Change",
-      color: colors.orange,
+      color: colors.bitcoin,
     }),
     ...satsBtcUsd({
       pattern: tree.unrealized.supplyInProfit,
       name: "In Profit",
-      color: colors.green,
+      color: colors.profit,
     }),
     ...satsBtcUsd({
       pattern: tree.unrealized.supplyInLoss,
       name: "In Loss",
-      color: colors.red,
+      color: colors.loss,
     }),
     ...satsBtcUsd({
       pattern: tree.supply.halved,
@@ -211,13 +211,13 @@ function createSingleSupplyRelativeToOwnMetrics(cohort) {
     line({
       metric: tree.relative.supplyInProfitRelToOwnSupply,
       name: "In Profit",
-      color: colors.green,
+      color: colors.profit,
       unit: Unit.pctOwn,
     }),
     line({
       metric: tree.relative.supplyInLossRelToOwnSupply,
       name: "In Loss",
-      color: colors.red,
+      color: colors.loss,
       unit: Unit.pctOwn,
     }),
     priceLine({
@@ -403,13 +403,13 @@ export function createSupplyPnlRelativeToCirculatingSeries(cohort) {
     line({
       metric: cohort.tree.relative.supplyInProfitRelToCirculatingSupply,
       name: "In Profit",
-      color: colors.green,
+      color: colors.profit,
       unit: Unit.pctSupply,
     }),
     line({
       metric: cohort.tree.relative.supplyInLossRelToCirculatingSupply,
       name: "In Loss",
-      color: colors.red,
+      color: colors.loss,
       unit: Unit.pctSupply,
     }),
   ];
@@ -513,7 +513,7 @@ export function createAddressCountSeries(list, useGroupName) {
     line({
       metric: tree.addrCount,
       name: useGroupName ? name : "Count",
-      color: useGroupName ? color : colors.orange,
+      color: useGroupName ? color : colors.bitcoin,
       unit: Unit.count,
     }),
   ]);
@@ -566,12 +566,11 @@ export function createRealizedCapSeries(list, useGroupName) {
 /**
  * Create cost basis percentile series (only for cohorts with CostBasisPattern2)
  * Includes min (p0) and max (p100) with full rainbow coloring
- * @param {Colors} colors
  * @param {readonly CohortWithCostBasisPercentiles[]} list
  * @param {boolean} useGroupName
  * @returns {FetchedPriceSeriesBlueprint[]}
  */
-export function createCostBasisPercentilesSeries(colors, list, useGroupName) {
+export function createCostBasisPercentilesSeries(list, useGroupName) {
   return list.flatMap(({ name, tree }) => {
     const cb = tree.costBasis;
     const p = cb.percentiles;
@@ -581,122 +580,122 @@ export function createCostBasisPercentilesSeries(colors, list, useGroupName) {
       price({
         metric: cb.max,
         name: n(100),
-        color: colors.purple,
+        color: colors.pct._100,
         defaultActive: false,
       }),
       price({
         metric: p.pct95,
         name: n(95),
-        color: colors.fuchsia,
+        color: colors.pct._95,
         defaultActive: false,
       }),
       price({
         metric: p.pct90,
         name: n(90),
-        color: colors.pink,
+        color: colors.pct._90,
         defaultActive: false,
       }),
       price({
         metric: p.pct85,
         name: n(85),
-        color: colors.pink,
+        color: colors.pct._85,
         defaultActive: false,
       }),
       price({
         metric: p.pct80,
         name: n(80),
-        color: colors.rose,
+        color: colors.pct._80,
         defaultActive: false,
       }),
       price({
         metric: p.pct75,
         name: n(75),
-        color: colors.red,
+        color: colors.pct._75,
         defaultActive: false,
       }),
       price({
         metric: p.pct70,
         name: n(70),
-        color: colors.orange,
+        color: colors.pct._70,
         defaultActive: false,
       }),
       price({
         metric: p.pct65,
         name: n(65),
-        color: colors.amber,
+        color: colors.pct._65,
         defaultActive: false,
       }),
       price({
         metric: p.pct60,
         name: n(60),
-        color: colors.yellow,
+        color: colors.pct._60,
         defaultActive: false,
       }),
       price({
         metric: p.pct55,
         name: n(55),
-        color: colors.yellow,
+        color: colors.pct._55,
         defaultActive: false,
       }),
-      price({ metric: p.pct50, name: n(50), color: colors.avocado }),
+      price({ metric: p.pct50, name: n(50), color: colors.pct._50 }),
       price({
         metric: p.pct45,
         name: n(45),
-        color: colors.lime,
+        color: colors.pct._45,
         defaultActive: false,
       }),
       price({
         metric: p.pct40,
         name: n(40),
-        color: colors.green,
+        color: colors.pct._40,
         defaultActive: false,
       }),
       price({
         metric: p.pct35,
         name: n(35),
-        color: colors.emerald,
+        color: colors.pct._35,
         defaultActive: false,
       }),
       price({
         metric: p.pct30,
         name: n(30),
-        color: colors.teal,
+        color: colors.pct._30,
         defaultActive: false,
       }),
       price({
         metric: p.pct25,
         name: n(25),
-        color: colors.teal,
+        color: colors.pct._25,
         defaultActive: false,
       }),
       price({
         metric: p.pct20,
         name: n(20),
-        color: colors.cyan,
+        color: colors.pct._20,
         defaultActive: false,
       }),
       price({
         metric: p.pct15,
         name: n(15),
-        color: colors.sky,
+        color: colors.pct._15,
         defaultActive: false,
       }),
       price({
         metric: p.pct10,
         name: n(10),
-        color: colors.blue,
+        color: colors.pct._10,
         defaultActive: false,
       }),
       price({
         metric: p.pct05,
         name: n(5),
-        color: colors.indigo,
+        color: colors.pct._05,
         defaultActive: false,
       }),
       price({
         metric: cb.min,
         name: n(0),
-        color: colors.violet,
+        color: colors.pct._0,
         defaultActive: false,
       }),
     ];
@@ -706,16 +705,11 @@ export function createCostBasisPercentilesSeries(colors, list, useGroupName) {
 /**
  * Create invested capital percentile series (only for cohorts with CostBasisPattern2)
  * Shows invested capital at each percentile level
- * @param {Colors} colors
  * @param {readonly CohortWithCostBasisPercentiles[]} list
  * @param {boolean} useGroupName
  * @returns {FetchedPriceSeriesBlueprint[]}
  */
-export function createInvestedCapitalPercentilesSeries(
-  colors,
-  list,
-  useGroupName,
-) {
+export function createInvestedCapitalPercentilesSeries(list, useGroupName) {
   return list.flatMap(({ name, tree }) => {
     const ic = tree.costBasis.investedCapital;
     const n = (/** @type {number} */ pct) =>
@@ -724,110 +718,110 @@ export function createInvestedCapitalPercentilesSeries(
       price({
         metric: ic.pct95,
         name: n(95),
-        color: colors.fuchsia,
+        color: colors.pct._95,
         defaultActive: false,
       }),
       price({
         metric: ic.pct90,
         name: n(90),
-        color: colors.pink,
+        color: colors.pct._90,
         defaultActive: false,
       }),
       price({
         metric: ic.pct85,
         name: n(85),
-        color: colors.pink,
+        color: colors.pct._85,
         defaultActive: false,
       }),
       price({
         metric: ic.pct80,
         name: n(80),
-        color: colors.rose,
+        color: colors.pct._80,
         defaultActive: false,
       }),
       price({
         metric: ic.pct75,
         name: n(75),
-        color: colors.red,
+        color: colors.pct._75,
         defaultActive: false,
       }),
       price({
         metric: ic.pct70,
         name: n(70),
-        color: colors.orange,
+        color: colors.pct._70,
         defaultActive: false,
       }),
       price({
         metric: ic.pct65,
         name: n(65),
-        color: colors.amber,
+        color: colors.pct._65,
         defaultActive: false,
       }),
       price({
         metric: ic.pct60,
         name: n(60),
-        color: colors.yellow,
+        color: colors.pct._60,
         defaultActive: false,
       }),
       price({
         metric: ic.pct55,
         name: n(55),
-        color: colors.yellow,
+        color: colors.pct._55,
         defaultActive: false,
       }),
-      price({ metric: ic.pct50, name: n(50), color: colors.avocado }),
+      price({ metric: ic.pct50, name: n(50), color: colors.pct._50 }),
       price({
         metric: ic.pct45,
         name: n(45),
-        color: colors.lime,
+        color: colors.pct._45,
         defaultActive: false,
       }),
       price({
         metric: ic.pct40,
         name: n(40),
-        color: colors.green,
+        color: colors.pct._40,
         defaultActive: false,
       }),
       price({
         metric: ic.pct35,
         name: n(35),
-        color: colors.emerald,
+        color: colors.pct._35,
         defaultActive: false,
       }),
       price({
         metric: ic.pct30,
         name: n(30),
-        color: colors.teal,
+        color: colors.pct._30,
         defaultActive: false,
       }),
       price({
         metric: ic.pct25,
         name: n(25),
-        color: colors.teal,
+        color: colors.pct._25,
         defaultActive: false,
       }),
       price({
         metric: ic.pct20,
         name: n(20),
-        color: colors.cyan,
+        color: colors.pct._20,
         defaultActive: false,
       }),
       price({
         metric: ic.pct15,
         name: n(15),
-        color: colors.sky,
+        color: colors.pct._15,
         defaultActive: false,
       }),
       price({
         metric: ic.pct10,
         name: n(10),
-        color: colors.blue,
+        color: colors.pct._10,
         defaultActive: false,
       }),
       price({
         metric: ic.pct05,
         name: n(5),
-        color: colors.indigo,
+        color: colors.pct._05,
         defaultActive: false,
       }),
     ];
@@ -836,12 +830,11 @@ export function createInvestedCapitalPercentilesSeries(
 
 /**
  * Create spot percentile series (shows current percentile of price relative to cost basis/invested capital)
- * @param {Colors} colors
  * @param {readonly CohortWithCostBasisPercentiles[]} list
  * @param {boolean} useGroupName
  * @returns {FetchedBaselineSeriesBlueprint[]}
  */
-export function createSpotPercentileSeries(colors, list, useGroupName) {
+export function createSpotPercentileSeries(list, useGroupName) {
   return list.flatMap(({ name, color, tree }) => [
     baseline({
       metric: tree.costBasis.spotCostBasisPercentile,
@@ -852,7 +845,7 @@ export function createSpotPercentileSeries(colors, list, useGroupName) {
     baseline({
       metric: tree.costBasis.spotInvestedCapitalPercentile,
       name: useGroupName ? `${name} Invested Capital` : "Invested Capital",
-      color: useGroupName ? color : colors.orange,
+      color: useGroupName ? color : colors.bitcoin,
       unit: Unit.ratio,
       defaultActive: false,
     }),
@@ -990,28 +983,27 @@ export function createSingleSentSeries(cohort) {
 
 /**
  * Create sell side risk ratio series for single cohort
- * @param {Colors} colors
  * @param {{ realized: AnyRealizedPattern }} tree
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSingleSellSideRiskSeries(colors, tree) {
+export function createSingleSellSideRiskSeries(tree) {
   return [
     dots({
       metric: tree.realized.sellSideRiskRatio,
       name: "Raw",
-      color: colors.orange,
+      color: colors.bitcoin,
       unit: Unit.ratio,
     }),
     line({
       metric: tree.realized.sellSideRiskRatio7dEma,
       name: "7d EMA",
-      color: colors.red,
+      color: colors.ma._1w,
       unit: Unit.ratio,
     }),
     line({
       metric: tree.realized.sellSideRiskRatio30dEma,
       name: "30d EMA",
-      color: colors.pink,
+      color: colors.ma._1m,
       unit: Unit.ratio,
     }),
   ];
@@ -1039,22 +1031,21 @@ export function createGroupedSellSideRiskSeries(list) {
 
 /**
  * Create value created & destroyed series for single cohort
- * @param {Colors} colors
  * @param {{ realized: AnyRealizedPattern }} tree
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSingleValueCreatedDestroyedSeries(colors, tree) {
+export function createSingleValueCreatedDestroyedSeries(tree) {
   return [
     line({
       metric: tree.realized.valueCreated,
       name: "Created",
-      color: colors.emerald,
+      color: colors.usd,
       unit: Unit.usd,
     }),
     line({
       metric: tree.realized.valueDestroyed,
       name: "Destroyed",
-      color: colors.red,
+      color: colors.loss,
       unit: Unit.usd,
     }),
   ];
@@ -1063,36 +1054,35 @@ export function createSingleValueCreatedDestroyedSeries(colors, tree) {
 /**
  * Create profit/loss value breakdown series for single cohort
  * Shows profit value created/destroyed and loss value created/destroyed
- * @param {Colors} colors
  * @param {{ realized: AnyRealizedPattern }} tree
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSingleValueFlowBreakdownSeries(colors, tree) {
+export function createSingleValueFlowBreakdownSeries(tree) {
   return [
     line({
       metric: tree.realized.profitValueCreated,
       name: "Profit Created",
-      color: colors.green,
+      color: colors.profit,
       unit: Unit.usd,
     }),
     line({
       metric: tree.realized.profitValueDestroyed,
       name: "Profit Destroyed",
-      color: colors.lime,
+      color: colors.loss,
       unit: Unit.usd,
       defaultActive: false,
     }),
     line({
       metric: tree.realized.lossValueCreated,
       name: "Loss Created",
-      color: colors.orange,
+      color: colors.bitcoin,
       unit: Unit.usd,
       defaultActive: false,
     }),
     line({
       metric: tree.realized.lossValueDestroyed,
       name: "Loss Destroyed",
-      color: colors.red,
+      color: colors.loss,
       unit: Unit.usd,
     }),
   ];
@@ -1100,22 +1090,21 @@ export function createSingleValueFlowBreakdownSeries(colors, tree) {
 
 /**
  * Create capitulation & profit flow series for single cohort
- * @param {Colors} colors
  * @param {{ realized: AnyRealizedPattern }} tree
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSingleCapitulationProfitFlowSeries(colors, tree) {
+export function createSingleCapitulationProfitFlowSeries(tree) {
   return [
     line({
       metric: tree.realized.profitFlow,
       name: "Profit Flow",
-      color: colors.green,
+      color: colors.profit,
       unit: Unit.usd,
     }),
     line({
       metric: tree.realized.capitulationFlow,
       name: "Capitulation Flow",
-      color: colors.red,
+      color: colors.loss,
       unit: Unit.usd,
     }),
   ];
@@ -1127,11 +1116,10 @@ export function createSingleCapitulationProfitFlowSeries(colors, tree) {
 
 /**
  * Create base SOPR series for single cohort (all cohorts have base SOPR)
- * @param {Colors} colors
  * @param {{ realized: AnyRealizedPattern }} tree
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSingleSoprSeries(colors, tree) {
+export function createSingleSoprSeries(tree) {
   return [
     baseline({
       metric: tree.realized.sopr,
@@ -1142,7 +1130,7 @@ export function createSingleSoprSeries(colors, tree) {
     baseline({
       metric: tree.realized.sopr7dEma,
       name: "7d EMA",
-      color: [colors.lime, colors.rose],
+      color: colors.bi.sopr7d,
       unit: Unit.ratio,
       defaultActive: false,
       base: 1,
@@ -1150,7 +1138,7 @@ export function createSingleSoprSeries(colors, tree) {
     baseline({
       metric: tree.realized.sopr30dEma,
       name: "30d EMA",
-      color: [colors.avocado, colors.pink],
+      color: colors.bi.sopr30d,
       unit: Unit.ratio,
       defaultActive: false,
       base: 1,
@@ -1337,11 +1325,10 @@ export function createGroupedRealizedAthRegretSeries(list) {
 
 /**
  * Create sentiment series for single cohort
- * @param {Colors} colors
  * @param {{ unrealized: UnrealizedPattern }} tree
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSingleSentimentSeries(colors, tree) {
+export function createSingleSentimentSeries(tree) {
   return [
     baseline({
       metric: tree.unrealized.netSentiment,
@@ -1351,13 +1338,13 @@ export function createSingleSentimentSeries(colors, tree) {
     line({
       metric: tree.unrealized.greedIndex,
       name: "Greed Index",
-      color: colors.green,
+      color: colors.profit,
       unit: Unit.usd,
     }),
     line({
       metric: tree.unrealized.painIndex,
       name: "Pain Index",
-      color: colors.red,
+      color: colors.loss,
       unit: Unit.usd,
     }),
   ];

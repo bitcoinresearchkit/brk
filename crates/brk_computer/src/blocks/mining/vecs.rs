@@ -11,6 +11,8 @@ pub struct Vecs {
     pub hash_rate_1m_sma: ComputedFromDateLast<StoredF32>,
     pub hash_rate_2m_sma: ComputedFromDateLast<StoredF32>,
     pub hash_rate_1y_sma: ComputedFromDateLast<StoredF32>,
+    pub hash_rate_ath: ComputedFromHeightLast<StoredF64>,
+    pub hash_rate_drawdown: ComputedFromHeightLast<StoredF32>,
     pub hash_price_ths: ComputedFromHeightLast<StoredF32>,
     pub hash_price_ths_min: ComputedFromHeightLast<StoredF32>,
     pub hash_price_phs: ComputedFromHeightLast<StoredF32>,

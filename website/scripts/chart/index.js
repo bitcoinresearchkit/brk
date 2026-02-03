@@ -241,13 +241,14 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
   );
 
   // Debounced range persistence
-  ichart.timeScale().subscribeVisibleLogicalRangeChange(
-    debounce((range) => {
-      if (range && range.from < range.to) {
-        setRange({ from: range.from, to: range.to });
-      }
-    }, 100),
-  );
+  const debouncedSetRange = debounce((/** @type {Range | null} */ range) => {
+    if (range && range.from < range.to) {
+      setRange({ from: range.from, to: range.to });
+    }
+  }, 100);
+  // Cancel pending range saves on index change to prevent saving stale ranges to wrong index
+  index.onChange.add(() => debouncedSetRange.cancel());
+  ichart.timeScale().subscribeVisibleLogicalRangeChange(debouncedSetRange);
 
   function applyColors() {
     const defaultColor = colors.default();
@@ -734,8 +735,8 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       defaultActive,
       options,
     }) {
-      const upColor = customColors?.[0] ?? colors.green;
-      const downColor = customColors?.[1] ?? colors.red;
+      const upColor = customColors?.[0] ?? colors.bi.profitLoss[0];
+      const downColor = customColors?.[1] ?? colors.bi.profitLoss[1];
 
       /** @type {CandlestickISeries} */
       const candlestickISeries = /** @type {any} */ (
@@ -875,7 +876,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       metric,
       name,
       key,
-      color = [colors.green, colors.red],
+      color = colors.bi.profitLoss,
       order,
       unit,
       paneIndex = 0,
@@ -1188,8 +1189,8 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       unit,
       paneIndex: _paneIndex,
       defaultActive,
-      topColor = colors.green,
-      bottomColor = colors.red,
+      topColor = colors.bi.profitLoss[0],
+      bottomColor = colors.bi.profitLoss[1],
       options,
     }) {
       const paneIndex = _paneIndex ?? 0;
@@ -1351,7 +1352,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         const options = blueprint.options;
         const indexes = Object.keys(blueprint.metric.by);
 
-        const defaultColor = unit === Unit.usd ? colors.green : colors.orange;
+        const defaultColor = unit === Unit.usd ? colors.usd : colors.bitcoin;
 
         if (indexes.includes(idx)) {
           switch (blueprint.type) {

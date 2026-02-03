@@ -80,22 +80,22 @@ export function createPartialOptions() {
             // Overview - All UTXOs (adjustedSopr + percentiles but no RelToMarketCap)
             createCohortFolderAll({ ...cohortAll, name: "Overview" }),
 
-            // STH - Short term holder cohort (Full capability)
-            createCohortFolderFull(termShort),
-
-            // LTH - Long term holder cohort (nupl)
-            createCohortFolderWithNupl(termLong),
-
-            // STH vs LTH - Direct comparison
+            // STH vs LTH - Direct comparison (before individual cohorts)
             createCohortFolderWithNupl({
               name: "STH vs LTH",
               title: "STH vs LTH",
               list: [termShort, termLong],
             }),
 
+            // STH - Short term holder cohort (Full capability)
+            createCohortFolderFull(termShort),
+
+            // LTH - Long term holder cohort (nupl)
+            createCohortFolderWithNupl(termLong),
+
             // Ages cohorts
             {
-              name: "Ages",
+              name: "UTXO Ages",
               tree: [
                 // Younger Than (< X old)
                 {
@@ -138,7 +138,7 @@ export function createPartialOptions() {
 
             // Sizes cohorts (UTXO size)
             {
-              name: "Sizes",
+              name: "UTXO Sizes",
               tree: [
                 // Less Than (< X sats)
                 {
@@ -187,7 +187,7 @@ export function createPartialOptions() {
 
             // Balances cohorts (Address balance)
             {
-              name: "Balances",
+              name: "Address Balances",
               tree: [
                 // Less Than (< X sats)
                 {

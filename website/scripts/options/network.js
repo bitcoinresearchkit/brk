@@ -7,6 +7,7 @@ import { priceLine } from "./constants.js";
 import {
   line,
   dots,
+  baseline,
   fromSupplyPattern,
   fromBaseStatsPattern,
   chartsFromFull,
@@ -126,17 +127,25 @@ export function createNetworkSection() {
   ]);
 
   // Count types for comparison charts
+  // addrCount and emptyAddrCount have .count, totalAddrCount doesn't
   const countTypes = /** @type {const} */ ([
-    { key: "addrCount", name: "Funded", title: "Address Count by Type" },
     {
-      key: "emptyAddrCount",
-      name: "Empty",
-      title: "Empty Address Count by Type",
+      name: "Funded",
+      title: "Address Count by Type",
+      /** @param {AddressableType} t */
+      getMetric: (t) => distribution.addrCount[t].count,
     },
     {
-      key: "totalAddrCount",
+      name: "Empty",
+      title: "Empty Address Count by Type",
+      /** @param {AddressableType} t */
+      getMetric: (t) => distribution.emptyAddrCount[t].count,
+    },
+    {
       name: "Total",
       title: "Total Address Count by Type",
+      /** @param {AddressableType} t */
+      getMetric: (t) => distribution.totalAddrCount[t],
     },
   ]);
 
@@ -151,7 +160,7 @@ export function createNetworkSection() {
       title: `${titlePrefix}Address Count`,
       bottom: [
         line({
-          metric: distribution.addrCount[key],
+          metric: distribution.addrCount[key].count,
           name: "Funded",
           unit: Unit.count,
         }),
@@ -163,7 +172,7 @@ export function createNetworkSection() {
           defaultActive: false,
         }),
         line({
-          metric: distribution.emptyAddrCount[key],
+          metric: distribution.emptyAddrCount[key].count,
           name: "Empty",
           color: colors.gray,
           unit: Unit.count,
@@ -172,28 +181,44 @@ export function createNetworkSection() {
       ],
     },
     {
-      name: "New",
-      tree: chartsFromFull({
-        pattern: distribution.newAddrCount[key],
-        title: `${titlePrefix}New Address Count`,
-        unit: Unit.count,
-      }),
-    },
-    {
-      name: "Reactivated",
-      title: `${titlePrefix}Reactivated Address Count`,
-      bottom: fromBaseStatsPattern({
-        pattern: distribution.addressActivity[key].reactivated,
-        unit: Unit.count,
-      }),
-    },
-    {
-      name: "Growth Rate",
-      title: `${titlePrefix}Address Growth Rate`,
-      bottom: fromBaseStatsPattern({
-        pattern: distribution.growthRate[key],
-        unit: Unit.ratio,
-      }),
+      name: "Trends",
+      tree: [
+        {
+          name: "30d Change",
+          title: `${titlePrefix}Address Count 30d Change`,
+          bottom: [
+            baseline({
+              metric: distribution.addrCount[key]._30dChange,
+              name: "30d Change",
+              unit: Unit.count,
+            }),
+          ],
+        },
+        {
+          name: "New",
+          tree: chartsFromFull({
+            pattern: distribution.newAddrCount[key],
+            title: `${titlePrefix}New Address Count`,
+            unit: Unit.count,
+          }),
+        },
+        {
+          name: "Reactivated",
+          title: `${titlePrefix}Reactivated Address Count`,
+          bottom: fromBaseStatsPattern({
+            pattern: distribution.addressActivity[key].reactivated,
+            unit: Unit.count,
+          }),
+        },
+        {
+          name: "Growth Rate",
+          title: `${titlePrefix}Address Growth Rate`,
+          bottom: fromBaseStatsPattern({
+            pattern: distribution.growthRate[key],
+            unit: Unit.ratio,
+          }),
+        },
+      ],
     },
     {
       name: "Transacting",
@@ -235,7 +260,7 @@ export function createNetworkSection() {
           title: `${groupName} ${c.title}`,
           bottom: types.map((t) =>
             line({
-              metric: distribution[c.key][t.key],
+              metric: c.getMetric(t.key),
               name: t.name,
               color: t.color,
               unit: Unit.count,
@@ -353,7 +378,7 @@ export function createNetworkSection() {
     { key: "p2ms", name: "P2MS", color: st.p2ms },
   ]);
   const segwitScripts = /** @type {const} */ ([
-    { key: "segwit", name: "All SegWit", color: colors.cyan },
+    { key: "segwit", name: "All SegWit", color: colors.segwit },
     { key: "p2wsh", name: "P2WSH", color: st.p2wsh },
     { key: "p2wpkh", name: "P2WPKH", color: st.p2wpkh },
   ]);
@@ -492,7 +517,7 @@ export function createNetworkSection() {
                   ...satsBtcUsd({
                     pattern: transactions.volume.receivedSum,
                     name: "Received",
-                    color: colors.cyan,
+                    color: colors.entity.output,
                   }),
                 ],
               },
@@ -530,19 +555,19 @@ export function createNetworkSection() {
                   line({
                     metric: transactions.versions.v1.sum,
                     name: "v1",
-                    color: colors.orange,
+                    color: colors.txVersion.v1,
                     unit: Unit.count,
                   }),
                   line({
                     metric: transactions.versions.v2.sum,
                     name: "v2",
-                    color: colors.cyan,
+                    color: colors.txVersion.v2,
                     unit: Unit.count,
                   }),
                   line({
                     metric: transactions.versions.v3.sum,
                     name: "v3",
-                    color: colors.lime,
+                    color: colors.txVersion.v3,
                     unit: Unit.count,
                   }),
                 ],
@@ -554,19 +579,19 @@ export function createNetworkSection() {
                   line({
                     metric: transactions.versions.v1.cumulative,
                     name: "v1",
-                    color: colors.orange,
+                    color: colors.txVersion.v1,
                     unit: Unit.count,
                   }),
                   line({
                     metric: transactions.versions.v2.cumulative,
                     name: "v2",
-                    color: colors.cyan,
+                    color: colors.txVersion.v2,
                     unit: Unit.count,
                   }),
                   line({
                     metric: transactions.versions.v3.cumulative,
                     name: "v3",
-                    color: colors.lime,
+                    color: colors.txVersion.v3,
                     unit: Unit.count,
                   }),
                 ],
@@ -585,7 +610,7 @@ export function createNetworkSection() {
               line({
                 metric: supply.velocity.usd,
                 name: "USD",
-                color: colors.emerald,
+                color: colors.usd,
                 unit: Unit.ratio,
               }),
             ],
@@ -625,25 +650,25 @@ export function createNetworkSection() {
                   line({
                     metric: blocks.count._24hBlockCount,
                     name: "24h",
-                    color: colors.pink,
+                    color: colors.time._24h,
                     unit: Unit.count,
                   }),
                   line({
                     metric: blocks.count._1wBlockCount,
                     name: "1w",
-                    color: colors.red,
+                    color: colors.time._1w,
                     unit: Unit.count,
                   }),
                   line({
                     metric: blocks.count._1mBlockCount,
                     name: "1m",
-                    color: colors.orange,
+                    color: colors.time._1m,
                     unit: Unit.count,
                   }),
                   line({
                     metric: blocks.count._1yBlockCount,
                     name: "1y",
-                    color: colors.purple,
+                    color: colors.time._1y,
                     unit: Unit.count,
                   }),
                 ],
@@ -840,19 +865,30 @@ export function createNetworkSection() {
             ],
           },
           {
+            name: "30d Change",
+            title: "UTXO Count 30d Change",
+            bottom: [
+              baseline({
+                metric: distribution.utxoCohorts.all.outputs.utxoCount30dChange,
+                name: "30d Change",
+                unit: Unit.count,
+              }),
+            ],
+          },
+          {
             name: "Flow",
             title: "UTXO Flow",
             bottom: [
               line({
                 metric: outputs.count.totalCount.sum,
                 name: "Created",
-                color: colors.lime,
+                color: colors.entity.output,
                 unit: Unit.count,
               }),
               line({
                 metric: inputs.count.sum,
                 name: "Spent",
-                color: colors.red,
+                color: colors.entity.input,
                 unit: Unit.count,
               }),
             ],
@@ -882,18 +918,19 @@ export function createNetworkSection() {
           dots({
             metric: transactions.volume.txPerSec,
             name: "TX/sec",
-            color: colors.red,
+            color: colors.entity.tx,
             unit: Unit.perSec,
           }),
           dots({
             metric: transactions.volume.inputsPerSec,
             name: "Inputs/sec",
+            color: colors.entity.input,
             unit: Unit.perSec,
           }),
           dots({
             metric: transactions.volume.outputsPerSec,
             name: "Outputs/sec",
-            color: colors.cyan,
+            color: colors.entity.output,
             unit: Unit.perSec,
           }),
         ],
@@ -917,7 +954,7 @@ export function createNetworkSection() {
                   title: c.title,
                   bottom: addressTypes.map((t) =>
                     line({
-                      metric: distribution[c.key][t.key],
+                      metric: c.getMetric(t.key),
                       name: t.name,
                       color: t.color,
                       unit: Unit.count,
@@ -1198,13 +1235,13 @@ export function createNetworkSection() {
                   line({
                     metric: scripts.count.segwitAdoption.cumulative,
                     name: "SegWit",
-                    color: colors.cyan,
+                    color: colors.segwit,
                     unit: Unit.percentage,
                   }),
                   line({
                     metric: scripts.count.taprootAdoption.cumulative,
                     name: "Taproot",
-                    color: colors.orange,
+                    color: colors.scriptType.p2tr,
                     unit: Unit.percentage,
                   }),
                 ],
@@ -1226,7 +1263,7 @@ export function createNetworkSection() {
                   line({
                     metric: scripts.count.segwitAdoption.cumulative,
                     name: "All-Time",
-                    color: colors.red,
+                    color: colors.time.all,
                     unit: Unit.percentage,
                   }),
                 ],
@@ -1248,7 +1285,7 @@ export function createNetworkSection() {
                   line({
                     metric: scripts.count.taprootAdoption.cumulative,
                     name: "All-Time",
-                    color: colors.red,
+                    color: colors.time.all,
                     unit: Unit.percentage,
                   }),
                 ],

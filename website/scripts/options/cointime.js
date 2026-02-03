@@ -27,7 +27,7 @@ export function createCointimeSection() {
     {
       metric: all.realized.realizedCap,
       name: "Realized",
-      color: colors.orange,
+      color: colors.realized,
     },
   ]);
 
@@ -36,47 +36,47 @@ export function createCointimeSection() {
       pricePattern: pricing.trueMarketMean,
       ratio: pricing.trueMarketMeanRatio,
       name: "True Market Mean",
-      color: colors.blue,
+      color: colors.trueMarketMean,
     },
     {
       pricePattern: pricing.vaultedPrice,
       ratio: pricing.vaultedPriceRatio,
       name: "Vaulted",
-      color: colors.lime,
+      color: colors.vaulted,
     },
     {
       pricePattern: pricing.activePrice,
       ratio: pricing.activePriceRatio,
       name: "Active",
-      color: colors.rose,
+      color: colors.active,
     },
     {
       pricePattern: pricing.cointimePrice,
       ratio: pricing.cointimePriceRatio,
       name: "Cointime",
-      color: colors.yellow,
+      color: colors.cointime,
     },
   ]);
 
   const caps = /** @type {const} */ ([
-    { metric: cap.vaultedCap, name: "Vaulted", color: colors.lime },
-    { metric: cap.activeCap, name: "Active", color: colors.rose },
-    { metric: cap.cointimeCap, name: "Cointime", color: colors.yellow },
-    { metric: cap.investorCap, name: "Investor", color: colors.fuchsia },
-    { metric: cap.thermoCap, name: "Thermo", color: colors.emerald },
+    { metric: cap.vaultedCap, name: "Vaulted", color: colors.vaulted },
+    { metric: cap.activeCap, name: "Active", color: colors.active },
+    { metric: cap.cointimeCap, name: "Cointime", color: colors.cointime },
+    { metric: cap.investorCap, name: "Investor", color: colors.investor },
+    { metric: cap.thermoCap, name: "Thermo", color: colors.thermo },
   ]);
 
   const supplyBreakdown = /** @type {const} */ ([
-    { pattern: all.supply.total, name: "Total", color: colors.orange },
+    { pattern: all.supply.total, name: "Total", color: colors.bitcoin },
     {
       pattern: cointimeSupply.vaultedSupply,
       name: "Vaulted",
-      color: colors.lime,
+      color: colors.vaulted,
     },
     {
       pattern: cointimeSupply.activeSupply,
       name: "Active",
-      color: colors.rose,
+      color: colors.active,
     },
   ]);
 
@@ -85,19 +85,19 @@ export function createCointimeSection() {
       pattern: all.activity.coinblocksDestroyed,
       name: "Destroyed",
       title: "Coinblocks Destroyed",
-      color: colors.red,
+      color: colors.destroyed,
     },
     {
       pattern: activity.coinblocksCreated,
       name: "Created",
       title: "Coinblocks Created",
-      color: colors.orange,
+      color: colors.created,
     },
     {
       pattern: activity.coinblocksStored,
       name: "Stored",
       title: "Coinblocks Stored",
-      color: colors.green,
+      color: colors.stored,
     },
   ]);
 
@@ -107,19 +107,19 @@ export function createCointimeSection() {
       pattern: value.cointimeValueCreated,
       name: "Created",
       title: "Cointime Value Created",
-      color: colors.orange,
+      color: colors.created,
     },
     {
       pattern: value.cointimeValueDestroyed,
       name: "Destroyed",
       title: "Cointime Value Destroyed",
-      color: colors.red,
+      color: colors.destroyed,
     },
     {
       pattern: value.cointimeValueStored,
       name: "Stored",
       title: "Cointime Value Stored",
-      color: colors.green,
+      color: colors.stored,
     },
   ]);
 
@@ -127,7 +127,7 @@ export function createCointimeSection() {
     pattern: value.vocdd,
     name: "VOCDD",
     title: "Value of Coin Days Destroyed",
-    color: colors.purple,
+    color: colors.vocdd,
   });
 
   return {
@@ -144,12 +144,12 @@ export function createCointimeSection() {
               price({
                 metric: all.realized.realizedPrice,
                 name: "Realized",
-                color: colors.orange,
+                color: colors.realized,
               }),
               price({
                 metric: all.realized.investorPrice,
                 name: "Investor",
-                color: colors.fuchsia,
+                color: colors.investor,
               }),
               ...prices.map(({ pricePattern, name, color }) =>
                 price({ metric: pricePattern, name, color }),
@@ -168,7 +168,7 @@ export function createCointimeSection() {
                 price({
                   metric: all.realized.realizedPrice,
                   name: "Realized",
-                  color: colors.orange,
+                  color: colors.realized,
                   defaultActive: false,
                 }),
               ],
@@ -228,19 +228,19 @@ export function createCointimeSection() {
           line({
             metric: activity.liveliness,
             name: "Liveliness",
-            color: colors.rose,
+            color: colors.liveliness,
             unit: Unit.ratio,
           }),
           line({
             metric: activity.vaultedness,
             name: "Vaultedness",
-            color: colors.lime,
+            color: colors.vaulted,
             unit: Unit.ratio,
           }),
           line({
             metric: activity.activityToVaultednessRatio,
             name: "L/V Ratio",
-            color: colors.purple,
+            color: colors.activity,
             unit: Unit.ratio,
             defaultActive: false,
           }),
@@ -394,9 +394,9 @@ export function createCointimeSection() {
                     unit: Unit.usd,
                   }),
                   line({
-                    metric: reserveRisk.vocdd365dSma,
-                    name: "365d SMA",
-                    color: colors.cyan,
+                    metric: reserveRisk.vocdd365dMedian,
+                    name: "365d Median",
+                    color: colors.ma._1y,
                     unit: Unit.usd,
                   }),
                 ],
@@ -429,7 +429,7 @@ export function createCointimeSection() {
               line({
                 metric: reserveRisk.reserveRisk,
                 name: "Ratio",
-                color: colors.orange,
+                color: colors.reserveRisk,
                 unit: Unit.ratio,
               }),
             ],
@@ -441,7 +441,7 @@ export function createCointimeSection() {
               line({
                 metric: reserveRisk.hodlBank,
                 name: "Value",
-                color: colors.blue,
+                color: colors.hodlBank,
                 unit: Unit.usd,
               }),
             ],
@@ -460,13 +460,13 @@ export function createCointimeSection() {
               dots({
                 metric: supply.inflation,
                 name: "Base",
-                color: colors.orange,
+                color: colors.base,
                 unit: Unit.percentage,
               }),
               dots({
                 metric: adjusted.cointimeAdjInflationRate,
                 name: "Cointime-Adjusted",
-                color: colors.purple,
+                color: colors.adjusted,
                 unit: Unit.percentage,
               }),
             ],
@@ -481,13 +481,13 @@ export function createCointimeSection() {
                   line({
                     metric: supply.velocity.btc,
                     name: "Base",
-                    color: colors.orange,
+                    color: colors.base,
                     unit: Unit.ratio,
                   }),
                   line({
                     metric: adjusted.cointimeAdjTxBtcVelocity,
                     name: "Cointime-Adjusted",
-                    color: colors.red,
+                    color: colors.adjusted,
                     unit: Unit.ratio,
                   }),
                 ],
@@ -499,13 +499,13 @@ export function createCointimeSection() {
                   line({
                     metric: supply.velocity.usd,
                     name: "Base",
-                    color: colors.emerald,
+                    color: colors.thermo,
                     unit: Unit.ratio,
                   }),
                   line({
                     metric: adjusted.cointimeAdjTxUsdVelocity,
                     name: "Cointime-Adjusted",
-                    color: colors.lime,
+                    color: colors.vaulted,
                     unit: Unit.ratio,
                   }),
                 ],

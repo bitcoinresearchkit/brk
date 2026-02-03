@@ -3,13 +3,15 @@ use std::path::Path;
 use brk_cohort::{CohortContext, Filter, Filtered};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, StoredU64, Version};
+use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, StoredF64, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, IterableVec};
 
 use crate::{
-    ComputeIndexes, distribution::state::AddressCohortState, indexes, internal::ComputedFromHeightLast,
-    price,
+    distribution::state::AddressCohortState,
+    indexes,
+    internal::{ComputedFromDateLast, ComputedFromHeightLast},
+    price, ComputeIndexes,
 };
 
 use crate::distribution::metrics::{CohortMetrics, ImportConfig, SupplyMetrics};
@@ -33,6 +35,7 @@ pub struct AddressCohortVecs {
     pub metrics: CohortMetrics,
 
     pub addr_count: ComputedFromHeightLast<StoredU64>,
+    pub addr_count_30d_change: ComputedFromDateLast<StoredF64>,
 }
 
 impl AddressCohortVecs {
@@ -76,6 +79,12 @@ impl AddressCohortVecs {
             addr_count: ComputedFromHeightLast::forced_import(
                 db,
                 &cfg.name("addr_count"),
+                version + VERSION,
+                indexes,
+            )?,
+            addr_count_30d_change: ComputedFromDateLast::forced_import(
+                db,
+                &cfg.name("addr_count_30d_change"),
                 version + VERSION,
                 indexes,
             )?,
@@ -234,6 +243,18 @@ impl DynCohortVecs for AddressCohortVecs {
     ) -> Result<()> {
         self.addr_count
             .compute_rest(indexes, starting_indexes, exit)?;
+
+        self.addr_count_30d_change
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_change(
+                    starting_indexes.dateindex,
+                    &*self.addr_count.dateindex,
+                    30,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
         self.metrics
             .compute_rest_part1(indexes, price, starting_indexes, exit)?;
         Ok(())

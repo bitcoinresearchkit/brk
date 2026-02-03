@@ -75,20 +75,19 @@ function createMaSubSection(label, averages) {
 }
 
 /**
- * @param {Colors} colors
  * @param {string} name
  * @param {string} title
  * @param {Unit} unit
  * @param {{ _1w: AnyMetricPattern, _1m: AnyMetricPattern, _1y: AnyMetricPattern }} metrics
  */
-function volatilityChart(colors, name, title, unit, metrics) {
+function volatilityChart(name, title, unit, metrics) {
   return {
     name,
     title,
     bottom: [
-      line({ metric: metrics._1w, name: "1w", color: colors.red, unit }),
-      line({ metric: metrics._1m, name: "1m", color: colors.orange, unit }),
-      line({ metric: metrics._1y, name: "1y", color: colors.lime, unit }),
+      line({ metric: metrics._1w, name: "1w", color: colors.time._1w, unit }),
+      line({ metric: metrics._1m, name: "1m", color: colors.time._1m, unit }),
+      line({ metric: metrics._1y, name: "1y", color: colors.time._1y, unit }),
     ],
   };
 }
@@ -423,7 +422,7 @@ export function createMarketSection() {
               line({
                 metric: ath.priceDrawdown,
                 name: "Drawdown",
-                color: colors.red,
+                color: colors.loss,
                 unit: Unit.percentage,
               }),
             ],
@@ -446,13 +445,13 @@ export function createMarketSection() {
               line({
                 metric: ath.maxDaysBetweenPriceAths,
                 name: "Max",
-                color: colors.red,
+                color: colors.loss,
                 unit: Unit.days,
               }),
               line({
                 metric: ath.maxYearsBetweenPriceAths,
                 name: "Max",
-                color: colors.red,
+                color: colors.loss,
                 unit: Unit.years,
               }),
             ],
@@ -484,17 +483,11 @@ export function createMarketSection() {
       {
         name: "Volatility",
         tree: [
-          volatilityChart(
-            colors,
-            "Index",
-            "Volatility Index",
-            Unit.percentage,
-            {
-              _1w: volatility.price1wVolatility,
-              _1m: volatility.price1mVolatility,
-              _1y: volatility.price1yVolatility,
-            },
-          ),
+          volatilityChart("Index", "Volatility Index", Unit.percentage, {
+            _1w: volatility.price1wVolatility,
+            _1m: volatility.price1mVolatility,
+            _1y: volatility.price1yVolatility,
+          }),
           {
             name: "True Range",
             title: "True Range",
@@ -502,13 +495,13 @@ export function createMarketSection() {
               line({
                 metric: range.priceTrueRange,
                 name: "Daily",
-                color: colors.yellow,
+                color: colors.time._24h,
                 unit: Unit.usd,
               }),
               line({
                 metric: range.priceTrueRange2wSum,
                 name: "2w Sum",
-                color: colors.orange,
+                color: colors.time._1w,
                 unit: Unit.usd,
                 defaultActive: false,
               }),
@@ -521,28 +514,22 @@ export function createMarketSection() {
               line({
                 metric: range.price2wChoppinessIndex,
                 name: "2w",
-                color: colors.red,
+                color: colors.indicator.main,
                 unit: Unit.index,
               }),
               ...priceLines({ unit: Unit.index, numbers: [61.8, 38.2] }),
             ],
           },
-          volatilityChart(colors, "Sharpe Ratio", "Sharpe Ratio", Unit.ratio, {
+          volatilityChart("Sharpe Ratio", "Sharpe Ratio", Unit.ratio, {
             _1w: volatility.sharpe1w,
             _1m: volatility.sharpe1m,
             _1y: volatility.sharpe1y,
           }),
-          volatilityChart(
-            colors,
-            "Sortino Ratio",
-            "Sortino Ratio",
-            Unit.ratio,
-            {
-              _1w: volatility.sortino1w,
-              _1m: volatility.sortino1m,
-              _1y: volatility.sortino1y,
-            },
-          ),
+          volatilityChart("Sortino Ratio", "Sortino Ratio", Unit.ratio, {
+            _1w: volatility.sortino1w,
+            _1m: volatility.sortino1m,
+            _1y: volatility.sortino1y,
+          }),
         ],
       },
 
@@ -624,16 +611,16 @@ export function createMarketSection() {
               title: `${p.name} MinMax`,
               top: [
                 price({
-                  metric: p.min,
-                  name: "Min",
-                  key: "price-min",
-                  color: colors.red,
-                }),
-                price({
                   metric: p.max,
                   name: "Max",
                   key: "price-max",
-                  color: colors.green,
+                  color: colors.stat.max,
+                }),
+                price({
+                  metric: p.min,
+                  name: "Min",
+                  key: "price-min",
+                  color: colors.stat.min,
                 }),
               ],
             })),
@@ -645,17 +632,17 @@ export function createMarketSection() {
               price({
                 metric: ma.price200dSma.price,
                 name: "200d SMA",
-                color: colors.yellow,
+                color: colors.ma._200d,
               }),
               price({
                 metric: ma.price200dSmaX24,
                 name: "200d SMA x2.4",
-                color: colors.green,
+                color: colors.indicator.upper,
               }),
               price({
                 metric: ma.price200dSmaX08,
                 name: "200d SMA x0.8",
-                color: colors.red,
+                color: colors.indicator.lower,
               }),
             ],
           },
@@ -672,20 +659,20 @@ export function createMarketSection() {
               line({
                 metric: indicators.rsi14d,
                 name: "RSI",
-                color: colors.indigo,
-                unit: Unit.index,
-              }),
-              line({
-                metric: indicators.rsi14dMin,
-                name: "Min",
-                color: colors.red,
-                defaultActive: false,
+                color: colors.indicator.main,
                 unit: Unit.index,
               }),
               line({
                 metric: indicators.rsi14dMax,
                 name: "Max",
-                color: colors.green,
+                color: colors.stat.max,
+                defaultActive: false,
+                unit: Unit.index,
+              }),
+              line({
+                metric: indicators.rsi14dMin,
+                name: "Min",
+                color: colors.stat.min,
                 defaultActive: false,
                 unit: Unit.index,
               }),
@@ -701,13 +688,13 @@ export function createMarketSection() {
               line({
                 metric: indicators.stochRsiK,
                 name: "K",
-                color: colors.blue,
+                color: colors.indicator.fast,
                 unit: Unit.index,
               }),
               line({
                 metric: indicators.stochRsiD,
                 name: "D",
-                color: colors.orange,
+                color: colors.indicator.slow,
                 unit: Unit.index,
               }),
               ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
@@ -720,13 +707,13 @@ export function createMarketSection() {
               line({
                 metric: indicators.macdLine,
                 name: "MACD",
-                color: colors.blue,
+                color: colors.indicator.fast,
                 unit: Unit.usd,
               }),
               line({
                 metric: indicators.macdSignal,
                 name: "Signal",
-                color: colors.orange,
+                color: colors.indicator.slow,
                 unit: Unit.usd,
               }),
               histogram({
@@ -769,12 +756,12 @@ export function createMarketSection() {
               price({
                 metric: ma.price111dSma.price,
                 name: "111d SMA",
-                color: colors.green,
+                color: colors.indicator.upper,
               }),
               price({
                 metric: ma.price350dSmaX2,
                 name: "350d SMA x2",
-                color: colors.red,
+                color: colors.indicator.lower,
               }),
             ],
             bottom: [
@@ -793,7 +780,7 @@ export function createMarketSection() {
               line({
                 metric: indicators.puellMultiple,
                 name: "Puell",
-                color: colors.green,
+                color: colors.usd,
                 unit: Unit.ratio,
               }),
             ],
@@ -805,7 +792,7 @@ export function createMarketSection() {
               line({
                 metric: indicators.nvt,
                 name: "NVT",
-                color: colors.orange,
+                color: colors.bitcoin,
                 unit: Unit.ratio,
               }),
             ],
@@ -817,7 +804,7 @@ export function createMarketSection() {
               line({
                 metric: indicators.gini,
                 name: "Gini",
-                color: colors.red,
+                color: colors.loss,
                 unit: Unit.ratio,
               }),
             ],

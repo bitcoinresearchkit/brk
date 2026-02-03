@@ -11,7 +11,7 @@ use crate::{
     internal::{LazyBinaryComputedFromHeightDistribution, RatioU64F32},
 };
 
-use super::{AddrCountVecs, NewAddrCountVecs};
+use super::{AddrCountsVecs, NewAddrCountVecs};
 
 /// Growth rate by type - lazy ratio with distribution stats
 pub type GrowthRateByType =
@@ -31,7 +31,7 @@ impl GrowthRateVecs {
         version: Version,
         indexes: &indexes::Vecs,
         new_addr_count: &NewAddrCountVecs,
-        addr_count: &AddrCountVecs,
+        addr_count: &AddrCountsVecs,
     ) -> Result<Self> {
         let all = make_growth_rate(
             db,
@@ -39,7 +39,7 @@ impl GrowthRateVecs {
             version,
             indexes,
             &new_addr_count.all.height,
-            &addr_count.all.height,
+            &addr_count.all.count.height,
         )?;
 
         let by_addresstype: GrowthRateByType = zip2_by_addresstype(
@@ -52,7 +52,7 @@ impl GrowthRateVecs {
                     version,
                     indexes,
                     &new.height,
-                    &addr.height,
+                    &addr.count.height,
                 )
             },
         )?;

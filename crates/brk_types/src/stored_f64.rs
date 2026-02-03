@@ -10,7 +10,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
-use crate::{Bitcoin, Dollars};
+use crate::{Bitcoin, Dollars, StoredU64};
 
 /// Fixed-size 64-bit floating point value optimized for on-disk storage
 #[derive(Debug, Deref, Default, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
@@ -45,6 +45,13 @@ impl From<usize> for StoredF64 {
     #[inline]
     fn from(value: usize) -> Self {
         Self(value as f64)
+    }
+}
+
+impl From<StoredU64> for StoredF64 {
+    #[inline]
+    fn from(value: StoredU64) -> Self {
+        Self(*value as f64)
     }
 }
 

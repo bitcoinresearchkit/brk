@@ -2614,16 +2614,49 @@ function createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2(clie
 }
 
 /**
+ * @typedef {Object} ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern
+ * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
+ * @property {MetricPattern1<StoredU64>} addrCount
+ * @property {MetricPattern4<StoredF64>} addrCount30dChange
+ * @property {MaxMinPattern} costBasis
+ * @property {UtxoPattern} outputs
+ * @property {CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} realized
+ * @property {InvestedNegNetNuplSupplyUnrealizedPattern} relative
+ * @property {_30dHalvedTotalPattern} supply
+ * @property {GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern}
+ */
+function createActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, acc) {
+  return {
+    activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
+    addrCount: createMetricPattern1(client, _m(acc, 'addr_count')),
+    addrCount30dChange: createMetricPattern4(client, _m(acc, 'addr_count_30d_change')),
+    costBasis: createMaxMinPattern(client, acc),
+    outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
+    realized: createCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern(client, acc),
+    relative: createInvestedNegNetNuplSupplyUnrealizedPattern(client, acc),
+    supply: create_30dHalvedTotalPattern(client, acc),
+    unrealized: createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(client, acc),
+  };
+}
+
+/**
  * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern
- * @property {MetricPattern1<StoredU64>} all
- * @property {MetricPattern1<StoredU64>} p2a
- * @property {MetricPattern1<StoredU64>} p2pk33
- * @property {MetricPattern1<StoredU64>} p2pk65
- * @property {MetricPattern1<StoredU64>} p2pkh
- * @property {MetricPattern1<StoredU64>} p2sh
- * @property {MetricPattern1<StoredU64>} p2tr
- * @property {MetricPattern1<StoredU64>} p2wpkh
- * @property {MetricPattern1<StoredU64>} p2wsh
+ * @property {_30dCountPattern} all
+ * @property {_30dCountPattern} p2a
+ * @property {_30dCountPattern} p2pk33
+ * @property {_30dCountPattern} p2pk65
+ * @property {_30dCountPattern} p2pkh
+ * @property {_30dCountPattern} p2sh
+ * @property {_30dCountPattern} p2tr
+ * @property {_30dCountPattern} p2wpkh
+ * @property {_30dCountPattern} p2wsh
  */
 
 /**
@@ -2634,15 +2667,15 @@ function createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2(clie
  */
 function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern(client, acc) {
   return {
-    all: createMetricPattern1(client, acc),
-    p2a: createMetricPattern1(client, _p('p2a', acc)),
-    p2pk33: createMetricPattern1(client, _p('p2pk33', acc)),
-    p2pk65: createMetricPattern1(client, _p('p2pk65', acc)),
-    p2pkh: createMetricPattern1(client, _p('p2pkh', acc)),
-    p2sh: createMetricPattern1(client, _p('p2sh', acc)),
-    p2tr: createMetricPattern1(client, _p('p2tr', acc)),
-    p2wpkh: createMetricPattern1(client, _p('p2wpkh', acc)),
-    p2wsh: createMetricPattern1(client, _p('p2wsh', acc)),
+    all: create_30dCountPattern(client, acc),
+    p2a: create_30dCountPattern(client, _p('p2a', acc)),
+    p2pk33: create_30dCountPattern(client, _p('p2pk33', acc)),
+    p2pk65: create_30dCountPattern(client, _p('p2pk65', acc)),
+    p2pkh: create_30dCountPattern(client, _p('p2pkh', acc)),
+    p2sh: create_30dCountPattern(client, _p('p2sh', acc)),
+    p2tr: create_30dCountPattern(client, _p('p2tr', acc)),
+    p2wpkh: create_30dCountPattern(client, _p('p2wpkh', acc)),
+    p2wsh: create_30dCountPattern(client, _p('p2wsh', acc)),
   };
 }
 
@@ -2713,37 +2746,6 @@ function createAverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc) {
     pct25: createMetricPattern6(client, _m(acc, 'pct25')),
     pct75: createMetricPattern6(client, _m(acc, 'pct75')),
     pct90: createMetricPattern6(client, _m(acc, 'pct90')),
-  };
-}
-
-/**
- * @typedef {Object} ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern
- * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
- * @property {MetricPattern1<StoredU64>} addrCount
- * @property {MaxMinPattern} costBasis
- * @property {UtxoPattern} outputs
- * @property {CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} realized
- * @property {InvestedNegNetNuplSupplyUnrealizedPattern} relative
- * @property {_30dHalvedTotalPattern} supply
- * @property {GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} unrealized
- */
-
-/**
- * Create a ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern}
- */
-function createActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, acc) {
-  return {
-    activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
-    addrCount: createMetricPattern1(client, _m(acc, 'addr_count')),
-    costBasis: createMaxMinPattern(client, acc),
-    outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
-    realized: createCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern(client, acc),
-    relative: createInvestedNegNetNuplSupplyUnrealizedPattern(client, acc),
-    supply: create_30dHalvedTotalPattern(client, acc),
-    unrealized: createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(client, acc),
   };
 }
 
@@ -3225,6 +3227,25 @@ function createBitcoinDollarsSatsPattern3(client, acc) {
 }
 
 /**
+ * @typedef {Object} _30dCountPattern
+ * @property {MetricPattern4<StoredF64>} _30dChange
+ * @property {MetricPattern1<StoredU64>} count
+ */
+
+/**
+ * Create a _30dCountPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_30dCountPattern}
+ */
+function create_30dCountPattern(client, acc) {
+  return {
+    _30dChange: createMetricPattern4(client, _m(acc, '30d_change')),
+    count: createMetricPattern1(client, acc),
+  };
+}
+
+/**
  * @typedef {Object} DollarsSatsPattern
  * @property {MetricPattern1<Dollars>} dollars
  * @property {MetricPattern1<SatsFract>} sats
@@ -3297,6 +3318,25 @@ function createSdSmaPattern(client, acc) {
   return {
     sd: createMetricPattern4(client, _m(acc, 'sd')),
     sma: createMetricPattern4(client, _m(acc, 'sma')),
+  };
+}
+
+/**
+ * @typedef {Object} UtxoPattern
+ * @property {MetricPattern1<StoredU64>} utxoCount
+ * @property {MetricPattern4<StoredF64>} utxoCount30dChange
+ */
+
+/**
+ * Create a UtxoPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {UtxoPattern}
+ */
+function createUtxoPattern(client, acc) {
+  return {
+    utxoCount: createMetricPattern1(client, acc),
+    utxoCount30dChange: createMetricPattern4(client, _m(acc, '30d_change')),
   };
 }
 
@@ -3380,23 +3420,6 @@ function createRatioPattern2(client, acc) {
   };
 }
 
-/**
- * @typedef {Object} UtxoPattern
- * @property {MetricPattern1<StoredU64>} utxoCount
- */
-
-/**
- * Create a UtxoPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {UtxoPattern}
- */
-function createUtxoPattern(client, acc) {
-  return {
-    utxoCount: createMetricPattern1(client, acc),
-  };
-}
-
 // Catalog tree typedefs
 
 /**
@@ -3473,6 +3496,8 @@ function createUtxoPattern(client, acc) {
  * @property {MetricPattern4<StoredF32>} hashRate1mSma
  * @property {MetricPattern4<StoredF32>} hashRate2mSma
  * @property {MetricPattern4<StoredF32>} hashRate1ySma
+ * @property {MetricPattern1<StoredF64>} hashRateAth
+ * @property {MetricPattern1<StoredF32>} hashRateDrawdown
  * @property {MetricPattern1<StoredF32>} hashPriceThs
  * @property {MetricPattern1<StoredF32>} hashPriceThsMin
  * @property {MetricPattern1<StoredF32>} hashPricePhs
@@ -3755,7 +3780,7 @@ function createUtxoPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Cointime_ReserveRisk
- * @property {MetricPattern6<StoredF64>} vocdd365dSma
+ * @property {MetricPattern6<StoredF64>} vocdd365dMedian
  * @property {MetricPattern6<StoredF64>} hodlBank
  * @property {MetricPattern4<StoredF64>} reserveRisk
  */
@@ -4478,7 +4503,7 @@ function createUtxoPattern(client, acc) {
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern} addrCount
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern} emptyAddrCount
  * @property {MetricsTree_Distribution_AddressActivity} addressActivity
- * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern} totalAddrCount
+ * @property {MetricsTree_Distribution_TotalAddrCount} totalAddrCount
  * @property {MetricsTree_Distribution_NewAddrCount} newAddrCount
  * @property {MetricsTree_Distribution_GrowthRate} growthRate
  * @property {MetricPattern31<FundedAddressIndex>} fundedaddressindex
@@ -4817,6 +4842,19 @@ function createUtxoPattern(client, acc) {
  */
 
 /**
+ * @typedef {Object} MetricsTree_Distribution_TotalAddrCount
+ * @property {MetricPattern1<StoredU64>} all
+ * @property {MetricPattern1<StoredU64>} p2pk65
+ * @property {MetricPattern1<StoredU64>} p2pk33
+ * @property {MetricPattern1<StoredU64>} p2pkh
+ * @property {MetricPattern1<StoredU64>} p2sh
+ * @property {MetricPattern1<StoredU64>} p2wpkh
+ * @property {MetricPattern1<StoredU64>} p2wsh
+ * @property {MetricPattern1<StoredU64>} p2tr
+ * @property {MetricPattern1<StoredU64>} p2a
+ */
+
+/**
  * @typedef {Object} MetricsTree_Distribution_NewAddrCount
  * @property {AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2<StoredU64>} all
  * @property {AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2<StoredU64>} p2pk65
@@ -4875,7 +4913,7 @@ function createUtxoPattern(client, acc) {
  * @extends BrkClientBase
  */
 class BrkClient extends BrkClientBase {
-  VERSION = "v0.1.2";
+  VERSION = "v0.1.3";
 
   INDEXES = /** @type {const} */ ([
     "dateindex",
@@ -5840,6 +5878,8 @@ class BrkClient extends BrkClientBase {
           hashRate1mSma: createMetricPattern4(this, 'hash_rate_1m_sma'),
           hashRate2mSma: createMetricPattern4(this, 'hash_rate_2m_sma'),
           hashRate1ySma: createMetricPattern4(this, 'hash_rate_1y_sma'),
+          hashRateAth: createMetricPattern1(this, 'hash_rate_ath'),
+          hashRateDrawdown: createMetricPattern1(this, 'hash_rate_drawdown'),
           hashPriceThs: createMetricPattern1(this, 'hash_price_ths'),
           hashPriceThsMin: createMetricPattern1(this, 'hash_price_ths_min'),
           hashPricePhs: createMetricPattern1(this, 'hash_price_phs'),
@@ -6047,7 +6087,7 @@ class BrkClient extends BrkClientBase {
           cointimeAdjTxUsdVelocity: createMetricPattern4(this, 'cointime_adj_tx_usd_velocity'),
         },
         reserveRisk: {
-          vocdd365dSma: createMetricPattern6(this, 'vocdd_365d_sma'),
+          vocdd365dMedian: createMetricPattern6(this, 'vocdd_365d_median'),
           hodlBank: createMetricPattern6(this, 'hodl_bank'),
           reserveRisk: createMetricPattern4(this, 'reserve_risk'),
         },
@@ -6886,7 +6926,17 @@ class BrkClient extends BrkClientBase {
           p2tr: createBalanceBothReactivatedReceivingSendingPattern(this, 'p2tr_address_activity'),
           p2a: createBalanceBothReactivatedReceivingSendingPattern(this, 'p2a_address_activity'),
         },
-        totalAddrCount: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern(this, 'total_addr_count'),
+        totalAddrCount: {
+          all: createMetricPattern1(this, 'total_addr_count'),
+          p2pk65: createMetricPattern1(this, 'p2pk65_total_addr_count'),
+          p2pk33: createMetricPattern1(this, 'p2pk33_total_addr_count'),
+          p2pkh: createMetricPattern1(this, 'p2pkh_total_addr_count'),
+          p2sh: createMetricPattern1(this, 'p2sh_total_addr_count'),
+          p2wpkh: createMetricPattern1(this, 'p2wpkh_total_addr_count'),
+          p2wsh: createMetricPattern1(this, 'p2wsh_total_addr_count'),
+          p2tr: createMetricPattern1(this, 'p2tr_total_addr_count'),
+          p2a: createMetricPattern1(this, 'p2a_total_addr_count'),
+        },
         newAddrCount: {
           all: createAverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2(this, 'new_addr_count'),
           p2pk65: createAverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2(this, 'p2pk65_new_addr_count'),

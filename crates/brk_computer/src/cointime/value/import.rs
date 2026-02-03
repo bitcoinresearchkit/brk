@@ -29,7 +29,7 @@ impl Vecs {
             vocdd: ComputedFromHeightSumCum::forced_import(
                 db,
                 "vocdd",
-                version,
+                version + Version::ONE,
                 indexes,
             )?,
         })
