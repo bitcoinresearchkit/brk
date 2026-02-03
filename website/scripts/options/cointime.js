@@ -1,14 +1,14 @@
+import { colors } from "../utils/colors.js";
+import { brk } from "../client.js";
 import { Unit } from "../utils/units.js";
 import { dots, line, price } from "./series.js";
 import { satsBtcUsd, createPriceRatioCharts } from "./shared.js";
 
 /**
  * Create Cointime section
- * @param {PartialContext} ctx
  * @returns {PartialOptionsGroup}
  */
-export function createCointimeSection(ctx) {
-  const { colors, brk } = ctx;
+export function createCointimeSection() {
   const { cointime, distribution, supply } = brk.metrics;
   const {
     pricing,
@@ -141,8 +141,16 @@ export function createCointimeSection(ctx) {
             name: "Compare",
             title: "Cointime Prices",
             top: [
-              price({ metric: all.realized.realizedPrice, name: "Realized", color: colors.orange }),
-              price({ metric: all.realized.investorPrice, name: "Investor", color: colors.fuchsia }),
+              price({
+                metric: all.realized.realizedPrice,
+                name: "Realized",
+                color: colors.orange,
+              }),
+              price({
+                metric: all.realized.investorPrice,
+                name: "Investor",
+                color: colors.fuchsia,
+              }),
               ...prices.map(({ pricePattern, name, color }) =>
                 price({ metric: pricePattern, name, color }),
               ),
@@ -150,13 +158,20 @@ export function createCointimeSection(ctx) {
           },
           ...prices.map(({ pricePattern, ratio, name, color }) => ({
             name,
-            tree: createPriceRatioCharts(ctx, {
+            tree: createPriceRatioCharts({
               context: `${name} Price`,
               legend: name,
               pricePattern,
               ratio,
               color,
-              priceReferences: [price({ metric: all.realized.realizedPrice, name: "Realized", color: colors.orange, defaultActive: false })],
+              priceReferences: [
+                price({
+                  metric: all.realized.realizedPrice,
+                  name: "Realized",
+                  color: colors.orange,
+                  defaultActive: false,
+                }),
+              ],
             }),
           })),
         ],

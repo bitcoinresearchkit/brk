@@ -3,8 +3,9 @@ import { chartElement } from "../utils/elements.js";
 import { serdeChartableIndex } from "../utils/serde.js";
 import { Unit } from "../utils/units.js";
 import { createChart } from "../chart/index.js";
-import { colors } from "../chart/colors.js";
+import { colors } from "../utils/colors.js";
 import { webSockets } from "../utils/ws.js";
+import { brk } from "../client.js";
 
 const ONE_BTC_IN_SATS = 100_000_000;
 
@@ -19,10 +20,7 @@ export function setOption(opt) {
   _setOption(opt);
 }
 
-/**
- * @param {BrkClient} brk
- */
-export function init(brk) {
+export function init() {
   chartElement.append(createShadow("left"));
   chartElement.append(createShadow("right"));
 

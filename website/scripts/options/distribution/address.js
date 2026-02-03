@@ -4,6 +4,7 @@
  * Address cohorts use _0satsPattern which has CostBasisPattern (no percentiles)
  */
 
+import { colors } from "../../utils/colors.js";
 import { Unit } from "../../utils/units.js";
 import { priceLine } from "../constants.js";
 import { line, baseline, price } from "../series.js";
@@ -35,11 +36,10 @@ import {
 /**
  * Create a cohort folder for address cohorts
  * Includes address count section (addrCount exists on AddressCohortObject)
- * @param {PartialContext} ctx
  * @param {AddressCohortObject | AddressCohortGroupObject} args
  * @returns {PartialOptionsGroup}
  */
-export function createAddressCohortFolder(ctx, args) {
+export function createAddressCohortFolder(args) {
   const list = "list" in args ? args.list : [args];
   const useGroupName = "list" in args;
   const isSingle = !("list" in args);
@@ -55,10 +55,8 @@ export function createAddressCohortFolder(ctx, args) {
             name: "Supply",
             title: title("Supply"),
             bottom: createSingleSupplySeries(
-              ctx,
               /** @type {AddressCohortObject} */ (args),
               createSingleSupplyRelativeOptions(
-                ctx,
                 /** @type {AddressCohortObject} */ (args),
               ),
             ),
@@ -80,7 +78,7 @@ export function createAddressCohortFolder(ctx, args) {
       {
         name: "Address Count",
         title: title("Address Count"),
-        bottom: createAddressCountSeries(ctx, list, useGroupName),
+        bottom: createAddressCountSeries(list, useGroupName),
       },
 
       // Realized section
@@ -122,7 +120,7 @@ export function createAddressCohortFolder(ctx, args) {
           {
             name: "Capitalization",
             title: title("Realized Cap"),
-            bottom: createRealizedCapWithExtras(ctx, list, args, useGroupName),
+            bottom: createRealizedCapWithExtras(list, args, useGroupName),
           },
           {
             name: "Value",
@@ -137,9 +135,8 @@ export function createAddressCohortFolder(ctx, args) {
             ),
           },
           ...(useGroupName
-            ? createGroupedRealizedPnlSection(ctx, list, title)
+            ? createGroupedRealizedPnlSection(list, title)
             : createRealizedPnlSection(
-                ctx,
                 /** @type {AddressCohortObject} */ (args),
                 title,
               )),
@@ -147,7 +144,7 @@ export function createAddressCohortFolder(ctx, args) {
       },
 
       // Unrealized section
-      ...createUnrealizedSection(ctx, list, useGroupName, title),
+      ...createUnrealizedSection(list, useGroupName, title),
 
       // Cost basis section (no percentiles for address cohorts)
       ...createCostBasisSection(list, useGroupName, title),
@@ -199,13 +196,12 @@ function createRealizedPriceOptions(args, title) {
 
 /**
  * Create realized cap with extras
- * @param {PartialContext} ctx
  * @param {readonly AddressCohortObject[]} list
  * @param {AddressCohortObject | AddressCohortGroupObject} args
  * @param {boolean} useGroupName
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
+function createRealizedCapWithExtras(list, args, useGroupName) {
   const isSingle = !("list" in args);
 
   return list.flatMap(({ color, name, tree }) => [
@@ -231,13 +227,11 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
 
 /**
  * Create realized PnL section for single cohort
- * @param {PartialContext} ctx
  * @param {AddressCohortObject} args
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function createRealizedPnlSection(ctx, args, title) {
-  const { colors } = ctx;
+function createRealizedPnlSection(args, title) {
   const { realized } = args.tree;
 
   return [
@@ -381,16 +375,13 @@ function createRealizedPnlSection(ctx, args, title) {
           unit: Unit.pctMcap,
         }),
         priceLine({
-          ctx,
           unit: Unit.usd,
           number: 1,
         }),
         priceLine({
-          ctx,
           unit: Unit.pctMcap,
         }),
         priceLine({
-          ctx,
           unit: Unit.pctRcap,
         }),
       ],
@@ -401,7 +392,6 @@ function createRealizedPnlSection(ctx, args, title) {
       bottom: [
         ...createSingleSoprSeries(colors, args.tree),
         priceLine({
-          ctx,
           unit: Unit.ratio,
           number: 1,
         }),
@@ -575,12 +565,11 @@ function createRealizedPnlSection(ctx, args, title) {
 
 /**
  * Create grouped realized P&L section for address cohorts (for compare view)
- * @param {PartialContext} ctx
  * @param {readonly AddressCohortObject[]} list
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function createGroupedRealizedPnlSection(ctx, list, title) {
+function createGroupedRealizedPnlSection(list, title) {
   const pnlConfigs = /** @type {const} */ ([
     {
       name: "Profit",
@@ -814,15 +803,12 @@ function createGroupedRealizedPnlSection(ctx, list, title) {
 
 /**
  * Create unrealized section
- * @param {PartialContext} ctx
  * @param {readonly AddressCohortObject[]} list
  * @param {boolean} useGroupName
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function createUnrealizedSection(ctx, list, useGroupName, title) {
-  const { colors } = ctx;
-
+function createUnrealizedSection(list, useGroupName, title) {
   return [
     {
       name: "Unrealized",
@@ -1005,7 +991,6 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
               unit: Unit.ratio,
             }),
             priceLine({
-              ctx,
               unit: Unit.ratio,
             }),
           ]),
@@ -1021,7 +1006,6 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
               unit: Unit.usd,
             }),
             priceLine({
-              ctx,
               unit: Unit.usd,
             }),
           ]),

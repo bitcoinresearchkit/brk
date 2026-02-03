@@ -1,9 +1,14 @@
 /** Shared cohort chart section builders */
 
+import { colors } from "../../utils/colors.js";
 import { Unit } from "../../utils/units.js";
 import { priceLine } from "../constants.js";
 import { baseline, dots, line, price } from "../series.js";
-import { satsBtcUsd, createPriceRatioCharts, formatCohortTitle } from "../shared.js";
+import {
+  satsBtcUsd,
+  createPriceRatioCharts,
+  formatCohortTitle,
+} from "../shared.js";
 
 // ============================================================================
 // Generic Price Helpers
@@ -12,15 +17,20 @@ import { satsBtcUsd, createPriceRatioCharts, formatCohortTitle } from "../shared
 /**
  * Create price folder (price + ratio + z-scores wrapped in folder)
  * For cohorts with full extended ratio metrics (ActivePriceRatioPattern)
- * @param {PartialContext} ctx
  * @param {{ name: string, cohortTitle?: string, priceMetric: ActivePricePattern, ratioPattern: AnyRatioPattern, color: Color }} args
  * @returns {PartialOptionsGroup}
  */
-export function createPriceFolder(ctx, { name, cohortTitle, priceMetric, ratioPattern, color }) {
+export function createPriceFolder({
+  name,
+  cohortTitle,
+  priceMetric,
+  ratioPattern,
+  color,
+}) {
   const context = cohortTitle ? `${cohortTitle} ${name}` : name;
   return {
     name,
-    tree: createPriceRatioCharts(ctx, {
+    tree: createPriceRatioCharts({
       context,
       legend: name,
       pricePattern: priceMetric,
@@ -37,7 +47,13 @@ export function createPriceFolder(ctx, { name, cohortTitle, priceMetric, ratioPa
  * @param {{ name: string, context: string, priceMetric: ActivePricePattern, ratioMetric: R, color: Color }} args
  * @returns {PartialOptionsTree}
  */
-export function createBasicPriceCharts({ name, context, priceMetric, ratioMetric, color }) {
+export function createBasicPriceCharts({
+  name,
+  context,
+  priceMetric,
+  ratioMetric,
+  color,
+}) {
   return [
     {
       name: "Price",
@@ -67,11 +83,23 @@ export function createBasicPriceCharts({ name, context, priceMetric, ratioMetric
  * @param {{ name: string, cohortTitle?: string, priceMetric: ActivePricePattern, ratioMetric: R, color: Color }} args
  * @returns {PartialOptionsGroup}
  */
-export function createBasicPriceFolder({ name, cohortTitle, priceMetric, ratioMetric, color }) {
+export function createBasicPriceFolder({
+  name,
+  cohortTitle,
+  priceMetric,
+  ratioMetric,
+  color,
+}) {
   const context = cohortTitle ? `${cohortTitle} ${name}` : name;
   return {
     name,
-    tree: createBasicPriceCharts({ name, context, priceMetric, ratioMetric, color }),
+    tree: createBasicPriceCharts({
+      name,
+      context,
+      priceMetric,
+      ratioMetric,
+      color,
+    }),
   };
 }
 
@@ -81,7 +109,13 @@ export function createBasicPriceFolder({ name, cohortTitle, priceMetric, ratioMe
  * @param {{ name: string, title: (metric: string) => string, list: readonly T[], getPrice: (tree: T['tree']) => ActivePricePattern, getRatio: (tree: T['tree']) => AnyMetricPattern }} args
  * @returns {PartialOptionsTree}
  */
-export function createGroupedPriceCharts({ name, title, list, getPrice, getRatio }) {
+export function createGroupedPriceCharts({
+  name,
+  title,
+  list,
+  getPrice,
+  getRatio,
+}) {
   return [
     {
       name: "Price",
@@ -94,7 +128,13 @@ export function createGroupedPriceCharts({ name, title, list, getPrice, getRatio
       name: "Ratio",
       title: title(`${name} Ratio`),
       bottom: list.map(({ color, name: cohortName, tree }) =>
-        baseline({ metric: getRatio(tree), name: cohortName, color, unit: Unit.ratio, base: 1 }),
+        baseline({
+          metric: getRatio(tree),
+          name: cohortName,
+          color,
+          unit: Unit.ratio,
+          base: 1,
+        }),
       ),
     },
   ];
@@ -106,7 +146,13 @@ export function createGroupedPriceCharts({ name, title, list, getPrice, getRatio
  * @param {{ name: string, title: (metric: string) => string, list: readonly T[], getPrice: (tree: T['tree']) => ActivePricePattern, getRatio: (tree: T['tree']) => AnyMetricPattern }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedPriceFolder({ name, title, list, getPrice, getRatio }) {
+export function createGroupedPriceFolder({
+  name,
+  title,
+  list,
+  getPrice,
+  getRatio,
+}) {
   return {
     name,
     tree: createGroupedPriceCharts({ name, title, list, getPrice, getRatio }),
@@ -115,20 +161,38 @@ export function createGroupedPriceFolder({ name, title, list, getPrice, getRatio
 
 /**
  * Create base supply series (without relative metrics)
- * @param {PartialContext} ctx
  * @param {CohortObject | CohortWithoutRelative} cohort
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function createSingleSupplySeriesBase(ctx, cohort) {
-  const { colors } = ctx;
+function createSingleSupplySeriesBase(cohort) {
   const { tree } = cohort;
 
   return [
-    ...satsBtcUsd({ pattern: tree.supply.total, name: "Supply", color: colors.default }),
-    ...satsBtcUsd({ pattern: tree.supply._30dChange, name: "30d Change", color: colors.orange }),
-    ...satsBtcUsd({ pattern: tree.unrealized.supplyInProfit, name: "In Profit", color: colors.green }),
-    ...satsBtcUsd({ pattern: tree.unrealized.supplyInLoss, name: "In Loss", color: colors.red }),
-    ...satsBtcUsd({ pattern: tree.supply.halved, name: "half", color: colors.gray }).map((s) => ({
+    ...satsBtcUsd({
+      pattern: tree.supply.total,
+      name: "Supply",
+      color: colors.default,
+    }),
+    ...satsBtcUsd({
+      pattern: tree.supply._30dChange,
+      name: "30d Change",
+      color: colors.orange,
+    }),
+    ...satsBtcUsd({
+      pattern: tree.unrealized.supplyInProfit,
+      name: "In Profit",
+      color: colors.green,
+    }),
+    ...satsBtcUsd({
+      pattern: tree.unrealized.supplyInLoss,
+      name: "In Loss",
+      color: colors.red,
+    }),
+    ...satsBtcUsd({
+      pattern: tree.supply.halved,
+      name: "half",
+      color: colors.gray,
+    }).map((s) => ({
       ...s,
       options: { lineStyle: 4 },
     })),
@@ -137,12 +201,10 @@ function createSingleSupplySeriesBase(ctx, cohort) {
 
 /**
  * Create supply relative to own supply metrics
- * @param {PartialContext} ctx
  * @param {UtxoCohortObject | AddressCohortObject} cohort
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function createSingleSupplyRelativeToOwnMetrics(ctx, cohort) {
-  const { colors } = ctx;
+function createSingleSupplyRelativeToOwnMetrics(cohort) {
   const { tree } = cohort;
 
   return [
@@ -159,42 +221,42 @@ function createSingleSupplyRelativeToOwnMetrics(ctx, cohort) {
       unit: Unit.pctOwn,
     }),
     priceLine({
-      ctx,
       unit: Unit.pctOwn,
       number: 100,
       style: 0,
       color: colors.default,
     }),
-    priceLine({ ctx, unit: Unit.pctOwn, number: 50 }),
+    priceLine({ unit: Unit.pctOwn, number: 50 }),
   ];
 }
 
 /**
  * Create supply section for a single cohort (with relative metrics)
- * @param {PartialContext} ctx
  * @param {UtxoCohortObject | AddressCohortObject} cohort
  * @param {Object} [options]
  * @param {AnyFetchedSeriesBlueprint[]} [options.supplyRelative] - Supply relative to circulating supply metrics
  * @param {AnyFetchedSeriesBlueprint[]} [options.pnlRelative] - Supply in profit/loss relative to circulating supply metrics
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSingleSupplySeries(ctx, cohort, { supplyRelative = [], pnlRelative = [] } = {}) {
+export function createSingleSupplySeries(
+  cohort,
+  { supplyRelative = [], pnlRelative = [] } = {},
+) {
   return [
-    ...createSingleSupplySeriesBase(ctx, cohort),
+    ...createSingleSupplySeriesBase(cohort),
     ...supplyRelative,
     ...pnlRelative,
-    ...createSingleSupplyRelativeToOwnMetrics(ctx, cohort),
+    ...createSingleSupplyRelativeToOwnMetrics(cohort),
   ];
 }
 
 /**
  * Create supply series for cohorts WITHOUT relative metrics
- * @param {PartialContext} ctx
  * @param {CohortWithoutRelative} cohort
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSingleSupplySeriesWithoutRelative(ctx, cohort) {
-  return createSingleSupplySeriesBase(ctx, cohort);
+export function createSingleSupplySeriesWithoutRelative(cohort) {
+  return createSingleSupplySeriesBase(cohort);
 }
 
 /**
@@ -207,7 +269,11 @@ export function createSingleSupplySeriesWithoutRelative(ctx, cohort) {
  */
 export function createGroupedSupplyTotalSeries(list, { relativeMetrics } = {}) {
   return list.flatMap((cohort) => [
-    ...satsBtcUsd({ pattern: cohort.tree.supply.total, name: cohort.name, color: cohort.color }),
+    ...satsBtcUsd({
+      pattern: cohort.tree.supply.total,
+      name: cohort.name,
+      color: cohort.color,
+    }),
     ...(relativeMetrics ? relativeMetrics(cohort) : []),
   ]);
 }
@@ -220,9 +286,16 @@ export function createGroupedSupplyTotalSeries(list, { relativeMetrics } = {}) {
  * @param {(cohort: T[number]) => AnyFetchedSeriesBlueprint[]} [options.relativeMetrics] - Generator for relative supply metrics
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createGroupedSupplyInProfitSeries(list, { relativeMetrics } = {}) {
+export function createGroupedSupplyInProfitSeries(
+  list,
+  { relativeMetrics } = {},
+) {
   return list.flatMap((cohort) => [
-    ...satsBtcUsd({ pattern: cohort.tree.unrealized.supplyInProfit, name: cohort.name, color: cohort.color }),
+    ...satsBtcUsd({
+      pattern: cohort.tree.unrealized.supplyInProfit,
+      name: cohort.name,
+      color: cohort.color,
+    }),
     ...(relativeMetrics ? relativeMetrics(cohort) : []),
   ]);
 }
@@ -235,9 +308,16 @@ export function createGroupedSupplyInProfitSeries(list, { relativeMetrics } = {}
  * @param {(cohort: T[number]) => AnyFetchedSeriesBlueprint[]} [options.relativeMetrics] - Generator for relative supply metrics
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createGroupedSupplyInLossSeries(list, { relativeMetrics } = {}) {
+export function createGroupedSupplyInLossSeries(
+  list,
+  { relativeMetrics } = {},
+) {
   return list.flatMap((cohort) => [
-    ...satsBtcUsd({ pattern: cohort.tree.unrealized.supplyInLoss, name: cohort.name, color: cohort.color }),
+    ...satsBtcUsd({
+      pattern: cohort.tree.unrealized.supplyInLoss,
+      name: cohort.name,
+      color: cohort.color,
+    }),
     ...(relativeMetrics ? relativeMetrics(cohort) : []),
   ]);
 }
@@ -253,14 +333,20 @@ export function createGroupedSupplyInLossSeries(list, { relativeMetrics } = {}) 
  * @param {(cohort: T[number]) => AnyFetchedSeriesBlueprint[]} [options.lossRelativeMetrics] - Generator for supply in loss relative metrics
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedSupplySection(list, title, { supplyRelativeMetrics, profitRelativeMetrics, lossRelativeMetrics } = {}) {
+export function createGroupedSupplySection(
+  list,
+  title,
+  { supplyRelativeMetrics, profitRelativeMetrics, lossRelativeMetrics } = {},
+) {
   return {
     name: "Supply",
     tree: [
       {
         name: "Total",
         title: title("Supply"),
-        bottom: createGroupedSupplyTotalSeries(list, { relativeMetrics: supplyRelativeMetrics }),
+        bottom: createGroupedSupplyTotalSeries(list, {
+          relativeMetrics: supplyRelativeMetrics,
+        }),
       },
       {
         name: "30d Change",
@@ -272,12 +358,16 @@ export function createGroupedSupplySection(list, title, { supplyRelativeMetrics,
       {
         name: "In Profit",
         title: title("Supply In Profit"),
-        bottom: createGroupedSupplyInProfitSeries(list, { relativeMetrics: profitRelativeMetrics }),
+        bottom: createGroupedSupplyInProfitSeries(list, {
+          relativeMetrics: profitRelativeMetrics,
+        }),
       },
       {
         name: "In Loss",
         title: title("Supply In Loss"),
-        bottom: createGroupedSupplyInLossSeries(list, { relativeMetrics: lossRelativeMetrics }),
+        bottom: createGroupedSupplyInLossSeries(list, {
+          relativeMetrics: lossRelativeMetrics,
+        }),
       },
     ],
   };
@@ -289,16 +379,15 @@ export function createGroupedSupplySection(list, title, { supplyRelativeMetrics,
 
 /**
  * Create supply relative to circulating supply series for single cohort
- * @param {PartialContext} ctx
  * @param {CohortWithCirculatingSupplyRelative} cohort
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSupplyRelativeToCirculatingSeries(ctx, cohort) {
+export function createSupplyRelativeToCirculatingSeries(cohort) {
   return [
     line({
       metric: cohort.tree.relative.supplyRelToCirculatingSupply,
       name: "Supply",
-      color: ctx.colors.default,
+      color: colors.default,
       unit: Unit.pctSupply,
     }),
   ];
@@ -306,22 +395,21 @@ export function createSupplyRelativeToCirculatingSeries(ctx, cohort) {
 
 /**
  * Create supply in profit/loss relative to circulating supply series for single cohort
- * @param {PartialContext} ctx
  * @param {CohortWithCirculatingSupplyRelative} cohort
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createSupplyPnlRelativeToCirculatingSeries(ctx, cohort) {
+export function createSupplyPnlRelativeToCirculatingSeries(cohort) {
   return [
     line({
       metric: cohort.tree.relative.supplyInProfitRelToCirculatingSupply,
       name: "In Profit",
-      color: ctx.colors.green,
+      color: colors.green,
       unit: Unit.pctSupply,
     }),
     line({
       metric: cohort.tree.relative.supplyInLossRelToCirculatingSupply,
       name: "In Loss",
-      color: ctx.colors.red,
+      color: colors.red,
       unit: Unit.pctSupply,
     }),
   ];
@@ -387,14 +475,13 @@ export const groupedSupplyRelativeGenerators = {
 
 /**
  * Create single cohort supply relative options for cohorts with circulating supply relative
- * @param {PartialContext} ctx
  * @param {CohortWithCirculatingSupplyRelative} cohort
  * @returns {{ supplyRelative: AnyFetchedSeriesBlueprint[], pnlRelative: AnyFetchedSeriesBlueprint[] }}
  */
-export function createSingleSupplyRelativeOptions(ctx, cohort) {
+export function createSingleSupplyRelativeOptions(cohort) {
   return {
-    supplyRelative: createSupplyRelativeToCirculatingSeries(ctx, cohort),
-    pnlRelative: createSupplyPnlRelativeToCirculatingSeries(ctx, cohort),
+    supplyRelative: createSupplyRelativeToCirculatingSeries(cohort),
+    pnlRelative: createSupplyPnlRelativeToCirculatingSeries(cohort),
   };
 }
 
@@ -417,14 +504,11 @@ export function createUtxoCountSeries(list, useGroupName) {
 
 /**
  * Create address count series (for address cohorts only)
- * @param {PartialContext} ctx
  * @param {readonly AddressCohortObject[]} list
  * @param {boolean} useGroupName
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createAddressCountSeries(ctx, list, useGroupName) {
-  const { colors } = ctx;
-
+export function createAddressCountSeries(list, useGroupName) {
   return list.flatMap(({ color, name, tree }) => [
     line({
       metric: tree.addrCount,
@@ -491,29 +575,130 @@ export function createCostBasisPercentilesSeries(colors, list, useGroupName) {
   return list.flatMap(({ name, tree }) => {
     const cb = tree.costBasis;
     const p = cb.percentiles;
-    const n = (/** @type {number} */ pct) => (useGroupName ? `${name} p${pct}` : `p${pct}`);
+    const n = (/** @type {number} */ pct) =>
+      useGroupName ? `${name} p${pct}` : `p${pct}`;
     return [
-      price({ metric: cb.max, name: n(100), color: colors.purple, defaultActive: false }),
-      price({ metric: p.pct95, name: n(95), color: colors.fuchsia, defaultActive: false }),
-      price({ metric: p.pct90, name: n(90), color: colors.pink, defaultActive: false }),
-      price({ metric: p.pct85, name: n(85), color: colors.pink, defaultActive: false }),
-      price({ metric: p.pct80, name: n(80), color: colors.rose, defaultActive: false }),
-      price({ metric: p.pct75, name: n(75), color: colors.red, defaultActive: false }),
-      price({ metric: p.pct70, name: n(70), color: colors.orange, defaultActive: false }),
-      price({ metric: p.pct65, name: n(65), color: colors.amber, defaultActive: false }),
-      price({ metric: p.pct60, name: n(60), color: colors.yellow, defaultActive: false }),
-      price({ metric: p.pct55, name: n(55), color: colors.yellow, defaultActive: false }),
+      price({
+        metric: cb.max,
+        name: n(100),
+        color: colors.purple,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct95,
+        name: n(95),
+        color: colors.fuchsia,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct90,
+        name: n(90),
+        color: colors.pink,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct85,
+        name: n(85),
+        color: colors.pink,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct80,
+        name: n(80),
+        color: colors.rose,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct75,
+        name: n(75),
+        color: colors.red,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct70,
+        name: n(70),
+        color: colors.orange,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct65,
+        name: n(65),
+        color: colors.amber,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct60,
+        name: n(60),
+        color: colors.yellow,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct55,
+        name: n(55),
+        color: colors.yellow,
+        defaultActive: false,
+      }),
       price({ metric: p.pct50, name: n(50), color: colors.avocado }),
-      price({ metric: p.pct45, name: n(45), color: colors.lime, defaultActive: false }),
-      price({ metric: p.pct40, name: n(40), color: colors.green, defaultActive: false }),
-      price({ metric: p.pct35, name: n(35), color: colors.emerald, defaultActive: false }),
-      price({ metric: p.pct30, name: n(30), color: colors.teal, defaultActive: false }),
-      price({ metric: p.pct25, name: n(25), color: colors.teal, defaultActive: false }),
-      price({ metric: p.pct20, name: n(20), color: colors.cyan, defaultActive: false }),
-      price({ metric: p.pct15, name: n(15), color: colors.sky, defaultActive: false }),
-      price({ metric: p.pct10, name: n(10), color: colors.blue, defaultActive: false }),
-      price({ metric: p.pct05, name: n(5), color: colors.indigo, defaultActive: false }),
-      price({ metric: cb.min, name: n(0), color: colors.violet, defaultActive: false }),
+      price({
+        metric: p.pct45,
+        name: n(45),
+        color: colors.lime,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct40,
+        name: n(40),
+        color: colors.green,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct35,
+        name: n(35),
+        color: colors.emerald,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct30,
+        name: n(30),
+        color: colors.teal,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct25,
+        name: n(25),
+        color: colors.teal,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct20,
+        name: n(20),
+        color: colors.cyan,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct15,
+        name: n(15),
+        color: colors.sky,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct10,
+        name: n(10),
+        color: colors.blue,
+        defaultActive: false,
+      }),
+      price({
+        metric: p.pct05,
+        name: n(5),
+        color: colors.indigo,
+        defaultActive: false,
+      }),
+      price({
+        metric: cb.min,
+        name: n(0),
+        color: colors.violet,
+        defaultActive: false,
+      }),
     ];
   });
 }
@@ -526,30 +711,125 @@ export function createCostBasisPercentilesSeries(colors, list, useGroupName) {
  * @param {boolean} useGroupName
  * @returns {FetchedPriceSeriesBlueprint[]}
  */
-export function createInvestedCapitalPercentilesSeries(colors, list, useGroupName) {
+export function createInvestedCapitalPercentilesSeries(
+  colors,
+  list,
+  useGroupName,
+) {
   return list.flatMap(({ name, tree }) => {
     const ic = tree.costBasis.investedCapital;
-    const n = (/** @type {number} */ pct) => (useGroupName ? `${name} p${pct}` : `p${pct}`);
+    const n = (/** @type {number} */ pct) =>
+      useGroupName ? `${name} p${pct}` : `p${pct}`;
     return [
-      price({ metric: ic.pct95, name: n(95), color: colors.fuchsia, defaultActive: false }),
-      price({ metric: ic.pct90, name: n(90), color: colors.pink, defaultActive: false }),
-      price({ metric: ic.pct85, name: n(85), color: colors.pink, defaultActive: false }),
-      price({ metric: ic.pct80, name: n(80), color: colors.rose, defaultActive: false }),
-      price({ metric: ic.pct75, name: n(75), color: colors.red, defaultActive: false }),
-      price({ metric: ic.pct70, name: n(70), color: colors.orange, defaultActive: false }),
-      price({ metric: ic.pct65, name: n(65), color: colors.amber, defaultActive: false }),
-      price({ metric: ic.pct60, name: n(60), color: colors.yellow, defaultActive: false }),
-      price({ metric: ic.pct55, name: n(55), color: colors.yellow, defaultActive: false }),
+      price({
+        metric: ic.pct95,
+        name: n(95),
+        color: colors.fuchsia,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct90,
+        name: n(90),
+        color: colors.pink,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct85,
+        name: n(85),
+        color: colors.pink,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct80,
+        name: n(80),
+        color: colors.rose,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct75,
+        name: n(75),
+        color: colors.red,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct70,
+        name: n(70),
+        color: colors.orange,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct65,
+        name: n(65),
+        color: colors.amber,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct60,
+        name: n(60),
+        color: colors.yellow,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct55,
+        name: n(55),
+        color: colors.yellow,
+        defaultActive: false,
+      }),
       price({ metric: ic.pct50, name: n(50), color: colors.avocado }),
-      price({ metric: ic.pct45, name: n(45), color: colors.lime, defaultActive: false }),
-      price({ metric: ic.pct40, name: n(40), color: colors.green, defaultActive: false }),
-      price({ metric: ic.pct35, name: n(35), color: colors.emerald, defaultActive: false }),
-      price({ metric: ic.pct30, name: n(30), color: colors.teal, defaultActive: false }),
-      price({ metric: ic.pct25, name: n(25), color: colors.teal, defaultActive: false }),
-      price({ metric: ic.pct20, name: n(20), color: colors.cyan, defaultActive: false }),
-      price({ metric: ic.pct15, name: n(15), color: colors.sky, defaultActive: false }),
-      price({ metric: ic.pct10, name: n(10), color: colors.blue, defaultActive: false }),
-      price({ metric: ic.pct05, name: n(5), color: colors.indigo, defaultActive: false }),
+      price({
+        metric: ic.pct45,
+        name: n(45),
+        color: colors.lime,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct40,
+        name: n(40),
+        color: colors.green,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct35,
+        name: n(35),
+        color: colors.emerald,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct30,
+        name: n(30),
+        color: colors.teal,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct25,
+        name: n(25),
+        color: colors.teal,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct20,
+        name: n(20),
+        color: colors.cyan,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct15,
+        name: n(15),
+        color: colors.sky,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct10,
+        name: n(10),
+        color: colors.blue,
+        defaultActive: false,
+      }),
+      price({
+        metric: ic.pct05,
+        name: n(5),
+        color: colors.indigo,
+        defaultActive: false,
+      }),
     ];
   });
 }
@@ -946,14 +1226,13 @@ export function createInvestorPriceRatioSeries(list) {
 /**
  * Create investor price folder for extended cohorts (with full Z-scores)
  * For cohorts with ActivePriceRatioPattern (all, term.*, ageRange.* UTXO cohorts)
- * @param {PartialContext} ctx
  * @param {{ tree: { realized: RealizedWithExtras }, color: Color }} cohort
  * @param {string} [cohortTitle] - Cohort title (e.g., "STH")
  * @returns {PartialOptionsGroup}
  */
-export function createInvestorPriceFolderFull(ctx, cohort, cohortTitle) {
+export function createInvestorPriceFolderFull(cohort, cohortTitle) {
   const { tree, color } = cohort;
-  return createPriceFolder(ctx, {
+  return createPriceFolder({
     name: "Investor Price",
     cohortTitle,
     priceMetric: tree.realized.investorPrice,

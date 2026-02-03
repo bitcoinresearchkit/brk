@@ -1,6 +1,5 @@
 /** Partial options - Main entry point */
 
-import { createContext } from "./context.js";
 import {
   buildCohortData,
   createCohortFolderAll,
@@ -20,22 +19,15 @@ import { createNetworkSection } from "./network.js";
 import { createMiningSection } from "./mining.js";
 import { createCointimeSection } from "./cointime.js";
 import { createInvestingSection } from "./investing.js";
-import { colors } from "../chart/colors.js";
 
 // Re-export types for external consumers
 export * from "./types.js";
-export * from "./context.js";
 
 /**
  * Create partial options tree
- * @param {Object} args
- * @param {BrkClient} args.brk
  * @returns {PartialOptionsTree}
  */
-export function createPartialOptions({ brk }) {
-  // Create context with all helpers
-  const ctx = createContext({ brk });
-
+export function createPartialOptions() {
   // Build cohort data
   const {
     cohortAll,
@@ -54,29 +46,7 @@ export function createPartialOptions({ brk }) {
     typeAddressable,
     typeOther,
     year,
-  } = buildCohortData(colors, brk);
-
-  // Helpers to map cohorts by capability type
-  /** @param {CohortWithAdjusted} cohort */
-  const mapWithAdjusted = (cohort) =>
-    createCohortFolderWithAdjusted(ctx, cohort);
-  /** @param {CohortAgeRange} cohort */
-  const mapAgeRange = (cohort) => createCohortFolderAgeRange(ctx, cohort);
-  /** @param {CohortBasicWithMarketCap} cohort */
-  const mapBasicWithMarketCap = (cohort) =>
-    createCohortFolderBasicWithMarketCap(ctx, cohort);
-  /** @param {CohortMinAge} cohort */
-  const mapMinAge = (cohort) => createCohortFolderMinAge(ctx, cohort);
-  /** @param {CohortBasicWithoutMarketCap} cohort */
-  const mapBasicWithoutMarketCap = (cohort) =>
-    createCohortFolderBasicWithoutMarketCap(ctx, cohort);
-  /** @param {CohortWithoutRelative} cohort */
-  const mapWithoutRelative = (cohort) =>
-    createCohortFolderWithoutRelative(ctx, cohort);
-  /** @param {CohortAddress} cohort */
-  const mapAddress = (cohort) => createCohortFolderAddress(ctx, cohort);
-  /** @param {AddressCohortObject} cohort */
-  const mapAddressCohorts = (cohort) => createAddressCohortFolder(ctx, cohort);
+  } = buildCohortData();
 
   return [
     // Debug explorer (disabled)
@@ -95,29 +65,29 @@ export function createPartialOptions({ brk }) {
       name: "Charts",
       tree: [
         // Market section
-        createMarketSection(ctx),
+        createMarketSection(),
 
         // Network section (on-chain activity)
-        createNetworkSection(ctx),
+        createNetworkSection(),
 
         // Mining section (security & economics)
-        createMiningSection(ctx),
+        createMiningSection(),
 
         // Cohorts section
         {
           name: "Distribution",
           tree: [
             // Overview - All UTXOs (adjustedSopr + percentiles but no RelToMarketCap)
-            createCohortFolderAll(ctx, { ...cohortAll, name: "Overview" }),
+            createCohortFolderAll({ ...cohortAll, name: "Overview" }),
 
             // STH - Short term holder cohort (Full capability)
-            createCohortFolderFull(ctx, termShort),
+            createCohortFolderFull(termShort),
 
             // LTH - Long term holder cohort (nupl)
-            createCohortFolderWithNupl(ctx, termLong),
+            createCohortFolderWithNupl(termLong),
 
             // STH vs LTH - Direct comparison
-            createCohortFolderWithNupl(ctx, {
+            createCohortFolderWithNupl({
               name: "STH vs LTH",
               title: "STH vs LTH",
               list: [termShort, termLong],
@@ -131,36 +101,36 @@ export function createPartialOptions({ brk }) {
                 {
                   name: "Younger Than",
                   tree: [
-                    createCohortFolderWithAdjusted(ctx, {
+                    createCohortFolderWithAdjusted({
                       name: "Compare",
                       title: "Max Age",
                       list: upToDate,
                     }),
-                    ...upToDate.map(mapWithAdjusted),
+                    ...upToDate.map(createCohortFolderWithAdjusted),
                   ],
                 },
                 // Older Than (≥ X old)
                 {
                   name: "Older Than",
                   tree: [
-                    createCohortFolderMinAge(ctx, {
+                    createCohortFolderMinAge({
                       name: "Compare",
                       title: "Min Age",
                       list: fromDate,
                     }),
-                    ...fromDate.map(mapMinAge),
+                    ...fromDate.map(createCohortFolderMinAge),
                   ],
                 },
                 // Range
                 {
                   name: "Range",
                   tree: [
-                    createCohortFolderAgeRange(ctx, {
+                    createCohortFolderAgeRange({
                       name: "Compare",
                       title: "Age Ranges",
                       list: dateRange,
                     }),
-                    ...dateRange.map(mapAgeRange),
+                    ...dateRange.map(createCohortFolderAgeRange),
                   ],
                 },
               ],
@@ -174,36 +144,42 @@ export function createPartialOptions({ brk }) {
                 {
                   name: "Less Than",
                   tree: [
-                    createCohortFolderBasicWithMarketCap(ctx, {
+                    createCohortFolderBasicWithMarketCap({
                       name: "Compare",
                       title: "Max Size",
                       list: utxosUnderAmount,
                     }),
-                    ...utxosUnderAmount.map(mapBasicWithMarketCap),
+                    ...utxosUnderAmount.map(
+                      createCohortFolderBasicWithMarketCap,
+                    ),
                   ],
                 },
                 // More Than (≥ X sats)
                 {
                   name: "More Than",
                   tree: [
-                    createCohortFolderBasicWithMarketCap(ctx, {
+                    createCohortFolderBasicWithMarketCap({
                       name: "Compare",
                       title: "Min Size",
                       list: utxosAboveAmount,
                     }),
-                    ...utxosAboveAmount.map(mapBasicWithMarketCap),
+                    ...utxosAboveAmount.map(
+                      createCohortFolderBasicWithMarketCap,
+                    ),
                   ],
                 },
                 // Range
                 {
                   name: "Range",
                   tree: [
-                    createCohortFolderBasicWithoutMarketCap(ctx, {
+                    createCohortFolderBasicWithoutMarketCap({
                       name: "Compare",
                       title: "Size Ranges",
                       list: utxosAmountRanges,
                     }),
-                    ...utxosAmountRanges.map(mapBasicWithoutMarketCap),
+                    ...utxosAmountRanges.map(
+                      createCohortFolderBasicWithoutMarketCap,
+                    ),
                   ],
                 },
               ],
@@ -217,36 +193,36 @@ export function createPartialOptions({ brk }) {
                 {
                   name: "Less Than",
                   tree: [
-                    createAddressCohortFolder(ctx, {
+                    createAddressCohortFolder({
                       name: "Compare",
                       title: "Max Balance",
                       list: addressesUnderAmount,
                     }),
-                    ...addressesUnderAmount.map(mapAddressCohorts),
+                    ...addressesUnderAmount.map(createAddressCohortFolder),
                   ],
                 },
                 // More Than (≥ X sats)
                 {
                   name: "More Than",
                   tree: [
-                    createAddressCohortFolder(ctx, {
+                    createAddressCohortFolder({
                       name: "Compare",
                       title: "Min Balance",
                       list: addressesAboveAmount,
                     }),
-                    ...addressesAboveAmount.map(mapAddressCohorts),
+                    ...addressesAboveAmount.map(createAddressCohortFolder),
                   ],
                 },
                 // Range
                 {
                   name: "Range",
                   tree: [
-                    createAddressCohortFolder(ctx, {
+                    createAddressCohortFolder({
                       name: "Compare",
                       title: "Balance Ranges",
                       list: addressesAmountRanges,
                     }),
-                    ...addressesAmountRanges.map(mapAddressCohorts),
+                    ...addressesAmountRanges.map(createAddressCohortFolder),
                   ],
                 },
               ],
@@ -256,13 +232,13 @@ export function createPartialOptions({ brk }) {
             {
               name: "Script Types",
               tree: [
-                createCohortFolderAddress(ctx, {
+                createCohortFolderAddress({
                   name: "Compare",
                   title: "Script Types",
                   list: typeAddressable,
                 }),
-                ...typeAddressable.map(mapAddress),
-                ...typeOther.map(mapWithoutRelative),
+                ...typeAddressable.map(createCohortFolderAddress),
+                ...typeOther.map(createCohortFolderWithoutRelative),
               ],
             },
 
@@ -270,12 +246,12 @@ export function createPartialOptions({ brk }) {
             {
               name: "Epochs",
               tree: [
-                createCohortFolderBasicWithoutMarketCap(ctx, {
+                createCohortFolderBasicWithoutMarketCap({
                   name: "Compare",
                   title: "Epochs",
                   list: epoch,
                 }),
-                ...epoch.map(mapBasicWithoutMarketCap),
+                ...epoch.map(createCohortFolderBasicWithoutMarketCap),
               ],
             },
 
@@ -283,12 +259,12 @@ export function createPartialOptions({ brk }) {
             {
               name: "Years",
               tree: [
-                createCohortFolderBasicWithoutMarketCap(ctx, {
+                createCohortFolderBasicWithoutMarketCap({
                   name: "Compare",
                   title: "Years",
                   list: year,
                 }),
-                ...year.map(mapBasicWithoutMarketCap),
+                ...year.map(createCohortFolderBasicWithoutMarketCap),
               ],
             },
           ],
@@ -297,11 +273,11 @@ export function createPartialOptions({ brk }) {
         // Frameworks section
         {
           name: "Frameworks",
-          tree: [createCointimeSection(ctx)],
+          tree: [createCointimeSection()],
         },
 
         // Investing section
-        createInvestingSection(ctx),
+        createInvestingSection(),
       ],
     },
 

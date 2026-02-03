@@ -1,26 +1,26 @@
 /** Network section - On-chain activity and health */
 
+import { colors } from "../utils/colors.js";
+import { brk } from "../client.js";
 import { Unit } from "../utils/units.js";
-import { includes } from "../utils/array.js";
 import { priceLine } from "./constants.js";
-import { line, dots, fromSupplyPattern } from "./series.js";
+import {
+  line,
+  dots,
+  fromSupplyPattern,
+  fromBaseStatsPattern,
+  chartsFromFull,
+  chartsFromValueFull,
+  fromStatsPattern,
+  chartsFromSum,
+} from "./series.js";
 import { satsBtcUsd, satsBtcUsdFrom } from "./shared.js";
 
 /**
  * Create Network section
- * @param {PartialContext} ctx
  * @returns {PartialOptionsGroup}
  */
-export function createNetworkSection(ctx) {
-  const {
-    colors,
-    brk,
-    fromBaseStatsPattern,
-    fromStatsPattern,
-    chartsFromFull,
-    chartsFromSum,
-    chartsFromValueFull,
-  } = ctx;
+export function createNetworkSection() {
   const {
     blocks,
     transactions,
@@ -31,160 +31,60 @@ export function createNetworkSection(ctx) {
     distribution,
   } = brk.metrics;
 
-  // Address types for mapping (newest to oldest)
+  const st = colors.scriptType;
+
+  // Addressable types - newest to oldest (for addresses/counts that only support addressable types)
   const addressTypes = /** @type {const} */ ([
-    {
-      key: "p2a",
-      name: "P2A",
-      color: colors[spendableTypeColors.p2a],
-      defaultActive: false,
-    },
-    {
-      key: "p2tr",
-      name: "P2TR",
-      color: colors[spendableTypeColors.p2tr],
-      defaultActive: true,
-    },
-    {
-      key: "p2wsh",
-      name: "P2WSH",
-      color: colors[spendableTypeColors.p2wsh],
-      defaultActive: true,
-    },
-    {
-      key: "p2wpkh",
-      name: "P2WPKH",
-      color: colors[spendableTypeColors.p2wpkh],
-      defaultActive: true,
-    },
-    {
-      key: "p2sh",
-      name: "P2SH",
-      color: colors[spendableTypeColors.p2sh],
-      defaultActive: true,
-    },
-    {
-      key: "p2pkh",
-      name: "P2PKH",
-      color: colors[spendableTypeColors.p2pkh],
-      defaultActive: true,
-    },
-    {
-      key: "p2pk33",
-      name: "P2PK33",
-      color: colors[spendableTypeColors.p2pk33],
-      defaultActive: false,
-    },
-    {
-      key: "p2pk65",
-      name: "P2PK65",
-      color: colors[spendableTypeColors.p2pk65],
-      defaultActive: false,
-    },
+    { key: "p2a", name: "P2A", color: st.p2a, defaultActive: false },
+    { key: "p2tr", name: "P2TR", color: st.p2tr, defaultActive: true },
+    { key: "p2wsh", name: "P2WSH", color: st.p2wsh, defaultActive: true },
+    { key: "p2wpkh", name: "P2WPKH", color: st.p2wpkh, defaultActive: true },
+    { key: "p2sh", name: "P2SH", color: st.p2sh, defaultActive: true },
+    { key: "p2pkh", name: "P2PKH", color: st.p2pkh, defaultActive: true },
+    { key: "p2pk33", name: "P2PK33", color: st.p2pk33, defaultActive: false },
+    { key: "p2pk65", name: "P2PK65", color: st.p2pk65, defaultActive: false },
   ]);
 
-  // Address type groups (newest to oldest)
-  const legacyAddresses = /** @type {const} */ ([
-    { key: "p2sh", name: "P2SH", color: colors[spendableTypeColors.p2sh] },
-    { key: "p2pkh", name: "P2PKH", color: colors[spendableTypeColors.p2pkh] },
-    {
-      key: "p2pk33",
-      name: "P2PK33",
-      color: colors[spendableTypeColors.p2pk33],
-    },
-    {
-      key: "p2pk65",
-      name: "P2PK65",
-      color: colors[spendableTypeColors.p2pk65],
-    },
-  ]);
-  const segwitAddresses = /** @type {const} */ ([
-    { key: "p2wsh", name: "P2WSH", color: colors[spendableTypeColors.p2wsh] },
-    {
-      key: "p2wpkh",
-      name: "P2WPKH",
-      color: colors[spendableTypeColors.p2wpkh],
-    },
-  ]);
-  const taprootAddresses = /** @type {const} */ ([
-    { key: "p2a", name: "P2A", color: colors[spendableTypeColors.p2a] },
-    { key: "p2tr", name: "P2TR", color: colors[spendableTypeColors.p2tr] },
-  ]);
-
-  // Script types for output count comparisons (newest to oldest, then non-addressable)
-  const scriptTypes = /** @type {const} */ ([
-    {
-      key: "p2a",
-      name: "P2A",
-      color: colors[spendableTypeColors.p2a],
-      defaultActive: false,
-    },
-    {
-      key: "p2tr",
-      name: "P2TR",
-      color: colors[spendableTypeColors.p2tr],
-      defaultActive: true,
-    },
-    {
-      key: "p2wsh",
-      name: "P2WSH",
-      color: colors[spendableTypeColors.p2wsh],
-      defaultActive: true,
-    },
-    {
-      key: "p2wpkh",
-      name: "P2WPKH",
-      color: colors[spendableTypeColors.p2wpkh],
-      defaultActive: true,
-    },
-    {
-      key: "p2sh",
-      name: "P2SH",
-      color: colors[spendableTypeColors.p2sh],
-      defaultActive: true,
-    },
-    {
-      key: "p2pkh",
-      name: "P2PKH",
-      color: colors[spendableTypeColors.p2pkh],
-      defaultActive: true,
-    },
-    {
-      key: "p2pk33",
-      name: "P2PK33",
-      color: colors[spendableTypeColors.p2pk33],
-      defaultActive: false,
-    },
-    {
-      key: "p2pk65",
-      name: "P2PK65",
-      color: colors[spendableTypeColors.p2pk65],
-      defaultActive: false,
-    },
-    {
-      key: "p2ms",
-      name: "P2MS",
-      color: colors[spendableTypeColors.p2ms],
-      defaultActive: false,
-    },
+  // Non-addressable script types
+  const nonAddressableTypes = /** @type {const} */ ([
+    { key: "p2ms", name: "P2MS", color: st.p2ms, defaultActive: false },
     {
       key: "opreturn",
       name: "OP_RETURN",
-      color: colors[spendableTypeColors.opreturn],
+      color: st.opreturn,
       defaultActive: false,
     },
     {
       key: "emptyoutput",
       name: "Empty",
-      color: colors[spendableTypeColors.empty],
+      color: st.empty,
       defaultActive: false,
     },
     {
       key: "unknownoutput",
       name: "Unknown",
-      color: colors[spendableTypeColors.unknown],
+      color: st.unknown,
       defaultActive: false,
     },
+  ]);
+
+  // All script types = addressable + non-addressable
+  const scriptTypes = [...addressTypes, ...nonAddressableTypes];
+
+  // Address type groups (by era)
+  const taprootAddresses = /** @type {const} */ ([
+    { key: "p2a", name: "P2A", color: st.p2a },
+    { key: "p2tr", name: "P2TR", color: st.p2tr },
+  ]);
+  const segwitAddresses = /** @type {const} */ ([
+    { key: "p2wsh", name: "P2WSH", color: st.p2wsh },
+    { key: "p2wpkh", name: "P2WPKH", color: st.p2wpkh },
+  ]);
+  const legacyAddresses = /** @type {const} */ ([
+    { key: "p2sh", name: "P2SH", color: st.p2sh },
+    { key: "p2pkh", name: "P2PKH", color: st.p2pkh },
+    { key: "p2pk33", name: "P2PK33", color: st.p2pk33 },
+    { key: "p2pk65", name: "P2PK65", color: st.p2pk65 },
   ]);
 
   // Transacting types (transaction participation)
@@ -442,49 +342,25 @@ export function createNetworkSection(ctx) {
     ],
   });
 
-  // Script type groups for Output Counts (newest to oldest)
+  // Script type groups for Output Counts
   const legacyScripts = /** @type {const} */ ([
-    { key: "p2pkh", name: "P2PKH", color: colors[spendableTypeColors.p2pkh] },
-    {
-      key: "p2pk33",
-      name: "P2PK33",
-      color: colors[spendableTypeColors.p2pk33],
-    },
-    {
-      key: "p2pk65",
-      name: "P2PK65",
-      color: colors[spendableTypeColors.p2pk65],
-    },
+    { key: "p2pkh", name: "P2PKH", color: st.p2pkh },
+    { key: "p2pk33", name: "P2PK33", color: st.p2pk33 },
+    { key: "p2pk65", name: "P2PK65", color: st.p2pk65 },
   ]);
   const scriptHashScripts = /** @type {const} */ ([
-    { key: "p2sh", name: "P2SH", color: colors[spendableTypeColors.p2sh] },
-    { key: "p2ms", name: "P2MS", color: colors[spendableTypeColors.p2ms] },
+    { key: "p2sh", name: "P2SH", color: st.p2sh },
+    { key: "p2ms", name: "P2MS", color: st.p2ms },
   ]);
   const segwitScripts = /** @type {const} */ ([
     { key: "segwit", name: "All SegWit", color: colors.cyan },
-    { key: "p2wsh", name: "P2WSH", color: colors[spendableTypeColors.p2wsh] },
-    {
-      key: "p2wpkh",
-      name: "P2WPKH",
-      color: colors[spendableTypeColors.p2wpkh],
-    },
+    { key: "p2wsh", name: "P2WSH", color: st.p2wsh },
+    { key: "p2wpkh", name: "P2WPKH", color: st.p2wpkh },
   ]);
   const otherScripts = /** @type {const} */ ([
-    {
-      key: "opreturn",
-      name: "OP_RETURN",
-      color: colors[spendableTypeColors.opreturn],
-    },
-    {
-      key: "emptyoutput",
-      name: "Empty",
-      color: colors[spendableTypeColors.empty],
-    },
-    {
-      key: "unknownoutput",
-      name: "Unknown",
-      color: colors[spendableTypeColors.unknown],
-    },
+    { key: "opreturn", name: "OP_RETURN", color: st.opreturn },
+    { key: "emptyoutput", name: "Empty", color: st.empty },
+    { key: "unknownoutput", name: "Unknown", color: st.unknown },
   ]);
 
   /**
@@ -793,7 +669,7 @@ export function createNetworkSection(ctx) {
                 pattern: blocks.interval,
                 unit: Unit.secs,
               }),
-              priceLine({ ctx, unit: Unit.secs, name: "Target", number: 600 }),
+              priceLine({ unit: Unit.secs, name: "Target", number: 600 }),
             ],
           },
           {

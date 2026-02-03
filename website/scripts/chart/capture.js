@@ -1,6 +1,6 @@
 import { ios, canShare } from "../utils/env.js";
 import { style } from "../utils/elements.js";
-import { colors } from "./colors.js";
+import { colors } from "../utils/colors.js";
 
 export const canCapture = !ios || canShare;
 
@@ -90,7 +90,11 @@ export function capture({ screenshot, chartWidth, parent, legends }) {
   if (hasBottomLegend) {
     drawLegend(
       legends.bottom.element,
-      pad + titleOffset + topLegendOffset + screenshot.height + legendHeight / 2,
+      pad +
+        titleOffset +
+        topLegendOffset +
+        screenshot.height +
+        legendHeight / 2,
     );
   }
 
@@ -99,7 +103,11 @@ export function capture({ screenshot, chartWidth, parent, legends }) {
   ctx.font = `${fontSize}px ${style.fontFamily}`;
   ctx.textAlign = "right";
   ctx.textBaseline = "bottom";
-  ctx.fillText(window.location.host, canvas.width - pad, canvas.height - pad / 2);
+  ctx.fillText(
+    window.location.host,
+    canvas.width - pad,
+    canvas.height - pad / 2,
+  );
 
   // Open in new tab
   canvas.toBlob((blob) => {

@@ -3,17 +3,20 @@ import { createButtonElement, createAnchorElement } from "../utils/dom.js";
 import { pushHistory, resetParams } from "../utils/url.js";
 import { readStored, writeToStorage } from "../utils/storage.js";
 import { stringToId } from "../utils/format.js";
-import { collect, markUsed, logUnused, extractTreeStructure } from "./unused.js";
+import {
+  collect,
+  markUsed,
+  logUnused,
+  extractTreeStructure,
+} from "./unused.js";
 import { localhost } from "../utils/env.js";
 import { setQr } from "../panes/share.js";
 import { getConstant } from "./constants.js";
-import { colors } from "../chart/colors.js";
+import { colors } from "../utils/colors.js";
 import { Unit } from "../utils/units.js";
+import { brk } from "../client.js";
 
-/**
- * @param {BrkClient} brk
- */
-export function initOptions(brk) {
+export function initOptions() {
   collect(brk.metrics);
 
   const LS_SELECTED_KEY = `selected_path`;
@@ -26,9 +29,7 @@ export function initOptions(brk) {
     JSON.parse(readStored(LS_SELECTED_KEY) || "[]") || []
   ).filter((v) => v);
 
-  const partialOptions = createPartialOptions({
-    brk,
-  });
+  const partialOptions = createPartialOptions();
 
   // Log tree structure for analysis (localhost only)
   if (localhost) {
@@ -115,9 +116,10 @@ export function initOptions(brk) {
 
       // Check for price pattern blueprint (has dollars/sats sub-metrics)
       // Use unknown cast for safe property access check
-      const maybePriceMetric = /** @type {{ dollars?: AnyMetricPattern, sats?: AnyMetricPattern }} */ (
-        /** @type {unknown} */ (blueprint.metric)
-      );
+      const maybePriceMetric =
+        /** @type {{ dollars?: AnyMetricPattern, sats?: AnyMetricPattern }} */ (
+          /** @type {unknown} */ (blueprint.metric)
+        );
       if (maybePriceMetric.dollars?.by && maybePriceMetric.sats?.by) {
         const { dollars, sats } = maybePriceMetric;
         markUsed(dollars);
@@ -131,7 +133,9 @@ export function initOptions(brk) {
       }
 
       // After continue, we know this is a regular metric blueprint
-      const regularBlueprint = /** @type {AnyFetchedSeriesBlueprint} */ (blueprint);
+      const regularBlueprint = /** @type {AnyFetchedSeriesBlueprint} */ (
+        blueprint
+      );
       const metric = regularBlueprint.metric;
       const unit = regularBlueprint.unit;
       if (!unit) continue;
@@ -171,7 +175,11 @@ export function initOptions(brk) {
           title: `${baseValue}`,
           color: colors.gray,
           unit,
-          options: { lineStyle: 4, lastValueVisible: false, crosshairMarkerVisible: false },
+          options: {
+            lineStyle: 4,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+          },
         });
       }
     }
@@ -247,7 +255,11 @@ export function initOptions(brk) {
    * @param {string} parentPathStr
    * @returns {{ nodes: ProcessedNode[], count: number }}
    */
-  function processPartialTree(partialTree, parentPath = [], parentPathStr = "") {
+  function processPartialTree(
+    partialTree,
+    parentPath = [],
+    parentPathStr = "",
+  ) {
     /** @type {ProcessedNode[]} */
     const nodes = [];
     let totalCount = 0;
@@ -258,7 +270,11 @@ export function initOptions(brk) {
         const serName = stringToId(anyPartial.name);
         const pathStr = parentPathStr ? `${parentPathStr}/${serName}` : serName;
         const path = parentPath.concat(serName);
-        const { nodes: children, count } = processPartialTree(anyPartial.tree, path, pathStr);
+        const { nodes: children, count } = processPartialTree(
+          anyPartial.tree,
+          path,
+          pathStr,
+        );
 
         // Skip groups with no children
         if (count === 0) continue;

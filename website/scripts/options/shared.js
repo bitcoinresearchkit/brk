@@ -3,14 +3,15 @@
 import { Unit } from "../utils/units.js";
 import { line, baseline, price } from "./series.js";
 import { priceLine, priceLines } from "./constants.js";
+import { colors } from "../utils/colors.js";
 
 /**
  * Create a title formatter for chart titles
  * @param {string} [cohortTitle]
  * @returns {(metric: string) => string}
  */
-export const formatCohortTitle = (cohortTitle) =>
-  (metric) => cohortTitle ? `${metric}: ${cohortTitle}` : metric;
+export const formatCohortTitle = (cohortTitle) => (metric) =>
+  cohortTitle ? `${metric}: ${cohortTitle}` : metric;
 
 /**
  * Create sats/btc/usd line series from a pattern with .sats/.bitcoin/.dollars
@@ -23,9 +24,21 @@ export const formatCohortTitle = (cohortTitle) =>
  */
 export function satsBtcUsd({ pattern, name, color, defaultActive }) {
   return [
-    line({ metric: pattern.bitcoin, name, color, unit: Unit.btc, defaultActive }),
+    line({
+      metric: pattern.bitcoin,
+      name,
+      color,
+      unit: Unit.btc,
+      defaultActive,
+    }),
     line({ metric: pattern.sats, name, color, unit: Unit.sats, defaultActive }),
-    line({ metric: pattern.dollars, name, color, unit: Unit.usd, defaultActive }),
+    line({
+      metric: pattern.dollars,
+      name,
+      color,
+      unit: Unit.usd,
+      defaultActive,
+    }),
   ];
 }
 
@@ -41,7 +54,11 @@ export function satsBtcUsd({ pattern, name, color, defaultActive }) {
  */
 export function satsBtcUsdFrom({ source, key, name, color, defaultActive }) {
   return satsBtcUsd({
-    pattern: { bitcoin: source.bitcoin[key], sats: source.sats[key], dollars: source.dollars[key] },
+    pattern: {
+      bitcoin: source.bitcoin[key],
+      sats: source.sats[key],
+      dollars: source.dollars[key],
+    },
     name,
     color,
     defaultActive,
@@ -58,9 +75,19 @@ export function satsBtcUsdFrom({ source, key, name, color, defaultActive }) {
  * @param {boolean} [args.defaultActive]
  * @returns {FetchedLineSeriesBlueprint[]}
  */
-export function satsBtcUsdFromFull({ source, key, name, color, defaultActive }) {
+export function satsBtcUsdFromFull({
+  source,
+  key,
+  name,
+  color,
+  defaultActive,
+}) {
   return satsBtcUsd({
-    pattern: { bitcoin: source.bitcoin[key], sats: source.sats[key], dollars: source.dollars[key] },
+    pattern: {
+      bitcoin: source.bitcoin[key],
+      sats: source.sats[key],
+      dollars: source.dollars[key],
+    },
     name,
     color,
     defaultActive,
@@ -69,7 +96,6 @@ export function satsBtcUsdFromFull({ source, key, name, color, defaultActive }) 
 
 /**
  * Create coinbase/subsidy/fee series from separate sources
- * @param {Colors} colors
  * @param {Object} args
  * @param {AnyValuePatternType} args.coinbase
  * @param {AnyValuePatternType} args.subsidy
@@ -77,20 +103,29 @@ export function satsBtcUsdFromFull({ source, key, name, color, defaultActive }) 
  * @param {'sum' | 'cumulative'} args.key
  * @returns {FetchedLineSeriesBlueprint[]}
  */
-export function revenueBtcSatsUsd(colors, { coinbase, subsidy, fee, key }) {
+export function revenueBtcSatsUsd({ coinbase, subsidy, fee, key }) {
   return [
-    ...satsBtcUsdFrom({ source: coinbase, key, name: "Coinbase", color: colors.orange }),
-    ...satsBtcUsdFrom({ source: subsidy, key, name: "Subsidy", color: colors.lime }),
+    ...satsBtcUsdFrom({
+      source: coinbase,
+      key,
+      name: "Coinbase",
+      color: colors.orange,
+    }),
+    ...satsBtcUsdFrom({
+      source: subsidy,
+      key,
+      name: "Subsidy",
+      color: colors.lime,
+    }),
     ...satsBtcUsdFrom({ source: fee, key, name: "Fees", color: colors.cyan }),
   ];
 }
 
 /**
  * Build percentile USD mappings from a ratio pattern
- * @param {Colors} colors
  * @param {AnyRatioPattern} ratio
  */
-export function percentileUsdMap(colors, ratio) {
+export function percentileUsdMap(ratio) {
   return /** @type {const} */ ([
     { name: "pct95", prop: ratio.ratioPct95Usd, color: colors.fuchsia },
     { name: "pct5", prop: ratio.ratioPct5Usd, color: colors.cyan },
@@ -103,10 +138,9 @@ export function percentileUsdMap(colors, ratio) {
 
 /**
  * Build percentile ratio mappings from a ratio pattern
- * @param {Colors} colors
  * @param {AnyRatioPattern} ratio
  */
-export function percentileMap(colors, ratio) {
+export function percentileMap(ratio) {
   return /** @type {const} */ ([
     { name: "pct95", prop: ratio.ratioPct95, color: colors.fuchsia },
     { name: "pct5", prop: ratio.ratioPct5, color: colors.cyan },
@@ -132,10 +166,9 @@ export function sdPatterns(ratio) {
 
 /**
  * Build SD band mappings from an SD pattern
- * @param {Colors} colors
  * @param {Ratio1ySdPattern} sd
  */
-export function sdBandsUsd(colors, sd) {
+export function sdBandsUsd(sd) {
   return /** @type {const} */ ([
     { name: "0σ", prop: sd._0sdUsd, color: colors.lime },
     { name: "+0.5σ", prop: sd.p05sdUsd, color: colors.yellow },
@@ -155,10 +188,9 @@ export function sdBandsUsd(colors, sd) {
 
 /**
  * Build SD band mappings (ratio) from an SD pattern
- * @param {Colors} colors
  * @param {Ratio1ySdPattern} sd
  */
-export function sdBandsRatio(colors, sd) {
+export function sdBandsRatio(sd) {
   return /** @type {const} */ ([
     { name: "0σ", prop: sd.sma, color: colors.lime },
     { name: "+0.5σ", prop: sd.p05sd, color: colors.yellow },
@@ -178,10 +210,9 @@ export function sdBandsRatio(colors, sd) {
 
 /**
  * Build ratio SMA series from a ratio pattern
- * @param {Colors} colors
  * @param {AnyRatioPattern} ratio
  */
-export function ratioSmas(colors, ratio) {
+export function ratioSmas(ratio) {
   return /** @type {const} */ ([
     { name: "1w SMA", metric: ratio.ratio1wSma, color: colors.lime },
     { name: "1m SMA", metric: ratio.ratio1mSma, color: colors.teal },
@@ -194,7 +225,6 @@ export function ratioSmas(colors, ratio) {
 
 /**
  * Create ratio chart from ActivePriceRatioPattern
- * @param {PartialContext} ctx
  * @param {Object} args
  * @param {(metric: string) => string} args.title
  * @param {AnyPricePattern} args.pricePattern - The price pattern to show in top pane
@@ -203,15 +233,13 @@ export function ratioSmas(colors, ratio) {
  * @param {string} [args.name] - Optional name override (default: "ratio")
  * @returns {PartialChartOption}
  */
-export function createRatioChart(ctx, { title, pricePattern, ratio, color, name }) {
-  const { colors } = ctx;
-
+export function createRatioChart({ title, pricePattern, ratio, color, name }) {
   return {
     name: name ?? "ratio",
     title: title(name ?? "Ratio"),
     top: [
       price({ metric: pricePattern, name: "Price", color }),
-      ...percentileUsdMap(colors, ratio).map(({ name, prop, color }) =>
+      ...percentileUsdMap(ratio).map(({ name, prop, color }) =>
         price({
           metric: prop,
           name,
@@ -228,10 +256,10 @@ export function createRatioChart(ctx, { title, pricePattern, ratio, color, name 
         unit: Unit.ratio,
         base: 1,
       }),
-      ...ratioSmas(colors, ratio).map(({ name, metric, color }) =>
+      ...ratioSmas(ratio).map(({ name, metric, color }) =>
         line({ metric, name, color, unit: Unit.ratio, defaultActive: false }),
       ),
-      ...percentileMap(colors, ratio).map(({ name, prop, color }) =>
+      ...percentileMap(ratio).map(({ name, prop, color }) =>
         line({
           metric: prop,
           name,
@@ -247,7 +275,6 @@ export function createRatioChart(ctx, { title, pricePattern, ratio, color, name 
 
 /**
  * Create ZScores folder from ActivePriceRatioPattern
- * @param {PartialContext} ctx
  * @param {Object} args
  * @param {(suffix: string) => string} args.formatTitle - Function that takes metric suffix and returns full title
  * @param {string} args.legend
@@ -256,11 +283,13 @@ export function createRatioChart(ctx, { title, pricePattern, ratio, color, name 
  * @param {Color} args.color
  * @returns {PartialOptionsGroup}
  */
-export function createZScoresFolder(
-  ctx,
-  { formatTitle, legend, pricePattern, ratio, color },
-) {
-  const { colors } = ctx;
+export function createZScoresFolder({
+  formatTitle,
+  legend,
+  pricePattern,
+  ratio,
+  color,
+}) {
   const sdPats = sdPatterns(ratio);
 
   return {
@@ -322,7 +351,6 @@ export function createZScoresFolder(
             unit: Unit.sd,
           }),
           ...priceLines({
-            ctx,
             unit: Unit.sd,
             numbers: [0, 1, -1, 2, -2, 3, -3],
             defaultActive: false,
@@ -334,14 +362,13 @@ export function createZScoresFolder(
         title: formatTitle(`${titleAddon ? `${titleAddon} ` : ""}Z-Score`),
         top: [
           price({ metric: pricePattern, name: legend, color }),
-          ...sdBandsUsd(colors, sd).map(
-            ({ name: bandName, prop, color: bandColor }) =>
-              price({
-                metric: prop,
-                name: bandName,
-                color: bandColor,
-                defaultActive: false,
-              }),
+          ...sdBandsUsd(sd).map(({ name: bandName, prop, color: bandColor }) =>
+            price({
+              metric: prop,
+              name: bandName,
+              color: bandColor,
+              defaultActive: false,
+            }),
           ),
         ],
         bottom: [
@@ -362,7 +389,7 @@ export function createZScoresFolder(
             color: colors.gray,
             unit: Unit.percentage,
           }),
-          ...sdBandsRatio(colors, sd).map(
+          ...sdBandsRatio(sd).map(
             ({ name: bandName, prop, color: bandColor }) =>
               line({
                 metric: prop,
@@ -373,11 +400,9 @@ export function createZScoresFolder(
               }),
           ),
           priceLine({
-            ctx,
             unit: Unit.sd,
           }),
           ...priceLines({
-            ctx,
             unit: Unit.sd,
             numbers: [1, -1, 2, -2, 3, -3],
             defaultActive: false,
@@ -391,7 +416,6 @@ export function createZScoresFolder(
 /**
  * Create price + ratio + z-scores charts - flat array
  * Unified helper for averages, distribution, and other price-based metrics
- * @param {PartialContext} ctx
  * @param {Object} args
  * @param {string} args.context - Context string for ratio/z-scores titles (e.g., "1 Week SMA", "STH")
  * @param {string} args.legend - Legend name for the price series
@@ -404,23 +428,38 @@ export function createZScoresFolder(
  * @param {FetchedPriceSeriesBlueprint[]} [args.priceReferences] - Optional additional price series to show in Price chart
  * @returns {PartialOptionsTree}
  */
-export function createPriceRatioCharts(ctx, { context, legend, pricePattern, ratio, color, ratioName, priceTitle, zScoresSuffix, priceReferences }) {
+export function createPriceRatioCharts({
+  context,
+  legend,
+  pricePattern,
+  ratio,
+  color,
+  ratioName,
+  priceTitle,
+  zScoresSuffix,
+  priceReferences,
+}) {
   const titleFn = formatCohortTitle(context);
-  const zScoresTitleFn = zScoresSuffix ? formatCohortTitle(`${context} ${zScoresSuffix}`) : titleFn;
+  const zScoresTitleFn = zScoresSuffix
+    ? formatCohortTitle(`${context} ${zScoresSuffix}`)
+    : titleFn;
   return [
     {
       name: "Price",
       title: priceTitle ?? context,
-      top: [price({ metric: pricePattern, name: legend, color }), ...(priceReferences ?? [])],
+      top: [
+        price({ metric: pricePattern, name: legend, color }),
+        ...(priceReferences ?? []),
+      ],
     },
-    createRatioChart(ctx, {
+    createRatioChart({
       title: titleFn,
       pricePattern,
       ratio,
       color,
       name: ratioName,
     }),
-    createZScoresFolder(ctx, {
+    createZScoresFolder({
       formatTitle: zScoresTitleFn,
       legend,
       pricePattern,

@@ -1,5 +1,7 @@
 /** Market section */
 
+import { colors } from "../utils/colors.js";
+import { brk } from "../client.js";
 import { includes } from "../utils/array.js";
 import { Unit } from "../utils/units.js";
 import { priceLine, priceLines } from "./constants.js";
@@ -27,21 +29,27 @@ import { periodIdToName } from "./utils.js";
  * @property {ActivePriceRatioPattern} ratio
  */
 
-const commonMaIds = /** @type {const} */ (["1w", "1m", "200d", "1y", "200w", "4y"]);
+const commonMaIds = /** @type {const} */ ([
+  "1w",
+  "1m",
+  "200d",
+  "1y",
+  "200w",
+  "4y",
+]);
 
 /**
- * @param {PartialContext} ctx
  * @param {string} label
  * @param {MaPeriod[]} averages
  */
-function createMaSubSection(ctx, label, averages) {
+function createMaSubSection(label, averages) {
   const common = averages.filter((a) => includes(commonMaIds, a.id));
   const more = averages.filter((a) => !includes(commonMaIds, a.id));
 
   /** @param {MaPeriod} a */
   const toFolder = (a) => ({
     name: periodIdToName(a.id, true),
-    tree: createPriceRatioCharts(ctx, {
+    tree: createPriceRatioCharts({
       context: `${periodIdToName(a.id, true)} ${label}`,
       legend: "average",
       pricePattern: a.ratio.price,
@@ -56,7 +64,9 @@ function createMaSubSection(ctx, label, averages) {
       {
         name: "Compare",
         title: `Price ${label}s`,
-        top: averages.map((a) => price({ metric: a.ratio.price, name: a.id, color: a.color })),
+        top: averages.map((a) =>
+          price({ metric: a.ratio.price, name: a.id, color: a.color }),
+        ),
       },
       ...common.map(toFolder),
       { name: "More...", tree: more.map(toFolder) },
@@ -94,12 +104,21 @@ function returnsSubSection(name, periods) {
       {
         name: "Compare",
         title: `${name} Returns`,
-        bottom: periods.map((p) => baseline({ metric: p.returns, name: p.id, color: p.color, unit: Unit.percentage })),
+        bottom: periods.map((p) =>
+          baseline({
+            metric: p.returns,
+            name: p.id,
+            color: p.color,
+            unit: Unit.percentage,
+          }),
+        ),
       },
       ...periods.map((p) => ({
         name: periodIdToName(p.id, true),
         title: `${periodIdToName(p.id, true)} Returns`,
-        bottom: [baseline({ metric: p.returns, name: "Total", unit: Unit.percentage })],
+        bottom: [
+          baseline({ metric: p.returns, name: "Total", unit: Unit.percentage }),
+        ],
       })),
     ],
   };
@@ -116,7 +135,14 @@ function returnsSubSectionWithCagr(name, periods) {
       {
         name: "Compare",
         title: `${name} Returns`,
-        bottom: periods.map((p) => baseline({ metric: p.returns, name: p.id, color: p.color, unit: Unit.percentage })),
+        bottom: periods.map((p) =>
+          baseline({
+            metric: p.returns,
+            name: p.id,
+            color: p.color,
+            unit: Unit.percentage,
+          }),
+        ),
       },
       ...periods.map((p) => ({
         name: periodIdToName(p.id, true),
@@ -141,7 +167,9 @@ function historicalSubSection(name, periods) {
       {
         name: "Compare",
         title: `${name} Historical`,
-        top: periods.map((p) => price({ metric: p.lookback, name: p.id, color: p.color })),
+        top: periods.map((p) =>
+          price({ metric: p.lookback, name: p.id, color: p.color }),
+        ),
       },
       ...periods.map((p) => ({
         name: periodIdToName(p.id, true),
@@ -154,33 +182,119 @@ function historicalSubSection(name, periods) {
 
 /**
  * Create Market section
- * @param {PartialContext} ctx
  * @returns {PartialOptionsGroup}
  */
-export function createMarketSection(ctx) {
-  const { colors, brk } = ctx;
+export function createMarketSection() {
   const { market, supply, price: priceMetrics } = brk.metrics;
-  const { movingAverage: ma, ath, returns, volatility, range, indicators, lookback } = market;
+  const {
+    movingAverage: ma,
+    ath,
+    returns,
+    volatility,
+    range,
+    indicators,
+    lookback,
+  } = market;
 
   /** @type {Period[]} */
   const shortPeriods = [
-    { id: "1d", color: colors.returns._1d, returns: returns.priceReturns._1d, lookback: lookback._1d },
-    { id: "1w", color: colors.returns._1w, returns: returns.priceReturns._1w, lookback: lookback._1w },
-    { id: "1m", color: colors.returns._1m, returns: returns.priceReturns._1m, lookback: lookback._1m },
-    { id: "3m", color: colors.returns._3m, returns: returns.priceReturns._3m, lookback: lookback._3m, defaultActive: false },
-    { id: "6m", color: colors.returns._6m, returns: returns.priceReturns._6m, lookback: lookback._6m, defaultActive: false },
-    { id: "1y", color: colors.returns._1y, returns: returns.priceReturns._1y, lookback: lookback._1y },
+    {
+      id: "1d",
+      color: colors.returns._1d,
+      returns: returns.priceReturns._1d,
+      lookback: lookback._1d,
+    },
+    {
+      id: "1w",
+      color: colors.returns._1w,
+      returns: returns.priceReturns._1w,
+      lookback: lookback._1w,
+    },
+    {
+      id: "1m",
+      color: colors.returns._1m,
+      returns: returns.priceReturns._1m,
+      lookback: lookback._1m,
+    },
+    {
+      id: "3m",
+      color: colors.returns._3m,
+      returns: returns.priceReturns._3m,
+      lookback: lookback._3m,
+      defaultActive: false,
+    },
+    {
+      id: "6m",
+      color: colors.returns._6m,
+      returns: returns.priceReturns._6m,
+      lookback: lookback._6m,
+      defaultActive: false,
+    },
+    {
+      id: "1y",
+      color: colors.returns._1y,
+      returns: returns.priceReturns._1y,
+      lookback: lookback._1y,
+    },
   ];
 
   /** @type {PeriodWithCagr[]} */
   const longPeriods = [
-    { id: "2y", color: colors.returns._2y, returns: returns.priceReturns._2y, cagr: returns.cagr._2y, lookback: lookback._2y, defaultActive: false },
-    { id: "3y", color: colors.returns._3y, returns: returns.priceReturns._3y, cagr: returns.cagr._3y, lookback: lookback._3y, defaultActive: false },
-    { id: "4y", color: colors.returns._4y, returns: returns.priceReturns._4y, cagr: returns.cagr._4y, lookback: lookback._4y },
-    { id: "5y", color: colors.returns._5y, returns: returns.priceReturns._5y, cagr: returns.cagr._5y, lookback: lookback._5y, defaultActive: false },
-    { id: "6y", color: colors.returns._6y, returns: returns.priceReturns._6y, cagr: returns.cagr._6y, lookback: lookback._6y, defaultActive: false },
-    { id: "8y", color: colors.returns._8y, returns: returns.priceReturns._8y, cagr: returns.cagr._8y, lookback: lookback._8y, defaultActive: false },
-    { id: "10y", color: colors.returns._10y, returns: returns.priceReturns._10y, cagr: returns.cagr._10y, lookback: lookback._10y, defaultActive: false },
+    {
+      id: "2y",
+      color: colors.returns._2y,
+      returns: returns.priceReturns._2y,
+      cagr: returns.cagr._2y,
+      lookback: lookback._2y,
+      defaultActive: false,
+    },
+    {
+      id: "3y",
+      color: colors.returns._3y,
+      returns: returns.priceReturns._3y,
+      cagr: returns.cagr._3y,
+      lookback: lookback._3y,
+      defaultActive: false,
+    },
+    {
+      id: "4y",
+      color: colors.returns._4y,
+      returns: returns.priceReturns._4y,
+      cagr: returns.cagr._4y,
+      lookback: lookback._4y,
+    },
+    {
+      id: "5y",
+      color: colors.returns._5y,
+      returns: returns.priceReturns._5y,
+      cagr: returns.cagr._5y,
+      lookback: lookback._5y,
+      defaultActive: false,
+    },
+    {
+      id: "6y",
+      color: colors.returns._6y,
+      returns: returns.priceReturns._6y,
+      cagr: returns.cagr._6y,
+      lookback: lookback._6y,
+      defaultActive: false,
+    },
+    {
+      id: "8y",
+      color: colors.returns._8y,
+      returns: returns.priceReturns._8y,
+      cagr: returns.cagr._8y,
+      lookback: lookback._8y,
+      defaultActive: false,
+    },
+    {
+      id: "10y",
+      color: colors.returns._10y,
+      returns: returns.priceReturns._10y,
+      cagr: returns.cagr._10y,
+      lookback: lookback._10y,
+      defaultActive: false,
+    },
   ];
 
   /** @type {MaPeriod[]} */
@@ -225,12 +339,48 @@ export function createMarketSection(ctx) {
 
   // SMA vs EMA comparison periods (common periods only)
   const smaVsEma = [
-    { id: "1w", name: "1 Week", color: colors.ma._1w, sma: ma.price1wSma, ema: ma.price1wEma },
-    { id: "1m", name: "1 Month", color: colors.ma._1m, sma: ma.price1mSma, ema: ma.price1mEma },
-    { id: "200d", name: "200 Day", color: colors.ma._200d, sma: ma.price200dSma, ema: ma.price200dEma },
-    { id: "1y", name: "1 Year", color: colors.ma._1y, sma: ma.price1ySma, ema: ma.price1yEma },
-    { id: "200w", name: "200 Week", color: colors.ma._200w, sma: ma.price200wSma, ema: ma.price200wEma },
-    { id: "4y", name: "4 Year", color: colors.ma._4y, sma: ma.price4ySma, ema: ma.price4yEma },
+    {
+      id: "1w",
+      name: "1 Week",
+      color: colors.ma._1w,
+      sma: ma.price1wSma,
+      ema: ma.price1wEma,
+    },
+    {
+      id: "1m",
+      name: "1 Month",
+      color: colors.ma._1m,
+      sma: ma.price1mSma,
+      ema: ma.price1mEma,
+    },
+    {
+      id: "200d",
+      name: "200 Day",
+      color: colors.ma._200d,
+      sma: ma.price200dSma,
+      ema: ma.price200dEma,
+    },
+    {
+      id: "1y",
+      name: "1 Year",
+      color: colors.ma._1y,
+      sma: ma.price1ySma,
+      ema: ma.price1yEma,
+    },
+    {
+      id: "200w",
+      name: "200 Week",
+      color: colors.ma._200w,
+      sma: ma.price200wSma,
+      ema: ma.price200wEma,
+    },
+    {
+      id: "4y",
+      name: "4 Year",
+      color: colors.ma._4y,
+      sma: ma.price4ySma,
+      ema: ma.price4yEma,
+    },
   ];
 
   return {
@@ -241,13 +391,25 @@ export function createMarketSection(ctx) {
       {
         name: "Sats/$",
         title: "Sats per Dollar",
-        bottom: [line({ metric: priceMetrics.sats.split.close, name: "Sats/$", unit: Unit.sats })],
+        bottom: [
+          line({
+            metric: priceMetrics.sats.split.close,
+            name: "Sats/$",
+            unit: Unit.sats,
+          }),
+        ],
       },
 
       {
         name: "Capitalization",
         title: "Market Capitalization",
-        bottom: [line({ metric: supply.marketCap, name: "Capitalization", unit: Unit.usd })],
+        bottom: [
+          line({
+            metric: supply.marketCap,
+            name: "Capitalization",
+            unit: Unit.usd,
+          }),
+        ],
       },
 
       {
@@ -257,17 +419,42 @@ export function createMarketSection(ctx) {
             name: "Drawdown",
             title: "ATH Drawdown",
             top: [price({ metric: ath.priceAth, name: "ATH" })],
-            bottom: [line({ metric: ath.priceDrawdown, name: "Drawdown", color: colors.red, unit: Unit.percentage })],
+            bottom: [
+              line({
+                metric: ath.priceDrawdown,
+                name: "Drawdown",
+                color: colors.red,
+                unit: Unit.percentage,
+              }),
+            ],
           },
           {
             name: "Time Since",
             title: "Time Since ATH",
             top: [price({ metric: ath.priceAth, name: "ATH" })],
             bottom: [
-              line({ metric: ath.daysSincePriceAth, name: "Since", unit: Unit.days }),
-              line({ metric: ath.yearsSincePriceAth, name: "Since", unit: Unit.years }),
-              line({ metric: ath.maxDaysBetweenPriceAths, name: "Max", color: colors.red, unit: Unit.days }),
-              line({ metric: ath.maxYearsBetweenPriceAths, name: "Max", color: colors.red, unit: Unit.years }),
+              line({
+                metric: ath.daysSincePriceAth,
+                name: "Since",
+                unit: Unit.days,
+              }),
+              line({
+                metric: ath.yearsSincePriceAth,
+                name: "Since",
+                unit: Unit.years,
+              }),
+              line({
+                metric: ath.maxDaysBetweenPriceAths,
+                name: "Max",
+                color: colors.red,
+                unit: Unit.days,
+              }),
+              line({
+                metric: ath.maxYearsBetweenPriceAths,
+                name: "Max",
+                color: colors.red,
+                unit: Unit.years,
+              }),
             ],
           },
         ],
@@ -297,25 +484,47 @@ export function createMarketSection(ctx) {
       {
         name: "Volatility",
         tree: [
-          volatilityChart(colors, "Index", "Volatility Index", Unit.percentage, {
-            _1w: volatility.price1wVolatility,
-            _1m: volatility.price1mVolatility,
-            _1y: volatility.price1yVolatility,
-          }),
+          volatilityChart(
+            colors,
+            "Index",
+            "Volatility Index",
+            Unit.percentage,
+            {
+              _1w: volatility.price1wVolatility,
+              _1m: volatility.price1mVolatility,
+              _1y: volatility.price1yVolatility,
+            },
+          ),
           {
             name: "True Range",
             title: "True Range",
             bottom: [
-              line({ metric: range.priceTrueRange, name: "Daily", color: colors.yellow, unit: Unit.usd }),
-              line({ metric: range.priceTrueRange2wSum, name: "2w Sum", color: colors.orange, unit: Unit.usd, defaultActive: false }),
+              line({
+                metric: range.priceTrueRange,
+                name: "Daily",
+                color: colors.yellow,
+                unit: Unit.usd,
+              }),
+              line({
+                metric: range.priceTrueRange2wSum,
+                name: "2w Sum",
+                color: colors.orange,
+                unit: Unit.usd,
+                defaultActive: false,
+              }),
             ],
           },
           {
             name: "Choppiness",
             title: "Choppiness Index",
             bottom: [
-              line({ metric: range.price2wChoppinessIndex, name: "2w", color: colors.red, unit: Unit.index }),
-              ...priceLines({ ctx, unit: Unit.index, numbers: [61.8, 38.2] }),
+              line({
+                metric: range.price2wChoppinessIndex,
+                name: "2w",
+                color: colors.red,
+                unit: Unit.index,
+              }),
+              ...priceLines({ unit: Unit.index, numbers: [61.8, 38.2] }),
             ],
           },
           volatilityChart(colors, "Sharpe Ratio", "Sharpe Ratio", Unit.ratio, {
@@ -323,11 +532,17 @@ export function createMarketSection(ctx) {
             _1m: volatility.sharpe1m,
             _1y: volatility.sharpe1y,
           }),
-          volatilityChart(colors, "Sortino Ratio", "Sortino Ratio", Unit.ratio, {
-            _1w: volatility.sortino1w,
-            _1m: volatility.sortino1m,
-            _1y: volatility.sortino1y,
-          }),
+          volatilityChart(
+            colors,
+            "Sortino Ratio",
+            "Sortino Ratio",
+            Unit.ratio,
+            {
+              _1w: volatility.sortino1w,
+              _1m: volatility.sortino1m,
+              _1y: volatility.sortino1y,
+            },
+          ),
         ],
       },
 
@@ -341,8 +556,17 @@ export function createMarketSection(ctx) {
                 name: "All Periods",
                 title: "SMA vs EMA Comparison",
                 top: smaVsEma.flatMap((p) => [
-                  price({ metric: p.sma.price, name: `${p.id} SMA`, color: p.color }),
-                  price({ metric: p.ema.price, name: `${p.id} EMA`, color: p.color, style: 1 }),
+                  price({
+                    metric: p.sma.price,
+                    name: `${p.id} SMA`,
+                    color: p.color,
+                  }),
+                  price({
+                    metric: p.ema.price,
+                    name: `${p.id} EMA`,
+                    color: p.color,
+                    style: 1,
+                  }),
                 ]),
               },
               ...smaVsEma.map((p) => ({
@@ -350,13 +574,18 @@ export function createMarketSection(ctx) {
                 title: `${p.name} SMA vs EMA`,
                 top: [
                   price({ metric: p.sma.price, name: "SMA", color: p.color }),
-                  price({ metric: p.ema.price, name: "EMA", color: p.color, style: 1 }),
+                  price({
+                    metric: p.ema.price,
+                    name: "EMA",
+                    color: p.color,
+                    style: 1,
+                  }),
                 ],
               })),
             ],
           },
-          createMaSubSection(ctx, "SMA", sma),
-          createMaSubSection(ctx, "EMA", ema),
+          createMaSubSection("SMA", sma),
+          createMaSubSection("EMA", ema),
         ],
       },
 
@@ -366,16 +595,46 @@ export function createMarketSection(ctx) {
           {
             name: "MinMax",
             tree: [
-              { id: "1w", name: "1 Week", min: range.price1wMin, max: range.price1wMax },
-              { id: "2w", name: "2 Week", min: range.price2wMin, max: range.price2wMax },
-              { id: "1m", name: "1 Month", min: range.price1mMin, max: range.price1mMax },
-              { id: "1y", name: "1 Year", min: range.price1yMin, max: range.price1yMax },
+              {
+                id: "1w",
+                name: "1 Week",
+                min: range.price1wMin,
+                max: range.price1wMax,
+              },
+              {
+                id: "2w",
+                name: "2 Week",
+                min: range.price2wMin,
+                max: range.price2wMax,
+              },
+              {
+                id: "1m",
+                name: "1 Month",
+                min: range.price1mMin,
+                max: range.price1mMax,
+              },
+              {
+                id: "1y",
+                name: "1 Year",
+                min: range.price1yMin,
+                max: range.price1yMax,
+              },
             ].map((p) => ({
               name: p.id,
               title: `${p.name} MinMax`,
               top: [
-                price({ metric: p.min, name: "Min", key: "price-min", color: colors.red }),
-                price({ metric: p.max, name: "Max", key: "price-max", color: colors.green }),
+                price({
+                  metric: p.min,
+                  name: "Min",
+                  key: "price-min",
+                  color: colors.red,
+                }),
+                price({
+                  metric: p.max,
+                  name: "Max",
+                  key: "price-max",
+                  color: colors.green,
+                }),
               ],
             })),
           },
@@ -383,9 +642,21 @@ export function createMarketSection(ctx) {
             name: "Mayer Multiple",
             title: "Mayer Multiple",
             top: [
-              price({ metric: ma.price200dSma.price, name: "200d SMA", color: colors.yellow }),
-              price({ metric: ma.price200dSmaX24, name: "200d SMA x2.4", color: colors.green }),
-              price({ metric: ma.price200dSmaX08, name: "200d SMA x0.8", color: colors.red }),
+              price({
+                metric: ma.price200dSma.price,
+                name: "200d SMA",
+                color: colors.yellow,
+              }),
+              price({
+                metric: ma.price200dSmaX24,
+                name: "200d SMA x2.4",
+                color: colors.green,
+              }),
+              price({
+                metric: ma.price200dSmaX08,
+                name: "200d SMA x0.8",
+                color: colors.red,
+              }),
             ],
           },
         ],
@@ -398,30 +669,71 @@ export function createMarketSection(ctx) {
             name: "RSI",
             title: "RSI (14d)",
             bottom: [
-              line({ metric: indicators.rsi14d, name: "RSI", color: colors.indigo, unit: Unit.index }),
-              line({ metric: indicators.rsi14dMin, name: "Min", color: colors.red, defaultActive: false, unit: Unit.index }),
-              line({ metric: indicators.rsi14dMax, name: "Max", color: colors.green, defaultActive: false, unit: Unit.index }),
-              priceLine({ ctx, unit: Unit.index, number: 70 }),
-              priceLine({ ctx, unit: Unit.index, number: 50, defaultActive: false }),
-              priceLine({ ctx, unit: Unit.index, number: 30 }),
+              line({
+                metric: indicators.rsi14d,
+                name: "RSI",
+                color: colors.indigo,
+                unit: Unit.index,
+              }),
+              line({
+                metric: indicators.rsi14dMin,
+                name: "Min",
+                color: colors.red,
+                defaultActive: false,
+                unit: Unit.index,
+              }),
+              line({
+                metric: indicators.rsi14dMax,
+                name: "Max",
+                color: colors.green,
+                defaultActive: false,
+                unit: Unit.index,
+              }),
+              priceLine({ unit: Unit.index, number: 70 }),
+              priceLine({ unit: Unit.index, number: 50, defaultActive: false }),
+              priceLine({ unit: Unit.index, number: 30 }),
             ],
           },
           {
             name: "StochRSI",
             title: "Stochastic RSI",
             bottom: [
-              line({ metric: indicators.stochRsiK, name: "K", color: colors.blue, unit: Unit.index }),
-              line({ metric: indicators.stochRsiD, name: "D", color: colors.orange, unit: Unit.index }),
-              ...priceLines({ ctx, unit: Unit.index, numbers: [80, 20] }),
+              line({
+                metric: indicators.stochRsiK,
+                name: "K",
+                color: colors.blue,
+                unit: Unit.index,
+              }),
+              line({
+                metric: indicators.stochRsiD,
+                name: "D",
+                color: colors.orange,
+                unit: Unit.index,
+              }),
+              ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
             ],
           },
           {
             name: "MACD",
             title: "MACD",
             bottom: [
-              line({ metric: indicators.macdLine, name: "MACD", color: colors.blue, unit: Unit.usd }),
-              line({ metric: indicators.macdSignal, name: "Signal", color: colors.orange, unit: Unit.usd }),
-              histogram({ metric: indicators.macdHistogram, name: "Histogram", unit: Unit.usd }),
+              line({
+                metric: indicators.macdLine,
+                name: "MACD",
+                color: colors.blue,
+                unit: Unit.usd,
+              }),
+              line({
+                metric: indicators.macdSignal,
+                name: "Signal",
+                color: colors.orange,
+                unit: Unit.usd,
+              }),
+              histogram({
+                metric: indicators.macdHistogram,
+                name: "Histogram",
+                unit: Unit.usd,
+              }),
             ],
           },
         ],
@@ -454,25 +766,61 @@ export function createMarketSection(ctx) {
             name: "Pi Cycle",
             title: "Pi Cycle",
             top: [
-              price({ metric: ma.price111dSma.price, name: "111d SMA", color: colors.green }),
-              price({ metric: ma.price350dSmaX2, name: "350d SMA x2", color: colors.red }),
+              price({
+                metric: ma.price111dSma.price,
+                name: "111d SMA",
+                color: colors.green,
+              }),
+              price({
+                metric: ma.price350dSmaX2,
+                name: "350d SMA x2",
+                color: colors.red,
+              }),
             ],
-            bottom: [baseline({ metric: indicators.piCycle, name: "Pi Cycle", unit: Unit.ratio, base: 1 })],
+            bottom: [
+              baseline({
+                metric: indicators.piCycle,
+                name: "Pi Cycle",
+                unit: Unit.ratio,
+                base: 1,
+              }),
+            ],
           },
           {
             name: "Puell Multiple",
             title: "Puell Multiple",
-            bottom: [line({ metric: indicators.puellMultiple, name: "Puell", color: colors.green, unit: Unit.ratio })],
+            bottom: [
+              line({
+                metric: indicators.puellMultiple,
+                name: "Puell",
+                color: colors.green,
+                unit: Unit.ratio,
+              }),
+            ],
           },
           {
             name: "NVT",
             title: "NVT Ratio",
-            bottom: [line({ metric: indicators.nvt, name: "NVT", color: colors.orange, unit: Unit.ratio })],
+            bottom: [
+              line({
+                metric: indicators.nvt,
+                name: "NVT",
+                color: colors.orange,
+                unit: Unit.ratio,
+              }),
+            ],
           },
           {
             name: "Gini",
             title: "Gini Coefficient",
-            bottom: [line({ metric: indicators.gini, name: "Gini", color: colors.red, unit: Unit.ratio })],
+            bottom: [
+              line({
+                metric: indicators.gini,
+                name: "Gini",
+                color: colors.red,
+                unit: Unit.ratio,
+              }),
+            ],
           },
         ],
       },

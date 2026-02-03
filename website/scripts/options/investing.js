@@ -1,5 +1,7 @@
 /** Investing section - Investment strategy tools and analysis */
 
+import { colors } from "../utils/colors.js";
+import { brk } from "../client.js";
 import { Unit } from "../utils/units.js";
 import { line, baseline, price, dotted } from "./series.js";
 import { satsBtcUsd } from "./shared.js";
@@ -39,6 +41,9 @@ const YEARS_2020S = /** @type {const} */ ([
 ]);
 const YEARS_2010S = /** @type {const} */ ([2019, 2018, 2017, 2016, 2015]);
 
+/** @typedef {typeof YEARS_2020S[number] | typeof YEARS_2010S[number]} DcaYear */
+/** @typedef {`_${DcaYear}`} DcaYearKey */
+
 /** @param {AllPeriodKey} key */
 const periodName = (key) => periodIdToName(key.slice(1), true);
 
@@ -65,14 +70,14 @@ const periodName = (key) => periodIdToName(key.slice(1), true);
  * Build DCA class entry from year
  * @param {Colors} colors
  * @param {MarketDca} dca
- * @param {number} year
+ * @param {DcaYear} year
  * @returns {BaseEntryItem}
  */
 function buildYearEntry(colors, dca, year) {
-  const key = /** @type {keyof Colors["dcaYears"]} */ (`_${year}`);
+  const key = /** @type {DcaYearKey} */ (`_${year}`);
   return {
     name: `${year}`,
-    color: colors.dcaYears[key],
+    color: colors.year[key],
     costBasis: dca.classAveragePrice[key],
     returns: dca.classReturns[key],
     minReturn: dca.classMinReturn[key],
@@ -85,21 +90,19 @@ function buildYearEntry(colors, dca, year) {
 
 /**
  * Create Investing section
- * @param {PartialContext} ctx
  * @returns {PartialOptionsGroup}
  */
-export function createInvestingSection(ctx) {
-  const { brk } = ctx;
+export function createInvestingSection() {
   const { market } = brk.metrics;
   const { dca, lookback, returns } = market;
 
   return {
     name: "Investing",
     tree: [
-      createDcaVsLumpSumSection(ctx, { dca, lookback, returns }),
-      createDcaByPeriodSection(ctx, { dca, returns }),
-      createLumpSumByPeriodSection(ctx, { dca, lookback, returns }),
-      createDcaByStartYearSection(ctx, { dca }),
+      createDcaVsLumpSumSection({ dca, lookback, returns }),
+      createDcaByPeriodSection({ dca, returns }),
+      createLumpSumByPeriodSection({ dca, lookback, returns }),
+      createDcaByStartYearSection({ dca }),
     ],
   };
 }
@@ -290,15 +293,12 @@ function createLongSingleEntry(colors, item) {
 
 /**
  * Create DCA vs Lump Sum section
- * @param {PartialContext} ctx
  * @param {Object} args
  * @param {Market["dca"]} args.dca
  * @param {Market["lookback"]} args.lookback
  * @param {Market["returns"]} args.returns
  */
-export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
-  const { colors } = ctx;
-
+export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
   /** @param {AllPeriodKey} key */
   const topPane = (key) => [
     price({
@@ -531,21 +531,19 @@ export function createDcaVsLumpSumSection(ctx, { dca, lookback, returns }) {
 
 /**
  * Create period-based section (DCA or Lump Sum)
- * @param {PartialContext} ctx
  * @param {Object} args
  * @param {Market["dca"]} args.dca
  * @param {Market["lookback"]} [args.lookback]
  * @param {Market["returns"]} args.returns
  */
-function createPeriodSection(ctx, { dca, lookback, returns }) {
-  const { colors } = ctx;
+function createPeriodSection({ dca, lookback, returns }) {
   const isLumpSum = !!lookback;
   const suffix = isLumpSum ? "Lump Sum" : "DCA";
 
   /** @param {AllPeriodKey} key @returns {BaseEntryItem} */
   const buildBaseEntry = (key) => ({
     name: periodName(key),
-    color: colors.dcaPeriods[key],
+    color: colors.dca[key],
     costBasis: isLumpSum ? lookback[key] : dca.periodAveragePrice[key],
     returns: isLumpSum ? dca.periodLumpSumReturns[key] : dca.periodReturns[key],
     minReturn: isLumpSum
@@ -617,36 +615,31 @@ function createPeriodSection(ctx, { dca, lookback, returns }) {
 
 /**
  * Create DCA by Period section
- * @param {PartialContext} ctx
  * @param {Object} args
  * @param {Market["dca"]} args.dca
  * @param {Market["returns"]} args.returns
  */
-export function createDcaByPeriodSection(ctx, { dca, returns }) {
-  return createPeriodSection(ctx, { dca, returns });
+export function createDcaByPeriodSection({ dca, returns }) {
+  return createPeriodSection({ dca, returns });
 }
 
 /**
  * Create Lump Sum by Period section
- * @param {PartialContext} ctx
  * @param {Object} args
  * @param {Market["dca"]} args.dca
  * @param {Market["lookback"]} args.lookback
  * @param {Market["returns"]} args.returns
  */
-export function createLumpSumByPeriodSection(ctx, { dca, lookback, returns }) {
-  return createPeriodSection(ctx, { dca, lookback, returns });
+export function createLumpSumByPeriodSection({ dca, lookback, returns }) {
+  return createPeriodSection({ dca, lookback, returns });
 }
 
 /**
  * Create DCA by Start Year section
- * @param {PartialContext} ctx
  * @param {Object} args
  * @param {Market["dca"]} args.dca
  */
-export function createDcaByStartYearSection(ctx, { dca }) {
-  const { colors } = ctx;
-
+export function createDcaByStartYearSection({ dca }) {
   /** @param {string} name @param {string} title @param {BaseEntryItem[]} entries */
   const createDecadeGroup = (name, title, entries) => ({
     name,

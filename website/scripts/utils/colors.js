@@ -1,5 +1,5 @@
-import { oklchToRgba } from "./oklch.js";
-import { dark } from "../utils/theme.js";
+import { oklchToRgba } from "../chart/oklch.js";
+import { dark } from "./theme.js";
 
 /** @type {Map<string, string>} */
 const rgbaCache = new Map();
@@ -117,7 +117,6 @@ const baseColors = {
 export const colors = {
   ...baseColors,
 
-  /** Semantic stat colors for pattern helpers */
   stat: {
     sum: blue,
     cumulative: indigo,
@@ -131,7 +130,6 @@ export const colors = {
     min: red,
   },
 
-  /** Common time period colors */
   time: {
     _24h: pink,
     _1w: red,
@@ -140,45 +138,121 @@ export const colors = {
     all: teal,
   },
 
-  /** DCA period colors by term */
-  dcaPeriods: {
-    // Short term
-    _1w: red,
-    _1m: orange,
-    _3m: yellow,
-    _6m: lime,
-    // Medium term
-    _1y: green,
-    _2y: teal,
-    _3y: cyan,
-    // Long term
-    _4y: sky,
-    _5y: blue,
-    _6y: indigo,
-    _8y: violet,
-    _10y: purple,
+  term: {
+    short: yellow,
+    long: fuchsia,
   },
 
-  /** DCA year colors by halving epoch */
-  dcaYears: {
-    // Epoch 5 (2024+)
-    _2026: rose,
-    _2025: fuchsia,
-    _2024: purple,
-    // Epoch 4 (2020-2023)
-    _2023: violet,
-    _2022: blue,
-    _2021: sky,
-    _2020: teal,
-    // Epoch 3 (2016-2019)
-    _2019: green,
-    _2018: yellow,
-    _2017: orange,
-    _2016: red,
-    _2015: pink,
+  age: {
+    _1d: red,
+    _1w: orange,
+    _1m: yellow,
+    _2m: lime,
+    _3m: green,
+    _4m: teal,
+    _5m: cyan,
+    _6m: blue,
+    _1y: indigo,
+    _2y: violet,
+    _3y: purple,
+    _4y: fuchsia,
+    _5y: pink,
+    _6y: rose,
+    _7y: red,
+    _8y: orange,
+    _10y: yellow,
+    _12y: lime,
+    _15y: green,
   },
 
-  /** Returns/lookback colors by period */
+  ageRange: {
+    upTo1h: rose,
+    _1hTo1d: pink,
+    _1dTo1w: red,
+    _1wTo1m: orange,
+    _1mTo2m: yellow,
+    _2mTo3m: yellow,
+    _3mTo4m: lime,
+    _4mTo5m: lime,
+    _5mTo6m: lime,
+    _6mTo1y: green,
+    _1yTo2y: cyan,
+    _2yTo3y: blue,
+    _3yTo4y: indigo,
+    _4yTo5y: violet,
+    _5yTo6y: purple,
+    _6yTo7y: purple,
+    _7yTo8y: fuchsia,
+    _8yTo10y: fuchsia,
+    _10yTo12y: pink,
+    _12yTo15y: red,
+    from15y: orange,
+  },
+
+  amount: {
+    _1sat: orange,
+    _10sats: orange,
+    _100sats: yellow,
+    _1kSats: lime,
+    _10kSats: green,
+    _100kSats: cyan,
+    _1mSats: blue,
+    _10mSats: indigo,
+    _1btc: purple,
+    _10btc: violet,
+    _100btc: fuchsia,
+    _1kBtc: pink,
+    _10kBtc: red,
+    _100kBtc: orange,
+  },
+
+  amountRange: {
+    _0sats: red,
+    _1satTo10sats: orange,
+    _10satsTo100sats: yellow,
+    _100satsTo1kSats: lime,
+    _1kSatsTo10kSats: green,
+    _10kSatsTo100kSats: cyan,
+    _100kSatsTo1mSats: blue,
+    _1mSatsTo10mSats: indigo,
+    _10mSatsTo1btc: purple,
+    _1btcTo10btc: violet,
+    _10btcTo100btc: fuchsia,
+    _100btcTo1kBtc: pink,
+    _1kBtcTo10kBtc: red,
+    _10kBtcTo100kBtc: orange,
+    _100kBtcOrMore: yellow,
+  },
+
+  epoch: {
+    _0: red,
+    _1: yellow,
+    _2: orange,
+    _3: lime,
+    _4: green,
+  },
+
+  year: {
+    _2009: red,
+    _2010: orange,
+    _2011: amber,
+    _2012: yellow,
+    _2013: lime,
+    _2014: green,
+    _2015: teal,
+    _2016: cyan,
+    _2017: sky,
+    _2018: blue,
+    _2019: indigo,
+    _2020: violet,
+    _2021: purple,
+    _2022: fuchsia,
+    _2023: pink,
+    _2024: rose,
+    _2025: red,
+    _2026: orange,
+  },
+
   returns: {
     _1d: red,
     _1w: orange,
@@ -195,29 +269,42 @@ export const colors = {
     _10y: fuchsia,
   },
 
-  /** Moving average colors by period */
   ma: {
     _1w: red,
     _8d: orange,
     _12d: amber,
-    _13d: amber,
-    _21d: yellow,
+    _13d: yellow,
+    _21d: avocado,
     _26d: lime,
-    _1m: lime,
-    _34d: green,
-    _55d: emerald,
-    _89d: teal,
-    _111d: cyan,
-    _144d: sky,
-    _200d: blue,
-    _350d: indigo,
-    _1y: violet,
-    _2y: purple,
-    _200w: fuchsia,
-    _4y: pink,
+    _1m: green,
+    _34d: emerald,
+    _55d: teal,
+    _89d: cyan,
+    _111d: sky,
+    _144d: blue,
+    _200d: indigo,
+    _350d: violet,
+    _1y: purple,
+    _2y: fuchsia,
+    _200w: pink,
+    _4y: rose,
   },
 
-  /** Script type colors (oldest to newest) */
+  dca: {
+    _1w: red,
+    _1m: orange,
+    _3m: yellow,
+    _6m: lime,
+    _1y: green,
+    _2y: teal,
+    _3y: cyan,
+    _4y: sky,
+    _5y: blue,
+    _6y: indigo,
+    _8y: violet,
+    _10y: purple,
+  },
+
   scriptType: {
     p2pk65: red,
     p2pk33: orange,

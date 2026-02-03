@@ -1,18 +1,8 @@
 /** Build cohort data arrays from brk.metrics */
 
-import {
-  termColors,
-  maxAgeColors,
-  minAgeColors,
-  ageRangeColors,
-  epochColors,
-  geAmountColors,
-  ltAmountColors,
-  amountRangeColors,
-  spendableTypeColors,
-  yearColors,
-} from "../colors/index.js";
+import { colors } from "../../utils/colors.js";
 import { entries } from "../../utils/array.js";
+import { brk } from "../../client.js";
 
 /** @type {readonly AddressableType[]} */
 const ADDRESSABLE_TYPES = [
@@ -32,10 +22,8 @@ const isAddressable = (key) =>
 
 /**
  * Build all cohort data from brk tree
- * @param {Colors} colors
- * @param {BrkClient} brk
  */
-export function buildCohortData(colors, brk) {
+export function buildCohortData() {
   const utxoCohorts = brk.metrics.distribution.utxoCohorts;
   const addressCohorts = brk.metrics.distribution.addressCohorts;
   const { addrCount } = brk.metrics.distribution;
@@ -66,7 +54,7 @@ export function buildCohortData(colors, brk) {
   const termShort = {
     name: shortNames.short,
     title: shortNames.long,
-    color: colors[termColors.short],
+    color: colors.term.short,
     tree: utxoCohorts.term.short,
   };
 
@@ -74,7 +62,7 @@ export function buildCohortData(colors, brk) {
   const termLong = {
     name: longNames.short,
     title: longNames.long,
-    color: colors[termColors.long],
+    color: colors.term.long,
     tree: utxoCohorts.term.long,
   };
 
@@ -84,7 +72,7 @@ export function buildCohortData(colors, brk) {
     return {
       name: names.short,
       title: `UTXOs ${names.long}`,
-      color: colors[maxAgeColors[key]],
+      color: colors.age[key],
       tree,
     };
   });
@@ -95,7 +83,7 @@ export function buildCohortData(colors, brk) {
     return {
       name: names.short,
       title: `UTXOs ${names.long}`,
-      color: colors[minAgeColors[key]],
+      color: colors.age[key],
       tree,
     };
   });
@@ -106,7 +94,7 @@ export function buildCohortData(colors, brk) {
     return {
       name: names.short,
       title: `UTXOs ${names.long}`,
-      color: colors[ageRangeColors[key]],
+      color: colors.ageRange[key],
       tree,
     };
   });
@@ -117,7 +105,7 @@ export function buildCohortData(colors, brk) {
     return {
       name: names.short,
       title: names.long,
-      color: colors[epochColors[key]],
+      color: colors.epoch[key],
       tree,
     };
   });
@@ -128,7 +116,7 @@ export function buildCohortData(colors, brk) {
     return {
       name: names.short,
       title: `UTXOs ${names.long}`,
-      color: colors[geAmountColors[key]],
+      color: colors.amount[key],
       tree,
     };
   });
@@ -140,7 +128,7 @@ export function buildCohortData(colors, brk) {
       return {
         name: names.short,
         title: `Addresses ${names.long}`,
-        color: colors[geAmountColors[key]],
+        color: colors.amount[key],
         tree,
       };
     },
@@ -152,7 +140,7 @@ export function buildCohortData(colors, brk) {
     return {
       name: names.short,
       title: `UTXOs ${names.long}`,
-      color: colors[ltAmountColors[key]],
+      color: colors.amount[key],
       tree,
     };
   });
@@ -164,7 +152,7 @@ export function buildCohortData(colors, brk) {
       return {
         name: names.short,
         title: `Addresses ${names.long}`,
-        color: colors[ltAmountColors[key]],
+        color: colors.amount[key],
         tree,
       };
     },
@@ -177,7 +165,7 @@ export function buildCohortData(colors, brk) {
       return {
         name: names.short,
         title: `UTXOs ${names.long}`,
-        color: colors[amountRangeColors[key]],
+        color: colors.amountRange[key],
         tree,
       };
     },
@@ -190,7 +178,7 @@ export function buildCohortData(colors, brk) {
       return {
         name: names.short,
         title: `Addresses ${names.long}`,
-        color: colors[amountRangeColors[key]],
+        color: colors.amountRange[key],
         tree,
       };
     },
@@ -202,7 +190,7 @@ export function buildCohortData(colors, brk) {
     return {
       name: names.short,
       title: names.short,
-      color: colors[spendableTypeColors[key]],
+      color: colors.scriptType[key],
       tree: utxoCohorts.type[key],
       addrCount: addrCount[key],
     };
@@ -215,7 +203,7 @@ export function buildCohortData(colors, brk) {
       return {
         name: names.short,
         title: names.short,
-        color: colors[spendableTypeColors[key]],
+        color: colors.scriptType[key],
         tree,
       };
     });
@@ -226,7 +214,7 @@ export function buildCohortData(colors, brk) {
     return {
       name: names.short,
       title: names.long,
-      color: colors[yearColors[key]],
+      color: colors.year[key],
       tree,
     };
   });

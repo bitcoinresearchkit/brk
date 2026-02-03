@@ -2,7 +2,7 @@
 
 import { Unit } from "../utils/units.js";
 import { entries, includes } from "../utils/array.js";
-import { colorAt } from "../chart/colors.js";
+import { colorAt, colors } from "../utils/colors.js";
 import {
   line,
   baseline,
@@ -16,6 +16,7 @@ import {
   satsBtcUsdFromFull,
   revenueBtcSatsUsd,
 } from "./shared.js";
+import { brk } from "../client.js";
 
 /** Major pools to show in Compare section (by current hashrate dominance) */
 const MAJOR_POOL_IDS = /** @type {const} */ ([
@@ -49,11 +50,9 @@ const ANTPOOL_AND_FRIENDS_IDS = /** @type {const} */ ([
 
 /**
  * Create Mining section
- * @param {PartialContext} ctx
  * @returns {PartialOptionsGroup}
  */
-export function createMiningSection(ctx) {
-  const { colors, brk } = ctx;
+export function createMiningSection() {
   const { blocks, transactions, pools } = brk.metrics;
 
   // Pre-compute pool entries with resolved names
@@ -174,7 +173,7 @@ export function createMiningSection(ctx) {
           {
             name: "Sum",
             title: `Rewards: ${name}`,
-            bottom: revenueBtcSatsUsd(colors, {
+            bottom: revenueBtcSatsUsd({
               coinbase: pool.coinbase,
               subsidy: pool.subsidy,
               fee: pool.fee,
@@ -184,7 +183,7 @@ export function createMiningSection(ctx) {
           {
             name: "Cumulative",
             title: `Rewards: ${name} (Total)`,
-            bottom: revenueBtcSatsUsd(colors, {
+            bottom: revenueBtcSatsUsd({
               coinbase: pool.coinbase,
               subsidy: pool.subsidy,
               fee: pool.fee,
@@ -330,7 +329,7 @@ export function createMiningSection(ctx) {
               {
                 name: "Sum",
                 title: "Revenue Comparison",
-                bottom: revenueBtcSatsUsd(colors, {
+                bottom: revenueBtcSatsUsd({
                   coinbase: blocks.rewards.coinbase,
                   subsidy: blocks.rewards.subsidy,
                   fee: transactions.fees.fee,
@@ -340,7 +339,7 @@ export function createMiningSection(ctx) {
               {
                 name: "Cumulative",
                 title: "Revenue Comparison (Total)",
-                bottom: revenueBtcSatsUsd(colors, {
+                bottom: revenueBtcSatsUsd({
                   coinbase: blocks.rewards.coinbase,
                   subsidy: blocks.rewards.subsidy,
                   fee: transactions.fees.fee,

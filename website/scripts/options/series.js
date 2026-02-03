@@ -1,6 +1,6 @@
 /** Series helpers for creating chart series blueprints */
 
-import { colors } from "../chart/colors.js";
+import { colors } from "../utils/colors.js";
 import { Unit } from "../utils/units.js";
 
 // ============================================================================
@@ -47,13 +47,12 @@ export function price({
 
 /**
  * Create percentile series (max/min/median/pct75/pct25/pct90/pct10) from any stats pattern
- * @param {Colors} colors
  * @param {StatsPattern<any> | BaseStatsPattern<any> | FullStatsPattern<any> | AnyStatsPattern} pattern
  * @param {Unit} unit
  * @param {string} title
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function percentileSeries(colors, pattern, unit, title) {
+function percentileSeries(pattern, unit, title) {
   const { stat } = colors;
   return [
     dots({
@@ -212,7 +211,7 @@ export function candlestick({
   metric,
   name,
   key,
-  colors,
+
   defaultActive,
   unit,
   options,
@@ -222,7 +221,7 @@ export function candlestick({
     metric,
     title: name,
     key,
-    colors,
+
     unit,
     defaultActive,
     options,
@@ -306,7 +305,6 @@ export function histogram({
 
 /**
  * Create series from a BaseStatsPattern (base + avg + percentiles, NO sum)
- * @param {Colors} colors
  * @param {Object} args
  * @param {BaseStatsPattern<any>} args.pattern
  * @param {Unit} args.unit
@@ -315,10 +313,13 @@ export function histogram({
  * @param {boolean} [args.avgActive]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromBaseStatsPattern(
-  colors,
-  { pattern, unit, title = "", baseColor, avgActive = true },
-) {
+export function fromBaseStatsPattern({
+  pattern,
+  unit,
+  title = "",
+  baseColor,
+  avgActive = true,
+}) {
   const { stat } = colors;
   return [
     dots({
@@ -334,20 +335,19 @@ export function fromBaseStatsPattern(
       unit,
       defaultActive: avgActive,
     }),
-    ...percentileSeries(colors, pattern, unit, title),
+    ...percentileSeries(pattern, unit, title),
   ];
 }
 
 /**
  * Create series from any pattern with avg + percentiles (works with StatsPattern, SumStatsPattern, etc.)
- * @param {Colors} colors
  * @param {Object} args
  * @param {StatsPattern<any> | BaseStatsPattern<any> | FullStatsPattern<any> | AnyStatsPattern} args.pattern
  * @param {Unit} args.unit
  * @param {string} [args.title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromStatsPattern(colors, { pattern, unit, title = "" }) {
+export function fromStatsPattern({ pattern, unit, title = "" }) {
   return [
     {
       type: "Dots",
@@ -355,7 +355,7 @@ export function fromStatsPattern(colors, { pattern, unit, title = "" }) {
       title: `${title} avg`.trim(),
       unit,
     },
-    ...percentileSeries(colors, pattern, unit, title),
+    ...percentileSeries(pattern, unit, title),
   ];
 }
 
@@ -365,9 +365,9 @@ export function fromStatsPattern(colors, { pattern, unit, title = "" }) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export const distributionBtcSatsUsd = (source) => [
-  ...fromStatsPattern(colors, { pattern: source.bitcoin, unit: Unit.btc }),
-  ...fromStatsPattern(colors, { pattern: source.sats, unit: Unit.sats }),
-  ...fromStatsPattern(colors, { pattern: source.dollars, unit: Unit.usd }),
+  ...fromStatsPattern({ pattern: source.bitcoin, unit: Unit.btc }),
+  ...fromStatsPattern({ pattern: source.sats, unit: Unit.sats }),
+  ...fromStatsPattern({ pattern: source.dollars, unit: Unit.usd }),
 ];
 
 /**
@@ -408,12 +408,11 @@ export function fromSupplyPattern({ pattern, title, color }) {
 
 /**
  * Create distribution series (avg + percentiles)
- * @param {Colors} colors
  * @param {StatsPattern<any> | BaseStatsPattern<any> | FullStatsPattern<any> | AnyStatsPattern} pattern
  * @param {Unit} unit
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function distributionSeries(colors, pattern, unit) {
+function distributionSeries(pattern, unit) {
   const { stat } = colors;
   return [
     dots({ metric: pattern.average, name: "avg", color: stat.avg, unit }),
@@ -506,14 +505,13 @@ function btcSatsUsdSeries({ metrics, name, color, defaultActive }) {
 
 /**
  * Split pattern with base + sum + distribution + cumulative into 3 charts
- * @param {Colors} colors
  * @param {Object} args
  * @param {FullStatsPattern<any>} args.pattern
  * @param {string} args.title
  * @param {Unit} args.unit
  * @returns {PartialOptionsTree}
  */
-export function chartsFromFull(colors, { pattern, title, unit }) {
+export function chartsFromFull({ pattern, title, unit }) {
   return [
     {
       name: "Sum",
@@ -526,7 +524,7 @@ export function chartsFromFull(colors, { pattern, title, unit }) {
     {
       name: "Distribution",
       title: `${title} Distribution`,
-      bottom: distributionSeries(colors, pattern, unit),
+      bottom: distributionSeries(pattern, unit),
     },
     {
       name: "Cumulative",
@@ -538,14 +536,13 @@ export function chartsFromFull(colors, { pattern, title, unit }) {
 
 /**
  * Split pattern with sum + distribution + cumulative into 3 charts (no base)
- * @param {Colors} colors
  * @param {Object} args
  * @param {AnyStatsPattern} args.pattern
  * @param {string} args.title
  * @param {Unit} args.unit
  * @returns {PartialOptionsTree}
  */
-export function chartsFromSum(colors, { pattern, title, unit }) {
+export function chartsFromSum({ pattern, title, unit }) {
   const { stat } = colors;
   return [
     {
@@ -556,7 +553,7 @@ export function chartsFromSum(colors, { pattern, title, unit }) {
     {
       name: "Distribution",
       title: `${title} Distribution`,
-      bottom: distributionSeries(colors, pattern, unit),
+      bottom: distributionSeries(pattern, unit),
     },
     {
       name: "Cumulative",
@@ -631,13 +628,12 @@ export function chartsFromValue({ pattern, title, color }) {
 
 /**
  * Split btc/sats/usd pattern with full stats into 3 charts
- * @param {Colors} colors
  * @param {Object} args
  * @param {CoinbasePattern} args.pattern
  * @param {string} args.title
  * @returns {PartialOptionsTree}
  */
-export function chartsFromValueFull(colors, { pattern, title }) {
+export function chartsFromValueFull({ pattern, title }) {
   return [
     {
       name: "Sum",
@@ -665,9 +661,9 @@ export function chartsFromValueFull(colors, { pattern, title }) {
       name: "Distribution",
       title: `${title} Distribution`,
       bottom: [
-        ...distributionSeries(colors, pattern.bitcoin, Unit.btc),
-        ...distributionSeries(colors, pattern.sats, Unit.sats),
-        ...distributionSeries(colors, pattern.dollars, Unit.usd),
+        ...distributionSeries(pattern.bitcoin, Unit.btc),
+        ...distributionSeries(pattern.sats, Unit.sats),
+        ...distributionSeries(pattern.dollars, Unit.usd),
       ],
     },
     {

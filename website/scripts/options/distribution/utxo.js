@@ -60,6 +60,7 @@ import {
 import { Unit } from "../../utils/units.js";
 import { line, baseline, price } from "../series.js";
 import { priceLine } from "../constants.js";
+import { colors } from "../../utils/colors.js";
 
 // ============================================================================
 // Folder Builders (4 variants based on pattern capabilities)
@@ -67,33 +68,31 @@ import { priceLine } from "../constants.js";
 
 /**
  * All folder: for the special "All" cohort (adjustedSopr + percentiles + RelToMarketCap)
- * @param {PartialContext} ctx
  * @param {CohortAll} args
  * @returns {PartialOptionsGroup}
  */
-export function createCohortFolderAll(ctx, args) {
+export function createCohortFolderAll(args) {
   const title = formatCohortTitle(args.name);
   return {
     name: args.name || "all",
     tree: [
-      createSingleSupplyChart(ctx, args, title),
+      createSingleSupplyChart(args, title),
       createSingleUtxoCountChart(args, title),
-      createSingleAddrCountChart(ctx, args, title),
-      createSingleRealizedSectionFull(ctx, args, title),
-      createSingleUnrealizedSectionAll(ctx, args, title),
-      createSingleCostBasisSectionWithPercentiles(ctx, args, title),
-      createSingleActivitySectionWithAdjusted(ctx, args, title),
+      createSingleAddrCountChart(args, title),
+      createSingleRealizedSectionFull(args, title),
+      createSingleUnrealizedSectionAll(args, title),
+      createSingleCostBasisSectionWithPercentiles(args, title),
+      createSingleActivitySectionWithAdjusted(args, title),
     ],
   };
 }
 
 /**
  * Full folder: adjustedSopr + percentiles + RelToMarketCap (term.short only)
- * @param {PartialContext} ctx
  * @param {CohortFull | CohortGroupFull} args
  * @returns {PartialOptionsGroup}
  */
-export function createCohortFolderFull(ctx, args) {
+export function createCohortFolderFull(args) {
   if ("list" in args) {
     const { list } = args;
     const title = formatCohortTitle(args.title);
@@ -106,11 +105,11 @@ export function createCohortFolderFull(ctx, args) {
           groupedSupplyRelativeGenerators,
         ),
         createGroupedUtxoCountChart(list, title),
-        createGroupedRealizedSectionWithAdjusted(ctx, list, title, {
+        createGroupedRealizedSectionWithAdjusted(list, title, {
           ratioMetrics: createGroupedRealizedPnlRatioMetrics,
         }),
-        createGroupedUnrealizedSectionFull(ctx, list, title),
-        createGroupedCostBasisSectionWithPercentiles(ctx, list, title),
+        createGroupedUnrealizedSectionFull(list, title),
+        createGroupedCostBasisSectionWithPercentiles(list, title),
         createGroupedActivitySectionWithAdjusted(list, title),
       ],
     };
@@ -120,27 +119,25 @@ export function createCohortFolderFull(ctx, args) {
     name: args.name || "all",
     tree: [
       createSingleSupplyChart(
-        ctx,
         args,
         title,
-        createSingleSupplyRelativeOptions(ctx, args),
+        createSingleSupplyRelativeOptions(args),
       ),
       createSingleUtxoCountChart(args, title),
-      createSingleRealizedSectionFull(ctx, args, title),
-      createSingleUnrealizedSectionFull(ctx, args, title),
-      createSingleCostBasisSectionWithPercentiles(ctx, args, title),
-      createSingleActivitySectionWithAdjusted(ctx, args, title),
+      createSingleRealizedSectionFull(args, title),
+      createSingleUnrealizedSectionFull(args, title),
+      createSingleCostBasisSectionWithPercentiles(args, title),
+      createSingleActivitySectionWithAdjusted(args, title),
     ],
   };
 }
 
 /**
  * Adjusted folder: adjustedSopr only, no percentiles (maxAge.*)
- * @param {PartialContext} ctx
  * @param {CohortWithAdjusted | CohortGroupWithAdjusted} args
  * @returns {PartialOptionsGroup}
  */
-export function createCohortFolderWithAdjusted(ctx, args) {
+export function createCohortFolderWithAdjusted(args) {
   if ("list" in args) {
     const { list } = args;
     const title = formatCohortTitle(args.title);
@@ -153,8 +150,8 @@ export function createCohortFolderWithAdjusted(ctx, args) {
           groupedSupplyRelativeGenerators,
         ),
         createGroupedUtxoCountChart(list, title),
-        createGroupedRealizedSectionWithAdjusted(ctx, list, title),
-        createGroupedUnrealizedSectionWithMarketCap(ctx, list, title),
+        createGroupedRealizedSectionWithAdjusted(list, title),
+        createGroupedUnrealizedSectionWithMarketCap(list, title),
         createGroupedCostBasisSection({ list, title }),
         createGroupedActivitySectionWithAdjusted(list, title),
       ],
@@ -165,27 +162,25 @@ export function createCohortFolderWithAdjusted(ctx, args) {
     name: args.name || "all",
     tree: [
       createSingleSupplyChart(
-        ctx,
         args,
         title,
-        createSingleSupplyRelativeOptions(ctx, args),
+        createSingleSupplyRelativeOptions(args),
       ),
       createSingleUtxoCountChart(args, title),
-      createSingleRealizedSectionWithAdjusted(ctx, args, title),
-      createSingleUnrealizedSectionWithMarketCap(ctx, args, title),
-      createCostBasisSection(ctx, { cohort: args, title }),
-      createSingleActivitySectionWithAdjusted(ctx, args, title),
+      createSingleRealizedSectionWithAdjusted(args, title),
+      createSingleUnrealizedSectionWithMarketCap(args, title),
+      createCostBasisSection({ cohort: args, title }),
+      createSingleActivitySectionWithAdjusted(args, title),
     ],
   };
 }
 
 /**
  * Folder for cohorts with nupl + percentiles (term.short, term.long)
- * @param {PartialContext} ctx
  * @param {CohortWithNuplPercentiles | CohortGroupWithNuplPercentiles} args
  * @returns {PartialOptionsGroup}
  */
-export function createCohortFolderWithNupl(ctx, args) {
+export function createCohortFolderWithNupl(args) {
   if ("list" in args) {
     const { list } = args;
     const title = formatCohortTitle(args.title);
@@ -198,11 +193,11 @@ export function createCohortFolderWithNupl(ctx, args) {
           groupedSupplyRelativeGenerators,
         ),
         createGroupedUtxoCountChart(list, title),
-        createGroupedRealizedSectionBasic(ctx, list, title, {
+        createGroupedRealizedSectionBasic(list, title, {
           ratioMetrics: createGroupedRealizedPnlRatioMetrics,
         }),
-        createGroupedUnrealizedSectionWithNupl({ ctx, list, title }),
-        createGroupedCostBasisSectionWithPercentiles(ctx, list, title),
+        createGroupedUnrealizedSectionWithNupl({ list, title }),
+        createGroupedCostBasisSectionWithPercentiles(list, title),
         createGroupedActivitySection({ list, title }),
       ],
     };
@@ -212,27 +207,25 @@ export function createCohortFolderWithNupl(ctx, args) {
     name: args.name || "all",
     tree: [
       createSingleSupplyChart(
-        ctx,
         args,
         title,
-        createSingleSupplyRelativeOptions(ctx, args),
+        createSingleSupplyRelativeOptions(args),
       ),
       createSingleUtxoCountChart(args, title),
-      createSingleRealizedSectionWithPercentiles(ctx, args, title),
-      createSingleUnrealizedSectionWithNupl({ ctx, cohort: args, title }),
-      createSingleCostBasisSectionWithPercentiles(ctx, args, title),
-      createActivitySection({ ctx, cohort: args, title }),
+      createSingleRealizedSectionWithPercentiles(args, title),
+      createSingleUnrealizedSectionWithNupl({ cohort: args, title }),
+      createSingleCostBasisSectionWithPercentiles(args, title),
+      createActivitySection({ cohort: args, title }),
     ],
   };
 }
 
 /**
  * Age range folder: ageRange.* (no nupl via RelativePattern2)
- * @param {PartialContext} ctx
  * @param {CohortAgeRange | CohortGroupAgeRange} args
  * @returns {PartialOptionsGroup}
  */
-export function createCohortFolderAgeRange(ctx, args) {
+export function createCohortFolderAgeRange(args) {
   if ("list" in args) {
     const { list } = args;
     const title = formatCohortTitle(args.title);
@@ -241,11 +234,11 @@ export function createCohortFolderAgeRange(ctx, args) {
       tree: [
         createGroupedSupplySection(list, title),
         createGroupedUtxoCountChart(list, title),
-        createGroupedRealizedSectionBasic(ctx, list, title, {
+        createGroupedRealizedSectionBasic(list, title, {
           ratioMetrics: createGroupedRealizedPnlRatioMetrics,
         }),
         createGroupedUnrealizedSectionAgeRange(list, title),
-        createGroupedCostBasisSectionWithPercentiles(ctx, list, title),
+        createGroupedCostBasisSectionWithPercentiles(list, title),
         createGroupedActivitySection({ list, title }),
       ],
     };
@@ -254,23 +247,22 @@ export function createCohortFolderAgeRange(ctx, args) {
   return {
     name: args.name || "all",
     tree: [
-      createSingleSupplyChart(ctx, args, title),
+      createSingleSupplyChart(args, title),
       createSingleUtxoCountChart(args, title),
-      createSingleRealizedSectionWithPercentiles(ctx, args, title),
-      createSingleUnrealizedSectionAgeRange(ctx, args, title),
-      createSingleCostBasisSectionWithPercentiles(ctx, args, title),
-      createActivitySection({ ctx, cohort: args, title }),
+      createSingleRealizedSectionWithPercentiles(args, title),
+      createSingleUnrealizedSectionAgeRange(args, title),
+      createSingleCostBasisSectionWithPercentiles(args, title),
+      createActivitySection({ cohort: args, title }),
     ],
   };
 }
 
 /**
  * MinAge folder - has peakRegret in unrealized (minAge.*)
- * @param {PartialContext} ctx
  * @param {CohortMinAge | CohortGroupMinAge} args
  * @returns {PartialOptionsGroup}
  */
-export function createCohortFolderMinAge(ctx, args) {
+export function createCohortFolderMinAge(args) {
   if ("list" in args) {
     const { list } = args;
     const title = formatCohortTitle(args.title);
@@ -283,8 +275,8 @@ export function createCohortFolderMinAge(ctx, args) {
           groupedSupplyRelativeGenerators,
         ),
         createGroupedUtxoCountChart(list, title),
-        createGroupedRealizedSectionBasic(ctx, list, title),
-        createGroupedUnrealizedSectionMinAge(ctx, list, title),
+        createGroupedRealizedSectionBasic(list, title),
+        createGroupedUnrealizedSectionMinAge(list, title),
         createGroupedCostBasisSection({ list, title }),
         createGroupedActivitySection({ list, title }),
       ],
@@ -295,27 +287,25 @@ export function createCohortFolderMinAge(ctx, args) {
     name: args.name || "all",
     tree: [
       createSingleSupplyChart(
-        ctx,
         args,
         title,
-        createSingleSupplyRelativeOptions(ctx, args),
+        createSingleSupplyRelativeOptions(args),
       ),
       createSingleUtxoCountChart(args, title),
-      createSingleRealizedSectionBasic(ctx, args, title),
-      createSingleUnrealizedSectionMinAge(ctx, args, title),
-      createCostBasisSection(ctx, { cohort: args, title }),
-      createActivitySection({ ctx, cohort: args, title }),
+      createSingleRealizedSectionBasic(args, title),
+      createSingleUnrealizedSectionMinAge(args, title),
+      createCostBasisSection({ cohort: args, title }),
+      createActivitySection({ cohort: args, title }),
     ],
   };
 }
 
 /**
  * Basic folder WITH RelToMarketCap (geAmount.*, ltAmount.*)
- * @param {PartialContext} ctx
  * @param {CohortBasicWithMarketCap | CohortGroupBasicWithMarketCap} args
  * @returns {PartialOptionsGroup}
  */
-export function createCohortFolderBasicWithMarketCap(ctx, args) {
+export function createCohortFolderBasicWithMarketCap(args) {
   if ("list" in args) {
     const { list } = args;
     const title = formatCohortTitle(args.title);
@@ -328,8 +318,8 @@ export function createCohortFolderBasicWithMarketCap(ctx, args) {
           groupedSupplyRelativeGenerators,
         ),
         createGroupedUtxoCountChart(list, title),
-        createGroupedRealizedSectionBasic(ctx, list, title),
-        createGroupedUnrealizedSectionWithMarketCapOnly(ctx, list, title),
+        createGroupedRealizedSectionBasic(list, title),
+        createGroupedUnrealizedSectionWithMarketCapOnly(list, title),
         createGroupedCostBasisSection({ list, title }),
         createGroupedActivitySection({ list, title }),
       ],
@@ -340,27 +330,25 @@ export function createCohortFolderBasicWithMarketCap(ctx, args) {
     name: args.name || "all",
     tree: [
       createSingleSupplyChart(
-        ctx,
         args,
         title,
-        createSingleSupplyRelativeOptions(ctx, args),
+        createSingleSupplyRelativeOptions(args),
       ),
       createSingleUtxoCountChart(args, title),
-      createSingleRealizedSectionBasic(ctx, args, title),
-      createSingleUnrealizedSectionWithMarketCapOnly(ctx, args, title),
-      createCostBasisSection(ctx, { cohort: args, title }),
-      createActivitySection({ ctx, cohort: args, title }),
+      createSingleRealizedSectionBasic(args, title),
+      createSingleUnrealizedSectionWithMarketCapOnly(args, title),
+      createCostBasisSection({ cohort: args, title }),
+      createActivitySection({ cohort: args, title }),
     ],
   };
 }
 
 /**
  * Basic folder WITHOUT RelToMarketCap (epoch.*, amountRange.*, year.*)
- * @param {PartialContext} ctx
  * @param {CohortBasicWithoutMarketCap | CohortGroupBasicWithoutMarketCap} args
  * @returns {PartialOptionsGroup}
  */
-export function createCohortFolderBasicWithoutMarketCap(ctx, args) {
+export function createCohortFolderBasicWithoutMarketCap(args) {
   if ("list" in args) {
     const { list } = args;
     const title = formatCohortTitle(args.title);
@@ -369,7 +357,7 @@ export function createCohortFolderBasicWithoutMarketCap(ctx, args) {
       tree: [
         createGroupedSupplySection(list, title),
         createGroupedUtxoCountChart(list, title),
-        createGroupedRealizedSectionBasic(ctx, list, title),
+        createGroupedRealizedSectionBasic(list, title),
         createGroupedUnrealizedSectionBase(list, title),
         createGroupedCostBasisSection({ list, title }),
         createGroupedActivitySection({ list, title }),
@@ -380,12 +368,12 @@ export function createCohortFolderBasicWithoutMarketCap(ctx, args) {
   return {
     name: args.name || "all",
     tree: [
-      createSingleSupplyChart(ctx, args, title),
+      createSingleSupplyChart(args, title),
       createSingleUtxoCountChart(args, title),
-      createSingleRealizedSectionBasic(ctx, args, title),
-      createSingleUnrealizedSectionBase(ctx, args, title),
-      createCostBasisSection(ctx, { cohort: args, title }),
-      createActivitySection({ ctx, cohort: args, title }),
+      createSingleRealizedSectionBasic(args, title),
+      createSingleUnrealizedSectionBase(args, title),
+      createCostBasisSection({ cohort: args, title }),
+      createActivitySection({ cohort: args, title }),
     ],
   };
 }
@@ -393,11 +381,10 @@ export function createCohortFolderBasicWithoutMarketCap(ctx, args) {
 /**
  * Address folder: like basic but with address count (addressable type cohorts)
  * Uses base unrealized section (no RelToMarketCap since it extends CohortBasicWithoutMarketCap)
- * @param {PartialContext} ctx
  * @param {CohortAddress | CohortGroupAddress} args
  * @returns {PartialOptionsGroup}
  */
-export function createCohortFolderAddress(ctx, args) {
+export function createCohortFolderAddress(args) {
   if ("list" in args) {
     const { list } = args;
     const title = formatCohortTitle(args.title);
@@ -407,7 +394,7 @@ export function createCohortFolderAddress(ctx, args) {
         createGroupedSupplySection(list, title),
         createGroupedUtxoCountChart(list, title),
         createGroupedAddrCountChart(list, title),
-        createGroupedRealizedSectionBasic(ctx, list, title),
+        createGroupedRealizedSectionBasic(list, title),
         createGroupedUnrealizedSectionBase(list, title),
         createGroupedCostBasisSection({ list, title }),
         createGroupedActivitySection({ list, title }),
@@ -418,39 +405,37 @@ export function createCohortFolderAddress(ctx, args) {
   return {
     name: args.name || "all",
     tree: [
-      createSingleSupplyChart(ctx, args, title),
+      createSingleSupplyChart(args, title),
       createSingleUtxoCountChart(args, title),
-      createSingleAddrCountChart(ctx, args, title),
-      createSingleRealizedSectionBasic(ctx, args, title),
-      createSingleUnrealizedSectionBase(ctx, args, title),
-      createCostBasisSection(ctx, { cohort: args, title }),
-      createActivitySection({ ctx, cohort: args, title }),
+      createSingleAddrCountChart(args, title),
+      createSingleRealizedSectionBasic(args, title),
+      createSingleUnrealizedSectionBase(args, title),
+      createCostBasisSection({ cohort: args, title }),
+      createActivitySection({ cohort: args, title }),
     ],
   };
 }
 
 /**
  * Create supply chart for cohorts WITHOUT relative metrics
- * @param {PartialContext} ctx
  * @param {CohortWithoutRelative} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption}
  */
-function createSingleSupplyChartWithoutRelative(ctx, cohort, title) {
+function createSingleSupplyChartWithoutRelative(cohort, title) {
   return {
     name: "Supply",
     title: title("Supply"),
-    bottom: createSingleSupplySeriesWithoutRelative(ctx, cohort),
+    bottom: createSingleSupplySeriesWithoutRelative(cohort),
   };
 }
 
 /**
  * Folder for cohorts WITHOUT relative section (edge case types: empty, p2ms, unknown)
- * @param {PartialContext} ctx
  * @param {CohortWithoutRelative | CohortGroupWithoutRelative} args
  * @returns {PartialOptionsGroup}
  */
-export function createCohortFolderWithoutRelative(ctx, args) {
+export function createCohortFolderWithoutRelative(args) {
   if ("list" in args) {
     const { list } = args;
     const title = formatCohortTitle(args.title);
@@ -459,7 +444,7 @@ export function createCohortFolderWithoutRelative(ctx, args) {
       tree: [
         createGroupedSupplySection(list, title),
         createGroupedUtxoCountChart(list, title),
-        createGroupedRealizedSectionBasic(ctx, list, title),
+        createGroupedRealizedSectionBasic(list, title),
         createGroupedUnrealizedSectionWithoutRelative(list, title),
         createGroupedCostBasisSection({ list, title }),
         createGroupedActivitySection({ list, title }),
@@ -470,19 +455,18 @@ export function createCohortFolderWithoutRelative(ctx, args) {
   return {
     name: args.name || "all",
     tree: [
-      createSingleSupplyChartWithoutRelative(ctx, args, title),
+      createSingleSupplyChartWithoutRelative(args, title),
       createSingleUtxoCountChart(args, title),
-      createSingleRealizedSectionBasic(ctx, args, title),
-      createSingleUnrealizedSectionWithoutRelative(ctx, args, title),
-      createCostBasisSection(ctx, { cohort: args, title }),
-      createActivitySection({ ctx, cohort: args, title }),
+      createSingleRealizedSectionBasic(args, title),
+      createSingleUnrealizedSectionWithoutRelative(args, title),
+      createCostBasisSection({ cohort: args, title }),
+      createActivitySection({ cohort: args, title }),
     ],
   };
 }
 
 /**
  * Create supply chart for single cohort
- * @param {PartialContext} ctx
  * @param {UtxoCohortObject} cohort
  * @param {(metric: string) => string} title
  * @param {Object} [options]
@@ -490,11 +474,11 @@ export function createCohortFolderWithoutRelative(ctx, args) {
  * @param {AnyFetchedSeriesBlueprint[]} [options.pnlRelative] - Supply in profit/loss relative to circulating supply
  * @returns {PartialChartOption}
  */
-function createSingleSupplyChart(ctx, cohort, title, options = {}) {
+function createSingleSupplyChart(cohort, title, options = {}) {
   return {
     name: "Supply",
     title: title("Supply"),
-    bottom: createSingleSupplySeries(ctx, cohort, options),
+    bottom: createSingleSupplySeries(cohort, options),
   };
 }
 
@@ -528,12 +512,11 @@ function createGroupedUtxoCountChart(list, title) {
 
 /**
  * Create address count chart for single cohort with addrCount
- * @param {PartialContext} ctx
  * @param {CohortAll | CohortAddress} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption}
  */
-function createSingleAddrCountChart(ctx, cohort, title) {
+function createSingleAddrCountChart(cohort, title) {
   return {
     name: "Address Count",
     title: title("Address Count"),
@@ -541,7 +524,7 @@ function createSingleAddrCountChart(ctx, cohort, title) {
       line({
         metric: cohort.addrCount,
         name: "Count",
-        color: ctx.colors.orange,
+        color: colors.orange,
         unit: Unit.count,
       }),
     ],
@@ -566,27 +549,25 @@ function createGroupedAddrCountChart(list, title) {
 
 /**
  * Create realized section for CohortAll/CohortFull (adjustedSopr + full ratio)
- * @param {PartialContext} ctx
  * @param {CohortAll | CohortFull} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function createSingleRealizedSectionFull(ctx, cohort, title) {
-  const { colors } = ctx;
+function createSingleRealizedSectionFull(cohort, title) {
   const { tree, color } = cohort;
   return {
     name: "Realized",
     tree: [
-      ...createSingleRealizedPriceChartsWithRatio(ctx, cohort, title),
-      createInvestorPriceFolderFull(ctx, cohort, cohort.name),
+      ...createSingleRealizedPriceChartsWithRatio(cohort, title),
+      createInvestorPriceFolderFull(cohort, cohort.name),
       {
         name: "Capitalization",
         title: title("Realized Cap"),
-        bottom: createSingleRealizedCapSeries(ctx, cohort, {
-          extra: createRealizedCapRatioSeries(ctx, tree),
+        bottom: createSingleRealizedCapSeries(cohort, {
+          extra: createRealizedCapRatioSeries(tree),
         }),
       },
-      ...createSingleRealizedPnlSection(ctx, cohort, title, {
+      ...createSingleRealizedPnlSection(cohort, title, {
         extra: createRealizedPnlRatioSeries(colors, tree),
       }),
       {
@@ -594,37 +575,36 @@ function createSingleRealizedSectionFull(ctx, cohort, title) {
         title: title("Realized Peak Regret"),
         bottom: createSingleRealizedAthRegretSeries(tree, color),
       },
-      createSingleSoprSectionWithAdjusted(ctx, cohort, title),
+      createSingleSoprSectionWithAdjusted(cohort, title),
     ],
   };
 }
 
 /**
  * Create realized section for CohortWithAdjusted (adjustedSopr but partial ratio)
- * @param {PartialContext} ctx
  * @param {CohortWithAdjusted} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function createSingleRealizedSectionWithAdjusted(ctx, cohort, title) {
+function createSingleRealizedSectionWithAdjusted(cohort, title) {
   const { tree, color } = cohort;
   return {
     name: "Realized",
     tree: [
-      ...createSingleRealizedPriceChartsBasic(ctx, cohort, title),
+      ...createSingleRealizedPriceChartsBasic(cohort, title),
       createInvestorPriceFolderBasic(cohort, cohort.name),
       {
         name: "Capitalization",
         title: title("Realized Cap"),
-        bottom: createSingleRealizedCapSeries(ctx, cohort),
+        bottom: createSingleRealizedCapSeries(cohort),
       },
-      ...createSingleRealizedPnlSection(ctx, cohort, title),
+      ...createSingleRealizedPnlSection(cohort, title),
       {
         name: "Peak Regret",
         title: title("Realized Peak Regret"),
         bottom: createSingleRealizedAthRegretSeries(tree, color),
       },
-      createSingleSoprSectionWithAdjusted(ctx, cohort, title),
+      createSingleSoprSectionWithAdjusted(cohort, title),
     ],
   };
 }
@@ -632,7 +612,6 @@ function createSingleRealizedSectionWithAdjusted(ctx, cohort, title) {
 /**
  * Create realized section with adjusted SOPR for grouped cohorts
  * @template {readonly (CohortFull | CohortWithAdjusted)[]} T
- * @param {PartialContext} ctx
  * @param {T} list
  * @param {(metric: string) => string} title
  * @param {Object} [options]
@@ -640,7 +619,6 @@ function createSingleRealizedSectionWithAdjusted(ctx, cohort, title) {
  * @returns {PartialOptionsGroup}
  */
 function createGroupedRealizedSectionWithAdjusted(
-  ctx,
   list,
   title,
   { ratioMetrics } = {},
@@ -664,7 +642,7 @@ function createGroupedRealizedSectionWithAdjusted(
         title: title("Realized Cap"),
         bottom: createGroupedRealizedCapSeries(list),
       },
-      ...createGroupedRealizedPnlSections(ctx, list, title, { ratioMetrics }),
+      ...createGroupedRealizedPnlSections(list, title, { ratioMetrics }),
       {
         name: "Peak Regret",
         title: title("Realized Peak Regret"),
@@ -677,27 +655,25 @@ function createGroupedRealizedSectionWithAdjusted(
 
 /**
  * Create realized section for CohortWithPercentiles (no adjustedSopr but full ratio)
- * @param {PartialContext} ctx
  * @param {CohortWithPercentiles} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function createSingleRealizedSectionWithPercentiles(ctx, cohort, title) {
-  const { colors } = ctx;
+function createSingleRealizedSectionWithPercentiles(cohort, title) {
   const { tree, color } = cohort;
   return {
     name: "Realized",
     tree: [
-      ...createSingleRealizedPriceChartsWithRatio(ctx, cohort, title),
-      createInvestorPriceFolderFull(ctx, cohort, cohort.name),
+      ...createSingleRealizedPriceChartsWithRatio(cohort, title),
+      createInvestorPriceFolderFull(cohort, cohort.name),
       {
         name: "Capitalization",
         title: title("Realized Cap"),
-        bottom: createSingleRealizedCapSeries(ctx, cohort, {
-          extra: createRealizedCapRatioSeries(ctx, tree),
+        bottom: createSingleRealizedCapSeries(cohort, {
+          extra: createRealizedCapRatioSeries(tree),
         }),
       },
-      ...createSingleRealizedPnlSection(ctx, cohort, title, {
+      ...createSingleRealizedPnlSection(cohort, title, {
         extra: createRealizedPnlRatioSeries(colors, tree),
       }),
       {
@@ -705,37 +681,36 @@ function createSingleRealizedSectionWithPercentiles(ctx, cohort, title) {
         title: title("Realized Peak Regret"),
         bottom: createSingleRealizedAthRegretSeries(tree, color),
       },
-      createSingleSoprSectionBasic(ctx, cohort, title),
+      createSingleSoprSectionBasic(cohort, title),
     ],
   };
 }
 
 /**
  * Create realized section for CohortBasic (no adjustedSopr, partial ratio)
- * @param {PartialContext} ctx
  * @param {CohortBasic | CohortAddress | CohortWithoutRelative} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function createSingleRealizedSectionBasic(ctx, cohort, title) {
+function createSingleRealizedSectionBasic(cohort, title) {
   const { tree, color } = cohort;
   return {
     name: "Realized",
     tree: [
-      ...createSingleRealizedPriceChartsBasic(ctx, cohort, title),
+      ...createSingleRealizedPriceChartsBasic(cohort, title),
       createInvestorPriceFolderBasic(cohort, cohort.name),
       {
         name: "Capitalization",
         title: title("Realized Cap"),
-        bottom: createSingleRealizedCapSeries(ctx, cohort),
+        bottom: createSingleRealizedCapSeries(cohort),
       },
-      ...createSingleRealizedPnlSection(ctx, cohort, title),
+      ...createSingleRealizedPnlSection(cohort, title),
       {
         name: "Peak Regret",
         title: title("Realized Peak Regret"),
         bottom: createSingleRealizedAthRegretSeries(tree, color),
       },
-      createSingleSoprSectionBasic(ctx, cohort, title),
+      createSingleSoprSectionBasic(cohort, title),
     ],
   };
 }
@@ -743,19 +718,13 @@ function createSingleRealizedSectionBasic(ctx, cohort, title) {
 /**
  * Create realized section without adjusted SOPR for grouped cohorts
  * @template {readonly (CohortWithPercentiles | CohortBasic | CohortAddress | CohortWithoutRelative)[]} T
- * @param {PartialContext} ctx
  * @param {T} list
  * @param {(metric: string) => string} title
  * @param {Object} [options]
  * @param {(cohort: T[number]) => AnyFetchedSeriesBlueprint[]} [options.ratioMetrics] - Generator for ratio metrics per cohort
  * @returns {PartialOptionsGroup}
  */
-function createGroupedRealizedSectionBasic(
-  ctx,
-  list,
-  title,
-  { ratioMetrics } = {},
-) {
+function createGroupedRealizedSectionBasic(list, title, { ratioMetrics } = {}) {
   return {
     name: "Realized",
     tree: [
@@ -775,7 +744,7 @@ function createGroupedRealizedSectionBasic(
         title: title("Realized Cap"),
         bottom: createGroupedRealizedCapSeries(list),
       },
-      ...createGroupedRealizedPnlSections(ctx, list, title, { ratioMetrics }),
+      ...createGroupedRealizedPnlSections(list, title, { ratioMetrics }),
       {
         name: "Peak Regret",
         title: title("Realized Peak Regret"),
@@ -810,17 +779,16 @@ function createSingleRealizedPriceChart(cohort, title) {
 /**
  * Create realized price and ratio charts for cohorts with full ActivePriceRatioPattern
  * (CohortAll, CohortFull, CohortWithPercentiles have RealizedPattern2/3 which has ActivePriceRatioPattern)
- * @param {PartialContext} ctx
  * @param {CohortAll | CohortFull | CohortWithPercentiles} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function createSingleRealizedPriceChartsWithRatio(ctx, cohort, title) {
+function createSingleRealizedPriceChartsWithRatio(cohort, title) {
   const { tree, color } = cohort;
   const ratio = /** @type {ActivePriceRatioPattern} */ (
     tree.realized.realizedPriceExtra
   );
-  return createPriceRatioCharts(ctx, {
+  return createPriceRatioCharts({
     context: cohort.name,
     legend: "Realized",
     pricePattern: tree.realized.realizedPrice,
@@ -835,12 +803,11 @@ function createSingleRealizedPriceChartsWithRatio(ctx, cohort, title) {
 /**
  * Create realized price and basic ratio charts for cohorts with RealizedPriceExtraPattern
  * (CohortWithAdjusted, CohortBasic have RealizedPattern/4 which has RealizedPriceExtraPattern)
- * @param {PartialContext} ctx
  * @param {CohortWithAdjusted | CohortBasic | CohortAddress | CohortWithoutRelative} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption[]}
  */
-function createSingleRealizedPriceChartsBasic(ctx, cohort, title) {
+function createSingleRealizedPriceChartsBasic(cohort, title) {
   const { tree, color } = cohort;
   return [
     createSingleRealizedPriceChart(cohort, title),
@@ -861,13 +828,12 @@ function createSingleRealizedPriceChartsBasic(ctx, cohort, title) {
 
 /**
  * Create realized cap series for single cohort
- * @param {PartialContext} ctx
  * @param {UtxoCohortObject | CohortWithoutRelative} cohort
  * @param {Object} [options]
  * @param {AnyFetchedSeriesBlueprint[]} [options.extra] - Additional series (e.g., ratio for cohorts with RealizedWithCapRatio)
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function createSingleRealizedCapSeries(ctx, cohort, { extra = [] } = {}) {
+function createSingleRealizedCapSeries(cohort, { extra = [] } = {}) {
   const { color, tree } = cohort;
 
   return [
@@ -896,11 +862,10 @@ function createSingleRealizedCapSeries(ctx, cohort, { extra = [] } = {}) {
 
 /**
  * Create realized cap ratio series (for cohorts with RealizedPattern2 or RealizedPattern3)
- * @param {PartialContext} ctx
  * @param {{ realized: RealizedWithExtras }} tree
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function createRealizedCapRatioSeries(ctx, tree) {
+function createRealizedCapRatioSeries(tree) {
   return [
     baseline({
       metric: tree.realized.realizedCapRelToOwnMarketCap,
@@ -909,7 +874,6 @@ function createRealizedCapRatioSeries(ctx, tree) {
       options: { baseValue: { price: 100 } },
     }),
     priceLine({
-      ctx,
       unit: Unit.pctOwnMcap,
       defaultActive: true,
       number: 100,
@@ -968,20 +932,13 @@ function createGroupedRealizedPnlRatioMetrics(cohort) {
 
 /**
  * Create realized PnL section for single cohort
- * @param {PartialContext} ctx
  * @param {UtxoCohortObject | CohortWithoutRelative} cohort
  * @param {(metric: string) => string} title
  * @param {Object} [options]
  * @param {AnyFetchedSeriesBlueprint[]} [options.extra] - Extra series (e.g., pnl ratio for cohorts with RealizedWithPnlRatio)
  * @returns {PartialOptionsTree}
  */
-function createSingleRealizedPnlSection(
-  ctx,
-  cohort,
-  title,
-  { extra = [] } = {},
-) {
-  const { colors } = ctx;
+function createSingleRealizedPnlSection(cohort, title, { extra = [] } = {}) {
   const { tree } = cohort;
 
   return [
@@ -1272,19 +1229,13 @@ function createSingleRealizedPnlSection(
 /**
  * Create realized PnL sections for grouped cohorts
  * @template {readonly (UtxoCohortObject | CohortWithoutRelative)[]} T
- * @param {PartialContext} ctx
  * @param {T} list
  * @param {(metric: string) => string} title
  * @param {Object} [options]
  * @param {(cohort: T[number]) => AnyFetchedSeriesBlueprint[]} [options.ratioMetrics] - Generator for ratio metrics per cohort
  * @returns {PartialOptionsTree}
  */
-function createGroupedRealizedPnlSections(
-  ctx,
-  list,
-  title,
-  { ratioMetrics } = {},
-) {
+function createGroupedRealizedPnlSections(list, title, { ratioMetrics } = {}) {
   const pnlConfigs = /** @type {const} */ ([
     {
       name: "Profit",
@@ -1566,28 +1517,25 @@ function createGroupedRealizedPnlSections(
 
 /**
  * Create single base SOPR chart (all UTXO cohorts have base SOPR)
- * @param {PartialContext} ctx
  * @param {CohortAll | CohortFull | CohortWithAdjusted | CohortLongTerm | CohortAgeRange | CohortBasicWithMarketCap | CohortBasicWithoutMarketCap | CohortAddress | CohortWithoutRelative} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption}
  */
-function createSingleBaseSoprChart(ctx, cohort, title) {
+function createSingleBaseSoprChart(cohort, title) {
   return {
     name: "Normal",
     title: title("SOPR"),
-    bottom: createSingleSoprSeries(ctx.colors, cohort.tree),
+    bottom: createSingleSoprSeries(colors, cohort.tree),
   };
 }
 
 /**
  * Create single adjusted SOPR chart (cohorts with RealizedPattern3/4)
- * @param {PartialContext} ctx
  * @param {CohortAll | CohortFull | CohortWithAdjusted} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption}
  */
-function createSingleAdjustedSoprChart(ctx, cohort, title) {
-  const { colors } = ctx;
+function createSingleAdjustedSoprChart(cohort, title) {
   const { tree } = cohort;
 
   return {
@@ -1707,17 +1655,16 @@ function createGroupedAdjustedSoprChart(list, title) {
 
 /**
  * Create SOPR section with adjusted SOPR (for cohorts with RealizedPattern3/4)
- * @param {PartialContext} ctx
  * @param {CohortAll | CohortFull | CohortWithAdjusted} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function createSingleSoprSectionWithAdjusted(ctx, cohort, title) {
+function createSingleSoprSectionWithAdjusted(cohort, title) {
   return {
     name: "SOPR",
     tree: [
-      createSingleBaseSoprChart(ctx, cohort, title),
-      createSingleAdjustedSoprChart(ctx, cohort, title),
+      createSingleBaseSoprChart(cohort, title),
+      createSingleAdjustedSoprChart(cohort, title),
     ],
   };
 }
@@ -1740,15 +1687,14 @@ function createGroupedSoprSectionWithAdjusted(list, title) {
 
 /**
  * Create SOPR section without adjusted SOPR (for cohorts with RealizedPattern/2)
- * @param {PartialContext} ctx
  * @param {CohortWithPercentiles | CohortBasic | CohortAddress | CohortWithoutRelative} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function createSingleSoprSectionBasic(ctx, cohort, title) {
+function createSingleSoprSectionBasic(cohort, title) {
   return {
     name: "SOPR",
-    tree: [createSingleBaseSoprChart(ctx, cohort, title)],
+    tree: [createSingleBaseSoprChart(cohort, title)],
   };
 }
 
@@ -1770,11 +1716,9 @@ function createGroupedSoprSectionBasic(list, title) {
 // ============================================================================
 
 /**
- * @param {PartialContext} ctx
  * @param {RelativeWithMarketCap} rel
  */
-function createUnrealizedPnlRelToMarketCapMetrics(ctx, rel) {
-  const { colors } = ctx;
+function createUnrealizedPnlRelToMarketCapMetrics(rel) {
   return [
     line({
       metric: rel.unrealizedProfitRelToMarketCap,
@@ -1800,11 +1744,9 @@ function createUnrealizedPnlRelToMarketCapMetrics(ctx, rel) {
 }
 
 /**
- * @param {PartialContext} ctx
  * @param {RelativeWithOwnMarketCap} rel
  */
-function createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, rel) {
-  const { colors } = ctx;
+function createUnrealizedPnlRelToOwnMarketCapMetrics(rel) {
   return [
     line({
       metric: rel.unrealizedProfitRelToOwnMarketCap,
@@ -1826,17 +1768,15 @@ function createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, rel) {
       unit: Unit.pctOwnMcap,
       defaultActive: false,
     }),
-    priceLine({ ctx, unit: Unit.pctOwnMcap, number: 100 }),
-    priceLine({ ctx, unit: Unit.pctOwnMcap }),
+    priceLine({ unit: Unit.pctOwnMcap, number: 100 }),
+    priceLine({ unit: Unit.pctOwnMcap }),
   ];
 }
 
 /**
- * @param {PartialContext} ctx
  * @param {RelativeWithOwnPnl} rel
  */
-function createUnrealizedPnlRelToOwnPnlMetrics(ctx, rel) {
-  const { colors } = ctx;
+function createUnrealizedPnlRelToOwnPnlMetrics(rel) {
   return [
     line({
       metric: rel.unrealizedProfitRelToOwnTotalUnrealizedPnl,
@@ -1858,8 +1798,8 @@ function createUnrealizedPnlRelToOwnPnlMetrics(ctx, rel) {
       unit: Unit.pctOwnPnl,
       defaultActive: false,
     }),
-    priceLine({ ctx, unit: Unit.pctOwnPnl, number: 100 }),
-    priceLine({ ctx, unit: Unit.pctOwnPnl }),
+    priceLine({ unit: Unit.pctOwnPnl, number: 100 }),
+    priceLine({ unit: Unit.pctOwnPnl }),
   ];
 }
 
@@ -1877,25 +1817,23 @@ function createNetUnrealizedPnlRelToMarketCapMetrics(rel) {
 }
 
 /**
- * @param {PartialContext} ctx
  * @param {RelativeWithOwnMarketCap} rel
  */
-function createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, rel) {
+function createNetUnrealizedPnlRelToOwnMarketCapMetrics(rel) {
   return [
     baseline({
       metric: rel.netUnrealizedPnlRelToOwnMarketCap,
       name: "Net",
       unit: Unit.pctOwnMcap,
     }),
-    priceLine({ ctx, unit: Unit.pctOwnMcap }),
+    priceLine({ unit: Unit.pctOwnMcap }),
   ];
 }
 
 /**
- * @param {PartialContext} ctx
  * @param {RelativeWithOwnPnl} rel
  */
-function createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, rel) {
+function createNetUnrealizedPnlRelToOwnPnlMetrics(rel) {
   return [
     baseline({
       metric: rel.netUnrealizedPnlRelToOwnTotalUnrealizedPnl,
@@ -1907,12 +1845,10 @@ function createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, rel) {
 
 /**
  * Create invested capital relative metrics (% of realized cap)
- * @param {PartialContext} ctx
  * @param {RelativeWithInvestedCapitalPct} rel
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function createInvestedCapitalRelMetrics(ctx, rel) {
-  const { colors } = ctx;
+function createInvestedCapitalRelMetrics(rel) {
   return [
     baseline({
       metric: rel.investedCapitalInProfitPct,
@@ -1931,11 +1867,9 @@ function createInvestedCapitalRelMetrics(ctx, rel) {
 
 /**
  * Base unrealized metrics (always present)
- * @param {PartialContext} ctx
  * @param {{ unrealized: UnrealizedPattern }} tree
  */
-function createUnrealizedPnlBaseMetrics(ctx, tree) {
-  const { colors } = ctx;
+function createUnrealizedPnlBaseMetrics(tree) {
   return [
     line({
       metric: tree.unrealized.totalUnrealizedPnl,
@@ -1984,12 +1918,11 @@ function createNetUnrealizedPnlBaseMetric(tree) {
 
 /**
  * Create NUPL chart for single cohort
- * @param {PartialContext} ctx
  * @param {RelativeWithNupl} rel
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption}
  */
-function createNuplChart(ctx, rel, title) {
+function createNuplChart(rel, title) {
   return {
     name: "NUPL",
     title: title("NUPL"),
@@ -2005,12 +1938,11 @@ function createNuplChart(ctx, rel, title) {
 
 /**
  * Create peak regret chart (basic - just absolute value)
- * @param {PartialContext} ctx
  * @param {{ unrealized: UnrealizedFullPattern }} tree
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption}
  */
-function createPeakRegretChart(ctx, tree, title) {
+function createPeakRegretChart(tree, title) {
   return {
     name: "Peak Regret",
     title: title("Unrealized Peak Regret"),
@@ -2018,7 +1950,7 @@ function createPeakRegretChart(ctx, tree, title) {
       line({
         metric: tree.unrealized.peakRegret,
         name: "Peak Regret",
-        color: ctx.colors.orange,
+        color: colors.orange,
         unit: Unit.usd,
       }),
     ],
@@ -2027,12 +1959,11 @@ function createPeakRegretChart(ctx, tree, title) {
 
 /**
  * Create peak regret chart with RelToMarketCap metric
- * @param {PartialContext} ctx
  * @param {{ unrealized: UnrealizedFullPattern, relative: RelativeWithMarketCap }} tree
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption}
  */
-function createPeakRegretChartWithMarketCap(ctx, tree, title) {
+function createPeakRegretChartWithMarketCap(tree, title) {
   return {
     name: "Peak Regret",
     title: title("Unrealized Peak Regret"),
@@ -2040,13 +1971,13 @@ function createPeakRegretChartWithMarketCap(ctx, tree, title) {
       line({
         metric: tree.unrealized.peakRegret,
         name: "Peak Regret",
-        color: ctx.colors.orange,
+        color: colors.orange,
         unit: Unit.usd,
       }),
       baseline({
         metric: tree.relative.unrealizedPeakRegretRelToMarketCap,
         name: "Peak Regret",
-        color: ctx.colors.orange,
+        color: colors.orange,
         unit: Unit.pctMcap,
       }),
     ],
@@ -2055,13 +1986,11 @@ function createPeakRegretChartWithMarketCap(ctx, tree, title) {
 
 /**
  * Create invested capital absolute chart
- * @param {PartialContext} ctx
  * @param {{ unrealized: UnrealizedPattern }} tree
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption}
  */
-function createSingleInvestedCapitalAbsoluteChart(ctx, tree, title) {
-  const { colors } = ctx;
+function createSingleInvestedCapitalAbsoluteChart(tree, title) {
   return {
     name: "Absolute",
     title: title("Invested Capital In Profit & Loss"),
@@ -2084,58 +2013,54 @@ function createSingleInvestedCapitalAbsoluteChart(ctx, tree, title) {
 
 /**
  * Create invested capital relative chart
- * @param {PartialContext} ctx
  * @param {RelativeWithInvestedCapitalPct} rel
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption}
  */
-function createSingleInvestedCapitalRelativeChart(ctx, rel, title) {
+function createSingleInvestedCapitalRelativeChart(rel, title) {
   return {
     name: "Relative",
     title: title("Invested Capital In Profit & Loss %"),
-    bottom: [...createInvestedCapitalRelMetrics(ctx, rel)],
+    bottom: [...createInvestedCapitalRelMetrics(rel)],
   };
 }
 
 /**
  * Create invested capital folder for cohorts WITHOUT relative metrics
- * @param {PartialContext} ctx
  * @param {{ unrealized: UnrealizedPattern }} tree
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function createSingleInvestedCapitalFolder(ctx, tree, title) {
+function createSingleInvestedCapitalFolder(tree, title) {
   return {
     name: "Invested Capital",
-    tree: [createSingleInvestedCapitalAbsoluteChart(ctx, tree, title)],
+    tree: [createSingleInvestedCapitalAbsoluteChart(tree, title)],
   };
 }
 
 /**
  * Create invested capital folder for cohorts WITH relative metrics
- * @param {PartialContext} ctx
  * @param {{ unrealized: UnrealizedPattern, relative: RelativeWithInvestedCapitalPct }} tree
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function createSingleInvestedCapitalFolderFull(ctx, tree, title) {
+function createSingleInvestedCapitalFolderFull(tree, title) {
   return {
     name: "Invested Capital",
     tree: [
-      createSingleInvestedCapitalAbsoluteChart(ctx, tree, title),
-      createSingleInvestedCapitalRelativeChart(ctx, tree.relative, title),
+      createSingleInvestedCapitalAbsoluteChart(tree, title),
+      createSingleInvestedCapitalRelativeChart(tree.relative, title),
     ],
   };
 }
 
 /**
  * Create NUPL chart for grouped cohorts
- * @param {PartialContext} ctx
  * @param {readonly { name: string, color: Color, tree: { relative: RelativeWithNupl } }[]} list
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption}
  */
-function createGroupedNuplChart(ctx, list, title) {
+function createGroupedNuplChart(list, title) {
   return {
     name: "NUPL",
     title: title("NUPL"),
@@ -2207,7 +2132,6 @@ function createGroupedPeakRegretChart(list, title) {
 /**
  * Generic single unrealized section builder - callers pass typed metrics
  * @param {Object} args
- * @param {PartialContext} args.ctx
  * @param {{ unrealized: UnrealizedPattern }} args.tree
  * @param {(metric: string) => string} args.title
  * @param {AnyFetchedSeriesBlueprint[]} [args.pnl] - Extra pnl metrics
@@ -2217,7 +2141,6 @@ function createGroupedPeakRegretChart(list, title) {
  * @returns {PartialOptionsGroup}
  */
 function createUnrealizedSection({
-  ctx,
   tree,
   title,
   pnl = [],
@@ -2225,14 +2148,13 @@ function createUnrealizedSection({
   investedCapitalFolder,
   charts = [],
 }) {
-  const { colors } = ctx;
   return {
     name: "Unrealized",
     tree: [
       {
         name: "P&L",
         title: title("Unrealized P&L"),
-        bottom: [...createUnrealizedPnlBaseMetrics(ctx, tree), ...pnl],
+        bottom: [...createUnrealizedPnlBaseMetrics(tree), ...pnl],
       },
       {
         name: "Net P&L",
@@ -2444,174 +2366,140 @@ function createGroupedUnrealizedSectionWithoutRelative(list, title) {
 
 /**
  * Unrealized section for All cohort (only RelToOwnPnl)
- * @param {PartialContext} ctx
  * @param {CohortAll} cohort
  * @param {(metric: string) => string} title
  */
-function createSingleUnrealizedSectionAll(ctx, cohort, title) {
+function createSingleUnrealizedSectionAll(cohort, title) {
   const { tree } = cohort;
   return createUnrealizedSection({
-    ctx,
     tree,
     title,
     pnl: [
-      ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
-      ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+      ...createUnrealizedPnlRelToMarketCapMetrics(tree.relative),
+      ...createUnrealizedPnlRelToOwnPnlMetrics(tree.relative),
     ],
     netPnl: [
       ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
-      ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+      ...createNetUnrealizedPnlRelToOwnPnlMetrics(tree.relative),
     ],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
-      ctx,
-      tree,
-      title,
-    ),
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(tree, title),
     charts: [
-      createNuplChart(ctx, tree.relative, title),
-      createPeakRegretChartWithMarketCap(ctx, tree, title),
+      createNuplChart(tree.relative, title),
+      createPeakRegretChartWithMarketCap(tree, title),
     ],
   });
 }
 
 /**
  * Unrealized section for Full cohort (all capabilities: MarketCap + OwnMarketCap + OwnPnl)
- * @param {PartialContext} ctx
  * @param {CohortFull} cohort
  * @param {(metric: string) => string} title
  */
-function createSingleUnrealizedSectionFull(ctx, cohort, title) {
+function createSingleUnrealizedSectionFull(cohort, title) {
   const { tree } = cohort;
   return createUnrealizedSection({
-    ctx,
     tree,
     title,
     pnl: [
-      ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
-      ...createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
-      ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+      ...createUnrealizedPnlRelToMarketCapMetrics(tree.relative),
+      ...createUnrealizedPnlRelToOwnMarketCapMetrics(tree.relative),
+      ...createUnrealizedPnlRelToOwnPnlMetrics(tree.relative),
     ],
     netPnl: [
       ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
-      ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
-      ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+      ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(tree.relative),
+      ...createNetUnrealizedPnlRelToOwnPnlMetrics(tree.relative),
     ],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
-      ctx,
-      tree,
-      title,
-    ),
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(tree, title),
     charts: [
-      createNuplChart(ctx, tree.relative, title),
-      createPeakRegretChartWithMarketCap(ctx, tree, title),
+      createNuplChart(tree.relative, title),
+      createPeakRegretChartWithMarketCap(tree, title),
     ],
   });
 }
 
 /**
  * Unrealized section for WithAdjusted cohort (MarketCap + nupl)
- * @param {PartialContext} ctx
  * @param {CohortWithAdjusted} cohort
  * @param {(metric: string) => string} title
  */
-function createSingleUnrealizedSectionWithMarketCap(ctx, cohort, title) {
+function createSingleUnrealizedSectionWithMarketCap(cohort, title) {
   const { tree } = cohort;
   return createUnrealizedSection({
-    ctx,
     tree,
     title,
-    pnl: [...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative)],
+    pnl: [...createUnrealizedPnlRelToMarketCapMetrics(tree.relative)],
     netPnl: [...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative)],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
-      ctx,
-      tree,
-      title,
-    ),
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(tree, title),
     charts: [
-      createNuplChart(ctx, tree.relative, title),
-      createPeakRegretChartWithMarketCap(ctx, tree, title),
+      createNuplChart(tree.relative, title),
+      createPeakRegretChartWithMarketCap(tree, title),
     ],
   });
 }
 
 /**
  * Unrealized section WITH RelToMarketCap metrics (for CohortBasicWithMarketCap)
- * @param {PartialContext} ctx
  * @param {CohortBasicWithMarketCap} cohort
  * @param {(metric: string) => string} title
  */
-function createSingleUnrealizedSectionWithMarketCapOnly(ctx, cohort, title) {
+function createSingleUnrealizedSectionWithMarketCapOnly(cohort, title) {
   const { tree } = cohort;
   return createUnrealizedSection({
-    ctx,
     tree,
     title,
-    pnl: [...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative)],
+    pnl: [...createUnrealizedPnlRelToMarketCapMetrics(tree.relative)],
     netPnl: [...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative)],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
-      ctx,
-      tree,
-      title,
-    ),
-    charts: [createNuplChart(ctx, tree.relative, title)],
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(tree, title),
+    charts: [createNuplChart(tree.relative, title)],
   });
 }
 
 /**
  * Unrealized section for minAge cohorts (has peakRegret)
- * @param {PartialContext} ctx
  * @param {CohortMinAge} cohort
  * @param {(metric: string) => string} title
  */
-function createSingleUnrealizedSectionMinAge(ctx, cohort, title) {
+function createSingleUnrealizedSectionMinAge(cohort, title) {
   const { tree } = cohort;
   return createUnrealizedSection({
-    ctx,
     tree,
     title,
-    pnl: [...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative)],
+    pnl: [...createUnrealizedPnlRelToMarketCapMetrics(tree.relative)],
     netPnl: [...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative)],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
-      ctx,
-      tree,
-      title,
-    ),
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(tree, title),
     charts: [
-      createNuplChart(ctx, tree.relative, title),
-      createPeakRegretChartWithMarketCap(ctx, tree, title),
+      createNuplChart(tree.relative, title),
+      createPeakRegretChartWithMarketCap(tree, title),
     ],
   });
 }
 
 /**
  * Unrealized section with only base metrics (no RelToMarketCap)
- * @param {PartialContext} ctx
  * @param {CohortBasicWithoutMarketCap} cohort
  * @param {(metric: string) => string} title
  */
-function createSingleUnrealizedSectionBase(ctx, cohort, title) {
+function createSingleUnrealizedSectionBase(cohort, title) {
   const { tree } = cohort;
   return createUnrealizedSection({
-    ctx,
     tree,
     title,
-    investedCapitalFolder: createSingleInvestedCapitalFolder(ctx, tree, title),
+    investedCapitalFolder: createSingleInvestedCapitalFolder(tree, title),
   });
 }
 
 /**
  * Unrealized section for cohorts WITHOUT relative (edge case types: empty, p2ms, unknown)
- * @param {PartialContext} ctx
  * @param {CohortWithoutRelative} cohort
  * @param {(metric: string) => string} title
  */
-function createSingleUnrealizedSectionWithoutRelative(ctx, cohort, title) {
+function createSingleUnrealizedSectionWithoutRelative(cohort, title) {
   const { tree } = cohort;
   return createUnrealizedSection({
-    ctx,
     tree,
     title,
-    investedCapitalFolder: createSingleInvestedCapitalFolder(ctx, tree, title),
+    investedCapitalFolder: createSingleInvestedCapitalFolder(tree, title),
   });
 }
 
@@ -2663,11 +2551,10 @@ function createGroupedUnrealizedBaseCharts(list, title) {
 
 /**
  * Grouped unrealized section for Full cohorts (all relative capabilities)
- * @param {PartialContext} ctx
  * @param {readonly CohortFull[]} list
  * @param {(metric: string) => string} title
  */
-function createGroupedUnrealizedSectionFull(ctx, list, title) {
+function createGroupedUnrealizedSectionFull(list, title) {
   return createGroupedUnrealizedSection({
     list,
     title,
@@ -2692,7 +2579,7 @@ function createGroupedUnrealizedSectionFull(ctx, list, title) {
       }),
     ],
     charts: [
-      createGroupedNuplChart(ctx, list, title),
+      createGroupedNuplChart(list, title),
       createGroupedPeakRegretChart(list, title),
     ],
   });
@@ -2700,11 +2587,10 @@ function createGroupedUnrealizedSectionFull(ctx, list, title) {
 
 /**
  * Grouped unrealized section for WithAdjusted cohorts (MarketCap + nupl)
- * @param {PartialContext} ctx
  * @param {readonly CohortWithAdjusted[]} list
  * @param {(metric: string) => string} title
  */
-function createGroupedUnrealizedSectionWithMarketCap(ctx, list, title) {
+function createGroupedUnrealizedSectionWithMarketCap(list, title) {
   return createGroupedUnrealizedSection({
     list,
     title,
@@ -2717,7 +2603,7 @@ function createGroupedUnrealizedSectionWithMarketCap(ctx, list, title) {
       }),
     ],
     charts: [
-      createGroupedNuplChart(ctx, list, title),
+      createGroupedNuplChart(list, title),
       createGroupedPeakRegretChart(list, title),
     ],
   });
@@ -2725,11 +2611,10 @@ function createGroupedUnrealizedSectionWithMarketCap(ctx, list, title) {
 
 /**
  * Grouped unrealized section WITH RelToMarketCap (for CohortBasicWithMarketCap)
- * @param {PartialContext} ctx
  * @param {readonly CohortBasicWithMarketCap[]} list
  * @param {(metric: string) => string} title
  */
-function createGroupedUnrealizedSectionWithMarketCapOnly(ctx, list, title) {
+function createGroupedUnrealizedSectionWithMarketCapOnly(list, title) {
   return createGroupedUnrealizedSection({
     list,
     title,
@@ -2741,17 +2626,16 @@ function createGroupedUnrealizedSectionWithMarketCapOnly(ctx, list, title) {
         unit: Unit.pctMcap,
       }),
     ],
-    charts: [createGroupedNuplChart(ctx, list, title)],
+    charts: [createGroupedNuplChart(list, title)],
   });
 }
 
 /**
  * Grouped unrealized section for minAge cohorts (has peakRegret)
- * @param {PartialContext} ctx
  * @param {readonly CohortMinAge[]} list
  * @param {(metric: string) => string} title
  */
-function createGroupedUnrealizedSectionMinAge(ctx, list, title) {
+function createGroupedUnrealizedSectionMinAge(list, title) {
   return createGroupedUnrealizedSection({
     list,
     title,
@@ -2764,7 +2648,7 @@ function createGroupedUnrealizedSectionMinAge(ctx, list, title) {
       }),
     ],
     charts: [
-      createGroupedNuplChart(ctx, list, title),
+      createGroupedNuplChart(list, title),
       createGroupedPeakRegretChart(list, title),
     ],
   });
@@ -2782,34 +2666,28 @@ function createGroupedUnrealizedSectionBase(list, title) {
 /**
  * Unrealized section for cohorts with nupl (OwnMarketCap + OwnPnl + nupl)
  * @param {Object} args
- * @param {PartialContext} args.ctx
  * @param {CohortWithNuplPercentiles} args.cohort
  * @param {(metric: string) => string} args.title
  */
-function createSingleUnrealizedSectionWithNupl({ ctx, cohort, title }) {
+function createSingleUnrealizedSectionWithNupl({ cohort, title }) {
   const { tree } = cohort;
   return createUnrealizedSection({
-    ctx,
     tree,
     title,
     pnl: [
-      ...createUnrealizedPnlRelToMarketCapMetrics(ctx, tree.relative),
-      ...createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
-      ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+      ...createUnrealizedPnlRelToMarketCapMetrics(tree.relative),
+      ...createUnrealizedPnlRelToOwnMarketCapMetrics(tree.relative),
+      ...createUnrealizedPnlRelToOwnPnlMetrics(tree.relative),
     ],
     netPnl: [
       ...createNetUnrealizedPnlRelToMarketCapMetrics(tree.relative),
-      ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
-      ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+      ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(tree.relative),
+      ...createNetUnrealizedPnlRelToOwnPnlMetrics(tree.relative),
     ],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
-      ctx,
-      tree,
-      title,
-    ),
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(tree, title),
     charts: [
-      createNuplChart(ctx, tree.relative, title),
-      createPeakRegretChartWithMarketCap(ctx, tree, title),
+      createNuplChart(tree.relative, title),
+      createPeakRegretChartWithMarketCap(tree, title),
     ],
   });
 }
@@ -2817,11 +2695,10 @@ function createSingleUnrealizedSectionWithNupl({ ctx, cohort, title }) {
 /**
  * Grouped unrealized section for cohorts with nupl (OwnMarketCap + OwnPnl + nupl)
  * @param {Object} args
- * @param {PartialContext} args.ctx
  * @param {readonly CohortWithNuplPercentiles[]} args.list
  * @param {(metric: string) => string} args.title
  */
-function createGroupedUnrealizedSectionWithNupl({ ctx, list, title }) {
+function createGroupedUnrealizedSectionWithNupl({ list, title }) {
   return createGroupedUnrealizedSection({
     list,
     title,
@@ -2846,7 +2723,7 @@ function createGroupedUnrealizedSectionWithNupl({ ctx, list, title }) {
       }),
     ],
     charts: [
-      createGroupedNuplChart(ctx, list, title),
+      createGroupedNuplChart(list, title),
       createGroupedPeakRegretChart(list, title),
     ],
   });
@@ -2854,30 +2731,24 @@ function createGroupedUnrealizedSectionWithNupl({ ctx, list, title }) {
 
 /**
  * Unrealized section for AgeRange cohort (no nupl via RelativePattern2)
- * @param {PartialContext} ctx
  * @param {CohortAgeRange} cohort
  * @param {(metric: string) => string} title
  */
-function createSingleUnrealizedSectionAgeRange(ctx, cohort, title) {
+function createSingleUnrealizedSectionAgeRange(cohort, title) {
   const { tree } = cohort;
   return createUnrealizedSection({
-    ctx,
     tree,
     title,
     pnl: [
-      ...createUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
-      ...createUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+      ...createUnrealizedPnlRelToOwnMarketCapMetrics(tree.relative),
+      ...createUnrealizedPnlRelToOwnPnlMetrics(tree.relative),
     ],
     netPnl: [
-      ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(ctx, tree.relative),
-      ...createNetUnrealizedPnlRelToOwnPnlMetrics(ctx, tree.relative),
+      ...createNetUnrealizedPnlRelToOwnMarketCapMetrics(tree.relative),
+      ...createNetUnrealizedPnlRelToOwnPnlMetrics(tree.relative),
     ],
-    investedCapitalFolder: createSingleInvestedCapitalFolderFull(
-      ctx,
-      tree,
-      title,
-    ),
-    charts: [createPeakRegretChart(ctx, tree, title)],
+    investedCapitalFolder: createSingleInvestedCapitalFolderFull(tree, title),
+    charts: [createPeakRegretChart(tree, title)],
   });
 }
 
@@ -2914,15 +2785,13 @@ function createGroupedUnrealizedSectionAgeRange(list, title) {
 
 /**
  * Generic single cost basis section builder - callers pass optional percentiles
- * @param {PartialContext} ctx
  * @param {Object} args
  * @param {UtxoCohortObject | CohortWithoutRelative} args.cohort
  * @param {(metric: string) => string} args.title
  * @param {PartialChartOption[]} [args.charts] - Extra charts (e.g., percentiles)
  * @returns {PartialOptionsGroup}
  */
-function createCostBasisSection(ctx, { cohort, title, charts = [] }) {
-  const { colors } = ctx;
+function createCostBasisSection({ cohort, title, charts = [] }) {
   const { color, tree } = cohort;
   return {
     name: "Cost Basis",
@@ -3026,14 +2895,12 @@ function createGroupedCostBasisSection({ list, title, charts = [] }) {
 
 /**
  * Create cost basis section for single cohort WITH percentiles
- * @param {PartialContext} ctx
  * @param {CohortAll | CohortFull | CohortWithPercentiles} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function createSingleCostBasisSectionWithPercentiles(ctx, cohort, title) {
-  const { colors } = ctx;
-  return createCostBasisSection(ctx, {
+function createSingleCostBasisSectionWithPercentiles(cohort, title) {
+  return createCostBasisSection({
     cohort,
     title,
     charts: [
@@ -3058,13 +2925,11 @@ function createSingleCostBasisSectionWithPercentiles(ctx, cohort, title) {
 
 /**
  * Create cost basis section for grouped cohorts WITH percentiles
- * @param {PartialContext} ctx
  * @param {readonly (CohortFull | CohortWithPercentiles)[]} list
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function createGroupedCostBasisSectionWithPercentiles(ctx, list, title) {
-  const { colors } = ctx;
+function createGroupedCostBasisSectionWithPercentiles(list, title) {
   return createGroupedCostBasisSection({
     list,
     title,
@@ -3095,14 +2960,12 @@ function createGroupedCostBasisSectionWithPercentiles(ctx, list, title) {
 /**
  * Generic single activity section builder - callers pass optional extra value metrics
  * @param {Object} args
- * @param {PartialContext} args.ctx
  * @param {UtxoCohortObject | CohortWithoutRelative} args.cohort
  * @param {(metric: string) => string} args.title
  * @param {AnyFetchedSeriesBlueprint[]} [args.valueMetrics] - Extra value metrics (e.g., adjusted)
  * @returns {PartialOptionsGroup}
  */
-function createActivitySection({ ctx, cohort, title, valueMetrics = [] }) {
-  const { colors } = ctx;
+function createActivitySection({ cohort, title, valueMetrics = [] }) {
   const { tree, color } = cohort;
 
   return {
@@ -3423,16 +3286,13 @@ function createGroupedActivitySection({ list, title, valueTree }) {
 
 /**
  * Create activity section with adjusted values (for cohorts with RealizedPattern3/4)
- * @param {PartialContext} ctx
  * @param {CohortAll | CohortFull | CohortWithAdjusted} cohort
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function createSingleActivitySectionWithAdjusted(ctx, cohort, title) {
-  const { colors } = ctx;
+function createSingleActivitySectionWithAdjusted(cohort, title) {
   const { tree } = cohort;
   return createActivitySection({
-    ctx,
     cohort,
     title,
     valueMetrics: [

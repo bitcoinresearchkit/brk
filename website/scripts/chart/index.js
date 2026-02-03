@@ -8,7 +8,7 @@ import {
 } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.mjs";
 import { createLegend } from "./legend.js";
 import { capture } from "./capture.js";
-import { colors } from "./colors.js";
+import { colors } from "../utils/colors.js";
 import { createRadios, createSelect } from "../utils/dom.js";
 import { createPersistedValue } from "../utils/persisted.js";
 import { onChange as onThemeChange } from "../utils/theme.js";

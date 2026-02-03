@@ -1,7 +1,6 @@
 import { webSockets } from "./utils/ws.js";
 import * as formatters from "./utils/format.js";
 import { onFirstIntersection, getElementById, isHidden } from "./utils/dom.js";
-import { BrkClient } from "./modules/brk-client/index.js";
 import { initOptions } from "./options/full.js";
 import {
   init as initChart,
@@ -106,17 +105,12 @@ function initFrameSelectors() {
 }
 initFrameSelectors();
 
-// const brk = new BrkClient("https://next.bitview.space");
-const brk = new BrkClient("/");
-
-console.log(`VERSION = ${brk.VERSION}`);
-
 webSockets.kraken1dCandle.onLatest((latest) => {
   console.log("close:", latest.close);
   window.document.title = `${latest.close.toLocaleString("en-us")} | ${window.location.host}`;
 });
 
-const options = initOptions(brk);
+const options = initOptions();
 
 window.addEventListener("popstate", (_event) => {
   const path = window.document.location.pathname.split("/").filter((v) => v);
@@ -158,7 +152,7 @@ function initSelected() {
           element = chartElement;
 
           if (firstTimeLoadingChart) {
-            initChart(brk);
+            initChart();
           }
           firstTimeLoadingChart = false;
 
