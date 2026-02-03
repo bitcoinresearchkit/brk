@@ -78,8 +78,6 @@ impl<'a> BlockProcessor<'a> {
 
     pub fn store_transaction_metadata(&mut self, txs: Vec<ComputedTx>) -> Result<()> {
         let height = self.height;
-        let mut inserted = 0usize;
-        let mut skipped = 0usize;
 
         for ct in txs {
             if ct.prev_txindex_opt.is_none() {
@@ -88,9 +86,6 @@ impl<'a> BlockProcessor<'a> {
                     ct.txindex,
                     height,
                 );
-                inserted += 1;
-            } else {
-                skipped += 1;
             }
 
             self.vecs
@@ -122,11 +117,6 @@ impl<'a> BlockProcessor<'a> {
                 .is_explicitly_rbf
                 .checked_push(ct.txindex, StoredBool::from(ct.tx.is_explicitly_rbf()))?;
         }
-
-        tracing::debug!(
-            "store_transaction_metadata: height={}, inserted={}, skipped={}",
-            height, inserted, skipped
-        );
 
         Ok(())
     }

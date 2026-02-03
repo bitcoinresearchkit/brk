@@ -1,5 +1,6 @@
 /** Series helpers for creating chart series blueprints */
 
+import { colors } from "../chart/colors.js";
 import { Unit } from "../utils/units.js";
 
 // ============================================================================
@@ -55,13 +56,55 @@ export function price({
 function percentileSeries(colors, pattern, unit, title) {
   const { stat } = colors;
   return [
-    dots({ metric: pattern.max, name: `${title} max`.trim(), color: stat.max, unit, defaultActive: false }),
-    dots({ metric: pattern.min, name: `${title} min`.trim(), color: stat.min, unit, defaultActive: false }),
-    dots({ metric: pattern.median, name: `${title} median`.trim(), color: stat.median, unit, defaultActive: false }),
-    dots({ metric: pattern.pct75, name: `${title} pct75`.trim(), color: stat.pct75, unit, defaultActive: false }),
-    dots({ metric: pattern.pct25, name: `${title} pct25`.trim(), color: stat.pct25, unit, defaultActive: false }),
-    dots({ metric: pattern.pct90, name: `${title} pct90`.trim(), color: stat.pct90, unit, defaultActive: false }),
-    dots({ metric: pattern.pct10, name: `${title} pct10`.trim(), color: stat.pct10, unit, defaultActive: false }),
+    dots({
+      metric: pattern.max,
+      name: `${title} max`.trim(),
+      color: stat.max,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.min,
+      name: `${title} min`.trim(),
+      color: stat.min,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.median,
+      name: `${title} median`.trim(),
+      color: stat.median,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.pct75,
+      name: `${title} pct75`.trim(),
+      color: stat.pct75,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.pct25,
+      name: `${title} pct25`.trim(),
+      color: stat.pct25,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.pct90,
+      name: `${title} pct90`.trim(),
+      color: stat.pct90,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.pct10,
+      name: `${title} pct10`.trim(),
+      color: stat.pct10,
+      unit,
+      defaultActive: false,
+    }),
   ];
 }
 
@@ -278,7 +321,12 @@ export function fromBaseStatsPattern(
 ) {
   const { stat } = colors;
   return [
-    dots({ metric: pattern.base, name: title || "base", color: baseColor, unit }),
+    dots({
+      metric: pattern.base,
+      name: title || "base",
+      color: baseColor,
+      unit,
+    }),
     dots({
       metric: pattern.average,
       name: `${title} avg`.trim(),
@@ -310,6 +358,17 @@ export function fromStatsPattern(colors, { pattern, unit, title = "" }) {
     ...percentileSeries(colors, pattern, unit, title),
   ];
 }
+
+/**
+ * Create distribution series for btc/sats/usd from a value pattern with stats (average + percentiles)
+ * @param {FullValuePattern | SumValuePattern} source
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export const distributionBtcSatsUsd = (source) => [
+  ...fromStatsPattern(colors, { pattern: source.bitcoin, unit: Unit.btc }),
+  ...fromStatsPattern(colors, { pattern: source.sats, unit: Unit.sats }),
+  ...fromStatsPattern(colors, { pattern: source.dollars, unit: Unit.usd }),
+];
 
 /**
  * Create series from a SupplyPattern (sats/bitcoin/dollars, no sum/cumulative)
@@ -358,13 +417,55 @@ function distributionSeries(colors, pattern, unit) {
   const { stat } = colors;
   return [
     dots({ metric: pattern.average, name: "avg", color: stat.avg, unit }),
-    dots({ metric: pattern.median, name: "median", color: stat.median, unit, defaultActive: false }),
-    dots({ metric: pattern.max, name: "max", color: stat.max, unit, defaultActive: false }),
-    dots({ metric: pattern.min, name: "min", color: stat.min, unit, defaultActive: false }),
-    dots({ metric: pattern.pct75, name: "pct75", color: stat.pct75, unit, defaultActive: false }),
-    dots({ metric: pattern.pct25, name: "pct25", color: stat.pct25, unit, defaultActive: false }),
-    dots({ metric: pattern.pct90, name: "pct90", color: stat.pct90, unit, defaultActive: false }),
-    dots({ metric: pattern.pct10, name: "pct10", color: stat.pct10, unit, defaultActive: false }),
+    dots({
+      metric: pattern.median,
+      name: "median",
+      color: stat.median,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.max,
+      name: "max",
+      color: stat.max,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.min,
+      name: "min",
+      color: stat.min,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.pct75,
+      name: "pct75",
+      color: stat.pct75,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.pct25,
+      name: "pct25",
+      color: stat.pct25,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.pct90,
+      name: "pct90",
+      color: stat.pct90,
+      unit,
+      defaultActive: false,
+    }),
+    dots({
+      metric: pattern.pct10,
+      name: "pct10",
+      color: stat.pct10,
+      unit,
+      defaultActive: false,
+    }),
   ];
 }
 
@@ -379,9 +480,27 @@ function distributionSeries(colors, pattern, unit) {
  */
 function btcSatsUsdSeries({ metrics, name, color, defaultActive }) {
   return [
-    { metric: metrics.bitcoin, title: name, color, unit: Unit.btc, defaultActive },
-    { metric: metrics.sats, title: name, color, unit: Unit.sats, defaultActive },
-    { metric: metrics.dollars, title: name, color, unit: Unit.usd, defaultActive },
+    {
+      metric: metrics.bitcoin,
+      title: name,
+      color,
+      unit: Unit.btc,
+      defaultActive,
+    },
+    {
+      metric: metrics.sats,
+      title: name,
+      color,
+      unit: Unit.sats,
+      defaultActive,
+    },
+    {
+      metric: metrics.dollars,
+      title: name,
+      color,
+      unit: Unit.usd,
+      defaultActive,
+    },
   ];
 }
 
@@ -485,7 +604,11 @@ export function chartsFromValue({ pattern, title, color }) {
       name: "Sum",
       title,
       bottom: btcSatsUsdSeries({
-        metrics: { bitcoin: pattern.bitcoin.sum, sats: pattern.sats.sum, dollars: pattern.dollars.sum },
+        metrics: {
+          bitcoin: pattern.bitcoin.sum,
+          sats: pattern.sats.sum,
+          dollars: pattern.dollars.sum,
+        },
         name: "sum",
         color,
       }),
@@ -494,7 +617,11 @@ export function chartsFromValue({ pattern, title, color }) {
       name: "Cumulative",
       title: `${title} (Total)`,
       bottom: btcSatsUsdSeries({
-        metrics: { bitcoin: pattern.bitcoin.cumulative, sats: pattern.sats.cumulative, dollars: pattern.dollars.cumulative },
+        metrics: {
+          bitcoin: pattern.bitcoin.cumulative,
+          sats: pattern.sats.cumulative,
+          dollars: pattern.dollars.cumulative,
+        },
         name: "all-time",
         color,
       }),
@@ -517,11 +644,19 @@ export function chartsFromValueFull(colors, { pattern, title }) {
       title,
       bottom: [
         ...btcSatsUsdSeries({
-          metrics: { bitcoin: pattern.bitcoin.base, sats: pattern.sats.base, dollars: pattern.dollars.base },
+          metrics: {
+            bitcoin: pattern.bitcoin.base,
+            sats: pattern.sats.base,
+            dollars: pattern.dollars.base,
+          },
           name: "sum",
         }),
         ...btcSatsUsdSeries({
-          metrics: { bitcoin: pattern.bitcoin.sum, sats: pattern.sats.sum, dollars: pattern.dollars.sum },
+          metrics: {
+            bitcoin: pattern.bitcoin.sum,
+            sats: pattern.sats.sum,
+            dollars: pattern.dollars.sum,
+          },
           name: "sum",
         }),
       ],
@@ -539,7 +674,11 @@ export function chartsFromValueFull(colors, { pattern, title }) {
       name: "Cumulative",
       title: `${title} (Total)`,
       bottom: btcSatsUsdSeries({
-        metrics: { bitcoin: pattern.bitcoin.cumulative, sats: pattern.sats.cumulative, dollars: pattern.dollars.cumulative },
+        metrics: {
+          bitcoin: pattern.bitcoin.cumulative,
+          sats: pattern.sats.cumulative,
+          dollars: pattern.dollars.cumulative,
+        },
         name: "all-time",
       }),
     },

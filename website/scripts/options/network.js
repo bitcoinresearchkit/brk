@@ -1,10 +1,10 @@
 /** Network section - On-chain activity and health */
 
 import { Unit } from "../utils/units.js";
+import { includes } from "../utils/array.js";
 import { priceLine } from "./constants.js";
-import { line, dots } from "./series.js";
+import { line, dots, fromSupplyPattern } from "./series.js";
 import { satsBtcUsd, satsBtcUsdFrom } from "./shared.js";
-import { spendableTypeColors } from "./colors/index.js";
 
 /**
  * Create Network section
@@ -17,7 +17,6 @@ export function createNetworkSection(ctx) {
     brk,
     fromBaseStatsPattern,
     fromStatsPattern,
-    fromSupplyPattern,
     chartsFromFull,
     chartsFromSum,
     chartsFromValueFull,

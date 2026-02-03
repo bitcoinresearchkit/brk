@@ -216,6 +216,22 @@ export const colors = {
     _200w: fuchsia,
     _4y: pink,
   },
+
+  /** Script type colors (oldest to newest) */
+  scriptType: {
+    p2pk65: red,
+    p2pk33: orange,
+    p2pkh: yellow,
+    p2ms: lime,
+    p2sh: green,
+    p2wpkh: teal,
+    p2wsh: blue,
+    p2tr: indigo,
+    p2a: purple,
+    opreturn: pink,
+    unknown: violet,
+    empty: fuchsia,
+  },
 };
 
 /**

@@ -3,7 +3,13 @@
 import { Unit } from "../utils/units.js";
 import { entries, includes } from "../utils/array.js";
 import { colorAt } from "../chart/colors.js";
-import { line, baseline, dots, dotted } from "./series.js";
+import {
+  line,
+  baseline,
+  dots,
+  dotted,
+  distributionBtcSatsUsd,
+} from "./series.js";
 import {
   satsBtcUsd,
   satsBtcUsdFrom,
@@ -47,7 +53,7 @@ const ANTPOOL_AND_FRIENDS_IDS = /** @type {const} */ ([
  * @returns {PartialOptionsGroup}
  */
 export function createMiningSection(ctx) {
-  const { colors, brk, distributionBtcSatsUsd } = ctx;
+  const { colors, brk } = ctx;
   const { blocks, transactions, pools } = brk.metrics;
 
   // Pre-compute pool entries with resolved names
