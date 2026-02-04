@@ -20,35 +20,174 @@ import { colors } from "../../utils/colors.js";
 import { priceLines } from "../constants.js";
 
 /**
+ * Base supply series (total, profit, loss, halved)
+ * @param {{ supply: { total: AnyValuePattern, halved: AnyValuePattern }, unrealized: { supplyInProfit: AnyValuePattern, supplyInLoss: AnyValuePattern } }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function baseSupplySeries(tree) {
+  return [
+    ...satsBtcUsd({ pattern: tree.supply.total, name: "Total", color: colors.default }),
+    ...satsBtcUsd({ pattern: tree.unrealized.supplyInProfit, name: "In Profit", color: colors.profit }),
+    ...satsBtcUsd({ pattern: tree.unrealized.supplyInLoss, name: "In Loss", color: colors.loss }),
+    ...satsBtcUsd({ pattern: tree.supply.halved, name: "Halved", color: colors.gray, style: 4 }),
+  ];
+}
+
+/**
+ * % of Own Supply series (profit/loss relative to own supply)
+ * @param {{ relative: { supplyInProfitRelToOwnSupply: AnyMetricPattern, supplyInLossRelToOwnSupply: AnyMetricPattern } }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function ownSupplyPctSeries(tree) {
+  return [
+    line({ metric: tree.relative.supplyInProfitRelToOwnSupply, name: "In Profit", color: colors.profit, unit: Unit.pctOwn }),
+    line({ metric: tree.relative.supplyInLossRelToOwnSupply, name: "In Loss", color: colors.loss, unit: Unit.pctOwn }),
+    ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
+  ];
+}
+
+/**
+ * % of Circulating Supply series (total, profit, loss)
+ * @param {{ relative: { supplyRelToCirculatingSupply: AnyMetricPattern, supplyInProfitRelToCirculatingSupply: AnyMetricPattern, supplyInLossRelToCirculatingSupply: AnyMetricPattern } }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function circulatingSupplyPctSeries(tree) {
+  return [
+    line({ metric: tree.relative.supplyRelToCirculatingSupply, name: "Total", color: colors.default, unit: Unit.pctSupply }),
+    line({ metric: tree.relative.supplyInProfitRelToCirculatingSupply, name: "In Profit", color: colors.profit, unit: Unit.pctSupply }),
+    line({ metric: tree.relative.supplyInLossRelToCirculatingSupply, name: "In Loss", color: colors.loss, unit: Unit.pctSupply }),
+  ];
+}
+
+/**
+ * Grouped UTXO count chart
+ * @template {{ name: string, color: Color, tree: { outputs: { utxoCount: AnyMetricPattern } } }} T
+ * @param {readonly T[]} list
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function groupedUtxoCountChart(list, title) {
+  return {
+    name: "UTXO Count",
+    title: title("UTXO Count"),
+    bottom: list.map(({ name, color, tree }) =>
+      line({ metric: tree.outputs.utxoCount, name, color, unit: Unit.count }),
+    ),
+  };
+}
+
+/**
+ * Grouped 30d supply change chart
+ * @template {{ name: string, color: Color, tree: { supply: { _30dChange: AnyValuePattern } } }} T
+ * @param {readonly T[]} list
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function grouped30dSupplyChangeChart(list, title) {
+  return {
+    name: "Supply",
+    title: title("Supply 30d Change"),
+    bottom: list.flatMap(({ name, color, tree }) =>
+      satsBtcUsdBaseline({ pattern: tree.supply._30dChange, name, color }),
+    ),
+  };
+}
+
+/**
+ * Grouped 30d UTXO count change chart
+ * @template {{ name: string, color: Color, tree: { outputs: { utxoCount30dChange: AnyMetricPattern } } }} T
+ * @param {readonly T[]} list
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function grouped30dUtxoCountChangeChart(list, title) {
+  return {
+    name: "UTXO Count",
+    title: title("UTXO Count 30d Change"),
+    bottom: list.map(({ name, color, tree }) =>
+      baseline({ metric: tree.outputs.utxoCount30dChange, name, unit: Unit.count, color }),
+    ),
+  };
+}
+
+/**
+ * Single cohort UTXO count chart
+ * @param {UtxoCohortObject | CohortWithoutRelative} cohort
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function singleUtxoCountChart(cohort, title) {
+  return {
+    name: "UTXO Count",
+    title: title("UTXO Count"),
+    bottom: createSingleUtxoCountSeries(cohort),
+  };
+}
+
+/**
+ * Single cohort 30d supply change chart
+ * @param {UtxoCohortObject | CohortWithoutRelative} cohort
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function single30dSupplyChangeChart(cohort, title) {
+  return {
+    name: "Supply",
+    title: title("Supply 30d Change"),
+    bottom: createSingle30dChangeSeries(cohort),
+  };
+}
+
+/**
+ * Single cohort 30d UTXO count change chart
+ * @param {UtxoCohortObject | CohortWithoutRelative} cohort
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function single30dUtxoCountChangeChart(cohort, title) {
+  return {
+    name: "UTXO Count",
+    title: title("UTXO Count 30d Change"),
+    bottom: createSingleUtxoCount30dChangeSeries(cohort),
+  };
+}
+
+/**
+ * Single cohort address count chart
+ * @param {CohortAll | CohortAddress} cohort
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function singleAddressCountChart(cohort, title) {
+  return {
+    name: "Address Count",
+    title: title("Address Count"),
+    bottom: [
+      line({ metric: cohort.addrCount.count, name: "Address Count", color: cohort.color, unit: Unit.count }),
+    ],
+  };
+}
+
+/**
+ * Single cohort 30d address count change chart
+ * @param {CohortAll | CohortAddress} cohort
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function single30dAddressCountChangeChart(cohort, title) {
+  return {
+    name: "Address Count",
+    title: title("Address Count 30d Change"),
+    bottom: createSingleAddrCount30dChangeSeries(cohort),
+  };
+}
+
+/**
  * @param {UtxoCohortObject | CohortWithoutRelative} cohort
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function createSingleSupplySeries(cohort) {
-  const { tree } = cohort;
-  return [
-    ...satsBtcUsd({
-      pattern: tree.supply.total,
-      name: "Total",
-      color: colors.default,
-    }),
-    ...satsBtcUsd({
-      pattern: tree.unrealized.supplyInProfit,
-      name: "In Profit",
-      color: colors.profit,
-    }),
-    ...satsBtcUsd({
-      pattern: tree.unrealized.supplyInLoss,
-      name: "In Loss",
-      color: colors.loss,
-    }),
-    // Halved supply (sparse line)
-    ...satsBtcUsd({
-      pattern: tree.supply.halved,
-      name: "Halved",
-      color: colors.gray,
-      style: 4,
-    }),
-  ];
+  return baseSupplySeries(cohort.tree);
 }
 
 /**
@@ -57,48 +196,7 @@ function createSingleSupplySeries(cohort) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function createSingleSupplySeriesAll(cohort) {
-  const { tree } = cohort;
-  return [
-    ...satsBtcUsd({
-      pattern: tree.supply.total,
-      name: "Total",
-      color: colors.default,
-    }),
-    ...satsBtcUsd({
-      pattern: tree.unrealized.supplyInProfit,
-      name: "In Profit",
-      color: colors.profit,
-    }),
-    ...satsBtcUsd({
-      pattern: tree.unrealized.supplyInLoss,
-      name: "In Loss",
-      color: colors.loss,
-    }),
-    // Halved supply (sparse line)
-    ...satsBtcUsd({
-      pattern: tree.supply.halved,
-      name: "Halved",
-      color: colors.gray,
-      style: 4,
-    }),
-    // % of Own Supply
-    line({
-      metric: tree.relative.supplyInProfitRelToOwnSupply,
-      name: "In Profit",
-      color: colors.profit,
-      unit: Unit.pctOwn,
-    }),
-    line({
-      metric: tree.relative.supplyInLossRelToOwnSupply,
-      name: "In Loss",
-      color: colors.loss,
-      unit: Unit.pctOwn,
-    }),
-    ...priceLines({
-      numbers: [100, 50, 0],
-      unit: Unit.pctOwn,
-    }),
-  ];
+  return [...baseSupplySeries(cohort.tree), ...ownSupplyPctSeries(cohort.tree)];
 }
 
 /**
@@ -164,114 +262,26 @@ function createSingleAddrCount30dChangeSeries(cohort) {
 function createSingleSupplySeriesWithRelative(cohort) {
   const { tree } = cohort;
   return [
-    ...satsBtcUsd({
-      pattern: tree.supply.total,
-      name: "Total",
-      color: colors.default,
-    }),
-    ...satsBtcUsd({
-      pattern: tree.unrealized.supplyInProfit,
-      name: "In Profit",
-      color: colors.profit,
-    }),
-    ...satsBtcUsd({
-      pattern: tree.unrealized.supplyInLoss,
-      name: "In Loss",
-      color: colors.loss,
-    }),
-    // Halved supply (sparse line)
-    ...satsBtcUsd({
-      pattern: tree.supply.halved,
-      name: "Halved",
-      color: colors.gray,
-      style: 4,
-    }),
-    // % of Circulating Supply
-    line({
-      metric: tree.relative.supplyRelToCirculatingSupply,
-      name: "Total",
-      color: colors.default,
-      unit: Unit.pctSupply,
-    }),
-    line({
-      metric: tree.relative.supplyInProfitRelToCirculatingSupply,
-      name: "In Profit",
-      color: colors.profit,
-      unit: Unit.pctSupply,
-    }),
-    line({
-      metric: tree.relative.supplyInLossRelToCirculatingSupply,
-      name: "In Loss",
-      color: colors.loss,
-      unit: Unit.pctSupply,
-    }),
-    // % of Own Supply
-    line({
-      metric: tree.relative.supplyInProfitRelToOwnSupply,
-      name: "In Profit",
-      color: colors.profit,
-      unit: Unit.pctOwn,
-    }),
-    line({
-      metric: tree.relative.supplyInLossRelToOwnSupply,
-      name: "In Loss",
-      color: colors.loss,
-      unit: Unit.pctOwn,
-    }),
-    ...priceLines({
-      numbers: [100, 50, 0],
-      unit: Unit.pctOwn,
-    }),
+    ...baseSupplySeries(tree),
+    ...circulatingSupplyPctSeries(tree),
+    ...ownSupplyPctSeries(tree),
   ];
 }
 
 /**
  * Supply series with % of Own Supply only (for cohorts without % of Circulating)
+ * Note: Different order - profit/loss before total for visual emphasis
  * @param {CohortAgeRange | CohortBasicWithoutMarketCap} cohort
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function createSingleSupplySeriesWithOwnSupply(cohort) {
   const { tree } = cohort;
   return [
-    ...satsBtcUsd({
-      pattern: tree.unrealized.supplyInProfit,
-      name: "In Profit",
-      color: colors.profit,
-    }),
-    ...satsBtcUsd({
-      pattern: tree.unrealized.supplyInLoss,
-      name: "In Loss",
-      color: colors.loss,
-    }),
-    ...satsBtcUsd({
-      pattern: tree.supply.total,
-      name: "Total",
-      color: colors.default,
-    }),
-    // Halved supply (sparse line)
-    ...satsBtcUsd({
-      pattern: tree.supply.halved,
-      name: "Halved",
-      color: colors.gray,
-      style: 4,
-    }),
-    // % of Own Supply
-    line({
-      metric: tree.relative.supplyInProfitRelToOwnSupply,
-      name: "In Profit",
-      color: colors.profit,
-      unit: Unit.pctOwn,
-    }),
-    line({
-      metric: tree.relative.supplyInLossRelToOwnSupply,
-      name: "In Loss",
-      color: colors.loss,
-      unit: Unit.pctOwn,
-    }),
-    ...priceLines({
-      numbers: [100, 50, 0],
-      unit: Unit.pctOwn,
-    }),
+    ...satsBtcUsd({ pattern: tree.unrealized.supplyInProfit, name: "In Profit", color: colors.profit }),
+    ...satsBtcUsd({ pattern: tree.unrealized.supplyInLoss, name: "In Loss", color: colors.loss }),
+    ...satsBtcUsd({ pattern: tree.supply.total, name: "Total", color: colors.default }),
+    ...satsBtcUsd({ pattern: tree.supply.halved, name: "Halved", color: colors.gray, style: 4 }),
+    ...ownSupplyPctSeries(tree),
   ];
 }
 
@@ -288,24 +298,12 @@ export function createHoldingsSection({ cohort, title }) {
         title: title("Supply"),
         bottom: createSingleSupplySeries(cohort),
       },
-      {
-        name: "UTXO Count",
-        title: title("UTXO Count"),
-        bottom: createSingleUtxoCountSeries(cohort),
-      },
+      singleUtxoCountChart(cohort, title),
       {
         name: "30d Changes",
         tree: [
-          {
-            name: "Supply",
-            title: title("Supply 30d Change"),
-            bottom: createSingle30dChangeSeries(cohort),
-          },
-          {
-            name: "UTXO Count",
-            title: title("UTXO Count 30d Change"),
-            bottom: createSingleUtxoCount30dChangeSeries(cohort),
-          },
+          single30dSupplyChangeChart(cohort, title),
+          single30dUtxoCountChangeChart(cohort, title),
         ],
       },
     ],
@@ -326,24 +324,12 @@ export function createHoldingsSectionWithOwnSupply({ cohort, title }) {
         title: title("Supply"),
         bottom: createSingleSupplySeriesWithOwnSupply(cohort),
       },
-      {
-        name: "UTXO Count",
-        title: title("UTXO Count"),
-        bottom: createSingleUtxoCountSeries(cohort),
-      },
+      singleUtxoCountChart(cohort, title),
       {
         name: "30d Changes",
         tree: [
-          {
-            name: "Supply",
-            title: title("Supply 30d Change"),
-            bottom: createSingle30dChangeSeries(cohort),
-          },
-          {
-            name: "UTXO Count",
-            title: title("UTXO Count 30d Change"),
-            bottom: createSingleUtxoCount30dChangeSeries(cohort),
-          },
+          single30dSupplyChangeChart(cohort, title),
+          single30dUtxoCountChangeChart(cohort, title),
         ],
       },
     ],
@@ -363,24 +349,12 @@ export function createHoldingsSectionWithRelative({ cohort, title }) {
         title: title("Supply"),
         bottom: createSingleSupplySeriesWithRelative(cohort),
       },
-      {
-        name: "UTXO Count",
-        title: title("UTXO Count"),
-        bottom: createSingleUtxoCountSeries(cohort),
-      },
+      singleUtxoCountChart(cohort, title),
       {
         name: "30d Changes",
         tree: [
-          {
-            name: "Supply",
-            title: title("Supply 30d Change"),
-            bottom: createSingle30dChangeSeries(cohort),
-          },
-          {
-            name: "UTXO Count",
-            title: title("UTXO Count 30d Change"),
-            bottom: createSingleUtxoCount30dChangeSeries(cohort),
-          },
+          single30dSupplyChangeChart(cohort, title),
+          single30dUtxoCountChangeChart(cohort, title),
         ],
       },
     ],
@@ -400,41 +374,14 @@ export function createHoldingsSectionAll({ cohort, title }) {
         title: title("Supply"),
         bottom: createSingleSupplySeriesAll(cohort),
       },
-      {
-        name: "UTXO Count",
-        title: title("UTXO Count"),
-        bottom: createSingleUtxoCountSeries(cohort),
-      },
-      {
-        name: "Address Count",
-        title: title("Address Count"),
-        bottom: [
-          line({
-            metric: cohort.addrCount.count,
-            name: "Address Count",
-            color: cohort.color,
-            unit: Unit.count,
-          }),
-        ],
-      },
+      singleUtxoCountChart(cohort, title),
+      singleAddressCountChart(cohort, title),
       {
         name: "30d Changes",
         tree: [
-          {
-            name: "Supply",
-            title: title("Supply 30d Change"),
-            bottom: createSingle30dChangeSeries(cohort),
-          },
-          {
-            name: "UTXO Count",
-            title: title("UTXO Count 30d Change"),
-            bottom: createSingleUtxoCount30dChangeSeries(cohort),
-          },
-          {
-            name: "Address Count",
-            title: title("Address Count 30d Change"),
-            bottom: createSingleAddrCount30dChangeSeries(cohort),
-          },
+          single30dSupplyChangeChart(cohort, title),
+          single30dUtxoCountChangeChart(cohort, title),
+          single30dAddressCountChangeChart(cohort, title),
         ],
       },
     ],
@@ -454,41 +401,14 @@ export function createHoldingsSectionAddress({ cohort, title }) {
         title: title("Supply"),
         bottom: createSingleSupplySeriesWithOwnSupply(cohort),
       },
-      {
-        name: "UTXO Count",
-        title: title("UTXO Count"),
-        bottom: createSingleUtxoCountSeries(cohort),
-      },
-      {
-        name: "Address Count",
-        title: title("Address Count"),
-        bottom: [
-          line({
-            metric: cohort.addrCount.count,
-            name: "Address Count",
-            color: cohort.color,
-            unit: Unit.count,
-          }),
-        ],
-      },
+      singleUtxoCountChart(cohort, title),
+      singleAddressCountChart(cohort, title),
       {
         name: "30d Changes",
         tree: [
-          {
-            name: "Supply",
-            title: title("Supply 30d Change"),
-            bottom: createSingle30dChangeSeries(cohort),
-          },
-          {
-            name: "UTXO Count",
-            title: title("UTXO Count 30d Change"),
-            bottom: createSingleUtxoCount30dChangeSeries(cohort),
-          },
-          {
-            name: "Address Count",
-            title: title("Address Count 30d Change"),
-            bottom: createSingleAddrCount30dChangeSeries(cohort),
-          },
+          single30dSupplyChangeChart(cohort, title),
+          single30dUtxoCountChangeChart(cohort, title),
+          single30dAddressCountChangeChart(cohort, title),
         ],
       },
     ],
@@ -509,41 +429,14 @@ export function createHoldingsSectionAddressAmount({ cohort, title }) {
         title: title("Supply"),
         bottom: createSingleSupplySeriesWithRelative(cohort),
       },
-      {
-        name: "UTXO Count",
-        title: title("UTXO Count"),
-        bottom: createSingleUtxoCountSeries(cohort),
-      },
-      {
-        name: "Address Count",
-        title: title("Address Count"),
-        bottom: [
-          line({
-            metric: cohort.addrCount.count,
-            name: "Address Count",
-            color: cohort.color,
-            unit: Unit.count,
-          }),
-        ],
-      },
+      singleUtxoCountChart(cohort, title),
+      singleAddressCountChart(cohort, title),
       {
         name: "30d Changes",
         tree: [
-          {
-            name: "Supply",
-            title: title("Supply 30d Change"),
-            bottom: createSingle30dChangeSeries(cohort),
-          },
-          {
-            name: "UTXO Count",
-            title: title("UTXO Count 30d Change"),
-            bottom: createSingleUtxoCount30dChangeSeries(cohort),
-          },
-          {
-            name: "Address Count",
-            title: title("Address Count 30d Change"),
-            bottom: createSingleAddrCount30dChangeSeries(cohort),
-          },
+          single30dSupplyChangeChart(cohort, title),
+          single30dUtxoCountChangeChart(cohort, title),
+          single30dAddressCountChangeChart(cohort, title),
         ],
       },
     ],
@@ -579,7 +472,6 @@ export function createGroupedHoldingsSectionAddress({ list, title }) {
                   color,
                 }),
               ),
-              // % of Own Supply
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInProfitRelToOwnSupply,
@@ -588,10 +480,7 @@ export function createGroupedHoldingsSectionAddress({ list, title }) {
                   unit: Unit.pctOwn,
                 }),
               ),
-              ...priceLines({
-                numbers: [100, 50, 0],
-                unit: Unit.pctOwn,
-              }),
+              ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
             ],
           },
           {
@@ -605,7 +494,6 @@ export function createGroupedHoldingsSectionAddress({ list, title }) {
                   color,
                 }),
               ),
-              // % of Own Supply
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInLossRelToOwnSupply,
@@ -614,26 +502,12 @@ export function createGroupedHoldingsSectionAddress({ list, title }) {
                   unit: Unit.pctOwn,
                 }),
               ),
-              ...priceLines({
-                numbers: [100, 50, 0],
-                unit: Unit.pctOwn,
-              }),
+              ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
             ],
           },
         ],
       },
-      {
-        name: "UTXO Count",
-        title: title("UTXO Count"),
-        bottom: list.map(({ name, color, tree }) =>
-          line({
-            metric: tree.outputs.utxoCount,
-            name,
-            color,
-            unit: Unit.count,
-          }),
-        ),
-      },
+      groupedUtxoCountChart(list, title),
       {
         name: "Address Count",
         title: title("Address Count"),
@@ -644,39 +518,13 @@ export function createGroupedHoldingsSectionAddress({ list, title }) {
       {
         name: "30d Changes",
         tree: [
-          {
-            name: "Supply",
-            title: title("Supply 30d Change"),
-            bottom: list.flatMap(({ name, color, tree }) =>
-              satsBtcUsdBaseline({
-                pattern: tree.supply._30dChange,
-                name,
-                color,
-              }),
-            ),
-          },
-          {
-            name: "UTXO Count",
-            title: title("UTXO Count 30d Change"),
-            bottom: list.map(({ name, color, tree }) =>
-              baseline({
-                metric: tree.outputs.utxoCount30dChange,
-                name,
-                unit: Unit.count,
-                color,
-              }),
-            ),
-          },
+          grouped30dSupplyChangeChart(list, title),
+          grouped30dUtxoCountChangeChart(list, title),
           {
             name: "Address Count",
             title: title("Address Count 30d Change"),
             bottom: list.map(({ name, color, addrCount }) =>
-              baseline({
-                metric: addrCount._30dChange,
-                name,
-                unit: Unit.count,
-                color,
-              }),
+              baseline({ metric: addrCount._30dChange, name, unit: Unit.count, color }),
             ),
           },
         ],
@@ -704,7 +552,6 @@ export function createGroupedHoldingsSectionAddressAmount({ list, title }) {
               ...list.flatMap(({ name, color, tree }) =>
                 satsBtcUsd({ pattern: tree.supply.total, name, color }),
               ),
-              // % of Circulating
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyRelToCirculatingSupply,
@@ -726,7 +573,6 @@ export function createGroupedHoldingsSectionAddressAmount({ list, title }) {
                   color,
                 }),
               ),
-              // % of Circulating
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInProfitRelToCirculatingSupply,
@@ -735,7 +581,6 @@ export function createGroupedHoldingsSectionAddressAmount({ list, title }) {
                   unit: Unit.pctSupply,
                 }),
               ),
-              // % of Own Supply
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInProfitRelToOwnSupply,
@@ -744,10 +589,7 @@ export function createGroupedHoldingsSectionAddressAmount({ list, title }) {
                   unit: Unit.pctOwn,
                 }),
               ),
-              ...priceLines({
-                numbers: [100, 50, 0],
-                unit: Unit.pctOwn,
-              }),
+              ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
             ],
           },
           {
@@ -761,7 +603,6 @@ export function createGroupedHoldingsSectionAddressAmount({ list, title }) {
                   color,
                 }),
               ),
-              // % of Circulating
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInLossRelToCirculatingSupply,
@@ -770,7 +611,6 @@ export function createGroupedHoldingsSectionAddressAmount({ list, title }) {
                   unit: Unit.pctSupply,
                 }),
               ),
-              // % of Own Supply
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInLossRelToOwnSupply,
@@ -779,26 +619,12 @@ export function createGroupedHoldingsSectionAddressAmount({ list, title }) {
                   unit: Unit.pctOwn,
                 }),
               ),
-              ...priceLines({
-                numbers: [100, 50, 0],
-                unit: Unit.pctOwn,
-              }),
+              ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
             ],
           },
         ],
       },
-      {
-        name: "UTXO Count",
-        title: title("UTXO Count"),
-        bottom: list.map(({ name, color, tree }) =>
-          line({
-            metric: tree.outputs.utxoCount,
-            name,
-            color,
-            unit: Unit.count,
-          }),
-        ),
-      },
+      groupedUtxoCountChart(list, title),
       {
         name: "Address Count",
         title: title("Address Count"),
@@ -809,39 +635,13 @@ export function createGroupedHoldingsSectionAddressAmount({ list, title }) {
       {
         name: "30d Changes",
         tree: [
-          {
-            name: "Supply",
-            title: title("Supply 30d Change"),
-            bottom: list.flatMap(({ name, color, tree }) =>
-              satsBtcUsdBaseline({
-                pattern: tree.supply._30dChange,
-                name,
-                color,
-              }),
-            ),
-          },
-          {
-            name: "UTXO Count",
-            title: title("UTXO Count 30d Change"),
-            bottom: list.map(({ name, color, tree }) =>
-              baseline({
-                metric: tree.outputs.utxoCount30dChange,
-                name,
-                unit: Unit.count,
-                color,
-              }),
-            ),
-          },
+          grouped30dSupplyChangeChart(list, title),
+          grouped30dUtxoCountChangeChart(list, title),
           {
             name: "Address Count",
             title: title("Address Count 30d Change"),
             bottom: list.map(({ name, color, addrCount }) =>
-              baseline({
-                metric: addrCount._30dChange,
-                name,
-                unit: Unit.count,
-                color,
-              }),
+              baseline({ metric: addrCount._30dChange, name, unit: Unit.count, color }),
             ),
           },
         ],
@@ -893,44 +693,12 @@ export function createGroupedHoldingsSection({ list, title }) {
           },
         ],
       },
-      {
-        name: "UTXO Count",
-        title: title("UTXO Count"),
-        bottom: list.map(({ name, color, tree }) =>
-          line({
-            metric: tree.outputs.utxoCount,
-            name,
-            color,
-            unit: Unit.count,
-          }),
-        ),
-      },
+      groupedUtxoCountChart(list, title),
       {
         name: "30d Changes",
         tree: [
-          {
-            name: "Supply",
-            title: title("Supply 30d Change"),
-            bottom: list.flatMap(({ name, color, tree }) =>
-              satsBtcUsdBaseline({
-                pattern: tree.supply._30dChange,
-                name,
-                color,
-              }),
-            ),
-          },
-          {
-            name: "UTXO Count",
-            title: title("UTXO Count 30d Change"),
-            bottom: list.map(({ name, color, tree }) =>
-              baseline({
-                metric: tree.outputs.utxoCount30dChange,
-                name,
-                unit: Unit.count,
-                color,
-              }),
-            ),
-          },
+          grouped30dSupplyChangeChart(list, title),
+          grouped30dUtxoCountChangeChart(list, title),
         ],
       },
     ],
@@ -960,7 +728,6 @@ export function createGroupedHoldingsSectionWithOwnSupply({ list, title }) {
                   color,
                 }),
               ),
-              // % of Own Supply
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInProfitRelToOwnSupply,
@@ -969,10 +736,7 @@ export function createGroupedHoldingsSectionWithOwnSupply({ list, title }) {
                   unit: Unit.pctOwn,
                 }),
               ),
-              ...priceLines({
-                numbers: [100, 50, 0],
-                unit: Unit.pctOwn,
-              }),
+              ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
             ],
           },
           {
@@ -986,7 +750,6 @@ export function createGroupedHoldingsSectionWithOwnSupply({ list, title }) {
                   color,
                 }),
               ),
-              // % of Own Supply
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInLossRelToOwnSupply,
@@ -995,10 +758,7 @@ export function createGroupedHoldingsSectionWithOwnSupply({ list, title }) {
                   unit: Unit.pctOwn,
                 }),
               ),
-              ...priceLines({
-                numbers: [100, 50, 0],
-                unit: Unit.pctOwn,
-              }),
+              ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
             ],
           },
           {
@@ -1010,44 +770,12 @@ export function createGroupedHoldingsSectionWithOwnSupply({ list, title }) {
           },
         ],
       },
-      {
-        name: "UTXO Count",
-        title: title("UTXO Count"),
-        bottom: list.map(({ name, color, tree }) =>
-          line({
-            metric: tree.outputs.utxoCount,
-            name,
-            color,
-            unit: Unit.count,
-          }),
-        ),
-      },
+      groupedUtxoCountChart(list, title),
       {
         name: "30d Changes",
         tree: [
-          {
-            name: "Supply",
-            title: title("Supply 30d Change"),
-            bottom: list.flatMap(({ name, color, tree }) =>
-              satsBtcUsdBaseline({
-                pattern: tree.supply._30dChange,
-                name,
-                color,
-              }),
-            ),
-          },
-          {
-            name: "UTXO Count",
-            title: title("UTXO Count 30d Change"),
-            bottom: list.map(({ name, color, tree }) =>
-              baseline({
-                metric: tree.outputs.utxoCount30dChange,
-                name,
-                unit: Unit.count,
-                color,
-              }),
-            ),
-          },
+          grouped30dSupplyChangeChart(list, title),
+          grouped30dUtxoCountChangeChart(list, title),
         ],
       },
     ],
@@ -1072,7 +800,6 @@ export function createGroupedHoldingsSectionWithRelative({ list, title }) {
               ...list.flatMap(({ name, color, tree }) =>
                 satsBtcUsd({ pattern: tree.supply.total, name, color }),
               ),
-              // % of Circulating
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyRelToCirculatingSupply,
@@ -1094,7 +821,6 @@ export function createGroupedHoldingsSectionWithRelative({ list, title }) {
                   color,
                 }),
               ),
-              // % of Circulating
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInProfitRelToCirculatingSupply,
@@ -1103,7 +829,6 @@ export function createGroupedHoldingsSectionWithRelative({ list, title }) {
                   unit: Unit.pctSupply,
                 }),
               ),
-              // % of Own Supply
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInProfitRelToOwnSupply,
@@ -1112,10 +837,7 @@ export function createGroupedHoldingsSectionWithRelative({ list, title }) {
                   unit: Unit.pctOwn,
                 }),
               ),
-              ...priceLines({
-                numbers: [100, 50, 0],
-                unit: Unit.pctOwn,
-              }),
+              ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
             ],
           },
           {
@@ -1129,7 +851,6 @@ export function createGroupedHoldingsSectionWithRelative({ list, title }) {
                   color,
                 }),
               ),
-              // % of Circulating
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInLossRelToCirculatingSupply,
@@ -1138,7 +859,6 @@ export function createGroupedHoldingsSectionWithRelative({ list, title }) {
                   unit: Unit.pctSupply,
                 }),
               ),
-              // % of Own Supply
               ...list.map(({ name, color, tree }) =>
                 line({
                   metric: tree.relative.supplyInLossRelToOwnSupply,
@@ -1147,52 +867,17 @@ export function createGroupedHoldingsSectionWithRelative({ list, title }) {
                   unit: Unit.pctOwn,
                 }),
               ),
-              ...priceLines({
-                numbers: [100, 50, 0],
-                unit: Unit.pctOwn,
-              }),
+              ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
             ],
           },
         ],
       },
-      {
-        name: "UTXO Count",
-        title: title("UTXO Count"),
-        bottom: list.map(({ name, color, tree }) =>
-          line({
-            metric: tree.outputs.utxoCount,
-            name,
-            color,
-            unit: Unit.count,
-          }),
-        ),
-      },
+      groupedUtxoCountChart(list, title),
       {
         name: "30d Changes",
         tree: [
-          {
-            name: "Supply",
-            title: title("Supply 30d Change"),
-            bottom: list.flatMap(({ name, color, tree }) =>
-              satsBtcUsdBaseline({
-                pattern: tree.supply._30dChange,
-                name,
-                color,
-              }),
-            ),
-          },
-          {
-            name: "UTXO Count",
-            title: title("UTXO Count 30d Change"),
-            bottom: list.map(({ name, color, tree }) =>
-              baseline({
-                metric: tree.outputs.utxoCount30dChange,
-                name,
-                unit: Unit.count,
-                color,
-              }),
-            ),
-          },
+          grouped30dSupplyChangeChart(list, title),
+          grouped30dUtxoCountChangeChart(list, title),
         ],
       },
     ],

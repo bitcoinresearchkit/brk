@@ -19,6 +19,22 @@ import { baseline, price } from "../series.js";
 import { Unit } from "../../utils/units.js";
 
 /**
+ * @param {{ realized: { realizedPrice: ActivePricePattern, investorPrice: ActivePricePattern } }} tree
+ * @param {(metric: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function createCompareChart(tree, title) {
+  return {
+    name: "Compare",
+    title: title("Prices"),
+    top: [
+      price({ metric: tree.realized.realizedPrice, name: "Realized", color: colors.realized }),
+      price({ metric: tree.realized.investorPrice, name: "Investor", color: colors.investor }),
+    ],
+  };
+}
+
+/**
  * Create prices section for cohorts with full ActivePriceRatioPattern
  * (CohortAll, CohortFull, CohortWithPercentiles)
  * @param {{ cohort: CohortAll | CohortFull | CohortWithPercentiles, title: (metric: string) => string }} args
@@ -29,22 +45,7 @@ export function createPricesSectionFull({ cohort, title }) {
   return {
     name: "Prices",
     tree: [
-      {
-        name: "Compare",
-        title: title("Prices"),
-        top: [
-          price({
-            metric: tree.realized.realizedPrice,
-            name: "Realized",
-            color: colors.realized,
-          }),
-          price({
-            metric: tree.realized.investorPrice,
-            name: "Investor",
-            color: colors.investor,
-          }),
-        ],
-      },
+      createCompareChart(tree, title),
       {
         name: "Realized",
         tree: createPriceRatioCharts({
@@ -84,22 +85,7 @@ export function createPricesSectionBasic({ cohort, title }) {
   return {
     name: "Prices",
     tree: [
-      {
-        name: "Compare",
-        title: title("Prices"),
-        top: [
-          price({
-            metric: tree.realized.realizedPrice,
-            name: "Realized",
-            color: colors.realized,
-          }),
-          price({
-            metric: tree.realized.investorPrice,
-            name: "Investor",
-            color: colors.investor,
-          }),
-        ],
-      },
+      createCompareChart(tree, title),
       {
         name: "Realized",
         tree: [
