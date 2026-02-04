@@ -69,20 +69,6 @@ import {
 // Re-export data builder
 export { buildCohortData } from "./data.js";
 
-// Re-export shared helpers
-export {
-  createSingleSupplySeries,
-  createGroupedSupplyTotalSeries,
-  createGroupedSupplyInProfitSeries,
-  createGroupedSupplyInLossSeries,
-  createUtxoCountSeries,
-  createAddressCountSeries,
-  createRealizedPriceSeries,
-  createRealizedPriceRatioSeries,
-  createRealizedCapSeries,
-  createCostBasisPercentilesSeries,
-} from "./shared.js";
-
 // ============================================================================
 // Folder Builders
 // ============================================================================
@@ -264,7 +250,10 @@ export function createCohortFolderAgeRange(args) {
         createGroupedValuationSectionWithOwnMarketCap({ list, title }),
         createGroupedPricesSection({ list, title }),
         createGroupedCostBasisSectionWithPercentiles({ list, title }),
-        createGroupedProfitabilitySectionWithInvestedCapitalPct({ list, title }),
+        createGroupedProfitabilitySectionWithInvestedCapitalPct({
+          list,
+          title,
+        }),
         createGroupedActivitySection({ list, title }),
       ],
     };

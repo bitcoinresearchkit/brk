@@ -12,15 +12,9 @@
  */
 
 import { Unit } from "../../utils/units.js";
-import { line, baseline, dotsBaseline } from "../series.js";
+import { line, baseline, dotsBaseline, dots } from "../series.js";
 import { satsBtcUsd } from "../shared.js";
 import { colors } from "../../utils/colors.js";
-import {
-  createSingleSellSideRiskSeries,
-  createGroupedSellSideRiskSeries,
-  createSingleValueCreatedDestroyedSeries,
-  createSingleCapitulationProfitFlowSeries,
-} from "./shared.js";
 
 // ============================================================================
 // Shared Helpers
@@ -800,4 +794,92 @@ export function createGroupedActivitySectionWithAdjusted({ list, title }) {
     soprTree: createGroupedSoprTreeWithAdjusted(list, title),
     valueTree: createGroupedValueTreeWithAdjusted(list, title),
   });
+}
+
+/**
+ * Create sell side risk ratio series for single cohort
+ * @param {{ realized: AnyRealizedPattern }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function createSingleSellSideRiskSeries(tree) {
+  return [
+    line({
+      metric: tree.realized.sellSideRiskRatio30dEma,
+      name: "30d EMA",
+      color: colors.ma._1m,
+      unit: Unit.ratio,
+    }),
+    line({
+      metric: tree.realized.sellSideRiskRatio7dEma,
+      name: "7d EMA",
+      color: colors.ma._1w,
+      unit: Unit.ratio,
+    }),
+    dots({
+      metric: tree.realized.sellSideRiskRatio,
+      name: "Raw",
+      color: colors.bitcoin,
+      unit: Unit.ratio,
+    }),
+  ];
+}
+
+/**
+ * Create sell side risk ratio series for grouped cohorts
+ * @param {readonly CohortObject[]} list
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function createGroupedSellSideRiskSeries(list) {
+  return list.flatMap(({ color, name, tree }) => [
+    line({
+      metric: tree.realized.sellSideRiskRatio,
+      name,
+      color,
+      unit: Unit.ratio,
+    }),
+  ]);
+}
+
+/**
+ * Create value created & destroyed series for single cohort
+ * @param {{ realized: AnyRealizedPattern }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function createSingleValueCreatedDestroyedSeries(tree) {
+  return [
+    line({
+      metric: tree.realized.valueCreated,
+      name: "Created",
+      color: colors.usd,
+      unit: Unit.usd,
+    }),
+    line({
+      metric: tree.realized.valueDestroyed,
+      name: "Destroyed",
+      color: colors.loss,
+      unit: Unit.usd,
+    }),
+  ];
+}
+
+/**
+ * Create capitulation & profit flow series for single cohort
+ * @param {{ realized: AnyRealizedPattern }} tree
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function createSingleCapitulationProfitFlowSeries(tree) {
+  return [
+    line({
+      metric: tree.realized.profitFlow,
+      name: "Profit Flow",
+      color: colors.profit,
+      unit: Unit.usd,
+    }),
+    line({
+      metric: tree.realized.capitulationFlow,
+      name: "Capitulation Flow",
+      color: colors.loss,
+      unit: Unit.usd,
+    }),
+  ];
 }
