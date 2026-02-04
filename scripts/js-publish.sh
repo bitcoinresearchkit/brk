@@ -16,6 +16,10 @@ cd "$ROOT_DIR/modules/brk-client"
 sed -i '' 's/"version": "[^"]*"/"version": "'"$VERSION"'"/' package.json
 echo "Updated package.json to $VERSION"
 
+# Update VERSION in index.js
+sed -i '' 's/VERSION = "v[^"]*"/VERSION = "v'"$VERSION"'"/' index.js
+echo "Updated index.js VERSION to v$VERSION"
+
 # Determine npm tag based on version
 if [[ "$VERSION" == *"-alpha"* ]]; then
     NPM_TAG="alpha"

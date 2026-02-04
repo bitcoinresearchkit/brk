@@ -598,17 +598,32 @@ impl UnrealizedMetrics {
                 )?)
             })?;
 
-        // Net sentiment: greed - pain
-        self.net_sentiment
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                Ok(vec.compute_subtract(
-                    starting_indexes.height,
-                    &self.greed_index.height,
-                    &self.pain_index.height,
-                    exit,
-                )?)
-            })?;
+        // Net sentiment height (greed - pain) computed separately for separate cohorts only
+        // Aggregate cohorts compute it via weighted average in compute_from_stateful
+        // Dateindex derivation for ALL cohorts happens in compute_net_sentiment_rest
 
         Ok(())
+    }
+
+    /// Compute net_sentiment.height for separate cohorts (greed - pain).
+    /// Aggregate cohorts skip this - their height is computed via weighted average in compute_from_stateful.
+    pub fn compute_net_sentiment_height(&mut self, starting_indexes: &ComputeIndexes, exit: &Exit) -> Result<()> {
+        Ok(self.net_sentiment.height.compute_subtract(
+            starting_indexes.height,
+            &self.greed_index.height,
+            &self.pain_index.height,
+            exit,
+        )?)
+    }
+
+    /// Compute net_sentiment dateindex derivation from height.
+    /// Called for ALL cohorts after height is computed (either via greed-pain or weighted avg).
+    pub fn compute_net_sentiment_rest(
+        &mut self,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.net_sentiment.compute_rest(indexes, starting_indexes, exit)
     }
 }

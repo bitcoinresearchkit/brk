@@ -310,6 +310,9 @@ class BrkClientBase {{
     this.timeout = isString ? 5000 : (options.timeout ?? 5000);
     /** @type {{Promise<Cache | null>}} */
     this._cachePromise = _openCache(isString ? undefined : options.cache);
+    /** @type {{Cache | null}} */
+    this._cache = null;
+    this._cachePromise.then(c => this._cache = c);
   }}
 
   /**
@@ -325,35 +328,57 @@ class BrkClientBase {{
   }}
 
   /**
-   * Make a GET request with stale-while-revalidate caching
+   * Make a GET request - races cache vs network, first to resolve calls onUpdate
    * @template T
    * @param {{string}} path
-   * @param {{(value: T) => void}} [onUpdate] - Called when data is available
+   * @param {{(value: T) => void}} [onUpdate] - Called when data is available (may be called twice: cache then network)
    * @returns {{Promise<T>}}
    */
   async getJson(path, onUpdate) {{
     const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
     const url = `${{base}}${{path}}`;
-    const cache = await this._cachePromise;
-    const cachedRes = await cache?.match(url);
-    const cachedJson = cachedRes ? await cachedRes.json() : null;
+    const cache = this._cache ?? await this._cachePromise;
 
-    if (cachedJson) onUpdate?.(cachedJson);
-    if (globalThis.navigator?.onLine === false) {{
-      if (cachedJson) return cachedJson;
-      throw new BrkError('Offline and no cached data available');
-    }}
+    let resolved = false;
+    /** @type {{Response | null}} */
+    let cachedRes = null;
 
-    try {{
-      const res = await this.get(path);
-      if (cachedRes?.headers.get('ETag') === res.headers.get('ETag')) return cachedJson;
+    // Race cache vs network - first to resolve calls onUpdate
+    const cachePromise = cache?.match(url).then(async (res) => {{
+      cachedRes = res ?? null;
+      if (!res) return null;
+      const json = await res.json();
+      if (!resolved && onUpdate) {{
+        resolved = true;
+        onUpdate(json);
+      }}
+      return json;
+    }});
 
+    const networkPromise = this.get(path).then(async (res) => {{
       const cloned = res.clone();
       const json = await res.json();
-      onUpdate?.(json);
+      // Skip update if ETag matches and cache already delivered
+      if (cachedRes?.headers.get('ETag') === res.headers.get('ETag')) {{
+        if (!resolved && onUpdate) {{
+          resolved = true;
+          onUpdate(json);
+        }}
+        return json;
+      }}
+      resolved = true;
+      if (onUpdate) {{
+        onUpdate(json);
+      }}
       if (cache) _runIdle(() => cache.put(url, cloned));
       return json;
+    }});
+
+    try {{
+      return await networkPromise;
     }} catch (e) {{
+      // Network failed - wait for cache
+      const cachedJson = await cachePromise?.catch(() => null);
       if (cachedJson) return cachedJson;
       throw e;
     }}

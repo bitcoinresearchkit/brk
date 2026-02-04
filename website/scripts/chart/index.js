@@ -114,6 +114,12 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
   // Used to detect and ignore stale operations (in-flight fetches, etc.)
   let generation = 0;
 
+  // Shared time - fetched once per rebuild, all series register callbacks
+  /** @type {number[] | null} */
+  let sharedTimeData = null;
+  /** @type {Set<(data: number[]) => void>} */
+  let timeCallbacks = new Set();
+
   // Range state: localStorage stores all ranges per-index, URL stores current range only
   /** @typedef {{ from: number, to: number }} Range */
   const ranges = createPersistedValue({
@@ -519,13 +525,16 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       active.value ? show() : hide();
 
       const seriesGeneration = generation;
-      let hasData = false;
-      let lastTime = -Infinity;
-      /** @type {string | null} */
-      let lastStamp = null;
-
-      /** @type {VoidFunction | null} */
-      let _fetch = null;
+      const state = {
+        hasData: false,
+        lastTime: -Infinity,
+        /** @type {string | null} */
+        lastStamp: null,
+        /** @type {VoidFunction | null} */
+        fetch: null,
+        /** @type {((data: number[]) => void) | null} */
+        onTime: null,
+      };
 
       /** @type {AnySeries} */
       const series = {
@@ -535,7 +544,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
           active.set(value);
           value ? show() : hide();
           if (value && !wasActive) {
-            _fetch?.();
+            state.fetch?.();
           }
           panes.updateVisibility();
         },
@@ -544,14 +553,15 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         hide,
         highlight,
         tame,
-        hasData: () => hasData,
-        fetch: () => _fetch?.(),
+        hasData: () => state.hasData,
+        fetch: () => state.fetch?.(),
         id,
         paneIndex,
         url: null,
         getData,
         update,
         remove() {
+          if (state.onTime) timeCallbacks.delete(state.onTime);
           onRemove();
           serieses.all.delete(series);
           panes.seriesByHome.get(paneIndex)?.delete(series);
@@ -563,9 +573,9 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       /** @param {ChartableIndex} idx */
       function setupIndexEffect(idx) {
         // Reset data state for new index
-        hasData = false;
-        lastTime = -Infinity;
-        _fetch = null;
+        state.hasData = false;
+        state.lastTime = -Infinity;
+        state.fetch = null;
 
         const _valuesEndpoint = metric.by[idx];
         // Gracefully skip - series may be about to be removed by option change
@@ -590,13 +600,13 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
           // Find start index for processing
           let startIdx = 0;
-          if (hasData) {
-            // Binary search to find first index where time >= lastTime
+          if (state.hasData) {
+            // Binary search to find first index where time >= state.lastTime
             let lo = 0;
             let hi = length;
             while (lo < hi) {
               const mid = (lo + hi) >>> 1;
-              if (indexes[mid] < lastTime) {
+              if (indexes[mid] < state.lastTime) {
                 lo = mid + 1;
               } else {
                 hi = mid;
@@ -625,7 +635,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
             }
           }
 
-          if (!hasData) {
+          if (!state.hasData) {
             // Initial load: build full array
             const data = /** @type {LineData[] | CandlestickData[]} */ (
               Array.from({ length })
@@ -655,8 +665,9 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
             data.length -= timeOffset;
 
             setData(data);
-            hasData = true;
-            lastTime = /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
+            state.hasData = true;
+            state.lastTime =
+              /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
 
             // Restore saved range or use defaults
             const savedRange = getRange();
@@ -685,26 +696,45 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
             for (let i = startIdx; i < length; i++) {
               const point = buildDataPoint(i);
               update(point);
-              lastTime = /** @type {number} */ (point.time);
+              state.lastTime = /** @type {number} */ (point.time);
             }
           }
         }
 
         async function fetchAndProcess() {
-          const [timeResult, valuesResult] = await Promise.all([
-            getTimeEndpoint(idx).slice(-10000).fetch(),
-            valuesEndpoint.slice(-10000).fetch(),
-          ]);
-          // Ignore stale fetches from series that have been replaced
-          if (seriesGeneration !== generation) return;
-          if (valuesResult.stamp === lastStamp) return;
-          lastStamp = valuesResult.stamp;
-          if (timeResult.data.length && valuesResult.data.length) {
-            processData(timeResult.data, valuesResult.data);
+          /** @type {number[] | null} */
+          let timeData = null;
+          /** @type {(number | null | [number, number, number, number])[] | null} */
+          let valuesData = null;
+          /** @type {string | null} */
+          let valuesStamp = null;
+
+          function tryProcess() {
+            if (seriesGeneration !== generation) return;
+            if (!timeData || !valuesData) return;
+            if (valuesStamp === state.lastStamp) return;
+            state.lastStamp = valuesStamp;
+            if (timeData.length && valuesData.length) {
+              processData(timeData, valuesData);
+            }
           }
+
+          // Register for shared time data (fetched once in rebuild)
+          state.onTime = (data) => {
+            timeData = data;
+            tryProcess();
+          };
+          timeCallbacks.add(state.onTime);
+          if (sharedTimeData) state.onTime(sharedTimeData);
+
+          await valuesEndpoint.slice(-10000).fetch((result) => {
+            valuesData = result.data;
+            valuesStamp = result.stamp;
+            tryProcess();
+          });
         }
 
-        _fetch = fetchAndProcess;
+        state.fetch = fetchAndProcess;
 
         // Initial fetch if active
         if (active.value) {
@@ -1597,6 +1627,17 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
     rebuild() {
       generation++;
+      const currentGen = generation;
+      const idx = index.get();
+      sharedTimeData = null;
+      timeCallbacks = new Set();
+      getTimeEndpoint(idx)
+        .slice(-10000)
+        .fetch((result) => {
+          if (currentGen !== generation) return; // Ignore stale fetch
+          sharedTimeData = result.data;
+          timeCallbacks.forEach((cb) => cb(result.data));
+        });
       this.rebuildPane(0);
       this.rebuildPane(1);
     },

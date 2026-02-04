@@ -296,16 +296,17 @@ impl CohortMetrics {
         Ok(())
     }
 
-    /// Compute net_sentiment as capital-weighted average of component cohorts.
+    /// Compute net_sentiment.height as capital-weighted average of component cohorts.
     ///
     /// For aggregate cohorts, the simple greed-pain formula produces values outside
-    /// the range of components due to asymmetric weighting. This recomputes net_sentiment
+    /// the range of components due to asymmetric weighting. This computes net_sentiment
     /// as a proper weighted average using realized_cap as weight.
+    ///
+    /// Only computes height; dateindex derivation is done separately via compute_net_sentiment_rest.
     pub fn compute_net_sentiment_from_others(
         &mut self,
         starting_indexes: &ComputeIndexes,
         others: &[&Self],
-        indexes: &indexes::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         let Some(unrealized) = self.unrealized.as_mut() else {
@@ -325,14 +326,10 @@ impl CohortMetrics {
             return Ok(());
         }
 
-        unrealized
+        Ok(unrealized
             .net_sentiment
             .height
-            .compute_weighted_average_of_others(starting_indexes.height, &weights, &values, exit)?;
-
-        unrealized
-            .net_sentiment
-            .compute_rest(indexes, starting_indexes, exit)
+            .compute_weighted_average_of_others(starting_indexes.height, &weights, &values, exit)?)
     }
 
     /// First phase of computed metrics (indexes from height).
@@ -387,6 +384,33 @@ impl CohortMetrics {
             )?;
         }
 
+        Ok(())
+    }
+
+    /// Compute net_sentiment.height for separate cohorts (greed - pain).
+    /// Called only for separate cohorts; aggregates compute via weighted average in compute_from_stateful.
+    pub fn compute_net_sentiment_height(
+        &mut self,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        if let Some(unrealized) = self.unrealized.as_mut() {
+            unrealized.compute_net_sentiment_height(starting_indexes, exit)?;
+        }
+        Ok(())
+    }
+
+    /// Compute net_sentiment dateindex derivation from height.
+    /// Called for ALL cohorts after height is computed.
+    pub fn compute_net_sentiment_rest(
+        &mut self,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        if let Some(unrealized) = self.unrealized.as_mut() {
+            unrealized.compute_net_sentiment_rest(indexes, starting_indexes, exit)?;
+        }
         Ok(())
     }
 }

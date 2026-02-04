@@ -1205,7 +1205,7 @@ function groupedPnlCharts(list, all, title) {
     {
       name: "Profit",
       title: title("Unrealized Profit"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.unrealized.unrealizedProfit,
           name,
@@ -1217,7 +1217,7 @@ function groupedPnlCharts(list, all, title) {
     {
       name: "Loss",
       title: title("Unrealized Loss"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.unrealized.negUnrealizedLoss,
           name,
@@ -1229,7 +1229,7 @@ function groupedPnlCharts(list, all, title) {
     {
       name: "Net P&L",
       title: title("Net Unrealized P&L"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         baseline({
           metric: tree.unrealized.netUnrealizedPnl,
           name,
@@ -1254,7 +1254,7 @@ function groupedPnlChartsWithMarketCap(list, all, title) {
       name: "Profit",
       title: title("Unrealized Profit"),
       bottom: [
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.unrealized.unrealizedProfit,
             name,
@@ -1262,7 +1262,7 @@ function groupedPnlChartsWithMarketCap(list, all, title) {
             unit: Unit.usd,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.relative.unrealizedProfitRelToMarketCap,
             name,
@@ -1276,7 +1276,7 @@ function groupedPnlChartsWithMarketCap(list, all, title) {
       name: "Loss",
       title: title("Unrealized Loss"),
       bottom: [
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.unrealized.negUnrealizedLoss,
             name,
@@ -1284,7 +1284,7 @@ function groupedPnlChartsWithMarketCap(list, all, title) {
             unit: Unit.usd,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.relative.negUnrealizedLossRelToMarketCap,
             name,
@@ -1298,7 +1298,7 @@ function groupedPnlChartsWithMarketCap(list, all, title) {
       name: "Net P&L",
       title: title("Net Unrealized P&L"),
       bottom: [
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.unrealized.netUnrealizedPnl,
             name,
@@ -1306,7 +1306,7 @@ function groupedPnlChartsWithMarketCap(list, all, title) {
             unit: Unit.usd,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.relative.netUnrealizedPnlRelToMarketCap,
             name,
@@ -1332,7 +1332,7 @@ function groupedPnlChartsWithOwnMarketCap(list, all, title) {
       name: "Profit",
       title: title("Unrealized Profit"),
       bottom: [
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.unrealized.unrealizedProfit,
             name,
@@ -1341,7 +1341,7 @@ function groupedPnlChartsWithOwnMarketCap(list, all, title) {
           }),
         ),
         // OwnMarketCap properties don't exist on CohortAll - use mapCohorts
-        ...mapCohorts(list, ({ color, name, tree }) =>
+        ...mapCohorts(list, ({ name, color, tree }) =>
           line({
             metric: tree.relative.unrealizedProfitRelToOwnMarketCap,
             name,
@@ -1349,7 +1349,7 @@ function groupedPnlChartsWithOwnMarketCap(list, all, title) {
             unit: Unit.pctOwnMcap,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.relative.unrealizedProfitRelToOwnTotalUnrealizedPnl,
             name,
@@ -1363,7 +1363,7 @@ function groupedPnlChartsWithOwnMarketCap(list, all, title) {
       name: "Loss",
       title: title("Unrealized Loss"),
       bottom: [
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.unrealized.negUnrealizedLoss,
             name,
@@ -1372,7 +1372,7 @@ function groupedPnlChartsWithOwnMarketCap(list, all, title) {
           }),
         ),
         // OwnMarketCap properties don't exist on CohortAll - use mapCohorts
-        ...mapCohorts(list, ({ color, name, tree }) =>
+        ...mapCohorts(list, ({ name, color, tree }) =>
           line({
             metric: tree.relative.negUnrealizedLossRelToOwnMarketCap,
             name,
@@ -1380,7 +1380,7 @@ function groupedPnlChartsWithOwnMarketCap(list, all, title) {
             unit: Unit.pctOwnMcap,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.relative.negUnrealizedLossRelToOwnTotalUnrealizedPnl,
             name,
@@ -1394,7 +1394,7 @@ function groupedPnlChartsWithOwnMarketCap(list, all, title) {
       name: "Net P&L",
       title: title("Net Unrealized P&L"),
       bottom: [
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.unrealized.netUnrealizedPnl,
             name,
@@ -1403,7 +1403,7 @@ function groupedPnlChartsWithOwnMarketCap(list, all, title) {
           }),
         ),
         // OwnMarketCap properties don't exist on CohortAll - use mapCohorts
-        ...mapCohorts(list, ({ color, name, tree }) =>
+        ...mapCohorts(list, ({ name, color, tree }) =>
           baseline({
             metric: tree.relative.netUnrealizedPnlRelToOwnMarketCap,
             name,
@@ -1411,7 +1411,7 @@ function groupedPnlChartsWithOwnMarketCap(list, all, title) {
             unit: Unit.pctOwnMcap,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.relative.netUnrealizedPnlRelToOwnTotalUnrealizedPnl,
             name,
@@ -1437,7 +1437,7 @@ function groupedPnlChartsLongTerm(list, all, title) {
       name: "Profit",
       title: title("Unrealized Profit"),
       bottom: [
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.unrealized.unrealizedProfit,
             name,
@@ -1446,7 +1446,7 @@ function groupedPnlChartsLongTerm(list, all, title) {
           }),
         ),
         // OwnMarketCap properties don't exist on CohortAll - use mapCohorts
-        ...mapCohorts(list, ({ color, name, tree }) =>
+        ...mapCohorts(list, ({ name, color, tree }) =>
           line({
             metric: tree.relative.unrealizedProfitRelToOwnMarketCap,
             name,
@@ -1454,7 +1454,7 @@ function groupedPnlChartsLongTerm(list, all, title) {
             unit: Unit.pctOwnMcap,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.relative.unrealizedProfitRelToOwnTotalUnrealizedPnl,
             name,
@@ -1468,7 +1468,7 @@ function groupedPnlChartsLongTerm(list, all, title) {
       name: "Loss",
       title: title("Unrealized Loss"),
       bottom: [
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.unrealized.negUnrealizedLoss,
             name,
@@ -1476,7 +1476,7 @@ function groupedPnlChartsLongTerm(list, all, title) {
             unit: Unit.usd,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.relative.unrealizedLossRelToMarketCap,
             name,
@@ -1485,7 +1485,7 @@ function groupedPnlChartsLongTerm(list, all, title) {
           }),
         ),
         // OwnMarketCap properties don't exist on CohortAll - use mapCohorts
-        ...mapCohorts(list, ({ color, name, tree }) =>
+        ...mapCohorts(list, ({ name, color, tree }) =>
           line({
             metric: tree.relative.negUnrealizedLossRelToOwnMarketCap,
             name,
@@ -1493,7 +1493,7 @@ function groupedPnlChartsLongTerm(list, all, title) {
             unit: Unit.pctOwnMcap,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.relative.negUnrealizedLossRelToOwnTotalUnrealizedPnl,
             name,
@@ -1507,7 +1507,7 @@ function groupedPnlChartsLongTerm(list, all, title) {
       name: "Net P&L",
       title: title("Net Unrealized P&L"),
       bottom: [
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.unrealized.netUnrealizedPnl,
             name,
@@ -1516,7 +1516,7 @@ function groupedPnlChartsLongTerm(list, all, title) {
           }),
         ),
         // OwnMarketCap properties don't exist on CohortAll - use mapCohorts
-        ...mapCohorts(list, ({ color, name, tree }) =>
+        ...mapCohorts(list, ({ name, color, tree }) =>
           baseline({
             metric: tree.relative.netUnrealizedPnlRelToOwnMarketCap,
             name,
@@ -1524,7 +1524,7 @@ function groupedPnlChartsLongTerm(list, all, title) {
             unit: Unit.pctOwnMcap,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.relative.netUnrealizedPnlRelToOwnTotalUnrealizedPnl,
             name,
@@ -1549,7 +1549,7 @@ function groupedInvestedCapitalAbsolute(list, all, title) {
     {
       name: "In Profit",
       title: title("Invested Capital In Profit"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.unrealized.investedCapitalInProfit,
           name,
@@ -1561,7 +1561,7 @@ function groupedInvestedCapitalAbsolute(list, all, title) {
     {
       name: "In Loss",
       title: title("Invested Capital In Loss"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.unrealized.investedCapitalInLoss,
           name,
@@ -1586,7 +1586,7 @@ function groupedInvestedCapital(list, all, title) {
       name: "In Profit",
       title: title("Invested Capital In Profit"),
       bottom: [
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.unrealized.investedCapitalInProfit,
             name,
@@ -1594,7 +1594,7 @@ function groupedInvestedCapital(list, all, title) {
             unit: Unit.usd,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.relative.investedCapitalInProfitPct,
             name,
@@ -1609,7 +1609,7 @@ function groupedInvestedCapital(list, all, title) {
       name: "In Loss",
       title: title("Invested Capital In Loss"),
       bottom: [
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.unrealized.investedCapitalInLoss,
             name,
@@ -1617,7 +1617,7 @@ function groupedInvestedCapital(list, all, title) {
             unit: Unit.usd,
           }),
         ),
-        ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.relative.investedCapitalInLossPct,
             name,
@@ -1643,7 +1643,7 @@ function groupedRealizedPnlSum(list, all, title) {
     {
       name: "Profit",
       title: title("Realized Profit"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.realized.realizedProfit.sum,
           name,
@@ -1655,7 +1655,7 @@ function groupedRealizedPnlSum(list, all, title) {
     {
       name: "Loss",
       title: title("Realized Loss"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.realized.negRealizedLoss.sum,
           name,
@@ -1667,7 +1667,7 @@ function groupedRealizedPnlSum(list, all, title) {
     {
       name: "Total",
       title: title("Total Realized P&L"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.realized.totalRealizedPnl,
           name,
@@ -1679,7 +1679,7 @@ function groupedRealizedPnlSum(list, all, title) {
     {
       name: "Value",
       title: title("Realized Value"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.realized.realizedValue,
           name,
@@ -1704,7 +1704,7 @@ function groupedRealizedPnlSumWithExtras(list, all, title) {
     {
       name: "P/L Ratio",
       title: title("Realized Profit/Loss Ratio"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         baseline({
           metric: tree.realized.realizedProfitToLossRatio,
           name,
@@ -1728,7 +1728,7 @@ function groupedRealizedPnlCumulative(list, all, title) {
     {
       name: "Profit",
       title: title("Cumulative Realized Profit"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.realized.realizedProfit.cumulative,
           name,
@@ -1740,7 +1740,7 @@ function groupedRealizedPnlCumulative(list, all, title) {
     {
       name: "Loss",
       title: title("Cumulative Realized Loss"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.realized.negRealizedLoss.cumulative,
           name,
@@ -1768,7 +1768,7 @@ function groupedSentInPnl(list, all, title) {
           name: "In Profit",
           title: title("Sent In Profit"),
           bottom: [
-            ...flatMapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            ...flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
               satsBtcUsd({
                 pattern: tree.realized.sentInProfit14dEma,
                 name: `${name} 14d EMA`,
@@ -1776,7 +1776,7 @@ function groupedSentInPnl(list, all, title) {
                 defaultActive: false,
               }),
             ),
-            ...flatMapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            ...flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
               satsBtcUsdFrom({
                 source: tree.realized.sentInProfit,
                 key: "sum",
@@ -1790,7 +1790,7 @@ function groupedSentInPnl(list, all, title) {
           name: "In Loss",
           title: title("Sent In Loss"),
           bottom: [
-            ...flatMapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            ...flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
               satsBtcUsd({
                 pattern: tree.realized.sentInLoss14dEma,
                 name: `${name} 14d EMA`,
@@ -1798,7 +1798,7 @@ function groupedSentInPnl(list, all, title) {
                 defaultActive: false,
               }),
             ),
-            ...flatMapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            ...flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
               satsBtcUsdFrom({
                 source: tree.realized.sentInLoss,
                 key: "sum",
@@ -1816,7 +1816,7 @@ function groupedSentInPnl(list, all, title) {
         {
           name: "In Profit",
           title: title("Cumulative Sent In Profit"),
-          bottom: flatMapCohortsWithAll(list, all, ({ color, name, tree }) =>
+          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
             satsBtcUsdFrom({
               source: tree.realized.sentInProfit,
               key: "cumulative",
@@ -1828,7 +1828,7 @@ function groupedSentInPnl(list, all, title) {
         {
           name: "In Loss",
           title: title("Cumulative Sent In Loss"),
-          bottom: flatMapCohortsWithAll(list, all, ({ color, name, tree }) =>
+          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
             satsBtcUsdFrom({
               source: tree.realized.sentInLoss,
               key: "cumulative",
@@ -1856,7 +1856,7 @@ function groupedSentiment(list, all, title) {
       {
         name: "Net",
         title: title("Net Sentiment"),
-        bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.unrealized.netSentiment,
             name,
@@ -1868,7 +1868,7 @@ function groupedSentiment(list, all, title) {
       {
         name: "Greed",
         title: title("Greed Index"),
-        bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.unrealized.greedIndex,
             name,
@@ -1880,7 +1880,7 @@ function groupedSentiment(list, all, title) {
       {
         name: "Pain",
         title: title("Pain Index"),
-        bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.unrealized.painIndex,
             name,
@@ -1908,7 +1908,7 @@ function groupedRealizedSubfolder(list, all, title) {
       {
         name: "Net",
         title: title("Net Realized P&L"),
-        bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.realized.netRealizedPnl.sum,
             name,
@@ -1920,7 +1920,7 @@ function groupedRealizedSubfolder(list, all, title) {
       {
         name: "30d Change",
         title: title("Realized P&L 30d Change"),
-        bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.realized.netRealizedPnlCumulative30dDelta,
             name,
@@ -1936,7 +1936,7 @@ function groupedRealizedSubfolder(list, all, title) {
           {
             name: "Net",
             title: title("Cumulative Net Realized P&L"),
-            bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               baseline({
                 metric: tree.realized.netRealizedPnl.cumulative,
                 name,
@@ -1966,7 +1966,7 @@ function groupedRealizedSubfolderWithExtras(list, all, title) {
       {
         name: "Net",
         title: title("Net Realized P&L"),
-        bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.realized.netRealizedPnl.sum,
             name,
@@ -1978,7 +1978,7 @@ function groupedRealizedSubfolderWithExtras(list, all, title) {
       {
         name: "30d Change",
         title: title("Realized P&L 30d Change"),
-        bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.realized.netRealizedPnlCumulative30dDelta,
             name,
@@ -1994,7 +1994,7 @@ function groupedRealizedSubfolderWithExtras(list, all, title) {
           {
             name: "Net",
             title: title("Cumulative Net Realized P&L"),
-            bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               baseline({
                 metric: tree.realized.netRealizedPnl.cumulative,
                 name,
@@ -2076,7 +2076,7 @@ export function createGroupedProfitabilitySectionWithInvestedCapitalPct({
           {
             name: "Peak Regret",
             title: title("Unrealized Peak Regret"),
-            bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               line({
                 metric: tree.unrealized.peakRegret,
                 name,
@@ -2111,7 +2111,7 @@ export function createGroupedProfitabilitySectionWithNupl({ list, all, title }) 
           {
             name: "NUPL",
             title: title("NUPL"),
-            bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               baseline({
                 metric: tree.relative.nupl,
                 name,
@@ -2146,7 +2146,7 @@ export function createGroupedProfitabilitySectionLongTerm({ list, all, title }) 
           {
             name: "NUPL",
             title: title("NUPL"),
-            bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               baseline({
                 metric: tree.relative.nupl,
                 name,
@@ -2159,7 +2159,7 @@ export function createGroupedProfitabilitySectionLongTerm({ list, all, title }) 
             name: "Peak Regret",
             title: title("Unrealized Peak Regret"),
             bottom: [
-              ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 line({
                   metric: tree.unrealized.peakRegret,
                   name,
@@ -2167,7 +2167,7 @@ export function createGroupedProfitabilitySectionLongTerm({ list, all, title }) 
                   unit: Unit.usd,
                 }),
               ),
-              ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 baseline({
                   metric: tree.relative.unrealizedPeakRegretRelToMarketCap,
                   name,
@@ -2207,7 +2207,7 @@ export function createGroupedProfitabilitySectionWithPeakRegret({
           {
             name: "NUPL",
             title: title("NUPL"),
-            bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               baseline({
                 metric: tree.relative.nupl,
                 name,
@@ -2220,7 +2220,7 @@ export function createGroupedProfitabilitySectionWithPeakRegret({
             name: "Peak Regret",
             title: title("Unrealized Peak Regret"),
             bottom: [
-              ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 line({
                   metric: tree.unrealized.peakRegret,
                   name,
@@ -2228,7 +2228,7 @@ export function createGroupedProfitabilitySectionWithPeakRegret({
                   unit: Unit.usd,
                 }),
               ),
-              ...mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 baseline({
                   metric: tree.relative.unrealizedPeakRegretRelToMarketCap,
                   name,

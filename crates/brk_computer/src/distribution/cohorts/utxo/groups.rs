@@ -152,10 +152,10 @@ impl UTXOCohorts {
         }))
     }
 
-    /// Apply a function to each aggregate cohort with its source cohorts.
-    fn for_each_aggregate<F>(&mut self, mut f: F) -> Result<()>
+    /// Apply a function to each aggregate cohort with its source cohorts (in parallel).
+    fn for_each_aggregate<F>(&mut self, f: F) -> Result<()>
     where
-        F: FnMut(&mut UTXOCohortVecs, Vec<&UTXOCohortVecs>) -> Result<()>,
+        F: Fn(&mut UTXOCohortVecs, Vec<&UTXOCohortVecs>) -> Result<()> + Sync,
     {
         let by_age_range = &self.0.age_range;
         let by_amount_range = &self.0.amount_range;
@@ -215,10 +215,9 @@ impl UTXOCohorts {
             }))
             .collect();
 
-        for (vecs, sources) in pairs {
-            f(vecs, sources)?;
-        }
-        Ok(())
+        pairs
+            .into_par_iter()
+            .try_for_each(|(vecs, sources)| f(vecs, sources))
     }
 
     /// Compute overlapping cohorts from component age/amount range cohorts.
@@ -240,26 +239,24 @@ impl UTXOCohorts {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
+        // 1. Compute all metrics except net_sentiment
         self.par_iter_mut()
-            .try_for_each(|v| v.compute_rest_part1(indexes, price, starting_indexes, exit))
-    }
+            .try_for_each(|v| v.compute_rest_part1(indexes, price, starting_indexes, exit))?;
 
-    /// Recompute net_sentiment for aggregate cohorts as weighted average of source cohorts.
-    pub fn compute_aggregate_net_sentiment(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-    ) -> Result<()> {
+        // 2. Compute net_sentiment.height for separate cohorts (greed - pain)
+        self.par_iter_separate_mut()
+            .try_for_each(|v| v.metrics.compute_net_sentiment_height(starting_indexes, exit))?;
+
+        // 3. Compute net_sentiment.height for aggregate cohorts (weighted average)
         self.for_each_aggregate(|vecs, sources| {
             let metrics: Vec<_> = sources.iter().map(|v| &v.metrics).collect();
-            vecs.metrics.compute_net_sentiment_from_others(
-                starting_indexes,
-                &metrics,
-                indexes,
-                exit,
-            )
-        })
+            vecs.metrics
+                .compute_net_sentiment_from_others(starting_indexes, &metrics, exit)
+        })?;
+
+        // 4. Compute net_sentiment dateindex for ALL cohorts
+        self.par_iter_mut()
+            .try_for_each(|v| v.metrics.compute_net_sentiment_rest(indexes, starting_indexes, exit))
     }
 
     /// Second phase of post-processing: compute relative metrics.

@@ -132,7 +132,7 @@ function valueBreakdownTree(list, all, title) {
         {
           name: "Created",
           title: title("Profit Value Created"),
-          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
             line({
               metric: tree.realized.profitValueCreated,
               name,
@@ -144,7 +144,7 @@ function valueBreakdownTree(list, all, title) {
         {
           name: "Destroyed",
           title: title("Profit Value Destroyed"),
-          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
             line({
               metric: tree.realized.profitValueDestroyed,
               name,
@@ -161,7 +161,7 @@ function valueBreakdownTree(list, all, title) {
         {
           name: "Created",
           title: title("Loss Value Created"),
-          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
             line({
               metric: tree.realized.lossValueCreated,
               name,
@@ -173,7 +173,7 @@ function valueBreakdownTree(list, all, title) {
         {
           name: "Destroyed",
           title: title("Loss Value Destroyed"),
-          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
             line({
               metric: tree.realized.lossValueDestroyed,
               name,
@@ -200,7 +200,7 @@ function coinsDestroyedTree(list, all, title) {
     {
       name: "Sum",
       title: title("Coins Destroyed"),
-      bottom: flatMapCohortsWithAll(list, all, ({ color, name, tree }) => [
+      bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
         line({
           metric: tree.activity.coinblocksDestroyed.sum,
           name,
@@ -218,7 +218,7 @@ function coinsDestroyedTree(list, all, title) {
     {
       name: "Cumulative",
       title: title("Cumulative Coins Destroyed"),
-      bottom: flatMapCohortsWithAll(list, all, ({ color, name, tree }) => [
+      bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
         line({
           metric: tree.activity.coinblocksDestroyed.cumulative,
           name,
@@ -594,7 +594,7 @@ function groupedFlowsTree(list, all, title) {
     {
       name: "Profit",
       title: title("Profit Flow"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.realized.profitFlow,
           name,
@@ -606,7 +606,7 @@ function groupedFlowsTree(list, all, title) {
     {
       name: "Capitulation",
       title: title("Capitulation Flow"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.realized.capitulationFlow,
           name,
@@ -632,7 +632,7 @@ function createGroupedValueTree(list, all, title) {
     {
       name: "Created",
       title: title("Value Created"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.realized.valueCreated,
           name,
@@ -644,7 +644,7 @@ function createGroupedValueTree(list, all, title) {
     {
       name: "Destroyed",
       title: title("Value Destroyed"),
-      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
           metric: tree.realized.valueDestroyed,
           name,
@@ -678,14 +678,14 @@ export function createGroupedActivitySection({
           {
             name: "14d EMA",
             title: title("Sent Volume 14d EMA"),
-            bottom: flatMapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
               satsBtcUsd({ pattern: tree.activity.sent14dEma, name, color }),
             ),
           },
           {
             name: "Sum",
             title: title("Sent Volume"),
-            bottom: flatMapCohortsWithAll(list, all, ({ color, name, tree }) =>
+            bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
               satsBtcUsd({
                 pattern: {
                   sats: tree.activity.sent.sats.sum,
@@ -733,7 +733,7 @@ function createGroupedValueTreeWithAdjusted(list, all, title) {
         {
           name: "Created",
           title: title("Value Created"),
-          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
             line({
               metric: tree.realized.valueCreated,
               name,
@@ -745,7 +745,7 @@ function createGroupedValueTreeWithAdjusted(list, all, title) {
         {
           name: "Destroyed",
           title: title("Value Destroyed"),
-          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
             line({
               metric: tree.realized.valueDestroyed,
               name,
@@ -762,7 +762,7 @@ function createGroupedValueTreeWithAdjusted(list, all, title) {
         {
           name: "Created",
           title: title("Adjusted Value Created"),
-          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
             line({
               metric: tree.realized.adjustedValueCreated,
               name,
@@ -774,7 +774,7 @@ function createGroupedValueTreeWithAdjusted(list, all, title) {
         {
           name: "Destroyed",
           title: title("Adjusted Value Destroyed"),
-          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
             line({
               metric: tree.realized.adjustedValueDestroyed,
               name,
@@ -839,7 +839,7 @@ function createSingleSellSideRiskSeries(tree) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function createGroupedSellSideRiskSeries(list, all) {
-  return flatMapCohortsWithAll(list, all, ({ color, name, tree }) => [
+  return flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
     line({
       metric: tree.realized.sellSideRiskRatio,
       name,
