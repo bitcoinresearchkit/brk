@@ -4938,7 +4938,7 @@ function createRatioPattern2(client, acc) {
  * @extends BrkClientBase
  */
 class BrkClient extends BrkClientBase {
-  VERSION = "v0.1.3";
+  VERSION = "v0.1.4";
 
   INDEXES = /** @type {const} */ ([
     "dateindex",
