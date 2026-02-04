@@ -296,6 +296,45 @@ impl CohortMetrics {
         Ok(())
     }
 
+    /// Compute net_sentiment as capital-weighted average of component cohorts.
+    ///
+    /// For aggregate cohorts, the simple greed-pain formula produces values outside
+    /// the range of components due to asymmetric weighting. This recomputes net_sentiment
+    /// as a proper weighted average using realized_cap as weight.
+    pub fn compute_net_sentiment_from_others(
+        &mut self,
+        starting_indexes: &ComputeIndexes,
+        others: &[&Self],
+        indexes: &indexes::Vecs,
+        exit: &Exit,
+    ) -> Result<()> {
+        let Some(unrealized) = self.unrealized.as_mut() else {
+            return Ok(());
+        };
+
+        let weights: Vec<_> = others
+            .iter()
+            .filter_map(|o| Some(&o.realized.as_ref()?.realized_cap.height))
+            .collect();
+        let values: Vec<_> = others
+            .iter()
+            .filter_map(|o| Some(&o.unrealized.as_ref()?.net_sentiment.height))
+            .collect();
+
+        if weights.len() != others.len() || values.len() != others.len() {
+            return Ok(());
+        }
+
+        unrealized
+            .net_sentiment
+            .height
+            .compute_weighted_average_of_others(starting_indexes.height, &weights, &values, exit)?;
+
+        unrealized
+            .net_sentiment
+            .compute_rest(indexes, starting_indexes, exit)
+    }
+
     /// First phase of computed metrics (indexes from height).
     pub fn compute_rest_part1(
         &mut self,

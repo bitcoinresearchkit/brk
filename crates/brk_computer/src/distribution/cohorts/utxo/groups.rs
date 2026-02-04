@@ -152,70 +152,84 @@ impl UTXOCohorts {
         }))
     }
 
+    /// Apply a function to each aggregate cohort with its source cohorts.
+    fn for_each_aggregate<F>(&mut self, mut f: F) -> Result<()>
+    where
+        F: FnMut(&mut UTXOCohortVecs, Vec<&UTXOCohortVecs>) -> Result<()>,
+    {
+        let by_age_range = &self.0.age_range;
+        let by_amount_range = &self.0.amount_range;
+
+        // Build (aggregate, sources) pairs
+        let pairs: Vec<_> = [(&mut self.0.all, by_age_range.iter().collect::<Vec<_>>())]
+            .into_iter()
+            .chain(self.0.min_age.iter_mut().map(|vecs| {
+                let filter = vecs.filter().clone();
+                (
+                    vecs,
+                    by_age_range
+                        .iter()
+                        .filter(|other| filter.includes(other.filter()))
+                        .collect(),
+                )
+            }))
+            .chain(self.0.max_age.iter_mut().map(|vecs| {
+                let filter = vecs.filter().clone();
+                (
+                    vecs,
+                    by_age_range
+                        .iter()
+                        .filter(|other| filter.includes(other.filter()))
+                        .collect(),
+                )
+            }))
+            .chain(self.0.term.iter_mut().map(|vecs| {
+                let filter = vecs.filter().clone();
+                (
+                    vecs,
+                    by_age_range
+                        .iter()
+                        .filter(|other| filter.includes(other.filter()))
+                        .collect(),
+                )
+            }))
+            .chain(self.0.ge_amount.iter_mut().map(|vecs| {
+                let filter = vecs.filter().clone();
+                (
+                    vecs,
+                    by_amount_range
+                        .iter()
+                        .filter(|other| filter.includes(other.filter()))
+                        .collect(),
+                )
+            }))
+            .chain(self.0.lt_amount.iter_mut().map(|vecs| {
+                let filter = vecs.filter().clone();
+                (
+                    vecs,
+                    by_amount_range
+                        .iter()
+                        .filter(|other| filter.includes(other.filter()))
+                        .collect(),
+                )
+            }))
+            .collect();
+
+        for (vecs, sources) in pairs {
+            f(vecs, sources)?;
+        }
+        Ok(())
+    }
+
     /// Compute overlapping cohorts from component age/amount range cohorts.
     pub fn compute_overlapping_vecs(
         &mut self,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let by_age_range = &self.0.age_range;
-        let by_amount_range = &self.0.amount_range;
-
-        [(&mut self.0.all, by_age_range.iter().collect::<Vec<_>>())]
-            .into_par_iter()
-            .chain(self.0.min_age.par_iter_mut().map(|vecs| {
-                let filter = vecs.filter().clone();
-                (
-                    vecs,
-                    by_age_range
-                        .iter()
-                        .filter(|other| filter.includes(other.filter()))
-                        .collect::<Vec<_>>(),
-                )
-            }))
-            .chain(self.0.max_age.par_iter_mut().map(|vecs| {
-                let filter = vecs.filter().clone();
-                (
-                    vecs,
-                    by_age_range
-                        .iter()
-                        .filter(|other| filter.includes(other.filter()))
-                        .collect::<Vec<_>>(),
-                )
-            }))
-            .chain(self.0.term.par_iter_mut().map(|vecs| {
-                let filter = vecs.filter().clone();
-                (
-                    vecs,
-                    by_age_range
-                        .iter()
-                        .filter(|other| filter.includes(other.filter()))
-                        .collect::<Vec<_>>(),
-                )
-            }))
-            .chain(self.0.ge_amount.par_iter_mut().map(|vecs| {
-                let filter = vecs.filter().clone();
-                (
-                    vecs,
-                    by_amount_range
-                        .iter()
-                        .filter(|other| filter.includes(other.filter()))
-                        .collect::<Vec<_>>(),
-                )
-            }))
-            .chain(self.0.lt_amount.par_iter_mut().map(|vecs| {
-                let filter = vecs.filter().clone();
-                (
-                    vecs,
-                    by_amount_range
-                        .iter()
-                        .filter(|other| filter.includes(other.filter()))
-                        .collect::<Vec<_>>(),
-                )
-            }))
-            .try_for_each(|(vecs, components)| {
-                vecs.compute_from_stateful(starting_indexes, &components, exit)
-            })
+        self.for_each_aggregate(|vecs, sources| {
+            vecs.compute_from_stateful(starting_indexes, &sources, exit)
+        })
     }
 
     /// First phase of post-processing: compute index transforms.
@@ -228,6 +242,24 @@ impl UTXOCohorts {
     ) -> Result<()> {
         self.par_iter_mut()
             .try_for_each(|v| v.compute_rest_part1(indexes, price, starting_indexes, exit))
+    }
+
+    /// Recompute net_sentiment for aggregate cohorts as weighted average of source cohorts.
+    pub fn compute_aggregate_net_sentiment(
+        &mut self,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.for_each_aggregate(|vecs, sources| {
+            let metrics: Vec<_> = sources.iter().map(|v| &v.metrics).collect();
+            vecs.metrics.compute_net_sentiment_from_others(
+                starting_indexes,
+                &metrics,
+                indexes,
+                exit,
+            )
+        })
     }
 
     /// Second phase of post-processing: compute relative metrics.

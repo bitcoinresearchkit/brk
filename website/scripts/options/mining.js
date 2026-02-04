@@ -415,7 +415,7 @@ export function createMiningSection() {
               },
               {
                 name: "Distribution",
-                title: "Coinbase Rewards Distribution",
+                title: "Coinbase Rewards per Block Distribution",
                 bottom: distributionBtcSatsUsd(blocks.rewards.coinbase),
               },
               {
@@ -476,7 +476,7 @@ export function createMiningSection() {
             tree: [
               {
                 name: "Sum",
-                title: "Transaction Fee Revenue",
+                title: "Transaction Fee Revenue per Block",
                 bottom: satsBtcUsdFrom({
                   source: transactions.fees.fee,
                   key: "sum",
@@ -485,7 +485,7 @@ export function createMiningSection() {
               },
               {
                 name: "Distribution",
-                title: "Transaction Fee Revenue Distribution",
+                title: "Transaction Fee Revenue per Block Distribution",
                 bottom: distributionBtcSatsUsd(transactions.fees.fee),
               },
               {

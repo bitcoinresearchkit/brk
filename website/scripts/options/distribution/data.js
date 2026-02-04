@@ -123,13 +123,17 @@ export function buildCohortData() {
 
   // Addresses above amount
   const addressesAboveAmount = entries(addressCohorts.geAmount).map(
-    ([key, tree]) => {
+    ([key, cohort]) => {
       const names = GE_AMOUNT_NAMES[key];
       return {
         name: names.short,
         title: `Addresses ${names.long}`,
         color: colors.amount[key],
-        tree,
+        tree: cohort,
+        addrCount: {
+          count: cohort.addrCount,
+          _30dChange: cohort.addrCount30dChange,
+        },
       };
     },
   );
@@ -147,13 +151,17 @@ export function buildCohortData() {
 
   // Addresses under amount
   const addressesUnderAmount = entries(addressCohorts.ltAmount).map(
-    ([key, tree]) => {
+    ([key, cohort]) => {
       const names = LT_AMOUNT_NAMES[key];
       return {
         name: names.short,
         title: `Addresses ${names.long}`,
         color: colors.amount[key],
-        tree,
+        tree: cohort,
+        addrCount: {
+          count: cohort.addrCount,
+          _30dChange: cohort.addrCount30dChange,
+        },
       };
     },
   );
@@ -173,13 +181,17 @@ export function buildCohortData() {
 
   // Addresses amount ranges
   const addressesAmountRanges = entries(addressCohorts.amountRange).map(
-    ([key, tree]) => {
+    ([key, cohort]) => {
       const names = AMOUNT_RANGE_NAMES[key];
       return {
         name: names.short,
         title: `Addresses ${names.long}`,
         color: colors.amountRange[key],
-        tree,
+        tree: cohort,
+        addrCount: {
+          count: cohort.addrCount,
+          _30dChange: cohort.addrCount30dChange,
+        },
       };
     },
   );

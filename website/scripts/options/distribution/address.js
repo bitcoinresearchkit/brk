@@ -291,13 +291,6 @@ function createRealizedPnlSection(args, title) {
           unit: Unit.usd,
           defaultActive: false,
         }),
-        line({
-          metric: realized.totalRealizedPnl,
-          name: "Total",
-          color: colors.default,
-          unit: Unit.usd,
-          defaultActive: false,
-        }),
         baseline({
           metric: realized.realizedProfitRelToRealizedCap.sum,
           name: "Profit",
@@ -322,6 +315,13 @@ function createRealizedPnlSection(args, title) {
           name: "Loss Cumulative",
           color: colors.loss,
           unit: Unit.pctRcap,
+          defaultActive: false,
+        }),
+        line({
+          metric: realized.totalRealizedPnl,
+          name: "Total",
+          color: colors.default,
+          unit: Unit.usd,
           defaultActive: false,
         }),
       ],
@@ -451,6 +451,24 @@ function createRealizedPnlSection(args, title) {
       name: "Sent In P/L",
       tree: [
         {
+          name: "In Profit 14d EMA",
+          title: title("Sent In Profit 14d EMA"),
+          bottom: satsBtcUsd({
+            pattern: realized.sentInProfit14dEma,
+            name: "14d EMA",
+            color: colors.profit,
+          }),
+        },
+        {
+          name: "In Loss 14d EMA",
+          title: title("Sent In Loss 14d EMA"),
+          bottom: satsBtcUsd({
+            pattern: realized.sentInLoss14dEma,
+            name: "14d EMA",
+            color: colors.loss,
+          }),
+        },
+        {
           name: "In Profit",
           title: title("Sent In Profit"),
           bottom: [
@@ -539,24 +557,6 @@ function createRealizedPnlSection(args, title) {
               defaultActive: false,
             }),
           ],
-        },
-        {
-          name: "In Profit 14d EMA",
-          title: title("Sent In Profit 14d EMA"),
-          bottom: satsBtcUsd({
-            pattern: realized.sentInProfit14dEma,
-            name: "14d EMA",
-            color: colors.profit,
-          }),
-        },
-        {
-          name: "In Loss 14d EMA",
-          title: title("Sent In Loss 14d EMA"),
-          bottom: satsBtcUsd({
-            pattern: realized.sentInLoss14dEma,
-            name: "14d EMA",
-            color: colors.loss,
-          }),
         },
       ],
     },
@@ -679,6 +679,28 @@ function createGroupedRealizedPnlSection(list, title) {
       name: "Sent In P/L",
       tree: [
         {
+          name: "In Profit 14d EMA",
+          title: title("Sent In Profit 14d EMA"),
+          bottom: list.flatMap(({ color, name, tree }) =>
+            satsBtcUsd({
+              pattern: tree.realized.sentInProfit14dEma,
+              name,
+              color,
+            }),
+          ),
+        },
+        {
+          name: "In Loss 14d EMA",
+          title: title("Sent In Loss 14d EMA"),
+          bottom: list.flatMap(({ color, name, tree }) =>
+            satsBtcUsd({
+              pattern: tree.realized.sentInLoss14dEma,
+              name,
+              color,
+            }),
+          ),
+        },
+        {
           name: "In Profit",
           title: title("Sent In Profit"),
           bottom: list.flatMap(({ color, name, tree }) => [
@@ -774,28 +796,6 @@ function createGroupedRealizedPnlSection(list, title) {
             }),
           ]),
         },
-        {
-          name: "In Profit 14d EMA",
-          title: title("Sent In Profit 14d EMA"),
-          bottom: list.flatMap(({ color, name, tree }) =>
-            satsBtcUsd({
-              pattern: tree.realized.sentInProfit14dEma,
-              name,
-              color,
-            }),
-          ),
-        },
-        {
-          name: "In Loss 14d EMA",
-          title: title("Sent In Loss 14d EMA"),
-          bottom: list.flatMap(({ color, name, tree }) =>
-            satsBtcUsd({
-              pattern: tree.realized.sentInLoss14dEma,
-              name,
-              color,
-            }),
-          ),
-        },
       ],
     },
   ];
@@ -811,7 +811,7 @@ function createGroupedRealizedPnlSection(list, title) {
 function createUnrealizedSection(list, useGroupName, title) {
   return [
     {
-      name: "Unrealized",
+      name: "Profitability",
       tree: [
         {
           name: "Profit",
@@ -962,7 +962,7 @@ function createUnrealizedSection(list, useGroupName, title) {
                   metric: tree.relative.investedCapitalInProfitPct,
                   name: useGroupName ? name : "In Profit",
                   color: useGroupName ? color : colors.profit,
-                  unit: Unit.pctRcap,
+                  unit: Unit.pctOwnRcap,
                 }),
               ]),
             },
@@ -974,7 +974,7 @@ function createUnrealizedSection(list, useGroupName, title) {
                   metric: tree.relative.investedCapitalInLossPct,
                   name: useGroupName ? name : "In Loss",
                   color: useGroupName ? color : colors.loss,
-                  unit: Unit.pctRcap,
+                  unit: Unit.pctOwnRcap,
                 }),
               ]),
             },
@@ -1105,6 +1105,13 @@ function createActivitySection(args, title) {
           name: "Sent",
           tree: [
             {
+              name: "14d EMA",
+              title: title("Sent 14d EMA"),
+              bottom: list.flatMap(({ color, name, tree }) =>
+                satsBtcUsd({ pattern: tree.activity.sent14dEma, name, color }),
+              ),
+            },
+            {
               name: "Sum",
               title: title("Sent"),
               bottom: list.flatMap(({ color, name, tree }) =>
@@ -1117,13 +1124,6 @@ function createActivitySection(args, title) {
                   name,
                   color,
                 }),
-              ),
-            },
-            {
-              name: "14d EMA",
-              title: title("Sent 14d EMA"),
-              bottom: list.flatMap(({ color, name, tree }) =>
-                satsBtcUsd({ pattern: tree.activity.sent14dEma, name, color }),
               ),
             },
           ],

@@ -5,8 +5,8 @@ use brk_types::{Dollars, Sats, StoredF32, StoredF64, Version};
 use vecdb::IterableCloneableVec;
 
 use crate::internal::{
-    LazyBinaryFromHeightLast, LazyBinaryFromDateLast, NegPercentageDollarsF32, NegRatio32,
-    PercentageDollarsF32, PercentageSatsF64, Ratio32,
+    LazyBinaryFromDateLast, LazyBinaryFromHeightLast, NegPercentageDollarsF32,
+    PercentageDollarsF32, PercentageSatsF64,
 };
 
 use super::{ImportConfig, RealizedMetrics, SupplyMetrics, UnrealizedMetrics};
@@ -337,33 +337,33 @@ impl RelativeMetrics {
 
             // === Unrealized vs Own Total Unrealized PnL (lazy, optional) ===
             unrealized_profit_rel_to_own_total_unrealized_pnl: extended.then(|| {
-                LazyBinaryFromHeightLast::from_computed_height_date_and_binary_block::<Ratio32, _, _>(
+                LazyBinaryFromHeightLast::from_computed_height_date_and_binary_block::<PercentageDollarsF32, _, _>(
                     &cfg.name("unrealized_profit_rel_to_own_total_unrealized_pnl"),
-                    cfg.version,
+                    cfg.version + v1,
                     &unrealized.unrealized_profit,
                     &unrealized.total_unrealized_pnl,
                 )
             }),
             unrealized_loss_rel_to_own_total_unrealized_pnl: extended.then(|| {
-                LazyBinaryFromHeightLast::from_computed_height_date_and_binary_block::<Ratio32, _, _>(
+                LazyBinaryFromHeightLast::from_computed_height_date_and_binary_block::<PercentageDollarsF32, _, _>(
                     &cfg.name("unrealized_loss_rel_to_own_total_unrealized_pnl"),
-                    cfg.version,
+                    cfg.version + v1,
                     &unrealized.unrealized_loss,
                     &unrealized.total_unrealized_pnl,
                 )
             }),
             neg_unrealized_loss_rel_to_own_total_unrealized_pnl: extended.then(|| {
-                LazyBinaryFromHeightLast::from_computed_height_date_and_binary_block::<NegRatio32, _, _>(
+                LazyBinaryFromHeightLast::from_computed_height_date_and_binary_block::<NegPercentageDollarsF32, _, _>(
                     &cfg.name("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
-                    cfg.version,
+                    cfg.version + v1,
                     &unrealized.unrealized_loss,
                     &unrealized.total_unrealized_pnl,
                 )
             }),
             net_unrealized_pnl_rel_to_own_total_unrealized_pnl: extended.then(|| {
-                LazyBinaryFromHeightLast::from_both_binary_block::<Ratio32, _, _, _, _>(
+                LazyBinaryFromHeightLast::from_both_binary_block::<PercentageDollarsF32, _, _, _, _>(
                     &cfg.name("net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
-                    cfg.version + v1,
+                    cfg.version + v2,
                     &unrealized.net_unrealized_pnl,
                     &unrealized.total_unrealized_pnl,
                 )

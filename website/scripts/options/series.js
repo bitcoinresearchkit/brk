@@ -211,7 +211,6 @@ export function candlestick({
   metric,
   name,
   key,
-
   defaultActive,
   unit,
   options,
@@ -221,7 +220,6 @@ export function candlestick({
     metric,
     title: name,
     key,
-
     unit,
     defaultActive,
     options,
@@ -238,6 +236,7 @@ export function candlestick({
  * @param {Color | [Color, Color]} [args.color]
  * @param {boolean} [args.defaultActive]
  * @param {number | undefined} [args.base]
+ * @param {number} [args.style] - Line style (0: Solid, 1: Dotted, 2: Dashed, 3: LargeDashed, 4: SparseDotted)
  * @param {BaselineSeriesPartialOptions} [args.options]
  * @returns {FetchedBaselineSeriesBlueprint}
  */
@@ -249,11 +248,64 @@ export function baseline({
   defaultActive,
   unit,
   base,
+  style,
   options,
 }) {
   const isTuple = Array.isArray(color);
   return {
     type: /** @type {const} */ ("Baseline"),
+    metric,
+    title: name,
+    key,
+    color: isTuple ? undefined : color,
+    colors: isTuple ? color : undefined,
+    unit,
+    defaultActive,
+    options: {
+      baseValue: {
+        price: base,
+      },
+      lineStyle: style,
+      ...options,
+    },
+  };
+}
+
+/**
+ * @param {Omit<Parameters<typeof baseline>[0], 'style'>} args
+ */
+export function dottedBaseline(args) {
+  const _args = /** @type {Parameters<typeof baseline>[0]} */ (args);
+  _args.style = 1;
+  return baseline(_args);
+}
+
+/**
+ * Baseline series rendered as dots (points only, no line)
+ * @param {Object} args
+ * @param {AnyMetricPattern} args.metric
+ * @param {string} args.name
+ * @param {Unit} args.unit
+ * @param {string} [args.key]
+ * @param {Color | [Color, Color]} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @param {number | undefined} [args.base]
+ * @param {BaselineSeriesPartialOptions} [args.options]
+ * @returns {FetchedDotsBaselineSeriesBlueprint}
+ */
+export function dotsBaseline({
+  metric,
+  name,
+  key,
+  color,
+  defaultActive,
+  unit,
+  base,
+  options,
+}) {
+  const isTuple = Array.isArray(color);
+  return {
+    type: /** @type {const} */ ("DotsBaseline"),
     metric,
     title: name,
     key,
@@ -509,9 +561,18 @@ function btcSatsUsdSeries({ metrics, name, color, defaultActive }) {
  * @param {FullStatsPattern<any>} args.pattern
  * @param {string} args.title
  * @param {Unit} args.unit
+ * @param {string} [args.distributionSuffix]
  * @returns {PartialOptionsTree}
  */
-export function chartsFromFull({ pattern, title, unit }) {
+export function chartsFromFull({
+  pattern,
+  title,
+  unit,
+  distributionSuffix = "",
+}) {
+  const distTitle = distributionSuffix
+    ? `${title} ${distributionSuffix} Distribution`
+    : `${title} Distribution`;
   return [
     {
       name: "Sum",
@@ -523,7 +584,7 @@ export function chartsFromFull({ pattern, title, unit }) {
     },
     {
       name: "Distribution",
-      title: `${title} Distribution`,
+      title: distTitle,
       bottom: distributionSeries(pattern, unit),
     },
     {
@@ -535,15 +596,35 @@ export function chartsFromFull({ pattern, title, unit }) {
 }
 
 /**
+ * Split pattern into 3 charts with "per Block" in distribution title
+ * @param {Object} args
+ * @param {FullStatsPattern<any>} args.pattern
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsTree}
+ */
+export const chartsFromFullPerBlock = (args) =>
+  chartsFromFull({ ...args, distributionSuffix: "per Block" });
+
+/**
  * Split pattern with sum + distribution + cumulative into 3 charts (no base)
  * @param {Object} args
  * @param {AnyStatsPattern} args.pattern
  * @param {string} args.title
  * @param {Unit} args.unit
+ * @param {string} [args.distributionSuffix]
  * @returns {PartialOptionsTree}
  */
-export function chartsFromSum({ pattern, title, unit }) {
+export function chartsFromSum({
+  pattern,
+  title,
+  unit,
+  distributionSuffix = "",
+}) {
   const { stat } = colors;
+  const distTitle = distributionSuffix
+    ? `${title} ${distributionSuffix} Distribution`
+    : `${title} Distribution`;
   return [
     {
       name: "Sum",
@@ -552,7 +633,7 @@ export function chartsFromSum({ pattern, title, unit }) {
     },
     {
       name: "Distribution",
-      title: `${title} Distribution`,
+      title: distTitle,
       bottom: distributionSeries(pattern, unit),
     },
     {
@@ -562,6 +643,17 @@ export function chartsFromSum({ pattern, title, unit }) {
     },
   ];
 }
+
+/**
+ * Split pattern into 3 charts with "per Block" in distribution title (no base)
+ * @param {Object} args
+ * @param {AnyStatsPattern} args.pattern
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsTree}
+ */
+export const chartsFromSumPerBlock = (args) =>
+  chartsFromSum({ ...args, distributionSuffix: "per Block" });
 
 /**
  * Split pattern with sum + cumulative into 2 charts

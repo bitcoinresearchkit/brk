@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{CentsSats, CentsSquaredSats, CentsUnsigned, DateIndex, Dollars, Height};
+use brk_types::{CentsSats, CentsSquaredSats, CentsUnsigned, DateIndex, Dollars, Height, Version};
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, BytesVec, Exit, GenericStoredVec, ImportableVec, Negate,
@@ -150,7 +150,7 @@ impl UnrealizedMetrics {
         let net_sentiment = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("net_sentiment"),
-            cfg.version,
+            cfg.version + Version::ONE, // v1: weighted average for aggregate cohorts
             cfg.indexes,
         )?;
 

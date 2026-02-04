@@ -110,6 +110,10 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
     }),
   };
 
+  // Generation counter - incremented on any context change (index, blueprints, unit)
+  // Used to detect and ignore stale operations (in-flight fetches, etc.)
+  let generation = 0;
+
   // Range state: localStorage stores all ranges per-index, URL stores current range only
   /** @typedef {{ from: number, to: number }} Range */
   const ranges = createPersistedValue({
@@ -514,6 +518,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
       active.value ? show() : hide();
 
+      const seriesGeneration = generation;
       let hasData = false;
       let lastTime = -Infinity;
       /** @type {string | null} */
@@ -671,7 +676,10 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
                 .setVisibleLogicalRange({ from: -1, to: data.length });
             }
             // Delay until chart has applied the range
-            requestAnimationFrame(() => blueprints.onDataLoaded?.());
+            requestAnimationFrame(() => {
+              if (seriesGeneration !== generation) return;
+              blueprints.onDataLoaded?.();
+            });
           } else {
             // Incremental update: only process new data points
             for (let i = startIdx; i < length; i++) {
@@ -687,9 +695,9 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
             getTimeEndpoint(idx).slice(-10000).fetch(),
             valuesEndpoint.slice(-10000).fetch(),
           ]);
-          if (valuesResult.stamp === lastStamp) {
-            return;
-          }
+          // Ignore stale fetches from series that have been replaced
+          if (seriesGeneration !== generation) return;
+          if (valuesResult.stamp === lastStamp) return;
           lastStamp = valuesResult.stamp;
           if (timeResult.data.length && valuesResult.data.length) {
             processData(timeResult.data, valuesResult.data);
@@ -735,8 +743,9 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       defaultActive,
       options,
     }) {
-      const upColor = customColors?.[0] ?? colors.bi.profitLoss[0];
-      const downColor = customColors?.[1] ?? colors.bi.profitLoss[1];
+      const seriesGeneration = generation;
+      const upColor = customColors?.[0] ?? colors.bi.p1[0];
+      const downColor = customColors?.[1] ?? colors.bi.p1[1];
 
       /** @type {CandlestickISeries} */
       const candlestickISeries = /** @type {any} */ (
@@ -836,6 +845,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
           const lineData = data.map((d) => ({ time: d.time, value: d.close }));
           lineISeries.setData(lineData);
           requestAnimationFrame(() => {
+            if (seriesGeneration !== generation) return;
             const range = ichart.timeScale().getVisibleLogicalRange();
             if (range) {
               showLine = shouldShowLine(range.to - range.from);
@@ -876,7 +886,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       metric,
       name,
       key,
-      color = colors.bi.profitLoss,
+      color = colors.bi.p1,
       order,
       unit,
       paneIndex = 0,
@@ -1189,8 +1199,8 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       unit,
       paneIndex: _paneIndex,
       defaultActive,
-      topColor = colors.bi.profitLoss[0],
-      bottomColor = colors.bi.profitLoss[1],
+      topColor = colors.bi.p1[0],
+      bottomColor = colors.bi.p1[1],
       options,
     }) {
       const paneIndex = _paneIndex ?? 0;
@@ -1264,6 +1274,127 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
         onRemove: () => {
+          removeSeriesThemeListener();
+          ichart.removeSeries(iseries);
+        },
+      });
+
+      panes.register(paneIndex, series, [iseries]);
+
+      return series;
+    },
+
+    /**
+     * Add a DotsBaseline series (baseline with point markers instead of line)
+     * @param {Object} args
+     * @param {AnyMetricPattern} args.metric
+     * @param {string} args.name
+     * @param {string} [args.key]
+     * @param {number} args.order
+     * @param {Unit} args.unit
+     * @param {number} [args.paneIndex]
+     * @param {boolean} [args.defaultActive]
+     * @param {Color} [args.topColor]
+     * @param {Color} [args.bottomColor]
+     * @param {BaselineSeriesPartialOptions} [args.options]
+     */
+    addDotsBaseline({
+      metric,
+      name,
+      key,
+      order,
+      unit,
+      paneIndex: _paneIndex,
+      defaultActive,
+      topColor = colors.bi.p1[0],
+      bottomColor = colors.bi.p1[1],
+      options,
+    }) {
+      const paneIndex = _paneIndex ?? 0;
+
+      /** @type {BaselineISeries} */
+      const iseries = /** @type {any} */ (
+        ichart.addSeries(
+          /** @type {SeriesDefinition<'Baseline'>} */ (BaselineSeries),
+          {
+            lineWidth,
+            baseValue: {
+              price: options?.baseValue?.price ?? 0,
+            },
+            ...options,
+            priceLineVisible: false,
+            bottomFillColor1: "transparent",
+            bottomFillColor2: "transparent",
+            topFillColor1: "transparent",
+            topFillColor2: "transparent",
+            lineVisible: false,
+            pointMarkersVisible: true,
+            pointMarkersRadius: 1,
+          },
+          paneIndex,
+        )
+      );
+
+      let active = defaultActive !== false;
+      let highlighted = true;
+      let radius = getDotsRadius(visibleBarsCount);
+
+      function update() {
+        iseries.applyOptions({
+          visible: active,
+          lastValueVisible: highlighted,
+          topLineColor: topColor.highlight(highlighted),
+          bottomLineColor: bottomColor.highlight(highlighted),
+          pointMarkersRadius: radius,
+        });
+      }
+      update();
+
+      /** @type {ZoomChangeCallback} */
+      function handleZoom(count) {
+        const newRadius = getDotsRadius(count);
+        if (newRadius === radius) return;
+        radius = newRadius;
+        iseries.applyOptions({ pointMarkersRadius: radius });
+      }
+      onZoomChange.add(handleZoom);
+      const removeSeriesThemeListener = onThemeChange(update);
+
+      const series = serieses.create({
+        colors: [topColor, bottomColor],
+        name,
+        key,
+        order,
+        paneIndex,
+        unit,
+        defaultActive,
+        metric,
+        setOrder: (order) => iseries.setSeriesOrder(order),
+        show() {
+          if (active) return;
+          active = true;
+          update();
+        },
+        hide() {
+          if (!active) return;
+          active = false;
+          update();
+        },
+        highlight() {
+          if (highlighted) return;
+          highlighted = true;
+          update();
+        },
+        tame() {
+          if (!highlighted) return;
+          highlighted = false;
+          update();
+        },
+        setData: (data) => iseries.setData(data),
+        update: (data) => iseries.update(data),
+        getData: () => iseries.data(),
+        onRemove: () => {
+          onZoomChange.delete(handleZoom);
           removeSeriesThemeListener();
           ichart.removeSeries(iseries);
         },
@@ -1373,6 +1504,23 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
               );
               break;
             }
+            case "DotsBaseline": {
+              pane.series.push(
+                serieses.addDotsBaseline({
+                  metric: blueprint.metric,
+                  name: blueprint.title,
+                  key: blueprint.key,
+                  defaultActive: blueprint.defaultActive,
+                  paneIndex,
+                  unit,
+                  topColor: blueprint.colors?.[0] ?? blueprint.color,
+                  bottomColor: blueprint.colors?.[1] ?? blueprint.color,
+                  options,
+                  order,
+                }),
+              );
+              break;
+            }
             case "Histogram": {
               pane.series.push(
                 serieses.addHistogram({
@@ -1448,6 +1596,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
     },
 
     rebuild() {
+      generation++;
       this.rebuildPane(0);
       this.rebuildPane(1);
     },
@@ -1507,6 +1656,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
               toLabel: (u) => u.name,
               sorted: true,
               onChange(unit) {
+                generation++;
                 persistedUnit.set(unit.id);
                 blueprints.panes[paneIndex].unit = unit;
                 blueprints.rebuildPane(paneIndex);
@@ -1522,6 +1672,10 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
     },
 
     destroy() {
+      debouncedSetRange.cancel();
+      serieses.all.forEach((s) => s.remove());
+      index.onChange.clear();
+      onZoomChange.clear();
       removeThemeListener();
       clearInterval(refreshInterval);
       ichart.remove();

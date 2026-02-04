@@ -28,22 +28,27 @@ function walk(node, map, path) {
     for (const [key, value] of Object.entries(node)) {
       const kn = key.toLowerCase();
       if (
-        //   kn === "mvrv" ||
+        key.endsWith("Raw") ||
+        key.endsWith("Cents") ||
+        key.endsWith("State") ||
+        key.endsWith("Start") ||
+        kn === "mvrv" ||
         //   kn === "time" ||
         //   kn === "height" ||
-        //   kn === "constants" ||
+        kn === "constants" ||
         kn === "blockhash" ||
         kn === "date" ||
         //   kn === "oracle" ||
-        //   kn === "split" ||
+        kn === "split" ||
         //   kn === "ohlc" ||
-        //   kn === "outpoint" ||
+        kn === "outpoint" ||
         kn === "positions" ||
         //   kn === "outputtype" ||
         kn === "heighttopool" ||
-        //   kn === "txid" ||
+        kn === "txid" ||
         kn.startsWith("timestamp") ||
-        //   kn.startsWith("satdays") ||
+        kn.startsWith("satdays") ||
+        kn.startsWith("satblocks") ||
         //   kn.endsWith("state") ||
         //   kn.endsWith("cents") ||
         kn.endsWith("index") ||

@@ -61,7 +61,7 @@ export function init() {
       type: "Candlestick",
       title: "Price",
       metric: brk.metrics.price.sats.ohlc,
-      colors: colors.bi.profitLoss,
+      colors: /** @type {const} */ ([colors.bi.p1[1], colors.bi.p1[0]]),
     };
     result.set(Unit.sats, [satsPrice, ...(optionTop.get(Unit.sats) ?? [])]);
 
@@ -97,15 +97,16 @@ export function init() {
   _setOption = (opt) => {
     headingElement.innerHTML = opt.title;
 
-    // Update index choices based on option
-    setChoices(computeChoices(opt));
-
+    // Set blueprints first so storageId is correct before any index change
     blueprints = chart.setBlueprints({
       name: opt.title,
       top: buildTopBlueprints(opt.top),
       bottom: opt.bottom,
       onDataLoaded: updatePriceWithLatest,
     });
+
+    // Update index choices (may trigger rebuild if index changes)
+    setChoices(computeChoices(opt));
   };
 
   // Live price update listener

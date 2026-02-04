@@ -20,9 +20,10 @@ export const formatCohortTitle = (cohortTitle) => (metric) =>
  * @param {string} args.name
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]
+ * @param {number} [args.style]
  * @returns {FetchedLineSeriesBlueprint[]}
  */
-export function satsBtcUsd({ pattern, name, color, defaultActive }) {
+export function satsBtcUsd({ pattern, name, color, defaultActive, style }) {
   return [
     line({
       metric: pattern.bitcoin,
@@ -30,14 +31,23 @@ export function satsBtcUsd({ pattern, name, color, defaultActive }) {
       color,
       unit: Unit.btc,
       defaultActive,
+      style,
     }),
-    line({ metric: pattern.sats, name, color, unit: Unit.sats, defaultActive }),
+    line({
+      metric: pattern.sats,
+      name,
+      color,
+      unit: Unit.sats,
+      defaultActive,
+      style,
+    }),
     line({
       metric: pattern.dollars,
       name,
       color,
       unit: Unit.usd,
       defaultActive,
+      style,
     }),
   ];
 }
@@ -60,7 +70,13 @@ export function satsBtcUsdBaseline({ pattern, name, color, defaultActive }) {
       unit: Unit.btc,
       defaultActive,
     }),
-    baseline({ metric: pattern.sats, name, color, unit: Unit.sats, defaultActive }),
+    baseline({
+      metric: pattern.sats,
+      name,
+      color,
+      unit: Unit.sats,
+      defaultActive,
+    }),
     baseline({
       metric: pattern.dollars,
       name,
@@ -146,7 +162,12 @@ export function revenueBtcSatsUsd({ coinbase, subsidy, fee, key }) {
       name: "Subsidy",
       color: colors.mining.subsidy,
     }),
-    ...satsBtcUsdFrom({ source: fee, key, name: "Fees", color: colors.mining.fee }),
+    ...satsBtcUsdFrom({
+      source: fee,
+      key,
+      name: "Fees",
+      color: colors.mining.fee,
+    }),
   ];
 }
 
@@ -477,8 +498,7 @@ export function createPriceRatioCharts({
       ],
     },
     createRatioChart({
-      title: (name) =>
-        titleFn(titlePrefix ? `${titlePrefix} ${name}` : name),
+      title: (name) => titleFn(titlePrefix ? `${titlePrefix} ${name}` : name),
       pricePattern,
       ratio,
       color,

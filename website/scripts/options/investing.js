@@ -327,7 +327,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
         baseline({
           metric: dca.periodLumpSumMaxReturn[key],
           name: "Lump Sum",
-          color: colors.bi.lumpSum,
+          color: colors.bi.p2,
           unit: Unit.percentage,
         }),
       ],
@@ -345,7 +345,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
         baseline({
           metric: dca.periodLumpSumMinReturn[key],
           name: "Lump Sum",
-          color: colors.bi.lumpSum,
+          color: colors.bi.p2,
           unit: Unit.percentage,
         }),
       ],
@@ -369,7 +369,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
           baseline({
             metric: dca.periodLumpSumReturns[key],
             name: "Lump Sum",
-            color: colors.bi.lumpSum,
+            color: colors.bi.p2,
             unit: Unit.percentage,
           }),
         ],
@@ -395,7 +395,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
           baseline({
             metric: dca.periodLumpSumReturns[key],
             name: "Lump Sum",
-            color: colors.bi.lumpSum,
+            color: colors.bi.p2,
             unit: Unit.percentage,
           }),
           baseline({
@@ -406,7 +406,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
           baseline({
             metric: returns.cagr[key],
             name: "Lump Sum",
-            color: colors.bi.lumpSum,
+            color: colors.bi.p2,
             unit: Unit.cagr,
           }),
         ],

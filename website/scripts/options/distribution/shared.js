@@ -342,13 +342,6 @@ export function createGroupedSupplySection(
     name: "Supply",
     tree: [
       {
-        name: "Total",
-        title: title("Supply"),
-        bottom: createGroupedSupplyTotalSeries(list, {
-          relativeMetrics: supplyRelativeMetrics,
-        }),
-      },
-      {
         name: "30d Change",
         title: title("Supply 30d Change"),
         bottom: list.flatMap(({ color, name, tree }) =>
@@ -367,6 +360,13 @@ export function createGroupedSupplySection(
         title: title("Supply In Loss"),
         bottom: createGroupedSupplyInLossSeries(list, {
           relativeMetrics: lossRelativeMetrics,
+        }),
+      },
+      {
+        name: "Total",
+        title: title("Supply"),
+        bottom: createGroupedSupplyTotalSeries(list, {
+          relativeMetrics: supplyRelativeMetrics,
         }),
       },
     ],
@@ -988,10 +988,10 @@ export function createSingleSentSeries(cohort) {
  */
 export function createSingleSellSideRiskSeries(tree) {
   return [
-    dots({
-      metric: tree.realized.sellSideRiskRatio,
-      name: "Raw",
-      color: colors.bitcoin,
+    line({
+      metric: tree.realized.sellSideRiskRatio30dEma,
+      name: "30d EMA",
+      color: colors.ma._1m,
       unit: Unit.ratio,
     }),
     line({
@@ -1000,10 +1000,10 @@ export function createSingleSellSideRiskSeries(tree) {
       color: colors.ma._1w,
       unit: Unit.ratio,
     }),
-    line({
-      metric: tree.realized.sellSideRiskRatio30dEma,
-      name: "30d EMA",
-      color: colors.ma._1m,
+    dots({
+      metric: tree.realized.sellSideRiskRatio,
+      name: "Raw",
+      color: colors.bitcoin,
       unit: Unit.ratio,
     }),
   ];
@@ -1130,7 +1130,7 @@ export function createSingleSoprSeries(tree) {
     baseline({
       metric: tree.realized.sopr7dEma,
       name: "7d EMA",
-      color: colors.bi.sopr7d,
+      color: colors.bi.p2,
       unit: Unit.ratio,
       defaultActive: false,
       base: 1,
@@ -1138,7 +1138,7 @@ export function createSingleSoprSeries(tree) {
     baseline({
       metric: tree.realized.sopr30dEma,
       name: "30d EMA",
-      color: colors.bi.sopr30d,
+      color: colors.bi.p2,
       unit: Unit.ratio,
       defaultActive: false,
       base: 1,
@@ -1340,12 +1340,14 @@ export function createSingleSentimentSeries(tree) {
       name: "Greed Index",
       color: colors.profit,
       unit: Unit.usd,
+      defaultActive: false,
     }),
     line({
       metric: tree.unrealized.painIndex,
       name: "Pain Index",
       color: colors.loss,
       unit: Unit.usd,
+      defaultActive: false,
     }),
   ];
 }

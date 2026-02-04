@@ -35,7 +35,14 @@
  * @property {LineSeriesPartialOptions} [options]
  * @typedef {BaseSeriesBlueprint & DotsSeriesBlueprintSpecific} DotsSeriesBlueprint
  *
- * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint | HistogramSeriesBlueprint | DotsSeriesBlueprint} AnySeriesBlueprint
+ * @typedef {Object} DotsBaselineSeriesBlueprintSpecific
+ * @property {"DotsBaseline"} type
+ * @property {Color} [color]
+ * @property {[Color, Color]} [colors]
+ * @property {BaselineSeriesPartialOptions} [options]
+ * @typedef {BaseSeriesBlueprint & DotsBaselineSeriesBlueprintSpecific} DotsBaselineSeriesBlueprint
+ *
+ * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint | HistogramSeriesBlueprint | DotsSeriesBlueprint | DotsBaselineSeriesBlueprint} AnySeriesBlueprint
  *
  * @typedef {AnySeriesBlueprint["type"]} SeriesType
  *
@@ -46,6 +53,7 @@
  * @typedef {LineSeriesBlueprint & FetchedAnySeriesOptions} FetchedLineSeriesBlueprint
  * @typedef {HistogramSeriesBlueprint & FetchedAnySeriesOptions} FetchedHistogramSeriesBlueprint
  * @typedef {DotsSeriesBlueprint & FetchedAnySeriesOptions} FetchedDotsSeriesBlueprint
+ * @typedef {DotsBaselineSeriesBlueprint & FetchedAnySeriesOptions} FetchedDotsBaselineSeriesBlueprint
  * @typedef {AnySeriesBlueprint & FetchedAnySeriesOptions} AnyFetchedSeriesBlueprint
  *
  * Any pattern with dollars and sats sub-metrics (auto-expands to USD + sats)
@@ -317,6 +325,7 @@
  * @property {string} title
  * @property {Color} color
  * @property {AddressCohortPattern} tree
+ * @property {Brk._30dCountPattern} addrCount
  *
  * @typedef {UtxoCohortObject | AddressCohortObject | CohortWithoutRelative} CohortObject
  *

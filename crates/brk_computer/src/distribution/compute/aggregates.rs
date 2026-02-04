@@ -42,6 +42,10 @@ pub fn compute_rest_part1(
     utxo_cohorts.compute_rest_part1(indexes, price, starting_indexes, exit)?;
     address_cohorts.compute_rest_part1(indexes, price, starting_indexes, exit)?;
 
+    // Recompute net_sentiment for aggregate cohorts as weighted average
+    utxo_cohorts.compute_aggregate_net_sentiment(indexes, starting_indexes, exit)?;
+    address_cohorts.compute_aggregate_net_sentiment(indexes, starting_indexes, exit)?;
+
     Ok(())
 }
 

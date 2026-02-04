@@ -24,13 +24,7 @@
  */
 
 import {
-  createSingleSellSideRiskSeries,
-  createGroupedSellSideRiskSeries,
-  createSingleValueCreatedDestroyedSeries,
-  createSingleValueFlowBreakdownSeries,
-  createSingleCapitulationProfitFlowSeries,
   createSingleSoprSeries,
-  createSingleCoinsDestroyedSeries,
   createSingleRealizedAthRegretSeries,
   createGroupedRealizedAthRegretSeries,
   createSingleSentimentSeries,
@@ -64,6 +58,20 @@ import {
   createValuationSectionFull,
   createGroupedValuationSection,
 } from "./valuation.js";
+import {
+  createActivitySection,
+  createActivitySectionWithAdjusted,
+  createGroupedActivitySection,
+  createGroupedActivitySectionWithAdjusted,
+} from "./activity.js";
+import {
+  createProfitabilitySection,
+  createProfitabilitySectionWithNupl,
+  createProfitabilitySectionAll,
+  createProfitabilitySectionWithPeakRegret,
+  createGroupedProfitabilitySection,
+  createGroupedProfitabilitySectionWithNupl,
+} from "./profitability.js";
 import { Unit } from "../../utils/units.js";
 import { line, baseline } from "../series.js";
 import { priceLine } from "../constants.js";
@@ -84,12 +92,11 @@ export function createCohortFolderAll(args) {
     name: args.name || "all",
     tree: [
       createHoldingsSectionAll({ cohort: args, title }),
-      createPricesSectionFull({ cohort: args, title }),
       createValuationSectionFull({ cohort: args, title }),
-      createSingleRealizedSectionFull(args, title),
-      createSingleUnrealizedSectionAll(args, title),
+      createPricesSectionFull({ cohort: args, title }),
       createCostBasisSectionWithPercentiles({ cohort: args, title }),
-      createSingleActivitySectionWithAdjusted(args, title),
+      createProfitabilitySectionAll({ cohort: args, title }),
+      createActivitySectionWithAdjusted({ cohort: args, title }),
     ],
   };
 }
@@ -107,14 +114,11 @@ export function createCohortFolderFull(args) {
       name: args.name || "all",
       tree: [
         createGroupedHoldingsSectionWithRelative({ list, title }),
-        createGroupedPricesSection({ list, title }),
         createGroupedValuationSection({ list, title }),
-        createGroupedRealizedSectionWithAdjusted(list, title, {
-          ratioMetrics: createGroupedRealizedPnlRatioMetrics,
-        }),
-        createGroupedUnrealizedSectionFull(list, title),
+        createGroupedPricesSection({ list, title }),
         createGroupedCostBasisSectionWithPercentiles({ list, title }),
-        createGroupedActivitySectionWithAdjusted(list, title),
+        createGroupedProfitabilitySectionWithNupl({ list, title }),
+        createGroupedActivitySectionWithAdjusted({ list, title }),
       ],
     };
   }
@@ -123,12 +127,11 @@ export function createCohortFolderFull(args) {
     name: args.name || "all",
     tree: [
       createHoldingsSectionWithRelative({ cohort: args, title }),
-      createPricesSectionFull({ cohort: args, title }),
       createValuationSectionFull({ cohort: args, title }),
-      createSingleRealizedSectionFull(args, title),
-      createSingleUnrealizedSectionFull(args, title),
+      createPricesSectionFull({ cohort: args, title }),
       createCostBasisSectionWithPercentiles({ cohort: args, title }),
-      createSingleActivitySectionWithAdjusted(args, title),
+      createProfitabilitySectionWithNupl({ cohort: args, title }),
+      createActivitySectionWithAdjusted({ cohort: args, title }),
     ],
   };
 }
@@ -146,12 +149,11 @@ export function createCohortFolderWithAdjusted(args) {
       name: args.name || "all",
       tree: [
         createGroupedHoldingsSectionWithRelative({ list, title }),
-        createGroupedPricesSection({ list, title }),
         createGroupedValuationSection({ list, title }),
-        createGroupedRealizedSectionWithAdjusted(list, title),
-        createGroupedUnrealizedSectionWithMarketCap(list, title),
+        createGroupedPricesSection({ list, title }),
         createGroupedCostBasisSection({ list, title }),
-        createGroupedActivitySectionWithAdjusted(list, title),
+        createGroupedProfitabilitySectionWithNupl({ list, title }),
+        createGroupedActivitySectionWithAdjusted({ list, title }),
       ],
     };
   }
@@ -160,12 +162,11 @@ export function createCohortFolderWithAdjusted(args) {
     name: args.name || "all",
     tree: [
       createHoldingsSectionWithRelative({ cohort: args, title }),
-      createPricesSectionBasic({ cohort: args, title }),
       createValuationSection({ cohort: args, title }),
-      createSingleRealizedSectionWithAdjusted(args, title),
-      createSingleUnrealizedSectionWithMarketCap(args, title),
+      createPricesSectionBasic({ cohort: args, title }),
       createCostBasisSection({ cohort: args, title }),
-      createSingleActivitySectionWithAdjusted(args, title),
+      createProfitabilitySectionWithNupl({ cohort: args, title }),
+      createActivitySectionWithAdjusted({ cohort: args, title }),
     ],
   };
 }
@@ -183,13 +184,10 @@ export function createCohortFolderWithNupl(args) {
       name: args.name || "all",
       tree: [
         createGroupedHoldingsSectionWithRelative({ list, title }),
-        createGroupedPricesSection({ list, title }),
         createGroupedValuationSection({ list, title }),
-        createGroupedRealizedSectionBasic(list, title, {
-          ratioMetrics: createGroupedRealizedPnlRatioMetrics,
-        }),
-        createGroupedUnrealizedSectionWithNupl({ list, title }),
+        createGroupedPricesSection({ list, title }),
         createGroupedCostBasisSectionWithPercentiles({ list, title }),
+        createGroupedProfitabilitySectionWithNupl({ list, title }),
         createGroupedActivitySection({ list, title }),
       ],
     };
@@ -199,11 +197,10 @@ export function createCohortFolderWithNupl(args) {
     name: args.name || "all",
     tree: [
       createHoldingsSectionWithRelative({ cohort: args, title }),
-      createPricesSectionFull({ cohort: args, title }),
       createValuationSectionFull({ cohort: args, title }),
-      createSingleRealizedSectionWithPercentiles(args, title),
-      createSingleUnrealizedSectionWithNupl({ cohort: args, title }),
+      createPricesSectionFull({ cohort: args, title }),
       createCostBasisSectionWithPercentiles({ cohort: args, title }),
+      createProfitabilitySectionWithNupl({ cohort: args, title }),
       createActivitySection({ cohort: args, title }),
     ],
   };
@@ -222,13 +219,10 @@ export function createCohortFolderAgeRange(args) {
       name: args.name || "all",
       tree: [
         createGroupedHoldingsSection({ list, title }),
-        createGroupedPricesSection({ list, title }),
         createGroupedValuationSection({ list, title }),
-        createGroupedRealizedSectionBasic(list, title, {
-          ratioMetrics: createGroupedRealizedPnlRatioMetrics,
-        }),
-        createGroupedUnrealizedSectionAgeRange(list, title),
+        createGroupedPricesSection({ list, title }),
         createGroupedCostBasisSectionWithPercentiles({ list, title }),
+        createGroupedProfitabilitySection({ list, title }),
         createGroupedActivitySection({ list, title }),
       ],
     };
@@ -238,11 +232,10 @@ export function createCohortFolderAgeRange(args) {
     name: args.name || "all",
     tree: [
       createHoldingsSection({ cohort: args, title }),
-      createPricesSectionFull({ cohort: args, title }),
       createValuationSectionFull({ cohort: args, title }),
-      createSingleRealizedSectionWithPercentiles(args, title),
-      createSingleUnrealizedSectionAgeRange(args, title),
+      createPricesSectionFull({ cohort: args, title }),
       createCostBasisSectionWithPercentiles({ cohort: args, title }),
+      createProfitabilitySection({ cohort: args, title }),
       createActivitySection({ cohort: args, title }),
     ],
   };
@@ -261,11 +254,10 @@ export function createCohortFolderMinAge(args) {
       name: args.name || "all",
       tree: [
         createGroupedHoldingsSectionWithRelative({ list, title }),
-        createGroupedPricesSection({ list, title }),
         createGroupedValuationSection({ list, title }),
-        createGroupedRealizedSectionBasic(list, title),
-        createGroupedUnrealizedSectionMinAge(list, title),
+        createGroupedPricesSection({ list, title }),
         createGroupedCostBasisSection({ list, title }),
+        createGroupedProfitabilitySection({ list, title }),
         createGroupedActivitySection({ list, title }),
       ],
     };
@@ -275,11 +267,10 @@ export function createCohortFolderMinAge(args) {
     name: args.name || "all",
     tree: [
       createHoldingsSectionWithRelative({ cohort: args, title }),
-      createPricesSectionBasic({ cohort: args, title }),
       createValuationSection({ cohort: args, title }),
-      createSingleRealizedSectionBasic(args, title),
-      createSingleUnrealizedSectionMinAge(args, title),
+      createPricesSectionBasic({ cohort: args, title }),
       createCostBasisSection({ cohort: args, title }),
+      createProfitabilitySectionWithPeakRegret({ cohort: args, title }),
       createActivitySection({ cohort: args, title }),
     ],
   };
@@ -298,11 +289,10 @@ export function createCohortFolderBasicWithMarketCap(args) {
       name: args.name || "all",
       tree: [
         createGroupedHoldingsSectionWithRelative({ list, title }),
-        createGroupedPricesSection({ list, title }),
         createGroupedValuationSection({ list, title }),
-        createGroupedRealizedSectionBasic(list, title),
-        createGroupedUnrealizedSectionWithMarketCapOnly(list, title),
+        createGroupedPricesSection({ list, title }),
         createGroupedCostBasisSection({ list, title }),
+        createGroupedProfitabilitySectionWithNupl({ list, title }),
         createGroupedActivitySection({ list, title }),
       ],
     };
@@ -312,11 +302,10 @@ export function createCohortFolderBasicWithMarketCap(args) {
     name: args.name || "all",
     tree: [
       createHoldingsSectionWithRelative({ cohort: args, title }),
-      createPricesSectionBasic({ cohort: args, title }),
       createValuationSection({ cohort: args, title }),
-      createSingleRealizedSectionBasic(args, title),
-      createSingleUnrealizedSectionWithMarketCapOnly(args, title),
+      createPricesSectionBasic({ cohort: args, title }),
       createCostBasisSection({ cohort: args, title }),
+      createProfitabilitySectionWithNupl({ cohort: args, title }),
       createActivitySection({ cohort: args, title }),
     ],
   };
@@ -335,11 +324,10 @@ export function createCohortFolderBasicWithoutMarketCap(args) {
       name: args.name || "all",
       tree: [
         createGroupedHoldingsSection({ list, title }),
-        createGroupedPricesSection({ list, title }),
         createGroupedValuationSection({ list, title }),
-        createGroupedRealizedSectionBasic(list, title),
-        createGroupedUnrealizedSectionBase(list, title),
+        createGroupedPricesSection({ list, title }),
         createGroupedCostBasisSection({ list, title }),
+        createGroupedProfitabilitySection({ list, title }),
         createGroupedActivitySection({ list, title }),
       ],
     };
@@ -349,11 +337,10 @@ export function createCohortFolderBasicWithoutMarketCap(args) {
     name: args.name || "all",
     tree: [
       createHoldingsSection({ cohort: args, title }),
-      createPricesSectionBasic({ cohort: args, title }),
       createValuationSection({ cohort: args, title }),
-      createSingleRealizedSectionBasic(args, title),
-      createSingleUnrealizedSectionBase(args, title),
+      createPricesSectionBasic({ cohort: args, title }),
       createCostBasisSection({ cohort: args, title }),
+      createProfitabilitySection({ cohort: args, title }),
       createActivitySection({ cohort: args, title }),
     ],
   };
@@ -373,11 +360,10 @@ export function createCohortFolderAddress(args) {
       name: args.name || "all",
       tree: [
         createGroupedHoldingsSectionAddress({ list, title }),
-        createGroupedPricesSection({ list, title }),
         createGroupedValuationSection({ list, title }),
-        createGroupedRealizedSectionBasic(list, title),
-        createGroupedUnrealizedSectionBase(list, title),
+        createGroupedPricesSection({ list, title }),
         createGroupedCostBasisSection({ list, title }),
+        createGroupedProfitabilitySection({ list, title }),
         createGroupedActivitySection({ list, title }),
       ],
     };
@@ -387,11 +373,10 @@ export function createCohortFolderAddress(args) {
     name: args.name || "all",
     tree: [
       createHoldingsSectionAddress({ cohort: args, title }),
-      createPricesSectionBasic({ cohort: args, title }),
       createValuationSection({ cohort: args, title }),
-      createSingleRealizedSectionBasic(args, title),
-      createSingleUnrealizedSectionBase(args, title),
+      createPricesSectionBasic({ cohort: args, title }),
       createCostBasisSection({ cohort: args, title }),
+      createProfitabilitySection({ cohort: args, title }),
       createActivitySection({ cohort: args, title }),
     ],
   };
@@ -410,11 +395,10 @@ export function createCohortFolderWithoutRelative(args) {
       name: args.name || "all",
       tree: [
         createGroupedHoldingsSection({ list, title }),
-        createGroupedPricesSection({ list, title }),
         createGroupedValuationSection({ list, title }),
-        createGroupedRealizedSectionBasic(list, title),
-        createGroupedUnrealizedSectionWithoutRelative(list, title),
+        createGroupedPricesSection({ list, title }),
         createGroupedCostBasisSection({ list, title }),
+        createGroupedProfitabilitySection({ list, title }),
         createGroupedActivitySection({ list, title }),
       ],
     };
@@ -424,11 +408,10 @@ export function createCohortFolderWithoutRelative(args) {
     name: args.name || "all",
     tree: [
       createHoldingsSection({ cohort: args, title }),
-      createPricesSectionBasic({ cohort: args, title }),
       createValuationSection({ cohort: args, title }),
-      createSingleRealizedSectionBasic(args, title),
-      createSingleUnrealizedSectionWithoutRelative(args, title),
+      createPricesSectionBasic({ cohort: args, title }),
       createCostBasisSection({ cohort: args, title }),
+      createProfitabilitySection({ cohort: args, title }),
       createActivitySection({ cohort: args, title }),
     ],
   };
@@ -734,6 +717,7 @@ function createSingleRealizedPnlSection(cohort, title, { extra = [] } = {}) {
           name: "Sum",
           title: title("Realized P&L"),
           bottom: [
+            // USD
             line({
               metric: tree.realized.realizedProfit.sum,
               name: "Profit",
@@ -773,12 +757,26 @@ function createSingleRealizedPnlSection(cohort, title, { extra = [] } = {}) {
               unit: Unit.usd,
               defaultActive: false,
             }),
+            // % of R.Cap
+            baseline({
+              metric: tree.realized.realizedProfitRelToRealizedCap.sum,
+              name: "Profit",
+              color: colors.profit,
+              unit: Unit.pctRcap,
+            }),
+            baseline({
+              metric: tree.realized.realizedLossRelToRealizedCap.sum,
+              name: "Loss",
+              color: colors.loss,
+              unit: Unit.pctRcap,
+            }),
           ],
         },
         {
           name: "Cumulative",
           title: title("Realized P&L (Total)"),
           bottom: [
+            // USD
             line({
               metric: tree.realized.realizedProfit.cumulative,
               name: "Profit",
@@ -798,40 +796,21 @@ function createSingleRealizedPnlSection(cohort, title, { extra = [] } = {}) {
               unit: Unit.usd,
               defaultActive: false,
             }),
+            // % of R.Cap
+            baseline({
+              metric: tree.realized.realizedProfitRelToRealizedCap.cumulative,
+              name: "Profit",
+              color: colors.profit,
+              unit: Unit.pctRcap,
+            }),
+            baseline({
+              metric: tree.realized.realizedLossRelToRealizedCap.cumulative,
+              name: "Loss",
+              color: colors.loss,
+              unit: Unit.pctRcap,
+            }),
           ],
         },
-      ],
-    },
-    {
-      name: "P&L Relative",
-      title: title("Realized P&L"),
-      bottom: [
-        baseline({
-          metric: tree.realized.realizedProfitRelToRealizedCap.sum,
-          name: "Profit",
-          color: colors.profit,
-          unit: Unit.pctRcap,
-        }),
-        baseline({
-          metric: tree.realized.realizedProfitRelToRealizedCap.cumulative,
-          name: "Profit Cumulative",
-          color: colors.profit,
-          unit: Unit.pctRcap,
-          defaultActive: false,
-        }),
-        baseline({
-          metric: tree.realized.realizedLossRelToRealizedCap.sum,
-          name: "Loss",
-          color: colors.loss,
-          unit: Unit.pctRcap,
-        }),
-        baseline({
-          metric: tree.realized.realizedLossRelToRealizedCap.cumulative,
-          name: "Loss Cumulative",
-          color: colors.loss,
-          unit: Unit.pctRcap,
-          defaultActive: false,
-        }),
       ],
     },
     {
@@ -841,6 +820,7 @@ function createSingleRealizedPnlSection(cohort, title, { extra = [] } = {}) {
           name: "Sum",
           title: title("Net Realized P&L"),
           bottom: [
+            // USD
             baseline({
               metric: tree.realized.netRealizedPnl.sum,
               name: "Net",
@@ -851,16 +831,11 @@ function createSingleRealizedPnlSection(cohort, title, { extra = [] } = {}) {
               name: "Net 7d EMA",
               unit: Unit.usd,
             }),
+            // % of R.Cap
             baseline({
               metric: tree.realized.netRealizedPnlRelToRealizedCap.sum,
               name: "Net",
               unit: Unit.pctRcap,
-            }),
-            baseline({
-              metric:
-                tree.realized.netRealizedPnlCumulative30dDeltaRelToMarketCap,
-              name: "30d Change",
-              unit: Unit.pctMcap,
             }),
           ],
         },
@@ -868,6 +843,7 @@ function createSingleRealizedPnlSection(cohort, title, { extra = [] } = {}) {
           name: "Cumulative",
           title: title("Net Realized P&L (Total)"),
           bottom: [
+            // USD
             baseline({
               metric: tree.realized.netRealizedPnl.cumulative,
               name: "Net",
@@ -879,6 +855,7 @@ function createSingleRealizedPnlSection(cohort, title, { extra = [] } = {}) {
               unit: Unit.usd,
               defaultActive: false,
             }),
+            // % of R.Cap
             baseline({
               metric: tree.realized.netRealizedPnlRelToRealizedCap.cumulative,
               name: "Net",
@@ -890,6 +867,13 @@ function createSingleRealizedPnlSection(cohort, title, { extra = [] } = {}) {
               name: "30d Change",
               unit: Unit.pctRcap,
               defaultActive: false,
+            }),
+            // % of M.Cap
+            baseline({
+              metric:
+                tree.realized.netRealizedPnlCumulative30dDeltaRelToMarketCap,
+              name: "30d Change",
+              unit: Unit.pctMcap,
             }),
           ],
         },
@@ -1330,14 +1314,14 @@ function createSingleAdjustedSoprChart(cohort, title) {
       baseline({
         metric: tree.realized.adjustedSopr,
         name: "Adjusted",
-        color: colors.bi.adjustedSopr,
+        color: colors.bi.p1,
         unit: Unit.ratio,
         base: 1,
       }),
       baseline({
         metric: tree.realized.adjustedSopr7dEma,
         name: "Adj. 7d EMA",
-        color: colors.bi.adjustedSopr7d,
+        color: colors.bi.p2,
         unit: Unit.ratio,
         defaultActive: false,
         base: 1,
@@ -1345,7 +1329,7 @@ function createSingleAdjustedSoprChart(cohort, title) {
       baseline({
         metric: tree.realized.adjustedSopr30dEma,
         name: "Adj. 30d EMA",
-        color: colors.bi.adjustedSopr30d,
+        color: colors.bi.p3,
         unit: Unit.ratio,
         defaultActive: false,
         base: 1,
@@ -1639,13 +1623,13 @@ function createInvestedCapitalRelMetrics(rel) {
       metric: rel.investedCapitalInProfitPct,
       name: "In Profit",
       color: colors.profit,
-      unit: Unit.pctRcap,
+      unit: Unit.pctOwnRcap,
     }),
     baseline({
       metric: rel.investedCapitalInLossPct,
       name: "In Loss",
       color: colors.loss,
-      unit: Unit.pctRcap,
+      unit: Unit.pctOwnRcap,
     }),
   ];
 }
@@ -1656,12 +1640,6 @@ function createInvestedCapitalRelMetrics(rel) {
  */
 function createUnrealizedPnlBaseMetrics(tree) {
   return [
-    line({
-      metric: tree.unrealized.totalUnrealizedPnl,
-      name: "Total",
-      color: colors.default,
-      unit: Unit.usd,
-    }),
     line({
       metric: tree.unrealized.unrealizedProfit,
       name: "Profit",
@@ -1681,6 +1659,12 @@ function createUnrealizedPnlBaseMetrics(tree) {
       color: colors.loss,
       unit: Unit.usd,
       defaultActive: false,
+    }),
+    line({
+      metric: tree.unrealized.totalUnrealizedPnl,
+      name: "Total",
+      color: colors.default,
+      unit: Unit.usd,
     }),
   ];
 }
@@ -1934,7 +1918,7 @@ function createUnrealizedSection({
   charts = [],
 }) {
   return {
-    name: "Unrealized",
+    name: "Profitability",
     tree: [
       {
         name: "P&L",
@@ -2008,7 +1992,7 @@ function createGroupedInvestedCapitalRelativeCharts(list, title) {
           metric: tree.relative.investedCapitalInProfitPct,
           name,
           color,
-          unit: Unit.pctRcap,
+          unit: Unit.pctOwnRcap,
         }),
       ),
     },
@@ -2020,7 +2004,7 @@ function createGroupedInvestedCapitalRelativeCharts(list, title) {
           metric: tree.relative.investedCapitalInLossPct,
           name,
           color,
-          unit: Unit.pctRcap,
+          unit: Unit.pctOwnRcap,
         }),
       ),
     },
@@ -2044,7 +2028,7 @@ function createGroupedUnrealizedSection({
   charts = [],
 }) {
   return {
-    name: "Unrealized",
+    name: "Profitability",
     tree: [
       ...createGroupedUnrealizedBaseCharts(list, title),
       {
@@ -2102,7 +2086,7 @@ function createGroupedUnrealizedSection({
  */
 function createGroupedUnrealizedSectionWithoutRelative(list, title) {
   return {
-    name: "Unrealized",
+    name: "Profitability",
     tree: [
       ...createGroupedUnrealizedBaseCharts(list, title),
       {
@@ -2561,441 +2545,5 @@ function createGroupedUnrealizedSectionAgeRange(list, title) {
       }),
     ],
     charts: [createGroupedPeakRegretChartBasic(list, title)],
-  });
-}
-
-// ============================================================================
-// Cost Basis Section Builders (generic, type-safe composition)
-// ============================================================================
-// ============================================================================
-// Activity Section Builders (generic, type-safe composition)
-// ============================================================================
-
-/**
- * Generic single activity section builder - callers pass optional extra value metrics
- * @param {Object} args
- * @param {UtxoCohortObject | CohortWithoutRelative} args.cohort
- * @param {(metric: string) => string} args.title
- * @param {AnyFetchedSeriesBlueprint[]} [args.valueMetrics] - Extra value metrics (e.g., adjusted)
- * @returns {PartialOptionsGroup}
- */
-function createActivitySection({ cohort, title, valueMetrics = [] }) {
-  const { tree, color } = cohort;
-
-  return {
-    name: "Activity",
-    tree: [
-      {
-        name: "Sent",
-        tree: [
-          {
-            name: "Sum",
-            title: title("Sent"),
-            bottom: [
-              line({
-                metric: tree.activity.sent.sats.sum,
-                name: "sum",
-                color,
-                unit: Unit.sats,
-              }),
-              line({
-                metric: tree.activity.sent.bitcoin.sum,
-                name: "sum",
-                color,
-                unit: Unit.btc,
-              }),
-              line({
-                metric: tree.activity.sent.dollars.sum,
-                name: "sum",
-                color,
-                unit: Unit.usd,
-              }),
-              line({
-                metric: tree.activity.sent14dEma.sats,
-                name: "14d EMA",
-                unit: Unit.sats,
-              }),
-              line({
-                metric: tree.activity.sent14dEma.bitcoin,
-                name: "14d EMA",
-                unit: Unit.btc,
-              }),
-              line({
-                metric: tree.activity.sent14dEma.dollars,
-                name: "14d EMA",
-                unit: Unit.usd,
-              }),
-            ],
-          },
-          {
-            name: "Cumulative",
-            title: title("Sent (Total)"),
-            bottom: [
-              line({
-                metric: tree.activity.sent.sats.cumulative,
-                name: "all-time",
-                color,
-                unit: Unit.sats,
-              }),
-              line({
-                metric: tree.activity.sent.bitcoin.cumulative,
-                name: "all-time",
-                color,
-                unit: Unit.btc,
-              }),
-              line({
-                metric: tree.activity.sent.dollars.cumulative,
-                name: "all-time",
-                color,
-                unit: Unit.usd,
-              }),
-            ],
-          },
-        ],
-      },
-      {
-        name: "Sell Side Risk",
-        title: title("Sell Side Risk Ratio"),
-        bottom: createSingleSellSideRiskSeries(tree),
-      },
-      {
-        name: "Value",
-        tree: [
-          {
-            name: "Created & Destroyed",
-            title: title("Value Created & Destroyed"),
-            bottom: [
-              ...createSingleValueCreatedDestroyedSeries(tree),
-              ...valueMetrics,
-            ],
-          },
-          {
-            name: "Breakdown",
-            title: title("Value Flow Breakdown"),
-            bottom: createSingleValueFlowBreakdownSeries(tree),
-          },
-          {
-            name: "Flow",
-            title: title("Capitulation & Profit Flow"),
-            bottom: createSingleCapitulationProfitFlowSeries(tree),
-          },
-        ],
-      },
-      {
-        name: "Coins Destroyed",
-        title: title("Coins Destroyed"),
-        bottom: createSingleCoinsDestroyedSeries(cohort),
-      },
-    ],
-  };
-}
-
-/**
- * Create grouped value flow charts (profit/loss created/destroyed, profit/capitulation flow)
- * @template {readonly (UtxoCohortObject | CohortWithoutRelative)[]} T
- * @param {T} list
- * @param {(metric: string) => string} title
- * @returns {PartialOptionsTree}
- */
-function createGroupedValueFlowCharts(list, title) {
-  return [
-    {
-      name: "Profit Created",
-      title: title("Profit Value Created"),
-      bottom: list.flatMap(({ color, name, tree }) => [
-        line({
-          metric: tree.realized.profitValueCreated,
-          name,
-          color,
-          unit: Unit.usd,
-        }),
-      ]),
-    },
-    {
-      name: "Profit Destroyed",
-      title: title("Profit Value Destroyed"),
-      bottom: list.flatMap(({ color, name, tree }) => [
-        line({
-          metric: tree.realized.profitValueDestroyed,
-          name,
-          color,
-          unit: Unit.usd,
-        }),
-      ]),
-    },
-    {
-      name: "Loss Created",
-      title: title("Loss Value Created"),
-      bottom: list.flatMap(({ color, name, tree }) => [
-        line({
-          metric: tree.realized.lossValueCreated,
-          name,
-          color,
-          unit: Unit.usd,
-        }),
-      ]),
-    },
-    {
-      name: "Loss Destroyed",
-      title: title("Loss Value Destroyed"),
-      bottom: list.flatMap(({ color, name, tree }) => [
-        line({
-          metric: tree.realized.lossValueDestroyed,
-          name,
-          color,
-          unit: Unit.usd,
-        }),
-      ]),
-    },
-    {
-      name: "Profit Flow",
-      title: title("Profit Flow"),
-      bottom: list.flatMap(({ color, name, tree }) => [
-        line({
-          metric: tree.realized.profitFlow,
-          name,
-          color,
-          unit: Unit.usd,
-        }),
-      ]),
-    },
-    {
-      name: "Capitulation Flow",
-      title: title("Capitulation Flow"),
-      bottom: list.flatMap(({ color, name, tree }) => [
-        line({
-          metric: tree.realized.capitulationFlow,
-          name,
-          color,
-          unit: Unit.usd,
-        }),
-      ]),
-    },
-  ];
-}
-
-/**
- * Generic grouped activity section builder - callers pass optional value tree
- * @template {readonly (UtxoCohortObject | CohortWithoutRelative)[]} T
- * @param {Object} args
- * @param {T} args.list
- * @param {(metric: string) => string} args.title
- * @param {PartialOptionsTree} [args.valueTree] - Optional value tree (defaults to basic created/destroyed)
- * @returns {PartialOptionsGroup}
- */
-function createGroupedActivitySection({ list, title, valueTree }) {
-  return {
-    name: "Activity",
-    tree: [
-      {
-        name: "Sent",
-        tree: [
-          {
-            name: "Sum",
-            title: title("Sent"),
-            bottom: list.flatMap(({ color, name, tree }) =>
-              satsBtcUsd({
-                pattern: {
-                  sats: tree.activity.sent.sats.sum,
-                  bitcoin: tree.activity.sent.bitcoin.sum,
-                  dollars: tree.activity.sent.dollars.sum,
-                },
-                name,
-                color,
-              }),
-            ),
-          },
-          {
-            name: "14d EMA",
-            title: title("Sent 14d EMA"),
-            bottom: list.flatMap(({ color, name, tree }) =>
-              satsBtcUsd({ pattern: tree.activity.sent14dEma, name, color }),
-            ),
-          },
-        ],
-      },
-      {
-        name: "Sell Side Risk",
-        title: title("Sell Side Risk Ratio"),
-        bottom: createGroupedSellSideRiskSeries(list),
-      },
-      {
-        name: "Value",
-        tree: valueTree ?? [
-          {
-            name: "Created",
-            title: title("Value Created"),
-            bottom: list.flatMap(({ color, name, tree }) => [
-              line({
-                metric: tree.realized.valueCreated,
-                name,
-                color,
-                unit: Unit.usd,
-              }),
-            ]),
-          },
-          {
-            name: "Destroyed",
-            title: title("Value Destroyed"),
-            bottom: list.flatMap(({ color, name, tree }) => [
-              line({
-                metric: tree.realized.valueDestroyed,
-                name,
-                color,
-                unit: Unit.usd,
-              }),
-            ]),
-          },
-          ...createGroupedValueFlowCharts(list, title),
-        ],
-      },
-      {
-        name: "Coins Destroyed",
-        tree: [
-          {
-            name: "Sum",
-            title: title("Coins Destroyed"),
-            bottom: list.flatMap(({ color, name, tree }) => [
-              line({
-                metric: tree.activity.coinblocksDestroyed.sum,
-                name,
-                color,
-                unit: Unit.coinblocks,
-              }),
-              line({
-                metric: tree.activity.coindaysDestroyed.sum,
-                name,
-                color,
-                unit: Unit.coindays,
-              }),
-            ]),
-          },
-          {
-            name: "Cumulative",
-            title: title("Cumulative Coins Destroyed"),
-            bottom: list.flatMap(({ color, name, tree }) => [
-              line({
-                metric: tree.activity.coinblocksDestroyed.cumulative,
-                name,
-                color,
-                unit: Unit.coinblocks,
-              }),
-              line({
-                metric: tree.activity.coindaysDestroyed.cumulative,
-                name,
-                color,
-                unit: Unit.coindays,
-              }),
-            ]),
-          },
-        ],
-      },
-    ],
-  };
-}
-
-// ============================================================================
-// Activity Section Variants (by cohort capability)
-// ============================================================================
-
-/**
- * Create activity section with adjusted values (for cohorts with RealizedPattern3/4)
- * @param {CohortAll | CohortFull | CohortWithAdjusted} cohort
- * @param {(metric: string) => string} title
- * @returns {PartialOptionsGroup}
- */
-function createSingleActivitySectionWithAdjusted(cohort, title) {
-  const { tree } = cohort;
-  return createActivitySection({
-    cohort,
-    title,
-    valueMetrics: [
-      line({
-        metric: tree.realized.adjustedValueCreated,
-        name: "Adjusted Created",
-        color: colors.adjustedCreated,
-        unit: Unit.usd,
-      }),
-      line({
-        metric: tree.realized.adjustedValueDestroyed,
-        name: "Adjusted Destroyed",
-        color: colors.adjustedDestroyed,
-        unit: Unit.usd,
-      }),
-    ],
-  });
-}
-
-/**
- * Create activity section for grouped cohorts with adjusted values (for cohorts with RealizedPattern3/4)
- * @param {readonly (CohortFull | CohortWithAdjusted)[]} list
- * @param {(metric: string) => string} title
- * @returns {PartialOptionsGroup}
- */
-function createGroupedActivitySectionWithAdjusted(list, title) {
-  return createGroupedActivitySection({
-    list,
-    title,
-    valueTree: [
-      {
-        name: "Created",
-        tree: [
-          {
-            name: "Normal",
-            title: title("Value Created"),
-            bottom: list.flatMap(({ color, name, tree }) => [
-              line({
-                metric: tree.realized.valueCreated,
-                name,
-                color,
-                unit: Unit.usd,
-              }),
-            ]),
-          },
-          {
-            name: "Adjusted",
-            title: title("Adjusted Value Created"),
-            bottom: list.flatMap(({ color, name, tree }) => [
-              line({
-                metric: tree.realized.adjustedValueCreated,
-                name,
-                color,
-                unit: Unit.usd,
-              }),
-            ]),
-          },
-        ],
-      },
-      {
-        name: "Destroyed",
-        tree: [
-          {
-            name: "Normal",
-            title: title("Value Destroyed"),
-            bottom: list.flatMap(({ color, name, tree }) => [
-              line({
-                metric: tree.realized.valueDestroyed,
-                name,
-                color,
-                unit: Unit.usd,
-              }),
-            ]),
-          },
-          {
-            name: "Adjusted",
-            title: title("Adjusted Value Destroyed"),
-            bottom: list.flatMap(({ color, name, tree }) => [
-              line({
-                metric: tree.realized.adjustedValueDestroyed,
-                name,
-                color,
-                unit: Unit.usd,
-              }),
-            ]),
-          },
-        ],
-      },
-      ...createGroupedValueFlowCharts(list, title),
-    ],
   });
 }

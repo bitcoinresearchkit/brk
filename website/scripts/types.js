@@ -14,7 +14,7 @@
  *
  * @import { WebSockets } from "./utils/ws.js"
  *
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedBaselineSeriesBlueprint, FetchedHistogramSeriesBlueprint, PatternAll, PatternFull, PatternWithAdjusted, PatternWithPercentiles, PatternBasic, PatternBasicWithMarketCap, PatternBasicWithoutMarketCap, PatternWithoutRelative, CohortAll, CohortFull, CohortWithAdjusted, CohortWithPercentiles, CohortBasic, CohortBasicWithMarketCap, CohortBasicWithoutMarketCap, CohortWithoutRelative, CohortAddress, CohortLongTerm, CohortAgeRange, CohortMinAge, CohortGroupFull, CohortGroupWithAdjusted, CohortGroupWithPercentiles, CohortGroupLongTerm, CohortGroupAgeRange, CohortGroupBasic, CohortGroupBasicWithMarketCap, CohortGroupBasicWithoutMarketCap, CohortGroupWithoutRelative, CohortGroupMinAge, CohortGroupAddress, UtxoCohortGroupObject, AddressCohortGroupObject, FetchedDotsSeriesBlueprint, FetchedCandlestickSeriesBlueprint, FetchedPriceSeriesBlueprint, AnyPricePattern, AnyValuePattern } from "./options/partial.js"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedBaselineSeriesBlueprint, FetchedHistogramSeriesBlueprint, FetchedDotsBaselineSeriesBlueprint, PatternAll, PatternFull, PatternWithAdjusted, PatternWithPercentiles, PatternBasic, PatternBasicWithMarketCap, PatternBasicWithoutMarketCap, PatternWithoutRelative, CohortAll, CohortFull, CohortWithAdjusted, CohortWithPercentiles, CohortBasic, CohortBasicWithMarketCap, CohortBasicWithoutMarketCap, CohortWithoutRelative, CohortAddress, CohortLongTerm, CohortAgeRange, CohortMinAge, CohortGroupFull, CohortGroupWithAdjusted, CohortGroupWithPercentiles, CohortGroupLongTerm, CohortGroupAgeRange, CohortGroupBasic, CohortGroupBasicWithMarketCap, CohortGroupBasicWithoutMarketCap, CohortGroupWithoutRelative, CohortGroupMinAge, CohortGroupAddress, UtxoCohortGroupObject, AddressCohortGroupObject, FetchedDotsSeriesBlueprint, FetchedCandlestickSeriesBlueprint, FetchedPriceSeriesBlueprint, AnyPricePattern, AnyValuePattern } from "./options/partial.js"
  *
  *
  * @import { UnitObject as Unit } from "./utils/units.js"
@@ -155,12 +155,12 @@
  * @typedef {UtxoCohortPattern | AddressCohortPattern} CohortPattern
  *
  * Relative pattern capability types
- * @typedef {GlobalRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithMarketCap
+ * @typedef {GlobalRelativePattern | GlobalPeakRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithMarketCap
  * @typedef {OwnRelativePattern | FullRelativePattern} RelativeWithOwnMarketCap
  * @typedef {OwnRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithOwnPnl
- * @typedef {GlobalRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithNupl
+ * @typedef {GlobalRelativePattern | GlobalPeakRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithNupl
  * @typedef {GlobalPeakRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithPeakRegret
- * @typedef {BasicRelativePattern | GlobalRelativePattern | OwnRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithInvestedCapitalPct
+ * @typedef {BasicRelativePattern | GlobalRelativePattern | GlobalPeakRelativePattern | OwnRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithInvestedCapitalPct
  *
  * Realized pattern capability types
  * RealizedWithExtras: patterns with realizedCapRelToOwnMarketCap + realizedProfitToLossRatio

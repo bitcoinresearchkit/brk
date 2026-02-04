@@ -58,7 +58,15 @@ export function createValuationSectionFull({ cohort, title }) {
       {
         name: "Realized Cap",
         title: title("Realized Cap"),
-        bottom: createSingleRealizedCapSeries(cohort),
+        bottom: [
+          ...createSingleRealizedCapSeries(cohort),
+          baseline({
+            metric: tree.realized.realizedCapRelToOwnMarketCap,
+            name: "Rel. to Own M.Cap",
+            color,
+            unit: Unit.pctOwnMcap,
+          }),
+        ],
       },
       {
         name: "30d Change",
@@ -134,6 +142,66 @@ export function createGroupedValuationSection({ list, title }) {
             unit: Unit.usd,
           }),
         ),
+      },
+      {
+        name: "30d Change",
+        title: title("Realized Cap 30d Change"),
+        bottom: list.map(({ name, color, tree }) =>
+          baseline({
+            metric: tree.realized.realizedCap30dDelta,
+            name,
+            color,
+            unit: Unit.usd,
+          }),
+        ),
+      },
+      {
+        name: "MVRV",
+        title: title("MVRV"),
+        bottom: list.map(({ name, color, tree }) =>
+          baseline({
+            metric: tree.realized.realizedPriceExtra.ratio,
+            name,
+            color,
+            unit: Unit.ratio,
+            base: 1,
+          }),
+        ),
+      },
+    ],
+  };
+}
+
+/**
+ * @template {{ name: string, color: Color, tree: { realized: { realizedCap: AnyMetricPattern, realizedCap30dDelta: AnyMetricPattern, realizedCapRelToOwnMarketCap: AnyMetricPattern, realizedPriceExtra: { ratio: AnyMetricPattern } } } }} T
+ * @param {{ list: readonly T[], title: (metric: string) => string }} args
+ * @returns {PartialOptionsGroup}
+ */
+export function createGroupedValuationSectionWithOwnMarketCap({ list, title }) {
+  return {
+    name: "Valuation",
+    tree: [
+      {
+        name: "Realized Cap",
+        title: title("Realized Cap"),
+        bottom: [
+          ...list.map(({ name, color, tree }) =>
+            line({
+              metric: tree.realized.realizedCap,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
+          ),
+          ...list.map(({ name, color, tree }) =>
+            baseline({
+              metric: tree.realized.realizedCapRelToOwnMarketCap,
+              name,
+              color,
+              unit: Unit.pctOwnMcap,
+            }),
+          ),
+        ],
       },
       {
         name: "30d Change",

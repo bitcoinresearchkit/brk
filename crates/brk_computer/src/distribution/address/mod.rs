@@ -8,7 +8,7 @@ mod total_addr_count;
 mod type_map;
 
 pub use activity::{AddressActivityVecs, AddressTypeToActivityCounts};
-pub use address_count::{AddrCountVecs, AddrCountsVecs, AddressTypeToAddressCount};
+pub use address_count::{AddrCountsVecs, AddressTypeToAddressCount};
 pub use data::AddressesDataVecs;
 pub use growth_rate::GrowthRateVecs;
 pub use indexes::AnyAddressIndexesVecs;

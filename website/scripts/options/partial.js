@@ -6,6 +6,7 @@ import {
   createCohortFolderFull,
   createCohortFolderWithAdjusted,
   createCohortFolderWithNupl,
+  createCohortFolderLongTerm,
   createCohortFolderAgeRange,
   createCohortFolderMinAge,
   createCohortFolderBasicWithMarketCap,
@@ -90,8 +91,8 @@ export function createPartialOptions() {
             // STH - Short term holder cohort (Full capability)
             createCohortFolderFull(termShort),
 
-            // LTH - Long term holder cohort (nupl)
-            createCohortFolderWithNupl(termLong),
+            // LTH - Long term holder cohort (own market cap + nupl + peak regret + P/L ratio)
+            createCohortFolderLongTerm(termLong),
 
             // Ages cohorts
             {

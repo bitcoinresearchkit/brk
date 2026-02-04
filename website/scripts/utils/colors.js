@@ -99,22 +99,14 @@ export const colors = {
   bitcoin: palette.orange,
   usd: palette.green,
 
-  // Bi-color pairs for baselines
+  // Bi-color pairs for baselines (spaced by 2 in palette)
   bi: {
     /** @type {[Color, Color]} */
-    profitLoss: [palette.green, palette.red],
+    p1: [palette.green, palette.red],
     /** @type {[Color, Color]} */
-    sopr7d: [palette.lime, palette.rose],
+    p2: [palette.teal, palette.amber],
     /** @type {[Color, Color]} */
-    sopr30d: [palette.avocado, palette.pink],
-    /** @type {[Color, Color]} */
-    adjustedSopr: [palette.yellow, palette.fuchsia],
-    /** @type {[Color, Color]} */
-    adjustedSopr7d: [palette.amber, palette.purple],
-    /** @type {[Color, Color]} */
-    adjustedSopr30d: [palette.orange, palette.violet],
-    /** @type {[Color, Color]} */
-    lumpSum: [palette.cyan, palette.orange],
+    p3: [palette.sky, palette.avocado],
   },
 
 
@@ -148,9 +140,9 @@ export const colors = {
 
   // Mining
   mining: {
-    coinbase: palette.orange,
-    subsidy: palette.lime,
-    fee: palette.cyan,
+    coinbase: palette.red,
+    subsidy: palette.orange,
+    fee: palette.yellow,
   },
 
   // Network
@@ -158,9 +150,9 @@ export const colors = {
 
   // Entity (transactions, inputs, outputs)
   entity: {
-    tx: palette.orange,
-    input: palette.red,
-    output: palette.cyan,
+    tx: palette.red,
+    input: palette.orange,
+    output: palette.yellow,
   },
 
   // Technical indicators
@@ -215,9 +207,9 @@ export const colors = {
 
   // Transaction versions
   txVersion: {
-    v1: palette.orange,
-    v2: palette.cyan,
-    v3: palette.lime,
+    v1: palette.red,
+    v2: palette.orange,
+    v3: palette.yellow,
   },
 
   pct: {
@@ -239,17 +231,17 @@ export const colors = {
     _25: palette.fuchsia,
     _20: palette.pink,
     _15: palette.rose,
-    _10: palette.pink,
-    _05: palette.fuchsia,
-    _0: palette.purple,
+    _10: palette.red,
+    _05: palette.orange,
+    _0: palette.amber,
   },
 
   time: {
-    _24h: palette.pink,
-    _1w: palette.red,
-    _1m: palette.yellow,
-    _1y: palette.lime,
-    all: palette.teal,
+    _24h: palette.red,
+    _1w: palette.yellow,
+    _1m: palette.green,
+    _1y: palette.blue,
+    all: palette.purple,
   },
 
   term: {
@@ -280,44 +272,44 @@ export const colors = {
   },
 
   ageRange: {
-    upTo1h: palette.rose,
-    _1hTo1d: palette.pink,
-    _1dTo1w: palette.red,
-    _1wTo1m: palette.orange,
-    _1mTo2m: palette.yellow,
-    _2mTo3m: palette.yellow,
-    _3mTo4m: palette.lime,
-    _4mTo5m: palette.lime,
-    _5mTo6m: palette.lime,
-    _6mTo1y: palette.green,
-    _1yTo2y: palette.cyan,
+    upTo1h: palette.red,
+    _1hTo1d: palette.orange,
+    _1dTo1w: palette.amber,
+    _1wTo1m: palette.yellow,
+    _1mTo2m: palette.avocado,
+    _2mTo3m: palette.lime,
+    _3mTo4m: palette.green,
+    _4mTo5m: palette.emerald,
+    _5mTo6m: palette.teal,
+    _6mTo1y: palette.cyan,
+    _1yTo2y: palette.sky,
     _2yTo3y: palette.blue,
     _3yTo4y: palette.indigo,
     _4yTo5y: palette.violet,
     _5yTo6y: palette.purple,
-    _6yTo7y: palette.purple,
-    _7yTo8y: palette.fuchsia,
-    _8yTo10y: palette.fuchsia,
-    _10yTo12y: palette.pink,
-    _12yTo15y: palette.red,
-    from15y: palette.orange,
+    _6yTo7y: palette.fuchsia,
+    _7yTo8y: palette.pink,
+    _8yTo10y: palette.rose,
+    _10yTo12y: palette.red,
+    _12yTo15y: palette.orange,
+    from15y: palette.amber,
   },
 
   amount: {
-    _1sat: palette.orange,
+    _1sat: palette.red,
     _10sats: palette.orange,
     _100sats: palette.yellow,
     _1kSats: palette.lime,
     _10kSats: palette.green,
-    _100kSats: palette.cyan,
-    _1mSats: palette.blue,
-    _10mSats: palette.indigo,
-    _1btc: palette.purple,
+    _100kSats: palette.teal,
+    _1mSats: palette.cyan,
+    _10mSats: palette.blue,
+    _1btc: palette.indigo,
     _10btc: palette.violet,
-    _100btc: palette.fuchsia,
-    _1kBtc: palette.pink,
-    _10kBtc: palette.red,
-    _100kBtc: palette.orange,
+    _100btc: palette.purple,
+    _1kBtc: palette.fuchsia,
+    _10kBtc: palette.pink,
+    _100kBtc: palette.rose,
   },
 
   amountRange: {
@@ -326,22 +318,22 @@ export const colors = {
     _10satsTo100sats: palette.yellow,
     _100satsTo1kSats: palette.lime,
     _1kSatsTo10kSats: palette.green,
-    _10kSatsTo100kSats: palette.cyan,
-    _100kSatsTo1mSats: palette.blue,
-    _1mSatsTo10mSats: palette.indigo,
-    _10mSatsTo1btc: palette.purple,
+    _10kSatsTo100kSats: palette.teal,
+    _100kSatsTo1mSats: palette.cyan,
+    _1mSatsTo10mSats: palette.blue,
+    _10mSatsTo1btc: palette.indigo,
     _1btcTo10btc: palette.violet,
-    _10btcTo100btc: palette.fuchsia,
-    _100btcTo1kBtc: palette.pink,
-    _1kBtcTo10kBtc: palette.red,
-    _10kBtcTo100kBtc: palette.orange,
-    _100kBtcOrMore: palette.yellow,
+    _10btcTo100btc: palette.purple,
+    _100btcTo1kBtc: palette.fuchsia,
+    _1kBtcTo10kBtc: palette.pink,
+    _10kBtcTo100kBtc: palette.rose,
+    _100kBtcOrMore: palette.red,
   },
 
   epoch: {
     _0: palette.red,
-    _1: palette.yellow,
-    _2: palette.orange,
+    _1: palette.orange,
+    _2: palette.yellow,
     _3: palette.lime,
     _4: palette.green,
   },
@@ -388,6 +380,7 @@ export const colors = {
     _8d: palette.orange,
     _12d: palette.amber,
     _13d: palette.yellow,
+    _14d: palette.avocado,
     _21d: palette.avocado,
     _26d: palette.lime,
     _1m: palette.green,
@@ -429,10 +422,10 @@ export const colors = {
     p2wpkh: palette.teal,
     p2wsh: palette.blue,
     p2tr: palette.indigo,
-    p2a: palette.purple,
-    opreturn: palette.pink,
-    unknown: palette.violet,
-    empty: palette.fuchsia,
+    p2a: palette.violet,
+    opreturn: palette.purple,
+    unknown: palette.fuchsia,
+    empty: palette.pink,
   },
 
   arr: Object.values(palette),
