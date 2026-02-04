@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Cointime
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3695](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3695)
+Defined in: [Developer/brk/modules/brk-client/index.js:3745](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3745)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3695](https://github.com/
 
 > **activity**: [`MetricsTree_Cointime_Activity`](MetricsTree_Cointime_Activity.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3696](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3696)
+Defined in: [Developer/brk/modules/brk-client/index.js:3746](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3746)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3696](https://github.com/
 
 > **adjusted**: [`MetricsTree_Cointime_Adjusted`](MetricsTree_Cointime_Adjusted.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3701](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3701)
+Defined in: [Developer/brk/modules/brk-client/index.js:3751](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3751)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3701](https://github.com/
 
 > **cap**: [`MetricsTree_Cointime_Cap`](MetricsTree_Cointime_Cap.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3699](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3699)
+Defined in: [Developer/brk/modules/brk-client/index.js:3749](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3749)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3699](https://github.com/
 
 > **pricing**: [`MetricsTree_Cointime_Pricing`](MetricsTree_Cointime_Pricing.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3700](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3700)
+Defined in: [Developer/brk/modules/brk-client/index.js:3750](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3750)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3700](https://github.com/
 
 > **reserveRisk**: [`MetricsTree_Cointime_ReserveRisk`](MetricsTree_Cointime_ReserveRisk.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3702](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3702)
+Defined in: [Developer/brk/modules/brk-client/index.js:3752](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3752)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3702](https://github.com/
 
 > **supply**: [`MetricsTree_Cointime_Supply`](MetricsTree_Cointime_Supply.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3697](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3697)
+Defined in: [Developer/brk/modules/brk-client/index.js:3747](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3747)
 
 ***
 
@@ -62,4 +62,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3697](https://github.com/
 
 > **value**: [`MetricsTree_Cointime_Value`](MetricsTree_Cointime_Value.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3698](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3698)
+Defined in: [Developer/brk/modules/brk-client/index.js:3748](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3748)

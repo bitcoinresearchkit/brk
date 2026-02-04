@@ -6,7 +6,7 @@
 
 # Interface: OhlcSplitPattern2\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3347](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3347)
+Defined in: [Developer/brk/modules/brk-client/index.js:3412](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3412)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3347](https://github.com/
 
 > **ohlc**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3348](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3348)
+Defined in: [Developer/brk/modules/brk-client/index.js:3413](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3413)
 
 ***
 
@@ -28,4 +28,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3348](https://github.com/
 
 > **split**: [`CloseHighLowOpenPattern2`](CloseHighLowOpenPattern2.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3349](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3349)
+Defined in: [Developer/brk/modules/brk-client/index.js:3414](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3414)

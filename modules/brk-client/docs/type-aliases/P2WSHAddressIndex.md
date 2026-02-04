@@ -8,6 +8,6 @@
 
 > **P2WSHAddressIndex**\<\> = [`TypeIndex`](TypeIndex.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:498](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L498)
+Defined in: [Developer/brk/modules/brk-client/index.js:498](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L498)
 
 ## Type Parameters

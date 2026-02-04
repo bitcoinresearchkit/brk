@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Indexes\_Address\_P2wpkh
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3845](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3845)
+Defined in: [Developer/brk/modules/brk-client/index.js:3895](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3895)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3845](https://github.com/
 
 > **identity**: [`MetricPattern23`](../type-aliases/MetricPattern23.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3846](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3846)
+Defined in: [Developer/brk/modules/brk-client/index.js:3896](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3896)

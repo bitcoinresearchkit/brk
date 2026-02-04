@@ -6,7 +6,7 @@
 
 # Interface: FundedAddressData
 
-Defined in: [Developer/brk/modules/brk-client/index.js:282](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L282)
+Defined in: [Developer/brk/modules/brk-client/index.js:282](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L282)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:282](https://github.com/b
 
 > **fundedTxoCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:284](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L284)
+Defined in: [Developer/brk/modules/brk-client/index.js:284](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L284)
 
 Number of transaction outputs funded to this address
 
@@ -24,7 +24,7 @@ Number of transaction outputs funded to this address
 
 > **investorCapRaw**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:289](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L289)
+Defined in: [Developer/brk/modules/brk-client/index.js:289](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L289)
 
 The investor capitalization: Σ(price² × sats)
 
@@ -34,7 +34,7 @@ The investor capitalization: Σ(price² × sats)
 
 > **realizedCapRaw**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:288](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L288)
+Defined in: [Developer/brk/modules/brk-client/index.js:288](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L288)
 
 The realized capitalization: Σ(price × sats)
 
@@ -44,7 +44,7 @@ The realized capitalization: Σ(price × sats)
 
 > **received**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:286](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L286)
+Defined in: [Developer/brk/modules/brk-client/index.js:286](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L286)
 
 Satoshis received by this address
 
@@ -54,7 +54,7 @@ Satoshis received by this address
 
 > **sent**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:287](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L287)
+Defined in: [Developer/brk/modules/brk-client/index.js:287](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L287)
 
 Satoshis sent by this address
 
@@ -64,7 +64,7 @@ Satoshis sent by this address
 
 > **spentTxoCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:285](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L285)
+Defined in: [Developer/brk/modules/brk-client/index.js:285](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L285)
 
 Number of transaction outputs spent by this address
 
@@ -74,6 +74,6 @@ Number of transaction outputs spent by this address
 
 > **txCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:283](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L283)
+Defined in: [Developer/brk/modules/brk-client/index.js:283](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L283)
 
 Total transaction count

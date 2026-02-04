@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Pools
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4277](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4277)
+Defined in: [Developer/brk/modules/brk-client/index.js:4327](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L4327)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4277](https://github.com/
 
 > **heightToPool**: [`MetricPattern11`](../type-aliases/MetricPattern11.md)\<[`PoolSlug`](../type-aliases/PoolSlug.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4278](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4278)
+Defined in: [Developer/brk/modules/brk-client/index.js:4328](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L4328)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4278](https://github.com/
 
 > **vecs**: [`MetricsTree_Pools_Vecs`](MetricsTree_Pools_Vecs.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4279](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4279)
+Defined in: [Developer/brk/modules/brk-client/index.js:4329](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L4329)

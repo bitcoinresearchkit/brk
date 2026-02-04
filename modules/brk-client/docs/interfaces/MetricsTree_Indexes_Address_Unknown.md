@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Indexes\_Address\_Unknown
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3870](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3870)
+Defined in: [Developer/brk/modules/brk-client/index.js:3920](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3920)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3870](https://github.com/
 
 > **identity**: [`MetricPattern28`](../type-aliases/MetricPattern28.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3871](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3871)
+Defined in: [Developer/brk/modules/brk-client/index.js:3921](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3921)

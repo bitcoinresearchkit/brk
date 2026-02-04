@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Price
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4445](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4445)
+Defined in: [Developer/brk/modules/brk-client/index.js:4495](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L4495)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4445](https://github.com/
 
 > **cents**: [`MetricsTree_Price_Cents`](MetricsTree_Price_Cents.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4446](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4446)
+Defined in: [Developer/brk/modules/brk-client/index.js:4496](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L4496)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4446](https://github.com/
 
 > **sats**: [`OhlcSplitPattern2`](OhlcSplitPattern2.md)\<[`OHLCSats`](OHLCSats.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4448](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4448)
+Defined in: [Developer/brk/modules/brk-client/index.js:4498](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L4498)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4448](https://github.com/
 
 > **usd**: [`MetricsTree_Price_Usd`](MetricsTree_Price_Usd.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4447](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L4447)
+Defined in: [Developer/brk/modules/brk-client/index.js:4497](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L4497)

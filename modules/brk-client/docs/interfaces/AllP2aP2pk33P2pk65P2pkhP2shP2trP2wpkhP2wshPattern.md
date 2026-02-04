@@ -6,76 +6,76 @@
 
 # Interface: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2617](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L2617)
+Defined in: [Developer/brk/modules/brk-client/index.js:2675](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L2675)
 
 ## Properties
 
 ### all
 
-> **all**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+> **all**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2618](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L2618)
+Defined in: [Developer/brk/modules/brk-client/index.js:2676](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L2676)
 
 ***
 
 ### p2a
 
-> **p2a**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+> **p2a**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2619](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L2619)
+Defined in: [Developer/brk/modules/brk-client/index.js:2677](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L2677)
 
 ***
 
 ### p2pk33
 
-> **p2pk33**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+> **p2pk33**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2620](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L2620)
+Defined in: [Developer/brk/modules/brk-client/index.js:2678](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L2678)
 
 ***
 
 ### p2pk65
 
-> **p2pk65**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+> **p2pk65**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2621](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L2621)
+Defined in: [Developer/brk/modules/brk-client/index.js:2679](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L2679)
 
 ***
 
 ### p2pkh
 
-> **p2pkh**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+> **p2pkh**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2622](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L2622)
+Defined in: [Developer/brk/modules/brk-client/index.js:2680](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L2680)
 
 ***
 
 ### p2sh
 
-> **p2sh**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+> **p2sh**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2623](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L2623)
+Defined in: [Developer/brk/modules/brk-client/index.js:2681](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L2681)
 
 ***
 
 ### p2tr
 
-> **p2tr**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+> **p2tr**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2624](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L2624)
+Defined in: [Developer/brk/modules/brk-client/index.js:2682](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L2682)
 
 ***
 
 ### p2wpkh
 
-> **p2wpkh**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+> **p2wpkh**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2625](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L2625)
+Defined in: [Developer/brk/modules/brk-client/index.js:2683](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L2683)
 
 ***
 
 ### p2wsh
 
-> **p2wsh**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<`number`\>
+> **p2wsh**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2626](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L2626)
+Defined in: [Developer/brk/modules/brk-client/index.js:2684](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L2684)

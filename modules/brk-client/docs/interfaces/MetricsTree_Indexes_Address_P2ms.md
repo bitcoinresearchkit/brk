@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Indexes\_Address\_P2ms
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3860](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3860)
+Defined in: [Developer/brk/modules/brk-client/index.js:3910](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3910)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3860](https://github.com/
 
 > **identity**: [`MetricPattern17`](../type-aliases/MetricPattern17.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3861](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3861)
+Defined in: [Developer/brk/modules/brk-client/index.js:3911](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3911)

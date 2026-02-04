@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Cointime\_ReserveRisk
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3757](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3757)
+Defined in: [Developer/brk/modules/brk-client/index.js:3807](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3807)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3757](https://github.com/
 
 > **hodlBank**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3759](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3759)
+Defined in: [Developer/brk/modules/brk-client/index.js:3809](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3809)
 
 ***
 
@@ -22,12 +22,12 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3759](https://github.com/
 
 > **reserveRisk**: [`MetricPattern4`](../type-aliases/MetricPattern4.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3760](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3760)
+Defined in: [Developer/brk/modules/brk-client/index.js:3810](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3810)
 
 ***
 
-### vocdd365dSma
+### vocdd365dMedian
 
-> **vocdd365dSma**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
+> **vocdd365dMedian**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3758](https://github.com/bitcoinresearchkit/brk/blob/36bc1fb4912b070acbe47217b1be5b7c1096f80f/modules/brk-client/index.js#L3758)
+Defined in: [Developer/brk/modules/brk-client/index.js:3808](https://github.com/bitcoinresearchkit/brk/blob/0433e3b25662fded3395ef89ebe1c68d82b918b1/modules/brk-client/index.js#L3808)
