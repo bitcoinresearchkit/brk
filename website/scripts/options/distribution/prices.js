@@ -14,7 +14,7 @@
  */
 
 import { colors } from "../../utils/colors.js";
-import { createPriceRatioCharts } from "../shared.js";
+import { createPriceRatioCharts, mapCohortsWithAll } from "../shared.js";
 import { baseline, price } from "../series.js";
 import { Unit } from "../../utils/units.js";
 
@@ -148,11 +148,10 @@ export function createPricesSectionBasic({ cohort, title }) {
 
 /**
  * Create prices section for grouped cohorts
- * @template {readonly (CohortAll | CohortFull | CohortWithPercentiles | CohortWithAdjusted | CohortBasic | CohortAddress | CohortWithoutRelative)[]} T
- * @param {{ list: T, title: (metric: string) => string }} args
+ * @param {{ list: readonly CohortObject[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedPricesSection({ list, title }) {
+export function createGroupedPricesSection({ list, all, title }) {
   return {
     name: "Prices",
     tree: [
@@ -162,14 +161,14 @@ export function createGroupedPricesSection({ list, title }) {
           {
             name: "Price",
             title: title("Realized Price"),
-            top: list.map(({ name, color, tree }) =>
+            top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({ metric: tree.realized.realizedPrice, name, color }),
             ),
           },
           {
             name: "Ratio",
             title: title("Realized Price Ratio"),
-            bottom: list.map(({ name, color, tree }) =>
+            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               baseline({
                 metric: tree.realized.realizedPriceExtra.ratio,
                 name,
@@ -187,14 +186,14 @@ export function createGroupedPricesSection({ list, title }) {
           {
             name: "Price",
             title: title("Investor Price"),
-            top: list.map(({ name, color, tree }) =>
+            top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({ metric: tree.realized.investorPrice, name, color }),
             ),
           },
           {
             name: "Ratio",
             title: title("Investor Price Ratio"),
-            bottom: list.map(({ name, color, tree }) =>
+            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               baseline({
                 metric: tree.realized.investorPriceExtra.ratio,
                 name,

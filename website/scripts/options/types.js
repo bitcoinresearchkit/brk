@@ -271,46 +271,55 @@
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortFull[]} list
+ * @property {CohortAll} all
  *
  * @typedef {Object} CohortGroupWithAdjusted
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortWithAdjusted[]} list
+ * @property {CohortAll} all
  *
  * @typedef {Object} CohortGroupWithPercentiles
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortWithPercentiles[]} list
+ * @property {CohortAll} all
  *
  * @typedef {Object} CohortGroupLongTerm
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortLongTerm[]} list
+ * @property {CohortAll} all
  *
  * @typedef {Object} CohortGroupAgeRange
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortAgeRange[]} list
+ * @property {CohortAll} all
  *
  * @typedef {Object} CohortGroupBasicWithMarketCap
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortBasicWithMarketCap[]} list
+ * @property {CohortAll} all
  *
  * @typedef {Object} CohortGroupMinAge
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortMinAge[]} list
+ * @property {CohortAll} all
  *
  * @typedef {Object} CohortGroupBasicWithoutMarketCap
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortBasicWithoutMarketCap[]} list
+ * @property {CohortAll} all
  *
  * @typedef {Object} CohortGroupWithoutRelative
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortWithoutRelative[]} list
+ * @property {CohortAll} all
  *
  * Union of basic cohort group types
  * @typedef {CohortGroupBasicWithMarketCap | CohortGroupBasicWithoutMarketCap} CohortGroupBasic
@@ -319,6 +328,7 @@
  * @property {string} name
  * @property {string} title
  * @property {readonly UtxoCohortObject[]} list
+ * @property {CohortAll} all
  *
  * @typedef {Object} AddressCohortObject
  * @property {string} name
@@ -334,6 +344,7 @@
  * @property {string} name
  * @property {string} title
  * @property {readonly AddressCohortObject[]} list
+ * @property {CohortAll} all
  *
  * @typedef {UtxoCohortGroupObject | AddressCohortGroupObject} CohortGroupObject
  *
@@ -341,6 +352,7 @@
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortAddress[]} list
+ * @property {CohortAll} all
  */
 
 // Re-export for type consumers

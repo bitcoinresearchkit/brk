@@ -13,7 +13,7 @@
 
 import { Unit } from "../../utils/units.js";
 import { line, baseline, dotsBaseline, dots } from "../series.js";
-import { satsBtcUsd } from "../shared.js";
+import { satsBtcUsd, mapCohortsWithAll, flatMapCohortsWithAll } from "../shared.js";
 import { colors } from "../../utils/colors.js";
 
 // ============================================================================
@@ -56,6 +56,7 @@ function soprSeries(realized, rawName = "SOPR") {
  * Create grouped SOPR chart entries (Raw, 7d EMA, 30d EMA)
  * @template {{ color: Color, name: string }} T
  * @param {readonly T[]} list
+ * @param {T} all
  * @param {(item: T) => AnyMetricPattern} getSopr
  * @param {(item: T) => AnyMetricPattern} getSopr7d
  * @param {(item: T) => AnyMetricPattern} getSopr30d
@@ -65,6 +66,7 @@ function soprSeries(realized, rawName = "SOPR") {
  */
 function groupedSoprCharts(
   list,
+  all,
   getSopr,
   getSopr7d,
   getSopr30d,
@@ -75,7 +77,7 @@ function groupedSoprCharts(
     {
       name: "Raw",
       title: title(`${titlePrefix}SOPR`),
-      bottom: list.map((item) =>
+      bottom: mapCohortsWithAll(list, all, (item) =>
         baseline({
           metric: getSopr(item),
           name: item.name,
@@ -88,7 +90,7 @@ function groupedSoprCharts(
     {
       name: "7d EMA",
       title: title(`${titlePrefix}SOPR 7d EMA`),
-      bottom: list.map((item) =>
+      bottom: mapCohortsWithAll(list, all, (item) =>
         baseline({
           metric: getSopr7d(item),
           name: item.name,
@@ -101,7 +103,7 @@ function groupedSoprCharts(
     {
       name: "30d EMA",
       title: title(`${titlePrefix}SOPR 30d EMA`),
-      bottom: list.map((item) =>
+      bottom: mapCohortsWithAll(list, all, (item) =>
         baseline({
           metric: getSopr30d(item),
           name: item.name,
@@ -118,10 +120,11 @@ function groupedSoprCharts(
  * Create value breakdown tree (Profit/Loss Created/Destroyed)
  * @template {{ color: Color, name: string, tree: { realized: AnyRealizedPattern } }} T
  * @param {readonly T[]} list
+ * @param {T} all
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function valueBreakdownTree(list, title) {
+function valueBreakdownTree(list, all, title) {
   return [
     {
       name: "Profit",
@@ -129,7 +132,7 @@ function valueBreakdownTree(list, title) {
         {
           name: "Created",
           title: title("Profit Value Created"),
-          bottom: list.map(({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
             line({
               metric: tree.realized.profitValueCreated,
               name,
@@ -141,7 +144,7 @@ function valueBreakdownTree(list, title) {
         {
           name: "Destroyed",
           title: title("Profit Value Destroyed"),
-          bottom: list.map(({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
             line({
               metric: tree.realized.profitValueDestroyed,
               name,
@@ -158,7 +161,7 @@ function valueBreakdownTree(list, title) {
         {
           name: "Created",
           title: title("Loss Value Created"),
-          bottom: list.map(({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
             line({
               metric: tree.realized.lossValueCreated,
               name,
@@ -170,7 +173,7 @@ function valueBreakdownTree(list, title) {
         {
           name: "Destroyed",
           title: title("Loss Value Destroyed"),
-          bottom: list.map(({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
             line({
               metric: tree.realized.lossValueDestroyed,
               name,
@@ -188,15 +191,16 @@ function valueBreakdownTree(list, title) {
  * Create coins destroyed tree (Sum/Cumulative with Coinblocks/Coindays)
  * @template {{ color: Color, name: string, tree: { activity: { coinblocksDestroyed: CountPattern<any>, coindaysDestroyed: CountPattern<any> } } }} T
  * @param {readonly T[]} list
+ * @param {T} all
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function coinsDestroyedTree(list, title) {
+function coinsDestroyedTree(list, all, title) {
   return [
     {
       name: "Sum",
       title: title("Coins Destroyed"),
-      bottom: list.flatMap(({ color, name, tree }) => [
+      bottom: flatMapCohortsWithAll(list, all, ({ color, name, tree }) => [
         line({
           metric: tree.activity.coinblocksDestroyed.sum,
           name,
@@ -214,7 +218,7 @@ function coinsDestroyedTree(list, title) {
     {
       name: "Cumulative",
       title: title("Cumulative Coins Destroyed"),
-      bottom: list.flatMap(({ color, name, tree }) => [
+      bottom: flatMapCohortsWithAll(list, all, ({ color, name, tree }) => [
         line({
           metric: tree.activity.coinblocksDestroyed.cumulative,
           name,
@@ -276,14 +280,15 @@ function createSingleSoprTreeWithAdjusted(cohort, title) {
 
 /**
  * Create grouped SOPR tree with separate charts for each variant
- * @template {readonly (UtxoCohortObject | CohortWithoutRelative)[]} T
- * @param {T} list
+ * @param {readonly (UtxoCohortObject | CohortWithoutRelative)[]} list
+ * @param {CohortAll} all
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function createGroupedSoprTree(list, title) {
+function createGroupedSoprTree(list, all, title) {
   return groupedSoprCharts(
     list,
+    all,
     (c) => c.tree.realized.sopr,
     (c) => c.tree.realized.sopr7dEma,
     (c) => c.tree.realized.sopr30dEma,
@@ -295,15 +300,17 @@ function createGroupedSoprTree(list, title) {
 /**
  * Create grouped SOPR tree with Normal and Adjusted sub-sections
  * @param {readonly (CohortAll | CohortFull | CohortWithAdjusted)[]} list
+ * @param {CohortAll | CohortFull | CohortWithAdjusted} all
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function createGroupedSoprTreeWithAdjusted(list, title) {
+function createGroupedSoprTreeWithAdjusted(list, all, title) {
   return [
     {
       name: "Normal",
       tree: groupedSoprCharts(
         list,
+        all,
         (c) => c.tree.realized.sopr,
         (c) => c.tree.realized.sopr7dEma,
         (c) => c.tree.realized.sopr30dEma,
@@ -315,6 +322,7 @@ function createGroupedSoprTreeWithAdjusted(list, title) {
       name: "Adjusted",
       tree: groupedSoprCharts(
         list,
+        all,
         (c) => c.tree.realized.adjustedSopr,
         (c) => c.tree.realized.adjustedSopr7dEma,
         (c) => c.tree.realized.adjustedSopr30dEma,
@@ -577,15 +585,16 @@ export function createActivitySectionWithAdjusted({ cohort, title }) {
  * Create grouped flows tree (Profit Flow, Capitulation Flow)
  * @template {{ color: Color, name: string, tree: { realized: AnyRealizedPattern } }} T
  * @param {readonly T[]} list
+ * @param {T} all
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function groupedFlowsTree(list, title) {
+function groupedFlowsTree(list, all, title) {
   return [
     {
       name: "Profit",
       title: title("Profit Flow"),
-      bottom: list.map(({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
         line({
           metric: tree.realized.profitFlow,
           name,
@@ -597,7 +606,7 @@ function groupedFlowsTree(list, title) {
     {
       name: "Capitulation",
       title: title("Capitulation Flow"),
-      bottom: list.map(({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
         line({
           metric: tree.realized.capitulationFlow,
           name,
@@ -613,16 +622,17 @@ function groupedFlowsTree(list, title) {
  * Create grouped value tree (Flows, Created, Destroyed, Breakdown)
  * @template {{ color: Color, name: string, tree: { realized: AnyRealizedPattern } }} T
  * @param {readonly T[]} list
+ * @param {T} all
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function createGroupedValueTree(list, title) {
+function createGroupedValueTree(list, all, title) {
   return [
-    { name: "Flows", tree: groupedFlowsTree(list, title) },
+    { name: "Flows", tree: groupedFlowsTree(list, all, title) },
     {
       name: "Created",
       title: title("Value Created"),
-      bottom: list.map(({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
         line({
           metric: tree.realized.valueCreated,
           name,
@@ -634,7 +644,7 @@ function createGroupedValueTree(list, title) {
     {
       name: "Destroyed",
       title: title("Value Destroyed"),
-      bottom: list.map(({ color, name, tree }) =>
+      bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
         line({
           metric: tree.realized.valueDestroyed,
           name,
@@ -643,22 +653,18 @@ function createGroupedValueTree(list, title) {
         }),
       ),
     },
-    { name: "Breakdown", tree: valueBreakdownTree(list, title) },
+    { name: "Breakdown", tree: valueBreakdownTree(list, all, title) },
   ];
 }
 
 /**
- * Generic grouped activity section builder
- * @template {readonly (UtxoCohortObject | CohortWithoutRelative)[]} T
- * @param {Object} args
- * @param {T} args.list
- * @param {(metric: string) => string} args.title
- * @param {PartialOptionsTree} [args.soprTree] - Optional SOPR tree override
- * @param {PartialOptionsTree} [args.valueTree] - Optional value tree (defaults to basic created/destroyed)
+ * Grouped activity section builder
+ * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative)[], all: CohortAll, title: (metric: string) => string, soprTree?: PartialOptionsTree, valueTree?: PartialOptionsTree }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedActivitySection({
   list,
+  all,
   title,
   soprTree,
   valueTree,
@@ -672,14 +678,14 @@ export function createGroupedActivitySection({
           {
             name: "14d EMA",
             title: title("Sent Volume 14d EMA"),
-            bottom: list.flatMap(({ color, name, tree }) =>
+            bottom: flatMapCohortsWithAll(list, all, ({ color, name, tree }) =>
               satsBtcUsd({ pattern: tree.activity.sent14dEma, name, color }),
             ),
           },
           {
             name: "Sum",
             title: title("Sent Volume"),
-            bottom: list.flatMap(({ color, name, tree }) =>
+            bottom: flatMapCohortsWithAll(list, all, ({ color, name, tree }) =>
               satsBtcUsd({
                 pattern: {
                   sats: tree.activity.sent.sats.sum,
@@ -695,18 +701,18 @@ export function createGroupedActivitySection({
       },
       {
         name: "SOPR",
-        tree: soprTree ?? createGroupedSoprTree(list, title),
+        tree: soprTree ?? createGroupedSoprTree(list, all, title),
       },
       {
         name: "Sell Side Risk",
         title: title("Sell Side Risk Ratio"),
-        bottom: createGroupedSellSideRiskSeries(list),
+        bottom: createGroupedSellSideRiskSeries(list, all),
       },
       {
         name: "Value",
-        tree: valueTree ?? createGroupedValueTree(list, title),
+        tree: valueTree ?? createGroupedValueTree(list, all, title),
       },
-      { name: "Coins Destroyed", tree: coinsDestroyedTree(list, title) },
+      { name: "Coins Destroyed", tree: coinsDestroyedTree(list, all, title) },
     ],
   };
 }
@@ -714,19 +720,20 @@ export function createGroupedActivitySection({
 /**
  * Create grouped value tree with adjusted values (Flows, Normal, Adjusted, Breakdown)
  * @param {readonly (CohortAll | CohortFull | CohortWithAdjusted)[]} list
+ * @param {CohortAll | CohortFull | CohortWithAdjusted} all
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function createGroupedValueTreeWithAdjusted(list, title) {
+function createGroupedValueTreeWithAdjusted(list, all, title) {
   return [
-    { name: "Flows", tree: groupedFlowsTree(list, title) },
+    { name: "Flows", tree: groupedFlowsTree(list, all, title) },
     {
       name: "Normal",
       tree: [
         {
           name: "Created",
           title: title("Value Created"),
-          bottom: list.map(({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
             line({
               metric: tree.realized.valueCreated,
               name,
@@ -738,7 +745,7 @@ function createGroupedValueTreeWithAdjusted(list, title) {
         {
           name: "Destroyed",
           title: title("Value Destroyed"),
-          bottom: list.map(({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
             line({
               metric: tree.realized.valueDestroyed,
               name,
@@ -755,7 +762,7 @@ function createGroupedValueTreeWithAdjusted(list, title) {
         {
           name: "Created",
           title: title("Adjusted Value Created"),
-          bottom: list.map(({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
             line({
               metric: tree.realized.adjustedValueCreated,
               name,
@@ -767,7 +774,7 @@ function createGroupedValueTreeWithAdjusted(list, title) {
         {
           name: "Destroyed",
           title: title("Adjusted Value Destroyed"),
-          bottom: list.map(({ color, name, tree }) =>
+          bottom: mapCohortsWithAll(list, all, ({ color, name, tree }) =>
             line({
               metric: tree.realized.adjustedValueDestroyed,
               name,
@@ -778,21 +785,22 @@ function createGroupedValueTreeWithAdjusted(list, title) {
         },
       ],
     },
-    { name: "Breakdown", tree: valueBreakdownTree(list, title) },
+    { name: "Breakdown", tree: valueBreakdownTree(list, all, title) },
   ];
 }
 
 /**
  * Grouped activity section with adjusted values (for cohorts with RealizedPattern3/4)
- * @param {{ list: readonly (CohortAll | CohortFull | CohortWithAdjusted)[], title: (metric: string) => string }} args
+ * @param {{ list: readonly (CohortAll | CohortFull | CohortWithAdjusted)[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedActivitySectionWithAdjusted({ list, title }) {
+export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
   return createGroupedActivitySection({
     list,
+    all,
     title,
-    soprTree: createGroupedSoprTreeWithAdjusted(list, title),
-    valueTree: createGroupedValueTreeWithAdjusted(list, title),
+    soprTree: createGroupedSoprTreeWithAdjusted(list, all, title),
+    valueTree: createGroupedValueTreeWithAdjusted(list, all, title),
   });
 }
 
@@ -827,10 +835,11 @@ function createSingleSellSideRiskSeries(tree) {
 /**
  * Create sell side risk ratio series for grouped cohorts
  * @param {readonly CohortObject[]} list
+ * @param {CohortObject} all
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function createGroupedSellSideRiskSeries(list) {
-  return list.flatMap(({ color, name, tree }) => [
+function createGroupedSellSideRiskSeries(list, all) {
+  return flatMapCohortsWithAll(list, all, ({ color, name, tree }) => [
     line({
       metric: tree.realized.sellSideRiskRatio,
       name,

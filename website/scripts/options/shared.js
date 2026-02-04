@@ -5,6 +5,64 @@ import { line, baseline, price } from "./series.js";
 import { priceLine, priceLines } from "./constants.js";
 import { colors } from "../utils/colors.js";
 
+// ============================================================================
+// Grouped Cohort Helpers
+// ============================================================================
+
+/**
+ * Map cohorts to series (without "all" cohort)
+ * Use for charts where "all" doesn't have required properties
+ * @template T
+ * @template R
+ * @param {readonly T[]} list
+ * @param {(item: T) => R} fn
+ * @returns {R[]}
+ */
+export function mapCohorts(list, fn) {
+  return list.map(fn);
+}
+
+/**
+ * FlatMap cohorts to series (without "all" cohort)
+ * Use for charts where "all" doesn't have required properties
+ * @template T
+ * @template R
+ * @param {readonly T[]} list
+ * @param {(item: T) => R[]} fn
+ * @returns {R[]}
+ */
+export function flatMapCohorts(list, fn) {
+  return list.flatMap(fn);
+}
+
+/**
+ * Map cohorts to series, with "all" cohort added as defaultActive: false
+ * @template T
+ * @template A
+ * @template R
+ * @param {readonly T[]} list
+ * @param {A} all
+ * @param {(item: T | A) => R} fn
+ * @returns {R[]}
+ */
+export function mapCohortsWithAll(list, all, fn) {
+  return [...list.map(fn), { ...fn({ ...all, name: "All" }), defaultActive: false }];
+}
+
+/**
+ * FlatMap cohorts to series, with "all" cohort added as defaultActive: false
+ * @template T
+ * @template A
+ * @template R
+ * @param {readonly T[]} list
+ * @param {A} all
+ * @param {(item: T | A) => R[]} fn
+ * @returns {R[]}
+ */
+export function flatMapCohortsWithAll(list, all, fn) {
+  return [...list.flatMap(fn), ...fn({ ...all, name: "All" }).map((s) => ({ ...s, defaultActive: false }))];
+}
+
 /**
  * Create a title formatter for chart titles
  * @param {string} [cohortTitle]

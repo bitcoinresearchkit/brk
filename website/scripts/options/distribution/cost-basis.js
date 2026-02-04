@@ -14,6 +14,7 @@ import { colors } from "../../utils/colors.js";
 import { Unit } from "../../utils/units.js";
 import { priceLines } from "../constants.js";
 import { line, price } from "../series.js";
+import { mapCohortsWithAll } from "../shared.js";
 
 /**
  * @param {PercentilesPattern} p
@@ -185,12 +186,12 @@ function createSingleSummarySeriesWithPercentiles(cohort) {
 }
 
 /**
- * @template {readonly { name: string, color: Color, tree: { realized: { realizedPrice: ActivePricePattern } } }[]} T
- * @param {T} list
+ * @param {readonly CohortObject[]} list
+ * @param {CohortAll} all
  * @returns {FetchedPriceSeriesBlueprint[]}
  */
-function createGroupedSummarySeries(list) {
-  return list.map(({ name, color, tree }) =>
+function createGroupedSummarySeries(list, all) {
+  return mapCohortsWithAll(list, all, ({ name, color, tree }) =>
     price({ metric: tree.realized.realizedPrice, name, color }),
   );
 }
@@ -305,35 +306,34 @@ export function createCostBasisSectionWithPercentiles({ cohort, title }) {
 }
 
 /**
- * @template {readonly (UtxoCohortObject | CohortWithoutRelative)[]} T
- * @param {{ list: T, title: (metric: string) => string }} args
+ * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative)[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCostBasisSection({ list, title }) {
+export function createGroupedCostBasisSection({ list, all, title }) {
   return {
     name: "Cost Basis",
     tree: [
       {
         name: "Summary",
         title: title("Cost Basis Summary"),
-        top: createGroupedSummarySeries(list),
+        top: createGroupedSummarySeries(list, all),
       },
     ],
   };
 }
 
 /**
- * @param {{ list: readonly (CohortAll | CohortFull | CohortWithPercentiles)[], title: (metric: string) => string }} args
+ * @param {{ list: readonly (CohortAll | CohortFull | CohortWithPercentiles)[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCostBasisSectionWithPercentiles({ list, title }) {
+export function createGroupedCostBasisSectionWithPercentiles({ list, all, title }) {
   return {
     name: "Cost Basis",
     tree: [
       {
         name: "Summary",
         title: title("Cost Basis Summary"),
-        top: createGroupedSummarySeries(list),
+        top: createGroupedSummarySeries(list, all),
       },
       {
         name: "By Coin",
@@ -341,28 +341,28 @@ export function createGroupedCostBasisSectionWithPercentiles({ list, title }) {
           {
             name: "Average",
             title: title("Realized Price Comparison"),
-            top: list.map(({ name, color, tree }) =>
+            top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({ metric: tree.realized.realizedPrice, name, color }),
             ),
           },
           {
             name: "Median",
             title: title("Cost Basis Median (BTC-weighted)"),
-            top: list.map(({ name, color, tree }) =>
+            top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({ metric: tree.costBasis.percentiles.pct50, name, color }),
             ),
           },
           {
             name: "Q3",
             title: title("Cost Basis Q3 (BTC-weighted)"),
-            top: list.map(({ name, color, tree }) =>
+            top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({ metric: tree.costBasis.percentiles.pct75, name, color }),
             ),
           },
           {
             name: "Q1",
             title: title("Cost Basis Q1 (BTC-weighted)"),
-            top: list.map(({ name, color, tree }) =>
+            top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({ metric: tree.costBasis.percentiles.pct25, name, color }),
             ),
           },
@@ -374,14 +374,14 @@ export function createGroupedCostBasisSectionWithPercentiles({ list, title }) {
           {
             name: "Average",
             title: title("Investor Price Comparison"),
-            top: list.map(({ name, color, tree }) =>
+            top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({ metric: tree.realized.investorPrice, name, color }),
             ),
           },
           {
             name: "Median",
             title: title("Cost Basis Median (USD-weighted)"),
-            top: list.map(({ name, color, tree }) =>
+            top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({
                 metric: tree.costBasis.investedCapital.pct50,
                 name,
@@ -392,7 +392,7 @@ export function createGroupedCostBasisSectionWithPercentiles({ list, title }) {
           {
             name: "Q3",
             title: title("Cost Basis Q3 (USD-weighted)"),
-            top: list.map(({ name, color, tree }) =>
+            top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({
                 metric: tree.costBasis.investedCapital.pct75,
                 name,
@@ -403,7 +403,7 @@ export function createGroupedCostBasisSectionWithPercentiles({ list, title }) {
           {
             name: "Q1",
             title: title("Cost Basis Q1 (USD-weighted)"),
-            top: list.map(({ name, color, tree }) =>
+            top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({
                 metric: tree.costBasis.investedCapital.pct25,
                 name,
@@ -420,7 +420,7 @@ export function createGroupedCostBasisSectionWithPercentiles({ list, title }) {
             name: "By Coin",
             title: title("Price Position (BTC-weighted)"),
             bottom: [
-              ...list.map(({ name, color, tree }) =>
+              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 line({
                   metric: tree.costBasis.spotCostBasisPercentile,
                   name,
@@ -435,7 +435,7 @@ export function createGroupedCostBasisSectionWithPercentiles({ list, title }) {
             name: "By Capital",
             title: title("Price Position (USD-weighted)"),
             bottom: [
-              ...list.map(({ name, color, tree }) =>
+              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 line({
                   metric: tree.costBasis.spotInvestedCapitalPercentile,
                   name,

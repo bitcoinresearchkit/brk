@@ -188,7 +188,7 @@
  *
  * Cohorts with nupl + percentiles (CohortFull and CohortLongTerm both have nupl and percentiles)
  * @typedef {CohortFull | CohortLongTerm} CohortWithNuplPercentiles
- * @typedef {{ name: string, title: string, list: readonly CohortWithNuplPercentiles[] }} CohortGroupWithNuplPercentiles
+ * @typedef {{ name: string, title: string, list: readonly CohortWithNuplPercentiles[], all: CohortAll }} CohortGroupWithNuplPercentiles
  *
  * Cohorts with RealizedWithExtras (realizedCapRelToOwnMarketCap + realizedProfitToLossRatio)
  * @typedef {CohortAll | CohortFull | CohortWithPercentiles} CohortWithRealizedExtras

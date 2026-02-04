@@ -12,7 +12,7 @@
 
 import { Unit } from "../../utils/units.js";
 import { line, baseline } from "../series.js";
-import { createRatioChart } from "../shared.js";
+import { createRatioChart, mapCohortsWithAll } from "../shared.js";
 
 /**
  * @param {UtxoCohortObject | CohortWithoutRelative} cohort
@@ -123,18 +123,17 @@ export function createValuationSection({ cohort, title }) {
 }
 
 /**
- * @template {readonly (UtxoCohortObject | CohortWithoutRelative)[]} T
- * @param {{ list: T, title: (metric: string) => string }} args
+ * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative)[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedValuationSection({ list, title }) {
+export function createGroupedValuationSection({ list, all, title }) {
   return {
     name: "Valuation",
     tree: [
       {
         name: "Realized Cap",
         title: title("Realized Cap"),
-        bottom: list.map(({ name, color, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             metric: tree.realized.realizedCap,
             name,
@@ -146,7 +145,7 @@ export function createGroupedValuationSection({ list, title }) {
       {
         name: "30d Change",
         title: title("Realized Cap 30d Change"),
-        bottom: list.map(({ name, color, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.realized.realizedCap30dDelta,
             name,
@@ -158,7 +157,7 @@ export function createGroupedValuationSection({ list, title }) {
       {
         name: "MVRV",
         title: title("MVRV"),
-        bottom: list.map(({ name, color, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.realized.realizedPriceExtra.ratio,
             name,
@@ -173,11 +172,10 @@ export function createGroupedValuationSection({ list, title }) {
 }
 
 /**
- * @template {{ name: string, color: Color, tree: { realized: { realizedCap: AnyMetricPattern, realizedCap30dDelta: AnyMetricPattern, realizedCapRelToOwnMarketCap: AnyMetricPattern, realizedPriceExtra: { ratio: AnyMetricPattern } } } }} T
- * @param {{ list: readonly T[], title: (metric: string) => string }} args
+ * @param {{ list: readonly (CohortAll | CohortFull | CohortWithPercentiles)[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedValuationSectionWithOwnMarketCap({ list, title }) {
+export function createGroupedValuationSectionWithOwnMarketCap({ list, all, title }) {
   return {
     name: "Valuation",
     tree: [
@@ -185,7 +183,7 @@ export function createGroupedValuationSectionWithOwnMarketCap({ list, title }) {
         name: "Realized Cap",
         title: title("Realized Cap"),
         bottom: [
-          ...list.map(({ name, color, tree }) =>
+          ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
             line({
               metric: tree.realized.realizedCap,
               name,
@@ -193,7 +191,7 @@ export function createGroupedValuationSectionWithOwnMarketCap({ list, title }) {
               unit: Unit.usd,
             }),
           ),
-          ...list.map(({ name, color, tree }) =>
+          ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
             baseline({
               metric: tree.realized.realizedCapRelToOwnMarketCap,
               name,
@@ -206,7 +204,7 @@ export function createGroupedValuationSectionWithOwnMarketCap({ list, title }) {
       {
         name: "30d Change",
         title: title("Realized Cap 30d Change"),
-        bottom: list.map(({ name, color, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.realized.realizedCap30dDelta,
             name,
@@ -218,7 +216,7 @@ export function createGroupedValuationSectionWithOwnMarketCap({ list, title }) {
       {
         name: "MVRV",
         title: title("MVRV"),
-        bottom: list.map(({ name, color, tree }) =>
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             metric: tree.realized.realizedPriceExtra.ratio,
             name,
