@@ -42,6 +42,9 @@
     * [get\_metric](#brk_client.BrkClient.get_metric)
     * [get\_metrics\_tree](#brk_client.BrkClient.get_metrics_tree)
     * [get\_metrics](#brk_client.BrkClient.get_metrics)
+    * [get\_cost\_basis\_cohorts](#brk_client.BrkClient.get_cost_basis_cohorts)
+    * [get\_cost\_basis\_dates](#brk_client.BrkClient.get_cost_basis_dates)
+    * [get\_cost\_basis](#brk_client.BrkClient.get_cost_basis)
     * [get\_metrics\_count](#brk_client.BrkClient.get_metrics_count)
     * [get\_indexes](#brk_client.BrkClient.get_indexes)
     * [list\_metrics](#brk_client.BrkClient.list_metrics)
@@ -542,6 +545,55 @@ Bulk metric data.
 Fetch multiple metrics in a single request. Supports filtering by index and date range. Returns an array of MetricData objects. For a single metric, use `get_metric` instead.
 
 Endpoint: `GET /api/metrics/bulk`
+
+<a id="brk_client.BrkClient.get_cost_basis_cohorts"></a>
+
+#### get\_cost\_basis\_cohorts
+
+```python
+def get_cost_basis_cohorts() -> List[str]
+```
+
+Available cost basis cohorts.
+
+List available cohorts for cost basis distribution.
+
+Endpoint: `GET /api/metrics/cost-basis`
+
+<a id="brk_client.BrkClient.get_cost_basis_dates"></a>
+
+#### get\_cost\_basis\_dates
+
+```python
+def get_cost_basis_dates(cohort: Cohort) -> List[Date]
+```
+
+Available cost basis dates.
+
+List available dates for a cohort's cost basis distribution.
+
+Endpoint: `GET /api/metrics/cost-basis/{cohort}/dates`
+
+<a id="brk_client.BrkClient.get_cost_basis"></a>
+
+#### get\_cost\_basis
+
+```python
+def get_cost_basis(cohort: Cohort,
+                   date: str,
+                   bucket: Optional[CostBasisBucket] = None,
+                   value: Optional[CostBasisValue] = None) -> dict
+```
+
+Cost basis distribution.
+
+Get the cost basis distribution for a cohort on a specific date.
+
+Query params:
+- `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100
+- `value`: supply (default, in BTC), realized (USD), unrealized (USD)
+
+Endpoint: `GET /api/metrics/cost-basis/{cohort}/{date}`
 
 <a id="brk_client.BrkClient.get_metrics_count"></a>
 
