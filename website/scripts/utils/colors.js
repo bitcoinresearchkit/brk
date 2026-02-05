@@ -109,7 +109,6 @@ export const colors = {
     p3: [palette.sky, palette.avocado],
   },
 
-
   // Cointime economics
   liveliness: palette.pink,
   vaulted: palette.lime,

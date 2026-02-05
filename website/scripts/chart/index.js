@@ -196,7 +196,6 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       timeScale: {
         borderVisible: false,
         enableConflation: true,
-        // conflationThresholdFactor: 8,
         ...(fitContent
           ? {
               minBarSpacing: 0.001,
@@ -680,27 +679,31 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
               /** @type {number} */ (data.at(-1)?.time) ?? -Infinity;
 
             // Restore saved range or use defaults
-            const savedRange = getRange();
-            if (savedRange) {
-              ichart.timeScale().setVisibleLogicalRange({
-                from: savedRange.from,
-                to: savedRange.to,
-              });
-            } else if (fitContent) {
-              ichart.timeScale().fitContent();
-            } else if (
-              (minBarSpacingByIndex[idx] ?? 0) >=
-              /** @type {number} */ (minBarSpacingByIndex.quarterindex)
-            ) {
-              ichart
-                .timeScale()
-                .setVisibleLogicalRange({ from: -1, to: data.length });
-            }
-            // Delay until chart has applied the range
+            // RAF for Safari compatibility
             requestAnimationFrame(() => {
               if (seriesGeneration !== generation) return;
-              initialLoadComplete = true;
-              blueprints.onDataLoaded?.();
+              const savedRange = getRange();
+              if (savedRange) {
+                ichart.timeScale().setVisibleLogicalRange({
+                  from: savedRange.from,
+                  to: savedRange.to,
+                });
+              } else if (fitContent) {
+                ichart.timeScale().fitContent();
+              } else if (
+                (minBarSpacingByIndex[idx] ?? 0) >=
+                /** @type {number} */ (minBarSpacingByIndex.quarterindex)
+              ) {
+                ichart
+                  .timeScale()
+                  .setVisibleLogicalRange({ from: -1, to: data.length });
+              }
+              // Delay until chart has applied the range
+              requestAnimationFrame(() => {
+                if (seriesGeneration !== generation) return;
+                initialLoadComplete = true;
+                blueprints.onDataLoaded?.();
+              });
             });
           } else {
             // Incremental update: only process new data points
