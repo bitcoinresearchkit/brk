@@ -9,7 +9,8 @@ use axum::{
 };
 use brk_traversable::TreeNode;
 use brk_types::{
-    DataRangeFormat, Index, IndexInfo, LimitParam, Metric, MetricCount, MetricData, MetricParam,
+    CostBasisCohortParam, CostBasisFormatted, CostBasisParams, CostBasisQuery, DataRangeFormat,
+    Date, Index, IndexInfo, LimitParam, Metric, MetricCount, MetricData, MetricParam,
     MetricSelection, MetricSelectionLegacy, MetricWithIndex, Metrics, PaginatedMetrics, Pagination,
 };
 
@@ -289,6 +290,82 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     .deprecated()
                     .ok_response::<serde_json::Value>()
                     .not_modified(),
+            ),
+        )
+        // Cost basis distribution endpoints
+        .api_route(
+            "/api/metrics/cost-basis",
+            get_with(
+                async |headers: HeaderMap, State(state): State<AppState>| {
+                    state
+                        .cached_json(&headers, CacheStrategy::Static, |q| q.cost_basis_cohorts())
+                        .await
+                },
+                |op| {
+                    op.id("get_cost_basis_cohorts")
+                        .metrics_tag()
+                        .summary("Available cost basis cohorts")
+                        .description("List available cohorts for cost basis distribution.")
+                        .ok_response::<Vec<String>>()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
+            "/api/metrics/cost-basis/{cohort}/dates",
+            get_with(
+                async |headers: HeaderMap,
+                       Path(params): Path<CostBasisCohortParam>,
+                       State(state): State<AppState>| {
+                    state
+                        .cached_json(&headers, CacheStrategy::Height, move |q| {
+                            q.cost_basis_dates(&params.cohort)
+                        })
+                        .await
+                },
+                |op| {
+                    op.id("get_cost_basis_dates")
+                        .metrics_tag()
+                        .summary("Available cost basis dates")
+                        .description("List available dates for a cohort's cost basis distribution.")
+                        .ok_response::<Vec<Date>>()
+                        .not_found()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
+            "/api/metrics/cost-basis/{cohort}/{date}",
+            get_with(
+                async |headers: HeaderMap,
+                       Path(params): Path<CostBasisParams>,
+                       Query(query): Query<CostBasisQuery>,
+                       State(state): State<AppState>| {
+                    state
+                        .cached_json(&headers, CacheStrategy::Static, move |q| {
+                            q.cost_basis_formatted(
+                                &params.cohort,
+                                params.date,
+                                query.bucket,
+                                query.value,
+                            )
+                        })
+                        .await
+                },
+                |op| {
+                    op.id("get_cost_basis")
+                        .metrics_tag()
+                        .summary("Cost basis distribution")
+                        .description(
+                            "Get the cost basis distribution for a cohort on a specific date.\n\n\
+                            Query params:\n\
+                            - `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100\n\
+                            - `value`: supply (default, in BTC), realized (USD), unrealized (USD)",
+                        )
+                        .ok_response::<CostBasisFormatted>()
+                        .not_found()
+                        .server_error()
+                },
             ),
         )
     }

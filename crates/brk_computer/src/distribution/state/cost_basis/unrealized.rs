@@ -2,7 +2,7 @@ use std::ops::Bound;
 
 use brk_types::{CentsUnsigned, CentsUnsignedCompact, Sats};
 
-use super::cost_basis_data::CostBasisData;
+use super::data::CostBasisData;
 
 #[derive(Debug, Default, Clone)]
 pub struct UnrealizedState {
@@ -91,9 +91,7 @@ impl CachedStateRaw {
             unrealized_profit: CentsUnsigned::new(
                 (self.unrealized_profit / Sats::ONE_BTC_U128) as u64,
             ),
-            unrealized_loss: CentsUnsigned::new(
-                (self.unrealized_loss / Sats::ONE_BTC_U128) as u64,
-            ),
+            unrealized_loss: CentsUnsigned::new((self.unrealized_loss / Sats::ONE_BTC_U128) as u64),
             invested_capital_in_profit: CentsUnsigned::new(
                 (self.invested_capital_in_profit / Sats::ONE_BTC_U128) as u64,
             ),
@@ -118,7 +116,10 @@ impl CachedUnrealizedState {
     pub fn compute_fresh(price: CentsUnsigned, cost_basis_data: &CostBasisData) -> Self {
         let price: CentsUnsignedCompact = price.into();
         let state = Self::compute_raw(price, cost_basis_data);
-        Self { state, at_price: price }
+        Self {
+            state,
+            at_price: price,
+        }
     }
 
     /// Get the current cached state as output (without price update).
@@ -233,8 +234,7 @@ impl CachedUnrealizedState {
             // Non-crossing profit UTXOs: their profit increases by delta
             self.state.unrealized_profit += delta * original_supply_in_profit;
             // Non-crossing loss UTXOs: their loss decreases by delta
-            let non_crossing_loss_sats =
-                self.state.supply_in_loss.as_u128(); // Already excludes crossing
+            let non_crossing_loss_sats = self.state.supply_in_loss.as_u128(); // Already excludes crossing
             self.state.unrealized_loss -= delta * non_crossing_loss_sats;
         } else if new_price < old_price {
             let delta = (old_price - new_price).as_u128();
@@ -276,8 +276,7 @@ impl CachedUnrealizedState {
             // Non-crossing loss UTXOs: their loss increases by delta
             self.state.unrealized_loss += delta * original_supply_in_loss;
             // Non-crossing profit UTXOs: their profit decreases by delta
-            let non_crossing_profit_sats =
-                self.state.supply_in_profit.as_u128(); // Already excludes crossing
+            let non_crossing_profit_sats = self.state.supply_in_profit.as_u128(); // Already excludes crossing
             self.state.unrealized_profit -= delta * non_crossing_profit_sats;
         }
 

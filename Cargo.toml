@@ -71,6 +71,7 @@ jiff = { version = "0.2.18", features = ["perf-inline", "tz-system"], default-fe
 minreq = { version = "2.14.1", features = ["https", "json-using-serde"] }
 owo-colors = "4.2.3"
 parking_lot = "0.12.5"
+pco = "1.0.0"
 rayon = "1.11.0"
 rustc-hash = "2.1.1"
 schemars = { version = "1.2.1", features = ["indexmap2"] }

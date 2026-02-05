@@ -6,10 +6,9 @@ use std::{
 };
 
 use brk_error::{Error, Result};
-use brk_types::{CentsSats, CentsSquaredSats, CentsUnsigned, CentsUnsignedCompact, Height, Sats};
-use pco::{
-    ChunkConfig,
-    standalone::{simple_compress, simple_decompress},
+use brk_types::{
+    CentsSats, CentsSquaredSats, CentsUnsigned, CentsUnsignedCompact, CostBasisDistribution,
+    Height, Sats,
 };
 use rustc_hash::FxHashMap;
 use vecdb::Bytes;
@@ -73,7 +72,7 @@ impl CostBasisData {
 
     pub fn iter(&self) -> impl Iterator<Item = (CentsUnsignedCompact, &Sats)> {
         self.assert_pending_empty();
-        self.state.u().map.iter().map(|(&k, v)| (k, v))
+        self.state.u().base.map.iter().map(|(&k, v)| (k, v))
     }
 
     pub fn range(
@@ -81,21 +80,31 @@ impl CostBasisData {
         bounds: (Bound<CentsUnsignedCompact>, Bound<CentsUnsignedCompact>),
     ) -> impl Iterator<Item = (CentsUnsignedCompact, &Sats)> {
         self.assert_pending_empty();
-        self.state.u().map.range(bounds).map(|(&k, v)| (k, v))
+        self.state.u().base.map.range(bounds).map(|(&k, v)| (k, v))
     }
 
     pub fn is_empty(&self) -> bool {
-        self.pending.is_empty() && self.state.u().map.is_empty()
+        self.pending.is_empty() && self.state.u().base.map.is_empty()
     }
 
     pub fn first_key_value(&self) -> Option<(CentsUnsignedCompact, &Sats)> {
         self.assert_pending_empty();
-        self.state.u().map.first_key_value().map(|(&k, v)| (k, v))
+        self.state
+            .u()
+            .base
+            .map
+            .first_key_value()
+            .map(|(&k, v)| (k, v))
     }
 
     pub fn last_key_value(&self) -> Option<(CentsUnsignedCompact, &Sats)> {
         self.assert_pending_empty();
-        self.state.u().map.last_key_value().map(|(&k, v)| (k, v))
+        self.state
+            .u()
+            .base
+            .map
+            .last_key_value()
+            .map(|(&k, v)| (k, v))
     }
 
     /// Get the exact cap_raw value (not recomputed from map).
@@ -142,7 +151,7 @@ impl CostBasisData {
 
     pub fn apply_pending(&mut self) {
         for (cents, (inc, dec)) in self.pending.drain() {
-            let entry = self.state.um().map.entry(cents).or_default();
+            let entry = self.state.um().base.map.entry(cents).or_default();
             *entry += inc;
             if *entry < dec {
                 panic!(
@@ -159,7 +168,7 @@ impl CostBasisData {
             }
             *entry -= dec;
             if *entry == Sats::ZERO {
-                self.state.um().map.remove(&cents);
+                self.state.um().base.map.remove(&cents);
             }
         }
 
@@ -214,12 +223,20 @@ impl CostBasisData {
 
     pub fn clean(&mut self) -> Result<()> {
         let _ = fs::remove_dir_all(&self.pathbuf);
-        fs::create_dir_all(&self.pathbuf)?;
+        fs::create_dir_all(self.path_by_height())?;
         Ok(())
     }
 
+    fn path_by_height(&self) -> PathBuf {
+        self.pathbuf.join("by_height")
+    }
+
     fn read_dir(&self, keep_only_before: Option<Height>) -> Result<BTreeMap<Height, PathBuf>> {
-        Ok(fs::read_dir(&self.pathbuf)?
+        let by_height = self.path_by_height();
+        if !by_height.exists() {
+            return Ok(BTreeMap::new());
+        }
+        Ok(fs::read_dir(&by_height)?
             .filter_map(|entry| {
                 let path = entry.ok()?.path();
                 let name = path.file_name()?.to_str()?;
@@ -257,13 +274,13 @@ impl CostBasisData {
     }
 
     fn path_state(&self, height: Height) -> PathBuf {
-        self.pathbuf.join(u32::from(height).to_string())
+        self.path_by_height().join(height.to_string())
     }
 }
 
 #[derive(Clone, Default, Debug)]
 struct State {
-    map: BTreeMap<CentsUnsignedCompact, Sats>,
+    base: CostBasisDistribution,
     /// Exact realized cap: Σ(price × sats)
     cap_raw: CentsSats,
     /// Exact investor cap: Σ(price² × sats)
@@ -271,51 +288,20 @@ struct State {
 }
 
 impl State {
-    fn serialize(&self) -> vecdb::Result<Vec<u8>> {
-        let keys: Vec<u32> = self.map.keys().map(|k| k.inner()).collect();
-        let values: Vec<u64> = self.map.values().map(|v| u64::from(*v)).collect();
-
-        let config = ChunkConfig::default();
-        let compressed_keys = simple_compress(&keys, &config)?;
-        let compressed_values = simple_compress(&values, &config)?;
-
-        let mut buffer = Vec::new();
-        buffer.extend(keys.len().to_bytes());
-        buffer.extend(compressed_keys.len().to_bytes());
-        buffer.extend(compressed_values.len().to_bytes());
-        buffer.extend(compressed_keys);
-        buffer.extend(compressed_values);
+    fn serialize(&self) -> Result<Vec<u8>> {
+        let mut buffer = self.base.serialize()?;
         buffer.extend(self.cap_raw.to_bytes());
         buffer.extend(self.investor_cap_raw.to_bytes());
-
         Ok(buffer)
     }
 
-    fn deserialize(data: &[u8]) -> vecdb::Result<Self> {
-        let entry_count = usize::from_bytes(&data[0..8])?;
-        let keys_len = usize::from_bytes(&data[8..16])?;
-        let values_len = usize::from_bytes(&data[16..24])?;
-
-        let keys_start = 24;
-        let values_start = keys_start + keys_len;
-        let raw_start = values_start + values_len;
-
-        let keys: Vec<u32> = simple_decompress(&data[keys_start..values_start])?;
-        let values: Vec<u64> = simple_decompress(&data[values_start..raw_start])?;
-
-        let map: BTreeMap<CentsUnsignedCompact, Sats> = keys
-            .into_iter()
-            .zip(values)
-            .map(|(k, v)| (CentsUnsignedCompact::new(k), Sats::from(v)))
-            .collect();
-
-        assert_eq!(map.len(), entry_count);
-
-        let cap_raw = CentsSats::from_bytes(&data[raw_start..raw_start + 16])?;
-        let investor_cap_raw = CentsSquaredSats::from_bytes(&data[raw_start + 16..raw_start + 32])?;
+    fn deserialize(data: &[u8]) -> Result<Self> {
+        let (base, rest) = CostBasisDistribution::deserialize_with_rest(data)?;
+        let cap_raw = CentsSats::from_bytes(&rest[0..16])?;
+        let investor_cap_raw = CentsSquaredSats::from_bytes(&rest[16..32])?;
 
         Ok(Self {
-            map,
+            base,
             cap_raw,
             investor_cap_raw,
         })

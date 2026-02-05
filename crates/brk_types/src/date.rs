@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 
 use jiff::{Span, Zoned, civil::Date as Date_, tz::TimeZone};
 use schemars::JsonSchema;
@@ -247,6 +247,21 @@ impl fmt::Display for Date {
         }
 
         f.write_str(buf.format(day))
+    }
+}
+
+impl FromStr for Date {
+    type Err = &'static str;
+
+    /// Parse a date from YYYY-MM-DD format.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() != 10 || s.as_bytes()[4] != b'-' || s.as_bytes()[7] != b'-' {
+            return Err("expected YYYY-MM-DD format");
+        }
+        let year: u16 = s[0..4].parse().map_err(|_| "invalid year")?;
+        let month: u8 = s[5..7].parse().map_err(|_| "invalid month")?;
+        let day: u8 = s[8..10].parse().map_err(|_| "invalid day")?;
+        Ok(Self::new(year, month, day))
     }
 }
 

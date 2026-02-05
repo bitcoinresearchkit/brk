@@ -58,6 +58,10 @@ pub enum Error {
     #[error(transparent)]
     BitcoinHexToArrayError(#[from] bitcoin::hex::HexToArrayError),
 
+    #[cfg(feature = "pco")]
+    #[error(transparent)]
+    Pco(#[from] pco::errors::PcoError),
+
     #[cfg(feature = "serde_json")]
     #[error(transparent)]
     SerdeJSON(#[from] serde_json::Error),

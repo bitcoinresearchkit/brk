@@ -17,6 +17,7 @@ use super::{CentsSats, Dollars, Sats};
     Eq,
     PartialOrd,
     Ord,
+    Hash,
     Serialize,
     Deserialize,
     Pco,
@@ -60,6 +61,41 @@ impl CentsUnsigned {
 
     pub fn to_dollars(self) -> Dollars {
         Dollars::from(self.0 as f64 / 100.0)
+    }
+
+    /// Round to N significant digits.
+    /// E.g., 12345 (= $123.45) with round_to(4) → 12350 (= $123.50)
+    /// E.g., 12345 (= $123.45) with round_to(3) → 12300 (= $123.00)
+    pub fn round_to(self, digits: i32) -> Self {
+        let v = self.0;
+        let ilog10 = v.checked_ilog10().unwrap_or(0) as i32;
+        if ilog10 >= digits {
+            let log_diff = ilog10 - digits + 1;
+            let pow = 10u64.pow(log_diff as u32);
+            // Add half for rounding
+            Self(((v + pow / 2) / pow) * pow)
+        } else {
+            self
+        }
+    }
+
+    /// Round to nearest dollar, then apply N significant digits.
+    /// E.g., 12345 (= $123.45) → 12300 (= $123.00) with 5 digits
+    /// E.g., 1234567 (= $12345.67) → 1234600 (= $12346.00) with 5 digits
+    #[inline]
+    pub fn round_to_dollar(self, digits: i32) -> Self {
+        // Round to nearest dollar (nearest 100 cents)
+        let dollars = (self.0 + 50) / 100;
+        // Apply significant digit rounding to dollars, then convert back to cents
+        let ilog10 = dollars.checked_ilog10().unwrap_or(0) as i32;
+        let rounded_dollars = if ilog10 >= digits {
+            let log_diff = ilog10 - digits + 1;
+            let pow = 10u64.pow(log_diff as u32);
+            ((dollars + pow / 2) / pow) * pow
+        } else {
+            dollars
+        };
+        Self(rounded_dollars * 100)
     }
 }
 

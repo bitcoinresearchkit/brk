@@ -1,13 +1,15 @@
-use std::{cmp::Reverse, collections::BinaryHeap, path::Path};
+use std::{cmp::Reverse, collections::BinaryHeap, fs, path::Path};
 
 use brk_cohort::{
     AGE_BOUNDARIES, ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount,
-    ByMaxAge, ByMinAge, BySpendableType, ByTerm, ByYear, Filter, Filtered, StateLevel, UTXOGroups,
+    ByMaxAge, ByMinAge, BySpendableType, ByTerm, ByYear, Filter, Filtered, StateLevel, TERM_NAMES,
+    Term, UTXOGroups,
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    CentsUnsigned, DateIndex, Dollars, Height, ONE_HOUR_IN_SEC, Sats, StoredF32, Timestamp, Version,
+    CentsUnsigned, CentsUnsignedCompact, CostBasisDistribution, Date, DateIndex, Dollars, Height,
+    ONE_HOUR_IN_SEC, Sats, StoredF32, Timestamp, Version,
 };
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
@@ -24,6 +26,9 @@ use crate::{
 use super::{super::traits::CohortVecs, vecs::UTXOCohortVecs};
 
 const VERSION: Version = Version::new(0);
+
+/// Significant digits for cost basis prices (after rounding to dollars).
+const COST_BASIS_PRICE_DIGITS: i32 = 5;
 
 /// All UTXO cohorts organized by filter type.
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -358,10 +363,12 @@ impl UTXOCohorts {
     /// Computes on-demand by merging age_range cohorts' cost_basis_data data.
     /// This avoids maintaining redundant aggregate cost_basis_data maps.
     /// Computes both sat-weighted (percentiles) and USD-weighted (invested_capital) percentiles.
+    /// Also writes daily cost basis snapshots to states_path.
     pub fn truncate_push_aggregate_percentiles(
         &mut self,
         dateindex: DateIndex,
         spot: Dollars,
+        states_path: &Path,
     ) -> Result<()> {
         // Collect (filter, entries, total_sats, total_usd) from age_range cohorts.
         // Keep data in CentsUnsigned to avoid float conversions until output.
@@ -432,6 +439,7 @@ impl UTXOCohorts {
             }
 
             // K-way merge using min-heap: O(n log k) where k = number of cohorts
+            // Collects merged price->sats map while computing percentiles
             let mut heap: BinaryHeap<Reverse<(CentsUnsigned, usize, usize)>> = BinaryHeap::new();
 
             // Initialize heap with first entry from each cohort
@@ -457,6 +465,42 @@ impl UTXOCohorts {
             let mut sats_at_price: u64 = 0;
             let mut usd_at_price: u128 = 0;
 
+            // Collect merged entries during the merge (already in sorted order)
+            // Pre-allocate with max possible unique prices (actual count likely lower due to dedup)
+            let max_unique_prices = relevant.iter().map(|e| e.len()).max().unwrap_or(0);
+            let mut merged: Vec<(CentsUnsignedCompact, Sats)> = Vec::with_capacity(max_unique_prices);
+
+            // Finalize a price point: compute percentiles and accumulate for merged vec
+            let mut finalize_price = |price: CentsUnsigned, sats: u64, usd: u128| {
+                // Percentile computation uses exact price for accuracy
+                cumsum_sats += sats;
+                cumsum_usd += usd;
+
+                if sat_idx < PERCENTILES_LEN || usd_idx < PERCENTILES_LEN {
+                    let dollars = price.to_dollars();
+                    while sat_idx < PERCENTILES_LEN && cumsum_sats >= sat_targets[sat_idx] {
+                        sat_result[sat_idx] = dollars;
+                        sat_idx += 1;
+                    }
+                    while usd_idx < PERCENTILES_LEN && cumsum_usd >= usd_targets[usd_idx] {
+                        usd_result[usd_idx] = dollars;
+                        usd_idx += 1;
+                    }
+                }
+
+                // Round to nearest dollar with N significant digits for storage
+                let rounded: CentsUnsignedCompact = price.round_to_dollar(COST_BASIS_PRICE_DIGITS).into();
+
+                // Merge entries with same rounded price using last_mut
+                if let Some((last_price, last_sats)) = merged.last_mut()
+                    && *last_price == rounded
+                {
+                    *last_sats += Sats::from(sats);
+                } else {
+                    merged.push((rounded, Sats::from(sats)));
+                }
+            };
+
             while let Some(Reverse((price, cohort_idx, entry_idx))) = heap.pop() {
                 let entries = relevant[cohort_idx];
                 let (_, amount) = entries[entry_idx];
@@ -467,27 +511,7 @@ impl UTXOCohorts {
                 if let Some(prev_price) = current_price
                     && prev_price != price
                 {
-                    cumsum_sats += sats_at_price;
-                    cumsum_usd += usd_at_price;
-
-                    // Only convert to dollars if we still need percentiles
-                    if sat_idx < PERCENTILES_LEN || usd_idx < PERCENTILES_LEN {
-                        let prev_dollars = prev_price.to_dollars();
-                        while sat_idx < PERCENTILES_LEN && cumsum_sats >= sat_targets[sat_idx] {
-                            sat_result[sat_idx] = prev_dollars;
-                            sat_idx += 1;
-                        }
-                        while usd_idx < PERCENTILES_LEN && cumsum_usd >= usd_targets[usd_idx] {
-                            usd_result[usd_idx] = prev_dollars;
-                            usd_idx += 1;
-                        }
-
-                        // Early exit if all percentiles found
-                        if sat_idx >= PERCENTILES_LEN && usd_idx >= PERCENTILES_LEN {
-                            break;
-                        }
-                    }
-
+                    finalize_price(prev_price, sats_at_price, usd_at_price);
                     sats_at_price = 0;
                     usd_at_price = 0;
                 }
@@ -503,22 +527,9 @@ impl UTXOCohorts {
                 }
             }
 
-            // Finalize last price (skip if we already found all percentiles via early exit)
-            if (sat_idx < PERCENTILES_LEN || usd_idx < PERCENTILES_LEN)
-                && let Some(price) = current_price
-            {
-                cumsum_sats += sats_at_price;
-                cumsum_usd += usd_at_price;
-
-                let price_dollars = price.to_dollars();
-                while sat_idx < PERCENTILES_LEN && cumsum_sats >= sat_targets[sat_idx] {
-                    sat_result[sat_idx] = price_dollars;
-                    sat_idx += 1;
-                }
-                while usd_idx < PERCENTILES_LEN && cumsum_usd >= usd_targets[usd_idx] {
-                    usd_result[usd_idx] = price_dollars;
-                    usd_idx += 1;
-                }
+            // Finalize last price
+            if let Some(price) = current_price {
+                finalize_price(price, sats_at_price, usd_at_price);
             }
 
             // Push both sat-weighted and USD-weighted results
@@ -538,6 +549,20 @@ impl UTXOCohorts {
                 let rank = compute_spot_percentile_rank(&usd_result, spot);
                 spot_pct.dateindex.truncate_push(dateindex, rank)?;
             }
+
+            // Write daily cost basis snapshot
+            let cohort_name = match &filter {
+                Filter::All => "all",
+                Filter::Term(Term::Sth) => TERM_NAMES.short.id,
+                Filter::Term(Term::Lth) => TERM_NAMES.long.id,
+                _ => return Ok(()),
+            };
+
+            let date = Date::from(dateindex);
+            let dir = states_path.join(format!("utxo_{cohort_name}_cost_basis/by_date"));
+            fs::create_dir_all(&dir)?;
+            let path = dir.join(date.to_string());
+            fs::write(path, CostBasisDistribution::serialize_iter(merged.into_iter())?)?;
 
             Ok(())
         })

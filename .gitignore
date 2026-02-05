@@ -24,6 +24,7 @@ _*
 /oracle*
 /playground
 /*.txt
+/*.csv
 
 # Logs
 *.log*

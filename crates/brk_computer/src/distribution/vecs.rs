@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use brk_error::Result;
 use brk_indexer::Indexer;
@@ -37,6 +37,8 @@ const VERSION: Version = Version::new(22);
 pub struct Vecs {
     #[traversable(skip)]
     db: Database,
+    #[traversable(skip)]
+    pub states_path: PathBuf,
 
     pub supply_state: BytesVec<Height, SupplyState>,
     pub any_address_indexes: AnyAddressIndexesVecs,
@@ -163,6 +165,7 @@ impl Vecs {
             emptyaddressindex,
 
             db,
+            states_path,
         };
 
         this.db.retain_regions(

@@ -52,6 +52,15 @@ CentsSquaredSats = int
 CentsUnsigned = int
 # Closing price value for a time period
 Close = CentsUnsigned
+# Cohort identifier for cost basis distribution.
+Cohort = str
+# Bucket type for cost basis aggregation.
+# Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
+# log10/log50/log100 (logarithmic with 10/50/100 buckets per decade).
+CostBasisBucket = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50", "log100"]
+# Value type for cost basis distribution.
+# Options: supply (BTC), realized (USD, price × supply), unrealized (USD, spot × supply).
+CostBasisValue = Literal["supply", "realized", "unrealized"]
 # Output format for API responses
 Format = Literal["json", "csv"]
 # Maximum number of results to return. Defaults to 100 if not specified.
@@ -359,6 +368,30 @@ class BlockTimestamp(TypedDict):
     height: Height
     hash: BlockHash
     timestamp: str
+
+class CostBasisCohortParam(TypedDict):
+    """
+    Path parameters for cost basis dates endpoint.
+    """
+    cohort: Cohort
+
+class CostBasisParams(TypedDict):
+    """
+    Path parameters for cost basis distribution endpoint.
+    """
+    cohort: Cohort
+    date: str
+
+class CostBasisQuery(TypedDict):
+    """
+    Query parameters for cost basis distribution endpoint.
+
+    Attributes:
+        bucket: Bucket type for aggregation. Default: raw (no aggregation).
+        value: Value type to return. Default: supply.
+    """
+    bucket: CostBasisBucket
+    value: CostBasisValue
 
 class DataRangeFormat(TypedDict):
     """
@@ -5510,6 +5543,39 @@ class BrkClient(BrkClientBase):
         path = f'/api/metrics/bulk{"?" + query if query else ""}'
         if format == 'csv':
             return self.get_text(path)
+        return self.get_json(path)
+
+    def get_cost_basis_cohorts(self) -> List[str]:
+        """Available cost basis cohorts.
+
+        List available cohorts for cost basis distribution.
+
+        Endpoint: `GET /api/metrics/cost-basis`"""
+        return self.get_json('/api/metrics/cost-basis')
+
+    def get_cost_basis_dates(self, cohort: Cohort) -> List[Date]:
+        """Available cost basis dates.
+
+        List available dates for a cohort's cost basis distribution.
+
+        Endpoint: `GET /api/metrics/cost-basis/{cohort}/dates`"""
+        return self.get_json(f'/api/metrics/cost-basis/{cohort}/dates')
+
+    def get_cost_basis(self, cohort: Cohort, date: str, bucket: Optional[CostBasisBucket] = None, value: Optional[CostBasisValue] = None) -> dict:
+        """Cost basis distribution.
+
+        Get the cost basis distribution for a cohort on a specific date.
+
+        Query params:
+        - `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100
+        - `value`: supply (default, in BTC), realized (USD), unrealized (USD)
+
+        Endpoint: `GET /api/metrics/cost-basis/{cohort}/{date}`"""
+        params = []
+        if bucket is not None: params.append(f'bucket={bucket}')
+        if value is not None: params.append(f'value={value}')
+        query = '&'.join(params)
+        path = f'/api/metrics/cost-basis/{cohort}/{date}{"?" + query if query else ""}'
         return self.get_json(path)
 
     def get_metrics_count(self) -> List[MetricCount]:

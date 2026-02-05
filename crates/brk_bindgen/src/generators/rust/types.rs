@@ -10,7 +10,7 @@ pub fn js_type_to_rust(js_type: &str) -> String {
             "integer" => "i64".to_string(),
             "number" => "f64".to_string(),
             "boolean" => "bool".to_string(),
-            "*" => "serde_json::Value".to_string(),
+            "*" | "Object" => "serde_json::Value".to_string(),
             other => other.to_string(),
         }
     }

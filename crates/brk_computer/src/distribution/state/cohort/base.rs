@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_types::{Age, CentsSats, CentsUnsigned, CostBasisSnapshot, Height, Sats, SupplyState};
 
 use super::super::cost_basis::{
-    CachedUnrealizedState, Percentiles, CostBasisData, RealizedState, UnrealizedState,
+    CachedUnrealizedState, CostBasisData, Percentiles, RealizedState, UnrealizedState,
 };
 
 #[derive(Clone)]
@@ -16,6 +16,8 @@ pub struct CohortState {
     pub satdays_destroyed: Sats,
     cost_basis_data: Option<CostBasisData>,
     cached_unrealized: Option<CachedUnrealizedState>,
+    /// If set, prices are rounded to nearest dollar with N significant digits.
+    price_rounding_digits: Option<i32>,
 }
 
 impl CohortState {
@@ -28,6 +30,22 @@ impl CohortState {
             satdays_destroyed: Sats::ZERO,
             cost_basis_data: compute_dollars.then_some(CostBasisData::create(path, name)),
             cached_unrealized: None,
+            price_rounding_digits: None,
+        }
+    }
+
+    /// Enable price rounding for cost basis data.
+    pub fn with_price_rounding(mut self, digits: i32) -> Self {
+        self.price_rounding_digits = Some(digits);
+        self
+    }
+
+    /// Round price if rounding is enabled.
+    #[inline]
+    fn round_price(&self, price: CentsUnsigned) -> CentsUnsigned {
+        match self.price_rounding_digits {
+            Some(digits) => price.round_to_dollar(digits),
+            None => price,
         }
     }
 
@@ -92,19 +110,21 @@ impl CohortState {
     pub fn increment_snapshot(&mut self, s: &CostBasisSnapshot) {
         self.supply += &s.supply_state;
 
-        if s.supply_state.value > Sats::ZERO
-            && let Some(realized) = self.realized.as_mut()
-        {
-            realized.increment_snapshot(s.price_sats, s.investor_cap);
+        if s.supply_state.value > Sats::ZERO && self.realized.is_some() {
+            let rounded_price = self.round_price(s.realized_price);
+            self.realized
+                .as_mut()
+                .unwrap()
+                .increment_snapshot(s.price_sats, s.investor_cap);
             self.cost_basis_data.as_mut().unwrap().increment(
-                s.realized_price,
+                rounded_price,
                 s.supply_state.value,
                 s.price_sats,
                 s.investor_cap,
             );
 
             if let Some(cache) = self.cached_unrealized.as_mut() {
-                cache.on_receive(s.realized_price, s.supply_state.value);
+                cache.on_receive(rounded_price, s.supply_state.value);
             }
         }
     }
@@ -119,19 +139,21 @@ impl CohortState {
     pub fn decrement_snapshot(&mut self, s: &CostBasisSnapshot) {
         self.supply -= &s.supply_state;
 
-        if s.supply_state.value > Sats::ZERO
-            && let Some(realized) = self.realized.as_mut()
-        {
-            realized.decrement_snapshot(s.price_sats, s.investor_cap);
+        if s.supply_state.value > Sats::ZERO && self.realized.is_some() {
+            let rounded_price = self.round_price(s.realized_price);
+            self.realized
+                .as_mut()
+                .unwrap()
+                .decrement_snapshot(s.price_sats, s.investor_cap);
             self.cost_basis_data.as_mut().unwrap().decrement(
-                s.realized_price,
+                rounded_price,
                 s.supply_state.value,
                 s.price_sats,
                 s.investor_cap,
             );
 
             if let Some(cache) = self.cached_unrealized.as_mut() {
-                cache.on_send(s.realized_price, s.supply_state.value);
+                cache.on_send(rounded_price, s.supply_state.value);
             }
         }
     }
@@ -173,34 +195,36 @@ impl CohortState {
     ) {
         self.supply += supply;
 
-        if supply.value > Sats::ZERO
-            && let Some(realized) = self.realized.as_mut()
-        {
-            realized.receive(price, supply.value);
+        if supply.value > Sats::ZERO && self.realized.is_some() {
+            // Pre-compute rounded prices before mutable borrows
+            let current_rounded = self.round_price(current.realized_price);
+            let prev_rounded = self.round_price(prev.realized_price);
+
+            self.realized.as_mut().unwrap().receive(price, supply.value);
 
             if current.supply_state.value.is_not_zero() {
                 self.cost_basis_data.as_mut().unwrap().increment(
-                    current.realized_price,
+                    current_rounded,
                     current.supply_state.value,
                     current.price_sats,
                     current.investor_cap,
                 );
 
                 if let Some(cache) = self.cached_unrealized.as_mut() {
-                    cache.on_receive(current.realized_price, current.supply_state.value);
+                    cache.on_receive(current_rounded, current.supply_state.value);
                 }
             }
 
             if prev.supply_state.value.is_not_zero() {
                 self.cost_basis_data.as_mut().unwrap().decrement(
-                    prev.realized_price,
+                    prev_rounded,
                     prev.supply_state.value,
                     prev.price_sats,
                     prev.investor_cap,
                 );
 
                 if let Some(cache) = self.cached_unrealized.as_mut() {
-                    cache.on_send(prev.realized_price, prev.supply_state.value);
+                    cache.on_send(prev_rounded, prev.supply_state.value);
                 }
             }
         }
@@ -275,7 +299,7 @@ impl CohortState {
             self.satblocks_destroyed += age.satblocks_destroyed(supply.value);
             self.satdays_destroyed += age.satdays_destroyed(supply.value);
 
-            if let Some(realized) = self.realized.as_mut() {
+            if self.realized.is_some() {
                 let sats = supply.value;
 
                 // Compute once for realized.send using typed values
@@ -284,31 +308,38 @@ impl CohortState {
                 let ath_ps = CentsSats::from_price_sats(ath, sats);
                 let prev_investor_cap = prev_ps.to_investor_cap(prev_price);
 
-                realized.send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
+                // Pre-compute rounded prices before mutable borrows
+                let current_rounded = self.round_price(current.realized_price);
+                let prev_rounded = self.round_price(prev.realized_price);
+
+                self.realized
+                    .as_mut()
+                    .unwrap()
+                    .send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
 
                 if current.supply_state.value.is_not_zero() {
                     self.cost_basis_data.as_mut().unwrap().increment(
-                        current.realized_price,
+                        current_rounded,
                         current.supply_state.value,
                         current.price_sats,
                         current.investor_cap,
                     );
 
                     if let Some(cache) = self.cached_unrealized.as_mut() {
-                        cache.on_receive(current.realized_price, current.supply_state.value);
+                        cache.on_receive(current_rounded, current.supply_state.value);
                     }
                 }
 
                 if prev.supply_state.value.is_not_zero() {
                     self.cost_basis_data.as_mut().unwrap().decrement(
-                        prev.realized_price,
+                        prev_rounded,
                         prev.supply_state.value,
                         prev.price_sats,
                         prev.investor_cap,
                     );
 
                     if let Some(cache) = self.cached_unrealized.as_mut() {
-                        cache.on_send(prev.realized_price, prev.supply_state.value);
+                        cache.on_send(prev_rounded, prev.supply_state.value);
                     }
                 }
             }

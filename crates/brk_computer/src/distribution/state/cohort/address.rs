@@ -6,6 +6,9 @@ use vecdb::unlikely;
 
 use super::{super::cost_basis::RealizedState, base::CohortState};
 
+/// Significant digits for address cost basis prices (after rounding to dollars).
+const COST_BASIS_PRICE_DIGITS: i32 = 4;
+
 #[derive(Clone)]
 pub struct AddressCohortState {
     pub addr_count: u64,
@@ -16,7 +19,8 @@ impl AddressCohortState {
     pub fn new(path: &Path, name: &str, compute_dollars: bool) -> Self {
         Self {
             addr_count: 0,
-            inner: CohortState::new(path, name, compute_dollars),
+            inner: CohortState::new(path, name, compute_dollars)
+                .with_price_rounding(COST_BASIS_PRICE_DIGITS),
         }
     }
 

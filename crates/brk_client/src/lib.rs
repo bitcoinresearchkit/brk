@@ -6051,7 +6051,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.1.3";
+    pub const VERSION: &'static str = "v0.1.5";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {
@@ -6344,6 +6344,42 @@ impl BrkClient {
         } else {
             self.base.get_json(&path).map(FormatResponse::Json)
         }
+    }
+
+    /// Available cost basis cohorts
+    ///
+    /// List available cohorts for cost basis distribution.
+    ///
+    /// Endpoint: `GET /api/metrics/cost-basis`
+    pub fn get_cost_basis_cohorts(&self) -> Result<Vec<String>> {
+        self.base.get_json(&format!("/api/metrics/cost-basis"))
+    }
+
+    /// Available cost basis dates
+    ///
+    /// List available dates for a cohort's cost basis distribution.
+    ///
+    /// Endpoint: `GET /api/metrics/cost-basis/{cohort}/dates`
+    pub fn get_cost_basis_dates(&self, cohort: Cohort) -> Result<Vec<Date>> {
+        self.base.get_json(&format!("/api/metrics/cost-basis/{cohort}/dates"))
+    }
+
+    /// Cost basis distribution
+    ///
+    /// Get the cost basis distribution for a cohort on a specific date.
+    ///
+    /// Query params:
+    /// - `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100
+    /// - `value`: supply (default, in BTC), realized (USD), unrealized (USD)
+    ///
+    /// Endpoint: `GET /api/metrics/cost-basis/{cohort}/{date}`
+    pub fn get_cost_basis(&self, cohort: Cohort, date: &str, bucket: Option<CostBasisBucket>, value: Option<CostBasisValue>) -> Result<serde_json::Value> {
+        let mut query = Vec::new();
+        if let Some(v) = bucket { query.push(format!("bucket={}", v)); }
+        if let Some(v) = value { query.push(format!("value={}", v)); }
+        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
+        let path = format!("/api/metrics/cost-basis/{cohort}/{date}{}", query_str);
+        self.base.get_json(&path)
     }
 
     /// Metric count

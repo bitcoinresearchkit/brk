@@ -399,7 +399,7 @@ pub fn process_blocks(
                 .map(|c| c.to_dollars())
                 .unwrap_or(Dollars::NAN);
             vecs.utxo_cohorts
-                .truncate_push_aggregate_percentiles(dateindex, spot)?;
+                .truncate_push_aggregate_percentiles(dateindex, spot, &vecs.states_path)?;
 
             // Compute unrealized peak regret by age range (once per day)
             // Aggregate cohorts (all, term, etc.) get values via compute_from_stateful

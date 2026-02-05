@@ -192,6 +192,44 @@
  * @typedef {CentsUnsigned} Close
  */
 /**
+ * Cohort identifier for cost basis distribution.
+ *
+ * @typedef {string} Cohort
+ */
+/**
+ * Bucket type for cost basis aggregation.
+ * Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
+ * log10/log50/log100 (logarithmic with 10/50/100 buckets per decade).
+ *
+ * @typedef {("raw"|"lin200"|"lin500"|"lin1000"|"log10"|"log50"|"log100")} CostBasisBucket
+ */
+/**
+ * Path parameters for cost basis dates endpoint.
+ *
+ * @typedef {Object} CostBasisCohortParam
+ * @property {Cohort} cohort
+ */
+/**
+ * Path parameters for cost basis distribution endpoint.
+ *
+ * @typedef {Object} CostBasisParams
+ * @property {Cohort} cohort
+ * @property {string} date
+ */
+/**
+ * Query parameters for cost basis distribution endpoint.
+ *
+ * @typedef {Object} CostBasisQuery
+ * @property {CostBasisBucket=} bucket - Bucket type for aggregation. Default: raw (no aggregation).
+ * @property {CostBasisValue=} value - Value type to return. Default: supply.
+ */
+/**
+ * Value type for cost basis distribution.
+ * Options: supply (BTC), realized (USD, price × supply), unrealized (USD, spot × supply).
+ *
+ * @typedef {("supply"|"realized"|"unrealized")} CostBasisValue
+ */
+/**
  * Data range with output format for API query parameters
  *
  * @typedef {Object} DataRangeFormat
@@ -7382,6 +7420,58 @@ class BrkClient extends BrkClientBase {
     if (format === 'csv') {
       return this.getText(path);
     }
+    return this.getJson(path);
+  }
+
+  /**
+   * Available cost basis cohorts
+   *
+   * List available cohorts for cost basis distribution.
+   *
+   * Endpoint: `GET /api/metrics/cost-basis`
+   * @returns {Promise<string[]>}
+   */
+  async getCostBasisCohorts() {
+    return this.getJson(`/api/metrics/cost-basis`);
+  }
+
+  /**
+   * Available cost basis dates
+   *
+   * List available dates for a cohort's cost basis distribution.
+   *
+   * Endpoint: `GET /api/metrics/cost-basis/{cohort}/dates`
+   *
+   * @param {Cohort} cohort
+   * @returns {Promise<Date[]>}
+   */
+  async getCostBasisDates(cohort) {
+    return this.getJson(`/api/metrics/cost-basis/${cohort}/dates`);
+  }
+
+  /**
+   * Cost basis distribution
+   *
+   * Get the cost basis distribution for a cohort on a specific date.
+   *
+   * Query params:
+   * - `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100
+   * - `value`: supply (default, in BTC), realized (USD), unrealized (USD)
+   *
+   * Endpoint: `GET /api/metrics/cost-basis/{cohort}/{date}`
+   *
+   * @param {Cohort} cohort
+   * @param {string} date
+   * @param {CostBasisBucket=} [bucket] - Bucket type for aggregation. Default: raw (no aggregation).
+   * @param {CostBasisValue=} [value] - Value type to return. Default: supply.
+   * @returns {Promise<Object>}
+   */
+  async getCostBasis(cohort, date, bucket, value) {
+    const params = new URLSearchParams();
+    if (bucket !== undefined) params.set('bucket', String(bucket));
+    if (value !== undefined) params.set('value', String(value));
+    const query = params.toString();
+    const path = `/api/metrics/cost-basis/${cohort}/${date}${query ? '?' + query : ''}`;
     return this.getJson(path);
   }
 
