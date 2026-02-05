@@ -120,6 +120,10 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
   /** @type {Set<(data: number[]) => void>} */
   let timeCallbacks = new Set();
 
+  // Memory cache for instant index switching
+  /** @type {Map<string, MetricData<any>>} */
+  const cache = new Map();
+
   // Range state: localStorage stores all ranges per-index, URL stores current range only
   /** @typedef {{ from: number, to: number }} Range */
   const ranges = createPersistedValue({
@@ -229,6 +233,10 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
     ichart.timeScale().setVisibleLogicalRange(initialRange);
   }
 
+  // Flag to prevent range persistence until first data load completes
+  // This prevents the URL range from being overwritten during chart initialization
+  let initialLoadComplete = false;
+
   let visibleBarsCount = initialRange
     ? initialRange.to - initialRange.from
     : Infinity;
@@ -243,6 +251,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
   ichart.timeScale().subscribeVisibleLogicalRangeChange(
     throttle((range) => {
       if (!range) return;
+      if (!initialLoadComplete) return; // Ignore range changes during initial load
       const count = range.to - range.from;
       if (count === visibleBarsCount) return;
       visibleBarsCount = count;
@@ -252,6 +261,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
   // Debounced range persistence
   const debouncedSetRange = debounce((/** @type {Range | null} */ range) => {
+    if (!initialLoadComplete) return; // Skip persistence during initial load
     if (range && range.from < range.to) {
       setRange({ from: range.from, to: range.to });
     }
@@ -689,6 +699,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
             // Delay until chart has applied the range
             requestAnimationFrame(() => {
               if (seriesGeneration !== generation) return;
+              initialLoadComplete = true;
               blueprints.onDataLoaded?.();
             });
           } else {
@@ -727,7 +738,14 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
           timeCallbacks.add(state.onTime);
           if (sharedTimeData) state.onTime(sharedTimeData);
 
+          const cachedValues = cache.get(valuesEndpoint.path);
+          if (cachedValues) {
+            valuesData = cachedValues.data;
+            valuesStamp = cachedValues.stamp;
+            tryProcess();
+          }
           await valuesEndpoint.slice(-10000).fetch((result) => {
+            cache.set(valuesEndpoint.path, result);
             valuesData = result.data;
             valuesStamp = result.stamp;
             tryProcess();
@@ -834,7 +852,6 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         showLine = newShowLine;
         update();
       }
-      onZoomChange.add(handleZoom);
       const removeSeriesThemeListener = onThemeChange(update);
 
       const series = serieses.create({
@@ -876,10 +893,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
           lineISeries.setData(lineData);
           requestAnimationFrame(() => {
             if (seriesGeneration !== generation) return;
-            const range = ichart.timeScale().getVisibleLogicalRange();
-            if (range) {
-              showLine = shouldShowLine(range.to - range.from);
-            }
+            showLine = shouldShowLine(visibleBarsCount);
             update();
           });
         },
@@ -895,6 +909,9 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
           ichart.removeSeries(lineISeries);
         },
       });
+
+      // Add zoom handler after series is created to avoid TDZ error
+      onZoomChange.add(handleZoom);
 
       panes.register(paneIndex, series, [candlestickISeries, lineISeries]);
 
@@ -1627,17 +1644,22 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
     rebuild() {
       generation++;
+      initialLoadComplete = false; // Reset to prevent saving stale ranges during load
       const currentGen = generation;
       const idx = index.get();
       sharedTimeData = null;
       timeCallbacks = new Set();
-      getTimeEndpoint(idx)
-        .slice(-10000)
-        .fetch((result) => {
-          if (currentGen !== generation) return; // Ignore stale fetch
-          sharedTimeData = result.data;
-          timeCallbacks.forEach((cb) => cb(result.data));
-        });
+      const timeEndpoint = getTimeEndpoint(idx);
+      const cached = cache.get(timeEndpoint.path);
+      if (cached) {
+        sharedTimeData = cached.data;
+      }
+      timeEndpoint.slice(-10000).fetch((result) => {
+        if (currentGen !== generation) return;
+        cache.set(timeEndpoint.path, result);
+        sharedTimeData = result.data;
+        timeCallbacks.forEach((cb) => cb(result.data));
+      });
       this.rebuildPane(0);
       this.rebuildPane(1);
     },
