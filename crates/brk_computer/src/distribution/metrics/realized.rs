@@ -17,7 +17,8 @@ use crate::{
     internal::{
         CentsUnsignedToDollars, ComputedFromDateLast, ComputedFromDateRatio,
         ComputedFromHeightLast, ComputedFromHeightSum, ComputedFromHeightSumCum, DollarsMinus,
-        DollarsPlus, LazyBinaryFromHeightSum, LazyBinaryFromHeightSumCum,
+        DollarsPlus, DollarsSquaredDivide, LazyBinaryFromHeightSum, LazyBinaryFromHeightSumCum,
+        LazyBinaryPriceFromHeight,
         LazyComputedValueFromHeightSumCum, LazyFromDateLast, LazyFromHeightLast, LazyFromHeightSum,
         LazyFromHeightSumCum, LazyPriceFromCents, PercentageDollarsF32, PriceFromHeight,
         StoredF32Identity, ValueFromDateLast,
@@ -42,6 +43,10 @@ pub struct RealizedMetrics {
     pub investor_price_cents: ComputedFromHeightLast<CentsUnsigned>,
     pub investor_price: LazyPriceFromCents,
     pub investor_price_extra: ComputedFromDateRatio,
+
+    // === Floor/Ceiling Price Bands (lazy: realized²/investor, investor²/realized) ===
+    pub floor_price: LazyBinaryPriceFromHeight,
+    pub ceiling_price: LazyBinaryPriceFromHeight,
 
     // === Raw values for aggregation (needed to compute investor_price for aggregated cohorts) ===
     /// Raw Σ(price × sats) for realized cap aggregation
@@ -286,6 +291,26 @@ impl RealizedMetrics {
             extended,
         )?;
 
+        // Floor price = realized² / investor (lower band)
+        let floor_price = LazyBinaryPriceFromHeight::forced_import::<DollarsSquaredDivide>(
+            cfg.db,
+            &cfg.name("floor_price"),
+            cfg.version,
+            realized_price.dollars.height.boxed_clone(),
+            investor_price.dollars.height.boxed_clone(),
+            cfg.indexes,
+        )?;
+
+        // Ceiling price = investor² / realized (upper band)
+        let ceiling_price = LazyBinaryPriceFromHeight::forced_import::<DollarsSquaredDivide>(
+            cfg.db,
+            &cfg.name("ceiling_price"),
+            cfg.version,
+            investor_price.dollars.height.boxed_clone(),
+            realized_price.dollars.height.boxed_clone(),
+            cfg.indexes,
+        )?;
+
         // Raw values for aggregation
         let cap_raw = BytesVec::forced_import(cfg.db, &cfg.name("cap_raw"), cfg.version)?;
         let investor_cap_raw =
@@ -429,6 +454,11 @@ impl RealizedMetrics {
             investor_price_cents,
             investor_price,
             investor_price_extra,
+
+            // === Floor/Ceiling Price Bands ===
+            floor_price,
+            ceiling_price,
+
             cap_raw,
             investor_cap_raw,
 
@@ -1147,6 +1177,10 @@ impl RealizedMetrics {
                 exit,
             )?;
         }
+
+        // Floor/ceiling price bands (derive stored dateindex from lazy height)
+        self.floor_price.dollars.derive_from(indexes, starting_indexes, exit)?;
+        self.ceiling_price.dollars.derive_from(indexes, starting_indexes, exit)?;
 
         Ok(())
     }

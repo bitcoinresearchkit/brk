@@ -1,5 +1,6 @@
 use std::{
     fs,
+    hash::{DefaultHasher, Hash, Hasher},
     path::{Path, PathBuf},
     str::FromStr,
     sync::OnceLock,
@@ -15,8 +16,13 @@ use crate::{Error, Result};
 /// Embedded website assets
 pub static EMBEDDED_WEBSITE: Dir = include_dir!("$CARGO_MANIFEST_DIR/website");
 
+struct CachedIndex {
+    html: Vec<u8>,
+    etag: String,
+}
+
 /// Cached index.html with importmap injected
-static INDEX_HTML: OnceLock<String> = OnceLock::new();
+static INDEX_HTML: OnceLock<CachedIndex> = OnceLock::new();
 
 /// Website configuration:
 /// - `true` or omitted: serve embedded website
@@ -33,6 +39,14 @@ pub enum Website {
 impl Website {
     pub fn is_enabled(&self) -> bool {
         !matches!(self, Self::Disabled)
+    }
+
+    /// Returns the cached index.html etag (None in debug mode or before first request)
+    pub fn index_etag(&self) -> Option<&str> {
+        if cfg!(debug_assertions) {
+            return None;
+        }
+        INDEX_HTML.get().map(|cached| cached.etag.as_str())
     }
 
     /// Returns the filesystem path if available, None means use embedded
@@ -96,35 +110,46 @@ impl Website {
         }
 
         // Release mode: cache with importmap
-        let html = INDEX_HTML.get_or_init(|| match self.filesystem_path() {
-            None => {
-                let file = EMBEDDED_WEBSITE
-                    .get_file("index.html")
-                    .expect("index.html must exist in embedded website");
+        let cached = INDEX_HTML.get_or_init(|| {
+            let html = match self.filesystem_path() {
+                None => {
+                    let file = EMBEDDED_WEBSITE
+                        .get_file("index.html")
+                        .expect("index.html must exist in embedded website");
 
-                let html =
-                    std::str::from_utf8(file.contents()).expect("index.html must be valid UTF-8");
+                    let html =
+                        std::str::from_utf8(file.contents()).expect("index.html must be valid UTF-8");
 
-                let importmap = ImportMap::scan_embedded(&EMBEDDED_WEBSITE, "");
-                importmap
-                    .transform_html(html)
-                    .unwrap_or_else(|| html.to_string())
-            }
-            Some(base) => {
-                let html =
-                    fs::read_to_string(base.join("index.html")).expect("index.html must exist");
+                    let importmap = ImportMap::scan_embedded(&EMBEDDED_WEBSITE, "");
+                    importmap
+                        .transform_html(html)
+                        .unwrap_or_else(|| html.to_string())
+                }
+                Some(base) => {
+                    let html =
+                        fs::read_to_string(base.join("index.html")).expect("index.html must exist");
 
-                match ImportMap::scan(&base, "") {
-                    Ok(importmap) => importmap.transform_html(&html).unwrap_or(html),
-                    Err(e) => {
-                        error!("Failed to scan for importmap: {e}");
-                        html
+                    match ImportMap::scan(&base, "") {
+                        Ok(importmap) => importmap.transform_html(&html).unwrap_or(html),
+                        Err(e) => {
+                            error!("Failed to scan for importmap: {e}");
+                            html
+                        }
                     }
                 }
+            };
+
+            let mut hasher = DefaultHasher::new();
+            html.hash(&mut hasher);
+            let etag = format!("\"{}\"", hasher.finish());
+
+            CachedIndex {
+                html: html.into_bytes(),
+                etag,
             }
         });
 
-        Ok(html.as_bytes().to_vec())
+        Ok(cached.html.clone())
     }
 
     fn get_embedded(&self, path: &str) -> Result<Vec<u8>> {

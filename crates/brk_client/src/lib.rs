@@ -858,7 +858,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern32<T> { fn get(&self
 // Reusable pattern structs
 
 /// Pattern struct for repeated tree structure.
-pub struct AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern {
+pub struct AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern {
     pub adjusted_sopr: MetricPattern6<StoredF64>,
     pub adjusted_sopr_30d_ema: MetricPattern6<StoredF64>,
     pub adjusted_sopr_7d_ema: MetricPattern6<StoredF64>,
@@ -866,6 +866,8 @@ pub struct AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSe
     pub adjusted_value_destroyed: MetricPattern1<Dollars>,
     pub cap_raw: MetricPattern11<CentsSats>,
     pub capitulation_flow: MetricPattern1<Dollars>,
+    pub ceiling_price: DollarsSatsPattern,
+    pub floor_price: DollarsSatsPattern,
     pub investor_cap_raw: MetricPattern11<CentsSquaredSats>,
     pub investor_price: DollarsSatsPattern,
     pub investor_price_cents: MetricPattern1<CentsUnsigned>,
@@ -914,7 +916,7 @@ pub struct AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSe
     pub value_destroyed: MetricPattern1<Dollars>,
 }
 
-impl AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern {
+impl AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
@@ -925,6 +927,8 @@ impl AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSopr
             adjusted_value_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "adjusted_value_destroyed")),
             cap_raw: MetricPattern11::new(client.clone(), _m(&acc, "cap_raw")),
             capitulation_flow: MetricPattern1::new(client.clone(), _m(&acc, "capitulation_flow")),
+            ceiling_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "ceiling_price")),
+            floor_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "floor_price")),
             investor_cap_raw: MetricPattern11::new(client.clone(), _m(&acc, "investor_cap_raw")),
             investor_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "investor_price")),
             investor_price_cents: MetricPattern1::new(client.clone(), _m(&acc, "investor_price_cents")),
@@ -976,7 +980,7 @@ impl AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSopr
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2 {
+pub struct AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2 {
     pub adjusted_sopr: MetricPattern6<StoredF64>,
     pub adjusted_sopr_30d_ema: MetricPattern6<StoredF64>,
     pub adjusted_sopr_7d_ema: MetricPattern6<StoredF64>,
@@ -984,6 +988,8 @@ pub struct AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSe
     pub adjusted_value_destroyed: MetricPattern1<Dollars>,
     pub cap_raw: MetricPattern11<CentsSats>,
     pub capitulation_flow: MetricPattern1<Dollars>,
+    pub ceiling_price: DollarsSatsPattern,
+    pub floor_price: DollarsSatsPattern,
     pub investor_cap_raw: MetricPattern11<CentsSquaredSats>,
     pub investor_price: DollarsSatsPattern,
     pub investor_price_cents: MetricPattern1<CentsUnsigned>,
@@ -1030,7 +1036,7 @@ pub struct AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSe
     pub value_destroyed: MetricPattern1<Dollars>,
 }
 
-impl AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2 {
+impl AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
@@ -1041,6 +1047,8 @@ impl AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSopr
             adjusted_value_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "adjusted_value_destroyed")),
             cap_raw: MetricPattern11::new(client.clone(), _m(&acc, "cap_raw")),
             capitulation_flow: MetricPattern1::new(client.clone(), _m(&acc, "capitulation_flow")),
+            ceiling_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "ceiling_price")),
+            floor_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "floor_price")),
             investor_cap_raw: MetricPattern11::new(client.clone(), _m(&acc, "investor_cap_raw")),
             investor_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "investor_price")),
             investor_price_cents: MetricPattern1::new(client.clone(), _m(&acc, "investor_price_cents")),
@@ -1090,9 +1098,11 @@ impl AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSopr
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2 {
+pub struct CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2 {
     pub cap_raw: MetricPattern11<CentsSats>,
     pub capitulation_flow: MetricPattern1<Dollars>,
+    pub ceiling_price: DollarsSatsPattern,
+    pub floor_price: DollarsSatsPattern,
     pub investor_cap_raw: MetricPattern11<CentsSquaredSats>,
     pub investor_price: DollarsSatsPattern,
     pub investor_price_cents: MetricPattern1<CentsUnsigned>,
@@ -1141,12 +1151,14 @@ pub struct CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTo
     pub value_destroyed: MetricPattern1<Dollars>,
 }
 
-impl CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2 {
+impl CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             cap_raw: MetricPattern11::new(client.clone(), _m(&acc, "cap_raw")),
             capitulation_flow: MetricPattern1::new(client.clone(), _m(&acc, "capitulation_flow")),
+            ceiling_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "ceiling_price")),
+            floor_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "floor_price")),
             investor_cap_raw: MetricPattern11::new(client.clone(), _m(&acc, "investor_cap_raw")),
             investor_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "investor_price")),
             investor_price_cents: MetricPattern1::new(client.clone(), _m(&acc, "investor_price_cents")),
@@ -1198,9 +1210,11 @@ impl CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalVal
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern {
+pub struct CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern {
     pub cap_raw: MetricPattern11<CentsSats>,
     pub capitulation_flow: MetricPattern1<Dollars>,
+    pub ceiling_price: DollarsSatsPattern,
+    pub floor_price: DollarsSatsPattern,
     pub investor_cap_raw: MetricPattern11<CentsSquaredSats>,
     pub investor_price: DollarsSatsPattern,
     pub investor_price_cents: MetricPattern1<CentsUnsigned>,
@@ -1247,12 +1261,14 @@ pub struct CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTo
     pub value_destroyed: MetricPattern1<Dollars>,
 }
 
-impl CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern {
+impl CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             cap_raw: MetricPattern11::new(client.clone(), _m(&acc, "cap_raw")),
             capitulation_flow: MetricPattern1::new(client.clone(), _m(&acc, "capitulation_flow")),
+            ceiling_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "ceiling_price")),
+            floor_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "floor_price")),
             investor_cap_raw: MetricPattern11::new(client.clone(), _m(&acc, "investor_cap_raw")),
             investor_price: DollarsSatsPattern::new(client.clone(), _m(&acc, "investor_price")),
             investor_price_cents: MetricPattern1::new(client.clone(), _m(&acc, "investor_price_cents")),
@@ -2032,7 +2048,7 @@ pub struct ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern {
     pub addr_count_30d_change: MetricPattern4<StoredF64>,
     pub cost_basis: MaxMinPattern,
     pub outputs: UtxoPattern,
-    pub realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
+    pub realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
     pub relative: InvestedNegNetNuplSupplyUnrealizedPattern,
     pub supply: _30dHalvedTotalPattern,
     pub unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern,
@@ -2047,7 +2063,7 @@ impl ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern {
             addr_count_30d_change: MetricPattern4::new(client.clone(), _m(&acc, "addr_count_30d_change")),
             cost_basis: MaxMinPattern::new(client.clone(), acc.clone()),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
+            realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
             relative: InvestedNegNetNuplSupplyUnrealizedPattern::new(client.clone(), acc.clone()),
             supply: _30dHalvedTotalPattern::new(client.clone(), acc.clone()),
             unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern::new(client.clone(), acc.clone()),
@@ -2176,7 +2192,7 @@ pub struct ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern {
     pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
     pub cost_basis: InvestedMaxMinPercentilesSpotPattern,
     pub outputs: UtxoPattern,
-    pub realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2,
+    pub realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2,
     pub relative: InvestedNegNetSupplyUnrealizedPattern,
     pub supply: _30dHalvedTotalPattern,
     pub unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern,
@@ -2189,7 +2205,7 @@ impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern {
             activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
             cost_basis: InvestedMaxMinPercentilesSpotPattern::new(client.clone(), acc.clone()),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2::new(client.clone(), acc.clone()),
+            realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2::new(client.clone(), acc.clone()),
             relative: InvestedNegNetSupplyUnrealizedPattern::new(client.clone(), acc.clone()),
             supply: _30dHalvedTotalPattern::new(client.clone(), acc.clone()),
             unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern::new(client.clone(), acc.clone()),
@@ -2202,7 +2218,7 @@ pub struct ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5 {
     pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
     pub cost_basis: MaxMinPattern,
     pub outputs: UtxoPattern,
-    pub realized: AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2,
+    pub realized: AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2,
     pub relative: InvestedNegNetNuplSupplyUnrealizedPattern3,
     pub supply: _30dHalvedTotalPattern,
     pub unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern,
@@ -2215,7 +2231,7 @@ impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5 {
             activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
             cost_basis: MaxMinPattern::new(client.clone(), acc.clone()),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2::new(client.clone(), acc.clone()),
+            realized: AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2::new(client.clone(), acc.clone()),
             relative: InvestedNegNetNuplSupplyUnrealizedPattern3::new(client.clone(), acc.clone()),
             supply: _30dHalvedTotalPattern::new(client.clone(), acc.clone()),
             unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern::new(client.clone(), acc.clone()),
@@ -2228,7 +2244,7 @@ pub struct ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4 {
     pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
     pub cost_basis: MaxMinPattern,
     pub outputs: UtxoPattern,
-    pub realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
+    pub realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
     pub relative: InvestedNegNetNuplSupplyUnrealizedPattern,
     pub supply: _30dHalvedTotalPattern,
     pub unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern,
@@ -2241,7 +2257,7 @@ impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4 {
             activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
             cost_basis: MaxMinPattern::new(client.clone(), acc.clone()),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
+            realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
             relative: InvestedNegNetNuplSupplyUnrealizedPattern::new(client.clone(), acc.clone()),
             supply: _30dHalvedTotalPattern::new(client.clone(), acc.clone()),
             unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern::new(client.clone(), acc.clone()),
@@ -2254,7 +2270,7 @@ pub struct ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern6 {
     pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
     pub cost_basis: MaxMinPattern,
     pub outputs: UtxoPattern,
-    pub realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
+    pub realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
     pub relative: InvestedNegNetNuplSupplyUnrealizedPattern3,
     pub supply: _30dHalvedTotalPattern,
     pub unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern,
@@ -2267,7 +2283,7 @@ impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern6 {
             activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
             cost_basis: MaxMinPattern::new(client.clone(), acc.clone()),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
+            realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
             relative: InvestedNegNetNuplSupplyUnrealizedPattern3::new(client.clone(), acc.clone()),
             supply: _30dHalvedTotalPattern::new(client.clone(), acc.clone()),
             unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern::new(client.clone(), acc.clone()),
@@ -2280,7 +2296,7 @@ pub struct ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3 {
     pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
     pub cost_basis: MaxMinPattern,
     pub outputs: UtxoPattern,
-    pub realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
+    pub realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
     pub relative: InvestedSupplyPattern,
     pub supply: _30dHalvedTotalPattern,
     pub unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern,
@@ -2293,7 +2309,7 @@ impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3 {
             activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
             cost_basis: MaxMinPattern::new(client.clone(), acc.clone()),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
+            realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
             relative: InvestedSupplyPattern::new(client.clone(), acc.clone()),
             supply: _30dHalvedTotalPattern::new(client.clone(), acc.clone()),
             unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern::new(client.clone(), acc.clone()),
@@ -2306,7 +2322,7 @@ pub struct ActivityCostOutputsRealizedSupplyUnrealizedPattern {
     pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
     pub cost_basis: MaxMinPattern,
     pub outputs: UtxoPattern,
-    pub realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
+    pub realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
     pub supply: _30dHalvedTotalPattern,
     pub unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern,
 }
@@ -2318,7 +2334,7 @@ impl ActivityCostOutputsRealizedSupplyUnrealizedPattern {
             activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
             cost_basis: MaxMinPattern::new(client.clone(), acc.clone()),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
+            realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), acc.clone()),
             supply: _30dHalvedTotalPattern::new(client.clone(), acc.clone()),
             unrealized: GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern::new(client.clone(), acc.clone()),
         }
@@ -5240,7 +5256,7 @@ pub struct MetricsTree_Distribution_UtxoCohorts_All {
     pub supply: _30dHalvedTotalPattern,
     pub outputs: UtxoPattern,
     pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
-    pub realized: AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
+    pub realized: AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
     pub unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern,
     pub cost_basis: InvestedMaxMinPercentilesSpotPattern,
     pub relative: MetricsTree_Distribution_UtxoCohorts_All_Relative,
@@ -5252,7 +5268,7 @@ impl MetricsTree_Distribution_UtxoCohorts_All {
             supply: _30dHalvedTotalPattern::new(client.clone(), "".to_string()),
             outputs: UtxoPattern::new(client.clone(), "utxo_count".to_string()),
             activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), "".to_string()),
-            realized: AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), "".to_string()),
+            realized: AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), "".to_string()),
             unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern::new(client.clone(), "".to_string()),
             cost_basis: InvestedMaxMinPercentilesSpotPattern::new(client.clone(), "".to_string()),
             relative: MetricsTree_Distribution_UtxoCohorts_All_Relative::new(client.clone(), format!("{base_path}_relative")),
@@ -5565,7 +5581,7 @@ pub struct MetricsTree_Distribution_UtxoCohorts_Term_Short {
     pub supply: _30dHalvedTotalPattern,
     pub outputs: UtxoPattern,
     pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
-    pub realized: AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
+    pub realized: AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern,
     pub unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern,
     pub cost_basis: InvestedMaxMinPercentilesSpotPattern,
     pub relative: InvestedNegNetNuplSupplyUnrealizedPattern4,
@@ -5577,7 +5593,7 @@ impl MetricsTree_Distribution_UtxoCohorts_Term_Short {
             supply: _30dHalvedTotalPattern::new(client.clone(), "sth".to_string()),
             outputs: UtxoPattern::new(client.clone(), "sth_utxo_count".to_string()),
             activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), "sth".to_string()),
-            realized: AdjustedCapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), "sth".to_string()),
+            realized: AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern::new(client.clone(), "sth".to_string()),
             unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern::new(client.clone(), "sth".to_string()),
             cost_basis: InvestedMaxMinPercentilesSpotPattern::new(client.clone(), "sth".to_string()),
             relative: InvestedNegNetNuplSupplyUnrealizedPattern4::new(client.clone(), "sth".to_string()),
@@ -5590,7 +5606,7 @@ pub struct MetricsTree_Distribution_UtxoCohorts_Term_Long {
     pub supply: _30dHalvedTotalPattern,
     pub outputs: UtxoPattern,
     pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
-    pub realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2,
+    pub realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2,
     pub unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern,
     pub cost_basis: InvestedMaxMinPercentilesSpotPattern,
     pub relative: InvestedNegNetNuplSupplyUnrealizedPattern4,
@@ -5602,7 +5618,7 @@ impl MetricsTree_Distribution_UtxoCohorts_Term_Long {
             supply: _30dHalvedTotalPattern::new(client.clone(), "lth".to_string()),
             outputs: UtxoPattern::new(client.clone(), "lth_utxo_count".to_string()),
             activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), "lth".to_string()),
-            realized: CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2::new(client.clone(), "lth".to_string()),
+            realized: CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2::new(client.clone(), "lth".to_string()),
             unrealized: GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern::new(client.clone(), "lth".to_string()),
             cost_basis: InvestedMaxMinPercentilesSpotPattern::new(client.clone(), "lth".to_string()),
             relative: InvestedNegNetNuplSupplyUnrealizedPattern4::new(client.clone(), "lth".to_string()),
@@ -6051,7 +6067,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.1.5";
+    pub const VERSION: &'static str = "v0.1.6";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {

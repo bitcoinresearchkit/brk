@@ -3,9 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_types::{Age, CentsSats, CentsUnsigned, CostBasisSnapshot, Height, Sats, SupplyState};
 
-use super::super::cost_basis::{
-    CachedUnrealizedState, CostBasisData, Percentiles, RealizedState, UnrealizedState,
-};
+use super::super::cost_basis::{CostBasisData, Percentiles, RealizedState, UnrealizedState};
 
 #[derive(Clone)]
 pub struct CohortState {
@@ -15,9 +13,6 @@ pub struct CohortState {
     pub satblocks_destroyed: Sats,
     pub satdays_destroyed: Sats,
     cost_basis_data: Option<CostBasisData>,
-    cached_unrealized: Option<CachedUnrealizedState>,
-    /// If set, prices are rounded to nearest dollar with N significant digits.
-    price_rounding_digits: Option<i32>,
 }
 
 impl CohortState {
@@ -29,28 +24,18 @@ impl CohortState {
             satblocks_destroyed: Sats::ZERO,
             satdays_destroyed: Sats::ZERO,
             cost_basis_data: compute_dollars.then_some(CostBasisData::create(path, name)),
-            cached_unrealized: None,
-            price_rounding_digits: None,
         }
     }
 
     /// Enable price rounding for cost basis data.
     pub fn with_price_rounding(mut self, digits: i32) -> Self {
-        self.price_rounding_digits = Some(digits);
+        if let Some(data) = self.cost_basis_data.take() {
+            self.cost_basis_data = Some(data.with_price_rounding(digits));
+        }
         self
     }
 
-    /// Round price if rounding is enabled.
-    #[inline]
-    fn round_price(&self, price: CentsUnsigned) -> CentsUnsigned {
-        match self.price_rounding_digits {
-            Some(digits) => price.round_to_dollar(digits),
-            None => price,
-        }
-    }
-
     pub fn import_at_or_before(&mut self, height: Height) -> Result<Height> {
-        self.cached_unrealized = None;
         match self.cost_basis_data.as_mut() {
             Some(p) => p.import_at_or_before(height),
             None => Ok(height),
@@ -73,7 +58,6 @@ impl CohortState {
             p.clean()?;
             p.init();
         }
-        self.cached_unrealized = None;
         Ok(())
     }
 
@@ -111,21 +95,16 @@ impl CohortState {
         self.supply += &s.supply_state;
 
         if s.supply_state.value > Sats::ZERO && self.realized.is_some() {
-            let rounded_price = self.round_price(s.realized_price);
             self.realized
                 .as_mut()
                 .unwrap()
                 .increment_snapshot(s.price_sats, s.investor_cap);
             self.cost_basis_data.as_mut().unwrap().increment(
-                rounded_price,
+                s.realized_price,
                 s.supply_state.value,
                 s.price_sats,
                 s.investor_cap,
             );
-
-            if let Some(cache) = self.cached_unrealized.as_mut() {
-                cache.on_receive(rounded_price, s.supply_state.value);
-            }
         }
     }
 
@@ -140,21 +119,16 @@ impl CohortState {
         self.supply -= &s.supply_state;
 
         if s.supply_state.value > Sats::ZERO && self.realized.is_some() {
-            let rounded_price = self.round_price(s.realized_price);
             self.realized
                 .as_mut()
                 .unwrap()
                 .decrement_snapshot(s.price_sats, s.investor_cap);
             self.cost_basis_data.as_mut().unwrap().decrement(
-                rounded_price,
+                s.realized_price,
                 s.supply_state.value,
                 s.price_sats,
                 s.investor_cap,
             );
-
-            if let Some(cache) = self.cached_unrealized.as_mut() {
-                cache.on_send(rounded_price, s.supply_state.value);
-            }
         }
     }
 
@@ -179,10 +153,6 @@ impl CohortState {
                 price_sats,
                 investor_cap,
             );
-
-            if let Some(cache) = self.cached_unrealized.as_mut() {
-                cache.on_receive(price, sats);
-            }
         }
     }
 
@@ -195,37 +165,27 @@ impl CohortState {
     ) {
         self.supply += supply;
 
-        if supply.value > Sats::ZERO && self.realized.is_some() {
-            // Pre-compute rounded prices before mutable borrows
-            let current_rounded = self.round_price(current.realized_price);
-            let prev_rounded = self.round_price(prev.realized_price);
-
-            self.realized.as_mut().unwrap().receive(price, supply.value);
+        if supply.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut()
+        {
+            realized.receive(price, supply.value);
 
             if current.supply_state.value.is_not_zero() {
                 self.cost_basis_data.as_mut().unwrap().increment(
-                    current_rounded,
+                    current.realized_price,
                     current.supply_state.value,
                     current.price_sats,
                     current.investor_cap,
                 );
-
-                if let Some(cache) = self.cached_unrealized.as_mut() {
-                    cache.on_receive(current_rounded, current.supply_state.value);
-                }
             }
 
             if prev.supply_state.value.is_not_zero() {
                 self.cost_basis_data.as_mut().unwrap().decrement(
-                    prev_rounded,
+                    prev.realized_price,
                     prev.supply_state.value,
                     prev.price_sats,
                     prev.investor_cap,
                 );
-
-                if let Some(cache) = self.cached_unrealized.as_mut() {
-                    cache.on_send(prev_rounded, prev.supply_state.value);
-                }
             }
         }
     }
@@ -269,10 +229,6 @@ impl CohortState {
                     prev_ps,
                     prev_investor_cap,
                 );
-
-                if let Some(cache) = self.cached_unrealized.as_mut() {
-                    cache.on_send(pp, sats);
-                }
             }
         }
     }
@@ -299,7 +255,7 @@ impl CohortState {
             self.satblocks_destroyed += age.satblocks_destroyed(supply.value);
             self.satdays_destroyed += age.satdays_destroyed(supply.value);
 
-            if self.realized.is_some() {
+            if let Some(realized) = self.realized.as_mut() {
                 let sats = supply.value;
 
                 // Compute once for realized.send using typed values
@@ -308,39 +264,24 @@ impl CohortState {
                 let ath_ps = CentsSats::from_price_sats(ath, sats);
                 let prev_investor_cap = prev_ps.to_investor_cap(prev_price);
 
-                // Pre-compute rounded prices before mutable borrows
-                let current_rounded = self.round_price(current.realized_price);
-                let prev_rounded = self.round_price(prev.realized_price);
-
-                self.realized
-                    .as_mut()
-                    .unwrap()
-                    .send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
+                realized.send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
 
                 if current.supply_state.value.is_not_zero() {
                     self.cost_basis_data.as_mut().unwrap().increment(
-                        current_rounded,
+                        current.realized_price,
                         current.supply_state.value,
                         current.price_sats,
                         current.investor_cap,
                     );
-
-                    if let Some(cache) = self.cached_unrealized.as_mut() {
-                        cache.on_receive(current_rounded, current.supply_state.value);
-                    }
                 }
 
                 if prev.supply_state.value.is_not_zero() {
                     self.cost_basis_data.as_mut().unwrap().decrement(
-                        prev_rounded,
+                        prev.realized_price,
                         prev.supply_state.value,
                         prev.price_sats,
                         prev.investor_cap,
                     );
-
-                    if let Some(cache) = self.cached_unrealized.as_mut() {
-                        cache.on_send(prev_rounded, prev.supply_state.value);
-                    }
                 }
             }
         }
@@ -355,25 +296,10 @@ impl CohortState {
         height_price: CentsUnsigned,
         date_price: Option<CentsUnsigned>,
     ) -> (UnrealizedState, Option<UnrealizedState>) {
-        let cost_basis_data = match self.cost_basis_data.as_ref() {
-            Some(p) if !p.is_empty() => p,
-            _ => return (UnrealizedState::ZERO, date_price.map(|_| UnrealizedState::ZERO)),
-        };
-
-        let date_state = date_price.map(|date_price| {
-            CachedUnrealizedState::compute_full_standalone(date_price.into(), cost_basis_data)
-        });
-
-        let height_state = if let Some(cache) = self.cached_unrealized.as_mut() {
-            cache.get_at_price(height_price, cost_basis_data)
-        } else {
-            let cache = CachedUnrealizedState::compute_fresh(height_price, cost_basis_data);
-            let state = cache.current_state();
-            self.cached_unrealized = Some(cache);
-            state
-        };
-
-        (height_state, date_state)
+        match self.cost_basis_data.as_mut() {
+            Some(p) => p.compute_unrealized_states(height_price, date_price),
+            None => (UnrealizedState::ZERO, date_price.map(|_| UnrealizedState::ZERO)),
+        }
     }
 
     pub fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {

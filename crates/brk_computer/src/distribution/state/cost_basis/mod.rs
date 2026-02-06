@@ -6,4 +6,7 @@ mod unrealized;
 pub use data::*;
 pub use percentiles::*;
 pub use realized::*;
-pub use unrealized::*;
+pub use unrealized::UnrealizedState;
+
+// Internal use only
+pub(super) use unrealized::CachedUnrealizedState;

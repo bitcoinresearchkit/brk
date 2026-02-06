@@ -3,6 +3,8 @@ use std::path::Path;
 use axum::http::{HeaderMap, header};
 
 pub trait HeaderMapExtended {
+    fn has_etag(&self, etag: &str) -> bool;
+    fn insert_etag(&mut self, etag: &str);
     fn insert_cache_control_must_revalidate(&mut self);
     fn insert_cache_control_immutable(&mut self);
     fn insert_content_type(&mut self, path: &Path);
@@ -10,6 +12,15 @@ pub trait HeaderMapExtended {
 }
 
 impl HeaderMapExtended for HeaderMap {
+    fn has_etag(&self, etag: &str) -> bool {
+        self.get(header::IF_NONE_MATCH)
+            .is_some_and(|v| v == etag)
+    }
+
+    fn insert_etag(&mut self, etag: &str) {
+        self.insert(header::ETAG, etag.parse().unwrap());
+    }
+
     fn insert_cache_control_must_revalidate(&mut self) {
         self.insert(
             header::CACHE_CONTROL,

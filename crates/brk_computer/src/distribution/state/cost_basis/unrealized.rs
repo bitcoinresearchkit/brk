@@ -2,7 +2,7 @@ use std::ops::Bound;
 
 use brk_types::{CentsUnsigned, CentsUnsignedCompact, Sats};
 
-use super::data::CostBasisData;
+use super::CostBasisMap;
 
 #[derive(Debug, Default, Clone)]
 pub struct UnrealizedState {
@@ -113,9 +113,9 @@ pub struct CachedUnrealizedState {
 }
 
 impl CachedUnrealizedState {
-    pub fn compute_fresh(price: CentsUnsigned, cost_basis_data: &CostBasisData) -> Self {
+    pub fn compute_fresh(price: CentsUnsigned, map: &CostBasisMap) -> Self {
         let price: CentsUnsignedCompact = price.into();
-        let state = Self::compute_raw(price, cost_basis_data);
+        let state = Self::compute_raw(price, map);
         Self {
             state,
             at_price: price,
@@ -130,11 +130,11 @@ impl CachedUnrealizedState {
     pub fn get_at_price(
         &mut self,
         new_price: CentsUnsigned,
-        cost_basis_data: &CostBasisData,
+        map: &CostBasisMap,
     ) -> UnrealizedState {
         let new_price: CentsUnsignedCompact = new_price.into();
         if new_price != self.at_price {
-            self.update_for_price_change(new_price, cost_basis_data);
+            self.update_for_price_change(new_price, map);
         }
         self.state.to_output()
     }
@@ -187,11 +187,7 @@ impl CachedUnrealizedState {
         }
     }
 
-    fn update_for_price_change(
-        &mut self,
-        new_price: CentsUnsignedCompact,
-        cost_basis_data: &CostBasisData,
-    ) {
+    fn update_for_price_change(&mut self, new_price: CentsUnsignedCompact, map: &CostBasisMap) {
         let old_price = self.at_price;
 
         if new_price > old_price {
@@ -202,8 +198,7 @@ impl CachedUnrealizedState {
 
             // First, process UTXOs crossing from loss to profit
             // Range (old_price, new_price] means: old_price < price <= new_price
-            for (price, &sats) in
-                cost_basis_data.range((Bound::Excluded(old_price), Bound::Included(new_price)))
+            for (&price, &sats) in map.range((Bound::Excluded(old_price), Bound::Included(new_price)))
             {
                 let sats_u128 = sats.as_u128();
                 let price_u128 = price.as_u128();
@@ -244,8 +239,7 @@ impl CachedUnrealizedState {
 
             // First, process UTXOs crossing from profit to loss
             // Range (new_price, old_price] means: new_price < price <= old_price
-            for (price, &sats) in
-                cost_basis_data.range((Bound::Excluded(new_price), Bound::Included(old_price)))
+            for (&price, &sats) in map.range((Bound::Excluded(new_price), Bound::Included(old_price)))
             {
                 let sats_u128 = sats.as_u128();
                 let price_u128 = price.as_u128();
@@ -283,14 +277,11 @@ impl CachedUnrealizedState {
         self.at_price = new_price;
     }
 
-    /// Compute raw cached state from cost_basis_data.
-    fn compute_raw(
-        current_price: CentsUnsignedCompact,
-        cost_basis_data: &CostBasisData,
-    ) -> CachedStateRaw {
+    /// Compute raw cached state from the map.
+    fn compute_raw(current_price: CentsUnsignedCompact, map: &CostBasisMap) -> CachedStateRaw {
         let mut state = CachedStateRaw::default();
 
-        for (price, &sats) in cost_basis_data.iter() {
+        for (&price, &sats) in map.iter() {
             let sats_u128 = sats.as_u128();
             let price_u128 = price.as_u128();
             let invested_capital = price_u128 * sats_u128;
@@ -320,8 +311,8 @@ impl CachedUnrealizedState {
     /// Used for date_state which doesn't use the cache.
     pub fn compute_full_standalone(
         current_price: CentsUnsignedCompact,
-        cost_basis_data: &CostBasisData,
+        map: &CostBasisMap,
     ) -> UnrealizedState {
-        Self::compute_raw(current_price, cost_basis_data).to_output()
+        Self::compute_raw(current_price, map).to_output()
     }
 }

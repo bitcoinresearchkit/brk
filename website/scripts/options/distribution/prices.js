@@ -19,7 +19,7 @@ import { baseline, price } from "../series.js";
 import { Unit } from "../../utils/units.js";
 
 /**
- * @param {{ realized: { realizedPrice: ActivePricePattern, investorPrice: ActivePricePattern } }} tree
+ * @param {{ realized: { realizedPrice: ActivePricePattern, investorPrice: ActivePricePattern, floorPrice: ActivePricePattern, ceilingPrice: ActivePricePattern } }} tree
  * @param {(metric: string) => string} title
  * @returns {PartialChartOption}
  */
@@ -30,6 +30,8 @@ function createCompareChart(tree, title) {
     top: [
       price({ metric: tree.realized.realizedPrice, name: "Realized", color: colors.realized }),
       price({ metric: tree.realized.investorPrice, name: "Investor", color: colors.investor }),
+      price({ metric: tree.realized.ceilingPrice, name: "I²/R", color: colors.stat.max, style: 2, defaultActive: false }),
+      price({ metric: tree.realized.floorPrice, name: "R²/I", color: colors.stat.min, style: 2, defaultActive: false }),
     ],
   };
 }
