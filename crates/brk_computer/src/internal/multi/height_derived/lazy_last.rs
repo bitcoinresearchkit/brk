@@ -8,7 +8,7 @@ use vecdb::{IterableCloneableVec, UnaryTransform};
 
 use crate::internal::{
     ComputedFromHeightLast, ComputedHeightDerivedLast, ComputedFromHeightAndDateLast, ComputedVecValue,
-    LazyFromDateLast, LazyTransformLast, NumericValue,
+    LazyBinaryHeightDerivedLast, LazyFromDateLast, LazyTransformLast, NumericValue,
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -73,6 +73,29 @@ where
                 source.dateindex.boxed_clone(),
                 &source.dates,
             ),
+            difficultyepoch: LazyTransformLast::from_boxed::<F>(
+                name,
+                v,
+                source.difficultyepoch.boxed_clone(),
+            ),
+        }
+    }
+
+    /// Create by unary-transforming a LazyBinaryHeightDerivedLast source.
+    pub fn from_binary<F, S1aT, S1bT>(
+        name: &str,
+        version: Version,
+        source: &LazyBinaryHeightDerivedLast<S1T, S1aT, S1bT>,
+    ) -> Self
+    where
+        F: UnaryTransform<S1T, T>,
+        S1aT: ComputedVecValue + JsonSchema,
+        S1bT: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        Self {
+            dates: LazyFromDateLast::from_binary::<F, _, _>(name, v, &source.dates),
             difficultyepoch: LazyTransformLast::from_boxed::<F>(
                 name,
                 v,

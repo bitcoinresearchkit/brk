@@ -457,6 +457,88 @@ where
         }
     }
 
+    /// Create from a ComputedFromHeightLast (block last with derived dates) and a LazyFromHeightLast.
+    pub fn from_block_last_and_lazy_block_last<F, S2SourceT>(
+        name: &str,
+        version: Version,
+        source1: &ComputedFromHeightLast<S1T>,
+        source2: &LazyFromHeightLast<S2T, S2SourceT>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S1T: NumericValue,
+        S2SourceT: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyBinaryTransformLast::from_vecs::<F>(
+                    name,
+                    v,
+                    source1.$p.boxed_clone(),
+                    source2.$p.boxed_clone(),
+                )
+            };
+        }
+
+        Self {
+            dateindex: LazyVecFrom2::transformed::<F>(
+                name,
+                v,
+                source1.dateindex.boxed_clone(),
+                source2.dateindex.boxed_clone(),
+            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
+
+    /// Create from a LazyFromHeightLast and a ComputedFromHeightLast (reversed source order).
+    pub fn from_lazy_block_last_and_block_last<F, S1SourceT>(
+        name: &str,
+        version: Version,
+        source1: &LazyFromHeightLast<S1T, S1SourceT>,
+        source2: &ComputedFromHeightLast<S2T>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S2T: NumericValue,
+        S1SourceT: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyBinaryTransformLast::from_vecs::<F>(
+                    name,
+                    v,
+                    source1.$p.boxed_clone(),
+                    source2.$p.boxed_clone(),
+                )
+            };
+        }
+
+        Self {
+            dateindex: LazyVecFrom2::transformed::<F>(
+                name,
+                v,
+                source1.dateindex.boxed_clone(),
+                source2.dateindex.boxed_clone(),
+            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
+
     /// Create from a LazyDateDerivedLast source and a BinaryDateLast source.
     pub fn from_derived_last_and_binary_last<F, S2aT, S2bT>(
         name: &str,

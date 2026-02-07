@@ -68,11 +68,17 @@ impl CohortState {
     }
 
     pub fn cost_basis_data_first_key_value(&self) -> Option<(CentsUnsigned, &Sats)> {
-        self.cost_basis_data.as_ref()?.first_key_value().map(|(k, v)| (k.into(), v))
+        self.cost_basis_data
+            .as_ref()?
+            .first_key_value()
+            .map(|(k, v)| (k.into(), v))
     }
 
     pub fn cost_basis_data_last_key_value(&self) -> Option<(CentsUnsigned, &Sats)> {
-        self.cost_basis_data.as_ref()?.last_key_value().map(|(k, v)| (k.into(), v))
+        self.cost_basis_data
+            .as_ref()?
+            .last_key_value()
+            .map(|(k, v)| (k.into(), v))
     }
 
     pub fn reset_single_iteration_values(&mut self) {
@@ -94,11 +100,10 @@ impl CohortState {
     pub fn increment_snapshot(&mut self, s: &CostBasisSnapshot) {
         self.supply += &s.supply_state;
 
-        if s.supply_state.value > Sats::ZERO && self.realized.is_some() {
-            self.realized
-                .as_mut()
-                .unwrap()
-                .increment_snapshot(s.price_sats, s.investor_cap);
+        if s.supply_state.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut()
+        {
+            realized.increment_snapshot(s.price_sats, s.investor_cap);
             self.cost_basis_data.as_mut().unwrap().increment(
                 s.realized_price,
                 s.supply_state.value,
@@ -118,11 +123,10 @@ impl CohortState {
     pub fn decrement_snapshot(&mut self, s: &CostBasisSnapshot) {
         self.supply -= &s.supply_state;
 
-        if s.supply_state.value > Sats::ZERO && self.realized.is_some() {
-            self.realized
-                .as_mut()
-                .unwrap()
-                .decrement_snapshot(s.price_sats, s.investor_cap);
+        if s.supply_state.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut()
+        {
+            realized.decrement_snapshot(s.price_sats, s.investor_cap);
             self.cost_basis_data.as_mut().unwrap().decrement(
                 s.realized_price,
                 s.supply_state.value,
@@ -147,12 +151,10 @@ impl CohortState {
 
             realized.receive(price, sats);
 
-            self.cost_basis_data.as_mut().unwrap().increment(
-                price,
-                sats,
-                price_sats,
-                investor_cap,
-            );
+            self.cost_basis_data
+                .as_mut()
+                .unwrap()
+                .increment(price, sats, price_sats, investor_cap);
         }
     }
 
@@ -298,7 +300,10 @@ impl CohortState {
     ) -> (UnrealizedState, Option<UnrealizedState>) {
         match self.cost_basis_data.as_mut() {
             Some(p) => p.compute_unrealized_states(height_price, date_price),
-            None => (UnrealizedState::ZERO, date_price.map(|_| UnrealizedState::ZERO)),
+            None => (
+                UnrealizedState::ZERO,
+                date_price.map(|_| UnrealizedState::ZERO),
+            ),
         }
     }
 
@@ -310,16 +315,22 @@ impl CohortState {
     }
 
     pub fn min_price(&self) -> Option<CentsUnsigned> {
-        self.cost_basis_data.as_ref()?.first_key_value().map(|(k, _)| k.into())
+        self.cost_basis_data
+            .as_ref()?
+            .first_key_value()
+            .map(|(k, _)| k.into())
     }
 
     pub fn max_price(&self) -> Option<CentsUnsigned> {
-        self.cost_basis_data.as_ref()?.last_key_value().map(|(k, _)| k.into())
+        self.cost_basis_data
+            .as_ref()?
+            .last_key_value()
+            .map(|(k, _)| k.into())
     }
 
-    pub fn cost_basis_data_iter(
-        &self,
-    ) -> Option<impl Iterator<Item = (CentsUnsigned, &Sats)>> {
-        self.cost_basis_data.as_ref().map(|p| p.iter().map(|(k, v)| (k.into(), v)))
+    pub fn cost_basis_data_iter(&self) -> Option<impl Iterator<Item = (CentsUnsigned, &Sats)>> {
+        self.cost_basis_data
+            .as_ref()
+            .map(|p| p.iter().map(|(k, v)| (k.into(), v)))
     }
 }

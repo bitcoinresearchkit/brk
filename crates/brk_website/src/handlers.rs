@@ -26,24 +26,22 @@ pub async fn index_handler(
 fn serve(website: &Website, path: &str, request_headers: &HeaderMap) -> Result<Response<Body>> {
     let path = sanitize(path);
 
-    let is_html = path.is_empty()
-        || Path::new(&path).extension().is_none()
-        || path.ends_with(".html");
+    let is_html =
+        path.is_empty() || Path::new(&path).extension().is_none() || path.ends_with(".html");
 
     // Etag 304 check (release mode, HTML only)
-    if is_html {
-        if let Some(etag) = website.index_etag() {
-            if request_headers.has_etag(etag) {
-                let mut response = Response::builder()
-                    .status(StatusCode::NOT_MODIFIED)
-                    .body(Body::empty())
-                    .unwrap();
-                let headers = response.headers_mut();
-                headers.insert_etag(etag);
-                headers.insert_cache_control_must_revalidate();
-                return Ok(response);
-            }
-        }
+    if is_html
+        && let Some(etag) = website.index_etag()
+        && request_headers.has_etag(etag)
+    {
+        let mut response = Response::builder()
+            .status(StatusCode::NOT_MODIFIED)
+            .body(Body::empty())
+            .unwrap();
+        let headers = response.headers_mut();
+        headers.insert_etag(etag);
+        headers.insert_cache_control_must_revalidate();
+        return Ok(response);
     }
 
     let content = website.get_file(&path)?;

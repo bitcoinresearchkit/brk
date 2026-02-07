@@ -115,9 +115,9 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
   let generation = 0;
 
   // Shared time - fetched once per rebuild, all series register callbacks
-  /** @type {number[] | null} */
+  /** @type {MetricData<number> | null} */
   let sharedTimeData = null;
-  /** @type {Set<(data: number[]) => void>} */
+  /** @type {Set<(data: MetricData<number>) => void>} */
   let timeCallbacks = new Set();
 
   // Memory cache for instant index switching
@@ -539,9 +539,11 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         lastTime: -Infinity,
         /** @type {string | null} */
         lastStamp: null,
+        /** @type {string | null} */
+        lastTimeStamp: null,
         /** @type {VoidFunction | null} */
         fetch: null,
-        /** @type {((data: number[]) => void) | null} */
+        /** @type {((data: MetricData<number>) => void) | null} */
         onTime: null,
       };
 
@@ -716,7 +718,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         }
 
         async function fetchAndProcess() {
-          /** @type {number[] | null} */
+          /** @type {MetricData<number> | null} */
           let timeData = null;
           /** @type {(number | null | [number, number, number, number])[] | null} */
           let valuesData = null;
@@ -726,16 +728,17 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
           function tryProcess() {
             if (seriesGeneration !== generation) return;
             if (!timeData || !valuesData) return;
-            if (valuesStamp === state.lastStamp) return;
+            if (valuesStamp === state.lastStamp && timeData.stamp === state.lastTimeStamp) return;
             state.lastStamp = valuesStamp;
-            if (timeData.length && valuesData.length) {
-              processData(timeData, valuesData);
+            state.lastTimeStamp = timeData.stamp;
+            if (timeData.data.length && valuesData.length) {
+              processData(timeData.data, valuesData);
             }
           }
 
           // Register for shared time data (fetched once in rebuild)
-          state.onTime = (data) => {
-            timeData = data;
+          state.onTime = (result) => {
+            timeData = result;
             tryProcess();
           };
           timeCallbacks.add(state.onTime);
@@ -1655,13 +1658,13 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       const timeEndpoint = getTimeEndpoint(idx);
       const cached = cache.get(timeEndpoint.path);
       if (cached) {
-        sharedTimeData = cached.data;
+        sharedTimeData = cached;
       }
       timeEndpoint.slice(-10000).fetch((result) => {
         if (currentGen !== generation) return;
         cache.set(timeEndpoint.path, result);
-        sharedTimeData = result.data;
-        timeCallbacks.forEach((cb) => cb(result.data));
+        sharedTimeData = result;
+        timeCallbacks.forEach((cb) => cb(result));
       });
       this.rebuildPane(0);
       this.rebuildPane(1);

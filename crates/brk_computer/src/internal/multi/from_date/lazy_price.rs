@@ -2,6 +2,8 @@
 //!
 //! Both dollars and sats are computed from the same source.
 
+use std::marker::PhantomData;
+
 use brk_traversable::Traversable;
 use brk_types::{Dollars, SatsFract, Version};
 use derive_more::{Deref, DerefMut};
@@ -28,7 +30,7 @@ where
 }
 
 /// Composed transform: ST -> Dollars -> SatsFract
-pub struct ComposedDollarsToSatsFract<F>(std::marker::PhantomData<F>);
+pub struct ComposedDollarsToSatsFract<F>(PhantomData<F>);
 
 impl<F, ST> UnaryTransform<ST, SatsFract> for ComposedDollarsToSatsFract<F>
 where

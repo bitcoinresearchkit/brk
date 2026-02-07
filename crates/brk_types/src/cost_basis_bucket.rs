@@ -6,7 +6,7 @@ use crate::CentsUnsigned;
 
 /// Bucket type for cost basis aggregation.
 /// Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
-/// log10/log50/log100 (logarithmic with 10/50/100 buckets per decade).
+/// log10/log50/log100/log200 (logarithmic with 10/50/100/200 buckets per decade).
 #[derive(
     Debug, Display, Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema,
 )]
@@ -21,6 +21,7 @@ pub enum CostBasisBucket {
     Log10,
     Log50,
     Log100,
+    Log200,
 }
 
 impl CostBasisBucket {
@@ -40,6 +41,7 @@ impl CostBasisBucket {
             Self::Log10 => Some(10),
             Self::Log50 => Some(50),
             Self::Log100 => Some(100),
+            Self::Log200 => Some(200),
             _ => None,
         }
     }
@@ -53,7 +55,7 @@ impl CostBasisBucket {
                 let size = self.linear_size_cents().unwrap();
                 Some((price_cents / size) * size)
             }
-            Self::Log10 | Self::Log50 | Self::Log100 => {
+            Self::Log10 | Self::Log50 | Self::Log100 | Self::Log200 => {
                 if price_cents == CentsUnsigned::ZERO {
                     return Some(CentsUnsigned::ZERO);
                 }

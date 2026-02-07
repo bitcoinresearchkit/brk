@@ -270,9 +270,9 @@ impl Mul<Sats> for Dollars {
         if self.is_nan() {
             self
         } else {
-            Self::from(CentsSigned::from(
-                u128::from(rhs) * u128::from(CentsSigned::from(self)) / Sats::ONE_BTC_U128,
-            ))
+            let cents = i128::from(CentsSigned::from(self));
+            let sats = rhs.as_u128() as i128;
+            Self::from(CentsSigned::from(sats * cents / Sats::ONE_BTC_U128 as i128))
         }
     }
 }

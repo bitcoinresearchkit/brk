@@ -180,6 +180,24 @@ impl Div<usize> for CentsSigned {
     }
 }
 
+impl From<CentsSigned> for i128 {
+    #[inline]
+    fn from(value: CentsSigned) -> Self {
+        value.0 as i128
+    }
+}
+
+impl From<i128> for CentsSigned {
+    #[inline]
+    fn from(value: i128) -> Self {
+        debug_assert!(
+            value >= i64::MIN as i128 && value <= i64::MAX as i128,
+            "i128 overflow to CentsSigned"
+        );
+        Self(value as i64)
+    }
+}
+
 impl From<u128> for CentsSigned {
     #[inline]
     fn from(value: u128) -> Self {

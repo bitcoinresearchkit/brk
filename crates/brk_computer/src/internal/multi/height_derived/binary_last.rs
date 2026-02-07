@@ -86,6 +86,32 @@ where
         }
     }
 
+    pub fn from_lazy_block_last_and_block_last<F, S1SourceT>(
+        name: &str,
+        version: Version,
+        source1: &LazyFromHeightLast<S1T, S1SourceT>,
+        source2: &ComputedFromHeightLast<S2T>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S2T: NumericValue,
+        S1SourceT: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        Self {
+            dates: LazyBinaryFromDateLast::from_lazy_block_last_and_block_last::<F, _>(
+                name, v, source1, source2,
+            ),
+            difficultyepoch: LazyBinaryTransformLast::from_vecs::<F>(
+                name,
+                v,
+                source1.rest.difficultyepoch.boxed_clone(),
+                source2.rest.difficultyepoch.boxed_clone(),
+            ),
+        }
+    }
+
     pub fn from_computed_height_date_last<F: BinaryTransform<S1T, S2T, T>>(
         name: &str,
         version: Version,
@@ -110,6 +136,32 @@ where
                 v,
                 source1.difficultyepoch.boxed_clone(),
                 source2.difficultyepoch.boxed_clone(),
+            ),
+        }
+    }
+
+    pub fn from_block_last_and_lazy_block_last<F, S2SourceT>(
+        name: &str,
+        version: Version,
+        source1: &ComputedFromHeightLast<S1T>,
+        source2: &LazyFromHeightLast<S2T, S2SourceT>,
+    ) -> Self
+    where
+        F: BinaryTransform<S1T, S2T, T>,
+        S1T: NumericValue,
+        S2SourceT: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        Self {
+            dates: LazyBinaryFromDateLast::from_block_last_and_lazy_block_last::<F, _>(
+                name, v, source1, source2,
+            ),
+            difficultyepoch: LazyBinaryTransformLast::from_vecs::<F>(
+                name,
+                v,
+                source1.rest.difficultyepoch.boxed_clone(),
+                source2.rest.difficultyepoch.boxed_clone(),
             ),
         }
     }

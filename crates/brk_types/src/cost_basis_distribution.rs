@@ -117,7 +117,7 @@ impl CostBasisDistribution {
                 let v = match value {
                     CostBasisValue::Supply => f64::from(Bitcoin::from(sats)),
                     CostBasisValue::Realized => f64::from(realized),
-                    CostBasisValue::Unrealized => f64::from(spot * sats),
+                    CostBasisValue::Unrealized => f64::from((spot - k) * sats),
                 };
                 (k, v)
             })

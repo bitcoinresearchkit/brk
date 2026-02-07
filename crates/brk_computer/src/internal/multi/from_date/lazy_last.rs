@@ -7,7 +7,7 @@ use brk_types::{
 use schemars::JsonSchema;
 use vecdb::{IterableBoxedVec, IterableCloneableVec, UnaryTransform};
 
-use crate::internal::{ComputedFromHeightLast, ComputedFromDateLast, ComputedVecValue, LazyDateDerivedLast, LazyTransformLast, NumericValue};
+use crate::internal::{ComputedFromHeightLast, ComputedFromDateLast, ComputedVecValue, LazyBinaryFromDateLast, LazyDateDerivedLast, LazyTransformLast, NumericValue};
 
 const VERSION: Version = Version::ZERO;
 
@@ -83,5 +83,35 @@ where
         S1T: NumericValue,
     {
         Self::from_derived::<F>(name, version, source.dateindex.boxed_clone(), &source.dates)
+    }
+
+    /// Create by unary-transforming a LazyBinaryFromDateLast source.
+    pub fn from_binary<F, S1aT, S1bT>(
+        name: &str,
+        version: Version,
+        source: &LazyBinaryFromDateLast<S1T, S1aT, S1bT>,
+    ) -> Self
+    where
+        F: UnaryTransform<S1T, T>,
+        S1aT: ComputedVecValue + JsonSchema,
+        S1bT: ComputedVecValue + JsonSchema,
+    {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyTransformLast::from_boxed::<F>(name, v, source.$p.boxed_clone())
+            };
+        }
+
+        Self {
+            dateindex: period!(dateindex),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
     }
 }

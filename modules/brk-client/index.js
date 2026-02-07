@@ -199,9 +199,9 @@
 /**
  * Bucket type for cost basis aggregation.
  * Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
- * log10/log50/log100 (logarithmic with 10/50/100 buckets per decade).
+ * log10/log50/log100/log200 (logarithmic with 10/50/100/200 buckets per decade).
  *
- * @typedef {("raw"|"lin200"|"lin500"|"lin1000"|"log10"|"log50"|"log100")} CostBasisBucket
+ * @typedef {("raw"|"lin200"|"lin500"|"lin1000"|"log10"|"log50"|"log100"|"log200")} CostBasisBucket
  */
 /**
  * Path parameters for cost basis dates endpoint.
@@ -1438,7 +1438,7 @@ function createMetricPattern32(client, name) { return _mp(client, name, _i32); }
 // Reusable structural pattern factories
 
 /**
- * @typedef {Object} AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern
+ * @typedef {Object} AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern
  * @property {MetricPattern6<StoredF64>} adjustedSopr
  * @property {MetricPattern6<StoredF64>} adjustedSopr30dEma
  * @property {MetricPattern6<StoredF64>} adjustedSopr7dEma
@@ -1446,14 +1446,13 @@ function createMetricPattern32(client, name) { return _mp(client, name, _i32); }
  * @property {MetricPattern1<Dollars>} adjustedValueDestroyed
  * @property {MetricPattern11<CentsSats>} capRaw
  * @property {MetricPattern1<Dollars>} capitulationFlow
- * @property {DollarsSatsPattern} ceilingPrice
- * @property {DollarsSatsPattern} floorPrice
  * @property {MetricPattern11<CentsSquaredSats>} investorCapRaw
  * @property {DollarsSatsPattern} investorPrice
  * @property {MetricPattern1<CentsUnsigned>} investorPriceCents
  * @property {RatioPattern} investorPriceExtra
  * @property {MetricPattern1<Dollars>} lossValueCreated
  * @property {MetricPattern1<Dollars>} lossValueDestroyed
+ * @property {DollarsSatsPattern} lowerPriceBand
  * @property {MetricPattern4<StoredF32>} mvrv
  * @property {CumulativeSumPattern2<Dollars>} negRealizedLoss
  * @property {CumulativeSumPattern<Dollars>} netRealizedPnl
@@ -1492,17 +1491,18 @@ function createMetricPattern32(client, name) { return _mp(client, name, _i32); }
  * @property {MetricPattern6<StoredF64>} sopr30dEma
  * @property {MetricPattern6<StoredF64>} sopr7dEma
  * @property {MetricPattern1<Dollars>} totalRealizedPnl
+ * @property {DollarsSatsPattern} upperPriceBand
  * @property {MetricPattern1<Dollars>} valueCreated
  * @property {MetricPattern1<Dollars>} valueDestroyed
  */
 
 /**
- * Create a AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern pattern node
+ * Create a AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern}
+ * @returns {AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern}
  */
-function createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern(client, acc) {
+function createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(client, acc) {
   return {
     adjustedSopr: createMetricPattern6(client, _m(acc, 'adjusted_sopr')),
     adjustedSopr30dEma: createMetricPattern6(client, _m(acc, 'adjusted_sopr_30d_ema')),
@@ -1511,14 +1511,13 @@ function createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProf
     adjustedValueDestroyed: createMetricPattern1(client, _m(acc, 'adjusted_value_destroyed')),
     capRaw: createMetricPattern11(client, _m(acc, 'cap_raw')),
     capitulationFlow: createMetricPattern1(client, _m(acc, 'capitulation_flow')),
-    ceilingPrice: createDollarsSatsPattern(client, _m(acc, 'ceiling_price')),
-    floorPrice: createDollarsSatsPattern(client, _m(acc, 'floor_price')),
     investorCapRaw: createMetricPattern11(client, _m(acc, 'investor_cap_raw')),
     investorPrice: createDollarsSatsPattern(client, _m(acc, 'investor_price')),
     investorPriceCents: createMetricPattern1(client, _m(acc, 'investor_price_cents')),
     investorPriceExtra: createRatioPattern(client, _m(acc, 'investor_price_ratio')),
     lossValueCreated: createMetricPattern1(client, _m(acc, 'loss_value_created')),
     lossValueDestroyed: createMetricPattern1(client, _m(acc, 'loss_value_destroyed')),
+    lowerPriceBand: createDollarsSatsPattern(client, _m(acc, 'lower_price_band')),
     mvrv: createMetricPattern4(client, _m(acc, 'mvrv')),
     negRealizedLoss: createCumulativeSumPattern2(client, _m(acc, 'neg_realized_loss')),
     netRealizedPnl: createCumulativeSumPattern(client, _m(acc, 'net_realized_pnl')),
@@ -1557,13 +1556,14 @@ function createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProf
     sopr30dEma: createMetricPattern6(client, _m(acc, 'sopr_30d_ema')),
     sopr7dEma: createMetricPattern6(client, _m(acc, 'sopr_7d_ema')),
     totalRealizedPnl: createMetricPattern1(client, _m(acc, 'total_realized_pnl')),
+    upperPriceBand: createDollarsSatsPattern(client, _m(acc, 'upper_price_band')),
     valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
     valueDestroyed: createMetricPattern1(client, _m(acc, 'value_destroyed')),
   };
 }
 
 /**
- * @typedef {Object} AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2
+ * @typedef {Object} AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2
  * @property {MetricPattern6<StoredF64>} adjustedSopr
  * @property {MetricPattern6<StoredF64>} adjustedSopr30dEma
  * @property {MetricPattern6<StoredF64>} adjustedSopr7dEma
@@ -1571,14 +1571,13 @@ function createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProf
  * @property {MetricPattern1<Dollars>} adjustedValueDestroyed
  * @property {MetricPattern11<CentsSats>} capRaw
  * @property {MetricPattern1<Dollars>} capitulationFlow
- * @property {DollarsSatsPattern} ceilingPrice
- * @property {DollarsSatsPattern} floorPrice
  * @property {MetricPattern11<CentsSquaredSats>} investorCapRaw
  * @property {DollarsSatsPattern} investorPrice
  * @property {MetricPattern1<CentsUnsigned>} investorPriceCents
  * @property {RatioPattern2} investorPriceExtra
  * @property {MetricPattern1<Dollars>} lossValueCreated
  * @property {MetricPattern1<Dollars>} lossValueDestroyed
+ * @property {DollarsSatsPattern} lowerPriceBand
  * @property {MetricPattern4<StoredF32>} mvrv
  * @property {CumulativeSumPattern2<Dollars>} negRealizedLoss
  * @property {CumulativeSumPattern<Dollars>} netRealizedPnl
@@ -1615,17 +1614,18 @@ function createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProf
  * @property {MetricPattern6<StoredF64>} sopr30dEma
  * @property {MetricPattern6<StoredF64>} sopr7dEma
  * @property {MetricPattern1<Dollars>} totalRealizedPnl
+ * @property {DollarsSatsPattern} upperPriceBand
  * @property {MetricPattern1<Dollars>} valueCreated
  * @property {MetricPattern1<Dollars>} valueDestroyed
  */
 
 /**
- * Create a AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2 pattern node
+ * Create a AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2}
+ * @returns {AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2}
  */
-function createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2(client, acc) {
+function createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2(client, acc) {
   return {
     adjustedSopr: createMetricPattern6(client, _m(acc, 'adjusted_sopr')),
     adjustedSopr30dEma: createMetricPattern6(client, _m(acc, 'adjusted_sopr_30d_ema')),
@@ -1634,14 +1634,13 @@ function createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProf
     adjustedValueDestroyed: createMetricPattern1(client, _m(acc, 'adjusted_value_destroyed')),
     capRaw: createMetricPattern11(client, _m(acc, 'cap_raw')),
     capitulationFlow: createMetricPattern1(client, _m(acc, 'capitulation_flow')),
-    ceilingPrice: createDollarsSatsPattern(client, _m(acc, 'ceiling_price')),
-    floorPrice: createDollarsSatsPattern(client, _m(acc, 'floor_price')),
     investorCapRaw: createMetricPattern11(client, _m(acc, 'investor_cap_raw')),
     investorPrice: createDollarsSatsPattern(client, _m(acc, 'investor_price')),
     investorPriceCents: createMetricPattern1(client, _m(acc, 'investor_price_cents')),
     investorPriceExtra: createRatioPattern2(client, _m(acc, 'investor_price_ratio')),
     lossValueCreated: createMetricPattern1(client, _m(acc, 'loss_value_created')),
     lossValueDestroyed: createMetricPattern1(client, _m(acc, 'loss_value_destroyed')),
+    lowerPriceBand: createDollarsSatsPattern(client, _m(acc, 'lower_price_band')),
     mvrv: createMetricPattern4(client, _m(acc, 'mvrv')),
     negRealizedLoss: createCumulativeSumPattern2(client, _m(acc, 'neg_realized_loss')),
     netRealizedPnl: createCumulativeSumPattern(client, _m(acc, 'net_realized_pnl')),
@@ -1678,23 +1677,23 @@ function createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProf
     sopr30dEma: createMetricPattern6(client, _m(acc, 'sopr_30d_ema')),
     sopr7dEma: createMetricPattern6(client, _m(acc, 'sopr_7d_ema')),
     totalRealizedPnl: createMetricPattern1(client, _m(acc, 'total_realized_pnl')),
+    upperPriceBand: createDollarsSatsPattern(client, _m(acc, 'upper_price_band')),
     valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
     valueDestroyed: createMetricPattern1(client, _m(acc, 'value_destroyed')),
   };
 }
 
 /**
- * @typedef {Object} CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2
+ * @typedef {Object} CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2
  * @property {MetricPattern11<CentsSats>} capRaw
  * @property {MetricPattern1<Dollars>} capitulationFlow
- * @property {DollarsSatsPattern} ceilingPrice
- * @property {DollarsSatsPattern} floorPrice
  * @property {MetricPattern11<CentsSquaredSats>} investorCapRaw
  * @property {DollarsSatsPattern} investorPrice
  * @property {MetricPattern1<CentsUnsigned>} investorPriceCents
  * @property {RatioPattern} investorPriceExtra
  * @property {MetricPattern1<Dollars>} lossValueCreated
  * @property {MetricPattern1<Dollars>} lossValueDestroyed
+ * @property {DollarsSatsPattern} lowerPriceBand
  * @property {MetricPattern4<StoredF32>} mvrv
  * @property {CumulativeSumPattern2<Dollars>} negRealizedLoss
  * @property {CumulativeSumPattern<Dollars>} netRealizedPnl
@@ -1733,28 +1732,28 @@ function createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProf
  * @property {MetricPattern6<StoredF64>} sopr30dEma
  * @property {MetricPattern6<StoredF64>} sopr7dEma
  * @property {MetricPattern1<Dollars>} totalRealizedPnl
+ * @property {DollarsSatsPattern} upperPriceBand
  * @property {MetricPattern1<Dollars>} valueCreated
  * @property {MetricPattern1<Dollars>} valueDestroyed
  */
 
 /**
- * Create a CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2 pattern node
+ * Create a CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2}
+ * @returns {CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2}
  */
-function createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2(client, acc) {
+function createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2(client, acc) {
   return {
     capRaw: createMetricPattern11(client, _m(acc, 'cap_raw')),
     capitulationFlow: createMetricPattern1(client, _m(acc, 'capitulation_flow')),
-    ceilingPrice: createDollarsSatsPattern(client, _m(acc, 'ceiling_price')),
-    floorPrice: createDollarsSatsPattern(client, _m(acc, 'floor_price')),
     investorCapRaw: createMetricPattern11(client, _m(acc, 'investor_cap_raw')),
     investorPrice: createDollarsSatsPattern(client, _m(acc, 'investor_price')),
     investorPriceCents: createMetricPattern1(client, _m(acc, 'investor_price_cents')),
     investorPriceExtra: createRatioPattern(client, _m(acc, 'investor_price_ratio')),
     lossValueCreated: createMetricPattern1(client, _m(acc, 'loss_value_created')),
     lossValueDestroyed: createMetricPattern1(client, _m(acc, 'loss_value_destroyed')),
+    lowerPriceBand: createDollarsSatsPattern(client, _m(acc, 'lower_price_band')),
     mvrv: createMetricPattern4(client, _m(acc, 'mvrv')),
     negRealizedLoss: createCumulativeSumPattern2(client, _m(acc, 'neg_realized_loss')),
     netRealizedPnl: createCumulativeSumPattern(client, _m(acc, 'net_realized_pnl')),
@@ -1793,23 +1792,23 @@ function createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealiz
     sopr30dEma: createMetricPattern6(client, _m(acc, 'sopr_30d_ema')),
     sopr7dEma: createMetricPattern6(client, _m(acc, 'sopr_7d_ema')),
     totalRealizedPnl: createMetricPattern1(client, _m(acc, 'total_realized_pnl')),
+    upperPriceBand: createDollarsSatsPattern(client, _m(acc, 'upper_price_band')),
     valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
     valueDestroyed: createMetricPattern1(client, _m(acc, 'value_destroyed')),
   };
 }
 
 /**
- * @typedef {Object} CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern
+ * @typedef {Object} CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern
  * @property {MetricPattern11<CentsSats>} capRaw
  * @property {MetricPattern1<Dollars>} capitulationFlow
- * @property {DollarsSatsPattern} ceilingPrice
- * @property {DollarsSatsPattern} floorPrice
  * @property {MetricPattern11<CentsSquaredSats>} investorCapRaw
  * @property {DollarsSatsPattern} investorPrice
  * @property {MetricPattern1<CentsUnsigned>} investorPriceCents
  * @property {RatioPattern2} investorPriceExtra
  * @property {MetricPattern1<Dollars>} lossValueCreated
  * @property {MetricPattern1<Dollars>} lossValueDestroyed
+ * @property {DollarsSatsPattern} lowerPriceBand
  * @property {MetricPattern4<StoredF32>} mvrv
  * @property {CumulativeSumPattern2<Dollars>} negRealizedLoss
  * @property {CumulativeSumPattern<Dollars>} netRealizedPnl
@@ -1846,28 +1845,28 @@ function createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealiz
  * @property {MetricPattern6<StoredF64>} sopr30dEma
  * @property {MetricPattern6<StoredF64>} sopr7dEma
  * @property {MetricPattern1<Dollars>} totalRealizedPnl
+ * @property {DollarsSatsPattern} upperPriceBand
  * @property {MetricPattern1<Dollars>} valueCreated
  * @property {MetricPattern1<Dollars>} valueDestroyed
  */
 
 /**
- * Create a CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern pattern node
+ * Create a CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern}
+ * @returns {CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern}
  */
-function createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern(client, acc) {
+function createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(client, acc) {
   return {
     capRaw: createMetricPattern11(client, _m(acc, 'cap_raw')),
     capitulationFlow: createMetricPattern1(client, _m(acc, 'capitulation_flow')),
-    ceilingPrice: createDollarsSatsPattern(client, _m(acc, 'ceiling_price')),
-    floorPrice: createDollarsSatsPattern(client, _m(acc, 'floor_price')),
     investorCapRaw: createMetricPattern11(client, _m(acc, 'investor_cap_raw')),
     investorPrice: createDollarsSatsPattern(client, _m(acc, 'investor_price')),
     investorPriceCents: createMetricPattern1(client, _m(acc, 'investor_price_cents')),
     investorPriceExtra: createRatioPattern2(client, _m(acc, 'investor_price_ratio')),
     lossValueCreated: createMetricPattern1(client, _m(acc, 'loss_value_created')),
     lossValueDestroyed: createMetricPattern1(client, _m(acc, 'loss_value_destroyed')),
+    lowerPriceBand: createDollarsSatsPattern(client, _m(acc, 'lower_price_band')),
     mvrv: createMetricPattern4(client, _m(acc, 'mvrv')),
     negRealizedLoss: createCumulativeSumPattern2(client, _m(acc, 'neg_realized_loss')),
     netRealizedPnl: createCumulativeSumPattern(client, _m(acc, 'net_realized_pnl')),
@@ -1904,6 +1903,7 @@ function createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealiz
     sopr30dEma: createMetricPattern6(client, _m(acc, 'sopr_30d_ema')),
     sopr7dEma: createMetricPattern6(client, _m(acc, 'sopr_7d_ema')),
     totalRealizedPnl: createMetricPattern1(client, _m(acc, 'total_realized_pnl')),
+    upperPriceBand: createDollarsSatsPattern(client, _m(acc, 'upper_price_band')),
     valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
     valueDestroyed: createMetricPattern1(client, _m(acc, 'value_destroyed')),
   };
@@ -2699,7 +2699,7 @@ function createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2(clie
  * @property {MetricPattern4<StoredF64>} addrCount30dChange
  * @property {MaxMinPattern} costBasis
  * @property {UtxoPattern} outputs
- * @property {CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} realized
+ * @property {CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} realized
  * @property {InvestedNegNetNuplSupplyUnrealizedPattern} relative
  * @property {_30dHalvedTotalPattern} supply
  * @property {GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} unrealized
@@ -2718,7 +2718,7 @@ function createActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern(cl
     addrCount30dChange: createMetricPattern4(client, _m(acc, 'addr_count_30d_change')),
     costBasis: createMaxMinPattern(client, acc),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
-    realized: createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern(client, acc),
+    realized: createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(client, acc),
     relative: createInvestedNegNetNuplSupplyUnrealizedPattern(client, acc),
     supply: create_30dHalvedTotalPattern(client, acc),
     unrealized: createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(client, acc),
@@ -2862,7 +2862,7 @@ function create_10y2y3y4y5y6y8yPattern(client, acc) {
  * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
  * @property {InvestedMaxMinPercentilesSpotPattern} costBasis
  * @property {UtxoPattern} outputs
- * @property {CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2} realized
+ * @property {CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2} realized
  * @property {InvestedNegNetSupplyUnrealizedPattern} relative
  * @property {_30dHalvedTotalPattern} supply
  * @property {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} unrealized
@@ -2879,7 +2879,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client
     activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
     costBasis: createInvestedMaxMinPercentilesSpotPattern(client, acc),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
-    realized: createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2(client, acc),
+    realized: createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2(client, acc),
     relative: createInvestedNegNetSupplyUnrealizedPattern(client, acc),
     supply: create_30dHalvedTotalPattern(client, acc),
     unrealized: createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(client, acc),
@@ -2891,7 +2891,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client
  * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
  * @property {MaxMinPattern} costBasis
  * @property {UtxoPattern} outputs
- * @property {AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2} realized
+ * @property {AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2} realized
  * @property {InvestedNegNetNuplSupplyUnrealizedPattern3} relative
  * @property {_30dHalvedTotalPattern} supply
  * @property {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} unrealized
@@ -2908,7 +2908,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(clien
     activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
     costBasis: createMaxMinPattern(client, acc),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
-    realized: createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2(client, acc),
+    realized: createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2(client, acc),
     relative: createInvestedNegNetNuplSupplyUnrealizedPattern3(client, acc),
     supply: create_30dHalvedTotalPattern(client, acc),
     unrealized: createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(client, acc),
@@ -2920,7 +2920,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(clien
  * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
  * @property {MaxMinPattern} costBasis
  * @property {UtxoPattern} outputs
- * @property {CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} realized
+ * @property {CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} realized
  * @property {InvestedNegNetNuplSupplyUnrealizedPattern} relative
  * @property {_30dHalvedTotalPattern} supply
  * @property {GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} unrealized
@@ -2937,7 +2937,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4(clien
     activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
     costBasis: createMaxMinPattern(client, acc),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
-    realized: createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern(client, acc),
+    realized: createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(client, acc),
     relative: createInvestedNegNetNuplSupplyUnrealizedPattern(client, acc),
     supply: create_30dHalvedTotalPattern(client, acc),
     unrealized: createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(client, acc),
@@ -2949,7 +2949,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4(clien
  * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
  * @property {MaxMinPattern} costBasis
  * @property {UtxoPattern} outputs
- * @property {CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} realized
+ * @property {CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} realized
  * @property {InvestedNegNetNuplSupplyUnrealizedPattern3} relative
  * @property {_30dHalvedTotalPattern} supply
  * @property {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} unrealized
@@ -2966,7 +2966,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern6(clien
     activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
     costBasis: createMaxMinPattern(client, acc),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
-    realized: createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern(client, acc),
+    realized: createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(client, acc),
     relative: createInvestedNegNetNuplSupplyUnrealizedPattern3(client, acc),
     supply: create_30dHalvedTotalPattern(client, acc),
     unrealized: createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(client, acc),
@@ -2978,7 +2978,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern6(clien
  * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
  * @property {MaxMinPattern} costBasis
  * @property {UtxoPattern} outputs
- * @property {CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} realized
+ * @property {CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} realized
  * @property {InvestedSupplyPattern} relative
  * @property {_30dHalvedTotalPattern} supply
  * @property {GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} unrealized
@@ -2995,7 +2995,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(clien
     activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
     costBasis: createMaxMinPattern(client, acc),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
-    realized: createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern(client, acc),
+    realized: createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(client, acc),
     relative: createInvestedSupplyPattern(client, acc),
     supply: create_30dHalvedTotalPattern(client, acc),
     unrealized: createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(client, acc),
@@ -3007,7 +3007,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(clien
  * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
  * @property {MaxMinPattern} costBasis
  * @property {UtxoPattern} outputs
- * @property {CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} realized
+ * @property {CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} realized
  * @property {_30dHalvedTotalPattern} supply
  * @property {GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} unrealized
  */
@@ -3023,7 +3023,7 @@ function createActivityCostOutputsRealizedSupplyUnrealizedPattern(client, acc) {
     activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
     costBasis: createMaxMinPattern(client, acc),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
-    realized: createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern(client, acc),
+    realized: createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(client, acc),
     supply: create_30dHalvedTotalPattern(client, acc),
     unrealized: createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(client, acc),
   };
@@ -4627,7 +4627,7 @@ function createRatioPattern2(client, acc) {
  * @property {_30dHalvedTotalPattern} supply
  * @property {UtxoPattern} outputs
  * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
- * @property {AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} realized
+ * @property {AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} realized
  * @property {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} unrealized
  * @property {InvestedMaxMinPercentilesSpotPattern} costBasis
  * @property {MetricsTree_Distribution_UtxoCohorts_All_Relative} relative
@@ -4776,7 +4776,7 @@ function createRatioPattern2(client, acc) {
  * @property {_30dHalvedTotalPattern} supply
  * @property {UtxoPattern} outputs
  * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
- * @property {AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} realized
+ * @property {AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} realized
  * @property {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} unrealized
  * @property {InvestedMaxMinPercentilesSpotPattern} costBasis
  * @property {InvestedNegNetNuplSupplyUnrealizedPattern4} relative
@@ -4787,7 +4787,7 @@ function createRatioPattern2(client, acc) {
  * @property {_30dHalvedTotalPattern} supply
  * @property {UtxoPattern} outputs
  * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
- * @property {CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2} realized
+ * @property {CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2} realized
  * @property {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} unrealized
  * @property {InvestedMaxMinPercentilesSpotPattern} costBasis
  * @property {InvestedNegNetNuplSupplyUnrealizedPattern4} relative
@@ -6752,7 +6752,7 @@ class BrkClient extends BrkClientBase {
             supply: create_30dHalvedTotalPattern(this, ''),
             outputs: createUtxoPattern(this, 'utxo_count'),
             activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(this, ''),
-            realized: createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern(this, ''),
+            realized: createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(this, ''),
             unrealized: createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(this, ''),
             costBasis: createInvestedMaxMinPercentilesSpotPattern(this, ''),
             relative: {
@@ -6879,7 +6879,7 @@ class BrkClient extends BrkClientBase {
               supply: create_30dHalvedTotalPattern(this, 'sth'),
               outputs: createUtxoPattern(this, 'sth_utxo_count'),
               activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(this, 'sth'),
-              realized: createAdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern(this, 'sth'),
+              realized: createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(this, 'sth'),
               unrealized: createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(this, 'sth'),
               costBasis: createInvestedMaxMinPercentilesSpotPattern(this, 'sth'),
               relative: createInvestedNegNetNuplSupplyUnrealizedPattern4(this, 'sth'),
@@ -6888,7 +6888,7 @@ class BrkClient extends BrkClientBase {
               supply: create_30dHalvedTotalPattern(this, 'lth'),
               outputs: createUtxoPattern(this, 'lth_utxo_count'),
               activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(this, 'lth'),
-              realized: createCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2(this, 'lth'),
+              realized: createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2(this, 'lth'),
               unrealized: createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(this, 'lth'),
               costBasis: createInvestedMaxMinPercentilesSpotPattern(this, 'lth'),
               relative: createInvestedNegNetNuplSupplyUnrealizedPattern4(this, 'lth'),

@@ -1,63 +1,72 @@
-//! Lazy binary price wrapper with both USD and sats representations.
+//! Fully lazy binary price wrapper with both USD and sats representations.
 //!
-//! Height-level value is lazy binary: transform(source1[h], source2[h]).
-//! Sats are derived lazily from the dollars output.
+//! All levels (height, dateindex, date periods, difficultyepoch) are lazy.
+//! Derives dateindex from the two source dateindexes rather than storing it.
 
-use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, SatsFract, Version};
+use brk_types::{CentsUnsigned, Dollars, SatsFract, Version};
 use derive_more::{Deref, DerefMut};
-use schemars::JsonSchema;
-use vecdb::{BinaryTransform, Database, IterableBoxedVec, IterableCloneableVec};
+use vecdb::BinaryTransform;
 
-use super::LazyBinaryComputedFromHeightLast;
-use crate::{
-    indexes,
-    internal::{ComputedVecValue, DollarsToSatsFract, LazyFromHeightLast, NumericValue},
+use crate::internal::{
+    DollarsToSatsFract, LazyBinaryFromHeightLast, LazyFromHeightLast, LazyPriceFromCents,
+    PriceFromHeight,
 };
 
-/// Lazy binary price metric with both USD and sats representations.
+/// Fully lazy binary price metric with both USD and sats representations.
 ///
-/// Dollars: lazy binary transform at height, stored at dateindex.
-/// Sats: lazy unary transform of dollars (fully lazy).
+/// Dollars: lazy binary transform at all levels (height, dateindex, date periods, difficultyepoch).
+/// Sats: lazy unary transform of dollars.
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyBinaryPriceFromHeight<S1T = Dollars, S2T = Dollars>
-where
-    S1T: ComputedVecValue + JsonSchema,
-    S2T: ComputedVecValue + JsonSchema,
-{
+pub struct LazyBinaryPriceFromHeight {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub dollars: LazyBinaryComputedFromHeightLast<Dollars, S1T, S2T>,
+    pub dollars: LazyBinaryFromHeightLast<Dollars, Dollars, Dollars>,
     pub sats: LazyFromHeightLast<SatsFract, Dollars>,
 }
 
-impl<S1T, S2T> LazyBinaryPriceFromHeight<S1T, S2T>
-where
-    S1T: NumericValue + JsonSchema,
-    S2T: NumericValue + JsonSchema,
-{
-    pub fn forced_import<F: BinaryTransform<S1T, S2T, Dollars>>(
-        db: &Database,
+impl LazyBinaryPriceFromHeight {
+    /// Create from a PriceFromHeight (source1) and a LazyPriceFromCents (source2).
+    pub fn from_price_and_lazy_price<F: BinaryTransform<Dollars, Dollars, Dollars>>(
         name: &str,
         version: Version,
-        source1: IterableBoxedVec<Height, S1T>,
-        source2: IterableBoxedVec<Height, S2T>,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
-        let dollars = LazyBinaryComputedFromHeightLast::forced_import::<F>(
-            db, name, version, source1, source2, indexes,
-        )?;
+        source1: &PriceFromHeight,
+        source2: &LazyPriceFromCents,
+    ) -> Self {
+        let dollars = LazyBinaryFromHeightLast::from_block_last_and_lazy_block_last::<
+            F,
+            CentsUnsigned,
+        >(name, version, &source1.dollars, &source2.dollars);
 
-        let sats = LazyFromHeightLast::from_lazy_binary_computed::<DollarsToSatsFract, S1T, S2T>(
+        let sats = LazyFromHeightLast::from_binary::<DollarsToSatsFract, _, _>(
             &format!("{name}_sats"),
             version,
-            dollars.height.boxed_clone(),
             &dollars,
         );
 
-        Ok(Self { dollars, sats })
+        Self { dollars, sats }
+    }
+
+    /// Create from a LazyPriceFromCents (source1) and a PriceFromHeight (source2).
+    pub fn from_lazy_price_and_price<F: BinaryTransform<Dollars, Dollars, Dollars>>(
+        name: &str,
+        version: Version,
+        source1: &LazyPriceFromCents,
+        source2: &PriceFromHeight,
+    ) -> Self {
+        let dollars = LazyBinaryFromHeightLast::from_lazy_block_last_and_block_last::<
+            F,
+            CentsUnsigned,
+        >(name, version, &source1.dollars, &source2.dollars);
+
+        let sats = LazyFromHeightLast::from_binary::<DollarsToSatsFract, _, _>(
+            &format!("{name}_sats"),
+            version,
+            &dollars,
+        );
+
+        Self { dollars, sats }
     }
 }

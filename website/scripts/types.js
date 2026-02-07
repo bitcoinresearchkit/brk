@@ -89,10 +89,10 @@
  * @typedef {Brk.GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} UnrealizedFullPattern
  *
  * Realized patterns
- * @typedef {Brk.CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} RealizedPattern
- * @typedef {Brk.CapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2} RealizedPattern2
- * @typedef {Brk.AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern} RealizedPattern3
- * @typedef {Brk.AdjustedCapCapitulationCeilingFloorInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2} RealizedPattern4
+ * @typedef {Brk.CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} RealizedPattern
+ * @typedef {Brk.CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2} RealizedPattern2
+ * @typedef {Brk.AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} RealizedPattern3
+ * @typedef {Brk.AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2} RealizedPattern4
  */
 
 /**
