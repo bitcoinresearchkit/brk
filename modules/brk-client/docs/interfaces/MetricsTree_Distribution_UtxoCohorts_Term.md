@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Distribution\_UtxoCohorts\_Term
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4753](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4753)
+Defined in: [Developer/brk/modules/brk-client/index.js:4769](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4769)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4753](https://github.com/
 
 > **long**: [`MetricsTree_Distribution_UtxoCohorts_Term_Long`](MetricsTree_Distribution_UtxoCohorts_Term_Long.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4755](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4755)
+Defined in: [Developer/brk/modules/brk-client/index.js:4771](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4771)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4755](https://github.com/
 
 > **short**: [`MetricsTree_Distribution_UtxoCohorts_Term_Short`](MetricsTree_Distribution_UtxoCohorts_Term_Short.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4754](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4754)
+Defined in: [Developer/brk/modules/brk-client/index.js:4770](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4770)

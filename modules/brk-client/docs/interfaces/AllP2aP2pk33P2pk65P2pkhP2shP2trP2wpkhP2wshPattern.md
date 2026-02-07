@@ -6,7 +6,7 @@
 
 # Interface: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2713](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2713)
+Defined in: [Developer/brk/modules/brk-client/index.js:2729](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L2729)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2713](https://github.com/
 
 > **all**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2714](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2714)
+Defined in: [Developer/brk/modules/brk-client/index.js:2730](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L2730)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2714](https://github.com/
 
 > **p2a**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2715](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2715)
+Defined in: [Developer/brk/modules/brk-client/index.js:2731](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L2731)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2715](https://github.com/
 
 > **p2pk33**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2716](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2716)
+Defined in: [Developer/brk/modules/brk-client/index.js:2732](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L2732)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2716](https://github.com/
 
 > **p2pk65**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2717](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2717)
+Defined in: [Developer/brk/modules/brk-client/index.js:2733](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L2733)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2717](https://github.com/
 
 > **p2pkh**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2718](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2718)
+Defined in: [Developer/brk/modules/brk-client/index.js:2734](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L2734)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2718](https://github.com/
 
 > **p2sh**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2719](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2719)
+Defined in: [Developer/brk/modules/brk-client/index.js:2735](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L2735)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2719](https://github.com/
 
 > **p2tr**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2720](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2720)
+Defined in: [Developer/brk/modules/brk-client/index.js:2736](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L2736)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2720](https://github.com/
 
 > **p2wpkh**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2721](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2721)
+Defined in: [Developer/brk/modules/brk-client/index.js:2737](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L2737)
 
 ***
 
@@ -78,4 +78,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2721](https://github.com/
 
 > **p2wsh**: [`_30dCountPattern`](30dCountPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2722](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2722)
+Defined in: [Developer/brk/modules/brk-client/index.js:2738](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L2738)

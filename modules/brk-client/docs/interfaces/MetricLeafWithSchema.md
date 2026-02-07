@@ -6,7 +6,7 @@
 
 # Interface: MetricLeafWithSchema
 
-Defined in: [Developer/brk/modules/brk-client/index.js:439](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L439)
+Defined in: [Developer/brk/modules/brk-client/index.js:439](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L439)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:439](https://github.com/b
 
 > **indexes**: [`Index`](../type-aliases/Index.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:442](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L442)
+Defined in: [Developer/brk/modules/brk-client/index.js:442](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L442)
 
 Available indexes for this metric
 
@@ -24,7 +24,7 @@ Available indexes for this metric
 
 > **kind**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:441](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L441)
+Defined in: [Developer/brk/modules/brk-client/index.js:441](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L441)
 
 The Rust type (e.g., "Sats", "StoredF64")
 
@@ -34,7 +34,7 @@ The Rust type (e.g., "Sats", "StoredF64")
 
 > **name**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:440](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L440)
+Defined in: [Developer/brk/modules/brk-client/index.js:440](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L440)
 
 The metric name/identifier
 
@@ -44,6 +44,6 @@ The metric name/identifier
 
 > **type**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:443](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L443)
+Defined in: [Developer/brk/modules/brk-client/index.js:443](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L443)
 
 JSON Schema type (e.g., "integer", "number", "string", "boolean", "array", "object")

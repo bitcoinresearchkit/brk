@@ -6,7 +6,7 @@
 
 # Interface: CostBasisParams
 
-Defined in: [Developer/brk/modules/brk-client/index.js:215](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L215)
+Defined in: [Developer/brk/modules/brk-client/index.js:215](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L215)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:215](https://github.com/b
 
 > **cohort**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:216](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L216)
+Defined in: [Developer/brk/modules/brk-client/index.js:216](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L216)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:216](https://github.com/b
 
 > **date**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:217](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L217)
+Defined in: [Developer/brk/modules/brk-client/index.js:217](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L217)

@@ -6,7 +6,7 @@
 
 # Interface: ActivityCostOutputsRealizedSupplyUnrealizedPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2990](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2990)
+Defined in: [Developer/brk/modules/brk-client/index.js:3006](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3006)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2990](https://github.com/
 
 > **activity**: [`CoinblocksCoindaysSatblocksSatdaysSentPattern`](CoinblocksCoindaysSatblocksSatdaysSentPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2991](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2991)
+Defined in: [Developer/brk/modules/brk-client/index.js:3007](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3007)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2991](https://github.com/
 
 > **costBasis**: [`MaxMinPattern`](MaxMinPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2992](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2992)
+Defined in: [Developer/brk/modules/brk-client/index.js:3008](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3008)
 
 ***
 
@@ -30,15 +30,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2992](https://github.com/
 
 > **outputs**: [`UtxoPattern`](UtxoPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2993](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2993)
+Defined in: [Developer/brk/modules/brk-client/index.js:3009](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3009)
 
 ***
 
 ### realized
 
-> **realized**: [`CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern`](CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern.md)
+> **realized**: [`CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern`](CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2994](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2994)
+Defined in: [Developer/brk/modules/brk-client/index.js:3010](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3010)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2994](https://github.com/
 
 > **supply**: [`_30dHalvedTotalPattern`](30dHalvedTotalPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2995](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2995)
+Defined in: [Developer/brk/modules/brk-client/index.js:3011](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3011)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2995](https://github.com/
 
 > **unrealized**: [`GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern`](GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2996](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L2996)
+Defined in: [Developer/brk/modules/brk-client/index.js:3012](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3012)

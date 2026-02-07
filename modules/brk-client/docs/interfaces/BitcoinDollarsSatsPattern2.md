@@ -6,7 +6,7 @@
 
 # Interface: BitcoinDollarsSatsPattern2
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3188](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3188)
+Defined in: [Developer/brk/modules/brk-client/index.js:3204](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3204)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3188](https://github.com/
 
 > **bitcoin**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3189](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3189)
+Defined in: [Developer/brk/modules/brk-client/index.js:3205](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3205)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3189](https://github.com/
 
 > **dollars**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3190](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3190)
+Defined in: [Developer/brk/modules/brk-client/index.js:3206](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3206)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3190](https://github.com/
 
 > **sats**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3191](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3191)
+Defined in: [Developer/brk/modules/brk-client/index.js:3207](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3207)

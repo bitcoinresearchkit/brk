@@ -6,7 +6,7 @@
 
 # Interface: Health
 
-Defined in: [Developer/brk/modules/brk-client/index.js:350](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L350)
+Defined in: [Developer/brk/modules/brk-client/index.js:350](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L350)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:350](https://github.com/b
 
 > **service**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:352](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L352)
+Defined in: [Developer/brk/modules/brk-client/index.js:352](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L352)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:352](https://github.com/b
 
 > **startedAt**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:354](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L354)
+Defined in: [Developer/brk/modules/brk-client/index.js:354](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L354)
 
 Server start time (ISO 8601)
 
@@ -32,7 +32,7 @@ Server start time (ISO 8601)
 
 > **status**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:351](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L351)
+Defined in: [Developer/brk/modules/brk-client/index.js:351](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L351)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:351](https://github.com/b
 
 > **timestamp**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:353](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L353)
+Defined in: [Developer/brk/modules/brk-client/index.js:353](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L353)
 
 ***
 
@@ -48,6 +48,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:353](https://github.com/b
 
 > **uptimeSeconds**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:355](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L355)
+Defined in: [Developer/brk/modules/brk-client/index.js:355](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L355)
 
 Uptime in seconds

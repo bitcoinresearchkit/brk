@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Scripts\_Count
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3753](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3753)
+Defined in: [Developer/brk/modules/brk-client/index.js:3769](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3769)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3753](https://github.com/
 
 > **emptyoutput**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3764](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3764)
+Defined in: [Developer/brk/modules/brk-client/index.js:3780](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3780)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3764](https://github.com/
 
 > **opreturn**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3763](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3763)
+Defined in: [Developer/brk/modules/brk-client/index.js:3779](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3779)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3763](https://github.com/
 
 > **p2a**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3754](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3754)
+Defined in: [Developer/brk/modules/brk-client/index.js:3770](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3770)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3754](https://github.com/
 
 > **p2ms**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3755](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3755)
+Defined in: [Developer/brk/modules/brk-client/index.js:3771](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3771)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3755](https://github.com/
 
 > **p2pk33**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3756](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3756)
+Defined in: [Developer/brk/modules/brk-client/index.js:3772](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3772)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3756](https://github.com/
 
 > **p2pk65**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3757](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3757)
+Defined in: [Developer/brk/modules/brk-client/index.js:3773](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3773)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3757](https://github.com/
 
 > **p2pkh**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3758](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3758)
+Defined in: [Developer/brk/modules/brk-client/index.js:3774](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3774)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3758](https://github.com/
 
 > **p2sh**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3759](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3759)
+Defined in: [Developer/brk/modules/brk-client/index.js:3775](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3775)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3759](https://github.com/
 
 > **p2tr**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3760](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3760)
+Defined in: [Developer/brk/modules/brk-client/index.js:3776](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3776)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3760](https://github.com/
 
 > **p2wpkh**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3761](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3761)
+Defined in: [Developer/brk/modules/brk-client/index.js:3777](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3777)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3761](https://github.com/
 
 > **p2wsh**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3762](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3762)
+Defined in: [Developer/brk/modules/brk-client/index.js:3778](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3778)
 
 ***
 
@@ -102,7 +102,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3762](https://github.com/
 
 > **segwit**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3766](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3766)
+Defined in: [Developer/brk/modules/brk-client/index.js:3782](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3782)
 
 ***
 
@@ -110,7 +110,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3766](https://github.com/
 
 > **segwitAdoption**: [`BaseCumulativeSumPattern`](BaseCumulativeSumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3768](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3768)
+Defined in: [Developer/brk/modules/brk-client/index.js:3784](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3784)
 
 ***
 
@@ -118,7 +118,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3768](https://github.com/
 
 > **taprootAdoption**: [`BaseCumulativeSumPattern`](BaseCumulativeSumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3767](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3767)
+Defined in: [Developer/brk/modules/brk-client/index.js:3783](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3783)
 
 ***
 
@@ -126,4 +126,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3767](https://github.com/
 
 > **unknownoutput**: [`AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2`](AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3765](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3765)
+Defined in: [Developer/brk/modules/brk-client/index.js:3781](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3781)

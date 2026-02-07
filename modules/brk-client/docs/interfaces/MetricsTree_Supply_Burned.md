@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Supply\_Burned
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4963](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4963)
+Defined in: [Developer/brk/modules/brk-client/index.js:4979](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4979)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4963](https://github.com/
 
 > **opreturn**: [`BitcoinDollarsSatsPattern3`](BitcoinDollarsSatsPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4964](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4964)
+Defined in: [Developer/brk/modules/brk-client/index.js:4980](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4980)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4964](https://github.com/
 
 > **unspendable**: [`BitcoinDollarsSatsPattern3`](BitcoinDollarsSatsPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4965](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4965)
+Defined in: [Developer/brk/modules/brk-client/index.js:4981](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4981)

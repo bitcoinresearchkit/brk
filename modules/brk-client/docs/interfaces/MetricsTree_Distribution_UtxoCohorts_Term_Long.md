@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Distribution\_UtxoCohorts\_Term\_Long
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4770](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4770)
+Defined in: [Developer/brk/modules/brk-client/index.js:4786](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4786)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4770](https://github.com/
 
 > **activity**: [`CoinblocksCoindaysSatblocksSatdaysSentPattern`](CoinblocksCoindaysSatblocksSatdaysSentPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4773](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4773)
+Defined in: [Developer/brk/modules/brk-client/index.js:4789](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4789)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4773](https://github.com/
 
 > **costBasis**: [`InvestedMaxMinPercentilesSpotPattern`](InvestedMaxMinPercentilesSpotPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4776](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4776)
+Defined in: [Developer/brk/modules/brk-client/index.js:4792](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4792)
 
 ***
 
@@ -30,15 +30,15 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4776](https://github.com/
 
 > **outputs**: [`UtxoPattern`](UtxoPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4772](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4772)
+Defined in: [Developer/brk/modules/brk-client/index.js:4788](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4788)
 
 ***
 
 ### realized
 
-> **realized**: [`CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2`](CapCapitulationInvestorLossMvrvNegNetPeakProfitRealizedSellSentSoprTotalValuePattern2.md)
+> **realized**: [`CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2`](CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4774](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4774)
+Defined in: [Developer/brk/modules/brk-client/index.js:4790](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4790)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4774](https://github.com/
 
 > **relative**: [`InvestedNegNetNuplSupplyUnrealizedPattern4`](InvestedNegNetNuplSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4777](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4777)
+Defined in: [Developer/brk/modules/brk-client/index.js:4793](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4793)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4777](https://github.com/
 
 > **supply**: [`_30dHalvedTotalPattern`](30dHalvedTotalPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4771](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4771)
+Defined in: [Developer/brk/modules/brk-client/index.js:4787](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4787)
 
 ***
 
@@ -62,4 +62,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4771](https://github.com/
 
 > **unrealized**: [`GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern`](GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4775](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4775)
+Defined in: [Developer/brk/modules/brk-client/index.js:4791](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4791)

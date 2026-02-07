@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Distribution\_UtxoCohorts\_GeAmount
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4717](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4717)
+Defined in: [Developer/brk/modules/brk-client/index.js:4733](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4733)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4717](https://github.com/
 
 > **\_100btc**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4728](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4728)
+Defined in: [Developer/brk/modules/brk-client/index.js:4744](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4744)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4728](https://github.com/
 
 > **\_100kSats**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4723](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4723)
+Defined in: [Developer/brk/modules/brk-client/index.js:4739](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4739)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4723](https://github.com/
 
 > **\_100sats**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4720](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4720)
+Defined in: [Developer/brk/modules/brk-client/index.js:4736](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4736)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4720](https://github.com/
 
 > **\_10btc**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4727](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4727)
+Defined in: [Developer/brk/modules/brk-client/index.js:4743](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4743)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4727](https://github.com/
 
 > **\_10kBtc**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4730](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4730)
+Defined in: [Developer/brk/modules/brk-client/index.js:4746](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4746)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4730](https://github.com/
 
 > **\_10kSats**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4722](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4722)
+Defined in: [Developer/brk/modules/brk-client/index.js:4738](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4738)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4722](https://github.com/
 
 > **\_10mSats**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4725](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4725)
+Defined in: [Developer/brk/modules/brk-client/index.js:4741](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4741)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4725](https://github.com/
 
 > **\_10sats**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4719](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4719)
+Defined in: [Developer/brk/modules/brk-client/index.js:4735](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4735)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4719](https://github.com/
 
 > **\_1btc**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4726](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4726)
+Defined in: [Developer/brk/modules/brk-client/index.js:4742](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4742)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4726](https://github.com/
 
 > **\_1kBtc**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4729](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4729)
+Defined in: [Developer/brk/modules/brk-client/index.js:4745](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4745)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4729](https://github.com/
 
 > **\_1kSats**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4721](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4721)
+Defined in: [Developer/brk/modules/brk-client/index.js:4737](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4737)
 
 ***
 
@@ -102,7 +102,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4721](https://github.com/
 
 > **\_1mSats**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4724](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4724)
+Defined in: [Developer/brk/modules/brk-client/index.js:4740](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4740)
 
 ***
 
@@ -110,4 +110,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4724](https://github.com/
 
 > **\_1sat**: [`ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4`](ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4718](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L4718)
+Defined in: [Developer/brk/modules/brk-client/index.js:4734](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L4734)

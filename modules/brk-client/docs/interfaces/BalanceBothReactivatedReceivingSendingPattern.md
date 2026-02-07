@@ -6,7 +6,7 @@
 
 # Interface: BalanceBothReactivatedReceivingSendingPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3017](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3017)
+Defined in: [Developer/brk/modules/brk-client/index.js:3033](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3033)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3017](https://github.com/
 
 > **balanceDecreased**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3018](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3018)
+Defined in: [Developer/brk/modules/brk-client/index.js:3034](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3034)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3018](https://github.com/
 
 > **balanceIncreased**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3019](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3019)
+Defined in: [Developer/brk/modules/brk-client/index.js:3035](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3035)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3019](https://github.com/
 
 > **both**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3020](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3020)
+Defined in: [Developer/brk/modules/brk-client/index.js:3036](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3036)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3020](https://github.com/
 
 > **reactivated**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3021](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3021)
+Defined in: [Developer/brk/modules/brk-client/index.js:3037](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3037)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3021](https://github.com/
 
 > **receiving**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3022](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3022)
+Defined in: [Developer/brk/modules/brk-client/index.js:3038](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3038)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3022](https://github.com/
 
 > **sending**: [`AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern`](AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3023](https://github.com/bitcoinresearchkit/brk/blob/afe4123a1799221536f346575595e85e3b7040d4/modules/brk-client/index.js#L3023)
+Defined in: [Developer/brk/modules/brk-client/index.js:3039](https://github.com/bitcoinresearchkit/brk/blob/ba60b7e4f64e81cffbd4781566a0df0728014881/modules/brk-client/index.js#L3039)
