@@ -4409,7 +4409,7 @@ class MetricsTree:
 class BrkClient(BrkClientBase):
     """Main BRK client with metrics tree and API methods."""
 
-    VERSION = "v0.1.6"
+    VERSION = "v0.1.7"
 
     INDEXES = [
       "dateindex",
