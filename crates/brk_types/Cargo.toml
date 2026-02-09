@@ -16,9 +16,9 @@ indexmap = { workspace = true }
 itoa = "1.0.17"
 jiff = { workspace = true }
 pco = { workspace = true }
-rapidhash = "4.2.1"
+rapidhash = "4.3.0"
 rustc-hash = { workspace = true }
-ryu = "1.0.22"
+ryu = "1.0.23"
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

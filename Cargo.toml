@@ -62,16 +62,16 @@ brk_traversable = { version = "0.1.7", path = "crates/brk_traversable", features
 brk_traversable_derive = { version = "0.1.7", path = "crates/brk_traversable_derive" }
 brk_types = { version = "0.1.7", path = "crates/brk_types" }
 brk_website = { version = "0.1.7", path = "crates/brk_website" }
-byteview = "0.10.0"
+byteview = "0.10.1"
 color-eyre = "0.6.5"
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
 fjall = "3.0.1"
 indexmap = { version = "2.13.0", features = ["serde"] }
-jiff = { version = "0.2.18", features = ["perf-inline", "tz-system"], default-features = false }
+jiff = { version = "0.2.19", features = ["perf-inline", "tz-system"], default-features = false }
 minreq = { version = "2.14.1", features = ["https", "json-using-serde"] }
 owo-colors = "4.2.3"
 parking_lot = "0.12.5"
-pco = "1.0.0"
+pco = "1.0.1"
 rayon = "1.11.0"
 rustc-hash = "2.1.1"
 schemars = { version = "1.2.1", features = ["indexmap2"] }
