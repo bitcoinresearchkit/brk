@@ -114,11 +114,37 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
   // Used to detect and ignore stale operations (in-flight fetches, etc.)
   let generation = 0;
 
-  // Shared time - fetched once per rebuild, all series register callbacks
-  /** @type {MetricData<number> | null} */
-  let sharedTimeData = null;
-  /** @type {Set<(data: MetricData<number>) => void>} */
-  let timeCallbacks = new Set();
+  const time = {
+    /** @type {MetricData<number> | null} */
+    data: null,
+    /** @type {Set<(data: MetricData<number>) => void>} */
+    callbacks: new Set(),
+    /** @type {ReturnType<typeof getTimeEndpoint> | null} */
+    endpoint: null,
+
+    /** @param {ChartableIndex} idx */
+    setIndex(idx) {
+      this.data = null;
+      this.callbacks = new Set();
+      this.endpoint = getTimeEndpoint(idx);
+    },
+
+    fetch() {
+      const endpoint = this.endpoint;
+      if (!endpoint) return;
+      const currentGen = generation;
+      const cached = cache.get(endpoint.path);
+      if (cached) {
+        this.data = cached;
+      }
+      endpoint.slice(-10000).fetch((result) => {
+        if (currentGen !== generation) return;
+        cache.set(endpoint.path, result);
+        this.data = result;
+        this.callbacks.forEach((cb) => cb(result));
+      });
+    },
+  };
 
   // Memory cache for instant index switching
   /** @type {Map<string, MetricData<any>>} */
@@ -324,6 +350,10 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
   // Periodic refresh of active series data
   const refreshInterval = setInterval(() => serieses.refreshAll(), 30_000);
+  const onVisibilityChange = () => {
+    if (!document.hidden) serieses.refreshAll();
+  };
+  document.addEventListener("visibilitychange", onVisibilityChange);
 
   if (fitContent) {
     new ResizeObserver(() => ichart.timeScale().fitContent()).observe(
@@ -475,6 +505,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
     all: new Set(),
 
     refreshAll() {
+      time.fetch();
       serieses.all.forEach((s) => {
         if (s.active.value) s.fetch?.();
       });
@@ -572,7 +603,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         getData,
         update,
         remove() {
-          if (state.onTime) timeCallbacks.delete(state.onTime);
+          if (state.onTime) time.callbacks.delete(state.onTime);
           onRemove();
           serieses.all.delete(series);
           panes.seriesByHome.get(paneIndex)?.delete(series);
@@ -736,13 +767,13 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
             }
           }
 
-          // Register for shared time data (fetched once in rebuild)
+          // Register for shared time data
           state.onTime = (result) => {
             timeData = result;
             tryProcess();
           };
-          timeCallbacks.add(state.onTime);
-          if (sharedTimeData) state.onTime(sharedTimeData);
+          time.callbacks.add(state.onTime);
+          if (time.data) state.onTime(time.data);
 
           const cachedValues = cache.get(valuesEndpoint.path);
           if (cachedValues) {
@@ -1651,21 +1682,8 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
     rebuild() {
       generation++;
       initialLoadComplete = false; // Reset to prevent saving stale ranges during load
-      const currentGen = generation;
-      const idx = index.get();
-      sharedTimeData = null;
-      timeCallbacks = new Set();
-      const timeEndpoint = getTimeEndpoint(idx);
-      const cached = cache.get(timeEndpoint.path);
-      if (cached) {
-        sharedTimeData = cached;
-      }
-      timeEndpoint.slice(-10000).fetch((result) => {
-        if (currentGen !== generation) return;
-        cache.set(timeEndpoint.path, result);
-        sharedTimeData = result;
-        timeCallbacks.forEach((cb) => cb(result));
-      });
+      time.setIndex(index.get());
+      time.fetch();
       this.rebuildPane(0);
       this.rebuildPane(1);
     },
@@ -1747,6 +1765,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       onZoomChange.clear();
       removeThemeListener();
       clearInterval(refreshInterval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       ichart.remove();
     },
   };

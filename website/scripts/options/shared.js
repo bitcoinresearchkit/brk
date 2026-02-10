@@ -265,7 +265,7 @@ export function percentileMap(ratio) {
  */
 export function sdPatterns(ratio) {
   return /** @type {const} */ ([
-    { nameAddon: "all", titleAddon: "", sd: ratio.ratioSd },
+    { nameAddon: "All Time", titleAddon: "", sd: ratio.ratioSd },
     { nameAddon: "4y", titleAddon: "4y", sd: ratio.ratio4ySd },
     { nameAddon: "2y", titleAddon: "2y", sd: ratio.ratio2ySd },
     { nameAddon: "1y", titleAddon: "1y", sd: ratio.ratio1ySd },
@@ -465,58 +465,82 @@ export function createZScoresFolder({
           }),
         ],
       },
-      ...sdPats.map(({ nameAddon, titleAddon, sd }) => ({
-        name: nameAddon,
-        title: formatTitle(`${titleAddon ? `${titleAddon} ` : ""}Z-Score`),
-        top: [
-          price({ metric: pricePattern, name: legend, color }),
-          ...sdBandsUsd(sd).map(({ name: bandName, prop, color: bandColor }) =>
-            price({
-              metric: prop,
-              name: bandName,
-              color: bandColor,
-              defaultActive: false,
-            }),
-          ),
-        ],
-        bottom: [
-          baseline({
-            metric: sd.zscore,
-            name: "Z-Score",
-            unit: Unit.sd,
-          }),
-          baseline({
-            metric: ratio.ratio,
-            name: "Ratio",
-            unit: Unit.ratio,
-            base: 1,
-          }),
-          line({
-            metric: sd.sd,
-            name: "Volatility",
-            color: colors.gray,
-            unit: Unit.percentage,
-          }),
-          ...sdBandsRatio(sd).map(
-            ({ name: bandName, prop, color: bandColor }) =>
-              line({
-                metric: prop,
-                name: bandName,
-                color: bandColor,
-                unit: Unit.ratio,
-                defaultActive: false,
-              }),
-          ),
-          priceLine({
-            unit: Unit.sd,
-          }),
-          ...priceLines({
-            unit: Unit.sd,
-            numbers: [1, -1, 2, -2, 3, -3],
-            defaultActive: false,
-          }),
-        ],
-      })),
+      ...sdPats.map(({ nameAddon, titleAddon, sd }) => {
+        const prefix = titleAddon ? `${titleAddon} ` : "";
+        const topPrice = price({ metric: pricePattern, name: legend, color });
+        return {
+          name: nameAddon,
+          tree: [
+            {
+              name: "Score",
+              title: formatTitle(`${prefix}Z-Score`),
+              top: [
+                topPrice,
+                ...sdBandsUsd(sd).map(
+                  ({ name: bandName, prop, color: bandColor }) =>
+                    price({
+                      metric: prop,
+                      name: bandName,
+                      color: bandColor,
+                      defaultActive: false,
+                    }),
+                ),
+              ],
+              bottom: [
+                baseline({
+                  metric: sd.zscore,
+                  name: "Z-Score",
+                  unit: Unit.sd,
+                }),
+                priceLine({
+                  unit: Unit.sd,
+                }),
+                ...priceLines({
+                  unit: Unit.sd,
+                  numbers: [1, -1, 2, -2, 3, -3],
+                  defaultActive: false,
+                }),
+              ],
+            },
+            {
+              name: "Ratio",
+              title: formatTitle(`${prefix}Ratio`),
+              top: [topPrice],
+              bottom: [
+                baseline({
+                  metric: ratio.ratio,
+                  name: "Ratio",
+                  unit: Unit.ratio,
+                  base: 1,
+                }),
+                ...sdBandsRatio(sd).map(
+                  ({ name: bandName, prop, color: bandColor }) =>
+                    line({
+                      metric: prop,
+                      name: bandName,
+                      color: bandColor,
+                      unit: Unit.ratio,
+                      defaultActive: false,
+                    }),
+                ),
+              ],
+            },
+            {
+              name: "Volatility",
+              title: formatTitle(`${prefix}Volatility`),
+              top: [topPrice],
+              bottom: [
+                line({
+                  metric: sd.sd,
+                  name: "Volatility",
+                  color: colors.gray,
+                  unit: Unit.percentage,
+                }),
+              ],
+            },
+          ],
+        };
+      }),
     ],
   };
 }
