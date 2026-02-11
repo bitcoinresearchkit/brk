@@ -3,6 +3,15 @@ import { stringToId } from "../utils/format.js";
 
 export function createLegend() {
   const element = window.document.createElement("legend");
+  const scroller = window.document.createElement("div");
+  const items = window.document.createElement("div");
+
+  scroller.append(items);
+  element.append(scroller);
+
+  scroller.addEventListener("wheel", (e) => e.stopPropagation());
+  scroller.addEventListener("touchstart", (e) => e.stopPropagation());
+  scroller.addEventListener("touchmove", (e) => e.stopPropagation());
 
   /** @type {AnySeries | null} */
   let hoveredSeries = null;
@@ -24,9 +33,22 @@ export function createLegend() {
 
   /** @type {HTMLElement[]} */
   const legends = [];
+  /** @type {HTMLElement | null} */
+  let prefix = null;
+  const separator = window.document.createElement("span");
+  separator.textContent = "|";
 
   return {
     element,
+    /**
+     * @param {HTMLElement} el
+     */
+    setPrefix(el) {
+      if (prefix) prefix.replaceWith(el);
+      else scroller.insertBefore(el, items);
+      prefix = el;
+      el.after(separator);
+    },
     /**
      * @param {Object} args
      * @param {AnySeries} args.series
@@ -41,11 +63,11 @@ export function createLegend() {
       if (prev) {
         prev.replaceWith(div);
       } else {
-        const elementAtOrder = Array.from(element.children).at(order);
+        const elementAtOrder = Array.from(items.children).at(order);
         if (elementAtOrder) {
           elementAtOrder.before(div);
         } else {
-          element.append(div);
+          items.append(div);
         }
       }
       legends[order] = div;

@@ -387,9 +387,9 @@ export function initOptions() {
         details.append(summary);
         summary.append(node.name);
 
-        const supCount = window.document.createElement("sup");
-        supCount.innerHTML = node.count.toLocaleString("en-us");
-        summary.append(supCount);
+        const count = window.document.createElement("small");
+        count.textContent = `(${node.count.toLocaleString("en-us")})`;
+        summary.append(count);
 
         let built = false;
         details.addEventListener("toggle", () => {

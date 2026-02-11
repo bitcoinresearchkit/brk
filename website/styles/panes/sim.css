@@ -64,7 +64,7 @@
     flex: none;
     height: 400px;
 
-    .lightweight-chart {
+    > div {
       margin-left: calc(var(--negative-main-padding) * 0.75);
 
       fieldset {

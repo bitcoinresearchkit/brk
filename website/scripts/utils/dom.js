@@ -287,6 +287,9 @@ export function createSelect({
       const small = window.document.createElement("small");
       small.textContent = `+${remaining}`;
       field.append(small);
+      const arrow = window.document.createElement("span");
+      arrow.textContent = "↓";
+      field.append(arrow);
     }
   }
 

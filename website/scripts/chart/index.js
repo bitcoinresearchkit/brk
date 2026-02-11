@@ -190,11 +190,8 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
 
     setup() {
       elements.root.classList.add("chart");
-      elements.chart.classList.add("lightweight-chart");
       parent.append(elements.root);
-      elements.root.append(legends.top.element);
       elements.root.append(elements.chart);
-      elements.root.append(legends.bottom.element);
     },
   };
   elements.setup();
@@ -220,6 +217,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         borderVisible: false,
       },
       timeScale: {
+        // borderColor: colors.border(),
         borderVisible: false,
         enableConflation: true,
         ...(fitContent
@@ -305,6 +303,9 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         panes: {
           separatorColor: borderColor,
         },
+      },
+      timeScale: {
+        // borderColor: colors.border(),
       },
       crosshair: {
         horzLine: {
@@ -415,28 +416,6 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
     seriesByHome: new Map(),
     pendingVisibilityCheck: false,
 
-    /** @param {number} homePane */
-    isAllHidden(homePane) {
-      const map = this.seriesByHome.get(homePane);
-      return !map || [...map.keys()].every((s) => !s.active.value);
-    },
-
-    /**
-     * @param {number} homePane
-     * @param {number} targetPane
-     */
-    moveTo(homePane, targetPane) {
-      const map = this.seriesByHome.get(homePane);
-      if (!map) return;
-      for (const iseries of map.values()) {
-        for (const is of iseries) {
-          if (is.getPane().paneIndex() !== targetPane) {
-            is.moveToPane(targetPane);
-          }
-        }
-      }
-    },
-
     /**
      * @param {number} paneIndex
      * @param {VoidFunction} callback
@@ -454,26 +433,55 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       }
     },
 
-    updateVisibility() {
-      const pane0Hidden = this.isAllHidden(0);
-      const pane1Hidden = this.isAllHidden(1);
-      const bothVisible = !pane0Hidden && !pane1Hidden;
+    /** @param {number} targetPaneIndex @param {Legend} legend */
+    injectLegend(targetPaneIndex, legend) {
+      const pane = ichart.panes().at(targetPaneIndex);
+      const parent = pane?.getHTMLElement()?.children?.item(1)?.firstChild;
+      if (!parent) return;
+      parent.appendChild(legend.element);
+    },
 
-      this.moveTo(1, bothVisible ? 1 : 0);
+    initialized: false,
 
-      if (bothVisible) {
+    setup() {
+      if (this.initialized) return;
+      this.initialized = true;
+
+      this.whenReady(0, () => {
+        const pane0 = ichart.panes().at(0);
+        fieldsets.createForPane(0);
+        this.injectLegend(0, legends.top);
+        if (pane0) injectScaleSelector(0, pane0);
+        this.updateSize(0);
+      });
+
+      if (this.seriesByHome.has(1)) {
         this.whenReady(1, () => {
-          fieldsets.createForPane(0);
+          const pane1 = ichart.panes().at(1);
           fieldsets.createForPane(1);
+          this.injectLegend(1, legends.bottom);
+          if (pane1) injectScaleSelector(1, pane1);
+          this.updateSize(1);
         });
+      }
+    },
+
+    /** @param {number} homePane */
+    isAllHidden(homePane) {
+      const map = this.seriesByHome.get(homePane);
+      return !map || [...map.keys()].every((s) => !s.active.value);
+    },
+
+    /** @param {number} paneIndex */
+    updateSize(paneIndex) {
+      const pane = ichart.panes().at(paneIndex);
+      if (!pane) return;
+      const hidden = this.isAllHidden(paneIndex);
+      if (hidden) {
+        const chartHeight = ichart.chartElement().clientHeight;
+        pane.setStretchFactor(chartHeight > 0 ? 32 / (chartHeight - 32) : 0);
       } else {
-        this.whenReady(0, () => {
-          if (pane0Hidden && !pane1Hidden) {
-            fieldsets.createForPane(1, 0);
-          } else {
-            fieldsets.createForPane(0);
-          }
-        });
+        pane.setStretchFactor(1);
       }
     },
 
@@ -494,7 +502,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         this.pendingVisibilityCheck = true;
         requestAnimationFrame(() => {
           this.pendingVisibilityCheck = false;
-          this.updateVisibility();
+          this.setup();
         });
       }
     },
@@ -588,7 +596,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
           if (value && !wasActive) {
             state.fetch?.();
           }
-          panes.updateVisibility();
+          panes.updateSize(paneIndex);
         },
         setOrder,
         show,
@@ -759,7 +767,11 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
           function tryProcess() {
             if (seriesGeneration !== generation) return;
             if (!timeData || !valuesData) return;
-            if (valuesStamp === state.lastStamp && timeData.stamp === state.lastTimeStamp) return;
+            if (
+              valuesStamp === state.lastStamp &&
+              timeData.stamp === state.lastTimeStamp
+            )
+              return;
             state.lastStamp = valuesStamp;
             state.lastTimeStamp = timeData.stamp;
             if (timeData.data.length && valuesData.length) {
@@ -1493,44 +1505,73 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
   /**
    * @param {number} paneIndex
    */
+  /**
+   * @param {number} paneIndex
+   */
   function applyScaleForUnit(paneIndex) {
+    const pane = ichart.panes().at(paneIndex);
+    if (!pane) return;
+    const persisted = scalePersistedValues[paneIndex];
+    if (!persisted) return;
+    try {
+      pane.priceScale("right").applyOptions({
+        mode: persisted.value === "lin" ? 0 : 1,
+      });
+    } catch {}
+  }
+
+  /** @type {Record<number, ReturnType<typeof createPersistedValue<"lin" | "log">>>} */
+  const scalePersistedValues = {};
+
+  /**
+   * @param {number} paneIndex
+   * @param {IPaneApi<Time>} pane
+   */
+  function injectScaleSelector(paneIndex, pane) {
     const id = `${storageId}-scale`;
     const defaultValue = paneIndex === 0 ? "log" : "lin";
 
-    const persisted = createPersistedValue({
-      defaultValue: /** @type {"lin" | "log"} */ (defaultValue),
-      storageKey: `${storageId}-p${paneIndex}-scale`,
-      urlKey: paneIndex === 0 ? "price_scale" : "unit_scale",
-      serialize: (v) => v,
-      deserialize: (s) => /** @type {"lin" | "log"} */ (s),
-    });
+    let persisted = scalePersistedValues[paneIndex];
+    if (!persisted) {
+      persisted = createPersistedValue({
+        defaultValue: /** @type {"lin" | "log"} */ (defaultValue),
+        storageKey: `${storageId}-p${paneIndex}-scale`,
+        urlKey: paneIndex === 0 ? "price_scale" : "unit_scale",
+        serialize: (v) => v,
+        deserialize: (s) => /** @type {"lin" | "log"} */ (s),
+      });
+      scalePersistedValues[paneIndex] = persisted;
+    }
 
-    /** @param {IPaneApi<Time>} pane @param {"lin" | "log"} value */
-    const applyScale = (pane, value) => {
-      try {
-        pane.priceScale("right").applyOptions({
-          mode: value === "lin" ? 0 : 1,
-        });
-      } catch {}
-    };
+    // Inject into the price scale td (last td in the pane's tr)
+    const paneEl = pane.getHTMLElement();
+    const tr = paneEl?.closest("tr");
+    const td = tr?.querySelector("td:last-child");
+    if (!td) return;
 
-    fieldsets.addIfNeeded({
-      id,
-      paneIndex,
-      position: "sw",
-      createChild(pane) {
-        applyScale(pane, persisted.value);
-        return createRadios({
-          choices: /** @type {const} */ (["lin", "log"]),
-          id: stringToId(`${id} ${paneIndex}`),
-          initialValue: persisted.value,
-          onChange(value) {
-            persisted.set(value);
-            applyScale(pane, value);
-          },
-        });
+    // Remove previous if any
+    td.querySelector(".scale-selector")?.remove();
+
+    /** @type {HTMLTableCellElement} */ (td).style.position = "relative";
+
+    const wrapper = window.document.createElement("div");
+    wrapper.classList.add("scale-selector");
+
+    const radios = createRadios({
+      choices: /** @type {const} */ (["lin", "log"]),
+      id: stringToId(`${id} ${paneIndex}`),
+      initialValue: persisted.value,
+      onChange(value) {
+        persisted.set(value);
+        try {
+          pane.priceScale("right").applyOptions({
+            mode: value === "lin" ? 0 : 1,
+          });
+        } catch {}
       },
     });
+    wrapper.append(radios);
+    td.append(wrapper);
   }
 
   const blueprints = {
@@ -1675,13 +1716,13 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
       // Remove old series AFTER adding new ones to prevent pane collapse
       oldSeries.forEach((s) => s.remove());
 
-      // Store scale config - it will be applied when createForPane runs after updateVisibility
       applyScaleForUnit(paneIndex);
     },
 
     rebuild() {
       generation++;
       initialLoadComplete = false; // Reset to prevent saving stale ranges during load
+      panes.initialized = false;
       time.setIndex(index.get());
       time.fetch();
       this.rebuildPane(0);
@@ -1692,8 +1733,45 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
   // Rebuild when index changes
   index.onChange.add(() => blueprints.rebuild());
 
+  // Index selector — injected into the last tr of the chart table
+  let preferredIndex = index.name.value;
+  /** @type {HTMLElement | null} */
+  let indexField = null;
+
+  const indexWrapper = window.document.createElement("div");
+  indexWrapper.classList.add("index-selector");
+
+  const lastTr = ichart.chartElement().querySelector("table > tr:last-child");
+  if (lastTr) {
+    lastTr.append(indexWrapper);
+  }
+
   const chart = {
     index,
+
+    /** @param {ChartableIndexName[]} choices */
+    setIndexChoices(choices) {
+      if (indexField) indexField.remove();
+
+      let currentValue = choices.includes(preferredIndex)
+        ? preferredIndex
+        : (choices[0] ?? "date");
+
+      if (currentValue !== index.name.value) {
+        index.name.set(currentValue);
+      }
+
+      indexField = createSelect({
+        initialValue: currentValue,
+        onChange: (v) => {
+          preferredIndex = v;
+          index.name.set(v);
+        },
+        choices,
+        id: "index",
+      });
+      indexWrapper.append(indexField);
+    },
 
     /**
      * @param {Object} args
@@ -1730,27 +1808,22 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
           units.find((u) => u.id === persistedUnit.value) ?? defaultUnit;
         blueprints.panes[paneIndex].unit = initialUnit;
 
-        fieldsets.addIfNeeded({
-          id: `${chartId}-unit`,
-          paneIndex,
-          position: "nw",
-          createChild() {
-            return createSelect({
-              choices: units,
-              id: `pane-${paneIndex}-unit`,
-              initialValue: blueprints.panes[paneIndex].unit ?? defaultUnit,
-              toKey: (u) => u.id,
-              toLabel: (u) => u.name,
-              sorted: true,
-              onChange(unit) {
-                generation++;
-                persistedUnit.set(unit.id);
-                blueprints.panes[paneIndex].unit = unit;
-                blueprints.rebuildPane(paneIndex);
-              },
-            });
-          },
-        });
+        blueprints.panes[paneIndex].legend.setPrefix(
+          createSelect({
+            choices: units,
+            id: `pane-${paneIndex}-unit`,
+            initialValue: blueprints.panes[paneIndex].unit ?? defaultUnit,
+            toKey: (u) => u.id,
+            toLabel: (u) => u.name,
+            sorted: true,
+            onChange(unit) {
+              generation++;
+              persistedUnit.set(unit.id);
+              blueprints.panes[paneIndex].unit = unit;
+              blueprints.rebuildPane(paneIndex);
+            },
+          }),
+        );
       });
 
       blueprints.rebuild();

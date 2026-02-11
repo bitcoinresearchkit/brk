@@ -1,4 +1,4 @@
-import { createShadow, createRadios, createHeader } from "../utils/dom.js";
+import { createShadow, createHeader } from "../utils/dom.js";
 import { chartElement } from "../utils/elements.js";
 import { serdeChartableIndex } from "../utils/serde.js";
 import { Unit } from "../utils/units.js";
@@ -33,9 +33,7 @@ export function init() {
     brk,
   });
 
-  // Create index selector
-  const { fieldset, setChoices } = createIndexSelector(chart);
-  chartElement.append(fieldset);
+  const setChoices = chart.setIndexChoices;
 
   /**
    * Build top blueprints with price series prepended for each unit
@@ -147,46 +145,3 @@ function computeChoices(opt) {
   );
 }
 
-/**
- * @param {Chart} chart
- */
-function createIndexSelector(chart) {
-  const fieldset = window.document.createElement("fieldset");
-  fieldset.id = "interval";
-  fieldset.dataset.size = "sm";
-
-  // Track user's preferred index (only updated on explicit selection)
-  let preferredIndex = chart.index.name.value;
-
-  /** @type {HTMLElement | null} */
-  let field = null;
-
-  /**
-   * @param {ChartableIndexName[]} newChoices
-   */
-  function setChoices(newChoices) {
-    if (field) field.remove();
-
-    // Use preferred index if available, otherwise fall back to first choice
-    let currentValue = newChoices.includes(preferredIndex)
-      ? preferredIndex
-      : (newChoices[0] ?? "date");
-
-    if (currentValue !== chart.index.name.value) {
-      chart.index.name.set(currentValue);
-    }
-
-    field = createRadios({
-      initialValue: currentValue,
-      onChange: (v) => {
-        preferredIndex = v; // User explicitly selected, update preference
-        chart.index.name.set(v);
-      },
-      choices: newChoices,
-      id: "index",
-    });
-    fieldset.append(field);
-  }
-
-  return { fieldset, setChoices };
-}
