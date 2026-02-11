@@ -112,7 +112,6 @@ export function createValuationSection({ cohort, title }) {
           baseline({
             metric: tree.realized.realizedPriceExtra.ratio,
             name: "MVRV",
-            color,
             unit: Unit.ratio,
             base: 1,
           }),
@@ -175,7 +174,11 @@ export function createGroupedValuationSection({ list, all, title }) {
  * @param {{ list: readonly (CohortAll | CohortFull | CohortWithPercentiles)[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedValuationSectionWithOwnMarketCap({ list, all, title }) {
+export function createGroupedValuationSectionWithOwnMarketCap({
+  list,
+  all,
+  title,
+}) {
   return {
     name: "Valuation",
     tree: [

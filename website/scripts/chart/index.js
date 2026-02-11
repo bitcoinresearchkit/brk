@@ -1550,12 +1550,9 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
     if (!td) return;
 
     // Remove previous if any
-    td.querySelector(".scale-selector")?.remove();
+    td.querySelector(":scope > .field")?.remove();
 
     /** @type {HTMLTableCellElement} */ (td).style.position = "relative";
-
-    const wrapper = window.document.createElement("div");
-    wrapper.classList.add("scale-selector");
 
     const radios = createRadios({
       choices: /** @type {const} */ (["lin", "log"]),
@@ -1570,8 +1567,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         } catch {}
       },
     });
-    wrapper.append(radios);
-    td.append(wrapper);
+    td.append(radios);
   }
 
   const blueprints = {
@@ -1738,13 +1734,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
   /** @type {HTMLElement | null} */
   let indexField = null;
 
-  const indexWrapper = window.document.createElement("div");
-  indexWrapper.classList.add("index-selector");
-
   const lastTr = ichart.chartElement().querySelector("table > tr:last-child");
-  if (lastTr) {
-    lastTr.append(indexWrapper);
-  }
 
   const chart = {
     index,
@@ -1770,7 +1760,7 @@ export function createChart({ parent, id: chartId, brk, fitContent }) {
         choices,
         id: "index",
       });
-      indexWrapper.append(indexField);
+      if (lastTr) lastTr.append(indexField);
     },
 
     /**
