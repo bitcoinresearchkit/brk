@@ -6,7 +6,7 @@
   /*oklch(0.9333 0.0059 59.65)*/
   --light-gray: oklch(85% 0.01 75);
   --gray: oklch(60% 0.01 44);
-  --dark-gray: oklch(30% 0.01 44);
+  --dark-gray: oklch(25% 0.006 90);
   --black: oklch(16.5% 0.006 90);
   /*oklch(0.2038 0.0076 196.57)*/
   --red: oklch(0.607 0.241 26.328);

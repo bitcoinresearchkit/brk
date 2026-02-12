@@ -321,14 +321,14 @@ export function sdBandsRatio(sd) {
  * @param {AnyRatioPattern} ratio
  */
 export function ratioSmas(ratio) {
-  return /** @type {const} */ ([
-    { name: "1w SMA", metric: ratio.ratio1wSma, color: colors.ma._1w },
-    { name: "1m SMA", metric: ratio.ratio1mSma, color: colors.ma._1m },
-    { name: "1y SMA", metric: ratio.ratio1ySd.sma, color: colors.ma._1y },
-    { name: "2y SMA", metric: ratio.ratio2ySd.sma, color: colors.ma._2y },
-    { name: "4y SMA", metric: ratio.ratio4ySd.sma, color: colors.ma._4y },
+  return [
+    { name: "1w SMA", metric: ratio.ratio1wSma },
+    { name: "1m SMA", metric: ratio.ratio1mSma },
+    { name: "1y SMA", metric: ratio.ratio1ySd.sma },
+    { name: "2y SMA", metric: ratio.ratio2ySd.sma },
+    { name: "4y SMA", metric: ratio.ratio4ySd.sma },
     { name: "All SMA", metric: ratio.ratioSd.sma, color: colors.time.all },
-  ]);
+  ].map((s, i, arr) => ({ color: colors.at(i, arr.length), ...s }));
 }
 
 /**
@@ -400,6 +400,13 @@ export function createZScoresFolder({
 }) {
   const sdPats = sdPatterns(ratio);
 
+  const zscorePeriods = [
+    { name: "1y", sd: ratio.ratio1ySd },
+    { name: "2y", sd: ratio.ratio2ySd },
+    { name: "4y", sd: ratio.ratio4ySd },
+    { name: "all", sd: ratio.ratioSd, color: colors.time.all },
+  ].map((s, i, arr) => ({ color: colors.at(i, arr.length), ...s }));
+
   return {
     name: "Z-Scores",
     tree: [
@@ -408,56 +415,24 @@ export function createZScoresFolder({
         title: formatTitle("Z-Scores"),
         top: [
           price({ metric: pricePattern, name: legend, color }),
-          price({
-            metric: ratio.ratio1ySd._0sdUsd,
-            name: "1y 0σ",
-            color: colors.ma._1y,
-            defaultActive: false,
-          }),
-          price({
-            metric: ratio.ratio2ySd._0sdUsd,
-            name: "2y 0σ",
-            color: colors.ma._2y,
-            defaultActive: false,
-          }),
-          price({
-            metric: ratio.ratio4ySd._0sdUsd,
-            name: "4y 0σ",
-            color: colors.ma._4y,
-            defaultActive: false,
-          }),
-          price({
-            metric: ratio.ratioSd._0sdUsd,
-            name: "all 0σ",
-            color: colors.time.all,
-            defaultActive: false,
-          }),
+          ...zscorePeriods.map((p) =>
+            price({
+              metric: p.sd._0sdUsd,
+              name: `${p.name} 0σ`,
+              color: p.color,
+              defaultActive: false,
+            }),
+          ),
         ],
         bottom: [
-          line({
-            metric: ratio.ratioSd.zscore,
-            name: "All",
-            color: colors.time.all,
-            unit: Unit.sd,
-          }),
-          line({
-            metric: ratio.ratio4ySd.zscore,
-            name: "4y",
-            color: colors.ma._4y,
-            unit: Unit.sd,
-          }),
-          line({
-            metric: ratio.ratio2ySd.zscore,
-            name: "2y",
-            color: colors.ma._2y,
-            unit: Unit.sd,
-          }),
-          line({
-            metric: ratio.ratio1ySd.zscore,
-            name: "1y",
-            color: colors.ma._1y,
-            unit: Unit.sd,
-          }),
+          ...zscorePeriods.reverse().map((p) =>
+            line({
+              metric: p.sd.zscore,
+              name: p.name,
+              color: p.color,
+              unit: Unit.sd,
+            }),
+          ),
           ...priceLines({
             unit: Unit.sd,
             numbers: [0, 1, -1, 2, -2, 3, -3],

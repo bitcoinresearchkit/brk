@@ -13,6 +13,7 @@ brk_error = { workspace = true, features = ["vecdb"] }
 brk_fetcher = { workspace = true }
 brk_cohort = { workspace = true }
 brk_indexer = { workspace = true }
+brk_oracle = { workspace = true }
 brk_iterator = { workspace = true }
 brk_logger = { workspace = true }
 brk_reader = { workspace = true }
@@ -21,6 +22,7 @@ brk_store = { workspace = true }
 brk_traversable = { workspace = true }
 brk_types = { workspace = true }
 derive_more = { workspace = true }
+pco = { workspace = true }
 tracing = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }

@@ -9,7 +9,7 @@ export const canCapture = !ios || canShare;
  * @param {HTMLCanvasElement} args.screenshot
  * @param {number} args.chartWidth
  * @param {HTMLElement} args.parent
- * @param {{ top: { element: HTMLElement }, bottom: { element: HTMLElement } }} args.legends
+ * @param {{ element: HTMLElement }[]} args.legends
  */
 export function capture({ screenshot, chartWidth, parent, legends }) {
   const dpr = screenshot.width / chartWidth;
@@ -22,8 +22,8 @@ export function capture({ screenshot, chartWidth, parent, legends }) {
 
   const title = (parent.querySelector("h1")?.textContent ?? "").toUpperCase();
   const hasTitle = title.length > 0;
-  const hasTopLegend = legends.top.element.children.length > 0;
-  const hasBottomLegend = legends.bottom.element.children.length > 0;
+  const hasTopLegend = legends[0].element.children.length > 0;
+  const hasBottomLegend = legends[1].element.children.length > 0;
   const titleOffset = hasTitle ? titleHeight : 0;
   const topLegendOffset = hasTopLegend ? legendHeight : 0;
   const bottomOffset = hasBottomLegend ? legendHeight : 0;
@@ -80,7 +80,7 @@ export function capture({ screenshot, chartWidth, parent, legends }) {
 
   // Top legend
   if (hasTopLegend) {
-    drawLegend(legends.top.element, pad + titleOffset + topLegendOffset / 2);
+    drawLegend(legends[0].element, pad + titleOffset + topLegendOffset / 2);
   }
 
   // Chart
@@ -89,7 +89,7 @@ export function capture({ screenshot, chartWidth, parent, legends }) {
   // Bottom legend
   if (hasBottomLegend) {
     drawLegend(
-      legends.bottom.element,
+      legends[1].element,
       pad +
         titleOffset +
         topLegendOffset +

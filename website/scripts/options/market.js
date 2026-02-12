@@ -5,7 +5,7 @@ import { brk } from "../client.js";
 import { includes } from "../utils/array.js";
 import { Unit } from "../utils/units.js";
 import { priceLine, priceLines } from "./constants.js";
-import { baseline, histogram, line, price } from "./series.js";
+import { baseline, candlestick, histogram, line, price } from "./series.js";
 import { createPriceRatioCharts } from "./shared.js";
 import { periodIdToName } from "./utils.js";
 
@@ -184,7 +184,7 @@ function historicalSubSection(name, periods) {
  * @returns {PartialOptionsGroup}
  */
 export function createMarketSection() {
-  const { market, supply, price: priceMetrics } = brk.metrics;
+  const { market, supply, distribution, price: priceMetrics } = brk.metrics;
   const {
     movingAverage: ma,
     ath,
@@ -195,53 +195,28 @@ export function createMarketSection() {
     lookback,
   } = market;
 
-  /** @type {Period[]} */
-  const shortPeriods = [
-    {
-      id: "1d",
-      color: colors.returns._1d,
-      returns: returns.priceReturns._1d,
-      lookback: lookback._1d,
-    },
-    {
-      id: "1w",
-      color: colors.returns._1w,
-      returns: returns.priceReturns._1w,
-      lookback: lookback._1w,
-    },
-    {
-      id: "1m",
-      color: colors.returns._1m,
-      returns: returns.priceReturns._1m,
-      lookback: lookback._1m,
-    },
+  const shortPeriodsBase = [
+    { id: "1d", returns: returns.priceReturns._1d, lookback: lookback._1d },
+    { id: "1w", returns: returns.priceReturns._1w, lookback: lookback._1w },
+    { id: "1m", returns: returns.priceReturns._1m, lookback: lookback._1m },
     {
       id: "3m",
-      color: colors.returns._3m,
       returns: returns.priceReturns._3m,
       lookback: lookback._3m,
       defaultActive: false,
     },
     {
       id: "6m",
-      color: colors.returns._6m,
       returns: returns.priceReturns._6m,
       lookback: lookback._6m,
       defaultActive: false,
     },
-    {
-      id: "1y",
-      color: colors.returns._1y,
-      returns: returns.priceReturns._1y,
-      lookback: lookback._1y,
-    },
+    { id: "1y", returns: returns.priceReturns._1y, lookback: lookback._1y },
   ];
 
-  /** @type {PeriodWithCagr[]} */
-  const longPeriods = [
+  const longPeriodsBase = [
     {
       id: "2y",
-      color: colors.returns._2y,
       returns: returns.priceReturns._2y,
       cagr: returns.cagr._2y,
       lookback: lookback._2y,
@@ -249,7 +224,6 @@ export function createMarketSection() {
     },
     {
       id: "3y",
-      color: colors.returns._3y,
       returns: returns.priceReturns._3y,
       cagr: returns.cagr._3y,
       lookback: lookback._3y,
@@ -257,14 +231,12 @@ export function createMarketSection() {
     },
     {
       id: "4y",
-      color: colors.returns._4y,
       returns: returns.priceReturns._4y,
       cagr: returns.cagr._4y,
       lookback: lookback._4y,
     },
     {
       id: "5y",
-      color: colors.returns._5y,
       returns: returns.priceReturns._5y,
       cagr: returns.cagr._5y,
       lookback: lookback._5y,
@@ -272,7 +244,6 @@ export function createMarketSection() {
     },
     {
       id: "6y",
-      color: colors.returns._6y,
       returns: returns.priceReturns._6y,
       cagr: returns.cagr._6y,
       lookback: lookback._6y,
@@ -280,7 +251,6 @@ export function createMarketSection() {
     },
     {
       id: "8y",
-      color: colors.returns._8y,
       returns: returns.priceReturns._8y,
       cagr: returns.cagr._8y,
       lookback: lookback._8y,
@@ -288,7 +258,6 @@ export function createMarketSection() {
     },
     {
       id: "10y",
-      color: colors.returns._10y,
       returns: returns.priceReturns._10y,
       cagr: returns.cagr._10y,
       lookback: lookback._10y,
@@ -296,96 +265,117 @@ export function createMarketSection() {
     },
   ];
 
+  const totalReturnPeriods =
+    shortPeriodsBase.length + longPeriodsBase.length;
+
+  /** @type {Period[]} */
+  const shortPeriods = shortPeriodsBase.map((p, i) => ({
+    ...p,
+    color: colors.at(i, totalReturnPeriods),
+  }));
+
+  /** @type {PeriodWithCagr[]} */
+  const longPeriods = longPeriodsBase.map((p, i) => ({
+    ...p,
+    color: colors.at(shortPeriodsBase.length + i, totalReturnPeriods),
+  }));
+
   /** @type {MaPeriod[]} */
   const sma = [
-    { id: "1w", color: colors.ma._1w, ratio: ma.price1wSma },
-    { id: "8d", color: colors.ma._8d, ratio: ma.price8dSma },
-    { id: "13d", color: colors.ma._13d, ratio: ma.price13dSma },
-    { id: "21d", color: colors.ma._21d, ratio: ma.price21dSma },
-    { id: "1m", color: colors.ma._1m, ratio: ma.price1mSma },
-    { id: "34d", color: colors.ma._34d, ratio: ma.price34dSma },
-    { id: "55d", color: colors.ma._55d, ratio: ma.price55dSma },
-    { id: "89d", color: colors.ma._89d, ratio: ma.price89dSma },
-    { id: "111d", color: colors.ma._111d, ratio: ma.price111dSma },
-    { id: "144d", color: colors.ma._144d, ratio: ma.price144dSma },
-    { id: "200d", color: colors.ma._200d, ratio: ma.price200dSma },
-    { id: "350d", color: colors.ma._350d, ratio: ma.price350dSma },
-    { id: "1y", color: colors.ma._1y, ratio: ma.price1ySma },
-    { id: "2y", color: colors.ma._2y, ratio: ma.price2ySma },
-    { id: "200w", color: colors.ma._200w, ratio: ma.price200wSma },
-    { id: "4y", color: colors.ma._4y, ratio: ma.price4ySma },
-  ];
+    { id: "1w", ratio: ma.price1wSma },
+    { id: "8d", ratio: ma.price8dSma },
+    { id: "13d", ratio: ma.price13dSma },
+    { id: "21d", ratio: ma.price21dSma },
+    { id: "1m", ratio: ma.price1mSma },
+    { id: "34d", ratio: ma.price34dSma },
+    { id: "55d", ratio: ma.price55dSma },
+    { id: "89d", ratio: ma.price89dSma },
+    { id: "111d", ratio: ma.price111dSma },
+    { id: "144d", ratio: ma.price144dSma },
+    { id: "200d", ratio: ma.price200dSma },
+    { id: "350d", ratio: ma.price350dSma },
+    { id: "1y", ratio: ma.price1ySma },
+    { id: "2y", ratio: ma.price2ySma },
+    { id: "200w", ratio: ma.price200wSma },
+    { id: "4y", ratio: ma.price4ySma },
+  ].map((p, i, arr) => ({ ...p, color: colors.at(i, arr.length) }));
 
   /** @type {MaPeriod[]} */
   const ema = [
-    { id: "1w", color: colors.ma._1w, ratio: ma.price1wEma },
-    { id: "8d", color: colors.ma._8d, ratio: ma.price8dEma },
-    { id: "12d", color: colors.ma._12d, ratio: ma.price12dEma },
-    { id: "13d", color: colors.ma._13d, ratio: ma.price13dEma },
-    { id: "21d", color: colors.ma._21d, ratio: ma.price21dEma },
-    { id: "26d", color: colors.ma._26d, ratio: ma.price26dEma },
-    { id: "1m", color: colors.ma._1m, ratio: ma.price1mEma },
-    { id: "34d", color: colors.ma._34d, ratio: ma.price34dEma },
-    { id: "55d", color: colors.ma._55d, ratio: ma.price55dEma },
-    { id: "89d", color: colors.ma._89d, ratio: ma.price89dEma },
-    { id: "144d", color: colors.ma._144d, ratio: ma.price144dEma },
-    { id: "200d", color: colors.ma._200d, ratio: ma.price200dEma },
-    { id: "1y", color: colors.ma._1y, ratio: ma.price1yEma },
-    { id: "2y", color: colors.ma._2y, ratio: ma.price2yEma },
-    { id: "200w", color: colors.ma._200w, ratio: ma.price200wEma },
-    { id: "4y", color: colors.ma._4y, ratio: ma.price4yEma },
-  ];
+    { id: "1w", ratio: ma.price1wEma },
+    { id: "8d", ratio: ma.price8dEma },
+    { id: "12d", ratio: ma.price12dEma },
+    { id: "13d", ratio: ma.price13dEma },
+    { id: "21d", ratio: ma.price21dEma },
+    { id: "26d", ratio: ma.price26dEma },
+    { id: "1m", ratio: ma.price1mEma },
+    { id: "34d", ratio: ma.price34dEma },
+    { id: "55d", ratio: ma.price55dEma },
+    { id: "89d", ratio: ma.price89dEma },
+    { id: "144d", ratio: ma.price144dEma },
+    { id: "200d", ratio: ma.price200dEma },
+    { id: "1y", ratio: ma.price1yEma },
+    { id: "2y", ratio: ma.price2yEma },
+    { id: "200w", ratio: ma.price200wEma },
+    { id: "4y", ratio: ma.price4yEma },
+  ].map((p, i, arr) => ({ ...p, color: colors.at(i, arr.length) }));
 
   // SMA vs EMA comparison periods (common periods only)
   const smaVsEma = [
     {
       id: "1w",
       name: "1 Week",
-      color: colors.ma._1w,
       sma: ma.price1wSma,
       ema: ma.price1wEma,
     },
     {
       id: "1m",
       name: "1 Month",
-      color: colors.ma._1m,
       sma: ma.price1mSma,
       ema: ma.price1mEma,
     },
     {
       id: "200d",
       name: "200 Day",
-      color: colors.ma._200d,
       sma: ma.price200dSma,
       ema: ma.price200dEma,
     },
     {
       id: "1y",
       name: "1 Year",
-      color: colors.ma._1y,
       sma: ma.price1ySma,
       ema: ma.price1yEma,
     },
     {
       id: "200w",
       name: "200 Week",
-      color: colors.ma._200w,
       sma: ma.price200wSma,
       ema: ma.price200wEma,
     },
     {
       id: "4y",
       name: "4 Year",
-      color: colors.ma._4y,
       sma: ma.price4ySma,
       ema: ma.price4yEma,
     },
-  ];
+  ].map((p, i, arr) => ({ ...p, color: colors.at(i, arr.length) }));
 
   return {
     name: "Market",
     tree: [
       { name: "Price", title: "Bitcoin Price" },
+      {
+        name: "Oracle",
+        title: "On-chain Price",
+        top: [
+          // @ts-ignore
+          candlestick({
+            metric: priceMetrics.oracle.ohlcDollars,
+            name: "Oracle",
+            unit: Unit.usd,
+          }),
+        ],
+      },
 
       {
         name: "Sats/$",
@@ -401,13 +391,53 @@ export function createMarketSection() {
 
       {
         name: "Capitalization",
-        title: "Market Capitalization",
-        bottom: [
-          line({
-            metric: supply.marketCap,
-            name: "Capitalization",
-            unit: Unit.usd,
-          }),
+        tree: [
+          {
+            name: "Market Cap",
+            title: "Market Capitalization",
+            bottom: [
+              line({
+                metric: supply.marketCap,
+                name: "Market Cap",
+                unit: Unit.usd,
+              }),
+            ],
+          },
+          {
+            name: "Realized Cap",
+            title: "Realized Capitalization",
+            bottom: [
+              line({
+                metric: distribution.utxoCohorts.all.realized.realizedCap,
+                name: "Realized Cap",
+                color: colors.realized,
+                unit: Unit.usd,
+              }),
+            ],
+          },
+          {
+            name: "Growth Rate",
+            title: "Capitalization Growth Rate",
+            bottom: [
+              line({
+                metric: supply.marketCapGrowthRate,
+                name: "Market Cap",
+                color: colors.bitcoin,
+                unit: Unit.percentage,
+              }),
+              line({
+                metric: supply.realizedCapGrowthRate,
+                name: "Realized Cap",
+                color: colors.usd,
+                unit: Unit.percentage,
+              }),
+              baseline({
+                metric: supply.capGrowthRateDiff,
+                name: "Difference",
+                unit: Unit.percentage,
+              }),
+            ],
+          },
         ],
       },
 
@@ -632,7 +662,7 @@ export function createMarketSection() {
               price({
                 metric: ma.price200dSma.price,
                 name: "200d SMA",
-                color: colors.ma._200d,
+                color: colors.indicator.main,
               }),
               price({
                 metric: ma.price200dSmaX24,

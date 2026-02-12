@@ -1,24 +1,24 @@
 use brk_traversable::Traversable;
-use vecdb::Database;
+use brk_types::{DateIndex, Dollars, StoredF32};
+use vecdb::{Database, LazyVecFrom2};
 
-use super::{burned, circulating, inflation, market_cap, velocity};
+use super::{burned, velocity};
+use crate::internal::{
+    ComputedFromDateAverage, ComputedFromDateLast, LazyFromHeightLast, LazyValueFromHeightLast,
+};
 
-/// Supply metrics module
-///
-/// This module owns all supply-related metrics:
-/// - circulating: Lazy references to distribution's actual circulating supply
-/// - burned: Cumulative opreturn and unspendable supply
-/// - inflation: Inflation rate derived from supply
-/// - velocity: BTC and USD velocity metrics
-/// - market_cap: Lazy references to supply in USD (circulating * price)
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     #[traversable(skip)]
     pub(crate) db: Database,
 
-    pub circulating: circulating::Vecs,
+    pub circulating: LazyValueFromHeightLast,
     pub burned: burned::Vecs,
-    pub inflation: inflation::Vecs,
+    pub inflation: ComputedFromDateAverage<StoredF32>,
     pub velocity: velocity::Vecs,
-    pub market_cap: Option<market_cap::Vecs>,
+    pub market_cap: Option<LazyFromHeightLast<Dollars>>,
+    pub market_cap_growth_rate: ComputedFromDateLast<StoredF32>,
+    pub realized_cap_growth_rate: ComputedFromDateLast<StoredF32>,
+    pub cap_growth_rate_diff:
+        LazyVecFrom2<DateIndex, StoredF32, DateIndex, StoredF32, DateIndex, StoredF32>,
 }

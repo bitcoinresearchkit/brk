@@ -3,6 +3,7 @@
 import { colors } from "../utils/colors.js";
 import { brk } from "../client.js";
 import { Unit } from "../utils/units.js";
+import { entries } from "../utils/array.js";
 import { priceLine } from "./constants.js";
 import {
   line,
@@ -375,25 +376,13 @@ export function createNetworkSection() {
   });
 
   // Script type groups for Output Counts
-  const legacyScripts = /** @type {const} */ ([
-    { key: "p2pkh", name: "P2PKH", color: st.p2pkh },
-    { key: "p2pk33", name: "P2PK33", color: st.p2pk33 },
-    { key: "p2pk65", name: "P2PK65", color: st.p2pk65 },
-  ]);
-  const scriptHashScripts = /** @type {const} */ ([
-    { key: "p2sh", name: "P2SH", color: st.p2sh },
-    { key: "p2ms", name: "P2MS", color: st.p2ms },
-  ]);
-  const segwitScripts = /** @type {const} */ ([
-    { key: "segwit", name: "All SegWit", color: colors.segwit },
-    { key: "p2wsh", name: "P2WSH", color: st.p2wsh },
-    { key: "p2wpkh", name: "P2WPKH", color: st.p2wpkh },
-  ]);
-  const otherScripts = /** @type {const} */ ([
-    { key: "opreturn", name: "OP_RETURN", color: st.opreturn },
-    { key: "emptyoutput", name: "Empty", color: st.empty },
-    { key: "unknownoutput", name: "Unknown", color: st.unknown },
-  ]);
+  const legacyScripts = legacyAddresses.slice(1); // p2pkh, p2pk33, p2pk65
+  const scriptHashScripts = [legacyAddresses[0], nonAddressableTypes[0]]; // p2sh, p2ms
+  const segwitScripts = [
+    /** @type {const} */ ({ key: "segwit", name: "All SegWit", color: colors.segwit }),
+    ...segwitAddresses,
+  ];
+  const otherScripts = nonAddressableTypes.slice(1); // opreturn, empty, unknown
 
   /**
    * Create Compare charts for a script group
@@ -558,50 +547,28 @@ export function createNetworkSection() {
               {
                 name: "Sum",
                 title: "Transaction Versions",
-                bottom: [
-                  line({
-                    metric: transactions.versions.v1.sum,
-                    name: "v1",
-                    color: colors.txVersion.v1,
-                    unit: Unit.count,
-                  }),
-                  line({
-                    metric: transactions.versions.v2.sum,
-                    name: "v2",
-                    color: colors.txVersion.v2,
-                    unit: Unit.count,
-                  }),
-                  line({
-                    metric: transactions.versions.v3.sum,
-                    name: "v3",
-                    color: colors.txVersion.v3,
-                    unit: Unit.count,
-                  }),
-                ],
+                bottom: entries(transactions.versions).map(
+                  ([v, data], i, arr) =>
+                    line({
+                      metric: data.sum,
+                      name: v,
+                      color: colors.at(i, arr.length),
+                      unit: Unit.count,
+                    }),
+                ),
               },
               {
                 name: "Cumulative",
                 title: "Transaction Versions (Total)",
-                bottom: [
-                  line({
-                    metric: transactions.versions.v1.cumulative,
-                    name: "v1",
-                    color: colors.txVersion.v1,
-                    unit: Unit.count,
-                  }),
-                  line({
-                    metric: transactions.versions.v2.cumulative,
-                    name: "v2",
-                    color: colors.txVersion.v2,
-                    unit: Unit.count,
-                  }),
-                  line({
-                    metric: transactions.versions.v3.cumulative,
-                    name: "v3",
-                    color: colors.txVersion.v3,
-                    unit: Unit.count,
-                  }),
-                ],
+                bottom: entries(transactions.versions).map(
+                  ([v, data], i, arr) =>
+                    line({
+                      metric: data.cumulative,
+                      name: v,
+                      color: colors.at(i, arr.length),
+                      unit: Unit.count,
+                    }),
+                ),
               },
             ],
           },
@@ -1248,7 +1215,7 @@ export function createNetworkSection() {
                   line({
                     metric: scripts.count.taprootAdoption.cumulative,
                     name: "Taproot",
-                    color: colors.scriptType.p2tr,
+                    color: taprootAddresses[1].color,
                     unit: Unit.percentage,
                   }),
                 ],

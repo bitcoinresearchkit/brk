@@ -367,21 +367,21 @@ export function createActivitySection({
               line({
                 metric: tree.activity.sent14dEma.sats,
                 name: "14d EMA",
-                color: colors.ma._14d,
+                color: colors.indicator.main,
                 unit: Unit.sats,
                 defaultActive: false,
               }),
               line({
                 metric: tree.activity.sent14dEma.bitcoin,
                 name: "14d EMA",
-                color: colors.ma._14d,
+                color: colors.indicator.main,
                 unit: Unit.btc,
                 defaultActive: false,
               }),
               line({
                 metric: tree.activity.sent14dEma.dollars,
                 name: "14d EMA",
-                color: colors.ma._14d,
+                color: colors.indicator.main,
                 unit: Unit.usd,
                 defaultActive: false,
               }),
@@ -814,13 +814,13 @@ function createSingleSellSideRiskSeries(tree) {
     line({
       metric: tree.realized.sellSideRiskRatio30dEma,
       name: "30d EMA",
-      color: colors.ma._1m,
+      color: colors.time._1m,
       unit: Unit.ratio,
     }),
     line({
       metric: tree.realized.sellSideRiskRatio7dEma,
       name: "7d EMA",
-      color: colors.ma._1w,
+      color: colors.time._1w,
       unit: Unit.ratio,
     }),
     dots({

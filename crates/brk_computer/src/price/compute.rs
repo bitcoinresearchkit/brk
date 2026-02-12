@@ -6,7 +6,6 @@ use super::Vecs;
 use crate::{indexes, ComputeIndexes};
 
 impl Vecs {
-    #[allow(unused_variables)]
     pub fn compute(
         &mut self,
         indexer: &Indexer,
@@ -18,18 +17,8 @@ impl Vecs {
 
         self.sats.compute(starting_indexes, &self.usd, exit)?;
 
-        // Oracle price computation is slow and still WIP, only run in dev builds
-        // #[cfg(debug_assertions)]
-        // {
-        //     use std::time::Instant;
-        //     use tracing::info;
-        //
-        //     info!("Computing oracle prices...");
-        //     let i = Instant::now();
-        //     self.oracle
-        //         .compute(indexer, indexes, &self.cents, starting_indexes, exit)?;
-        //     info!("Computed oracle prices in {:?}", i.elapsed());
-        // }
+        self.oracle
+            .compute(indexer, indexes, starting_indexes, exit)?;
 
         let _lock = exit.lock();
         self.db().compact()?;

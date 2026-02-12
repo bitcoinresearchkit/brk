@@ -2,12 +2,12 @@ mod compute;
 mod fetch;
 
 pub mod cents;
-// pub mod oracle;
+pub mod oracle;
 pub mod sats;
 pub mod usd;
 
 pub use cents::Vecs as CentsVecs;
-// pub use oracle::Vecs as OracleVecs;
+pub use oracle::Vecs as OracleVecs;
 pub use sats::Vecs as SatsVecs;
 pub use usd::Vecs as UsdVecs;
 
@@ -33,7 +33,7 @@ pub struct Vecs {
     pub cents: CentsVecs,
     pub usd: UsdVecs,
     pub sats: SatsVecs,
-    // pub oracle: OracleVecs,
+    pub oracle: OracleVecs,
 }
 
 impl Vecs {
@@ -67,7 +67,7 @@ impl Vecs {
         let cents = CentsVecs::forced_import(db, version)?;
         let usd = UsdVecs::forced_import(db, version, indexes)?;
         let sats = SatsVecs::forced_import(db, version, indexes)?;
-        // let oracle = OracleVecs::forced_import(db, version)?;
+        let oracle = OracleVecs::forced_import(db, version)?;
 
         Ok(Self {
             db: db.clone(),
@@ -75,7 +75,7 @@ impl Vecs {
             cents,
             usd,
             sats,
-            // oracle,
+            oracle,
         })
     }
 

@@ -52,6 +52,7 @@ brk_fetcher = { version = "0.1.7", path = "crates/brk_fetcher" }
 brk_indexer = { version = "0.1.7", path = "crates/brk_indexer" }
 brk_iterator = { version = "0.1.7", path = "crates/brk_iterator" }
 brk_logger = { version = "0.1.7", path = "crates/brk_logger" }
+brk_oracle = { version = "0.1.7", path = "crates/brk_oracle" }
 brk_mempool = { version = "0.1.7", path = "crates/brk_mempool" }
 brk_query = { version = "0.1.7", path = "crates/brk_query", features = ["tokio"] }
 brk_reader = { version = "0.1.7", path = "crates/brk_reader" }
@@ -67,7 +68,7 @@ color-eyre = "0.6.5"
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
 fjall = "3.0.1"
 indexmap = { version = "2.13.0", features = ["serde"] }
-jiff = { version = "0.2.19", features = ["perf-inline", "tz-system"], default-features = false }
+jiff = { version = "0.2.20", features = ["perf-inline", "tz-system"], default-features = false }
 minreq = { version = "2.14.1", features = ["https", "json-using-serde"] }
 owo-colors = "4.2.3"
 parking_lot = "0.12.5"

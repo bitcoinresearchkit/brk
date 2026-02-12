@@ -3933,6 +3933,14 @@ class MetricsTree_Price_Usd:
         self.split: CloseHighLowOpenPattern2[Dollars] = CloseHighLowOpenPattern2(client, 'price')
         self.ohlc: MetricPattern1[OHLCDollars] = MetricPattern1(client, 'price_ohlc')
 
+class MetricsTree_Price_Oracle:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.price_cents: MetricPattern11[CentsUnsigned] = MetricPattern11(client, 'oracle_price_cents')
+        self.ohlc_cents: MetricPattern6[OHLCCentsUnsigned] = MetricPattern6(client, 'oracle_ohlc_cents')
+        self.ohlc_dollars: MetricPattern6[OHLCDollars] = MetricPattern6(client, 'oracle_ohlc_dollars')
+
 class MetricsTree_Price:
     """Metrics tree node."""
     
@@ -3940,6 +3948,7 @@ class MetricsTree_Price:
         self.cents: MetricsTree_Price_Cents = MetricsTree_Price_Cents(client)
         self.usd: MetricsTree_Price_Usd = MetricsTree_Price_Usd(client)
         self.sats: OhlcSplitPattern2[OHLCSats] = OhlcSplitPattern2(client, 'price')
+        self.oracle: MetricsTree_Price_Oracle = MetricsTree_Price_Oracle(client)
 
 class MetricsTree_Distribution_AnyAddressIndexes:
     """Metrics tree node."""
@@ -4385,6 +4394,9 @@ class MetricsTree_Supply:
         self.inflation: MetricPattern4[StoredF32] = MetricPattern4(client, 'inflation_rate')
         self.velocity: MetricsTree_Supply_Velocity = MetricsTree_Supply_Velocity(client)
         self.market_cap: MetricPattern1[Dollars] = MetricPattern1(client, 'market_cap')
+        self.market_cap_growth_rate: MetricPattern4[StoredF32] = MetricPattern4(client, 'market_cap_growth_rate')
+        self.realized_cap_growth_rate: MetricPattern4[StoredF32] = MetricPattern4(client, 'realized_cap_growth_rate')
+        self.cap_growth_rate_diff: MetricPattern6[StoredF32] = MetricPattern6(client, 'cap_growth_rate_diff')
 
 class MetricsTree:
     """Metrics tree node."""
@@ -5490,6 +5502,14 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/mempool/info`"""
         return self.get_json('/api/mempool/info')
+
+    def get_live_price(self) -> float:
+        """Live BTC/USD price.
+
+        Returns the current BTC/USD price in cents, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
+
+        Endpoint: `GET /api/mempool/price`"""
+        return self.get_json('/api/mempool/price')
 
     def get_mempool_txids(self) -> List[Txid]:
         """Mempool transaction IDs.

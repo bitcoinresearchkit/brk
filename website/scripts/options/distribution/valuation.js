@@ -91,7 +91,7 @@ export function createValuationSectionFull({ cohort, title }) {
  * @returns {PartialOptionsGroup}
  */
 export function createValuationSection({ cohort, title }) {
-  const { tree, color } = cohort;
+  const { tree } = cohort;
   return {
     name: "Valuation",
     tree: [

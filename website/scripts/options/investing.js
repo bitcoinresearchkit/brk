@@ -66,17 +66,20 @@ const periodName = (key) => periodIdToName(key.slice(1), true);
  * @typedef {BaseEntryItem & { cagr: AnyMetricPattern }} LongEntryItem
  */
 
+const ALL_YEARS = /** @type {const} */ ([...YEARS_2020S, ...YEARS_2010S]);
+
 /**
  * Build DCA class entry from year
  * @param {MarketDca} dca
  * @param {DcaYear} year
+ * @param {number} i
  * @returns {BaseEntryItem}
  */
-function buildYearEntry(dca, year) {
+function buildYearEntry(dca, year, i) {
   const key = /** @type {DcaYearKey} */ (`_${year}`);
   return {
     name: `${year}`,
-    color: colors.year[key],
+    color: colors.at(i, ALL_YEARS.length),
     costBasis: dca.classAveragePrice[key],
     returns: dca.classReturns[key],
     minReturn: dca.classMinReturn[key],
@@ -536,10 +539,12 @@ function createPeriodSection({ dca, lookback, returns }) {
   const isLumpSum = !!lookback;
   const suffix = isLumpSum ? "Lump Sum" : "DCA";
 
-  /** @param {AllPeriodKey} key @returns {BaseEntryItem} */
-  const buildBaseEntry = (key) => ({
+  const allPeriods = /** @type {const} */ ([...SHORT_PERIODS, ...LONG_PERIODS]);
+
+  /** @param {AllPeriodKey} key @param {number} i @returns {BaseEntryItem} */
+  const buildBaseEntry = (key, i) => ({
     name: periodName(key),
-    color: colors.dca[key],
+    color: colors.at(i, allPeriods.length),
     costBasis: isLumpSum ? lookback[key] : dca.periodAveragePrice[key],
     returns: isLumpSum ? dca.periodLumpSumReturns[key] : dca.periodReturns[key],
     minReturn: isLumpSum
@@ -557,10 +562,10 @@ function createPeriodSection({ dca, lookback, returns }) {
     stack: isLumpSum ? dca.periodLumpSumStack[key] : dca.periodStack[key],
   });
 
-  /** @param {LongPeriodKey} key @returns {LongEntryItem} */
-  const buildLongEntry = (key) =>
+  /** @param {LongPeriodKey} key @param {number} i @returns {LongEntryItem} */
+  const buildLongEntry = (key, i) =>
     withCagr(
-      buildBaseEntry(key),
+      buildBaseEntry(key, i),
       isLumpSum ? returns.cagr[key] : dca.periodCagr[key],
     );
 
@@ -578,8 +583,10 @@ function createPeriodSection({ dca, lookback, returns }) {
       titlePrefix: `${entry.name} ${suffix}`,
     });
 
-  const shortEntries = SHORT_PERIODS.map(buildBaseEntry);
-  const longEntries = LONG_PERIODS.map(buildLongEntry);
+  const shortEntries = SHORT_PERIODS.map((key, i) => buildBaseEntry(key, i));
+  const longEntries = LONG_PERIODS.map((key, i) =>
+    buildLongEntry(key, SHORT_PERIODS.length + i),
+  );
 
   return {
     name: `${suffix} by Period`,
@@ -651,8 +658,12 @@ export function createDcaByStartYearSection({ dca }) {
     ],
   });
 
-  const entries2020s = YEARS_2020S.map((year) => buildYearEntry(dca, year));
-  const entries2010s = YEARS_2010S.map((year) => buildYearEntry(dca, year));
+  const entries2020s = YEARS_2020S.map((year, i) =>
+    buildYearEntry(dca, year, i),
+  );
+  const entries2010s = YEARS_2010S.map((year, i) =>
+    buildYearEntry(dca, year, YEARS_2020S.length + i),
+  );
 
   return {
     name: "DCA by Start Year",

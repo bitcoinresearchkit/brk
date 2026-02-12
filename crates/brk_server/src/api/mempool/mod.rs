@@ -63,6 +63,28 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 ),
             )
             .api_route(
+                "/api/mempool/price",
+                get_with(
+                    async |headers: HeaderMap, State(state): State<AppState>| {
+                        state
+                            .cached_json(&headers, CacheStrategy::MaxAge(5), |q| q.live_price())
+                            .await
+                    },
+                    |op| {
+                        op.id("get_live_price")
+                            .mempool_tag()
+                            .summary("Live BTC/USD price")
+                            .description(
+                                "Returns the current BTC/USD price in cents, derived from \
+                                on-chain round-dollar output patterns in the last 12 blocks \
+                                plus mempool.",
+                            )
+                            .ok_response::<u64>()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
                 "/api/v1/fees/mempool-blocks",
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {

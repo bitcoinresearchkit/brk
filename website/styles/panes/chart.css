@@ -6,6 +6,37 @@
   min-height: 0;
   padding: var(--main-padding);
   background-color: var(--background-color);
+  position: relative;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: var(--main-padding);
+    pointer-events: none;
+  }
+
+  &::before {
+    left: 0;
+    z-index: 50;
+    background-image: linear-gradient(
+      to left,
+      transparent,
+      var(--background-color)
+    );
+  }
+
+  &::after {
+    right: 0;
+    z-index: 10;
+    background-image: linear-gradient(
+      to right,
+      transparent,
+      var(--background-color)
+    );
+  }
 
   header {
     flex-shrink: 0;
@@ -13,16 +44,15 @@
     white-space: nowrap;
     overflow-x: auto;
     padding-bottom: 1rem;
-    margin-bottom: -1.25rem;
+    margin-bottom: -1rem;
     padding-left: var(--main-padding);
     margin-left: var(--negative-main-padding);
     padding-right: var(--main-padding);
     margin-right: var(--negative-main-padding);
-    margin-top: -0.5rem;
 
     h1 {
       font-size: 1.375rem;
-      letter-spacing: 0.05rem;
+      letter-spacing: 0.075rem;
       font-weight: 300;
     }
   }
@@ -30,5 +60,6 @@
   .chart {
     flex: 1;
     margin-bottom: -0.25rem;
+    z-index: 20;
   }
 }

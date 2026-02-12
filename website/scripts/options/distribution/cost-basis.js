@@ -11,10 +11,13 @@
  */
 
 import { colors } from "../../utils/colors.js";
+import { entries } from "../../utils/array.js";
 import { Unit } from "../../utils/units.js";
 import { priceLines } from "../constants.js";
 import { line, price } from "../series.js";
 import { mapCohortsWithAll } from "../shared.js";
+
+const ACTIVE_PCTS = new Set(["pct75", "pct50", "pct25"]);
 
 /**
  * @param {PercentilesPattern} p
@@ -22,107 +25,16 @@ import { mapCohortsWithAll } from "../shared.js";
  * @returns {FetchedPriceSeriesBlueprint[]}
  */
 function createCorePercentileSeries(p, n = (x) => x) {
-  return [
-    price({
-      metric: p.pct95,
-      name: n("p95"),
-      color: colors.pct._95,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct90,
-      name: n("p90"),
-      color: colors.pct._90,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct85,
-      name: n("p85"),
-      color: colors.pct._85,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct80,
-      name: n("p80"),
-      color: colors.pct._80,
-      defaultActive: false,
-    }),
-    price({ metric: p.pct75, name: n("p75"), color: colors.pct._75 }),
-    price({
-      metric: p.pct70,
-      name: n("p70"),
-      color: colors.pct._70,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct65,
-      name: n("p65"),
-      color: colors.pct._65,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct60,
-      name: n("p60"),
-      color: colors.pct._60,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct55,
-      name: n("p55"),
-      color: colors.pct._55,
-      defaultActive: false,
-    }),
-    price({ metric: p.pct50, name: n("p50"), color: colors.pct._50 }),
-    price({
-      metric: p.pct45,
-      name: n("p45"),
-      color: colors.pct._45,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct40,
-      name: n("p40"),
-      color: colors.pct._40,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct35,
-      name: n("p35"),
-      color: colors.pct._35,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct30,
-      name: n("p30"),
-      color: colors.pct._30,
-      defaultActive: false,
-    }),
-    price({ metric: p.pct25, name: n("p25"), color: colors.pct._25 }),
-    price({
-      metric: p.pct20,
-      name: n("p20"),
-      color: colors.pct._20,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct15,
-      name: n("p15"),
-      color: colors.pct._15,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct10,
-      name: n("p10"),
-      color: colors.pct._10,
-      defaultActive: false,
-    }),
-    price({
-      metric: p.pct05,
-      name: n("p05"),
-      color: colors.pct._05,
-      defaultActive: false,
-    }),
-  ];
+  return entries(p)
+    .reverse()
+    .map(([key, metric], i, arr) =>
+      price({
+        metric,
+        name: n(key.replace("pct", "p")),
+        color: colors.at(i, arr.length),
+        ...(ACTIVE_PCTS.has(key) ? {} : { defaultActive: false }),
+      }),
+    );
 }
 
 /**
@@ -136,13 +48,13 @@ function createSingleSummarySeriesBasic(cohort) {
     price({
       metric: tree.costBasis.max,
       name: "Max",
-      color: colors.pct._100,
+      color: colors.stat.max,
       defaultActive: false,
     }),
     price({
       metric: tree.costBasis.min,
       name: "Min",
-      color: colors.pct._0,
+      color: colors.stat.min,
       defaultActive: false,
     }),
   ];
@@ -160,26 +72,26 @@ function createSingleSummarySeriesWithPercentiles(cohort) {
     price({
       metric: tree.costBasis.max,
       name: "Max (p100)",
-      color: colors.pct._100,
+      color: colors.stat.max,
       defaultActive: false,
     }),
     price({
       metric: p.pct75,
       name: "Q3 (p75)",
-      color: colors.pct._75,
+      color: colors.stat.pct75,
       defaultActive: false,
     }),
-    price({ metric: p.pct50, name: "Median (p50)", color: colors.pct._50 }),
+    price({ metric: p.pct50, name: "Median (p50)", color: colors.stat.median }),
     price({
       metric: p.pct25,
       name: "Q1 (p25)",
-      color: colors.pct._25,
+      color: colors.stat.pct25,
       defaultActive: false,
     }),
     price({
       metric: tree.costBasis.min,
       name: "Min (p0)",
-      color: colors.pct._0,
+      color: colors.stat.min,
       defaultActive: false,
     }),
   ];
@@ -208,14 +120,14 @@ function createSingleByCoinSeries(cohort) {
     price({
       metric: cb.max,
       name: "p100",
-      color: colors.pct._100,
+      color: colors.stat.max,
       defaultActive: false,
     }),
     ...createCorePercentileSeries(cb.percentiles),
     price({
       metric: cb.min,
       name: "p0",
-      color: colors.pct._0,
+      color: colors.stat.min,
       defaultActive: false,
     }),
   ];

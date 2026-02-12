@@ -71,7 +71,18 @@ impl Server {
                    mut request: Request<Body>,
                    next: Next|
                    -> Response<Body> {
-                request.extensions_mut().insert(connect_info.0);
+                let mut addr = connect_info.0;
+
+                // When behind a reverse proxy (e.g. cloudflared), the direct
+                // connection comes from loopback but the request is external.
+                // Mark it as non-loopback so it gets the stricter limit.
+                if addr.ip().is_loopback()
+                    && request.headers().contains_key("CF-Connecting-IP")
+                {
+                    addr.set_ip(std::net::Ipv4Addr::UNSPECIFIED.into());
+                }
+
+                request.extensions_mut().insert(addr);
                 next.run(request).await
             },
         );

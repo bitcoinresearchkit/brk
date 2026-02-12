@@ -52,19 +52,31 @@ function createColor(getter) {
 const globalComputedStyle = getComputedStyle(window.document.documentElement);
 
 /**
+ * Resolve a light-dark() value based on current theme
+ * @param {string} value
+ */
+function resolveLightDark(value) {
+  if (value.startsWith("light-dark(")) {
+    const [light, _dark] = value.slice(11, -1).split(", ");
+    return dark ? _dark : light;
+  }
+  return value;
+}
+
+/**
  * @param {string} name
  */
 function getColor(name) {
-  return globalComputedStyle.getPropertyValue(`--${name}`);
+  return globalComputedStyle.getPropertyValue(`--${name}`).trim();
 }
 
 /**
  * @param {string} property
  */
 function getLightDarkValue(property) {
-  const value = globalComputedStyle.getPropertyValue(property);
-  const [light, _dark] = value.slice(11, -1).split(", ");
-  return dark ? _dark : light;
+  return resolveLightDark(
+    globalComputedStyle.getPropertyValue(property).trim(),
+  );
 }
 
 const palette = {
@@ -87,6 +99,29 @@ const palette = {
   pink: createColor(() => getColor("pink")),
   rose: createColor(() => getColor("rose")),
 };
+
+const paletteArr = Object.values(palette);
+
+/**
+ * Get a palette color by index, spreading small groups for better separation
+ * @param {number} index
+ * @param {number} [length]
+ */
+function at(index, length) {
+  const n = paletteArr.length;
+  if (length && length <= n / 2) {
+    return paletteArr[Math.round((index * n) / length) % n];
+  }
+  return paletteArr[index % n];
+}
+
+/**
+ * Build a named color map from keys, using position-based palette assignment
+ * @param {readonly string[]} keys
+ */
+function seq(keys) {
+  return Object.fromEntries(keys.map((key, i) => [key, at(i, keys.length)]));
+}
 
 export const colors = {
   default: createColor(() => getLightDarkValue("--color")),
@@ -138,21 +173,13 @@ export const colors = {
   plRatio: palette.yellow,
 
   // Mining
-  mining: {
-    coinbase: palette.red,
-    subsidy: palette.orange,
-    fee: palette.yellow,
-  },
+  mining: seq(["coinbase", "subsidy", "fee"]),
 
   // Network
   segwit: palette.cyan,
 
   // Entity (transactions, inputs, outputs)
-  entity: {
-    tx: palette.red,
-    input: palette.orange,
-    output: palette.yellow,
-  },
+  entity: seq(["tx", "input", "output"]),
 
   // Technical indicators
   indicator: {
@@ -182,9 +209,9 @@ export const colors = {
     _99: palette.rose,
     _98: palette.pink,
     _95: palette.fuchsia,
-    _5: palette.cyan,
+    _5: palette.teal,
     _2: palette.sky,
-    _1: palette.blue,
+    _1: palette.indigo,
   },
 
   // Standard deviation bands (warm = positive, cool = negative)
@@ -204,37 +231,6 @@ export const colors = {
     m3: palette.violet,
   },
 
-  // Transaction versions
-  txVersion: {
-    v1: palette.red,
-    v2: palette.orange,
-    v3: palette.yellow,
-  },
-
-  pct: {
-    _100: palette.red,
-    _95: palette.orange,
-    _90: palette.amber,
-    _85: palette.yellow,
-    _80: palette.avocado,
-    _75: palette.lime,
-    _70: palette.green,
-    _65: palette.emerald,
-    _60: palette.teal,
-    _55: palette.cyan,
-    _50: palette.sky,
-    _45: palette.blue,
-    _40: palette.indigo,
-    _35: palette.violet,
-    _30: palette.purple,
-    _25: palette.fuchsia,
-    _20: palette.pink,
-    _15: palette.rose,
-    _10: palette.red,
-    _05: palette.orange,
-    _0: palette.amber,
-  },
-
   time: {
     _24h: palette.red,
     _1w: palette.yellow,
@@ -248,192 +244,22 @@ export const colors = {
     long: palette.fuchsia,
   },
 
-  age: {
-    _1d: palette.red,
-    _1w: palette.orange,
-    _1m: palette.yellow,
-    _2m: palette.lime,
-    _3m: palette.green,
-    _4m: palette.teal,
-    _5m: palette.cyan,
-    _6m: palette.blue,
-    _1y: palette.indigo,
-    _2y: palette.violet,
-    _3y: palette.purple,
-    _4y: palette.fuchsia,
-    _5y: palette.pink,
-    _6y: palette.rose,
-    _7y: palette.red,
-    _8y: palette.orange,
-    _10y: palette.yellow,
-    _12y: palette.lime,
-    _15y: palette.green,
-  },
+  scriptType: seq([
+    "p2pk65",
+    "p2pk33",
+    "p2pkh",
+    "p2ms",
+    "p2sh",
+    "p2wpkh",
+    "p2wsh",
+    "p2tr",
+    "p2a",
+    "opreturn",
+    "unknown",
+    "empty",
+  ]),
 
-  ageRange: {
-    upTo1h: palette.red,
-    _1hTo1d: palette.orange,
-    _1dTo1w: palette.amber,
-    _1wTo1m: palette.yellow,
-    _1mTo2m: palette.avocado,
-    _2mTo3m: palette.lime,
-    _3mTo4m: palette.green,
-    _4mTo5m: palette.emerald,
-    _5mTo6m: palette.teal,
-    _6mTo1y: palette.cyan,
-    _1yTo2y: palette.sky,
-    _2yTo3y: palette.blue,
-    _3yTo4y: palette.indigo,
-    _4yTo5y: palette.violet,
-    _5yTo6y: palette.purple,
-    _6yTo7y: palette.fuchsia,
-    _7yTo8y: palette.pink,
-    _8yTo10y: palette.rose,
-    _10yTo12y: palette.red,
-    _12yTo15y: palette.orange,
-    from15y: palette.amber,
-  },
+  arr: paletteArr,
 
-  amount: {
-    _1sat: palette.red,
-    _10sats: palette.orange,
-    _100sats: palette.yellow,
-    _1kSats: palette.lime,
-    _10kSats: palette.green,
-    _100kSats: palette.teal,
-    _1mSats: palette.cyan,
-    _10mSats: palette.blue,
-    _1btc: palette.indigo,
-    _10btc: palette.violet,
-    _100btc: palette.purple,
-    _1kBtc: palette.fuchsia,
-    _10kBtc: palette.pink,
-    _100kBtc: palette.rose,
-  },
-
-  amountRange: {
-    _0sats: palette.red,
-    _1satTo10sats: palette.orange,
-    _10satsTo100sats: palette.yellow,
-    _100satsTo1kSats: palette.lime,
-    _1kSatsTo10kSats: palette.green,
-    _10kSatsTo100kSats: palette.teal,
-    _100kSatsTo1mSats: palette.cyan,
-    _1mSatsTo10mSats: palette.blue,
-    _10mSatsTo1btc: palette.indigo,
-    _1btcTo10btc: palette.violet,
-    _10btcTo100btc: palette.purple,
-    _100btcTo1kBtc: palette.fuchsia,
-    _1kBtcTo10kBtc: palette.pink,
-    _10kBtcTo100kBtc: palette.rose,
-    _100kBtcOrMore: palette.red,
-  },
-
-  epoch: {
-    _0: palette.red,
-    _1: palette.orange,
-    _2: palette.yellow,
-    _3: palette.lime,
-    _4: palette.green,
-  },
-
-  year: {
-    _2009: palette.red,
-    _2010: palette.orange,
-    _2011: palette.amber,
-    _2012: palette.yellow,
-    _2013: palette.lime,
-    _2014: palette.green,
-    _2015: palette.teal,
-    _2016: palette.cyan,
-    _2017: palette.sky,
-    _2018: palette.blue,
-    _2019: palette.indigo,
-    _2020: palette.violet,
-    _2021: palette.purple,
-    _2022: palette.fuchsia,
-    _2023: palette.pink,
-    _2024: palette.rose,
-    _2025: palette.red,
-    _2026: palette.orange,
-  },
-
-  returns: {
-    _1d: palette.red,
-    _1w: palette.orange,
-    _1m: palette.yellow,
-    _3m: palette.lime,
-    _6m: palette.green,
-    _1y: palette.teal,
-    _2y: palette.cyan,
-    _3y: palette.sky,
-    _4y: palette.blue,
-    _5y: palette.indigo,
-    _6y: palette.violet,
-    _8y: palette.purple,
-    _10y: palette.fuchsia,
-  },
-
-  ma: {
-    _1w: palette.red,
-    _8d: palette.orange,
-    _12d: palette.amber,
-    _13d: palette.yellow,
-    _14d: palette.avocado,
-    _21d: palette.avocado,
-    _26d: palette.lime,
-    _1m: palette.green,
-    _34d: palette.emerald,
-    _55d: palette.teal,
-    _2m: palette.cyan,
-    _89d: palette.sky,
-    _111d: palette.blue,
-    _144d: palette.indigo,
-    _200d: palette.violet,
-    _350d: palette.purple,
-    _1y: palette.fuchsia,
-    _2y: palette.pink,
-    _200w: palette.rose,
-    _4y: palette.red,
-  },
-
-  dca: {
-    _1w: palette.red,
-    _1m: palette.orange,
-    _3m: palette.yellow,
-    _6m: palette.lime,
-    _1y: palette.green,
-    _2y: palette.teal,
-    _3y: palette.cyan,
-    _4y: palette.sky,
-    _5y: palette.blue,
-    _6y: palette.indigo,
-    _8y: palette.violet,
-    _10y: palette.purple,
-  },
-
-  scriptType: {
-    p2pk65: palette.red,
-    p2pk33: palette.orange,
-    p2pkh: palette.yellow,
-    p2ms: palette.lime,
-    p2sh: palette.green,
-    p2wpkh: palette.teal,
-    p2wsh: palette.blue,
-    p2tr: palette.indigo,
-    p2a: palette.violet,
-    opreturn: palette.purple,
-    unknown: palette.fuchsia,
-    empty: palette.pink,
-  },
-
-  arr: Object.values(palette),
-
-  /**
-   * Get a color by index (cycles through palette)
-   * @param {number} index
-   */
-  at(index) {
-    return this.arr[index % this.arr.length];
-  },
+  at,
 };

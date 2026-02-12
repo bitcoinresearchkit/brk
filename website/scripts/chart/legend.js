@@ -9,9 +9,13 @@ export function createLegend() {
   scroller.append(items);
   element.append(scroller);
 
-  scroller.addEventListener("wheel", (e) => e.stopPropagation());
-  scroller.addEventListener("touchstart", (e) => e.stopPropagation());
-  scroller.addEventListener("touchmove", (e) => e.stopPropagation());
+  /** @param {HTMLElement} el */
+  function captureScroll(el) {
+    el.addEventListener("wheel", (e) => e.stopPropagation());
+    el.addEventListener("touchstart", (e) => e.stopPropagation());
+    el.addEventListener("touchmove", (e) => e.stopPropagation());
+  }
+  captureScroll(items);
 
   /** @type {AnySeries | null} */
   let hoveredSeries = null;
@@ -37,6 +41,7 @@ export function createLegend() {
   let prefix = null;
   const separator = window.document.createElement("span");
   separator.textContent = "|";
+  captureScroll(separator);
 
   return {
     element,
@@ -47,6 +52,7 @@ export function createLegend() {
       if (prefix) prefix.replaceWith(el);
       else scroller.insertBefore(el, items);
       prefix = el;
+      captureScroll(el);
       el.after(separator);
     },
     /**

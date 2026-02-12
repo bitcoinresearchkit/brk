@@ -4550,6 +4550,7 @@ function createRatioPattern2(client, acc) {
  * @property {MetricsTree_Price_Cents} cents
  * @property {MetricsTree_Price_Usd} usd
  * @property {OhlcSplitPattern2<OHLCSats>} sats
+ * @property {MetricsTree_Price_Oracle} oracle
  */
 
 /**
@@ -4570,6 +4571,13 @@ function createRatioPattern2(client, acc) {
  * @typedef {Object} MetricsTree_Price_Usd
  * @property {CloseHighLowOpenPattern2<Dollars>} split
  * @property {MetricPattern1<OHLCDollars>} ohlc
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Price_Oracle
+ * @property {MetricPattern11<CentsUnsigned>} priceCents
+ * @property {MetricPattern6<OHLCCentsUnsigned>} ohlcCents
+ * @property {MetricPattern6<OHLCDollars>} ohlcDollars
  */
 
 /**
@@ -4966,6 +4974,9 @@ function createRatioPattern2(client, acc) {
  * @property {MetricPattern4<StoredF32>} inflation
  * @property {MetricsTree_Supply_Velocity} velocity
  * @property {MetricPattern1<Dollars>} marketCap
+ * @property {MetricPattern4<StoredF32>} marketCapGrowthRate
+ * @property {MetricPattern4<StoredF32>} realizedCapGrowthRate
+ * @property {MetricPattern6<StoredF32>} capGrowthRateDiff
  */
 
 /**
@@ -6730,6 +6741,11 @@ class BrkClient extends BrkClientBase {
           ohlc: createMetricPattern1(this, 'price_ohlc'),
         },
         sats: createOhlcSplitPattern2(this, 'price'),
+        oracle: {
+          priceCents: createMetricPattern11(this, 'oracle_price_cents'),
+          ohlcCents: createMetricPattern6(this, 'oracle_ohlc_cents'),
+          ohlcDollars: createMetricPattern6(this, 'oracle_ohlc_dollars'),
+        },
       },
       distribution: {
         supplyState: createMetricPattern11(this, 'supply_state'),
@@ -7057,6 +7073,9 @@ class BrkClient extends BrkClientBase {
           usd: createMetricPattern4(this, 'usd_velocity'),
         },
         marketCap: createMetricPattern1(this, 'market_cap'),
+        marketCapGrowthRate: createMetricPattern4(this, 'market_cap_growth_rate'),
+        realizedCapGrowthRate: createMetricPattern4(this, 'realized_cap_growth_rate'),
+        capGrowthRateDiff: createMetricPattern6(this, 'cap_growth_rate_diff'),
       },
     };
   }
@@ -7337,6 +7356,18 @@ class BrkClient extends BrkClientBase {
    */
   async getMempool() {
     return this.getJson(`/api/mempool/info`);
+  }
+
+  /**
+   * Live BTC/USD price
+   *
+   * Returns the current BTC/USD price in cents, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
+   *
+   * Endpoint: `GET /api/mempool/price`
+   * @returns {Promise<number>}
+   */
+  async getLivePrice() {
+    return this.getJson(`/api/mempool/price`);
   }
 
   /**

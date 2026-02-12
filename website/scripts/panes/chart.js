@@ -1,4 +1,4 @@
-import { createShadow, createHeader } from "../utils/dom.js";
+import { createHeader } from "../utils/dom.js";
 import { chartElement } from "../utils/elements.js";
 import { serdeChartableIndex } from "../utils/serde.js";
 import { Unit } from "../utils/units.js";
@@ -21,15 +21,11 @@ export function setOption(opt) {
 }
 
 export function init() {
-  chartElement.append(createShadow("left"));
-  chartElement.append(createShadow("right"));
-
   const { headerElement, headingElement } = createHeader();
   chartElement.append(headerElement);
 
   const chart = createChart({
     parent: chartElement,
-    id: "charts",
     brk,
   });
 
@@ -66,15 +62,12 @@ export function init() {
     return result;
   }
 
-  /** @type {ReturnType<typeof chart.setBlueprints> | null} */
-  let blueprints = null;
-
   function updatePriceWithLatest() {
     const latest = webSockets.kraken1dCandle.latest();
-    if (!latest || !blueprints) return;
+    if (!latest) return;
 
-    const priceSeries = blueprints.panes[0].series[0];
-    const unit = blueprints.panes[0].unit;
+    const priceSeries = chart.panes[0].series[0];
+    const unit = chart.panes[0].unit;
     if (!priceSeries?.hasData() || !unit) return;
 
     const last = /** @type {CandlestickData | undefined} */ (
@@ -96,7 +89,7 @@ export function init() {
     headingElement.innerHTML = opt.title;
 
     // Set blueprints first so storageId is correct before any index change
-    blueprints = chart.setBlueprints({
+    chart.setBlueprints({
       name: opt.title,
       top: buildTopBlueprints(opt.top),
       bottom: opt.bottom,

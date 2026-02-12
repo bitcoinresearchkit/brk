@@ -396,7 +396,7 @@ export function createCointimeSection() {
                   line({
                     metric: reserveRisk.vocdd365dMedian,
                     name: "365d Median",
-                    color: colors.ma._1y,
+                    color: colors.time._1y,
                     unit: Unit.usd,
                   }),
                 ],

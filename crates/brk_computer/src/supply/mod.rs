@@ -1,7 +1,4 @@
 pub mod burned;
-pub mod circulating;
-pub mod inflation;
-pub mod market_cap;
 pub mod velocity;
 
 mod compute;

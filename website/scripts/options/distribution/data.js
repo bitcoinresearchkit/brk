@@ -67,68 +67,72 @@ export function buildCohortData() {
   };
 
   // Max age cohorts (up to X time)
-  const upToDate = entries(utxoCohorts.maxAge).map(([key, tree]) => {
+  const upToDate = entries(utxoCohorts.maxAge).map(([key, tree], i, arr) => {
     const names = MAX_AGE_NAMES[key];
     return {
       name: names.short,
       title: `UTXOs ${names.long}`,
-      color: colors.age[key],
+      color: colors.at(i, arr.length),
       tree,
     };
   });
 
   // Min age cohorts (from X time)
-  const fromDate = entries(utxoCohorts.minAge).map(([key, tree]) => {
+  const fromDate = entries(utxoCohorts.minAge).map(([key, tree], i, arr) => {
     const names = MIN_AGE_NAMES[key];
     return {
       name: names.short,
       title: `UTXOs ${names.long}`,
-      color: colors.age[key],
+      color: colors.at(i, arr.length),
       tree,
     };
   });
 
   // Age range cohorts
-  const dateRange = entries(utxoCohorts.ageRange).map(([key, tree]) => {
-    const names = AGE_RANGE_NAMES[key];
-    return {
-      name: names.short,
-      title: `UTXOs ${names.long}`,
-      color: colors.ageRange[key],
-      tree,
-    };
-  });
+  const dateRange = entries(utxoCohorts.ageRange).map(
+    ([key, tree], i, arr) => {
+      const names = AGE_RANGE_NAMES[key];
+      return {
+        name: names.short,
+        title: `UTXOs ${names.long}`,
+        color: colors.at(i, arr.length),
+        tree,
+      };
+    },
+  );
 
   // Epoch cohorts
-  const epoch = entries(utxoCohorts.epoch).map(([key, tree]) => {
+  const epoch = entries(utxoCohorts.epoch).map(([key, tree], i, arr) => {
     const names = EPOCH_NAMES[key];
     return {
       name: names.short,
       title: names.long,
-      color: colors.epoch[key],
+      color: colors.at(i, arr.length),
       tree,
     };
   });
 
   // UTXOs above amount
-  const utxosAboveAmount = entries(utxoCohorts.geAmount).map(([key, tree]) => {
-    const names = GE_AMOUNT_NAMES[key];
-    return {
-      name: names.short,
-      title: `UTXOs ${names.long}`,
-      color: colors.amount[key],
-      tree,
-    };
-  });
+  const utxosAboveAmount = entries(utxoCohorts.geAmount).map(
+    ([key, tree], i, arr) => {
+      const names = GE_AMOUNT_NAMES[key];
+      return {
+        name: names.short,
+        title: `UTXOs ${names.long}`,
+        color: colors.at(i, arr.length),
+        tree,
+      };
+    },
+  );
 
   // Addresses above amount
   const addressesAboveAmount = entries(addressCohorts.geAmount).map(
-    ([key, cohort]) => {
+    ([key, cohort], i, arr) => {
       const names = GE_AMOUNT_NAMES[key];
       return {
         name: names.short,
         title: `Addresses ${names.long}`,
-        color: colors.amount[key],
+        color: colors.at(i, arr.length),
         tree: cohort,
         addrCount: {
           count: cohort.addrCount,
@@ -139,24 +143,26 @@ export function buildCohortData() {
   );
 
   // UTXOs under amount
-  const utxosUnderAmount = entries(utxoCohorts.ltAmount).map(([key, tree]) => {
-    const names = LT_AMOUNT_NAMES[key];
-    return {
-      name: names.short,
-      title: `UTXOs ${names.long}`,
-      color: colors.amount[key],
-      tree,
-    };
-  });
+  const utxosUnderAmount = entries(utxoCohorts.ltAmount).map(
+    ([key, tree], i, arr) => {
+      const names = LT_AMOUNT_NAMES[key];
+      return {
+        name: names.short,
+        title: `UTXOs ${names.long}`,
+        color: colors.at(i, arr.length),
+        tree,
+      };
+    },
+  );
 
   // Addresses under amount
   const addressesUnderAmount = entries(addressCohorts.ltAmount).map(
-    ([key, cohort]) => {
+    ([key, cohort], i, arr) => {
       const names = LT_AMOUNT_NAMES[key];
       return {
         name: names.short,
         title: `Addresses ${names.long}`,
-        color: colors.amount[key],
+        color: colors.at(i, arr.length),
         tree: cohort,
         addrCount: {
           count: cohort.addrCount,
@@ -168,12 +174,12 @@ export function buildCohortData() {
 
   // UTXOs amount ranges
   const utxosAmountRanges = entries(utxoCohorts.amountRange).map(
-    ([key, tree]) => {
+    ([key, tree], i, arr) => {
       const names = AMOUNT_RANGE_NAMES[key];
       return {
         name: names.short,
         title: `UTXOs ${names.long}`,
-        color: colors.amountRange[key],
+        color: colors.at(i, arr.length),
         tree,
       };
     },
@@ -181,12 +187,12 @@ export function buildCohortData() {
 
   // Addresses amount ranges
   const addressesAmountRanges = entries(addressCohorts.amountRange).map(
-    ([key, cohort]) => {
+    ([key, cohort], i, arr) => {
       const names = AMOUNT_RANGE_NAMES[key];
       return {
         name: names.short,
         title: `Addresses ${names.long}`,
-        color: colors.amountRange[key],
+        color: colors.at(i, arr.length),
         tree: cohort,
         addrCount: {
           count: cohort.addrCount,
@@ -197,12 +203,12 @@ export function buildCohortData() {
   );
 
   // Spendable type cohorts - split by addressability
-  const typeAddressable = ADDRESSABLE_TYPES.map((key) => {
+  const typeAddressable = ADDRESSABLE_TYPES.map((key, i, arr) => {
     const names = SPENDABLE_TYPE_NAMES[key];
     return {
       name: names.short,
       title: names.short,
-      color: colors.scriptType[key],
+      color: colors.at(i, arr.length),
       tree: utxoCohorts.type[key],
       addrCount: addrCount[key],
     };
@@ -210,26 +216,28 @@ export function buildCohortData() {
 
   const typeOther = entries(utxoCohorts.type)
     .filter(([key]) => !isAddressable(key))
-    .map(([key, tree]) => {
+    .map(([key, tree], i, arr) => {
       const names = SPENDABLE_TYPE_NAMES[key];
       return {
         name: names.short,
         title: names.short,
-        color: colors.scriptType[key],
+        color: colors.at(i, arr.length),
         tree,
       };
     });
 
   // Year cohorts
-  const year = entries(utxoCohorts.year).map(([key, tree]) => {
-    const names = YEAR_NAMES[key];
-    return {
-      name: names.short,
-      title: names.long,
-      color: colors.year[key],
-      tree,
-    };
-  });
+  const year = entries(utxoCohorts.year)
+    .reverse()
+    .map(([key, tree], i, arr) => {
+      const names = YEAR_NAMES[key];
+      return {
+        name: names.short,
+        title: names.long,
+        color: colors.at(i, arr.length),
+        tree,
+      };
+    });
 
   return {
     cohortAll,

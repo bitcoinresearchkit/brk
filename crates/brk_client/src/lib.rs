@@ -5078,6 +5078,7 @@ pub struct MetricsTree_Price {
     pub cents: MetricsTree_Price_Cents,
     pub usd: MetricsTree_Price_Usd,
     pub sats: OhlcSplitPattern2<OHLCSats>,
+    pub oracle: MetricsTree_Price_Oracle,
 }
 
 impl MetricsTree_Price {
@@ -5086,6 +5087,7 @@ impl MetricsTree_Price {
             cents: MetricsTree_Price_Cents::new(client.clone(), format!("{base_path}_cents")),
             usd: MetricsTree_Price_Usd::new(client.clone(), format!("{base_path}_usd")),
             sats: OhlcSplitPattern2::new(client.clone(), "price".to_string()),
+            oracle: MetricsTree_Price_Oracle::new(client.clone(), format!("{base_path}_oracle")),
         }
     }
 }
@@ -5135,6 +5137,23 @@ impl MetricsTree_Price_Usd {
         Self {
             split: CloseHighLowOpenPattern2::new(client.clone(), "price".to_string()),
             ohlc: MetricPattern1::new(client.clone(), "price_ohlc".to_string()),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Price_Oracle {
+    pub price_cents: MetricPattern11<CentsUnsigned>,
+    pub ohlc_cents: MetricPattern6<OHLCCentsUnsigned>,
+    pub ohlc_dollars: MetricPattern6<OHLCDollars>,
+}
+
+impl MetricsTree_Price_Oracle {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            price_cents: MetricPattern11::new(client.clone(), "oracle_price_cents".to_string()),
+            ohlc_cents: MetricPattern6::new(client.clone(), "oracle_ohlc_cents".to_string()),
+            ohlc_dollars: MetricPattern6::new(client.clone(), "oracle_ohlc_dollars".to_string()),
         }
     }
 }
@@ -5998,6 +6017,9 @@ pub struct MetricsTree_Supply {
     pub inflation: MetricPattern4<StoredF32>,
     pub velocity: MetricsTree_Supply_Velocity,
     pub market_cap: MetricPattern1<Dollars>,
+    pub market_cap_growth_rate: MetricPattern4<StoredF32>,
+    pub realized_cap_growth_rate: MetricPattern4<StoredF32>,
+    pub cap_growth_rate_diff: MetricPattern6<StoredF32>,
 }
 
 impl MetricsTree_Supply {
@@ -6008,6 +6030,9 @@ impl MetricsTree_Supply {
             inflation: MetricPattern4::new(client.clone(), "inflation_rate".to_string()),
             velocity: MetricsTree_Supply_Velocity::new(client.clone(), format!("{base_path}_velocity")),
             market_cap: MetricPattern1::new(client.clone(), "market_cap".to_string()),
+            market_cap_growth_rate: MetricPattern4::new(client.clone(), "market_cap_growth_rate".to_string()),
+            realized_cap_growth_rate: MetricPattern4::new(client.clone(), "realized_cap_growth_rate".to_string()),
+            cap_growth_rate_diff: MetricPattern6::new(client.clone(), "cap_growth_rate_diff".to_string()),
         }
     }
 }
@@ -6289,6 +6314,15 @@ impl BrkClient {
     /// Endpoint: `GET /api/mempool/info`
     pub fn get_mempool(&self) -> Result<MempoolInfo> {
         self.base.get_json(&format!("/api/mempool/info"))
+    }
+
+    /// Live BTC/USD price
+    ///
+    /// Returns the current BTC/USD price in cents, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
+    ///
+    /// Endpoint: `GET /api/mempool/price`
+    pub fn get_live_price(&self) -> Result<f64> {
+        self.base.get_json(&format!("/api/mempool/price"))
     }
 
     /// Mempool transaction IDs

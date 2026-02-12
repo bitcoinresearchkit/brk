@@ -244,7 +244,7 @@ export function createMiningSection() {
               line({
                 metric: blocks.mining.hashRate2mSma,
                 name: "2m SMA",
-                color: colors.ma._2m,
+                color: colors.indicator.main,
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
@@ -677,7 +677,7 @@ export function createMiningSection() {
                   line({
                     metric: p.pool._1mDominance,
                     name: p.name,
-                    color: colors.at(i),
+                    color: colors.at(i, majorPools.length),
                     unit: Unit.percentage,
                   }),
                 ),
@@ -689,7 +689,7 @@ export function createMiningSection() {
                   line({
                     metric: p.pool._1mBlocksMined,
                     name: p.name,
-                    color: colors.at(i),
+                    color: colors.at(i, majorPools.length),
                     unit: Unit.count,
                   }),
                 ),
@@ -702,7 +702,7 @@ export function createMiningSection() {
                     source: p.pool.coinbase,
                     key: "sum",
                     name: p.name,
-                    color: colors.at(i),
+                    color: colors.at(i, majorPools.length),
                   }),
                 ),
               },
@@ -719,7 +719,7 @@ export function createMiningSection() {
                   line({
                     metric: p.pool._1mDominance,
                     name: p.name,
-                    color: colors.at(i),
+                    color: colors.at(i, antpoolFriends.length),
                     unit: Unit.percentage,
                   }),
                 ),
@@ -731,7 +731,7 @@ export function createMiningSection() {
                   line({
                     metric: p.pool._1mBlocksMined,
                     name: p.name,
-                    color: colors.at(i),
+                    color: colors.at(i, antpoolFriends.length),
                     unit: Unit.count,
                   }),
                 ),
@@ -744,7 +744,7 @@ export function createMiningSection() {
                     source: p.pool.coinbase,
                     key: "sum",
                     name: p.name,
-                    color: colors.at(i),
+                    color: colors.at(i, antpoolFriends.length),
                   }),
                 ),
               },
