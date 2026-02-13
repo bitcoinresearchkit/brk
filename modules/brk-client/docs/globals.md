@@ -204,6 +204,7 @@
 - [MetricsTree\_Price](interfaces/MetricsTree_Price.md)
 - [MetricsTree\_Price\_Cents](interfaces/MetricsTree_Price_Cents.md)
 - [MetricsTree\_Price\_Cents\_Split](interfaces/MetricsTree_Price_Cents_Split.md)
+- [MetricsTree\_Price\_Oracle](interfaces/MetricsTree_Price_Oracle.md)
 - [MetricsTree\_Price\_Usd](interfaces/MetricsTree_Price_Usd.md)
 - [MetricsTree\_Scripts](interfaces/MetricsTree_Scripts.md)
 - [MetricsTree\_Scripts\_Count](interfaces/MetricsTree_Scripts_Count.md)

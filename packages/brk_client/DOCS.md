@@ -37,6 +37,7 @@
     * [get\_blocks](#brk_client.BrkClient.get_blocks)
     * [get\_blocks\_from\_height](#brk_client.BrkClient.get_blocks_from_height)
     * [get\_mempool](#brk_client.BrkClient.get_mempool)
+    * [get\_live\_price](#brk_client.BrkClient.get_live_price)
     * [get\_mempool\_txids](#brk_client.BrkClient.get_mempool_txids)
     * [get\_metric\_info](#brk_client.BrkClient.get_metric_info)
     * [get\_metric](#brk_client.BrkClient.get_metric)
@@ -462,6 +463,20 @@ Get current mempool statistics including transaction count, total vsize, and tot
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
 
 Endpoint: `GET /api/mempool/info`
+
+<a id="brk_client.BrkClient.get_live_price"></a>
+
+#### get\_live\_price
+
+```python
+def get_live_price() -> Dollars
+```
+
+Live BTC/USD price.
+
+Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
+
+Endpoint: `GET /api/mempool/price`
 
 <a id="brk_client.BrkClient.get_mempool_txids"></a>
 
