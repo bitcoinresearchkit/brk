@@ -6,7 +6,7 @@
 
 # Interface: MaxMinPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3366](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3366)
+Defined in: [Developer/brk/modules/brk-client/index.js:3366](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3366)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3366](https://github.com/
 
 > **max**: [`DollarsSatsPattern`](DollarsSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3367](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3367)
+Defined in: [Developer/brk/modules/brk-client/index.js:3367](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3367)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3367](https://github.com/
 
 > **min**: [`DollarsSatsPattern`](DollarsSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3368](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3368)
+Defined in: [Developer/brk/modules/brk-client/index.js:3368](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3368)

@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Supply\_Circulating
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4985](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4985)
+Defined in: [Developer/brk/modules/brk-client/index.js:4985](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4985)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4985](https://github.com/
 
 > **bitcoin**: [`MetricPattern3`](../type-aliases/MetricPattern3.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4987](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4987)
+Defined in: [Developer/brk/modules/brk-client/index.js:4987](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4987)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4987](https://github.com/
 
 > **dollars**: [`MetricPattern3`](../type-aliases/MetricPattern3.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4988](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4988)
+Defined in: [Developer/brk/modules/brk-client/index.js:4988](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4988)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4988](https://github.com/
 
 > **sats**: [`MetricPattern3`](../type-aliases/MetricPattern3.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4986](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4986)
+Defined in: [Developer/brk/modules/brk-client/index.js:4986](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4986)

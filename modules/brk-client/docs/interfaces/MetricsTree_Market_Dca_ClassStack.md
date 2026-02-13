@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Market\_Dca\_ClassStack
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4262](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4262)
+Defined in: [Developer/brk/modules/brk-client/index.js:4262](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4262)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4262](https://github.com/
 
 > **\_2015**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4263](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4263)
+Defined in: [Developer/brk/modules/brk-client/index.js:4263](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4263)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4263](https://github.com/
 
 > **\_2016**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4264](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4264)
+Defined in: [Developer/brk/modules/brk-client/index.js:4264](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4264)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4264](https://github.com/
 
 > **\_2017**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4265](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4265)
+Defined in: [Developer/brk/modules/brk-client/index.js:4265](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4265)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4265](https://github.com/
 
 > **\_2018**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4266](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4266)
+Defined in: [Developer/brk/modules/brk-client/index.js:4266](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4266)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4266](https://github.com/
 
 > **\_2019**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4267](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4267)
+Defined in: [Developer/brk/modules/brk-client/index.js:4267](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4267)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4267](https://github.com/
 
 > **\_2020**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4268](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4268)
+Defined in: [Developer/brk/modules/brk-client/index.js:4268](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4268)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4268](https://github.com/
 
 > **\_2021**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4269](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4269)
+Defined in: [Developer/brk/modules/brk-client/index.js:4269](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4269)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4269](https://github.com/
 
 > **\_2022**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4270](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4270)
+Defined in: [Developer/brk/modules/brk-client/index.js:4270](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4270)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4270](https://github.com/
 
 > **\_2023**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4271](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4271)
+Defined in: [Developer/brk/modules/brk-client/index.js:4271](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4271)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4271](https://github.com/
 
 > **\_2024**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4272](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4272)
+Defined in: [Developer/brk/modules/brk-client/index.js:4272](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4272)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4272](https://github.com/
 
 > **\_2025**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4273](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4273)
+Defined in: [Developer/brk/modules/brk-client/index.js:4273](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4273)
 
 ***
 
@@ -102,4 +102,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4273](https://github.com/
 
 > **\_2026**: [`BitcoinDollarsSatsPattern5`](BitcoinDollarsSatsPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4274](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4274)
+Defined in: [Developer/brk/modules/brk-client/index.js:4274](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4274)

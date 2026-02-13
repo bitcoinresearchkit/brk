@@ -6,7 +6,7 @@
 
 # Interface: MetricEndpointBuilder\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1030](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L1030)
+Defined in: [Developer/brk/modules/brk-client/index.js:1030](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L1030)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1030](https://github.com/
 
 > **fetch**: (`onUpdate?`) => `Promise`\<[`MetricData`](MetricData.md)\<`T`\>\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1036](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L1036)
+Defined in: [Developer/brk/modules/brk-client/index.js:1036](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L1036)
 
 Fetch all data
 
@@ -40,7 +40,7 @@ Fetch all data
 
 > **fetchCsv**: () => `Promise`\<`string`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1037](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L1037)
+Defined in: [Developer/brk/modules/brk-client/index.js:1037](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L1037)
 
 Fetch all data as CSV
 
@@ -54,7 +54,7 @@ Fetch all data as CSV
 
 > **first**: (`n`) => [`RangeBuilder`](RangeBuilder.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1033](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L1033)
+Defined in: [Developer/brk/modules/brk-client/index.js:1033](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L1033)
 
 Get first n items
 
@@ -74,7 +74,7 @@ Get first n items
 
 > **get**: (`index`) => [`SingleItemBuilder`](SingleItemBuilder.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1031](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L1031)
+Defined in: [Developer/brk/modules/brk-client/index.js:1031](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L1031)
 
 Get single item at index
 
@@ -94,7 +94,7 @@ Get single item at index
 
 > **last**: (`n`) => [`RangeBuilder`](RangeBuilder.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1034](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L1034)
+Defined in: [Developer/brk/modules/brk-client/index.js:1034](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L1034)
 
 Get last n items
 
@@ -114,7 +114,7 @@ Get last n items
 
 > **path**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1039](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L1039)
+Defined in: [Developer/brk/modules/brk-client/index.js:1039](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L1039)
 
 The endpoint path
 
@@ -124,7 +124,7 @@ The endpoint path
 
 > **skip**: (`n`) => [`SkippedBuilder`](SkippedBuilder.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1035](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L1035)
+Defined in: [Developer/brk/modules/brk-client/index.js:1035](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L1035)
 
 Skip first n items, chain with take()
 
@@ -144,7 +144,7 @@ Skip first n items, chain with take()
 
 > **slice**: (`start?`, `end?`) => [`RangeBuilder`](RangeBuilder.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1032](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L1032)
+Defined in: [Developer/brk/modules/brk-client/index.js:1032](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L1032)
 
 Slice like Array.slice
 
@@ -168,6 +168,6 @@ Slice like Array.slice
 
 > **then**: [`Thenable`](../type-aliases/Thenable.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1038](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L1038)
+Defined in: [Developer/brk/modules/brk-client/index.js:1038](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L1038)
 
 Thenable (await endpoint)

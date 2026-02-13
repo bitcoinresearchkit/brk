@@ -6,7 +6,7 @@
 
 # Interface: TxStatus
 
-Defined in: [Developer/brk/modules/brk-client/index.js:794](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L794)
+Defined in: [Developer/brk/modules/brk-client/index.js:794](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L794)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:794](https://github.com/b
 
 > `optional` **blockHash**: `string` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:797](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L797)
+Defined in: [Developer/brk/modules/brk-client/index.js:797](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L797)
 
 Block hash (only present if confirmed)
 
@@ -24,7 +24,7 @@ Block hash (only present if confirmed)
 
 > `optional` **blockHeight**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:796](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L796)
+Defined in: [Developer/brk/modules/brk-client/index.js:796](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L796)
 
 Block height (only present if confirmed)
 
@@ -34,7 +34,7 @@ Block height (only present if confirmed)
 
 > `optional` **blockTime**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:798](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L798)
+Defined in: [Developer/brk/modules/brk-client/index.js:798](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L798)
 
 Block timestamp (only present if confirmed)
 
@@ -44,6 +44,6 @@ Block timestamp (only present if confirmed)
 
 > **confirmed**: `boolean`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:795](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L795)
+Defined in: [Developer/brk/modules/brk-client/index.js:795](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L795)
 
 Whether the transaction is confirmed

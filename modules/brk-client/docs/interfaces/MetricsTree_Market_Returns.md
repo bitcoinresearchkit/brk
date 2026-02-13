@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Market\_Returns
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4124](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4124)
+Defined in: [Developer/brk/modules/brk-client/index.js:4124](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4124)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4124](https://github.com/
 
 > **\_1dReturns1mSd**: [`SdSmaPattern`](SdSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4128](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4128)
+Defined in: [Developer/brk/modules/brk-client/index.js:4128](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4128)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4128](https://github.com/
 
 > **\_1dReturns1wSd**: [`SdSmaPattern`](SdSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4127](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4127)
+Defined in: [Developer/brk/modules/brk-client/index.js:4127](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4127)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4127](https://github.com/
 
 > **\_1dReturns1ySd**: [`SdSmaPattern`](SdSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4129](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4129)
+Defined in: [Developer/brk/modules/brk-client/index.js:4129](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4129)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4129](https://github.com/
 
 > **cagr**: [`_10y2y3y4y5y6y8yPattern`](10y2y3y4y5y6y8yPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4126](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4126)
+Defined in: [Developer/brk/modules/brk-client/index.js:4126](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4126)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4126](https://github.com/
 
 > **downside1mSd**: [`SdSmaPattern`](SdSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4132](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4132)
+Defined in: [Developer/brk/modules/brk-client/index.js:4132](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4132)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4132](https://github.com/
 
 > **downside1wSd**: [`SdSmaPattern`](SdSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4131](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4131)
+Defined in: [Developer/brk/modules/brk-client/index.js:4131](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4131)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4131](https://github.com/
 
 > **downside1ySd**: [`SdSmaPattern`](SdSmaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4133](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4133)
+Defined in: [Developer/brk/modules/brk-client/index.js:4133](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4133)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4133](https://github.com/
 
 > **downsideReturns**: [`MetricPattern6`](../type-aliases/MetricPattern6.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4130](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4130)
+Defined in: [Developer/brk/modules/brk-client/index.js:4130](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4130)
 
 ***
 
@@ -78,4 +78,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4130](https://github.com/
 
 > **priceReturns**: [`MetricsTree_Market_Returns_PriceReturns`](MetricsTree_Market_Returns_PriceReturns.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4125](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4125)
+Defined in: [Developer/brk/modules/brk-client/index.js:4125](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4125)

@@ -6,7 +6,7 @@
 
 # Interface: DifficultyEntry
 
-Defined in: [Developer/brk/modules/brk-client/index.js:276](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L276)
+Defined in: [Developer/brk/modules/brk-client/index.js:276](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L276)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:276](https://github.com/b
 
 > **difficulty**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:278](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L278)
+Defined in: [Developer/brk/modules/brk-client/index.js:278](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L278)
 
 Difficulty value.
 
@@ -24,7 +24,7 @@ Difficulty value.
 
 > **height**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:279](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L279)
+Defined in: [Developer/brk/modules/brk-client/index.js:279](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L279)
 
 Block height of the adjustment.
 
@@ -34,6 +34,6 @@ Block height of the adjustment.
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:277](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L277)
+Defined in: [Developer/brk/modules/brk-client/index.js:277](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L277)
 
 Unix timestamp of the difficulty adjustment.

@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Pools\_Vecs
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4387](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4387)
+Defined in: [Developer/brk/modules/brk-client/index.js:4387](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4387)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4387](https://github.com/
 
 > **aaopool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4497](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4497)
+Defined in: [Developer/brk/modules/brk-client/index.js:4497](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4497)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4497](https://github.com/
 
 > **antpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4432](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4432)
+Defined in: [Developer/brk/modules/brk-client/index.js:4432](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4432)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4432](https://github.com/
 
 > **arkpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4501](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4501)
+Defined in: [Developer/brk/modules/brk-client/index.js:4501](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4501)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4501](https://github.com/
 
 > **asicminer**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4404](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4404)
+Defined in: [Developer/brk/modules/brk-client/index.js:4404](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4404)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4404](https://github.com/
 
 > **axbt**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4403](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4403)
+Defined in: [Developer/brk/modules/brk-client/index.js:4403](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4403)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4403](https://github.com/
 
 > **batpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4463](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4463)
+Defined in: [Developer/brk/modules/brk-client/index.js:4463](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4463)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4463](https://github.com/
 
 > **bcmonster**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4457](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4457)
+Defined in: [Developer/brk/modules/brk-client/index.js:4457](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4457)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4457](https://github.com/
 
 > **bcpoolio**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4434](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4434)
+Defined in: [Developer/brk/modules/brk-client/index.js:4434](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4434)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4434](https://github.com/
 
 > **binancepool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4493](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4493)
+Defined in: [Developer/brk/modules/brk-client/index.js:4493](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4493)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4493](https://github.com/
 
 > **bitalo**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4423](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4423)
+Defined in: [Developer/brk/modules/brk-client/index.js:4423](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4423)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4423](https://github.com/
 
 > **bitclub**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4440](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4440)
+Defined in: [Developer/brk/modules/brk-client/index.js:4440](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4440)
 
 ***
 
@@ -102,7 +102,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4440](https://github.com/
 
 > **bitcoinaffiliatenetwork**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4441](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4441)
+Defined in: [Developer/brk/modules/brk-client/index.js:4441](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4441)
 
 ***
 
@@ -110,7 +110,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4441](https://github.com/
 
 > **bitcoincom**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4400](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4400)
+Defined in: [Developer/brk/modules/brk-client/index.js:4400](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4400)
 
 ***
 
@@ -118,7 +118,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4400](https://github.com/
 
 > **bitcoinindia**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4469](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4469)
+Defined in: [Developer/brk/modules/brk-client/index.js:4469](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4469)
 
 ***
 
@@ -126,7 +126,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4469](https://github.com/
 
 > **bitcoinrussia**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4406](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4406)
+Defined in: [Developer/brk/modules/brk-client/index.js:4406](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4406)
 
 ***
 
@@ -134,7 +134,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4406](https://github.com/
 
 > **bitcoinukraine**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4481](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4481)
+Defined in: [Developer/brk/modules/brk-client/index.js:4481](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4481)
 
 ***
 
@@ -142,7 +142,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4481](https://github.com/
 
 > **bitfarms**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4395](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4395)
+Defined in: [Developer/brk/modules/brk-client/index.js:4395](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4395)
 
 ***
 
@@ -150,7 +150,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4395](https://github.com/
 
 > **bitfufupool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4538](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4538)
+Defined in: [Developer/brk/modules/brk-client/index.js:4538](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4538)
 
 ***
 
@@ -158,7 +158,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4538](https://github.com/
 
 > **bitfury**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4446](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4446)
+Defined in: [Developer/brk/modules/brk-client/index.js:4446](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4446)
 
 ***
 
@@ -166,7 +166,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4446](https://github.com/
 
 > **bitminter**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4405](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4405)
+Defined in: [Developer/brk/modules/brk-client/index.js:4405](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4405)
 
 ***
 
@@ -174,7 +174,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4405](https://github.com/
 
 > **bitparking**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4419](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4419)
+Defined in: [Developer/brk/modules/brk-client/index.js:4419](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4419)
 
 ***
 
@@ -182,7 +182,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4419](https://github.com/
 
 > **bitsolo**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4445](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4445)
+Defined in: [Developer/brk/modules/brk-client/index.js:4445](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4445)
 
 ***
 
@@ -190,7 +190,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4445](https://github.com/
 
 > **bixin**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4459](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4459)
+Defined in: [Developer/brk/modules/brk-client/index.js:4459](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4459)
 
 ***
 
@@ -198,7 +198,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4459](https://github.com/
 
 > **blockfills**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4389](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4389)
+Defined in: [Developer/brk/modules/brk-client/index.js:4389](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4389)
 
 ***
 
@@ -206,7 +206,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4389](https://github.com/
 
 > **braiinspool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4431](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4431)
+Defined in: [Developer/brk/modules/brk-client/index.js:4431](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4431)
 
 ***
 
@@ -214,7 +214,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4431](https://github.com/
 
 > **bravomining**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4454](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4454)
+Defined in: [Developer/brk/modules/brk-client/index.js:4454](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4454)
 
 ***
 
@@ -222,7 +222,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4454](https://github.com/
 
 > **btcc**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4442](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4442)
+Defined in: [Developer/brk/modules/brk-client/index.js:4442](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4442)
 
 ***
 
@@ -230,7 +230,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4442](https://github.com/
 
 > **btccom**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4394](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4394)
+Defined in: [Developer/brk/modules/brk-client/index.js:4394](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4394)
 
 ***
 
@@ -238,7 +238,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4394](https://github.com/
 
 > **btcdig**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4516](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4516)
+Defined in: [Developer/brk/modules/brk-client/index.js:4516](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4516)
 
 ***
 
@@ -246,7 +246,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4516](https://github.com/
 
 > **btcguild**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4409](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4409)
+Defined in: [Developer/brk/modules/brk-client/index.js:4409](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4409)
 
 ***
 
@@ -254,7 +254,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4409](https://github.com/
 
 > **btclab**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4544](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4544)
+Defined in: [Developer/brk/modules/brk-client/index.js:4544](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4544)
 
 ***
 
@@ -262,7 +262,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4544](https://github.com/
 
 > **btcmp**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4518](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4518)
+Defined in: [Developer/brk/modules/brk-client/index.js:4518](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4518)
 
 ***
 
@@ -270,7 +270,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4518](https://github.com/
 
 > **btcnuggets**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4509](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4509)
+Defined in: [Developer/brk/modules/brk-client/index.js:4509](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4509)
 
 ***
 
@@ -278,7 +278,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4509](https://github.com/
 
 > **btcpoolparty**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4513](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4513)
+Defined in: [Developer/brk/modules/brk-client/index.js:4513](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4513)
 
 ***
 
@@ -286,7 +286,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4513](https://github.com/
 
 > **btcserv**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4407](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4407)
+Defined in: [Developer/brk/modules/brk-client/index.js:4407](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4407)
 
 ***
 
@@ -294,7 +294,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4407](https://github.com/
 
 > **btctop**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4399](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4399)
+Defined in: [Developer/brk/modules/brk-client/index.js:4399](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4399)
 
 ***
 
@@ -302,7 +302,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4399](https://github.com/
 
 > **btpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4467](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4467)
+Defined in: [Developer/brk/modules/brk-client/index.js:4467](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4467)
 
 ***
 
@@ -310,7 +310,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4467](https://github.com/
 
 > **bwpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4443](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4443)
+Defined in: [Developer/brk/modules/brk-client/index.js:4443](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4443)
 
 ***
 
@@ -318,7 +318,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4443](https://github.com/
 
 > **bytepool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4489](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4489)
+Defined in: [Developer/brk/modules/brk-client/index.js:4489](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4489)
 
 ***
 
@@ -326,7 +326,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4489](https://github.com/
 
 > **canoe**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4524](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4524)
+Defined in: [Developer/brk/modules/brk-client/index.js:4524](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4524)
 
 ***
 
@@ -334,7 +334,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4524](https://github.com/
 
 > **canoepool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4398](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4398)
+Defined in: [Developer/brk/modules/brk-client/index.js:4398](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4398)
 
 ***
 
@@ -342,7 +342,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4398](https://github.com/
 
 > **carbonnegative**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4533](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4533)
+Defined in: [Developer/brk/modules/brk-client/index.js:4533](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4533)
 
 ***
 
@@ -350,7 +350,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4533](https://github.com/
 
 > **ckpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4438](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4438)
+Defined in: [Developer/brk/modules/brk-client/index.js:4438](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4438)
 
 ***
 
@@ -358,7 +358,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4438](https://github.com/
 
 > **cloudhashing**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4510](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4510)
+Defined in: [Developer/brk/modules/brk-client/index.js:4510](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4510)
 
 ***
 
@@ -366,7 +366,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4510](https://github.com/
 
 > **coinlab**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4415](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4415)
+Defined in: [Developer/brk/modules/brk-client/index.js:4415](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4415)
 
 ***
 
@@ -374,7 +374,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4415](https://github.com/
 
 > **cointerra**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4435](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4435)
+Defined in: [Developer/brk/modules/brk-client/index.js:4435](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4435)
 
 ***
 
@@ -382,7 +382,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4435](https://github.com/
 
 > **connectbtc**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4462](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4462)
+Defined in: [Developer/brk/modules/brk-client/index.js:4462](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4462)
 
 ***
 
@@ -390,7 +390,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4462](https://github.com/
 
 > **dcex**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4466](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4466)
+Defined in: [Developer/brk/modules/brk-client/index.js:4466](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4466)
 
 ***
 
@@ -398,7 +398,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4466](https://github.com/
 
 > **dcexploration**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4465](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4465)
+Defined in: [Developer/brk/modules/brk-client/index.js:4465](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4465)
 
 ***
 
@@ -406,7 +406,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4465](https://github.com/
 
 > **digitalbtc**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4448](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4448)
+Defined in: [Developer/brk/modules/brk-client/index.js:4448](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4448)
 
 ***
 
@@ -414,7 +414,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4448](https://github.com/
 
 > **digitalxmintsy**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4511](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4511)
+Defined in: [Developer/brk/modules/brk-client/index.js:4511](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4511)
 
 ***
 
@@ -422,7 +422,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4511](https://github.com/
 
 > **dpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4477](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4477)
+Defined in: [Developer/brk/modules/brk-client/index.js:4477](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4477)
 
 ***
 
@@ -430,7 +430,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4477](https://github.com/
 
 > **eclipsemc**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4412](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4412)
+Defined in: [Developer/brk/modules/brk-client/index.js:4412](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4412)
 
 ***
 
@@ -438,7 +438,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4412](https://github.com/
 
 > **eightbaochi**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4449](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4449)
+Defined in: [Developer/brk/modules/brk-client/index.js:4449](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4449)
 
 ***
 
@@ -446,7 +446,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4449](https://github.com/
 
 > **ekanembtc**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4523](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4523)
+Defined in: [Developer/brk/modules/brk-client/index.js:4523](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4523)
 
 ***
 
@@ -454,7 +454,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4523](https://github.com/
 
 > **eligius**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4410](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4410)
+Defined in: [Developer/brk/modules/brk-client/index.js:4410](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4410)
 
 ***
 
@@ -462,7 +462,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4410](https://github.com/
 
 > **emcdpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4498](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4498)
+Defined in: [Developer/brk/modules/brk-client/index.js:4498](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4498)
 
 ***
 
@@ -470,7 +470,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4498](https://github.com/
 
 > **entrustcharitypool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4505](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4505)
+Defined in: [Developer/brk/modules/brk-client/index.js:4505](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4505)
 
 ***
 
@@ -478,7 +478,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4505](https://github.com/
 
 > **eobot**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4519](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4519)
+Defined in: [Developer/brk/modules/brk-client/index.js:4519](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4519)
 
 ***
 
@@ -486,7 +486,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4519](https://github.com/
 
 > **exxbw**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4444](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4444)
+Defined in: [Developer/brk/modules/brk-client/index.js:4444](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4444)
 
 ***
 
@@ -494,7 +494,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4444](https://github.com/
 
 > **f2pool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4424](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4424)
+Defined in: [Developer/brk/modules/brk-client/index.js:4424](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4424)
 
 ***
 
@@ -502,7 +502,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4424](https://github.com/
 
 > **fiftyeightcoin**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4468](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4468)
+Defined in: [Developer/brk/modules/brk-client/index.js:4468](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4468)
 
 ***
 
@@ -510,7 +510,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4468](https://github.com/
 
 > **foundryusa**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4499](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4499)
+Defined in: [Developer/brk/modules/brk-client/index.js:4499](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4499)
 
 ***
 
@@ -518,7 +518,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4499](https://github.com/
 
 > **futurebitapollosolo**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4532](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4532)
+Defined in: [Developer/brk/modules/brk-client/index.js:4532](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4532)
 
 ***
 
@@ -526,7 +526,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4532](https://github.com/
 
 > **gbminers**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4402](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4402)
+Defined in: [Developer/brk/modules/brk-client/index.js:4402](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4402)
 
 ***
 
@@ -534,7 +534,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4402](https://github.com/
 
 > **ghashio**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4417](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4417)
+Defined in: [Developer/brk/modules/brk-client/index.js:4417](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4417)
 
 ***
 
@@ -542,7 +542,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4417](https://github.com/
 
 > **givemecoins**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4430](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4430)
+Defined in: [Developer/brk/modules/brk-client/index.js:4430](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4430)
 
 ***
 
@@ -550,7 +550,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4430](https://github.com/
 
 > **gogreenlight**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4522](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4522)
+Defined in: [Developer/brk/modules/brk-client/index.js:4522](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4522)
 
 ***
 
@@ -558,7 +558,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4522](https://github.com/
 
 > **haominer**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4479](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4479)
+Defined in: [Developer/brk/modules/brk-client/index.js:4479](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4479)
 
 ***
 
@@ -566,7 +566,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4479](https://github.com/
 
 > **haozhuzhu**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4473](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4473)
+Defined in: [Developer/brk/modules/brk-client/index.js:4473](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4473)
 
 ***
 
@@ -574,7 +574,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4473](https://github.com/
 
 > **hashbx**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4476](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4476)
+Defined in: [Developer/brk/modules/brk-client/index.js:4476](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4476)
 
 ***
 
@@ -582,7 +582,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4476](https://github.com/
 
 > **hashpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4452](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4452)
+Defined in: [Developer/brk/modules/brk-client/index.js:4452](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4452)
 
 ***
 
@@ -590,7 +590,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4452](https://github.com/
 
 > **helix**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4480](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4480)
+Defined in: [Developer/brk/modules/brk-client/index.js:4480](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4480)
 
 ***
 
@@ -598,7 +598,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4480](https://github.com/
 
 > **hhtt**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4425](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4425)
+Defined in: [Developer/brk/modules/brk-client/index.js:4425](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4425)
 
 ***
 
@@ -606,7 +606,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4425](https://github.com/
 
 > **hotpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4455](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4455)
+Defined in: [Developer/brk/modules/brk-client/index.js:4455](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4455)
 
 ***
 
@@ -614,7 +614,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4455](https://github.com/
 
 > **hummerpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4487](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4487)
+Defined in: [Developer/brk/modules/brk-client/index.js:4487](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4487)
 
 ***
 
@@ -622,7 +622,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4487](https://github.com/
 
 > **huobipool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4396](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4396)
+Defined in: [Developer/brk/modules/brk-client/index.js:4396](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4396)
 
 ***
 
@@ -630,7 +630,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4396](https://github.com/
 
 > **innopolistech**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4543](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4543)
+Defined in: [Developer/brk/modules/brk-client/index.js:4543](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4543)
 
 ***
 
@@ -638,7 +638,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4543](https://github.com/
 
 > **kanopool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4436](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4436)
+Defined in: [Developer/brk/modules/brk-client/index.js:4436](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4436)
 
 ***
 
@@ -646,7 +646,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4436](https://github.com/
 
 > **kncminer**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4422](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4422)
+Defined in: [Developer/brk/modules/brk-client/index.js:4422](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4422)
 
 ***
 
@@ -654,7 +654,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4422](https://github.com/
 
 > **kucoinpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4504](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4504)
+Defined in: [Developer/brk/modules/brk-client/index.js:4504](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4504)
 
 ***
 
@@ -662,7 +662,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4504](https://github.com/
 
 > **lubiancom**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4495](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4495)
+Defined in: [Developer/brk/modules/brk-client/index.js:4495](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4495)
 
 ***
 
@@ -670,7 +670,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4495](https://github.com/
 
 > **luckypool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4539](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4539)
+Defined in: [Developer/brk/modules/brk-client/index.js:4539](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4539)
 
 ***
 
@@ -678,7 +678,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4539](https://github.com/
 
 > **luxor**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4392](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4392)
+Defined in: [Developer/brk/modules/brk-client/index.js:4392](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4392)
 
 ***
 
@@ -686,7 +686,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4392](https://github.com/
 
 > **marapool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4503](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4503)
+Defined in: [Developer/brk/modules/brk-client/index.js:4503](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4503)
 
 ***
 
@@ -694,7 +694,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4503](https://github.com/
 
 > **maxbtc**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4413](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4413)
+Defined in: [Developer/brk/modules/brk-client/index.js:4413](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4413)
 
 ***
 
@@ -702,7 +702,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4413](https://github.com/
 
 > **maxipool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4537](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4537)
+Defined in: [Developer/brk/modules/brk-client/index.js:4537](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4537)
 
 ***
 
@@ -710,7 +710,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4537](https://github.com/
 
 > **megabigpower**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4426](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4426)
+Defined in: [Developer/brk/modules/brk-client/index.js:4426](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4426)
 
 ***
 
@@ -718,7 +718,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4426](https://github.com/
 
 > **minerium**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4494](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4494)
+Defined in: [Developer/brk/modules/brk-client/index.js:4494](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4494)
 
 ***
 
@@ -726,7 +726,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4494](https://github.com/
 
 > **miningcity**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4492](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4492)
+Defined in: [Developer/brk/modules/brk-client/index.js:4492](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4492)
 
 ***
 
@@ -734,7 +734,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4492](https://github.com/
 
 > **miningdutch**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4540](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4540)
+Defined in: [Developer/brk/modules/brk-client/index.js:4540](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4540)
 
 ***
 
@@ -742,7 +742,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4540](https://github.com/
 
 > **miningkings**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4475](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4475)
+Defined in: [Developer/brk/modules/brk-client/index.js:4475](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4475)
 
 ***
 
@@ -750,7 +750,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4475](https://github.com/
 
 > **miningsquared**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4542](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4542)
+Defined in: [Developer/brk/modules/brk-client/index.js:4542](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4542)
 
 ***
 
@@ -758,7 +758,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4542](https://github.com/
 
 > **mmpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4420](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4420)
+Defined in: [Developer/brk/modules/brk-client/index.js:4420](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4420)
 
 ***
 
@@ -766,7 +766,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4420](https://github.com/
 
 > **mtred**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4427](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4427)
+Defined in: [Developer/brk/modules/brk-client/index.js:4427](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4427)
 
 ***
 
@@ -774,7 +774,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4427](https://github.com/
 
 > **multicoinco**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4433](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4433)
+Defined in: [Developer/brk/modules/brk-client/index.js:4433](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4433)
 
 ***
 
@@ -782,7 +782,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4433](https://github.com/
 
 > **multipool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4514](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4514)
+Defined in: [Developer/brk/modules/brk-client/index.js:4514](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4514)
 
 ***
 
@@ -790,7 +790,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4514](https://github.com/
 
 > **mybtccoinpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4450](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4450)
+Defined in: [Developer/brk/modules/brk-client/index.js:4450](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4450)
 
 ***
 
@@ -798,7 +798,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4450](https://github.com/
 
 > **neopool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4536](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4536)
+Defined in: [Developer/brk/modules/brk-client/index.js:4536](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4536)
 
 ***
 
@@ -806,7 +806,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4536](https://github.com/
 
 > **nexious**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4453](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4453)
+Defined in: [Developer/brk/modules/brk-client/index.js:4453](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4453)
 
 ***
 
@@ -814,7 +814,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4453](https://github.com/
 
 > **nicehash**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4439](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4439)
+Defined in: [Developer/brk/modules/brk-client/index.js:4439](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4439)
 
 ***
 
@@ -822,7 +822,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4439](https://github.com/
 
 > **nmcbit**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4428](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4428)
+Defined in: [Developer/brk/modules/brk-client/index.js:4428](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4428)
 
 ***
 
@@ -830,7 +830,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4428](https://github.com/
 
 > **novablock**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4491](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4491)
+Defined in: [Developer/brk/modules/brk-client/index.js:4491](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4491)
 
 ***
 
@@ -838,7 +838,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4491](https://github.com/
 
 > **ocean**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4529](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4529)
+Defined in: [Developer/brk/modules/brk-client/index.js:4529](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4529)
 
 ***
 
@@ -846,7 +846,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4529](https://github.com/
 
 > **okexpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4456](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4456)
+Defined in: [Developer/brk/modules/brk-client/index.js:4456](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4456)
 
 ***
 
@@ -854,7 +854,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4456](https://github.com/
 
 > **okkong**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4496](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4496)
+Defined in: [Developer/brk/modules/brk-client/index.js:4496](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4496)
 
 ***
 
@@ -862,7 +862,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4496](https://github.com/
 
 > **okminer**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4506](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4506)
+Defined in: [Developer/brk/modules/brk-client/index.js:4506](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4506)
 
 ***
 
@@ -870,7 +870,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4506](https://github.com/
 
 > **okpooltop**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4486](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4486)
+Defined in: [Developer/brk/modules/brk-client/index.js:4486](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4486)
 
 ***
 
@@ -878,7 +878,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4486](https://github.com/
 
 > **onehash**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4458](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4458)
+Defined in: [Developer/brk/modules/brk-client/index.js:4458](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4458)
 
 ***
 
@@ -886,7 +886,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4458](https://github.com/
 
 > **onem1x**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4526](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4526)
+Defined in: [Developer/brk/modules/brk-client/index.js:4526](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4526)
 
 ***
 
@@ -894,7 +894,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4526](https://github.com/
 
 > **onethash**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4393](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4393)
+Defined in: [Developer/brk/modules/brk-client/index.js:4393](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4393)
 
 ***
 
@@ -902,7 +902,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4393](https://github.com/
 
 > **ozcoin**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4411](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4411)
+Defined in: [Developer/brk/modules/brk-client/index.js:4411](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4411)
 
 ***
 
@@ -910,7 +910,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4411](https://github.com/
 
 > **parasite**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4545](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4545)
+Defined in: [Developer/brk/modules/brk-client/index.js:4545](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4545)
 
 ***
 
@@ -918,7 +918,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4545](https://github.com/
 
 > **patels**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4521](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4521)
+Defined in: [Developer/brk/modules/brk-client/index.js:4521](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4521)
 
 ***
 
@@ -926,7 +926,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4521](https://github.com/
 
 > **pegapool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4508](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4508)
+Defined in: [Developer/brk/modules/brk-client/index.js:4508](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4508)
 
 ***
 
@@ -934,7 +934,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4508](https://github.com/
 
 > **phashio**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4471](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4471)
+Defined in: [Developer/brk/modules/brk-client/index.js:4471](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4471)
 
 ***
 
@@ -942,7 +942,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4471](https://github.com/
 
 > **phoenix**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4535](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4535)
+Defined in: [Developer/brk/modules/brk-client/index.js:4535](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4535)
 
 ***
 
@@ -950,7 +950,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4535](https://github.com/
 
 > **polmine**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4421](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4421)
+Defined in: [Developer/brk/modules/brk-client/index.js:4421](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4421)
 
 ***
 
@@ -958,7 +958,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4421](https://github.com/
 
 > **pool175btc**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4401](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4401)
+Defined in: [Developer/brk/modules/brk-client/index.js:4401](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4401)
 
 ***
 
@@ -966,7 +966,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4401](https://github.com/
 
 > **pool50btc**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4416](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4416)
+Defined in: [Developer/brk/modules/brk-client/index.js:4416](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4416)
 
 ***
 
@@ -974,7 +974,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4416](https://github.com/
 
 > **poolin**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4482](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4482)
+Defined in: [Developer/brk/modules/brk-client/index.js:4482](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4482)
 
 ***
 
@@ -982,7 +982,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4482](https://github.com/
 
 > **portlandhodl**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4534](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4534)
+Defined in: [Developer/brk/modules/brk-client/index.js:4534](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4534)
 
 ***
 
@@ -990,7 +990,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4534](https://github.com/
 
 > **publicpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4541](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4541)
+Defined in: [Developer/brk/modules/brk-client/index.js:4541](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4541)
 
 ***
 
@@ -998,7 +998,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4541](https://github.com/
 
 > **purebtccom**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4502](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4502)
+Defined in: [Developer/brk/modules/brk-client/index.js:4502](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4502)
 
 ***
 
@@ -1006,7 +1006,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4502](https://github.com/
 
 > **rawpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4478](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4478)
+Defined in: [Developer/brk/modules/brk-client/index.js:4478](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4478)
 
 ***
 
@@ -1014,7 +1014,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4478](https://github.com/
 
 > **rigpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4472](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4472)
+Defined in: [Developer/brk/modules/brk-client/index.js:4472](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4472)
 
 ***
 
@@ -1022,7 +1022,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4472](https://github.com/
 
 > **sbicrypto**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4500](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4500)
+Defined in: [Developer/brk/modules/brk-client/index.js:4500](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4500)
 
 ***
 
@@ -1030,7 +1030,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4500](https://github.com/
 
 > **secpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4528](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4528)
+Defined in: [Developer/brk/modules/brk-client/index.js:4528](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4528)
 
 ***
 
@@ -1038,7 +1038,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4528](https://github.com/
 
 > **secretsuperstar**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4483](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4483)
+Defined in: [Developer/brk/modules/brk-client/index.js:4483](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4483)
 
 ***
 
@@ -1046,7 +1046,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4483](https://github.com/
 
 > **sevenpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4474](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4474)
+Defined in: [Developer/brk/modules/brk-client/index.js:4474](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4474)
 
 ***
 
@@ -1054,7 +1054,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4474](https://github.com/
 
 > **shawnp0wers**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4470](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4470)
+Defined in: [Developer/brk/modules/brk-client/index.js:4470](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4470)
 
 ***
 
@@ -1062,7 +1062,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4470](https://github.com/
 
 > **sigmapoolcom**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4485](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4485)
+Defined in: [Developer/brk/modules/brk-client/index.js:4485](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4485)
 
 ***
 
@@ -1070,7 +1070,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4485](https://github.com/
 
 > **simplecoinus**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4408](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4408)
+Defined in: [Developer/brk/modules/brk-client/index.js:4408](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4408)
 
 ***
 
@@ -1078,7 +1078,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4408](https://github.com/
 
 > **solock**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4437](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4437)
+Defined in: [Developer/brk/modules/brk-client/index.js:4437](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4437)
 
 ***
 
@@ -1086,7 +1086,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4437](https://github.com/
 
 > **spiderpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4490](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4490)
+Defined in: [Developer/brk/modules/brk-client/index.js:4490](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4490)
 
 ***
 
@@ -1094,7 +1094,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4490](https://github.com/
 
 > **stminingcorp**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4418](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4418)
+Defined in: [Developer/brk/modules/brk-client/index.js:4418](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4418)
 
 ***
 
@@ -1102,7 +1102,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4418](https://github.com/
 
 > **tangpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4488](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4488)
+Defined in: [Developer/brk/modules/brk-client/index.js:4488](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4488)
 
 ***
 
@@ -1110,7 +1110,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4488](https://github.com/
 
 > **tatmaspool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4460](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4460)
+Defined in: [Developer/brk/modules/brk-client/index.js:4460](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4460)
 
 ***
 
@@ -1118,7 +1118,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4460](https://github.com/
 
 > **tbdice**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4451](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4451)
+Defined in: [Developer/brk/modules/brk-client/index.js:4451](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4451)
 
 ***
 
@@ -1126,7 +1126,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4451](https://github.com/
 
 > **telco214**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4512](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4512)
+Defined in: [Developer/brk/modules/brk-client/index.js:4512](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4512)
 
 ***
 
@@ -1134,7 +1134,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4512](https://github.com/
 
 > **terrapool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4391](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4391)
+Defined in: [Developer/brk/modules/brk-client/index.js:4391](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4391)
 
 ***
 
@@ -1142,7 +1142,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4391](https://github.com/
 
 > **tiger**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4525](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4525)
+Defined in: [Developer/brk/modules/brk-client/index.js:4525](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4525)
 
 ***
 
@@ -1150,7 +1150,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4525](https://github.com/
 
 > **tigerpoolnet**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4484](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4484)
+Defined in: [Developer/brk/modules/brk-client/index.js:4484](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4484)
 
 ***
 
@@ -1158,7 +1158,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4484](https://github.com/
 
 > **titan**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4507](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4507)
+Defined in: [Developer/brk/modules/brk-client/index.js:4507](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4507)
 
 ***
 
@@ -1166,7 +1166,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4507](https://github.com/
 
 > **transactioncoinmining**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4515](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4515)
+Defined in: [Developer/brk/modules/brk-client/index.js:4515](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4515)
 
 ***
 
@@ -1174,7 +1174,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4515](https://github.com/
 
 > **trickysbtcpool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4517](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4517)
+Defined in: [Developer/brk/modules/brk-client/index.js:4517](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4517)
 
 ***
 
@@ -1182,7 +1182,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4517](https://github.com/
 
 > **triplemining**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4414](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4414)
+Defined in: [Developer/brk/modules/brk-client/index.js:4414](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4414)
 
 ***
 
@@ -1190,7 +1190,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4414](https://github.com/
 
 > **twentyoneinc**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4447](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4447)
+Defined in: [Developer/brk/modules/brk-client/index.js:4447](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4447)
 
 ***
 
@@ -1198,7 +1198,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4447](https://github.com/
 
 > **ultimuspool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4390](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4390)
+Defined in: [Developer/brk/modules/brk-client/index.js:4390](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4390)
 
 ***
 
@@ -1206,7 +1206,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4390](https://github.com/
 
 > **unknown**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4388](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4388)
+Defined in: [Developer/brk/modules/brk-client/index.js:4388](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4388)
 
 ***
 
@@ -1214,7 +1214,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4388](https://github.com/
 
 > **unomp**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4520](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4520)
+Defined in: [Developer/brk/modules/brk-client/index.js:4520](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4520)
 
 ***
 
@@ -1222,7 +1222,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4520](https://github.com/
 
 > **viabtc**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4461](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4461)
+Defined in: [Developer/brk/modules/brk-client/index.js:4461](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4461)
 
 ***
 
@@ -1230,7 +1230,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4461](https://github.com/
 
 > **waterhole**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4464](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4464)
+Defined in: [Developer/brk/modules/brk-client/index.js:4464](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4464)
 
 ***
 
@@ -1238,7 +1238,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4464](https://github.com/
 
 > **wayicn**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4397](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4397)
+Defined in: [Developer/brk/modules/brk-client/index.js:4397](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4397)
 
 ***
 
@@ -1246,7 +1246,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4397](https://github.com/
 
 > **whitepool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4530](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4530)
+Defined in: [Developer/brk/modules/brk-client/index.js:4530](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4530)
 
 ***
 
@@ -1254,7 +1254,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4530](https://github.com/
 
 > **wk057**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4531](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4531)
+Defined in: [Developer/brk/modules/brk-client/index.js:4531](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4531)
 
 ***
 
@@ -1262,7 +1262,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4531](https://github.com/
 
 > **yourbtcnet**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4429](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4429)
+Defined in: [Developer/brk/modules/brk-client/index.js:4429](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4429)
 
 ***
 
@@ -1270,4 +1270,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4429](https://github.com/
 
 > **zulupool**: [`_1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern`](1m1w1y24hBlocksCoinbaseDaysDominanceFeeSubsidyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4527](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4527)
+Defined in: [Developer/brk/modules/brk-client/index.js:4527](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4527)

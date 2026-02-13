@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Price\_Usd
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4571](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4571)
+Defined in: [Developer/brk/modules/brk-client/index.js:4571](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4571)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4571](https://github.com/
 
 > **ohlc**: [`MetricPattern1`](../type-aliases/MetricPattern1.md)\<[`OHLCDollars`](OHLCDollars.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4573](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4573)
+Defined in: [Developer/brk/modules/brk-client/index.js:4573](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4573)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4573](https://github.com/
 
 > **split**: [`CloseHighLowOpenPattern2`](CloseHighLowOpenPattern2.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4572](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L4572)
+Defined in: [Developer/brk/modules/brk-client/index.js:4572](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L4572)

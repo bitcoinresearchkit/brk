@@ -6,7 +6,7 @@
 
 # Interface: MetricsTree\_Scripts
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3755](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3755)
+Defined in: [Developer/brk/modules/brk-client/index.js:3755](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3755)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3755](https://github.com/
 
 > **count**: [`MetricsTree_Scripts_Count`](MetricsTree_Scripts_Count.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3764](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3764)
+Defined in: [Developer/brk/modules/brk-client/index.js:3764](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3764)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3764](https://github.com/
 
 > **emptyToTxindex**: [`MetricPattern9`](../type-aliases/MetricPattern9.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3760](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3760)
+Defined in: [Developer/brk/modules/brk-client/index.js:3760](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3760)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3760](https://github.com/
 
 > **firstEmptyoutputindex**: [`MetricPattern11`](../type-aliases/MetricPattern11.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3756](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3756)
+Defined in: [Developer/brk/modules/brk-client/index.js:3756](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3756)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3756](https://github.com/
 
 > **firstOpreturnindex**: [`MetricPattern11`](../type-aliases/MetricPattern11.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3757](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3757)
+Defined in: [Developer/brk/modules/brk-client/index.js:3757](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3757)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3757](https://github.com/
 
 > **firstP2msoutputindex**: [`MetricPattern11`](../type-aliases/MetricPattern11.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3758](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3758)
+Defined in: [Developer/brk/modules/brk-client/index.js:3758](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3758)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3758](https://github.com/
 
 > **firstUnknownoutputindex**: [`MetricPattern11`](../type-aliases/MetricPattern11.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3759](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3759)
+Defined in: [Developer/brk/modules/brk-client/index.js:3759](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3759)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3759](https://github.com/
 
 > **opreturnToTxindex**: [`MetricPattern14`](../type-aliases/MetricPattern14.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3761](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3761)
+Defined in: [Developer/brk/modules/brk-client/index.js:3761](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3761)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3761](https://github.com/
 
 > **p2msToTxindex**: [`MetricPattern17`](../type-aliases/MetricPattern17.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3762](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3762)
+Defined in: [Developer/brk/modules/brk-client/index.js:3762](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3762)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3762](https://github.com/
 
 > **unknownToTxindex**: [`MetricPattern28`](../type-aliases/MetricPattern28.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3763](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3763)
+Defined in: [Developer/brk/modules/brk-client/index.js:3763](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3763)
 
 ***
 
@@ -86,4 +86,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3763](https://github.com/
 
 > **value**: [`MetricsTree_Scripts_Value`](MetricsTree_Scripts_Value.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3765](https://github.com/bitcoinresearchkit/brk/blob/dfcb04484b3a4203772bb13ff5945fb24d8bbd9f/modules/brk-client/index.js#L3765)
+Defined in: [Developer/brk/modules/brk-client/index.js:3765](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L3765)
