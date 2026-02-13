@@ -30,6 +30,7 @@ Feature flags match crate names without the `brk_` prefix. Use `full` to enable 
 | [brk_indexer](https://docs.rs/brk_indexer) | Index transactions, addresses, and UTXOs |
 | [brk_computer](https://docs.rs/brk_computer) | Compute derived metrics (realized cap, MVRV, SOPR, cohorts, etc.) |
 | [brk_mempool](https://docs.rs/brk_mempool) | Monitor mempool, estimate fees, project upcoming blocks |
+| [brk_oracle](https://docs.rs/brk_oracle) | Pure on-chain BTC/USD price oracle |
 | [brk_query](https://docs.rs/brk_query) | Query interface for indexed and computed data |
 | [brk_server](https://docs.rs/brk_server) | REST API with OpenAPI docs |
 

@@ -347,6 +347,7 @@ dependencies = [
  "brk_iterator",
  "brk_logger",
  "brk_mempool",
+ "brk_oracle",
  "brk_query",
  "brk_reader",
  "brk_rpc",

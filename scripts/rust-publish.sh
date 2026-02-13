@@ -18,6 +18,7 @@ CRATES=(
     brk_bencher
     brk_cohort
     brk_indexer
+    brk_oracle
     brk_computer
     brk_query
     brk_bindgen

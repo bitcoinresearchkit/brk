@@ -44,6 +44,10 @@ pub use brk_logger as logger;
 #[doc(inline)]
 pub use brk_mempool as mempool;
 
+#[cfg(feature = "oracle")]
+#[doc(inline)]
+pub use brk_oracle as oracle;
+
 #[cfg(feature = "query")]
 #[doc(inline)]
 pub use brk_query as query;
