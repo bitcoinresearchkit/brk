@@ -91,8 +91,8 @@ impl AddressRoutes for ApiRouter<AppState> {
                 Path(path): Path<AddressParam>,
                 State(state): State<AppState>
             | {
-                // Mempool txs for an address - use MaxAge since it's volatile
-                state.cached_json(&headers, CacheStrategy::MaxAge(5), move |q| q.address_mempool_txids(path.address)).await
+                let hash = state.sync(|q| q.address_mempool_hash(&path.address));
+                state.cached_json(&headers, CacheStrategy::MempoolHash(hash), move |q| q.address_mempool_txids(path.address)).await
             }, |op| op
                 .id("get_address_mempool_txs")
                 .addresses_tag()

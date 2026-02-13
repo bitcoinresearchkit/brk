@@ -68,35 +68,6 @@ export function writeParam(key, value) {
 }
 
 /**
- * @param {string} key
- */
-export function removeParam(key) {
-  writeParam(key, undefined);
-}
-
-/**
- * @param {string} key
- */
-export function readBoolParam(key) {
-  const param = readParam(key);
-  if (param) {
-    return param === "true" || param === "1";
-  }
-  return null;
-}
-
-/**
- * @param {string} key
- */
-export function readNumberParam(key) {
-  const param = readParam(key);
-  if (param) {
-    return Number(param);
-  }
-  return null;
-}
-
-/**
  *
  * @param {string} key
  * @returns {string | null}

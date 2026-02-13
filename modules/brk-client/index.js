@@ -4577,7 +4577,9 @@ function createRatioPattern2(client, acc) {
  * @typedef {Object} MetricsTree_Price_Oracle
  * @property {MetricPattern11<CentsUnsigned>} priceCents
  * @property {MetricPattern6<OHLCCentsUnsigned>} ohlcCents
- * @property {MetricPattern6<OHLCDollars>} ohlcDollars
+ * @property {CloseHighLowOpenPattern2<CentsUnsigned>} split
+ * @property {MetricPattern1<OHLCCentsUnsigned>} ohlc
+ * @property {MetricPattern1<OHLCDollars>} ohlcDollars
  */
 
 /**
@@ -6744,7 +6746,9 @@ class BrkClient extends BrkClientBase {
         oracle: {
           priceCents: createMetricPattern11(this, 'oracle_price_cents'),
           ohlcCents: createMetricPattern6(this, 'oracle_ohlc_cents'),
-          ohlcDollars: createMetricPattern6(this, 'oracle_ohlc_dollars'),
+          split: createCloseHighLowOpenPattern2(this, 'oracle_price'),
+          ohlc: createMetricPattern1(this, 'oracle_price_ohlc'),
+          ohlcDollars: createMetricPattern1(this, 'oracle_ohlc_dollars'),
         },
       },
       distribution: {
@@ -7361,10 +7365,10 @@ class BrkClient extends BrkClientBase {
   /**
    * Live BTC/USD price
    *
-   * Returns the current BTC/USD price in cents, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
+   * Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
    *
    * Endpoint: `GET /api/mempool/price`
-   * @returns {Promise<number>}
+   * @returns {Promise<Dollars>}
    */
   async getLivePrice() {
     return this.getJson(`/api/mempool/price`);

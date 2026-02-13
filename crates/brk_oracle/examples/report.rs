@@ -229,7 +229,8 @@ fn main() {
             if ref_config.excluded_output_types.contains(&output_type) {
                 continue;
             }
-            if *sats < ref_config.min_sats || (ref_config.exclude_round_btc && sats.is_round_btc())
+            if *sats < ref_config.min_sats
+                || (ref_config.exclude_common_round_values && sats.is_common_round_value())
             {
                 continue;
             }
@@ -339,7 +340,7 @@ fn main() {
         daily_days += 1;
     }
 
-    fn daily_stats(errors: &mut Vec<f64>) -> (f64, f64, f64) {
+    fn daily_stats(errors: &mut [f64]) -> (f64, f64, f64) {
         let n = errors.len() as f64;
         let rmse = (errors.iter().map(|e| e * e).sum::<f64>() / n).sqrt();
         errors.sort_by(|a, b| a.abs().partial_cmp(&b.abs()).unwrap());

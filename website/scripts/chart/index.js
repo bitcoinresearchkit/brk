@@ -472,10 +472,48 @@ export function createChart({ parent, brk, fitContent }) {
         lastStamp: null,
         /** @type {string | null} */
         lastTimeStamp: null,
+        /** @type {number | null} */
+        lastVersion: null,
+        /** @type {number | null} */
+        lastTimeVersion: null,
         /** @type {VoidFunction | null} */
         fetch: null,
         /** @type {((data: MetricData<number>) => void) | null} */
         onTime: null,
+        reset() {
+          this.hasData = false;
+          this.lastTime = -Infinity;
+          this.lastStamp = null;
+          this.lastTimeStamp = null;
+          this.lastVersion = null;
+          this.lastTimeVersion = null;
+        },
+        /**
+         * @param {string | null} valuesStamp
+         * @param {string} timeStamp
+         * @param {number | null} valuesVersion
+         * @param {number} timeVersion
+         */
+        shouldProcess(valuesStamp, timeStamp, valuesVersion, timeVersion) {
+          if (
+            valuesStamp === this.lastStamp &&
+            timeStamp === this.lastTimeStamp
+          )
+            return false;
+          // Version change means data was recomputed, needs full reload
+          if (
+            valuesVersion !== this.lastVersion ||
+            timeVersion !== this.lastTimeVersion
+          ) {
+            this.hasData = false;
+            this.lastTime = -Infinity;
+          }
+          this.lastStamp = valuesStamp;
+          this.lastTimeStamp = timeStamp;
+          this.lastVersion = valuesVersion;
+          this.lastTimeVersion = timeVersion;
+          return true;
+        },
       };
 
       /** @type {AnySeries} */
@@ -523,8 +561,7 @@ export function createChart({ parent, brk, fitContent }) {
       /** @param {ChartableIndex} idx */
       function setupIndexEffect(idx) {
         // Reset data state for new index
-        state.hasData = false;
-        state.lastTime = -Infinity;
+        state.reset();
         state.fetch = null;
 
         const _valuesEndpoint = metric.by[idx];
@@ -663,17 +700,21 @@ export function createChart({ parent, brk, fitContent }) {
           let valuesData = null;
           /** @type {string | null} */
           let valuesStamp = null;
+          /** @type {number | null} */
+          let valuesVersion = null;
 
           function tryProcess() {
             if (seriesGeneration !== generation) return;
             if (!timeData || !valuesData) return;
             if (
-              valuesStamp === state.lastStamp &&
-              timeData.stamp === state.lastTimeStamp
+              !state.shouldProcess(
+                valuesStamp,
+                timeData.stamp,
+                valuesVersion,
+                timeData.version,
+              )
             )
               return;
-            state.lastStamp = valuesStamp;
-            state.lastTimeStamp = timeData.stamp;
             if (timeData.data.length && valuesData.length) {
               processData(timeData.data, valuesData);
             }
@@ -691,12 +732,14 @@ export function createChart({ parent, brk, fitContent }) {
           if (cachedValues) {
             valuesData = cachedValues.data;
             valuesStamp = cachedValues.stamp;
+            valuesVersion = cachedValues.version;
             tryProcess();
           }
           await valuesEndpoint.slice(-10000).fetch((result) => {
             cache.set(valuesEndpoint.path, result);
             valuesData = result.data;
             valuesStamp = result.stamp;
+            valuesVersion = result.version;
             tryProcess();
           });
         }
@@ -1253,6 +1296,7 @@ export function createChart({ parent, brk, fitContent }) {
         persisted.set(value);
         applyScaleForUnit(paneIndex);
       },
+      toTitle: (c) => (c === "lin" ? "Linear scale" : "Logarithmic scale"),
     });
     td.append(radios);
   }

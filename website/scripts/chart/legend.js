@@ -11,9 +11,9 @@ export function createLegend() {
 
   /** @param {HTMLElement} el */
   function captureScroll(el) {
-    el.addEventListener("wheel", (e) => e.stopPropagation());
-    el.addEventListener("touchstart", (e) => e.stopPropagation());
-    el.addEventListener("touchmove", (e) => e.stopPropagation());
+    el.addEventListener("wheel", (e) => e.stopPropagation(), { passive: true });
+    el.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: true });
+    el.addEventListener("touchmove", (e) => e.stopPropagation(), { passive: true });
   }
   captureScroll(items);
 

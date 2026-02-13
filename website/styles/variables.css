@@ -32,8 +32,6 @@
   --off-color: var(--gray);
   --border-color: light-dark(var(--light-gray), var(--dark-gray));
 
-  --font-size-2xs: 0.625rem;
-  --line-height-2xs: 1rem;
   --font-size-xs: 0.75rem;
   --line-height-xs: calc(1 / 0.75);
   --font-size-sm: 0.875rem;
@@ -44,24 +42,10 @@
   --line-height-lg: calc(1.75 / 1.125);
   --font-size-xl: 1.25rem;
   --line-height-xl: calc(1.75 / 1.25);
-  --font-size-2xl: 1.5rem;
-  --line-height-2xl: calc(2 / 1.5);
-  --font-size-3xl: 1.75rem;
-  --line-height-3xl: calc(2.25 / 1.75);
 
   --main-padding: 2rem;
-
-  @media (min-width: 768px) {
-    --main-padding: 2rem;
-  }
-
   --negative-main-padding: calc(-1 * var(--main-padding));
   --font-weight-base: 400;
-  --transform-scale-active: scaleY(0.9);
   --default-main-width: 25rem;
   --bottom-area: 69vh;
-}
-
-[data-resize] {
-  user-select: none;
 }

@@ -7,11 +7,12 @@ use vecdb::{Database, IterableCloneableVec, LazyVecFrom2, PAGE_SIZE};
 
 use super::Vecs;
 use crate::{
-    distribution, indexes, price,
+    distribution, indexes,
     internal::{
         ComputedFromDateAverage, ComputedFromDateLast, DifferenceF32, DollarsIdentity,
         LazyFromHeightLast, LazyValueFromHeightLast, SatsIdentity,
     },
+    price,
 };
 
 const VERSION: Version = Version::ONE;
@@ -61,10 +62,18 @@ impl Vecs {
         });
 
         // Growth rates
-        let market_cap_growth_rate =
-            ComputedFromDateLast::forced_import(&db, "market_cap_growth_rate", version, indexes)?;
-        let realized_cap_growth_rate =
-            ComputedFromDateLast::forced_import(&db, "realized_cap_growth_rate", version, indexes)?;
+        let market_cap_growth_rate = ComputedFromDateLast::forced_import(
+            &db,
+            "market_cap_growth_rate",
+            version + Version::ONE,
+            indexes,
+        )?;
+        let realized_cap_growth_rate = ComputedFromDateLast::forced_import(
+            &db,
+            "realized_cap_growth_rate",
+            version + Version::ONE,
+            indexes,
+        )?;
         let cap_growth_rate_diff = LazyVecFrom2::transformed::<DifferenceF32>(
             "cap_growth_rate_diff",
             version,

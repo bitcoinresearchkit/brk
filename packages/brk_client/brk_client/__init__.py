@@ -3939,7 +3939,9 @@ class MetricsTree_Price_Oracle:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.price_cents: MetricPattern11[CentsUnsigned] = MetricPattern11(client, 'oracle_price_cents')
         self.ohlc_cents: MetricPattern6[OHLCCentsUnsigned] = MetricPattern6(client, 'oracle_ohlc_cents')
-        self.ohlc_dollars: MetricPattern6[OHLCDollars] = MetricPattern6(client, 'oracle_ohlc_dollars')
+        self.split: CloseHighLowOpenPattern2[CentsUnsigned] = CloseHighLowOpenPattern2(client, 'oracle_price')
+        self.ohlc: MetricPattern1[OHLCCentsUnsigned] = MetricPattern1(client, 'oracle_price_ohlc')
+        self.ohlc_dollars: MetricPattern1[OHLCDollars] = MetricPattern1(client, 'oracle_ohlc_dollars')
 
 class MetricsTree_Price:
     """Metrics tree node."""
@@ -5503,10 +5505,10 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/mempool/info`"""
         return self.get_json('/api/mempool/info')
 
-    def get_live_price(self) -> float:
+    def get_live_price(self) -> Dollars:
         """Live BTC/USD price.
 
-        Returns the current BTC/USD price in cents, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
+        Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
 
         Endpoint: `GET /api/mempool/price`"""
         return self.get_json('/api/mempool/price')

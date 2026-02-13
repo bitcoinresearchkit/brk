@@ -176,6 +176,7 @@ export function createLabeledInput({
  * @param {(value: T) => void} [args.onChange]
  * @param {(choice: T) => string} [args.toKey]
  * @param {(choice: T) => string} [args.toLabel]
+ * @param {(choice: T) => string | undefined} [args.toTitle]
  */
 export function createRadios({
   id,
@@ -184,6 +185,7 @@ export function createRadios({
   onChange,
   toKey = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
   toLabel = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
+  toTitle,
 }) {
   const field = window.document.createElement("div");
   field.classList.add("field");
@@ -208,6 +210,7 @@ export function createRadios({
         inputName: fieldId,
         inputValue: choiceKey,
         inputChecked: choiceKey === initialKey,
+        title: toTitle?.(choice),
         type: "radio",
       });
 
@@ -314,31 +317,3 @@ export function createHeader(title = "", level = 1) {
   };
 }
 
-/**
- * @template {string} Name
- * @template {string} Value
- * @template {Value | {name: Name; value: Value}} T
- * @param {T} arg
- */
-export function createOption(arg) {
-  const option = window.document.createElement("option");
-  if (typeof arg === "object") {
-    option.value = arg.value;
-    option.innerText = arg.name;
-  } else {
-    option.value = arg;
-    option.innerText = arg;
-  }
-  return option;
-}
-
-
-
-/**
- * @param {'left' | 'bottom' | 'top' | 'right'} position
- */
-export function createShadow(position) {
-  const div = window.document.createElement("div");
-  div.classList.add(`shadow-${position}`);
-  return div;
-}

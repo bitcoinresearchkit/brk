@@ -249,8 +249,10 @@ impl UTXOCohorts {
             .try_for_each(|v| v.compute_rest_part1(indexes, price, starting_indexes, exit))?;
 
         // 2. Compute net_sentiment.height for separate cohorts (greed - pain)
-        self.par_iter_separate_mut()
-            .try_for_each(|v| v.metrics.compute_net_sentiment_height(starting_indexes, exit))?;
+        self.par_iter_separate_mut().try_for_each(|v| {
+            v.metrics
+                .compute_net_sentiment_height(starting_indexes, exit)
+        })?;
 
         // 3. Compute net_sentiment.height for aggregate cohorts (weighted average)
         self.for_each_aggregate(|vecs, sources| {
@@ -260,8 +262,10 @@ impl UTXOCohorts {
         })?;
 
         // 4. Compute net_sentiment dateindex for ALL cohorts
-        self.par_iter_mut()
-            .try_for_each(|v| v.metrics.compute_net_sentiment_rest(indexes, starting_indexes, exit))
+        self.par_iter_mut().try_for_each(|v| {
+            v.metrics
+                .compute_net_sentiment_rest(indexes, starting_indexes, exit)
+        })
     }
 
     /// Second phase of post-processing: compute relative metrics.
@@ -468,7 +472,8 @@ impl UTXOCohorts {
             // Collect merged entries during the merge (already in sorted order)
             // Pre-allocate with max possible unique prices (actual count likely lower due to dedup)
             let max_unique_prices = relevant.iter().map(|e| e.len()).max().unwrap_or(0);
-            let mut merged: Vec<(CentsUnsignedCompact, Sats)> = Vec::with_capacity(max_unique_prices);
+            let mut merged: Vec<(CentsUnsignedCompact, Sats)> =
+                Vec::with_capacity(max_unique_prices);
 
             // Finalize a price point: compute percentiles and accumulate for merged vec
             let mut finalize_price = |price: CentsUnsigned, sats: u64, usd: u128| {
@@ -489,7 +494,8 @@ impl UTXOCohorts {
                 }
 
                 // Round to nearest dollar with N significant digits for storage
-                let rounded: CentsUnsignedCompact = price.round_to_dollar(COST_BASIS_PRICE_DIGITS).into();
+                let rounded: CentsUnsignedCompact =
+                    price.round_to_dollar(COST_BASIS_PRICE_DIGITS).into();
 
                 // Merge entries with same rounded price using last_mut
                 if let Some((last_price, last_sats)) = merged.last_mut()
@@ -562,7 +568,10 @@ impl UTXOCohorts {
             let dir = states_path.join(format!("utxo_{cohort_name}_cost_basis/by_date"));
             fs::create_dir_all(&dir)?;
             let path = dir.join(date.to_string());
-            fs::write(path, CostBasisDistribution::serialize_iter(merged.into_iter())?)?;
+            fs::write(
+                path,
+                CostBasisDistribution::serialize_iter(merged.into_iter())?,
+            )?;
 
             Ok(())
         })

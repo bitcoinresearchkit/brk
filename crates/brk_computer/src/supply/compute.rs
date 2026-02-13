@@ -52,7 +52,7 @@ impl Vecs {
                     vec.compute_percentage_change(
                         starting_indexes.dateindex,
                         mcap_dateindex,
-                        30,
+                        365,
                         exit,
                     )?;
                     Ok(())
@@ -66,7 +66,7 @@ impl Vecs {
                     vec.compute_percentage_change(
                         starting_indexes.dateindex,
                         rcap_dateindex,
-                        30,
+                        365,
                         exit,
                     )?;
                     Ok(())

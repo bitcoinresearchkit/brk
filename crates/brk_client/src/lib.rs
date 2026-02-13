@@ -5145,7 +5145,9 @@ impl MetricsTree_Price_Usd {
 pub struct MetricsTree_Price_Oracle {
     pub price_cents: MetricPattern11<CentsUnsigned>,
     pub ohlc_cents: MetricPattern6<OHLCCentsUnsigned>,
-    pub ohlc_dollars: MetricPattern6<OHLCDollars>,
+    pub split: CloseHighLowOpenPattern2<CentsUnsigned>,
+    pub ohlc: MetricPattern1<OHLCCentsUnsigned>,
+    pub ohlc_dollars: MetricPattern1<OHLCDollars>,
 }
 
 impl MetricsTree_Price_Oracle {
@@ -5153,7 +5155,9 @@ impl MetricsTree_Price_Oracle {
         Self {
             price_cents: MetricPattern11::new(client.clone(), "oracle_price_cents".to_string()),
             ohlc_cents: MetricPattern6::new(client.clone(), "oracle_ohlc_cents".to_string()),
-            ohlc_dollars: MetricPattern6::new(client.clone(), "oracle_ohlc_dollars".to_string()),
+            split: CloseHighLowOpenPattern2::new(client.clone(), "oracle_price".to_string()),
+            ohlc: MetricPattern1::new(client.clone(), "oracle_price_ohlc".to_string()),
+            ohlc_dollars: MetricPattern1::new(client.clone(), "oracle_ohlc_dollars".to_string()),
         }
     }
 }
@@ -6318,10 +6322,10 @@ impl BrkClient {
 
     /// Live BTC/USD price
     ///
-    /// Returns the current BTC/USD price in cents, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
+    /// Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
     ///
     /// Endpoint: `GET /api/mempool/price`
-    pub fn get_live_price(&self) -> Result<f64> {
+    pub fn get_live_price(&self) -> Result<Dollars> {
         self.base.get_json(&format!("/api/mempool/price"))
     }
 

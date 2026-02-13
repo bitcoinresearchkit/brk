@@ -1,3 +1,5 @@
+use std::hash::{DefaultHasher, Hash, Hasher};
+
 use brk_types::RecommendedFees;
 
 use super::{fees, stats::{self, BlockStats}};
@@ -35,5 +37,15 @@ impl Snapshot {
             block_stats,
             fees,
         }
+    }
+
+    /// Hash of the first projected block (the one about to be mined).
+    pub fn next_block_hash(&self) -> u64 {
+        let Some(block) = self.blocks.first() else {
+            return 0;
+        };
+        let mut hasher = DefaultHasher::new();
+        block.hash(&mut hasher);
+        hasher.finish()
     }
 }

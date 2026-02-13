@@ -143,7 +143,7 @@ pub struct Config {
     /// Minimum output value in sats (dust filter).
     pub min_sats: u64,
     /// Exclude round BTC amounts that create false stencil matches.
-    pub exclude_round_btc: bool,
+    pub exclude_common_round_values: bool,
     /// Output types to ignore (e.g. P2TR, P2WSH are noisy).
     pub excluded_output_types: Vec<OutputType>,
 }
@@ -156,7 +156,7 @@ impl Default for Config {
             search_below: 9,
             search_above: 11,
             min_sats: 1000,
-            exclude_round_btc: true,
+            exclude_common_round_values: true,
             excluded_output_types: vec![OutputType::P2TR, OutputType::P2WSH],
         }
     }
@@ -241,7 +241,7 @@ impl Oracle {
         if self.config.excluded_output_types.contains(&output_type) {
             return None;
         }
-        if *sats < self.config.min_sats || (self.config.exclude_round_btc && sats.is_round_btc()) {
+        if *sats < self.config.min_sats || (self.config.exclude_common_round_values && sats.is_common_round_value()) {
             return None;
         }
         sats_to_bin(sats)

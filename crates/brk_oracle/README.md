@@ -36,7 +36,7 @@ All parameters are exposed via Config with sensible defaults:
 - **window_size** (12): number of block histograms in the ring buffer
 - **search_below / search_above** (9 / 11): how far to search around the previous estimate, in bins
 - **min_sats** (1,000): minimum output value, filters dust
-- **exclude_round_btc** (true): exclude round BTC amounts that create false stencil matches
+- **exclude_common_round_values** (true): exclude common round values (d × 10^n, d ∈ {1,2,3,5,6}) that create false stencil matches
 - **excluded_output_types** (P2TR, P2WSH): script types dominated by protocol activity, not round-dollar purchases
 
 ## Inspiration
@@ -69,11 +69,11 @@ Tested over 361,245 blocks (heights 575,000 to 936,244) against exchange OHLC da
 | 95th percentile | 0.55% |
 | 99th percentile | 1.4% |
 | 99.9th percentile | 4.4% |
-| RMSE | 0.39% |
-| Max error | 18.2% |
+| RMSE | 0.38% |
+| Max error | 18.1% |
 | Bias | +0.04 bins (essentially zero) |
-| Blocks > 5% error | 261 (0.07%) |
-| Blocks > 10% error | 40 (0.01%) |
+| Blocks > 5% error | 237 (0.07%) |
+| Blocks > 10% error | 22 (0.006%) |
 | Blocks > 20% error | 0 |
 
 ### Daily candles

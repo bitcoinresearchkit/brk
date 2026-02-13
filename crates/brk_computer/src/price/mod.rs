@@ -67,7 +67,7 @@ impl Vecs {
         let cents = CentsVecs::forced_import(db, version)?;
         let usd = UsdVecs::forced_import(db, version, indexes)?;
         let sats = SatsVecs::forced_import(db, version, indexes)?;
-        let oracle = OracleVecs::forced_import(db, version)?;
+        let oracle = OracleVecs::forced_import(db, version, indexes)?;
 
         Ok(Self {
             db: db.clone(),

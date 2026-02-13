@@ -1,5 +1,6 @@
-import { webSockets } from "./utils/ws.js";
-import * as formatters from "./utils/format.js";
+import { initPrice, onPrice } from "./utils/price.js";
+import { brk } from "./client.js";
+import { stringToId } from "./utils/format.js";
 import { onFirstIntersection, getElementById, isHidden } from "./utils/dom.js";
 import { initOptions } from "./options/full.js";
 import {
@@ -105,9 +106,11 @@ function initFrameSelectors() {
 }
 initFrameSelectors();
 
-webSockets.kraken1dCandle.onLatest((latest) => {
-  console.log("close:", latest.close);
-  window.document.title = `${latest.close.toLocaleString("en-us")} | ${window.location.host}`;
+initPrice(brk);
+
+onPrice((price) => {
+  console.log("close:", price);
+  window.document.title = `${price.toLocaleString("en-us")} | ${window.location.host}`;
 });
 
 const options = initOptions();
@@ -118,7 +121,7 @@ window.addEventListener("popstate", (_event) => {
 
   while (path.length) {
     const id = path.shift();
-    const res = folder.find((v) => id === formatters.stringToId(v.name));
+    const res = folder.find((v) => id === stringToId(v.name));
     if (!res) throw "Option not found";
     if (path.length >= 1) {
       if (!("tree" in res)) {

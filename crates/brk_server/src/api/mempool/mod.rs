@@ -1,8 +1,8 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{extract::State, http::HeaderMap, response::Redirect, routing::get};
-use brk_types::{MempoolBlock, MempoolInfo, RecommendedFees, Txid};
+use brk_types::{Dollars, MempoolBlock, MempoolInfo, RecommendedFees, Txid};
 
-use crate::{CacheStrategy, extended::TransformResponseExtended};
+use crate::extended::TransformResponseExtended;
 
 use super::AppState;
 
@@ -18,7 +18,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 "/api/mempool/info",
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::MaxAge(5), |q| q.mempool_info()).await
+                        state.cached_json(&headers, state.mempool_cache(), |q| q.mempool_info()).await
                     },
                     |op| {
                         op.id("get_mempool")
@@ -34,7 +34,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 "/api/mempool/txids",
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::MaxAge(5), |q| q.mempool_txids()).await
+                        state.cached_json(&headers, state.mempool_cache(), |q| q.mempool_txids()).await
                     },
                     |op| {
                         op.id("get_mempool_txids")
@@ -50,7 +50,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 "/api/v1/fees/recommended",
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::MaxAge(3), |q| q.recommended_fees()).await
+                        state.cached_json(&headers, state.mempool_cache(), |q| q.recommended_fees()).await
                     },
                     |op| {
                         op.id("get_recommended_fees")
@@ -67,7 +67,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {
                         state
-                            .cached_json(&headers, CacheStrategy::MaxAge(5), |q| q.live_price())
+                            .cached_json(&headers, state.mempool_cache(), |q| q.live_price())
                             .await
                     },
                     |op| {
@@ -75,11 +75,11 @@ impl MempoolRoutes for ApiRouter<AppState> {
                             .mempool_tag()
                             .summary("Live BTC/USD price")
                             .description(
-                                "Returns the current BTC/USD price in cents, derived from \
+                                "Returns the current BTC/USD price in dollars, derived from \
                                 on-chain round-dollar output patterns in the last 12 blocks \
                                 plus mempool.",
                             )
-                            .ok_response::<u64>()
+                            .ok_response::<Dollars>()
                             .server_error()
                     },
                 ),
@@ -88,7 +88,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 "/api/v1/fees/mempool-blocks",
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::MaxAge(5), |q| q.mempool_blocks()).await
+                        state.cached_json(&headers, state.mempool_cache(), |q| q.mempool_blocks()).await
                     },
                     |op| {
                         op.id("get_mempool_blocks")

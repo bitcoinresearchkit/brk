@@ -4,7 +4,7 @@ import { serdeChartableIndex } from "../utils/serde.js";
 import { Unit } from "../utils/units.js";
 import { createChart } from "../chart/index.js";
 import { colors } from "../utils/colors.js";
-import { webSockets } from "../utils/ws.js";
+import { latestPrice, onPrice } from "../utils/price.js";
 import { brk } from "../client.js";
 
 const ONE_BTC_IN_SATS = 100_000_000;
@@ -63,8 +63,8 @@ export function init() {
   }
 
   function updatePriceWithLatest() {
-    const latest = webSockets.kraken1dCandle.latest();
-    if (!latest) return;
+    const latest = latestPrice();
+    if (latest === null) return;
 
     const priceSeries = chart.panes[0].series[0];
     const unit = chart.panes[0].unit;
@@ -78,8 +78,8 @@ export function init() {
     // Convert to sats if needed
     const close =
       unit === Unit.sats
-        ? Math.floor(ONE_BTC_IN_SATS / latest.close)
-        : latest.close;
+        ? Math.floor(ONE_BTC_IN_SATS / latest)
+        : latest;
 
     priceSeries.update({ ...last, close });
   }
@@ -101,7 +101,7 @@ export function init() {
   };
 
   // Live price update listener
-  webSockets.kraken1dCandle.onLatest(updatePriceWithLatest);
+  onPrice(updatePriceWithLatest);
 }
 
 const ALL_CHOICES = /** @satisfies {ChartableIndexName[]} */ ([

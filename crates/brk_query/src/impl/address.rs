@@ -201,6 +201,16 @@ impl Query {
         Ok(utxos)
     }
 
+    pub fn address_mempool_hash(&self, address: &Address) -> u64 {
+        let Some(mempool) = self.mempool() else {
+            return 0;
+        };
+        let Ok(bytes) = AddressBytes::from_str(address) else {
+            return 0;
+        };
+        mempool.address_hash(&bytes)
+    }
+
     pub fn address_mempool_txids(&self, address: Address) -> Result<Vec<Txid>> {
         let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
 

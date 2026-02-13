@@ -12,9 +12,9 @@ pub enum CacheStrategy {
     /// Etag = VERSION only, Cache-Control: must-revalidate
     Static,
 
-    /// Volatile data (mempool) - no etag, just max-age
-    /// Cache-Control: max-age={seconds}
-    MaxAge(u64),
+    /// Mempool data - etag from next projected block hash + short max-age
+    /// Etag = VERSION-m{hash:x}, Cache-Control: max-age=1, must-revalidate
+    MempoolHash(u64),
 }
 
 /// Resolved cache parameters
@@ -50,9 +50,9 @@ impl CacheParams {
                 etag: Some(VERSION.to_string()),
                 cache_control: "public, max-age=1, must-revalidate".into(),
             },
-            MaxAge(secs) => Self {
-                etag: None,
-                cache_control: format!("public, max-age={secs}"),
+            MempoolHash(hash) => Self {
+                etag: Some(format!("{VERSION}-m{hash:x}")),
+                cache_control: "public, max-age=1, must-revalidate".into(),
             },
         }
     }

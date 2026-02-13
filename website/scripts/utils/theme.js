@@ -18,7 +18,7 @@ export function onChange(callback) {
 }
 
 /** @param {boolean} value */
-export function setDark(value) {
+function setDark(value) {
   if (dark === value) return;
   dark = value;
   apply(value);

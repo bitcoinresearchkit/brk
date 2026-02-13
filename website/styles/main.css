@@ -1,0 +1,147 @@
+main {
+  order: 1;
+  position: relative;
+  display: flex;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  &::before {
+    top: 0;
+    height: var(--main-padding);
+    background-image: linear-gradient(
+      to top,
+      transparent,
+      var(--background-color)
+    );
+  }
+
+  &::after {
+    bottom: 0;
+    height: 21rem;
+    background-image: linear-gradient(
+      to bottom,
+      transparent,
+      var(--background-color) 90%,
+      var(--background-color)
+    );
+  }
+
+  @media (max-width: 767px) {
+    flex: 1;
+    min-height: 0;
+    width: 100% !important;
+  }
+
+  @media (min-width: 768px) {
+    min-width: 300px;
+    width: var(--default-main-width);
+    max-width: 65dvw;
+  }
+
+  > nav,
+  > search {
+    flex: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: var(--main-padding);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: var(--bottom-area);
+  }
+
+  > footer {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    text-transform: uppercase;
+    z-index: 100;
+    padding-bottom: var(--main-padding);
+
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: var(--main-padding);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    &::before {
+      left: 0;
+      background-image: linear-gradient(
+        to left,
+        transparent,
+        var(--background-color)
+      );
+    }
+
+    &::after {
+      right: 0;
+      background-image: linear-gradient(
+        to right,
+        transparent,
+        var(--background-color)
+      );
+    }
+
+    @media (max-width: 767px) {
+      html[data-display="standalone"] & {
+        margin-bottom: calc(var(--main-padding) + 0.5rem);
+      }
+    }
+
+    > fieldset {
+      display: flex;
+      gap: 1.25rem;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      min-width: 0;
+      margin: -0.5rem 0;
+      padding: 0.5rem var(--main-padding);
+      pointer-events: auto;
+
+      > label,
+      > button {
+        flex-shrink: 0;
+      }
+
+      > button {
+        color: var(--off-color);
+      }
+    }
+  }
+
+  > #resize-bar {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    margin: 0 -2px;
+    z-index: 50;
+
+    html[data-resize] &,
+    &:hover {
+      border-right: 4px;
+      cursor: col-resize;
+      border-color: var(--off-color) !important;
+    }
+
+    @media (min-width: 768px) {
+      display: block;
+    }
+  }
+}

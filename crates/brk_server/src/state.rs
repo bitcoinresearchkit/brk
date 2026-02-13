@@ -30,6 +30,11 @@ pub struct AppState {
 }
 
 impl AppState {
+    pub fn mempool_cache(&self) -> CacheStrategy {
+        let hash = self.sync(|q| q.mempool().map(|m| m.next_block_hash()).unwrap_or(0));
+        CacheStrategy::MempoolHash(hash)
+    }
+
     /// JSON response with caching
     pub async fn cached_json<T, F>(
         &self,

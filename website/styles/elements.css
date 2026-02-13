@@ -1,17 +1,19 @@
 * {
+  border-width: 0;
   border-color: var(--border-color) !important;
   border-style: solid !important;
+
+  background-color: transparent;
 
   &::selection {
     color: var(--white);
     background-color: var(--orange);
   }
-
 }
 
 a {
+  color: inherit;
   display: flow-root;
-  align-items: baseline;
   text-decoration-style: dotted;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
@@ -22,19 +24,9 @@ a {
 
   &:hover {
     text-decoration-style: solid;
-    &,
-    &::after,
-    * {
-      color: var(--color) !important;
-    }
   }
 
   &:active {
-    &,
-    *,
-    &::after {
-      color: var(--orange) !important;
-    }
     text-decoration-color: inherit;
   }
 
@@ -55,7 +47,7 @@ a {
 }
 
 aside {
-  min-width: 0px;
+  min-width: 0;
   position: relative;
   height: 100%;
   width: 100%;
@@ -73,16 +65,11 @@ aside {
   @media (min-width: 768px) {
     border-left: 1px;
     order: 2;
-    margin-bottom: 0rem;
   }
 
   body > &[hidden] {
     display: flex !important;
   }
-}
-
-b {
-  font-weight: 700;
 }
 
 body {
@@ -102,68 +89,21 @@ body {
 }
 
 button {
+  padding: 0;
   cursor: pointer;
   text-transform: inherit;
-
-  &:disabled {
-    color: var(--off-color);
-  }
-
-  &:hover {
-    &,
-    &::after,
-    * {
-      color: var(--color) !important;
-    }
-  }
-
-  &:active {
-    &,
-    &::after,
-    * {
-      color: var(--orange) !important;
-    }
-  }
 }
 
-details {
-  display: block;
-}
-
-div {
-  &:has(> * + button[type="reset"]) {
-    display: flex;
-    gap: 0.5rem;
-    align-items: baseline;
-
-    button {
-      color: var(--off-color);
-      font-size: var(--font-size-sm);
-      line-height: var(--line-height-sm);
-    }
-  }
-}
-
-h1,
-h2 {
+h1 {
   text-transform: uppercase;
   font-size: var(--font-size-xl);
   line-height: var(--line-height-xl);
-  font-weight: 350;
+  font-weight: 300;
 }
 
 h3 {
   font-size: var(--font-size-lg);
   line-height: var(--line-height-lg);
-}
-
-h4 {
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-base);
-}
-
-hr {
-  width: 100%;
 }
 
 html {
@@ -175,14 +115,7 @@ html {
 }
 
 input {
-  text-transform: inherit;
-  border: 0;
   width: 100%;
-  text-align: left;
-
-  &:focus-visible {
-    outline: none;
-  }
 
   &::placeholder {
     color: var(--off-color);
@@ -239,7 +172,7 @@ label {
       color: var(--orange);
     }
 
-    > *:not(input):not(svg) {
+    > *:not(input) {
       width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -253,125 +186,19 @@ label {
 
   &:has(input:checked) {
     color: var(--color);
-    font-style: normal;
   }
-}
-
-main {
-  order: 1;
-  position: relative;
-  display: flex;
-
-  @media (max-width: 767px) {
-    flex: 1;
-    min-height: 0;
-    width: 100% !important;
-  }
-
-  @media (min-width: 768px) {
-    min-width: 300px;
-    width: var(--default-main-width);
-    max-width: 65dvw;
-  }
-
-  > footer {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    left: 0;
-    text-transform: uppercase;
-    margin: var(--main-padding) 0;
-    z-index: 100;
-    pointer-events: none;
-    justify-content: center;
-
-    @media (max-width: 767px) {
-      html[data-display="standalone"] & {
-        margin-bottom: calc(var(--main-padding) + 0.5rem);
-      }
-    }
-
-    > fieldset {
-      display: flex;
-      gap: 1.25rem;
-      overflow-x: auto;
-      scrollbar-width: thin;
-      min-width: 0;
-      margin: -0.5rem 0;
-      padding: 0.5rem var(--main-padding);
-      pointer-events: auto;
-
-      > label,
-      > button {
-        flex-shrink: 0;
-      }
-
-      > button {
-        color: var(--off-color);
-      }
-    }
-  }
-
-  > #resize-bar {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    margin: 0 -2px;
-    z-index: 50;
-
-    html[data-resize] &,
-    &:hover {
-      border-right: 4px;
-      cursor: col-resize;
-      border-color: var(--off-color) !important;
-    }
-
-    @media (min-width: 768px) {
-      display: block;
-    }
-  }
-}
-
-object {
-  background-color: white;
 }
 
 select {
   cursor: pointer;
-  -webkit-appearance: none;
-  -moz-appearance: none;
   appearance: none;
-  background: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="gray"><path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /></svg>')
-    100% 50% no-repeat transparent;
-  /*flex: 1;*/
   flex-shrink: 0;
   width: 100%;
-
-  &:focus-visible {
-    border: 0;
-    outline: none;
-  }
+  text-transform: uppercase;
 }
 
-nav,
-search {
-  flex: 1;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: var(--main-padding);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding-bottom: var(--bottom-area);
-}
-
-sup {
-  opacity: 0.5;
-  margin-left: 0.25rem;
-  font-weight: 500;
+:is(input, select):focus-visible {
+  outline: none;
 }
 
 summary > small {
@@ -383,13 +210,7 @@ small {
   color: var(--off-color);
   font-weight: var(--font-weight-base);
 
-  h4 + & {
-    font-size: var(--font-size-base);
-    line-height: var(--line-height-base);
-  }
-
   select + & {
-    font-weight: var(--font-weight-base);
     font-size: var(--font-size-xs);
 
     + span {
@@ -409,15 +230,10 @@ span {
   }
 }
 
-strong {
-  color: var(--orange);
-}
-
 summary {
   list-style: none;
   display: block;
   cursor: pointer;
-  position: relative;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -427,16 +243,21 @@ summary {
     display: none;
   }
 
+}
+
+:is(a, button, summary) {
   &:hover {
     &,
-    * {
+    *,
+    &::after {
       color: var(--color) !important;
     }
   }
 
   &:active {
     &,
-    * {
+    *,
+    &::after {
       color: var(--orange) !important;
     }
   }
@@ -446,4 +267,12 @@ summary {
   .md\:hidden {
     display: none !important;
   }
+}
+
+[data-resize] {
+  user-select: none;
+}
+
+[hidden] {
+  display: none !important;
 }

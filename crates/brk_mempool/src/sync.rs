@@ -1,4 +1,5 @@
 use std::{
+    hash::{DefaultHasher, Hash, Hasher},
     sync::{
         Arc,
         atomic::{AtomicBool, AtomicU64, Ordering},
@@ -9,7 +10,7 @@ use std::{
 
 use brk_error::Result;
 use brk_rpc::Client;
-use brk_types::{MempoolEntryInfo, MempoolInfo, TxWithHex, Txid, TxidPrefix};
+use brk_types::{AddressBytes, MempoolEntryInfo, MempoolInfo, TxWithHex, Txid, TxidPrefix};
 use derive_more::Deref;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::FxHashMap;
@@ -85,6 +86,20 @@ impl MempoolInner {
 
     pub fn get_block_stats(&self) -> Vec<BlockStats> {
         self.snapshot.read().block_stats.clone()
+    }
+
+    pub fn next_block_hash(&self) -> u64 {
+        self.snapshot.read().next_block_hash()
+    }
+
+    pub fn address_hash(&self, address: &AddressBytes) -> u64 {
+        let addresses = self.addresses.read();
+        let Some((stats, _)) = addresses.get(address) else {
+            return 0;
+        };
+        let mut hasher = DefaultHasher::new();
+        stats.hash(&mut hasher);
+        hasher.finish()
     }
 
     pub fn get_txs(&self) -> RwLockReadGuard<'_, TxStore> {
