@@ -90,8 +90,8 @@
  * @typedef {PartialOption & PartialChartOptionSpecific} PartialChartOption
  *
  * @typedef {Object} ProcessedChartOptionAddons
- * @property {Map<Unit, AnyFetchedSeriesBlueprint[]>} top
- * @property {Map<Unit, AnyFetchedSeriesBlueprint[]>} bottom
+ * @property {() => Map<Unit, AnyFetchedSeriesBlueprint[]>} top
+ * @property {() => Map<Unit, AnyFetchedSeriesBlueprint[]>} bottom
  *
  * @typedef {Required<Omit<PartialChartOption, "top" | "bottom">> & ProcessedChartOptionAddons & ProcessedOptionAddons} ChartOption
  *

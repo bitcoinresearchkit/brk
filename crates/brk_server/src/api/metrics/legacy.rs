@@ -1,14 +1,13 @@
-use std::{net::SocketAddr, time::Duration};
+use std::net::SocketAddr;
 
 use axum::{
     Extension,
-    body::Body,
+    body::{Body, Bytes},
     extract::{Query, State},
     http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
 use brk_types::{Format, MetricSelection, OutputLegacy};
-use quick_cache::sync::GuardResult;
 
 use crate::{
     Result,
@@ -23,57 +22,41 @@ pub async fn handler(
     headers: HeaderMap,
     Extension(addr): Extension<SocketAddr>,
     Query(params): Query<MetricSelection>,
-    State(AppState { query, cache, .. }): State<AppState>,
+    State(state): State<AppState>,
 ) -> Result<Response> {
     // Phase 1: Search and resolve metadata (cheap)
-    let resolved = query.run(move |q| q.resolve(params, max_weight(&addr))).await?;
+    let resolved = state.run(move |q| q.resolve(params, max_weight(&addr))).await?;
 
     let format = resolved.format();
     let etag = resolved.etag();
 
-    // Check if client has fresh cache
     if headers.has_etag(etag.as_str()) {
-        let response = (StatusCode::NOT_MODIFIED, "").into_response();
-        return Ok(response);
+        return Ok((StatusCode::NOT_MODIFIED, "").into_response());
     }
 
-    // Check server-side cache
+    // Phase 2: Format (expensive, server-side cached)
     let cache_key = format!("legacy-{}{}{}", uri.path(), uri.query().unwrap_or(""), etag);
-    let guard_res = cache.get_value_or_guard(&cache_key, Some(Duration::from_millis(50)));
+    let query = &state;
+    let bytes = state
+        .get_or_insert(&cache_key, async move {
+            let out = query.run(move |q| q.format_legacy(resolved)).await?;
+            Ok(match out.output {
+                OutputLegacy::CSV(s) => Bytes::from(s),
+                OutputLegacy::Json(v) => Bytes::from(v.to_vec()),
+            })
+        })
+        .await?;
 
-    let mut response = if let GuardResult::Value(v) = guard_res {
-        Response::new(Body::from(v))
-    } else {
-        // Phase 2: Format (expensive, only on cache miss)
-        let metric_output = query.run(move |q| q.format_legacy(resolved)).await?;
-
-        match metric_output.output {
-            OutputLegacy::CSV(s) => {
-                if let GuardResult::Guard(g) = guard_res {
-                    let _ = g.insert(s.clone().into());
-                }
-                s.into_response()
-            }
-            OutputLegacy::Json(v) => {
-                let json = v.to_vec();
-                if let GuardResult::Guard(g) = guard_res {
-                    let _ = g.insert(json.clone().into());
-                }
-                json.into_response()
-            }
-        }
-    };
-
-    let headers = response.headers_mut();
-    headers.insert_etag(etag.as_str());
-    headers.insert_cache_control(CACHE_CONTROL);
-
+    let mut response = Response::new(Body::from(bytes));
+    let h = response.headers_mut();
+    h.insert_etag(etag.as_str());
+    h.insert_cache_control(CACHE_CONTROL);
     match format {
         Format::CSV => {
-            headers.insert_content_disposition_attachment();
-            headers.insert_content_type_text_csv()
+            h.insert_content_disposition_attachment();
+            h.insert_content_type_text_csv()
         }
-        Format::JSON => headers.insert_content_type_application_json(),
+        Format::JSON => h.insert_content_type_application_json(),
     }
 
     Ok(response)

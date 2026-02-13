@@ -1,9 +1,6 @@
 import { localhost } from "../utils/env.js";
 import { serdeChartableIndex } from "../utils/serde.js";
 
-/** @type {Map<AnyMetricPattern, string[]> | null} */
-export const unused = localhost ? new Map() : null;
-
 /**
  * Check if a metric pattern has at least one chartable index
  * @param {AnyMetricPattern} node
@@ -15,11 +12,12 @@ function hasChartableIndex(node) {
 }
 
 /**
+ * Walk a metrics tree and collect all chartable metric patterns
  * @param {TreeNode | null | undefined} node
  * @param {Map<AnyMetricPattern, string[]>} map
  * @param {string[]} path
  */
-function walk(node, map, path) {
+function walkMetrics(node, map, path) {
   if (node && "by" in node) {
     const metricNode = /** @type {AnyMetricPattern} */ (node);
     if (!hasChartableIndex(metricNode)) return;
@@ -33,32 +31,22 @@ function walk(node, map, path) {
         key.endsWith("State") ||
         key.endsWith("Start") ||
         kn === "mvrv" ||
-        //   kn === "time" ||
-        //   kn === "height" ||
         kn === "constants" ||
         kn === "blockhash" ||
         kn === "date" ||
-        //   kn === "oracle" ||
         kn === "split" ||
-        //   kn === "ohlc" ||
         kn === "outpoint" ||
         kn === "positions" ||
-        //   kn === "outputtype" ||
         kn === "heighttopool" ||
         kn === "txid" ||
         kn.startsWith("timestamp") ||
         kn.startsWith("satdays") ||
         kn.startsWith("satblocks") ||
-        //   kn.endsWith("state") ||
-        //   kn.endsWith("cents") ||
         kn.endsWith("index") ||
         kn.endsWith("indexes")
-        //   kn.endsWith("raw") ||
-        //   kn.endsWith("bytes") ||
-        //   (kn.startsWith("_") && kn.endsWith("start"))
       )
         continue;
-      walk(/** @type {TreeNode | null | undefined} */ (value), map, [
+      walkMetrics(/** @type {TreeNode | null | undefined} */ (value), map, [
         ...path,
         key,
       ]);
@@ -67,29 +55,64 @@ function walk(node, map, path) {
 }
 
 /**
- * Collect all AnyMetricPatterns from tree
- * @param {TreeNode} tree
+ * Walk partial options tree and delete referenced metrics from the map
+ * @param {PartialOptionsTree} options
+ * @param {Map<AnyMetricPattern, string[]>} map
  */
-export function collect(tree) {
-  if (unused) walk(tree, unused, []);
+function walkOptions(options, map) {
+  for (const node of options) {
+    if ("tree" in node && node.tree) {
+      walkOptions(node.tree, map);
+    } else if ("top" in node || "bottom" in node) {
+      const chartNode = /** @type {PartialChartOption} */ (node);
+      markUsedBlueprints(map, chartNode.top);
+      markUsedBlueprints(map, chartNode.bottom);
+    }
+  }
 }
 
 /**
- * Mark a metric as used
- * @param {AnyMetricPattern} metric
+ * @param {Map<AnyMetricPattern, string[]>} map
+ * @param {(AnyFetchedSeriesBlueprint | FetchedPriceSeriesBlueprint)[]} [arr]
  */
-export function markUsed(metric) {
-  unused?.delete(metric);
+function markUsedBlueprints(map, arr) {
+  if (!arr) return;
+  for (let i = 0; i < arr.length; i++) {
+    const metric = arr[i].metric;
+    if (!metric) continue;
+    const maybePriceMetric =
+      /** @type {{ dollars?: AnyMetricPattern, sats?: AnyMetricPattern }} */ (
+        /** @type {unknown} */ (metric)
+      );
+    if (maybePriceMetric.dollars?.by && maybePriceMetric.sats?.by) {
+      map.delete(maybePriceMetric.dollars);
+      map.delete(maybePriceMetric.sats);
+    } else {
+      map.delete(/** @type {AnyMetricPattern} */ (metric));
+    }
+  }
 }
 
-/** Log unused metrics to console */
-export function logUnused() {
-  if (!unused?.size) return;
+/**
+ * Log unused metrics to console (localhost only)
+ * @param {TreeNode} metricsTree
+ * @param {PartialOptionsTree} partialOptions
+ */
+export function logUnused(metricsTree, partialOptions) {
+  if (!localhost) return;
+
+  console.log(extractTreeStructure(partialOptions));
+
+  /** @type {Map<AnyMetricPattern, string[]>} */
+  const all = new Map();
+  walkMetrics(metricsTree, all, []);
+  walkOptions(partialOptions, all);
+
+  if (!all.size) return;
 
   /** @type {Record<string, any>} */
   const tree = {};
-
-  for (const path of unused.values()) {
+  for (const path of all.values()) {
     let current = tree;
     for (let i = 0; i < path.length; i++) {
       const part = path[i];
@@ -102,7 +125,7 @@ export function logUnused() {
     }
   }
 
-  console.log("Unused metrics:", { count: unused.size, tree });
+  console.log("Unused metrics:", { count: all.size, tree });
 }
 
 /**
@@ -121,7 +144,6 @@ export function extractTreeStructure(options) {
     /** @type {Record<string, string[]>} */
     const grouped = {};
     for (const s of series) {
-      // Price patterns in top pane have dollars/sats sub-metrics
       const metric = /** @type {any} */ (s.metric);
       if (isTop && metric?.dollars && metric?.sats) {
         const title = s.title || s.key || "unnamed";
@@ -142,14 +164,12 @@ export function extractTreeStructure(options) {
    * @returns {object}
    */
   function processNode(node) {
-    // Group with children
     if ("tree" in node && node.tree) {
       return {
         name: node.name,
         children: node.tree.map(processNode),
       };
     }
-    // Chart option
     if ("top" in node || "bottom" in node) {
       const chartNode = /** @type {PartialChartOption} */ (node);
       const top = chartNode.top ? groupByUnit(chartNode.top, true) : undefined;
@@ -163,23 +183,11 @@ export function extractTreeStructure(options) {
         ...(bottom && Object.keys(bottom).length > 0 ? { bottom } : {}),
       };
     }
-    // URL option
     if ("url" in node) {
       return { name: node.name, url: true };
     }
-    // Other options (explorer, table, simulation)
     return { name: node.name };
   }
 
   return options.map(processNode);
-}
-
-/**
- * Log the options tree structure to console (localhost only)
- * @param {PartialOptionsTree} options
- */
-export function logTreeStructure(options) {
-  if (!localhost) return;
-  const structure = extractTreeStructure(options);
-  console.log("Options tree structure:", JSON.stringify(structure, null, 2));
 }

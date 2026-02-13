@@ -8,7 +8,6 @@ import {
   setOption as setChartOption,
 } from "./panes/chart.js";
 import { initSearch } from "./panes/search.js";
-import { next } from "./utils/timing.js";
 import { replaceHistory } from "./utils/url.js";
 import { removeStored, writeToStorage } from "./utils/storage.js";
 import {
@@ -195,68 +194,13 @@ function initSelected() {
 }
 initSelected();
 
-onFirstIntersection(navElement, async () => {
+requestIdleCallback(() => options.setParent(navElement));
+
+onFirstIntersection(navElement, () => {
   options.setParent(navElement);
 
-  const option = options.selected.value;
-  if (!option) throw "Selected should be set by now";
-  const path = [...option.path];
-
-  /** @type {HTMLUListElement | null} */
-  let ul = /** @type {any} */ (null);
-  async function getFirstChild() {
-    try {
-      ul = /** @type {HTMLUListElement} */ (navElement.firstElementChild);
-      await next();
-      if (!ul) {
-        await getFirstChild();
-      }
-    } catch (_) {
-      await next();
-      await getFirstChild();
-    }
-  }
-  await getFirstChild();
-  if (!ul) throw Error("Unreachable");
-
-  while (path.length > 1) {
-    const name = path.shift();
-    if (!name) throw "Unreachable";
-    /** @type {HTMLDetailsElement[]} */
-    let detailsList = [];
-    while (!detailsList.length) {
-      detailsList = Array.from(ul.querySelectorAll(":scope > li > details"));
-      if (!detailsList.length) {
-        await next();
-      }
-    }
-    const details = detailsList.find((s) => s.dataset.name == name);
-    if (!details) return;
-    details.open = true;
-    ul = null;
-    while (!ul) {
-      const uls = /** @type {HTMLUListElement[]} */ (
-        Array.from(details.querySelectorAll(":scope > ul"))
-      );
-      if (!uls.length) {
-        await next();
-      } else if (uls.length > 1) {
-        throw "Shouldn't be possible";
-      } else {
-        ul = /** @type {HTMLUListElement} */ (uls.pop());
-      }
-    }
-  }
-  /** @type {HTMLAnchorElement[]} */
-  let anchors = [];
-  while (!anchors.length) {
-    anchors = Array.from(ul.querySelectorAll(":scope > li > a"));
-    if (!anchors.length) {
-      await next();
-    }
-  }
-  anchors
-    .find((a) => a.getAttribute("href") == window.document.location.pathname)
+  navElement
+    .querySelector(`a[href="${window.document.location.pathname}"]`)
     ?.scrollIntoView({
       behavior: "instant",
       block: "center",

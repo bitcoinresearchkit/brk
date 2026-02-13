@@ -91,8 +91,8 @@ export function init() {
     // Set blueprints first so storageId is correct before any index change
     chart.setBlueprints({
       name: opt.title,
-      top: buildTopBlueprints(opt.top),
-      bottom: opt.bottom,
+      top: buildTopBlueprints(opt.top()),
+      bottom: opt.bottom(),
       onDataLoaded: updatePriceWithLatest,
     });
 
@@ -120,11 +120,11 @@ const ALL_CHOICES = /** @satisfies {ChartableIndexName[]} */ ([
  * @returns {ChartableIndexName[]}
  */
 function computeChoices(opt) {
-  if (!opt.top.size && !opt.bottom.size) {
+  if (!opt.top().size && !opt.bottom().size) {
     return [...ALL_CHOICES];
   }
   const rawIndexes = new Set(
-    [Array.from(opt.top.values()), Array.from(opt.bottom.values())]
+    [Array.from(opt.top().values()), Array.from(opt.bottom().values())]
       .flat(2)
       .filter((blueprint) => {
         const path = Object.values(blueprint.metric.by)[0]?.path ?? "";

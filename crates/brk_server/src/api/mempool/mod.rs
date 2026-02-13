@@ -67,7 +67,9 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {
                         state
-                            .cached_json(&headers, state.mempool_cache(), |q| q.live_price())
+                            .server_cached_json(&headers, state.mempool_cache(), "price", |q| {
+                                q.live_price()
+                            })
                             .await
                     },
                     |op| {

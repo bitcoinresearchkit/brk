@@ -3,13 +3,7 @@ import { createButtonElement, createAnchorElement } from "../utils/dom.js";
 import { pushHistory, resetParams } from "../utils/url.js";
 import { readStored, writeToStorage } from "../utils/storage.js";
 import { stringToId } from "../utils/format.js";
-import {
-  collect,
-  markUsed,
-  logUnused,
-  extractTreeStructure,
-} from "./unused.js";
-import { localhost } from "../utils/env.js";
+import { logUnused } from "./unused.js";
 import { setQr } from "../panes/share.js";
 import { getConstant } from "./constants.js";
 import { colors } from "../utils/colors.js";
@@ -17,8 +11,6 @@ import { Unit } from "../utils/units.js";
 import { brk } from "../client.js";
 
 export function initOptions() {
-  collect(brk.metrics);
-
   const LS_SELECTED_KEY = `selected_path`;
 
   const urlPath_ = window.document.location.pathname
@@ -31,11 +23,6 @@ export function initOptions() {
 
   const partialOptions = createPartialOptions();
 
-  // Log tree structure for analysis (localhost only)
-  if (localhost) {
-    console.log(extractTreeStructure(partialOptions));
-  }
-
   /** @type {Option[]} */
   const list = [];
 
@@ -45,18 +32,26 @@ export function initOptions() {
   /** @type {Set<(option: Option) => void>} */
   const selectedListeners = new Set();
 
+  /** @type {HTMLLIElement[]} */
+  let highlightedLis = [];
+
   /**
    * @param {Option | undefined} sel
    */
   function updateHighlight(sel) {
     if (!sel) return;
-    liByPath.forEach((li) => {
+    for (const li of highlightedLis) {
       delete li.dataset.highlight;
-    });
-    for (let i = 1; i <= sel.path.length; i++) {
-      const pathKey = sel.path.slice(0, i).join("/");
+    }
+    highlightedLis = [];
+    let pathKey = "";
+    for (const segment of sel.path) {
+      pathKey = pathKey ? `${pathKey}/${segment}` : segment;
       const li = liByPath.get(pathKey);
-      if (li) li.dataset.highlight = "";
+      if (li) {
+        li.dataset.highlight = "";
+        highlightedLis.push(li);
+      }
     }
   }
 
@@ -87,6 +82,24 @@ export function initOptions() {
       nodePath.length <= selectedPath.length &&
       nodePath.every((v, i) => v === selectedPath[i])
     );
+  }
+
+  /**
+   * @template T
+   * @param {() => T} fn
+   * @returns {() => T}
+   */
+  function lazy(fn) {
+    /** @type {T | undefined} */
+    let cached;
+    let computed = false;
+    return () => {
+      if (!computed) {
+        computed = true;
+        cached = fn();
+      }
+      return /** @type {T} */ (cached);
+    };
   }
 
   /**
@@ -122,11 +135,9 @@ export function initOptions() {
         );
       if (maybePriceMetric.dollars?.by && maybePriceMetric.sats?.by) {
         const { dollars, sats } = maybePriceMetric;
-        markUsed(dollars);
         if (!usdArr) map.set(Unit.usd, (usdArr = []));
         usdArr.push({ ...blueprint, metric: dollars, unit: Unit.usd });
 
-        markUsed(sats);
         if (!satsArr) map.set(Unit.sats, (satsArr = []));
         satsArr.push({ ...blueprint, metric: sats, unit: Unit.sats });
         continue;
@@ -140,7 +151,6 @@ export function initOptions() {
       const unit = regularBlueprint.unit;
       if (!unit) continue;
 
-      markUsed(metric);
       let unitArr = map.get(unit);
       if (!unitArr) map.set(unit, (unitArr = []));
       unitArr.push(regularBlueprint);
@@ -169,7 +179,6 @@ export function initOptions() {
       if (!arr) continue;
       for (const baseValue of values) {
         const metric = getConstant(brk.metrics.constants, baseValue);
-        markUsed(metric);
         arr.push({
           metric,
           title: `${baseValue}`,
@@ -240,8 +249,8 @@ export function initOptions() {
   let savedOption;
 
   /**
-   * @typedef {{ type: "group"; name: string; serName: string; path: string[]; count: number; children: ProcessedNode[] }} ProcessedGroup
-   * @typedef {{ type: "option"; option: Option; path: string[] }} ProcessedOption
+   * @typedef {{ type: "group"; name: string; serName: string; path: string[]; pathKey: string; count: number; children: ProcessedNode[] }} ProcessedGroup
+   * @typedef {{ type: "option"; option: Option; path: string[]; pathKey: string }} ProcessedOption
    * @typedef {ProcessedGroup | ProcessedOption} ProcessedNode
    */
 
@@ -285,6 +294,7 @@ export function initOptions() {
           name: anyPartial.name,
           serName,
           path,
+          pathKey: pathStr,
           count,
           children,
         });
@@ -322,6 +332,10 @@ export function initOptions() {
           );
         } else {
           const title = option.title || name;
+          const topArr = anyPartial.top;
+          const bottomArr = anyPartial.bottom;
+          const topFn = lazy(() => arrayToMap(topArr));
+          const bottomFn = lazy(() => arrayToMap(bottomArr));
           Object.assign(
             option,
             /** @satisfies {ChartOption} */ ({
@@ -329,8 +343,8 @@ export function initOptions() {
               name,
               title,
               path,
-              top: arrayToMap(anyPartial.top),
-              bottom: arrayToMap(anyPartial.bottom),
+              top: topFn,
+              bottom: bottomFn,
             }),
           );
         }
@@ -349,6 +363,7 @@ export function initOptions() {
           type: "option",
           option,
           path,
+          pathKey: pathStr,
         });
       }
     }
@@ -356,8 +371,8 @@ export function initOptions() {
     return { nodes, count: totalCount };
   }
 
+  logUnused(brk.metrics, partialOptions);
   const { nodes: processedTree } = processPartialTree(partialOptions);
-  logUnused();
 
   /**
    * @param {ProcessedNode[]} nodes
@@ -365,16 +380,16 @@ export function initOptions() {
    */
   function buildTreeDOM(nodes, parentEl) {
     const ul = window.document.createElement("ul");
-    parentEl.append(ul);
 
     for (const node of nodes) {
       const li = window.document.createElement("li");
       ul.append(li);
 
-      const pathKey = node.path.join("/");
-      liByPath.set(pathKey, li);
+      liByPath.set(node.pathKey, li);
 
-      if (isOnSelectedPath(node.path)) {
+      const onSelectedPath = isOnSelectedPath(node.path);
+
+      if (onSelectedPath) {
         li.dataset.highlight = "";
       }
 
@@ -392,6 +407,11 @@ export function initOptions() {
         summary.append(count);
 
         let built = false;
+        if (onSelectedPath) {
+          built = true;
+          details.open = true;
+          buildTreeDOM(node.children, details);
+        }
         details.addEventListener("toggle", () => {
           if (details.open && !built) {
             built = true;
@@ -405,6 +425,8 @@ export function initOptions() {
         li.append(element);
       }
     }
+
+    parentEl.append(ul);
   }
 
   /** @type {HTMLElement | null} */
