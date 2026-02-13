@@ -27,10 +27,8 @@ where
         T: Serialize;
     fn new_text(value: &str, etag: &str) -> Self;
     fn new_text_with(status: StatusCode, value: &str, etag: &str) -> Self;
-    fn new_text_cached(value: &str, params: &CacheParams) -> Self;
     fn new_bytes(value: Vec<u8>, etag: &str) -> Self;
     fn new_bytes_with(status: StatusCode, value: Vec<u8>, etag: &str) -> Self;
-    fn new_bytes_cached(value: Vec<u8>, params: &CacheParams) -> Self;
 }
 
 impl ResponseExtended for Response<Body> {
@@ -113,27 +111,5 @@ impl ResponseExtended for Response<Body> {
             return Self::new_not_modified();
         }
         Self::new_json_cached(value, &params)
-    }
-
-    fn new_text_cached(value: &str, params: &CacheParams) -> Self {
-        let mut response = Response::builder().body(value.to_string().into()).unwrap();
-        let headers = response.headers_mut();
-        headers.insert_content_type_text_plain();
-        headers.insert_cache_control(&params.cache_control);
-        if let Some(etag) = &params.etag {
-            headers.insert_etag(etag);
-        }
-        response
-    }
-
-    fn new_bytes_cached(value: Vec<u8>, params: &CacheParams) -> Self {
-        let mut response = Response::builder().body(value.into()).unwrap();
-        let headers = response.headers_mut();
-        headers.insert_content_type_octet_stream();
-        headers.insert_cache_control(&params.cache_control);
-        if let Some(etag) = &params.etag {
-            headers.insert_etag(etag);
-        }
-        response
     }
 }

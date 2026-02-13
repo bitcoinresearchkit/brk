@@ -12,6 +12,15 @@ export function next() {
 }
 
 /**
+ * @param {() => void} callback
+ */
+export function idle(callback) {
+  ("requestIdleCallback" in window ? requestIdleCallback : setTimeout)(
+    callback,
+  );
+}
+
+/**
  *
  * @template {(...args: any[]) => any} F
  * @param {F} callback

@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_oracle::{Config, Oracle, START_HEIGHT, bin_to_cents, cents_to_bin};
+use brk_oracle::{Config, NUM_BINS, Oracle, START_HEIGHT, bin_to_cents, cents_to_bin};
 use brk_types::{
     CentsUnsigned, Close, DateIndex, Height, High, Low, OHLCCentsUnsigned, OHLCDollars, Open,
     OutputType, Sats, TxIndex, TxOutIndex,
@@ -358,7 +358,6 @@ impl Vecs {
         let mut value_iter = indexer.vecs.outputs.value.into_iter();
         let mut outputtype_iter = indexer.vecs.outputs.outputtype.into_iter();
 
-        let mut block_outputs: Vec<(Sats, OutputType)> = Vec::new();
         let mut ref_bins = Vec::with_capacity(range.len());
 
         for h in range {
@@ -382,15 +381,16 @@ impl Vecs {
                 .unwrap_or(TxOutIndex::from(total_outputs))
                 .to_usize();
 
-            block_outputs.clear();
+            let mut hist = [0u32; NUM_BINS];
             for i in out_start..out_end {
-                block_outputs.push((
-                    value_iter.get_at_unwrap(i),
-                    outputtype_iter.get_at_unwrap(i),
-                ));
+                let sats: Sats = value_iter.get_at_unwrap(i);
+                let output_type: OutputType = outputtype_iter.get_at_unwrap(i);
+                if let Some(bin) = oracle.output_to_bin(sats, output_type) {
+                    hist[bin] += 1;
+                }
             }
 
-            ref_bins.push(oracle.process_outputs(block_outputs.iter().copied()));
+            ref_bins.push(oracle.process_histogram(&hist));
         }
 
         ref_bins

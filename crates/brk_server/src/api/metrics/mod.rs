@@ -48,8 +48,8 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/metrics",
             get_with(
-                async |headers: HeaderMap, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.metrics_catalog().clone())).await
+                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::Static, &uri, |q| Ok(q.metrics_catalog().clone())).await
                 },
                 |op| op
                     .id("get_metrics_tree")
@@ -67,10 +67,11 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             "/api/metrics/count",
             get_with(
                 async |
+                    uri: Uri,
                     headers: HeaderMap,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.metric_count())).await
+                    state.cached_json(&headers, CacheStrategy::Static, &uri, |q| Ok(q.metric_count())).await
                 },
                 |op| op
                     .id("get_metrics_count")
@@ -85,10 +86,11 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             "/api/metrics/indexes",
             get_with(
                 async |
+                    uri: Uri,
                     headers: HeaderMap,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.indexes().to_vec())).await
+                    state.cached_json(&headers, CacheStrategy::Static, &uri, |q| Ok(q.indexes().to_vec())).await
                 },
                 |op| op
                     .id("get_indexes")
@@ -105,11 +107,12 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             "/api/metrics/list",
             get_with(
                 async |
+                    uri: Uri,
                     headers: HeaderMap,
                     State(state): State<AppState>,
                     Query(pagination): Query<Pagination>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, move |q| Ok(q.metrics(pagination))).await
+                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| Ok(q.metrics(pagination))).await
                 },
                 |op| op
                     .id("list_metrics")
@@ -124,12 +127,13 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             "/api/metrics/search/{metric}",
             get_with(
                 async |
+                    uri: Uri,
                     headers: HeaderMap,
                     State(state): State<AppState>,
                     Path(path): Path<MetricParam>,
                     Query(query): Query<LimitParam>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, move |q| Ok(q.match_metric(&path.metric, query.limit))).await
+                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| Ok(q.match_metric(&path.metric, query.limit))).await
                 },
                 |op| op
                     .id("search_metrics")
@@ -145,11 +149,12 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             "/api/metric/{metric}",
             get_with(
                 async |
+                    uri: Uri,
                     headers: HeaderMap,
                     State(state): State<AppState>,
                     Path(path): Path<MetricParam>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, move |q| {
+                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| {
                         if let Some(indexes) = q.metric_to_indexes(path.metric.clone()) {
                             return Ok(indexes.clone())
                         }
@@ -296,9 +301,9 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/metrics/cost-basis",
             get_with(
-                async |headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Static, |q| q.cost_basis_cohorts())
+                        .cached_json(&headers, CacheStrategy::Static, &uri, |q| q.cost_basis_cohorts())
                         .await
                 },
                 |op| {
@@ -314,11 +319,12 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/metrics/cost-basis/{cohort}/dates",
             get_with(
-                async |headers: HeaderMap,
+                async |uri: Uri,
+                       headers: HeaderMap,
                        Path(params): Path<CostBasisCohortParam>,
                        State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, move |q| {
+                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
                             q.cost_basis_dates(&params.cohort)
                         })
                         .await
@@ -337,12 +343,13 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/metrics/cost-basis/{cohort}/{date}",
             get_with(
-                async |headers: HeaderMap,
+                async |uri: Uri,
+                       headers: HeaderMap,
                        Path(params): Path<CostBasisParams>,
                        Query(query): Query<CostBasisQuery>,
                        State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Static, move |q| {
+                        .cached_json(&headers, CacheStrategy::Static, &uri, move |q| {
                             q.cost_basis_formatted(
                                 &params.cohort,
                                 params.date,

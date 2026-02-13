@@ -9,6 +9,7 @@ import {
 } from "./panes/chart.js";
 import { initSearch } from "./panes/search.js";
 import { replaceHistory } from "./utils/url.js";
+import { idle } from "./utils/timing.js";
 import { removeStored, writeToStorage } from "./utils/storage.js";
 import {
   asideElement,
@@ -194,7 +195,7 @@ function initSelected() {
 }
 initSelected();
 
-requestIdleCallback(() => options.setParent(navElement));
+idle(() => options.setParent(navElement));
 
 onFirstIntersection(navElement, () => {
   options.setParent(navElement);

@@ -1,7 +1,7 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, Query, State},
-    http::HeaderMap,
+    http::{HeaderMap, Uri},
     response::Redirect,
     routing::get,
 };
@@ -26,11 +26,12 @@ impl AddressRoutes for ApiRouter<AppState> {
             .api_route(
             "/api/address/{address}",
             get_with(async |
+                uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddressParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address(path.address)).await
+                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.address(path.address)).await
             }, |op| op
                 .id("get_address")
                 .addresses_tag()
@@ -46,12 +47,13 @@ impl AddressRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/address/{address}/txs",
             get_with(async |
+                uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddressParam>,
                 Query(params): Query<AddressTxidsParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_txids(path.address, params.after_txid, params.limit)).await
+                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.address_txids(path.address, params.after_txid, params.limit)).await
             }, |op| op
                 .id("get_address_txs")
                 .addresses_tag()
@@ -67,11 +69,12 @@ impl AddressRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/address/{address}/utxo",
             get_with(async |
+                uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddressParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_utxos(path.address)).await
+                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.address_utxos(path.address)).await
             }, |op| op
                 .id("get_address_utxos")
                 .addresses_tag()
@@ -87,12 +90,13 @@ impl AddressRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/address/{address}/txs/mempool",
             get_with(async |
+                uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddressParam>,
                 State(state): State<AppState>
             | {
                 let hash = state.sync(|q| q.address_mempool_hash(&path.address));
-                state.cached_json(&headers, CacheStrategy::MempoolHash(hash), move |q| q.address_mempool_txids(path.address)).await
+                state.cached_json(&headers, CacheStrategy::MempoolHash(hash), &uri, move |q| q.address_mempool_txids(path.address)).await
             }, |op| op
                 .id("get_address_mempool_txs")
                 .addresses_tag()
@@ -107,12 +111,13 @@ impl AddressRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/address/{address}/txs/chain",
             get_with(async |
+                uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddressParam>,
                 Query(params): Query<AddressTxidsParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_txids(path.address, params.after_txid, 25)).await
+                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.address_txids(path.address, params.after_txid, 25)).await
             }, |op| op
                 .id("get_address_confirmed_txs")
                 .addresses_tag()
@@ -128,11 +133,12 @@ impl AddressRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/validate-address/{address}",
             get_with(async |
+                uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<ValidateAddressParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Static, move |_q| Ok(AddressValidation::from_address(&path.address))).await
+                state.cached_json(&headers, CacheStrategy::Static, &uri, move |_q| Ok(AddressValidation::from_address(&path.address))).await
             }, |op| op
                 .id("validate_address")
                 .addresses_tag()

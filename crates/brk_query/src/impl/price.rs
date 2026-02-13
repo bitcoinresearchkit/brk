@@ -16,12 +16,11 @@ impl Query {
 
         if let Some(mempool) = self.mempool() {
             let txs = mempool.get_txs();
-            let mempool_outputs: Vec<_> = txs
-                .values()
-                .flat_map(|tx| &tx.tx().output)
-                .map(|txout| (txout.value, txout.type_()))
-                .collect();
-            oracle.process_outputs(mempool_outputs.into_iter());
+            oracle.process_outputs(
+                txs.values()
+                    .flat_map(|tx| &tx.tx().output)
+                    .map(|txout| (txout.value, txout.type_())),
+            );
         }
 
         Ok(oracle.price_dollars())

@@ -1,7 +1,7 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, State},
-    http::HeaderMap,
+    http::{HeaderMap, Uri},
     response::Redirect,
     routing::get,
 };
@@ -24,11 +24,12 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/tx/{txid}",
             get_with(
                 async |
+                    uri: Uri,
                     headers: HeaderMap,
                     Path(txid): Path<TxidParam>,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Height, move |q| q.transaction(txid)).await
+                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.transaction(txid)).await
                 },
                 |op| op
                     .id("get_tx")
@@ -48,11 +49,12 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/tx/{txid}/status",
             get_with(
                 async |
+                    uri: Uri,
                     headers: HeaderMap,
                     Path(txid): Path<TxidParam>,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Height, move |q| q.transaction_status(txid)).await
+                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.transaction_status(txid)).await
                 },
                 |op| op
                     .id("get_tx_status")
@@ -72,11 +74,12 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/tx/{txid}/hex",
             get_with(
                 async |
+                    uri: Uri,
                     headers: HeaderMap,
                     Path(txid): Path<TxidParam>,
                     State(state): State<AppState>
                 | {
-                    state.cached_text(&headers, CacheStrategy::Height, move |q| q.transaction_hex(txid)).await
+                    state.cached_text(&headers, CacheStrategy::Height, &uri, move |q| q.transaction_hex(txid)).await
                 },
                 |op| op
                     .id("get_tx_hex")
@@ -96,12 +99,13 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/tx/{txid}/outspend/{vout}",
             get_with(
                 async |
+                    uri: Uri,
                     headers: HeaderMap,
                     Path(path): Path<TxidVout>,
                     State(state): State<AppState>
                 | {
                     let txid = TxidParam { txid: path.txid };
-                    state.cached_json(&headers, CacheStrategy::Height, move |q| q.outspend(txid, path.vout)).await
+                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.outspend(txid, path.vout)).await
                 },
                 |op| op
                     .id("get_tx_outspend")
@@ -121,11 +125,12 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/tx/{txid}/outspends",
             get_with(
                 async |
+                    uri: Uri,
                     headers: HeaderMap,
                     Path(txid): Path<TxidParam>,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Height, move |q| q.outspends(txid)).await
+                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.outspends(txid)).await
                 },
                 |op| op
                     .id("get_tx_outspends")

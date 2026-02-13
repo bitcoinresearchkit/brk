@@ -389,10 +389,6 @@ export function initOptions() {
 
       const onSelectedPath = isOnSelectedPath(node.path);
 
-      if (onSelectedPath) {
-        li.dataset.highlight = "";
-      }
-
       if (node.type === "group") {
         const details = window.document.createElement("details");
         details.dataset.name = node.serName;
@@ -439,6 +435,7 @@ export function initOptions() {
     if (parentEl) return;
     parentEl = el;
     buildTreeDOM(processedTree, el);
+    updateHighlight(selected.value);
   }
 
   if (!selected.value) {

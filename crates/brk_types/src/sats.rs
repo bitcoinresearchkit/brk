@@ -83,45 +83,14 @@ impl Sats {
         if self.0 == 0 {
             return false;
         }
-        let log = (self.0 as f64).log10();
-        let magnitude = 10.0_f64.powf(log.floor());
-        let leading = (self.0 as f64 / magnitude).round() as u64;
+        let mag = 10u64.pow(self.0.ilog10());
+        let leading = (self.0 + mag / 2) / mag;
         if !matches!(leading, 1 | 2 | 3 | 5 | 6 | 10) {
             return false;
         }
-        let round_val = leading as f64 * magnitude;
-        (self.0 as f64 - round_val).abs() <= round_val * 0.001
+        let round_val = leading * mag;
+        self.0.abs_diff(round_val) * 1000 <= round_val
     }
-
-    // pub fn is_common_round_value(&self) -> bool {
-    //     const ROUND_SATS: [u64; 19] = [
-    //         1_000,        // 1k sats
-    //         10_000,       // 10k sats
-    //         20_000,       // 20k sats
-    //         30_000,       // 30k sats
-    //         50_000,       // 50k sats
-    //         100_000,      // 100k sats (0.001 BTC)
-    //         200_000,      // 200k sats
-    //         300_000,      // 300k sats
-    //         500_000,      // 500k sats
-    //         1_000_000,    // 0.01 BTC
-    //         2_000_000,    // 0.02 BTC
-    //         3_000_000,    // 0.03 BTC
-    //         5_000_000,    // 0.05 BTC
-    //         10_000_000,   // 0.1 BTC
-    //         20_000_000,   // 0.2 BTC
-    //         30_000_000,   // 0.3 BTC
-    //         50_000_000,   // 0.5 BTC
-    //         100_000_000,  // 1 BTC
-    //         1_000_000_000, // 10 BTC
-    //     ];
-    //     const TOLERANCE: f64 = 0.001; // 0.1%
-    //
-    //     let v = self.0 as f64;
-    //     ROUND_SATS
-    //         .iter()
-    //         .any(|&r| (v - r as f64).abs() <= r as f64 * TOLERANCE)
-    // }
 }
 
 impl Add for Sats {

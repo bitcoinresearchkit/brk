@@ -132,6 +132,7 @@ fn find_best_bin(
     best_bin as f64 + sub_bin
 }
 
+#[derive(Clone)]
 pub struct Config {
     /// EMA decay: 2/(N+1) where N is span in blocks. 2/7 = 6-block span.
     pub alpha: f64,
@@ -162,29 +163,39 @@ impl Default for Config {
     }
 }
 
+#[derive(Clone)]
 pub struct Oracle {
     histograms: Vec<[u32; NUM_BINS]>,
     ema: Box<[f64; NUM_BINS]>,
-    weights: Vec<f64>,
     cursor: usize,
     filled: usize,
     ref_bin: f64,
     config: Config,
+    weights: Vec<f64>,
+    excluded_mask: u16,
+    warmup: bool,
 }
 
 impl Oracle {
     pub fn new(start_bin: f64, config: Config) -> Self {
-        let weights: Vec<f64> = (0..config.window_size)
-            .map(|age| config.alpha * (1.0 - config.alpha).powi(age as i32))
-            .collect();
         let window_size = config.window_size;
+        let decay = 1.0 - config.alpha;
+        let weights: Vec<f64> = (0..window_size)
+            .map(|i| config.alpha * decay.powi(i as i32))
+            .collect();
+        let excluded_mask = config
+            .excluded_output_types
+            .iter()
+            .fold(0u16, |mask, ot| mask | (1 << *ot as u8));
         Self {
             histograms: vec![[0u32; NUM_BINS]; window_size],
             ema: Box::new([0.0; NUM_BINS]),
-            weights,
             cursor: 0,
             filled: 0,
             ref_bin: start_bin,
+            weights,
+            excluded_mask,
+            warmup: false,
             config,
         }
     }
@@ -215,7 +226,10 @@ impl Oracle {
     /// ref_bin is anchored to the checkpoint regardless of warmup drift.
     pub fn from_checkpoint(ref_bin: f64, config: Config, fill: impl FnOnce(&mut Self)) -> Self {
         let mut oracle = Self::new(ref_bin, config);
+        oracle.warmup = true;
         fill(&mut oracle);
+        oracle.warmup = false;
+        oracle.recompute_ema();
         oracle.ref_bin = ref_bin;
         oracle
     }
@@ -237,11 +251,18 @@ impl Oracle {
     }
 
     #[inline(always)]
+    pub fn output_to_bin(&self, sats: Sats, output_type: OutputType) -> Option<usize> {
+        self.eligible_bin(sats, output_type)
+    }
+
+    #[inline(always)]
     fn eligible_bin(&self, sats: Sats, output_type: OutputType) -> Option<usize> {
-        if self.config.excluded_output_types.contains(&output_type) {
+        if self.excluded_mask & (1 << output_type as u8) != 0 {
             return None;
         }
-        if *sats < self.config.min_sats || (self.config.exclude_common_round_values && sats.is_common_round_value()) {
+        if *sats < self.config.min_sats
+            || (self.config.exclude_common_round_values && sats.is_common_round_value())
+        {
             return None;
         }
         sats_to_bin(sats)
@@ -254,24 +275,28 @@ impl Oracle {
             self.filled += 1;
         }
 
-        self.recompute_ema();
+        if !self.warmup {
+            self.recompute_ema();
 
-        self.ref_bin = find_best_bin(
-            &self.ema,
-            self.ref_bin,
-            self.config.search_below,
-            self.config.search_above,
-        );
+            self.ref_bin = find_best_bin(
+                &self.ema,
+                self.ref_bin,
+                self.config.search_below,
+                self.config.search_above,
+            );
+        }
         self.ref_bin
     }
 
     fn recompute_ema(&mut self) {
         self.ema.fill(0.0);
         for age in 0..self.filled {
-            let idx = (self.cursor + self.config.window_size - 1 - age) % self.config.window_size;
+            let idx =
+                (self.cursor + self.config.window_size - 1 - age) % self.config.window_size;
             let weight = self.weights[age];
+            let h = &self.histograms[idx];
             for bin in 0..NUM_BINS {
-                self.ema[bin] += weight * self.histograms[idx][bin] as f64;
+                self.ema[bin] += weight * h[bin] as f64;
             }
         }
     }
