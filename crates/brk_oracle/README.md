@@ -1,65 +1,149 @@
 # brk_oracle
 
-BTC/USD price oracle from on-chain Bitcoin data alone. No exchange feeds, no external APIs. Given an initial price estimate, tracks block by block from height 575,000 (May 2019) onward.
+Pure on-chain BTC/USD price oracle. No exchange feeds, no external APIs. Derives the bitcoin price from transaction data alone. Tracks block by block from height 575,000 (May 2019) onward with 0.1% median error.
 
-## The insight
+Inspired by [UTXOracle](https://utxo.live/oracle/) by [@SteveSimple](https://x.com/SteveSimple), which proved the concept. brk_oracle takes the same core insight and redesigns the algorithm for per-block resolution and rolling operation. See [comparison](#comparison-with-utxoracle) below.
 
-When someone buys $100 of bitcoin at $50,000/BTC, the output is 200,000 sats. At $60,000 it would be 166,667 sats. Millions of round-dollar purchases happen every day at common amounts like $1, $5, $10, $20, $50, $100, $200, $500. Each amount creates its own spike in the histogram of transaction outputs, at a position that depends on the current price. As the price moves, all spikes shift together. The oracle finds those spikes and reads the price from their position.
+## The signal
+
+People buy bitcoin in round dollar amounts. Each purchase creates a transaction output whose satoshi value depends on the current price:
+
+```
+  $100 at  $50,000/BTC  →  200,000 sats
+  $100 at $100,000/BTC  →  100,000 sats
+```
+
+Thousands of these round-dollar purchases happen every day: $10, $20, $50, $100, $200, $500. Plot every transaction output in a block on a log-scale histogram and clear spikes emerge at each round-dollar amount:
+
+```
+       $5  $10 $20 $50 $100 $200 $500  $1k       $5k $10k
+        ↓   ↓   ↓   ↓    ↓    ↓    ↓    ↓         ↓   ↓
+   │            ▌        ▌         ▌                  ▌
+   │    ▌   █   █   ▌    █    ▌    █    █         ▌   █
+   │   ▐█▌ ▐█▌  █▌  █   ▐█▌  ▐█   ▐█▌  ▐█▌  █    ▐█  ▐█▌
+   │▄▄████▄███████▄▐█▌▄█████▄██▌▄█████▄███▄▐█▌▄▄▄███▄████▄▄
+   └─────────────────────────────────────────────────────────→
+                          log₁₀(satoshis)
+```
+
+On a log scale, when the price changes **all spikes shift together** by the same number of bins. A 2x price move always shifts the pattern by ~60 bins, whether bitcoin moves from $1k to $2k or from $50k to $100k:
+
+```
+  price × 2  →  sats ÷ 2  →  shift left by log₁₀(2) × 200 ≈ 60 bins
+
+  $50k:  ···· █ ···· █ ···· █ ···· █ ····
+  $100k: ·· █ ···· █ ···· █ ···· █ ······
+              ◄── 60 bins ──►
+```
+
+The spacing between spikes is constant (set by the ratios between dollar amounts). Only the position changes. The oracle detects this pattern and reads the price from where it lands.
 
 ## How it works
 
 For each new block:
 
-1. **Filter outputs.** Skip the coinbase transaction, then apply the configured filters: excluded script types, dust threshold, and round BTC exclusion.
+### 1. Filter outputs
 
-2. **Map to bins.** Each output's satoshi value is placed into a log-scale histogram with 2,400 bins (200 per 10x): bin = round(log10(sats) * 200). Log-scale is key: if the price doubles, all spikes shift by 60 bins whether bitcoin goes from $1k to $2k or from $50k to $100k.
+Skip the coinbase transaction, then exclude noisy outputs: script types dominated by protocol activity (P2TR, P2WSH by default), dust below 1,000 sats, and round BTC amounts (0.01, 0.1, 1.0 BTC, etc.) that create false spikes unrelated to dollar purchases.
 
-3. **Store in ring buffer.** The block histogram goes into a ring buffer of configurable depth. A single block is too sparse to get a clean signal, so the oracle accumulates several.
+### 2. Map to log-scale bins
 
-4. **Compute EMA.** The stored histograms are combined into a weighted average where recent blocks count more than older ones: weight = alpha * (1 - alpha)^age. Fully recomputed from the ring buffer each block.
+Each remaining output becomes a bin index in a 2,400-bin histogram:
 
-5. **Score with stencil.** A 19-point stencil encodes where the spikes from round-dollar amounts ($1 through $10,000) should appear relative to each other. The oracle slides this stencil across the EMA histogram within a search window around the previous estimate. At each position, it reads the EMA value at each of the 19 expected spike locations, divides each by that offset's peak in the window, and sums them into a score. This gives every dollar amount, common or rare, an equal vote.
+```
+  bin = round(log₁₀(sats) × 200)       200 bins per decade
+```
 
-6. **Pick the best.** The position with the highest score is the new price estimate. Parabolic interpolation between neighbors refines it to fractional-bin precision.
+### 3. Accumulate in ring buffer
 
-The resulting bin converts to a dollar price: 10^(10 - bin/200). The search is bounded to prevent the stencil from matching at wrong price levels, so the oracle tracks incrementally block by block.
+A single block is too sparse for a clean signal. The histogram goes into a ring buffer (default depth: 12 blocks) so the pattern accumulates over recent blocks.
 
-The oracle accepts three input formats: raw block data, an iterator of (sats, output type) pairs, or a pre-built histogram. Each call returns the current estimate as a fractional bin, convertible to cents or dollars. Daily candles can be built from the per-block prices.
+### 4. Compute EMA
 
-The initial seed must be close to the real price at the starting height. The crate includes a PRICES constant with exchange prices for every height before 630,000 to derive a seed from.
+The buffered histograms combine into an exponential moving average, weighting recent blocks more heavily:
 
-## Config
+```
+  weight = α × (1 − α)^age             default α = 2/7 (~6-block span)
+```
 
-All parameters are exposed via Config with sensible defaults:
+Fully recomputed from the ring buffer each block.
 
-- **alpha** (2/7): EMA decay rate, ~6-block span
-- **window_size** (12): number of block histograms in the ring buffer
-- **search_below / search_above** (9 / 11): how far to search around the previous estimate, in bins
-- **min_sats** (1,000): minimum output value, filters dust
-- **exclude_common_round_values** (true): exclude common round values (d × 10^n, d ∈ {1,2,3,5,6}) that create false stencil matches
-- **excluded_output_types** (P2TR, P2WSH): script types dominated by protocol activity, not round-dollar purchases
+### 5. Score with a 19-point stencil
 
-## Inspiration
+The core detection step. A stencil encodes where spikes from 19 round-dollar amounts ($1 through $10,000) should appear relative to each other on the log scale:
 
-Inspired by [UTXOracle](https://utxo.live/oracle/) by [@SteveSimple](https://x.com/SteveSimple), which showed that the BTC/USD price can be derived from on-chain data alone. brk_oracle takes the same core insight (round-dollar detection via log-scale histogram) and redesigns the algorithm for per-block resolution and rolling operation.
+```
+   $1       $5     $10          $50  $100  $200        $1k          $10k
+    ↓        ↓      ↓            ↓     ↓     ↓          ↓             ↓
+    ·────────·──────·────────────·─────·─────·──────────·─────────────·
+  -400     -260   -200          -60    0    +60       +200          +400
+                      bin offsets from the $100 reference point
+                                 (19 offsets total)
+```
 
-### Differences from UTXOracle
+The oracle slides this stencil across the EMA histogram within a narrow search window around the previous estimate. At each candidate position it reads the EMA value at all 19 expected spike locations, divides each by that offset's peak in the window (so rare amounts like $3 get equal voting weight to common amounts like $100) and sums the normalized values into a score.
+
+### 6. Pick the best position
+
+The position with the highest score is the new price estimate. Parabolic interpolation between the best bin and its neighbors refines it to sub-bin precision:
+
+```
+  price = 10^(10 − bin / 200)  dollars
+```
+
+The search window is bounded, so the oracle must track incrementally block by block from a known seed price.
+
+## Pipeline
+
+```
+  block ──→ filter ──→ histogram ──→ ring ──→ EMA ──→ stencil ──→ best bin ──→ $
+             outputs     2,400 bins    buffer           19-point     parabolic
+                          log-scale     ×12              scoring    interpolation
+```
+
+## Input formats
+
+The oracle accepts three input formats:
+
+- **Raw block**: `process_block(&block)` — filters and bins internally
+- **Output pairs**: `process_outputs(iter)` — `(sats, output_type)` pairs, still applies configured filters
+- **Histogram**: `process_histogram(&hist)` — pre-built `[u32; 2400]` array
+
+The initial seed must be close to the real price at the starting height. The crate includes a `PRICES` constant with exchange prices for every height up to 630,000 to derive a seed from.
+
+## Configuration
+
+All parameters via `Config` with sensible defaults:
+
+| Parameter | Default | Purpose |
+|-----------|---------|---------|
+| `alpha` | 2/7 | EMA decay rate (~6-block span) |
+| `window_size` | 12 | Ring buffer depth in blocks |
+| `search_below` / `search_above` | 9 / 11 | Search window around previous estimate (bins) |
+| `min_sats` | 1,000 | Dust threshold |
+| `exclude_common_round_values` | true | Filter d × 10ⁿ (d ∈ {1,2,3,5,6}) to prevent false stencil matches |
+| `excluded_output_types` | P2TR, P2WSH | Script types dominated by protocol activity |
+
+## Comparison with UTXOracle
+
+[UTXOracle](https://utxo.live/oracle/) by [@SteveSimple](https://x.com/SteveSimple) proved that BTC/USD can be derived purely from on-chain data. Both projects share the same core insight (round-dollar detection via log-scale histogram) but make different engineering choices:
 
 | | brk_oracle | UTXOracle |
 |---|---|---|
-| Resolution | Per-block (~10 min) and daily candles | Per-day |
-| Algorithm | Single-pass stencil scoring | Multi-step: rough stencil match, output-to-USD mapping, iterative median convergence |
-| Operation | Rolling EMA over configurable window | Stateless, processes a full day from scratch |
-| Stencil | 19 offsets with per-offset peak normalization | Gaussian smooth + empirically weighted spikes |
-| Round BTC handling | Excludes outputs entirely | Smooths histogram bins by averaging neighbors |
-| Output filtering | Script type, dust threshold, round BTC | 2-output txs only, input count limits, same-day exclusion, witness size limits |
+| Resolution | Per-block (~10 min) + daily candles | Per-run consensus price + per-output intraday scatter |
+| Operation | Rolling: EMA over ring buffer, updates each block | Batch: processes a full day from scratch, stateless |
+| Algorithm | Single-pass stencil scoring with per-offset normalization | Multi-step: dual stencil → rough estimate → output-to-USD mapping → iterative convergence |
+| Stencil | 19 round-USD offsets ($1 to $10k), each normalized to its own peak | 803-point Gaussian + weighted spike template targeting 17 round-USD amounts |
+| Round BTC handling | Excluded from histogram entirely | Histogram bins smoothed by averaging neighbors |
+| Output filtering | Per-output: script type, dust threshold, round BTC | Per-tx: exactly 2 outputs, ≤5 inputs, no same-day inputs, ≤500-byte witness |
 | Validated from | Height 575,000 (May 2019) | December 2023 |
-
-Both use 200 bins per 10x on a log scale.
+| Language | Rust | Python |
+| Dependencies | None (pure computation, caller provides block data) | Bitcoin Core RPC |
+| Bins per decade | 200 | 200 |
 
 ## Accuracy
 
-Tested over 361,245 blocks (heights 575,000 to 936,244) against exchange OHLC data. Error is measured per block as the distance from the oracle's estimate to the exchange high-low range at that height. If the oracle falls within the range, the error is zero.
+Tested over 361,245 blocks (heights 575,000 to 936,244) against exchange OHLC data. Error is measured per block as distance from the oracle estimate to the exchange high/low range at that height. If the oracle falls within the range, the error is zero.
 
 ### Per-block
 
@@ -100,4 +184,4 @@ Oracle daily OHLC built from per-block prices vs exchange daily OHLC:
 | 2025 | 53,113 | 0.11% | 0.25% | 5.8% | 4 | 0 | $74,409–$126,198 |
 | 2026 | 5,904 | 0.11% | 0.27% | 3.3% | 0 | 0 | $60,000–$97,900 |
 
-Accuracy improves over time as on-chain transaction volume grows. Since 2022, zero blocks exceed 10% error. All worst-case errors occur during the fastest intraday price moves in 2019–2021.
+Accuracy improves over time as on-chain transaction volume grows. Since 2022, zero blocks exceed 10% error. All worst-case errors occur during the fastest intraday price moves in 2019 to 2021.
