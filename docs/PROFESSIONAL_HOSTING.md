@@ -1,10 +1,4 @@
-# Hosting
-
-## Self-Hosting
-
-BRK is designed to be self-hosted. See the [brk_cli documentation](https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_cli/README.md#brk_cli) for installation, requirements, and configuration options.
-
-## Professional Hosting
+# Professional Hosting
 
 Need a managed instance? We offer professional hosting services.
 
