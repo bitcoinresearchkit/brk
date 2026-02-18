@@ -7,7 +7,7 @@ use brk_iterator::Blocks;
 use brk_rpc::Client;
 use brk_types::Height;
 use tracing::{debug, info};
-use vecdb::Exit;
+use vecdb::{Exit, ReadableVec};
 mod constants;
 mod indexes;
 mod processor;
@@ -97,7 +97,7 @@ impl Indexer {
     ) -> Result<Indexes> {
         debug!("Starting indexing...");
 
-        let last_blockhash = self.vecs.blocks.blockhash.iter()?.last();
+        let last_blockhash = self.vecs.blocks.blockhash.collect_last();
         debug!("Last block hash found.");
 
         let (starting_indexes, prev_hash) = if let Some(hash) = last_blockhash {
@@ -193,15 +193,20 @@ impl Indexer {
             // Phase 2: Compute TXIDs in parallel
             let txs = processor.compute_txids()?;
 
-            // Phase 3: Process inputs in parallel
-            let txins = processor.process_inputs(&txs)?;
+            // Phase 3+5: Process inputs and outputs in parallel
+            // They access different stores (txidprefix vs addresshash) and
+            // different vecs, so running concurrently hides latency of the
+            // shorter phase behind the longer one.
+            let (txins_result, txouts_result) = rayon::join(
+                || processor.process_inputs(&txs),
+                || processor.process_outputs(),
+            );
+            let txins = txins_result?;
+            let txouts = txouts_result?;
 
             // Phase 4: Collect same-block spent outpoints
             let same_block_spent_outpoints =
                 BlockProcessor::collect_same_block_spent_outpoints(&txins);
-
-            // Phase 5: Process outputs in parallel
-            let txouts = processor.process_outputs()?;
 
             let tx_len = block.txdata.len();
             let inputs_len = txins.len();

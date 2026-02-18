@@ -8,8 +8,8 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, PcoVec, Reader, Stamp,
-    TypedVecIterator,
+    AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, Reader, ReadableVec,
+    Stamp, VecIndex,
 };
 
 use crate::parallel_import;
@@ -171,71 +171,70 @@ impl AddressesVecs {
         addresstype: OutputType,
         typeindex: TypeIndex,
         reader: &Reader,
-    ) -> Result<Option<AddressBytes>> {
+    ) -> Option<AddressBytes> {
         match addresstype {
             OutputType::P2PK65 => self
                 .p2pk65bytes
                 .get_pushed_or_read(typeindex.into(), reader)
-                .map(|opt| opt.map(AddressBytes::from)),
+                .map(AddressBytes::from),
             OutputType::P2PK33 => self
                 .p2pk33bytes
                 .get_pushed_or_read(typeindex.into(), reader)
-                .map(|opt| opt.map(AddressBytes::from)),
+                .map(AddressBytes::from),
             OutputType::P2PKH => self
                 .p2pkhbytes
                 .get_pushed_or_read(typeindex.into(), reader)
-                .map(|opt| opt.map(AddressBytes::from)),
+                .map(AddressBytes::from),
             OutputType::P2SH => self
                 .p2shbytes
                 .get_pushed_or_read(typeindex.into(), reader)
-                .map(|opt| opt.map(AddressBytes::from)),
+                .map(AddressBytes::from),
             OutputType::P2WPKH => self
                 .p2wpkhbytes
                 .get_pushed_or_read(typeindex.into(), reader)
-                .map(|opt| opt.map(AddressBytes::from)),
+                .map(AddressBytes::from),
             OutputType::P2WSH => self
                 .p2wshbytes
                 .get_pushed_or_read(typeindex.into(), reader)
-                .map(|opt| opt.map(AddressBytes::from)),
+                .map(AddressBytes::from),
             OutputType::P2TR => self
                 .p2trbytes
                 .get_pushed_or_read(typeindex.into(), reader)
-                .map(|opt| opt.map(AddressBytes::from)),
+                .map(AddressBytes::from),
             OutputType::P2A => self
                 .p2abytes
                 .get_pushed_or_read(typeindex.into(), reader)
-                .map(|opt| opt.map(AddressBytes::from)),
+                .map(AddressBytes::from),
             _ => unreachable!("get_bytes_by_type called with non-address type"),
         }
-        .map_err(|e| e.into())
     }
 
     pub fn push_bytes_if_needed(&mut self, index: TypeIndex, bytes: AddressBytes) -> Result<()> {
         match bytes {
             AddressBytes::P2PK65(bytes) => self
                 .p2pk65bytes
-                .checked_push(index.into(), *bytes)?,
+                .checked_push(index.into(), bytes)?,
             AddressBytes::P2PK33(bytes) => self
                 .p2pk33bytes
-                .checked_push(index.into(), *bytes)?,
+                .checked_push(index.into(), bytes)?,
             AddressBytes::P2PKH(bytes) => self
                 .p2pkhbytes
-                .checked_push(index.into(), *bytes)?,
+                .checked_push(index.into(), bytes)?,
             AddressBytes::P2SH(bytes) => self
                 .p2shbytes
-                .checked_push(index.into(), *bytes)?,
+                .checked_push(index.into(), bytes)?,
             AddressBytes::P2WPKH(bytes) => self
                 .p2wpkhbytes
-                .checked_push(index.into(), *bytes)?,
+                .checked_push(index.into(), bytes)?,
             AddressBytes::P2WSH(bytes) => self
                 .p2wshbytes
-                .checked_push(index.into(), *bytes)?,
+                .checked_push(index.into(), bytes)?,
             AddressBytes::P2TR(bytes) => self
                 .p2trbytes
-                .checked_push(index.into(), *bytes)?,
+                .checked_push(index.into(), bytes)?,
             AddressBytes::P2A(bytes) => self
                 .p2abytes
-                .checked_push(index.into(), *bytes)?,
+                .checked_push(index.into(), bytes)?,
         };
         Ok(())
     }
@@ -250,11 +249,12 @@ impl AddressesVecs {
     ) -> Result<Box<dyn Iterator<Item = AddressHash> + '_>> {
         macro_rules! make_iter {
             ($height_vec:expr, $bytes_vec:expr) => {{
-                match $height_vec.read_once(height) {
-                    Ok(mut index) => {
-                        let mut iter = $bytes_vec.iter()?;
+                let h = height.to_usize();
+                match $height_vec.collect_one(h) {
+                    Some(mut index) => {
+                        let reader = $bytes_vec.reader();
                         Ok(Box::new(std::iter::from_fn(move || {
-                            iter.get(index).map(|typedbytes| {
+                            reader.try_get(index.to_usize()).map(|typedbytes| {
                                 let bytes = AddressBytes::from(typedbytes);
                                 index.increment();
                                 AddressHash::from(&bytes)
@@ -262,7 +262,7 @@ impl AddressesVecs {
                         }))
                             as Box<dyn Iterator<Item = AddressHash> + '_>)
                     }
-                    Err(_) => {
+                    None => {
                         Ok(Box::new(std::iter::empty())
                             as Box<dyn Iterator<Item = AddressHash> + '_>)
                     }

@@ -1,7 +1,7 @@
 use brk_error::{Error, Result};
 use brk_types::{StoredBool, TxIndex, Txid, TxidPrefix};
 use rayon::prelude::*;
-use vecdb::{AnyVec, GenericStoredVec, TypedVecIterator, likely};
+use vecdb::{AnyVec, WritableVec, likely};
 
 use crate::constants::DUPLICATE_TXIDS;
 
@@ -9,8 +9,7 @@ use super::{BlockProcessor, ComputedTx};
 
 impl<'a> BlockProcessor<'a> {
     pub fn compute_txids(&self) -> Result<Vec<ComputedTx<'a>>> {
-        let will_check_collisions =
-            self.check_collisions && self.stores.txidprefix_to_txindex.needs(self.height);
+        let will_check_collisions = self.check_collisions;
         let base_txindex = self.indexes.txindex;
 
         self.block
@@ -36,6 +35,8 @@ impl<'a> BlockProcessor<'a> {
                     txid,
                     txid_prefix,
                     prev_txindex_opt,
+                    base_size: tx.base_size() as u32,
+                    total_size: tx.total_size() as u32,
                 })
             })
             .collect()
@@ -47,7 +48,6 @@ impl<'a> BlockProcessor<'a> {
             return Ok(());
         }
 
-        let mut txindex_to_txid_iter = self.vecs.transactions.txid.into_iter();
         for ct in txs.iter() {
             let Some(prev_txindex) = ct.prev_txindex_opt else {
                 continue;
@@ -58,8 +58,11 @@ impl<'a> BlockProcessor<'a> {
             }
 
             let len = self.vecs.transactions.txid.len();
-            let prev_txid = txindex_to_txid_iter
-                .get(prev_txindex)
+            let prev_txid = self
+                .vecs
+                .transactions
+                .txid
+                .get_pushed_or_read(prev_txindex, &self.readers.txid)
                 .ok_or(Error::Internal("Missing txid for txindex"))
                 .inspect_err(|_| {
                     dbg!(ct.txindex, len);
@@ -81,11 +84,9 @@ impl<'a> BlockProcessor<'a> {
 
         for ct in txs {
             if ct.prev_txindex_opt.is_none() {
-                self.stores.txidprefix_to_txindex.insert_if_needed(
-                    ct.txid_prefix,
-                    ct.txindex,
-                    height,
-                );
+                self.stores
+                    .txidprefix_to_txindex
+                    .insert(ct.txid_prefix, ct.txindex);
             }
 
             self.vecs
@@ -107,11 +108,11 @@ impl<'a> BlockProcessor<'a> {
             self.vecs
                 .transactions
                 .base_size
-                .checked_push(ct.txindex, ct.tx.base_size().into())?;
+                .checked_push(ct.txindex, ct.base_size.into())?;
             self.vecs
                 .transactions
                 .total_size
-                .checked_push(ct.txindex, ct.tx.total_size().into())?;
+                .checked_push(ct.txindex, ct.total_size.into())?;
             self.vecs
                 .transactions
                 .is_explicitly_rbf

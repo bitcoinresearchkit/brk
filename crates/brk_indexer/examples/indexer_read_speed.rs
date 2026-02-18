@@ -3,16 +3,17 @@ use std::{fs, path::Path, time::Instant};
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::Sats;
+use vecdb::ReadableVec;
 
 fn run_benchmark(indexer: &Indexer) -> (Sats, std::time::Duration, usize) {
     let start = Instant::now();
     let mut sum = Sats::ZERO;
     let mut count = 0;
 
-    for value in indexer.vecs.outputs.value.clean_iter().unwrap() {
+    indexer.vecs.outputs.value.for_each(|value| {
         sum += value;
         count += 1;
-    }
+    });
 
     let duration = start.elapsed();
     (sum, duration, count)

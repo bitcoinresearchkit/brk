@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, OutPoint, OutputType, TxInIndex, TxIndex, TypeIndex, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, GenericStoredVec, ImportableVec, PcoVec, Stamp};
+use vecdb::{AnyStoredVec, Database, WritableVec, ImportableVec, PcoVec, Stamp};
 
 use crate::parallel_import;
 

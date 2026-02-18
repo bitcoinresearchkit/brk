@@ -1,11 +1,12 @@
 use brk_cohort::ByAddressType;
-use vecdb::{GenericStoredVec, Reader};
+use vecdb::Reader;
 
 use crate::Vecs;
 
 /// Readers for vectors that need to be accessed during block processing.
 /// These provide consistent snapshots for reading while the main vectors are being modified.
 pub struct Readers {
+    pub txid: Reader,
     pub txindex_to_first_txoutindex: Reader,
     pub txoutindex_to_outputtype: Reader,
     pub txoutindex_to_typeindex: Reader,
@@ -15,6 +16,7 @@ pub struct Readers {
 impl Readers {
     pub fn new(vecs: &Vecs) -> Self {
         Self {
+            txid: vecs.transactions.txid.create_reader(),
             txindex_to_first_txoutindex: vecs.transactions.first_txoutindex.create_reader(),
             txoutindex_to_outputtype: vecs.outputs.outputtype.create_reader(),
             txoutindex_to_typeindex: vecs.outputs.typeindex.create_reader(),

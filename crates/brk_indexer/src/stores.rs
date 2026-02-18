@@ -12,7 +12,7 @@ use brk_types::{
 use fjall::{Database, PersistMode};
 use rayon::prelude::*;
 use tracing::info;
-use vecdb::{AnyVec, TypedVecIterator, VecIndex, VecIterator};
+use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 use crate::{Indexes, constants::DUPLICATE_TXID_PREFIXES};
 
@@ -214,14 +214,14 @@ impl Stores {
         }
 
         if starting_indexes.height != Height::ZERO {
-            vecs.blocks
-                .blockhash
-                .iter()?
-                .skip(starting_indexes.height.to_usize())
-                .map(BlockHashPrefix::from)
-                .for_each(|prefix| {
+            vecs.blocks.blockhash.for_each_range(
+                starting_indexes.height.to_usize(),
+                vecs.blocks.blockhash.len(),
+                |blockhash| {
+                    let prefix = BlockHashPrefix::from(blockhash);
                     self.blockhashprefix_to_height.remove(prefix);
-                });
+                },
+            );
 
             (starting_indexes.height.to_usize()..vecs.blocks.blockhash.len())
                 .map(Height::from)
@@ -257,16 +257,17 @@ impl Stores {
             let remove_count = txid_vec_len.saturating_sub(skip_count);
             tracing::debug!(
                 "Rollback TXIDs: vec_len={}, skip={}, removing={}",
-                txid_vec_len, skip_count, remove_count
+                txid_vec_len,
+                skip_count,
+                remove_count
             );
 
-            vecs.transactions
-                .txid
-                .iter()?
-                .enumerate()
-                .skip(starting_indexes.txindex.to_usize())
-                .for_each(|(txindex, txid)| {
-                    let txindex = TxIndex::from(txindex);
+            {
+                let start = starting_indexes.txindex.to_usize();
+                let end = vecs.transactions.txid.len();
+                let mut current_index = start;
+                vecs.transactions.txid.for_each_range(start, end, |txid| {
+                    let txindex = TxIndex::from(current_index);
                     let txidprefix = TxidPrefix::from(&txid);
 
                     let is_known_dup =
@@ -279,7 +280,9 @@ impl Stores {
                     if !is_known_dup {
                         self.txidprefix_to_txindex.remove(txidprefix);
                     }
+                    current_index += 1;
                 });
+            }
 
             // Clear caches to prevent stale reads after rollback
             self.txidprefix_to_txindex.clear_caches();
@@ -288,35 +291,38 @@ impl Stores {
         }
 
         if starting_indexes.txoutindex != TxOutIndex::ZERO {
-            let mut txoutindex_to_txindex_iter = vecs.outputs.txindex.iter()?;
-            let mut txindex_to_first_txoutindex_iter =
-                vecs.transactions.first_txoutindex.iter()?;
-            let mut txoutindex_to_outputtype_iter = vecs.outputs.outputtype.iter()?;
-            let mut txoutindex_to_typeindex_iter = vecs.outputs.typeindex.iter()?;
+            let txindex_to_first_txoutindex_reader = vecs.transactions.first_txoutindex.reader();
+            let txoutindex_to_outputtype_reader = vecs.outputs.outputtype.reader();
+            let txoutindex_to_typeindex_reader = vecs.outputs.typeindex.reader();
 
             // Collect unique (addresstype, addressindex, txindex) to avoid double deletion
             // when same address receives multiple outputs in same transaction
             let mut addressindex_txindex_to_remove: FxHashSet<(OutputType, TypeIndex, TxIndex)> =
                 FxHashSet::default();
 
-            for txoutindex in
-                starting_indexes.txoutindex.to_usize()..vecs.outputs.outputtype.len()
-            {
-                let outputtype = txoutindex_to_outputtype_iter.get_at_unwrap(txoutindex);
+            let rollback_start = starting_indexes.txoutindex.to_usize();
+            let rollback_end = vecs.outputs.outputtype.len();
+
+            // Pre-collect PcoVec range to avoid per-element page decompression
+            let txindexes: Vec<TxIndex> =
+                vecs.outputs.txindex.collect_range(rollback_start, rollback_end);
+
+            for (i, txoutindex) in (rollback_start..rollback_end).enumerate() {
+                let outputtype = txoutindex_to_outputtype_reader.get(txoutindex);
                 if !outputtype.is_address() {
                     continue;
                 }
 
                 let addresstype = outputtype;
-                let addressindex = txoutindex_to_typeindex_iter.get_at_unwrap(txoutindex);
-                let txindex = txoutindex_to_txindex_iter.get_at_unwrap(txoutindex);
+                let addressindex = txoutindex_to_typeindex_reader.get(txoutindex);
+                let txindex = txindexes[i];
 
                 addressindex_txindex_to_remove.insert((addresstype, addressindex, txindex));
 
                 let vout = Vout::from(
                     txoutindex
-                        - txindex_to_first_txoutindex_iter
-                            .get_unwrap(txindex)
+                        - txindex_to_first_txoutindex_reader
+                            .get(txindex.to_usize())
                             .to_usize(),
                 );
                 let outpoint = OutPoint::new(txindex, vout);
@@ -331,19 +337,15 @@ impl Stores {
 
             // Collect outputs that were spent after the rollback point
             // We need to: 1) reset their spend status, 2) restore address stores
-            let mut txindex_to_first_txoutindex_iter =
-                vecs.transactions.first_txoutindex.iter()?;
-            let mut txoutindex_to_outputtype_iter = vecs.outputs.outputtype.iter()?;
-            let mut txoutindex_to_typeindex_iter = vecs.outputs.typeindex.iter()?;
-            let mut txinindex_to_txindex_iter = vecs.inputs.txindex.iter()?;
+            let start = starting_indexes.txinindex.to_usize();
+            let end = vecs.inputs.outpoint.len();
+            let outpoints: Vec<OutPoint> = vecs.inputs.outpoint.collect_range(start, end);
+            let spending_txindexes: Vec<TxIndex> = vecs.inputs.txindex.collect_range(start, end);
 
-            let outputs_to_unspend: Vec<_> = vecs
-                .inputs
-                .outpoint
-                .iter()?
-                .enumerate()
-                .skip(starting_indexes.txinindex.to_usize())
-                .filter_map(|(txinindex, outpoint): (usize, OutPoint)| {
+            let outputs_to_unspend: Vec<_> = outpoints
+                .into_iter()
+                .zip(spending_txindexes)
+                .filter_map(|(outpoint, spending_txindex)| {
                     if outpoint.is_coinbase() {
                         return None;
                     }
@@ -353,13 +355,13 @@ impl Stores {
 
                     // Calculate txoutindex from output's txindex and vout
                     let txoutindex =
-                        txindex_to_first_txoutindex_iter.get_unwrap(output_txindex) + vout;
+                        txindex_to_first_txoutindex_reader.get(output_txindex.to_usize()) + vout;
 
                     // Only process if this output was created before the rollback point
                     if txoutindex < starting_indexes.txoutindex {
-                        let outputtype = txoutindex_to_outputtype_iter.get_unwrap(txoutindex);
-                        let typeindex = txoutindex_to_typeindex_iter.get_unwrap(txoutindex);
-                        let spending_txindex = txinindex_to_txindex_iter.get_at_unwrap(txinindex);
+                        let outputtype =
+                            txoutindex_to_outputtype_reader.get(txoutindex.to_usize());
+                        let typeindex = txoutindex_to_typeindex_reader.get(txoutindex.to_usize());
 
                         Some((outpoint, outputtype, typeindex, spending_txindex))
                     } else {
@@ -378,7 +380,11 @@ impl Stores {
                     let addressindex = typeindex;
 
                     // Add to same set as first loop
-                    addressindex_txindex_to_remove.insert((addresstype, addressindex, spending_txindex));
+                    addressindex_txindex_to_remove.insert((
+                        addresstype,
+                        addressindex,
+                        spending_txindex,
+                    ));
 
                     // OutPoints are unique, no dedup needed for insert
                     self.addresstype_to_addressindex_and_unspentoutpoint

@@ -4,7 +4,9 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{AddressBytes, AddressHash, Height, OutputType, TypeIndex, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, PAGE_SIZE, Reader, Stamp};
+use vecdb::{AnyStoredVec, Database, Reader, Stamp};
+
+const PAGE_SIZE: usize = 4096;
 
 use crate::parallel_import;
 
@@ -149,7 +151,7 @@ impl Vecs {
         addresstype: OutputType,
         typeindex: TypeIndex,
         reader: &Reader,
-    ) -> Result<Option<AddressBytes>> {
+    ) -> Option<AddressBytes> {
         self.addresses
             .get_bytes_by_type(addresstype, typeindex, reader)
     }

@@ -1,11 +1,11 @@
-use bitcoin::{Transaction, TxIn, TxOut};
+use bitcoin::{Transaction, TxOut};
 use brk_types::{
     AddressBytes, AddressHash, OutPoint, OutputType, TxIndex, TxOutIndex, Txid, TxidPrefix,
     TypeIndex, Vin, Vout,
 };
 
 #[derive(Debug)]
-pub enum InputSource<'a> {
+pub enum InputSource {
     PreviousBlock {
         vin: Vin,
         txindex: TxIndex,
@@ -15,7 +15,6 @@ pub enum InputSource<'a> {
     },
     SameBlock {
         txindex: TxIndex,
-        txin: &'a TxIn,
         vin: Vin,
         outpoint: OutPoint,
     },
@@ -43,4 +42,6 @@ pub struct ComputedTx<'a> {
     pub txid: Txid,
     pub txid_prefix: TxidPrefix,
     pub prev_txindex_opt: Option<TxIndex>,
+    pub base_size: u32,
+    pub total_size: u32,
 }

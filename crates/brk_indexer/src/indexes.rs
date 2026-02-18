@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_types::Height;
 use tracing::{debug, info};
-use vecdb::{GenericStoredVec, IterableStoredVec, IterableVec, VecIndex, VecValue};
+use vecdb::{AnyStoredVec, WritableVec, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue};
 
 use crate::{Stores, Vecs};
 
@@ -208,12 +208,12 @@ impl IndexesExt for Indexes {
 }
 
 pub fn starting_index<I, T>(
-    height_to_index: &impl IterableStoredVec<Height, I>,
-    index_to_else: &impl IterableVec<I, T>,
+    height_to_index: &PcoVec<Height, I>,
+    index_to_else: &impl ReadableVec<I, T>,
     starting_height: Height,
 ) -> Option<I>
 where
-    I: VecValue + VecIndex + From<usize>,
+    I: VecIndex + PcoVecValue + From<usize>,
     T: VecValue,
 {
     let h = Height::from(height_to_index.stamp());
@@ -222,6 +222,6 @@ where
     } else if h + 1_u32 == starting_height {
         Some(I::from(index_to_else.len()))
     } else {
-        height_to_index.iter().get(starting_height)
+        height_to_index.collect_one(starting_height.to_usize())
     }
 }

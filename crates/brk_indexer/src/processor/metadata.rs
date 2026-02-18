@@ -1,7 +1,7 @@
 use brk_error::{Error, Result};
 use brk_types::{BlockHashPrefix, Timestamp};
 use tracing::error;
-use vecdb::GenericStoredVec;
+use vecdb::WritableVec;
 
 use super::BlockProcessor;
 use crate::IndexesExt;
@@ -26,12 +26,11 @@ impl BlockProcessor<'_> {
 
         self.stores
             .blockhashprefix_to_height
-            .insert_if_needed(blockhash_prefix, height, height);
+            .insert(blockhash_prefix, height);
 
-        self.stores.height_to_coinbase_tag.insert_if_needed(
+        self.stores.height_to_coinbase_tag.insert(
             height,
             self.block.coinbase_tag().into(),
-            height,
         );
 
         self.vecs
@@ -46,14 +45,15 @@ impl BlockProcessor<'_> {
             .blocks
             .timestamp
             .checked_push(height, Timestamp::from(self.block.header.time))?;
+        let (block_total_size, block_weight) = self.block.total_size_and_weight();
         self.vecs
             .blocks
             .total_size
-            .checked_push(height, self.block.total_size().into())?;
+            .checked_push(height, block_total_size.into())?;
         self.vecs
             .blocks
             .weight
-            .checked_push(height, self.block.weight().into())?;
+            .checked_push(height, block_weight.into())?;
 
         Ok(())
     }

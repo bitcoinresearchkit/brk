@@ -1,5 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
+use vecdb::ReadableVec;
 // use brk_types::Sats;
 use std::{fs, path::Path};
 
@@ -14,25 +15,14 @@ fn main() -> Result<()> {
     // let mut sum = Sats::ZERO;
     // let mut count: usize = 0;
 
-    // for value in indexer.vecs.txoutindex_to_value.clean_iter()? {
+    // for value in indexer.vecs.txoutindex_to_value.clean_iter() {
     //     sum += value;
     //     count += 1;
     // }
 
     // println!("sum = {sum}, count = {count}");
 
-    dbg!(
-        indexer
-            .vecs
-            .outputs
-            .value
-            .iter()?
-            .enumerate()
-            .take(200)
-            // .filter(|(_, op)| !op.is_coinbase())
-            // .map(|(i, op)| (i, op.txindex(), op.vout()))
-            .collect::<Vec<_>>()
-    );
+    dbg!(indexer.vecs.outputs.value.collect_range(0, 200));
 
     Ok(())
 }

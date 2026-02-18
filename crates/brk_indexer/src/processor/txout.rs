@@ -6,7 +6,7 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
-use vecdb::GenericStoredVec;
+use vecdb::WritableVec;
 
 use super::{BlockProcessor, ProcessedOutput, SameBlockOutputInfo};
 
@@ -18,17 +18,15 @@ impl<'a> BlockProcessor<'a> {
         let base_txindex = self.indexes.txindex;
         let base_txoutindex = self.indexes.txoutindex;
 
-        self.block
-            .txdata
-            .iter()
-            .enumerate()
-            .flat_map(|(index, tx)| {
-                tx.output
-                    .iter()
-                    .enumerate()
-                    .map(move |(vout, txout)| (TxIndex::from(index), Vout::from(vout), txout, tx))
-            })
-            .collect::<Vec<_>>()
+        let total_outputs: usize = self.block.txdata.iter().map(|tx| tx.output.len()).sum();
+        let mut items = Vec::with_capacity(total_outputs);
+        for (index, tx) in self.block.txdata.iter().enumerate() {
+            for (vout, txout) in tx.output.iter().enumerate() {
+                items.push((TxIndex::from(index), Vout::from(vout), txout, tx));
+            }
+        }
+
+        items
             .into_par_iter()
             .enumerate()
             .map(
@@ -59,8 +57,7 @@ impl<'a> BlockProcessor<'a> {
                         .stores
                         .addresstype_to_addresshash_to_addressindex
                         .get_unwrap(addresstype)
-                        .get(&address_hash)
-                        .unwrap()
+                        .get(&address_hash)?
                         .map(|v| *v)
                         .and_then(|typeindex_local| {
                             (typeindex_local < self.indexes.to_typeindex(addresstype))
@@ -68,22 +65,14 @@ impl<'a> BlockProcessor<'a> {
                         });
 
                     if check_collisions && let Some(typeindex) = existing_typeindex {
-                        let prev_addressbytes_opt = self.vecs.get_addressbytes_by_type(
+                        let prev_addressbytes = self.vecs.get_addressbytes_by_type(
                             addresstype,
                             typeindex,
                             self.readers.addressbytes.get_unwrap(addresstype),
-                        )?;
-                        let prev_addressbytes = prev_addressbytes_opt
-                            .as_ref()
-                            .ok_or(Error::Internal("Missing addressbytes"))?;
+                        )
+                        .ok_or(Error::Internal("Missing addressbytes"))?;
 
-                        if self
-                            .stores
-                            .addresstype_to_addresshash_to_addressindex
-                            .get_unwrap(addresstype)
-                            .needs(height)
-                            && prev_addressbytes != &address_bytes
-                        {
+                        if prev_addressbytes != address_bytes {
                             let txid = tx.compute_txid();
                             dbg!(
                                 height,
@@ -121,7 +110,6 @@ impl<'a> BlockProcessor<'a> {
         txouts: Vec<ProcessedOutput>,
         same_block_spent_outpoints: &FxHashSet<OutPoint>,
     ) -> Result<FxHashMap<OutPoint, SameBlockOutputInfo>> {
-        let height = self.height;
         let mut already_added_addresshash: ByAddressType<FxHashMap<AddressHash, TypeIndex>> =
             ByAddressType::default();
         let mut same_block_output_info: FxHashMap<OutPoint, SameBlockOutputInfo> =
@@ -172,7 +160,7 @@ impl<'a> BlockProcessor<'a> {
                     self.stores
                         .addresstype_to_addresshash_to_addressindex
                         .get_mut_unwrap(addresstype)
-                        .insert_if_needed(address_hash, ti, height);
+                        .insert(address_hash, ti);
                     self.vecs.push_bytes_if_needed(ti, address_bytes)?;
 
                     ti
@@ -230,10 +218,9 @@ impl<'a> BlockProcessor<'a> {
                 self.stores
                     .addresstype_to_addressindex_and_txindex
                     .get_mut_unwrap(addresstype)
-                    .insert_if_needed(
+                    .insert(
                         AddressIndexTxIndex::from((addressindex, txindex)),
                         Unit,
-                        height,
                     );
             }
 
@@ -254,10 +241,9 @@ impl<'a> BlockProcessor<'a> {
                 self.stores
                     .addresstype_to_addressindex_and_unspentoutpoint
                     .get_mut_unwrap(addresstype)
-                    .insert_if_needed(
+                    .insert(
                         AddressIndexOutPoint::from((addressindex, outpoint)),
                         Unit,
-                        height,
                     );
             }
         }
