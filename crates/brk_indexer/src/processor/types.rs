@@ -1,8 +1,10 @@
 use bitcoin::{Transaction, TxOut};
+use brk_cohort::ByAddressType;
 use brk_types::{
     AddressBytes, AddressHash, OutPoint, OutputType, TxIndex, TxOutIndex, Txid, TxidPrefix,
     TypeIndex, Vin, Vout,
 };
+use rustc_hash::{FxHashMap, FxHashSet};
 
 #[derive(Debug)]
 pub enum InputSource {
@@ -45,3 +47,13 @@ pub struct ComputedTx<'a> {
     pub base_size: u32,
     pub total_size: u32,
 }
+
+/// Reusable buffers cleared and refilled each block to avoid allocation churn.
+#[derive(Default)]
+pub struct BlockBuffers {
+    pub txid_prefix_map: FxHashMap<TxidPrefix, TxIndex>,
+    pub same_block_spent: FxHashSet<OutPoint>,
+    pub already_added_addresses: ByAddressType<FxHashMap<AddressHash, TypeIndex>>,
+    pub same_block_output_info: FxHashMap<OutPoint, SameBlockOutputInfo>,
+}
+

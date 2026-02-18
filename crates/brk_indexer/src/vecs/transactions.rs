@@ -5,7 +5,7 @@ use brk_types::{
     Version,
 };
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, Stamp};
+use vecdb::{AnyStoredVec, BytesVec, Database, ImportableVec, PcoVec, Stamp, WritableVec};
 
 use crate::parallel_import;
 
@@ -23,7 +23,39 @@ pub struct TransactionsVecs {
     pub first_txoutindex: BytesVec<TxIndex, TxOutIndex>,
 }
 
+pub struct TxMetadataVecs<'a> {
+    pub height: &'a mut PcoVec<TxIndex, Height>,
+    pub txversion: &'a mut PcoVec<TxIndex, TxVersion>,
+    pub txid: &'a mut BytesVec<TxIndex, Txid>,
+    pub rawlocktime: &'a mut PcoVec<TxIndex, RawLockTime>,
+    pub base_size: &'a mut PcoVec<TxIndex, StoredU32>,
+    pub total_size: &'a mut PcoVec<TxIndex, StoredU32>,
+    pub is_explicitly_rbf: &'a mut PcoVec<TxIndex, StoredBool>,
+}
+
 impl TransactionsVecs {
+    pub fn split_for_finalize(
+        &mut self,
+    ) -> (
+        &mut BytesVec<TxIndex, TxOutIndex>,
+        &mut PcoVec<TxIndex, TxInIndex>,
+        TxMetadataVecs<'_>,
+    ) {
+        (
+            &mut self.first_txoutindex,
+            &mut self.first_txinindex,
+            TxMetadataVecs {
+                height: &mut self.height,
+                txversion: &mut self.txversion,
+                txid: &mut self.txid,
+                rawlocktime: &mut self.rawlocktime,
+                base_size: &mut self.base_size,
+                total_size: &mut self.total_size,
+                is_explicitly_rbf: &mut self.is_explicitly_rbf,
+            },
+        )
+    }
+
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
         let (
             first_txindex,
@@ -65,10 +97,8 @@ impl TransactionsVecs {
     pub fn truncate(&mut self, height: Height, txindex: TxIndex, stamp: Stamp) -> Result<()> {
         self.first_txindex
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.height
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.txid
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
+        self.height.truncate_if_needed_with_stamp(txindex, stamp)?;
+        self.txid.truncate_if_needed_with_stamp(txindex, stamp)?;
         self.txversion
             .truncate_if_needed_with_stamp(txindex, stamp)?;
         self.rawlocktime

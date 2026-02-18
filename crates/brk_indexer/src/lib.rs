@@ -136,8 +136,8 @@ impl Indexer {
         let mut indexes = starting_indexes.clone();
         debug!("Indexes cloned.");
 
-        let should_export = |height: Height, rem: bool| -> bool {
-            height != 0 && (height % SNAPSHOT_BLOCK_RANGE == 0) != rem
+        let is_export_height = |height: Height| -> bool {
+            height != 0 && height % SNAPSHOT_BLOCK_RANGE == 0
         };
 
         let export = move |stores: &mut Stores, vecs: &mut Vecs, height: Height| -> Result<()> {
@@ -166,6 +166,7 @@ impl Indexer {
         };
 
         let mut readers = Readers::new(&self.vecs);
+        let mut buffers = BlockBuffers::default();
 
         let vecs = &mut self.vecs;
         let stores = &mut self.stores;
@@ -187,48 +188,50 @@ impl Indexer {
                 readers: &readers,
             };
 
-            // Phase 1: Process block metadata
+            // 1. Process block metadata
             processor.process_block_metadata()?;
 
-            // Phase 2: Compute TXIDs in parallel
+            // 2. Compute TXIDs (parallel)
             let txs = processor.compute_txids()?;
 
-            // Phase 3+5: Process inputs and outputs in parallel
-            // They access different stores (txidprefix vs addresshash) and
-            // different vecs, so running concurrently hides latency of the
-            // shorter phase behind the longer one.
+            // 2.5 Push block size/weight reusing per-tx sizes from compute_txids
+            processor.push_block_size_and_weight(&txs)?;
+
+            // 3. Process inputs and outputs (parallel)
             let (txins_result, txouts_result) = rayon::join(
-                || processor.process_inputs(&txs),
+                || processor.process_inputs(&txs, &mut buffers.txid_prefix_map),
                 || processor.process_outputs(),
             );
             let txins = txins_result?;
             let txouts = txouts_result?;
 
-            // Phase 4: Collect same-block spent outpoints
-            let same_block_spent_outpoints =
-                BlockProcessor::collect_same_block_spent_outpoints(&txins);
+            let tx_count = block.txdata.len();
+            let input_count = txins.len();
+            let output_count = txouts.len();
 
-            let tx_len = block.txdata.len();
-            let inputs_len = txins.len();
-            let outputs_len = txouts.len();
+            // 4. Collect same-block spent outpoints
+            BlockProcessor::collect_same_block_spent_outpoints(
+                &txins,
+                &mut buffers.same_block_spent,
+            );
 
-            // Phase 6: Finalize outputs sequentially
-            let same_block_output_info =
-                processor.finalize_outputs(txouts, &same_block_spent_outpoints)?;
-
-            // Phase 7: Finalize inputs sequentially
-            processor.finalize_inputs(txins, same_block_output_info)?;
-
-            // Phase 8: Check TXID collisions
+            // 5. Check TXID collisions (BIP-30)
             processor.check_txid_collisions(&txs)?;
 
-            // Phase 9: Store transaction metadata
-            processor.store_transaction_metadata(txs)?;
+            // 6. Finalize outputs/inputs || store tx metadata (parallel)
+            processor.finalize_and_store_metadata(
+                txs,
+                txouts,
+                txins,
+                &buffers.same_block_spent,
+                &mut buffers.already_added_addresses,
+                &mut buffers.same_block_output_info,
+            )?;
 
-            // Phase 10: Update indexes
-            processor.update_indexes(tx_len, inputs_len, outputs_len);
+            // 7. Update indexes
+            processor.update_indexes(tx_count, input_count, output_count);
 
-            if should_export(height, false) {
+            if is_export_height(height) {
                 drop(readers);
                 export(stores, vecs, height)?;
                 readers = Readers::new(vecs);
@@ -237,7 +240,7 @@ impl Indexer {
 
         drop(readers);
 
-        if should_export(indexes.height, true) {
+        if !is_export_height(indexes.height) {
             export(stores, vecs, indexes.height)?;
         }
 

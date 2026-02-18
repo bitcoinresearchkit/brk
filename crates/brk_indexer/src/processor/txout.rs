@@ -1,14 +1,16 @@
 use brk_cohort::ByAddressType;
 use brk_error::{Error, Result};
+use brk_store::Store;
 use brk_types::{
     AddressBytes, AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, OutPoint, OutputType,
     Sats, TxIndex, TxOutIndex, TypeIndex, Unit, Vout,
 };
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
-use vecdb::WritableVec;
+use vecdb::{BytesVec, WritableVec};
 
 use super::{BlockProcessor, ProcessedOutput, SameBlockOutputInfo};
+use crate::{AddressesVecs, Indexes, OutputsVecs, ScriptsVecs};
 
 impl<'a> BlockProcessor<'a> {
     pub fn process_outputs(&self) -> Result<Vec<ProcessedOutput<'a>>> {
@@ -104,150 +106,138 @@ impl<'a> BlockProcessor<'a> {
             )
             .collect()
     }
+}
 
-    pub fn finalize_outputs(
-        &mut self,
-        txouts: Vec<ProcessedOutput>,
-        same_block_spent_outpoints: &FxHashSet<OutPoint>,
-    ) -> Result<FxHashMap<OutPoint, SameBlockOutputInfo>> {
-        let mut already_added_addresshash: ByAddressType<FxHashMap<AddressHash, TypeIndex>> =
-            ByAddressType::default();
-        let mut same_block_output_info: FxHashMap<OutPoint, SameBlockOutputInfo> =
-            FxHashMap::with_capacity_and_hasher(
-                same_block_spent_outpoints.len(),
-                Default::default(),
-            );
+#[allow(clippy::too_many_arguments)]
+pub(super) fn finalize_outputs(
+    indexes: &mut Indexes,
+    first_txoutindex: &mut BytesVec<TxIndex, TxOutIndex>,
+    outputs: &mut OutputsVecs,
+    addresses: &mut AddressesVecs,
+    scripts: &mut ScriptsVecs,
+    addr_hash_stores: &mut ByAddressType<Store<AddressHash, TypeIndex>>,
+    addr_txindex_stores: &mut ByAddressType<Store<AddressIndexTxIndex, Unit>>,
+    addr_outpoint_stores: &mut ByAddressType<Store<AddressIndexOutPoint, Unit>>,
+    txouts: Vec<ProcessedOutput>,
+    same_block_spent_outpoints: &FxHashSet<OutPoint>,
+    already_added_addresshash: &mut ByAddressType<FxHashMap<AddressHash, TypeIndex>>,
+    same_block_output_info: &mut FxHashMap<OutPoint, SameBlockOutputInfo>,
+) -> Result<()> {
+    already_added_addresshash
+        .values_mut()
+        .for_each(|m| m.clear());
+    same_block_output_info.clear();
 
-        for ProcessedOutput {
-            txoutindex,
-            txout,
-            txindex,
-            vout,
-            outputtype,
-            address_info,
-            existing_typeindex,
-        } in txouts
-        {
-            let sats = Sats::from(txout.value);
+    for ProcessedOutput {
+        txoutindex,
+        txout,
+        txindex,
+        vout,
+        outputtype,
+        address_info,
+        existing_typeindex,
+    } in txouts
+    {
+        let sats = Sats::from(txout.value);
 
-            if vout.is_zero() {
-                self.vecs
-                    .transactions
-                    .first_txoutindex
-                    .checked_push(txindex, txoutindex)?;
-            }
-
-            self.vecs
-                .outputs
-                .txindex
-                .checked_push(txoutindex, txindex)?;
-
-            let typeindex = if let Some(ti) = existing_typeindex {
-                ti
-            } else if let Some((address_bytes, address_hash)) = address_info {
-                let addresstype = outputtype;
-                if let Some(&ti) = already_added_addresshash
-                    .get_unwrap(addresstype)
-                    .get(&address_hash)
-                {
-                    ti
-                } else {
-                    let ti = self.indexes.increment_address_index(addresstype);
-
-                    already_added_addresshash
-                        .get_mut_unwrap(addresstype)
-                        .insert(address_hash, ti);
-                    self.stores
-                        .addresstype_to_addresshash_to_addressindex
-                        .get_mut_unwrap(addresstype)
-                        .insert(address_hash, ti);
-                    self.vecs.push_bytes_if_needed(ti, address_bytes)?;
-
-                    ti
-                }
-            } else {
-                match outputtype {
-                    OutputType::P2MS => {
-                        self.vecs
-                            .scripts
-                            .p2ms_to_txindex
-                            .checked_push(self.indexes.p2msoutputindex, txindex)?;
-                        self.indexes.p2msoutputindex.copy_then_increment()
-                    }
-                    OutputType::OpReturn => {
-                        self.vecs
-                            .scripts
-                            .opreturn_to_txindex
-                            .checked_push(self.indexes.opreturnindex, txindex)?;
-                        self.indexes.opreturnindex.copy_then_increment()
-                    }
-                    OutputType::Empty => {
-                        self.vecs
-                            .scripts
-                            .empty_to_txindex
-                            .checked_push(self.indexes.emptyoutputindex, txindex)?;
-                        self.indexes.emptyoutputindex.copy_then_increment()
-                    }
-                    OutputType::Unknown => {
-                        self.vecs
-                            .scripts
-                            .unknown_to_txindex
-                            .checked_push(self.indexes.unknownoutputindex, txindex)?;
-                        self.indexes.unknownoutputindex.copy_then_increment()
-                    }
-                    _ => unreachable!(),
-                }
-            };
-
-            self.vecs.outputs.value.checked_push(txoutindex, sats)?;
-            self.vecs
-                .outputs
-                .outputtype
-                .checked_push(txoutindex, outputtype)?;
-            self.vecs
-                .outputs
-                .typeindex
-                .checked_push(txoutindex, typeindex)?;
-
-            if outputtype.is_unspendable() {
-                continue;
-            } else if outputtype.is_address() {
-                let addresstype = outputtype;
-                let addressindex = typeindex;
-
-                self.stores
-                    .addresstype_to_addressindex_and_txindex
-                    .get_mut_unwrap(addresstype)
-                    .insert(
-                        AddressIndexTxIndex::from((addressindex, txindex)),
-                        Unit,
-                    );
-            }
-
-            let outpoint = OutPoint::new(txindex, vout);
-
-            if same_block_spent_outpoints.contains(&outpoint) {
-                same_block_output_info.insert(
-                    outpoint,
-                    SameBlockOutputInfo {
-                        outputtype,
-                        typeindex,
-                    },
-                );
-            } else if outputtype.is_address() {
-                let addresstype = outputtype;
-                let addressindex = typeindex;
-
-                self.stores
-                    .addresstype_to_addressindex_and_unspentoutpoint
-                    .get_mut_unwrap(addresstype)
-                    .insert(
-                        AddressIndexOutPoint::from((addressindex, outpoint)),
-                        Unit,
-                    );
-            }
+        if vout.is_zero() {
+            first_txoutindex.checked_push(txindex, txoutindex)?;
         }
 
-        Ok(same_block_output_info)
+        outputs.txindex.checked_push(txoutindex, txindex)?;
+
+        let typeindex = if let Some(ti) = existing_typeindex {
+            ti
+        } else if let Some((address_bytes, address_hash)) = address_info {
+            let addresstype = outputtype;
+            if let Some(&ti) = already_added_addresshash
+                .get_unwrap(addresstype)
+                .get(&address_hash)
+            {
+                ti
+            } else {
+                let ti = indexes.increment_address_index(addresstype);
+
+                already_added_addresshash
+                    .get_mut_unwrap(addresstype)
+                    .insert(address_hash, ti);
+                addr_hash_stores
+                    .get_mut_unwrap(addresstype)
+                    .insert(address_hash, ti);
+                addresses.push_bytes_if_needed(ti, address_bytes)?;
+
+                ti
+            }
+        } else {
+            match outputtype {
+                OutputType::P2MS => {
+                    scripts
+                        .p2ms_to_txindex
+                        .checked_push(indexes.p2msoutputindex, txindex)?;
+                    indexes.p2msoutputindex.copy_then_increment()
+                }
+                OutputType::OpReturn => {
+                    scripts
+                        .opreturn_to_txindex
+                        .checked_push(indexes.opreturnindex, txindex)?;
+                    indexes.opreturnindex.copy_then_increment()
+                }
+                OutputType::Empty => {
+                    scripts
+                        .empty_to_txindex
+                        .checked_push(indexes.emptyoutputindex, txindex)?;
+                    indexes.emptyoutputindex.copy_then_increment()
+                }
+                OutputType::Unknown => {
+                    scripts
+                        .unknown_to_txindex
+                        .checked_push(indexes.unknownoutputindex, txindex)?;
+                    indexes.unknownoutputindex.copy_then_increment()
+                }
+                _ => unreachable!(),
+            }
+        };
+
+        outputs.value.checked_push(txoutindex, sats)?;
+        outputs.outputtype.checked_push(txoutindex, outputtype)?;
+        outputs.typeindex.checked_push(txoutindex, typeindex)?;
+
+        if outputtype.is_unspendable() {
+            continue;
+        } else if outputtype.is_address() {
+            let addresstype = outputtype;
+            let addressindex = typeindex;
+
+            addr_txindex_stores
+                .get_mut_unwrap(addresstype)
+                .insert(
+                    AddressIndexTxIndex::from((addressindex, txindex)),
+                    Unit,
+                );
+        }
+
+        let outpoint = OutPoint::new(txindex, vout);
+
+        if same_block_spent_outpoints.contains(&outpoint) {
+            same_block_output_info.insert(
+                outpoint,
+                SameBlockOutputInfo {
+                    outputtype,
+                    typeindex,
+                },
+            );
+        } else if outputtype.is_address() {
+            let addresstype = outputtype;
+            let addressindex = typeindex;
+
+            addr_outpoint_stores
+                .get_mut_unwrap(addresstype)
+                .insert(
+                    AddressIndexOutPoint::from((addressindex, outpoint)),
+                    Unit,
+                );
+        }
     }
+
+    Ok(())
 }

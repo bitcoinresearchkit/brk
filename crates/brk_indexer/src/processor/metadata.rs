@@ -3,7 +3,7 @@ use brk_types::{BlockHashPrefix, Timestamp};
 use tracing::error;
 use vecdb::WritableVec;
 
-use super::BlockProcessor;
+use super::{BlockProcessor, ComputedTx};
 use crate::IndexesExt;
 
 impl BlockProcessor<'_> {
@@ -45,16 +45,31 @@ impl BlockProcessor<'_> {
             .blocks
             .timestamp
             .checked_push(height, Timestamp::from(self.block.header.time))?;
-        let (block_total_size, block_weight) = self.block.total_size_and_weight();
+
+        Ok(())
+    }
+
+    /// Push block total_size and weight, reusing per-tx sizes already computed in ComputedTx.
+    /// This avoids redundant tx serialization (base_size + total_size were already computed).
+    pub fn push_block_size_and_weight(&mut self, txs: &[ComputedTx]) -> Result<()> {
+        let overhead =
+            bitcoin::block::Header::SIZE + bitcoin::VarInt::from(txs.len()).size();
+        let mut total_size = overhead;
+        let mut weight_wu = overhead * 4;
+        for ct in txs {
+            let base = ct.base_size as usize;
+            let total = ct.total_size as usize;
+            total_size += total;
+            weight_wu += base * 3 + total;
+        }
         self.vecs
             .blocks
             .total_size
-            .checked_push(height, block_total_size.into())?;
+            .checked_push(self.height, total_size.into())?;
         self.vecs
             .blocks
             .weight
-            .checked_push(height, block_weight.into())?;
-
+            .checked_push(self.height, weight_wu.into())?;
         Ok(())
     }
 }

@@ -1,21 +1,25 @@
+use brk_cohort::ByAddressType;
 use brk_error::{Error, Result};
+use brk_store::Store;
 use brk_types::{
     AddressIndexOutPoint, AddressIndexTxIndex, OutPoint, OutputType, TxInIndex, TxIndex, Txid,
     TxidPrefix, TypeIndex, Unit, Vin, Vout,
 };
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
-use vecdb::WritableVec;
+use vecdb::{PcoVec, WritableVec};
 
 use super::{BlockProcessor, ComputedTx, InputSource, SameBlockOutputInfo};
+use crate::InputsVecs;
 
 impl<'a> BlockProcessor<'a> {
     pub fn process_inputs(
         &self,
         txs: &[ComputedTx],
+        txid_prefix_to_txindex: &mut FxHashMap<TxidPrefix, TxIndex>,
     ) -> Result<Vec<(TxInIndex, InputSource)>> {
-        let txid_prefix_to_txindex: FxHashMap<_, _> =
-            txs.iter().map(|ct| (ct.txid_prefix, ct.txindex)).collect();
+        txid_prefix_to_txindex.clear();
+        txid_prefix_to_txindex.extend(txs.iter().map(|ct| (ct.txid_prefix, ct.txindex)));
 
         let base_txindex = self.indexes.txindex;
         let base_txinindex = self.indexes.txinindex;
@@ -27,6 +31,8 @@ impl<'a> BlockProcessor<'a> {
                 items.push((TxIndex::from(index), Vin::from(vin), txin, tx));
             }
         }
+
+        let txid_prefix_to_txindex = &*txid_prefix_to_txindex;
 
         let txins = items
             .into_par_iter()
@@ -125,99 +131,78 @@ impl<'a> BlockProcessor<'a> {
 
     pub fn collect_same_block_spent_outpoints(
         txins: &[(TxInIndex, InputSource)],
-    ) -> FxHashSet<OutPoint> {
-        txins
-            .iter()
-            .filter_map(|(_, input_source)| {
-                let InputSource::SameBlock { outpoint, .. } = input_source else {
-                    return None;
-                };
-                if !outpoint.is_coinbase() {
-                    Some(*outpoint)
-                } else {
-                    None
-                }
-            })
-            .collect()
+        out: &mut FxHashSet<OutPoint>,
+    ) {
+        out.clear();
+        out.extend(txins.iter().filter_map(|(_, input_source)| match input_source {
+            InputSource::SameBlock { outpoint, .. } if !outpoint.is_coinbase() => Some(*outpoint),
+            _ => None,
+        }));
     }
+}
 
-    pub fn finalize_inputs(
-        &mut self,
-        txins: Vec<(TxInIndex, InputSource)>,
-        mut same_block_output_info: FxHashMap<OutPoint, SameBlockOutputInfo>,
-    ) -> Result<()> {
-        for (txinindex, input_source) in txins {
-            let (vin, txindex, outpoint, outputtype, typeindex) = match input_source {
-                InputSource::PreviousBlock {
-                    vin,
-                    txindex,
-                    outpoint,
-                    outputtype,
-                    typeindex,
-                } => (vin, txindex, outpoint, outputtype, typeindex),
-                InputSource::SameBlock {
-                    txindex,
-                    vin,
-                    outpoint,
-                } => {
-                    if outpoint.is_coinbase() {
-                        (vin, txindex, outpoint, OutputType::Unknown, TypeIndex::COINBASE)
-                    } else {
-                        let info = same_block_output_info
-                            .remove(&outpoint)
-                            .ok_or(Error::Internal("Same-block output not found"))
-                            .inspect_err(|_| {
-                                dbg!(&same_block_output_info, outpoint);
-                            })?;
-                        (vin, txindex, outpoint, info.outputtype, info.typeindex)
-                    }
+pub(super) fn finalize_inputs(
+    first_txinindex: &mut PcoVec<TxIndex, TxInIndex>,
+    inputs: &mut InputsVecs,
+    addr_txindex_stores: &mut ByAddressType<Store<AddressIndexTxIndex, Unit>>,
+    addr_outpoint_stores: &mut ByAddressType<Store<AddressIndexOutPoint, Unit>>,
+    txins: Vec<(TxInIndex, InputSource)>,
+    same_block_output_info: &mut FxHashMap<OutPoint, SameBlockOutputInfo>,
+) -> Result<()> {
+    for (txinindex, input_source) in txins {
+        let (vin, txindex, outpoint, outputtype, typeindex) = match input_source {
+            InputSource::PreviousBlock {
+                vin,
+                txindex,
+                outpoint,
+                outputtype,
+                typeindex,
+            } => (vin, txindex, outpoint, outputtype, typeindex),
+            InputSource::SameBlock {
+                txindex,
+                vin,
+                outpoint,
+            } => {
+                if outpoint.is_coinbase() {
+                    (vin, txindex, outpoint, OutputType::Unknown, TypeIndex::COINBASE)
+                } else {
+                    let info = same_block_output_info
+                        .remove(&outpoint)
+                        .ok_or(Error::Internal("Same-block output not found"))
+                        .inspect_err(|_| {
+                            dbg!(&same_block_output_info, outpoint);
+                        })?;
+                    (vin, txindex, outpoint, info.outputtype, info.typeindex)
                 }
-            };
-
-            if vin.is_zero() {
-                self.vecs
-                    .transactions
-                    .first_txinindex
-                    .checked_push(txindex, txinindex)?;
             }
+        };
 
-            self.vecs
-                .inputs
-                .txindex
-                .checked_push(txinindex, txindex)?;
-            self.vecs
-                .inputs
-                .outpoint
-                .checked_push(txinindex, outpoint)?;
-            self.vecs
-                .inputs
-                .outputtype
-                .checked_push(txinindex, outputtype)?;
-            self.vecs
-                .inputs
-                .typeindex
-                .checked_push(txinindex, typeindex)?;
-
-            if !outputtype.is_address() {
-                continue;
-            }
-            let addresstype = outputtype;
-            let addressindex = typeindex;
-
-            self.stores
-                .addresstype_to_addressindex_and_txindex
-                .get_mut_unwrap(addresstype)
-                .insert(
-                    AddressIndexTxIndex::from((addressindex, txindex)),
-                    Unit,
-                );
-
-            self.stores
-                .addresstype_to_addressindex_and_unspentoutpoint
-                .get_mut_unwrap(addresstype)
-                .remove(AddressIndexOutPoint::from((addressindex, outpoint)));
+        if vin.is_zero() {
+            first_txinindex.checked_push(txindex, txinindex)?;
         }
 
-        Ok(())
+        inputs.txindex.checked_push(txinindex, txindex)?;
+        inputs.outpoint.checked_push(txinindex, outpoint)?;
+        inputs.outputtype.checked_push(txinindex, outputtype)?;
+        inputs.typeindex.checked_push(txinindex, typeindex)?;
+
+        if !outputtype.is_address() {
+            continue;
+        }
+        let addresstype = outputtype;
+        let addressindex = typeindex;
+
+        addr_txindex_stores
+            .get_mut_unwrap(addresstype)
+            .insert(
+                AddressIndexTxIndex::from((addressindex, txindex)),
+                Unit,
+            );
+
+        addr_outpoint_stores
+            .get_mut_unwrap(addresstype)
+            .remove(AddressIndexOutPoint::from((addressindex, outpoint)));
     }
+
+    Ok(())
 }

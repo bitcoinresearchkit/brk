@@ -1,8 +1,10 @@
 use brk_error::{Error, Result};
-use brk_types::{StoredBool, TxIndex, Txid, TxidPrefix};
+use brk_store::Store;
+use brk_types::{Height, StoredBool, TxIndex, Txid, TxidPrefix};
 use rayon::prelude::*;
 use vecdb::{AnyVec, WritableVec, likely};
 
+use crate::TxMetadataVecs;
 use crate::constants::DUPLICATE_TXIDS;
 
 use super::{BlockProcessor, ComputedTx};
@@ -78,47 +80,30 @@ impl<'a> BlockProcessor<'a> {
 
         Ok(())
     }
+}
 
-    pub fn store_transaction_metadata(&mut self, txs: Vec<ComputedTx>) -> Result<()> {
-        let height = self.height;
-
-        for ct in txs {
-            if ct.prev_txindex_opt.is_none() {
-                self.stores
-                    .txidprefix_to_txindex
-                    .insert(ct.txid_prefix, ct.txindex);
-            }
-
-            self.vecs
-                .transactions
-                .height
-                .checked_push(ct.txindex, height)?;
-            self.vecs
-                .transactions
-                .txversion
-                .checked_push(ct.txindex, ct.tx.version.into())?;
-            self.vecs
-                .transactions
-                .txid
-                .checked_push(ct.txindex, ct.txid)?;
-            self.vecs
-                .transactions
-                .rawlocktime
-                .checked_push(ct.txindex, ct.tx.lock_time.into())?;
-            self.vecs
-                .transactions
-                .base_size
-                .checked_push(ct.txindex, ct.base_size.into())?;
-            self.vecs
-                .transactions
-                .total_size
-                .checked_push(ct.txindex, ct.total_size.into())?;
-            self.vecs
-                .transactions
-                .is_explicitly_rbf
-                .checked_push(ct.txindex, StoredBool::from(ct.tx.is_explicitly_rbf()))?;
+pub(super) fn store_tx_metadata(
+    height: Height,
+    txs: Vec<ComputedTx>,
+    store: &mut Store<TxidPrefix, TxIndex>,
+    md: &mut TxMetadataVecs<'_>,
+) -> Result<()> {
+    for ct in txs {
+        if ct.prev_txindex_opt.is_none() {
+            store.insert(ct.txid_prefix, ct.txindex);
         }
-
-        Ok(())
+        md.height.checked_push(ct.txindex, height)?;
+        md.txversion
+            .checked_push(ct.txindex, ct.tx.version.into())?;
+        md.txid.checked_push(ct.txindex, ct.txid)?;
+        md.rawlocktime
+            .checked_push(ct.txindex, ct.tx.lock_time.into())?;
+        md.base_size
+            .checked_push(ct.txindex, ct.base_size.into())?;
+        md.total_size
+            .checked_push(ct.txindex, ct.total_size.into())?;
+        md.is_explicitly_rbf
+            .checked_push(ct.txindex, StoredBool::from(ct.tx.is_explicitly_rbf()))?;
     }
+    Ok(())
 }
