@@ -19,7 +19,9 @@ impl<'a> BlockProcessor<'a> {
             .par_iter()
             .enumerate()
             .map(|(index, tx)| {
-                let txid = Txid::from(tx.compute_txid());
+                let (btc_txid, base_size, total_size) =
+                    self.block.compute_tx_id_and_sizes(index);
+                let txid = Txid::from(btc_txid);
                 let txid_prefix = TxidPrefix::from(&txid);
 
                 let prev_txindex_opt = if will_check_collisions {
@@ -37,8 +39,8 @@ impl<'a> BlockProcessor<'a> {
                     txid,
                     txid_prefix,
                     prev_txindex_opt,
-                    base_size: tx.base_size() as u32,
-                    total_size: tx.total_size() as u32,
+                    base_size,
+                    total_size,
                 })
             })
             .collect()

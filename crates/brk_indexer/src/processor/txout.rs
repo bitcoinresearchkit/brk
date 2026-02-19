@@ -70,7 +70,7 @@ impl<'a> BlockProcessor<'a> {
                         let prev_addressbytes = self.vecs.get_addressbytes_by_type(
                             addresstype,
                             typeindex,
-                            self.readers.addressbytes.get_unwrap(addresstype),
+                            &self.readers.addressbytes,
                         )
                         .ok_or(Error::Internal("Missing addressbytes"))?;
 

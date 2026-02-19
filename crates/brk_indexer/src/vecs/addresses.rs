@@ -8,10 +8,11 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, Reader, ReadableVec,
+    AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, ReadableVec,
     Stamp, VecIndex,
 };
 
+use crate::AddressReaders;
 use crate::parallel_import;
 
 #[derive(Clone, Traversable)]
@@ -164,46 +165,46 @@ impl AddressesVecs {
         .into_par_iter()
     }
 
-    /// Get address bytes by output type, using the reader for the specific address type.
+    /// Get address bytes by output type, using the cached VecReader for the specific address type.
     /// Returns None if the index doesn't exist yet.
     pub fn get_bytes_by_type(
         &self,
         addresstype: OutputType,
         typeindex: TypeIndex,
-        reader: &Reader,
+        readers: &AddressReaders,
     ) -> Option<AddressBytes> {
         match addresstype {
             OutputType::P2PK65 => self
                 .p2pk65bytes
-                .get_pushed_or_read(typeindex.into(), reader)
+                .get_pushed_or_read(typeindex.into(), &readers.p2pk65)
                 .map(AddressBytes::from),
             OutputType::P2PK33 => self
                 .p2pk33bytes
-                .get_pushed_or_read(typeindex.into(), reader)
+                .get_pushed_or_read(typeindex.into(), &readers.p2pk33)
                 .map(AddressBytes::from),
             OutputType::P2PKH => self
                 .p2pkhbytes
-                .get_pushed_or_read(typeindex.into(), reader)
+                .get_pushed_or_read(typeindex.into(), &readers.p2pkh)
                 .map(AddressBytes::from),
             OutputType::P2SH => self
                 .p2shbytes
-                .get_pushed_or_read(typeindex.into(), reader)
+                .get_pushed_or_read(typeindex.into(), &readers.p2sh)
                 .map(AddressBytes::from),
             OutputType::P2WPKH => self
                 .p2wpkhbytes
-                .get_pushed_or_read(typeindex.into(), reader)
+                .get_pushed_or_read(typeindex.into(), &readers.p2wpkh)
                 .map(AddressBytes::from),
             OutputType::P2WSH => self
                 .p2wshbytes
-                .get_pushed_or_read(typeindex.into(), reader)
+                .get_pushed_or_read(typeindex.into(), &readers.p2wsh)
                 .map(AddressBytes::from),
             OutputType::P2TR => self
                 .p2trbytes
-                .get_pushed_or_read(typeindex.into(), reader)
+                .get_pushed_or_read(typeindex.into(), &readers.p2tr)
                 .map(AddressBytes::from),
             OutputType::P2A => self
                 .p2abytes
-                .get_pushed_or_read(typeindex.into(), reader)
+                .get_pushed_or_read(typeindex.into(), &readers.p2a)
                 .map(AddressBytes::from),
             _ => unreachable!("get_bytes_by_type called with non-address type"),
         }
