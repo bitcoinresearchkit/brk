@@ -16,10 +16,12 @@ mod stores;
 mod vecs;
 
 use constants::*;
-pub use indexes::*;
-pub use processor::*;
-pub use readers::*;
-pub use stores::*;
+use indexes::IndexesExt;
+use processor::{BlockBuffers, BlockProcessor};
+use readers::Readers;
+
+pub use brk_types::Indexes;
+pub use stores::Stores;
 pub use vecs::*;
 
 #[derive(Clone)]
@@ -136,9 +138,8 @@ impl Indexer {
         let mut indexes = starting_indexes.clone();
         debug!("Indexes cloned.");
 
-        let is_export_height = |height: Height| -> bool {
-            height != 0 && height % SNAPSHOT_BLOCK_RANGE == 0
-        };
+        let is_export_height =
+            |height: Height| -> bool { height != 0 && height % SNAPSHOT_BLOCK_RANGE == 0 };
 
         let export = move |stores: &mut Stores, vecs: &mut Vecs, height: Height| -> Result<()> {
             info!("Exporting...");

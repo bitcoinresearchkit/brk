@@ -7,6 +7,7 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
+use tracing::error;
 use vecdb::{PcoVec, WritableVec};
 
 use super::{BlockProcessor, ComputedTx, InputSource, SameBlockOutputInfo};
@@ -80,7 +81,7 @@ impl<'a> BlockProcessor<'a> {
                     let prev_txindex = match store_result {
                         Some(txindex) if txindex < self.indexes.txindex => txindex,
                         _ => {
-                            tracing::error!(
+                            error!(
                                 "UnknownTxid: txid={}, prefix={:?}, store_result={:?}, current_txindex={:?}",
                                 txid, txid_prefix, store_result, self.indexes.txindex
                             );
@@ -170,7 +171,7 @@ pub(super) fn finalize_inputs(
                         .remove(&outpoint)
                         .ok_or(Error::Internal("Same-block output not found"))
                         .inspect_err(|_| {
-                            dbg!(&same_block_output_info, outpoint);
+                            error!(?outpoint, remaining = same_block_output_info.len(), "Same-block output not found");
                         })?;
                     (vin, txindex, outpoint, info.outputtype, info.typeindex)
                 }

@@ -12,7 +12,7 @@ use vecdb::{
     Stamp, VecIndex,
 };
 
-use crate::AddressReaders;
+use crate::readers::AddressReaders;
 use crate::parallel_import;
 
 #[derive(Clone, Traversable)]

@@ -143,7 +143,7 @@ All parameters via `Config` with sensible defaults:
 
 ## Accuracy
 
-Tested over 361,245 blocks (heights 575,000 to 936,244) against exchange OHLC data. Error is measured per block as distance from the oracle estimate to the exchange high/low range at that height. If the oracle falls within the range, the error is zero.
+Tested over 361,245 blocks (heights 575,000 to 936,244, as of February 2026) against exchange OHLC data. Error is measured per block as distance from the oracle estimate to the exchange high/low range at that height. If the oracle falls within the range, the error is zero.
 
 ### Per-block
 

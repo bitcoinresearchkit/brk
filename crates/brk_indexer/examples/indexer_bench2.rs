@@ -35,8 +35,6 @@ fn main() -> Result<()> {
 
     let blocks = Blocks::new(&client, &reader);
 
-    fs::create_dir_all(&outputs_dir)?;
-
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
     let mut bencher =

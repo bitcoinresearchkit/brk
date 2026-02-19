@@ -2,6 +2,7 @@ use brk_error::{Error, Result};
 use brk_store::Store;
 use brk_types::{Height, StoredBool, TxIndex, Txid, TxidPrefix};
 use rayon::prelude::*;
+use tracing::error;
 use vecdb::{AnyVec, WritableVec, likely};
 
 use crate::TxMetadataVecs;
@@ -69,13 +70,17 @@ impl<'a> BlockProcessor<'a> {
                 .get_pushed_or_read(prev_txindex, &self.readers.txid)
                 .ok_or(Error::Internal("Missing txid for txindex"))
                 .inspect_err(|_| {
-                    dbg!(ct.txindex, len);
+                    error!(txindex = ?ct.txindex, len, "Missing txid for txindex");
                 })?;
 
             let is_dup = DUPLICATE_TXIDS.contains(&prev_txid);
 
             if !is_dup {
-                dbg!(self.height, ct.txindex, prev_txid, prev_txindex);
+                error!(
+                    height = ?self.height, txindex = ?ct.txindex,
+                    ?prev_txid, ?prev_txindex,
+                    "Unexpected TXID collision"
+                );
                 return Err(Error::Internal("Unexpected TXID collision"));
             }
         }

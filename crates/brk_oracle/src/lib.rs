@@ -3,13 +3,13 @@
 //! Detects round-dollar transaction patterns ($1, $5, $10, ... $10,000) in Bitcoin
 //! block outputs to derive the current price without any exchange data.
 
-use brk_types::{Block, CentsUnsigned, Dollars, OutputType, Sats};
+use brk_types::{Block, Cents, Dollars, OutputType, Sats};
 
 /// Pre-oracle dollar prices, one per line, heights 0..630_000.
 pub const PRICES: &str = include_str!("prices.txt");
 
 /// First height where the oracle computes from on-chain data.
-pub const START_HEIGHT: usize = 575_000;
+pub const START_HEIGHT: usize = 550_000;
 
 pub const BINS_PER_DECADE: usize = 200;
 const MIN_LOG_BTC: i32 = -8;
@@ -120,8 +120,16 @@ fn find_best_bin(
 
     // Parabolic sub-bin interpolation for fractional precision.
     let score_center = best_score;
-    let score_left = if best_bin > search_start { score(best_bin - 1) } else { score_center };
-    let score_right = if best_bin + 1 < search_end { score(best_bin + 1) } else { score_center };
+    let score_left = if best_bin > search_start {
+        score(best_bin - 1)
+    } else {
+        score_center
+    };
+    let score_right = if best_bin + 1 < search_end {
+        score(best_bin + 1)
+    } else {
+        score_center
+    };
     let denom = score_left - 2.0 * score_center + score_right;
     let sub_bin = if denom.abs() > 1e-10 {
         (0.5 * (score_left - score_right) / denom).clamp(-0.5, 0.5)
@@ -207,7 +215,12 @@ impl Oracle {
                 .iter()
                 .skip(1) // skip coinbase
                 .flat_map(|tx| &tx.output)
-                .map(|txout| (Sats::from(txout.value), OutputType::from(&txout.script_pubkey))),
+                .map(|txout| {
+                    (
+                        Sats::from(txout.value),
+                        OutputType::from(&txout.script_pubkey),
+                    )
+                }),
         )
     }
 
@@ -242,7 +255,7 @@ impl Oracle {
         self.ref_bin
     }
 
-    pub fn price_cents(&self) -> CentsUnsigned {
+    pub fn price_cents(&self) -> Cents {
         bin_to_cents(self.ref_bin).into()
     }
 
@@ -291,13 +304,12 @@ impl Oracle {
     fn recompute_ema(&mut self) {
         self.ema.fill(0.0);
         for age in 0..self.filled {
-            let idx =
-                (self.cursor + self.config.window_size - 1 - age) % self.config.window_size;
+            let idx = (self.cursor + self.config.window_size - 1 - age) % self.config.window_size;
             let weight = self.weights[age];
             let h = &self.histograms[idx];
-            for bin in 0..NUM_BINS {
+            (0..NUM_BINS).for_each(|bin| {
                 self.ema[bin] += weight * h[bin] as f64;
-            }
+            });
         }
     }
 }

@@ -33,6 +33,10 @@ pub struct Stores {
 
 impl Stores {
     pub fn forced_import(parent: &Path, version: Version) -> Result<Self> {
+        Self::forced_import_inner(parent, version, true)
+    }
+
+    fn forced_import_inner(parent: &Path, version: Version, can_retry: bool) -> Result<Self> {
         let pathbuf = parent.join("stores");
         let path = pathbuf.as_path();
 
@@ -40,10 +44,11 @@ impl Stores {
 
         let database = match brk_store::open_database(path) {
             Ok(database) => database,
-            Err(_) => {
+            Err(_) if can_retry => {
                 fs::remove_dir_all(path)?;
-                return Self::forced_import(parent, version);
+                return Self::forced_import_inner(parent, version, false);
             }
+            Err(err) => return Err(err.into()),
         };
 
         let database_ref = &database;
@@ -194,7 +199,28 @@ impl Stores {
         vecs: &mut Vecs,
         starting_indexes: &Indexes,
     ) -> Result<()> {
-        if self.blockhashprefix_to_height.is_empty()?
+        if self.is_empty()? {
+            return Ok(());
+        }
+
+        debug_assert!(starting_indexes.height != Height::ZERO);
+        debug_assert!(starting_indexes.txindex != TxIndex::ZERO);
+        debug_assert!(starting_indexes.txoutindex != TxOutIndex::ZERO);
+
+        self.rollback_block_metadata(vecs, starting_indexes)?;
+        self.rollback_txids(vecs, starting_indexes);
+        self.rollback_outputs_and_inputs(vecs, starting_indexes);
+
+        let rollback_height = starting_indexes.height.decremented().unwrap_or_default();
+        self.par_iter_any_mut()
+            .try_for_each(|store| store.export_meta(rollback_height))?;
+        self.commit(rollback_height)?;
+
+        Ok(())
+    }
+
+    fn is_empty(&self) -> Result<bool> {
+        Ok(self.blockhashprefix_to_height.is_empty()?
             && self.txidprefix_to_txindex.is_empty()?
             && self.height_to_coinbase_tag.is_empty()?
             && self
@@ -208,211 +234,152 @@ impl Stores {
             && self
                 .addresstype_to_addressindex_and_unspentoutpoint
                 .values()
-                .try_fold(true, |acc, s| s.is_empty().map(|empty| acc && empty))?
-        {
-            return Ok(());
+                .try_fold(true, |acc, s| s.is_empty().map(|empty| acc && empty))?)
+    }
+
+    fn rollback_block_metadata(
+        &mut self,
+        vecs: &mut Vecs,
+        starting_indexes: &Indexes,
+    ) -> Result<()> {
+        vecs.blocks.blockhash.for_each_range(
+            starting_indexes.height.to_usize(),
+            vecs.blocks.blockhash.len(),
+            |blockhash| {
+                self.blockhashprefix_to_height
+                    .remove(BlockHashPrefix::from(blockhash));
+            },
+        );
+
+        (starting_indexes.height.to_usize()..vecs.blocks.blockhash.len())
+            .map(Height::from)
+            .for_each(|h| {
+                self.height_to_coinbase_tag.remove(h);
+            });
+
+        for address_type in OutputType::ADDRESS_TYPES {
+            for hash in vecs.iter_address_hashes_from(address_type, starting_indexes.height)? {
+                self.addresstype_to_addresshash_to_addressindex
+                    .get_mut_unwrap(address_type)
+                    .remove(hash);
+            }
         }
-
-        if starting_indexes.height != Height::ZERO {
-            vecs.blocks.blockhash.for_each_range(
-                starting_indexes.height.to_usize(),
-                vecs.blocks.blockhash.len(),
-                |blockhash| {
-                    let prefix = BlockHashPrefix::from(blockhash);
-                    self.blockhashprefix_to_height.remove(prefix);
-                },
-            );
-
-            (starting_indexes.height.to_usize()..vecs.blocks.blockhash.len())
-                .map(Height::from)
-                .for_each(|h| {
-                    self.height_to_coinbase_tag.remove(h);
-                });
-
-            // Remove address hashes for all address types starting from rollback height
-            // (each address only appears once in bytes vec, so no dedup needed)
-            for address_type in [
-                OutputType::P2PK65,
-                OutputType::P2PK33,
-                OutputType::P2PKH,
-                OutputType::P2SH,
-                OutputType::P2WPKH,
-                OutputType::P2WSH,
-                OutputType::P2TR,
-                OutputType::P2A,
-            ] {
-                for hash in vecs.iter_address_hashes_from(address_type, starting_indexes.height)? {
-                    self.addresstype_to_addresshash_to_addressindex
-                        .get_mut_unwrap(address_type)
-                        .remove(hash);
-                }
-            }
-        } else {
-            unreachable!();
-        }
-
-        if starting_indexes.txindex != TxIndex::ZERO {
-            let txid_vec_len = vecs.transactions.txid.len();
-            let skip_count = starting_indexes.txindex.to_usize();
-            let remove_count = txid_vec_len.saturating_sub(skip_count);
-            tracing::debug!(
-                "Rollback TXIDs: vec_len={}, skip={}, removing={}",
-                txid_vec_len,
-                skip_count,
-                remove_count
-            );
-
-            {
-                let start = starting_indexes.txindex.to_usize();
-                let end = vecs.transactions.txid.len();
-                let mut current_index = start;
-                vecs.transactions.txid.for_each_range(start, end, |txid| {
-                    let txindex = TxIndex::from(current_index);
-                    let txidprefix = TxidPrefix::from(&txid);
-
-                    let is_known_dup =
-                        DUPLICATE_TXID_PREFIXES
-                            .iter()
-                            .any(|(dup_prefix, dup_txindex)| {
-                                txindex == *dup_txindex && txidprefix == *dup_prefix
-                            });
-
-                    if !is_known_dup {
-                        self.txidprefix_to_txindex.remove(txidprefix);
-                    }
-                    current_index += 1;
-                });
-            }
-
-            // Clear caches to prevent stale reads after rollback
-            self.txidprefix_to_txindex.clear_caches();
-        } else {
-            unreachable!();
-        }
-
-        if starting_indexes.txoutindex != TxOutIndex::ZERO {
-            let txindex_to_first_txoutindex_reader = vecs.transactions.first_txoutindex.reader();
-            let txoutindex_to_outputtype_reader = vecs.outputs.outputtype.reader();
-            let txoutindex_to_typeindex_reader = vecs.outputs.typeindex.reader();
-
-            // Collect unique (addresstype, addressindex, txindex) to avoid double deletion
-            // when same address receives multiple outputs in same transaction
-            let mut addressindex_txindex_to_remove: FxHashSet<(OutputType, TypeIndex, TxIndex)> =
-                FxHashSet::default();
-
-            let rollback_start = starting_indexes.txoutindex.to_usize();
-            let rollback_end = vecs.outputs.outputtype.len();
-
-            // Pre-collect PcoVec range to avoid per-element page decompression
-            let txindexes: Vec<TxIndex> =
-                vecs.outputs.txindex.collect_range(rollback_start, rollback_end);
-
-            for (i, txoutindex) in (rollback_start..rollback_end).enumerate() {
-                let outputtype = txoutindex_to_outputtype_reader.get(txoutindex);
-                if !outputtype.is_address() {
-                    continue;
-                }
-
-                let addresstype = outputtype;
-                let addressindex = txoutindex_to_typeindex_reader.get(txoutindex);
-                let txindex = txindexes[i];
-
-                addressindex_txindex_to_remove.insert((addresstype, addressindex, txindex));
-
-                let vout = Vout::from(
-                    txoutindex
-                        - txindex_to_first_txoutindex_reader
-                            .get(txindex.to_usize())
-                            .to_usize(),
-                );
-                let outpoint = OutPoint::new(txindex, vout);
-
-                // OutPoints are unique per output, no dedup needed
-                self.addresstype_to_addressindex_and_unspentoutpoint
-                    .get_mut_unwrap(addresstype)
-                    .remove(AddressIndexOutPoint::from((addressindex, outpoint)));
-            }
-
-            // Don't remove yet - merge with second loop's set first
-
-            // Collect outputs that were spent after the rollback point
-            // We need to: 1) reset their spend status, 2) restore address stores
-            let start = starting_indexes.txinindex.to_usize();
-            let end = vecs.inputs.outpoint.len();
-            let outpoints: Vec<OutPoint> = vecs.inputs.outpoint.collect_range(start, end);
-            let spending_txindexes: Vec<TxIndex> = vecs.inputs.txindex.collect_range(start, end);
-
-            let outputs_to_unspend: Vec<_> = outpoints
-                .into_iter()
-                .zip(spending_txindexes)
-                .filter_map(|(outpoint, spending_txindex)| {
-                    if outpoint.is_coinbase() {
-                        return None;
-                    }
-
-                    let output_txindex = outpoint.txindex();
-                    let vout = outpoint.vout();
-
-                    // Calculate txoutindex from output's txindex and vout
-                    let txoutindex =
-                        txindex_to_first_txoutindex_reader.get(output_txindex.to_usize()) + vout;
-
-                    // Only process if this output was created before the rollback point
-                    if txoutindex < starting_indexes.txoutindex {
-                        let outputtype =
-                            txoutindex_to_outputtype_reader.get(txoutindex.to_usize());
-                        let typeindex = txoutindex_to_typeindex_reader.get(txoutindex.to_usize());
-
-                        Some((outpoint, outputtype, typeindex, spending_txindex))
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-
-            // Now process the collected outputs (iterators dropped, can mutate vecs)
-            // Add spending tx entries to the same set (avoid double deletion when same tx
-            // both creates output to address A and spends output from address A)
-            for (outpoint, outputtype, typeindex, spending_txindex) in outputs_to_unspend {
-                // Restore address stores if this is an address output
-                if outputtype.is_address() {
-                    let addresstype = outputtype;
-                    let addressindex = typeindex;
-
-                    // Add to same set as first loop
-                    addressindex_txindex_to_remove.insert((
-                        addresstype,
-                        addressindex,
-                        spending_txindex,
-                    ));
-
-                    // OutPoints are unique, no dedup needed for insert
-                    self.addresstype_to_addressindex_and_unspentoutpoint
-                        .get_mut_unwrap(addresstype)
-                        .insert(AddressIndexOutPoint::from((addressindex, outpoint)), Unit);
-                }
-            }
-
-            // Now remove all deduplicated addressindex_txindex entries (from both loops)
-            for (addresstype, addressindex, txindex) in addressindex_txindex_to_remove {
-                self.addresstype_to_addressindex_and_txindex
-                    .get_mut_unwrap(addresstype)
-                    .remove(AddressIndexTxIndex::from((addressindex, txindex)));
-            }
-        } else {
-            unreachable!();
-        }
-
-        // Force-lower the height on all stores before committing.
-        // This is necessary because commit() only updates the height if needed,
-        // but during rollback we must lower it even if it's already higher.
-        let rollback_height = starting_indexes.height.decremented().unwrap_or_default();
-        self.par_iter_any_mut()
-            .try_for_each(|store| store.export_meta(rollback_height))?;
-
-        self.commit(rollback_height)?;
 
         Ok(())
+    }
+
+    fn rollback_txids(&mut self, vecs: &mut Vecs, starting_indexes: &Indexes) {
+        let start = starting_indexes.txindex.to_usize();
+        let end = vecs.transactions.txid.len();
+        let mut current_index = start;
+        vecs.transactions.txid.for_each_range(start, end, |txid| {
+            let txindex = TxIndex::from(current_index);
+            let txidprefix = TxidPrefix::from(&txid);
+
+            let is_known_dup = DUPLICATE_TXID_PREFIXES
+                .iter()
+                .any(|(dup_prefix, dup_txindex)| {
+                    txindex == *dup_txindex && txidprefix == *dup_prefix
+                });
+
+            if !is_known_dup {
+                self.txidprefix_to_txindex.remove(txidprefix);
+            }
+            current_index += 1;
+        });
+
+        self.txidprefix_to_txindex.clear_caches();
+    }
+
+    fn rollback_outputs_and_inputs(&mut self, vecs: &mut Vecs, starting_indexes: &Indexes) {
+        let txindex_to_first_txoutindex_reader = vecs.transactions.first_txoutindex.reader();
+        let txoutindex_to_outputtype_reader = vecs.outputs.outputtype.reader();
+        let txoutindex_to_typeindex_reader = vecs.outputs.typeindex.reader();
+
+        let mut addressindex_txindex_to_remove: FxHashSet<(OutputType, TypeIndex, TxIndex)> =
+            FxHashSet::default();
+
+        let rollback_start = starting_indexes.txoutindex.to_usize();
+        let rollback_end = vecs.outputs.outputtype.len();
+
+        let txindexes: Vec<TxIndex> =
+            vecs.outputs.txindex.collect_range(rollback_start, rollback_end);
+
+        for (i, txoutindex) in (rollback_start..rollback_end).enumerate() {
+            let outputtype = txoutindex_to_outputtype_reader.get(txoutindex);
+            if !outputtype.is_address() {
+                continue;
+            }
+
+            let addresstype = outputtype;
+            let addressindex = txoutindex_to_typeindex_reader.get(txoutindex);
+            let txindex = txindexes[i];
+
+            addressindex_txindex_to_remove.insert((addresstype, addressindex, txindex));
+
+            let vout = Vout::from(
+                txoutindex
+                    - txindex_to_first_txoutindex_reader
+                        .get(txindex.to_usize())
+                        .to_usize(),
+            );
+            let outpoint = OutPoint::new(txindex, vout);
+
+            self.addresstype_to_addressindex_and_unspentoutpoint
+                .get_mut_unwrap(addresstype)
+                .remove(AddressIndexOutPoint::from((addressindex, outpoint)));
+        }
+
+        let start = starting_indexes.txinindex.to_usize();
+        let end = vecs.inputs.outpoint.len();
+        let outpoints: Vec<OutPoint> = vecs.inputs.outpoint.collect_range(start, end);
+        let spending_txindexes: Vec<TxIndex> = vecs.inputs.txindex.collect_range(start, end);
+
+        let outputs_to_unspend: Vec<_> = outpoints
+            .into_iter()
+            .zip(spending_txindexes)
+            .filter_map(|(outpoint, spending_txindex)| {
+                if outpoint.is_coinbase() {
+                    return None;
+                }
+
+                let output_txindex = outpoint.txindex();
+                let vout = outpoint.vout();
+                let txoutindex =
+                    txindex_to_first_txoutindex_reader.get(output_txindex.to_usize()) + vout;
+
+                if txoutindex < starting_indexes.txoutindex {
+                    let outputtype = txoutindex_to_outputtype_reader.get(txoutindex.to_usize());
+                    let typeindex = txoutindex_to_typeindex_reader.get(txoutindex.to_usize());
+                    Some((outpoint, outputtype, typeindex, spending_txindex))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        for (outpoint, outputtype, typeindex, spending_txindex) in outputs_to_unspend {
+            if outputtype.is_address() {
+                let addresstype = outputtype;
+                let addressindex = typeindex;
+
+                addressindex_txindex_to_remove.insert((
+                    addresstype,
+                    addressindex,
+                    spending_txindex,
+                ));
+
+                self.addresstype_to_addressindex_and_unspentoutpoint
+                    .get_mut_unwrap(addresstype)
+                    .insert(AddressIndexOutPoint::from((addressindex, outpoint)), Unit);
+            }
+        }
+
+        for (addresstype, addressindex, txindex) in addressindex_txindex_to_remove {
+            self.addresstype_to_addressindex_and_txindex
+                .get_mut_unwrap(addresstype)
+                .remove(AddressIndexTxIndex::from((addressindex, txindex)));
+        }
     }
 
     pub fn reset(&mut self) -> Result<()> {

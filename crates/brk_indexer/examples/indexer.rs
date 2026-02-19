@@ -36,8 +36,6 @@ fn main() -> color_eyre::Result<()> {
     let blocks = Blocks::new(&client, &reader);
     debug!("Blocks created.");
 
-    fs::create_dir_all(&outputs_dir)?;
-
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
     debug!("Indexer imported.");
 

@@ -6,6 +6,7 @@ use brk_types::{
     Sats, TxIndex, TxOutIndex, TypeIndex, Unit, Vout,
 };
 use rayon::prelude::*;
+use tracing::error;
 use rustc_hash::{FxHashMap, FxHashSet};
 use vecdb::{BytesVec, WritableVec};
 
@@ -24,7 +25,7 @@ impl<'a> BlockProcessor<'a> {
         let mut items = Vec::with_capacity(total_outputs);
         for (index, tx) in self.block.txdata.iter().enumerate() {
             for (vout, txout) in tx.output.iter().enumerate() {
-                items.push((TxIndex::from(index), Vout::from(vout), txout, tx));
+                items.push((TxIndex::from(index), Vout::from(vout), txout));
             }
         }
 
@@ -32,7 +33,7 @@ impl<'a> BlockProcessor<'a> {
             .into_par_iter()
             .enumerate()
             .map(
-                |(block_txoutindex, (block_txindex, vout, txout, tx))| -> Result<ProcessedOutput> {
+                |(block_txoutindex, (block_txindex, vout, txout))| -> Result<ProcessedOutput> {
                     let txindex = base_txindex + block_txindex;
                     let txoutindex = base_txoutindex + TxOutIndex::from(block_txoutindex);
 
@@ -67,7 +68,7 @@ impl<'a> BlockProcessor<'a> {
                         });
 
                     if check_collisions && let Some(typeindex) = existing_typeindex {
-                        let prev_addressbytes = self.vecs.get_addressbytes_by_type(
+                        let prev_addressbytes = self.vecs.addresses.get_bytes_by_type(
                             addresstype,
                             typeindex,
                             &self.readers.addressbytes,
@@ -75,21 +76,12 @@ impl<'a> BlockProcessor<'a> {
                         .ok_or(Error::Internal("Missing addressbytes"))?;
 
                         if prev_addressbytes != address_bytes {
-                            let txid = tx.compute_txid();
-                            dbg!(
-                                height,
-                                txid,
-                                vout,
-                                block_txindex,
-                                addresstype,
-                                prev_addressbytes,
-                                &address_bytes,
-                                &self.indexes,
-                                typeindex,
-                                txout,
-                                AddressHash::from(&address_bytes),
+                            error!(
+                                ?height, ?vout, ?block_txindex, ?addresstype,
+                                ?prev_addressbytes, ?address_bytes, ?typeindex,
+                                "Address hash collision"
                             );
-                            panic!()
+                            return Err(Error::Internal("Address hash collision"));
                         }
                     }
 

@@ -2,11 +2,9 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{AddressBytes, AddressHash, Height, OutputType, TypeIndex, Version};
+use brk_types::{AddressHash, Height, OutputType, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Stamp};
-
-use crate::AddressReaders;
 
 const PAGE_SIZE: usize = 4096;
 
@@ -47,46 +45,14 @@ impl Vecs {
         tracing::debug!("Setting min len...");
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
-        tracing::debug!("Importing sub-vecs in parallel...");
         let (blocks, transactions, inputs, outputs, addresses, scripts) = parallel_import! {
-            blocks = {
-                tracing::debug!("Importing BlocksVecs...");
-                let r = BlocksVecs::forced_import(&db, version);
-                tracing::debug!("BlocksVecs imported.");
-                r
-            },
-            transactions = {
-                tracing::debug!("Importing TransactionsVecs...");
-                let r = TransactionsVecs::forced_import(&db, version);
-                tracing::debug!("TransactionsVecs imported.");
-                r
-            },
-            inputs = {
-                tracing::debug!("Importing InputsVecs...");
-                let r = InputsVecs::forced_import(&db, version);
-                tracing::debug!("InputsVecs imported.");
-                r
-            },
-            outputs = {
-                tracing::debug!("Importing OutputsVecs...");
-                let r = OutputsVecs::forced_import(&db, version);
-                tracing::debug!("OutputsVecs imported.");
-                r
-            },
-            addresses = {
-                tracing::debug!("Importing AddressesVecs...");
-                let r = AddressesVecs::forced_import(&db, version);
-                tracing::debug!("AddressesVecs imported.");
-                r
-            },
-            scripts = {
-                tracing::debug!("Importing ScriptsVecs...");
-                let r = ScriptsVecs::forced_import(&db, version);
-                tracing::debug!("ScriptsVecs imported.");
-                r
-            },
+            blocks = BlocksVecs::forced_import(&db, version),
+            transactions = TransactionsVecs::forced_import(&db, version),
+            inputs = InputsVecs::forced_import(&db, version),
+            outputs = OutputsVecs::forced_import(&db, version),
+            addresses = AddressesVecs::forced_import(&db, version),
+            scripts = ScriptsVecs::forced_import(&db, version),
         };
-        tracing::debug!("Sub-vecs imported.");
 
         let this = Self {
             db,
@@ -146,20 +112,6 @@ impl Vecs {
         )?;
 
         Ok(())
-    }
-
-    pub fn get_addressbytes_by_type(
-        &self,
-        addresstype: OutputType,
-        typeindex: TypeIndex,
-        readers: &AddressReaders,
-    ) -> Option<AddressBytes> {
-        self.addresses
-            .get_bytes_by_type(addresstype, typeindex, readers)
-    }
-
-    pub fn push_bytes_if_needed(&mut self, index: TypeIndex, bytes: AddressBytes) -> Result<()> {
-        self.addresses.push_bytes_if_needed(index, bytes)
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {

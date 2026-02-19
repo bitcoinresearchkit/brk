@@ -1,11 +1,9 @@
 use brk_error::Result;
-use brk_types::Height;
+use brk_types::{Height, Indexes};
 use tracing::{debug, info};
 use vecdb::{AnyStoredVec, WritableVec, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue};
 
 use crate::{Stores, Vecs};
-
-pub use brk_types::Indexes;
 
 /// Extension trait for Indexes with brk_indexer-specific functionality.
 pub trait IndexesExt {
@@ -93,98 +91,85 @@ impl IndexesExt for Indexes {
             &vecs.scripts.first_emptyoutputindex,
             &vecs.scripts.empty_to_txindex,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let p2msoutputindex = starting_index(
             &vecs.scripts.first_p2msoutputindex,
             &vecs.scripts.p2ms_to_txindex,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let opreturnindex = starting_index(
             &vecs.scripts.first_opreturnindex,
             &vecs.scripts.opreturn_to_txindex,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let p2pk33addressindex = starting_index(
             &vecs.addresses.first_p2pk33addressindex,
             &vecs.addresses.p2pk33bytes,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let p2pk65addressindex = starting_index(
             &vecs.addresses.first_p2pk65addressindex,
             &vecs.addresses.p2pk65bytes,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let p2pkhaddressindex = starting_index(
             &vecs.addresses.first_p2pkhaddressindex,
             &vecs.addresses.p2pkhbytes,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let p2shaddressindex = starting_index(
             &vecs.addresses.first_p2shaddressindex,
             &vecs.addresses.p2shbytes,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let p2traddressindex = starting_index(
             &vecs.addresses.first_p2traddressindex,
             &vecs.addresses.p2trbytes,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let p2wpkhaddressindex = starting_index(
             &vecs.addresses.first_p2wpkhaddressindex,
             &vecs.addresses.p2wpkhbytes,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let p2wshaddressindex = starting_index(
             &vecs.addresses.first_p2wshaddressindex,
             &vecs.addresses.p2wshbytes,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let p2aaddressindex = starting_index(
             &vecs.addresses.first_p2aaddressindex,
             &vecs.addresses.p2abytes,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let txindex = starting_index(
             &vecs.transactions.first_txindex,
             &vecs.transactions.txid,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         let txinindex =
-            starting_index(&vecs.inputs.first_txinindex, &vecs.inputs.outpoint, starting_height).unwrap();
+            starting_index(&vecs.inputs.first_txinindex, &vecs.inputs.outpoint, starting_height)?;
 
         let txoutindex =
-            starting_index(&vecs.outputs.first_txoutindex, &vecs.outputs.value, starting_height).unwrap();
+            starting_index(&vecs.outputs.first_txoutindex, &vecs.outputs.value, starting_height)?;
 
         let unknownoutputindex = starting_index(
             &vecs.scripts.first_unknownoutputindex,
             &vecs.scripts.unknown_to_txindex,
             starting_height,
-        )
-        .unwrap();
+        )?;
 
         Some(Indexes {
             emptyoutputindex,
