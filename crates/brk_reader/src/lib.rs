@@ -4,12 +4,10 @@ use std::{
     collections::BTreeMap,
     fs::{self, File},
     io::{Read, Seek, SeekFrom},
-    mem,
     ops::ControlFlow,
     path::{Path, PathBuf},
     sync::Arc,
     thread,
-    time::Duration,
 };
 
 use bitcoin::{block::Header, consensus::Decodable};
@@ -24,17 +22,29 @@ use parking_lot::{RwLock, RwLockReadGuard};
 use rayon::prelude::*;
 use tracing::error;
 
-mod any_block;
 mod blk_index_to_blk_path;
+mod decode;
 mod xor_bytes;
 mod xor_index;
 
-use any_block::*;
+use decode::*;
 pub use xor_bytes::*;
 pub use xor_index::*;
 
 const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
 const BOUND_CAP: usize = 50;
+
+fn find_magic(bytes: &[u8], xor_i: &mut XORIndex, xor_bytes: XORBytes) -> Option<usize> {
+    let mut window = [0u8; 4];
+    for (i, &b) in bytes.iter().enumerate() {
+        window.rotate_left(1);
+        window[3] = xor_i.byte(b, xor_bytes);
+        if window == MAGIC_BYTES {
+            return Some(i + 1);
+        }
+    }
+    None
+}
 
 ///
 /// Bitcoin BLK file reader
@@ -107,11 +117,9 @@ impl ReaderInner {
         Ok(buffer)
     }
 
+    /// Returns a crossbeam channel receiver that streams `ReadBlock`s in chain order.
     ///
-    /// Returns a crossbeam channel receiver that receives `Block` from an **inclusive** range (`start` and `end`)
-    ///
-    /// For an example checkout `./main.rs`
-    ///
+    /// Both `start` and `end` are inclusive. `None` means unbounded.
     pub fn read(&self, start: Option<Height>, end: Option<Height>) -> Receiver<ReadBlock> {
         let client = self.client.clone();
 
@@ -128,6 +136,18 @@ impl ReaderInner {
             .find_start_blk_index(start, &blk_index_to_blk_path, xor_bytes)
             .unwrap_or_default();
 
+        let get_block_time = |h: Height| -> u32 {
+            self.client
+                .get_block_hash(*h as u64)
+                .ok()
+                .and_then(|hash| self.client.get_block_header(&hash).ok())
+                .map(|h| h.time)
+                .unwrap_or(0)
+        };
+
+        let start_time = start.filter(|h| **h > 0).map(&get_block_time).unwrap_or(0);
+        let end_time = end.map(&get_block_time).unwrap_or(0);
+
         thread::spawn(move || {
             let _ = blk_index_to_blk_path.range(first_blk_index..).try_for_each(
                 move |(blk_index, blk_path)| {
@@ -135,29 +155,19 @@ impl ReaderInner {
 
                     let blk_index = *blk_index;
 
-                    let mut blk_bytes_ = fs::read(blk_path).unwrap();
+                    let Ok(mut blk_bytes_) = fs::read(blk_path) else {
+                        error!("Failed to read blk file: {}", blk_path.display());
+                        return ControlFlow::Break(());
+                    };
                     let blk_bytes = blk_bytes_.as_mut_slice();
-                    let blk_bytes_len = blk_bytes.len();
-
-                    let mut current_4bytes = [0; 4];
-
                     let mut i = 0;
 
-                    'parent: loop {
-                        loop {
-                            if i == blk_bytes_len {
-                                break 'parent;
-                            }
-
-                            current_4bytes.rotate_left(1);
-
-                            current_4bytes[3] = xor_i.byte(blk_bytes[i], xor_bytes);
-                            i += 1;
-
-                            if current_4bytes == MAGIC_BYTES {
-                                break;
-                            }
-                        }
+                    loop {
+                        let Some(offset) = find_magic(&blk_bytes[i..], &mut xor_i, xor_bytes)
+                        else {
+                            break;
+                        };
+                        i += offset;
 
                         let len = u32::from_le_bytes(
                             xor_i
@@ -172,10 +182,7 @@ impl ReaderInner {
 
                         let block_bytes = (blk_bytes[i..(i + len)]).to_vec();
 
-                        if send_bytes
-                            .send((metadata, AnyBlock::Raw(block_bytes), xor_i))
-                            .is_err()
-                        {
+                        if send_bytes.send((metadata, block_bytes, xor_i)).is_err() {
                             return ControlFlow::Break(());
                         }
 
@@ -189,47 +196,27 @@ impl ReaderInner {
         });
 
         thread::spawn(move || {
-            let xor_bytes = xor_bytes;
-
-            let mut bulk = vec![];
-
             // Private pool to prevent collision with the global pool
-            // Without it there can be hanging
             let parser_pool = rayon::ThreadPoolBuilder::new()
-                .num_threads(thread::available_parallelism().unwrap().get() / 2)
+                .num_threads(4.min(thread::available_parallelism().unwrap().get() / 2))
                 .build()
                 .expect("Failed to create parser thread pool");
 
-            let drain_and_send = |bulk: &mut Vec<(BlkMetadata, AnyBlock, XORIndex)>| {
-                parser_pool.install(|| {
-                    mem::take(bulk)
-                        .into_par_iter()
-                        .try_for_each(|(metdata, any_block, xor_i)| {
-                            if let Ok(AnyBlock::Decoded(block)) =
-                                any_block.decode(metdata, &client, xor_i, xor_bytes, start, end)
+            parser_pool.install(|| {
+                let _ =
+                    recv_bytes
+                        .into_iter()
+                        .par_bridge()
+                        .try_for_each(|(metadata, bytes, xor_i)| {
+                            if let Ok(Some(block)) =
+                                decode_block(bytes, metadata, &client, xor_i, xor_bytes, start, end, start_time, end_time)
                                 && send_block.send(block).is_err()
                             {
                                 return ControlFlow::Break(());
                             }
                             ControlFlow::Continue(())
-                        })
-                })
-            };
-
-            recv_bytes.iter().try_for_each(|tuple| {
-                bulk.push(tuple);
-
-                if bulk.len() < BOUND_CAP / 2 {
-                    return ControlFlow::Continue(());
-                }
-
-                while send_block.len() >= bulk.len() {
-                    thread::sleep(Duration::from_micros(100));
-                }
-                drain_and_send(&mut bulk)
-            })?;
-
-            drain_and_send(&mut bulk)
+                        });
+            });
         });
 
         thread::spawn(move || {
@@ -272,7 +259,7 @@ impl ReaderInner {
 
                         current_height.increment();
 
-                        if end.is_some_and(|end| end == current_height) {
+                        if end.is_some_and(|end| current_height > end) {
                             return ControlFlow::Break(());
                         }
                     }
@@ -302,14 +289,11 @@ impl ReaderInner {
                 .keys()
                 .rev()
                 .nth(2)
-                .cloned()
+                .copied()
                 .unwrap_or_default());
         }
 
-        let blk_indices: Vec<u16> = blk_index_to_blk_path
-            .range(0..)
-            .map(|(idx, _)| *idx)
-            .collect();
+        let blk_indices: Vec<u16> = blk_index_to_blk_path.keys().copied().collect();
 
         if blk_indices.is_empty() {
             return Ok(0);
@@ -328,9 +312,6 @@ impl ReaderInner {
                     Ok(height) => {
                         if height <= target_start {
                             best_start_idx = mid;
-                            if mid == usize::MAX {
-                                break;
-                            }
                             left = mid + 1;
                         } else {
                             if mid == 0 {
@@ -340,9 +321,6 @@ impl ReaderInner {
                         }
                     }
                     Err(_) => {
-                        if mid == usize::MAX {
-                            break;
-                        }
                         left = mid + 1;
                     }
                 }
@@ -357,35 +335,23 @@ impl ReaderInner {
         Ok(blk_indices.get(final_idx).copied().unwrap_or(0))
     }
 
-    fn get_first_block_height(&self, blk_path: &PathBuf, xor_bytes: XORBytes) -> Result<Height> {
+    pub fn get_first_block_height(&self, blk_path: &PathBuf, xor_bytes: XORBytes) -> Result<Height> {
         let mut file = File::open(blk_path)?;
+        let mut buf = [0u8; 4096];
+        let n = file.read(&mut buf)?;
+
         let mut xor_i = XORIndex::default();
-        let mut current_4bytes = [0; 4];
-        let mut byte_buffer = [0u8; 1];
+        let magic_end = find_magic(&buf[..n], &mut xor_i, xor_bytes)
+            .ok_or_else(|| Error::NotFound("No magic bytes found".into()))?;
 
-        loop {
-            if file.read_exact(&mut byte_buffer).is_err() {
-                return Err(Error::NotFound("No magic bytes found".into()));
-            }
+        let size_end = magic_end + 4;
+        xor_i.bytes(&mut buf[magic_end..size_end], xor_bytes);
 
-            current_4bytes.rotate_left(1);
-            current_4bytes[3] = xor_i.byte(byte_buffer[0], xor_bytes);
+        let header_end = size_end + 80;
+        xor_i.bytes(&mut buf[size_end..header_end], xor_bytes);
 
-            if current_4bytes == MAGIC_BYTES {
-                break;
-            }
-        }
-
-        let mut size_bytes = [0u8; 4];
-        file.read_exact(&mut size_bytes)?;
-        let _block_size =
-            u32::from_le_bytes(xor_i.bytes(&mut size_bytes, xor_bytes).try_into().unwrap());
-
-        let mut header_bytes = [0u8; 80];
-        file.read_exact(&mut header_bytes)?;
-        xor_i.bytes(&mut header_bytes, xor_bytes);
-
-        let header = Header::consensus_decode(&mut std::io::Cursor::new(&header_bytes))?;
+        let header =
+            Header::consensus_decode(&mut std::io::Cursor::new(&buf[size_end..header_end]))?;
 
         let height = self.client.get_block_info(&header.block_hash())?.height as u32;
 

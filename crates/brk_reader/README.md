@@ -1,46 +1,59 @@
 # brk_reader
 
-High-performance Bitcoin block reader from raw blk files.
+Streams Bitcoin blocks from Bitcoin Core's raw `blk*.dat` files in chain order.
 
-## What It Enables
+## Requirements
 
-Stream blocks directly from Bitcoin Core's `blk*.dat` files with parallel parsing, automatic XOR decoding, and chain-order delivery. Much faster than RPC for full-chain scans.
+A running Bitcoin Core node with RPC access. The reader needs:
+- The `blocks/` directory (for `blk*.dat` files)
+- RPC connection (to resolve block heights and filter orphan blocks)
 
-## Key Features
-
-- **Direct blk file access**: Bypasses RPC overhead entirely
-- **XOR decoding**: Handles Bitcoin Core's obfuscated block storage
-- **Parallel parsing**: Multi-threaded block deserialization
-- **Chain ordering**: Reorders out-of-sequence blocks before delivery
-- **Smart start finding**: Binary search to locate starting height across blk files
-- **Reorg detection**: Stops iteration on chain discontinuity
-
-## Core API
+## Quick Start
 
 ```rust,ignore
-let reader = Reader::new(blocks_dir, &rpc_client);
+let bitcoin_dir = Client::default_bitcoin_path();
+let client = Client::new(
+    Client::default_url(),
+    Auth::CookieFile(bitcoin_dir.join(".cookie")),
+)?;
+let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
 
-// Stream blocks from height 800,000 to 850,000
-let receiver = reader.read(Some(Height::new(800_000)), Some(Height::new(850_000)));
+// Stream the entire chain
+for block in reader.read(None, None) {
+    println!("{}: {}", block.height(), block.hash());
+}
 
-for block in receiver {
-    // Process block in chain order
+// Or a specific range (inclusive)
+for block in reader.read(Some(Height::new(800_000)), Some(Height::new(850_000))) {
+    // ...
 }
 ```
 
-## Architecture
+## What You Get
 
-1. **File scanner**: Maps `blk*.dat` files to indices
-2. **Byte reader**: Streams raw bytes, finds magic bytes, segments blocks
-3. **Parser pool**: Parallel deserialization with rayon
-4. **Orderer**: Buffers and emits blocks in height order
+Each `ReadBlock` gives you access to:
 
-## Performance
+| Field | Description |
+|-------|-------------|
+| `block.height()` | Block height |
+| `block.hash()` | Block hash |
+| `block.header` | Block header (timestamp, nonce, difficulty, ...) |
+| `block.txdata` | All transactions |
+| `block.coinbase_tag()` | Miner's coinbase tag |
+| `block.metadata()` | Position in the blk file |
+| `block.tx_metadata()` | Per-transaction blk file positions |
 
-The parallel pipeline can saturate disk I/O while parsing on multiple cores. For recent blocks, falls back to RPC for lower latency.
+`Reader` is thread-safe and cheap to clone (Arc-backed).
 
-## Built On
+## How It Works
 
-- `brk_error` for error handling
-- `brk_rpc` for RPC client (height lookups, recent blocks)
-- `brk_types` for `Height`, `BlockHash`, `BlkPosition`, `BlkMetadata`
+Three-thread pipeline connected by bounded channels:
+
+```text
+blk*.dat ──► File Reader ──► Parser Pool ──► Orderer ──► Receiver<ReadBlock>
+              1 thread        up to 4         1 thread
+```
+
+1. **File reader** binary-searches to the starting blk file, scans for magic bytes, segments raw blocks
+2. **Parser pool** XOR-decodes and deserializes blocks in parallel, skips out-of-range blocks via header timestamp, filters orphans via RPC
+3. **Orderer** buffers out-of-order arrivals, validates `prev_blockhash` continuity, emits blocks sequentially

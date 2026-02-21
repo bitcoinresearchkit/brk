@@ -8,11 +8,12 @@ edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+exclude = ["examples/"]
 
 [dependencies]
 bitcoin = { workspace = true }
 brk_error = { workspace = true }
-brk_rpc = { workspace = true }
+brk_rpc = { workspace = true, features = ["corepc"] }
 brk_types = { workspace = true }
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
 derive_more = { workspace = true }

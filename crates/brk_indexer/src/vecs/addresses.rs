@@ -250,8 +250,7 @@ impl AddressesVecs {
     ) -> Result<Box<dyn Iterator<Item = AddressHash> + '_>> {
         macro_rules! make_iter {
             ($height_vec:expr, $bytes_vec:expr) => {{
-                let h = height.to_usize();
-                match $height_vec.collect_one(h) {
+                match $height_vec.collect_one(height) {
                     Some(mut index) => {
                         let reader = $bytes_vec.reader();
                         Ok(Box::new(std::iter::from_fn(move || {

@@ -12,7 +12,7 @@ fn main() -> Result<()> {
 
     let indexer = Indexer::forced_import(&outputs_dir)?;
 
-    println!("{:?}", indexer.vecs.outputs.value.collect_range(0, 200));
+    println!("{:?}", indexer.vecs.outputs.value.collect_range_at(0, 200));
 
     Ok(())
 }

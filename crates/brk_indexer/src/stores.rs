@@ -242,7 +242,7 @@ impl Stores {
         vecs: &mut Vecs,
         starting_indexes: &Indexes,
     ) -> Result<()> {
-        vecs.blocks.blockhash.for_each_range(
+        vecs.blocks.blockhash.for_each_range_at(
             starting_indexes.height.to_usize(),
             vecs.blocks.blockhash.len(),
             |blockhash| {
@@ -272,7 +272,7 @@ impl Stores {
         let start = starting_indexes.txindex.to_usize();
         let end = vecs.transactions.txid.len();
         let mut current_index = start;
-        vecs.transactions.txid.for_each_range(start, end, |txid| {
+        vecs.transactions.txid.for_each_range_at(start, end, |txid| {
             let txindex = TxIndex::from(current_index);
             let txidprefix = TxidPrefix::from(&txid);
 
@@ -303,7 +303,7 @@ impl Stores {
         let rollback_end = vecs.outputs.outputtype.len();
 
         let txindexes: Vec<TxIndex> =
-            vecs.outputs.txindex.collect_range(rollback_start, rollback_end);
+            vecs.outputs.txindex.collect_range_at(rollback_start, rollback_end);
 
         for (i, txoutindex) in (rollback_start..rollback_end).enumerate() {
             let outputtype = txoutindex_to_outputtype_reader.get(txoutindex);
@@ -332,8 +332,8 @@ impl Stores {
 
         let start = starting_indexes.txinindex.to_usize();
         let end = vecs.inputs.outpoint.len();
-        let outpoints: Vec<OutPoint> = vecs.inputs.outpoint.collect_range(start, end);
-        let spending_txindexes: Vec<TxIndex> = vecs.inputs.txindex.collect_range(start, end);
+        let outpoints: Vec<OutPoint> = vecs.inputs.outpoint.collect_range_at(start, end);
+        let spending_txindexes: Vec<TxIndex> = vecs.inputs.txindex.collect_range_at(start, end);
 
         let outputs_to_unspend: Vec<_> = outpoints
             .into_iter()

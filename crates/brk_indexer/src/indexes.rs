@@ -207,6 +207,6 @@ where
     } else if h + 1_u32 == starting_height {
         Some(I::from(index_to_else.len()))
     } else {
-        height_to_index.collect_one(starting_height.to_usize())
+        height_to_index.collect_one(starting_height)
     }
 }
