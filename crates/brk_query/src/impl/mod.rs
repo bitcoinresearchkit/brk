@@ -3,7 +3,6 @@ mod block;
 mod cost_basis;
 mod mempool;
 mod metrics;
-mod metrics_legacy;
 mod mining;
 mod price;
 mod transaction;

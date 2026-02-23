@@ -115,7 +115,8 @@ impl std::fmt::Display for PairOutputIndex {
 
 impl Formattable for PairOutputIndex {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }

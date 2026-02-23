@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::Version;
-use vecdb::{Database, IterableCloneableVec};
+use vecdb::{Database, ReadableCloneableVec};
 
 use super::Vecs;
 use crate::{
@@ -10,7 +10,7 @@ use crate::{
 };
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexer: &Indexer,
@@ -19,7 +19,7 @@ impl Vecs {
         let weight = ComputedHeightDerivedFull::forced_import(
             db,
             "block_weight",
-            indexer.vecs.blocks.weight.boxed_clone(),
+            indexer.vecs.blocks.weight.read_only_boxed_clone(),
             version,
             indexes,
         )?;
@@ -27,7 +27,7 @@ impl Vecs {
         let fullness = LazyFromHeightTransformDistribution::from_derived::<WeightToFullness>(
             "block_fullness",
             version,
-            indexer.vecs.blocks.weight.boxed_clone(),
+            indexer.vecs.blocks.weight.read_only_boxed_clone(),
             &weight,
         );
 

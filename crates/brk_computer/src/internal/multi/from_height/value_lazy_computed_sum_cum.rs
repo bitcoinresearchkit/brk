@@ -8,90 +8,81 @@
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Close, Dollars, Sats, Version};
-use vecdb::{Database, Exit, IterableCloneableVec, LazyVecFrom2};
+use brk_types::{Bitcoin, Dollars, Sats, Version};
+use vecdb::{Database, Exit, ReadableCloneableVec, LazyVecFrom2, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        ClosePriceTimesSats, ComputedFromHeightSumCum, LazyFromHeightSumCum, LazyComputedFromHeightSumCum,
-        SatsToBitcoin,
+        ComputedFromHeightSumCum, LazyComputedFromHeightSumCum, LazyFromHeightSumCum,
+        PriceTimesSats, SatsToBitcoin,
     },
-    price,
+    prices,
 };
 
 /// Value wrapper with stored sats height + lazy dollars.
 ///
 /// Sats height is stored (computed directly or from stateful loop).
 /// Dollars height is lazy (price × sats).
-/// Cumulative and dateindex aggregates are stored for both.
-#[derive(Clone, Traversable)]
-pub struct LazyComputedValueFromHeightSumCum {
-    pub sats: ComputedFromHeightSumCum<Sats>,
-    pub bitcoin: LazyFromHeightSumCum<Bitcoin, Sats>,
-    pub dollars: Option<LazyComputedFromHeightSumCum<Dollars, Close<Dollars>, Sats>>,
+/// Cumulative and day1 aggregates are stored for both.
+#[derive(Traversable)]
+pub struct LazyComputedValueFromHeightSumCum<M: StorageMode = Rw> {
+    pub sats: ComputedFromHeightSumCum<Sats, M>,
+    pub btc: LazyFromHeightSumCum<Bitcoin, Sats>,
+    pub usd: LazyComputedFromHeightSumCum<Dollars, Dollars, Sats, M>,
 }
 
 const VERSION: Version = Version::ZERO;
 
 impl LazyComputedValueFromHeightSumCum {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
     ) -> Result<Self> {
         let v = version + VERSION;
 
         let sats = ComputedFromHeightSumCum::forced_import(db, name, v, indexes)?;
 
-        let bitcoin = LazyFromHeightSumCum::from_computed::<SatsToBitcoin>(
+        let btc = LazyFromHeightSumCum::from_computed::<SatsToBitcoin>(
             &format!("{name}_btc"),
             v,
-            sats.height.boxed_clone(),
+            sats.height.read_only_boxed_clone(),
             &sats,
         );
 
-        let dollars = if let Some(price) = price {
-            let dollars_height = LazyVecFrom2::transformed::<ClosePriceTimesSats>(
-                &format!("{name}_usd"),
-                v,
-                price.usd.split.close.height.boxed_clone(),
-                sats.height.boxed_clone(),
-            );
+        let usd_height = LazyVecFrom2::transformed::<PriceTimesSats>(
+            &format!("{name}_usd"),
+            v,
+            prices.usd.price.read_only_boxed_clone(),
+            sats.height.read_only_boxed_clone(),
+        );
 
-            Some(LazyComputedFromHeightSumCum::forced_import(
-                db,
-                &format!("{name}_usd"),
-                v,
-                indexes,
-                dollars_height,
-            )?)
-        } else {
-            None
-        };
+        let usd = LazyComputedFromHeightSumCum::forced_import(
+            db,
+            &format!("{name}_usd"),
+            v,
+            indexes,
+            usd_height,
+        )?;
 
         Ok(Self {
             sats,
-            bitcoin,
-            dollars,
+            btc,
+            usd,
         })
     }
 
-    /// Compute rest (derived indexes) from already-computed height.
-    pub fn compute_rest(
+    /// Compute cumulative from already-computed height.
+    pub(crate) fn compute_cumulative(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.sats.compute_rest(indexes, starting_indexes, exit)?;
-
-        if let Some(dollars) = self.dollars.as_mut() {
-            dollars.derive_from(indexes, starting_indexes, exit)?;
-        }
-
+        self.sats.compute_cumulative(starting_indexes, exit)?;
+        self.usd.compute_cumulative(starting_indexes, exit)?;
         Ok(())
     }
 }

@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{indexes, inputs, scripts, ComputeIndexes};
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,

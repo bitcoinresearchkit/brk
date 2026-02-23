@@ -1,33 +1,45 @@
-//! ComputedHeightDerivedFull - height_cumulative + dateindex storage + difficultyepoch + lazy time periods.
+//! ComputedHeightDerivedFull - height_cumulative (stored) + lazy time periods + epochs.
 
 use brk_error::Result;
 
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, DifficultyEpoch, Height, Version};
-use derive_more::{Deref, DerefMut};
+use brk_types::{
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4, Minute1, Minute10,
+    Minute30, Minute5, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+};
 use schemars::JsonSchema;
-use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec};
+use vecdb::{Database, Exit, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{
-        ComputedVecValue, CumulativeVec, Full, LazyDateDerivedFull, LazyFull, NumericValue,
-    },
+    internal::{ComputedVecValue, CumulativeVec, LazyFull, NumericValue},
     ComputeIndexes,
 };
 
-#[derive(Clone, Deref, DerefMut, Traversable)]
+#[derive(Traversable)]
 #[traversable(merge)]
-pub struct ComputedHeightDerivedFull<T>
+pub struct ComputedHeightDerivedFull<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
     #[traversable(rename = "cumulative")]
-    pub height_cumulative: CumulativeVec<Height, T>,
-    pub dateindex: Full<DateIndex, T>,
-    #[deref]
-    #[deref_mut]
-    pub dates: LazyDateDerivedFull<T>,
+    pub height_cumulative: CumulativeVec<Height, T, M>,
+    pub minute1: LazyFull<Minute1, T, Height, Height>,
+    pub minute5: LazyFull<Minute5, T, Height, Height>,
+    pub minute10: LazyFull<Minute10, T, Height, Height>,
+    pub minute30: LazyFull<Minute30, T, Height, Height>,
+    pub hour1: LazyFull<Hour1, T, Height, Height>,
+    pub hour4: LazyFull<Hour4, T, Height, Height>,
+    pub hour12: LazyFull<Hour12, T, Height, Height>,
+    pub day1: LazyFull<Day1, T, Height, Height>,
+    pub day3: LazyFull<Day3, T, Height, Height>,
+    pub week1: LazyFull<Week1, T, Height, Height>,
+    pub month1: LazyFull<Month1, T, Height, Height>,
+    pub month3: LazyFull<Month3, T, Height, Height>,
+    pub month6: LazyFull<Month6, T, Height, Height>,
+    pub year1: LazyFull<Year1, T, Height, Height>,
+    pub year10: LazyFull<Year10, T, Height, Height>,
+    pub halvingepoch: LazyFull<HalvingEpoch, T, Height, HalvingEpoch>,
     pub difficultyepoch: LazyFull<DifficultyEpoch, T, Height, DifficultyEpoch>,
 }
 
@@ -37,74 +49,92 @@ impl<T> ComputedHeightDerivedFull<T>
 where
     T: NumericValue + JsonSchema,
 {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
-        height_source: IterableBoxedVec<Height, T>,
+        height_source: ReadableBoxedVec<Height, T>,
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let v = version + VERSION;
         let height_cumulative = CumulativeVec::forced_import(db, name, v)?;
-        let dateindex = Full::forced_import(db, name, v)?;
+
+        macro_rules! period {
+            ($idx:ident) => {
+                LazyFull::from_height_source(
+                    name,
+                    v,
+                    height_source.clone(),
+                    height_cumulative.read_only_boxed_clone(),
+                    indexes.$idx.first_height.read_only_boxed_clone(),
+                )
+            };
+        }
+
+        macro_rules! epoch {
+            ($idx:ident) => {
+                LazyFull::from_stats_aggregate(
+                    name,
+                    v,
+                    height_source.clone(),
+                    height_source.clone(),
+                    height_source.clone(),
+                    height_source.clone(),
+                    height_cumulative.read_only_boxed_clone(),
+                    height_source.clone(),
+                    indexes.$idx.identity.read_only_boxed_clone(),
+                )
+            };
+        }
+
+        let minute1 = period!(minute1);
+        let minute5 = period!(minute5);
+        let minute10 = period!(minute10);
+        let minute30 = period!(minute30);
+        let hour1 = period!(hour1);
+        let hour4 = period!(hour4);
+        let hour12 = period!(hour12);
+        let day1 = period!(day1);
+        let day3 = period!(day3);
+        let week1 = period!(week1);
+        let month1 = period!(month1);
+        let month3 = period!(month3);
+        let month6 = period!(month6);
+        let year1 = period!(year1);
+        let year10 = period!(year10);
+        let halvingepoch = epoch!(halvingepoch);
+        let difficultyepoch = epoch!(difficultyepoch);
 
         Ok(Self {
-            dates: LazyDateDerivedFull::from_sources(
-                name,
-                v,
-                dateindex.boxed_average(),
-                dateindex.boxed_min(),
-                dateindex.boxed_max(),
-                dateindex.boxed_sum(),
-                dateindex.boxed_cumulative(),
-                indexes,
-            ),
-            difficultyepoch: LazyFull::from_stats_aggregate(
-                name,
-                v,
-                height_source.boxed_clone(),
-                height_source.boxed_clone(),
-                height_source.boxed_clone(),
-                height_source.boxed_clone(),
-                height_cumulative.boxed_clone(),
-                indexes.difficultyepoch.identity.boxed_clone(),
-            ),
             height_cumulative,
-            dateindex,
+            minute1,
+            minute5,
+            minute10,
+            minute30,
+            hour1,
+            hour4,
+            hour12,
+            day1,
+            day3,
+            week1,
+            month1,
+            month3,
+            month6,
+            year1,
+            year10,
+            halvingepoch,
+            difficultyepoch,
         })
     }
 
-    pub fn derive_from(
+    pub(crate) fn compute_cumulative(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
-        height_source: &impl IterableVec<Height, T>,
+        height_source: &impl ReadableVec<Height, T>,
         exit: &Exit,
     ) -> Result<()> {
-        // Compute height_cumulative from external source
-        self.compute_height_cumulative(starting_indexes.height, height_source, exit)?;
-
-        // Compute dateindex aggregations
-        self.dateindex.compute(
-            starting_indexes.dateindex,
-            height_source,
-            &indexes.dateindex.first_height,
-            &indexes.dateindex.height_count,
-            exit,
-        )?;
-
-        Ok(())
-    }
-
-    fn compute_height_cumulative(
-        &mut self,
-        max_from: Height,
-        height_source: &impl IterableVec<Height, T>,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.height_cumulative
+        Ok(self.height_cumulative
             .0
-            .compute_cumulative(max_from, height_source, exit)?;
-        Ok(())
+            .compute_cumulative(starting_indexes.height, height_source, exit)?)
     }
 }

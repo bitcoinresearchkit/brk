@@ -1,6 +1,6 @@
 use brk_cohort::{AmountBucket, ByAddressType};
 use brk_error::Result;
-use brk_types::{Age, CentsUnsigned, CheckedSub, Height, Sats, Timestamp, TypeIndex};
+use brk_types::{Age, Cents, CheckedSub, Height, Sats, Timestamp, TypeIndex};
 use rustc_hash::FxHashSet;
 use vecdb::{VecIndex, unlikely};
 
@@ -26,17 +26,17 @@ use super::super::cache::AddressLookup;
 /// `price_range_max` is used to compute the peak price during each UTXO's holding period
 /// for accurate peak regret calculation.
 #[allow(clippy::too_many_arguments)]
-pub fn process_sent(
+pub(crate) fn process_sent(
     sent_data: HeightToAddressTypeToVec<(TypeIndex, Sats)>,
     cohorts: &mut AddressCohorts,
     lookup: &mut AddressLookup<'_>,
-    current_price: Option<CentsUnsigned>,
-    price_range_max: Option<&PriceRangeMax>,
+    current_price: Cents,
+    price_range_max: &PriceRangeMax,
     addr_count: &mut ByAddressType<u64>,
     empty_addr_count: &mut ByAddressType<u64>,
     activity_counts: &mut AddressTypeToActivityCounts,
     received_addresses: &ByAddressType<FxHashSet<TypeIndex>>,
-    height_to_price: Option<&[CentsUnsigned]>,
+    height_to_price: &[Cents],
     height_to_timestamp: &[Timestamp],
     current_height: Height,
     current_timestamp: Timestamp,
@@ -45,22 +45,21 @@ pub fn process_sent(
     let mut seen_senders: ByAddressType<FxHashSet<TypeIndex>> = ByAddressType::default();
 
     for (receive_height, by_type) in sent_data.into_iter() {
-        let prev_price = height_to_price.map(|v| v[receive_height.to_usize()]);
+        let prev_price = height_to_price[receive_height.to_usize()];
         let prev_timestamp = height_to_timestamp[receive_height.to_usize()];
         let blocks_old = current_height.to_usize() - receive_height.to_usize();
         let age = Age::new(current_timestamp, prev_timestamp, blocks_old);
 
         // Compute peak price during holding period for peak regret
         // This is the max HIGH price between receive and send heights
-        let peak_price: Option<CentsUnsigned> =
-            price_range_max.map(|t| t.max_between(receive_height, current_height));
+        let peak_price = price_range_max.max_between(receive_height, current_height);
 
         for (output_type, vec) in by_type.unwrap().into_iter() {
             // Cache mutable refs for this address type
             let type_addr_count = addr_count.get_mut(output_type).unwrap();
             let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
             let type_activity = activity_counts.get_mut_unwrap(output_type);
-            let type_received = received_addresses.get_unwrap(output_type);
+            let type_received = received_addresses.get(output_type);
             let type_seen = seen_senders.get_mut_unwrap(output_type);
 
             for (type_index, value) in vec {
@@ -74,7 +73,7 @@ pub fn process_sent(
                     type_activity.sending += 1;
 
                     // Track "both" - addresses that sent AND received this block
-                    if type_received.contains(&type_index) {
+                    if type_received.is_some_and(|s| s.contains(&type_index)) {
                         type_activity.both += 1;
                     }
                 }
@@ -154,9 +153,9 @@ pub fn process_sent(
                         .send(
                             addr_data,
                             value,
-                            current_price.unwrap(),
-                            prev_price.unwrap(),
-                            peak_price.unwrap(),
+                            current_price,
+                            prev_price,
+                            peak_price,
                             age,
                         )?;
                 }

@@ -1,57 +1,56 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{CentsSats, CentsSquaredSats, CentsUnsigned, DateIndex, Dollars, Height, Version};
+use brk_types::{Cents, CentsSats, CentsSquaredSats, Dollars, Height, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Exit, GenericStoredVec, ImportableVec, Negate,
-    TypedVecIterator,
+    AnyStoredVec, AnyVec, BytesVec, Exit, WritableVec, ImportableVec, ReadableCloneableVec,
+    ReadableVec, Negate, Rw, StorageMode,
 };
 
 use crate::{
     ComputeIndexes,
     distribution::state::UnrealizedState,
-    indexes,
     internal::{
-        ComputedFromDateLast, ComputedFromHeightAndDateLast, ComputedFromHeightLast, DollarsMinus,
-        DollarsPlus, LazyBinaryFromHeightLast, LazyFromHeightLast, ValueFromHeightAndDateLast,
+        ComputedFromHeightLast, DollarsMinus, DollarsPlus,
+        LazyBinaryFromHeightLast, LazyFromHeightLast, ValueFromHeightLast,
     },
-    price,
+    prices,
 };
 
 use super::ImportConfig;
 
 /// Unrealized profit/loss metrics.
-#[derive(Clone, Traversable)]
-pub struct UnrealizedMetrics {
+#[derive(Traversable)]
+pub struct UnrealizedMetrics<M: StorageMode = Rw> {
     // === Supply in Profit/Loss ===
-    pub supply_in_profit: ValueFromHeightAndDateLast,
-    pub supply_in_loss: ValueFromHeightAndDateLast,
+    pub supply_in_profit: ValueFromHeightLast<M>,
+    pub supply_in_loss: ValueFromHeightLast<M>,
 
     // === Unrealized Profit/Loss ===
-    pub unrealized_profit: ComputedFromHeightAndDateLast<Dollars>,
-    pub unrealized_loss: ComputedFromHeightAndDateLast<Dollars>,
+    pub unrealized_profit: ComputedFromHeightLast<Dollars, M>,
+    pub unrealized_loss: ComputedFromHeightLast<Dollars, M>,
 
     // === Invested Capital in Profit/Loss ===
-    pub invested_capital_in_profit: ComputedFromHeightAndDateLast<Dollars>,
-    pub invested_capital_in_loss: ComputedFromHeightAndDateLast<Dollars>,
+    pub invested_capital_in_profit: ComputedFromHeightLast<Dollars, M>,
+    pub invested_capital_in_loss: ComputedFromHeightLast<Dollars, M>,
 
     // === Raw values for precise aggregation (used to compute pain/greed indices) ===
     /// Σ(price × sats) for UTXOs in profit (raw u128, no indexes)
-    pub invested_capital_in_profit_raw: BytesVec<Height, CentsSats>,
+    pub invested_capital_in_profit_raw: M::Stored<BytesVec<Height, CentsSats>>,
     /// Σ(price × sats) for UTXOs in loss (raw u128, no indexes)
-    pub invested_capital_in_loss_raw: BytesVec<Height, CentsSats>,
+    pub invested_capital_in_loss_raw: M::Stored<BytesVec<Height, CentsSats>>,
     /// Σ(price² × sats) for UTXOs in profit (raw u128, no indexes)
-    pub investor_cap_in_profit_raw: BytesVec<Height, CentsSquaredSats>,
+    pub investor_cap_in_profit_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
     /// Σ(price² × sats) for UTXOs in loss (raw u128, no indexes)
-    pub investor_cap_in_loss_raw: BytesVec<Height, CentsSquaredSats>,
+    pub investor_cap_in_loss_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 
     // === Pain/Greed Indices (computed in compute_rest from raw values + spot price) ===
     /// investor_price_of_losers - spot (average distance underwater, weighted by $)
-    pub pain_index: ComputedFromHeightLast<Dollars>,
+    pub pain_index: ComputedFromHeightLast<Dollars, M>,
     /// spot - investor_price_of_winners (average distance in profit, weighted by $)
-    pub greed_index: ComputedFromHeightLast<Dollars>,
+    pub greed_index: ComputedFromHeightLast<Dollars, M>,
     /// greed_index - pain_index (positive = greedy market, negative = painful market)
-    pub net_sentiment: ComputedFromHeightLast<Dollars>,
+    pub net_sentiment: ComputedFromHeightLast<Dollars, M>,
 
     // === Negated ===
     pub neg_unrealized_loss: LazyFromHeightLast<Dollars>,
@@ -64,40 +63,36 @@ pub struct UnrealizedMetrics {
     /// Unrealized peak regret: sum of (peak_price - reference_price) × supply
     /// where reference_price = max(spot, cost_basis) and peak = max price during holding period.
     /// Only computed for age_range cohorts, then aggregated for overlapping cohorts.
-    pub peak_regret: Option<ComputedFromDateLast<Dollars>>,
+    pub peak_regret: Option<ComputedFromHeightLast<Dollars, M>>,
 }
 
 impl UnrealizedMetrics {
     /// Import unrealized metrics from database.
-    pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let compute_dollars = cfg.compute_dollars();
-
+    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         // === Supply in Profit/Loss ===
-        let supply_in_profit = ValueFromHeightAndDateLast::forced_import(
+        let supply_in_profit = ValueFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("supply_in_profit"),
             cfg.version,
-            compute_dollars,
             cfg.indexes,
-            cfg.price,
+            cfg.prices,
         )?;
-        let supply_in_loss = ValueFromHeightAndDateLast::forced_import(
+        let supply_in_loss = ValueFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("supply_in_loss"),
             cfg.version,
-            compute_dollars,
             cfg.indexes,
-            cfg.price,
+            cfg.prices,
         )?;
 
         // === Unrealized Profit/Loss ===
-        let unrealized_profit = ComputedFromHeightAndDateLast::forced_import(
+        let unrealized_profit = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("unrealized_profit"),
             cfg.version,
             cfg.indexes,
         )?;
-        let unrealized_loss = ComputedFromHeightAndDateLast::forced_import(
+        let unrealized_loss = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("unrealized_loss"),
             cfg.version,
@@ -105,13 +100,13 @@ impl UnrealizedMetrics {
         )?;
 
         // === Invested Capital in Profit/Loss ===
-        let invested_capital_in_profit = ComputedFromHeightAndDateLast::forced_import(
+        let invested_capital_in_profit = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("invested_capital_in_profit"),
             cfg.version,
             cfg.indexes,
         )?;
-        let invested_capital_in_loss = ComputedFromHeightAndDateLast::forced_import(
+        let invested_capital_in_loss = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("invested_capital_in_loss"),
             cfg.version,
@@ -155,33 +150,32 @@ impl UnrealizedMetrics {
         )?;
 
         // === Negated ===
-        let neg_unrealized_loss = LazyFromHeightLast::from_computed_height_date::<Negate>(
+        let neg_unrealized_loss = LazyFromHeightLast::from_computed::<Negate>(
             &cfg.name("neg_unrealized_loss"),
             cfg.version,
+            unrealized_loss.height.read_only_boxed_clone(),
             &unrealized_loss,
         );
 
         // === Net and Total ===
-        let net_unrealized_pnl =
-            LazyBinaryFromHeightLast::from_computed_height_date_last::<DollarsMinus>(
-                &cfg.name("net_unrealized_pnl"),
-                cfg.version,
-                &unrealized_profit,
-                &unrealized_loss,
-            );
-        let total_unrealized_pnl =
-            LazyBinaryFromHeightLast::from_computed_height_date_last::<DollarsPlus>(
-                &cfg.name("total_unrealized_pnl"),
-                cfg.version,
-                &unrealized_profit,
-                &unrealized_loss,
-            );
+        let net_unrealized_pnl = LazyBinaryFromHeightLast::from_computed_last::<DollarsMinus>(
+            &cfg.name("net_unrealized_pnl"),
+            cfg.version,
+            &unrealized_profit,
+            &unrealized_loss,
+        );
+        let total_unrealized_pnl = LazyBinaryFromHeightLast::from_computed_last::<DollarsPlus>(
+            &cfg.name("total_unrealized_pnl"),
+            cfg.version,
+            &unrealized_profit,
+            &unrealized_loss,
+        );
 
         // Peak regret: only for age-based UTXO cohorts
         let peak_regret = cfg
             .compute_peak_regret()
             .then(|| {
-                ComputedFromDateLast::forced_import(
+                ComputedFromHeightLast::forced_import(
                     cfg.db,
                     &cfg.name("unrealized_peak_regret"),
                     cfg.version,
@@ -212,11 +206,12 @@ impl UnrealizedMetrics {
     }
 
     /// Get minimum length across height-indexed vectors written in block loop.
-    pub fn min_stateful_height_len(&self) -> usize {
+    pub(crate) fn min_stateful_height_len(&self) -> usize {
         self.supply_in_profit
+            .sats
             .height
             .len()
-            .min(self.supply_in_loss.height.len())
+            .min(self.supply_in_loss.sats.height.len())
             .min(self.unrealized_profit.height.len())
             .min(self.unrealized_loss.height.len())
             .min(self.invested_capital_in_profit.height.len())
@@ -227,36 +222,14 @@ impl UnrealizedMetrics {
             .min(self.investor_cap_in_loss_raw.len())
     }
 
-    /// Get minimum length across dateindex-indexed vectors written in block loop.
-    pub fn min_stateful_dateindex_len(&self) -> usize {
-        let mut min = self
-            .supply_in_profit
-            .indexes
-            .sats_dateindex
-            .len()
-            .min(self.supply_in_loss.indexes.sats_dateindex.len())
-            .min(self.unrealized_profit.dateindex.len())
-            .min(self.unrealized_loss.dateindex.len())
-            .min(self.invested_capital_in_profit.dateindex.len())
-            .min(self.invested_capital_in_loss.dateindex.len());
-        if let Some(pr) = &self.peak_regret {
-            min = min.min(pr.dateindex.len());
-        }
-        min
-    }
-
     /// Push unrealized state values to height-indexed vectors.
-    pub fn truncate_push(
-        &mut self,
-        height: Height,
-        dateindex: Option<DateIndex>,
-        height_state: &UnrealizedState,
-        date_state: Option<&UnrealizedState>,
-    ) -> Result<()> {
+    pub(crate) fn truncate_push(&mut self, height: Height, height_state: &UnrealizedState) -> Result<()> {
         self.supply_in_profit
+            .sats
             .height
             .truncate_push(height, height_state.supply_in_profit)?;
         self.supply_in_loss
+            .sats
             .height
             .truncate_push(height, height_state.supply_in_loss)?;
         self.unrealized_profit
@@ -290,38 +263,14 @@ impl UnrealizedMetrics {
             CentsSquaredSats::new(height_state.investor_cap_in_loss_raw),
         )?;
 
-        if let (Some(dateindex), Some(date_state)) = (dateindex, date_state) {
-            self.supply_in_profit
-                .indexes
-                .sats_dateindex
-                .truncate_push(dateindex, date_state.supply_in_profit)?;
-            self.supply_in_loss
-                .indexes
-                .sats_dateindex
-                .truncate_push(dateindex, date_state.supply_in_loss)?;
-            self.unrealized_profit
-                .dateindex
-                .truncate_push(dateindex, date_state.unrealized_profit.to_dollars())?;
-            self.unrealized_loss
-                .dateindex
-                .truncate_push(dateindex, date_state.unrealized_loss.to_dollars())?;
-            self.invested_capital_in_profit.dateindex.truncate_push(
-                dateindex,
-                date_state.invested_capital_in_profit.to_dollars(),
-            )?;
-            self.invested_capital_in_loss
-                .dateindex
-                .truncate_push(dateindex, date_state.invested_capital_in_loss.to_dollars())?;
-        }
-
         Ok(())
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = vec![
-            &mut self.supply_in_profit.height,
-            &mut self.supply_in_loss.height,
+            &mut self.supply_in_profit.sats.height,
+            &mut self.supply_in_loss.sats.height,
             &mut self.unrealized_profit.height,
             &mut self.unrealized_loss.height,
             &mut self.invested_capital_in_profit.height,
@@ -330,39 +279,33 @@ impl UnrealizedMetrics {
             &mut self.invested_capital_in_loss_raw,
             &mut self.investor_cap_in_profit_raw,
             &mut self.investor_cap_in_loss_raw,
-            &mut self.supply_in_profit.indexes.sats_dateindex,
-            &mut self.supply_in_loss.indexes.sats_dateindex,
-            &mut self.unrealized_profit.rest.dateindex,
-            &mut self.unrealized_loss.rest.dateindex,
-            &mut self.invested_capital_in_profit.rest.dateindex,
-            &mut self.invested_capital_in_loss.rest.dateindex,
         ];
         if let Some(pr) = &mut self.peak_regret {
-            vecs.push(&mut pr.dateindex);
+            vecs.push(&mut pr.height);
         }
         vecs.into_par_iter()
     }
 
     /// Compute aggregate values from separate cohorts.
-    pub fn compute_from_stateful(
+    pub(crate) fn compute_from_stateful(
         &mut self,
         starting_indexes: &ComputeIndexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.supply_in_profit.height.compute_sum_of_others(
+        self.supply_in_profit.sats.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.supply_in_profit.height)
+                .map(|v| &v.supply_in_profit.sats.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        self.supply_in_loss.height.compute_sum_of_others(
+        self.supply_in_loss.sats.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.supply_in_loss.height)
+                .map(|v| &v.supply_in_loss.sats.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
@@ -402,19 +345,6 @@ impl UnrealizedMetrics {
         )?;
 
         // Raw values for aggregation - manually sum since BytesVec doesn't have compute_sum_of_others
-        // Create iterators for each source vec
-        let mut iters: Vec<_> = others
-            .iter()
-            .filter_map(|o| {
-                Some((
-                    o.invested_capital_in_profit_raw.iter().ok()?,
-                    o.invested_capital_in_loss_raw.iter().ok()?,
-                    o.investor_cap_in_profit_raw.iter().ok()?,
-                    o.investor_cap_in_loss_raw.iter().ok()?,
-                ))
-            })
-            .collect();
-
         // Start from where the target vecs left off (handles fresh/reset vecs)
         let start = self
             .invested_capital_in_profit_raw
@@ -437,11 +367,11 @@ impl UnrealizedMetrics {
             let mut sum_investor_profit = CentsSquaredSats::ZERO;
             let mut sum_investor_loss = CentsSquaredSats::ZERO;
 
-            for (ip_iter, il_iter, cap_p_iter, cap_l_iter) in &mut iters {
-                sum_invested_profit += ip_iter.get_unwrap(height);
-                sum_invested_loss += il_iter.get_unwrap(height);
-                sum_investor_profit += cap_p_iter.get_unwrap(height);
-                sum_investor_loss += cap_l_iter.get_unwrap(height);
+            for o in others.iter() {
+                sum_invested_profit += o.invested_capital_in_profit_raw.collect_one_at(i).unwrap();
+                sum_invested_loss += o.invested_capital_in_loss_raw.collect_one_at(i).unwrap();
+                sum_investor_profit += o.investor_cap_in_profit_raw.collect_one_at(i).unwrap();
+                sum_investor_loss += o.investor_cap_in_loss_raw.collect_one_at(i).unwrap();
             }
 
             self.invested_capital_in_profit_raw
@@ -454,75 +384,16 @@ impl UnrealizedMetrics {
                 .truncate_push(height, sum_investor_loss)?;
         }
 
-        self.supply_in_profit
-            .indexes
-            .sats_dateindex
-            .compute_sum_of_others(
-                starting_indexes.dateindex,
-                &others
-                    .iter()
-                    .map(|v| &v.supply_in_profit.indexes.sats_dateindex)
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
-        self.supply_in_loss
-            .indexes
-            .sats_dateindex
-            .compute_sum_of_others(
-                starting_indexes.dateindex,
-                &others
-                    .iter()
-                    .map(|v| &v.supply_in_loss.indexes.sats_dateindex)
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
-        self.unrealized_profit.dateindex.compute_sum_of_others(
-            starting_indexes.dateindex,
-            &others
-                .iter()
-                .map(|v| &v.unrealized_profit.dateindex)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.unrealized_loss.dateindex.compute_sum_of_others(
-            starting_indexes.dateindex,
-            &others
-                .iter()
-                .map(|v| &v.unrealized_loss.dateindex)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.invested_capital_in_profit
-            .dateindex
-            .compute_sum_of_others(
-                starting_indexes.dateindex,
-                &others
-                    .iter()
-                    .map(|v| &v.invested_capital_in_profit.dateindex)
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
-        self.invested_capital_in_loss
-            .dateindex
-            .compute_sum_of_others(
-                starting_indexes.dateindex,
-                &others
-                    .iter()
-                    .map(|v| &v.invested_capital_in_loss.dateindex)
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
-
         // Peak regret aggregation (only if this cohort has peak_regret)
         if let Some(pr) = &mut self.peak_regret {
-            let other_prs: Vec<_> = others.iter().filter_map(|v| v.peak_regret.as_ref()).collect();
+            let other_prs: Vec<_> = others
+                .iter()
+                .filter_map(|v| v.peak_regret.as_ref())
+                .collect();
             if !other_prs.is_empty() {
-                pr.dateindex.compute_sum_of_others(
-                    starting_indexes.dateindex,
-                    &other_prs
-                        .iter()
-                        .map(|v| &v.dateindex)
-                        .collect::<Vec<_>>(),
+                pr.height.compute_sum_of_others(
+                    starting_indexes.height,
+                    &other_prs.iter().map(|v| &v.height).collect::<Vec<_>>(),
                     exit,
                 )?;
             }
@@ -532,71 +403,53 @@ impl UnrealizedMetrics {
     }
 
     /// Compute derived metrics from stored values + price.
-    pub fn compute_rest(
+    pub(crate) fn compute_rest(
         &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.supply_in_profit
-            .compute_dollars_from_price(price, starting_indexes, exit)?;
-
-        self.supply_in_loss
-            .compute_dollars_from_price(price, starting_indexes, exit)?;
-
-        // Compute pain/greed/net from raw values + spot price
-        let Some(price) = price else {
-            return Ok(());
-        };
+        // Height-based types now have lazy day1, no compute_rest needed.
 
         // Pain index: investor_price_of_losers - spot
-        self.pain_index
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                Ok(vec.compute_transform3(
-                    starting_indexes.height,
-                    &self.investor_cap_in_loss_raw,
-                    &self.invested_capital_in_loss_raw,
-                    &price.cents.split.height.close,
-                    |(h, investor_cap, invested_cap, spot, ..)| {
-                        if invested_cap.inner() == 0 {
-                            return (h, Dollars::ZERO);
-                        }
-                        let investor_price_losers = investor_cap.inner() / invested_cap.inner();
-                        let spot_u128 = (*spot).as_u128();
-                        (
-                            h,
-                            CentsUnsigned::new((investor_price_losers - spot_u128) as u64)
-                                .to_dollars(),
-                        )
-                    },
-                    exit,
-                )?)
-            })?;
+        self.pain_index.height.compute_transform3(
+            starting_indexes.height,
+            &self.investor_cap_in_loss_raw,
+            &self.invested_capital_in_loss_raw,
+            &prices.cents.price,
+            |(h, investor_cap, invested_cap, spot, ..)| {
+                if invested_cap.inner() == 0 {
+                    return (h, Dollars::ZERO);
+                }
+                let investor_price_losers = investor_cap.inner() / invested_cap.inner();
+                let spot_u128 = spot.as_u128();
+                (
+                    h,
+                    Cents::new((investor_price_losers - spot_u128) as u64).to_dollars(),
+                )
+            },
+            exit,
+        )?;
 
         // Greed index: spot - investor_price_of_winners
-        self.greed_index
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                Ok(vec.compute_transform3(
-                    starting_indexes.height,
-                    &self.investor_cap_in_profit_raw,
-                    &self.invested_capital_in_profit_raw,
-                    &price.cents.split.height.close,
-                    |(h, investor_cap, invested_cap, spot, ..)| {
-                        if invested_cap.inner() == 0 {
-                            return (h, Dollars::ZERO);
-                        }
-                        let investor_price_winners = investor_cap.inner() / invested_cap.inner();
-                        let spot_u128 = (*spot).as_u128();
-                        (
-                            h,
-                            CentsUnsigned::new((spot_u128 - investor_price_winners) as u64)
-                                .to_dollars(),
-                        )
-                    },
-                    exit,
-                )?)
-            })?;
+        self.greed_index.height.compute_transform3(
+            starting_indexes.height,
+            &self.investor_cap_in_profit_raw,
+            &self.invested_capital_in_profit_raw,
+            &prices.cents.price,
+            |(h, investor_cap, invested_cap, spot, ..)| {
+                if invested_cap.inner() == 0 {
+                    return (h, Dollars::ZERO);
+                }
+                let investor_price_winners = investor_cap.inner() / invested_cap.inner();
+                let spot_u128 = spot.as_u128();
+                (
+                    h,
+                    Cents::new((spot_u128 - investor_price_winners) as u64).to_dollars(),
+                )
+            },
+            exit,
+        )?;
 
         // Net sentiment height (greed - pain) computed separately for separate cohorts only
         // Aggregate cohorts compute it via weighted average in compute_from_stateful
@@ -607,23 +460,16 @@ impl UnrealizedMetrics {
 
     /// Compute net_sentiment.height for separate cohorts (greed - pain).
     /// Aggregate cohorts skip this - their height is computed via weighted average in compute_from_stateful.
-    pub fn compute_net_sentiment_height(&mut self, starting_indexes: &ComputeIndexes, exit: &Exit) -> Result<()> {
+    pub(crate) fn compute_net_sentiment_height(
+        &mut self,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
         Ok(self.net_sentiment.height.compute_subtract(
             starting_indexes.height,
             &self.greed_index.height,
             &self.pain_index.height,
             exit,
         )?)
-    }
-
-    /// Compute net_sentiment dateindex derivation from height.
-    /// Called for ALL cohorts after height is computed (either via greed-pain or weighted avg).
-    pub fn compute_net_sentiment_rest(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.net_sentiment.compute_rest(indexes, starting_indexes, exit)
     }
 }

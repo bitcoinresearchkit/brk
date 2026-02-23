@@ -114,13 +114,13 @@ fn main() {
             .vecs
             .transactions
             .first_txindex
-            .collect_one(h)
+            .collect_one_at(h)
             .unwrap();
         let next_first_txindex: TxIndex = indexer
             .vecs
             .transactions
             .first_txindex
-            .collect_one(h + 1)
+            .collect_one_at(h + 1)
             .unwrap_or(TxIndex::from(total_txs));
 
         let out_start = if first_txindex.to_usize() + 1 < next_first_txindex.to_usize() {
@@ -132,7 +132,7 @@ fn main() {
                 .vecs
                 .outputs
                 .first_txoutindex
-                .collect_one(h + 1)
+                .collect_one_at(h + 1)
                 .unwrap_or(TxOutIndex::from(total_outputs))
                 .to_usize()
         };
@@ -140,7 +140,7 @@ fn main() {
             .vecs
             .outputs
             .first_txoutindex
-            .collect_one(h + 1)
+            .collect_one_at(h + 1)
             .unwrap_or(TxOutIndex::from(total_outputs))
             .to_usize();
 
@@ -174,7 +174,7 @@ fn main() {
             low_bin,
         });
 
-        if (h - lowest) % 50_000 == 0 {
+        if (h - lowest).is_multiple_of(50_000) {
             eprint!(
                 "\r  {}/{} ({:.0}%)",
                 h - lowest,

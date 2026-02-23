@@ -8,7 +8,7 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};
-use vecdb::AnyExportableVec;
+use vecdb::{AnyExportableVec, Ro};
 
 #[derive(Default)]
 pub struct Vecs<'a> {
@@ -25,7 +25,7 @@ pub struct Vecs<'a> {
 }
 
 impl<'a> Vecs<'a> {
-    pub fn build(indexer: &'a Indexer, computer: &'a Computer) -> Self {
+    pub fn build(indexer: &'a Indexer<Ro>, computer: &'a Computer<Ro>) -> Self {
         let mut this = Vecs::default();
 
         indexer

@@ -7,7 +7,7 @@ use vecdb::{Formattable, Pco};
 
 use crate::ONE_DAY_IN_SEC_F64;
 
-use super::{DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Timestamp, WeekIndex, YearIndex};
+use super::{Day1, Year10, Month1, Month3, Month6, Timestamp, Week1, Year1};
 
 /// Date in YYYYMMDD format stored as u32
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Pco, JsonSchema)]
@@ -96,10 +96,10 @@ impl From<Timestamp> for Date {
     }
 }
 
-impl From<DateIndex> for Date {
+impl From<Day1> for Date {
     #[inline]
-    fn from(value: DateIndex) -> Self {
-        if value == DateIndex::default() {
+    fn from(value: Day1) -> Self {
+        if value == Day1::default() {
             Date::INDEX_ZERO
         } else {
             Self::from(
@@ -111,9 +111,9 @@ impl From<DateIndex> for Date {
     }
 }
 
-impl From<WeekIndex> for Date {
+impl From<Week1> for Date {
     #[inline]
-    fn from(value: WeekIndex) -> Self {
+    fn from(value: Week1) -> Self {
         // Week 0 starts at genesis (2009-01-03), add i weeks
         Self::from(
             Self::INDEX_ZERO_
@@ -123,9 +123,9 @@ impl From<WeekIndex> for Date {
     }
 }
 
-impl From<MonthIndex> for Date {
+impl From<Month1> for Date {
     #[inline]
-    fn from(value: MonthIndex) -> Self {
+    fn from(value: Month1) -> Self {
         // Month 0 is January 2009, add i months
         Self::from(
             Date_::constant(2009, 1, 1)
@@ -135,18 +135,18 @@ impl From<MonthIndex> for Date {
     }
 }
 
-impl From<YearIndex> for Date {
+impl From<Year1> for Date {
     #[inline]
-    fn from(value: YearIndex) -> Self {
+    fn from(value: Year1) -> Self {
         // Year 0 is 2009
         let year = 2009i16 + usize::from(value) as i16;
         Self::from(Date_::constant(year, 1, 1))
     }
 }
 
-impl From<QuarterIndex> for Date {
+impl From<Month3> for Date {
     #[inline]
-    fn from(value: QuarterIndex) -> Self {
+    fn from(value: Month3) -> Self {
         // Quarter 0 is Q1 2009, add i*3 months
         Self::from(
             Date_::constant(2009, 1, 1)
@@ -156,9 +156,9 @@ impl From<QuarterIndex> for Date {
     }
 }
 
-impl From<SemesterIndex> for Date {
+impl From<Month6> for Date {
     #[inline]
-    fn from(value: SemesterIndex) -> Self {
+    fn from(value: Month6) -> Self {
         // Semester 0 is H1 2009, add i*6 months
         Self::from(
             Date_::constant(2009, 1, 1)
@@ -168,9 +168,9 @@ impl From<SemesterIndex> for Date {
     }
 }
 
-impl From<DecadeIndex> for Date {
+impl From<Year10> for Date {
     #[inline]
-    fn from(value: DecadeIndex) -> Self {
+    fn from(value: Year10) -> Self {
         // Decade 0 is 2009, add i*10 years
         let year = 2009i16 + usize::from(value) as i16 * 10;
         Self::from(Date_::constant(year, 1, 1))
@@ -267,8 +267,9 @@ impl FromStr for Date {
 
 impl Formattable for Date {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }
 
@@ -277,9 +278,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_date_from_dateindex_zero() {
-        // DateIndex 0 is genesis: Jan 3, 2009
-        let date = Date::from(DateIndex::from(0_usize));
+    fn test_date_from_day1_zero() {
+        // Day1 0 is genesis: Jan 3, 2009
+        let date = Date::from(Day1::from(0_usize));
         assert_eq!(date, Date::INDEX_ZERO);
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
@@ -287,9 +288,9 @@ mod tests {
     }
 
     #[test]
-    fn test_date_from_dateindex_one() {
-        // DateIndex 1 is Jan 9, 2009 (6 day gap after genesis)
-        let date = Date::from(DateIndex::from(1_usize));
+    fn test_date_from_day1_one() {
+        // Day1 1 is Jan 9, 2009 (6 day gap after genesis)
+        let date = Date::from(Day1::from(1_usize));
         assert_eq!(date, Date::INDEX_ONE);
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
@@ -297,144 +298,144 @@ mod tests {
     }
 
     #[test]
-    fn test_date_from_dateindex_two() {
-        // DateIndex 2 is Jan 10, 2009
-        let date = Date::from(DateIndex::from(2_usize));
+    fn test_date_from_day1_two() {
+        // Day1 2 is Jan 10, 2009
+        let date = Date::from(Day1::from(2_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 10);
     }
 
     #[test]
-    fn test_date_from_weekindex_zero() {
-        // WeekIndex 0 starts at genesis: Jan 3, 2009
-        let date = Date::from(WeekIndex::from(0_usize));
+    fn test_date_from_week1_zero() {
+        // Week1 0 starts at genesis: Jan 3, 2009
+        let date = Date::from(Week1::from(0_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 3);
     }
 
     #[test]
-    fn test_date_from_weekindex_one() {
-        // WeekIndex 1 is Jan 10, 2009 (one week after genesis)
-        let date = Date::from(WeekIndex::from(1_usize));
+    fn test_date_from_week1_one() {
+        // Week1 1 is Jan 10, 2009 (one week after genesis)
+        let date = Date::from(Week1::from(1_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 10);
     }
 
     #[test]
-    fn test_date_from_monthindex_zero() {
-        // MonthIndex 0 is Jan 1, 2009
-        let date = Date::from(MonthIndex::from(0_usize));
+    fn test_date_from_month1_zero() {
+        // Month1 0 is Jan 1, 2009
+        let date = Date::from(Month1::from(0_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_monthindex_one() {
-        // MonthIndex 1 is Feb 1, 2009
-        let date = Date::from(MonthIndex::from(1_usize));
+    fn test_date_from_month1_one() {
+        // Month1 1 is Feb 1, 2009
+        let date = Date::from(Month1::from(1_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 2);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_monthindex_twelve() {
-        // MonthIndex 12 is Jan 1, 2010
-        let date = Date::from(MonthIndex::from(12_usize));
+    fn test_date_from_month1_twelve() {
+        // Month1 12 is Jan 1, 2010
+        let date = Date::from(Month1::from(12_usize));
         assert_eq!(date.year(), 2010);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_yearindex_zero() {
-        // YearIndex 0 is Jan 1, 2009
-        let date = Date::from(YearIndex::from(0_usize));
+    fn test_date_from_year1_zero() {
+        // Year1 0 is Jan 1, 2009
+        let date = Date::from(Year1::from(0_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_yearindex_one() {
-        // YearIndex 1 is Jan 1, 2010
-        let date = Date::from(YearIndex::from(1_usize));
+    fn test_date_from_year1_one() {
+        // Year1 1 is Jan 1, 2010
+        let date = Date::from(Year1::from(1_usize));
         assert_eq!(date.year(), 2010);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_quarterindex_zero() {
-        // QuarterIndex 0 is Q1 2009: Jan 1, 2009
-        let date = Date::from(QuarterIndex::from(0_usize));
+    fn test_date_from_month3_zero() {
+        // Month3 0 is Q1 2009: Jan 1, 2009
+        let date = Date::from(Month3::from(0_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_quarterindex_one() {
-        // QuarterIndex 1 is Q2 2009: Apr 1, 2009
-        let date = Date::from(QuarterIndex::from(1_usize));
+    fn test_date_from_month3_one() {
+        // Month3 1 is Q2 2009: Apr 1, 2009
+        let date = Date::from(Month3::from(1_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 4);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_quarterindex_four() {
-        // QuarterIndex 4 is Q1 2010: Jan 1, 2010
-        let date = Date::from(QuarterIndex::from(4_usize));
+    fn test_date_from_month3_four() {
+        // Month3 4 is Q1 2010: Jan 1, 2010
+        let date = Date::from(Month3::from(4_usize));
         assert_eq!(date.year(), 2010);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_semesterindex_zero() {
-        // SemesterIndex 0 is H1 2009: Jan 1, 2009
-        let date = Date::from(SemesterIndex::from(0_usize));
+    fn test_date_from_month6_zero() {
+        // Month6 0 is H1 2009: Jan 1, 2009
+        let date = Date::from(Month6::from(0_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_semesterindex_one() {
-        // SemesterIndex 1 is H2 2009: Jul 1, 2009
-        let date = Date::from(SemesterIndex::from(1_usize));
+    fn test_date_from_month6_one() {
+        // Month6 1 is H2 2009: Jul 1, 2009
+        let date = Date::from(Month6::from(1_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 7);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_semesterindex_two() {
-        // SemesterIndex 2 is H1 2010: Jan 1, 2010
-        let date = Date::from(SemesterIndex::from(2_usize));
+    fn test_date_from_month6_two() {
+        // Month6 2 is H1 2010: Jan 1, 2010
+        let date = Date::from(Month6::from(2_usize));
         assert_eq!(date.year(), 2010);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_decadeindex_zero() {
-        // DecadeIndex 0 is 2009: Jan 1, 2009
-        let date = Date::from(DecadeIndex::from(0_usize));
+    fn test_date_from_year10_zero() {
+        // Year10 0 is 2009: Jan 1, 2009
+        let date = Date::from(Year10::from(0_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 1);
     }
 
     #[test]
-    fn test_date_from_decadeindex_one() {
-        // DecadeIndex 1 is 2019: Jan 1, 2019
-        let date = Date::from(DecadeIndex::from(1_usize));
+    fn test_date_from_year10_one() {
+        // Year10 1 is 2019: Jan 1, 2019
+        let date = Date::from(Year10::from(1_usize));
         assert_eq!(date.year(), 2019);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 1);

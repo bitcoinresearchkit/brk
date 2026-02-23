@@ -1,10 +1,10 @@
-use crate::{Output, OutputLegacy};
+use crate::{Output, OutputLegacy, Version};
 
 /// Metric output with metadata for caching.
 #[derive(Debug)]
 pub struct MetricOutput {
     pub output: Output,
-    pub version: u64,
+    pub version: Version,
     pub total: usize,
     pub start: usize,
     pub end: usize,
@@ -14,7 +14,7 @@ pub struct MetricOutput {
 #[derive(Debug)]
 pub struct MetricOutputLegacy {
     pub output: OutputLegacy,
-    pub version: u64,
+    pub version: Version,
     pub total: usize,
     pub start: usize,
     pub end: usize,

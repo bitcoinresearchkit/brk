@@ -127,16 +127,16 @@ export function initOptions() {
         throw new Error(`Blueprint has undefined metric: ${blueprint.title}`);
       }
 
-      // Check for price pattern blueprint (has dollars/sats sub-metrics)
+      // Check for price pattern blueprint (has usd/sats sub-metrics)
       // Use unknown cast for safe property access check
       const maybePriceMetric =
-        /** @type {{ dollars?: AnyMetricPattern, sats?: AnyMetricPattern }} */ (
+        /** @type {{ usd?: AnyMetricPattern, sats?: AnyMetricPattern }} */ (
           /** @type {unknown} */ (blueprint.metric)
         );
-      if (maybePriceMetric.dollars?.by && maybePriceMetric.sats?.by) {
-        const { dollars, sats } = maybePriceMetric;
+      if (maybePriceMetric.usd?.by && maybePriceMetric.sats?.by) {
+        const { usd, sats } = maybePriceMetric;
         if (!usdArr) map.set(Unit.usd, (usdArr = []));
-        usdArr.push({ ...blueprint, metric: dollars, unit: Unit.usd });
+        usdArr.push({ ...blueprint, metric: usd, unit: Unit.usd });
 
         if (!satsArr) map.set(Unit.sats, (satsArr = []));
         satsArr.push({ ...blueprint, metric: sats, unit: Unit.sats });

@@ -15,6 +15,10 @@ pub enum Error {
     #[error(transparent)]
     BitcoinRPC(#[from] bitcoincore_rpc::Error),
 
+    #[cfg(feature = "corepc")]
+    #[error(transparent)]
+    CorepcRPC(#[from] corepc_client::client_sync::Error),
+
     #[cfg(feature = "jiff")]
     #[error(transparent)]
     Jiff(#[from] jiff::Error),
@@ -166,6 +170,7 @@ impl Error {
     #[cfg(feature = "vecdb")]
     pub fn is_data_error(&self) -> bool {
         matches!(self, Error::VecDB(e) if e.is_data_error())
+            || matches!(self, Error::VersionMismatch { .. })
     }
 
     /// Returns true if this network/fetch error indicates a permanent/blocking condition

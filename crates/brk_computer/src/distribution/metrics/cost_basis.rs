@@ -1,15 +1,14 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Dollars, Height, StoredF32, Version};
+use brk_types::{Dollars, Height, StoredF32, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec};
+use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     ComputeIndexes,
     distribution::state::CohortState,
-    indexes,
     internal::{
-        ComputedFromDateLast, PERCENTILES_LEN, PercentilesVecs, PriceFromHeight,
+        ComputedFromHeightLast, PERCENTILES_LEN, Price, PriceFromHeight, PercentilesVecs,
         compute_spot_percentile_rank,
     },
 };
@@ -17,30 +16,30 @@ use crate::{
 use super::ImportConfig;
 
 /// Cost basis metrics.
-#[derive(Clone, Traversable)]
-pub struct CostBasisMetrics {
+#[derive(Traversable)]
+pub struct CostBasisMetrics<M: StorageMode = Rw> {
     /// Minimum cost basis for any UTXO at this height
-    pub min: PriceFromHeight,
+    pub min: Price<ComputedFromHeightLast<Dollars, M>>,
 
     /// Maximum cost basis for any UTXO at this height
-    pub max: PriceFromHeight,
+    pub max: Price<ComputedFromHeightLast<Dollars, M>>,
 
     /// Cost basis percentiles (sat-weighted)
-    pub percentiles: Option<PercentilesVecs>,
+    pub percentiles: Option<PercentilesVecs<M>>,
 
     /// Invested capital percentiles (USD-weighted)
-    pub invested_capital: Option<PercentilesVecs>,
+    pub invested_capital: Option<PercentilesVecs<M>>,
 
     /// What percentile of cost basis is below spot (sat-weighted)
-    pub spot_cost_basis_percentile: Option<ComputedFromDateLast<StoredF32>>,
+    pub spot_cost_basis_percentile: Option<ComputedFromHeightLast<StoredF32, M>>,
 
     /// What percentile of invested capital is below spot (USD-weighted)
-    pub spot_invested_capital_percentile: Option<ComputedFromDateLast<StoredF32>>,
+    pub spot_invested_capital_percentile: Option<ComputedFromHeightLast<StoredF32, M>>,
 }
 
 impl CostBasisMetrics {
     /// Import cost basis metrics from database.
-    pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
+    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let extended = cfg.extended();
 
         Ok(Self {
@@ -80,7 +79,7 @@ impl CostBasisMetrics {
                 .transpose()?,
             spot_cost_basis_percentile: extended
                 .then(|| {
-                    ComputedFromDateLast::forced_import(
+                    ComputedFromHeightLast::forced_import(
                         cfg.db,
                         &cfg.name("spot_cost_basis_percentile"),
                         cfg.version,
@@ -90,7 +89,7 @@ impl CostBasisMetrics {
                 .transpose()?,
             spot_invested_capital_percentile: extended
                 .then(|| {
-                    ComputedFromDateLast::forced_import(
+                    ComputedFromHeightLast::forced_import(
                         cfg.db,
                         &cfg.name("spot_invested_capital_percentile"),
                         cfg.version,
@@ -102,38 +101,25 @@ impl CostBasisMetrics {
     }
 
     /// Get minimum length across height-indexed vectors written in block loop.
-    pub fn min_stateful_height_len(&self) -> usize {
-        self.min.height.len().min(self.max.height.len())
-    }
-
-    /// Get minimum length across dateindex-indexed vectors written in block loop.
-    pub fn min_stateful_dateindex_len(&self) -> usize {
-        self.percentiles
-            .as_ref()
-            .map(|p| p.min_stateful_dateindex_len())
-            .unwrap_or(usize::MAX)
-            .min(
-                self.invested_capital
-                    .as_ref()
-                    .map(|p| p.min_stateful_dateindex_len())
-                    .unwrap_or(usize::MAX),
-            )
-            .min(
-                self.spot_cost_basis_percentile
-                    .as_ref()
-                    .map(|v| v.dateindex.len())
-                    .unwrap_or(usize::MAX),
-            )
-            .min(
-                self.spot_invested_capital_percentile
-                    .as_ref()
-                    .map(|v| v.dateindex.len())
-                    .unwrap_or(usize::MAX),
-            )
+    pub(crate) fn min_stateful_height_len(&self) -> usize {
+        let mut min = self.min.height.len().min(self.max.height.len());
+        if let Some(v) = &self.spot_cost_basis_percentile {
+            min = min.min(v.height.len());
+        }
+        if let Some(v) = &self.spot_invested_capital_percentile {
+            min = min.min(v.height.len());
+        }
+        if let Some(p) = &self.percentiles {
+            min = min.min(p.min_stateful_height_len());
+        }
+        if let Some(p) = &self.invested_capital {
+            min = min.min(p.min_stateful_height_len());
+        }
+        min
     }
 
     /// Push min/max cost basis from state.
-    pub fn truncate_push_minmax(&mut self, height: Height, state: &CohortState) -> Result<()> {
+    pub(crate) fn truncate_push_minmax(&mut self, height: Height, state: &CohortState) -> Result<()> {
         self.min.height.truncate_push(
             height,
             state
@@ -151,49 +137,48 @@ impl CostBasisMetrics {
         Ok(())
     }
 
-    /// Push cost basis percentiles from state at date boundary.
-    /// Only called when at the last height of a day.
-    pub fn truncate_push_percentiles(
+    /// Push cost basis percentiles and spot ranks at every height.
+    pub(crate) fn truncate_push_percentiles(
         &mut self,
-        dateindex: DateIndex,
-        state: &CohortState,
+        height: Height,
+        state: &mut CohortState,
         spot: Dollars,
     ) -> Result<()> {
         let computed = state.compute_percentiles();
 
-        // Push sat-weighted percentiles and spot rank
+        // Sat-weighted percentiles and spot rank
         let sat_prices = computed
             .as_ref()
             .map(|p| p.sat_weighted.map(|c| c.to_dollars()))
             .unwrap_or([Dollars::NAN; PERCENTILES_LEN]);
 
         if let Some(percentiles) = self.percentiles.as_mut() {
-            percentiles.truncate_push(dateindex, &sat_prices)?;
+            percentiles.truncate_push(height, &sat_prices)?;
         }
         if let Some(spot_pct) = self.spot_cost_basis_percentile.as_mut() {
             let rank = compute_spot_percentile_rank(&sat_prices, spot);
-            spot_pct.dateindex.truncate_push(dateindex, rank)?;
+            spot_pct.height.truncate_push(height, rank)?;
         }
 
-        // Push USD-weighted percentiles and spot rank
+        // USD-weighted percentiles and spot rank
         let usd_prices = computed
             .as_ref()
             .map(|p| p.usd_weighted.map(|c| c.to_dollars()))
             .unwrap_or([Dollars::NAN; PERCENTILES_LEN]);
 
         if let Some(invested_capital) = self.invested_capital.as_mut() {
-            invested_capital.truncate_push(dateindex, &usd_prices)?;
+            invested_capital.truncate_push(height, &usd_prices)?;
         }
         if let Some(spot_pct) = self.spot_invested_capital_percentile.as_mut() {
             let rank = compute_spot_percentile_rank(&usd_prices, spot);
-            spot_pct.dateindex.truncate_push(dateindex, rank)?;
+            spot_pct.height.truncate_push(height, rank)?;
         }
 
         Ok(())
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = vec![&mut self.min.height, &mut self.max.height];
         if let Some(percentiles) = self.percentiles.as_mut() {
             vecs.extend(
@@ -201,7 +186,7 @@ impl CostBasisMetrics {
                     .vecs
                     .iter_mut()
                     .flatten()
-                    .map(|v| &mut v.dateindex as &mut dyn AnyStoredVec),
+                    .map(|v| &mut v.height as &mut dyn AnyStoredVec),
             );
         }
         if let Some(invested_capital) = self.invested_capital.as_mut() {
@@ -210,20 +195,20 @@ impl CostBasisMetrics {
                     .vecs
                     .iter_mut()
                     .flatten()
-                    .map(|v| &mut v.dateindex as &mut dyn AnyStoredVec),
+                    .map(|v| &mut v.height as &mut dyn AnyStoredVec),
             );
         }
         if let Some(v) = self.spot_cost_basis_percentile.as_mut() {
-            vecs.push(&mut v.dateindex);
+            vecs.push(&mut v.height);
         }
         if let Some(v) = self.spot_invested_capital_percentile.as_mut() {
-            vecs.push(&mut v.dateindex);
+            vecs.push(&mut v.height);
         }
         vecs.into_par_iter()
     }
 
     /// Validate computed versions or reset if mismatched.
-    pub fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+    pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         if let Some(percentiles) = self.percentiles.as_mut() {
             percentiles.validate_computed_version_or_reset(base_version)?;
         }
@@ -231,16 +216,18 @@ impl CostBasisMetrics {
             invested_capital.validate_computed_version_or_reset(base_version)?;
         }
         if let Some(v) = self.spot_cost_basis_percentile.as_mut() {
-            v.dateindex.validate_computed_version_or_reset(base_version)?;
+            v.height
+                .validate_computed_version_or_reset(base_version)?;
         }
         if let Some(v) = self.spot_invested_capital_percentile.as_mut() {
-            v.dateindex.validate_computed_version_or_reset(base_version)?;
+            v.height
+                .validate_computed_version_or_reset(base_version)?;
         }
         Ok(())
     }
 
     /// Compute aggregate values from separate cohorts.
-    pub fn compute_from_stateful(
+    pub(crate) fn compute_from_stateful(
         &mut self,
         starting_indexes: &ComputeIndexes,
         others: &[&Self],
@@ -256,18 +243,6 @@ impl CostBasisMetrics {
             &others.iter().map(|v| &v.max.height).collect::<Vec<_>>(),
             exit,
         )?;
-        Ok(())
-    }
-
-    /// First phase of computed metrics (indexes from height).
-    pub fn compute_rest_part1(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.min.compute_rest(indexes, starting_indexes, exit)?;
-        self.max.compute_rest(indexes, starting_indexes, exit)?;
         Ok(())
     }
 }

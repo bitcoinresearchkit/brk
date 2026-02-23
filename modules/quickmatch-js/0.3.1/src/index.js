@@ -1,4 +1,4 @@
-const DEFAULT_SEPARATORS = "_- ";
+const DEFAULT_SEPARATORS = "_- ,:";
 const DEFAULT_TRIGRAM_BUDGET = 6;
 const DEFAULT_LIMIT = 100;
 

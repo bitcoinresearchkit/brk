@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use brk_types::{CentsSats, CentsSquaredSats, CentsUnsigned, Sats};
+use brk_types::{CentsSats, CentsSquaredSats, Cents, Sats};
 
 /// Realized state using u128 for raw cent*sat values internally.
 /// This avoids overflow and defers division to output time for efficiency.
@@ -34,19 +34,19 @@ pub struct RealizedState {
 impl RealizedState {
     /// Get realized cap as CentsUnsigned (divides by ONE_BTC).
     #[inline]
-    pub fn cap(&self) -> CentsUnsigned {
-        CentsUnsigned::new((self.cap_raw / Sats::ONE_BTC_U128) as u64)
+    pub(crate) fn cap(&self) -> Cents {
+        Cents::new((self.cap_raw / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Set cap_raw directly from persisted value.
     #[inline]
-    pub fn set_cap_raw(&mut self, cap_raw: CentsSats) {
+    pub(crate) fn set_cap_raw(&mut self, cap_raw: CentsSats) {
         self.cap_raw = cap_raw.inner();
     }
 
     /// Set investor_cap_raw directly from persisted value.
     #[inline]
-    pub fn set_investor_cap_raw(&mut self, investor_cap_raw: CentsSquaredSats) {
+    pub(crate) fn set_investor_cap_raw(&mut self, investor_cap_raw: CentsSquaredSats) {
         self.investor_cap_raw = investor_cap_raw;
     }
 
@@ -54,114 +54,84 @@ impl RealizedState {
     /// investor_price = Σ(price² × sats) / Σ(price × sats)
     /// This is the dollar-weighted average acquisition price.
     #[inline]
-    pub fn investor_price(&self) -> CentsUnsigned {
+    pub(crate) fn investor_price(&self) -> Cents {
         if self.cap_raw == 0 {
-            return CentsUnsigned::ZERO;
+            return Cents::ZERO;
         }
-        CentsUnsigned::new((self.investor_cap_raw / self.cap_raw) as u64)
+        Cents::new((self.investor_cap_raw / self.cap_raw) as u64)
     }
 
     /// Get raw realized cap for aggregation.
     #[inline]
-    pub fn cap_raw(&self) -> CentsSats {
+    pub(crate) fn cap_raw(&self) -> CentsSats {
         CentsSats::new(self.cap_raw)
     }
 
     /// Get raw investor cap for aggregation.
     #[inline]
-    pub fn investor_cap_raw(&self) -> CentsSquaredSats {
+    pub(crate) fn investor_cap_raw(&self) -> CentsSquaredSats {
         self.investor_cap_raw
     }
 
     /// Get realized profit as CentsUnsigned.
     #[inline]
-    pub fn profit(&self) -> CentsUnsigned {
-        CentsUnsigned::new((self.profit_raw / Sats::ONE_BTC_U128) as u64)
+    pub(crate) fn profit(&self) -> Cents {
+        Cents::new((self.profit_raw / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Get realized loss as CentsUnsigned.
     #[inline]
-    pub fn loss(&self) -> CentsUnsigned {
-        CentsUnsigned::new((self.loss_raw / Sats::ONE_BTC_U128) as u64)
-    }
-
-    /// Get value created as CentsUnsigned (derived from profit + loss splits).
-    #[inline]
-    pub fn value_created(&self) -> CentsUnsigned {
-        let raw = self.profit_value_created_raw + self.loss_value_created_raw;
-        CentsUnsigned::new((raw / Sats::ONE_BTC_U128) as u64)
-    }
-
-    /// Get value destroyed as CentsUnsigned (derived from profit + loss splits).
-    #[inline]
-    pub fn value_destroyed(&self) -> CentsUnsigned {
-        let raw = self.profit_value_destroyed_raw + self.loss_value_destroyed_raw;
-        CentsUnsigned::new((raw / Sats::ONE_BTC_U128) as u64)
+    pub(crate) fn loss(&self) -> Cents {
+        Cents::new((self.loss_raw / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Get profit value created as CentsUnsigned (sell_price × sats for profit cases).
     #[inline]
-    pub fn profit_value_created(&self) -> CentsUnsigned {
-        CentsUnsigned::new((self.profit_value_created_raw / Sats::ONE_BTC_U128) as u64)
+    pub(crate) fn profit_value_created(&self) -> Cents {
+        Cents::new((self.profit_value_created_raw / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Get profit value destroyed as CentsUnsigned (cost_basis × sats for profit cases).
     /// This is also known as profit_flow.
     #[inline]
-    pub fn profit_value_destroyed(&self) -> CentsUnsigned {
-        CentsUnsigned::new((self.profit_value_destroyed_raw / Sats::ONE_BTC_U128) as u64)
+    pub(crate) fn profit_value_destroyed(&self) -> Cents {
+        Cents::new((self.profit_value_destroyed_raw / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Get loss value created as CentsUnsigned (sell_price × sats for loss cases).
     #[inline]
-    pub fn loss_value_created(&self) -> CentsUnsigned {
-        CentsUnsigned::new((self.loss_value_created_raw / Sats::ONE_BTC_U128) as u64)
+    pub(crate) fn loss_value_created(&self) -> Cents {
+        Cents::new((self.loss_value_created_raw / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Get loss value destroyed as CentsUnsigned (cost_basis × sats for loss cases).
     /// This is also known as capitulation_flow.
     #[inline]
-    pub fn loss_value_destroyed(&self) -> CentsUnsigned {
-        CentsUnsigned::new((self.loss_value_destroyed_raw / Sats::ONE_BTC_U128) as u64)
-    }
-
-    /// Get capitulation flow as CentsUnsigned.
-    /// This is the invested capital (cost_basis × sats) sold at a loss.
-    /// Alias for loss_value_destroyed.
-    #[inline]
-    pub fn capitulation_flow(&self) -> CentsUnsigned {
-        self.loss_value_destroyed()
-    }
-
-    /// Get profit flow as CentsUnsigned.
-    /// This is the invested capital (cost_basis × sats) sold at a profit.
-    /// Alias for profit_value_destroyed.
-    #[inline]
-    pub fn profit_flow(&self) -> CentsUnsigned {
-        self.profit_value_destroyed()
+    pub(crate) fn loss_value_destroyed(&self) -> Cents {
+        Cents::new((self.loss_value_destroyed_raw / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Get realized peak regret as CentsUnsigned.
     /// This is Σ((peak - sell_price) × sats) - how much more could have been made
     /// by selling at peak instead of when actually sold.
     #[inline]
-    pub fn peak_regret(&self) -> CentsUnsigned {
-        CentsUnsigned::new((self.peak_regret_raw / Sats::ONE_BTC_U128) as u64)
+    pub(crate) fn peak_regret(&self) -> Cents {
+        Cents::new((self.peak_regret_raw / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Get sats sent in profit.
     #[inline]
-    pub fn sent_in_profit(&self) -> Sats {
+    pub(crate) fn sent_in_profit(&self) -> Sats {
         self.sent_in_profit
     }
 
     /// Get sats sent in loss.
     #[inline]
-    pub fn sent_in_loss(&self) -> Sats {
+    pub(crate) fn sent_in_loss(&self) -> Sats {
         self.sent_in_loss
     }
 
-    pub fn reset_single_iteration_values(&mut self) {
+    pub(crate) fn reset_single_iteration_values(&mut self) {
         self.profit_raw = 0;
         self.loss_raw = 0;
         self.profit_value_created_raw = 0;
@@ -175,7 +145,7 @@ impl RealizedState {
 
     /// Increment using pre-computed values (for UTXO path)
     #[inline]
-    pub fn increment(&mut self, price: CentsUnsigned, sats: Sats) {
+    pub(crate) fn increment(&mut self, price: Cents, sats: Sats) {
         if sats.is_zero() {
             return;
         }
@@ -186,26 +156,26 @@ impl RealizedState {
 
     /// Increment using pre-computed snapshot values (for address path)
     #[inline]
-    pub fn increment_snapshot(&mut self, price_sats: CentsSats, investor_cap: CentsSquaredSats) {
+    pub(crate) fn increment_snapshot(&mut self, price_sats: CentsSats, investor_cap: CentsSquaredSats) {
         self.cap_raw += price_sats.as_u128();
         self.investor_cap_raw += investor_cap;
     }
 
     /// Decrement using pre-computed snapshot values (for address path)
     #[inline]
-    pub fn decrement_snapshot(&mut self, price_sats: CentsSats, investor_cap: CentsSquaredSats) {
+    pub(crate) fn decrement_snapshot(&mut self, price_sats: CentsSats, investor_cap: CentsSquaredSats) {
         self.cap_raw -= price_sats.as_u128();
         self.investor_cap_raw -= investor_cap;
     }
 
     #[inline]
-    pub fn receive(&mut self, price: CentsUnsigned, sats: Sats) {
+    pub(crate) fn receive(&mut self, price: Cents, sats: Sats) {
         self.increment(price, sats);
     }
 
     /// Send with pre-computed typed values. Inlines decrement to avoid recomputation.
     #[inline]
-    pub fn send(
+    pub(crate) fn send(
         &mut self,
         sats: Sats,
         current_ps: CentsSats,

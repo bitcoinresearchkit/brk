@@ -4,9 +4,9 @@ use brk_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{IterableBoxedVec, LazyVecFrom1, UnaryTransform, VecIndex};
+use vecdb::{ReadableBoxedVec, LazyVecFrom1, UnaryTransform, VecIndex};
 
-use crate::internal::{ComputedVecValue, SumVec};
+use crate::internal::ComputedVecValue;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(wrap = "sum")]
@@ -22,22 +22,10 @@ where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
 {
-    pub fn from_sum_vec<F: UnaryTransform<S1T, T>>(
+    pub(crate) fn from_boxed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        source: &SumVec<I, S1T>,
-    ) -> Self {
-        Self(LazyVecFrom1::transformed::<F>(
-            name,
-            version,
-            source.boxed_clone(),
-        ))
-    }
-
-    pub fn from_boxed<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        sum_source: IterableBoxedVec<I, S1T>,
+        sum_source: ReadableBoxedVec<I, S1T>,
     ) -> Self {
         Self(LazyVecFrom1::transformed::<F>(name, version, sum_source))
     }

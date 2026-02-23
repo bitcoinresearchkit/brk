@@ -1,13 +1,12 @@
-use brk_types::{Bitcoin, Close, Dollars, Sats};
+use brk_types::{Bitcoin, Dollars, Sats};
 use vecdb::BinaryTransform;
 
-/// Close<Dollars> * Sats -> Dollars (price × sats / 1e8)
-/// Same as PriceTimesSats but accepts Close<Dollars> price source.
-pub struct ClosePriceTimesSats;
+/// Dollars * Sats -> Dollars (price × sats / 1e8)
+pub struct PriceTimesSats;
 
-impl BinaryTransform<Close<Dollars>, Sats, Dollars> for ClosePriceTimesSats {
+impl BinaryTransform<Dollars, Sats, Dollars> for PriceTimesSats {
     #[inline(always)]
-    fn apply(price: Close<Dollars>, sats: Sats) -> Dollars {
-        *price * Bitcoin::from(sats)
+    fn apply(price: Dollars, sats: Sats) -> Dollars {
+        price * Bitcoin::from(sats)
     }
 }

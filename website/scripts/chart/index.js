@@ -310,11 +310,11 @@ export function createChart({ parent, brk, fitContent }) {
 
   /** @type {Partial<Record<ChartableIndex, number>>} */
   const minBarSpacingByIndex = {
-    monthindex: 1,
-    quarterindex: 2,
-    semesterindex: 3,
-    yearindex: 6,
-    decadeindex: 60,
+    month1: 1,
+    month3: 2,
+    month6: 3,
+    year1: 6,
+    year10: 60,
   };
 
   /** @param {ChartableIndex} index */
@@ -670,7 +670,7 @@ export function createChart({ parent, brk, fitContent }) {
                 ichart.timeScale().fitContent();
               } else if (
                 (minBarSpacingByIndex[idx] ?? 0) >=
-                /** @type {number} */ (minBarSpacingByIndex.quarterindex)
+                /** @type {number} */ (minBarSpacingByIndex.month3)
               ) {
                 ichart
                   .timeScale()

@@ -2,20 +2,20 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{BlockHash, Height, StoredF64, StoredU64, Timestamp, Version, Weight};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, Stamp};
+use vecdb::{AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, Rw, Stamp, StorageMode};
 
 use crate::parallel_import;
 
-#[derive(Clone, Traversable)]
-pub struct BlocksVecs {
-    pub blockhash: BytesVec<Height, BlockHash>,
+#[derive(Traversable)]
+pub struct BlocksVecs<M: StorageMode = Rw> {
+    pub blockhash: M::Stored<BytesVec<Height, BlockHash>>,
     #[traversable(wrap = "difficulty", rename = "raw")]
-    pub difficulty: PcoVec<Height, StoredF64>,
+    pub difficulty: M::Stored<PcoVec<Height, StoredF64>>,
     /// Doesn't guarantee continuity due to possible reorgs and more generally the nature of mining
     #[traversable(wrap = "time")]
-    pub timestamp: PcoVec<Height, Timestamp>,
-    pub total_size: PcoVec<Height, StoredU64>,
-    pub weight: PcoVec<Height, Weight>,
+    pub timestamp: M::Stored<PcoVec<Height, Timestamp>>,
+    pub total_size: M::Stored<PcoVec<Height, StoredU64>>,
+    pub weight: M::Stored<PcoVec<Height, Weight>>,
 }
 
 impl BlocksVecs {

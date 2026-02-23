@@ -5,7 +5,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use vecdb::AnySerializableVec;
 
-use super::{Index, Timestamp};
+use super::{Index, Timestamp, Version};
 
 /// Metric data with range information.
 ///
@@ -14,7 +14,7 @@ use super::{Index, Timestamp};
 #[derive(Debug, JsonSchema, Deserialize)]
 pub struct MetricData<T = Value> {
     /// Version of the metric data
-    pub version: u64,
+    pub version: Version,
     /// The index type used for this query
     pub index: Index,
     /// Total number of data points in the metric
@@ -38,8 +38,8 @@ impl MetricData {
         end: usize,
         buf: &mut Vec<u8>,
     ) -> vecdb::Result<()> {
-        let version = u64::from(vec.version());
-        let index_str = index.serialize_long();
+        let version = u32::from(vec.version());
+        let index_str = index.name();
         let total = vec.len();
         let end = end.min(total);
         let start = start.min(end);
@@ -95,8 +95,8 @@ mod tests {
 
     fn date_based_metric() -> MetricData<i32> {
         MetricData {
-            version: 1,
-            index: Index::DateIndex,
+            version: Version::ONE,
+            index: Index::Day1,
             total: 100,
             start: 0,
             end: 5,
@@ -107,7 +107,7 @@ mod tests {
 
     fn height_based_metric() -> MetricData<f64> {
         MetricData {
-            version: 1,
+            version: Version::ONE,
             index: Index::Height,
             total: 1000,
             start: 800000,
@@ -144,15 +144,15 @@ mod tests {
     }
 
     #[test]
-    fn test_dates_for_dateindex() {
+    fn test_dates_for_day1() {
         let metric = date_based_metric();
         let dates: Vec<_> = metric.dates().collect();
         assert_eq!(dates.len(), 5);
-        // DateIndex 0 = Jan 3, 2009 (genesis)
+        // Day1 0 = Jan 3, 2009 (genesis)
         assert_eq!(dates[0].year(), 2009);
         assert_eq!(dates[0].month(), 1);
         assert_eq!(dates[0].day(), 3);
-        // DateIndex 1 = Jan 9, 2009 (day one)
+        // Day1 1 = Jan 9, 2009 (day one)
         assert_eq!(dates[1].year(), 2009);
         assert_eq!(dates[1].month(), 1);
         assert_eq!(dates[1].day(), 9);

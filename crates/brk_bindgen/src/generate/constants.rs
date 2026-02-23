@@ -26,7 +26,7 @@ impl ClientConstants {
     /// Collect all constant data.
     pub fn collect() -> Self {
         let indexes = Index::all();
-        let indexes: Vec<&'static str> = indexes.iter().map(|i| i.serialize_long()).collect();
+        let indexes: Vec<&'static str> = indexes.iter().map(|i| i.name()).collect();
 
         let pools = pools();
         let mut sorted_pools: Vec<_> = pools.iter().collect();

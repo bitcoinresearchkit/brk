@@ -11,8 +11,8 @@ use brk_types::{
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Database, GenericStoredVec, ImportOptions, ImportableVec,
-    Reader, Stamp,
+    AnyStoredVec, AnyVec, BytesVec, Database, ReadableVec, WritableVec, ImportOptions, ImportableVec,
+    Reader, Rw, Stamp, StorageMode,
 };
 
 use super::super::AddressTypeToTypeIndexMap;
@@ -22,14 +22,14 @@ const SAVED_STAMPED_CHANGES: u16 = 10;
 /// Macro to define AnyAddressIndexesVecs and its methods.
 macro_rules! define_any_address_indexes_vecs {
     ($(($field:ident, $variant:ident, $index:ty)),* $(,)?) => {
-        #[derive(Clone, Traversable)]
-        pub struct AnyAddressIndexesVecs {
-            $(pub $field: BytesVec<$index, AnyAddressIndex>,)*
+        #[derive(Traversable)]
+        pub struct AnyAddressIndexesVecs<M: StorageMode = Rw> {
+            $(pub $field: M::Stored<BytesVec<$index, AnyAddressIndex>>,)*
         }
 
         impl AnyAddressIndexesVecs {
             /// Import from database.
-            pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
+            pub(crate) fn forced_import(db: &Database, version: Version) -> Result<Self> {
                 Ok(Self {
                     $($field: BytesVec::forced_import_with(
                         ImportOptions::new(db, "anyaddressindex", version)
@@ -39,7 +39,7 @@ macro_rules! define_any_address_indexes_vecs {
             }
 
             /// Get minimum stamped height across all address types.
-            pub fn min_stamped_height(&self) -> Height {
+            pub(crate) fn min_stamped_height(&self) -> Height {
                 [$(Height::from(self.$field.stamp()).incremented()),*]
                     .into_iter()
                     .min()
@@ -47,76 +47,40 @@ macro_rules! define_any_address_indexes_vecs {
             }
 
             /// Rollback all address types to before the given stamp.
-            pub fn rollback_before(&mut self, stamp: Stamp) -> Result<Vec<Stamp>> {
+            pub(crate) fn rollback_before(&mut self, stamp: Stamp) -> Result<Vec<Stamp>> {
                 Ok(vec![$(self.$field.rollback_before(stamp)?),*])
             }
 
             /// Reset all address types.
-            pub fn reset(&mut self) -> Result<()> {
+            pub(crate) fn reset(&mut self) -> Result<()> {
                 $(self.$field.reset()?;)*
                 Ok(())
             }
 
             /// Get address index for a given type and typeindex.
-            /// Uses get_any_or_read_at_unwrap to check updated layer (needed after rollback).
-            pub fn get(&self, address_type: OutputType, typeindex: TypeIndex, reader: &Reader) -> AnyAddressIndex {
+            /// Uses get_any_or_read_at to check updated layer (needed after rollback).
+            pub(crate) fn get(&self, address_type: OutputType, typeindex: TypeIndex, reader: &Reader) -> Result<AnyAddressIndex> {
                 match address_type {
-                    $(OutputType::$variant => self.$field.get_any_or_read_at_unwrap(typeindex.into(), reader),)*
+                    $(OutputType::$variant => Ok(self.$field.get_any_or_read_at(typeindex.into(), reader)?.unwrap()),)*
                     _ => unreachable!("Invalid address type: {:?}", address_type),
                 }
-            }
-
-            /// Get address index with single read (no caching).
-            pub fn get_once(&self, address_type: OutputType, typeindex: TypeIndex) -> Result<AnyAddressIndex> {
-                match address_type {
-                    $(OutputType::$variant => self.$field.read_at_once(typeindex.into()).map_err(Into::into),)*
-                    _ => Err(Error::UnsupportedType(address_type.to_string())),
-                }
-            }
-
-            /// Update or push address index for a given type.
-            pub fn update_or_push(&mut self, address_type: OutputType, typeindex: TypeIndex, index: AnyAddressIndex) -> Result<()> {
-                match address_type {
-                    $(OutputType::$variant => self.$field.update_or_push(typeindex.into(), index)?,)*
-                    _ => unreachable!("Invalid address type: {:?}", address_type),
-                }
-                Ok(())
-            }
-
-            /// Get length for a given address type.
-            pub fn len_of(&self, address_type: OutputType) -> usize {
-                match address_type {
-                    $(OutputType::$variant => self.$field.len(),)*
-                    _ => unreachable!("Invalid address type: {:?}", address_type),
-                }
-            }
-
-            /// Update existing entry (must be within bounds).
-            pub fn update(&mut self, address_type: OutputType, typeindex: TypeIndex, index: AnyAddressIndex) -> Result<()> {
-                match address_type {
-                    $(OutputType::$variant => self.$field.update(typeindex.into(), index)?,)*
-                    _ => unreachable!("Invalid address type: {:?}", address_type),
-                }
-                Ok(())
-            }
-
-            /// Push new entry (must be at exactly len position).
-            pub fn push(&mut self, address_type: OutputType, index: AnyAddressIndex) {
-                match address_type {
-                    $(OutputType::$variant => self.$field.push(index),)*
-                    _ => unreachable!("Invalid address type: {:?}", address_type),
-                }
-            }
-
-            /// Write all address types with stamp.
-            pub fn write(&mut self, stamp: Stamp, with_changes: bool) -> Result<()> {
-                $(self.$field.stamped_write_maybe_with_changes(stamp, with_changes)?;)*
-                Ok(())
             }
 
             /// Returns a parallel iterator over all vecs for parallel writing.
-            pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+            pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
                 vec![$(&mut self.$field as &mut dyn AnyStoredVec),*].into_par_iter()
+            }
+        }
+
+        impl<M: StorageMode> AnyAddressIndexesVecs<M> {
+            /// Get address index with single read (no caching).
+            pub fn get_once(&self, address_type: OutputType, typeindex: TypeIndex) -> Result<AnyAddressIndex> {
+                match address_type {
+                    $(OutputType::$variant => self.$field
+                        .collect_one(<$index>::from(usize::from(typeindex)))
+                        .ok_or_else(|| Error::UnsupportedType(address_type.to_string())),)*
+                    _ => Err(Error::UnsupportedType(address_type.to_string())),
+                }
             }
         }
     };
@@ -139,7 +103,7 @@ impl AnyAddressIndexesVecs {
     /// Accepts two maps (e.g. from empty and funded processing) and merges per-thread.
     /// Updates existing entries and pushes new ones (sorted).
     /// Returns (update_count, push_count).
-    pub fn par_batch_update(
+    pub(crate) fn par_batch_update(
         &mut self,
         updates1: AddressTypeToTypeIndexMap<AnyAddressIndex>,
         updates2: AddressTypeToTypeIndexMap<AnyAddressIndex>,

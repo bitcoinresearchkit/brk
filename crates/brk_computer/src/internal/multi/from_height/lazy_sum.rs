@@ -4,10 +4,10 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{IterableBoxedVec, LazyVecFrom1, UnaryTransform};
+use vecdb::{ReadableBoxedVec, LazyVecFrom1, UnaryTransform};
 
 use crate::internal::{
-    ComputedFromHeightSum, ComputedHeightDerivedSum, ComputedVecValue, LazyHeightDerivedSum, NumericValue,
+    ComputedFromHeightSum, ComputedVecValue, LazyHeightDerivedSum, NumericValue,
 };
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -20,7 +20,7 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub rest: LazyHeightDerivedSum<T, S1T>,
+    pub rest: Box<LazyHeightDerivedSum<T, S1T>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -30,30 +30,11 @@ where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
 {
-    pub fn from_computed<F: UnaryTransform<S1T, T>>(
+    pub(crate) fn from_computed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        height_source: IterableBoxedVec<Height, S1T>,
+        height_source: ReadableBoxedVec<Height, S1T>,
         source: &ComputedFromHeightSum<S1T>,
-    ) -> Self {
-        let v = version + VERSION;
-        Self {
-            height: LazyVecFrom1::transformed::<F>(name, v, height_source),
-            rest: LazyHeightDerivedSum::from_computed::<F>(
-                name,
-                v,
-                &source.dateindex,
-                &source.rest,
-                &source.difficultyepoch,
-            ),
-        }
-    }
-
-    pub fn from_derived<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        height_source: IterableBoxedVec<Height, S1T>,
-        source: &ComputedHeightDerivedSum<S1T>,
     ) -> Self
     where
         S1T: NumericValue,
@@ -61,7 +42,8 @@ where
         let v = version + VERSION;
         Self {
             height: LazyVecFrom1::transformed::<F>(name, v, height_source),
-            rest: LazyHeightDerivedSum::from_derived_computed::<F>(name, v, source),
+            rest: Box::new(LazyHeightDerivedSum::from_derived_computed::<F>(name, v, &source.rest)),
         }
     }
+
 }

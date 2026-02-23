@@ -1,15 +1,16 @@
-# brk_cli
+# BRK CLI
 
 Command-line interface for running a Bitcoin Research Kit instance.
 
-## Preview
+## Demo
 
-- https://bitview.space - web interface
-- https://bitview.space/api - API docs
+- [bitview.space](https://bitview.space) - web interface
+- [bitview.space/api](https://bitview.space/api) - API docs
 
 ## Requirements
 
-- Bitcoin Core running with RPC enabled
+- Linux or macOS
+- Bitcoin Core with `server=1` in `bitcoin.conf`
 - Access to `blk*.dat` files
 - [~400 GB disk space](https://bitview.space/api/server/disk)
 - [12+ GB RAM](https://github.com/bitcoinresearchkit/benches#benchmarks)
@@ -35,7 +36,9 @@ brk
 
 Indexes the blockchain, computes datasets, starts the server on `localhost:3110`, and waits for new blocks.
 
-**Note:** When more than 10,000 blocks behind, indexing completes before the server starts to free up memory from fragmentation that occurs during large syncs. The web interface at `localhost:3110` won't be available until sync finishes.
+## First sync
+
+The initial sync processes the entire blockchain and can take several hours. During this time (more than 10,000 blocks behind), indexing completes before the server starts to free up memory. The web interface at `localhost:3110` won't be available until sync finishes.
 
 ## Options
 

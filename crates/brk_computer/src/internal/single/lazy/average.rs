@@ -1,23 +1,34 @@
 //! Lazy average-value aggregation.
 
+use std::sync::Arc;
+
 use brk_traversable::Traversable;
-use brk_types::Version;
-use derive_more::{Deref, DerefMut};
+use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{FromCoarserIndex, IterableBoxedVec, LazyVecFrom2, VecIndex, VecValue};
+use vecdb::{Cursor, FromCoarserIndex, ReadableBoxedVec, VecIndex, VecValue};
 
 use crate::internal::ComputedVecValue;
 
 const VERSION: Version = Version::ZERO;
 
-#[derive(Clone, Deref, DerefMut, Traversable)]
-#[traversable(transparent)]
-pub struct LazyAverage<I, T, S1I, S2T>(pub LazyVecFrom2<I, T, S1I, T, I, S2T>)
+type ForEachRangeFn<S1I, T, I, S2T> =
+    fn(usize, usize, &ReadableBoxedVec<S1I, T>, &ReadableBoxedVec<I, S2T>, &mut dyn FnMut(T));
+
+pub struct LazyAverage<I, T, S1I, S2T>
 where
     I: VecIndex,
     T: ComputedVecValue + JsonSchema,
     S1I: VecIndex,
-    S2T: VecValue;
+    S2T: VecValue,
+{
+    name: Arc<str>,
+    version: Version,
+    source: ReadableBoxedVec<S1I, T>,
+    mapping: ReadableBoxedVec<I, S2T>,
+    for_each_range: ForEachRangeFn<S1I, T, I, S2T>,
+}
+
+impl_lazy_agg!(LazyAverage);
 
 impl<I, T, S1I, S2T> LazyAverage<I, T, S1I, S2T>
 where
@@ -26,52 +37,120 @@ where
     S1I: VecIndex + 'static + FromCoarserIndex<I>,
     S2T: VecValue,
 {
-    pub fn from_source(
+    pub(crate) fn from_source(
         name: &str,
         version: Version,
-        source: IterableBoxedVec<S1I, T>,
-        len_source: IterableBoxedVec<I, S2T>,
+        source: ReadableBoxedVec<S1I, T>,
+        len_source: ReadableBoxedVec<I, S2T>,
     ) -> Self {
         Self::from_source_inner(&format!("{name}_average"), version, source, len_source)
-    }
-
-    pub fn from_source_raw(
-        name: &str,
-        version: Version,
-        source: IterableBoxedVec<S1I, T>,
-        len_source: IterableBoxedVec<I, S2T>,
-    ) -> Self {
-        Self::from_source_inner(name, version, source, len_source)
     }
 
     fn from_source_inner(
         name: &str,
         version: Version,
-        source: IterableBoxedVec<S1I, T>,
-        len_source: IterableBoxedVec<I, S2T>,
+        source: ReadableBoxedVec<S1I, T>,
+        len_source: ReadableBoxedVec<I, S2T>,
     ) -> Self {
-        Self(LazyVecFrom2::init(
-            name,
-            version + VERSION,
+        fn for_each_range<
+            I: VecIndex,
+            T: ComputedVecValue + JsonSchema,
+            S1I: VecIndex + FromCoarserIndex<I>,
+            S2T: VecValue,
+        >(
+            from: usize,
+            to: usize,
+            source: &ReadableBoxedVec<S1I, T>,
+            mapping: &ReadableBoxedVec<I, S2T>,
+            f: &mut dyn FnMut(T),
+        ) {
+            let mapping_len = mapping.len();
+            let source_len = source.len();
+            let to = to.min(mapping_len);
+            if from >= to {
+                return;
+            }
+            let mut cursor = Cursor::from_dyn(&**source);
+            cursor.advance(S1I::min_from(I::from(from)));
+            for i in from..to {
+                let start = S1I::min_from(I::from(i));
+                let end = S1I::max_from(I::from(i), source_len) + 1;
+                let count = end.saturating_sub(start);
+                if count == 0 || cursor.remaining() == 0 {
+                    continue;
+                }
+                let sum = cursor.fold(count, T::from(0), |s, v| s + v);
+                f(sum / count);
+            }
+        }
+        Self {
+            name: Arc::from(name),
+            version: version + VERSION,
             source,
-            len_source,
-            |i: I, source, len_source| {
-                if i.to_usize() >= len_source.vec_len() {
-                    return None;
+            mapping: len_source,
+            for_each_range: for_each_range::<I, T, S1I, S2T>,
+        }
+    }
+}
+
+impl<I, T> LazyAverage<I, T, Height, Height>
+where
+    I: VecIndex,
+    T: ComputedVecValue + JsonSchema + 'static,
+{
+    pub(crate) fn from_height_source(
+        name: &str,
+        version: Version,
+        source: ReadableBoxedVec<Height, T>,
+        first_height: ReadableBoxedVec<I, Height>,
+    ) -> Self {
+        Self::from_height_source_inner(&format!("{name}_average"), version, source, first_height)
+    }
+
+    fn from_height_source_inner(
+        name: &str,
+        version: Version,
+        source: ReadableBoxedVec<Height, T>,
+        first_height: ReadableBoxedVec<I, Height>,
+    ) -> Self {
+        fn for_each_range<I: VecIndex, T: ComputedVecValue + JsonSchema>(
+            from: usize,
+            to: usize,
+            source: &ReadableBoxedVec<Height, T>,
+            mapping: &ReadableBoxedVec<I, Height>,
+            f: &mut dyn FnMut(T),
+        ) {
+            let map_end = (to + 1).min(mapping.len());
+            let heights = mapping.collect_range_dyn(from, map_end);
+            let source_len = source.len();
+            let Some(&first_h) = heights.first() else {
+                return;
+            };
+            let mut cursor = Cursor::from_dyn(&**source);
+            cursor.advance(first_h.to_usize());
+            for idx in 0..(to - from) {
+                let Some(&cur_h) = heights.get(idx) else {
+                    continue;
+                };
+                let first = cur_h.to_usize();
+                let next_first = heights
+                    .get(idx + 1)
+                    .map(|h| h.to_usize())
+                    .unwrap_or(source_len);
+                let count = next_first.saturating_sub(first);
+                if count == 0 || cursor.remaining() == 0 {
+                    continue;
                 }
-                let mut sum = T::from(0);
-                let mut len = 0usize;
-                for v in
-                    S1I::inclusive_range_from(i, source.vec_len()).flat_map(|i| source.get_at(i))
-                {
-                    sum += v;
-                    len += 1;
-                }
-                if len == 0 {
-                    return None;
-                }
-                Some(sum / len)
-            },
-        ))
+                let sum = cursor.fold(count, T::from(0), |s, v| s + v);
+                f(sum / count);
+            }
+        }
+        Self {
+            name: Arc::from(name),
+            version: version + VERSION,
+            source,
+            mapping: first_height,
+            for_each_range: for_each_range::<I, T>,
+        }
     }
 }

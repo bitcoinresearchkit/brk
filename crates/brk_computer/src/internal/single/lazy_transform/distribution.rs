@@ -5,9 +5,9 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
 use schemars::JsonSchema;
-use vecdb::{LazyVecFrom1, UnaryTransform, VecIndex};
+use vecdb::{ReadableBoxedVec, LazyVecFrom1, UnaryTransform, VecIndex};
 
-use crate::internal::{ComputedVecValue, Distribution, Full};
+use crate::internal::ComputedVecValue;
 
 use super::LazyPercentiles;
 
@@ -33,61 +33,24 @@ where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
 {
-    pub fn from_stats_aggregate<F: UnaryTransform<S1T, T>>(
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn from_boxed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        source: &Full<I, S1T>,
+        average: ReadableBoxedVec<I, S1T>,
+        min: ReadableBoxedVec<I, S1T>,
+        max: ReadableBoxedVec<I, S1T>,
+        pct10: ReadableBoxedVec<I, S1T>,
+        pct25: ReadableBoxedVec<I, S1T>,
+        median: ReadableBoxedVec<I, S1T>,
+        pct75: ReadableBoxedVec<I, S1T>,
+        pct90: ReadableBoxedVec<I, S1T>,
     ) -> Self {
         Self {
-            average: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_average"),
-                version,
-                source.boxed_average(),
-            ),
-            min: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_min"),
-                version,
-                source.boxed_min(),
-            ),
-            max: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_max"),
-                version,
-                source.boxed_max(),
-            ),
-            percentiles: LazyPercentiles::from_percentiles::<F>(
-                name,
-                version,
-                &source.distribution.percentiles,
-            ),
-        }
-    }
-
-    pub fn from_distribution<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        source: &Distribution<I, S1T>,
-    ) -> Self {
-        Self {
-            average: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_average"),
-                version,
-                source.boxed_average(),
-            ),
-            min: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_min"),
-                version,
-                source.boxed_min(),
-            ),
-            max: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_max"),
-                version,
-                source.boxed_max(),
-            ),
-            percentiles: LazyPercentiles::from_percentiles::<F>(
-                name,
-                version,
-                &source.percentiles,
-            ),
+            average: LazyVecFrom1::transformed::<F>(&format!("{name}_average"), version, average),
+            min: LazyVecFrom1::transformed::<F>(&format!("{name}_min"), version, min),
+            max: LazyVecFrom1::transformed::<F>(&format!("{name}_max"), version, max),
+            percentiles: LazyPercentiles::from_boxed::<F>(name, version, pct10, pct25, median, pct75, pct90),
         }
     }
 }

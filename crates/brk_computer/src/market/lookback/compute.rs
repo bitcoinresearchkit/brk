@@ -1,23 +1,31 @@
 use brk_error::Result;
-use vecdb::Exit;
+use brk_types::Dollars;
+use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, price};
+use crate::{blocks, ComputeIndexes, prices};
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
-        price: &price::Vecs,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close = &price.usd.split.close.dateindex;
+        let close_data: Vec<Dollars> = prices.usd.price.collect();
 
         for (price_ago, days) in self.price_ago.iter_mut_with_days() {
-            price_ago.compute_all(starting_indexes, exit, |v| {
-                v.compute_previous_value(starting_indexes.dateindex, close, days as usize, exit)?;
-                Ok(())
-            })?;
+            let window_starts = blocks.count.start_vec(days as usize);
+            price_ago.usd.height.compute_transform(
+                starting_indexes.height,
+                window_starts,
+                |(h, start_h, _)| {
+                    let val = close_data[start_h.to_usize()];
+                    (h, val)
+                },
+                exit,
+            )?;
         }
 
         Ok(())

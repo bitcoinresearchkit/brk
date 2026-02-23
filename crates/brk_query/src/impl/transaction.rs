@@ -6,7 +6,7 @@ use brk_types::{
     Sats, Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxOutspend, TxStatus, Txid, TxidParam,
     TxidPrefix, Vin, Vout, Weight,
 };
-use vecdb::{GenericStoredVec, TypedVecIterator};
+use vecdb::{ReadableVec, VecIndex};
 
 use crate::Query;
 
@@ -55,9 +55,9 @@ impl Query {
         };
 
         // Get block info for status
-        let height = indexer.vecs.transactions.height.read_once(txindex)?;
+        let height = indexer.vecs.transactions.height.collect_one(txindex).unwrap();
         let block_hash = indexer.vecs.blocks.blockhash.read_once(height)?;
-        let block_time = indexer.vecs.blocks.timestamp.read_once(height)?;
+        let block_time = indexer.vecs.blocks.timestamp.collect_one(height).unwrap();
 
         Ok(TxStatus {
             confirmed: true,
@@ -120,11 +120,7 @@ impl Query {
 
         // Look up spend status
         let computer = self.computer();
-        let txinindex = computer
-            .outputs
-            .spent
-            .txinindex
-            .read_once(txoutindex)?;
+        let txinindex = computer.outputs.spent.txinindex.read_once(txoutindex)?;
 
         if txinindex == TxInIndex::UNSPENT {
             return Ok(TxOutspend::UNSPENT);
@@ -169,13 +165,12 @@ impl Query {
 
         // Get spend status for each output
         let computer = self.computer();
-        let mut txoutindex_to_txinindex_iter =
-            computer.outputs.spent.txinindex.iter()?;
+        let txinindex_reader = computer.outputs.spent.txinindex.reader();
 
         let mut outspends = Vec::with_capacity(output_count);
         for i in 0..output_count {
             let txoutindex = first_txoutindex + Vout::from(i);
-            let txinindex = txoutindex_to_txinindex_iter.get_unwrap(txoutindex);
+            let txinindex = txinindex_reader.get(usize::from(txoutindex));
 
             if txinindex == TxInIndex::UNSPENT {
                 outspends.push(TxOutspend::UNSPENT);
@@ -194,22 +189,23 @@ impl Query {
         let reader = self.reader();
         let computer = self.computer();
 
-        // Get tx metadata using read_once for single lookups
+        // Get tx metadata using collect_one for PcoVec, read_once for BytesVec
         let txid = indexer.vecs.transactions.txid.read_once(txindex)?;
-        let height = indexer.vecs.transactions.height.read_once(txindex)?;
-        let version = indexer.vecs.transactions.txversion.read_once(txindex)?;
-        let lock_time = indexer.vecs.transactions.rawlocktime.read_once(txindex)?;
-        let total_size = indexer.vecs.transactions.total_size.read_once(txindex)?;
+        let height = indexer.vecs.transactions.height.collect_one(txindex).unwrap();
+        let version = indexer.vecs.transactions.txversion.collect_one(txindex).unwrap();
+        let lock_time = indexer.vecs.transactions.rawlocktime.collect_one(txindex).unwrap();
+        let total_size = indexer.vecs.transactions.total_size.collect_one(txindex).unwrap();
         let first_txinindex = indexer
             .vecs
             .transactions
             .first_txinindex
-            .read_once(txindex)?;
-        let position = computer.positions.tx_position.read_once(txindex)?;
+            .collect_one(txindex)
+            .unwrap();
+        let position = computer.positions.tx_position.collect_one(txindex).unwrap();
 
         // Get block info for status
         let block_hash = indexer.vecs.blocks.blockhash.read_once(height)?;
-        let block_time = indexer.vecs.blocks.timestamp.read_once(height)?;
+        let block_time = indexer.vecs.blocks.timestamp.collect_one(height).unwrap();
 
         // Read and decode the raw transaction from blk file
         let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
@@ -217,12 +213,16 @@ impl Query {
         let tx = bitcoin::Transaction::consensus_decode(&mut cursor)
             .map_err(|_| Error::Parse("Failed to decode transaction".into()))?;
 
-        // For iterating through inputs, we need iterators (multiple lookups)
-        let mut txindex_to_txid_iter = indexer.vecs.transactions.txid.iter()?;
-        let mut txindex_to_first_txoutindex_iter =
-            indexer.vecs.transactions.first_txoutindex.iter()?;
-        let mut txinindex_to_outpoint_iter = indexer.vecs.inputs.outpoint.iter()?;
-        let mut txoutindex_to_value_iter = indexer.vecs.outputs.value.iter()?;
+        // Create readers for random access lookups
+        let txid_reader = indexer.vecs.transactions.txid.reader();
+        let first_txoutindex_reader = indexer.vecs.transactions.first_txoutindex.reader();
+        let value_reader = indexer.vecs.outputs.value.reader();
+
+        // Batch-read outpoints for all inputs (avoids per-input PcoVec page decompression)
+        let outpoints: Vec<_> = indexer.vecs.inputs.outpoint.collect_range_at(
+            usize::from(first_txinindex),
+            usize::from(first_txinindex) + tx.input.len(),
+        );
 
         // Build inputs with prevout information
         let input: Vec<TxIn> = tx
@@ -230,8 +230,7 @@ impl Query {
             .iter()
             .enumerate()
             .map(|(i, txin)| {
-                let txinindex = first_txinindex + i;
-                let outpoint = txinindex_to_outpoint_iter.get_unwrap(txinindex);
+                let outpoint = outpoints[i];
 
                 let is_coinbase = outpoint.is_coinbase();
 
@@ -241,15 +240,14 @@ impl Query {
                 } else {
                     let prev_txindex = outpoint.txindex();
                     let prev_vout = outpoint.vout();
-                    let prev_txid = txindex_to_txid_iter.get_unwrap(prev_txindex);
+                    let prev_txid = txid_reader.get(prev_txindex.to_usize());
 
                     // Calculate the txoutindex for the prevout
-                    let prev_first_txoutindex =
-                        txindex_to_first_txoutindex_iter.get_unwrap(prev_txindex);
+                    let prev_first_txoutindex = first_txoutindex_reader.get(prev_txindex.to_usize());
                     let prev_txoutindex = prev_first_txoutindex + prev_vout;
 
                     // Get the value of the prevout
-                    let prev_value = txoutindex_to_value_iter.get_unwrap(prev_txoutindex);
+                    let prev_value = value_reader.get(usize::from(prev_txoutindex));
 
                     let prevout = Some(TxOut::from((
                         bitcoin::ScriptBuf::new(), // Placeholder - would need to reconstruct
@@ -314,8 +312,8 @@ impl Query {
         let reader = self.reader();
         let computer = self.computer();
 
-        let total_size = indexer.vecs.transactions.total_size.read_once(txindex)?;
-        let position = computer.positions.tx_position.read_once(txindex)?;
+        let total_size = indexer.vecs.transactions.total_size.collect_one(txindex).unwrap();
+        let position = computer.positions.tx_position.collect_one(txindex).unwrap();
 
         let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
 
@@ -326,14 +324,15 @@ impl Query {
         let indexer = self.indexer();
 
         // Look up spending txindex directly
-        let spending_txindex = indexer.vecs.inputs.txindex.read_once(txinindex)?;
+        let spending_txindex = indexer.vecs.inputs.txindex.collect_one(txinindex).unwrap();
 
         // Calculate vin
         let spending_first_txinindex = indexer
             .vecs
             .transactions
             .first_txinindex
-            .read_once(spending_txindex)?;
+            .collect_one(spending_txindex)
+            .unwrap();
         let vin = Vin::from(usize::from(txinindex) - usize::from(spending_first_txinindex));
 
         // Get spending tx details
@@ -342,9 +341,10 @@ impl Query {
             .vecs
             .transactions
             .height
-            .read_once(spending_txindex)?;
+            .collect_one(spending_txindex)
+            .unwrap();
         let block_hash = indexer.vecs.blocks.blockhash.read_once(spending_height)?;
-        let block_time = indexer.vecs.blocks.timestamp.read_once(spending_height)?;
+        let block_time = indexer.vecs.blocks.timestamp.collect_one(spending_height).unwrap();
 
         Ok(TxOutspend {
             spent: true,

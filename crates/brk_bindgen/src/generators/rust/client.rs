@@ -179,7 +179,7 @@ impl EndpointConfig {{
     }}
 
     fn path(&self) -> String {{
-        format!("/api/metric/{{}}/{{}}", self.name, self.index.serialize_long())
+        format!("/api/metric/{{}}/{{}}", self.name, self.index.name())
     }}
 
     fn build_path(&self, format: Option<&str>) -> String {{

@@ -110,7 +110,22 @@ impl std::fmt::Display for DifficultyEpoch {
 
 impl Formattable for DifficultyEpoch {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
+    }
+}
+
+impl From<f64> for DifficultyEpoch {
+    #[inline]
+    fn from(value: f64) -> Self {
+        Self(value.round() as u16)
+    }
+}
+
+impl From<DifficultyEpoch> for f64 {
+    #[inline]
+    fn from(value: DifficultyEpoch) -> Self {
+        value.0 as f64
     }
 }

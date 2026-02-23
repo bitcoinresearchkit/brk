@@ -20,7 +20,7 @@
     * [\_\_init\_\_](#brk_client.BrkClient.__init__)
     * [metric](#brk_client.BrkClient.metric)
     * [index\_to\_date](#brk_client.BrkClient.index_to_date)
-    * [is\_date\_index](#brk_client.BrkClient.is_date_index)
+    * [date\_to\_index](#brk_client.BrkClient.date_to_index)
     * [get\_api](#brk_client.BrkClient.get_api)
     * [get\_address](#brk_client.BrkClient.get_address)
     * [get\_address\_txs](#brk_client.BrkClient.get_address_txs)
@@ -191,20 +191,20 @@ For type-safe access, use the `metrics` tree instead.
 #### index\_to\_date
 
 ```python
-def index_to_date(index: Index, i: int) -> date
+def index_to_date(index: Index, i: int) -> Union[date, datetime]
 ```
 
-Convert an index value to a date for date-based indexes.
+Convert an index value to a date/datetime for date-based indexes.
 
-<a id="brk_client.BrkClient.is_date_index"></a>
+<a id="brk_client.BrkClient.date_to_index"></a>
 
-#### is\_date\_index
+#### date\_to\_index
 
 ```python
-def is_date_index(index: Index) -> bool
+def date_to_index(index: Index, d: Union[date, datetime]) -> int
 ```
 
-Check if an index type is date-based.
+Convert a date/datetime to an index value for date-based indexes.
 
 <a id="brk_client.BrkClient.get_api"></a>
 

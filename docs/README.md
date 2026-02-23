@@ -8,16 +8,18 @@
 [![X](https://img.shields.io/badge/@_nym21_-000000?logo=x)](https://x.com/_nym21_)
 [![Nostr](https://img.shields.io/badge/Nostr-purple?logo=nostr)](https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6)
 
-> "Shout out to Bitcoin Research Kit and researchbitcoin.net. Two data sources for On-Chain Data. Couldn't recommend them highly enough."
+> "Shout out to Bitcoin Research Kit. [...] Couldn't recommend them highly enough."
 > — James Check (CheckOnChain), [What Bitcoin Did #1000](https://www.whatbitcoindid.com/episodes/wbd1000-checkmate)
 
-Open-source, self-hostable on-chain analytics for Bitcoin. Block explorer, address index, and thousands of metrics, all from your own node. No external APIs required.
+Open-source, self-hostable on-chain analytics for Bitcoin. Block explorer, address index, and thousands of metrics, everything computed from your node, even the price.
 
 Similar to [Glassnode](https://glassnode.com) + [mempool.space](https://mempool.space) + [electrs](https://github.com/romanz/electrs) + [UTXO Oracle](https://utxo.live/oracle/) in a single package.
 
 [Bitview](https://bitview.space) is a free hosted instance of BRK.
 
 ## Data
+
+**Zero external dependencies.** BRK needs only a Bitcoin Core node. Historical prices are built in, live price from your mempool. Every metric is computed locally from your own copy of the blockchain. Your node, your data.
 
 **Blockchain:** Blocks, transactions, addresses, UTXOs.
 
@@ -36,7 +38,7 @@ Browse metrics and charts at [bitview.space](https://bitview.space), no signup r
 ### API
 
 ```bash
-curl https://bitview.space/api/blocks/count/height
+curl https://bitview.space/api/mempool/price
 ```
 
 Query metrics and blockchain data in JSON or CSV.
@@ -49,7 +51,7 @@ Query metrics and blockchain data in JSON or CSV.
 cargo install --locked brk_cli && brk
 ```
 
-Run your own website and API. Private, verifiable, self-sovereign. Runs alongside Bitcoin Core.
+Run your own website and API. All you need is Bitcoin Core.
 
 [Guide](https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_cli/README.md) · [Professional hosting](./PROFESSIONAL_HOSTING.md)
 
@@ -71,11 +73,11 @@ Build custom applications in Rust. Use the full stack or individual components (
 
 ## Donations
 
-<a href="https://x.com/_Checkmatey_"><img src="https://pbs.twimg.com/profile_images/1657255419172253698/ncG0Gt8e_400x400.jpg" width="60" alt="Checkmate" title="Checkmate" style="border-radius:50%" /></a>
-<a href="https://x.com/JohanMBergman"><img src="https://pbs.twimg.com/profile_images/1958587470120988673/7rlY5csu_400x400.jpg" width="60" alt="Johan" title="Johan" style="border-radius:50%" /></a>
-<a href="https://x.com/clearmined1"><img src="https://pbs.twimg.com/profile_images/1657777901830541313/6OAaR8XF_400x400.png" width="60" alt="ClearMined" title="ClearMined" style="border-radius:50%" /></a>
+<a href="https://x.com/_Checkmatey_"><img src="https://pbs.twimg.com/profile_images/1657255419172253698/ncG0Gt8e_400x400.jpg" width="40" alt="Checkmate" title="Checkmate" style="border-radius:50%" /></a>
+<a href="https://x.com/JohanMBergman"><img src="https://pbs.twimg.com/profile_images/1958587470120988673/7rlY5csu_400x400.jpg" width="40" alt="Johan" title="Johan" style="border-radius:50%" /></a>
+<a href="https://x.com/clearmined1"><img src="https://pbs.twimg.com/profile_images/1657777901830541313/6OAaR8XF_400x400.png" width="40" alt="ClearMined" title="ClearMined" style="border-radius:50%" /></a>
 
-<img src="./qr.png" alt="Bitcoin donate QR code" width="180" />
+<img src="./qr.png" alt="Bitcoin donate QR code" width="120" />
 
 [`bc1q09 8zsm89 m7kgyz e338vf ejhpdt 92ua9p 3peuve`](bitcoin:bc1q098zsm89m7kgyze338vfejhpdt92ua9p3peuve)
 

@@ -3,16 +3,16 @@ use brk_indexer::Indexer;
 use brk_types::{Height, TxInIndex, TxOutIndex};
 use tracing::info;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, Stamp, TypedVecIterator, VecIndex,
+    AnyStoredVec, AnyVec, Database, Exit, WritableVec, ReadableVec, Stamp, VecIndex,
 };
 
 use super::Vecs;
-use crate::{ComputeIndexes, inputs};
+use crate::{inputs, ComputeIndexes};
 
 const HEIGHT_BATCH: u32 = 10_000;
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         db: &Database,
         indexer: &Indexer,
@@ -36,19 +36,36 @@ impl Vecs {
         self.txinindex
             .truncate_if_needed(TxOutIndex::from(min_txoutindex))?;
 
-        let mut height_to_first_txoutindex = indexer.vecs.outputs.first_txoutindex.iter()?;
-        let mut height_to_first_txinindex = indexer.vecs.inputs.first_txinindex.iter()?;
-        let mut txinindex_to_txoutindex = inputs.spent.txoutindex.iter()?;
+        let txinindex_to_txoutindex = &inputs.spent.txoutindex;
 
-        // Find starting height from min_txoutindex
-        let mut min_height = Height::ZERO;
-        for h in 0..=target_height.to_usize() {
-            let txoutindex = height_to_first_txoutindex.get_unwrap(Height::from(h));
-            if txoutindex.to_usize() > min_txoutindex {
-                break;
+        // Find min_height via binary search (first_txoutindex is monotonically non-decreasing)
+        let first_txoutindex_vec = &indexer.vecs.outputs.first_txoutindex;
+        let total_heights = target_height.to_usize() + 1;
+        let min_height = if min_txoutindex == 0 {
+            Height::ZERO
+        } else {
+            let mut lo = 0usize;
+            let mut hi = total_heights;
+            while lo < hi {
+                let mid = lo + (hi - lo) / 2;
+                if first_txoutindex_vec.collect_one_at(mid).unwrap().to_usize() <= min_txoutindex {
+                    lo = mid + 1;
+                } else {
+                    hi = mid;
+                }
             }
-            min_height = Height::from(h);
-        }
+            Height::from(lo.saturating_sub(1))
+        };
+
+        // Only collect from min_height onward (not from 0)
+        let offset = min_height.to_usize();
+        let first_txoutindex_data = first_txoutindex_vec
+            .collect_range_at(offset, target_height.to_usize() + 1);
+        let first_txinindex_data = indexer
+            .vecs
+            .inputs
+            .first_txinindex
+            .collect_range_at(offset, target_height.to_usize() + 2);
 
         // Validate: computed height must not exceed starting height
         assert!(
@@ -68,30 +85,24 @@ impl Vecs {
             let batch_txoutindex = if batch_end_height >= target_height {
                 indexer.vecs.outputs.value.len()
             } else {
-                height_to_first_txoutindex
-                    .get_unwrap(batch_end_height + 1_u32)
-                    .to_usize()
+                first_txoutindex_data[batch_end_height.to_usize() + 1 - offset].to_usize()
             };
             self.txinindex
                 .fill_to(batch_txoutindex, TxInIndex::UNSPENT)?;
 
             // Get txin range for this height batch
-            let txin_start = height_to_first_txinindex
-                .get_unwrap(batch_start_height)
-                .to_usize();
+            let txin_start = first_txinindex_data[batch_start_height.to_usize() - offset].to_usize();
             let txin_end = if batch_end_height >= target_height {
                 inputs.spent.txoutindex.len()
             } else {
-                height_to_first_txinindex
-                    .get_unwrap(batch_end_height + 1_u32)
-                    .to_usize()
+                first_txinindex_data[batch_end_height.to_usize() + 1 - offset].to_usize()
             };
 
             // Collect and process txins
             pairs.clear();
-            for i in txin_start..txin_end {
-                let txinindex = TxInIndex::from(i);
-                let txoutindex = txinindex_to_txoutindex.get_unwrap(txinindex);
+            let txoutindexes: Vec<TxOutIndex> = txinindex_to_txoutindex.collect_range_at(txin_start, txin_end);
+            for (j, txoutindex) in txoutindexes.into_iter().enumerate() {
+                let txinindex = TxInIndex::from(txin_start + j);
 
                 if txoutindex.is_coinbase() {
                     continue;

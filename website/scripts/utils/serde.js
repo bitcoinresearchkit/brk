@@ -18,7 +18,7 @@ export const serdeBool = {
 };
 
 /**
- * @typedef {"timestamp" | "date" | "week" | "month" | "quarter" | "semester" | "year" | "decade"} ChartableIndexName
+ * @typedef {"timestamp" | "date" | "week" | "month" | "month3" | "month6" | "year" | "year10"} ChartableIndexName
  */
 
 export const serdeChartableIndex = {
@@ -28,21 +28,21 @@ export const serdeChartableIndex = {
    */
   serialize(v) {
     switch (v) {
-      case "dateindex":
+      case "day1":
         return "date";
-      case "decadeindex":
-        return "decade";
+      case "year10":
+        return "year10";
       case "height":
         return "timestamp";
-      case "monthindex":
+      case "month1":
         return "month";
-      case "quarterindex":
-        return "quarter";
-      case "semesterindex":
-        return "semester";
-      case "weekindex":
+      case "month3":
+        return "month3";
+      case "month6":
+        return "month6";
+      case "week1":
         return "week";
-      case "yearindex":
+      case "year1":
         return "year";
       default:
         return null;
@@ -57,19 +57,19 @@ export const serdeChartableIndex = {
       case "timestamp":
         return "height";
       case "date":
-        return "dateindex";
+        return "day1";
       case "week":
-        return "weekindex";
+        return "week1";
       case "month":
-        return "monthindex";
-      case "quarter":
-        return "quarterindex";
-      case "semester":
-        return "semesterindex";
+        return "month1";
+      case "month3":
+        return "month3";
+      case "month6":
+        return "month6";
       case "year":
-        return "yearindex";
-      case "decade":
-        return "decadeindex";
+        return "year1";
+      case "year10":
+        return "year10";
       default:
         throw Error("todo");
     }

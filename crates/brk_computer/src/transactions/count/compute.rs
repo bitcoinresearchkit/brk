@@ -3,18 +3,17 @@ use brk_indexer::Indexer;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, indexes};
+use crate::ComputeIndexes;
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.tx_count
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.transactions.first_txindex,

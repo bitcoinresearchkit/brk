@@ -2,7 +2,7 @@
 
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
-use vecdb::{IterableCloneableVec, LazyVecFrom1, UnaryTransform};
+use vecdb::{ReadableCloneableVec, LazyVecFrom1, UnaryTransform};
 
 use crate::internal::{SatsToBitcoin, ValueFromHeightLast};
 
@@ -14,12 +14,12 @@ const VERSION: Version = Version::ZERO;
 #[derive(Clone, Traversable)]
 pub struct LazyValueHeight {
     pub sats: LazyVecFrom1<Height, Sats, Height, Sats>,
-    pub bitcoin: LazyVecFrom1<Height, Bitcoin, Height, Sats>,
-    pub dollars: Option<LazyVecFrom1<Height, Dollars, Height, Dollars>>,
+    pub btc: LazyVecFrom1<Height, Bitcoin, Height, Sats>,
+    pub usd: LazyVecFrom1<Height, Dollars, Height, Dollars>,
 }
 
 impl LazyValueHeight {
-    pub fn from_block_source<SatsTransform, DollarsTransform>(
+    pub(crate) fn from_block_source<SatsTransform, DollarsTransform>(
         name: &str,
         source: &ValueFromHeightLast,
         version: Version,
@@ -31,22 +31,20 @@ impl LazyValueHeight {
         let v = version + VERSION;
 
         let sats =
-            LazyVecFrom1::transformed::<SatsTransform>(name, v, source.sats.height.boxed_clone());
+            LazyVecFrom1::transformed::<SatsTransform>(name, v, source.sats.height.read_only_boxed_clone());
 
-        let bitcoin = LazyVecFrom1::transformed::<SatsToBitcoin>(
+        let btc = LazyVecFrom1::transformed::<SatsToBitcoin>(
             &format!("{name}_btc"),
             v,
-            source.sats.height.boxed_clone(),
+            source.sats.height.read_only_boxed_clone(),
         );
 
-        let dollars = source.dollars.as_ref().map(|d| {
-            LazyVecFrom1::transformed::<DollarsTransform>(
-                &format!("{name}_usd"),
-                v,
-                d.height.boxed_clone(),
-            )
-        });
+        let usd = LazyVecFrom1::transformed::<DollarsTransform>(
+            &format!("{name}_usd"),
+            v,
+            source.usd.height.read_only_boxed_clone(),
+        );
 
-        Self { sats, bitcoin, dollars }
+        Self { sats, btc, usd }
     }
 }

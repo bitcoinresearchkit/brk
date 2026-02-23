@@ -3,18 +3,17 @@ use brk_indexer::Indexer;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, indexes};
+use crate::ComputeIndexes;
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.weight
-            .derive_from(indexes, starting_indexes, &indexer.vecs.blocks.weight, exit)?;
+            .compute_cumulative(starting_indexes, &indexer.vecs.blocks.weight, exit)?;
 
         Ok(())
     }

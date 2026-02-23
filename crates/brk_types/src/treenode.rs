@@ -371,10 +371,10 @@ mod tests {
     fn merge_lifts_branch_children() {
         // Branch children are lifted to top level with their keys
         let tree = branch(vec![(
-            "weekindex",
+            "week1",
             branch(vec![
-                ("sum", leaf("metric_sum", Index::WeekIndex)),
-                ("cumulative", leaf("metric_cumulative", Index::WeekIndex)),
+                ("sum", leaf("metric_sum", Index::Week1)),
+                ("cumulative", leaf("metric_cumulative", Index::Week1)),
             ]),
         )]);
         let merged = tree.merge_branches().unwrap();
@@ -383,7 +383,7 @@ mod tests {
             TreeNode::Branch(map) => {
                 assert!(map.contains_key("sum"));
                 assert!(map.contains_key("cumulative"));
-                assert!(!map.contains_key("weekindex")); // Parent key gone
+                assert!(!map.contains_key("week1")); // Parent key gone
             }
             _ => panic!("Expected branch"),
         }
@@ -394,17 +394,17 @@ mod tests {
         // Multiple branches with same child keys → indexes are merged
         let tree = branch(vec![
             (
-                "weekindex",
+                "week1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::WeekIndex)),
-                    ("cumulative", leaf("metric_cumulative", Index::WeekIndex)),
+                    ("sum", leaf("metric_sum", Index::Week1)),
+                    ("cumulative", leaf("metric_cumulative", Index::Week1)),
                 ]),
             ),
             (
-                "monthindex",
+                "month1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::MonthIndex)),
-                    ("cumulative", leaf("metric_cumulative", Index::MonthIndex)),
+                    ("sum", leaf("metric_sum", Index::Month1)),
+                    ("cumulative", leaf("metric_cumulative", Index::Month1)),
                 ]),
             ),
         ]);
@@ -413,12 +413,12 @@ mod tests {
         match merged {
             TreeNode::Branch(map) => {
                 let sum_indexes = get_leaf_indexes(map.get("sum").unwrap()).unwrap();
-                assert!(sum_indexes.contains(&Index::WeekIndex));
-                assert!(sum_indexes.contains(&Index::MonthIndex));
+                assert!(sum_indexes.contains(&Index::Week1));
+                assert!(sum_indexes.contains(&Index::Month1));
 
                 let cum_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
-                assert!(cum_indexes.contains(&Index::WeekIndex));
-                assert!(cum_indexes.contains(&Index::MonthIndex));
+                assert!(cum_indexes.contains(&Index::Week1));
+                assert!(cum_indexes.contains(&Index::Month1));
             }
             _ => panic!("Expected branch"),
         }
@@ -429,14 +429,14 @@ mod tests {
     #[test]
     fn merge_leaf_merges_with_lifted_branch_child() {
         // Direct leaf with key "cumulative" merges with lifted "cumulative" from branch
-        // This simulates: height_cumulative (renamed) + dateindex branch
+        // This simulates: height_cumulative (renamed) + day1 branch
         let tree = branch(vec![
             ("cumulative", leaf("metric_cumulative", Index::Height)),
             (
-                "dateindex",
+                "day1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::DateIndex)),
-                    ("cumulative", leaf("metric_cumulative", Index::DateIndex)),
+                    ("sum", leaf("metric_sum", Index::Day1)),
+                    ("cumulative", leaf("metric_cumulative", Index::Day1)),
                 ]),
             ),
         ]);
@@ -446,14 +446,14 @@ mod tests {
             TreeNode::Branch(map) => {
                 assert_eq!(map.len(), 2);
 
-                // cumulative merged: Height + DateIndex
+                // cumulative merged: Height + Day1
                 let cum_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
                 assert!(cum_indexes.contains(&Index::Height));
-                assert!(cum_indexes.contains(&Index::DateIndex));
+                assert!(cum_indexes.contains(&Index::Day1));
 
-                // sum only has DateIndex
+                // sum only has Day1
                 let sum_indexes = get_leaf_indexes(map.get("sum").unwrap()).unwrap();
-                assert!(sum_indexes.contains(&Index::DateIndex));
+                assert!(sum_indexes.contains(&Index::Day1));
                 assert!(!sum_indexes.contains(&Index::Height));
             }
             _ => panic!("Expected branch"),
@@ -464,23 +464,23 @@ mod tests {
     fn merge_derived_computed_block_sum_cum_pattern() {
         // Simulates DerivedComputedBlockSumCum:
         // - height_cumulative (renamed to "cumulative") → direct leaf at Height
-        // - dateindex → branch with sum/cumulative at DateIndex
-        // - weekindex (flattened from dates) → branch with sum/cumulative at WeekIndex
+        // - day1 → branch with sum/cumulative at Day1
+        // - week1 (flattened from dates) → branch with sum/cumulative at Week1
         // - difficultyepoch → branch with sum/cumulative at DifficultyEpoch
         let tree = branch(vec![
             ("cumulative", leaf("metric_cumulative", Index::Height)),
             (
-                "dateindex",
+                "day1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::DateIndex)),
-                    ("cumulative", leaf("metric_cumulative", Index::DateIndex)),
+                    ("sum", leaf("metric_sum", Index::Day1)),
+                    ("cumulative", leaf("metric_cumulative", Index::Day1)),
                 ]),
             ),
             (
-                "weekindex",
+                "week1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::WeekIndex)),
-                    ("cumulative", leaf("metric_cumulative", Index::WeekIndex)),
+                    ("sum", leaf("metric_sum", Index::Week1)),
+                    ("cumulative", leaf("metric_cumulative", Index::Week1)),
                 ]),
             ),
             (
@@ -501,18 +501,18 @@ mod tests {
             TreeNode::Branch(map) => {
                 assert_eq!(map.len(), 2);
 
-                // sum: DateIndex, WeekIndex, DifficultyEpoch (NOT Height)
+                // sum: Day1, Week1, DifficultyEpoch (NOT Height)
                 let sum_indexes = get_leaf_indexes(map.get("sum").unwrap()).unwrap();
                 assert!(!sum_indexes.contains(&Index::Height));
-                assert!(sum_indexes.contains(&Index::DateIndex));
-                assert!(sum_indexes.contains(&Index::WeekIndex));
+                assert!(sum_indexes.contains(&Index::Day1));
+                assert!(sum_indexes.contains(&Index::Week1));
                 assert!(sum_indexes.contains(&Index::DifficultyEpoch));
 
-                // cumulative: Height, DateIndex, WeekIndex, DifficultyEpoch
+                // cumulative: Height, Day1, Week1, DifficultyEpoch
                 let cum_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
                 assert!(cum_indexes.contains(&Index::Height));
-                assert!(cum_indexes.contains(&Index::DateIndex));
-                assert!(cum_indexes.contains(&Index::WeekIndex));
+                assert!(cum_indexes.contains(&Index::Day1));
+                assert!(cum_indexes.contains(&Index::Week1));
                 assert!(cum_indexes.contains(&Index::DifficultyEpoch));
             }
             _ => panic!("Expected branch"),
@@ -528,7 +528,7 @@ mod tests {
             ("a", branch(vec![("data", leaf("metric_a", Index::Height))])),
             (
                 "b",
-                branch(vec![("data", leaf("metric_b", Index::DateIndex))]),
+                branch(vec![("data", leaf("metric_b", Index::Day1))]),
             ),
         ]);
         let result = tree.merge_branches();
@@ -545,7 +545,7 @@ mod tests {
             ),
             (
                 "b",
-                branch(vec![("sum", leaf("metric_sum", Index::DateIndex))]),
+                branch(vec![("sum", leaf("metric_sum", Index::Day1))]),
             ),
         ]);
         let result = tree.merge_branches();
@@ -557,7 +557,7 @@ mod tests {
                 assert_eq!(leaf.name(), "metric_sum");
                 let indexes = leaf.indexes();
                 assert!(indexes.contains(&Index::Height));
-                assert!(indexes.contains(&Index::DateIndex));
+                assert!(indexes.contains(&Index::Day1));
             }
             _ => panic!("Expected collapsed Leaf"),
         }
@@ -592,20 +592,20 @@ mod tests {
     #[test]
     fn collapse_direct_leaf_with_lifted_branches_same_name() {
         // ComputedVecsDateLast pattern:
-        // - dateindex: direct leaf (field name as key)
+        // - day1: direct leaf (field name as key)
         // - rest (flattened): DerivedDateLast → branches with "last" children
         // All leaves have same metric name → collapse to single Leaf
         let tree = branch(vec![
-            // Direct leaf from dateindex field (no wrap attribute)
-            ("dateindex", leaf("1m_block_count", Index::DateIndex)),
+            // Direct leaf from day1 field (no wrap attribute)
+            ("day1", leaf("1m_block_count", Index::Day1)),
             // Flattened from rest: DerivedDateLast
             (
-                "weekindex",
-                branch(vec![("last", leaf("1m_block_count", Index::WeekIndex))]),
+                "week1",
+                branch(vec![("last", leaf("1m_block_count", Index::Week1))]),
             ),
             (
-                "monthindex",
-                branch(vec![("last", leaf("1m_block_count", Index::MonthIndex))]),
+                "month1",
+                branch(vec![("last", leaf("1m_block_count", Index::Month1))]),
             ),
         ]);
 
@@ -616,9 +616,9 @@ mod tests {
             TreeNode::Leaf(leaf) => {
                 assert_eq!(leaf.name(), "1m_block_count");
                 let indexes = leaf.indexes();
-                assert!(indexes.contains(&Index::DateIndex));
-                assert!(indexes.contains(&Index::WeekIndex));
-                assert!(indexes.contains(&Index::MonthIndex));
+                assert!(indexes.contains(&Index::Day1));
+                assert!(indexes.contains(&Index::Week1));
+                assert!(indexes.contains(&Index::Month1));
             }
             TreeNode::Branch(map) => {
                 panic!(
@@ -637,20 +637,20 @@ mod tests {
         // All branches lift to same key → collapses to single Leaf
         let tree = branch(vec![
             (
-                "weekindex",
-                branch(vec![("last", leaf("1m_block_count", Index::WeekIndex))]),
+                "week1",
+                branch(vec![("last", leaf("1m_block_count", Index::Week1))]),
             ),
             (
-                "monthindex",
-                branch(vec![("last", leaf("1m_block_count", Index::MonthIndex))]),
+                "month1",
+                branch(vec![("last", leaf("1m_block_count", Index::Month1))]),
             ),
             (
-                "quarterindex",
-                branch(vec![("last", leaf("1m_block_count", Index::QuarterIndex))]),
+                "month3",
+                branch(vec![("last", leaf("1m_block_count", Index::Month3))]),
             ),
             (
-                "yearindex",
-                branch(vec![("last", leaf("1m_block_count", Index::YearIndex))]),
+                "year1",
+                branch(vec![("last", leaf("1m_block_count", Index::Year1))]),
             ),
         ]);
 
@@ -660,10 +660,10 @@ mod tests {
             TreeNode::Leaf(leaf) => {
                 assert_eq!(leaf.name(), "1m_block_count");
                 let indexes = leaf.indexes();
-                assert!(indexes.contains(&Index::WeekIndex));
-                assert!(indexes.contains(&Index::MonthIndex));
-                assert!(indexes.contains(&Index::QuarterIndex));
-                assert!(indexes.contains(&Index::YearIndex));
+                assert!(indexes.contains(&Index::Week1));
+                assert!(indexes.contains(&Index::Month1));
+                assert!(indexes.contains(&Index::Month3));
+                assert!(indexes.contains(&Index::Year1));
             }
             _ => panic!("Expected collapsed Leaf"),
         }
@@ -678,17 +678,17 @@ mod tests {
         // These should merge into { "sum": Leaf(all indexes), "cumulative": Leaf(all indexes) }
         let tree = branch(vec![
             (
-                "dateindex",
+                "day1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::DateIndex)),
-                    ("cumulative", leaf("metric_cumulative", Index::DateIndex)),
+                    ("sum", leaf("metric_sum", Index::Day1)),
+                    ("cumulative", leaf("metric_cumulative", Index::Day1)),
                 ]),
             ),
             (
-                "weekindex",
+                "week1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::WeekIndex)),
-                    ("cumulative", leaf("metric_cumulative", Index::WeekIndex)),
+                    ("sum", leaf("metric_sum", Index::Week1)),
+                    ("cumulative", leaf("metric_cumulative", Index::Week1)),
                 ]),
             ),
         ]);
@@ -701,12 +701,12 @@ mod tests {
                 assert_eq!(map.len(), 2);
 
                 let sum_indexes = get_leaf_indexes(map.get("sum").unwrap()).unwrap();
-                assert!(sum_indexes.contains(&Index::DateIndex));
-                assert!(sum_indexes.contains(&Index::WeekIndex));
+                assert!(sum_indexes.contains(&Index::Day1));
+                assert!(sum_indexes.contains(&Index::Week1));
 
                 let cum_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
-                assert!(cum_indexes.contains(&Index::DateIndex));
-                assert!(cum_indexes.contains(&Index::WeekIndex));
+                assert!(cum_indexes.contains(&Index::Day1));
+                assert!(cum_indexes.contains(&Index::Week1));
             }
             _ => panic!("Expected branch with sum and cumulative"),
         }
@@ -727,18 +727,18 @@ mod tests {
             ),
             // rest (flattened) produces branches
             (
-                "dateindex",
-                branch(vec![("sum", leaf("metric_sum", Index::DateIndex))]),
+                "day1",
+                branch(vec![("sum", leaf("metric_sum", Index::Day1))]),
             ),
             (
-                "weekindex",
-                branch(vec![("sum", leaf("metric_sum", Index::WeekIndex))]),
+                "week1",
+                branch(vec![("sum", leaf("metric_sum", Index::Week1))]),
             ),
         ]);
 
         let merged = tree.merge_branches().unwrap();
 
-        // DESIRED: { "base": Leaf(height), "sum": Leaf(dateindex, weekindex) }
+        // DESIRED: { "base": Leaf(height), "sum": Leaf(day1, week1) }
         match &merged {
             TreeNode::Branch(map) => {
                 assert_eq!(
@@ -753,11 +753,11 @@ mod tests {
                 assert!(base_indexes.contains(&Index::Height));
                 assert_eq!(base_indexes.len(), 1);
 
-                // sum should have DateIndex and WeekIndex
+                // sum should have Day1 and Week1
                 let sum_indexes = get_leaf_indexes(map.get("sum").unwrap()).unwrap();
                 assert!(!sum_indexes.contains(&Index::Height));
-                assert!(sum_indexes.contains(&Index::DateIndex));
-                assert!(sum_indexes.contains(&Index::WeekIndex));
+                assert!(sum_indexes.contains(&Index::Day1));
+                assert!(sum_indexes.contains(&Index::Week1));
             }
             _ => panic!("Expected branch"),
         }
@@ -778,18 +778,18 @@ mod tests {
             ),
             // rest (flattened) produces branches with "last" key
             (
-                "dateindex",
-                branch(vec![("last", leaf("metric_last", Index::DateIndex))]),
+                "day1",
+                branch(vec![("last", leaf("metric_last", Index::Day1))]),
             ),
             (
-                "weekindex",
-                branch(vec![("last", leaf("metric_last", Index::WeekIndex))]),
+                "week1",
+                branch(vec![("last", leaf("metric_last", Index::Week1))]),
             ),
         ]);
 
         let merged = tree.merge_branches().unwrap();
 
-        // DESIRED: { "base": Leaf(height), "last": Leaf(dateindex, weekindex) }
+        // DESIRED: { "base": Leaf(height), "last": Leaf(day1, week1) }
         match &merged {
             TreeNode::Branch(map) => {
                 assert_eq!(
@@ -804,11 +804,11 @@ mod tests {
                 assert!(base_indexes.contains(&Index::Height));
                 assert_eq!(base_indexes.len(), 1);
 
-                // last should have DateIndex and WeekIndex
+                // last should have Day1 and Week1
                 let last_indexes = get_leaf_indexes(map.get("last").unwrap()).unwrap();
                 assert!(!last_indexes.contains(&Index::Height));
-                assert!(last_indexes.contains(&Index::DateIndex));
-                assert!(last_indexes.contains(&Index::WeekIndex));
+                assert!(last_indexes.contains(&Index::Day1));
+                assert!(last_indexes.contains(&Index::Week1));
             }
             _ => panic!("Expected branch"),
         }
@@ -822,7 +822,7 @@ mod tests {
         // - height: wrapped as "base" (raw values, not aggregated)
         // - rest (flatten): DerivedComputedBlockFull {
         //     height_cumulative: CumulativeVec → Branch{"cumulative": Leaf}
-        //     dateindex: Full → Branch{avg, min, max, sum, cumulative}
+        //     day1: Full → Branch{avg, min, max, sum, cumulative}
         //     dates (flatten): more aggregation branches
         //   }
         let tree = branch(vec![
@@ -839,26 +839,26 @@ mod tests {
                     leaf("metric_cumulative", Index::Height),
                 )]),
             ),
-            // dateindex Full
+            // day1 Full
             (
-                "dateindex",
+                "day1",
                 branch(vec![
-                    ("average", leaf("metric_average", Index::DateIndex)),
-                    ("min", leaf("metric_min", Index::DateIndex)),
-                    ("max", leaf("metric_max", Index::DateIndex)),
-                    ("sum", leaf("metric_sum", Index::DateIndex)),
-                    ("cumulative", leaf("metric_cumulative", Index::DateIndex)),
+                    ("average", leaf("metric_average", Index::Day1)),
+                    ("min", leaf("metric_min", Index::Day1)),
+                    ("max", leaf("metric_max", Index::Day1)),
+                    ("sum", leaf("metric_sum", Index::Day1)),
+                    ("cumulative", leaf("metric_cumulative", Index::Day1)),
                 ]),
             ),
-            // weekindex (from flattened dates)
+            // week1 (from flattened dates)
             (
-                "weekindex",
+                "week1",
                 branch(vec![
-                    ("average", leaf("metric_average", Index::WeekIndex)),
-                    ("min", leaf("metric_min", Index::WeekIndex)),
-                    ("max", leaf("metric_max", Index::WeekIndex)),
-                    ("sum", leaf("metric_sum", Index::WeekIndex)),
-                    ("cumulative", leaf("metric_cumulative", Index::WeekIndex)),
+                    ("average", leaf("metric_average", Index::Week1)),
+                    ("min", leaf("metric_min", Index::Week1)),
+                    ("max", leaf("metric_max", Index::Week1)),
+                    ("sum", leaf("metric_sum", Index::Week1)),
+                    ("cumulative", leaf("metric_cumulative", Index::Week1)),
                 ]),
             ),
         ]);
@@ -886,15 +886,15 @@ mod tests {
                     cum_indexes.contains(&Index::Height),
                     "cumulative should include Height"
                 );
-                assert!(cum_indexes.contains(&Index::DateIndex));
-                assert!(cum_indexes.contains(&Index::WeekIndex));
+                assert!(cum_indexes.contains(&Index::Day1));
+                assert!(cum_indexes.contains(&Index::Week1));
 
-                // average, min, max, sum should have DateIndex and WeekIndex only
+                // average, min, max, sum should have Day1 and Week1 only
                 for key in ["average", "min", "max", "sum"] {
                     let indexes = get_leaf_indexes(map.get(key).unwrap()).unwrap();
                     assert!(!indexes.contains(&Index::Height));
-                    assert!(indexes.contains(&Index::DateIndex));
-                    assert!(indexes.contains(&Index::WeekIndex));
+                    assert!(indexes.contains(&Index::Day1));
+                    assert!(indexes.contains(&Index::Week1));
                 }
             }
             _ => panic!("Expected branch"),
@@ -909,24 +909,24 @@ mod tests {
         // All leaves have the same metric name → should collapse to single Leaf
         let tree = branch(vec![
             (
-                "dateindex",
-                branch(vec![("last", leaf("price_200d_sma", Index::DateIndex))]),
+                "day1",
+                branch(vec![("last", leaf("price_200d_sma", Index::Day1))]),
             ),
             (
-                "weekindex",
-                branch(vec![("last", leaf("price_200d_sma", Index::WeekIndex))]),
+                "week1",
+                branch(vec![("last", leaf("price_200d_sma", Index::Week1))]),
             ),
             (
-                "monthindex",
-                branch(vec![("last", leaf("price_200d_sma", Index::MonthIndex))]),
+                "month1",
+                branch(vec![("last", leaf("price_200d_sma", Index::Month1))]),
             ),
             (
-                "quarterindex",
-                branch(vec![("last", leaf("price_200d_sma", Index::QuarterIndex))]),
+                "month3",
+                branch(vec![("last", leaf("price_200d_sma", Index::Month3))]),
             ),
             (
-                "yearindex",
-                branch(vec![("last", leaf("price_200d_sma", Index::YearIndex))]),
+                "year1",
+                branch(vec![("last", leaf("price_200d_sma", Index::Year1))]),
             ),
         ]);
 
@@ -937,11 +937,11 @@ mod tests {
             TreeNode::Leaf(leaf) => {
                 assert_eq!(leaf.name(), "price_200d_sma");
                 let indexes = leaf.indexes();
-                assert!(indexes.contains(&Index::DateIndex));
-                assert!(indexes.contains(&Index::WeekIndex));
-                assert!(indexes.contains(&Index::MonthIndex));
-                assert!(indexes.contains(&Index::QuarterIndex));
-                assert!(indexes.contains(&Index::YearIndex));
+                assert!(indexes.contains(&Index::Day1));
+                assert!(indexes.contains(&Index::Week1));
+                assert!(indexes.contains(&Index::Month1));
+                assert!(indexes.contains(&Index::Month3));
+                assert!(indexes.contains(&Index::Year1));
             }
             TreeNode::Branch(map) => {
                 panic!(
@@ -1028,11 +1028,11 @@ mod tests {
             // Each leaf has merged indexes from all time periods
             (
                 "sum",
-                leaf("metric_sum", Index::DateIndex), // Would have all time indexes
+                leaf("metric_sum", Index::Day1), // Would have all time indexes
             ),
             (
                 "cumulative",
-                leaf("metric_cumulative", Index::DateIndex), // Would have all time indexes
+                leaf("metric_cumulative", Index::Day1), // Would have all time indexes
             ),
         ]);
 
@@ -1059,7 +1059,7 @@ mod tests {
                 // cumulative: Height merged with rest's cumulative
                 let cum_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
                 assert!(cum_indexes.contains(&Index::Height));
-                assert!(cum_indexes.contains(&Index::DateIndex));
+                assert!(cum_indexes.contains(&Index::Day1));
             }
             _ => panic!("Expected branch"),
         }
@@ -1077,19 +1077,19 @@ mod tests {
         // Simulating the output after inner merge
         let sats_merged = branch(vec![
             ("base", leaf("metric", Index::Height)),
-            ("sum", leaf("metric_sum", Index::DateIndex)),
+            ("sum", leaf("metric_sum", Index::Day1)),
             ("cumulative", leaf("metric_cumulative", Index::Height)),
         ]);
 
         let bitcoin_merged = branch(vec![
             ("base", leaf("metric_btc", Index::Height)),
-            ("sum", leaf("metric_btc_sum", Index::DateIndex)),
+            ("sum", leaf("metric_btc_sum", Index::Day1)),
             ("cumulative", leaf("metric_btc_cumulative", Index::Height)),
         ]);
 
         let dollars_merged = branch(vec![
             ("base", leaf("metric_usd", Index::Height)),
-            ("sum", leaf("metric_usd_sum", Index::DateIndex)),
+            ("sum", leaf("metric_usd_sum", Index::Day1)),
             ("cumulative", leaf("metric_usd_cumulative", Index::Height)),
         ]);
 
@@ -1126,20 +1126,20 @@ mod tests {
     #[test]
     fn case10_derived_date_last_collapses_to_leaf() {
         // DerivedDateLast<T> with merge: all fields have wrap="last"
-        // weekindex: { last: Leaf }, monthindex: { last: Leaf }, etc.
+        // week1: { last: Leaf }, month1: { last: Leaf }, etc.
         // After merge: all "last" keys merge, same metric name → collapses to Leaf
         let tree = branch(vec![
             (
-                "weekindex",
-                branch(vec![("last", leaf("metric", Index::WeekIndex))]),
+                "week1",
+                branch(vec![("last", leaf("metric", Index::Week1))]),
             ),
             (
-                "monthindex",
-                branch(vec![("last", leaf("metric", Index::MonthIndex))]),
+                "month1",
+                branch(vec![("last", leaf("metric", Index::Month1))]),
             ),
             (
-                "yearindex",
-                branch(vec![("last", leaf("metric", Index::YearIndex))]),
+                "year1",
+                branch(vec![("last", leaf("metric", Index::Year1))]),
             ),
         ]);
 
@@ -1149,9 +1149,9 @@ mod tests {
         match &merged {
             TreeNode::Leaf(leaf) => {
                 let indexes = leaf.indexes();
-                assert!(indexes.contains(&Index::WeekIndex));
-                assert!(indexes.contains(&Index::MonthIndex));
-                assert!(indexes.contains(&Index::YearIndex));
+                assert!(indexes.contains(&Index::Week1));
+                assert!(indexes.contains(&Index::Month1));
+                assert!(indexes.contains(&Index::Year1));
             }
             TreeNode::Branch(map) => {
                 panic!(
@@ -1165,20 +1165,20 @@ mod tests {
     #[test]
     fn case10_computed_date_last_collapses_to_leaf() {
         // ComputedDateLast<T> with merge:
-        //   - dateindex with wrap="base" → { base: Leaf }
+        //   - day1 with wrap="base" → { base: Leaf }
         //   - rest (flatten): DerivedDateLast already merged to Leaf
         //     → flatten inserts with field name "rest" as key
         //
         // Both have same metric name → collapses to single Leaf
         let tree = branch(vec![
-            // dateindex with wrap="base"
+            // day1 with wrap="base"
             (
-                "dateindex",
-                branch(vec![("base", leaf("metric", Index::DateIndex))]),
+                "day1",
+                branch(vec![("base", leaf("metric", Index::Day1))]),
             ),
             // rest (flatten): DerivedDateLast merged to Leaf
             // Same metric name as base
-            ("rest", leaf("metric", Index::WeekIndex)),
+            ("rest", leaf("metric", Index::Week1)),
         ]);
 
         let merged = tree.merge_branches().unwrap();
@@ -1187,8 +1187,8 @@ mod tests {
         match &merged {
             TreeNode::Leaf(leaf) => {
                 let indexes = leaf.indexes();
-                assert!(indexes.contains(&Index::DateIndex));
-                assert!(indexes.contains(&Index::WeekIndex));
+                assert!(indexes.contains(&Index::Day1));
+                assert!(indexes.contains(&Index::Week1));
             }
             TreeNode::Branch(map) => {
                 panic!(
@@ -1204,25 +1204,25 @@ mod tests {
     #[test]
     fn case11_value_date_last_sats_key_conflict() {
         // ValueDateLast has a structural issue:
-        // - sats_dateindex with wrap="sats" produces key "sats"
+        // - sats_day1 with wrap="sats" produces key "sats"
         // - rest (flatten) has field "sats" (DerivedDateLast<Sats>)
         // Both try to use the same "sats" key!
 
         // Simulating the pre-merge structure
         let tree = branch(vec![
-            // From sats_dateindex with wrap="sats"
+            // From sats_day1 with wrap="sats"
             (
-                "sats_dateindex",
-                branch(vec![("sats", leaf("metric", Index::DateIndex))]),
+                "sats_day1",
+                branch(vec![("sats", leaf("metric", Index::Day1))]),
             ),
             // From rest (flatten): ValueDerivedDateLast
             (
                 "rest",
                 branch(vec![
                     // sats field: DerivedDateLast merged to Leaf
-                    ("sats", leaf("metric", Index::WeekIndex)), // Same metric name!
-                    ("bitcoin", leaf("metric_btc", Index::DateIndex)),
-                    ("dollars", leaf("metric_usd", Index::DateIndex)),
+                    ("sats", leaf("metric", Index::Week1)), // Same metric name!
+                    ("bitcoin", leaf("metric_btc", Index::Day1)),
+                    ("dollars", leaf("metric_usd", Index::Day1)),
                 ]),
             ),
         ]);
@@ -1234,8 +1234,8 @@ mod tests {
         match merged {
             Some(TreeNode::Branch(map)) => {
                 let sats_indexes = get_leaf_indexes(map.get("sats").unwrap()).unwrap();
-                assert!(sats_indexes.contains(&Index::DateIndex));
-                assert!(sats_indexes.contains(&Index::WeekIndex));
+                assert!(sats_indexes.contains(&Index::Day1));
+                assert!(sats_indexes.contains(&Index::Week1));
             }
             Some(_) => panic!("Expected branch"),
             None => panic!("Unexpected conflict"),
@@ -1255,9 +1255,9 @@ mod tests {
 
         // Simulating final merged output
         let tree = branch(vec![
-            ("sats", leaf("metric", Index::DateIndex)), // placeholder, would have all indexes
-            ("bitcoin", leaf("metric_btc", Index::DateIndex)),
-            ("dollars", leaf("metric_usd", Index::DateIndex)),
+            ("sats", leaf("metric", Index::Day1)), // placeholder, would have all indexes
+            ("bitcoin", leaf("metric_btc", Index::Day1)),
+            ("dollars", leaf("metric_usd", Index::Day1)),
         ]);
 
         match &tree {

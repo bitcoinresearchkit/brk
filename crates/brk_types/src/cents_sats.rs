@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
-use super::{CentsSquaredSats, CentsUnsigned, Sats};
+use super::{CentsSquaredSats, Cents, Sats};
 
 /// Cents × Sats (u128) - price in cents multiplied by amount in sats.
 /// Uses u128 because large amounts at any price can overflow u64.
@@ -23,7 +23,7 @@ impl CentsSats {
 
     /// Compute from price and sats using widening multiplication
     #[inline(always)]
-    pub fn from_price_sats(price: CentsUnsigned, sats: Sats) -> Self {
+    pub fn from_price_sats(price: Cents, sats: Sats) -> Self {
         Self(price.inner() as u128 * sats.as_u128())
     }
 
@@ -39,23 +39,23 @@ impl CentsSats {
 
     /// Convert to CentsUnsigned by dividing by ONE_BTC.
     #[inline(always)]
-    pub fn to_cents(self) -> CentsUnsigned {
-        CentsUnsigned::new((self.0 / Sats::ONE_BTC_U128) as u64)
+    pub fn to_cents(self) -> Cents {
+        Cents::new((self.0 / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Get the realized price (cents per BTC) given the sats amount.
     #[inline(always)]
-    pub fn realized_price(self, sats: Sats) -> CentsUnsigned {
+    pub fn realized_price(self, sats: Sats) -> Cents {
         if sats.is_zero() {
-            return CentsUnsigned::ZERO;
+            return Cents::ZERO;
         }
         let result = self.0 / sats.as_u128();
-        CentsUnsigned::new(result.min(u32::MAX as u128) as u64)
+        Cents::new(result.min(u32::MAX as u128) as u64)
     }
 
     /// Compute investor cap (price² × sats) = price × (price × sats)
     #[inline(always)]
-    pub fn to_investor_cap(self, price: CentsUnsigned) -> CentsSquaredSats {
+    pub fn to_investor_cap(self, price: Cents) -> CentsSquaredSats {
         CentsSquaredSats::new(price.inner() as u128 * self.0)
     }
 }
@@ -114,8 +114,9 @@ impl Div<usize> for CentsSats {
 
 impl Formattable for CentsSats {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }
 

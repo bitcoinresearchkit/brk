@@ -9,7 +9,7 @@ use super::{CountVecs, SpentVecs, Vecs};
 use crate::indexes;
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,

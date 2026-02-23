@@ -1,28 +1,28 @@
 use brk_traversable::Traversable;
-use brk_types::{Close, DateIndex, Dollars, StoredF32};
-use vecdb::{EagerVec, PcoVec};
+use brk_types::{Dollars, Height, StoredF32};
+use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use crate::{
-    internal::{ComputedFromDateLast, ComputedFromDateStdDev, LazyBinaryFromDateLast},
+    internal::{ComputedFromHeightLast, ComputedFromHeightStdDev, LazyBinaryFromHeightLast},
     market::{dca::ByDcaCagr, lookback::ByLookbackPeriod},
 };
 
 /// Price returns, CAGR, and returns standard deviation metrics
-#[derive(Clone, Traversable)]
-pub struct Vecs {
-    pub price_returns: ByLookbackPeriod<LazyBinaryFromDateLast<StoredF32, Close<Dollars>, Dollars>>,
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
+    pub price_returns: ByLookbackPeriod<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
 
     // CAGR (computed from returns, 2y+ only)
-    pub cagr: ByDcaCagr<ComputedFromDateLast<StoredF32>>,
+    pub cagr: ByDcaCagr<ComputedFromHeightLast<StoredF32, M>>,
 
     // Returns standard deviation (computed from 1d returns)
-    pub _1d_returns_1w_sd: ComputedFromDateStdDev,
-    pub _1d_returns_1m_sd: ComputedFromDateStdDev,
-    pub _1d_returns_1y_sd: ComputedFromDateStdDev,
+    pub _1d_returns_1w_sd: ComputedFromHeightStdDev<M>,
+    pub _1d_returns_1m_sd: ComputedFromHeightStdDev<M>,
+    pub _1d_returns_1y_sd: ComputedFromHeightStdDev<M>,
 
     // Downside returns and deviation (for Sortino ratio)
-    pub downside_returns: EagerVec<PcoVec<DateIndex, StoredF32>>,
-    pub downside_1w_sd: ComputedFromDateStdDev,
-    pub downside_1m_sd: ComputedFromDateStdDev,
-    pub downside_1y_sd: ComputedFromDateStdDev,
+    pub downside_returns: M::Stored<EagerVec<PcoVec<Height, StoredF32>>>,
+    pub downside_1w_sd: ComputedFromHeightStdDev<M>,
+    pub downside_1m_sd: ComputedFromHeightStdDev<M>,
+    pub downside_1y_sd: ComputedFromHeightStdDev<M>,
 }

@@ -66,7 +66,7 @@ let height = async_query.inner().height();
 
 ## Recommended: mimalloc v3
 
-Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator to reduce memory usage.
+Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator. Query operations involve many short-lived allocations; mimalloc handles this with less fragmentation and lower peak memory than the system allocator.
 
 ## Built On
 

@@ -190,26 +190,12 @@ where
     }
 
     #[inline]
-    pub fn insert_if_needed(&mut self, key: K, value: V, height: Height) {
-        if self.needs(height) {
-            self.insert(key, value);
-        }
-    }
-
-    #[inline]
     pub fn remove(&mut self, key: K) {
         if self.puts.remove(&key).is_some() {
             return;
         }
         let newly_inserted = self.dels.insert(key);
         debug_assert!(newly_inserted, "Double deletion at {:?}", self.meta.path());
-    }
-
-    #[inline]
-    pub fn remove_if_needed(&mut self, key: K, height: Height) {
-        if self.needs(height) {
-            self.remove(key)
-        }
     }
 
     /// Clear all caches. Call after bulk removals (e.g., rollback) to prevent stale reads.
@@ -349,6 +335,9 @@ where
         }
 
         Self::ingest(&self.keyspace, puts.iter(), dels.iter())?;
+
+        // Pre-allocate for next batch based on current batch size
+        self.puts.reserve(puts.len());
 
         if !self.caches.is_empty() {
             self.caches.pop();

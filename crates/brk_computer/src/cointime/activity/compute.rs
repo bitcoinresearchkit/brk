@@ -1,14 +1,13 @@
 use brk_error::Result;
 use brk_types::{Bitcoin, CheckedSub, StoredF64};
-use vecdb::{Exit, TypedVecIterator};
+use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, distribution, indexes};
+use crate::{ComputeIndexes, distribution};
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         distribution: &distribution::Vecs,
         exit: &Exit,
@@ -23,7 +22,7 @@ impl Vecs {
             .height;
 
         self.coinblocks_created
-            .compute_all(indexes, starting_indexes, exit, |vec| {
+            .compute(starting_indexes, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
                     circulating_supply,
@@ -41,52 +40,37 @@ impl Vecs {
             .coinblocks_destroyed;
 
         self.coinblocks_stored
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                let mut coinblocks_destroyed_iter = coinblocks_destroyed.height.into_iter();
-                vec.compute_transform(
+            .compute(starting_indexes, exit, |vec| {
+                vec.compute_transform2(
                     starting_indexes.height,
                     &self.coinblocks_created.height,
-                    |(i, created, ..)| {
-                        let destroyed = coinblocks_destroyed_iter.get_unwrap(i);
-                        (i, created.checked_sub(destroyed).unwrap())
-                    },
+                    &coinblocks_destroyed.height,
+                    |(i, created, destroyed, ..)| (i, created.checked_sub(destroyed).unwrap()),
                     exit,
                 )?;
                 Ok(())
             })?;
 
-        self.liveliness
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                vec.compute_divide(
-                    starting_indexes.height,
-                    coinblocks_destroyed.height_cumulative.inner(),
-                    self.coinblocks_created.height_cumulative.inner(),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.liveliness.height.compute_divide(
+            starting_indexes.height,
+            &*coinblocks_destroyed.height_cumulative,
+            &*self.coinblocks_created.height_cumulative,
+            exit,
+        )?;
 
-        self.vaultedness
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                vec.compute_transform(
-                    starting_indexes.height,
-                    &self.liveliness.height,
-                    |(i, v, ..)| (i, StoredF64::from(1.0).checked_sub(v).unwrap()),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.vaultedness.height.compute_transform(
+            starting_indexes.height,
+            &self.liveliness.height,
+            |(i, v, ..)| (i, StoredF64::from(1.0).checked_sub(v).unwrap()),
+            exit,
+        )?;
 
-        self.activity_to_vaultedness_ratio
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                vec.compute_divide(
-                    starting_indexes.height,
-                    &self.liveliness.height,
-                    &self.vaultedness.height,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.activity_to_vaultedness_ratio.height.compute_divide(
+            starting_indexes.height,
+            &self.liveliness.height,
+            &self.vaultedness.height,
+            exit,
+        )?;
 
         Ok(())
     }

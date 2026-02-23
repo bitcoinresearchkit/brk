@@ -1,8 +1,8 @@
 use brk_traversable::Traversable;
 use brk_types::{TxInIndex, TxOutIndex};
-use vecdb::BytesVec;
+use vecdb::{BytesVec, Rw, StorageMode};
 
-#[derive(Clone, Traversable)]
-pub struct Vecs {
-    pub txinindex: BytesVec<TxOutIndex, TxInIndex>,
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
+    pub txinindex: M::Stored<BytesVec<TxOutIndex, TxInIndex>>,
 }

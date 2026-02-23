@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_types::{BlockHash, BlockStatus, Height};
-use vecdb::{AnyVec, GenericStoredVec};
+use vecdb::AnyVec;
 
 use crate::Query;
 

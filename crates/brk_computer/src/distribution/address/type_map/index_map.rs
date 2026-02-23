@@ -7,7 +7,7 @@ use rustc_hash::FxHashMap;
 use smallvec::{Array, SmallVec};
 
 /// A hashmap for each address type, keyed by TypeIndex.
-#[derive(Debug, Clone, Deref, DerefMut)]
+#[derive(Debug, Deref, DerefMut)]
 pub struct AddressTypeToTypeIndexMap<T>(ByAddressType<FxHashMap<TypeIndex, T>>);
 
 impl<T> Default for AddressTypeToTypeIndexMap<T> {
@@ -27,7 +27,7 @@ impl<T> Default for AddressTypeToTypeIndexMap<T> {
 
 impl<T> AddressTypeToTypeIndexMap<T> {
     /// Create with pre-allocated capacity per address type.
-    pub fn with_capacity(capacity: usize) -> Self {
+    pub(crate) fn with_capacity(capacity: usize) -> Self {
         Self(ByAddressType {
             p2a: FxHashMap::with_capacity_and_hasher(capacity, Default::default()),
             p2pk33: FxHashMap::with_capacity_and_hasher(capacity, Default::default()),
@@ -40,19 +40,6 @@ impl<T> AddressTypeToTypeIndexMap<T> {
         })
     }
 
-    /// Merge two maps, consuming other and extending self.
-    pub fn merge(mut self, mut other: Self) -> Self {
-        Self::merge_single(&mut self.p2a, &mut other.p2a);
-        Self::merge_single(&mut self.p2pk33, &mut other.p2pk33);
-        Self::merge_single(&mut self.p2pk65, &mut other.p2pk65);
-        Self::merge_single(&mut self.p2pkh, &mut other.p2pkh);
-        Self::merge_single(&mut self.p2sh, &mut other.p2sh);
-        Self::merge_single(&mut self.p2tr, &mut other.p2tr);
-        Self::merge_single(&mut self.p2wpkh, &mut other.p2wpkh);
-        Self::merge_single(&mut self.p2wsh, &mut other.p2wsh);
-        self
-    }
-
     fn merge_single(own: &mut FxHashMap<TypeIndex, T>, other: &mut FxHashMap<TypeIndex, T>) {
         if own.len() < other.len() {
             mem::swap(own, other);
@@ -61,7 +48,7 @@ impl<T> AddressTypeToTypeIndexMap<T> {
     }
 
     /// Merge another map into self, consuming other.
-    pub fn merge_mut(&mut self, mut other: Self) {
+    pub(crate) fn merge_mut(&mut self, mut other: Self) {
         Self::merge_single(&mut self.p2a, &mut other.p2a);
         Self::merge_single(&mut self.p2pk33, &mut other.p2pk33);
         Self::merge_single(&mut self.p2pk65, &mut other.p2pk65);
@@ -73,32 +60,23 @@ impl<T> AddressTypeToTypeIndexMap<T> {
     }
 
     /// Insert a value for a specific address type and typeindex.
-    pub fn insert_for_type(&mut self, address_type: OutputType, typeindex: TypeIndex, value: T) {
+    pub(crate) fn insert_for_type(&mut self, address_type: OutputType, typeindex: TypeIndex, value: T) {
         self.get_mut(address_type).unwrap().insert(typeindex, value);
-    }
-
-    /// Iterate over sorted entries by address type.
-    pub fn into_sorted_iter(self) -> impl Iterator<Item = (OutputType, Vec<(TypeIndex, T)>)> {
-        self.0.into_iter().map(|(output_type, map)| {
-            let mut sorted: Vec<_> = map.into_iter().collect();
-            sorted.sort_unstable_by_key(|(typeindex, _)| *typeindex);
-            (output_type, sorted)
-        })
     }
 
     /// Consume and iterate over entries by address type.
     #[allow(clippy::should_implement_trait)]
-    pub fn into_iter(self) -> impl Iterator<Item = (OutputType, FxHashMap<TypeIndex, T>)> {
+    pub(crate) fn into_iter(self) -> impl Iterator<Item = (OutputType, FxHashMap<TypeIndex, T>)> {
         self.0.into_iter()
     }
 
     /// Consume and return the inner ByAddressType.
-    pub fn into_inner(self) -> ByAddressType<FxHashMap<TypeIndex, T>> {
+    pub(crate) fn into_inner(self) -> ByAddressType<FxHashMap<TypeIndex, T>> {
         self.0
     }
 
     /// Iterate mutably over entries by address type.
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut FxHashMap<TypeIndex, T>)> {
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut FxHashMap<TypeIndex, T>)> {
         self.0.iter_mut()
     }
 }
@@ -108,7 +86,7 @@ where
     T: Array,
 {
     /// Merge two maps of SmallVec values, concatenating vectors.
-    pub fn merge_vec(mut self, other: Self) -> Self {
+    pub(crate) fn merge_vec(mut self, other: Self) -> Self {
         for (address_type, other_map) in other.0.into_iter() {
             let self_map = self.0.get_mut_unwrap(address_type);
             for (typeindex, mut other_vec) in other_map {

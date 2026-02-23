@@ -41,29 +41,3 @@ impl Pool {
     }
 }
 
-impl From<(usize, JSONPool)> for Pool {
-    #[inline]
-    fn from((index, pool): (usize, JSONPool)) -> Self {
-        Self {
-            slug: (index as u8).into(),
-            name: pool.name,
-            addresses: pool.addresses,
-            tags_lowercase: pool
-                .tags
-                .iter()
-                .map(|t| t.to_lowercase())
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-            tags: pool.tags,
-            link: pool.link,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct JSONPool {
-    pub name: &'static str,
-    pub addresses: Box<[&'static str]>,
-    pub tags: Box<[&'static str]>,
-    pub link: &'static str,
-}

@@ -7,8 +7,6 @@ mod distribution;
 mod full;
 mod last;
 mod percentiles;
-mod spread;
-mod stats;
 mod sum;
 mod sum_cum;
 
@@ -21,7 +19,5 @@ pub use distribution::*;
 pub use full::*;
 pub use last::*;
 pub use percentiles::*;
-pub use spread::*;
-pub use stats::*;
 pub use sum::*;
 pub use sum_cum::*;

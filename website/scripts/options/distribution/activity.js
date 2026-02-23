@@ -372,14 +372,14 @@ export function createActivitySection({
                 defaultActive: false,
               }),
               line({
-                metric: tree.activity.sent14dEma.bitcoin,
+                metric: tree.activity.sent14dEma.btc,
                 name: "14d EMA",
                 color: colors.indicator.main,
                 unit: Unit.btc,
                 defaultActive: false,
               }),
               line({
-                metric: tree.activity.sent14dEma.dollars,
+                metric: tree.activity.sent14dEma.usd,
                 name: "14d EMA",
                 color: colors.indicator.main,
                 unit: Unit.usd,
@@ -392,13 +392,13 @@ export function createActivitySection({
                 unit: Unit.sats,
               }),
               line({
-                metric: tree.activity.sent.bitcoin.sum,
+                metric: tree.activity.sent.btc.sum,
                 name: "sum",
                 color,
                 unit: Unit.btc,
               }),
               line({
-                metric: tree.activity.sent.dollars.sum,
+                metric: tree.activity.sent.usd.sum,
                 name: "sum",
                 color,
                 unit: Unit.usd,
@@ -416,13 +416,13 @@ export function createActivitySection({
                 unit: Unit.sats,
               }),
               line({
-                metric: tree.activity.sent.bitcoin.cumulative,
+                metric: tree.activity.sent.btc.cumulative,
                 name: "all-time",
                 color,
                 unit: Unit.btc,
               }),
               line({
-                metric: tree.activity.sent.dollars.cumulative,
+                metric: tree.activity.sent.usd.cumulative,
                 name: "all-time",
                 color,
                 unit: Unit.usd,
@@ -689,8 +689,8 @@ export function createGroupedActivitySection({
               satsBtcUsd({
                 pattern: {
                   sats: tree.activity.sent.sats.sum,
-                  bitcoin: tree.activity.sent.bitcoin.sum,
-                  dollars: tree.activity.sent.dollars.sum,
+                  btc: tree.activity.sent.btc.sum,
+                  usd: tree.activity.sent.usd.sum,
                 },
                 name,
                 color,

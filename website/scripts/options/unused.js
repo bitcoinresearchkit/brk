@@ -81,11 +81,11 @@ function markUsedBlueprints(map, arr) {
     const metric = arr[i].metric;
     if (!metric) continue;
     const maybePriceMetric =
-      /** @type {{ dollars?: AnyMetricPattern, sats?: AnyMetricPattern }} */ (
+      /** @type {{ usd?: AnyMetricPattern, sats?: AnyMetricPattern }} */ (
         /** @type {unknown} */ (metric)
       );
-    if (maybePriceMetric.dollars?.by && maybePriceMetric.sats?.by) {
-      map.delete(maybePriceMetric.dollars);
+    if (maybePriceMetric.usd?.by && maybePriceMetric.sats?.by) {
+      map.delete(maybePriceMetric.usd);
       map.delete(maybePriceMetric.sats);
     } else {
       map.delete(/** @type {AnyMetricPattern} */ (metric));
@@ -145,7 +145,7 @@ export function extractTreeStructure(options) {
     const grouped = {};
     for (const s of series) {
       const metric = /** @type {any} */ (s.metric);
-      if (isTop && metric?.dollars && metric?.sats) {
+      if (isTop && metric?.usd && metric?.sats) {
         const title = s.title || s.key || "unnamed";
         (grouped["USD"] ??= []).push(title);
         (grouped["sats"] ??= []).push(title);

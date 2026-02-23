@@ -1,59 +1,78 @@
 use brk_error::Result;
-use brk_types::{StoredU64, Version};
+use brk_types::Version;
 use vecdb::{Database, ImportableVec};
 
 use super::Vecs;
 use crate::{
-    blocks::{
-        TARGET_BLOCKS_PER_DAY, TARGET_BLOCKS_PER_DECADE, TARGET_BLOCKS_PER_MONTH,
-        TARGET_BLOCKS_PER_QUARTER, TARGET_BLOCKS_PER_SEMESTER, TARGET_BLOCKS_PER_WEEK,
-        TARGET_BLOCKS_PER_YEAR,
-    },
     indexes,
-    internal::{ComputedFromHeightLast, ComputedFromHeightSumCum, LazyFromDate},
+    internal::{BlockCountTarget, ComputedFromHeightLast, ComputedFromHeightSumCum, ConstantVecs},
 };
 
 impl Vecs {
-    pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
+    pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         Ok(Self {
-            block_count_target: LazyFromDate::new(
+            block_count_target: ConstantVecs::new::<BlockCountTarget>(
                 "block_count_target",
                 version,
                 indexes,
-                |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_DAY)),
-                |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_WEEK)),
-                |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_MONTH)),
-                |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_QUARTER)),
-                |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_SEMESTER)),
-                |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_YEAR)),
-                |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_DECADE)),
             ),
-            block_count: ComputedFromHeightSumCum::forced_import(db, "block_count", version, indexes)?,
-            _24h_start: ImportableVec::forced_import(db, "24h_start", version)?,
-            _1w_start: ImportableVec::forced_import(db, "1w_start", version)?,
-            _1m_start: ImportableVec::forced_import(db, "1m_start", version)?,
-            _1y_start: ImportableVec::forced_import(db, "1y_start", version)?,
-            _24h_block_count: ComputedFromHeightLast::forced_import(
+            block_count: ComputedFromHeightSumCum::forced_import(
                 db,
-                "24h_block_count",
+                "block_count",
                 version,
                 indexes,
             )?,
-            _1w_block_count: ComputedFromHeightLast::forced_import(
+            height_24h_ago: ImportableVec::forced_import(db, "height_24h_ago", version)?,
+            height_3d_ago: ImportableVec::forced_import(db, "height_3d_ago", version)?,
+            height_1w_ago: ImportableVec::forced_import(db, "height_1w_ago", version)?,
+            height_8d_ago: ImportableVec::forced_import(db, "height_8d_ago", version)?,
+            height_9d_ago: ImportableVec::forced_import(db, "height_9d_ago", version)?,
+            height_12d_ago: ImportableVec::forced_import(db, "height_12d_ago", version)?,
+            height_13d_ago: ImportableVec::forced_import(db, "height_13d_ago", version)?,
+            height_2w_ago: ImportableVec::forced_import(db, "height_2w_ago", version)?,
+            height_21d_ago: ImportableVec::forced_import(db, "height_21d_ago", version)?,
+            height_26d_ago: ImportableVec::forced_import(db, "height_26d_ago", version)?,
+            height_1m_ago: ImportableVec::forced_import(db, "height_1m_ago", version)?,
+            height_34d_ago: ImportableVec::forced_import(db, "height_34d_ago", version)?,
+            height_55d_ago: ImportableVec::forced_import(db, "height_55d_ago", version)?,
+            height_2m_ago: ImportableVec::forced_import(db, "height_2m_ago", version)?,
+            height_89d_ago: ImportableVec::forced_import(db, "height_89d_ago", version)?,
+            height_111d_ago: ImportableVec::forced_import(db, "height_111d_ago", version)?,
+            height_144d_ago: ImportableVec::forced_import(db, "height_144d_ago", version)?,
+            height_3m_ago: ImportableVec::forced_import(db, "height_3m_ago", version)?,
+            height_6m_ago: ImportableVec::forced_import(db, "height_6m_ago", version)?,
+            height_200d_ago: ImportableVec::forced_import(db, "height_200d_ago", version)?,
+            height_350d_ago: ImportableVec::forced_import(db, "height_350d_ago", version)?,
+            height_1y_ago: ImportableVec::forced_import(db, "height_1y_ago", version)?,
+            height_2y_ago: ImportableVec::forced_import(db, "height_2y_ago", version)?,
+            height_200w_ago: ImportableVec::forced_import(db, "height_200w_ago", version)?,
+            height_3y_ago: ImportableVec::forced_import(db, "height_3y_ago", version)?,
+            height_4y_ago: ImportableVec::forced_import(db, "height_4y_ago", version)?,
+            height_5y_ago: ImportableVec::forced_import(db, "height_5y_ago", version)?,
+            height_6y_ago: ImportableVec::forced_import(db, "height_6y_ago", version)?,
+            height_8y_ago: ImportableVec::forced_import(db, "height_8y_ago", version)?,
+            height_10y_ago: ImportableVec::forced_import(db, "height_10y_ago", version)?,
+            block_count_24h_sum: ComputedFromHeightLast::forced_import(
                 db,
-                "1w_block_count",
+                "block_count_24h_sum",
                 version,
                 indexes,
             )?,
-            _1m_block_count: ComputedFromHeightLast::forced_import(
+            block_count_1w_sum: ComputedFromHeightLast::forced_import(
                 db,
-                "1m_block_count",
+                "block_count_1w_sum",
                 version,
                 indexes,
             )?,
-            _1y_block_count: ComputedFromHeightLast::forced_import(
+            block_count_1m_sum: ComputedFromHeightLast::forced_import(
                 db,
-                "1y_block_count",
+                "block_count_1m_sum",
+                version,
+                indexes,
+            )?,
+            block_count_1y_sum: ComputedFromHeightLast::forced_import(
+                db,
+                "block_count_1y_sum",
                 version,
                 indexes,
             )?,

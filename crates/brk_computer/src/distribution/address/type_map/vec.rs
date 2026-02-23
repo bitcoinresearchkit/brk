@@ -22,7 +22,7 @@ impl<T> Default for AddressTypeToVec<T> {
 
 impl<T> AddressTypeToVec<T> {
     /// Create with pre-allocated capacity per address type.
-    pub fn with_capacity(capacity: usize) -> Self {
+    pub(crate) fn with_capacity(capacity: usize) -> Self {
         Self(ByAddressType {
             p2a: Vec::with_capacity(capacity),
             p2pk33: Vec::with_capacity(capacity),
@@ -38,7 +38,7 @@ impl<T> AddressTypeToVec<T> {
 
 impl<T> AddressTypeToVec<T> {
     /// Unwrap the inner ByAddressType.
-    pub fn unwrap(self) -> ByAddressType<Vec<T>> {
+    pub(crate) fn unwrap(self) -> ByAddressType<Vec<T>> {
         self.0
     }
 }

@@ -1,8 +1,8 @@
 use brk_error::Result;
 use brk_types::{BlockRewardsEntry, TimePeriod};
-use vecdb::{IterableVec, VecIndex};
+use vecdb::{ReadableVec, VecIndex};
 
-use super::dateindex_iter::DateIndexIter;
+use super::day1_iter::Day1Iter;
 use crate::Query;
 
 impl Query {
@@ -13,20 +13,18 @@ impl Query {
             .to_usize()
             .saturating_sub(time_period.block_count());
 
-        let iter = DateIndexIter::new(computer, start, current_height.to_usize());
+        let iter = Day1Iter::new(computer, start, current_height.to_usize());
 
-        let mut rewards = computer
-            .blocks
+        let rewards_vec = &computer
+            .mining
             .rewards
             .coinbase
             .sats
-            .dateindex
-            .distribution
-            .average()
-            .iter();
+            .day1
+            .average;
 
         Ok(iter.collect(|di, ts, h| {
-            rewards.get(di).map(|reward| BlockRewardsEntry {
+            rewards_vec.collect_one(di).map(|reward| BlockRewardsEntry {
                 avg_height: h.into(),
                 timestamp: *ts,
                 avg_rewards: *reward,

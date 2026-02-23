@@ -1,4 +1,5 @@
 use brk_cohort::ByAddressType;
+use brk_error::Result;
 use brk_types::{Sats, TxIndex, TypeIndex};
 
 use crate::distribution::{
@@ -34,7 +35,7 @@ pub struct OutputsResult {
 /// 3. Look up address data if output is an address type
 /// 4. Track address-specific data for address cohort processing
 #[allow(clippy::too_many_arguments)]
-pub fn process_outputs(
+pub(crate) fn process_outputs(
     txoutindex_to_txindex: &[TxIndex],
     txoutdata_vec: &[TxOutData],
     first_addressindexes: &ByAddressType<TypeIndex>,
@@ -42,7 +43,7 @@ pub fn process_outputs(
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
-) -> OutputsResult {
+) -> Result<OutputsResult> {
     let output_count = txoutdata_vec.len();
 
     // Pre-allocate result structures
@@ -81,7 +82,7 @@ pub fn process_outputs(
             vr,
             any_address_indexes,
             addresses_data,
-        );
+        )?;
 
         if let Some(addr_data) = addr_data_opt {
             address_data.insert_for_type(output_type, typeindex, addr_data);
@@ -95,10 +96,10 @@ pub fn process_outputs(
             .push(txindex);
     }
 
-    OutputsResult {
+    Ok(OutputsResult {
         transacted,
         received_data,
         address_data,
         txindex_vecs,
-    }
+    })
 }

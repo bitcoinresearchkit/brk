@@ -1,103 +1,127 @@
 use brk_error::Result;
 use brk_types::StoredF32;
-use vecdb::Exit;
+use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, price};
+use crate::{
+    blocks, ComputeIndexes, prices,
+    traits::{ComputeRollingMaxFromStarts, ComputeRollingMinFromStarts},
+};
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
-        price: &price::Vecs,
+        prices: &prices::Vecs,
+        blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let open = &price.usd.split.open.dateindex;
-        let low = &price.usd.split.low.dateindex;
-        let high = &price.usd.split.high.dateindex;
+        let price = &prices.usd.price;
 
-        self.price_1w_min.compute_all(starting_indexes, exit, |v| {
-            v.compute_min(starting_indexes.dateindex, low, 7, exit)?;
-            Ok(())
-        })?;
+        self.price_1w_min.height.compute_rolling_min_from_starts(
+            starting_indexes.height,
+            &blocks.count.height_1w_ago,
+            price,
+            exit,
+        )?;
 
-        self.price_1w_max.compute_all(starting_indexes, exit, |v| {
-            v.compute_max(starting_indexes.dateindex, high, 7, exit)?;
-            Ok(())
-        })?;
+        self.price_1w_max.height.compute_rolling_max_from_starts(
+            starting_indexes.height,
+            &blocks.count.height_1w_ago,
+            price,
+            exit,
+        )?;
 
-        self.price_2w_min.compute_all(starting_indexes, exit, |v| {
-            v.compute_min(starting_indexes.dateindex, low, 14, exit)?;
-            Ok(())
-        })?;
+        self.price_2w_min.height.compute_rolling_min_from_starts(
+            starting_indexes.height,
+            &blocks.count.height_2w_ago,
+            price,
+            exit,
+        )?;
 
-        self.price_2w_max.compute_all(starting_indexes, exit, |v| {
-            v.compute_max(starting_indexes.dateindex, high, 14, exit)?;
-            Ok(())
-        })?;
+        self.price_2w_max.height.compute_rolling_max_from_starts(
+            starting_indexes.height,
+            &blocks.count.height_2w_ago,
+            price,
+            exit,
+        )?;
 
-        self.price_1m_min.compute_all(starting_indexes, exit, |v| {
-            v.compute_min(starting_indexes.dateindex, low, 30, exit)?;
-            Ok(())
-        })?;
+        self.price_1m_min.height.compute_rolling_min_from_starts(
+            starting_indexes.height,
+            &blocks.count.height_1m_ago,
+            price,
+            exit,
+        )?;
 
-        self.price_1m_max.compute_all(starting_indexes, exit, |v| {
-            v.compute_max(starting_indexes.dateindex, high, 30, exit)?;
-            Ok(())
-        })?;
+        self.price_1m_max.height.compute_rolling_max_from_starts(
+            starting_indexes.height,
+            &blocks.count.height_1m_ago,
+            price,
+            exit,
+        )?;
 
-        self.price_1y_min.compute_all(starting_indexes, exit, |v| {
-            v.compute_min(starting_indexes.dateindex, low, 365, exit)?;
-            Ok(())
-        })?;
+        self.price_1y_min.height.compute_rolling_min_from_starts(
+            starting_indexes.height,
+            &blocks.count.height_1y_ago,
+            price,
+            exit,
+        )?;
 
-        self.price_1y_max.compute_all(starting_indexes, exit, |v| {
-            v.compute_max(starting_indexes.dateindex, high, 365, exit)?;
-            Ok(())
-        })?;
+        self.price_1y_max.height.compute_rolling_max_from_starts(
+            starting_indexes.height,
+            &blocks.count.height_1y_ago,
+            price,
+            exit,
+        )?;
 
-        self.price_true_range.compute_transform3(
-            starting_indexes.dateindex,
-            open,
-            high,
-            low,
-            |(i, open, high, low, ..)| {
-                let high_min_low = **high - **low;
-                let high_min_open = (**high - **open).abs();
-                let low_min_open = (**low - **open).abs();
-                (i, high_min_low.max(high_min_open).max(low_min_open).into())
+        // True range at block level: |price[h] - price[h-1]|
+        let mut prev_price = None;
+        self.price_true_range.height.compute_transform(
+            starting_indexes.height,
+            price,
+            |(h, current, ..)| {
+                let prev = prev_price.unwrap_or_else(|| {
+                    if h.to_usize() > 0 {
+                        price.collect_one_at(h.to_usize() - 1).unwrap_or(current)
+                    } else {
+                        current
+                    }
+                });
+                prev_price = Some(current);
+                let tr = (*current - *prev).abs();
+                (h, StoredF32::from(tr))
             },
             exit,
         )?;
 
-        self.price_true_range_2w_sum.compute_sum(
-            starting_indexes.dateindex,
-            &self.price_true_range,
-            14,
+        // 2w rolling sum of true range
+        self.price_true_range_2w_sum.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_2w_ago,
+            &self.price_true_range.height,
             exit,
         )?;
 
-        self.price_2w_choppiness_index
-            .compute_all(starting_indexes, exit, |v| {
-                let n = 14;
-                let log10n = (n as f32).log10();
-                v.compute_transform3(
-                    starting_indexes.dateindex,
-                    &self.price_true_range_2w_sum,
-                    &self.price_2w_max.dateindex,
-                    &self.price_2w_min.dateindex,
-                    |(i, tr_sum, max, min, ..)| {
-                        (
-                            i,
-                            StoredF32::from(
-                                100.0 * (*tr_sum / (*max - *min) as f32).log10() / log10n,
-                            ),
-                        )
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        // Choppiness index: 100 * log10(tr_2w_sum / (price_2w_max - price_2w_min)) / log10(14)
+        let log10n = 14.0f32.log10();
+        self.price_2w_choppiness_index.height.compute_transform3(
+            starting_indexes.height,
+            &self.price_true_range_2w_sum.height,
+            &self.price_2w_max.height,
+            &self.price_2w_min.height,
+            |(h, tr_sum, max, min, ..)| {
+                let range = *max - *min;
+                let ci = if range > 0.0 {
+                    StoredF32::from(
+                        100.0 * (*tr_sum / range as f32).log10() / log10n,
+                    )
+                } else {
+                    StoredF32::NAN
+                };
+                (h, ci)
+            },
+            exit,
+        )?;
 
         Ok(())
     }

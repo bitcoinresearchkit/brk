@@ -9,11 +9,10 @@ use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_rpc::Client;
 use brk_types::Height;
-use vecdb::AnyStoredVec;
+use vecdb::{ReadOnlyClone, Ro};
 
 #[cfg(feature = "tokio")]
 mod r#async;
-mod resolved;
 mod vecs;
 
 mod r#impl;
@@ -21,7 +20,6 @@ mod r#impl;
 #[cfg(feature = "tokio")]
 pub use r#async::*;
 pub use r#impl::BLOCK_TXS_PAGE_SIZE;
-use resolved::ResolvedQuery;
 pub use vecs::Vecs;
 
 #[derive(Clone)]
@@ -30,8 +28,8 @@ struct QueryInner<'a> {
     vecs: &'a Vecs<'a>,
     client: Client,
     reader: Reader,
-    indexer: &'a Indexer,
-    computer: &'a Computer,
+    indexer: &'a Indexer<Ro>,
+    computer: &'a Computer<Ro>,
     mempool: Option<Mempool>,
 }
 
@@ -44,8 +42,8 @@ impl Query {
     ) -> Self {
         let client = reader.client().clone();
         let reader = reader.clone();
-        let indexer = Box::leak(Box::new(indexer.clone()));
-        let computer = Box::leak(Box::new(computer.clone()));
+        let indexer = Box::leak(Box::new(indexer.read_only_clone()));
+        let computer = Box::leak(Box::new(computer.read_only_clone()));
         let vecs = Box::leak(Box::new(Vecs::build(indexer, computer)));
 
         Self(Arc::new(QueryInner {
@@ -79,12 +77,12 @@ impl Query {
     }
 
     #[inline]
-    pub fn indexer(&self) -> &Indexer {
+    pub fn indexer(&self) -> &Indexer<Ro> {
         self.0.indexer
     }
 
     #[inline]
-    pub fn computer(&self) -> &Computer {
+    pub fn computer(&self) -> &Computer<Ro> {
         self.0.computer
     }
 

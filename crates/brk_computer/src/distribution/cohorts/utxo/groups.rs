@@ -8,19 +8,19 @@ use brk_cohort::{
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    CentsUnsigned, CentsUnsignedCompact, CostBasisDistribution, Date, DateIndex, Dollars, Height,
-    ONE_HOUR_IN_SEC, Sats, StoredF32, Timestamp, Version,
+    Cents, CentsCompact, CostBasisDistribution, Date, Day1, Dollars, Height, ONE_HOUR_IN_SEC, Sats,
+    StoredF32, Timestamp, Version,
 };
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, GenericStoredVec, IterableVec, VecIndex};
+use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode, VecIndex, WritableVec};
 
 use crate::{
-    ComputeIndexes,
+    ComputeIndexes, blocks,
     distribution::{DynCohortVecs, compute::PriceRangeMax, state::BlockState},
     indexes,
     internal::{PERCENTILES, PERCENTILES_LEN, compute_spot_percentile_rank},
-    price,
+    prices,
 };
 
 use super::{super::traits::CohortVecs, vecs::UTXOCohortVecs};
@@ -31,16 +31,16 @@ const VERSION: Version = Version::new(0);
 const COST_BASIS_PRICE_DIGITS: i32 = 5;
 
 /// All UTXO cohorts organized by filter type.
-#[derive(Clone, Deref, DerefMut, Traversable)]
-pub struct UTXOCohorts(pub(crate) UTXOGroups<UTXOCohortVecs>);
+#[derive(Deref, DerefMut, Traversable)]
+pub struct UTXOCohorts<M: StorageMode = Rw>(pub(crate) UTXOGroups<UTXOCohortVecs<M>>);
 
 impl UTXOCohorts {
     /// Import all UTXO cohorts from database.
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
         states_path: &Path,
     ) -> Result<Self> {
         let v = version + VERSION;
@@ -54,7 +54,7 @@ impl UTXOCohorts {
                 name,
                 v,
                 indexes,
-                price,
+                prices,
                 states_path,
                 StateLevel::Full,
                 None,
@@ -69,7 +69,7 @@ impl UTXOCohorts {
         let type_ = BySpendableType::try_new(&base)?;
 
         // Get up_to_1h realized for adjusted computation (cohort - up_to_1h)
-        let up_to_1h_realized = age_range.up_to_1h.metrics.realized.as_ref();
+        let up_to_1h_realized = &age_range.up_to_1h.metrics.realized;
 
         // Phase 2: Import "all" cohort (needs up_to_1h for adjusted, is global supply source)
         let all = UTXOCohortVecs::forced_import(
@@ -78,14 +78,14 @@ impl UTXOCohorts {
             "",
             version + VERSION + Version::ONE,
             indexes,
-            price,
+            prices,
             states_path,
             StateLevel::PriceOnly,
             None,
-            up_to_1h_realized,
+            Some(up_to_1h_realized),
         )?;
 
-        let all_supply = Some(&all.metrics.supply);
+        let all_supply = Some(all.metrics.supply.as_ref());
 
         // Phase 3: Import cohorts that need adjusted and/or all_supply
         let price_only_adjusted = |f: Filter, name: &'static str| {
@@ -95,11 +95,11 @@ impl UTXOCohorts {
                 name,
                 v,
                 indexes,
-                price,
+                prices,
                 states_path,
                 StateLevel::PriceOnly,
                 all_supply,
-                up_to_1h_realized,
+                Some(up_to_1h_realized),
             )
         };
 
@@ -112,11 +112,11 @@ impl UTXOCohorts {
                 name,
                 v,
                 indexes,
-                price,
+                prices,
                 states_path,
                 StateLevel::None,
                 all_supply,
-                up_to_1h_realized,
+                Some(up_to_1h_realized),
             )
         };
 
@@ -130,7 +130,7 @@ impl UTXOCohorts {
                 name,
                 v,
                 indexes,
-                price,
+                prices,
                 states_path,
                 StateLevel::None,
                 all_supply,
@@ -226,7 +226,7 @@ impl UTXOCohorts {
     }
 
     /// Compute overlapping cohorts from component age/amount range cohorts.
-    pub fn compute_overlapping_vecs(
+    pub(crate) fn compute_overlapping_vecs(
         &mut self,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
@@ -237,16 +237,16 @@ impl UTXOCohorts {
     }
 
     /// First phase of post-processing: compute index transforms.
-    pub fn compute_rest_part1(
+    pub(crate) fn compute_rest_part1(
         &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         // 1. Compute all metrics except net_sentiment
         self.par_iter_mut()
-            .try_for_each(|v| v.compute_rest_part1(indexes, price, starting_indexes, exit))?;
+            .try_for_each(|v| v.compute_rest_part1(blocks, prices, starting_indexes, exit))?;
 
         // 2. Compute net_sentiment.height for separate cohorts (greed - pain)
         self.par_iter_separate_mut().try_for_each(|v| {
@@ -261,42 +261,30 @@ impl UTXOCohorts {
                 .compute_net_sentiment_from_others(starting_indexes, &metrics, exit)
         })?;
 
-        // 4. Compute net_sentiment dateindex for ALL cohorts
-        self.par_iter_mut().try_for_each(|v| {
-            v.metrics
-                .compute_net_sentiment_rest(indexes, starting_indexes, exit)
-        })
+        Ok(())
     }
 
     /// Second phase of post-processing: compute relative metrics.
-    #[allow(clippy::too_many_arguments)]
-    pub fn compute_rest_part2<HM, DM>(
+    pub(crate) fn compute_rest_part2<HM>(
         &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         height_to_market_cap: Option<&HM>,
-        dateindex_to_market_cap: Option<&DM>,
         exit: &Exit,
     ) -> Result<()>
     where
-        HM: IterableVec<Height, Dollars> + Sync,
-        DM: IterableVec<DateIndex, Dollars> + Sync,
+        HM: ReadableVec<Height, Dollars> + Sync,
     {
         self.par_iter_mut().try_for_each(|v| {
-            v.compute_rest_part2(
-                indexes,
-                price,
-                starting_indexes,
-                height_to_market_cap,
-                dateindex_to_market_cap,
-                exit,
-            )
+            v.compute_rest_part2(blocks, prices, starting_indexes, height_to_market_cap, exit)
         })
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
-    pub fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_vecs_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         // Collect all vecs from all cohorts (separate + aggregate)
         self.0
             .iter_mut()
@@ -306,55 +294,36 @@ impl UTXOCohorts {
     }
 
     /// Commit all states to disk (separate from vec writes for parallelization).
-    pub fn commit_all_states(&mut self, height: Height, cleanup: bool) -> Result<()> {
+    pub(crate) fn commit_all_states(&mut self, height: Height, cleanup: bool) -> Result<()> {
         self.par_iter_separate_mut()
             .try_for_each(|v| v.write_state(height, cleanup))
     }
 
     /// Get minimum height from all separate cohorts' height-indexed vectors.
-    pub fn min_separate_stateful_height_len(&self) -> Height {
+    pub(crate) fn min_separate_stateful_height_len(&self) -> Height {
         self.iter_separate()
             .map(|v| Height::from(v.min_stateful_height_len()))
             .min()
             .unwrap_or_default()
     }
 
-    /// Get minimum dateindex from all separate cohorts' dateindex-indexed vectors.
-    pub fn min_separate_stateful_dateindex_len(&self) -> usize {
-        self.iter_separate()
-            .map(|v| v.min_stateful_dateindex_len())
-            .min()
-            .unwrap_or(usize::MAX)
-    }
-
-    /// Get minimum dateindex from all aggregate cohorts' dateindex-indexed vectors.
-    /// This checks cost_basis metrics which are only on aggregate cohorts.
-    pub fn min_aggregate_stateful_dateindex_len(&self) -> usize {
-        self.0
-            .iter_aggregate()
-            .filter_map(|v| v.metrics.cost_basis.as_ref())
-            .map(|cb| cb.min_stateful_dateindex_len())
-            .min()
-            .unwrap_or(usize::MAX)
-    }
-
     /// Import state for all separate cohorts at or before given height.
     /// Returns true if all imports succeeded and returned the expected height.
-    pub fn import_separate_states(&mut self, height: Height) -> bool {
+    pub(crate) fn import_separate_states(&mut self, height: Height) -> bool {
         self.par_iter_separate_mut()
             .map(|v| v.import_state(height).unwrap_or_default())
             .all(|h| h == height)
     }
 
     /// Reset state heights for all separate cohorts.
-    pub fn reset_separate_state_heights(&mut self) {
+    pub(crate) fn reset_separate_state_heights(&mut self) {
         self.par_iter_separate_mut().for_each(|v| {
             v.reset_state_starting_height();
         });
     }
 
     /// Reset cost_basis_data for all separate cohorts (called during fresh start).
-    pub fn reset_separate_cost_basis_data(&mut self) -> Result<()> {
+    pub(crate) fn reset_separate_cost_basis_data(&mut self) -> Result<()> {
         self.par_iter_separate_mut().try_for_each(|v| {
             if let Some(state) = v.state.as_mut() {
                 state.reset_cost_basis_data_if_needed()?;
@@ -367,11 +336,12 @@ impl UTXOCohorts {
     /// Computes on-demand by merging age_range cohorts' cost_basis_data data.
     /// This avoids maintaining redundant aggregate cost_basis_data maps.
     /// Computes both sat-weighted (percentiles) and USD-weighted (invested_capital) percentiles.
-    /// Also writes daily cost basis snapshots to states_path.
-    pub fn truncate_push_aggregate_percentiles(
+    /// Also writes daily cost basis snapshots to states_path when day1 is provided.
+    pub(crate) fn truncate_push_aggregate_percentiles(
         &mut self,
-        dateindex: DateIndex,
+        height: Height,
         spot: Dollars,
+        day1_opt: Option<Day1>,
         states_path: &Path,
     ) -> Result<()> {
         // Collect (filter, entries, total_sats, total_usd) from age_range cohorts.
@@ -385,8 +355,8 @@ impl UTXOCohorts {
                 let state = sub.state.as_ref()?;
                 let mut total_sats: u64 = 0;
                 let mut total_usd: u128 = 0;
-                let entries: Vec<(CentsUnsigned, Sats)> = state
-                    .cost_basis_data_iter()?
+                let entries: Vec<(Cents, Sats)> = state
+                    .cost_basis_data_iter()
                     .map(|(price, &sats)| {
                         let sats_u64 = u64::from(sats);
                         let price_u128 = price.as_u128();
@@ -403,10 +373,7 @@ impl UTXOCohorts {
         self.0.par_iter_aggregate_mut().try_for_each(|aggregate| {
             let filter = aggregate.filter().clone();
 
-            // Get cost_basis, skip if not configured
-            let Some(cost_basis) = aggregate.metrics.cost_basis.as_mut() else {
-                return Ok(());
-            };
+            let cost_basis = &mut aggregate.metrics.cost_basis;
 
             // Collect relevant cohort data for this aggregate and sum totals
             let mut total_sats: u64 = 0;
@@ -424,27 +391,23 @@ impl UTXOCohorts {
             if total_sats == 0 {
                 let nan_prices = [Dollars::NAN; PERCENTILES_LEN];
                 if let Some(percentiles) = cost_basis.percentiles.as_mut() {
-                    percentiles.truncate_push(dateindex, &nan_prices)?;
+                    percentiles.truncate_push(height, &nan_prices)?;
                 }
                 if let Some(invested_capital) = cost_basis.invested_capital.as_mut() {
-                    invested_capital.truncate_push(dateindex, &nan_prices)?;
+                    invested_capital.truncate_push(height, &nan_prices)?;
                 }
                 if let Some(spot_pct) = cost_basis.spot_cost_basis_percentile.as_mut() {
-                    spot_pct
-                        .dateindex
-                        .truncate_push(dateindex, StoredF32::NAN)?;
+                    spot_pct.height.truncate_push(height, StoredF32::NAN)?;
                 }
                 if let Some(spot_pct) = cost_basis.spot_invested_capital_percentile.as_mut() {
-                    spot_pct
-                        .dateindex
-                        .truncate_push(dateindex, StoredF32::NAN)?;
+                    spot_pct.height.truncate_push(height, StoredF32::NAN)?;
                 }
                 return Ok(());
             }
 
             // K-way merge using min-heap: O(n log k) where k = number of cohorts
             // Collects merged price->sats map while computing percentiles
-            let mut heap: BinaryHeap<Reverse<(CentsUnsigned, usize, usize)>> = BinaryHeap::new();
+            let mut heap: BinaryHeap<Reverse<(Cents, usize, usize)>> = BinaryHeap::new();
 
             // Initialize heap with first entry from each cohort
             for (cohort_idx, entries) in relevant.iter().enumerate() {
@@ -465,19 +428,21 @@ impl UTXOCohorts {
             let mut sat_idx = 0;
             let mut usd_idx = 0;
 
-            let mut current_price: Option<CentsUnsigned> = None;
+            let mut current_price: Option<Cents> = None;
             let mut sats_at_price: u64 = 0;
             let mut usd_at_price: u128 = 0;
 
-            // Collect merged entries during the merge (already in sorted order)
-            // Pre-allocate with max possible unique prices (actual count likely lower due to dedup)
-            let max_unique_prices = relevant.iter().map(|e| e.len()).max().unwrap_or(0);
-            let mut merged: Vec<(CentsUnsignedCompact, Sats)> =
-                Vec::with_capacity(max_unique_prices);
+            // Only collect merged entries when writing snapshots (date boundary)
+            let collect_merged = day1_opt.is_some();
+            let max_unique_prices = if collect_merged {
+                relevant.iter().map(|e| e.len()).max().unwrap_or(0)
+            } else {
+                0
+            };
+            let mut merged: Vec<(CentsCompact, Sats)> = Vec::with_capacity(max_unique_prices);
 
-            // Finalize a price point: compute percentiles and accumulate for merged vec
-            let mut finalize_price = |price: CentsUnsigned, sats: u64, usd: u128| {
-                // Percentile computation uses exact price for accuracy
+            // Finalize a price point: compute percentiles and optionally accumulate for merged vec
+            let mut finalize_price = |price: Cents, sats: u64, usd: u128| {
                 cumsum_sats += sats;
                 cumsum_usd += usd;
 
@@ -493,17 +458,16 @@ impl UTXOCohorts {
                     }
                 }
 
-                // Round to nearest dollar with N significant digits for storage
-                let rounded: CentsUnsignedCompact =
-                    price.round_to_dollar(COST_BASIS_PRICE_DIGITS).into();
-
-                // Merge entries with same rounded price using last_mut
-                if let Some((last_price, last_sats)) = merged.last_mut()
-                    && *last_price == rounded
-                {
-                    *last_sats += Sats::from(sats);
-                } else {
-                    merged.push((rounded, Sats::from(sats)));
+                if collect_merged {
+                    let rounded: CentsCompact =
+                        price.round_to_dollar(COST_BASIS_PRICE_DIGITS).into();
+                    if let Some((last_price, last_sats)) = merged.last_mut()
+                        && *last_price == rounded
+                    {
+                        *last_sats += Sats::from(sats);
+                    } else {
+                        merged.push((rounded, Sats::from(sats)));
+                    }
                 }
             };
 
@@ -540,45 +504,47 @@ impl UTXOCohorts {
 
             // Push both sat-weighted and USD-weighted results
             if let Some(percentiles) = cost_basis.percentiles.as_mut() {
-                percentiles.truncate_push(dateindex, &sat_result)?;
+                percentiles.truncate_push(height, &sat_result)?;
             }
             if let Some(invested_capital) = cost_basis.invested_capital.as_mut() {
-                invested_capital.truncate_push(dateindex, &usd_result)?;
+                invested_capital.truncate_push(height, &usd_result)?;
             }
 
             // Compute and push spot percentile ranks
             if let Some(spot_pct) = cost_basis.spot_cost_basis_percentile.as_mut() {
                 let rank = compute_spot_percentile_rank(&sat_result, spot);
-                spot_pct.dateindex.truncate_push(dateindex, rank)?;
+                spot_pct.height.truncate_push(height, rank)?;
             }
             if let Some(spot_pct) = cost_basis.spot_invested_capital_percentile.as_mut() {
                 let rank = compute_spot_percentile_rank(&usd_result, spot);
-                spot_pct.dateindex.truncate_push(dateindex, rank)?;
+                spot_pct.height.truncate_push(height, rank)?;
             }
 
-            // Write daily cost basis snapshot
-            let cohort_name = match &filter {
-                Filter::All => "all",
-                Filter::Term(Term::Sth) => TERM_NAMES.short.id,
-                Filter::Term(Term::Lth) => TERM_NAMES.long.id,
-                _ => return Ok(()),
-            };
+            // Write daily cost basis snapshot (only at date boundaries)
+            if let Some(day1) = day1_opt {
+                let cohort_name = match &filter {
+                    Filter::All => "all",
+                    Filter::Term(Term::Sth) => TERM_NAMES.short.id,
+                    Filter::Term(Term::Lth) => TERM_NAMES.long.id,
+                    _ => return Ok(()),
+                };
 
-            let date = Date::from(dateindex);
-            let dir = states_path.join(format!("utxo_{cohort_name}_cost_basis/by_date"));
-            fs::create_dir_all(&dir)?;
-            let path = dir.join(date.to_string());
-            fs::write(
-                path,
-                CostBasisDistribution::serialize_iter(merged.into_iter())?,
-            )?;
+                let date = Date::from(day1);
+                let dir = states_path.join(format!("utxo_{cohort_name}_cost_basis/by_date"));
+                fs::create_dir_all(&dir)?;
+                let path = dir.join(date.to_string());
+                fs::write(
+                    path,
+                    CostBasisDistribution::serialize_iter(merged.into_iter())?,
+                )?;
+            }
 
             Ok(())
         })
     }
 
     /// Validate computed versions for all cohorts (separate and aggregate).
-    pub fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+    pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         // Validate separate cohorts
         self.par_iter_separate_mut()
             .try_for_each(|v| v.validate_computed_versions(base_version))?;
@@ -595,15 +561,14 @@ impl UTXOCohorts {
     ///
     /// Uses split points to efficiently compute regret per cohort.
     /// All 21 cohorts are computed in parallel, then pushed sequentially.
-    /// Called once per day when dateindex changes.
-    pub fn compute_and_push_peak_regret(
+    /// Called once per day when day1 changes.
+    pub(crate) fn compute_and_push_peak_regret(
         &mut self,
         chain_state: &[BlockState],
         current_height: Height,
         current_timestamp: Timestamp,
-        spot: CentsUnsigned,
+        spot: Cents,
         price_range_max: &PriceRangeMax,
-        dateindex: DateIndex,
     ) -> Result<()> {
         const FIRST_PRICE_HEIGHT: usize = 68_195;
 
@@ -613,12 +578,10 @@ impl UTXOCohorts {
         // Early return: push zeros if no price data yet
         if end_height <= start_height {
             for cohort in self.0.age_range.iter_mut() {
-                if let Some(unrealized) = cohort.metrics.unrealized.as_mut()
-                    && let Some(peak_regret) = unrealized.peak_regret.as_mut()
-                {
+                if let Some(peak_regret) = cohort.metrics.unrealized.peak_regret.as_mut() {
                     peak_regret
-                        .dateindex
-                        .truncate_push(dateindex, Dollars::ZERO)?;
+                        .height
+                        .truncate_push(current_height, Dollars::ZERO)?;
                 }
             }
             return Ok(());
@@ -655,20 +618,16 @@ impl UTXOCohorts {
                 }
 
                 let mut regret: u128 = 0;
-                for h in effective_start..range_end {
-                    let block = &chain_state[h];
+                for (i, block) in chain_state[effective_start..range_end].iter().enumerate() {
                     let supply = block.supply.value;
 
                     if supply.is_zero() {
                         continue;
                     }
 
-                    let cost_basis = match block.price {
-                        Some(p) => p,
-                        None => continue,
-                    };
+                    let cost_basis = block.price;
 
-                    let receive_height = Height::from(h);
+                    let receive_height = Height::from(effective_start + i);
                     let peak = price_range_max.max_between(receive_height, current_height);
                     let peak_u128 = peak.as_u128();
                     let cost_u128 = cost_basis.as_u128();
@@ -681,7 +640,7 @@ impl UTXOCohorts {
                     };
                 }
 
-                CentsUnsigned::new((regret / Sats::ONE_BTC_U128) as u64).to_dollars()
+                Cents::new((regret / Sats::ONE_BTC_U128) as u64).to_dollars()
             })
             .collect::<Vec<_>>()
             .try_into()
@@ -689,10 +648,8 @@ impl UTXOCohorts {
 
         // Push results to cohorts
         for (cohort, regret) in self.0.age_range.iter_mut().zip(regrets) {
-            if let Some(unrealized) = cohort.metrics.unrealized.as_mut()
-                && let Some(peak_regret) = unrealized.peak_regret.as_mut()
-            {
-                peak_regret.dateindex.truncate_push(dateindex, regret)?;
+            if let Some(peak_regret) = cohort.metrics.unrealized.peak_regret.as_mut() {
+                peak_regret.height.truncate_push(current_height, regret)?;
             }
         }
 

@@ -1,15 +1,13 @@
 use std::{
     env, fs,
     path::Path,
-    thread::{self, sleep},
+    thread::sleep,
     time::{Duration, Instant},
 };
 
 use brk_alloc::Mimalloc;
 use brk_bencher::Bencher;
 use brk_computer::Computer;
-use brk_error::Result;
-use brk_fetcher::{Fetcher, PriceSource};
 use brk_indexer::Indexer;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
@@ -20,17 +18,6 @@ use vecdb::Exit;
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    // Can't increase main thread's stack size, thus we need to use another thread
-    thread::Builder::new()
-        .stack_size(512 * 1024 * 1024)
-        .spawn(run)?
-        .join()
-        .unwrap()?;
-
-    Ok(())
-}
-
-fn run() -> Result<()> {
     let bitcoin_dir = Client::default_bitcoin_path();
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
 
@@ -60,10 +47,6 @@ fn run() -> Result<()> {
 
     let blocks = Blocks::new(&client, &reader);
 
-    let fetcher = Fetcher::import(None)?;
-
-    info!("Ping: {:?}", fetcher.brk.ping()?);
-
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
     // Pre-run indexer if too far behind, then drop and reimport to reduce memory
@@ -76,7 +59,7 @@ fn run() -> Result<()> {
         indexer = Indexer::forced_import(&outputs_dir)?;
     }
 
-    let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
+    let mut computer = Computer::forced_import(&outputs_dir, &indexer)?;
 
     loop {
         let i = Instant::now();

@@ -4,22 +4,22 @@ use brk_types::{
     EmptyOutputIndex, Height, OpReturnIndex, P2MSOutputIndex, TxIndex, UnknownOutputIndex, Version,
 };
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, WritableVec, ImportableVec, PcoVec, Stamp};
+use vecdb::{AnyStoredVec, Database, WritableVec, ImportableVec, PcoVec, Rw, Stamp, StorageMode};
 
 use crate::parallel_import;
 
-#[derive(Clone, Traversable)]
-pub struct ScriptsVecs {
+#[derive(Traversable)]
+pub struct ScriptsVecs<M: StorageMode = Rw> {
     // Height to first output index (per output type)
-    pub first_emptyoutputindex: PcoVec<Height, EmptyOutputIndex>,
-    pub first_opreturnindex: PcoVec<Height, OpReturnIndex>,
-    pub first_p2msoutputindex: PcoVec<Height, P2MSOutputIndex>,
-    pub first_unknownoutputindex: PcoVec<Height, UnknownOutputIndex>,
+    pub first_emptyoutputindex: M::Stored<PcoVec<Height, EmptyOutputIndex>>,
+    pub first_opreturnindex: M::Stored<PcoVec<Height, OpReturnIndex>>,
+    pub first_p2msoutputindex: M::Stored<PcoVec<Height, P2MSOutputIndex>>,
+    pub first_unknownoutputindex: M::Stored<PcoVec<Height, UnknownOutputIndex>>,
     // Output index to txindex (per output type)
-    pub empty_to_txindex: PcoVec<EmptyOutputIndex, TxIndex>,
-    pub opreturn_to_txindex: PcoVec<OpReturnIndex, TxIndex>,
-    pub p2ms_to_txindex: PcoVec<P2MSOutputIndex, TxIndex>,
-    pub unknown_to_txindex: PcoVec<UnknownOutputIndex, TxIndex>,
+    pub empty_to_txindex: M::Stored<PcoVec<EmptyOutputIndex, TxIndex>>,
+    pub opreturn_to_txindex: M::Stored<PcoVec<OpReturnIndex, TxIndex>>,
+    pub p2ms_to_txindex: M::Stored<PcoVec<P2MSOutputIndex, TxIndex>>,
+    pub unknown_to_txindex: M::Stored<PcoVec<UnknownOutputIndex, TxIndex>>,
 }
 
 impl ScriptsVecs {

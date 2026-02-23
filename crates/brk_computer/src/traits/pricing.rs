@@ -29,7 +29,7 @@ use brk_traversable::Traversable;
 /// | `Data` | Computer top-level | `PricingData` | `()` |
 /// | `PriceRef<'a>` | Function params | `&price::Vecs` | `()` |
 /// | `ComputedDollarsHeight` | Value wrappers (Height) | `ComputedFromHeight<Dollars>` | `()` |
-/// | `ComputedDollarsDateIndex` | Value wrappers (DateIndex) | `ComputedVecsDate<Dollars>` | `()` |
+/// | `ComputedDollarsDay1` | Value wrappers (Day1) | `ComputedVecsDate<Dollars>` | `()` |
 /// | `StdDevBandsUsd` | StdDev USD bands | `StdDevBandsUsdData` | `()` |
 /// | `RatioUsd` | Ratio USD variants | `RatioUsdData` | `()` |
 /// | `BasePriced` | Base metrics | `BasePricedData` | `()` |
@@ -50,8 +50,8 @@ pub trait Pricing: 'static + Clone + Send + Sync {
     /// Computed dollars with Height index
     type ComputedDollarsHeight: Clone + Send + Sync + Traversable;
 
-    /// Computed dollars with DateIndex index
-    type ComputedDollarsDateIndex: Clone + Send + Sync + Traversable;
+    /// Computed dollars with Day1 index
+    type ComputedDollarsDay1: Clone + Send + Sync + Traversable;
 
     // === Specialized structs ===
 
@@ -100,7 +100,7 @@ impl Pricing for Priced {
     type Data = ();
     type PriceRef<'a> = ();
     type ComputedDollarsHeight = ();
-    type ComputedDollarsDateIndex = ();
+    type ComputedDollarsDay1 = ();
     type StdDevBandsUsd = ();
     type RatioUsd = ();
     type BasePriced = ();
@@ -113,7 +113,7 @@ impl Pricing for Unpriced {
     type Data = ();
     type PriceRef<'a> = ();
     type ComputedDollarsHeight = ();
-    type ComputedDollarsDateIndex = ();
+    type ComputedDollarsDay1 = ();
     type StdDevBandsUsd = ();
     type RatioUsd = ();
     type BasePriced = ();

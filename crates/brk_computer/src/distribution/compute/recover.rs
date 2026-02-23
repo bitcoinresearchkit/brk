@@ -22,7 +22,7 @@ pub struct RecoveredState {
 /// Rolls back state vectors and imports cohort states.
 /// Validates that all rollbacks and imports are consistent.
 /// Returns Height::ZERO if any validation fails (triggers fresh start).
-pub fn recover_state(
+pub(crate) fn recover_state(
     height: Height,
     chain_state_rollback: vecdb::Result<Stamp>,
     any_address_indexes: &mut AnyAddressIndexesVecs,
@@ -98,7 +98,7 @@ pub fn recover_state(
 /// Reset all state for fresh start.
 ///
 /// Resets all state vectors and cohort states.
-pub fn reset_state(
+pub(crate) fn reset_state(
     any_address_indexes: &mut AnyAddressIndexesVecs,
     addresses_data: &mut AddressesDataVecs,
     utxo_cohorts: &mut UTXOCohorts,
@@ -125,7 +125,7 @@ pub fn reset_state(
 ///
 /// - `min_available`: minimum height we have data for across all stateful vecs
 /// - `resume_target`: the height we want to resume processing from
-pub fn determine_start_mode(min_available: Height, resume_target: Height) -> StartMode {
+pub(crate) fn determine_start_mode(min_available: Height, resume_target: Height) -> StartMode {
     // No data to resume from
     if resume_target.is_zero() {
         return StartMode::Fresh;

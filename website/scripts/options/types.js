@@ -56,13 +56,13 @@
  * @typedef {DotsBaselineSeriesBlueprint & FetchedAnySeriesOptions} FetchedDotsBaselineSeriesBlueprint
  * @typedef {AnySeriesBlueprint & FetchedAnySeriesOptions} AnyFetchedSeriesBlueprint
  *
- * Any pattern with dollars and sats sub-metrics (auto-expands to USD + sats)
- * @typedef {{ dollars: AnyMetricPattern, sats: AnyMetricPattern }} AnyPricePattern
+ * Any pattern with usd and sats sub-metrics (auto-expands to USD + sats)
+ * @typedef {{ usd: AnyMetricPattern, sats: AnyMetricPattern }} AnyPricePattern
  *
- * Any pattern with sats, bitcoin, and dollars sub-metrics (value patterns like stack)
- * @typedef {{ sats: AnyMetricPattern, bitcoin: AnyMetricPattern, dollars: AnyMetricPattern }} AnyValuePattern
+ * Any pattern with sats, btc, and usd sub-metrics (value patterns like stack)
+ * @typedef {{ sats: AnyMetricPattern, btc: AnyMetricPattern, usd: AnyMetricPattern }} AnyValuePattern
  *
- * Top pane price series - requires a price pattern with dollars/sats, auto-expands to USD + sats
+ * Top pane price series - requires a price pattern with usd/sats, auto-expands to USD + sats
  * @typedef {{ metric: AnyPricePattern }} FetchedPriceSeriesOptions
  * @typedef {LineSeriesBlueprint & FetchedPriceSeriesOptions} FetchedPriceSeriesBlueprint
  *

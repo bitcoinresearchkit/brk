@@ -18,7 +18,12 @@ use brk::query::Query;
 use brk::types::Height;
 ```
 
-Feature flags match crate names without the `brk_` prefix. Use `full` to enable all.
+Feature flags match crate names without the `brk_` prefix. Use `full` to enable all:
+
+```toml
+[dependencies]
+brk = { version = "0.1", features = ["full"] }
+```
 
 ## Crates
 

@@ -1,52 +1,56 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{Database, EagerVec, ImportableVec, IterableCloneableVec};
+use vecdb::{Database, ReadableCloneableVec};
 
 use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ComputedFromDateLast, LazyBinaryFromHeightAndDateLast, LazyFromDateLast,
-        PercentageDiffCloseDollars, PriceFromHeightAndDate, StoredU16ToYears,
+        ComputedFromHeightLast, LazyBinaryFromHeightLast, LazyHeightDerivedLast,
+        PercentageDiffDollars, PriceFromHeight, StoredU16ToYears,
     },
-    price,
+    prices,
 };
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        price: &price::Vecs,
+        prices: &prices::Vecs,
     ) -> Result<Self> {
-        let price_ath = PriceFromHeightAndDate::forced_import(db, "price_ath", version, indexes)?;
+        let price_ath = PriceFromHeight::forced_import(db, "price_ath", version, indexes)?;
 
-        let max_days_between_price_aths =
-            ComputedFromDateLast::forced_import(db, "max_days_between_price_aths", version, indexes)?;
-
-        let max_years_between_price_aths = LazyFromDateLast::from_computed::<StoredU16ToYears>(
-            "max_years_between_price_aths",
+        let max_days_between_price_aths = ComputedFromHeightLast::forced_import(
+            db,
+            "max_days_between_price_aths",
             version,
-            max_days_between_price_aths.dateindex.boxed_clone(),
-            &max_days_between_price_aths,
-        );
+            indexes,
+        )?;
+
+        let max_years_between_price_aths =
+            LazyHeightDerivedLast::from_computed::<StoredU16ToYears>(
+                "max_years_between_price_aths",
+                version,
+                &max_days_between_price_aths,
+            );
 
         let days_since_price_ath =
-            ComputedFromDateLast::forced_import(db, "days_since_price_ath", version, indexes)?;
+            ComputedFromHeightLast::forced_import(db, "days_since_price_ath", version, indexes)?;
 
-        let years_since_price_ath = LazyFromDateLast::from_computed::<StoredU16ToYears>(
+        let years_since_price_ath = LazyHeightDerivedLast::from_computed::<StoredU16ToYears>(
             "years_since_price_ath",
             version,
-            days_since_price_ath.dateindex.boxed_clone(),
             &days_since_price_ath,
         );
 
         let price_drawdown =
-            LazyBinaryFromHeightAndDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
+            LazyBinaryFromHeightLast::from_height_and_derived_last::<PercentageDiffDollars>(
                 "price_drawdown",
                 version,
-                EagerVec::forced_import(db, "price_drawdown", version)?,
-                &price.usd.split.close,
+                prices.usd.price.read_only_boxed_clone(),
+                price_ath.height.read_only_boxed_clone(),
+                &prices.usd.split.close,
                 &price_ath.rest,
             );
 

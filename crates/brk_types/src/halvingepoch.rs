@@ -116,7 +116,22 @@ impl std::fmt::Display for HalvingEpoch {
 
 impl Formattable for HalvingEpoch {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
+    }
+}
+
+impl From<f64> for HalvingEpoch {
+    #[inline]
+    fn from(value: f64) -> Self {
+        Self(value.round() as u8)
+    }
+}
+
+impl From<HalvingEpoch> for f64 {
+    #[inline]
+    fn from(value: HalvingEpoch) -> Self {
+        value.0 as f64
     }
 }

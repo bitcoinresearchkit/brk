@@ -10,7 +10,7 @@ use super::with_source::{EmptyAddressDataWithSource, FundedAddressDataWithSource
 ///
 /// Addresses are looked up in funded_cache first, then empty_cache.
 /// NOTE: This should be called AFTER merging parallel-fetched address data into funded_cache.
-pub fn update_tx_counts(
+pub(crate) fn update_tx_counts(
     funded_cache: &mut AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
     empty_cache: &mut AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
     mut txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>,

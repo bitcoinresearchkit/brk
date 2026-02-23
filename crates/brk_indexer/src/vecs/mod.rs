@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{AddressHash, Height, OutputType, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Stamp};
+use vecdb::{AnyStoredVec, Database, Rw, Stamp, StorageMode};
 
 const PAGE_SIZE: usize = 4096;
 
@@ -27,15 +27,16 @@ pub use transactions::*;
 
 use crate::Indexes;
 
-#[derive(Clone, Traversable)]
-pub struct Vecs {
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
+    #[traversable(skip)]
     db: Database,
-    pub blocks: BlocksVecs,
-    pub transactions: TransactionsVecs,
-    pub inputs: InputsVecs,
-    pub outputs: OutputsVecs,
-    pub addresses: AddressesVecs,
-    pub scripts: ScriptsVecs,
+    pub blocks: BlocksVecs<M>,
+    pub transactions: TransactionsVecs<M>,
+    pub inputs: InputsVecs<M>,
+    pub outputs: OutputsVecs<M>,
+    pub addresses: AddressesVecs<M>,
+    pub scripts: ScriptsVecs<M>,
 }
 
 impl Vecs {

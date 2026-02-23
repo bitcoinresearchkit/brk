@@ -10,7 +10,7 @@ import { Unit } from "../utils/units.js";
 /**
  * Create a price series for the top pane (auto-expands to USD + sats versions)
  * @param {Object} args
- * @param {AnyPricePattern} args.metric - Price pattern with dollars and sats
+ * @param {AnyPricePattern} args.metric - Price pattern with usd and sats
  * @param {string} args.name
  * @param {string} [args.key]
  * @param {LineStyle} [args.style]
@@ -417,13 +417,13 @@ export function fromStatsPattern({ pattern, unit, title = "" }) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export const distributionBtcSatsUsd = (source) => [
-  ...fromStatsPattern({ pattern: source.bitcoin, unit: Unit.btc }),
+  ...fromStatsPattern({ pattern: source.btc, unit: Unit.btc }),
   ...fromStatsPattern({ pattern: source.sats, unit: Unit.sats }),
-  ...fromStatsPattern({ pattern: source.dollars, unit: Unit.usd }),
+  ...fromStatsPattern({ pattern: source.usd, unit: Unit.usd }),
 ];
 
 /**
- * Create series from a SupplyPattern (sats/bitcoin/dollars, no sum/cumulative)
+ * Create series from a SupplyPattern (sats/btc/usd, no sum/cumulative)
  * @param {Object} args
  * @param {SupplyPattern} args.pattern
  * @param {string} args.title
@@ -433,7 +433,7 @@ export const distributionBtcSatsUsd = (source) => [
 export function fromSupplyPattern({ pattern, title, color }) {
   return [
     {
-      metric: pattern.bitcoin,
+      metric: pattern.btc,
       title,
       color,
       unit: Unit.btc,
@@ -445,7 +445,7 @@ export function fromSupplyPattern({ pattern, title, color }) {
       unit: Unit.sats,
     },
     {
-      metric: pattern.dollars,
+      metric: pattern.usd,
       title,
       color,
       unit: Unit.usd,
@@ -523,7 +523,7 @@ function distributionSeries(pattern, unit) {
 /**
  * Create btc/sats/usd series from metrics
  * @param {Object} args
- * @param {{ bitcoin: AnyMetricPattern, sats: AnyMetricPattern, dollars: AnyMetricPattern }} args.metrics
+ * @param {{ btc: AnyMetricPattern, sats: AnyMetricPattern, usd: AnyMetricPattern }} args.metrics
  * @param {string} args.name
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]
@@ -532,7 +532,7 @@ function distributionSeries(pattern, unit) {
 function btcSatsUsdSeries({ metrics, name, color, defaultActive }) {
   return [
     {
-      metric: metrics.bitcoin,
+      metric: metrics.btc,
       title: name,
       color,
       unit: Unit.btc,
@@ -546,7 +546,7 @@ function btcSatsUsdSeries({ metrics, name, color, defaultActive }) {
       defaultActive,
     },
     {
-      metric: metrics.dollars,
+      metric: metrics.usd,
       title: name,
       color,
       unit: Unit.usd,
@@ -694,9 +694,9 @@ export function chartsFromValue({ pattern, title, color }) {
       title,
       bottom: btcSatsUsdSeries({
         metrics: {
-          bitcoin: pattern.bitcoin.sum,
+          btc: pattern.btc.sum,
           sats: pattern.sats.sum,
-          dollars: pattern.dollars.sum,
+          usd: pattern.usd.sum,
         },
         name: "sum",
         color,
@@ -707,9 +707,9 @@ export function chartsFromValue({ pattern, title, color }) {
       title: `${title} (Total)`,
       bottom: btcSatsUsdSeries({
         metrics: {
-          bitcoin: pattern.bitcoin.cumulative,
+          btc: pattern.btc.cumulative,
           sats: pattern.sats.cumulative,
-          dollars: pattern.dollars.cumulative,
+          usd: pattern.usd.cumulative,
         },
         name: "all-time",
         color,
@@ -733,17 +733,17 @@ export function chartsFromValueFull({ pattern, title }) {
       bottom: [
         ...btcSatsUsdSeries({
           metrics: {
-            bitcoin: pattern.bitcoin.base,
+            btc: pattern.btc.base,
             sats: pattern.sats.base,
-            dollars: pattern.dollars.base,
+            usd: pattern.usd.base,
           },
           name: "sum",
         }),
         ...btcSatsUsdSeries({
           metrics: {
-            bitcoin: pattern.bitcoin.sum,
+            btc: pattern.btc.sum,
             sats: pattern.sats.sum,
-            dollars: pattern.dollars.sum,
+            usd: pattern.usd.sum,
           },
           name: "sum",
         }),
@@ -753,9 +753,9 @@ export function chartsFromValueFull({ pattern, title }) {
       name: "Distribution",
       title: `${title} Distribution`,
       bottom: [
-        ...distributionSeries(pattern.bitcoin, Unit.btc),
+        ...distributionSeries(pattern.btc, Unit.btc),
         ...distributionSeries(pattern.sats, Unit.sats),
-        ...distributionSeries(pattern.dollars, Unit.usd),
+        ...distributionSeries(pattern.usd, Unit.usd),
       ],
     },
     {
@@ -763,9 +763,9 @@ export function chartsFromValueFull({ pattern, title }) {
       title: `${title} (Total)`,
       bottom: btcSatsUsdSeries({
         metrics: {
-          bitcoin: pattern.bitcoin.cumulative,
+          btc: pattern.btc.cumulative,
           sats: pattern.sats.cumulative,
-          dollars: pattern.dollars.cumulative,
+          usd: pattern.usd.cumulative,
         },
         name: "all-time",
       }),

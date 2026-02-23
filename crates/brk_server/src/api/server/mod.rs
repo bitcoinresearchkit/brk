@@ -3,7 +3,7 @@ use std::{borrow::Cow, fs, path};
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{extract::State, http::{HeaderMap, Uri}};
 use brk_types::{DiskUsage, Health, Height, SyncStatus};
-use vecdb::GenericStoredVec;
+use vecdb::ReadableVec;
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
 
@@ -31,7 +31,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                                 .vecs
                                 .blocks
                                 .timestamp
-                                .read_once(indexed_height)?;
+                                .collect_one(indexed_height).unwrap();
 
                             Ok(SyncStatus {
                                 indexed_height,

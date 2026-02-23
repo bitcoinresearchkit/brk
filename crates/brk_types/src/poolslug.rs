@@ -159,6 +159,7 @@ pub enum PoolSlug {
     Unomp,
     Patels,
     GoGreenLight,
+    BitcoinIndiaPool,
     EkanemBtc,
     Canoe,
     Tiger,
@@ -167,41 +168,36 @@ pub enum PoolSlug {
     SecPool,
     Ocean,
     WhitePool,
+    Wiz,
+    #[schemars(skip)]
+    Dummy145,
+    #[schemars(skip)]
+    Dummy146,
     Wk057,
     FutureBitApolloSolo,
+    #[schemars(skip)]
+    Dummy149,
+    #[schemars(skip)]
+    Dummy150,
     CarbonNegative,
     PortlandHodl,
     Phoenix,
     Neopool,
     MaxiPool,
+    #[schemars(skip)]
+    Dummy156,
     BitFuFuPool,
-    LuckyPool,
+    GDPool,
     MiningDutch,
     PublicPool,
     MiningSquared,
     InnopolisTech,
-    BtcLab,
-    Parasite,
-    #[schemars(skip)]
-    Dummy158,
-    #[schemars(skip)]
-    Dummy159,
-    #[schemars(skip)]
-    Dummy160,
-    #[schemars(skip)]
-    Dummy161,
-    #[schemars(skip)]
-    Dummy162,
     #[schemars(skip)]
     Dummy163,
-    #[schemars(skip)]
-    Dummy164,
-    #[schemars(skip)]
-    Dummy165,
-    #[schemars(skip)]
-    Dummy166,
-    #[schemars(skip)]
-    Dummy167,
+    BtcLab,
+    Parasite,
+    RedRockPool,
+    Est3lar,
     #[schemars(skip)]
     Dummy168,
     #[schemars(skip)]
@@ -382,8 +378,9 @@ pub enum PoolSlug {
 
 impl Formattable for PoolSlug {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }
 

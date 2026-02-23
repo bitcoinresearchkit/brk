@@ -5,7 +5,7 @@ use brk_traversable::Traversable;
 use brk_types::Version;
 use vecdb::{Database, PAGE_SIZE};
 
-use crate::{distribution, indexes, price, transactions};
+use crate::{distribution, indexes, prices, transactions};
 
 use super::{
     AthVecs, DcaVecs, IndicatorsVecs, LookbackVecs, MovingAverageVecs, RangeVecs, ReturnsVecs,
@@ -13,11 +13,11 @@ use super::{
 };
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
         distribution: &distribution::Vecs,
         transactions: &transactions::Vecs,
     ) -> Result<Self> {
@@ -26,20 +26,17 @@ impl Vecs {
 
         let version = parent_version;
 
-        let price = price.expect("price required for market");
-
-        let ath = AthVecs::forced_import(&db, version, indexes, price)?;
+        let ath = AthVecs::forced_import(&db, version, indexes, prices)?;
         let lookback = LookbackVecs::forced_import(&db, version, indexes)?;
-        let returns = ReturnsVecs::forced_import(&db, version, indexes, price, &lookback)?;
+        let returns = ReturnsVecs::forced_import(&db, version, indexes, prices, &lookback)?;
         let volatility = VolatilityVecs::forced_import(version, &returns);
         let range = RangeVecs::forced_import(&db, version, indexes)?;
         let moving_average = MovingAverageVecs::forced_import(&db, version, indexes)?;
-        let dca = DcaVecs::forced_import(&db, version, indexes, price, &lookback)?;
+        let dca = DcaVecs::forced_import(&db, version, indexes, prices, &lookback)?;
         let indicators = IndicatorsVecs::forced_import(
             &db,
             version,
             indexes,
-            true,
             distribution,
             transactions,
             &moving_average,

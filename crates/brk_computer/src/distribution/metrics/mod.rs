@@ -19,38 +19,38 @@ pub use unrealized::*;
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, Version};
+use brk_types::{Cents, Dollars, Height, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Exit, IterableVec};
+use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{ComputeIndexes, distribution::state::CohortState, indexes, price as price_vecs};
+use crate::{ComputeIndexes, blocks, distribution::state::CohortState, prices};
 
 /// All metrics for a cohort, organized by category.
-#[derive(Clone, Traversable)]
-pub struct CohortMetrics {
+#[derive(Traversable)]
+pub struct CohortMetrics<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub filter: Filter,
 
     /// Supply metrics (always computed)
-    pub supply: SupplyMetrics,
+    pub supply: Box<SupplyMetrics<M>>,
 
     /// Output metrics - UTXO count (always computed)
-    pub outputs: OutputsMetrics,
+    pub outputs: Box<OutputsMetrics<M>>,
 
     /// Transaction activity (always computed)
-    pub activity: ActivityMetrics,
+    pub activity: Box<ActivityMetrics<M>>,
 
-    /// Realized cap and profit/loss (requires price data)
-    pub realized: Option<RealizedMetrics>,
+    /// Realized cap and profit/loss
+    pub realized: Box<RealizedMetrics<M>>,
 
-    /// Unrealized profit/loss (requires price data)
-    pub unrealized: Option<UnrealizedMetrics>,
+    /// Unrealized profit/loss
+    pub unrealized: Box<UnrealizedMetrics<M>>,
 
-    /// Cost basis metrics (requires price data)
-    pub cost_basis: Option<CostBasisMetrics>,
+    /// Cost basis metrics
+    pub cost_basis: Box<CostBasisMetrics<M>>,
 
-    /// Relative metrics (requires price data)
-    pub relative: Option<RelativeMetrics>,
+    /// Relative metrics (not all cohorts compute this)
+    pub relative: Option<Box<RelativeMetrics>>,
 }
 
 impl CohortMetrics {
@@ -59,83 +59,51 @@ impl CohortMetrics {
     /// `all_supply` is the supply metrics from the "all" cohort, used as global
     /// sources for `*_rel_to_market_cap` and `*_rel_to_circulating_supply` ratios.
     /// Pass `None` for the "all" cohort itself.
-    pub fn forced_import(cfg: &ImportConfig, all_supply: Option<&SupplyMetrics>) -> Result<Self> {
-        let compute_dollars = cfg.compute_dollars();
-
+    pub(crate) fn forced_import(cfg: &ImportConfig, all_supply: Option<&SupplyMetrics>) -> Result<Self> {
         let supply = SupplyMetrics::forced_import(cfg)?;
         let outputs = OutputsMetrics::forced_import(cfg)?;
 
-        let unrealized = compute_dollars
-            .then(|| UnrealizedMetrics::forced_import(cfg))
-            .transpose()?;
+        let unrealized = UnrealizedMetrics::forced_import(cfg)?;
+        let realized = RealizedMetrics::forced_import(cfg)?;
 
-        let realized = compute_dollars
-            .then(|| RealizedMetrics::forced_import(cfg))
-            .transpose()?;
-
-        let relative = (cfg.compute_relative() && unrealized.is_some())
+        let relative = cfg
+            .compute_relative()
             .then(|| {
                 RelativeMetrics::forced_import(
                     cfg,
-                    unrealized.as_ref().unwrap(),
+                    &unrealized,
                     &supply,
                     all_supply,
-                    realized.as_ref(),
+                    Some(&realized),
                 )
             })
             .transpose()?;
 
         Ok(Self {
             filter: cfg.filter.clone(),
-            supply,
-            outputs,
-            activity: ActivityMetrics::forced_import(cfg)?,
-            realized,
-            cost_basis: compute_dollars
-                .then(|| CostBasisMetrics::forced_import(cfg))
-                .transpose()?,
-            relative,
-            unrealized,
+            supply: Box::new(supply),
+            outputs: Box::new(outputs),
+            activity: Box::new(ActivityMetrics::forced_import(cfg)?),
+            realized: Box::new(realized),
+            cost_basis: Box::new(CostBasisMetrics::forced_import(cfg)?),
+            relative: relative.map(Box::new),
+            unrealized: Box::new(unrealized),
         })
     }
 
     /// Get minimum length across height-indexed vectors written in block loop.
-    pub fn min_stateful_height_len(&self) -> usize {
-        let mut min = self
-            .supply
+    pub(crate) fn min_stateful_height_len(&self) -> usize {
+        self.supply
             .min_len()
             .min(self.outputs.min_len())
-            .min(self.activity.min_len());
-
-        if let Some(realized) = &self.realized {
-            min = min.min(realized.min_stateful_height_len());
-        }
-        if let Some(unrealized) = &self.unrealized {
-            min = min.min(unrealized.min_stateful_height_len());
-        }
-        if let Some(cost_basis) = &self.cost_basis {
-            min = min.min(cost_basis.min_stateful_height_len());
-        }
-
-        min
-    }
-
-    /// Get minimum length across dateindex-indexed vectors written in block loop.
-    pub fn min_stateful_dateindex_len(&self) -> usize {
-        let mut min = usize::MAX;
-
-        if let Some(unrealized) = &self.unrealized {
-            min = min.min(unrealized.min_stateful_dateindex_len());
-        }
-        if let Some(cost_basis) = &self.cost_basis {
-            min = min.min(cost_basis.min_stateful_dateindex_len());
-        }
-
-        min
+            .min(self.activity.min_len())
+            .min(self.realized.min_stateful_height_len())
+            .min(self.unrealized.min_stateful_height_len())
+            .min(self.cost_basis.min_stateful_height_len())
     }
 
     /// Push state values to height-indexed vectors.
-    pub fn truncate_push(&mut self, height: Height, state: &CohortState) -> Result<()> {
+    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState) -> Result<()> {
         self.supply.truncate_push(height, state.supply.value)?;
         self.outputs
             .truncate_push(height, state.supply.utxo_count)?;
@@ -146,99 +114,61 @@ impl CohortMetrics {
             state.satdays_destroyed,
         )?;
 
-        if let (Some(realized), Some(realized_state)) =
-            (self.realized.as_mut(), state.realized.as_ref())
-        {
-            realized.truncate_push(height, realized_state)?;
-        }
+        self.realized.truncate_push(height, &state.realized)?;
 
         Ok(())
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
 
         vecs.extend(self.supply.par_iter_mut().collect::<Vec<_>>());
         vecs.extend(self.outputs.par_iter_mut().collect::<Vec<_>>());
         vecs.extend(self.activity.par_iter_mut().collect::<Vec<_>>());
-
-        if let Some(realized) = self.realized.as_mut() {
-            vecs.extend(realized.par_iter_mut().collect::<Vec<_>>());
-        }
-
-        if let Some(unrealized) = self.unrealized.as_mut() {
-            vecs.extend(unrealized.par_iter_mut().collect::<Vec<_>>());
-        }
-
-        if let Some(cost_basis) = self.cost_basis.as_mut() {
-            vecs.extend(cost_basis.par_iter_mut().collect::<Vec<_>>());
-        }
+        vecs.extend(self.realized.par_iter_mut().collect::<Vec<_>>());
+        vecs.extend(self.unrealized.par_iter_mut().collect::<Vec<_>>());
+        vecs.extend(self.cost_basis.par_iter_mut().collect::<Vec<_>>());
 
         vecs.into_par_iter()
     }
 
     /// Validate computed versions against base version.
-    pub fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+    pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.supply.validate_computed_versions(base_version)?;
         self.activity.validate_computed_versions(base_version)?;
-
-        if let Some(realized) = self.realized.as_mut() {
-            realized.validate_computed_versions(base_version)?;
-        }
-
-        if let Some(cost_basis) = self.cost_basis.as_mut() {
-            cost_basis.validate_computed_versions(base_version)?;
-        }
+        self.realized.validate_computed_versions(base_version)?;
+        self.cost_basis.validate_computed_versions(base_version)?;
 
         Ok(())
     }
 
-    /// Compute and push unrealized states.
-    /// Percentiles are only computed at date boundaries (when dateindex is Some).
-    pub fn compute_then_truncate_push_unrealized_states(
+    /// Compute and push unrealized states and percentiles.
+    pub(crate) fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
-        height_price: Option<CentsUnsigned>,
-        dateindex: Option<DateIndex>,
-        date_price: Option<Option<CentsUnsigned>>,
+        height_price: Cents,
         state: &mut CohortState,
     ) -> Result<()> {
         // Apply pending updates before reading
         state.apply_pending();
 
-        if let (Some(unrealized), Some(cost_basis), Some(height_price)) = (
-            self.unrealized.as_mut(),
-            self.cost_basis.as_mut(),
-            height_price,
-        ) {
-            cost_basis.truncate_push_minmax(height, state)?;
+        self.cost_basis.truncate_push_minmax(height, state)?;
 
-            let (height_unrealized_state, date_unrealized_state) =
-                state.compute_unrealized_states(height_price, date_price.unwrap());
+        let (height_unrealized_state, _) = state.compute_unrealized_states(height_price, None);
 
-            unrealized.truncate_push(
-                height,
-                dateindex,
-                &height_unrealized_state,
-                date_unrealized_state.as_ref(),
-            )?;
+        self.unrealized
+            .truncate_push(height, &height_unrealized_state)?;
 
-            // Only compute expensive percentiles at date boundaries (~144x reduction)
-            if let Some(dateindex) = dateindex {
-                let spot = date_price
-                    .unwrap()
-                    .map(|c| c.to_dollars())
-                    .unwrap_or(Dollars::NAN);
-                cost_basis.truncate_push_percentiles(dateindex, state, spot)?;
-            }
-        }
+        let spot = height_price.to_dollars();
+        self.cost_basis
+            .truncate_push_percentiles(height, state, spot)?;
 
         Ok(())
     }
 
     /// Compute aggregate cohort values from separate cohorts.
-    pub fn compute_from_stateful(
+    pub(crate) fn compute_from_stateful(
         &mut self,
         starting_indexes: &ComputeIndexes,
         others: &[&Self],
@@ -246,52 +176,35 @@ impl CohortMetrics {
     ) -> Result<()> {
         self.supply.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| &v.supply).collect::<Vec<_>>(),
+            &others.iter().map(|v| &*v.supply).collect::<Vec<_>>(),
             exit,
         )?;
         self.outputs.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| &v.outputs).collect::<Vec<_>>(),
+            &others.iter().map(|v| &*v.outputs).collect::<Vec<_>>(),
             exit,
         )?;
         self.activity.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| &v.activity).collect::<Vec<_>>(),
+            &others.iter().map(|v| &*v.activity).collect::<Vec<_>>(),
             exit,
         )?;
 
-        if let Some(realized) = self.realized.as_mut() {
-            realized.compute_from_stateful(
-                starting_indexes,
-                &others
-                    .iter()
-                    .filter_map(|v| v.realized.as_ref())
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
-        }
-
-        if let Some(unrealized) = self.unrealized.as_mut() {
-            unrealized.compute_from_stateful(
-                starting_indexes,
-                &others
-                    .iter()
-                    .filter_map(|v| v.unrealized.as_ref())
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
-        }
-
-        if let Some(cost_basis) = self.cost_basis.as_mut() {
-            cost_basis.compute_from_stateful(
-                starting_indexes,
-                &others
-                    .iter()
-                    .filter_map(|v| v.cost_basis.as_ref())
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
-        }
+        self.realized.compute_from_stateful(
+            starting_indexes,
+            &others.iter().map(|v| &*v.realized).collect::<Vec<_>>(),
+            exit,
+        )?;
+        self.unrealized.compute_from_stateful(
+            starting_indexes,
+            &others.iter().map(|v| &*v.unrealized).collect::<Vec<_>>(),
+            exit,
+        )?;
+        self.cost_basis.compute_from_stateful(
+            starting_indexes,
+            &others.iter().map(|v| &*v.cost_basis).collect::<Vec<_>>(),
+            exit,
+        )?;
 
         Ok(())
     }
@@ -302,115 +215,80 @@ impl CohortMetrics {
     /// the range of components due to asymmetric weighting. This computes net_sentiment
     /// as a proper weighted average using realized_cap as weight.
     ///
-    /// Only computes height; dateindex derivation is done separately via compute_net_sentiment_rest.
-    pub fn compute_net_sentiment_from_others(
+    /// Only computes height; day1 derivation is done separately via compute_net_sentiment_rest.
+    pub(crate) fn compute_net_sentiment_from_others(
         &mut self,
         starting_indexes: &ComputeIndexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        let Some(unrealized) = self.unrealized.as_mut() else {
-            return Ok(());
-        };
-
         let weights: Vec<_> = others
             .iter()
-            .filter_map(|o| Some(&o.realized.as_ref()?.realized_cap.height))
+            .map(|o| &o.realized.realized_cap.height)
             .collect();
         let values: Vec<_> = others
             .iter()
-            .filter_map(|o| Some(&o.unrealized.as_ref()?.net_sentiment.height))
+            .map(|o| &o.unrealized.net_sentiment.height)
             .collect();
 
-        if weights.len() != others.len() || values.len() != others.len() {
-            return Ok(());
-        }
-
-        Ok(unrealized
+        self.unrealized
             .net_sentiment
             .height
-            .compute_weighted_average_of_others(starting_indexes.height, &weights, &values, exit)?)
+            .compute_weighted_average_of_others(starting_indexes.height, &weights, &values, exit)?;
+
+        Ok(())
     }
 
     /// First phase of computed metrics (indexes from height).
-    pub fn compute_rest_part1(
+    pub(crate) fn compute_rest_part1(
         &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price_vecs::Vecs>,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.supply
-            .compute_rest_part1(indexes, starting_indexes, exit)?;
-        self.outputs.compute_rest(indexes, starting_indexes, exit)?;
-        self.activity
-            .compute_rest_part1(indexes, starting_indexes, exit)?;
+        self.supply.compute_rest_part1(blocks, starting_indexes, exit)?;
+        self.outputs.compute_rest(blocks, starting_indexes, exit)?;
+        self.activity.compute_rest_part1(blocks, starting_indexes, exit)?;
 
-        if let Some(realized) = self.realized.as_mut() {
-            realized.compute_rest_part1(indexes, starting_indexes, exit)?;
-        }
+        self.realized.compute_rest_part1(starting_indexes, exit)?;
 
-        if let Some(unrealized) = self.unrealized.as_mut() {
-            unrealized.compute_rest(indexes, price, starting_indexes, exit)?;
-        }
-
-        if let Some(cost_basis) = self.cost_basis.as_mut() {
-            cost_basis.compute_rest_part1(indexes, starting_indexes, exit)?;
-        }
+        self.unrealized
+            .compute_rest(prices, starting_indexes, exit)?;
 
         Ok(())
     }
 
     /// Second phase of computed metrics (ratios, relative values).
-    #[allow(clippy::too_many_arguments)]
-    pub fn compute_rest_part2(
+    pub(crate) fn compute_rest_part2(
         &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price_vecs::Vecs>,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
-        height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
-        dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
+        height_to_market_cap: Option<&impl ReadableVec<Height, Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
-        if let Some(realized) = self.realized.as_mut() {
-            realized.compute_rest_part2(
-                indexes,
-                price,
-                starting_indexes,
-                &self.supply.total.bitcoin.height,
-                height_to_market_cap,
-                dateindex_to_market_cap,
-                exit,
-            )?;
-        }
+        self.realized.compute_rest_part2(
+            blocks,
+            prices,
+            starting_indexes,
+            &self.supply.total.btc.height,
+            height_to_market_cap,
+            exit,
+        )?;
 
         Ok(())
     }
 
     /// Compute net_sentiment.height for separate cohorts (greed - pain).
     /// Called only for separate cohorts; aggregates compute via weighted average in compute_from_stateful.
-    pub fn compute_net_sentiment_height(
+    pub(crate) fn compute_net_sentiment_height(
         &mut self,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        if let Some(unrealized) = self.unrealized.as_mut() {
-            unrealized.compute_net_sentiment_height(starting_indexes, exit)?;
-        }
-        Ok(())
-    }
-
-    /// Compute net_sentiment dateindex derivation from height.
-    /// Called for ALL cohorts after height is computed.
-    pub fn compute_net_sentiment_rest(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        if let Some(unrealized) = self.unrealized.as_mut() {
-            unrealized.compute_net_sentiment_rest(indexes, starting_indexes, exit)?;
-        }
+        self.unrealized
+            .compute_net_sentiment_height(starting_indexes, exit)?;
         Ok(())
     }
 }

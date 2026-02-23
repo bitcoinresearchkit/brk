@@ -3,7 +3,7 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
 use schemars::JsonSchema;
-use vecdb::{BinaryTransform, IterableBoxedVec, LazyVecFrom2, VecIndex};
+use vecdb::{BinaryTransform, ReadableBoxedVec, LazyVecFrom2, VecIndex};
 
 use crate::internal::{ComputedVecValue, Percentiles};
 
@@ -29,11 +29,11 @@ where
     S1T: ComputedVecValue + JsonSchema,
     S2T: ComputedVecValue + JsonSchema,
 {
-    pub fn from_percentiles<F: BinaryTransform<S1T, S2T, T>>(
+    pub(crate) fn from_percentiles<F: BinaryTransform<S1T, S2T, T>>(
         name: &str,
         version: Version,
         source: &Percentiles<I, S1T>,
-        source2: IterableBoxedVec<I, S2T>,
+        source2: ReadableBoxedVec<I, S2T>,
     ) -> Self {
         Self {
             pct10: LazyVecFrom2::transformed::<F>(

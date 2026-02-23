@@ -1,6 +1,6 @@
 use brk_error::{Error, Result};
 use brk_types::{BlockHash, Height, Transaction, TxIndex, Txid};
-use vecdb::{AnyVec, GenericStoredVec, TypedVecIterator};
+use vecdb::{AnyVec, ReadableVec};
 
 use super::BLOCK_TXS_PAGE_SIZE;
 use crate::Query;
@@ -31,26 +31,22 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let first_txindex = indexer.vecs.transactions.first_txindex.read_once(height)?;
+        let first_txindex = indexer.vecs.transactions.first_txindex.collect_one(height).unwrap();
         let next_first_txindex = indexer
             .vecs
             .transactions
             .first_txindex
-            .read_once(height.incremented())
-            .unwrap_or_else(|_| TxIndex::from(indexer.vecs.transactions.txid.len()));
+            .collect_one(height.incremented())
+            .unwrap_or_else(|| TxIndex::from(indexer.vecs.transactions.txid.len()));
 
         let first: usize = first_txindex.into();
         let next: usize = next_first_txindex.into();
-        let count = next - first;
 
         let txids: Vec<Txid> = indexer
             .vecs
             .transactions
             .txid
-            .iter()?
-            .skip(first)
-            .take(count)
-            .collect();
+            .collect_range_at(first, next);
 
         Ok(txids)
     }
@@ -67,13 +63,13 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let first_txindex = indexer.vecs.transactions.first_txindex.read_once(height)?;
+        let first_txindex = indexer.vecs.transactions.first_txindex.collect_one(height).unwrap();
         let next_first_txindex = indexer
             .vecs
             .transactions
             .first_txindex
-            .read_once(height.incremented())
-            .unwrap_or_else(|_| TxIndex::from(indexer.vecs.transactions.txid.len()));
+            .collect_one(height.incremented())
+            .unwrap_or_else(|| TxIndex::from(indexer.vecs.transactions.txid.len()));
 
         let first: usize = first_txindex.into();
         let next: usize = next_first_txindex.into();
@@ -104,13 +100,13 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let first_txindex = indexer.vecs.transactions.first_txindex.read_once(height)?;
+        let first_txindex = indexer.vecs.transactions.first_txindex.collect_one(height).unwrap();
         let next_first_txindex = indexer
             .vecs
             .transactions
             .first_txindex
-            .read_once(height.incremented())
-            .unwrap_or_else(|_| TxIndex::from(indexer.vecs.transactions.txid.len()));
+            .collect_one(height.incremented())
+            .unwrap_or_else(|| TxIndex::from(indexer.vecs.transactions.txid.len()));
 
         let first: usize = first_txindex.into();
         let next: usize = next_first_txindex.into();
@@ -120,8 +116,8 @@ impl Query {
             return Err(Error::OutOfRange("Transaction index out of range".into()));
         }
 
-        let txindex = TxIndex::from(first + index);
-        let txid = indexer.vecs.transactions.txid.iter()?.get_unwrap(txindex);
+        let txindex = first + index;
+        let txid = indexer.vecs.transactions.txid.reader().get(txindex);
 
         Ok(txid)
     }

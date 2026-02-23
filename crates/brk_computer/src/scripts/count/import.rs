@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{Database, IterableCloneableVec};
+use vecdb::{Database, ReadableCloneableVec};
 
 use super::Vecs;
 use crate::{
@@ -10,7 +10,7 @@ use crate::{
 };
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
@@ -31,20 +31,20 @@ impl Vecs {
 
         // Adoption ratios (lazy)
         // Uses outputs.count.count as denominator (total output count)
-        // At height level: per-block ratio; at dateindex level: sum-based ratio (% of new outputs)
+        // At height level: per-block ratio; at day1 level: sum-based ratio (% of new outputs)
         let taproot_adoption = LazyBinaryFromHeightFull::from_height_and_txindex::<PercentageU64F32>(
             "taproot_adoption",
             version,
-            p2tr.height.boxed_clone(),
-            outputs.count.total_count.height.sum_cum.sum.0.boxed_clone(),
+            p2tr.height.read_only_boxed_clone(),
+            outputs.count.total_count.height.sum_cum.sum.0.read_only_boxed_clone(),
             &p2tr,
             &outputs.count.total_count,
         );
         let segwit_adoption = LazyBinaryFromHeightFull::from_height_and_txindex::<PercentageU64F32>(
             "segwit_adoption",
             version,
-            segwit.height.boxed_clone(),
-            outputs.count.total_count.height.sum_cum.sum.0.boxed_clone(),
+            segwit.height.read_only_boxed_clone(),
+            outputs.count.total_count.height.sum_cum.sum.0.read_only_boxed_clone(),
             &segwit,
             &outputs.count.total_count,
         );

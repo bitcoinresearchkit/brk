@@ -167,7 +167,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     .summary("Get supported indexes for a metric")
                     .description(
                         "Returns the list of indexes supported by the specified metric. \
-                        For example, `realized_price` might be available on dateindex, weekindex, and monthindex."
+                        For example, `realized_price` might be available on day1, week1, and month1."
                     )
                     .ok_response::<Vec<Index>>()
                     .not_modified()
@@ -262,7 +262,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     .description(
                         "**DEPRECATED** - Use `/api/metric/{metric}/{index}` instead.\n\n\
                         Sunset date: 2027-01-01. May be removed earlier in case of abuse.\n\n\
-                        Legacy endpoint for querying metrics by variant path (e.g., `dateindex_to_price`). \
+                        Legacy endpoint for querying metrics by variant path (e.g., `day1_to_price`). \
                         Returns raw data without the MetricData wrapper."
                     )
                     .deprecated()

@@ -1,11 +1,11 @@
-//! Lazy stats aggregate pattern (average, min, max, sum, cumulative).
+//! Lazy full stats aggregate (distribution + sum + cumulative).
 
 use brk_traversable::Traversable;
-use brk_types::Version;
+use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{FromCoarserIndex, IterableBoxedVec, VecIndex, VecValue};
+use vecdb::{FromCoarserIndex, ReadableBoxedVec, VecIndex, VecValue};
 
-use super::{LazyAverage, LazyCumulative, LazyMax, LazyMin, LazySum};
+use super::{LazyAggPercentiles, LazyAverage, LazyCumulative, LazyMax, LazyMin, LazySum};
 use crate::internal::ComputedVecValue;
 
 const VERSION: Version = Version::ZERO;
@@ -25,6 +25,8 @@ where
     #[traversable(flatten)]
     pub max: LazyMax<I, T, S1I, S2T>,
     #[traversable(flatten)]
+    pub percentiles: LazyAggPercentiles<I, T, S1I, S2T>,
+    #[traversable(flatten)]
     pub sum: LazySum<I, T, S1I, S2T>,
     #[traversable(flatten)]
     pub cumulative: LazyCumulative<I, T, S1I, S2T>,
@@ -38,15 +40,16 @@ where
     S2T: VecValue,
 {
     #[allow(clippy::too_many_arguments)]
-    pub fn from_stats_aggregate(
+    pub(crate) fn from_stats_aggregate(
         name: &str,
         version: Version,
-        source_average: IterableBoxedVec<S1I, T>,
-        source_min: IterableBoxedVec<S1I, T>,
-        source_max: IterableBoxedVec<S1I, T>,
-        source_sum: IterableBoxedVec<S1I, T>,
-        source_cumulative: IterableBoxedVec<S1I, T>,
-        len_source: IterableBoxedVec<I, S2T>,
+        source_average: ReadableBoxedVec<S1I, T>,
+        source_min: ReadableBoxedVec<S1I, T>,
+        source_max: ReadableBoxedVec<S1I, T>,
+        source_sum: ReadableBoxedVec<S1I, T>,
+        source_cumulative: ReadableBoxedVec<S1I, T>,
+        source_all: ReadableBoxedVec<S1I, T>,
+        len_source: ReadableBoxedVec<I, S2T>,
     ) -> Self {
         let v = version + VERSION;
 
@@ -54,8 +57,34 @@ where
             average: LazyAverage::from_source(name, v, source_average, len_source.clone()),
             min: LazyMin::from_source(name, v, source_min, len_source.clone()),
             max: LazyMax::from_source(name, v, source_max, len_source.clone()),
+            percentiles: LazyAggPercentiles::from_source(name, v, source_all, len_source.clone()),
             sum: LazySum::from_source(name, v, source_sum, len_source.clone()),
             cumulative: LazyCumulative::from_source(name, v, source_cumulative, len_source),
+        }
+    }
+}
+
+impl<I, T> LazyFull<I, T, Height, Height>
+where
+    I: VecIndex,
+    T: ComputedVecValue + JsonSchema + 'static,
+{
+    pub(crate) fn from_height_source(
+        name: &str,
+        version: Version,
+        source: ReadableBoxedVec<Height, T>,
+        height_cumulative: ReadableBoxedVec<Height, T>,
+        first_height: ReadableBoxedVec<I, Height>,
+    ) -> Self {
+        let v = version + VERSION;
+
+        Self {
+            average: LazyAverage::from_height_source(name, v, source.clone(), first_height.clone()),
+            min: LazyMin::from_height_source(name, v, source.clone(), first_height.clone()),
+            max: LazyMax::from_height_source(name, v, source.clone(), first_height.clone()),
+            percentiles: LazyAggPercentiles::from_height_source(name, v, source.clone(), first_height.clone()),
+            sum: LazySum::from_height_source(name, v, source, first_height.clone()),
+            cumulative: LazyCumulative::from_height_source(name, v, height_cumulative, first_height),
         }
     }
 }

@@ -144,8 +144,10 @@ impl Bytes for OracleBins {
 }
 
 impl Formattable for OracleBins {
-    fn may_need_escaping() -> bool {
-        false
+    #[inline(always)]
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }
 
@@ -298,7 +300,9 @@ impl Bytes for OracleBinsV2 {
 }
 
 impl Formattable for OracleBinsV2 {
-    fn may_need_escaping() -> bool {
-        false
+    #[inline(always)]
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }

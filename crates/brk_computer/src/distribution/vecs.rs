@@ -4,13 +4,13 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    DateIndex, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, Height,
+    Day1, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, Height,
     SupplyState, Version,
 };
 use tracing::{debug, info};
 use vecdb::{
-    AnyVec, BytesVec, Database, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec,
-    LazyVecFrom1, PAGE_SIZE, Stamp, TypedVecIterator, VecIndex,
+    AnyVec, BytesVec, Database, Exit, WritableVec, ImportableVec, ReadableCloneableVec,
+    ReadableVec, Rw, StorageMode, LazyVecFrom1, PAGE_SIZE, Stamp,
 };
 
 use crate::{
@@ -19,7 +19,7 @@ use crate::{
         compute::{StartMode, determine_start_mode, process_blocks, recover_state, reset_state},
         state::BlockState,
     },
-    indexes, inputs, outputs, price, transactions,
+    indexes, inputs, outputs, prices, transactions,
 };
 
 use super::{
@@ -33,27 +33,27 @@ use super::{
 const VERSION: Version = Version::new(22);
 
 /// Main struct holding all computed vectors and state for stateful computation.
-#[derive(Clone, Traversable)]
-pub struct Vecs {
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     db: Database,
     #[traversable(skip)]
     pub states_path: PathBuf,
 
-    pub supply_state: BytesVec<Height, SupplyState>,
-    pub any_address_indexes: AnyAddressIndexesVecs,
-    pub addresses_data: AddressesDataVecs,
-    pub utxo_cohorts: UTXOCohorts,
-    pub address_cohorts: AddressCohorts,
+    pub supply_state: M::Stored<BytesVec<Height, SupplyState>>,
+    pub any_address_indexes: AnyAddressIndexesVecs<M>,
+    pub addresses_data: AddressesDataVecs<M>,
+    pub utxo_cohorts: UTXOCohorts<M>,
+    pub address_cohorts: AddressCohorts<M>,
 
-    pub addr_count: AddrCountsVecs,
-    pub empty_addr_count: AddrCountsVecs,
-    pub address_activity: AddressActivityVecs,
+    pub addr_count: AddrCountsVecs<M>,
+    pub empty_addr_count: AddrCountsVecs<M>,
+    pub address_activity: AddressActivityVecs<M>,
 
     /// Total addresses ever seen (addr_count + empty_addr_count) - lazy, global + per-type
     pub total_addr_count: TotalAddrCountVecs,
-    /// New addresses per block (delta of total) - lazy height, stored dateindex stats, global + per-type
-    pub new_addr_count: NewAddrCountVecs,
+    /// New addresses per block (delta of total) - lazy height, stored day1 stats, global + per-type
+    pub new_addr_count: NewAddrCountVecs<M>,
     /// Growth rate (new / addr_count) - lazy ratio with distribution stats, global + per-type
     pub growth_rate: GrowthRateVecs,
 
@@ -66,11 +66,11 @@ pub struct Vecs {
 const SAVED_STAMPED_CHANGES: u16 = 10;
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         parent: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
     ) -> Result<Self> {
         let db_path = parent.join(super::DB_NAME);
         let states_path = db_path.join("states");
@@ -81,14 +81,14 @@ impl Vecs {
 
         let version = parent_version + VERSION;
 
-        let utxo_cohorts = UTXOCohorts::forced_import(&db, version, indexes, price, &states_path)?;
+        let utxo_cohorts = UTXOCohorts::forced_import(&db, version, indexes, prices, &states_path)?;
 
         // Create address cohorts with reference to utxo "all" cohort's supply for global ratios
         let address_cohorts = AddressCohorts::forced_import(
             &db,
             version,
             indexes,
-            price,
+            prices,
             &states_path,
             Some(&utxo_cohorts.all.metrics.supply),
         )?;
@@ -107,14 +107,14 @@ impl Vecs {
         let fundedaddressindex = LazyVecFrom1::init(
             "fundedaddressindex",
             version,
-            fundedaddressindex_to_fundedaddressdata.boxed_clone(),
-            |index, _| Some(index),
+            fundedaddressindex_to_fundedaddressdata.read_only_boxed_clone(),
+            |index, _| index,
         );
         let emptyaddressindex = LazyVecFrom1::init(
             "emptyaddressindex",
             version,
-            emptyaddressindex_to_emptyaddressdata.boxed_clone(),
-            |index, _| Some(index),
+            emptyaddressindex_to_emptyaddressdata.read_only_boxed_clone(),
+            |index, _| index,
         );
 
         let addr_count = AddrCountsVecs::forced_import(&db, "addr_count", version, indexes)?;
@@ -125,7 +125,6 @@ impl Vecs {
 
         // Lazy total = addr_count + empty_addr_count (global + per-type, with all derived indexes)
         let total_addr_count = TotalAddrCountVecs::forced_import(
-            &db,
             version,
             indexes,
             &addr_count,
@@ -138,7 +137,7 @@ impl Vecs {
 
         // Growth rate: new / addr_count (global + per-type)
         let growth_rate =
-            GrowthRateVecs::forced_import(&db, version, indexes, &new_addr_count, &addr_count)?;
+            GrowthRateVecs::forced_import(version, indexes, &new_addr_count, &addr_count)?;
 
         let this = Self {
             supply_state: BytesVec::forced_import_with(
@@ -187,7 +186,7 @@ impl Vecs {
     /// 4. Computes aggregate cohorts from separate cohorts
     /// 5. Computes derived metrics
     #[allow(clippy::too_many_arguments)]
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
@@ -195,15 +194,13 @@ impl Vecs {
         outputs: &outputs::Vecs,
         transactions: &transactions::Vecs,
         blocks: &blocks::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
         starting_indexes: &mut ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         // 1. Find minimum height we have data for across stateful vecs
         let current_height = Height::from(self.supply_state.len());
-        let height_based_min = self.min_stateful_height_len();
-        let dateindex_min = self.min_stateful_dateindex_len();
-        let min_stateful = adjust_for_dateindex_gap(height_based_min, dateindex_min, indexes)?;
+        let min_stateful = self.min_stateful_height_len();
 
         // 2. Determine start mode and recover/reset state
         // Clamp to starting_indexes.height to handle reorg (indexer may require earlier start)
@@ -267,22 +264,21 @@ impl Vecs {
             // Recover chain_state from stored values
             debug!("recovering chain_state from stored values");
             let height_to_timestamp = &blocks.time.timestamp_monotonic;
-            let height_to_price = price.map(|p| &p.cents.split.height.close);
+            let height_to_price = &prices.cents.price;
 
-            let mut height_to_timestamp_iter = height_to_timestamp.into_iter();
-            let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
-            let mut chain_state_iter = self.supply_state.into_iter();
+            let end = usize::from(recovered_height);
+            let timestamp_data: Vec<_> = height_to_timestamp.collect_range_at(0, end);
+            let price_data: Vec<_> = height_to_price.collect_range_at(0, end);
 
             debug!("building supply_state vec for {} heights", recovered_height);
-            let chain_state = (0..recovered_height.to_usize())
-                .map(|h| {
-                    let h = Height::from(h);
-                    let price = height_to_price_iter.as_mut().map(|v| *v.get_unwrap(h));
-                    BlockState {
-                        supply: chain_state_iter.get_unwrap(h),
-                        price,
-                        timestamp: height_to_timestamp_iter.get_unwrap(h),
-                    }
+            let supply_state_data: Vec<_> = self.supply_state.collect_range_at(0, end);
+            let chain_state = supply_state_data
+                .into_iter()
+                .enumerate()
+                .map(|(h, supply)| BlockState {
+                    supply,
+                    price: price_data[h],
+                    timestamp: timestamp_data[h],
                 })
                 .collect();
             debug!("chain_state vec built");
@@ -293,14 +289,15 @@ impl Vecs {
         // Update starting_indexes if we need to recompute from an earlier point
         if starting_height < starting_indexes.height {
             starting_indexes.height = starting_height;
-            // Also update dateindex to match
+            // Also update day1 to match
             if starting_height.is_zero() {
-                starting_indexes.dateindex = DateIndex::from(0);
+                starting_indexes.day1 = Day1::from(0);
             } else {
-                starting_indexes.dateindex = indexes
+                starting_indexes.day1 = indexes
                     .height
-                    .dateindex
-                    .read_once(starting_height.decremented().unwrap())?;
+                    .day1
+                    .collect_one(starting_height.decremented().unwrap())
+                    .unwrap();
             }
         }
 
@@ -330,7 +327,7 @@ impl Vecs {
                 outputs,
                 transactions,
                 blocks,
-                price,
+                prices,
                 starting_height,
                 last_height,
                 &mut chain_state,
@@ -346,62 +343,38 @@ impl Vecs {
             exit,
         )?;
 
-        // 6. Compute rest part1 (dateindex mappings)
+        // 6. Compute rest part1 (day1 mappings)
         aggregates::compute_rest_part1(
             &mut self.utxo_cohorts,
             &mut self.address_cohorts,
-            indexes,
-            price,
+            blocks,
+            prices,
             starting_indexes,
             exit,
         )?;
 
-        // 6b. Compute address count dateindex vecs (by addresstype + all)
+        // 6b. Compute address count day1 vecs (by addresstype + all)
         self.addr_count
-            .compute_rest(indexes, starting_indexes, exit)?;
+            .compute_rest(blocks, starting_indexes, exit)?;
         self.empty_addr_count
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.address_activity
-            .compute_rest(indexes, starting_indexes, exit)?;
+            .compute_rest(blocks, starting_indexes, exit)?;
 
-        // 6c. Derive total_addr_count dateindex stats (height is lazy sum)
-        self.total_addr_count
-            .derive_from(indexes, starting_indexes, exit)?;
-
-        // 6d. Derive new_addr_count dateindex stats (height is lazy delta)
+        // 6d. Compute new_addr_count cumulative (height is lazy delta)
         self.new_addr_count
-            .derive_from(indexes, starting_indexes, exit)?;
-
-        // 6e. Derive growth_rate dateindex stats (height is lazy ratio)
-        self.growth_rate
-            .derive_from(indexes, starting_indexes, exit)?;
+            .compute_cumulative(starting_indexes, exit)?;
 
         // 7. Compute rest part2 (relative metrics)
         let supply_metrics = &self.utxo_cohorts.all.metrics.supply;
 
-        let height_to_market_cap = supply_metrics
-            .total
-            .dollars
-            .as_ref()
-            .map(|d| d.height.clone());
-
-        let dateindex_to_market_cap = supply_metrics
-            .total
-            .dollars
-            .as_ref()
-            .map(|d| d.dateindex.0.clone());
-
-        let height_to_market_cap_ref = height_to_market_cap.as_ref();
-        let dateindex_to_market_cap_ref = dateindex_to_market_cap.as_ref();
+        let height_to_market_cap = supply_metrics.total.usd.height.clone();
 
         aggregates::compute_rest_part2(
             &mut self.utxo_cohorts,
             &mut self.address_cohorts,
-            indexes,
-            price,
+            blocks,
+            prices,
             starting_indexes,
-            height_to_market_cap_ref,
-            dateindex_to_market_cap_ref,
+            Some(&height_to_market_cap),
             exit,
         )?;
 
@@ -410,7 +383,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn flush(&self) -> Result<()> {
+    pub(crate) fn flush(&self) -> Result<()> {
         self.db.flush()?;
         Ok(())
     }
@@ -428,44 +401,4 @@ impl Vecs {
             .min(Height::from(self.address_activity.min_stateful_height()))
     }
 
-    /// Get minimum length across all dateindex-indexed stateful vectors.
-    fn min_stateful_dateindex_len(&self) -> usize {
-        self.utxo_cohorts
-            .min_separate_stateful_dateindex_len()
-            .min(self.utxo_cohorts.min_aggregate_stateful_dateindex_len())
-            .min(self.address_cohorts.min_separate_stateful_dateindex_len())
-    }
-}
-
-/// Adjust start height if dateindex vecs are behind where they should be.
-///
-/// To resume at height H (in day D), we need days 0..D-1 complete in dateindex vecs.
-/// If dateindex vecs only have length N < D, restart from the first height of day N.
-fn adjust_for_dateindex_gap(
-    height_based_min: Height,
-    dateindex_min: usize,
-    indexes: &indexes::Vecs,
-) -> Result<Height> {
-    // Skip check if no dateindex vecs exist or starting from zero
-    if dateindex_min == usize::MAX || height_based_min.is_zero() {
-        return Ok(height_based_min);
-    }
-
-    // Skip if height.dateindex doesn't cover height_based_min yet
-    if height_based_min.to_usize() >= indexes.height.dateindex.len() {
-        return Ok(height_based_min);
-    }
-
-    // Get the dateindex at the height we want to resume at
-    let required_dateindex: usize = indexes.height.dateindex.read_once(height_based_min)?.into();
-
-    // If dateindex vecs are behind, restart from first height of the missing day
-    if dateindex_min < required_dateindex && dateindex_min < indexes.dateindex.first_height.len() {
-        Ok(indexes
-            .dateindex
-            .first_height
-            .read_once(dateindex_min.into())?)
-    } else {
-        Ok(height_based_min)
-    }
 }

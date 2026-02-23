@@ -1,8 +1,7 @@
-use std::{path::Path, thread};
+use std::path::Path;
 
 use brk_computer::Computer;
 use brk_error::Result;
-use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
@@ -13,15 +12,6 @@ use tracing::info;
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
-    // Can't increase main thread's stack size, thus we need to use another thread
-    thread::Builder::new()
-        .stack_size(512 * 1024 * 1024)
-        .spawn(run)?
-        .join()
-        .unwrap()
-}
-
-fn run() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")))?;
 
     let bitcoin_dir = Client::default_bitcoin_path();
@@ -34,12 +24,11 @@ fn run() -> Result<()> {
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
     let indexer = Indexer::forced_import(&outputs_dir)?;
-    let fetcher = Some(Fetcher::import(None)?);
-    let computer = Computer::forced_import(&outputs_dir, &indexer, fetcher)?;
+    let computer = Computer::forced_import(&outputs_dir, &indexer)?;
 
     let mempool = Mempool::new(&client);
     let mempool_clone = mempool.clone();
-    thread::spawn(move || {
+    std::thread::spawn(move || {
         mempool_clone.start();
     });
 

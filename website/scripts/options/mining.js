@@ -53,7 +53,7 @@ const ANTPOOL_AND_FRIENDS_IDS = /** @type {const} */ ([
  * @returns {PartialOptionsGroup}
  */
 export function createMiningSection() {
-  const { blocks, transactions, pools } = brk.metrics;
+  const { blocks, transactions, pools, mining } = brk.metrics;
 
   // Pre-compute pool entries with resolved names
   const poolData = entries(pools.vecs).map(([id, pool]) => ({
@@ -223,33 +223,33 @@ export function createMiningSection() {
             title: "Network Hashrate",
             bottom: [
               dots({
-                metric: blocks.mining.hashRate,
+                metric: mining.hashrate.hashRate,
                 name: "Hashrate",
                 unit: Unit.hashRate,
               }),
               line({
-                metric: blocks.mining.hashRate1wSma,
+                metric: mining.hashrate.hashRate1wSma,
                 name: "1w SMA",
                 color: colors.time._1w,
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
               line({
-                metric: blocks.mining.hashRate1mSma,
+                metric: mining.hashrate.hashRate1mSma,
                 name: "1m SMA",
                 color: colors.time._1m,
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
               line({
-                metric: blocks.mining.hashRate2mSma,
+                metric: mining.hashrate.hashRate2mSma,
                 name: "2m SMA",
                 color: colors.indicator.main,
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
               line({
-                metric: blocks.mining.hashRate1ySma,
+                metric: mining.hashrate.hashRate1ySma,
                 name: "1y SMA",
                 color: colors.time._1y,
                 unit: Unit.hashRate,
@@ -262,7 +262,7 @@ export function createMiningSection() {
                 unit: Unit.hashRate,
               }),
               line({
-                metric: blocks.mining.hashRateAth,
+                metric: mining.hashrate.hashRateAth,
                 name: "ATH",
                 color: colors.loss,
                 unit: Unit.hashRate,
@@ -275,13 +275,13 @@ export function createMiningSection() {
             title: "Network Hashrate ATH",
             bottom: [
               line({
-                metric: blocks.mining.hashRateAth,
+                metric: mining.hashrate.hashRateAth,
                 name: "ATH",
                 color: colors.loss,
                 unit: Unit.hashRate,
               }),
               dots({
-                metric: blocks.mining.hashRate,
+                metric: mining.hashrate.hashRate,
                 name: "Hashrate",
                 color: colors.bitcoin,
                 unit: Unit.hashRate,
@@ -293,7 +293,7 @@ export function createMiningSection() {
             title: "Network Hashrate Drawdown",
             bottom: [
               line({
-                metric: blocks.mining.hashRateDrawdown,
+                metric: mining.hashrate.hashRateDrawdown,
                 name: "Drawdown",
                 unit: Unit.percentage,
                 color: colors.loss,
@@ -370,8 +370,8 @@ export function createMiningSection() {
                 name: "Sum",
                 title: "Revenue Comparison",
                 bottom: revenueBtcSatsUsd({
-                  coinbase: blocks.rewards.coinbase,
-                  subsidy: blocks.rewards.subsidy,
+                  coinbase: mining.rewards.coinbase,
+                  subsidy: mining.rewards.subsidy,
                   fee: transactions.fees.fee,
                   key: "sum",
                 }),
@@ -380,8 +380,8 @@ export function createMiningSection() {
                 name: "Cumulative",
                 title: "Revenue Comparison (Total)",
                 bottom: revenueBtcSatsUsd({
-                  coinbase: blocks.rewards.coinbase,
-                  subsidy: blocks.rewards.subsidy,
+                  coinbase: mining.rewards.coinbase,
+                  subsidy: mining.rewards.subsidy,
                   fee: transactions.fees.fee,
                   key: "cumulative",
                 }),
@@ -396,17 +396,17 @@ export function createMiningSection() {
                 title: "Coinbase Rewards",
                 bottom: [
                   ...satsBtcUsdFromFull({
-                    source: blocks.rewards.coinbase,
+                    source: mining.rewards.coinbase,
                     key: "base",
                     name: "sum",
                   }),
                   ...satsBtcUsdFrom({
-                    source: blocks.rewards.coinbase,
+                    source: mining.rewards.coinbase,
                     key: "sum",
                     name: "sum",
                   }),
                   ...satsBtcUsd({
-                    pattern: blocks.rewards._24hCoinbaseSum,
+                    pattern: mining.rewards._24hCoinbaseSum,
                     name: "24h",
                     color: colors.time._24h,
                     defaultActive: false,
@@ -416,13 +416,13 @@ export function createMiningSection() {
               {
                 name: "Distribution",
                 title: "Coinbase Rewards per Block Distribution",
-                bottom: distributionBtcSatsUsd(blocks.rewards.coinbase),
+                bottom: distributionBtcSatsUsd(mining.rewards.coinbase),
               },
               {
                 name: "Cumulative",
                 title: "Coinbase Rewards (Total)",
                 bottom: satsBtcUsdFrom({
-                  source: blocks.rewards.coinbase,
+                  source: mining.rewards.coinbase,
                   key: "cumulative",
                   name: "all-time",
                 }),
@@ -437,17 +437,17 @@ export function createMiningSection() {
                 title: "Block Subsidy",
                 bottom: [
                   ...satsBtcUsdFromFull({
-                    source: blocks.rewards.subsidy,
+                    source: mining.rewards.subsidy,
                     key: "base",
                     name: "sum",
                   }),
                   ...satsBtcUsdFrom({
-                    source: blocks.rewards.subsidy,
+                    source: mining.rewards.subsidy,
                     key: "sum",
                     name: "sum",
                   }),
                   line({
-                    metric: blocks.rewards.subsidyUsd1ySma,
+                    metric: mining.rewards.subsidyUsd1ySma,
                     name: "1y SMA",
                     color: colors.time._1y,
                     unit: Unit.usd,
@@ -458,13 +458,13 @@ export function createMiningSection() {
               {
                 name: "Distribution",
                 title: "Block Subsidy Distribution",
-                bottom: distributionBtcSatsUsd(blocks.rewards.subsidy),
+                bottom: distributionBtcSatsUsd(mining.rewards.subsidy),
               },
               {
                 name: "Cumulative",
                 title: "Block Subsidy (Total)",
                 bottom: satsBtcUsdFrom({
-                  source: blocks.rewards.subsidy,
+                  source: mining.rewards.subsidy,
                   key: "cumulative",
                   name: "all-time",
                 }),
@@ -504,13 +504,13 @@ export function createMiningSection() {
             title: "Revenue Dominance",
             bottom: [
               line({
-                metric: blocks.rewards.subsidyDominance,
+                metric: mining.rewards.subsidyDominance,
                 name: "Subsidy",
                 color: colors.mining.subsidy,
                 unit: Unit.percentage,
               }),
               line({
-                metric: blocks.rewards.feeDominance,
+                metric: mining.rewards.feeDominance24h,
                 name: "Fees",
                 color: colors.mining.fee,
                 unit: Unit.percentage,
@@ -524,7 +524,7 @@ export function createMiningSection() {
                 name: "Sum",
                 title: "Unclaimed Rewards",
                 bottom: satsBtcUsdFrom({
-                  source: blocks.rewards.unclaimedRewards,
+                  source: mining.rewards.unclaimedRewards,
                   key: "sum",
                   name: "sum",
                 }),
@@ -533,7 +533,7 @@ export function createMiningSection() {
                 name: "Cumulative",
                 title: "Unclaimed Rewards (Total)",
                 bottom: satsBtcUsdFrom({
-                  source: blocks.rewards.unclaimedRewards,
+                  source: mining.rewards.unclaimedRewards,
                   key: "cumulative",
                   name: "all-time",
                 }),
@@ -552,25 +552,25 @@ export function createMiningSection() {
             title: "Hash Price",
             bottom: [
               line({
-                metric: blocks.mining.hashPriceThs,
+                metric: mining.hashrate.hashPriceThs,
                 name: "TH/s",
                 color: colors.usd,
                 unit: Unit.usdPerThsPerDay,
               }),
               line({
-                metric: blocks.mining.hashPricePhs,
+                metric: mining.hashrate.hashPricePhs,
                 name: "PH/s",
                 color: colors.usd,
                 unit: Unit.usdPerPhsPerDay,
               }),
               dotted({
-                metric: blocks.mining.hashPriceThsMin,
+                metric: mining.hashrate.hashPriceThsMin,
                 name: "TH/s Min",
                 color: colors.stat.min,
                 unit: Unit.usdPerThsPerDay,
               }),
               dotted({
-                metric: blocks.mining.hashPricePhsMin,
+                metric: mining.hashrate.hashPricePhsMin,
                 name: "PH/s Min",
                 color: colors.stat.min,
                 unit: Unit.usdPerPhsPerDay,
@@ -582,25 +582,25 @@ export function createMiningSection() {
             title: "Hash Value",
             bottom: [
               line({
-                metric: blocks.mining.hashValueThs,
+                metric: mining.hashrate.hashValueThs,
                 name: "TH/s",
                 color: colors.bitcoin,
                 unit: Unit.satsPerThsPerDay,
               }),
               line({
-                metric: blocks.mining.hashValuePhs,
+                metric: mining.hashrate.hashValuePhs,
                 name: "PH/s",
                 color: colors.bitcoin,
                 unit: Unit.satsPerPhsPerDay,
               }),
               dotted({
-                metric: blocks.mining.hashValueThsMin,
+                metric: mining.hashrate.hashValueThsMin,
                 name: "TH/s Min",
                 color: colors.stat.min,
                 unit: Unit.satsPerThsPerDay,
               }),
               dotted({
-                metric: blocks.mining.hashValuePhsMin,
+                metric: mining.hashrate.hashValuePhsMin,
                 name: "PH/s Min",
                 color: colors.stat.min,
                 unit: Unit.satsPerPhsPerDay,
@@ -612,13 +612,13 @@ export function createMiningSection() {
             title: "Recovery",
             bottom: [
               line({
-                metric: blocks.mining.hashPriceRebound,
+                metric: mining.hashrate.hashPriceRebound,
                 name: "Hash Price",
                 color: colors.usd,
                 unit: Unit.percentage,
               }),
               line({
-                metric: blocks.mining.hashValueRebound,
+                metric: mining.hashrate.hashValueRebound,
                 name: "Hash Value",
                 color: colors.bitcoin,
                 unit: Unit.percentage,

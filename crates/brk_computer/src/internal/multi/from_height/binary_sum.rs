@@ -4,10 +4,10 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2};
+use vecdb::{BinaryTransform, ReadableBoxedVec, ReadableCloneableVec, LazyVecFrom2};
 
 use crate::internal::{
-    ComputedFromHeightSum, ComputedFromHeightSumCum, ComputedHeightDerivedSum, ComputedVecValue,
+    ComputedFromHeightSum, ComputedFromHeightSumCum, ComputedVecValue,
     LazyBinaryHeightDerivedSum, LazyFromHeightLast, NumericValue,
 };
 
@@ -25,7 +25,7 @@ where
     pub height: LazyVecFrom2<Height, T, Height, S1T, Height, S2T>,
     #[deref]
     #[deref_mut]
-    pub rest: LazyBinaryHeightDerivedSum<T, S1T, S2T>,
+    pub rest: Box<LazyBinaryHeightDerivedSum<T, S1T, S2T>>,
 }
 
 impl<T, S1T, S2T> LazyBinaryFromHeightSum<T, S1T, S2T>
@@ -34,23 +34,7 @@ where
     S1T: NumericValue + JsonSchema,
     S2T: NumericValue + JsonSchema,
 {
-    pub fn from_derived<F: BinaryTransform<S1T, S2T, T>>(
-        name: &str,
-        version: Version,
-        height_source1: IterableBoxedVec<Height, S1T>,
-        height_source2: IterableBoxedVec<Height, S2T>,
-        source1: &ComputedHeightDerivedSum<S1T>,
-        source2: &ComputedHeightDerivedSum<S2T>,
-    ) -> Self {
-        let v = version + VERSION;
-
-        Self {
-            height: LazyVecFrom2::transformed::<F>(name, v, height_source1, height_source2),
-            rest: LazyBinaryHeightDerivedSum::from_derived::<F>(name, v, source1, source2),
-        }
-    }
-
-    pub fn from_computed<F: BinaryTransform<S1T, S2T, T>>(
+    pub(crate) fn from_computed<F: BinaryTransform<S1T, S2T, T>>(
         name: &str,
         version: Version,
         source1: &ComputedFromHeightSum<S1T>,
@@ -62,15 +46,15 @@ where
             height: LazyVecFrom2::transformed::<F>(
                 name,
                 v,
-                source1.height.boxed_clone(),
-                source2.height.boxed_clone(),
+                source1.height.read_only_boxed_clone(),
+                source2.height.read_only_boxed_clone(),
             ),
-            rest: LazyBinaryHeightDerivedSum::from_derived::<F>(name, v, &source1.rest, &source2.rest),
+            rest: Box::new(LazyBinaryHeightDerivedSum::from_derived::<F>(name, v, &source1.rest, &source2.rest)),
         }
     }
 
     /// Create from two LazyBinaryFromHeightSum sources.
-    pub fn from_binary<F, S1aT, S1bT, S2aT, S2bT>(
+    pub(crate) fn from_binary<F, S1aT, S1bT, S2aT, S2bT>(
         name: &str,
         version: Version,
         source1: &LazyBinaryFromHeightSum<S1T, S1aT, S1bT>,
@@ -89,25 +73,25 @@ where
             height: LazyVecFrom2::transformed::<F>(
                 name,
                 v,
-                source1.height.boxed_clone(),
-                source2.height.boxed_clone(),
+                source1.height.read_only_boxed_clone(),
+                source2.height.read_only_boxed_clone(),
             ),
-            rest: LazyBinaryHeightDerivedSum::from_binary::<F, _, _, _, _>(
+            rest: Box::new(LazyBinaryHeightDerivedSum::from_binary::<F, _, _, _, _>(
                 name,
                 v,
                 &source1.rest,
                 &source2.rest,
-            ),
+            )),
         }
     }
 
     /// Create from a SumCum source (using only sum) and a LazyLast source.
     /// Produces sum-only output (no cumulative).
-    pub fn from_sumcum_lazy_last<F, S2ST>(
+    pub(crate) fn from_sumcum_lazy_last<F, S2ST>(
         name: &str,
         version: Version,
-        height_source1: IterableBoxedVec<Height, S1T>,
-        height_source2: IterableBoxedVec<Height, S2T>,
+        height_source1: ReadableBoxedVec<Height, S1T>,
+        height_source2: ReadableBoxedVec<Height, S2T>,
         source1: &ComputedFromHeightSumCum<S1T>,
         source2: &LazyFromHeightLast<S2T, S2ST>,
     ) -> Self
@@ -119,12 +103,12 @@ where
 
         Self {
             height: LazyVecFrom2::transformed::<F>(name, v, height_source1, height_source2),
-            rest: LazyBinaryHeightDerivedSum::from_sumcum_lazy_last::<F, S2ST>(
+            rest: Box::new(LazyBinaryHeightDerivedSum::from_sumcum_lazy_last::<F, S2ST>(
                 name,
                 v,
                 source1,
                 source2,
-            ),
+            )),
         }
     }
 }

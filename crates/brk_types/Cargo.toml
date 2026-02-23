@@ -16,14 +16,14 @@ indexmap = { workspace = true }
 itoa = "1.0.17"
 jiff = { workspace = true }
 pco = { workspace = true }
-rapidhash = "4.3.0"
+rapidhash = "4.4.1"
 rustc-hash = { workspace = true }
 ryu = "1.0.23"
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_bytes = { workspace = true }
-strum = { version = "0.27", features = ["derive"] }
+strum = { version = "0.28", features = ["derive"] }
 vecdb = { workspace = true }
 
 [package.metadata.cargo-machete]

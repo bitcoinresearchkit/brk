@@ -10,7 +10,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, CheckedSub, Formattable, FromCoarserIndex, Pco, PrintableIndex, Stamp};
 
-use super::DifficultyEpoch;
+use super::{DifficultyEpoch, HalvingEpoch};
 
 use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING};
 
@@ -288,8 +288,9 @@ impl std::fmt::Display for Height {
 
 impl Formattable for Height {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }
 
@@ -300,5 +301,15 @@ impl FromCoarserIndex<DifficultyEpoch> for Height {
 
     fn max_from_(coarser: DifficultyEpoch) -> usize {
         (usize::from(coarser) + 1) * BLOCKS_PER_DIFF_EPOCHS as usize - 1
+    }
+}
+
+impl FromCoarserIndex<HalvingEpoch> for Height {
+    fn min_from(coarser: HalvingEpoch) -> usize {
+        usize::from(coarser) * BLOCKS_PER_HALVING as usize
+    }
+
+    fn max_from_(coarser: HalvingEpoch) -> usize {
+        (usize::from(coarser) + 1) * BLOCKS_PER_HALVING as usize - 1
     }
 }

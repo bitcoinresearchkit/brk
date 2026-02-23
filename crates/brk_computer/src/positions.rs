@@ -6,24 +6,24 @@ use brk_reader::Reader;
 use brk_traversable::Traversable;
 use brk_types::{BlkPosition, Height, TxIndex, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, ImportableVec, PAGE_SIZE, PcoVec,
-    TypedVecIterator,
+    AnyStoredVec, AnyVec, Database, Exit, WritableVec, ImportableVec, PAGE_SIZE, PcoVec,
+    ReadableVec, Rw, StorageMode, VecIndex,
 };
 
 use super::ComputeIndexes;
 
 pub const DB_NAME: &str = "positions";
 
-#[derive(Clone, Traversable)]
-pub struct Vecs {
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
     db: Database,
 
-    pub block_position: PcoVec<Height, BlkPosition>,
-    pub tx_position: PcoVec<TxIndex, BlkPosition>,
+    pub block_position: M::Stored<PcoVec<Height, BlkPosition>>,
+    pub tx_position: M::Stored<PcoVec<TxIndex, BlkPosition>>,
 }
 
 impl Vecs {
-    pub fn forced_import(parent_path: &Path, parent_version: Version) -> Result<Self> {
+    pub(crate) fn forced_import(parent_path: &Path, parent_version: Version) -> Result<Self> {
         let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
@@ -46,7 +46,7 @@ impl Vecs {
         Ok(this)
     }
 
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         starting_indexes: &ComputeIndexes,
@@ -80,14 +80,16 @@ impl Vecs {
             .vecs
             .transactions
             .height
-            .iter()?
-            .get(min_txindex)
-            .map(|h| h.min(starting_indexes.height))
+            .collect_one(min_txindex)
+            .map(|h: Height| h.min(starting_indexes.height))
         else {
             return Ok(());
         };
 
-        let mut height_to_first_txindex_iter = indexer.vecs.transactions.first_txindex.iter()?;
+        // Cursor avoids per-height PcoVec page decompression.
+        // Heights are sequential, so the cursor only advances forward.
+        let mut first_txindex_cursor = indexer.vecs.transactions.first_txindex.cursor();
+        first_txindex_cursor.advance(min_height.to_usize());
 
         parser
             .read(
@@ -101,7 +103,7 @@ impl Vecs {
                 self.block_position
                     .truncate_push(height, block.metadata().position())?;
 
-                let txindex = height_to_first_txindex_iter.get_unwrap(height);
+                let txindex = first_txindex_cursor.next().unwrap();
 
                 block.tx_metadata().iter().enumerate().try_for_each(
                     |(index, metadata)| -> Result<()> {

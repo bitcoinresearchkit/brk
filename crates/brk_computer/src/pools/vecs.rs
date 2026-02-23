@@ -2,50 +2,52 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, PoolSlug, Sats, StoredF32, StoredU16, StoredU32};
 use vecdb::{
-    Database, Exit, GenericStoredVec, IterableCloneableVec, IterableVec, VecIndex, Version,
+    Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, Version,
 };
 
 use crate::{
     blocks,
     indexes::{self, ComputeIndexes},
     internal::{
-        ComputedFromHeightLast, ComputedFromHeightSumCum, ComputedFromDateLast, DollarsPlus, LazyBinaryFromHeightLast,
-        LazyValueFromHeightSumCum, MaskSats, PercentageU32F32, SatsPlus, SatsPlusToBitcoin,
-        ValueBinaryFromHeight,
+        ComputedFromHeightLast, ComputedFromHeightSumCum, DollarsPlus,
+        LazyBinaryFromHeightLast, LazyValueFromHeightSumCum, MaskSats, PercentageU32F32, SatsPlus,
+        SatsPlusToBitcoin, ValueBinaryFromHeight,
     },
-    price, transactions,
+    mining, prices, transactions,
 };
 
-#[derive(Clone, Traversable)]
-pub struct Vecs {
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
     slug: PoolSlug,
 
-    pub blocks_mined: ComputedFromHeightSumCum<StoredU32>,
-    pub _24h_blocks_mined: ComputedFromHeightLast<StoredU32>,
-    pub _1w_blocks_mined: ComputedFromHeightLast<StoredU32>,
-    pub _1m_blocks_mined: ComputedFromHeightLast<StoredU32>,
-    pub _1y_blocks_mined: ComputedFromHeightLast<StoredU32>,
-    pub subsidy: LazyValueFromHeightSumCum<StoredU32, Sats>,
-    pub fee: LazyValueFromHeightSumCum<StoredU32, Sats>,
+    pub blocks_mined: ComputedFromHeightSumCum<StoredU32, M>,
+    pub blocks_mined_24h_sum: ComputedFromHeightLast<StoredU32, M>,
+    pub blocks_mined_1w_sum: ComputedFromHeightLast<StoredU32, M>,
+    pub blocks_mined_1m_sum: ComputedFromHeightLast<StoredU32, M>,
+    pub blocks_mined_1y_sum: ComputedFromHeightLast<StoredU32, M>,
+    pub subsidy: LazyValueFromHeightSumCum<StoredU32, Sats, M>,
+    pub fee: LazyValueFromHeightSumCum<StoredU32, Sats, M>,
     pub coinbase: ValueBinaryFromHeight,
     pub dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
 
-    pub _24h_dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
-    pub _1w_dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
-    pub _1m_dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
-    pub _1y_dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
-    pub blocks_since_block: ComputedFromHeightLast<StoredU32>,
-    pub days_since_block: ComputedFromDateLast<StoredU16>,
+    pub dominance_24h: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
+    pub dominance_1w: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
+    pub dominance_1m: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
+    pub dominance_1y: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
+    pub blocks_since_block: ComputedFromHeightLast<StoredU32, M>,
+    pub days_since_block: ComputedFromHeightLast<StoredU16, M>,
 }
 
 impl Vecs {
-    pub fn forced_import(
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn forced_import(
         db: &Database,
         slug: PoolSlug,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
         blocks: &blocks::Vecs,
+        mining: &mining::Vecs,
         transactions: &transactions::Vecs,
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
@@ -54,23 +56,39 @@ impl Vecs {
         let blocks_mined =
             ComputedFromHeightSumCum::forced_import(db, &suffix("blocks_mined"), version, indexes)?;
 
-        let _24h_blocks_mined =
-            ComputedFromHeightLast::forced_import(db, &suffix("24h_blocks_mined"), version, indexes)?;
-        let _1w_blocks_mined =
-            ComputedFromHeightLast::forced_import(db, &suffix("1w_blocks_mined"), version, indexes)?;
-        let _1m_blocks_mined =
-            ComputedFromHeightLast::forced_import(db, &suffix("1m_blocks_mined"), version, indexes)?;
-        let _1y_blocks_mined =
-            ComputedFromHeightLast::forced_import(db, &suffix("1y_blocks_mined"), version, indexes)?;
+        let blocks_mined_24h_sum = ComputedFromHeightLast::forced_import(
+            db,
+            &suffix("blocks_mined_24h_sum"),
+            version,
+            indexes,
+        )?;
+        let blocks_mined_1w_sum = ComputedFromHeightLast::forced_import(
+            db,
+            &suffix("blocks_mined_1w_sum"),
+            version,
+            indexes,
+        )?;
+        let blocks_mined_1m_sum = ComputedFromHeightLast::forced_import(
+            db,
+            &suffix("blocks_mined_1m_sum"),
+            version,
+            indexes,
+        )?;
+        let blocks_mined_1y_sum = ComputedFromHeightLast::forced_import(
+            db,
+            &suffix("blocks_mined_1y_sum"),
+            version,
+            indexes,
+        )?;
 
         let subsidy = LazyValueFromHeightSumCum::forced_import::<MaskSats>(
             db,
             &suffix("subsidy"),
             version,
             indexes,
-            blocks_mined.height.boxed_clone(),
-            blocks.rewards.subsidy.sats.height.boxed_clone(),
-            price,
+            blocks_mined.height.read_only_boxed_clone(),
+            mining.rewards.subsidy.sats.height.read_only_boxed_clone(),
+            prices,
         )?;
 
         let fee = LazyValueFromHeightSumCum::forced_import::<MaskSats>(
@@ -78,9 +96,9 @@ impl Vecs {
             &suffix("fee"),
             version,
             indexes,
-            blocks_mined.height.boxed_clone(),
-            transactions.fees.fee.sats.height.sum_cum.sum.0.boxed_clone(),
-            price,
+            blocks_mined.height.read_only_boxed_clone(),
+            transactions.fees.fee.sats.height.boxed_sum(),
+            prices,
         )?;
 
         Ok(Self {
@@ -90,36 +108,36 @@ impl Vecs {
                 &blocks_mined,
                 &blocks.count.block_count,
             ),
-            _24h_dominance: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
-                &suffix("24h_dominance"),
+            dominance_24h: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
+                &suffix("dominance_24h"),
                 version,
-                &_24h_blocks_mined,
-                &blocks.count._24h_block_count,
+                &blocks_mined_24h_sum,
+                &blocks.count.block_count_24h_sum,
             ),
-            _1w_dominance: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
-                &suffix("1w_dominance"),
+            dominance_1w: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
+                &suffix("dominance_1w"),
                 version,
-                &_1w_blocks_mined,
-                &blocks.count._1w_block_count,
+                &blocks_mined_1w_sum,
+                &blocks.count.block_count_1w_sum,
             ),
-            _1m_dominance: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
-                &suffix("1m_dominance"),
+            dominance_1m: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
+                &suffix("dominance_1m"),
                 version,
-                &_1m_blocks_mined,
-                &blocks.count._1m_block_count,
+                &blocks_mined_1m_sum,
+                &blocks.count.block_count_1m_sum,
             ),
-            _1y_dominance: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
-                &suffix("1y_dominance"),
+            dominance_1y: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
+                &suffix("dominance_1y"),
                 version,
-                &_1y_blocks_mined,
-                &blocks.count._1y_block_count,
+                &blocks_mined_1y_sum,
+                &blocks.count.block_count_1y_sum,
             ),
             slug,
             blocks_mined,
-            _24h_blocks_mined,
-            _1w_blocks_mined,
-            _1m_blocks_mined,
-            _1y_blocks_mined,
+            blocks_mined_24h_sum,
+            blocks_mined_1w_sum,
+            blocks_mined_1m_sum,
+            blocks_mined_1y_sum,
             coinbase: ValueBinaryFromHeight::from_lazy::<
                 SatsPlus,
                 SatsPlusToBitcoin,
@@ -135,7 +153,7 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            days_since_block: ComputedFromDateLast::forced_import(
+            days_since_block: ComputedFromHeightLast::forced_import(
                 db,
                 &suffix("days_since_block"),
                 version,
@@ -144,16 +162,15 @@ impl Vecs {
         })
     }
 
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
-        height_to_pool: &impl IterableVec<Height, PoolSlug>,
+        height_to_pool: &impl ReadableVec<Height, PoolSlug>,
         blocks: &blocks::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         self.blocks_mined
-            .compute_all(indexes, starting_indexes, exit, |vec| {
+            .compute(starting_indexes, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
                     height_to_pool,
@@ -173,99 +190,62 @@ impl Vecs {
             })?;
 
         // Compute rolling window blocks mined using the start heights from blocks.count
-        let blocks_mined_height = &self.blocks_mined.height.clone();
-        self._24h_blocks_mined
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                Ok(v.compute_rolling_sum(
-                    starting_indexes.height,
-                    &blocks.count._24h_start,
-                    blocks_mined_height,
-                    exit,
-                )?)
-            })?;
+        self.blocks_mined_24h_sum.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_24h_ago,
+            &self.blocks_mined.height,
+            exit,
+        )?;
 
-        self._1w_blocks_mined
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                Ok(v.compute_rolling_sum(
-                    starting_indexes.height,
-                    &blocks.count._1w_start,
-                    blocks_mined_height,
-                    exit,
-                )?)
-            })?;
+        self.blocks_mined_1w_sum.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_1w_ago,
+            &self.blocks_mined.height,
+            exit,
+        )?;
 
-        self._1m_blocks_mined
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                Ok(v.compute_rolling_sum(
-                    starting_indexes.height,
-                    &blocks.count._1m_start,
-                    blocks_mined_height,
-                    exit,
-                )?)
-            })?;
+        self.blocks_mined_1m_sum.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_1m_ago,
+            &self.blocks_mined.height,
+            exit,
+        )?;
 
-        self._1y_blocks_mined
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                Ok(v.compute_rolling_sum(
-                    starting_indexes.height,
-                    &blocks.count._1y_start,
-                    blocks_mined_height,
-                    exit,
-                )?)
-            })?;
+        self.blocks_mined_1y_sum.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_1y_ago,
+            &self.blocks_mined.height,
+            exit,
+        )?;
 
-        self.subsidy.derive_from(indexes, starting_indexes, exit)?;
+        self.subsidy.compute_cumulative(starting_indexes, exit)?;
 
-        self.fee.derive_from(indexes, starting_indexes, exit)?;
+        self.fee.compute_cumulative(starting_indexes, exit)?;
 
-        self.blocks_since_block
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                let mut prev = StoredU32::ZERO;
-                v.compute_transform(
-                    starting_indexes.height,
-                    blocks_mined_height,
-                    |(h, mined, ..)| {
-                        let blocks = if mined.is_zero() {
-                            prev + StoredU32::ONE
-                        } else {
-                            StoredU32::ZERO
-                        };
-                        prev = blocks;
-                        (h, blocks)
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        {
+            let mut prev = StoredU32::ZERO;
+            self.blocks_since_block.height.compute_transform(
+                starting_indexes.height,
+                &self.blocks_mined.height,
+                |(h, mined, ..)| {
+                    let blocks = if mined.is_zero() {
+                        prev + StoredU32::ONE
+                    } else {
+                        StoredU32::ZERO
+                    };
+                    prev = blocks;
+                    (h, blocks)
+                },
+                exit,
+            )?;
+        }
 
-        self.days_since_block
-            .compute_all(starting_indexes, exit, |v| {
-                let mut prev = None;
-                v.compute_transform2(
-                    starting_indexes.dateindex,
-                    self.blocks_mined.dateindex.sum.inner(),
-                    self.blocks_mined.dateindex.cumulative.inner(),
-                    |(i, sum, cumulative, slf)| {
-                        if prev.is_none() {
-                            let i = i.to_usize();
-                            prev.replace(if i > 0 {
-                                slf.get_pushed_or_read_at_unwrap_once(i - 1)
-                            } else {
-                                StoredU16::ZERO
-                            });
-                        }
-                        let days = if !cumulative.is_zero() && sum.is_zero() {
-                            prev.unwrap() + StoredU16::ONE
-                        } else {
-                            StoredU16::ZERO
-                        };
-                        prev.replace(days);
-                        (i, days)
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.days_since_block.height.compute_transform(
+            starting_indexes.height,
+            &self.blocks_since_block.height,
+            |(h, blocks, ..)| (h, StoredU16::from(u16::try_from(*blocks).unwrap_or(u16::MAX))),
+            exit,
+        )?;
 
         Ok(())
     }

@@ -3,13 +3,14 @@ use std::collections::BTreeMap;
 use brk_error::{Error, Result};
 use brk_traversable::TreeNode;
 use brk_types::{
-    DetailedMetricCount, Format, Index, IndexInfo, Limit, Metric, MetricData, MetricOutput,
-    MetricSelection, Output, PaginatedMetrics, Pagination, PaginationIndex,
+    DetailedMetricCount, Etag, Format, Index, IndexInfo, LegacyValue, Limit, Metric, MetricData,
+    MetricOutput, MetricOutputLegacy, MetricSelection, Output, OutputLegacy, PaginatedMetrics,
+    Pagination, PaginationIndex, Version,
 };
 use vecdb::AnyExportableVec;
 
 use crate::{
-    Query, ResolvedQuery,
+    Query,
     vecs::{IndexToVec, MetricToVec},
 };
 
@@ -120,15 +121,11 @@ impl Query {
 
     /// Resolve query metadata without formatting (cheap).
     /// Use with `format` for lazy formatting after ETag check.
-    pub fn resolve(
-        &self,
-        params: MetricSelection,
-        max_weight: usize,
-    ) -> Result<ResolvedQuery> {
+    pub fn resolve(&self, params: MetricSelection, max_weight: usize) -> Result<ResolvedQuery> {
         let vecs = self.search(&params)?;
 
         let total = vecs.iter().map(|v| v.len()).min().unwrap_or(0);
-        let version: u64 = vecs.iter().map(|v| u64::from(v.version())).sum();
+        let version: Version = vecs.iter().map(|v| v.version()).sum();
 
         let start = params
             .start()
@@ -182,12 +179,13 @@ impl Query {
         let output = match format {
             Format::CSV => Output::CSV(Self::columns_to_csv(&vecs, start, end)?),
             Format::JSON => {
+                let count = end.saturating_sub(start);
                 if vecs.len() == 1 {
-                    let mut buf = Vec::new();
+                    let mut buf = Vec::with_capacity(count * 12 + 256);
                     MetricData::serialize(vecs[0], index, start, end, &mut buf)?;
                     Output::Json(buf)
                 } else {
-                    let mut buf = Vec::new();
+                    let mut buf = Vec::with_capacity(count * 12 * vecs.len() + 256);
                     buf.push(b'[');
                     for (i, vec) in vecs.iter().enumerate() {
                         if i > 0 {
@@ -243,5 +241,88 @@ impl Query {
 
     pub fn metric_to_indexes(&self, metric: Metric) -> Option<&Vec<Index>> {
         self.vecs().metric_to_indexes(metric)
+    }
+
+    /// Deprecated - format a resolved query as legacy output (expensive).
+    pub fn format_legacy(&self, resolved: ResolvedQuery) -> Result<MetricOutputLegacy> {
+        let ResolvedQuery {
+            vecs,
+            format,
+            version,
+            total,
+            start,
+            end,
+            ..
+        } = resolved;
+
+        if vecs.is_empty() {
+            return Ok(MetricOutputLegacy {
+                output: OutputLegacy::default(format),
+                version: Version::ZERO,
+                total: 0,
+                start: 0,
+                end: 0,
+            });
+        }
+
+        let from = Some(start as i64);
+        let to = Some(end as i64);
+
+        let output = match format {
+            Format::CSV => OutputLegacy::CSV(Self::columns_to_csv(&vecs, start, end)?),
+            Format::JSON => {
+                if vecs.len() == 1 {
+                    let metric = vecs[0];
+                    let count = metric.range_count(from, to);
+                    let mut buf = Vec::new();
+                    if count == 1 {
+                        metric.write_json_value(Some(start), &mut buf)?;
+                        OutputLegacy::Json(LegacyValue::Value(buf))
+                    } else {
+                        metric.write_json(Some(start), Some(end), &mut buf)?;
+                        OutputLegacy::Json(LegacyValue::List(buf))
+                    }
+                } else {
+                    let mut values = Vec::with_capacity(vecs.len());
+                    for vec in &vecs {
+                        let mut buf = Vec::new();
+                        vec.write_json(Some(start), Some(end), &mut buf)?;
+                        values.push(buf);
+                    }
+                    OutputLegacy::Json(LegacyValue::Matrix(values))
+                }
+            }
+        };
+
+        Ok(MetricOutputLegacy {
+            output,
+            version,
+            total,
+            start,
+            end,
+        })
+    }
+}
+
+/// A resolved metric query ready for formatting.
+/// Contains the vecs and metadata needed to build an ETag or format the output.
+pub struct ResolvedQuery {
+    pub vecs: Vec<&'static dyn AnyExportableVec>,
+    pub format: Format,
+    pub index: Index,
+    pub version: Version,
+    pub total: usize,
+    pub start: usize,
+    pub end: usize,
+    pub height: u32,
+}
+
+impl ResolvedQuery {
+    pub fn etag(&self) -> Etag {
+        Etag::from_metric(self.version, self.total, self.start, self.end, self.height)
+    }
+
+    pub fn format(&self) -> Format {
+        self.format
     }
 }

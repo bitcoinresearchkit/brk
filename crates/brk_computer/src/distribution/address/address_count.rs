@@ -5,21 +5,22 @@ use brk_types::{Height, StoredF64, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, PcoVec, TypedVecIterator,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode,
+    WritableVec,
 };
 
-use crate::{ComputeIndexes, indexes, internal::{ComputedFromDateLast, ComputedFromHeightLast}};
+use crate::{ComputeIndexes, blocks, indexes, internal::ComputedFromHeightLast};
 
 /// Address count with 30d change metric for a single type.
-#[derive(Clone, Traversable)]
-pub struct AddrCountVecs {
+#[derive(Traversable)]
+pub struct AddrCountVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub count: ComputedFromHeightLast<StoredU64>,
-    pub _30d_change: ComputedFromDateLast<StoredF64>,
+    pub count: ComputedFromHeightLast<StoredU64, M>,
+    pub _30d_change: ComputedFromHeightLast<StoredF64, M>,
 }
 
 impl AddrCountVecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
@@ -27,7 +28,7 @@ impl AddrCountVecs {
     ) -> Result<Self> {
         Ok(Self {
             count: ComputedFromHeightLast::forced_import(db, name, version, indexes)?,
-            _30d_change: ComputedFromDateLast::forced_import(
+            _30d_change: ComputedFromHeightLast::forced_import(
                 db,
                 &format!("{name}_30d_change"),
                 version,
@@ -36,24 +37,18 @@ impl AddrCountVecs {
         })
     }
 
-    pub fn compute_rest(
+    pub(crate) fn compute_rest(
         &mut self,
-        indexes: &indexes::Vecs,
+        blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.count.compute_rest(indexes, starting_indexes, exit)?;
-
-        self._30d_change
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_change(
-                    starting_indexes.dateindex,
-                    &*self.count.dateindex,
-                    30,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self._30d_change.height.compute_rolling_change(
+            starting_indexes.height,
+            &blocks.count.height_1m_ago,
+            &self.count.height,
+            exit,
+        )?;
 
         Ok(())
     }
@@ -65,7 +60,7 @@ pub struct AddressTypeToAddressCount(ByAddressType<u64>);
 
 impl AddressTypeToAddressCount {
     #[inline]
-    pub fn sum(&self) -> u64 {
+    pub(crate) fn sum(&self) -> u64 {
         self.0.values().sum()
     }
 }
@@ -75,56 +70,14 @@ impl From<(&AddressTypeToAddrCountVecs, Height)> for AddressTypeToAddressCount {
     fn from((groups, starting_height): (&AddressTypeToAddrCountVecs, Height)) -> Self {
         if let Some(prev_height) = starting_height.decremented() {
             Self(ByAddressType {
-                p2pk65: groups
-                    .p2pk65
-                    .count
-                    .height
-                    .into_iter()
-                    .get_unwrap(prev_height)
-                    .into(),
-                p2pk33: groups
-                    .p2pk33
-                    .count
-                    .height
-                    .into_iter()
-                    .get_unwrap(prev_height)
-                    .into(),
-                p2pkh: groups
-                    .p2pkh
-                    .count
-                    .height
-                    .into_iter()
-                    .get_unwrap(prev_height)
-                    .into(),
-                p2sh: groups
-                    .p2sh
-                    .count
-                    .height
-                    .into_iter()
-                    .get_unwrap(prev_height)
-                    .into(),
-                p2wpkh: groups
-                    .p2wpkh
-                    .count
-                    .height
-                    .into_iter()
-                    .get_unwrap(prev_height)
-                    .into(),
-                p2wsh: groups
-                    .p2wsh
-                    .count
-                    .height
-                    .into_iter()
-                    .get_unwrap(prev_height)
-                    .into(),
-                p2tr: groups
-                    .p2tr
-                    .count
-                    .height
-                    .into_iter()
-                    .get_unwrap(prev_height)
-                    .into(),
-                p2a: groups.p2a.count.height.into_iter().get_unwrap(prev_height).into(),
+                p2pk65: groups.p2pk65.count.height.collect_one(prev_height).unwrap().into(),
+                p2pk33: groups.p2pk33.count.height.collect_one(prev_height).unwrap().into(),
+                p2pkh: groups.p2pkh.count.height.collect_one(prev_height).unwrap().into(),
+                p2sh: groups.p2sh.count.height.collect_one(prev_height).unwrap().into(),
+                p2wpkh: groups.p2wpkh.count.height.collect_one(prev_height).unwrap().into(),
+                p2wsh: groups.p2wsh.count.height.collect_one(prev_height).unwrap().into(),
+                p2tr: groups.p2tr.count.height.collect_one(prev_height).unwrap().into(),
+                p2a: groups.p2a.count.height.collect_one(prev_height).unwrap().into(),
             })
         } else {
             Default::default()
@@ -133,8 +86,8 @@ impl From<(&AddressTypeToAddrCountVecs, Height)> for AddressTypeToAddressCount {
 }
 
 /// Address count per address type, with height + derived indexes + 30d change.
-#[derive(Clone, Deref, DerefMut, Traversable)]
-pub struct AddressTypeToAddrCountVecs(ByAddressType<AddrCountVecs>);
+#[derive(Deref, DerefMut, Traversable)]
+pub struct AddressTypeToAddrCountVecs<M: StorageMode = Rw>(ByAddressType<AddrCountVecs<M>>);
 
 impl From<ByAddressType<AddrCountVecs>> for AddressTypeToAddrCountVecs {
     #[inline]
@@ -144,7 +97,7 @@ impl From<ByAddressType<AddrCountVecs>> for AddressTypeToAddrCountVecs {
 }
 
 impl AddressTypeToAddrCountVecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
@@ -162,7 +115,7 @@ impl AddressTypeToAddrCountVecs {
         ))
     }
 
-    pub fn min_stateful_height(&self) -> usize {
+    pub(crate) fn min_stateful_height(&self) -> usize {
         self.p2pk65
             .count
             .height
@@ -176,7 +129,7 @@ impl AddressTypeToAddrCountVecs {
             .min(self.p2a.count.height.len())
     }
 
-    pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         let inner = &mut self.0;
         [
             &mut inner.p2pk65.count.height as &mut dyn AnyStoredVec,
@@ -191,7 +144,7 @@ impl AddressTypeToAddrCountVecs {
         .into_par_iter()
     }
 
-    pub fn truncate_push_height(
+    pub(crate) fn truncate_push_height(
         &mut self,
         height: Height,
         addr_counts: &AddressTypeToAddressCount,
@@ -231,8 +184,8 @@ impl AddressTypeToAddrCountVecs {
         Ok(())
     }
 
-    pub fn reset_height(&mut self) -> Result<()> {
-        use vecdb::GenericStoredVec;
+    pub(crate) fn reset_height(&mut self) -> Result<()> {
+        use vecdb::WritableVec;
         self.p2pk65.count.height.reset()?;
         self.p2pk33.count.height.reset()?;
         self.p2pkh.count.height.reset()?;
@@ -244,24 +197,24 @@ impl AddressTypeToAddrCountVecs {
         Ok(())
     }
 
-    pub fn compute_rest(
+    pub(crate) fn compute_rest(
         &mut self,
-        indexes: &indexes::Vecs,
+        blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.p2pk65.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2pk33.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2pkh.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2sh.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2wpkh.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2wsh.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2tr.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2a.compute_rest(indexes, starting_indexes, exit)?;
+        self.p2pk65.compute_rest(blocks, starting_indexes, exit)?;
+        self.p2pk33.compute_rest(blocks, starting_indexes, exit)?;
+        self.p2pkh.compute_rest(blocks, starting_indexes, exit)?;
+        self.p2sh.compute_rest(blocks, starting_indexes, exit)?;
+        self.p2wpkh.compute_rest(blocks, starting_indexes, exit)?;
+        self.p2wsh.compute_rest(blocks, starting_indexes, exit)?;
+        self.p2tr.compute_rest(blocks, starting_indexes, exit)?;
+        self.p2a.compute_rest(blocks, starting_indexes, exit)?;
         Ok(())
     }
 
-    pub fn by_height(&self) -> Vec<&EagerVec<PcoVec<Height, StoredU64>>> {
+    pub(crate) fn by_height(&self) -> Vec<&EagerVec<PcoVec<Height, StoredU64>>> {
         vec![
             &self.p2pk65.count.height,
             &self.p2pk33.count.height,
@@ -275,15 +228,15 @@ impl AddressTypeToAddrCountVecs {
     }
 }
 
-#[derive(Clone, Traversable)]
-pub struct AddrCountsVecs {
-    pub all: AddrCountVecs,
+#[derive(Traversable)]
+pub struct AddrCountsVecs<M: StorageMode = Rw> {
+    pub all: AddrCountVecs<M>,
     #[traversable(flatten)]
-    pub by_addresstype: AddressTypeToAddrCountVecs,
+    pub by_addresstype: AddressTypeToAddrCountVecs<M>,
 }
 
 impl AddrCountsVecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
@@ -295,22 +248,22 @@ impl AddrCountsVecs {
         })
     }
 
-    pub fn min_stateful_height(&self) -> usize {
+    pub(crate) fn min_stateful_height(&self) -> usize {
         self.all.count.height.len().min(self.by_addresstype.min_stateful_height())
     }
 
-    pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         rayon::iter::once(&mut self.all.count.height as &mut dyn AnyStoredVec)
             .chain(self.by_addresstype.par_iter_height_mut())
     }
 
-    pub fn reset_height(&mut self) -> Result<()> {
+    pub(crate) fn reset_height(&mut self) -> Result<()> {
         self.all.count.height.reset()?;
         self.by_addresstype.reset_height()?;
         Ok(())
     }
 
-    pub fn truncate_push_height(
+    pub(crate) fn truncate_push_height(
         &mut self,
         height: Height,
         total: u64,
@@ -322,32 +275,27 @@ impl AddrCountsVecs {
         Ok(())
     }
 
-    pub fn compute_rest(
+    pub(crate) fn compute_rest(
         &mut self,
-        indexes: &indexes::Vecs,
+        blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.by_addresstype
-            .compute_rest(indexes, starting_indexes, exit)?;
+            .compute_rest(blocks, starting_indexes, exit)?;
 
         let sources = self.by_addresstype.by_height();
         self.all
             .count
-            .compute_all(indexes, starting_indexes, exit, |height_vec| {
-                Ok(height_vec.compute_sum_of_others(starting_indexes.height, &sources, exit)?)
-            })?;
+            .height
+            .compute_sum_of_others(starting_indexes.height, &sources, exit)?;
 
-        self.all._30d_change
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_change(
-                    starting_indexes.dateindex,
-                    &*self.all.count.dateindex,
-                    30,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.all._30d_change.height.compute_rolling_change(
+            starting_indexes.height,
+            &blocks.count.height_1m_ago,
+            &self.all.count.height,
+            exit,
+        )?;
 
         Ok(())
     }

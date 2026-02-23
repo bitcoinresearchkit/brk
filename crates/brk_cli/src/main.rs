@@ -24,15 +24,6 @@ mod paths;
 use crate::{config::Config, paths::*};
 
 pub fn main() -> anyhow::Result<()> {
-    // Can't increase main thread's stack size, thus we need to use another thread
-    thread::Builder::new()
-        .stack_size(512 * 1024 * 1024)
-        .spawn(run)?
-        .join()
-        .unwrap()
-}
-
-pub fn run() -> anyhow::Result<()> {
     fs::create_dir_all(dot_brk_path())?;
 
     brk_logger::init(Some(&dot_brk_log_path()))?;
@@ -68,7 +59,7 @@ pub fn run() -> anyhow::Result<()> {
         }
     }
 
-    let mut computer = Computer::forced_import(&config.brkdir(), &indexer, config.fetcher())?;
+    let mut computer = Computer::forced_import(&config.brkdir(), &indexer)?;
 
     let mempool = Mempool::new(&client);
 

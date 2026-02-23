@@ -2,15 +2,15 @@ use brk_error::Result;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, distribution, indexes, scripts, transactions};
+use crate::{ComputeIndexes, blocks, distribution, mining, scripts, transactions};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
         scripts: &scripts::Vecs,
         blocks: &blocks::Vecs,
+        mining: &mining::Vecs,
         transactions: &transactions::Vecs,
         distribution: &distribution::Vecs,
         starting_indexes: &ComputeIndexes,
@@ -18,60 +18,39 @@ impl Vecs {
     ) -> Result<()> {
         // 1. Compute burned/unspendable supply
         self.burned
-            .compute(indexes, scripts, blocks, starting_indexes, exit)?;
+            .compute(scripts, mining, starting_indexes, exit)?;
 
-        // 2. Compute inflation rate: daily_subsidy / circulating_supply * 365 * 100
+        // 2. Compute inflation rate at height level: (supply[h] - supply[1y_ago]) / supply[1y_ago] * 100
         let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.total.sats;
-        self.inflation.compute_all(starting_indexes, exit, |v| {
-            v.compute_transform2(
-                starting_indexes.dateindex,
-                &blocks.rewards.subsidy.sats.dateindex.sum_cum.sum.0,
-                &circulating_supply.dateindex.0,
-                |(i, subsidy_1d_sum, supply, ..)| {
-                    let inflation = if *supply > 0 {
-                        365.0 * *subsidy_1d_sum as f64 / *supply as f64 * 100.0
-                    } else {
-                        0.0
-                    };
-                    (i, inflation.into())
-                },
+        self.inflation.height.compute_rolling_percentage_change(
+            starting_indexes.height,
+            &blocks.count.height_1y_ago,
+            &circulating_supply.height,
+            exit,
+        )?;
+
+        // 3. Compute velocity at height level
+        self.velocity
+            .compute(blocks, transactions, distribution, starting_indexes, exit)?;
+
+        // 4. Compute cap growth rates at height level using 1y lookback
+        self.market_cap_growth_rate
+            .height
+            .compute_rolling_percentage_change(
+                starting_indexes.height,
+                &blocks.count.height_1y_ago,
+                &self.market_cap.height,
                 exit,
             )?;
-            Ok(())
-        })?;
 
-        // 3. Compute velocity
-        self.velocity
-            .compute(transactions, distribution, starting_indexes, exit)?;
-
-        // 4. Compute cap growth rates
-        if let Some(market_cap) = self.market_cap.as_ref() {
-            let mcap_dateindex = &market_cap.dateindex.0;
-            self.market_cap_growth_rate
-                .compute_all(starting_indexes, exit, |vec| {
-                    vec.compute_percentage_change(
-                        starting_indexes.dateindex,
-                        mcap_dateindex,
-                        365,
-                        exit,
-                    )?;
-                    Ok(())
-                })?;
-        }
-
-        if let Some(realized) = distribution.utxo_cohorts.all.metrics.realized.as_ref() {
-            let rcap_dateindex = &realized.realized_cap.dateindex.0;
-            self.realized_cap_growth_rate
-                .compute_all(starting_indexes, exit, |vec| {
-                    vec.compute_percentage_change(
-                        starting_indexes.dateindex,
-                        rcap_dateindex,
-                        365,
-                        exit,
-                    )?;
-                    Ok(())
-                })?;
-        }
+        self.realized_cap_growth_rate
+            .height
+            .compute_rolling_percentage_change(
+                starting_indexes.height,
+                &blocks.count.height_1y_ago,
+                &distribution.utxo_cohorts.all.metrics.realized.realized_cap.height,
+                exit,
+            )?;
 
         // Note: circulating, market_cap, cap_growth_rate_diff are lazy
 

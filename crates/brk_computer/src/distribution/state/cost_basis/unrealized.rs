@@ -1,6 +1,6 @@
 use std::ops::Bound;
 
-use brk_types::{CentsUnsigned, CentsUnsignedCompact, Sats};
+use brk_types::{Cents, CentsCompact, Sats};
 
 use super::CostBasisMap;
 
@@ -8,10 +8,10 @@ use super::CostBasisMap;
 pub struct UnrealizedState {
     pub supply_in_profit: Sats,
     pub supply_in_loss: Sats,
-    pub unrealized_profit: CentsUnsigned,
-    pub unrealized_loss: CentsUnsigned,
-    pub invested_capital_in_profit: CentsUnsigned,
-    pub invested_capital_in_loss: CentsUnsigned,
+    pub unrealized_profit: Cents,
+    pub unrealized_loss: Cents,
+    pub invested_capital_in_profit: Cents,
+    pub invested_capital_in_loss: Cents,
     /// Raw Σ(price² × sats) for UTXOs in profit. Used for aggregation.
     pub investor_cap_in_profit_raw: u128,
     /// Raw Σ(price² × sats) for UTXOs in loss. Used for aggregation.
@@ -26,39 +26,16 @@ impl UnrealizedState {
     pub const ZERO: Self = Self {
         supply_in_profit: Sats::ZERO,
         supply_in_loss: Sats::ZERO,
-        unrealized_profit: CentsUnsigned::ZERO,
-        unrealized_loss: CentsUnsigned::ZERO,
-        invested_capital_in_profit: CentsUnsigned::ZERO,
-        invested_capital_in_loss: CentsUnsigned::ZERO,
+        unrealized_profit: Cents::ZERO,
+        unrealized_loss: Cents::ZERO,
+        invested_capital_in_profit: Cents::ZERO,
+        invested_capital_in_loss: Cents::ZERO,
         investor_cap_in_profit_raw: 0,
         investor_cap_in_loss_raw: 0,
         invested_capital_in_profit_raw: 0,
         invested_capital_in_loss_raw: 0,
     };
 
-    /// Compute pain_index from raw values.
-    /// pain_index = investor_price_of_losers - spot
-    #[inline]
-    pub fn pain_index(&self, spot: CentsUnsigned) -> CentsUnsigned {
-        if self.invested_capital_in_loss_raw == 0 {
-            return CentsUnsigned::ZERO;
-        }
-        let investor_price_losers =
-            self.investor_cap_in_loss_raw / self.invested_capital_in_loss_raw;
-        CentsUnsigned::new((investor_price_losers - spot.as_u128()) as u64)
-    }
-
-    /// Compute greed_index from raw values.
-    /// greed_index = spot - investor_price_of_winners
-    #[inline]
-    pub fn greed_index(&self, spot: CentsUnsigned) -> CentsUnsigned {
-        if self.invested_capital_in_profit_raw == 0 {
-            return CentsUnsigned::ZERO;
-        }
-        let investor_price_winners =
-            self.investor_cap_in_profit_raw / self.invested_capital_in_profit_raw;
-        CentsUnsigned::new((spot.as_u128() - investor_price_winners) as u64)
-    }
 }
 
 /// Internal cache state using u128 for raw cent*sat values.
@@ -88,14 +65,12 @@ impl CachedStateRaw {
         UnrealizedState {
             supply_in_profit: self.supply_in_profit,
             supply_in_loss: self.supply_in_loss,
-            unrealized_profit: CentsUnsigned::new(
-                (self.unrealized_profit / Sats::ONE_BTC_U128) as u64,
-            ),
-            unrealized_loss: CentsUnsigned::new((self.unrealized_loss / Sats::ONE_BTC_U128) as u64),
-            invested_capital_in_profit: CentsUnsigned::new(
+            unrealized_profit: Cents::new((self.unrealized_profit / Sats::ONE_BTC_U128) as u64),
+            unrealized_loss: Cents::new((self.unrealized_loss / Sats::ONE_BTC_U128) as u64),
+            invested_capital_in_profit: Cents::new(
                 (self.invested_capital_in_profit / Sats::ONE_BTC_U128) as u64,
             ),
-            invested_capital_in_loss: CentsUnsigned::new(
+            invested_capital_in_loss: Cents::new(
                 (self.invested_capital_in_loss / Sats::ONE_BTC_U128) as u64,
             ),
             investor_cap_in_profit_raw: self.investor_cap_in_profit,
@@ -109,12 +84,12 @@ impl CachedStateRaw {
 #[derive(Debug, Clone)]
 pub struct CachedUnrealizedState {
     state: CachedStateRaw,
-    at_price: CentsUnsignedCompact,
+    at_price: CentsCompact,
 }
 
 impl CachedUnrealizedState {
-    pub fn compute_fresh(price: CentsUnsigned, map: &CostBasisMap) -> Self {
-        let price: CentsUnsignedCompact = price.into();
+    pub(crate) fn compute_fresh(price: Cents, map: &CostBasisMap) -> Self {
+        let price: CentsCompact = price.into();
         let state = Self::compute_raw(price, map);
         Self {
             state,
@@ -123,24 +98,20 @@ impl CachedUnrealizedState {
     }
 
     /// Get the current cached state as output (without price update).
-    pub fn current_state(&self) -> UnrealizedState {
+    pub(crate) fn current_state(&self) -> UnrealizedState {
         self.state.to_output()
     }
 
-    pub fn get_at_price(
-        &mut self,
-        new_price: CentsUnsigned,
-        map: &CostBasisMap,
-    ) -> UnrealizedState {
-        let new_price: CentsUnsignedCompact = new_price.into();
+    pub(crate) fn get_at_price(&mut self, new_price: Cents, map: &CostBasisMap) -> UnrealizedState {
+        let new_price: CentsCompact = new_price.into();
         if new_price != self.at_price {
             self.update_for_price_change(new_price, map);
         }
         self.state.to_output()
     }
 
-    pub fn on_receive(&mut self, price: CentsUnsigned, sats: Sats) {
-        let price: CentsUnsignedCompact = price.into();
+    pub(crate) fn on_receive(&mut self, price: Cents, sats: Sats) {
+        let price: CentsCompact = price.into();
         let sats_u128 = sats.as_u128();
         let price_u128 = price.as_u128();
         let invested_capital = price_u128 * sats_u128;
@@ -163,8 +134,8 @@ impl CachedUnrealizedState {
         }
     }
 
-    pub fn on_send(&mut self, price: CentsUnsigned, sats: Sats) {
-        let price: CentsUnsignedCompact = price.into();
+    pub(crate) fn on_send(&mut self, price: Cents, sats: Sats) {
+        let price: CentsCompact = price.into();
         let sats_u128 = sats.as_u128();
         let price_u128 = price.as_u128();
         let invested_capital = price_u128 * sats_u128;
@@ -187,7 +158,7 @@ impl CachedUnrealizedState {
         }
     }
 
-    fn update_for_price_change(&mut self, new_price: CentsUnsignedCompact, map: &CostBasisMap) {
+    fn update_for_price_change(&mut self, new_price: CentsCompact, map: &CostBasisMap) {
         let old_price = self.at_price;
 
         if new_price > old_price {
@@ -198,7 +169,8 @@ impl CachedUnrealizedState {
 
             // First, process UTXOs crossing from loss to profit
             // Range (old_price, new_price] means: old_price < price <= new_price
-            for (&price, &sats) in map.range((Bound::Excluded(old_price), Bound::Included(new_price)))
+            for (&price, &sats) in
+                map.range((Bound::Excluded(old_price), Bound::Included(new_price)))
             {
                 let sats_u128 = sats.as_u128();
                 let price_u128 = price.as_u128();
@@ -239,7 +211,8 @@ impl CachedUnrealizedState {
 
             // First, process UTXOs crossing from profit to loss
             // Range (new_price, old_price] means: new_price < price <= old_price
-            for (&price, &sats) in map.range((Bound::Excluded(new_price), Bound::Included(old_price)))
+            for (&price, &sats) in
+                map.range((Bound::Excluded(new_price), Bound::Included(old_price)))
             {
                 let sats_u128 = sats.as_u128();
                 let price_u128 = price.as_u128();
@@ -278,7 +251,7 @@ impl CachedUnrealizedState {
     }
 
     /// Compute raw cached state from the map.
-    fn compute_raw(current_price: CentsUnsignedCompact, map: &CostBasisMap) -> CachedStateRaw {
+    fn compute_raw(current_price: CentsCompact, map: &CostBasisMap) -> CachedStateRaw {
         let mut state = CachedStateRaw::default();
 
         for (&price, &sats) in map.iter() {
@@ -309,8 +282,8 @@ impl CachedUnrealizedState {
 
     /// Compute final UnrealizedState directly (not cached).
     /// Used for date_state which doesn't use the cache.
-    pub fn compute_full_standalone(
-        current_price: CentsUnsignedCompact,
+    pub(crate) fn compute_full_standalone(
+        current_price: CentsCompact,
         map: &CostBasisMap,
     ) -> UnrealizedState {
         Self::compute_raw(current_price, map).to_output()

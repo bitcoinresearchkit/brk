@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{Sats, TxInIndex, TxIndex, TxOutIndex, Vout};
 use tracing::info;
-use vecdb::{AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, TypedVecIterator, VecIndex};
+use vecdb::{AnyStoredVec, AnyVec, Database, Exit, WritableVec, ReadableVec, VecIndex};
 
 use super::Vecs;
 use crate::ComputeIndexes;
@@ -10,7 +10,7 @@ use crate::ComputeIndexes;
 const BATCH_SIZE: usize = 2 * 1024 * 1024 * 1024 / size_of::<Entry>();
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         db: &Database,
         indexer: &Indexer,
@@ -39,19 +39,20 @@ impl Vecs {
             return Ok(());
         }
 
-        let mut outpoint_iter = indexer.vecs.inputs.outpoint.iter()?;
-        let mut first_txoutindex_iter = indexer.vecs.transactions.first_txoutindex.iter()?;
-        let mut value_iter = indexer.vecs.outputs.value.iter()?;
-        let mut entries: Vec<Entry> = Vec::with_capacity(BATCH_SIZE);
+        let first_txoutindex_reader = indexer.vecs.transactions.first_txoutindex.reader();
+        let value_reader = indexer.vecs.outputs.value.reader();
+        let actual_total = target - min;
+    let mut entries: Vec<Entry> = Vec::with_capacity(actual_total.min(BATCH_SIZE));
 
         let mut batch_start = min;
         while batch_start < target {
             let batch_end = (batch_start + BATCH_SIZE).min(target);
 
+            let outpoints = indexer.vecs.inputs.outpoint.collect_range_at(batch_start, batch_end);
+
             entries.clear();
-            for i in batch_start..batch_end {
-                let txinindex = TxInIndex::from(i);
-                let outpoint = outpoint_iter.get_unwrap(txinindex);
+            for (j, outpoint) in outpoints.into_iter().enumerate() {
+                let txinindex = TxInIndex::from(batch_start + j);
                 entries.push(Entry {
                     txinindex,
                     txindex: outpoint.txindex(),
@@ -67,7 +68,7 @@ impl Vecs {
                 if entry.txindex.is_coinbase() {
                     break;
                 }
-                entry.txoutindex = first_txoutindex_iter.get_unwrap(entry.txindex) + entry.vout;
+                entry.txoutindex = first_txoutindex_reader.get(entry.txindex.to_usize()) + entry.vout;
             }
 
             entries.sort_unstable_by_key(|e| e.txoutindex);
@@ -75,7 +76,7 @@ impl Vecs {
                 if entry.txoutindex.is_coinbase() {
                     break;
                 }
-                entry.value = value_iter.get_unwrap(entry.txoutindex);
+                entry.value = value_reader.get(entry.txoutindex.to_usize());
             }
 
             entries.sort_unstable_by_key(|e| e.txinindex);

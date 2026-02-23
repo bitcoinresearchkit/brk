@@ -1,21 +1,21 @@
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, StoredF32};
-use vecdb::{EagerVec, PcoVec};
+use brk_types::{Dollars, StoredF32};
+use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedFromDateLast, Price};
+use crate::internal::{ComputedFromHeightLast, Price};
 
 /// Price range and choppiness metrics
-#[derive(Clone, Traversable)]
-pub struct Vecs {
-    pub price_1w_min: Price,
-    pub price_1w_max: Price,
-    pub price_2w_min: Price,
-    pub price_2w_max: Price,
-    pub price_1m_min: Price,
-    pub price_1m_max: Price,
-    pub price_1y_min: Price,
-    pub price_1y_max: Price,
-    pub price_true_range: EagerVec<PcoVec<DateIndex, StoredF32>>,
-    pub price_true_range_2w_sum: EagerVec<PcoVec<DateIndex, StoredF32>>,
-    pub price_2w_choppiness_index: ComputedFromDateLast<StoredF32>,
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
+    pub price_1w_min: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub price_1w_max: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub price_2w_min: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub price_2w_max: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub price_1m_min: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub price_1m_max: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub price_1y_min: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub price_1y_max: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub price_true_range: ComputedFromHeightLast<StoredF32, M>,
+    pub price_true_range_2w_sum: ComputedFromHeightLast<StoredF32, M>,
+    pub price_2w_choppiness_index: ComputedFromHeightLast<StoredF32, M>,
 }

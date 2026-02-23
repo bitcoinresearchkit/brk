@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-use crate::CentsUnsigned;
+use crate::Cents;
 
 /// Bucket type for cost basis aggregation.
 /// Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
@@ -48,7 +48,7 @@ impl CostBasisBucket {
 
     /// Compute bucket floor for a given price in cents.
     /// Returns None for Raw (no bucketing).
-    pub fn bucket_floor(&self, price_cents: CentsUnsigned) -> Option<CentsUnsigned> {
+    pub fn bucket_floor(&self, price_cents: Cents) -> Option<Cents> {
         match self {
             Self::Raw => None,
             Self::Lin200 | Self::Lin500 | Self::Lin1000 => {
@@ -56,8 +56,8 @@ impl CostBasisBucket {
                 Some((price_cents / size) * size)
             }
             Self::Log10 | Self::Log50 | Self::Log100 | Self::Log200 => {
-                if price_cents == CentsUnsigned::ZERO {
-                    return Some(CentsUnsigned::ZERO);
+                if price_cents == Cents::ZERO {
+                    return Some(Cents::ZERO);
                 }
                 let n = self.log_buckets_per_decade().unwrap();
                 // Bucket index = floor(n * log10(price))
@@ -65,7 +65,7 @@ impl CostBasisBucket {
                 let log_price = f64::from(price_cents).log10();
                 let bucket_idx = (n as f64 * log_price).floor() as i32;
                 let floor = 10_f64.powf(bucket_idx as f64 / n as f64);
-                Some(CentsUnsigned::from(floor.round() as u64))
+                Some(Cents::from(floor.round() as u64))
             }
         }
     }

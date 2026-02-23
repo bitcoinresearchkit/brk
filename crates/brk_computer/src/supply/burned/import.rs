@@ -3,14 +3,14 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::ValueFromHeightSumCum, price};
+use crate::{indexes, internal::ValueFromHeightSumCum, prices};
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
     ) -> Result<Self> {
         Ok(Self {
             opreturn: ValueFromHeightSumCum::forced_import(
@@ -18,14 +18,14 @@ impl Vecs {
                 "opreturn_supply",
                 version,
                 indexes,
-                price,
+                prices,
             )?,
             unspendable: ValueFromHeightSumCum::forced_import(
                 db,
                 "unspendable_supply",
                 version,
                 indexes,
-                price,
+                prices,
             )?,
         })
     }

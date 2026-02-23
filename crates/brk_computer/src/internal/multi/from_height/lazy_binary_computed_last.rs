@@ -1,18 +1,17 @@
 //! LazyBinaryComputedFromHeightLast - block last with lazy binary transform at height level.
 //!
 //! Height-level value is lazy: `transform(source1[h], source2[h])`.
-//! DateIndex last is stored since it requires finding the last value within each date
+//! Day1 last is stored since it requires finding the last value within each date
 //! (which may span multiple heights with varying prices).
 
-use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{BinaryTransform, Database, Exit, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2};
+use vecdb::{BinaryTransform, ReadableBoxedVec, ReadableCloneableVec, LazyVecFrom2};
 
 use crate::{
-    ComputeIndexes, indexes,
+    indexes,
     internal::{ComputedHeightDerivedLast, ComputedVecValue, NumericValue},
 };
 
@@ -31,7 +30,7 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub rest: ComputedHeightDerivedLast<T>,
+    pub rest: Box<ComputedHeightDerivedLast<T>>,
 }
 
 impl<T, S1T, S2T> LazyBinaryComputedFromHeightLast<T, S1T, S2T>
@@ -40,31 +39,20 @@ where
     S1T: ComputedVecValue + JsonSchema,
     S2T: ComputedVecValue + JsonSchema,
 {
-    pub fn forced_import<F: BinaryTransform<S1T, S2T, T>>(
-        db: &Database,
+    pub(crate) fn forced_import<F: BinaryTransform<S1T, S2T, T>>(
         name: &str,
         version: Version,
-        source1: IterableBoxedVec<Height, S1T>,
-        source2: IterableBoxedVec<Height, S2T>,
+        source1: ReadableBoxedVec<Height, S1T>,
+        source2: ReadableBoxedVec<Height, S2T>,
         indexes: &indexes::Vecs,
-    ) -> Result<Self> {
+    ) -> Self {
         let v = version + VERSION;
 
         let height = LazyVecFrom2::transformed::<F>(name, v, source1, source2);
 
         let rest =
-            ComputedHeightDerivedLast::forced_import(db, name, height.boxed_clone(), v, indexes)?;
+            ComputedHeightDerivedLast::forced_import(name, height.read_only_boxed_clone(), v, indexes);
 
-        Ok(Self { height, rest })
-    }
-
-    pub fn derive_from(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.rest
-            .derive_from(indexes, starting_indexes, &self.height, exit)
+        Self { height, rest: Box::new(rest) }
     }
 }

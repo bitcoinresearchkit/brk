@@ -6,7 +6,7 @@ mod rate_limit;
 
 use std::{io, path::Path, time::Duration};
 
-use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{filter::Targets, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 use format::Formatter;
 use hook::{HookLayer, LOG_HOOK};
@@ -25,10 +25,14 @@ pub fn init(path: Option<&Path>) -> io::Result<()> {
 
     let level = std::env::var("LOG").unwrap_or_else(|_| DEFAULT_LEVEL.to_string());
 
-    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-        EnvFilter::new(format!(
-            "{level},bitcoin=off,bitcoincore-rpc=off,fjall=off,brk_fjall=off,lsm_tree=off,brk_rolldown=off,rolldown=off,tracing=off,aide=off,rustls=off,notify=off,oxc_resolver=off,tower_http=off"
-        ))
+    let directives = std::env::var("RUST_LOG").unwrap_or_else(|_| {
+        format!(
+            "{level},bitcoin=off,bitcoincore_rpc=off,corepc=off,fjall=off,brk_fjall=off,lsm_tree=off,brk_rolldown=off,rolldown=off,tracing=off,aide=off,rustls=off,notify=off,oxc_resolver=off,tower_http=off"
+        )
+    });
+
+    let filter: Targets = directives.parse().unwrap_or_else(|_| {
+        Targets::new().with_default(tracing::Level::INFO)
     });
 
     let registry = tracing_subscriber::registry()

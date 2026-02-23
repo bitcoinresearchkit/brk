@@ -1,7 +1,7 @@
 use brk_error::{Error, Result};
-use brk_types::{BlockTimestamp, Date, DateIndex, Height, Timestamp};
+use brk_types::{BlockTimestamp, Date, Day1, Height, Timestamp};
 use jiff::Timestamp as JiffTimestamp;
-use vecdb::{GenericStoredVec, TypedVecIterator};
+use vecdb::ReadableVec;
 
 use crate::Query;
 
@@ -19,28 +19,26 @@ impl Query {
 
         let target = timestamp;
         let date = Date::from(target);
-        let dateindex = DateIndex::try_from(date).unwrap_or_default();
+        let day1 = Day1::try_from(date).unwrap_or_default();
 
         // Get first height of the target date
         let first_height_of_day = computer
             .indexes
-            .dateindex
+            .day1
             .first_height
-            .read_once(dateindex)
+            .collect_one(day1)
             .unwrap_or(Height::from(0usize));
 
         let start: usize = usize::from(first_height_of_day).min(max_height_usize);
 
-        // Use iterator for efficient sequential access
-        let mut timestamp_iter = indexer.vecs.blocks.timestamp.iter()?;
+        let timestamps = &indexer.vecs.blocks.timestamp;
 
         // Search forward from start to find the last block <= target timestamp
         let mut best_height = start;
-        let mut best_ts = timestamp_iter.get_unwrap(Height::from(start));
+        let mut best_ts = timestamps.collect_one_at(start).unwrap();
 
         for h in (start + 1)..=max_height_usize {
-            let height = Height::from(h);
-            let block_ts = timestamp_iter.get_unwrap(height);
+            let block_ts = timestamps.collect_one_at(h).unwrap();
             if block_ts <= target {
                 best_height = h;
                 best_ts = block_ts;
@@ -51,8 +49,7 @@ impl Query {
 
         // Check one block before start in case we need to go backward
         if start > 0 && best_ts > target {
-            let prev_height = Height::from(start - 1);
-            let prev_ts = timestamp_iter.get_unwrap(prev_height);
+            let prev_ts = timestamps.collect_one_at(start - 1).unwrap();
             if prev_ts <= target {
                 best_height = start - 1;
                 best_ts = prev_ts;
@@ -60,12 +57,7 @@ impl Query {
         }
 
         let height = Height::from(best_height);
-        let blockhash = indexer
-            .vecs
-            .blocks
-            .blockhash
-            .iter()?
-            .get_unwrap(height);
+        let blockhash = indexer.vecs.blocks.blockhash.reader().get(usize::from(height));
 
         // Convert timestamp to ISO 8601 format
         let ts_secs: i64 = (*best_ts).into();

@@ -2,7 +2,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use brk_error::Result;
 use brk_types::{DifficultyAdjustment, DifficultyEpoch, Height};
-use vecdb::GenericStoredVec;
+use vecdb::ReadableVec;
 
 use crate::Query;
 
@@ -24,7 +24,8 @@ impl Query {
             .indexes
             .height
             .difficultyepoch
-            .read_once(current_height)?;
+            .collect_one(current_height)
+            .unwrap();
         let current_epoch_usize: usize = current_epoch.into();
 
         // Get epoch start height
@@ -32,7 +33,8 @@ impl Query {
             .indexes
             .difficultyepoch
             .first_height
-            .read_once(current_epoch)?;
+            .collect_one(current_epoch)
+            .unwrap();
         let epoch_start_u32: u32 = epoch_start_height.into();
 
         // Calculate epoch progress
@@ -47,12 +49,14 @@ impl Query {
             .time
             .timestamp
             .difficultyepoch
-            .read_once(current_epoch)?;
+            .collect_one(current_epoch)
+            .unwrap();
         let current_timestamp = indexer
             .vecs
             .blocks
             .timestamp
-            .read_once(current_height)?;
+            .collect_one(current_height)
+            .unwrap();
 
         // Calculate average block time in current epoch
         let elapsed_time = (*current_timestamp - *epoch_start_timestamp) as u64;
@@ -88,18 +92,21 @@ impl Query {
                 .indexes
                 .difficultyepoch
                 .first_height
-                .read_once(prev_epoch)?;
+                .collect_one(prev_epoch)
+                .unwrap();
 
             let prev_difficulty = indexer
                 .vecs
                 .blocks
                 .difficulty
-                .read_once(prev_epoch_start)?;
+                .collect_one(prev_epoch_start)
+                .unwrap();
             let curr_difficulty = indexer
                 .vecs
                 .blocks
                 .difficulty
-                .read_once(epoch_start_height)?;
+                .collect_one(epoch_start_height)
+                .unwrap();
 
             if *prev_difficulty > 0.0 {
                 ((*curr_difficulty / *prev_difficulty) - 1.0) * 100.0

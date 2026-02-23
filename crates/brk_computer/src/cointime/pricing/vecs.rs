@@ -1,15 +1,17 @@
 use brk_traversable::Traversable;
+use brk_types::Dollars;
+use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedFromDateRatio, PriceFromHeight};
+use crate::internal::{ComputedFromHeightLast, ComputedFromHeightRatio, Price};
 
-#[derive(Clone, Traversable)]
-pub struct Vecs {
-    pub vaulted_price: PriceFromHeight,
-    pub vaulted_price_ratio: ComputedFromDateRatio,
-    pub active_price: PriceFromHeight,
-    pub active_price_ratio: ComputedFromDateRatio,
-    pub true_market_mean: PriceFromHeight,
-    pub true_market_mean_ratio: ComputedFromDateRatio,
-    pub cointime_price: PriceFromHeight,
-    pub cointime_price_ratio: ComputedFromDateRatio,
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
+    pub vaulted_price: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub vaulted_price_ratio: ComputedFromHeightRatio<M>,
+    pub active_price: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub active_price_ratio: ComputedFromHeightRatio<M>,
+    pub true_market_mean: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub true_market_mean_ratio: ComputedFromHeightRatio<M>,
+    pub cointime_price: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub cointime_price_ratio: ComputedFromHeightRatio<M>,
 }

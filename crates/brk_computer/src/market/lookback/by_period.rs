@@ -37,7 +37,7 @@ pub const LOOKBACK_PERIOD_NAMES: ByLookbackPeriod<&'static str> = ByLookbackPeri
 };
 
 /// Generic wrapper for lookback period-based data (includes 1d)
-#[derive(Default, Clone, Traversable)]
+#[derive(Clone, Default, Traversable)]
 pub struct ByLookbackPeriod<T> {
     pub _1d: T,
     pub _1w: T,
@@ -55,30 +55,7 @@ pub struct ByLookbackPeriod<T> {
 }
 
 impl<T> ByLookbackPeriod<T> {
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(&'static str, u32) -> T,
-    {
-        let n = LOOKBACK_PERIOD_NAMES;
-        let d = LOOKBACK_PERIOD_DAYS;
-        Self {
-            _1d: create(n._1d, d._1d),
-            _1w: create(n._1w, d._1w),
-            _1m: create(n._1m, d._1m),
-            _3m: create(n._3m, d._3m),
-            _6m: create(n._6m, d._6m),
-            _1y: create(n._1y, d._1y),
-            _2y: create(n._2y, d._2y),
-            _3y: create(n._3y, d._3y),
-            _4y: create(n._4y, d._4y),
-            _5y: create(n._5y, d._5y),
-            _6y: create(n._6y, d._6y),
-            _8y: create(n._8y, d._8y),
-            _10y: create(n._10y, d._10y),
-        }
-    }
-
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
+    pub(crate) fn try_new<F, E>(mut create: F) -> Result<Self, E>
     where
         F: FnMut(&'static str, u32) -> Result<T, E>,
     {
@@ -101,45 +78,7 @@ impl<T> ByLookbackPeriod<T> {
         })
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        [
-            &self._1d,
-            &self._1w,
-            &self._1m,
-            &self._3m,
-            &self._6m,
-            &self._1y,
-            &self._2y,
-            &self._3y,
-            &self._4y,
-            &self._5y,
-            &self._6y,
-            &self._8y,
-            &self._10y,
-        ]
-        .into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        [
-            &mut self._1d,
-            &mut self._1w,
-            &mut self._1m,
-            &mut self._3m,
-            &mut self._6m,
-            &mut self._1y,
-            &mut self._2y,
-            &mut self._3y,
-            &mut self._4y,
-            &mut self._5y,
-            &mut self._6y,
-            &mut self._8y,
-            &mut self._10y,
-        ]
-        .into_iter()
-    }
-
-    pub fn iter_mut_with_days(&mut self) -> impl Iterator<Item = (&mut T, u32)> {
+    pub(crate) fn iter_mut_with_days(&mut self) -> impl Iterator<Item = (&mut T, u32)> {
         let d = LOOKBACK_PERIOD_DAYS;
         [
             (&mut self._1d, d._1d),
@@ -160,7 +99,7 @@ impl<T> ByLookbackPeriod<T> {
     }
 
     /// Get the DCA-matching subset (excludes 1d)
-    pub fn as_dca_period(&self) -> ByDcaPeriod<&T> {
+    pub(crate) fn as_dca_period(&self) -> ByDcaPeriod<&T> {
         ByDcaPeriod {
             _1w: &self._1w,
             _1m: &self._1m,
@@ -177,7 +116,7 @@ impl<T> ByLookbackPeriod<T> {
         }
     }
 
-    pub fn zip_ref<'a, U>(&'a self, other: &'a ByLookbackPeriod<U>) -> ByLookbackPeriod<(&'a T, &'a U)> {
+    pub(crate) fn zip_ref<'a, U>(&'a self, other: &'a ByLookbackPeriod<U>) -> ByLookbackPeriod<(&'a T, &'a U)> {
         ByLookbackPeriod {
             _1d: (&self._1d, &other._1d),
             _1w: (&self._1w, &other._1w),
@@ -195,7 +134,7 @@ impl<T> ByLookbackPeriod<T> {
         }
     }
 
-    pub fn map<U, F: FnMut(T) -> U>(self, mut f: F) -> ByLookbackPeriod<U> {
+    pub(crate) fn map<U, F: FnMut(T) -> U>(self, mut f: F) -> ByLookbackPeriod<U> {
         ByLookbackPeriod {
             _1d: f(self._1d),
             _1w: f(self._1w),

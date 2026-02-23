@@ -5,7 +5,7 @@ import { brk } from "../client.js";
 import { includes } from "../utils/array.js";
 import { Unit } from "../utils/units.js";
 import { priceLine, priceLines } from "./constants.js";
-import { baseline, candlestick, histogram, line, price } from "./series.js";
+import { baseline, histogram, line, price } from "./series.js";
 import { createPriceRatioCharts } from "./shared.js";
 import { periodIdToName } from "./utils.js";
 
@@ -184,7 +184,7 @@ function historicalSubSection(name, periods) {
  * @returns {PartialOptionsGroup}
  */
 export function createMarketSection() {
-  const { market, supply, distribution, price: priceMetrics } = brk.metrics;
+  const { market, supply, distribution, prices } = brk.metrics;
   const {
     movingAverage: ma,
     ath,
@@ -265,8 +265,7 @@ export function createMarketSection() {
     },
   ];
 
-  const totalReturnPeriods =
-    shortPeriodsBase.length + longPeriodsBase.length;
+  const totalReturnPeriods = shortPeriodsBase.length + longPeriodsBase.length;
 
   /** @type {Period[]} */
   const shortPeriods = shortPeriodsBase.map((p, i) => ({
@@ -364,25 +363,13 @@ export function createMarketSection() {
     name: "Market",
     tree: [
       { name: "Price", title: "Bitcoin Price" },
-      {
-        name: "Oracle",
-        title: "On-chain Price",
-        top: [
-          // @ts-ignore
-          candlestick({
-            metric: priceMetrics.oracle.ohlcDollars,
-            name: "Oracle",
-            unit: Unit.usd,
-          }),
-        ],
-      },
 
       {
         name: "Sats/$",
         title: "Sats per Dollar",
         bottom: [
           line({
-            metric: priceMetrics.sats.split.close,
+            metric: prices.sats.split.close,
             name: "Sats/$",
             unit: Unit.sats,
           }),
@@ -687,20 +674,20 @@ export function createMarketSection() {
             title: "RSI (14d)",
             bottom: [
               line({
-                metric: indicators.rsi14d,
+                metric: indicators.rsi._1d.rsi,
                 name: "RSI",
                 color: colors.indicator.main,
                 unit: Unit.index,
               }),
               line({
-                metric: indicators.rsi14dMax,
+                metric: indicators.rsi._1d.rsiMax,
                 name: "Max",
                 color: colors.stat.max,
                 defaultActive: false,
                 unit: Unit.index,
               }),
               line({
-                metric: indicators.rsi14dMin,
+                metric: indicators.rsi._1d.rsiMin,
                 name: "Min",
                 color: colors.stat.min,
                 defaultActive: false,
@@ -716,13 +703,13 @@ export function createMarketSection() {
             title: "Stochastic RSI",
             bottom: [
               line({
-                metric: indicators.stochRsiK,
+                metric: indicators.rsi._1d.stochRsiK,
                 name: "K",
                 color: colors.indicator.fast,
                 unit: Unit.index,
               }),
               line({
-                metric: indicators.stochRsiD,
+                metric: indicators.rsi._1d.stochRsiD,
                 name: "D",
                 color: colors.indicator.slow,
                 unit: Unit.index,
@@ -735,19 +722,19 @@ export function createMarketSection() {
             title: "MACD",
             bottom: [
               line({
-                metric: indicators.macdLine,
+                metric: indicators.macd._1d.line,
                 name: "MACD",
                 color: colors.indicator.fast,
                 unit: Unit.usd,
               }),
               line({
-                metric: indicators.macdSignal,
+                metric: indicators.macd._1d.signal,
                 name: "Signal",
                 color: colors.indicator.slow,
                 unit: Unit.usd,
               }),
               histogram({
-                metric: indicators.macdHistogram,
+                metric: indicators.macd._1d.histogram,
                 name: "Histogram",
                 unit: Unit.usd,
               }),

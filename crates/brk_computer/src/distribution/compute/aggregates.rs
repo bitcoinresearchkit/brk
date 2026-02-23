@@ -1,9 +1,9 @@
 use brk_error::Result;
-use brk_types::{DateIndex, Dollars, Height};
+use brk_types::{Dollars, Height};
 use tracing::info;
-use vecdb::{Exit, IterableVec};
+use vecdb::{Exit, ReadableVec};
 
-use crate::{ComputeIndexes, indexes, price};
+use crate::{ComputeIndexes, blocks, prices};
 
 use super::super::cohorts::{AddressCohorts, UTXOCohorts};
 
@@ -12,7 +12,7 @@ use super::super::cohorts::{AddressCohorts, UTXOCohorts};
 /// For example:
 /// - ">=1d" UTXO cohort is computed from sum of age_range cohorts that match
 /// - ">=1 BTC" address cohort is computed from sum of amount_range cohorts that match
-pub fn compute_overlapping(
+pub(crate) fn compute_overlapping(
     utxo_cohorts: &mut UTXOCohorts,
     address_cohorts: &mut AddressCohorts,
     starting_indexes: &ComputeIndexes,
@@ -28,19 +28,19 @@ pub fn compute_overlapping(
 
 /// First phase of post-processing: compute index transforms.
 ///
-/// Converts height-indexed data to dateindex-indexed data and other transforms.
-pub fn compute_rest_part1(
+/// Converts height-indexed data to day1-indexed data and other transforms.
+pub(crate) fn compute_rest_part1(
     utxo_cohorts: &mut UTXOCohorts,
     address_cohorts: &mut AddressCohorts,
-    indexes: &indexes::Vecs,
-    price: Option<&price::Vecs>,
+    blocks: &blocks::Vecs,
+    prices: &prices::Vecs,
     starting_indexes: &ComputeIndexes,
     exit: &Exit,
 ) -> Result<()> {
     info!("Computing rest part 1...");
 
-    utxo_cohorts.compute_rest_part1(indexes, price, starting_indexes, exit)?;
-    address_cohorts.compute_rest_part1(indexes, price, starting_indexes, exit)?;
+    utxo_cohorts.compute_rest_part1(blocks, prices, starting_indexes, exit)?;
+    address_cohorts.compute_rest_part1(blocks, prices, starting_indexes, exit)?;
 
     Ok(())
 }
@@ -48,38 +48,33 @@ pub fn compute_rest_part1(
 /// Second phase of post-processing: compute relative metrics.
 ///
 /// Computes supply ratios, market cap ratios, etc. using total references.
-#[allow(clippy::too_many_arguments)]
-pub fn compute_rest_part2<HM, DM>(
+pub(crate) fn compute_rest_part2<HM>(
     utxo_cohorts: &mut UTXOCohorts,
     address_cohorts: &mut AddressCohorts,
-    indexes: &indexes::Vecs,
-    price: Option<&price::Vecs>,
+    blocks: &blocks::Vecs,
+    prices: &prices::Vecs,
     starting_indexes: &ComputeIndexes,
     height_to_market_cap: Option<&HM>,
-    dateindex_to_market_cap: Option<&DM>,
     exit: &Exit,
 ) -> Result<()>
 where
-    HM: IterableVec<Height, Dollars> + Sync,
-    DM: IterableVec<DateIndex, Dollars> + Sync,
+    HM: ReadableVec<Height, Dollars> + Sync,
 {
     info!("Computing rest part 2...");
 
     utxo_cohorts.compute_rest_part2(
-        indexes,
-        price,
+        blocks,
+        prices,
         starting_indexes,
         height_to_market_cap,
-        dateindex_to_market_cap,
         exit,
     )?;
 
     address_cohorts.compute_rest_part2(
-        indexes,
-        price,
+        blocks,
+        prices,
         starting_indexes,
         height_to_market_cap,
-        dateindex_to_market_cap,
         exit,
     )?;
 

@@ -5,22 +5,22 @@ use brk_types::{
     Version,
 };
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, BytesVec, Database, ImportableVec, PcoVec, Stamp, WritableVec};
+use vecdb::{AnyStoredVec, BytesVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec};
 
 use crate::parallel_import;
 
-#[derive(Clone, Traversable)]
-pub struct TransactionsVecs {
-    pub first_txindex: PcoVec<Height, TxIndex>,
-    pub height: PcoVec<TxIndex, Height>,
-    pub txid: BytesVec<TxIndex, Txid>,
-    pub txversion: PcoVec<TxIndex, TxVersion>,
-    pub rawlocktime: PcoVec<TxIndex, RawLockTime>,
-    pub base_size: PcoVec<TxIndex, StoredU32>,
-    pub total_size: PcoVec<TxIndex, StoredU32>,
-    pub is_explicitly_rbf: PcoVec<TxIndex, StoredBool>,
-    pub first_txinindex: PcoVec<TxIndex, TxInIndex>,
-    pub first_txoutindex: BytesVec<TxIndex, TxOutIndex>,
+#[derive(Traversable)]
+pub struct TransactionsVecs<M: StorageMode = Rw> {
+    pub first_txindex: M::Stored<PcoVec<Height, TxIndex>>,
+    pub height: M::Stored<PcoVec<TxIndex, Height>>,
+    pub txid: M::Stored<BytesVec<TxIndex, Txid>>,
+    pub txversion: M::Stored<PcoVec<TxIndex, TxVersion>>,
+    pub rawlocktime: M::Stored<PcoVec<TxIndex, RawLockTime>>,
+    pub base_size: M::Stored<PcoVec<TxIndex, StoredU32>>,
+    pub total_size: M::Stored<PcoVec<TxIndex, StoredU32>>,
+    pub is_explicitly_rbf: M::Stored<PcoVec<TxIndex, StoredBool>>,
+    pub first_txinindex: M::Stored<PcoVec<TxIndex, TxInIndex>>,
+    pub first_txoutindex: M::Stored<BytesVec<TxIndex, TxOutIndex>>,
 }
 
 pub struct TxMetadataVecs<'a> {

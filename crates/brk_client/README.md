@@ -21,7 +21,7 @@ fn main() -> brk_client::Result<()> {
 
     // Blockchain data (mempool.space compatible)
     let block = client.get_block_by_height(800000)?;
-    let tx = client.get_tx("abc123...")?;
+    let tx = client.get_tx("a1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d")?;
     let address = client.get_address("bc1q...")?;
 
     // Metrics API - typed, chainable

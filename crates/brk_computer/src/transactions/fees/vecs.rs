@@ -1,13 +1,13 @@
 use brk_traversable::Traversable;
 use brk_types::{FeeRate, Sats, TxIndex};
-use vecdb::{EagerVec, PcoVec};
+use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use crate::internal::{ComputedFromTxDistribution, ValueFromTxFull};
 
-#[derive(Clone, Traversable)]
-pub struct Vecs {
-    pub input_value: EagerVec<PcoVec<TxIndex, Sats>>,
-    pub output_value: EagerVec<PcoVec<TxIndex, Sats>>,
-    pub fee: ValueFromTxFull,
-    pub fee_rate: ComputedFromTxDistribution<FeeRate>,
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
+    pub input_value: M::Stored<EagerVec<PcoVec<TxIndex, Sats>>>,
+    pub output_value: M::Stored<EagerVec<PcoVec<TxIndex, Sats>>>,
+    pub fee: ValueFromTxFull<M>,
+    pub fee_rate: ComputedFromTxDistribution<FeeRate, M>,
 }

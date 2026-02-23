@@ -9,32 +9,32 @@ use brk_types::{
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, ReadableVec,
-    Stamp, VecIndex,
+    Rw, Stamp, StorageMode, VecIndex,
 };
 
 use crate::readers::AddressReaders;
 use crate::parallel_import;
 
-#[derive(Clone, Traversable)]
-pub struct AddressesVecs {
+#[derive(Traversable)]
+pub struct AddressesVecs<M: StorageMode = Rw> {
     // Height to first address index (per address type)
-    pub first_p2pk65addressindex: PcoVec<Height, P2PK65AddressIndex>,
-    pub first_p2pk33addressindex: PcoVec<Height, P2PK33AddressIndex>,
-    pub first_p2pkhaddressindex: PcoVec<Height, P2PKHAddressIndex>,
-    pub first_p2shaddressindex: PcoVec<Height, P2SHAddressIndex>,
-    pub first_p2wpkhaddressindex: PcoVec<Height, P2WPKHAddressIndex>,
-    pub first_p2wshaddressindex: PcoVec<Height, P2WSHAddressIndex>,
-    pub first_p2traddressindex: PcoVec<Height, P2TRAddressIndex>,
-    pub first_p2aaddressindex: PcoVec<Height, P2AAddressIndex>,
+    pub first_p2pk65addressindex: M::Stored<PcoVec<Height, P2PK65AddressIndex>>,
+    pub first_p2pk33addressindex: M::Stored<PcoVec<Height, P2PK33AddressIndex>>,
+    pub first_p2pkhaddressindex: M::Stored<PcoVec<Height, P2PKHAddressIndex>>,
+    pub first_p2shaddressindex: M::Stored<PcoVec<Height, P2SHAddressIndex>>,
+    pub first_p2wpkhaddressindex: M::Stored<PcoVec<Height, P2WPKHAddressIndex>>,
+    pub first_p2wshaddressindex: M::Stored<PcoVec<Height, P2WSHAddressIndex>>,
+    pub first_p2traddressindex: M::Stored<PcoVec<Height, P2TRAddressIndex>>,
+    pub first_p2aaddressindex: M::Stored<PcoVec<Height, P2AAddressIndex>>,
     // Address index to bytes (per address type)
-    pub p2pk65bytes: BytesVec<P2PK65AddressIndex, P2PK65Bytes>,
-    pub p2pk33bytes: BytesVec<P2PK33AddressIndex, P2PK33Bytes>,
-    pub p2pkhbytes: BytesVec<P2PKHAddressIndex, P2PKHBytes>,
-    pub p2shbytes: BytesVec<P2SHAddressIndex, P2SHBytes>,
-    pub p2wpkhbytes: BytesVec<P2WPKHAddressIndex, P2WPKHBytes>,
-    pub p2wshbytes: BytesVec<P2WSHAddressIndex, P2WSHBytes>,
-    pub p2trbytes: BytesVec<P2TRAddressIndex, P2TRBytes>,
-    pub p2abytes: BytesVec<P2AAddressIndex, P2ABytes>,
+    pub p2pk65bytes: M::Stored<BytesVec<P2PK65AddressIndex, P2PK65Bytes>>,
+    pub p2pk33bytes: M::Stored<BytesVec<P2PK33AddressIndex, P2PK33Bytes>>,
+    pub p2pkhbytes: M::Stored<BytesVec<P2PKHAddressIndex, P2PKHBytes>>,
+    pub p2shbytes: M::Stored<BytesVec<P2SHAddressIndex, P2SHBytes>>,
+    pub p2wpkhbytes: M::Stored<BytesVec<P2WPKHAddressIndex, P2WPKHBytes>>,
+    pub p2wshbytes: M::Stored<BytesVec<P2WSHAddressIndex, P2WSHBytes>>,
+    pub p2trbytes: M::Stored<BytesVec<P2TRAddressIndex, P2TRBytes>>,
+    pub p2abytes: M::Stored<BytesVec<P2AAddressIndex, P2ABytes>>,
 }
 
 impl AddressesVecs {

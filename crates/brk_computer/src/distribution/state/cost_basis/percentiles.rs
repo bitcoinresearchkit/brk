@@ -1,19 +1,19 @@
-use brk_types::{CentsUnsigned, CentsUnsignedCompact, Sats};
+use brk_types::{Cents, CentsCompact, Sats};
 
 use crate::internal::{PERCENTILES, PERCENTILES_LEN};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Percentiles {
     /// Sat-weighted: percentiles by coin count
-    pub sat_weighted: [CentsUnsigned; PERCENTILES_LEN],
+    pub sat_weighted: [Cents; PERCENTILES_LEN],
     /// USD-weighted: percentiles by invested capital (sats × price)
-    pub usd_weighted: [CentsUnsigned; PERCENTILES_LEN],
+    pub usd_weighted: [Cents; PERCENTILES_LEN],
 }
 
 impl Percentiles {
     /// Compute both sat-weighted and USD-weighted percentiles in a single pass.
     /// Takes an iterator over (price, sats) pairs, assumed sorted by price ascending.
-    pub fn compute(iter: impl Iterator<Item = (CentsUnsignedCompact, Sats)>) -> Option<Self> {
+    pub(crate) fn compute(iter: impl Iterator<Item = (CentsCompact, Sats)>) -> Option<Self> {
         // Collect to allow two passes: one for totals, one for percentiles
         let entries: Vec<_> = iter.collect();
         if entries.is_empty() {
@@ -32,8 +32,8 @@ impl Percentiles {
             return None;
         }
 
-        let mut sat_weighted = [CentsUnsigned::ZERO; PERCENTILES_LEN];
-        let mut usd_weighted = [CentsUnsigned::ZERO; PERCENTILES_LEN];
+        let mut sat_weighted = [Cents::ZERO; PERCENTILES_LEN];
+        let mut usd_weighted = [Cents::ZERO; PERCENTILES_LEN];
         let mut cumsum_sats: u64 = 0;
         let mut cumsum_usd: u128 = 0;
         let mut sat_idx = 0;

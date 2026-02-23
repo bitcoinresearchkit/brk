@@ -1,19 +1,21 @@
 //! Lazy aggregated binary transform for Sum-only pattern across all time periods.
 
 use brk_traversable::Traversable;
-use brk_types::{DifficultyEpoch, Version};
-use derive_more::{Deref, DerefMut};
+use brk_types::{
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Hour1, Hour12, Hour4, Minute1, Minute10, Minute30,
+    Minute5, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+};
 use schemars::JsonSchema;
-use vecdb::{BinaryTransform, IterableCloneableVec};
+use vecdb::{BinaryTransform, ReadableCloneableVec};
 
 use crate::internal::{
-    ComputedFromHeightSumCum, ComputedHeightDerivedSum, ComputedVecValue, LazyBinaryFromDateSum,
-    LazyBinaryTransformSum, LazyFromHeightLast, NumericValue,
+    ComputedFromHeightSumCum, ComputedHeightDerivedSum, ComputedVecValue, LazyBinaryTransformSum,
+    LazyFromHeightLast, NumericValue,
 };
 
 const VERSION: Version = Version::ZERO;
 
-#[derive(Clone, Deref, DerefMut, Traversable)]
+#[derive(Clone, Traversable)]
 #[traversable(merge)]
 pub struct LazyBinaryHeightDerivedSum<T, S1T, S2T>
 where
@@ -21,9 +23,22 @@ where
     S1T: ComputedVecValue,
     S2T: ComputedVecValue,
 {
-    #[deref]
-    #[deref_mut]
-    pub dates: LazyBinaryFromDateSum<T, S1T, S2T>,
+    pub minute1: LazyBinaryTransformSum<Minute1, T, S1T, S2T>,
+    pub minute5: LazyBinaryTransformSum<Minute5, T, S1T, S2T>,
+    pub minute10: LazyBinaryTransformSum<Minute10, T, S1T, S2T>,
+    pub minute30: LazyBinaryTransformSum<Minute30, T, S1T, S2T>,
+    pub hour1: LazyBinaryTransformSum<Hour1, T, S1T, S2T>,
+    pub hour4: LazyBinaryTransformSum<Hour4, T, S1T, S2T>,
+    pub hour12: LazyBinaryTransformSum<Hour12, T, S1T, S2T>,
+    pub day1: LazyBinaryTransformSum<Day1, T, S1T, S2T>,
+    pub day3: LazyBinaryTransformSum<Day3, T, S1T, S2T>,
+    pub week1: LazyBinaryTransformSum<Week1, T, S1T, S2T>,
+    pub month1: LazyBinaryTransformSum<Month1, T, S1T, S2T>,
+    pub month3: LazyBinaryTransformSum<Month3, T, S1T, S2T>,
+    pub month6: LazyBinaryTransformSum<Month6, T, S1T, S2T>,
+    pub year1: LazyBinaryTransformSum<Year1, T, S1T, S2T>,
+    pub year10: LazyBinaryTransformSum<Year10, T, S1T, S2T>,
+    pub halvingepoch: LazyBinaryTransformSum<HalvingEpoch, T, S1T, S2T>,
     pub difficultyepoch: LazyBinaryTransformSum<DifficultyEpoch, T, S1T, S2T>,
 }
 
@@ -33,7 +48,7 @@ where
     S1T: NumericValue + JsonSchema,
     S2T: NumericValue + JsonSchema,
 {
-    pub fn from_derived<F: BinaryTransform<S1T, S2T, T>>(
+    pub(crate) fn from_derived<F: BinaryTransform<S1T, S2T, T>>(
         name: &str,
         version: Version,
         source1: &ComputedHeightDerivedSum<S1T>,
@@ -41,19 +56,40 @@ where
     ) -> Self {
         let v = version + VERSION;
 
+        macro_rules! period {
+            ($p:ident) => {
+                LazyBinaryTransformSum::from_boxed::<F>(
+                    name,
+                    v,
+                    source1.$p.read_only_boxed_clone(),
+                    source2.$p.read_only_boxed_clone(),
+                )
+            };
+        }
+
         Self {
-            dates: LazyBinaryFromDateSum::from_derived::<F>(name, v, source1, source2),
-            difficultyepoch: LazyBinaryTransformSum::from_boxed::<F>(
-                name,
-                v,
-                source1.difficultyepoch.boxed_clone(),
-                source2.difficultyepoch.boxed_clone(),
-            ),
+            minute1: period!(minute1),
+            minute5: period!(minute5),
+            minute10: period!(minute10),
+            minute30: period!(minute30),
+            hour1: period!(hour1),
+            hour4: period!(hour4),
+            hour12: period!(hour12),
+            day1: period!(day1),
+            day3: period!(day3),
+            week1: period!(week1),
+            month1: period!(month1),
+            month3: period!(month3),
+            month6: period!(month6),
+            year1: period!(year1),
+            year10: period!(year10),
+            halvingepoch: period!(halvingepoch),
+            difficultyepoch: period!(difficultyepoch),
         }
     }
 
     /// Create from two LazyBinaryHeightDerivedSum sources.
-    pub fn from_binary<F, S1aT, S1bT, S2aT, S2bT>(
+    pub(crate) fn from_binary<F, S1aT, S1bT, S2aT, S2bT>(
         name: &str,
         version: Version,
         source1: &LazyBinaryHeightDerivedSum<S1T, S1aT, S1bT>,
@@ -68,24 +104,40 @@ where
     {
         let v = version + VERSION;
 
+        macro_rules! period {
+            ($p:ident) => {
+                LazyBinaryTransformSum::from_boxed::<F>(
+                    name,
+                    v,
+                    source1.$p.read_only_boxed_clone(),
+                    source2.$p.read_only_boxed_clone(),
+                )
+            };
+        }
+
         Self {
-            dates: LazyBinaryFromDateSum::from_binary::<F, _, _, _, _>(
-                name,
-                v,
-                &source1.dates,
-                &source2.dates,
-            ),
-            difficultyepoch: LazyBinaryTransformSum::from_boxed::<F>(
-                name,
-                v,
-                source1.difficultyepoch.boxed_clone(),
-                source2.difficultyepoch.boxed_clone(),
-            ),
+            minute1: period!(minute1),
+            minute5: period!(minute5),
+            minute10: period!(minute10),
+            minute30: period!(minute30),
+            hour1: period!(hour1),
+            hour4: period!(hour4),
+            hour12: period!(hour12),
+            day1: period!(day1),
+            day3: period!(day3),
+            week1: period!(week1),
+            month1: period!(month1),
+            month3: period!(month3),
+            month6: period!(month6),
+            year1: period!(year1),
+            year10: period!(year10),
+            halvingepoch: period!(halvingepoch),
+            difficultyepoch: period!(difficultyepoch),
         }
     }
 
     /// Create from a SumCum source (using only sum) and a LazyLast source.
-    pub fn from_sumcum_lazy_last<F, S2ST>(
+    pub(crate) fn from_sumcum_lazy_last<F, S2ST>(
         name: &str,
         version: Version,
         source1: &ComputedFromHeightSumCum<S1T>,
@@ -97,19 +149,35 @@ where
     {
         let v = version + VERSION;
 
+        macro_rules! period {
+            ($p:ident) => {
+                LazyBinaryTransformSum::from_boxed::<F>(
+                    name,
+                    v,
+                    source1.$p.sum.read_only_boxed_clone(),
+                    source2.$p.read_only_boxed_clone(),
+                )
+            };
+        }
+
         Self {
-            dates: LazyBinaryFromDateSum::from_sumcum_lazy_last::<F, S2ST>(
-                name,
-                v,
-                source1,
-                source2,
-            ),
-            difficultyepoch: LazyBinaryTransformSum::from_boxed::<F>(
-                name,
-                v,
-                source1.difficultyepoch.sum.boxed_clone(),
-                source2.difficultyepoch.boxed_clone(),
-            ),
+            minute1: period!(minute1),
+            minute5: period!(minute5),
+            minute10: period!(minute10),
+            minute30: period!(minute30),
+            hour1: period!(hour1),
+            hour4: period!(hour4),
+            hour12: period!(hour12),
+            day1: period!(day1),
+            day3: period!(day3),
+            week1: period!(week1),
+            month1: period!(month1),
+            month3: period!(month3),
+            month6: period!(month6),
+            year1: period!(year1),
+            year10: period!(year10),
+            halvingepoch: period!(halvingepoch),
+            difficultyepoch: period!(difficultyepoch),
         }
     }
 }

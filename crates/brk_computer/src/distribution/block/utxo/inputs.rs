@@ -1,4 +1,5 @@
 use brk_cohort::ByAddressType;
+use brk_error::Result;
 use brk_types::{Height, OutputType, Sats, TxIndex, TypeIndex};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
@@ -42,7 +43,7 @@ pub struct InputsResult {
 /// Uses parallel reads followed by sequential accumulation to avoid
 /// expensive merge overhead from rayon's fold/reduce pattern.
 #[allow(clippy::too_many_arguments)]
-pub fn process_inputs(
+pub(crate) fn process_inputs(
     input_count: usize,
     txinindex_to_txindex: &[TxIndex],
     txinindex_to_value: &[Sats],
@@ -54,10 +55,10 @@ pub fn process_inputs(
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
-) -> InputsResult {
+) -> Result<InputsResult> {
     let items: Vec<_> = (0..input_count)
         .into_par_iter()
-        .map(|local_idx| {
+        .map(|local_idx| -> Result<_> {
             let txindex = txinindex_to_txindex[local_idx];
 
             let prev_height = *txinindex_to_prev_height.get(local_idx).unwrap();
@@ -65,7 +66,7 @@ pub fn process_inputs(
             let input_type = *txinindex_to_outputtype.get(local_idx).unwrap();
 
             if input_type.is_not_address() {
-                return (prev_height, value, input_type, None);
+                return Ok((prev_height, value, input_type, None));
             }
 
             let typeindex = *txinindex_to_typeindex.get(local_idx).unwrap();
@@ -79,16 +80,16 @@ pub fn process_inputs(
                 vr,
                 any_address_indexes,
                 addresses_data,
-            );
+            )?;
 
-            (
+            Ok((
                 prev_height,
                 value,
                 input_type,
                 Some((typeindex, txindex, value, addr_data_opt)),
-            )
+            ))
         })
-        .collect();
+        .collect::<Result<Vec<_>>>()?;
 
     // Phase 2: Sequential accumulation - no merge overhead
     // Estimate: unique heights bounded by block depth, addresses spread across ~8 types
@@ -131,10 +132,10 @@ pub fn process_inputs(
         }
     }
 
-    InputsResult {
+    Ok(InputsResult {
         height_to_sent,
         sent_data,
         address_data,
         txindex_vecs,
-    }
+    })
 }

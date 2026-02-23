@@ -2,17 +2,17 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, OutputType, Sats, TxIndex, TxOutIndex, TypeIndex, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, Stamp};
+use vecdb::{AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, Rw, Stamp, StorageMode};
 
 use crate::parallel_import;
 
-#[derive(Clone, Traversable)]
-pub struct OutputsVecs {
-    pub first_txoutindex: PcoVec<Height, TxOutIndex>,
-    pub value: BytesVec<TxOutIndex, Sats>,
-    pub outputtype: BytesVec<TxOutIndex, OutputType>,
-    pub typeindex: BytesVec<TxOutIndex, TypeIndex>,
-    pub txindex: PcoVec<TxOutIndex, TxIndex>,
+#[derive(Traversable)]
+pub struct OutputsVecs<M: StorageMode = Rw> {
+    pub first_txoutindex: M::Stored<PcoVec<Height, TxOutIndex>>,
+    pub value: M::Stored<BytesVec<TxOutIndex, Sats>>,
+    pub outputtype: M::Stored<BytesVec<TxOutIndex, OutputType>>,
+    pub typeindex: M::Stored<BytesVec<TxOutIndex, TypeIndex>>,
+    pub txindex: M::Stored<PcoVec<TxOutIndex, TxIndex>>,
 }
 
 impl OutputsVecs {

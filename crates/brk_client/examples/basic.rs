@@ -17,12 +17,12 @@ fn main() -> brk_client::Result<()> {
     // Using new idiomatic API: last(3).fetch()
     let price_close = client
         .metrics()
-        .price
+        .prices
         .usd
         .split
         .close
         .by
-        .dateindex()
+        .day1()
         .last(3)
         .fetch()?;
     println!("Last 3 price close values: {:?}", price_close);
@@ -35,29 +35,20 @@ fn main() -> brk_client::Result<()> {
         .block_count
         .sum
         .by
-        .dateindex()
+        .day1()
         .last(3)
         .fetch()?;
     println!("Last 3 block count values: {:?}", block_count);
 
     // Fetch supply data
-    dbg!(
-        client
-            .metrics()
-            .supply
-            .circulating
-            .bitcoin
-            .by
-            .dateindex()
-            .path()
-    );
+    dbg!(client.metrics().supply.circulating.btc.by.day1().path());
     let circulating = client
         .metrics()
         .supply
         .circulating
-        .bitcoin
+        .btc
         .by
-        .dateindex()
+        .day1()
         .last(3)
         .fetch_csv()?;
     println!("Last 3 circulating supply values: {:?}", circulating);
@@ -65,7 +56,7 @@ fn main() -> brk_client::Result<()> {
     // Using generic metric fetching
     let metricdata = client.get_metric(
         Metric::from("price_close"),
-        Index::DateIndex,
+        Index::Day1,
         Some(-3),
         None,
         None,

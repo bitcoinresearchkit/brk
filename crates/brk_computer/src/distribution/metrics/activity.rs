@@ -2,54 +2,53 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Height, Sats, StoredF64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec};
+use vecdb::{AnyStoredVec, AnyVec, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode, WritableVec};
 
 use crate::{
-    ComputeIndexes, indexes,
-    internal::{ComputedFromHeightSumCum, LazyComputedValueFromHeightSumCum, ValueFromDateLast},
+    ComputeIndexes, blocks,
+    internal::{ComputedFromHeightSumCum, LazyComputedValueFromHeightSumCum, ValueEmaFromHeight},
 };
 
 use super::ImportConfig;
 
 /// Activity metrics for a cohort.
-#[derive(Clone, Traversable)]
-pub struct ActivityMetrics {
+#[derive(Traversable)]
+pub struct ActivityMetrics<M: StorageMode = Rw> {
     /// Total satoshis sent at each height + derived indexes
-    pub sent: LazyComputedValueFromHeightSumCum,
+    pub sent: LazyComputedValueFromHeightSumCum<M>,
 
     /// 14-day EMA of sent supply (sats, btc, usd)
-    pub sent_14d_ema: ValueFromDateLast,
+    pub sent_14d_ema: ValueEmaFromHeight<M>,
 
     /// Satoshi-blocks destroyed (supply * blocks_old when spent)
-    pub satblocks_destroyed: EagerVec<PcoVec<Height, Sats>>,
+    pub satblocks_destroyed: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
 
     /// Satoshi-days destroyed (supply * days_old when spent)
-    pub satdays_destroyed: EagerVec<PcoVec<Height, Sats>>,
+    pub satdays_destroyed: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
 
     /// Coin-blocks destroyed (in BTC rather than sats)
-    pub coinblocks_destroyed: ComputedFromHeightSumCum<StoredF64>,
+    pub coinblocks_destroyed: ComputedFromHeightSumCum<StoredF64, M>,
 
     /// Coin-days destroyed (in BTC rather than sats)
-    pub coindays_destroyed: ComputedFromHeightSumCum<StoredF64>,
+    pub coindays_destroyed: ComputedFromHeightSumCum<StoredF64, M>,
 }
 
 impl ActivityMetrics {
     /// Import activity metrics from database.
-    pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
+    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             sent: LazyComputedValueFromHeightSumCum::forced_import(
                 cfg.db,
                 &cfg.name("sent"),
                 cfg.version,
                 cfg.indexes,
-                cfg.price,
+                cfg.prices,
             )?,
 
-            sent_14d_ema: ValueFromDateLast::forced_import(
+            sent_14d_ema: ValueEmaFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("sent_14d_ema"),
                 cfg.version,
-                cfg.compute_dollars(),
                 cfg.indexes,
             )?,
 
@@ -82,7 +81,7 @@ impl ActivityMetrics {
     }
 
     /// Get minimum length across height-indexed vectors.
-    pub fn min_len(&self) -> usize {
+    pub(crate) fn min_len(&self) -> usize {
         self.sent
             .sats
             .height
@@ -92,7 +91,7 @@ impl ActivityMetrics {
     }
 
     /// Push activity state values to height-indexed vectors.
-    pub fn truncate_push(
+    pub(crate) fn truncate_push(
         &mut self,
         height: Height,
         sent: Sats,
@@ -108,7 +107,7 @@ impl ActivityMetrics {
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         vec![
             &mut self.sent.sats.height as &mut dyn AnyStoredVec,
             &mut self.satblocks_destroyed as &mut dyn AnyStoredVec,
@@ -118,13 +117,13 @@ impl ActivityMetrics {
     }
 
     /// Validate computed versions against base version.
-    pub fn validate_computed_versions(&mut self, _base_version: Version) -> Result<()> {
+    pub(crate) fn validate_computed_versions(&mut self, _base_version: Version) -> Result<()> {
         // Validation logic for computed vecs
         Ok(())
     }
 
     /// Compute aggregate values from separate cohorts.
-    pub fn compute_from_stateful(
+    pub(crate) fn compute_from_stateful(
         &mut self,
         starting_indexes: &ComputeIndexes,
         others: &[&Self],
@@ -158,44 +157,42 @@ impl ActivityMetrics {
     }
 
     /// First phase of computed metrics (indexes from height).
-    pub fn compute_rest_part1(
+    pub(crate) fn compute_rest_part1(
         &mut self,
-        indexes: &indexes::Vecs,
+        blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.sent.compute_rest(indexes, starting_indexes, exit)?;
+        self.sent.compute_cumulative(starting_indexes, exit)?;
 
-        // 14-day EMA of sent (sats and dollars)
-        self.sent_14d_ema.compute_ema(
-            starting_indexes.dateindex,
-            &self.sent.sats.dateindex.sum.0,
-            self.sent.dollars.as_ref().map(|d| &d.dateindex.sum.0),
-            14,
+        // 14-day rolling average of sent (sats and dollars)
+        self.sent_14d_ema.compute_rolling_average(
+            starting_indexes.height,
+            &blocks.count.height_2w_ago,
+            &self.sent.sats.height,
+            &self.sent.usd.height,
             exit,
         )?;
 
-        self.coinblocks_destroyed
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &self.satblocks_destroyed,
-                    |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.coinblocks_destroyed.compute(starting_indexes, exit, |v| {
+            v.compute_transform(
+                starting_indexes.height,
+                &self.satblocks_destroyed,
+                |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
+                exit,
+            )?;
+            Ok(())
+        })?;
 
-        self.coindays_destroyed
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &self.satdays_destroyed,
-                    |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.coindays_destroyed.compute(starting_indexes, exit, |v| {
+            v.compute_transform(
+                starting_indexes.height,
+                &self.satdays_destroyed,
+                |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
+                exit,
+            )?;
+            Ok(())
+        })?;
 
         Ok(())
     }

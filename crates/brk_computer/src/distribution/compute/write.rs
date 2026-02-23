@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_types::Height;
 use rayon::prelude::*;
 use tracing::info;
-use vecdb::{AnyStoredVec, GenericStoredVec, Stamp};
+use vecdb::{AnyStoredVec, WritableVec, Stamp};
 
 use crate::distribution::{
     Vecs,
@@ -25,7 +25,7 @@ use super::super::address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAdd
 /// - Updates address indexes
 ///
 /// Call this before `flush()` to prepare data for writing.
-pub fn process_address_updates(
+pub(crate) fn process_address_updates(
     addresses_data: &mut AddressesDataVecs,
     address_indexes: &mut AnyAddressIndexesVecs,
     empty_updates: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
@@ -53,7 +53,7 @@ pub fn process_address_updates(
 /// - Chain state
 ///
 /// Set `with_changes=true` near chain tip to enable rollback support.
-pub fn write(
+pub(crate) fn write(
     vecs: &mut Vecs,
     height: Height,
     chain_state: &[BlockState],

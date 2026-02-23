@@ -1,6 +1,5 @@
 //! Single-index types and primitives.
 
-mod difficultyepoch;
 mod group;
 mod height;
 mod lazy;
@@ -9,7 +8,6 @@ mod transform;
 mod tx;
 mod vec;
 
-pub use difficultyepoch::*;
 pub use group::*;
 pub use height::*;
 pub use lazy::*;

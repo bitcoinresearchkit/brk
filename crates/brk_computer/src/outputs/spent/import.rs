@@ -5,7 +5,7 @@ use vecdb::{BytesVec, Database, ImportableVec};
 use super::Vecs;
 
 impl Vecs {
-    pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
+    pub(crate) fn forced_import(db: &Database, version: Version) -> Result<Self> {
         Ok(Self {
             txinindex: BytesVec::forced_import(db, "txinindex", version)?,
         })

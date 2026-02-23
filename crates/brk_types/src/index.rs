@@ -8,29 +8,47 @@ use vecdb::PrintableIndex;
 use crate::PairOutputIndex;
 
 use super::{
-    Date, DateIndex, DecadeIndex, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
-    Height, FundedAddressIndex, MonthIndex, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex,
+    Date, Day1, Day3, Year10, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
+    Height, Hour1, Hour4, Hour12, FundedAddressIndex, Minute1, Minute5, Minute10, Minute30,
+    Month1, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex,
     P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
-    P2WPKHAddressIndex, P2WSHAddressIndex, QuarterIndex, SemesterIndex, TxInIndex, TxIndex,
-    TxOutIndex, UnknownOutputIndex, WeekIndex, YearIndex,
+    P2WPKHAddressIndex, P2WSHAddressIndex, Month3, Month6, Timestamp, TxInIndex, TxIndex,
+    TxOutIndex, UnknownOutputIndex, Week1, Year1,
+    timestamp::INDEX_EPOCH,
+    minute1::MINUTE1_INTERVAL, minute5::MINUTE5_INTERVAL, minute10::MINUTE10_INTERVAL,
+    minute30::MINUTE30_INTERVAL, hour1::HOUR1_INTERVAL, hour4::HOUR4_INTERVAL,
+    hour12::HOUR12_INTERVAL, day3::DAY3_INTERVAL,
 };
 
 /// Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
 /// block-based (height, txindex), and address/output type indexes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
-#[schemars(example = Index::DateIndex)]
+#[schemars(example = Index::Day1)]
 pub enum Index {
-    DateIndex,
-    DecadeIndex,
-    DifficultyEpoch,
-    EmptyOutputIndex,
+    Minute1,
+    Minute5,
+    Minute10,
+    Minute30,
+    Hour1,
+    Hour4,
+    Hour12,
+    Day1,
+    Day3,
+    Week1,
+    Month1,
+    Month3,
+    Month6,
+    Year1,
+    Year10,
     HalvingEpoch,
+    DifficultyEpoch,
     Height,
+    TxIndex,
     TxInIndex,
-    MonthIndex,
-    OpReturnIndex,
     TxOutIndex,
+    EmptyOutputIndex,
+    OpReturnIndex,
     P2AAddressIndex,
     P2MSOutputIndex,
     P2PK33AddressIndex,
@@ -40,30 +58,38 @@ pub enum Index {
     P2TRAddressIndex,
     P2WPKHAddressIndex,
     P2WSHAddressIndex,
-    QuarterIndex,
-    SemesterIndex,
-    TxIndex,
     UnknownOutputIndex,
-    WeekIndex,
-    YearIndex,
     FundedAddressIndex,
     EmptyAddressIndex,
     PairOutputIndex,
 }
 
 impl Index {
-    pub const fn all() -> [Self; 28] {
+    pub const fn all() -> [Self; 36] {
         [
-            Self::DateIndex,
-            Self::DecadeIndex,
-            Self::DifficultyEpoch,
-            Self::EmptyOutputIndex,
+            Self::Minute1,
+            Self::Minute5,
+            Self::Minute10,
+            Self::Minute30,
+            Self::Hour1,
+            Self::Hour4,
+            Self::Hour12,
+            Self::Day1,
+            Self::Day3,
+            Self::Week1,
+            Self::Month1,
+            Self::Month3,
+            Self::Month6,
+            Self::Year1,
+            Self::Year10,
             Self::HalvingEpoch,
+            Self::DifficultyEpoch,
             Self::Height,
+            Self::TxIndex,
             Self::TxInIndex,
-            Self::MonthIndex,
-            Self::OpReturnIndex,
             Self::TxOutIndex,
+            Self::EmptyOutputIndex,
+            Self::OpReturnIndex,
             Self::P2AAddressIndex,
             Self::P2MSOutputIndex,
             Self::P2PK33AddressIndex,
@@ -73,12 +99,7 @@ impl Index {
             Self::P2TRAddressIndex,
             Self::P2WPKHAddressIndex,
             Self::P2WSHAddressIndex,
-            Self::QuarterIndex,
-            Self::SemesterIndex,
-            Self::TxIndex,
             Self::UnknownOutputIndex,
-            Self::WeekIndex,
-            Self::YearIndex,
             Self::FundedAddressIndex,
             Self::EmptyAddressIndex,
             Self::PairOutputIndex,
@@ -87,16 +108,29 @@ impl Index {
 
     pub fn possible_values(&self) -> &'static [&'static str] {
         match self {
-            Self::DateIndex => DateIndex::to_possible_strings(),
-            Self::DecadeIndex => DecadeIndex::to_possible_strings(),
-            Self::DifficultyEpoch => DifficultyEpoch::to_possible_strings(),
-            Self::EmptyOutputIndex => EmptyOutputIndex::to_possible_strings(),
+            Self::Minute1 => Minute1::to_possible_strings(),
+            Self::Minute5 => Minute5::to_possible_strings(),
+            Self::Minute10 => Minute10::to_possible_strings(),
+            Self::Minute30 => Minute30::to_possible_strings(),
+            Self::Hour1 => Hour1::to_possible_strings(),
+            Self::Hour4 => Hour4::to_possible_strings(),
+            Self::Hour12 => Hour12::to_possible_strings(),
+            Self::Day1 => Day1::to_possible_strings(),
+            Self::Day3 => Day3::to_possible_strings(),
+            Self::Week1 => Week1::to_possible_strings(),
+            Self::Month1 => Month1::to_possible_strings(),
+            Self::Month3 => Month3::to_possible_strings(),
+            Self::Month6 => Month6::to_possible_strings(),
+            Self::Year1 => Year1::to_possible_strings(),
+            Self::Year10 => Year10::to_possible_strings(),
             Self::HalvingEpoch => HalvingEpoch::to_possible_strings(),
+            Self::DifficultyEpoch => DifficultyEpoch::to_possible_strings(),
             Self::Height => Height::to_possible_strings(),
+            Self::TxIndex => TxIndex::to_possible_strings(),
             Self::TxInIndex => TxInIndex::to_possible_strings(),
-            Self::MonthIndex => MonthIndex::to_possible_strings(),
-            Self::OpReturnIndex => OpReturnIndex::to_possible_strings(),
             Self::TxOutIndex => TxOutIndex::to_possible_strings(),
+            Self::EmptyOutputIndex => EmptyOutputIndex::to_possible_strings(),
+            Self::OpReturnIndex => OpReturnIndex::to_possible_strings(),
             Self::P2AAddressIndex => P2AAddressIndex::to_possible_strings(),
             Self::P2MSOutputIndex => P2MSOutputIndex::to_possible_strings(),
             Self::P2PK33AddressIndex => P2PK33AddressIndex::to_possible_strings(),
@@ -106,12 +140,7 @@ impl Index {
             Self::P2TRAddressIndex => P2TRAddressIndex::to_possible_strings(),
             Self::P2WPKHAddressIndex => P2WPKHAddressIndex::to_possible_strings(),
             Self::P2WSHAddressIndex => P2WSHAddressIndex::to_possible_strings(),
-            Self::QuarterIndex => QuarterIndex::to_possible_strings(),
-            Self::SemesterIndex => SemesterIndex::to_possible_strings(),
-            Self::TxIndex => TxIndex::to_possible_strings(),
             Self::UnknownOutputIndex => UnknownOutputIndex::to_possible_strings(),
-            Self::WeekIndex => WeekIndex::to_possible_strings(),
-            Self::YearIndex => YearIndex::to_possible_strings(),
             Self::FundedAddressIndex => FundedAddressIndex::to_possible_strings(),
             Self::EmptyAddressIndex => EmptyAddressIndex::to_possible_strings(),
             Self::PairOutputIndex => PairOutputIndex::to_possible_strings(),
@@ -125,15 +154,46 @@ impl Index {
             .collect::<Vec<_>>()
     }
 
-    pub fn serialize_short(&self) -> &'static str {
-        self.possible_values()
-            .iter()
-            .find(|str| str.len() > 1)
-            .unwrap()
-    }
 
-    pub fn serialize_long(&self) -> &'static str {
-        self.possible_values().last().unwrap()
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::Minute1 => <Minute1 as PrintableIndex>::to_string(),
+            Self::Minute5 => <Minute5 as PrintableIndex>::to_string(),
+            Self::Minute10 => <Minute10 as PrintableIndex>::to_string(),
+            Self::Minute30 => <Minute30 as PrintableIndex>::to_string(),
+            Self::Hour1 => <Hour1 as PrintableIndex>::to_string(),
+            Self::Hour4 => <Hour4 as PrintableIndex>::to_string(),
+            Self::Hour12 => <Hour12 as PrintableIndex>::to_string(),
+            Self::Day1 => <Day1 as PrintableIndex>::to_string(),
+            Self::Day3 => <Day3 as PrintableIndex>::to_string(),
+            Self::Week1 => <Week1 as PrintableIndex>::to_string(),
+            Self::Month1 => <Month1 as PrintableIndex>::to_string(),
+            Self::Month3 => <Month3 as PrintableIndex>::to_string(),
+            Self::Month6 => <Month6 as PrintableIndex>::to_string(),
+            Self::Year1 => <Year1 as PrintableIndex>::to_string(),
+            Self::Year10 => <Year10 as PrintableIndex>::to_string(),
+            Self::HalvingEpoch => <HalvingEpoch as PrintableIndex>::to_string(),
+            Self::DifficultyEpoch => <DifficultyEpoch as PrintableIndex>::to_string(),
+            Self::Height => <Height as PrintableIndex>::to_string(),
+            Self::TxIndex => <TxIndex as PrintableIndex>::to_string(),
+            Self::TxInIndex => <TxInIndex as PrintableIndex>::to_string(),
+            Self::TxOutIndex => <TxOutIndex as PrintableIndex>::to_string(),
+            Self::EmptyOutputIndex => <EmptyOutputIndex as PrintableIndex>::to_string(),
+            Self::OpReturnIndex => <OpReturnIndex as PrintableIndex>::to_string(),
+            Self::P2AAddressIndex => <P2AAddressIndex as PrintableIndex>::to_string(),
+            Self::P2MSOutputIndex => <P2MSOutputIndex as PrintableIndex>::to_string(),
+            Self::P2PK33AddressIndex => <P2PK33AddressIndex as PrintableIndex>::to_string(),
+            Self::P2PK65AddressIndex => <P2PK65AddressIndex as PrintableIndex>::to_string(),
+            Self::P2PKHAddressIndex => <P2PKHAddressIndex as PrintableIndex>::to_string(),
+            Self::P2SHAddressIndex => <P2SHAddressIndex as PrintableIndex>::to_string(),
+            Self::P2TRAddressIndex => <P2TRAddressIndex as PrintableIndex>::to_string(),
+            Self::P2WPKHAddressIndex => <P2WPKHAddressIndex as PrintableIndex>::to_string(),
+            Self::P2WSHAddressIndex => <P2WSHAddressIndex as PrintableIndex>::to_string(),
+            Self::UnknownOutputIndex => <UnknownOutputIndex as PrintableIndex>::to_string(),
+            Self::FundedAddressIndex => <FundedAddressIndex as PrintableIndex>::to_string(),
+            Self::EmptyAddressIndex => <EmptyAddressIndex as PrintableIndex>::to_string(),
+            Self::PairOutputIndex => <PairOutputIndex as PrintableIndex>::to_string(),
+        }
     }
 
     /// Returns the query cost multiplier for this index type.
@@ -149,27 +209,52 @@ impl Index {
     pub const fn is_date_based(&self) -> bool {
         matches!(
             self,
-            Self::DateIndex
-                | Self::WeekIndex
-                | Self::MonthIndex
-                | Self::YearIndex
-                | Self::QuarterIndex
-                | Self::SemesterIndex
-                | Self::DecadeIndex
+            Self::Minute1
+                | Self::Minute5
+                | Self::Minute10
+                | Self::Minute30
+                | Self::Hour1
+                | Self::Hour4
+                | Self::Hour12
+                | Self::Day1
+                | Self::Day3
+                | Self::Week1
+                | Self::Month1
+                | Self::Month3
+                | Self::Month6
+                | Self::Year1
+                | Self::Year10
         )
     }
 
+    /// Convert an index value to a timestamp for time-based indexes.
+    /// Returns None for non-time-based indexes.
+    pub fn index_to_timestamp(&self, i: usize) -> Option<Timestamp> {
+        let interval = match self {
+            Self::Minute1 => MINUTE1_INTERVAL,
+            Self::Minute5 => MINUTE5_INTERVAL,
+            Self::Minute10 => MINUTE10_INTERVAL,
+            Self::Minute30 => MINUTE30_INTERVAL,
+            Self::Hour1 => HOUR1_INTERVAL,
+            Self::Hour4 => HOUR4_INTERVAL,
+            Self::Hour12 => HOUR12_INTERVAL,
+            Self::Day3 => DAY3_INTERVAL,
+            _ => return self.index_to_date(i).map(|d| d.into()),
+        };
+        Some(Timestamp::new(INDEX_EPOCH + i as u32 * interval))
+    }
+
     /// Convert an index value to a date for date-based indexes.
-    /// Returns None for non-date-based indexes.
+    /// Returns None for non-date-based or sub-daily indexes.
     pub fn index_to_date(&self, i: usize) -> Option<Date> {
         match self {
-            Self::DateIndex => Some(Date::from(DateIndex::from(i))),
-            Self::WeekIndex => Some(Date::from(WeekIndex::from(i))),
-            Self::MonthIndex => Some(Date::from(MonthIndex::from(i))),
-            Self::YearIndex => Some(Date::from(YearIndex::from(i))),
-            Self::QuarterIndex => Some(Date::from(QuarterIndex::from(i))),
-            Self::SemesterIndex => Some(Date::from(SemesterIndex::from(i))),
-            Self::DecadeIndex => Some(Date::from(DecadeIndex::from(i))),
+            Self::Day1 => Some(Date::from(Day1::from(i))),
+            Self::Week1 => Some(Date::from(Week1::from(i))),
+            Self::Month1 => Some(Date::from(Month1::from(i))),
+            Self::Year1 => Some(Date::from(Year1::from(i))),
+            Self::Month3 => Some(Date::from(Month3::from(i))),
+            Self::Month6 => Some(Date::from(Month6::from(i))),
+            Self::Year10 => Some(Date::from(Year10::from(i))),
             _ => None,
         }
     }
@@ -178,53 +263,14 @@ impl Index {
 impl TryFrom<&str> for Index {
     type Error = Error;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Ok(match value.to_lowercase().as_str() {
-            v if (Self::DateIndex).possible_values().contains(&v) => Self::DateIndex,
-            v if (Self::DecadeIndex).possible_values().contains(&v) => Self::DecadeIndex,
-            v if (Self::DifficultyEpoch).possible_values().contains(&v) => Self::DifficultyEpoch,
-            v if (Self::EmptyOutputIndex).possible_values().contains(&v) => Self::EmptyOutputIndex,
-            v if (Self::HalvingEpoch).possible_values().contains(&v) => Self::HalvingEpoch,
-            v if (Self::Height).possible_values().contains(&v) => Self::Height,
-            v if (Self::TxInIndex).possible_values().contains(&v) => Self::TxInIndex,
-            v if (Self::MonthIndex).possible_values().contains(&v) => Self::MonthIndex,
-            v if (Self::OpReturnIndex).possible_values().contains(&v) => Self::OpReturnIndex,
-            v if (Self::TxOutIndex).possible_values().contains(&v) => Self::TxOutIndex,
-            v if (Self::P2AAddressIndex).possible_values().contains(&v) => Self::P2AAddressIndex,
-            v if (Self::P2MSOutputIndex).possible_values().contains(&v) => Self::P2MSOutputIndex,
-            v if (Self::P2PK33AddressIndex).possible_values().contains(&v) => {
-                Self::P2PK33AddressIndex
+        let v = value.to_lowercase();
+        let v = v.as_str();
+        for idx in Self::all() {
+            if idx.possible_values().contains(&v) {
+                return Ok(idx);
             }
-            v if (Self::P2PK65AddressIndex).possible_values().contains(&v) => {
-                Self::P2PK65AddressIndex
-            }
-            v if (Self::P2PKHAddressIndex).possible_values().contains(&v) => {
-                Self::P2PKHAddressIndex
-            }
-            v if (Self::P2SHAddressIndex).possible_values().contains(&v) => Self::P2SHAddressIndex,
-            v if (Self::P2TRAddressIndex).possible_values().contains(&v) => Self::P2TRAddressIndex,
-            v if (Self::P2WPKHAddressIndex).possible_values().contains(&v) => {
-                Self::P2WPKHAddressIndex
-            }
-            v if (Self::P2WSHAddressIndex).possible_values().contains(&v) => {
-                Self::P2WSHAddressIndex
-            }
-            v if (Self::QuarterIndex).possible_values().contains(&v) => Self::QuarterIndex,
-            v if (Self::SemesterIndex).possible_values().contains(&v) => Self::SemesterIndex,
-            v if (Self::TxIndex).possible_values().contains(&v) => Self::TxIndex,
-            v if (Self::WeekIndex).possible_values().contains(&v) => Self::WeekIndex,
-            v if (Self::YearIndex).possible_values().contains(&v) => Self::YearIndex,
-            v if (Self::UnknownOutputIndex).possible_values().contains(&v) => {
-                Self::UnknownOutputIndex
-            }
-            v if (Self::FundedAddressIndex).possible_values().contains(&v) => {
-                Self::FundedAddressIndex
-            }
-            v if (Self::EmptyAddressIndex).possible_values().contains(&v) => {
-                Self::EmptyAddressIndex
-            }
-            v if (Self::PairOutputIndex).possible_values().contains(&v) => Self::PairOutputIndex,
-            _ => return Err(Error::Parse(format!("Invalid index: {value}"))),
-        })
+        }
+        Err(Error::Parse(format!("Invalid index: {value}")))
     }
 }
 
@@ -254,38 +300,38 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_is_date_based_dateindex() {
-        assert!(Index::DateIndex.is_date_based());
+    fn test_is_date_based_day1() {
+        assert!(Index::Day1.is_date_based());
     }
 
     #[test]
-    fn test_is_date_based_weekindex() {
-        assert!(Index::WeekIndex.is_date_based());
+    fn test_is_date_based_week1() {
+        assert!(Index::Week1.is_date_based());
     }
 
     #[test]
-    fn test_is_date_based_monthindex() {
-        assert!(Index::MonthIndex.is_date_based());
+    fn test_is_date_based_month1() {
+        assert!(Index::Month1.is_date_based());
     }
 
     #[test]
-    fn test_is_date_based_yearindex() {
-        assert!(Index::YearIndex.is_date_based());
+    fn test_is_date_based_year1() {
+        assert!(Index::Year1.is_date_based());
     }
 
     #[test]
-    fn test_is_date_based_quarterindex() {
-        assert!(Index::QuarterIndex.is_date_based());
+    fn test_is_date_based_month3() {
+        assert!(Index::Month3.is_date_based());
     }
 
     #[test]
-    fn test_is_date_based_semesterindex() {
-        assert!(Index::SemesterIndex.is_date_based());
+    fn test_is_date_based_month6() {
+        assert!(Index::Month6.is_date_based());
     }
 
     #[test]
-    fn test_is_date_based_decadeindex() {
-        assert!(Index::DecadeIndex.is_date_based());
+    fn test_is_date_based_year10() {
+        assert!(Index::Year10.is_date_based());
     }
 
     #[test]
@@ -299,51 +345,51 @@ mod tests {
     }
 
     #[test]
-    fn test_index_to_date_dateindex_zero() {
-        let date = Index::DateIndex.index_to_date(0).unwrap();
-        assert_eq!(date, Date::from(DateIndex::from(0_usize)));
+    fn test_index_to_date_day1_zero() {
+        let date = Index::Day1.index_to_date(0).unwrap();
+        assert_eq!(date, Date::from(Day1::from(0_usize)));
     }
 
     #[test]
-    fn test_index_to_date_dateindex_one() {
-        let date = Index::DateIndex.index_to_date(1).unwrap();
-        assert_eq!(date, Date::from(DateIndex::from(1_usize)));
+    fn test_index_to_date_day1_one() {
+        let date = Index::Day1.index_to_date(1).unwrap();
+        assert_eq!(date, Date::from(Day1::from(1_usize)));
     }
 
     #[test]
-    fn test_index_to_date_weekindex() {
-        let date = Index::WeekIndex.index_to_date(1).unwrap();
-        assert_eq!(date, Date::from(WeekIndex::from(1_usize)));
+    fn test_index_to_date_week1() {
+        let date = Index::Week1.index_to_date(1).unwrap();
+        assert_eq!(date, Date::from(Week1::from(1_usize)));
     }
 
     #[test]
-    fn test_index_to_date_monthindex() {
-        let date = Index::MonthIndex.index_to_date(12).unwrap();
-        assert_eq!(date, Date::from(MonthIndex::from(12_usize)));
+    fn test_index_to_date_month1() {
+        let date = Index::Month1.index_to_date(12).unwrap();
+        assert_eq!(date, Date::from(Month1::from(12_usize)));
     }
 
     #[test]
-    fn test_index_to_date_yearindex() {
-        let date = Index::YearIndex.index_to_date(5).unwrap();
-        assert_eq!(date, Date::from(YearIndex::from(5_usize)));
+    fn test_index_to_date_year1() {
+        let date = Index::Year1.index_to_date(5).unwrap();
+        assert_eq!(date, Date::from(Year1::from(5_usize)));
     }
 
     #[test]
-    fn test_index_to_date_quarterindex() {
-        let date = Index::QuarterIndex.index_to_date(4).unwrap();
-        assert_eq!(date, Date::from(QuarterIndex::from(4_usize)));
+    fn test_index_to_date_month3() {
+        let date = Index::Month3.index_to_date(4).unwrap();
+        assert_eq!(date, Date::from(Month3::from(4_usize)));
     }
 
     #[test]
-    fn test_index_to_date_semesterindex() {
-        let date = Index::SemesterIndex.index_to_date(2).unwrap();
-        assert_eq!(date, Date::from(SemesterIndex::from(2_usize)));
+    fn test_index_to_date_month6() {
+        let date = Index::Month6.index_to_date(2).unwrap();
+        assert_eq!(date, Date::from(Month6::from(2_usize)));
     }
 
     #[test]
-    fn test_index_to_date_decadeindex() {
-        let date = Index::DecadeIndex.index_to_date(1).unwrap();
-        assert_eq!(date, Date::from(DecadeIndex::from(1_usize)));
+    fn test_index_to_date_year10() {
+        let date = Index::Year10.index_to_date(1).unwrap();
+        assert_eq!(date, Date::from(Year10::from(1_usize)));
     }
 
     #[test]

@@ -6,7 +6,7 @@ use brk_traversable::Traversable;
 use brk_types::{TxIndex, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec};
+use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, indexes,
@@ -15,24 +15,24 @@ use crate::{
 
 const VERSION: Version = Version::ZERO;
 
-#[derive(Clone, Deref, DerefMut, Traversable)]
+#[derive(Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct ComputedFromTxDistribution<T>
+pub struct ComputedFromTxDistribution<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    pub txindex: EagerVec<PcoVec<TxIndex, T>>,
+    pub txindex: M::Stored<EagerVec<PcoVec<TxIndex, T>>>,
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub distribution: TxDerivedDistribution<T>,
+    pub distribution: TxDerivedDistribution<T, M>,
 }
 
 impl<T> ComputedFromTxDistribution<T>
 where
     T: NumericValue + JsonSchema,
 {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
@@ -44,20 +44,10 @@ where
         Ok(Self { txindex, distribution })
     }
 
-    pub fn derive_from(
-        &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.derive_from_with_skip(indexer, indexes, starting_indexes, exit, 0)
-    }
-
     /// Derive from source, skipping first N transactions per block from all calculations.
     ///
     /// Use `skip_count: 1` to exclude coinbase transactions from fee/feerate stats.
-    pub fn derive_from_with_skip(
+    pub(crate) fn derive_from_with_skip(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,

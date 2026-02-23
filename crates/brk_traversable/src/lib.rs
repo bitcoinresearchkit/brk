@@ -8,8 +8,9 @@ pub use brk_traversable_derive::Traversable;
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, BytesVec, BytesVecValue, EagerVec, Formattable, LazyVecFrom1,
-    LazyVecFrom2, LazyVecFrom3, StoredVec, VecIndex, VecValue,
+    AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CompressionStrategy, EagerVec, Formattable,
+    LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, RawStrategy, ReadOnlyCompressedVec, ReadOnlyRawVec,
+    StoredVec, VecIndex, VecValue,
 };
 
 pub trait Traversable {
@@ -126,6 +127,38 @@ where
 
     fn to_tree_node(&self) -> TreeNode {
         make_leaf::<V::I, V::T, _>(self)
+    }
+}
+
+// Read-only compressed vec (PcoVec::ReadOnly, LZ4Vec::ReadOnly, ZstdVec::ReadOnly)
+impl<I, T, S> Traversable for ReadOnlyCompressedVec<I, T, S>
+where
+    I: VecIndex,
+    T: VecValue + Formattable + Serialize + JsonSchema,
+    S: CompressionStrategy<T>,
+{
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
+    }
+
+    fn to_tree_node(&self) -> TreeNode {
+        make_leaf::<I, T, _>(self)
+    }
+}
+
+// Read-only raw vec (BytesVec::ReadOnly, ZeroCopyVec::ReadOnly)
+impl<I, T, S> Traversable for ReadOnlyRawVec<I, T, S>
+where
+    I: VecIndex,
+    T: VecValue + Formattable + Serialize + JsonSchema,
+    S: RawStrategy<T>,
+{
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
+    }
+
+    fn to_tree_node(&self) -> TreeNode {
+        make_leaf::<I, T, _>(self)
     }
 }
 

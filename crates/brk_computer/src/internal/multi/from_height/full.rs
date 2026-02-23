@@ -6,23 +6,25 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, PcoVec};
+use vecdb::{
+    Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableCloneableVec, Rw, StorageMode,
+};
 
 use crate::{ComputeIndexes, indexes};
 
-use crate::internal::{ComputedVecValue, ComputedHeightDerivedFull, NumericValue};
+use crate::internal::{ComputedHeightDerivedFull, ComputedVecValue, NumericValue};
 
-#[derive(Clone, Deref, DerefMut, Traversable)]
+#[derive(Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct ComputedFromHeightFull<T>
+pub struct ComputedFromHeightFull<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
     #[traversable(rename = "base")]
-    pub height: EagerVec<PcoVec<Height, T>>,
+    pub height: M::Stored<EagerVec<PcoVec<Height, T>>>,
     #[deref]
     #[deref_mut]
-    pub rest: ComputedHeightDerivedFull<T>,
+    pub rest: Box<ComputedHeightDerivedFull<T, M>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -31,7 +33,7 @@ impl<T> ComputedFromHeightFull<T>
 where
     T: NumericValue + JsonSchema,
 {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
@@ -44,25 +46,22 @@ where
         let rest = ComputedHeightDerivedFull::forced_import(
             db,
             name,
-            height.boxed_clone(),
+            height.read_only_boxed_clone(),
             v,
             indexes,
         )?;
 
-        Ok(Self { height, rest })
+        Ok(Self { height, rest: Box::new(rest) })
     }
 
-    pub fn compute_all<F>(
+    pub(crate) fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
-        mut compute: F,
-    ) -> Result<()>
-    where
-        F: FnMut(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
-    {
+        mut compute: impl FnMut(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
+    ) -> Result<()> {
         compute(&mut self.height)?;
-        self.rest.derive_from(indexes, starting_indexes, &self.height, exit)
+        self.rest.compute_cumulative(starting_indexes, &self.height, exit)?;
+        Ok(())
     }
 }

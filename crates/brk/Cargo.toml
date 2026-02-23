@@ -64,7 +64,7 @@ brk_mempool = { workspace = true, optional = true }
 brk_oracle = { workspace = true, optional = true }
 brk_query = { workspace = true, optional = true }
 brk_reader = { workspace = true, optional = true }
-brk_rpc = { workspace = true, optional = true }
+brk_rpc = { workspace = true, optional = true, features = ["corepc"] }
 brk_server = { workspace = true, optional = true }
 brk_store = { workspace = true, optional = true }
 brk_traversable = { workspace = true, optional = true }

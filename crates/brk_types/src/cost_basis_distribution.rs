@@ -3,17 +3,20 @@ use std::collections::BTreeMap;
 use rustc_hash::FxHashMap;
 
 use brk_error::Result;
-use pco::{ChunkConfig, standalone::{simple_compress, simple_decompress}};
+use pco::{
+    ChunkConfig,
+    standalone::{simple_compress, simple_decompress},
+};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::Bytes;
 
-use crate::{Bitcoin, CentsUnsigned, CentsUnsignedCompact, CostBasisBucket, CostBasisValue, Dollars, Sats};
+use crate::{Bitcoin, Cents, CentsCompact, CostBasisBucket, CostBasisValue, Dollars, Sats};
 
 /// Cost basis distribution: a map of price (cents) to sats.
 #[derive(Debug, Clone, Default, Serialize, JsonSchema)]
 pub struct CostBasisDistribution {
-    pub map: BTreeMap<CentsUnsignedCompact, Sats>,
+    pub map: BTreeMap<CentsCompact, Sats>,
 }
 
 /// Formatted cost basis output.
@@ -35,10 +38,10 @@ impl CostBasisDistribution {
         let keys: Vec<u32> = simple_decompress(&data[keys_start..values_start])?;
         let values: Vec<u64> = simple_decompress(&data[values_start..rest_start])?;
 
-        let map: BTreeMap<CentsUnsignedCompact, Sats> = keys
+        let map: BTreeMap<CentsCompact, Sats> = keys
             .into_iter()
             .zip(values)
-            .map(|(k, v)| (CentsUnsignedCompact::new(k), Sats::from(v)))
+            .map(|(k, v)| (CentsCompact::new(k), Sats::from(v)))
             .collect();
 
         assert_eq!(map.len(), entry_count);
@@ -57,7 +60,7 @@ impl CostBasisDistribution {
     }
 
     /// Serialize from a sorted iterator of (price, sats) pairs.
-    pub fn serialize_iter(iter: impl Iterator<Item = (CentsUnsignedCompact, Sats)>) -> Result<Vec<u8>> {
+    pub fn serialize_iter(iter: impl Iterator<Item = (CentsCompact, Sats)>) -> Result<Vec<u8>> {
         let entries: Vec<_> = iter.collect();
         let keys: Vec<u32> = entries.iter().map(|(k, _)| k.inner()).collect();
         let values: Vec<u64> = entries.iter().map(|(_, v)| u64::from(*v)).collect();
@@ -85,23 +88,25 @@ impl CostBasisDistribution {
         &self,
         bucket: CostBasisBucket,
         value: CostBasisValue,
-        spot_cents: CentsUnsigned,
+        spot_cents: Cents,
     ) -> CostBasisFormatted {
         let spot = Dollars::from(spot_cents);
         let needs_realized = value == CostBasisValue::Realized;
-        let mut result: FxHashMap<CentsUnsigned, (Sats, Dollars)> =
+        let mut result: FxHashMap<Cents, (Sats, Dollars)> =
             FxHashMap::with_capacity_and_hasher(self.map.len(), Default::default());
 
         // Aggregate into buckets
         for (&price_cents, &sats) in &self.map {
-            let price_cents_u = CentsUnsigned::from(price_cents);
+            let price_cents_u = Cents::from(price_cents);
 
             let bucket_key = match bucket {
                 CostBasisBucket::Raw => price_cents_u,
                 _ => bucket.bucket_floor(price_cents_u).unwrap_or(price_cents_u),
             };
 
-            let entry = result.entry(bucket_key).or_insert((Sats::ZERO, Dollars::ZERO));
+            let entry = result
+                .entry(bucket_key)
+                .or_insert((Sats::ZERO, Dollars::ZERO));
             entry.0 += sats;
             // Only compute realized value if needed
             if needs_realized {

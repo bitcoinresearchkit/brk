@@ -3,7 +3,7 @@
 use std::{path::Path, thread::sleep, time::Duration};
 
 use brk_error::{Error, Result};
-use brk_types::{Date, Height, OHLCCentsUnsigned, Timestamp};
+use brk_types::{Date, Height, OHLCCents, Timestamp};
 use tracing::info;
 
 mod binance;
@@ -66,9 +66,9 @@ impl Fetcher {
     }
 
     /// Try fetching from each source in order, return first success
-    fn try_sources<F>(&mut self, mut fetch: F) -> Option<Result<OHLCCentsUnsigned>>
+    fn try_sources<F>(&mut self, mut fetch: F) -> Option<Result<OHLCCents>>
     where
-        F: FnMut(&mut dyn PriceSource) -> Option<Result<OHLCCentsUnsigned>>,
+        F: FnMut(&mut dyn PriceSource) -> Option<Result<OHLCCents>>,
     {
         if let Some(Ok(ohlc)) = fetch(&mut self.binance) {
             return Some(Ok(ohlc));
@@ -82,7 +82,7 @@ impl Fetcher {
         None
     }
 
-    pub fn get_date(&mut self, date: Date) -> Result<OHLCCentsUnsigned> {
+    pub fn get_date(&mut self, date: Date) -> Result<OHLCCents> {
         self.fetch_with_retry(
             |source| source.get_date(date),
             || format!("Failed to fetch price for date {date}"),
@@ -94,7 +94,7 @@ impl Fetcher {
         height: Height,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> Result<OHLCCentsUnsigned> {
+    ) -> Result<OHLCCents> {
         let timestamp = timestamp.floor_seconds();
         let previous_timestamp = previous_timestamp.map(|t| t.floor_seconds());
 
@@ -133,9 +133,9 @@ How to fix this:
     }
 
     /// Try each source in order, with retries on total failure
-    fn fetch_with_retry<F, E>(&mut self, mut fetch: F, error_message: E) -> Result<OHLCCentsUnsigned>
+    fn fetch_with_retry<F, E>(&mut self, mut fetch: F, error_message: E) -> Result<OHLCCents>
     where
-        F: FnMut(&mut dyn PriceSource) -> Option<Result<OHLCCentsUnsigned>>,
+        F: FnMut(&mut dyn PriceSource) -> Option<Result<OHLCCents>>,
         E: Fn() -> String,
     {
         for retry in 0..=MAX_RETRIES {

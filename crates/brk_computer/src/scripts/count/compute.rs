@@ -1,20 +1,19 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::StoredU64;
-use vecdb::{Exit, TypedVecIterator};
+use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, indexes};
+use crate::ComputeIndexes;
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.p2a.compute_all(indexes, starting_indexes, exit, |v| {
+        self.p2a.compute(starting_indexes, exit,|v| {
             v.compute_count_from_indexes(
                 starting_indexes.height,
                 &indexer.vecs.addresses.first_p2aaddressindex,
@@ -25,7 +24,7 @@ impl Vecs {
         })?;
 
         self.p2ms
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit,|v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.scripts.first_p2msoutputindex,
@@ -36,7 +35,7 @@ impl Vecs {
             })?;
 
         self.p2pk33
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit,|v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.addresses.first_p2pk33addressindex,
@@ -47,7 +46,7 @@ impl Vecs {
             })?;
 
         self.p2pk65
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit,|v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.addresses.first_p2pk65addressindex,
@@ -58,7 +57,7 @@ impl Vecs {
             })?;
 
         self.p2pkh
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit,|v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.addresses.first_p2pkhaddressindex,
@@ -69,7 +68,7 @@ impl Vecs {
             })?;
 
         self.p2sh
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit,|v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.addresses.first_p2shaddressindex,
@@ -80,7 +79,7 @@ impl Vecs {
             })?;
 
         self.p2tr
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit,|v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.addresses.first_p2traddressindex,
@@ -91,7 +90,7 @@ impl Vecs {
             })?;
 
         self.p2wpkh
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit,|v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.addresses.first_p2wpkhaddressindex,
@@ -102,7 +101,7 @@ impl Vecs {
             })?;
 
         self.p2wsh
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit,|v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.addresses.first_p2wshaddressindex,
@@ -113,7 +112,7 @@ impl Vecs {
             })?;
 
         self.opreturn
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit,|v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.scripts.first_opreturnindex,
@@ -124,7 +123,7 @@ impl Vecs {
             })?;
 
         self.unknownoutput
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit,|v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.scripts.first_unknownoutputindex,
@@ -135,7 +134,7 @@ impl Vecs {
             })?;
 
         self.emptyoutput
-            .compute_all(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit,|v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.scripts.first_emptyoutputindex,
@@ -146,17 +145,15 @@ impl Vecs {
             })?;
 
         // Compute segwit = p2wpkh + p2wsh + p2tr
-        let mut p2wsh_iter = self.p2wsh.height.into_iter();
-        let mut p2tr_iter = self.p2tr.height.into_iter();
-
         self.segwit
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                v.compute_transform(
+            .compute(starting_indexes, exit,|v| {
+                v.compute_transform3(
                     starting_indexes.height,
                     &self.p2wpkh.height,
-                    |(h, p2wpkh, ..)| {
-                        let sum = *p2wpkh + *p2wsh_iter.get_unwrap(h) + *p2tr_iter.get_unwrap(h);
-                        (h, StoredU64::from(sum))
+                    &self.p2wsh.height,
+                    &self.p2tr.height,
+                    |(h, p2wpkh, p2wsh, p2tr, ..)| {
+                        (h, StoredU64::from(*p2wpkh + *p2wsh + *p2tr))
                     },
                     exit,
                 )?;

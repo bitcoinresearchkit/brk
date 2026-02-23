@@ -9,7 +9,7 @@ use crate::{
 };
 
 impl Vecs {
-    pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
+    pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         Ok(Self {
             coinblocks_created: ComputedFromHeightSumCum::forced_import(
                 db,

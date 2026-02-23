@@ -31,7 +31,7 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn new(version: Version, indexes: &indexes::Vecs) -> Self {
+    pub(crate) fn new(version: Version, indexes: &indexes::Vecs) -> Self {
         let v = version;
 
         Self {

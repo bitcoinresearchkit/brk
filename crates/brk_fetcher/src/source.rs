@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use brk_error::{Error, Result};
-use brk_types::{Date, Height, OHLCCentsUnsigned, Timestamp};
+use brk_types::{Date, Height, OHLCCents, Timestamp};
 use tracing::info;
 
 /// Default cooldown period for unhealthy sources (5 minutes)
@@ -12,17 +12,17 @@ pub trait PriceSource {
     fn name(&self) -> &'static str;
 
     /// Fetch daily OHLC for a date. Returns None if this source doesn't support date queries.
-    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCentsUnsigned>>;
+    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCents>>;
 
     /// Fetch minute OHLC for a timestamp range. Returns None if unsupported.
     fn get_1mn(
         &mut self,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> Option<Result<OHLCCentsUnsigned>>;
+    ) -> Option<Result<OHLCCents>>;
 
     /// Fetch OHLC by block height. Returns None if unsupported.
-    fn get_height(&mut self, height: Height) -> Option<Result<OHLCCentsUnsigned>>;
+    fn get_height(&mut self, height: Height) -> Option<Result<OHLCCents>>;
 
     /// Check if the source is reachable
     fn ping(&self) -> Result<()>;
@@ -115,7 +115,7 @@ impl<T: PriceSource> PriceSource for TrackedSource<T> {
         self.source.name()
     }
 
-    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCentsUnsigned>> {
+    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCents>> {
         self.try_fetch(|s| s.get_date(date))
     }
 
@@ -123,11 +123,11 @@ impl<T: PriceSource> PriceSource for TrackedSource<T> {
         &mut self,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> Option<Result<OHLCCentsUnsigned>> {
+    ) -> Option<Result<OHLCCents>> {
         self.try_fetch(|s| s.get_1mn(timestamp, previous_timestamp))
     }
 
-    fn get_height(&mut self, height: Height) -> Option<Result<OHLCCentsUnsigned>> {
+    fn get_height(&mut self, height: Height) -> Option<Result<OHLCCents>> {
         self.try_fetch(|s| s.get_height(height))
     }
 

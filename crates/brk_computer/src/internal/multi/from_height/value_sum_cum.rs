@@ -1,131 +1,78 @@
 //! Value type for SumCum pattern from Height.
 //!
 //! Height-level USD sum is lazy: `sats * price`.
-//! Cumulative and dateindex stats are stored since they require aggregation
+//! Cumulative and day1 stats are stored since they require aggregation
 //! across heights with varying prices.
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Close, Dollars, Height, Sats, Version};
-use vecdb::{Database, EagerVec, Exit, IterableCloneableVec, IterableVec, PcoVec};
+use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
+use vecdb::{Database, EagerVec, Exit, ReadableCloneableVec, PcoVec, Rw, StorageMode};
 
 use crate::{
-    ComputeIndexes, indexes,
+    ComputeIndexes,
+    indexes,
     internal::{
         ComputedFromHeightSumCum, LazyBinaryComputedFromHeightSumCum, LazyFromHeightSumCum,
-        SatsTimesClosePrice, SatsToBitcoin,
+        SatsTimesPrice, SatsToBitcoin,
     },
-    price,
+    prices,
 };
 
-/// Lazy dollars type: `sats[h] * price[h]` at height level, stored derived.
-pub type LazyDollarsFromHeightSumCum =
-    LazyBinaryComputedFromHeightSumCum<Dollars, Sats, Close<Dollars>>;
-
-#[derive(Clone, Traversable)]
-pub struct ValueFromHeightSumCum {
-    pub sats: ComputedFromHeightSumCum<Sats>,
-    pub bitcoin: LazyFromHeightSumCum<Bitcoin, Sats>,
-    pub dollars: Option<LazyDollarsFromHeightSumCum>,
+#[derive(Traversable)]
+pub struct ValueFromHeightSumCum<M: StorageMode = Rw> {
+    pub sats: ComputedFromHeightSumCum<Sats, M>,
+    pub btc: LazyFromHeightSumCum<Bitcoin, Sats>,
+    pub usd: LazyBinaryComputedFromHeightSumCum<Dollars, Sats, Dollars, M>,
 }
 
 const VERSION: Version = Version::ONE; // Bumped for lazy height dollars
 
 impl ValueFromHeightSumCum {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
     ) -> Result<Self> {
         let v = version + VERSION;
 
         let sats = ComputedFromHeightSumCum::forced_import(db, name, v, indexes)?;
 
-        let bitcoin = LazyFromHeightSumCum::from_computed::<SatsToBitcoin>(
+        let btc = LazyFromHeightSumCum::from_computed::<SatsToBitcoin>(
             &format!("{name}_btc"),
             v,
-            sats.height.boxed_clone(),
+            sats.height.read_only_boxed_clone(),
             &sats,
         );
 
-        let dollars = price
-            .map(|price| {
-                LazyBinaryComputedFromHeightSumCum::forced_import::<SatsTimesClosePrice>(
-                    db,
-                    &format!("{name}_usd"),
-                    v,
-                    sats.height.boxed_clone(),
-                    price.usd.split.close.height.boxed_clone(),
-                    indexes,
-                )
-            })
-            .transpose()?;
+        let usd = LazyBinaryComputedFromHeightSumCum::forced_import::<SatsTimesPrice>(
+            db,
+            &format!("{name}_usd"),
+            v,
+            sats.height.read_only_boxed_clone(),
+            prices.usd.price.read_only_boxed_clone(),
+            indexes,
+        )?;
+
 
         Ok(Self {
             sats,
-            bitcoin,
-            dollars,
+            btc,
+            usd,
         })
     }
 
-    pub fn compute_all<F>(
+    pub(crate) fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
-        mut compute: F,
-    ) -> Result<()>
-    where
-        F: FnMut(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
-    {
-        // Compute sats (closure receives &mut height vec)
-        self.sats
-            .compute_all(indexes, starting_indexes, exit, |v| compute(v))?;
-
-        // Derive dollars (height is lazy, just compute cumulative and dateindex)
-        if let Some(dollars) = self.dollars.as_mut() {
-            dollars.derive_from(indexes, starting_indexes, exit)?;
-        }
-
-        Ok(())
-    }
-
-    /// Derive from an external height source (e.g., a LazyVec).
-    pub fn derive_from(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        source: &impl IterableVec<Height, Sats>,
-        exit: &Exit,
+        mut compute: impl FnMut(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     ) -> Result<()> {
-        // Derive sats from source
-        self.sats
-            .derive_from(indexes, starting_indexes, source, exit)?;
-
-        // Derive dollars (height is lazy, just compute cumulative and dateindex)
-        if let Some(dollars) = self.dollars.as_mut() {
-            dollars.derive_from(indexes, starting_indexes, exit)?;
-        }
-
-        Ok(())
-    }
-
-    /// Compute rest (derived indexes) from already-computed height.
-    pub fn compute_rest(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.sats.compute_rest(indexes, starting_indexes, exit)?;
-
-        // Derive dollars (height is lazy, just compute cumulative and dateindex)
-        if let Some(dollars) = self.dollars.as_mut() {
-            dollars.derive_from(indexes, starting_indexes, exit)?;
-        }
-
+        compute(&mut self.sats.height)?;
+        self.sats.compute_cumulative(starting_indexes, exit)?;
+        self.usd.compute_cumulative(starting_indexes, exit)?;
         Ok(())
     }
 }

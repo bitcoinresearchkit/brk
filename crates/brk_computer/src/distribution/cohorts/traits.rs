@@ -1,8 +1,8 @@
 use brk_error::Result;
-use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, Version};
-use vecdb::{Exit, IterableVec};
+use brk_types::{Cents, Dollars, Height, Version};
+use vecdb::{Exit, ReadableVec};
 
-use crate::{ComputeIndexes, indexes, price};
+use crate::{ComputeIndexes, blocks, prices};
 
 /// Dynamic dispatch trait for cohort vectors.
 ///
@@ -10,9 +10,6 @@ use crate::{ComputeIndexes, indexes, price};
 pub trait DynCohortVecs: Send + Sync {
     /// Get minimum length across height-indexed vectors written in block loop.
     fn min_stateful_height_len(&self) -> usize;
-
-    /// Get minimum length across dateindex-indexed vectors written in block loop.
-    fn min_stateful_dateindex_len(&self) -> usize;
 
     /// Reset the starting height for state tracking.
     fn reset_state_starting_height(&mut self);
@@ -26,21 +23,18 @@ pub trait DynCohortVecs: Send + Sync {
     /// Push state to height-indexed vectors (truncating if needed).
     fn truncate_push(&mut self, height: Height) -> Result<()>;
 
-    /// Compute and push unrealized profit/loss states.
+    /// Compute and push unrealized profit/loss states and percentiles.
     fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
-        height_price: Option<CentsUnsigned>,
-        dateindex: Option<DateIndex>,
-        date_price: Option<Option<CentsUnsigned>>,
+        height_price: Cents,
     ) -> Result<()>;
 
     /// First phase of post-processing computations.
-    #[allow(clippy::too_many_arguments)]
     fn compute_rest_part1(
         &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()>;
@@ -57,14 +51,12 @@ pub trait CohortVecs: DynCohortVecs {
     ) -> Result<()>;
 
     /// Second phase of post-processing computations.
-    #[allow(clippy::too_many_arguments)]
     fn compute_rest_part2(
         &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
-        height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
-        dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
+        height_to_market_cap: Option<&impl ReadableVec<Height, Dollars>>,
         exit: &Exit,
     ) -> Result<()>;
 }

@@ -4,11 +4,9 @@ use brk_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{
-    IterableBoxedVec, IterableCloneableVec, LazyVecFrom1, UnaryTransform, VecIndex, VecValue,
-};
+use vecdb::{LazyVecFrom1, ReadableBoxedVec, UnaryTransform, VecIndex};
 
-use crate::internal::{ComputedVecValue, LastVec, LazyLast};
+use crate::internal::ComputedVecValue;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
@@ -24,34 +22,10 @@ where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
 {
-    pub fn from_last_vec<F: UnaryTransform<S1T, T>>(
+    pub(crate) fn from_boxed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        source: &LastVec<I, S1T>,
-    ) -> Self {
-        Self(LazyVecFrom1::transformed::<F>(
-            name,
-            version,
-            source.boxed_clone(),
-        ))
-    }
-
-    pub fn from_lazy_last<F: UnaryTransform<S1T, T>, S1I: VecIndex + 'static, S1S2T: VecValue>(
-        name: &str,
-        version: Version,
-        source: &LazyLast<I, S1T, S1I, S1S2T>,
-    ) -> Self {
-        Self(LazyVecFrom1::transformed::<F>(
-            name,
-            version,
-            source.boxed_clone(),
-        ))
-    }
-
-    pub fn from_boxed<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        last_source: IterableBoxedVec<I, S1T>,
+        last_source: ReadableBoxedVec<I, S1T>,
     ) -> Self {
         Self(LazyVecFrom1::transformed::<F>(name, version, last_source))
     }

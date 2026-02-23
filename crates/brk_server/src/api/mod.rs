@@ -83,8 +83,15 @@ impl ApiRoutes for ApiRouter<AppState> {
                 ),
             )
             .route("/api", get(Html::from(include_str!("./scalar.html"))))
+            // Pre-compressed with: brotli -c -q 11 scalar.js > scalar.js.br
             .route("/scalar.js", get(|| async {
-                ([(header::CONTENT_TYPE, "application/javascript")], include_str!("./scalar.js"))
+                (
+                    [
+                        (header::CONTENT_TYPE, "application/javascript"),
+                        (header::CONTENT_ENCODING, "br"),
+                    ],
+                    include_bytes!("./scalar.js.br").as_slice(),
+                )
             }))
             .route(
                 "/api/{*path}",

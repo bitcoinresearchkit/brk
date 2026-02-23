@@ -1,14 +1,12 @@
 use std::{
     env,
     path::Path,
-    thread::{self, sleep},
+    thread::sleep,
     time::{Duration, Instant},
 };
 
 use brk_alloc::Mimalloc;
 use brk_computer::Computer;
-use brk_error::Result;
-use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
@@ -18,17 +16,6 @@ use vecdb::Exit;
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    // Can't increase main thread's stack size, thus we need to use another thread
-    thread::Builder::new()
-        .stack_size(512 * 1024 * 1024)
-        .spawn(run)?
-        .join()
-        .unwrap()?;
-
-    Ok(())
-}
-
-fn run() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")))?;
 
     let bitcoin_dir = Client::default_bitcoin_path();
@@ -48,8 +35,6 @@ fn run() -> Result<()> {
 
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
-    let fetcher = Fetcher::import(None)?;
-
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
@@ -63,7 +48,7 @@ fn run() -> Result<()> {
         indexer = Indexer::forced_import(&outputs_dir)?;
     }
 
-    let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
+    let mut computer = Computer::forced_import(&outputs_dir, &indexer)?;
 
     loop {
         let i = Instant::now();

@@ -40,6 +40,8 @@ aide = { version = "0.16.0-alpha.2", features = ["axum-json", "axum-query"] }
 axum = { version = "0.8.8", default-features = false, features = ["http1", "json", "query", "tokio", "tracing"] }
 bitcoin = { version = "0.32.8", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
+corepc-client = { path = "/Users/k/Developer/corepc/client", features = ["client-sync"] }
+corepc-jsonrpc = { package = "jsonrpc", path = "/Users/k/Developer/corepc/jsonrpc", features = ["simple_http"], default-features = false }
 brk_alloc = { version = "0.1.9", path = "crates/brk_alloc" }
 brk_bencher = { version = "0.1.9", path = "crates/brk_bencher" }
 brk_bindgen = { version = "0.1.9", path = "crates/brk_bindgen" }
@@ -66,11 +68,11 @@ brk_website = { version = "0.1.9", path = "crates/brk_website" }
 byteview = "0.10.1"
 color-eyre = "0.6.5"
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
-fjall = "3.0.1"
+fjall = "3.0.2"
 indexmap = { version = "2.13.0", features = ["serde"] }
-jiff = { version = "0.2.20", features = ["perf-inline", "tz-system"], default-features = false }
+jiff = { version = "0.2.21", features = ["perf-inline", "tz-system"], default-features = false }
 minreq = { version = "2.14.1", features = ["https", "json-using-serde"] }
-owo-colors = "4.2.3"
+owo-colors = "4.3.0"
 parking_lot = "0.12.5"
 pco = "1.0.1"
 rayon = "1.11.0"
@@ -85,8 +87,8 @@ tokio = { version = "1.49.0", features = ["rt-multi-thread"] }
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 tower-http = { version = "0.6.8", features = ["catch-panic", "compression-br", "compression-gzip", "compression-zstd", "cors", "normalize-path", "timeout", "trace"] }
 tower-layer = "0.3"
-vecdb = { version = "0.6.8", features = ["derive", "serde_json", "pco", "schemars"] }
-# vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
+# vecdb = { version = "0.6.8", features = ["derive", "serde_json", "pco", "schemars"] }
+vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
 
 [workspace.metadata.release]
 shared-version = true

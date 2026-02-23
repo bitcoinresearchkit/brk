@@ -55,7 +55,7 @@ fn main() -> brk_client::Result<()> {
 
     for metric in &metrics {
         for index in &metric.indexes {
-            let index_str = index.serialize_long();
+            let index_str = index.name();
             let full_path = format!("{}.by.{}", metric.path, index_str);
 
             match client.get_metric(

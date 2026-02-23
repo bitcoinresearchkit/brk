@@ -3,7 +3,7 @@ use brk_types::{
     Height, PoolBlockCounts, PoolBlockShares, PoolDetail, PoolDetailInfo, PoolInfo, PoolSlug,
     PoolStats, PoolsSummary, TimePeriod, pools,
 };
-use vecdb::{AnyVec, IterableVec, VecIndex};
+use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 use crate::Query;
 
@@ -30,18 +30,16 @@ impl Query {
 
         // For each pool, get cumulative count at end and start, subtract to get range count
         for (pool_id, pool_vecs) in &computer.pools.vecs {
-            let mut cumulative = pool_vecs
+            let cumulative = &pool_vecs
                 .blocks_mined
-                .height_cumulative
-                .inner()
-                .iter();
+                .height_cumulative;
 
-            let count_at_end: u32 = *cumulative.get(current_height).unwrap_or_default();
+            let count_at_end: u32 = *cumulative.collect_one(current_height).unwrap_or_default();
 
             let count_at_start: u32 = if start == 0 {
                 0
             } else {
-                *cumulative.get(Height::from(start - 1)).unwrap_or_default()
+                *cumulative.collect_one(Height::from(start - 1)).unwrap_or_default()
             };
 
             let block_count = count_at_end.saturating_sub(count_at_start);
@@ -100,14 +98,12 @@ impl Query {
             .get(&slug)
             .ok_or_else(|| Error::NotFound("Pool data not found".into()))?;
 
-        let mut cumulative = pool_vecs
+        let cumulative = &pool_vecs
             .blocks_mined
-            .height_cumulative
-            .inner()
-            .iter();
+            .height_cumulative;
 
         // Get total blocks (all time)
-        let total_all: u32 = *cumulative.get(current_height).unwrap_or_default();
+        let total_all: u32 = *cumulative.collect_one(current_height).unwrap_or_default();
 
         // Get blocks for 24h (144 blocks)
         let start_24h = end.saturating_sub(144);
@@ -115,7 +111,7 @@ impl Query {
             0
         } else {
             *cumulative
-                .get(Height::from(start_24h - 1))
+                .collect_one(Height::from(start_24h - 1))
                 .unwrap_or_default()
         };
         let total_24h = total_all.saturating_sub(count_before_24h);
@@ -126,7 +122,7 @@ impl Query {
             0
         } else {
             *cumulative
-                .get(Height::from(start_1w - 1))
+                .collect_one(Height::from(start_1w - 1))
                 .unwrap_or_default()
         };
         let total_1w = total_all.saturating_sub(count_before_1w);

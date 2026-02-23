@@ -6,18 +6,18 @@ edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+exclude = ["examples/"]
 
 [dependencies]
 bitcoin = { workspace = true }
 brk_error = { workspace = true, features = ["vecdb"] }
-brk_fetcher = { workspace = true }
 brk_cohort = { workspace = true }
 brk_indexer = { workspace = true }
 brk_oracle = { workspace = true }
 brk_iterator = { workspace = true }
 brk_logger = { workspace = true }
 brk_reader = { workspace = true }
-brk_rpc = { workspace = true }
+brk_rpc = { workspace = true, features = ["corepc"] }
 brk_store = { workspace = true }
 brk_traversable = { workspace = true }
 brk_types = { workspace = true }
@@ -28,6 +28,7 @@ rayon = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 smallvec = { workspace = true }
 vecdb = { workspace = true }
 

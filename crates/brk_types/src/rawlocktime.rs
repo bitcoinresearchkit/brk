@@ -38,8 +38,14 @@ impl std::fmt::Display for RawLockTime {
 }
 
 impl Formattable for RawLockTime {
-    #[inline(always)]
-    fn may_need_escaping() -> bool {
-        true
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        let start = f.len();
+        write!(f, "{}", self)?;
+        if f.as_bytes()[start..].contains(&b',') {
+            f.insert(start, '"');
+            f.push('"');
+        }
+        Ok(())
     }
 }

@@ -31,6 +31,9 @@ pub const ONE_HOUR_IN_SEC: u32 = 60 * 60;
 pub const ONE_DAY_IN_SEC: u32 = 24 * 60 * 60;
 pub const ONE_DAY_IN_SEC_F64: f64 = ONE_DAY_IN_SEC as f64;
 
+/// 2009-01-01 00:00:00 UTC — epoch for fixed-interval time indexes.
+pub const INDEX_EPOCH: u32 = 1230768000;
+
 impl Timestamp {
     pub const ZERO: Self = Self(0);
 
@@ -186,7 +189,8 @@ impl std::fmt::Display for Timestamp {
 
 impl Formattable for Timestamp {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }

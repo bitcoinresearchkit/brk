@@ -72,7 +72,7 @@ export const formatCohortTitle = (cohortTitle) => (metric) =>
   cohortTitle ? `${metric}: ${cohortTitle}` : metric;
 
 /**
- * Create sats/btc/usd line series from a pattern with .sats/.bitcoin/.dollars
+ * Create sats/btc/usd line series from a pattern with .sats/.btc/.usd
  * @param {Object} args
  * @param {AnyValuePattern} args.pattern
  * @param {string} args.name
@@ -84,7 +84,7 @@ export const formatCohortTitle = (cohortTitle) => (metric) =>
 export function satsBtcUsd({ pattern, name, color, defaultActive, style }) {
   return [
     line({
-      metric: pattern.bitcoin,
+      metric: pattern.btc,
       name,
       color,
       unit: Unit.btc,
@@ -100,7 +100,7 @@ export function satsBtcUsd({ pattern, name, color, defaultActive, style }) {
       style,
     }),
     line({
-      metric: pattern.dollars,
+      metric: pattern.usd,
       name,
       color,
       unit: Unit.usd,
@@ -113,7 +113,7 @@ export function satsBtcUsd({ pattern, name, color, defaultActive, style }) {
 /**
  * Create sats/btc/usd baseline series from a value pattern
  * @param {Object} args
- * @param {{ bitcoin: AnyMetricPattern, sats: AnyMetricPattern, dollars: AnyMetricPattern }} args.pattern
+ * @param {{ btc: AnyMetricPattern, sats: AnyMetricPattern, usd: AnyMetricPattern }} args.pattern
  * @param {string} args.name
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]
@@ -122,7 +122,7 @@ export function satsBtcUsd({ pattern, name, color, defaultActive, style }) {
 export function satsBtcUsdBaseline({ pattern, name, color, defaultActive }) {
   return [
     baseline({
-      metric: pattern.bitcoin,
+      metric: pattern.btc,
       name,
       color,
       unit: Unit.btc,
@@ -136,7 +136,7 @@ export function satsBtcUsdBaseline({ pattern, name, color, defaultActive }) {
       defaultActive,
     }),
     baseline({
-      metric: pattern.dollars,
+      metric: pattern.usd,
       name,
       color,
       unit: Unit.usd,
@@ -158,9 +158,9 @@ export function satsBtcUsdBaseline({ pattern, name, color, defaultActive }) {
 export function satsBtcUsdFrom({ source, key, name, color, defaultActive }) {
   return satsBtcUsd({
     pattern: {
-      bitcoin: source.bitcoin[key],
+      btc: source.btc[key],
       sats: source.sats[key],
-      dollars: source.dollars[key],
+      usd: source.usd[key],
     },
     name,
     color,
@@ -187,9 +187,9 @@ export function satsBtcUsdFromFull({
 }) {
   return satsBtcUsd({
     pattern: {
-      bitcoin: source.bitcoin[key],
+      btc: source.btc[key],
       sats: source.sats[key],
-      dollars: source.dollars[key],
+      usd: source.usd[key],
     },
     name,
     color,

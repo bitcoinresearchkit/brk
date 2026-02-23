@@ -5,19 +5,20 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{Database, Exit, IterableCloneableVec, LazyVecFrom1, UnaryTransform};
+use vecdb::{Database, Exit, ReadableCloneableVec, LazyVecFrom1, UnaryTransform, Rw, StorageMode};
 
 use crate::{
-    ComputeIndexes, indexes,
+    ComputeIndexes,
+    indexes,
     internal::{ComputedVecValue, ComputedHeightDerivedFull, NumericValue},
 };
 
 const VERSION: Version = Version::ZERO;
 
 /// Block full aggregation with lazy height transform + computed derived indexes.
-#[derive(Clone, Deref, DerefMut, Traversable)]
+#[derive(Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyComputedFromHeightFull<T, S = T>
+pub struct LazyComputedFromHeightFull<T, S = T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S: ComputedVecValue,
@@ -26,7 +27,7 @@ where
     pub height: LazyVecFrom1<Height, T, Height, S>,
     #[deref]
     #[deref_mut]
-    pub rest: ComputedHeightDerivedFull<T>,
+    pub rest: Box<ComputedHeightDerivedFull<T, M>>,
 }
 
 impl<T, S> LazyComputedFromHeightFull<T, S>
@@ -34,48 +35,29 @@ where
     T: NumericValue + JsonSchema,
     S: ComputedVecValue + JsonSchema,
 {
-    pub fn forced_import<F: UnaryTransform<S, T>>(
+    pub(crate) fn forced_import<F: UnaryTransform<S, T>>(
         db: &Database,
         name: &str,
         version: Version,
-        source: impl IterableCloneableVec<Height, S>,
+        source: &impl ReadableCloneableVec<Height, S>,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let height = LazyVecFrom1::transformed::<F>(name, v, source.boxed_clone());
+        let height = LazyVecFrom1::transformed::<F>(name, v, source.read_only_boxed_clone());
 
         let rest =
-            ComputedHeightDerivedFull::forced_import(db, name, height.boxed_clone(), v, indexes)?;
+            ComputedHeightDerivedFull::forced_import(db, name, height.read_only_boxed_clone(), v, indexes)?;
 
-        Ok(Self { height, rest })
+        Ok(Self { height, rest: Box::new(rest) })
     }
 
-    pub fn forced_import_with_init(
-        db: &Database,
-        name: &str,
-        version: Version,
-        source: impl IterableCloneableVec<Height, S>,
-        indexes: &indexes::Vecs,
-        init_fn: vecdb::ComputeFrom1<Height, T, Height, S>,
-    ) -> Result<Self> {
-        let v = version + VERSION;
-
-        let height = LazyVecFrom1::init(name, v, source.boxed_clone(), init_fn);
-
-        let rest =
-            ComputedHeightDerivedFull::forced_import(db, name, height.boxed_clone(), v, indexes)?;
-
-        Ok(Self { height, rest })
-    }
-
-    pub fn derive_from(
+    pub(crate) fn compute_cumulative(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.rest
-            .derive_from(indexes, starting_indexes, &self.height, exit)
+            .compute_cumulative(starting_indexes, &self.height, exit)
     }
 }

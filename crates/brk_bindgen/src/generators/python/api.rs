@@ -40,15 +40,14 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     writeln!(output).unwrap();
 
     // Generate helper methods
-    writeln!(output, "    def index_to_date(self, index: Index, i: int) -> date:").unwrap();
-    writeln!(output, "        \"\"\"Convert an index value to a date for date-based indexes.\"\"\"").unwrap();
-    writeln!(output, "        return index_to_date(index, i)").unwrap();
+    writeln!(output, "    def index_to_date(self, index: Index, i: int) -> Union[date, datetime]:").unwrap();
+    writeln!(output, "        \"\"\"Convert an index value to a date/datetime for date-based indexes.\"\"\"").unwrap();
+    writeln!(output, "        return _index_to_date(index, i)").unwrap();
     writeln!(output).unwrap();
-    writeln!(output, "    def is_date_index(self, index: Index) -> bool:").unwrap();
-    writeln!(output, "        \"\"\"Check if an index type is date-based.\"\"\"").unwrap();
-    writeln!(output, "        return is_date_index(index)").unwrap();
+    writeln!(output, "    def date_to_index(self, index: Index, d: Union[date, datetime]) -> int:").unwrap();
+    writeln!(output, "        \"\"\"Convert a date/datetime to an index value for date-based indexes.\"\"\"").unwrap();
+    writeln!(output, "        return _date_to_index(index, d)").unwrap();
     writeln!(output).unwrap();
-
     // Generate API methods
     generate_api_methods(output, endpoints);
 }

@@ -3,7 +3,7 @@ use std::{
     cmp::Ordering,
     f32,
     iter::Sum,
-    ops::{Add, AddAssign, Div, Mul, Neg, Sub},
+    ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
 };
 
 use derive_more::Deref;
@@ -11,7 +11,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
-use crate::{Close, StoredU32};
+use crate::{Close, Sats, StoredU32};
 
 use super::{Dollars, StoredF64};
 
@@ -123,6 +123,12 @@ impl AddAssign for StoredF32 {
     }
 }
 
+impl SubAssign for StoredF32 {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs
+    }
+}
+
 impl From<StoredF32> for f32 {
     #[inline]
     fn from(value: StoredF32) -> Self {
@@ -134,6 +140,13 @@ impl From<Dollars> for StoredF32 {
     #[inline]
     fn from(value: Dollars) -> Self {
         StoredF32::from(f64::from(value))
+    }
+}
+
+impl From<Sats> for StoredF32 {
+    #[inline]
+    fn from(value: Sats) -> Self {
+        Self(f32::from(value))
     }
 }
 
@@ -260,7 +273,8 @@ impl std::fmt::Display for StoredF32 {
 
 impl Formattable for StoredF32 {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }

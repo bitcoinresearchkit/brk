@@ -9,10 +9,10 @@ use brk_oracle::{
     Config, NUM_BINS, Oracle, PRICES, START_HEIGHT, bin_to_cents, cents_to_bin, sats_to_bin,
 };
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
-use vecdb::{AnyVec, VecIndex, VecIterator};
+use vecdb::{AnyVec, ReadableVec, VecIndex};
 
-/// DateIndex 1 = Jan 9, 2009 (block 1). For dates after genesis week:
-/// dateindex = floor(timestamp / 86400) - 14252.
+/// Day1 1 = Jan 9, 2009 (block 1). For dates after genesis week:
+/// day1 = floor(timestamp / 86400) - 14252.
 const GENESIS_DAY: u32 = 14252;
 
 const BINS_5PCT: f64 = 4.24;
@@ -108,7 +108,7 @@ impl YearStats {
 
 /// Oracle OHLC for a single day, built from per-block prices.
 struct DayCandle {
-    dateindex: usize,
+    day1: usize,
     open: f64,
     high: f64,
     low: f64,
@@ -160,16 +160,16 @@ fn main() {
         })
         .collect();
 
-    // Read block timestamps for year + dateindex mapping.
-    let mut timestamp_iter = indexer.vecs.blocks.timestamp.into_iter();
-    let mut height_years: Vec<u16> = Vec::with_capacity(total_heights);
-    let mut height_dateindexes: Vec<usize> = Vec::with_capacity(total_heights);
-    for h in 0..total_heights {
-        let ts: brk_types::Timestamp = timestamp_iter.get_at_unwrap(h);
-        let ts_u32 = *ts as u32;
-        height_years.push(timestamp_to_year(ts_u32));
-        height_dateindexes.push((ts_u32 / 86400).saturating_sub(GENESIS_DAY) as usize);
-    }
+    // Read block timestamps for year + day1 mapping.
+    let timestamps: Vec<brk_types::Timestamp> = indexer.vecs.blocks.timestamp.collect();
+    let height_years: Vec<u16> = timestamps
+        .iter()
+        .map(|ts| timestamp_to_year(**ts))
+        .collect();
+    let height_day1s: Vec<usize> = timestamps
+        .iter()
+        .map(|ts| (**ts / 86400).saturating_sub(GENESIS_DAY) as usize)
+        .collect();
 
     let start_price: f64 = PRICES
         .lines()
@@ -184,11 +184,9 @@ fn main() {
     let total_txs = indexer.vecs.transactions.height.len();
     let total_outputs = indexer.vecs.outputs.value.len();
 
-    let mut first_txindex_iter = indexer.vecs.transactions.first_txindex.into_iter();
-    let mut first_txoutindex_iter = indexer.vecs.transactions.first_txoutindex.into_iter();
-    let mut out_first_iter = indexer.vecs.outputs.first_txoutindex.into_iter();
-    let mut value_iter = indexer.vecs.outputs.value.into_iter();
-    let mut outputtype_iter = indexer.vecs.outputs.outputtype.into_iter();
+    // Pre-collect height-indexed vecs (small). Transaction-indexed vecs are too large.
+    let first_txindex: Vec<TxIndex> = indexer.vecs.transactions.first_txindex.collect();
+    let out_first: Vec<TxOutIndex> = indexer.vecs.outputs.first_txoutindex.collect();
 
     let ref_config = Config::default();
 
@@ -202,30 +200,46 @@ fn main() {
     let mut current_di: Option<usize> = None;
 
     for h in START_HEIGHT..total_heights {
-        let first_txindex: TxIndex = first_txindex_iter.get_at_unwrap(h);
-        let next_first_txindex = first_txindex_iter
-            .get_at(h + 1)
+        let ft = first_txindex[h];
+        let next_ft = first_txindex
+            .get(h + 1)
+            .copied()
             .unwrap_or(TxIndex::from(total_txs));
 
-        let out_start = if first_txindex.to_usize() + 1 < next_first_txindex.to_usize() {
-            first_txoutindex_iter
-                .get_at_unwrap(first_txindex.to_usize() + 1)
+        let out_start = if ft.to_usize() + 1 < next_ft.to_usize() {
+            indexer
+                .vecs
+                .transactions
+                .first_txoutindex
+                .collect_one(ft + 1)
+                .unwrap()
                 .to_usize()
         } else {
-            out_first_iter
-                .get_at(h + 1)
+            out_first
+                .get(h + 1)
+                .copied()
                 .unwrap_or(TxOutIndex::from(total_outputs))
                 .to_usize()
         };
-        let out_end = out_first_iter
-            .get_at(h + 1)
+        let out_end = out_first
+            .get(h + 1)
+            .copied()
             .unwrap_or(TxOutIndex::from(total_outputs))
             .to_usize();
 
+        let values: Vec<Sats> = indexer
+            .vecs
+            .outputs
+            .value
+            .collect_range_at(out_start, out_end);
+        let output_types: Vec<OutputType> = indexer
+            .vecs
+            .outputs
+            .outputtype
+            .collect_range_at(out_start, out_end);
+
         let mut hist = [0u32; NUM_BINS];
-        for i in out_start..out_end {
-            let sats: Sats = value_iter.get_at_unwrap(i);
-            let output_type: OutputType = outputtype_iter.get_at_unwrap(i);
+        for (sats, output_type) in values.into_iter().zip(output_types) {
             if ref_config.excluded_output_types.contains(&output_type) {
                 continue;
             }
@@ -243,11 +257,11 @@ fn main() {
         let oracle_price = bin_to_cents(ref_bin) as f64 / 100.0;
 
         // Build oracle daily candle.
-        let di = height_dateindexes[h];
+        let di = height_day1s[h];
         if current_di != Some(di) {
             current_di = Some(di);
             oracle_candles.push(DayCandle {
-                dateindex: di,
+                day1: di,
                 open: oracle_price,
                 high: oracle_price,
                 low: oracle_price,
@@ -319,7 +333,7 @@ fn main() {
     let mut daily_days = 0u64;
 
     for candle in &oracle_candles {
-        let di = candle.dateindex;
+        let di = candle.day1;
         if di >= daily_ohlc.len() {
             continue;
         }

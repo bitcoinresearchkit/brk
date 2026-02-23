@@ -13,7 +13,7 @@ use std::path::PathBuf;
 use brk_indexer::Indexer;
 use brk_oracle::{Config, NUM_BINS, Oracle, PRICES, START_HEIGHT, cents_to_bin, sats_to_bin};
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
-use vecdb::{AnyVec, VecIndex, VecIterator};
+use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 fn seed_bin(height: usize) -> f64 {
     let price: f64 = PRICES
@@ -49,11 +49,8 @@ fn main() {
     let total_txs = indexer.vecs.transactions.height.len();
     let total_outputs = indexer.vecs.outputs.value.len();
 
-    let mut first_txindex_iter = indexer.vecs.transactions.first_txindex.into_iter();
-    let mut first_txoutindex_iter = indexer.vecs.transactions.first_txoutindex.into_iter();
-    let mut out_first_iter = indexer.vecs.outputs.first_txoutindex.into_iter();
-    let mut value_iter = indexer.vecs.outputs.value.into_iter();
-    let mut outputtype_iter = indexer.vecs.outputs.outputtype.into_iter();
+    let first_txindex: Vec<TxIndex> = indexer.vecs.transactions.first_txindex.collect();
+    let out_first: Vec<TxOutIndex> = indexer.vecs.outputs.first_txoutindex.collect();
 
     let ref_config = Config::default();
 
@@ -77,30 +74,21 @@ fn main() {
     let end_height = (last_start + window_size + 100).min(total_heights);
 
     for h in START_HEIGHT..end_height {
-        let first_txindex: TxIndex = first_txindex_iter.get_at_unwrap(h);
-        let next_first_txindex = first_txindex_iter
-            .get_at(h + 1)
-            .unwrap_or(TxIndex::from(total_txs));
+        let ft = first_txindex[h];
+        let next_ft = first_txindex.get(h + 1).copied().unwrap_or(TxIndex::from(total_txs));
 
-        let out_start = if first_txindex.to_usize() + 1 < next_first_txindex.to_usize() {
-            first_txoutindex_iter
-                .get_at_unwrap(first_txindex.to_usize() + 1)
-                .to_usize()
+        let out_start = if ft.to_usize() + 1 < next_ft.to_usize() {
+            indexer.vecs.transactions.first_txoutindex.collect_one(ft + 1).unwrap().to_usize()
         } else {
-            out_first_iter
-                .get_at(h + 1)
-                .unwrap_or(TxOutIndex::from(total_outputs))
-                .to_usize()
+            out_first.get(h + 1).copied().unwrap_or(TxOutIndex::from(total_outputs)).to_usize()
         };
-        let out_end = out_first_iter
-            .get_at(h + 1)
-            .unwrap_or(TxOutIndex::from(total_outputs))
-            .to_usize();
+        let out_end = out_first.get(h + 1).copied().unwrap_or(TxOutIndex::from(total_outputs)).to_usize();
+
+        let values: Vec<Sats> = indexer.vecs.outputs.value.collect_range_at(out_start, out_end);
+        let output_types: Vec<OutputType> = indexer.vecs.outputs.outputtype.collect_range_at(out_start, out_end);
 
         let mut hist = [0u32; NUM_BINS];
-        for i in out_start..out_end {
-            let sats: Sats = value_iter.get_at_unwrap(i);
-            let output_type: OutputType = outputtype_iter.get_at_unwrap(i);
+        for (sats, output_type) in values.into_iter().zip(output_types) {
             if ref_config.excluded_output_types.contains(&output_type) {
                 continue;
             }

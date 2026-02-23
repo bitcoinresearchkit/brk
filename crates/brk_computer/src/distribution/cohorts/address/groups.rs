@@ -5,12 +5,12 @@ use brk_cohort::{
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Dollars, Height, Version};
+use brk_types::{Dollars, Height, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
+use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{ComputeIndexes, distribution::DynCohortVecs, indexes, price};
+use crate::{ComputeIndexes, blocks, distribution::DynCohortVecs, indexes, prices};
 
 use crate::distribution::metrics::SupplyMetrics;
 
@@ -19,19 +19,19 @@ use super::{super::traits::CohortVecs, vecs::AddressCohortVecs};
 const VERSION: Version = Version::new(0);
 
 /// All Address cohorts organized by filter type.
-#[derive(Clone, Deref, DerefMut, Traversable)]
-pub struct AddressCohorts(AddressGroups<AddressCohortVecs>);
+#[derive(Deref, DerefMut, Traversable)]
+pub struct AddressCohorts<M: StorageMode = Rw>(AddressGroups<AddressCohortVecs<M>>);
 
 impl AddressCohorts {
     /// Import all Address cohorts from database.
     ///
     /// `all_supply` is the supply metrics from the UTXO "all" cohort, used as global
     /// sources for `*_rel_to_market_cap` ratios.
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
         states_path: &Path,
         all_supply: Option<&SupplyMetrics>,
     ) -> Result<Self> {
@@ -43,7 +43,7 @@ impl AddressCohorts {
                       has_state: bool|
          -> Result<AddressCohortVecs> {
             let sp = if has_state { Some(states_path) } else { None };
-            AddressCohortVecs::forced_import(db, filter, name, v, indexes, price, sp, all_supply)
+            AddressCohortVecs::forced_import(db, filter, name, v, indexes, prices, sp, all_supply)
         };
 
         let full = |f: Filter, name: &'static str| create(f, name, true);
@@ -86,7 +86,7 @@ impl AddressCohorts {
     }
 
     /// Compute overlapping cohorts from component amount_range cohorts.
-    pub fn compute_overlapping_vecs(
+    pub(crate) fn compute_overlapping_vecs(
         &mut self,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
@@ -97,20 +97,32 @@ impl AddressCohorts {
     }
 
     /// First phase of post-processing: compute index transforms.
-    pub fn compute_rest_part1(
+    pub(crate) fn compute_rest_part1(
         &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        // 1. Compute all metrics except net_sentiment
+        // 1. Compute addr_count_30d_change using rolling window
+        self.par_iter_mut().try_for_each(|v| {
+            v.addr_count_30d_change.height.compute_rolling_change(
+                starting_indexes.height,
+                &blocks.count.height_1m_ago,
+                &v.addr_count.height,
+                exit,
+            )
+        })?;
+
+        // 2. Compute all metrics except net_sentiment
         self.par_iter_mut()
-            .try_for_each(|v| v.compute_rest_part1(indexes, price, starting_indexes, exit))?;
+            .try_for_each(|v| v.compute_rest_part1(blocks, prices, starting_indexes, exit))?;
 
         // 2. Compute net_sentiment.height for separate cohorts (greed - pain)
-        self.par_iter_separate_mut()
-            .try_for_each(|v| v.metrics.compute_net_sentiment_height(starting_indexes, exit))?;
+        self.par_iter_separate_mut().try_for_each(|v| {
+            v.metrics
+                .compute_net_sentiment_height(starting_indexes, exit)
+        })?;
 
         // 3. Compute net_sentiment.height for aggregate cohorts (weighted average)
         self.for_each_aggregate(|vecs, sources| {
@@ -119,40 +131,34 @@ impl AddressCohorts {
                 .compute_net_sentiment_from_others(starting_indexes, &metrics, exit)
         })?;
 
-        // 4. Compute net_sentiment dateindex for ALL cohorts
-        self.par_iter_mut()
-            .try_for_each(|v| v.metrics.compute_net_sentiment_rest(indexes, starting_indexes, exit))
+        Ok(())
     }
 
     /// Second phase of post-processing: compute relative metrics.
-    #[allow(clippy::too_many_arguments)]
-    pub fn compute_rest_part2<HM, DM>(
+    pub(crate) fn compute_rest_part2<HM>(
         &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         height_to_market_cap: Option<&HM>,
-        dateindex_to_market_cap: Option<&DM>,
         exit: &Exit,
     ) -> Result<()>
     where
-        HM: IterableVec<Height, Dollars> + Sync,
-        DM: IterableVec<DateIndex, Dollars> + Sync,
+        HM: ReadableVec<Height, Dollars> + Sync,
     {
         self.0.par_iter_mut().try_for_each(|v| {
             v.compute_rest_part2(
-                indexes,
-                price,
+                blocks,
+                prices,
                 starting_indexes,
                 height_to_market_cap,
-                dateindex_to_market_cap,
                 exit,
             )
         })
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
-    pub fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         // Collect all vecs from all cohorts
         self.0
             .iter_mut()
@@ -162,44 +168,36 @@ impl AddressCohorts {
     }
 
     /// Commit all states to disk (separate from vec writes for parallelization).
-    pub fn commit_all_states(&mut self, height: Height, cleanup: bool) -> Result<()> {
+    pub(crate) fn commit_all_states(&mut self, height: Height, cleanup: bool) -> Result<()> {
         self.par_iter_separate_mut()
             .try_for_each(|v| v.write_state(height, cleanup))
     }
 
     /// Get minimum height from all separate cohorts' height-indexed vectors.
-    pub fn min_separate_stateful_height_len(&self) -> Height {
+    pub(crate) fn min_separate_stateful_height_len(&self) -> Height {
         self.iter_separate()
             .map(|v| Height::from(v.min_stateful_height_len()))
             .min()
             .unwrap_or_default()
     }
 
-    /// Get minimum dateindex from all separate cohorts' dateindex-indexed vectors.
-    pub fn min_separate_stateful_dateindex_len(&self) -> usize {
-        self.iter_separate()
-            .map(|v| v.min_stateful_dateindex_len())
-            .min()
-            .unwrap_or(usize::MAX)
-    }
-
     /// Import state for all separate cohorts at or before given height.
     /// Returns true if all imports succeeded and returned the expected height.
-    pub fn import_separate_states(&mut self, height: Height) -> bool {
+    pub(crate) fn import_separate_states(&mut self, height: Height) -> bool {
         self.par_iter_separate_mut()
             .map(|v| v.import_state(height).unwrap_or_default())
             .all(|h| h == height)
     }
 
     /// Reset state heights for all separate cohorts.
-    pub fn reset_separate_state_heights(&mut self) {
+    pub(crate) fn reset_separate_state_heights(&mut self) {
         self.par_iter_separate_mut().for_each(|v| {
             v.reset_state_starting_height();
         });
     }
 
     /// Reset cost_basis_data for all separate cohorts (called during fresh start).
-    pub fn reset_separate_cost_basis_data(&mut self) -> Result<()> {
+    pub(crate) fn reset_separate_cost_basis_data(&mut self) -> Result<()> {
         self.par_iter_separate_mut().try_for_each(|v| {
             if let Some(state) = v.state.as_mut() {
                 state.reset_cost_basis_data_if_needed()?;
@@ -209,7 +207,7 @@ impl AddressCohorts {
     }
 
     /// Validate computed versions for all separate cohorts.
-    pub fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+    pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.par_iter_separate_mut()
             .try_for_each(|v| v.validate_computed_versions(base_version))
     }

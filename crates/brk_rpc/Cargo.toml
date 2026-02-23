@@ -1,17 +1,26 @@
 [package]
 name = "brk_rpc"
-description = "A thin wrapper around bitcoincore-rpc"
+description = "A thin wrapper around bitcoincore-rpc or corepc-client"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+exclude = ["examples/"]
+
+[features]
+bitcoincore-rpc = ["dep:bitcoincore-rpc", "brk_error/bitcoincore-rpc"]
+corepc = ["dep:corepc-client", "dep:corepc-jsonrpc", "dep:serde_json", "dep:serde", "brk_error/corepc"]
 
 [dependencies]
 bitcoin = { workspace = true }
-bitcoincore-rpc = { workspace = true }
-brk_error = { workspace = true, features = ["bitcoincore-rpc"] }
+bitcoincore-rpc = { workspace = true, optional = true }
+corepc-client = { workspace = true, optional = true }
+corepc-jsonrpc = { workspace = true, optional = true }
+brk_error = { workspace = true }
 brk_logger = { workspace = true }
 brk_types = { workspace = true }
 tracing = { workspace = true }
 parking_lot = { workspace = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }

@@ -15,21 +15,21 @@ use vecdb::{Bytes, Formattable, Pco, TransparentPco};
 
 use crate::StoredF64;
 
-use super::{CentsUnsigned, Dollars, Sats};
+use super::{Cents, Dollars, Sats};
 
 /// OHLC (Open, High, Low, Close) data in cents
 #[derive(Debug, Default, Clone, JsonSchema)]
 #[repr(C)]
-pub struct OHLCCentsUnsigned {
-    pub open: Open<CentsUnsigned>,
-    pub high: High<CentsUnsigned>,
-    pub low: Low<CentsUnsigned>,
-    pub close: Close<CentsUnsigned>,
+pub struct OHLCCents {
+    pub open: Open<Cents>,
+    pub high: High<Cents>,
+    pub low: Low<Cents>,
+    pub close: Close<Cents>,
 }
 
-impl From<(Open<CentsUnsigned>, High<CentsUnsigned>, Low<CentsUnsigned>, Close<CentsUnsigned>)> for OHLCCentsUnsigned {
+impl From<(Open<Cents>, High<Cents>, Low<Cents>, Close<Cents>)> for OHLCCents {
     #[inline]
-    fn from(value: (Open<CentsUnsigned>, High<CentsUnsigned>, Low<CentsUnsigned>, Close<CentsUnsigned>)) -> Self {
+    fn from(value: (Open<Cents>, High<Cents>, Low<Cents>, Close<Cents>)) -> Self {
         Self {
             open: value.0,
             high: value.1,
@@ -39,9 +39,9 @@ impl From<(Open<CentsUnsigned>, High<CentsUnsigned>, Low<CentsUnsigned>, Close<C
     }
 }
 
-impl From<Close<CentsUnsigned>> for OHLCCentsUnsigned {
+impl From<Close<Cents>> for OHLCCents {
     #[inline]
-    fn from(value: Close<CentsUnsigned>) -> Self {
+    fn from(value: Close<Cents>) -> Self {
         Self {
             open: Open::from(value),
             high: High::from(value),
@@ -51,7 +51,7 @@ impl From<Close<CentsUnsigned>> for OHLCCentsUnsigned {
     }
 }
 
-impl Serialize for OHLCCentsUnsigned {
+impl Serialize for OHLCCents {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -113,11 +113,11 @@ macro_rules! impl_ohlc_deserialize {
     };
 }
 
-impl_ohlc_deserialize!(OHLCCentsUnsigned, CentsUnsigned);
+impl_ohlc_deserialize!(OHLCCents, Cents);
 impl_ohlc_deserialize!(OHLCDollars, Dollars);
 impl_ohlc_deserialize!(OHLCSats, Sats);
 
-impl Display for OHLCCentsUnsigned {
+impl Display for OHLCCents {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -127,14 +127,20 @@ impl Display for OHLCCentsUnsigned {
     }
 }
 
-impl Formattable for OHLCCentsUnsigned {
-    #[inline(always)]
-    fn may_need_escaping() -> bool {
-        true
+impl Formattable for OHLCCents {
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        let start = f.len();
+        write!(f, "{}", self)?;
+        if f.as_bytes()[start..].contains(&b',') {
+            f.insert(start, '"');
+            f.push('"');
+        }
+        Ok(())
     }
 }
 
-impl Bytes for OHLCCentsUnsigned {
+impl Bytes for OHLCCents {
     type Array = [u8; size_of::<Self>()];
 
     fn to_bytes(&self) -> Self::Array {
@@ -148,15 +154,15 @@ impl Bytes for OHLCCentsUnsigned {
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
         Ok(Self {
-            open: Open::<CentsUnsigned>::from_bytes(&bytes[0..8])?,
-            high: High::<CentsUnsigned>::from_bytes(&bytes[8..16])?,
-            low: Low::<CentsUnsigned>::from_bytes(&bytes[16..24])?,
-            close: Close::<CentsUnsigned>::from_bytes(&bytes[24..32])?,
+            open: Open::<Cents>::from_bytes(&bytes[0..8])?,
+            high: High::<Cents>::from_bytes(&bytes[8..16])?,
+            low: Low::<Cents>::from_bytes(&bytes[16..24])?,
+            close: Close::<Cents>::from_bytes(&bytes[24..32])?,
         })
     }
 }
 
-impl Add for OHLCCentsUnsigned {
+impl Add for OHLCCents {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self {
@@ -223,16 +229,16 @@ impl From<Close<Dollars>> for OHLCDollars {
     }
 }
 
-impl From<OHLCCentsUnsigned> for OHLCDollars {
+impl From<OHLCCents> for OHLCDollars {
     #[inline]
-    fn from(value: OHLCCentsUnsigned) -> Self {
+    fn from(value: OHLCCents) -> Self {
         Self::from(&value)
     }
 }
 
-impl From<&OHLCCentsUnsigned> for OHLCDollars {
+impl From<&OHLCCents> for OHLCDollars {
     #[inline]
-    fn from(value: &OHLCCentsUnsigned) -> Self {
+    fn from(value: &OHLCCents) -> Self {
         Self {
             open: value.open.into(),
             high: value.high.into(),
@@ -253,9 +259,15 @@ impl Display for OHLCDollars {
 }
 
 impl Formattable for OHLCDollars {
-    #[inline(always)]
-    fn may_need_escaping() -> bool {
-        true
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        let start = f.len();
+        write!(f, "{}", self)?;
+        if f.as_bytes()[start..].contains(&b',') {
+            f.insert(start, '"');
+            f.push('"');
+        }
+        Ok(())
     }
 }
 
@@ -347,9 +359,15 @@ impl Display for OHLCSats {
 }
 
 impl Formattable for OHLCSats {
-    #[inline(always)]
-    fn may_need_escaping() -> bool {
-        true
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        let start = f.len();
+        write!(f, "{}", self)?;
+        if f.as_bytes()[start..].contains(&b',') {
+            f.insert(start, '"');
+            f.push('"');
+        }
+        Ok(())
     }
 }
 
@@ -451,9 +469,9 @@ where
     }
 }
 
-impl From<Open<CentsUnsigned>> for Open<Dollars> {
+impl From<Open<Cents>> for Open<Dollars> {
     #[inline]
-    fn from(value: Open<CentsUnsigned>) -> Self {
+    fn from(value: Open<Cents>) -> Self {
         Self(Dollars::from(*value))
     }
 }
@@ -501,8 +519,9 @@ where
     T: Display,
 {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }
 
@@ -582,9 +601,9 @@ where
     }
 }
 
-impl From<High<CentsUnsigned>> for High<Dollars> {
+impl From<High<Cents>> for High<Dollars> {
     #[inline]
-    fn from(value: High<CentsUnsigned>) -> Self {
+    fn from(value: High<Cents>) -> Self {
         Self(Dollars::from(*value))
     }
 }
@@ -632,8 +651,9 @@ where
     T: Display,
 {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }
 
@@ -713,9 +733,9 @@ where
     }
 }
 
-impl From<Low<CentsUnsigned>> for Low<Dollars> {
+impl From<Low<Cents>> for Low<Dollars> {
     #[inline]
-    fn from(value: Low<CentsUnsigned>) -> Self {
+    fn from(value: Low<Cents>) -> Self {
         Self(Dollars::from(*value))
     }
 }
@@ -763,8 +783,9 @@ where
     T: Display,
 {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }
 
@@ -861,9 +882,9 @@ where
 // #[inline]
 // fn from(value: Close<A>) -> Self {
 //         Self(B::from(*value))
-impl From<Close<CentsUnsigned>> for Close<Dollars> {
+impl From<Close<Cents>> for Close<Dollars> {
     #[inline]
-    fn from(value: Close<CentsUnsigned>) -> Self {
+    fn from(value: Close<Cents>) -> Self {
         Self(Dollars::from(*value))
     }
 }
@@ -917,7 +938,8 @@ where
     T: Display,
 {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }

@@ -1,22 +1,21 @@
 use brk_error::Result;
 use brk_types::{Height, Sats};
-use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec, TypedVecIterator, VecIndex};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, WritableVec, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, indexes, scripts};
+use crate::{ComputeIndexes, mining, scripts};
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
         scripts: &scripts::Vecs,
-        blocks: &blocks::Vecs,
+        mining: &mining::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         // 1. Compute opreturn supply - copy per-block opreturn values from scripts
         self.opreturn
-            .compute_all(indexes, starting_indexes, exit, |height_vec| {
+            .compute(starting_indexes, exit, |height_vec| {
                 // Validate computed versions against dependencies
 
                 let opreturn_dep_version = scripts.value.opreturn.sats.height.version();
@@ -31,14 +30,15 @@ impl Vecs {
                         Height::from(current_len.min(starting_indexes.height.to_usize()));
 
                     if starting_height <= target_height {
-                        let mut opreturn_value_iter =
-                            scripts.value.opreturn.sats.height.into_iter();
-
-                        for h in starting_height.to_usize()..=target_height.to_usize() {
-                            let height = Height::from(h);
-                            let value = opreturn_value_iter.get_unwrap(height);
-                            height_vec.truncate_push(height, value)?;
-                        }
+                        let start = starting_height.to_usize();
+                        let end = target_height.to_usize() + 1;
+                        scripts.value.opreturn.sats.height.fold_range_at(
+                            start, end, start,
+                            |idx, value| {
+                                height_vec.truncate_push(Height::from(idx), value).unwrap();
+                                idx + 1
+                            },
+                        );
                     }
                 }
 
@@ -49,10 +49,10 @@ impl Vecs {
         // 2. Compute unspendable supply = opreturn + unclaimed_rewards + genesis (at height 0)
         // Get reference to opreturn height vec for computing unspendable
         let opreturn_height = &self.opreturn.sats.height;
-        let unclaimed_height = &blocks.rewards.unclaimed_rewards.sats.height;
+        let unclaimed_height = &mining.rewards.unclaimed_rewards.sats.height;
 
         self.unspendable
-            .compute_all(indexes, starting_indexes, exit, |height_vec| {
+            .compute(starting_indexes, exit, |height_vec| {
                 let unspendable_dep_version =
                     opreturn_height.version() + unclaimed_height.version();
                 height_vec.validate_computed_version_or_reset(unspendable_dep_version)?;
@@ -65,29 +65,19 @@ impl Vecs {
                         Height::from(current_len.min(starting_indexes.height.to_usize()));
 
                     if starting_height <= target_height {
-                        let mut opreturn_iter = opreturn_height.into_iter();
-
-                        let mut unclaimed_rewards_iter = unclaimed_height.into_iter();
-
-                        for h in starting_height.to_usize()..=target_height.to_usize() {
-                            let height = Height::from(h);
-
-                            // Genesis block 50 BTC is unspendable (only at height 0)
-                            let genesis = if height == Height::ZERO {
-                                Sats::FIFTY_BTC
-                            } else {
-                                Sats::ZERO
-                            };
-
-                            // Per-block opreturn value
-                            let opreturn = opreturn_iter.get_unwrap(height);
-
-                            // Per-block unclaimed rewards
-                            let unclaimed = unclaimed_rewards_iter.get_unwrap(height);
-
-                            let unspendable = genesis + opreturn + unclaimed;
-                            height_vec.truncate_push(height, unspendable)?;
-                        }
+                        let start = starting_height.to_usize();
+                        let end = target_height.to_usize() + 1;
+                        let unclaimed_data = unclaimed_height.collect_range_at(start, end);
+                        opreturn_height.fold_range_at(
+                            start, end, start,
+                            |idx, opreturn| {
+                                let unclaimed = unclaimed_data[idx - start];
+                                let genesis = if idx == 0 { Sats::FIFTY_BTC } else { Sats::ZERO };
+                                let unspendable = genesis + opreturn + unclaimed;
+                                height_vec.truncate_push(Height::from(idx), unspendable).unwrap();
+                                idx + 1
+                            },
+                        );
                     }
                 }
 

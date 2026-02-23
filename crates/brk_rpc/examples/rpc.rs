@@ -1,4 +1,3 @@
-use bitcoincore_rpc::RpcApi;
 use brk_rpc::{Auth, Client};
 
 fn main() {
@@ -11,6 +10,6 @@ fn main() {
     let client = Client::new(Client::default_url(), auth).unwrap();
 
     loop {
-        println!("{:?}", client.call(|c| c.get_block_count()).unwrap());
+        println!("{:?}", client.get_block_count().unwrap());
     }
 }

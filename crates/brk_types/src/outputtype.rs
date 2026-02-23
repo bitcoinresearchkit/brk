@@ -41,6 +41,17 @@ pub enum OutputType {
 }
 
 impl OutputType {
+    pub const ADDRESS_TYPES: [Self; 8] = [
+        Self::P2PK65,
+        Self::P2PK33,
+        Self::P2PKH,
+        Self::P2SH,
+        Self::P2WPKH,
+        Self::P2WSH,
+        Self::P2TR,
+        Self::P2A,
+    ];
+
     fn is_valid(value: u8) -> bool {
         value <= Self::Unknown as u8
     }
@@ -108,7 +119,19 @@ impl OutputType {
 impl From<&ScriptBuf> for OutputType {
     #[inline]
     fn from(script: &ScriptBuf) -> Self {
-        if script.is_p2pk() {
+        if script.is_p2pkh() {
+            Self::P2PKH
+        } else if script.is_p2wpkh() {
+            Self::P2WPKH
+        } else if script.is_p2wsh() {
+            Self::P2WSH
+        } else if script.is_p2tr() {
+            Self::P2TR
+        } else if script.is_p2sh() {
+            Self::P2SH
+        } else if script.is_op_return() {
+            Self::OpReturn
+        } else if script.is_p2pk() {
             let bytes = script.as_bytes();
 
             match bytes.len() {
@@ -119,20 +142,8 @@ impl From<&ScriptBuf> for OutputType {
                     unreachable!()
                 }
             }
-        } else if script.is_p2pkh() {
-            Self::P2PKH
         } else if script.is_multisig() {
             Self::P2MS
-        } else if script.is_p2sh() {
-            Self::P2SH
-        } else if script.is_op_return() {
-            Self::OpReturn
-        } else if script.is_p2wpkh() {
-            Self::P2WPKH
-        } else if script.is_p2wsh() {
-            Self::P2WSH
-        } else if script.is_p2tr() {
-            Self::P2TR
         } else if script.witness_version() == Some(bitcoin::WitnessVersion::V1)
             && script.len() == 4
             && script.as_bytes()[1] == OP_PUSHBYTES_2.to_u8()
@@ -195,8 +206,9 @@ impl TryFrom<OutputType> for AddressType {
 
 impl Formattable for OutputType {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }
 

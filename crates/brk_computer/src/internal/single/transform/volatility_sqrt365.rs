@@ -7,6 +7,7 @@ pub struct StoredF32TimesSqrt365;
 impl UnaryTransform<StoredF32, StoredF32> for StoredF32TimesSqrt365 {
     #[inline(always)]
     fn apply(v: StoredF32) -> StoredF32 {
-        (*v * 365.0_f32.sqrt()).into()
+        // 365.0_f32.sqrt() = 19.104973
+        (*v * 19.104973_f32).into()
     }
 }

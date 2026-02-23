@@ -1,25 +1,25 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{Database, EagerVec, ImportableVec};
+use vecdb::{Database, EagerVec, ImportableVec, ReadableCloneableVec};
 
 use super::super::lookback::{self, LOOKBACK_PERIOD_NAMES};
 use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ComputedFromDateLast, ComputedFromDateStdDev, LazyBinaryFromDateLast,
-        PercentageDiffCloseDollars, StandardDeviationVecsOptions,
+        ComputedFromHeightLast, ComputedFromHeightStdDev, LazyBinaryFromHeightLast,
+        PercentageDiffDollars, StandardDeviationVecsOptions,
     },
     market::dca::ByDcaCagr,
-    price,
+    prices,
 };
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        price: &price::Vecs,
+        prices: &prices::Vecs,
         lookback: &lookback::Vecs,
     ) -> Result<Self> {
         let v1 = Version::ONE;
@@ -28,20 +28,24 @@ impl Vecs {
             LOOKBACK_PERIOD_NAMES
                 .zip_ref(&lookback.price_ago)
                 .map(|(name, price_ago)| {
-                    LazyBinaryFromDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
+                    LazyBinaryFromHeightLast::from_height_and_derived_last::<
+                        PercentageDiffDollars,
+                    >(
                         &format!("{name}_price_returns"),
                         version,
-                        &price.usd.split.close,
-                        price_ago,
+                        prices.usd.price.read_only_boxed_clone(),
+                        price_ago.height.read_only_boxed_clone(),
+                        &prices.usd.split.close,
+                        &price_ago.rest,
                     )
                 });
 
         // CAGR (computed, 2y+ only)
         let cagr = ByDcaCagr::try_new(|name, _days| {
-            ComputedFromDateLast::forced_import(db, &format!("{name}_cagr"), version, indexes)
+            ComputedFromHeightLast::forced_import(db, &format!("{name}_cagr"), version, indexes)
         })?;
 
-        let _1d_returns_1w_sd = ComputedFromDateStdDev::forced_import(
+        let _1d_returns_1w_sd = ComputedFromHeightStdDev::forced_import(
             db,
             "1d_returns_1w_sd",
             7,
@@ -49,9 +53,8 @@ impl Vecs {
             indexes,
             StandardDeviationVecsOptions::default(),
             None,
-            None,
         )?;
-        let _1d_returns_1m_sd = ComputedFromDateStdDev::forced_import(
+        let _1d_returns_1m_sd = ComputedFromHeightStdDev::forced_import(
             db,
             "1d_returns_1m_sd",
             30,
@@ -59,9 +62,8 @@ impl Vecs {
             indexes,
             StandardDeviationVecsOptions::default(),
             None,
-            None,
         )?;
-        let _1d_returns_1y_sd = ComputedFromDateStdDev::forced_import(
+        let _1d_returns_1y_sd = ComputedFromHeightStdDev::forced_import(
             db,
             "1d_returns_1y_sd",
             365,
@@ -69,11 +71,10 @@ impl Vecs {
             indexes,
             StandardDeviationVecsOptions::default(),
             None,
-            None,
         )?;
 
         let downside_returns = EagerVec::forced_import(db, "downside_returns", version)?;
-        let downside_1w_sd = ComputedFromDateStdDev::forced_import(
+        let downside_1w_sd = ComputedFromHeightStdDev::forced_import(
             db,
             "downside_1w_sd",
             7,
@@ -81,9 +82,8 @@ impl Vecs {
             indexes,
             StandardDeviationVecsOptions::default(),
             None,
-            None,
         )?;
-        let downside_1m_sd = ComputedFromDateStdDev::forced_import(
+        let downside_1m_sd = ComputedFromHeightStdDev::forced_import(
             db,
             "downside_1m_sd",
             30,
@@ -91,16 +91,14 @@ impl Vecs {
             indexes,
             StandardDeviationVecsOptions::default(),
             None,
-            None,
         )?;
-        let downside_1y_sd = ComputedFromDateStdDev::forced_import(
+        let downside_1y_sd = ComputedFromHeightStdDev::forced_import(
             db,
             "downside_1y_sd",
             365,
             version + v1,
             indexes,
             StandardDeviationVecsOptions::default(),
-            None,
             None,
         )?;
 

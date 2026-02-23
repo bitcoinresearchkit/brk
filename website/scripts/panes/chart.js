@@ -45,7 +45,7 @@ export function init() {
     const usdPrice = {
       type: "Candlestick",
       title: "Price",
-      metric: brk.metrics.price.usd.ohlc,
+      metric: brk.metrics.prices.usd.ohlc,
     };
     result.set(Unit.usd, [usdPrice, ...(optionTop.get(Unit.usd) ?? [])]);
 
@@ -54,7 +54,7 @@ export function init() {
     const satsPrice = {
       type: "Candlestick",
       title: "Price",
-      metric: brk.metrics.price.sats.ohlc,
+      metric: brk.metrics.prices.sats.ohlc,
       colors: /** @type {const} */ ([colors.bi.p1[1], colors.bi.p1[0]]),
     };
     result.set(Unit.sats, [satsPrice, ...(optionTop.get(Unit.sats) ?? [])]);
@@ -109,10 +109,10 @@ const ALL_CHOICES = /** @satisfies {ChartableIndexName[]} */ ([
   "date",
   "week",
   "month",
-  "quarter",
-  "semester",
+  "month3",
+  "month6",
   "year",
-  "decade",
+  "year10",
 ]);
 
 /**

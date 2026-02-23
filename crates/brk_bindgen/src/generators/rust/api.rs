@@ -187,7 +187,7 @@ fn param_type_to_rust(param_type: &str) -> String {
 fn build_path_template(endpoint: &Endpoint) -> (String, &'static str) {
     let has_index_param = endpoint.path_params.iter().any(|p| p.name == "index" && p.param_type == "Index");
     if has_index_param {
-        (endpoint.path.replace("{index}", "{}"), ", index.serialize_long()")
+        (endpoint.path.replace("{index}", "{}"), ", index.name()")
     } else {
         (endpoint.path.clone(), "")
     }

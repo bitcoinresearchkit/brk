@@ -19,7 +19,7 @@ Compute 1000+ on-chain metrics from indexed blockchain data: supply breakdowns, 
 ## Core API
 
 ```rust,ignore
-let mut computer = Computer::forced_import(&outputs_path, &indexer, Some(fetcher))?;
+let mut computer = Computer::forced_import(&outputs_path, &indexer)?;
 
 // Compute all metrics for new blocks
 computer.compute(&indexer, starting_indexes, &reader, &exit)?;
@@ -40,7 +40,7 @@ let realized_cap = computer.distribution.utxo_cohorts.all.metrics.realized.unwra
 | `cointime` | Liveliness, vaultedness, true market mean |
 | `pools` | Per-pool block counts, rewards, fees |
 | `market` | Market cap, NVT, Puell multiple |
-| `price` | Height-to-price mapping from fetched data |
+| `price` | Height-to-price mapping from on-chain oracle |
 
 ## Cohort System
 
@@ -49,6 +49,17 @@ UTXO and address cohorts support filtering by:
 - **Amount**: 0-0.001 BTC, 0.001-0.01, ..., 10k+ BTC
 - **Type**: P2PK, P2PKH, P2MS, P2SH, P2WPKH, P2WSH, P2TR, P2A
 - **Epoch**: By halving epoch
+
+```rust,ignore
+// Access metrics for a specific UTXO cohort (e.g. long-term holders)
+let lth_supply = computer.distribution.utxo_cohorts.lth.metrics.supply.total.sats.height;
+
+// Access metrics for an address cohort (e.g. 1-10 BTC holders)
+let whale_count = computer.distribution.address_cohorts.from_1_to_10.metrics.address_count.height;
+
+// Access metrics for all UTXOs combined
+let sopr = computer.distribution.utxo_cohorts.all.metrics.realized.unwrap().sopr.height;
+```
 
 ## Performance
 
@@ -71,6 +82,6 @@ Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator to 
 
 - `brk_indexer` for indexed blockchain data
 - `brk_cohort` for cohort filtering
-- `brk_fetcher` for price data
+- `brk_oracle` for on-chain price data
 - `brk_reader` for raw block access
 - `brk_traversable` for data export

@@ -34,8 +34,8 @@ impl StoreMeta {
         {
             return Err(Error::VersionMismatch {
                 path: path.to_path_buf(),
-                expected: u64::from(version) as usize,
-                found: u64::from(prev_version) as usize,
+                expected: usize::from(version),
+                found: usize::from(prev_version),
             });
         }
 

@@ -3,21 +3,17 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedFromDateAverage};
+use crate::{indexes, internal::ComputedFromHeightLast};
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        compute_dollars: bool,
     ) -> Result<Self> {
         Ok(Self {
-            btc: ComputedFromDateAverage::forced_import(db, "btc_velocity", version, indexes)?,
-            usd: compute_dollars.then(|| {
-                ComputedFromDateAverage::forced_import(db, "usd_velocity", version, indexes)
-                    .unwrap()
-            }),
+            btc: ComputedFromHeightLast::forced_import(db, "btc_velocity", version, indexes)?,
+            usd: ComputedFromHeightLast::forced_import(db, "usd_velocity", version, indexes)?,
         })
     }
 }

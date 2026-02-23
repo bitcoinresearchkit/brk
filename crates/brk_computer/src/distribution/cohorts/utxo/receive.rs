@@ -1,4 +1,4 @@
-use brk_types::{CentsUnsigned, Height, Timestamp};
+use brk_types::{Cents, Height, Timestamp};
 
 use crate::distribution::state::Transacted;
 
@@ -13,12 +13,12 @@ impl UTXOCohorts {
     /// - The appropriate year cohort based on block timestamp
     /// - The appropriate output type cohort (P2PKH, P2SH, etc.)
     /// - The appropriate amount range cohort based on value
-    pub fn receive(
+    pub(crate) fn receive(
         &mut self,
         received: Transacted,
         height: Height,
         timestamp: Timestamp,
-        price: Option<CentsUnsigned>,
+        price: Cents,
     ) {
         let supply_state = received.spendable_supply;
 

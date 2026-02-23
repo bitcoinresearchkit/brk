@@ -12,6 +12,6 @@ pub struct IndexInfo {
     pub index: Index,
 
     /// All Accepted query aliases
-    #[schemars(example = vec!["d", "date", "dateindex"])]
+    #[schemars(example = vec!["d", "date", "day1"])]
     pub aliases: Vec<Cow<'static, str>>,
 }

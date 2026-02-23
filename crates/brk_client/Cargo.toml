@@ -8,6 +8,7 @@ homepage.workspace = true
 repository.workspace = true
 keywords = ["bitcoin", "blockchain", "analytics", "on-chain"]
 categories = ["api-bindings", "cryptography::cryptocurrencies"]
+exclude = ["examples/"]
 
 [dependencies]
 brk_cohort = { workspace = true }

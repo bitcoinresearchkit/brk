@@ -1,12 +1,9 @@
 use brk_cohort::{ByAddressType, ByAnyAddress};
 use brk_indexer::Indexer;
 use brk_types::{
-    Height, OutPoint, OutputType, Sats, StoredU64, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
+    Height, OutPoint, OutputType, Sats, StoredU64, TxIndex, TypeIndex,
 };
-use vecdb::{
-    BoxedVecIterator, BytesVecIterator, GenericStoredVec, PcodecVecIterator, Reader, VecIndex,
-    VecIterator,
-};
+use vecdb::{Reader, ReadableVec, VecIndex};
 
 use crate::{
     distribution::{
@@ -24,94 +21,86 @@ pub struct TxOutData {
     pub typeindex: TypeIndex,
 }
 
-/// Reusable iterators for txout vectors (16KB buffered reads).
-///
-/// Iterators are created once and re-positioned each block to avoid
-/// creating new file handles repeatedly.
-pub struct TxOutIterators<'a> {
-    value_iter: BytesVecIterator<'a, TxOutIndex, Sats>,
-    outputtype_iter: BytesVecIterator<'a, TxOutIndex, OutputType>,
-    typeindex_iter: BytesVecIterator<'a, TxOutIndex, TypeIndex>,
+/// Readers for txout vectors. Uses collect_range for bulk reads.
+pub struct TxOutReaders<'a> {
+    indexer: &'a Indexer,
 }
 
-impl<'a> TxOutIterators<'a> {
-    pub fn new(indexer: &'a Indexer) -> Self {
-        Self {
-            value_iter: indexer.vecs.outputs.value.into_iter(),
-            outputtype_iter: indexer.vecs.outputs.outputtype.into_iter(),
-            typeindex_iter: indexer.vecs.outputs.typeindex.into_iter(),
-        }
+impl<'a> TxOutReaders<'a> {
+    pub(crate) fn new(indexer: &'a Indexer) -> Self {
+        Self { indexer }
     }
 
-    /// Collect output data for a block range using buffered iteration.
-    pub fn collect_block_outputs(
-        &mut self,
+    /// Collect output data for a block range using bulk reads.
+    pub(crate) fn collect_block_outputs(
+        &self,
         first_txoutindex: usize,
         output_count: usize,
     ) -> Vec<TxOutData> {
-        (first_txoutindex..first_txoutindex + output_count)
-            .map(|i| TxOutData {
-                value: self.value_iter.get_at_unwrap(i),
-                outputtype: self.outputtype_iter.get_at_unwrap(i),
-                typeindex: self.typeindex_iter.get_at_unwrap(i),
+        let end = first_txoutindex + output_count;
+        let values: Vec<Sats> = self.indexer.vecs.outputs.value.collect_range_at(first_txoutindex, end);
+        let outputtypes: Vec<OutputType> = self.indexer.vecs.outputs.outputtype.collect_range_at(first_txoutindex, end);
+        let typeindexes: Vec<TypeIndex> = self.indexer.vecs.outputs.typeindex.collect_range_at(first_txoutindex, end);
+
+        values
+            .into_iter()
+            .zip(outputtypes)
+            .zip(typeindexes)
+            .map(|((value, outputtype), typeindex)| TxOutData {
+                value,
+                outputtype,
+                typeindex,
             })
             .collect()
     }
 }
 
-/// Reusable iterators for txin vectors (PcoVec - avoids repeated page decompression).
-pub struct TxInIterators<'a> {
-    value_iter: PcodecVecIterator<'a, TxInIndex, Sats>,
-    outpoint_iter: PcodecVecIterator<'a, TxInIndex, OutPoint>,
-    outputtype_iter: PcodecVecIterator<'a, TxInIndex, OutputType>,
-    typeindex_iter: PcodecVecIterator<'a, TxInIndex, TypeIndex>,
+/// Readers for txin vectors. Uses collect_range for bulk reads.
+pub struct TxInReaders<'a> {
+    indexer: &'a Indexer,
+    txins: &'a inputs::Vecs,
     txindex_to_height: &'a mut RangeMap<TxIndex, Height>,
 }
 
-impl<'a> TxInIterators<'a> {
-    pub fn new(
+impl<'a> TxInReaders<'a> {
+    pub(crate) fn new(
         indexer: &'a Indexer,
         txins: &'a inputs::Vecs,
         txindex_to_height: &'a mut RangeMap<TxIndex, Height>,
     ) -> Self {
         Self {
-            value_iter: txins.spent.value.into_iter(),
-            outpoint_iter: indexer.vecs.inputs.outpoint.into_iter(),
-            outputtype_iter: indexer.vecs.inputs.outputtype.into_iter(),
-            typeindex_iter: indexer.vecs.inputs.typeindex.into_iter(),
+            indexer,
+            txins,
             txindex_to_height,
         }
     }
 
-    /// Collect input data for a block range using buffered iteration.
+    /// Collect input data for a block range using bulk reads.
     /// Computes prev_height on-the-fly from outpoint using RangeMap lookup.
-    pub fn collect_block_inputs(
+    pub(crate) fn collect_block_inputs(
         &mut self,
         first_txinindex: usize,
         input_count: usize,
         current_height: Height,
     ) -> (Vec<Sats>, Vec<Height>, Vec<OutputType>, Vec<TypeIndex>) {
-        let mut values = Vec::with_capacity(input_count);
-        let mut prev_heights = Vec::with_capacity(input_count);
-        let mut outputtypes = Vec::with_capacity(input_count);
-        let mut typeindexes = Vec::with_capacity(input_count);
+        let end = first_txinindex + input_count;
+        let values: Vec<Sats> = self.txins.spent.value.collect_range_at(first_txinindex, end);
+        let outpoints: Vec<OutPoint> = self.indexer.vecs.inputs.outpoint.collect_range_at(first_txinindex, end);
+        let outputtypes: Vec<OutputType> = self.indexer.vecs.inputs.outputtype.collect_range_at(first_txinindex, end);
+        let typeindexes: Vec<TypeIndex> = self.indexer.vecs.inputs.typeindex.collect_range_at(first_txinindex, end);
 
-        for i in first_txinindex..first_txinindex + input_count {
-            values.push(self.value_iter.get_at_unwrap(i));
-
-            let outpoint = self.outpoint_iter.get_at_unwrap(i);
-            let prev_height = if outpoint.is_coinbase() {
-                current_height
-            } else {
-                self.txindex_to_height
-                    .get(outpoint.txindex())
-                    .unwrap_or(current_height)
-            };
-            prev_heights.push(prev_height);
-
-            outputtypes.push(self.outputtype_iter.get_at_unwrap(i));
-            typeindexes.push(self.typeindex_iter.get_at_unwrap(i));
-        }
+        let prev_heights: Vec<Height> = outpoints
+            .iter()
+            .map(|outpoint| {
+                if outpoint.is_coinbase() {
+                    current_height
+                } else {
+                    self.txindex_to_height
+                        .get(outpoint.txindex())
+                        .unwrap_or(current_height)
+                }
+            })
+            .collect();
 
         (values, prev_heights, outputtypes, typeindexes)
     }
@@ -124,7 +113,7 @@ pub struct VecsReaders {
 }
 
 impl VecsReaders {
-    pub fn new(
+    pub(crate) fn new(
         any_address_indexes: &AnyAddressIndexesVecs,
         addresses_data: &AddressesDataVecs,
     ) -> Self {
@@ -147,51 +136,48 @@ impl VecsReaders {
     }
 
     /// Get reader for specific address type.
-    pub fn address_reader(&self, address_type: OutputType) -> &Reader {
+    pub(crate) fn address_reader(&self, address_type: OutputType) -> &Reader {
         self.addresstypeindex_to_anyaddressindex
-            .get_unwrap(address_type)
+            .get(address_type)
+            .unwrap()
     }
 }
 
 /// Build txoutindex -> txindex mapping for a block.
-pub fn build_txoutindex_to_txindex<'a>(
+pub(crate) fn build_txoutindex_to_txindex(
     block_first_txindex: TxIndex,
     block_tx_count: u64,
-    txindex_to_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
+    txindex_to_count: &impl ReadableVec<TxIndex, StoredU64>,
 ) -> Vec<TxIndex> {
     build_index_to_txindex(block_first_txindex, block_tx_count, txindex_to_count)
 }
 
 /// Build txinindex -> txindex mapping for a block.
-pub fn build_txinindex_to_txindex<'a>(
+pub(crate) fn build_txinindex_to_txindex(
     block_first_txindex: TxIndex,
     block_tx_count: u64,
-    txindex_to_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
+    txindex_to_count: &impl ReadableVec<TxIndex, StoredU64>,
 ) -> Vec<TxIndex> {
     build_index_to_txindex(block_first_txindex, block_tx_count, txindex_to_count)
 }
 
 /// Build index -> txindex mapping for a block (shared implementation).
-fn build_index_to_txindex<'a>(
+fn build_index_to_txindex(
     block_first_txindex: TxIndex,
     block_tx_count: u64,
-    txindex_to_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
+    txindex_to_count: &impl ReadableVec<TxIndex, StoredU64>,
 ) -> Vec<TxIndex> {
     let first = block_first_txindex.to_usize();
 
-    let counts: Vec<u64> = (0..block_tx_count as usize)
-        .map(|offset| {
-            let txindex = TxIndex::from(first + offset);
-            u64::from(txindex_to_count.get_unwrap(txindex))
-        })
-        .collect();
+    let counts: Vec<StoredU64> =
+        txindex_to_count.collect_range_at(first, first + block_tx_count as usize);
 
-    let total: u64 = counts.iter().sum();
+    let total: u64 = counts.iter().map(|c| u64::from(*c)).sum();
     let mut result = Vec::with_capacity(total as usize);
 
-    for (offset, &count) in counts.iter().enumerate() {
+    for (offset, count) in counts.iter().enumerate() {
         let txindex = TxIndex::from(first + offset);
-        result.extend(std::iter::repeat_n(txindex, count as usize));
+        result.extend(std::iter::repeat_n(txindex, u64::from(*count) as usize));
     }
 
     result

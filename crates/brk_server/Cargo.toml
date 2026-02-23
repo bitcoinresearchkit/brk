@@ -6,6 +6,7 @@ edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+exclude = ["examples/", "src/api/scalar.js"]
 
 [features]
 bindgen = ["dep:brk_bindgen"]
@@ -16,12 +17,11 @@ axum = { workspace = true }
 brk_bindgen = { workspace = true, optional = true }
 brk_computer = { workspace = true }
 brk_error = { workspace = true, features = ["jiff", "serde_json", "tokio", "vecdb"] }
-brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
 brk_query = { workspace = true }
 brk_reader = { workspace = true }
-brk_rpc = { workspace = true }
+brk_rpc = { workspace = true, features = ["corepc"] }
 brk_types = { workspace = true }
 brk_traversable = { workspace = true }
 brk_website = { workspace = true }

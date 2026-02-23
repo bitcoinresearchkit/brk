@@ -6,22 +6,18 @@ use std::{
     time::Duration,
 };
 
-use bitcoin::{block::Header, consensus::encode};
-use bitcoincore_rpc::{
-    json::{GetBlockHeaderResult, GetBlockResult, GetBlockchainInfoResult, GetTxOutResult},
-    {Client as CoreClient, Error as RpcError, RpcApi},
-};
+use bitcoin::consensus::encode;
 use brk_error::{Error, Result};
 use brk_types::{
     BlockHash, Height, MempoolEntryInfo, Sats, Transaction, TxIn, TxOut, TxStatus, TxWithHex, Txid,
     Vout,
 };
 
-pub use bitcoincore_rpc::Auth;
+pub mod backend;
 
-mod inner;
+pub use backend::{Auth, BlockHeaderInfo, BlockInfo, BlockchainInfo, TxOutInfo};
 
-use inner::ClientInner;
+use backend::ClientInner;
 use tracing::{debug, info};
 
 ///
@@ -53,29 +49,25 @@ impl Client {
 
     /// Returns a data structure containing various state info regarding
     /// blockchain processing.
-    pub fn get_blockchain_info(&self) -> Result<GetBlockchainInfoResult> {
-        self.call(move |c| c.get_blockchain_info())
-            .map_err(Into::into)
+    pub fn get_blockchain_info(&self) -> Result<BlockchainInfo> {
+        self.0.get_blockchain_info()
     }
 
     pub fn get_block<'a, H>(&self, hash: &'a H) -> Result<bitcoin::Block>
     where
         &'a H: Into<&'a bitcoin::BlockHash>,
     {
-        self.call(|c| c.get_block(hash.into())).map_err(Into::into)
+        self.0.get_block(hash.into())
     }
 
     /// Returns the numbers of block in the longest chain.
     pub fn get_block_count(&self) -> Result<u64> {
-        self.call(|c| c.get_block_count()).map_err(Into::into)
+        self.0.get_block_count()
     }
 
     /// Returns the numbers of block in the longest chain.
     pub fn get_last_height(&self) -> Result<Height> {
-        // debug!("Get last height...");
-        self.call(|c| c.get_block_count())
-            .map(Height::from)
-            .map_err(Into::into)
+        self.0.get_block_count().map(Height::from)
     }
 
     /// Get block hash at a given height
@@ -83,33 +75,30 @@ impl Client {
     where
         H: Into<u64> + Copy,
     {
-        self.call(|c| c.get_block_hash(height.into()))
+        self.0
+            .get_block_hash(height.into())
             .map(BlockHash::from)
-            .map_err(Into::into)
     }
 
-    pub fn get_block_header<'a, H>(&self, hash: &'a H) -> Result<Header>
+    pub fn get_block_header<'a, H>(&self, hash: &'a H) -> Result<bitcoin::block::Header>
     where
         &'a H: Into<&'a bitcoin::BlockHash>,
     {
-        self.call(|c| c.get_block_header(hash.into()))
-            .map_err(Into::into)
+        self.0.get_block_header(hash.into())
     }
 
-    pub fn get_block_info<'a, H>(&self, hash: &'a H) -> Result<GetBlockResult>
+    pub fn get_block_info<'a, H>(&self, hash: &'a H) -> Result<BlockInfo>
     where
         &'a H: Into<&'a bitcoin::BlockHash>,
     {
-        self.call(move |c| c.get_block_info(hash.into()))
-            .map_err(Into::into)
+        self.0.get_block_info(hash.into())
     }
 
-    pub fn get_block_header_info<'a, H>(&self, hash: &'a H) -> Result<GetBlockHeaderResult>
+    pub fn get_block_header_info<'a, H>(&self, hash: &'a H) -> Result<BlockHeaderInfo>
     where
         &'a H: Into<&'a bitcoin::BlockHash>,
     {
-        self.call(|c| c.get_block_header_info(hash.into()))
-            .map_err(Into::into)
+        self.0.get_block_header_info(hash.into())
     }
 
     pub fn get_transaction<'a, T, H>(
@@ -125,12 +114,9 @@ impl Client {
         Ok(tx)
     }
 
-    pub fn get_mempool_transaction<'a, T>(&self, txid: &'a T) -> Result<TxWithHex>
-    where
-        &'a T: Into<&'a bitcoin::Txid>,
-    {
+    pub fn get_mempool_transaction(&self, txid: &Txid) -> Result<TxWithHex> {
         // Get hex first, then deserialize from it
-        let hex = self.get_raw_transaction_hex(txid, None as Option<&'a BlockHash>)?;
+        let hex = self.get_raw_transaction_hex(txid, None as Option<&BlockHash>)?;
         let mut tx = encode::deserialize_hex::<bitcoin::Transaction>(&hex)?;
 
         let input = mem::take(&mut tx.input)
@@ -146,8 +132,8 @@ impl Client {
 
                 let txout = if let Some(txout_result) = txout_result {
                     Some(TxOut::from((
-                        txout_result.script_pub_key.script()?,
-                        Sats::from(txout_result.value.to_sat()),
+                        txout_result.script_pub_key,
+                        txout_result.value,
                     )))
                 } else {
                     None
@@ -168,7 +154,7 @@ impl Client {
 
         let mut tx = Transaction {
             index: None,
-            txid: tx.compute_txid().into(),
+            txid: txid.clone(),
             version: tx.version.into(),
             total_sigop_cost: tx.total_sigop_cost(|_| None),
             weight: tx.weight().into(),
@@ -190,31 +176,30 @@ impl Client {
         txid: &Txid,
         vout: Vout,
         include_mempool: Option<bool>,
-    ) -> Result<Option<GetTxOutResult>> {
-        self.call(|c| c.get_tx_out(txid.into(), vout.into(), include_mempool))
-            .map_err(Into::into)
+    ) -> Result<Option<TxOutInfo>> {
+        self.0.get_tx_out(txid.into(), vout.into(), include_mempool)
     }
 
     /// Get txids of all transactions in a memory pool
     pub fn get_raw_mempool(&self) -> Result<Vec<Txid>> {
-        self.call(|c| c.get_raw_mempool())
+        self.0
+            .get_raw_mempool()
             .map(|v| unsafe { mem::transmute(v) })
-            .map_err(Into::into)
     }
 
     /// Get all mempool entries with their fee data in a single RPC call
     pub fn get_raw_mempool_verbose(&self) -> Result<Vec<MempoolEntryInfo>> {
-        let result = self.call(|c| c.get_raw_mempool_verbose())?;
+        let result = self.0.get_raw_mempool_verbose()?;
         Ok(result
             .into_iter()
-            .map(|(txid, entry)| MempoolEntryInfo {
+            .map(|(txid, entry): (bitcoin::Txid, backend::RawMempoolEntry)| MempoolEntryInfo {
                 txid: txid.into(),
                 vsize: entry.vsize,
-                weight: entry.weight.unwrap_or(entry.vsize * 4),
-                fee: Sats::from(entry.fees.base.to_sat()),
+                weight: entry.weight,
+                fee: Sats::from(entry.base_fee_sats),
                 ancestor_count: entry.ancestor_count,
                 ancestor_size: entry.ancestor_size,
-                ancestor_fee: Sats::from(entry.fees.ancestor.to_sat()),
+                ancestor_fee: Sats::from(entry.ancestor_fee_sats),
                 depends: entry.depends.into_iter().map(Txid::from).collect(),
             })
             .collect())
@@ -243,8 +228,8 @@ impl Client {
         &'a T: Into<&'a bitcoin::Txid>,
         &'a H: Into<&'a bitcoin::BlockHash>,
     {
-        self.call(|c| c.get_raw_transaction_hex(txid.into(), block_hash.map(|h| h.into())))
-            .map_err(Into::into)
+        self.0
+            .get_raw_transaction_hex(txid.into(), block_hash.map(|h| h.into()))
     }
 
     /// Checks if a block is in the main chain (has positive confirmations)
@@ -305,16 +290,18 @@ impl Client {
         Ok(())
     }
 
-    pub fn call<F, T>(&self, f: F) -> Result<T, RpcError>
+    #[cfg(feature = "bitcoincore-rpc")]
+    pub fn call<F, T>(&self, f: F) -> Result<T, bitcoincore_rpc::Error>
     where
-        F: Fn(&CoreClient) -> Result<T, RpcError>,
+        F: Fn(&bitcoincore_rpc::Client) -> Result<T, bitcoincore_rpc::Error>,
     {
         self.0.call_with_retry(f)
     }
 
-    pub fn call_once<F, T>(&self, f: F) -> Result<T, RpcError>
+    #[cfg(feature = "bitcoincore-rpc")]
+    pub fn call_once<F, T>(&self, f: F) -> Result<T, bitcoincore_rpc::Error>
     where
-        F: Fn(&CoreClient) -> Result<T, RpcError>,
+        F: Fn(&bitcoincore_rpc::Client) -> Result<T, bitcoincore_rpc::Error>,
     {
         self.0.call_once(f)
     }

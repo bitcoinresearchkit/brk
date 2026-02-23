@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use super::{
-    DateIndex, EmptyOutputIndex, Height, MonthIndex, OpReturnIndex, P2AAddressIndex,
+    Day1, EmptyOutputIndex, Height, Month1, OpReturnIndex, P2AAddressIndex,
     P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex,
     P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex,
-    UnknownOutputIndex, YearIndex,
+    UnknownOutputIndex, Year1,
 };
 
 /// Fixed-size 64-bit unsigned integer optimized for on-disk storage
@@ -137,23 +137,23 @@ impl From<TxOutIndex> for StoredU64 {
     }
 }
 
-impl From<DateIndex> for StoredU64 {
+impl From<Day1> for StoredU64 {
     #[inline]
-    fn from(value: DateIndex) -> Self {
+    fn from(value: Day1) -> Self {
         Self::from(u64::from(value))
     }
 }
 
-impl From<MonthIndex> for StoredU64 {
+impl From<Month1> for StoredU64 {
     #[inline]
-    fn from(value: MonthIndex) -> Self {
+    fn from(value: Month1) -> Self {
         Self::from(u64::from(value))
     }
 }
 
-impl From<YearIndex> for StoredU64 {
+impl From<Year1> for StoredU64 {
     #[inline]
-    fn from(value: YearIndex) -> Self {
+    fn from(value: Year1) -> Self {
         Self::from(u64::from(value))
     }
 }
@@ -262,7 +262,8 @@ impl std::fmt::Display for StoredU64 {
 
 impl Formattable for StoredU64 {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }

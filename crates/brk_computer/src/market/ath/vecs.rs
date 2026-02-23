@@ -1,17 +1,18 @@
 use brk_traversable::Traversable;
-use brk_types::{Close, Dollars, StoredF32, StoredU16};
+use brk_types::{Dollars, StoredF32, StoredU16};
+use vecdb::{Rw, StorageMode};
 
 use crate::internal::{
-    ComputedFromDateLast, LazyBinaryFromHeightAndDateLast, LazyFromDateLast, PriceFromHeightAndDate,
+    ComputedFromHeightLast, LazyBinaryFromHeightLast, LazyHeightDerivedLast, Price,
 };
 
 /// All-time high related metrics
-#[derive(Clone, Traversable)]
-pub struct Vecs {
-    pub price_ath: PriceFromHeightAndDate,
-    pub price_drawdown: LazyBinaryFromHeightAndDateLast<StoredF32, Close<Dollars>, Dollars>,
-    pub days_since_price_ath: ComputedFromDateLast<StoredU16>,
-    pub years_since_price_ath: LazyFromDateLast<StoredF32, StoredU16>,
-    pub max_days_between_price_aths: ComputedFromDateLast<StoredU16>,
-    pub max_years_between_price_aths: LazyFromDateLast<StoredF32, StoredU16>,
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
+    pub price_ath: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub price_drawdown: LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
+    pub days_since_price_ath: ComputedFromHeightLast<StoredU16, M>,
+    pub years_since_price_ath: LazyHeightDerivedLast<StoredF32, StoredU16>,
+    pub max_days_between_price_aths: ComputedFromHeightLast<StoredU16, M>,
+    pub max_years_between_price_aths: LazyHeightDerivedLast<StoredF32, StoredU16>,
 }

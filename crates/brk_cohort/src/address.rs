@@ -1,6 +1,6 @@
 use brk_traversable::Traversable;
 use rayon::prelude::*;
-use vecdb::AnyExportableVec;
+use vecdb::{AnyExportableVec, ReadOnlyClone};
 
 use crate::Filter;
 
@@ -77,6 +77,18 @@ impl<T> AddressGroups<T> {
 
     pub fn iter_overlapping_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.lt_amount.iter_mut().chain(self.ge_amount.iter_mut())
+    }
+}
+
+impl<T: ReadOnlyClone> ReadOnlyClone for AddressGroups<T> {
+    type ReadOnly = AddressGroups<T::ReadOnly>;
+
+    fn read_only_clone(&self) -> Self::ReadOnly {
+        AddressGroups {
+            ge_amount: self.ge_amount.read_only_clone(),
+            amount_range: self.amount_range.read_only_clone(),
+            lt_amount: self.lt_amount.read_only_clone(),
+        }
     }
 }
 

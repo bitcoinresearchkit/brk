@@ -35,7 +35,7 @@ impl<I: Default + Copy, V: Default + Copy> Default for RangeMap<I, V> {
 
 impl<I: Ord + Copy + Default, V: From<usize> + Copy + Default> RangeMap<I, V> {
     /// Create with pre-allocated capacity.
-    pub fn with_capacity(capacity: usize) -> Self {
+    pub(crate) fn with_capacity(capacity: usize) -> Self {
         Self {
             first_indexes: Vec::with_capacity(capacity),
             cache: [(I::default(), I::default(), V::default(), 0); CACHE_SIZE],
@@ -47,7 +47,7 @@ impl<I: Ord + Copy + Default, V: From<usize> + Copy + Default> RangeMap<I, V> {
     /// Push a new first_index. Value is implicitly the current length.
     /// Must be called in order (first_index must be >= all previous).
     #[inline]
-    pub fn push(&mut self, first_index: I) {
+    pub(crate) fn push(&mut self, first_index: I) {
         debug_assert!(
             self.first_indexes
                 .last()
@@ -60,7 +60,7 @@ impl<I: Ord + Copy + Default, V: From<usize> + Copy + Default> RangeMap<I, V> {
     /// Look up value for an index, checking cache first.
     /// Returns the value (position) of the largest first_index <= given index.
     #[inline]
-    pub fn get(&mut self, index: I) -> Option<V> {
+    pub(crate) fn get(&mut self, index: I) -> Option<V> {
         if self.first_indexes.is_empty() {
             return None;
         }

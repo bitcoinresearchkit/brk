@@ -7,7 +7,7 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
 use schemars::JsonSchema;
-use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2, VecIndex};
+use vecdb::{BinaryTransform, ReadableBoxedVec, ReadableCloneableVec, LazyVecFrom2, VecIndex};
 
 use crate::internal::{ComputedVecValue, Full};
 
@@ -43,11 +43,11 @@ where
     /// Create from Full source and a second source (e.g., price).
     ///
     /// The transform F is applied as `F(source1_stat, source2)` for each stat.
-    pub fn from_full_and_source<F: BinaryTransform<S1T, S2T, T>>(
+    pub(crate) fn from_full_and_source<F: BinaryTransform<S1T, S2T, T>>(
         name: &str,
         version: Version,
         source1: &Full<I, S1T>,
-        source2: IterableBoxedVec<I, S2T>,
+        source2: ReadableBoxedVec<I, S2T>,
     ) -> Self {
         Self {
             average: LazyVecFrom2::transformed::<F>(
@@ -83,19 +83,19 @@ where
         }
     }
 
-    pub fn boxed_average(&self) -> IterableBoxedVec<I, T> {
-        self.average.boxed_clone()
+    pub(crate) fn boxed_average(&self) -> ReadableBoxedVec<I, T> {
+        self.average.read_only_boxed_clone()
     }
 
-    pub fn boxed_min(&self) -> IterableBoxedVec<I, T> {
-        self.min.boxed_clone()
+    pub(crate) fn boxed_min(&self) -> ReadableBoxedVec<I, T> {
+        self.min.read_only_boxed_clone()
     }
 
-    pub fn boxed_max(&self) -> IterableBoxedVec<I, T> {
-        self.max.boxed_clone()
+    pub(crate) fn boxed_max(&self) -> ReadableBoxedVec<I, T> {
+        self.max.read_only_boxed_clone()
     }
 
-    pub fn boxed_sum(&self) -> IterableBoxedVec<I, T> {
-        self.sum.boxed_clone()
+    pub(crate) fn boxed_sum(&self) -> ReadableBoxedVec<I, T> {
+        self.sum.read_only_boxed_clone()
     }
 }

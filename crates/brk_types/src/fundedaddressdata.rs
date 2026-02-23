@@ -3,13 +3,13 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
-use crate::{CentsSats, CentsSquaredSats, CentsUnsigned, EmptyAddressData, Sats, SupplyState};
+use crate::{CentsSats, CentsSquaredSats, Cents, EmptyAddressData, Sats, SupplyState};
 
 /// Snapshot of cost basis related state.
 /// Uses CentsSats (u64) for single-UTXO values, CentsSquaredSats (u128) for investor cap.
 #[derive(Clone, Debug)]
 pub struct CostBasisSnapshot {
-    pub realized_price: CentsUnsigned,
+    pub realized_price: Cents,
     pub supply_state: SupplyState,
     /// price × sats (fits u64 for individual UTXOs)
     pub price_sats: CentsSats,
@@ -20,7 +20,7 @@ pub struct CostBasisSnapshot {
 impl CostBasisSnapshot {
     /// Create from a single UTXO (computes caps from price × value)
     #[inline]
-    pub fn from_utxo(price: CentsUnsigned, supply: &SupplyState) -> Self {
+    pub fn from_utxo(price: Cents, supply: &SupplyState) -> Self {
         let price_sats = CentsSats::from_price_sats(price, supply.value);
         Self {
             realized_price: price,
@@ -58,7 +58,7 @@ impl FundedAddressData {
         (u64::from(self.received) - u64::from(self.sent)).into()
     }
 
-    pub fn realized_price(&self) -> CentsUnsigned {
+    pub fn realized_price(&self) -> Cents {
         self.realized_cap_raw.realized_price(self.balance())
     }
 
@@ -104,36 +104,32 @@ impl FundedAddressData {
         self.funded_txo_count == self.spent_txo_count
     }
 
-    pub fn receive(&mut self, amount: Sats, price: Option<CentsUnsigned>) {
+    pub fn receive(&mut self, amount: Sats, price: Cents) {
         self.receive_outputs(amount, price, 1);
     }
 
     pub fn receive_outputs(
         &mut self,
         amount: Sats,
-        price: Option<CentsUnsigned>,
+        price: Cents,
         output_count: u32,
     ) {
         self.received += amount;
         self.funded_txo_count += output_count;
-        if let Some(price) = price {
-            let ps = CentsSats::from_price_sats(price, amount);
-            self.realized_cap_raw += ps;
-            self.investor_cap_raw += ps.to_investor_cap(price);
-        }
+        let ps = CentsSats::from_price_sats(price, amount);
+        self.realized_cap_raw += ps;
+        self.investor_cap_raw += ps.to_investor_cap(price);
     }
 
-    pub fn send(&mut self, amount: Sats, previous_price: Option<CentsUnsigned>) -> Result<()> {
+    pub fn send(&mut self, amount: Sats, previous_price: Cents) -> Result<()> {
         if self.balance() < amount {
             return Err(Error::Internal("Previous amount smaller than sent amount"));
         }
         self.sent += amount;
         self.spent_txo_count += 1;
-        if let Some(price) = previous_price {
-            let ps = CentsSats::from_price_sats(price, amount);
-            self.realized_cap_raw -= ps;
-            self.investor_cap_raw -= ps.to_investor_cap(price);
-        }
+        let ps = CentsSats::from_price_sats(previous_price, amount);
+        self.realized_cap_raw -= ps;
+        self.investor_cap_raw -= ps.to_investor_cap(previous_price);
         Ok(())
     }
 }
@@ -178,9 +174,15 @@ impl std::fmt::Display for FundedAddressData {
 }
 
 impl Formattable for FundedAddressData {
-    #[inline(always)]
-    fn may_need_escaping() -> bool {
-        true
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        let start = f.len();
+        write!(f, "{}", self)?;
+        if f.as_bytes()[start..].contains(&b',') {
+            f.insert(start, '"');
+            f.push('"');
+        }
+        Ok(())
     }
 }
 

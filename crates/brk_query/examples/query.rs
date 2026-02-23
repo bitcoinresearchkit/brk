@@ -1,4 +1,4 @@
-use std::{env, fs, path::Path, thread};
+use std::{env, fs, path::Path};
 
 use brk_computer::Computer;
 use brk_error::Result;
@@ -11,15 +11,6 @@ use brk_types::{Address, OutputType};
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
-    // Can't increase main thread's stack size, thus we need to use another thread
-    thread::Builder::new()
-        .stack_size(512 * 1024 * 1024)
-        .spawn(run)?
-        .join()
-        .unwrap()
-}
-
-fn run() -> Result<()> {
     let bitcoin_dir = Client::default_bitcoin_path();
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
 
@@ -44,11 +35,11 @@ fn run() -> Result<()> {
 
     let indexer = Indexer::forced_import(&outputs_dir)?;
 
-    let computer = Computer::forced_import(&outputs_dir, &indexer, None)?;
+    let computer = Computer::forced_import(&outputs_dir, &indexer)?;
 
     let mempool = Mempool::new(&client);
     let mempool_clone = mempool.clone();
-    thread::spawn(move || {
+    std::thread::spawn(move || {
         mempool_clone.start();
     });
 

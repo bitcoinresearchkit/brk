@@ -1,6 +1,6 @@
 use brk_error::Result;
-use brk_types::{DateIndex, DifficultyEntry, HashrateEntry, HashrateSummary, Height, TimePeriod};
-use vecdb::{GenericStoredVec, IterableVec, VecIndex};
+use brk_types::{Day1, DifficultyEntry, HashrateEntry, HashrateSummary, Height, TimePeriod};
+use vecdb::{ReadableVec, VecIndex};
 
 use super::epochs::iter_difficulty_epochs;
 use crate::Query;
@@ -12,21 +12,23 @@ impl Query {
         let current_height = self.height();
 
         // Get current difficulty
-        let current_difficulty = *indexer.vecs.blocks.difficulty.read_once(current_height)?;
+        let current_difficulty = *indexer.vecs.blocks.difficulty.collect_one(current_height).unwrap();
 
         // Get current hashrate
-        let current_dateindex = computer
+        let current_day1 = computer
             .indexes
             .height
-            .dateindex
-            .read_once(current_height)?;
+            .day1
+            .collect_one(current_height)
+            .unwrap();
 
         let current_hashrate = *computer
-            .blocks
             .mining
+            .hashrate
             .hash_rate
-            .dateindex
-            .read_once(current_dateindex)? as u128;
+            .day1
+            .collect_one(current_day1)
+            .unwrap() as u128;
 
         // Calculate start height based on time period
         let end = current_height.to_usize();
@@ -36,31 +38,30 @@ impl Query {
         };
 
         // Get hashrate entries using iterators for efficiency
-        let start_dateindex = computer
+        let start_day1 = computer
             .indexes
             .height
-            .dateindex
-            .read_once(Height::from(start))?;
-        let end_dateindex = current_dateindex;
+            .day1
+            .collect_one(Height::from(start))
+            .unwrap();
+        let end_day1 = current_day1;
 
         // Sample at regular intervals to avoid too many data points
-        let total_days = end_dateindex
+        let total_days = end_day1
             .to_usize()
-            .saturating_sub(start_dateindex.to_usize())
+            .saturating_sub(start_day1.to_usize())
             + 1;
         let step = (total_days / 200).max(1); // Max ~200 data points
 
-        // Create iterators for the loop
-        let mut hashrate_iter = computer.blocks.mining.hash_rate.dateindex.iter();
-
-        let mut timestamp_iter = computer.blocks.time.timestamp.dateindex.iter();
+        let hashrate_vec = &computer.mining.hashrate.hash_rate.day1;
+        let timestamp_vec = &computer.blocks.time.timestamp.day1;
 
         let mut hashrates = Vec::with_capacity(total_days / step + 1);
-        let mut di = start_dateindex.to_usize();
-        while di <= end_dateindex.to_usize() {
-            let dateindex = DateIndex::from(di);
+        let mut di = start_day1.to_usize();
+        while di <= end_day1.to_usize() {
+            let day1 = Day1::from(di);
             if let (Some(hr), Some(timestamp)) =
-                (hashrate_iter.get(dateindex), timestamp_iter.get(dateindex))
+                (hashrate_vec.collect_one(day1), timestamp_vec.collect_one(day1))
             {
                 hashrates.push(HashrateEntry {
                     timestamp,

@@ -1,93 +1,62 @@
 //! Value type for Sum pattern from Height.
 //!
 //! Height-level USD value is lazy: `sats * price`.
-//! DateIndex sum is stored since it requires aggregation across heights with varying prices.
+//! Day1 sum is stored since it requires aggregation across heights with varying prices.
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Close, Dollars, Height, Sats, Version};
-use vecdb::{Database, EagerVec, Exit, IterableCloneableVec, PcoVec};
+use brk_types::{Bitcoin, Dollars, Sats, Version};
+use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
-    ComputeIndexes, indexes,
+    indexes,
     internal::{
-        ComputedFromHeightSum, LazyBinaryComputedFromHeightSum, LazyFromHeightSum,
-        SatsTimesClosePrice, SatsToBitcoin,
+        ComputedFromHeightSum, LazyBinaryComputedFromHeightSum, LazyFromHeightSum, SatsTimesPrice,
+        SatsToBitcoin,
     },
-    price,
+    prices,
 };
 
-/// Lazy dollars type: `sats[h] * price[h]` at height level, stored derived.
-pub type LazyDollarsFromHeightSum =
-    LazyBinaryComputedFromHeightSum<Dollars, Sats, Close<Dollars>>;
-
-#[derive(Clone, Traversable)]
-pub struct ValueFromHeightSum {
-    pub sats: ComputedFromHeightSum<Sats>,
-    pub bitcoin: LazyFromHeightSum<Bitcoin, Sats>,
-    pub dollars: Option<LazyDollarsFromHeightSum>,
+#[derive(Traversable)]
+pub struct ValueFromHeightSum<M: StorageMode = Rw> {
+    pub sats: ComputedFromHeightSum<Sats, M>,
+    pub btc: LazyFromHeightSum<Bitcoin, Sats>,
+    pub usd: LazyBinaryComputedFromHeightSum<Dollars, Sats, Dollars>,
 }
 
 const VERSION: Version = Version::ONE; // Bumped for lazy height dollars
 
 impl ValueFromHeightSum {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
     ) -> Result<Self> {
         let v = version + VERSION;
 
         let sats = ComputedFromHeightSum::forced_import(db, name, v, indexes)?;
 
-        let bitcoin = LazyFromHeightSum::from_computed::<SatsToBitcoin>(
+        let btc = LazyFromHeightSum::from_computed::<SatsToBitcoin>(
             &format!("{name}_btc"),
             v,
-            sats.height.boxed_clone(),
+            sats.height.read_only_boxed_clone(),
             &sats,
         );
 
-        let dollars = price
-            .map(|price| {
-                LazyBinaryComputedFromHeightSum::forced_import::<SatsTimesClosePrice>(
-                    db,
-                    &format!("{name}_usd"),
-                    v,
-                    sats.height.boxed_clone(),
-                    price.usd.split.close.height.boxed_clone(),
-                    indexes,
-                )
-            })
-            .transpose()?;
+        let usd = LazyBinaryComputedFromHeightSum::forced_import::<SatsTimesPrice>(
+            &format!("{name}_usd"),
+            v,
+            sats.height.read_only_boxed_clone(),
+            prices.usd.price.read_only_boxed_clone(),
+            indexes,
+        );
 
         Ok(Self {
             sats,
-            bitcoin,
-            dollars,
+            btc,
+            usd,
         })
-    }
-
-    pub fn compute_all<F>(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-        mut compute: F,
-    ) -> Result<()>
-    where
-        F: FnMut(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
-    {
-        // Compute sats (closure receives &mut height vec)
-        self.sats
-            .compute_all(indexes, starting_indexes, exit, |v| compute(v))?;
-
-        // Derive dollars (height is lazy, just compute dateindex sum)
-        if let Some(dollars) = self.dollars.as_mut() {
-            dollars.derive_from(indexes, starting_indexes, exit)?;
-        }
-
-        Ok(())
     }
 }

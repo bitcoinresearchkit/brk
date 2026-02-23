@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{indexes, internal::TxDerivedFull};
 
 impl Vecs {
-    pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
+    pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         Ok(Self(TxDerivedFull::forced_import(
             db,
             "input_count",

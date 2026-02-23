@@ -7,7 +7,7 @@ use brk_types::{
     AddressIndexTxIndex, AddressStats, AnyAddressDataIndexEnum, OutputType, Sats, TxIndex,
     TxStatus, Txid, TypeIndex, Unit, Utxo, Vout,
 };
-use vecdb::TypedVecIterator;
+use vecdb::{ReadableVec, VecIndex};
 
 use crate::Query;
 
@@ -62,14 +62,14 @@ impl Query {
                 .distribution
                 .addresses_data
                 .funded
-                .iter()?
-                .get_unwrap(index),
+                .reader()
+                .get(usize::from(index)),
             AnyAddressDataIndexEnum::Empty(index) => computer
                 .distribution
                 .addresses_data
                 .empty
-                .iter()?
-                .get_unwrap(index)
+                .reader()
+                .get(usize::from(index))
                 .into(),
         };
 
@@ -138,10 +138,10 @@ impl Query {
             .map(|(key, _)| key.txindex())
             .collect();
 
-        let mut txindex_to_txid_iter = indexer.vecs.transactions.txid.iter()?;
+        let txid_reader = indexer.vecs.transactions.txid.reader();
         let txids: Vec<Txid> = txindices
             .into_iter()
-            .map(|txindex| txindex_to_txid_iter.get_unwrap(txindex))
+            .map(|txindex| txid_reader.get(txindex.to_usize()))
             .collect();
 
         Ok(txids)
@@ -166,23 +166,21 @@ impl Query {
             .map(|(key, _): (AddressIndexOutPoint, Unit)| (key.txindex(), key.vout()))
             .collect();
 
-        let mut txindex_to_txid_iter = vecs.transactions.txid.iter()?;
-        let mut txindex_to_height_iter = vecs.transactions.height.iter()?;
-        let mut txindex_to_first_txoutindex_iter = vecs.transactions.first_txoutindex.iter()?;
-        let mut txoutindex_to_value_iter = vecs.outputs.value.iter()?;
-        let mut height_to_blockhash_iter = vecs.blocks.blockhash.iter()?;
-        let mut height_to_timestamp_iter = vecs.blocks.timestamp.iter()?;
+        let txid_reader = vecs.transactions.txid.reader();
+        let first_txoutindex_reader = vecs.transactions.first_txoutindex.reader();
+        let value_reader = vecs.outputs.value.reader();
+        let blockhash_reader = vecs.blocks.blockhash.reader();
 
         let utxos: Vec<Utxo> = outpoints
             .into_iter()
             .map(|(txindex, vout)| {
-                let txid: Txid = txindex_to_txid_iter.get_unwrap(txindex);
-                let height = txindex_to_height_iter.get_unwrap(txindex);
-                let first_txoutindex = txindex_to_first_txoutindex_iter.get_unwrap(txindex);
+                let txid: Txid = txid_reader.get(txindex.to_usize());
+                let height = vecs.transactions.height.collect_one_at(txindex.to_usize()).unwrap();
+                let first_txoutindex = first_txoutindex_reader.get(txindex.to_usize());
                 let txoutindex = first_txoutindex + vout;
-                let value: Sats = txoutindex_to_value_iter.get_unwrap(txoutindex);
-                let block_hash = height_to_blockhash_iter.get_unwrap(height);
-                let block_time = height_to_timestamp_iter.get_unwrap(height);
+                let value: Sats = value_reader.get(usize::from(txoutindex));
+                let block_hash = blockhash_reader.get(usize::from(height));
+                let block_time = vecs.blocks.timestamp.collect_one_at(usize::from(height)).unwrap();
 
                 Utxo {
                     txid,

@@ -2,16 +2,17 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use vecdb::Exit;
 
-use crate::{indexes, inputs, outputs, ComputeIndexes};
+use crate::{blocks, indexes, inputs, outputs, ComputeIndexes};
 
 use super::Vecs;
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
+        blocks: &blocks::Vecs,
         inputs: &inputs::Vecs,
         outputs: &outputs::Vecs,
         starting_indexes: &ComputeIndexes,
@@ -19,11 +20,11 @@ impl Vecs {
     ) -> Result<()> {
         // Count computes first
         self.count
-            .compute(indexer, indexes, starting_indexes, exit)?;
+            .compute(indexer, starting_indexes, exit)?;
 
         // Versions depends on count
         self.versions
-            .compute(indexer, indexes, starting_indexes, exit)?;
+            .compute(indexer, starting_indexes, exit)?;
 
         // Size computes next
         self.size
@@ -39,10 +40,11 @@ impl Vecs {
             exit,
         )?;
 
-        // Volume depends on fees and input/output counts
+        // Volume depends on fees, counts, and blocks (lookback vecs, interval)
         self.volume.compute(
             indexer,
             indexes,
+            blocks,
             &self.count,
             &self.fees,
             &inputs.count,

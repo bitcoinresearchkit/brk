@@ -1,10 +1,9 @@
-use std::{env, path::Path, thread, time::Instant};
+use std::{env, path::Path, time::Instant};
 
 use brk_alloc::Mimalloc;
 use brk_bencher::Bencher;
 use brk_computer::Computer;
 use brk_error::Result;
-use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
@@ -13,15 +12,6 @@ use tracing::{debug, info};
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
-    // Can't increase main thread's stack size, thus we need to use another thread
-    thread::Builder::new()
-        .stack_size(512 * 1024 * 1024)
-        .spawn(run)?
-        .join()
-        .unwrap()
-}
-
-fn run() -> Result<()> {
     brk_logger::init(None)?;
 
     let bitcoin_dir = Client::default_bitcoin_path();
@@ -42,9 +32,7 @@ fn run() -> Result<()> {
 
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
-    let fetcher = Fetcher::import(None)?;
-
-    let mut computer = Computer::forced_import(&outputs_benches_dir, &indexer, Some(fetcher))?;
+    let mut computer = Computer::forced_import(&outputs_benches_dir, &indexer)?;
 
     let mut bencher =
         Bencher::from_cargo_env(env!("CARGO_PKG_NAME"), &outputs_dir.join("computed"))?;

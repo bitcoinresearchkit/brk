@@ -1,8 +1,8 @@
 use brk_error::Result;
 use brk_types::{BlockFeesEntry, TimePeriod};
-use vecdb::{IterableVec, VecIndex};
+use vecdb::{ReadableVec, VecIndex};
 
-use super::dateindex_iter::DateIndexIter;
+use super::day1_iter::Day1Iter;
 use crate::Query;
 
 impl Query {
@@ -13,19 +13,18 @@ impl Query {
             .to_usize()
             .saturating_sub(time_period.block_count());
 
-        let iter = DateIndexIter::new(computer, start, current_height.to_usize());
+        let iter = Day1Iter::new(computer, start, current_height.to_usize());
 
-        let mut fees = computer
+        let fees_vec = &computer
             .transactions
             .fees
             .fee
             .sats
-            .dateindex
-            .average()
-            .iter();
+            .day1
+            .average;
 
         Ok(iter.collect(|di, ts, h| {
-            fees.get(di).map(|fee| BlockFeesEntry {
+            fees_vec.collect_one(di).map(|fee| BlockFeesEntry {
                 avg_height: h,
                 timestamp: ts,
                 avg_fees: fee,

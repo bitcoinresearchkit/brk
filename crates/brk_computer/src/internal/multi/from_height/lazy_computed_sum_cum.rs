@@ -2,7 +2,7 @@
 //!
 //! Use this when you need:
 //! - Lazy height (binary transform from two sources)
-//! - Stored cumulative and dateindex aggregates
+//! - Stored cumulative and day1 aggregates
 //! - Lazy coarser period lookups
 
 use brk_error::Result;
@@ -10,7 +10,7 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{Database, Exit, IterableCloneableVec, LazyVecFrom2};
+use vecdb::{Database, Exit, ReadableCloneableVec, LazyVecFrom2, Rw, StorageMode};
 
 use crate::{indexes, ComputeIndexes};
 
@@ -19,11 +19,11 @@ use crate::internal::{ComputedVecValue, ComputedHeightDerivedSumCum, NumericValu
 /// Block sum+cumulative with lazy binary height transform + computed derived indexes.
 ///
 /// Height is a lazy binary transform (e.g., mask × source, or price × sats).
-/// Cumulative and dateindex are stored (computed from lazy height).
+/// Cumulative and day1 are stored (computed from lazy height).
 /// Coarser periods are lazy lookups.
-#[derive(Clone, Deref, DerefMut, Traversable)]
+#[derive(Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyComputedFromHeightSumCum<T, S1T = T, S2T = T>
+pub struct LazyComputedFromHeightSumCum<T, S1T = T, S2T = T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue,
@@ -33,7 +33,7 @@ where
     pub height: LazyVecFrom2<Height, T, Height, S1T, Height, S2T>,
     #[deref]
     #[deref_mut]
-    pub rest: ComputedHeightDerivedSumCum<T>,
+    pub rest: Box<ComputedHeightDerivedSumCum<T, M>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -44,7 +44,7 @@ where
     S1T: ComputedVecValue + JsonSchema,
     S2T: ComputedVecValue + JsonSchema,
 {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
@@ -56,22 +56,20 @@ where
         let rest = ComputedHeightDerivedSumCum::forced_import(
             db,
             name,
-            height.boxed_clone(),
+            height.read_only_boxed_clone(),
             v,
             indexes,
         )?;
 
-        Ok(Self { height, rest })
+        Ok(Self { height, rest: Box::new(rest) })
     }
 
-    /// Derive aggregates from the lazy height source.
-    pub fn derive_from(
+    pub(crate) fn compute_cumulative(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.rest
-            .derive_from(indexes, starting_indexes, &self.height, exit)
+            .derive_from(starting_indexes, &self.height, exit)
     }
 }

@@ -11,7 +11,7 @@ mod import;
 
 use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::Database;
+use vecdb::{Database, Rw, StorageMode};
 
 pub use activity::Vecs as ActivityVecs;
 pub use adjusted::Vecs as AdjustedVecs;
@@ -24,16 +24,16 @@ pub use value::Vecs as ValueVecs;
 pub const DB_NAME: &str = "cointime";
 const VERSION: Version = Version::ZERO;
 
-#[derive(Clone, Traversable)]
-pub struct Vecs {
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub(crate) db: Database,
 
-    pub activity: ActivityVecs,
-    pub supply: SupplyVecs,
-    pub value: ValueVecs,
-    pub cap: CapVecs,
-    pub pricing: PricingVecs,
-    pub adjusted: AdjustedVecs,
-    pub reserve_risk: ReserveRiskVecs,
+    pub activity: ActivityVecs<M>,
+    pub supply: SupplyVecs<M>,
+    pub value: ValueVecs<M>,
+    pub cap: CapVecs<M>,
+    pub pricing: PricingVecs<M>,
+    pub adjusted: AdjustedVecs<M>,
+    pub reserve_risk: ReserveRiskVecs<M>,
 }

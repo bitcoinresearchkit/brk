@@ -6,10 +6,11 @@ edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+exclude = ["examples/"]
 
 [dependencies]
 jiff = { workspace = true }
 owo-colors = { workspace = true }
 tracing = { workspace = true }
 tracing-log = "0.2"
-tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "std"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "std"] }

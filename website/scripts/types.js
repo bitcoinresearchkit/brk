@@ -36,7 +36,7 @@
  * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_Term_Short} ShortTermPattern
  * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_Term_Long} LongTermPattern
  * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_All_Relative} AllRelativePattern
- * @typedef {Brk.MetricsTree_Supply_Circulating} SupplyPattern
+ * @typedef {Brk.BtcSatsUsdPattern} SupplyPattern
  * @typedef {Brk.MetricsTree_Blocks_Size} BlockSizePattern
  * @typedef {keyof Brk.MetricsTree_Distribution_UtxoCohorts_Type} SpendableType
  * @typedef {keyof Brk.MetricsTree_Distribution_AnyAddressIndexes} AddressableType
@@ -53,22 +53,22 @@
  * @typedef {Brk.ActivityCostOutputsRealizedSupplyUnrealizedPattern} EmptyPattern
  * @typedef {Brk._0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern} Ratio1ySdPattern
  * @typedef {Brk.Dollars} Dollars
- * CoinbasePattern: patterns with bitcoin/sats/dollars each having fullness + sum + cumulative
- * @typedef {Brk.BitcoinDollarsSatsPattern2} CoinbasePattern
+ * CoinbasePattern: patterns with btc/sats/usd each having base + sum + cumulative + stats
+ * @typedef {Brk.BtcSatsUsdPattern4} CoinbasePattern
  * ActivePriceRatioPattern: ratio pattern with price (extended)
  * @typedef {Brk.PriceRatioPattern} ActivePriceRatioPattern
  * AnyRatioPattern: full ratio patterns (with or without price) - has ratio, percentiles, z-scores
  * @typedef {Brk.RatioPattern | Brk.PriceRatioPattern} AnyRatioPattern
- * ValuePattern: patterns with minimal stats (sum, cumulative only) for bitcoin/sats/dollars
- * @typedef {Brk.BitcoinDollarsSatsPattern6 | Brk.BitcoinDollarsSatsPattern3} ValuePattern
- * FullValuePattern: patterns with full stats (base, sum, cumulative, average, percentiles) for bitcoin/sats/dollars
- * @typedef {Brk.BitcoinDollarsSatsPattern2} FullValuePattern
+ * ValuePattern: patterns with minimal stats (sum, cumulative only) for btc/sats/usd
+ * @typedef {Brk.BtcSatsUsdPattern5 | Brk.BtcSatsUsdPattern2} ValuePattern
+ * FullValuePattern: patterns with full stats (base, sum, cumulative, average, percentiles) for btc/sats/usd
+ * @typedef {Brk.BtcSatsUsdPattern4} FullValuePattern
  * SumValuePattern: patterns with sum stats (sum, cumulative, average, percentiles - no base) for bitcoin/sats/dollars
- * @typedef {{bitcoin: SumStatsPattern<any>, sats: SumStatsPattern<any>, dollars: SumStatsPattern<any>}} SumValuePattern
+ * @typedef {{btc: SumStatsPattern<any>, sats: SumStatsPattern<any>, usd: SumStatsPattern<any>}} SumValuePattern
  * AnyValuePatternType: union of all value pattern types
  * @typedef {ValuePattern | FullValuePattern} AnyValuePatternType
  * @typedef {Brk.AnyMetricPattern} AnyMetricPattern
- * @typedef {Brk.DollarsSatsPattern} ActivePricePattern
+ * @typedef {Brk.SatsUsdPattern} ActivePricePattern
  * @typedef {Brk.AnyMetricEndpointBuilder} AnyMetricEndpoint
  * @typedef {Brk.AnyMetricData} AnyMetricData
  * @typedef {Brk.AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern} AddrCountPattern
@@ -110,7 +110,7 @@
 /**
  * Full stats pattern: base, average, sum, cumulative, min, max, percentiles
  * @template T
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2<T>} FullStatsPattern
+ * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<T>} FullStatsPattern
  */
 /**
  * Sum stats pattern: average, sum, cumulative, percentiles (NO base)
@@ -140,7 +140,7 @@
  * @typedef {Brk.MetricsTree_Market_Dca} MarketDca
  * @typedef {Brk._10y2y3y4y5y6y8yPattern} PeriodCagrPattern
  * Full stats pattern union (both generic and non-generic variants)
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern | FullStatsPattern<any>} AnyFullStatsPattern
+ * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<any> | FullStatsPattern<any>} AnyFullStatsPattern
  *
  * DCA period keys - derived from pattern types
  * @typedef {keyof Brk._10y2y3y4y5y6y8yPattern} LongPeriodKey
@@ -205,5 +205,5 @@
  * @typedef {AnyMetricPattern | Record<string, unknown>} TreeNode
  *
  * Chartable index IDs (subset of IndexName that can be charted)
- * @typedef {"height" | "dateindex" | "weekindex" | "monthindex" | "quarterindex" | "semesterindex" | "yearindex" | "decadeindex"} ChartableIndex
+ * @typedef {"height" | "day1" | "week1" | "month1" | "month3" | "month6" | "year1" | "year10"} ChartableIndex
  */

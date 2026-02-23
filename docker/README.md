@@ -62,7 +62,6 @@ cd docker && docker compose up -d
 | `BTC_RPC_USER` | Bitcoin RPC username | - |
 | `BTC_RPC_PASSWORD` | Bitcoin RPC password | - |
 | `BRK_DATA_VOLUME` | Docker volume name for BRK data | `brk-data` |
-| `BRK_FETCH` | Enable price fetching | `true` |
 
 ### Example .env File
 
@@ -78,7 +77,6 @@ BTC_RPC_USER=your_username
 BTC_RPC_PASSWORD=your_password
 
 # BRK settings
-BRK_FETCH=true
 ```
 
 ### Connecting to Bitcoin Core
@@ -151,7 +149,7 @@ volumes:
 
 The container includes a combined health check that verifies:
 - The BRK process is running
-- The API server is responding on port 3110
+- The API server is responding (port 7070 externally, 3110 internally)
 
 ## Monitoring
 

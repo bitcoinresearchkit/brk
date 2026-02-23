@@ -1,9 +1,9 @@
-// TODO: INCOMPLETE - indexes_to_fee_rate.dateindex doesn't have percentile fields
-// because from_txindex.rs calls remove_percentiles() before creating dateindex.
+// TODO: INCOMPLETE - indexes_to_fee_rate.day1 doesn't have percentile fields
+// because from_txindex.rs calls remove_percentiles() before creating day1.
 // Need to either:
-// 1. Use .height instead and convert height to dateindex for iteration
-// 2. Fix from_txindex.rs to preserve percentiles for dateindex
-// 3. Create a separate dateindex computation path with percentiles
+// 1. Use .height instead and convert height to day1 for iteration
+// 2. Fix from_txindex.rs to preserve percentiles for day1
+// 3. Create a separate day1 computation path with percentiles
 
 #![allow(dead_code)]
 
@@ -15,12 +15,11 @@ use brk_types::{
 };
 // use vecdb::{IterableVec, VecIndex};
 
-// use super::dateindex_iter::DateIndexIter;
 use crate::Query;
 
 impl Query {
     pub fn block_fee_rates(&self, _time_period: TimePeriod) -> Result<Vec<BlockFeeRatesEntry>> {
-        // Disabled until percentile data is available at dateindex level
+        // Disabled until percentile data is available at day1 level
         Ok(Vec::new())
 
         // Original implementation:
@@ -30,9 +29,9 @@ impl Query {
         //     .to_usize()
         //     .saturating_sub(time_period.block_count());
         //
-        // let iter = DateIndexIter::new(computer, start, current_height.to_usize());
+        // let iter = Day1Iter::new(computer, start, current_height.to_usize());
         //
-        // let vecs = &computer.transactions.transaction.indexes_to_fee_rate.dateindex;
+        // let vecs = &computer.transactions.transaction.indexes_to_fee_rate.day1;
         // let mut min = vecs.unwrap_min().iter();
         // let mut pct10 = vecs.unwrap_pct10().iter();
         // let mut pct25 = vecs.unwrap_pct25().iter();

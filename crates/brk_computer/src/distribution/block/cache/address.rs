@@ -1,4 +1,5 @@
 use brk_cohort::ByAddressType;
+use brk_error::Result;
 use brk_types::{AnyAddressDataIndexEnum, FundedAddressData, OutputType, TypeIndex};
 
 use crate::distribution::{
@@ -27,7 +28,7 @@ impl Default for AddressCache {
 }
 
 impl AddressCache {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             funded: AddressTypeToTypeIndexMap::default(),
             empty: AddressTypeToTypeIndexMap::default(),
@@ -36,7 +37,7 @@ impl AddressCache {
 
     /// Check if address is in cache (either funded or empty).
     #[inline]
-    pub fn contains(&self, address_type: OutputType, typeindex: TypeIndex) -> bool {
+    pub(crate) fn contains(&self, address_type: OutputType, typeindex: TypeIndex) -> bool {
         self.funded
             .get(address_type)
             .is_some_and(|m| m.contains_key(&typeindex))
@@ -48,13 +49,13 @@ impl AddressCache {
 
     /// Merge address data into funded cache.
     #[inline]
-    pub fn merge_funded(&mut self, data: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>) {
+    pub(crate) fn merge_funded(&mut self, data: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>) {
         self.funded.merge_mut(data);
     }
 
     /// Create an AddressLookup view into this cache.
     #[inline]
-    pub fn as_lookup(&mut self) -> AddressLookup<'_> {
+    pub(crate) fn as_lookup(&mut self) -> AddressLookup<'_> {
         AddressLookup {
             funded: &mut self.funded,
             empty: &mut self.empty,
@@ -62,12 +63,12 @@ impl AddressCache {
     }
 
     /// Update transaction counts for addresses.
-    pub fn update_tx_counts(&mut self, txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>) {
+    pub(crate) fn update_tx_counts(&mut self, txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>) {
         update_tx_counts(&mut self.funded, &mut self.empty, txindex_vecs);
     }
 
     /// Take the cache contents for flushing, leaving empty caches.
-    pub fn take(
+    pub(crate) fn take(
         &mut self,
     ) -> (
         AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
@@ -84,7 +85,7 @@ impl AddressCache {
 ///
 /// Returns None if address is already in cache (funded or empty).
 #[allow(clippy::too_many_arguments)]
-pub fn load_uncached_address_data(
+pub(crate) fn load_uncached_address_data(
     address_type: OutputType,
     typeindex: TypeIndex,
     first_addressindexes: &ByAddressType<TypeIndex>,
@@ -92,38 +93,38 @@ pub fn load_uncached_address_data(
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
-) -> Option<FundedAddressDataWithSource> {
+) -> Result<Option<FundedAddressDataWithSource>> {
     // Check if this is a new address (typeindex >= first for this height)
     let first = *first_addressindexes.get(address_type).unwrap();
     if first <= typeindex {
-        return Some(WithAddressDataSource::New(FundedAddressData::default()));
+        return Ok(Some(WithAddressDataSource::New(FundedAddressData::default())));
     }
 
     // Skip if already in cache
     if cache.contains(address_type, typeindex) {
-        return None;
+        return Ok(None);
     }
 
     // Read from storage
     let reader = vr.address_reader(address_type);
-    let anyaddressindex = any_address_indexes.get(address_type, typeindex, reader);
+    let anyaddressindex = any_address_indexes.get(address_type, typeindex, reader)?;
 
-    Some(match anyaddressindex.to_enum() {
+    Ok(Some(match anyaddressindex.to_enum() {
         AnyAddressDataIndexEnum::Funded(funded_index) => {
             let reader = &vr.anyaddressindex_to_anyaddressdata.funded;
-            // Use get_any_or_read_unwrap to check updated layer (needed after rollback)
             let funded_data = addresses_data
                 .funded
-                .get_any_or_read_unwrap(funded_index, reader);
+                .get_any_or_read_at(funded_index.into(), reader)?
+                .unwrap();
             WithAddressDataSource::FromFunded(funded_index, funded_data)
         }
         AnyAddressDataIndexEnum::Empty(empty_index) => {
             let reader = &vr.anyaddressindex_to_anyaddressdata.empty;
-            // Use get_any_or_read_unwrap to check updated layer (needed after rollback)
             let empty_data = addresses_data
                 .empty
-                .get_any_or_read_unwrap(empty_index, reader);
+                .get_any_or_read_at(empty_index.into(), reader)?
+                .unwrap();
             WithAddressDataSource::FromEmpty(empty_index, empty_data.into())
         }
-    })
+    }))
 }

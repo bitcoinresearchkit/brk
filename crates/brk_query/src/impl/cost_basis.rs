@@ -2,9 +2,9 @@ use std::{fs, path::PathBuf};
 
 use brk_error::{Error, Result};
 use brk_types::{
-    CostBasisBucket, CostBasisDistribution, CostBasisFormatted, CostBasisValue, Date, DateIndex,
+    CostBasisBucket, CostBasisDistribution, CostBasisFormatted, CostBasisValue, Date, Day1,
 };
-use vecdb::IterableVec;
+use vecdb::ReadableVec;
 
 use crate::Query;
 
@@ -81,20 +81,14 @@ impl Query {
         value: CostBasisValue,
     ) -> Result<CostBasisFormatted> {
         let distribution = self.cost_basis_distribution(cohort, date)?;
-        let dateindex =
-            DateIndex::try_from(date).map_err(|e| Error::Parse(e.to_string()))?;
-        let price = self
-            .computer()
-            .price
-            .as_ref()
-            .ok_or_else(|| Error::NotFound("Price data not available".to_string()))?;
-        let spot = *price
+        let day1 = Day1::try_from(date).map_err(|e| Error::Parse(e.to_string()))?;
+        let price = &self.computer().prices;
+        let spot = price
             .cents
             .split
-            .dateindex
             .close
-            .iter()
-            .get(dateindex)
+            .day1
+            .collect_one(day1)
             .ok_or_else(|| Error::NotFound(format!("No price data for {date}")))?;
         Ok(distribution.format(bucket, value, spot))
     }

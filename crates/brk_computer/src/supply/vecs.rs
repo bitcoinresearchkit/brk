@@ -1,24 +1,24 @@
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Dollars, StoredF32};
-use vecdb::{Database, LazyVecFrom2};
+use brk_types::{Dollars, StoredF32};
+use vecdb::{Database, Rw, StorageMode};
 
 use super::{burned, velocity};
 use crate::internal::{
-    ComputedFromDateAverage, ComputedFromDateLast, LazyFromHeightLast, LazyValueFromHeightLast,
+    ComputedFromHeightLast, LazyBinaryComputedFromHeightLast, LazyFromHeightLast,
+    LazyValueFromHeightLast,
 };
 
-#[derive(Clone, Traversable)]
-pub struct Vecs {
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub(crate) db: Database,
 
     pub circulating: LazyValueFromHeightLast,
-    pub burned: burned::Vecs,
-    pub inflation: ComputedFromDateAverage<StoredF32>,
-    pub velocity: velocity::Vecs,
-    pub market_cap: Option<LazyFromHeightLast<Dollars>>,
-    pub market_cap_growth_rate: ComputedFromDateLast<StoredF32>,
-    pub realized_cap_growth_rate: ComputedFromDateLast<StoredF32>,
-    pub cap_growth_rate_diff:
-        LazyVecFrom2<DateIndex, StoredF32, DateIndex, StoredF32, DateIndex, StoredF32>,
+    pub burned: burned::Vecs<M>,
+    pub inflation: ComputedFromHeightLast<StoredF32, M>,
+    pub velocity: velocity::Vecs<M>,
+    pub market_cap: LazyFromHeightLast<Dollars>,
+    pub market_cap_growth_rate: ComputedFromHeightLast<StoredF32, M>,
+    pub realized_cap_growth_rate: ComputedFromHeightLast<StoredF32, M>,
+    pub cap_growth_rate_diff: LazyBinaryComputedFromHeightLast<StoredF32>,
 }

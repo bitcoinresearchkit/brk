@@ -371,15 +371,15 @@ mod tests {
         let tree = make_branch(vec![
             (
                 "base",
-                make_branch(vec![("dateindex", make_leaf("block_vbytes"))]),
+                make_branch(vec![("day1", make_leaf("block_vbytes"))]),
             ),
             (
                 "average",
-                make_branch(vec![("dateindex", make_leaf("block_vbytes_average"))]),
+                make_branch(vec![("day1", make_leaf("block_vbytes_average"))]),
             ),
             (
                 "sum",
-                make_branch(vec![("dateindex", make_leaf("block_vbytes_sum"))]),
+                make_branch(vec![("day1", make_leaf("block_vbytes_sum"))]),
             ),
         ]);
 
@@ -394,23 +394,23 @@ mod tests {
         let tree = make_branch(vec![
             (
                 "average",
-                make_branch(vec![("dateindex", make_leaf("block_weight_average"))]),
+                make_branch(vec![("day1", make_leaf("block_weight_average"))]),
             ),
             (
                 "sum",
-                make_branch(vec![("dateindex", make_leaf("block_weight_sum"))]),
+                make_branch(vec![("day1", make_leaf("block_weight_sum"))]),
             ),
             (
                 "cumulative",
-                make_branch(vec![("dateindex", make_leaf("block_weight_cumulative"))]),
+                make_branch(vec![("day1", make_leaf("block_weight_cumulative"))]),
             ),
             (
                 "max",
-                make_branch(vec![("dateindex", make_leaf("block_weight_max"))]),
+                make_branch(vec![("day1", make_leaf("block_weight_max"))]),
             ),
             (
                 "min",
-                make_branch(vec![("dateindex", make_leaf("block_weight_min"))]),
+                make_branch(vec![("day1", make_leaf("block_weight_min"))]),
             ),
         ]);
 
@@ -426,15 +426,15 @@ mod tests {
         let tree = make_branch(vec![
             (
                 "base",
-                make_branch(vec![("dateindex", make_leaf("block_weight_average"))]),
+                make_branch(vec![("day1", make_leaf("block_weight_average"))]),
             ),
             (
                 "average",
-                make_branch(vec![("dateindex", make_leaf("block_weight_average"))]),
+                make_branch(vec![("day1", make_leaf("block_weight_average"))]),
             ),
             (
                 "sum",
-                make_branch(vec![("dateindex", make_leaf("block_weight_sum"))]),
+                make_branch(vec![("day1", make_leaf("block_weight_sum"))]),
             ),
         ]);
 

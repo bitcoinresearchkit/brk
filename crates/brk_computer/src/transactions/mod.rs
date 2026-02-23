@@ -8,7 +8,7 @@ mod compute;
 mod import;
 
 use brk_traversable::Traversable;
-use vecdb::Database;
+use vecdb::{Database, Rw, StorageMode};
 
 pub use count::Vecs as CountVecs;
 pub use fees::Vecs as FeesVecs;
@@ -18,14 +18,14 @@ pub use volume::Vecs as VolumeVecs;
 
 pub const DB_NAME: &str = "transactions";
 
-#[derive(Clone, Traversable)]
-pub struct Vecs {
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub(crate) db: Database,
 
-    pub count: CountVecs,
-    pub size: SizeVecs,
-    pub fees: FeesVecs,
-    pub versions: VersionsVecs,
-    pub volume: VolumeVecs,
+    pub count: CountVecs<M>,
+    pub size: SizeVecs<M>,
+    pub fees: FeesVecs<M>,
+    pub versions: VersionsVecs<M>,
+    pub volume: VolumeVecs<M>,
 }

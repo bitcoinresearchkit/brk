@@ -49,11 +49,18 @@ class BrkError extends Error {{
 }}
 
 // Date conversion constants and helpers
-const _GENESIS = new Date(2009, 0, 3);  // dateindex 0, weekindex 0
-const _DAY_ONE = new Date(2009, 0, 9);  // dateindex 1 (6 day gap after genesis)
-const _MS_PER_DAY = 24 * 60 * 60 * 1000;
+const _GENESIS = new Date(2009, 0, 3);  // day1 0, week1 0
+const _DAY_ONE = new Date(2009, 0, 9);  // day1 1 (6 day gap after genesis)
+const _MS_PER_DAY = 86400000;
 const _MS_PER_WEEK = 7 * _MS_PER_DAY;
-const _DATE_INDEXES = new Set(['dateindex', 'weekindex', 'monthindex', 'yearindex', 'quarterindex', 'semesterindex', 'decadeindex']);
+const _EPOCH_MS = 1230768000000;
+const _DATE_INDEXES = new Set([
+  'minute1', 'minute5', 'minute10', 'minute30',
+  'hour1', 'hour4', 'hour12',
+  'day1', 'day3', 'week1',
+  'month1', 'month3', 'month6',
+  'year1', 'year10',
+]);
 
 /** @param {{number}} months @returns {{globalThis.Date}} */
 const _addMonths = (months) => new Date(2009, months, 1);
@@ -66,24 +73,55 @@ const _addMonths = (months) => new Date(2009, months, 1);
  */
 function indexToDate(index, i) {{
   switch (index) {{
-    case 'dateindex': return i === 0 ? _GENESIS : new Date(_DAY_ONE.getTime() + (i - 1) * _MS_PER_DAY);
-    case 'weekindex': return new Date(_GENESIS.getTime() + i * _MS_PER_WEEK);
-    case 'monthindex': return _addMonths(i);
-    case 'yearindex': return new Date(2009 + i, 0, 1);
-    case 'quarterindex': return _addMonths(i * 3);
-    case 'semesterindex': return _addMonths(i * 6);
-    case 'decadeindex': return new Date(2009 + i * 10, 0, 1);
+    case 'minute1': return new Date(_EPOCH_MS + i * 60000);
+    case 'minute5': return new Date(_EPOCH_MS + i * 300000);
+    case 'minute10': return new Date(_EPOCH_MS + i * 600000);
+    case 'minute30': return new Date(_EPOCH_MS + i * 1800000);
+    case 'hour1': return new Date(_EPOCH_MS + i * 3600000);
+    case 'hour4': return new Date(_EPOCH_MS + i * 14400000);
+    case 'hour12': return new Date(_EPOCH_MS + i * 43200000);
+    case 'day1': return i === 0 ? _GENESIS : new Date(_DAY_ONE.getTime() + (i - 1) * _MS_PER_DAY);
+    case 'day3': return new Date(_EPOCH_MS + i * 259200000);
+    case 'week1': return new Date(_GENESIS.getTime() + i * _MS_PER_WEEK);
+    case 'month1': return _addMonths(i);
+    case 'month3': return _addMonths(i * 3);
+    case 'month6': return _addMonths(i * 6);
+    case 'year1': return new Date(2009 + i, 0, 1);
+    case 'year10': return new Date(2009 + i * 10, 0, 1);
     default: throw new Error(`${{index}} is not a date-based index`);
   }}
 }}
 
 /**
- * Check if an index type is date-based.
- * @param {{Index}} index
- * @returns {{boolean}}
+ * Convert a Date to an index value for date-based indexes.
+ * Returns the floor index (latest index whose date is <= the given date).
+ * @param {{Index}} index - The index type
+ * @param {{globalThis.Date}} d - The date to convert
+ * @returns {{number}}
  */
-function isDateIndex(index) {{
-  return _DATE_INDEXES.has(index);
+function dateToIndex(index, d) {{
+  const ms = d.getTime();
+  switch (index) {{
+    case 'minute1': return Math.floor((ms - _EPOCH_MS) / 60000);
+    case 'minute5': return Math.floor((ms - _EPOCH_MS) / 300000);
+    case 'minute10': return Math.floor((ms - _EPOCH_MS) / 600000);
+    case 'minute30': return Math.floor((ms - _EPOCH_MS) / 1800000);
+    case 'hour1': return Math.floor((ms - _EPOCH_MS) / 3600000);
+    case 'hour4': return Math.floor((ms - _EPOCH_MS) / 14400000);
+    case 'hour12': return Math.floor((ms - _EPOCH_MS) / 43200000);
+    case 'day1': {{
+      if (ms < _DAY_ONE.getTime()) return 0;
+      return 1 + Math.floor((ms - _DAY_ONE.getTime()) / _MS_PER_DAY);
+    }}
+    case 'day3': return Math.floor((ms - _EPOCH_MS) / 259200000);
+    case 'week1': return Math.floor((ms - _GENESIS.getTime()) / _MS_PER_WEEK);
+    case 'month1': return (d.getFullYear() - 2009) * 12 + d.getMonth();
+    case 'month3': return (d.getFullYear() - 2009) * 4 + Math.floor(d.getMonth() / 3);
+    case 'month6': return (d.getFullYear() - 2009) * 2 + Math.floor(d.getMonth() / 6);
+    case 'year1': return d.getFullYear() - 2009;
+    case 'year10': return Math.floor((d.getFullYear() - 2009) / 10);
+    default: throw new Error(`${{index}} is not a date-based index`);
+  }}
 }}
 
 /**
@@ -94,8 +132,10 @@ function isDateIndex(index) {{
  */
 function _wrapMetricData(raw) {{
   const {{ index, start, end, data }} = raw;
+  const _dateBased = _DATE_INDEXES.has(index);
   return /** @type {{MetricData<T>}} */ ({{
     ...raw,
+    isDateBased: _dateBased,
     dates() {{
       /** @type {{globalThis.Date[]}} */
       const result = [];
@@ -108,38 +148,35 @@ function _wrapMetricData(raw) {{
       for (let i = start; i < end; i++) result.push(i);
       return result;
     }},
-    toDateMap() {{
-      /** @type {{Map<globalThis.Date, T>}} */
-      const map = new Map();
-      for (let i = 0; i < data.length; i++) map.set(indexToDate(index, start + i), data[i]);
-      return map;
+    keys() {{
+      return _dateBased ? this.dates() : this.indexes();
     }},
-    toIndexMap() {{
-      /** @type {{Map<number, T>}} */
-      const map = new Map();
-      for (let i = 0; i < data.length; i++) map.set(start + i, data[i]);
-      return map;
-    }},
-    dateEntries() {{
-      /** @type {{Array<[globalThis.Date, T]>}} */
+    entries() {{
+      /** @type {{Array<[globalThis.Date | number, T]>}} */
       const result = [];
-      for (let i = 0; i < data.length; i++) result.push([indexToDate(index, start + i), data[i]]);
+      if (_dateBased) {{
+        for (let i = 0; i < data.length; i++) result.push([indexToDate(index, start + i), data[i]]);
+      }} else {{
+        for (let i = 0; i < data.length; i++) result.push([start + i, data[i]]);
+      }}
       return result;
     }},
-    indexEntries() {{
-      /** @type {{Array<[number, T]>}} */
-      const result = [];
-      for (let i = 0; i < data.length; i++) result.push([start + i, data[i]]);
-      return result;
+    toMap() {{
+      /** @type {{Map<globalThis.Date | number, T>}} */
+      const map = new Map();
+      if (_dateBased) {{
+        for (let i = 0; i < data.length; i++) map.set(indexToDate(index, start + i), data[i]);
+      }} else {{
+        for (let i = 0; i < data.length; i++) map.set(start + i, data[i]);
+      }}
+      return map;
     }},
-    *iter() {{
-      for (let i = 0; i < data.length; i++) yield [start + i, data[i]];
-    }},
-    *iterDates() {{
-      for (let i = 0; i < data.length; i++) yield [indexToDate(index, start + i), data[i]];
-    }},
-    [Symbol.iterator]() {{
-      return this.iter();
+    *[Symbol.iterator]() {{
+      if (_dateBased) {{
+        for (let i = 0; i < data.length; i++) yield [indexToDate(index, start + i), data[i]];
+      }} else {{
+        for (let i = 0; i < data.length; i++) yield [start + i, data[i]];
+      }}
     }},
   }});
 }}
@@ -154,14 +191,12 @@ function _wrapMetricData(raw) {{
  * @property {{number}} end - End index (exclusive)
  * @property {{string}} stamp - ISO 8601 timestamp of when the response was generated
  * @property {{T[]}} data - The metric data
- * @property {{() => globalThis.Date[]}} dates - Convert index range to dates (date-based indexes only)
- * @property {{() => number[]}} indexes - Get index range as array
- * @property {{() => Map<globalThis.Date, T>}} toDateMap - Return data as Map keyed by date (date-based only)
- * @property {{() => Map<number, T>}} toIndexMap - Return data as Map keyed by index
- * @property {{() => Array<[globalThis.Date, T]>}} dateEntries - Return data as [date, value] pairs (date-based only)
- * @property {{() => Array<[number, T]>}} indexEntries - Return data as [index, value] pairs
- * @property {{() => IterableIterator<[number, T]>}} iter - Iterate over [index, value] pairs
- * @property {{() => IterableIterator<[globalThis.Date, T]>}} iterDates - Iterate over [date, value] pairs (date-based only)
+ * @property {{boolean}} isDateBased - Whether this metric uses a date-based index
+ * @property {{() => (globalThis.Date[] | number[])}} keys - Get keys (dates for date-based, index numbers otherwise)
+ * @property {{() => Array<[globalThis.Date | number, T]>}} entries - Get [key, value] pairs (dates for date-based, index numbers otherwise)
+ * @property {{() => Map<globalThis.Date | number, T>}} toMap - Return data as Map (dates for date-based, index numbers otherwise)
+ * @property {{() => globalThis.Date[]}} dates - Get dates (date-based indexes only, throws otherwise)
+ * @property {{() => number[]}} indexes - Get index numbers
  */
 /** @typedef {{MetricData<any>}} AnyMetricData */
 
@@ -172,11 +207,11 @@ function _wrapMetricData(raw) {{
  */
 
 /**
- * Metric endpoint builder. Callable (returns itself) so both .by.dateindex and .by.dateindex() work.
+ * Metric endpoint builder. Callable (returns itself) so both .by.day1 and .by.day1() work.
  * @template T
  * @typedef {{Object}} MetricEndpointBuilder
  * @property {{(index: number) => SingleItemBuilder<T>}} get - Get single item at index
- * @property {{(start?: number, end?: number) => RangeBuilder<T>}} slice - Slice like Array.slice
+ * @property {{(start?: number | globalThis.Date, end?: number | globalThis.Date) => RangeBuilder<T>}} slice - Slice by index or Date
  * @property {{(n: number) => RangeBuilder<T>}} first - Get first n items
  * @property {{(n: number) => RangeBuilder<T>}} last - Get last n items
  * @property {{(n: number) => SkippedBuilder<T>}} skip - Skip first n items, chain with take()
@@ -216,7 +251,7 @@ function _wrapMetricData(raw) {{
  * @template T
  * @typedef {{Object}} MetricPattern
  * @property {{string}} name - The metric name
- * @property {{Readonly<Partial<Record<Index, MetricEndpointBuilder<T>>>>}} by - Index endpoints as lazy getters. Access via .by.dateindex or .by['dateindex']
+ * @property {{Readonly<Partial<Record<Index, MetricEndpointBuilder<T>>>>}} by - Index endpoints as lazy getters. Access via .by.day1 or .by['day1']
  * @property {{() => readonly Index[]}} indexes - Get the list of available indexes
  * @property {{(index: Index) => MetricEndpointBuilder<T>|undefined}} get - Get an endpoint for a specific index
  */
@@ -284,7 +319,11 @@ function _endpoint(client, name, index) {{
   /** @type {{MetricEndpointBuilder<T>}} */
   const endpoint = {{
     get(idx) {{ return singleItemBuilder(idx); }},
-    slice(start, end) {{ return rangeBuilder(start, end); }},
+    slice(start, end) {{
+      if (start instanceof Date) start = dateToIndex(index, start);
+      if (end instanceof Date) end = dateToIndex(index, end);
+      return rangeBuilder(start, end);
+    }},
     first(n) {{ return rangeBuilder(undefined, n); }},
     last(n) {{ return n === 0 ? rangeBuilder(undefined, 0) : rangeBuilder(-n, undefined); }},
     skip(n) {{ return skippedBuilder(n); }},
@@ -457,13 +496,15 @@ pub fn generate_static_constants(output: &mut String) {
   }}
 
   /**
-   * Check if an index type is date-based.
-   * @param {{Index}} index
-   * @returns {{boolean}}
+   * Convert a Date to an index value for date-based indexes.
+   * @param {{Index}} index - The index type
+   * @param {{globalThis.Date}} d - The date to convert
+   * @returns {{number}}
    */
-  isDateIndex(index) {{
-    return isDateIndex(index);
+  dateToIndex(index, d) {{
+    return dateToIndex(index, d);
   }}
+
 "#
     )
     .unwrap();
@@ -501,14 +542,14 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
 
     writeln!(output, "// Index group constants and factory\n").unwrap();
 
-    // Generate index array constants (e.g., _i1 = ["dateindex", "height"])
+    // Generate index array constants (e.g., _i1 = ["day1", "height"])
     for (i, pattern) in patterns.iter().enumerate() {
         write!(output, "const _i{} = /** @type {{const}} */ ([", i + 1).unwrap();
         for (j, index) in pattern.indexes.iter().enumerate() {
             if j > 0 {
                 write!(output, ", ").unwrap();
             }
-            write!(output, "\"{}\"", index.serialize_long()).unwrap();
+            write!(output, "\"{}\"", index.name()).unwrap();
         }
         writeln!(output, "]);").unwrap();
     }
@@ -554,7 +595,7 @@ function _mp(client, name, indexes) {{
             .map(|idx| {
                 format!(
                     "readonly {}: MetricEndpointBuilder<T>",
-                    idx.serialize_long()
+                    idx.name()
                 )
             })
             .collect();

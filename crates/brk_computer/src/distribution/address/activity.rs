@@ -20,9 +20,9 @@ use brk_traversable::Traversable;
 use brk_types::{Height, StoredU32, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec};
+use vecdb::{AnyStoredVec, AnyVec, Database, Rw, StorageMode, WritableVec};
 
-use crate::{ComputeIndexes, indexes, internal::ComputedFromHeightDistribution};
+use crate::{indexes, internal::ComputedFromHeightDistribution};
 
 /// Per-block activity counts - reset each block.
 ///
@@ -40,7 +40,7 @@ pub struct BlockActivityCounts {
 impl BlockActivityCounts {
     /// Reset all counts to zero.
     #[inline]
-    pub fn reset(&mut self) {
+    pub(crate) fn reset(&mut self) {
         *self = Self::default();
     }
 }
@@ -51,12 +51,12 @@ pub struct AddressTypeToActivityCounts(pub ByAddressType<BlockActivityCounts>);
 
 impl AddressTypeToActivityCounts {
     /// Reset all per-type counts.
-    pub fn reset(&mut self) {
+    pub(crate) fn reset(&mut self) {
         self.0.values_mut().for_each(|v| v.reset());
     }
 
     /// Sum all types to get totals.
-    pub fn totals(&self) -> BlockActivityCounts {
+    pub(crate) fn totals(&self) -> BlockActivityCounts {
         let mut total = BlockActivityCounts::default();
         for counts in self.0.values() {
             total.reactivated += counts.reactivated;
@@ -69,18 +69,18 @@ impl AddressTypeToActivityCounts {
 }
 
 /// Activity count vectors for a single category (e.g., one address type or "all").
-#[derive(Clone, Traversable)]
-pub struct ActivityCountVecs {
-    pub reactivated: ComputedFromHeightDistribution<StoredU32>,
-    pub sending: ComputedFromHeightDistribution<StoredU32>,
-    pub receiving: ComputedFromHeightDistribution<StoredU32>,
-    pub balance_increased: ComputedFromHeightDistribution<StoredU32>,
-    pub balance_decreased: ComputedFromHeightDistribution<StoredU32>,
-    pub both: ComputedFromHeightDistribution<StoredU32>,
+#[derive(Traversable)]
+pub struct ActivityCountVecs<M: StorageMode = Rw> {
+    pub reactivated: ComputedFromHeightDistribution<StoredU32, M>,
+    pub sending: ComputedFromHeightDistribution<StoredU32, M>,
+    pub receiving: ComputedFromHeightDistribution<StoredU32, M>,
+    pub balance_increased: ComputedFromHeightDistribution<StoredU32, M>,
+    pub balance_decreased: ComputedFromHeightDistribution<StoredU32, M>,
+    pub both: ComputedFromHeightDistribution<StoredU32, M>,
 }
 
 impl ActivityCountVecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
@@ -126,7 +126,7 @@ impl ActivityCountVecs {
         })
     }
 
-    pub fn min_stateful_height(&self) -> usize {
+    pub(crate) fn min_stateful_height(&self) -> usize {
         self.reactivated
             .height
             .len()
@@ -137,7 +137,7 @@ impl ActivityCountVecs {
             .min(self.both.height.len())
     }
 
-    pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.reactivated.height as &mut dyn AnyStoredVec,
             &mut self.sending.height as &mut dyn AnyStoredVec,
@@ -149,7 +149,7 @@ impl ActivityCountVecs {
         .into_par_iter()
     }
 
-    pub fn reset_height(&mut self) -> Result<()> {
+    pub(crate) fn reset_height(&mut self) -> Result<()> {
         self.reactivated.height.reset()?;
         self.sending.height.reset()?;
         self.receiving.height.reset()?;
@@ -159,7 +159,7 @@ impl ActivityCountVecs {
         Ok(())
     }
 
-    pub fn truncate_push_height(
+    pub(crate) fn truncate_push_height(
         &mut self,
         height: Height,
         counts: &BlockActivityCounts,
@@ -187,30 +187,11 @@ impl ActivityCountVecs {
         Ok(())
     }
 
-    pub fn compute_rest(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.reactivated
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.sending
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.receiving
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.balance_increased
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.balance_decreased
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.both.compute_rest(indexes, starting_indexes, exit)?;
-        Ok(())
-    }
 }
 
 /// Per-address-type activity count vecs.
-#[derive(Clone, Deref, DerefMut, Traversable)]
-pub struct AddressTypeToActivityCountVecs(ByAddressType<ActivityCountVecs>);
+#[derive(Deref, DerefMut, Traversable)]
+pub struct AddressTypeToActivityCountVecs<M: StorageMode = Rw>(ByAddressType<ActivityCountVecs<M>>);
 
 impl From<ByAddressType<ActivityCountVecs>> for AddressTypeToActivityCountVecs {
     #[inline]
@@ -220,7 +201,7 @@ impl From<ByAddressType<ActivityCountVecs>> for AddressTypeToActivityCountVecs {
 }
 
 impl AddressTypeToActivityCountVecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
@@ -233,11 +214,11 @@ impl AddressTypeToActivityCountVecs {
         ))
     }
 
-    pub fn min_stateful_height(&self) -> usize {
+    pub(crate) fn min_stateful_height(&self) -> usize {
         self.0.values().map(|v| v.min_stateful_height()).min().unwrap_or(0)
     }
 
-    pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         let inner = &mut self.0;
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
         for type_vecs in [
@@ -260,7 +241,7 @@ impl AddressTypeToActivityCountVecs {
         vecs.into_par_iter()
     }
 
-    pub fn reset_height(&mut self) -> Result<()> {
+    pub(crate) fn reset_height(&mut self) -> Result<()> {
         self.p2pk65.reset_height()?;
         self.p2pk33.reset_height()?;
         self.p2pkh.reset_height()?;
@@ -272,7 +253,7 @@ impl AddressTypeToActivityCountVecs {
         Ok(())
     }
 
-    pub fn truncate_push_height(
+    pub(crate) fn truncate_push_height(
         &mut self,
         height: Height,
         counts: &AddressTypeToActivityCounts,
@@ -293,34 +274,18 @@ impl AddressTypeToActivityCountVecs {
         Ok(())
     }
 
-    pub fn compute_rest(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.p2pk65.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2pk33.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2pkh.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2sh.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2wpkh.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2wsh.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2tr.compute_rest(indexes, starting_indexes, exit)?;
-        self.p2a.compute_rest(indexes, starting_indexes, exit)?;
-        Ok(())
-    }
 }
 
 /// Storage for activity metrics (global + per type).
-#[derive(Clone, Traversable)]
-pub struct AddressActivityVecs {
-    pub all: ActivityCountVecs,
+#[derive(Traversable)]
+pub struct AddressActivityVecs<M: StorageMode = Rw> {
+    pub all: ActivityCountVecs<M>,
     #[traversable(flatten)]
-    pub by_addresstype: AddressTypeToActivityCountVecs,
+    pub by_addresstype: AddressTypeToActivityCountVecs<M>,
 }
 
 impl AddressActivityVecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
@@ -334,23 +299,23 @@ impl AddressActivityVecs {
         })
     }
 
-    pub fn min_stateful_height(&self) -> usize {
+    pub(crate) fn min_stateful_height(&self) -> usize {
         self.all.min_stateful_height().min(self.by_addresstype.min_stateful_height())
     }
 
-    pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         self.all
             .par_iter_height_mut()
             .chain(self.by_addresstype.par_iter_height_mut())
     }
 
-    pub fn reset_height(&mut self) -> Result<()> {
+    pub(crate) fn reset_height(&mut self) -> Result<()> {
         self.all.reset_height()?;
         self.by_addresstype.reset_height()?;
         Ok(())
     }
 
-    pub fn truncate_push_height(
+    pub(crate) fn truncate_push_height(
         &mut self,
         height: Height,
         counts: &AddressTypeToActivityCounts,
@@ -361,15 +326,4 @@ impl AddressActivityVecs {
         Ok(())
     }
 
-    pub fn compute_rest(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.all.compute_rest(indexes, starting_indexes, exit)?;
-        self.by_addresstype
-            .compute_rest(indexes, starting_indexes, exit)?;
-        Ok(())
-    }
 }

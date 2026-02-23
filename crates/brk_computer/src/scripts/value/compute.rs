@@ -1,21 +1,20 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{Height, OutputType, Sats, TxOutIndex};
-use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec, TypedVecIterator, VecIndex};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, WritableVec, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, indexes};
+use crate::ComputeIndexes;
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.opreturn
-            .compute_all(indexes, starting_indexes, exit, |height_vec| {
+            .compute(starting_indexes, exit, |height_vec| {
                 // Validate computed versions against dependencies
                 let dep_version = indexer.vecs.outputs.first_txoutindex.version()
                     + indexer.vecs.outputs.outputtype.version()
@@ -38,35 +37,38 @@ impl Vecs {
                     return Ok(());
                 }
 
-                // Prepare iterators
-                let mut height_to_first_txoutindex =
-                    indexer.vecs.outputs.first_txoutindex.iter()?;
-                let mut txoutindex_to_outputtype = indexer.vecs.outputs.outputtype.iter()?;
-                let mut txoutindex_to_value = indexer.vecs.outputs.value.iter()?;
+                // Pre-collect height-indexed data
+                let first_txoutindexes: Vec<TxOutIndex> = indexer.vecs.outputs.first_txoutindex
+                    .collect_range_at(starting_height.to_usize(), target_height.to_usize() + 2.min(indexer.vecs.outputs.first_txoutindex.len()));
 
                 // Iterate blocks
                 for h in starting_height.to_usize()..=target_height.to_usize() {
                     let height = Height::from(h);
+                    let local_idx = h - starting_height.to_usize();
 
                     // Get output range for this block
-                    let first_txoutindex = height_to_first_txoutindex.get_unwrap(height);
-                    let next_first_txoutindex = if height < target_height {
-                        height_to_first_txoutindex.get_unwrap(height.incremented())
+                    let first_txoutindex = first_txoutindexes[local_idx];
+                    let next_first_txoutindex = if let Some(&next) = first_txoutindexes.get(local_idx + 1) {
+                        next
                     } else {
                         TxOutIndex::from(indexer.vecs.outputs.value.len())
                     };
 
-                    // Sum opreturn values
-                    let mut opreturn_value = Sats::ZERO;
-                    for i in first_txoutindex.to_usize()..next_first_txoutindex.to_usize() {
-                        let txoutindex = TxOutIndex::from(i);
-                        let outputtype = txoutindex_to_outputtype.get_unwrap(txoutindex);
+                    let out_start = first_txoutindex.to_usize();
+                    let out_end = next_first_txoutindex.to_usize();
 
-                        if outputtype == OutputType::OpReturn {
-                            let value = txoutindex_to_value.get_unwrap(txoutindex);
-                            opreturn_value += value;
-                        }
-                    }
+                    // Sum opreturn values — batch read both ranges for the block
+                    let values = indexer.vecs.outputs.value.collect_range_at(out_start, out_end);
+                    let opreturn_value = indexer.vecs.outputs.outputtype.fold_range_at(
+                        out_start, out_end,
+                        (Sats::ZERO, 0_usize),
+                        |(mut sum, idx), ot| {
+                            if ot == OutputType::OpReturn {
+                                sum += values[idx];
+                            }
+                            (sum, idx + 1)
+                        },
+                    ).0;
 
                     height_vec.truncate_push(height, opreturn_value)?;
                 }

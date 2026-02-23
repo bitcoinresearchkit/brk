@@ -4,7 +4,6 @@ use std::{
 };
 
 use brk_error::{Error, Result};
-use brk_fetcher::Fetcher;
 use brk_rpc::{Auth, Client};
 use brk_server::Website;
 use brk_types::Port;
@@ -23,9 +22,6 @@ pub struct Config {
 
     #[serde(default, deserialize_with = "default_on_error")]
     website: Option<Website>,
-
-    #[serde(default, deserialize_with = "default_on_error")]
-    fetch: Option<bool>,
 
     #[serde(default, deserialize_with = "default_on_error")]
     bitcoindir: Option<String>,
@@ -69,9 +65,6 @@ impl Config {
         }
         if let Some(v) = config_args.website {
             config.website = Some(v);
-        }
-        if let Some(v) = config_args.fetch {
-            config.fetch = Some(v);
         }
         if let Some(v) = config_args.bitcoindir {
             config.bitcoindir = Some(v);
@@ -119,7 +112,6 @@ impl Config {
                 Long("brkdir") => config.brkdir = Some(parser.value().unwrap().parse().unwrap()),
                 Long("brkport") => config.brkport = Some(parser.value().unwrap().parse().unwrap()),
                 Long("website") => config.website = Some(parser.value().unwrap().parse().unwrap()),
-                Long("fetch") => config.fetch = Some(parser.value().unwrap().parse().unwrap()),
                 Long("bitcoindir") => {
                     config.bitcoindir = Some(parser.value().unwrap().parse().unwrap())
                 }
@@ -179,11 +171,6 @@ impl Config {
             "<BOOL|PATH>".bright_black(),
             "[true]".bright_black()
         );
-        println!(
-            "    --fetch {}            Fetch prices {}",
-            "<BOOL>".bright_black(),
-            "[true]".bright_black()
-        );
         println!();
         println!(
             "    --bitcoindir {}       Bitcoin directory {}",
@@ -236,10 +223,7 @@ impl Config {
             "    Edit {} to persist settings:",
             "~/.brk/config.toml".bright_black()
         );
-        println!(
-            "    {}",
-            "brkdir = \"/path/to/data\"".bright_black()
-        );
+        println!("    {}", "brkdir = \"/path/to/data\"".bright_black());
         println!(
             "    {}",
             "bitcoindir = \"/path/to/.bitcoin\"".bright_black()
@@ -338,10 +322,6 @@ Finally, you can run the program with '-h' for help."
             .map_or_else(default_brk_path, |s| fix_user_path(s.as_ref()))
     }
 
-    pub fn harsdir(&self) -> PathBuf {
-        self.brkdir().join("hars")
-    }
-
     fn path_cookiefile(&self) -> PathBuf {
         self.rpccookiefile.as_ref().map_or_else(
             || self.bitcoindir().join(".cookie"),
@@ -355,15 +335,6 @@ Finally, you can run the program with '-h' for help."
 
     pub fn brkport(&self) -> Option<Port> {
         self.brkport
-    }
-
-    pub fn fetch(&self) -> bool {
-        self.fetch.is_none_or(|b| b)
-    }
-
-    pub fn fetcher(&self) -> Option<Fetcher> {
-        self.fetch()
-            .then(|| Fetcher::import(Some(self.harsdir().as_path())).unwrap())
     }
 }
 

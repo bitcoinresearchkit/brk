@@ -3,34 +3,33 @@ use std::path::Path;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::{Database, IterableCloneableVec, LazyVecFrom2, PAGE_SIZE};
+use vecdb::{Database, ReadableCloneableVec, PAGE_SIZE};
 
 use super::Vecs;
 use crate::{
     distribution, indexes,
     internal::{
-        ComputedFromDateAverage, ComputedFromDateLast, DifferenceF32, DollarsIdentity,
-        LazyFromHeightLast, LazyValueFromHeightLast, SatsIdentity,
+        ComputedFromHeightLast, DifferenceF32, DollarsIdentity,
+        LazyBinaryComputedFromHeightLast, LazyFromHeightLast, LazyValueFromHeightLast,
+        SatsIdentity,
     },
-    price,
+    prices,
 };
 
 const VERSION: Version = Version::ONE;
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         parent: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
         distribution: &distribution::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent.join(super::DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 10_000_000)?;
 
         let version = parent_version + VERSION;
-        let compute_dollars = price.is_some();
-
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
         // Circulating supply - lazy refs to distribution
@@ -41,45 +40,45 @@ impl Vecs {
         );
 
         // Burned/unspendable supply - computed from scripts
-        let burned = super::burned::Vecs::forced_import(&db, version, indexes, price)?;
+        let burned = super::burned::Vecs::forced_import(&db, version, indexes, prices)?;
 
         // Inflation rate
         let inflation =
-            ComputedFromDateAverage::forced_import(&db, "inflation_rate", version, indexes)?;
+            ComputedFromHeightLast::forced_import(&db, "inflation_rate", version, indexes)?;
 
         // Velocity
         let velocity =
-            super::velocity::Vecs::forced_import(&db, version, indexes, compute_dollars)?;
+            super::velocity::Vecs::forced_import(&db, version, indexes)?;
 
         // Market cap - lazy identity from distribution supply in USD
-        let market_cap = supply_metrics.total.dollars.as_ref().map(|d| {
-            LazyFromHeightLast::from_lazy_binary_computed::<DollarsIdentity, _, _>(
-                "market_cap",
-                version,
-                d.height.boxed_clone(),
-                d,
-            )
-        });
+        let market_cap = LazyFromHeightLast::from_lazy_binary_computed::<DollarsIdentity, _, _>(
+            "market_cap",
+            version,
+            supply_metrics.total.usd.height.read_only_boxed_clone(),
+            &supply_metrics.total.usd,
+        );
 
         // Growth rates
-        let market_cap_growth_rate = ComputedFromDateLast::forced_import(
+        let market_cap_growth_rate = ComputedFromHeightLast::forced_import(
             &db,
             "market_cap_growth_rate",
             version + Version::ONE,
             indexes,
         )?;
-        let realized_cap_growth_rate = ComputedFromDateLast::forced_import(
+        let realized_cap_growth_rate = ComputedFromHeightLast::forced_import(
             &db,
             "realized_cap_growth_rate",
             version + Version::ONE,
             indexes,
         )?;
-        let cap_growth_rate_diff = LazyVecFrom2::transformed::<DifferenceF32>(
-            "cap_growth_rate_diff",
-            version,
-            market_cap_growth_rate.dateindex.boxed_clone(),
-            realized_cap_growth_rate.dateindex.boxed_clone(),
-        );
+        let cap_growth_rate_diff =
+            LazyBinaryComputedFromHeightLast::forced_import::<DifferenceF32>(
+                "cap_growth_rate_diff",
+                version,
+                market_cap_growth_rate.height.read_only_boxed_clone(),
+                realized_cap_growth_rate.height.read_only_boxed_clone(),
+                indexes,
+            );
 
         let this = Self {
             db,

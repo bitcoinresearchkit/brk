@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_types::{Height, RewardStats, Sats};
-use vecdb::{IterableVec, VecIndex};
+use vecdb::{ReadableVec, VecIndex};
 
 use crate::Query;
 
@@ -12,39 +12,16 @@ impl Query {
         let end_block = current_height;
         let start_block = Height::from(current_height.to_usize().saturating_sub(block_count - 1));
 
-        let mut coinbase_iter = computer.blocks.rewards.coinbase.sats.height.iter();
+        let coinbase_vec = &computer.mining.rewards.coinbase.sats.height;
+        let fee_vec = &computer.transactions.fees.fee.sats.height.sum_cum.sum.0;
+        let tx_count_vec = &computer.transactions.count.tx_count.height;
 
-        let mut fee_iter = computer
-            .transactions
-            .fees
-            .fee
-            .sats
-            .height
-            .sum_cum
-            .sum
-            .0
-            .iter();
-        let mut tx_count_iter = computer.transactions.count.tx_count.height.iter();
+        let start = start_block.to_usize();
+        let end = end_block.to_usize() + 1;
 
-        let mut total_reward = Sats::ZERO;
-        let mut total_fee = Sats::ZERO;
-        let mut total_tx: u64 = 0;
-
-        for height in start_block.to_usize()..=end_block.to_usize() {
-            let h = Height::from(height);
-
-            if let Some(coinbase) = coinbase_iter.get(h) {
-                total_reward += coinbase;
-            }
-
-            if let Some(fee) = fee_iter.get(h) {
-                total_fee += fee;
-            }
-
-            if let Some(tx_count) = tx_count_iter.get(h) {
-                total_tx += *tx_count;
-            }
-        }
+        let total_reward = coinbase_vec.fold_range_at(start, end, Sats::ZERO, |acc, v| acc + v);
+        let total_fee = fee_vec.fold_range_at(start, end, Sats::ZERO, |acc, v| acc + v);
+        let total_tx = tx_count_vec.fold_range_at(start, end, 0u64, |acc, v| acc + *v);
 
         Ok(RewardStats {
             start_block,

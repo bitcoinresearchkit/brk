@@ -1,7 +1,7 @@
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Close, Dollars, Height, Sats, Version};
+use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{BinaryTransform, IterableBoxedVec, LazyVecFrom1, LazyVecFrom2, UnaryTransform};
+use vecdb::{BinaryTransform, ReadableBoxedVec, LazyVecFrom1, LazyVecFrom2, UnaryTransform};
 
 use crate::internal::LazyDerivedValuesHeight;
 
@@ -18,39 +18,37 @@ pub struct LazyFromHeightValue {
 }
 
 impl LazyFromHeightValue {
-    pub fn from_sources<SatsTransform, BitcoinTransform, DollarsTransform>(
+    pub(crate) fn from_sources<SatsTransform, BitcoinTransform, DollarsTransform>(
         name: &str,
-        sats_source: IterableBoxedVec<Height, Sats>,
-        price_source: Option<IterableBoxedVec<Height, Close<Dollars>>>,
+        sats_source: ReadableBoxedVec<Height, Sats>,
+        price_source: ReadableBoxedVec<Height, Dollars>,
         version: Version,
     ) -> Self
     where
         SatsTransform: UnaryTransform<Sats, Sats>,
         BitcoinTransform: UnaryTransform<Sats, Bitcoin>,
-        DollarsTransform: BinaryTransform<Close<Dollars>, Sats, Dollars>,
+        DollarsTransform: BinaryTransform<Dollars, Sats, Dollars>,
     {
         let v = version + VERSION;
 
         let sats = LazyVecFrom1::transformed::<SatsTransform>(name, v, sats_source.clone());
 
-        let bitcoin = LazyVecFrom1::transformed::<BitcoinTransform>(
+        let btc = LazyVecFrom1::transformed::<BitcoinTransform>(
             &format!("{name}_btc"),
             v,
             sats_source.clone(),
         );
 
-        let dollars = price_source.map(|price| {
-            LazyVecFrom2::transformed::<DollarsTransform>(
-                &format!("{name}_usd"),
-                v,
-                price,
-                sats_source,
-            )
-        });
+        let usd = LazyVecFrom2::transformed::<DollarsTransform>(
+            &format!("{name}_usd"),
+            v,
+            price_source,
+            sats_source,
+        );
 
         Self {
             sats,
-            rest: LazyDerivedValuesHeight { bitcoin, dollars },
+            rest: LazyDerivedValuesHeight { btc, usd },
         }
     }
 }

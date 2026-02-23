@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, SubAssign};
 
-use brk_types::{CentsUnsigned, SupplyState, Timestamp};
+use brk_types::{Cents, SupplyState, Timestamp};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
@@ -8,7 +8,7 @@ pub struct BlockState {
     #[serde(flatten)]
     pub supply: SupplyState,
     #[serde(skip)]
-    pub price: Option<CentsUnsigned>,
+    pub price: Cents,
     #[serde(skip)]
     pub timestamp: Timestamp,
 }

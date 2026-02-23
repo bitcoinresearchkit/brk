@@ -1,18 +1,36 @@
 use brk_error::Result;
-use vecdb::Exit;
+use brk_indexer::Indexer;
+use brk_types::{CheckedSub, Timestamp};
+use vecdb::{Exit, ReadableVec};
 
 use super::Vecs;
-use crate::{ComputeIndexes, indexes};
+use crate::ComputeIndexes;
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
+        indexer: &Indexer,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.interval.derive_from(indexes, starting_indexes, exit)?;
-
+        let mut prev_timestamp = None;
+        self.interval.height.compute_transform(
+            starting_indexes.height,
+            &indexer.vecs.blocks.timestamp,
+            |(h, timestamp, ..)| {
+                let interval = if let Some(prev_h) = h.decremented() {
+                    let prev = prev_timestamp.unwrap_or_else(|| {
+                        indexer.vecs.blocks.timestamp.collect_one(prev_h).unwrap()
+                    });
+                    timestamp.checked_sub(prev).unwrap_or(Timestamp::ZERO)
+                } else {
+                    Timestamp::ZERO
+                };
+                prev_timestamp = Some(timestamp);
+                (h, interval)
+            },
+            exit,
+        )?;
         Ok(())
     }
 }

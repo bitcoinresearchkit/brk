@@ -3,15 +3,15 @@ use vecdb::Exit;
 
 use super::super::{activity, cap, supply};
 use super::Vecs;
-use crate::{ComputeIndexes, distribution, indexes, price, utils::OptionExt};
+use crate::{ComputeIndexes, blocks, distribution, prices};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
-        price: &price::Vecs,
+        prices: &prices::Vecs,
+        blocks: &blocks::Vecs,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         supply: &supply::Vecs,
@@ -24,88 +24,75 @@ impl Vecs {
             .metrics
             .supply
             .total
-            .bitcoin
+            .btc
             .height;
         let realized_price = &distribution
             .utxo_cohorts
             .all
             .metrics
             .realized
-            .u()
             .realized_price
             .height;
 
-        self.vaulted_price
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                vec.compute_divide(
-                    starting_indexes.height,
-                    realized_price,
-                    &activity.vaultedness.height,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.vaulted_price.height.compute_divide(
+            starting_indexes.height,
+            realized_price,
+            &activity.vaultedness.height,
+            exit,
+        )?;
 
         self.vaulted_price_ratio.compute_rest(
-            price,
+            blocks,
+            prices,
             starting_indexes,
             exit,
-            Some(&self.vaulted_price.dateindex.0),
+            Some(&self.vaulted_price.height),
         )?;
 
-        self.active_price
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                vec.compute_multiply(
-                    starting_indexes.height,
-                    realized_price,
-                    &activity.liveliness.height,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.active_price.height.compute_multiply(
+            starting_indexes.height,
+            realized_price,
+            &activity.liveliness.height,
+            exit,
+        )?;
 
         self.active_price_ratio.compute_rest(
-            price,
+            blocks,
+            prices,
             starting_indexes,
             exit,
-            Some(&self.active_price.dateindex.0),
+            Some(&self.active_price.height),
         )?;
 
-        self.true_market_mean
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                vec.compute_divide(
-                    starting_indexes.height,
-                    &cap.investor_cap.height,
-                    &supply.active_supply.bitcoin.height,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.true_market_mean.height.compute_divide(
+            starting_indexes.height,
+            &cap.investor_cap.height,
+            &supply.active_supply.btc.height,
+            exit,
+        )?;
 
         self.true_market_mean_ratio.compute_rest(
-            price,
+            blocks,
+            prices,
             starting_indexes,
             exit,
-            Some(&self.true_market_mean.dateindex.0),
+            Some(&self.true_market_mean.height),
         )?;
 
         // cointime_price = cointime_cap / circulating_supply
-        self.cointime_price
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                vec.compute_divide(
-                    starting_indexes.height,
-                    &cap.cointime_cap.height,
-                    circulating_supply,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.cointime_price.height.compute_divide(
+            starting_indexes.height,
+            &cap.cointime_cap.height,
+            circulating_supply,
+            exit,
+        )?;
 
         self.cointime_price_ratio.compute_rest(
-            price,
+            blocks,
+            prices,
             starting_indexes,
             exit,
-            Some(&self.cointime_price.dateindex.0),
+            Some(&self.cointime_price.height),
         )?;
 
         Ok(())

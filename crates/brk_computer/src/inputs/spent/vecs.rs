@@ -1,9 +1,9 @@
 use brk_traversable::Traversable;
 use brk_types::{Sats, TxInIndex, TxOutIndex};
-use vecdb::PcoVec;
+use vecdb::{PcoVec, Rw, StorageMode};
 
-#[derive(Clone, Traversable)]
-pub struct Vecs {
-    pub txoutindex: PcoVec<TxInIndex, TxOutIndex>,
-    pub value: PcoVec<TxInIndex, Sats>,
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
+    pub txoutindex: M::Stored<PcoVec<TxInIndex, TxOutIndex>>,
+    pub value: M::Stored<PcoVec<TxInIndex, Sats>>,
 }

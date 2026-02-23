@@ -6,8 +6,7 @@ use std::{
 
 use brk_error::{Error, Result};
 use brk_types::{
-    CentsSats, CentsSquaredSats, CentsUnsigned, CentsUnsignedCompact, CostBasisDistribution,
-    Height, Sats,
+    CentsCompact, CentsSats, CentsSquaredSats, Cents, CostBasisDistribution, Height, Sats,
 };
 use rustc_hash::FxHashMap;
 use vecdb::Bytes;
@@ -17,7 +16,7 @@ use crate::utils::OptionExt;
 use super::{CachedUnrealizedState, Percentiles, UnrealizedState};
 
 /// Type alias for the price-to-sats map used in cost basis data.
-pub(super) type CostBasisMap = BTreeMap<CentsUnsignedCompact, Sats>;
+pub(super) type CostBasisMap = BTreeMap<CentsCompact, Sats>;
 
 #[derive(Clone, Debug, Default)]
 struct PendingRaw {
@@ -31,40 +30,44 @@ struct PendingRaw {
 pub struct CostBasisData {
     pathbuf: PathBuf,
     state: Option<State>,
-    pending: FxHashMap<CentsUnsignedCompact, (Sats, Sats)>,
+    pending: FxHashMap<CentsCompact, (Sats, Sats)>,
     pending_raw: PendingRaw,
     cache: Option<CachedUnrealizedState>,
+    percentiles_dirty: bool,
+    cached_percentiles: Option<Percentiles>,
     rounding_digits: Option<i32>,
 }
 
 const STATE_TO_KEEP: usize = 10;
 
 impl CostBasisData {
-    pub fn create(path: &Path, name: &str) -> Self {
+    pub(crate) fn create(path: &Path, name: &str) -> Self {
         Self {
             pathbuf: path.join(format!("{name}_cost_basis")),
             state: None,
             pending: FxHashMap::default(),
             pending_raw: PendingRaw::default(),
             cache: None,
+            percentiles_dirty: true,
+            cached_percentiles: None,
             rounding_digits: None,
         }
     }
 
-    pub fn with_price_rounding(mut self, digits: i32) -> Self {
+    pub(crate) fn with_price_rounding(mut self, digits: i32) -> Self {
         self.rounding_digits = Some(digits);
         self
     }
 
     #[inline]
-    fn round_price(&self, price: CentsUnsigned) -> CentsUnsigned {
+    fn round_price(&self, price: Cents) -> Cents {
         match self.rounding_digits {
             Some(digits) => price.round_to_dollar(digits),
             None => price,
         }
     }
 
-    pub fn import_at_or_before(&mut self, height: Height) -> Result<Height> {
+    pub(crate) fn import_at_or_before(&mut self, height: Height) -> Result<Height> {
         let files = self.read_dir(None)?;
         let (&height, path) = files.range(..=height).next_back().ok_or(Error::NotFound(
             "No cost basis state found at or before height".into(),
@@ -73,6 +76,8 @@ impl CostBasisData {
         self.pending.clear();
         self.pending_raw = PendingRaw::default();
         self.cache = None;
+        self.percentiles_dirty = true;
+        self.cached_percentiles = None;
         Ok(height)
     }
 
@@ -90,16 +95,16 @@ impl CostBasisData {
             && self.pending_raw.investor_cap_dec == CentsSquaredSats::ZERO
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (CentsUnsignedCompact, &Sats)> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = (CentsCompact, &Sats)> {
         self.assert_pending_empty();
         self.state.u().base.map.iter().map(|(&k, v)| (k, v))
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.pending.is_empty() && self.state.u().base.map.is_empty()
     }
 
-    pub fn first_key_value(&self) -> Option<(CentsUnsignedCompact, &Sats)> {
+    pub(crate) fn first_key_value(&self) -> Option<(CentsCompact, &Sats)> {
         self.assert_pending_empty();
         self.state
             .u()
@@ -109,7 +114,7 @@ impl CostBasisData {
             .map(|(&k, v)| (k, v))
     }
 
-    pub fn last_key_value(&self) -> Option<(CentsUnsignedCompact, &Sats)> {
+    pub(crate) fn last_key_value(&self) -> Option<(CentsCompact, &Sats)> {
         self.assert_pending_empty();
         self.state
             .u()
@@ -120,22 +125,22 @@ impl CostBasisData {
     }
 
     /// Get the exact cap_raw value (not recomputed from map).
-    pub fn cap_raw(&self) -> CentsSats {
+    pub(crate) fn cap_raw(&self) -> CentsSats {
         self.assert_pending_empty();
         self.state.u().cap_raw
     }
 
     /// Get the exact investor_cap_raw value (not recomputed from map).
-    pub fn investor_cap_raw(&self) -> CentsSquaredSats {
+    pub(crate) fn investor_cap_raw(&self) -> CentsSquaredSats {
         self.assert_pending_empty();
         self.state.u().investor_cap_raw
     }
 
     /// Increment with pre-computed typed values.
     /// Handles rounding and cache update.
-    pub fn increment(
+    pub(crate) fn increment(
         &mut self,
-        price: CentsUnsigned,
+        price: Cents,
         sats: Sats,
         price_sats: CentsSats,
         investor_cap: CentsSquaredSats,
@@ -153,9 +158,9 @@ impl CostBasisData {
 
     /// Decrement with pre-computed typed values.
     /// Handles rounding and cache update.
-    pub fn decrement(
+    pub(crate) fn decrement(
         &mut self,
-        price: CentsUnsigned,
+        price: Cents,
         sats: Sats,
         price_sats: CentsSats,
         investor_cap: CentsSquaredSats,
@@ -171,7 +176,10 @@ impl CostBasisData {
         }
     }
 
-    pub fn apply_pending(&mut self) {
+    pub(crate) fn apply_pending(&mut self) {
+        if !self.pending.is_empty() {
+            self.percentiles_dirty = true;
+        }
         for (cents, (inc, dec)) in self.pending.drain() {
             let entry = self.state.um().base.map.entry(cents).or_default();
             *entry += inc;
@@ -232,25 +240,35 @@ impl CostBasisData {
         self.pending_raw = PendingRaw::default();
     }
 
-    pub fn init(&mut self) {
+    pub(crate) fn init(&mut self) {
         self.state.replace(State::default());
         self.pending.clear();
         self.pending_raw = PendingRaw::default();
         self.cache = None;
+        self.percentiles_dirty = true;
+        self.cached_percentiles = None;
     }
 
-    pub fn compute_percentiles(&self) -> Option<Percentiles> {
+    pub(crate) fn compute_percentiles(&mut self) -> Option<Percentiles> {
         self.assert_pending_empty();
-        Percentiles::compute(self.iter().map(|(k, &v)| (k, v)))
+        if !self.percentiles_dirty {
+            return self.cached_percentiles;
+        }
+        self.cached_percentiles = Percentiles::compute(self.iter().map(|(k, &v)| (k, v)));
+        self.percentiles_dirty = false;
+        self.cached_percentiles
     }
 
-    pub fn compute_unrealized_states(
+    pub(crate) fn compute_unrealized_states(
         &mut self,
-        height_price: CentsUnsigned,
-        date_price: Option<CentsUnsigned>,
+        height_price: Cents,
+        date_price: Option<Cents>,
     ) -> (UnrealizedState, Option<UnrealizedState>) {
         if self.is_empty() {
-            return (UnrealizedState::ZERO, date_price.map(|_| UnrealizedState::ZERO));
+            return (
+                UnrealizedState::ZERO,
+                date_price.map(|_| UnrealizedState::ZERO),
+            );
         }
 
         let map = &self.state.u().base.map;
@@ -270,7 +288,7 @@ impl CostBasisData {
         (height_state, date_state)
     }
 
-    pub fn clean(&mut self) -> Result<()> {
+    pub(crate) fn clean(&mut self) -> Result<()> {
         let _ = fs::remove_dir_all(&self.pathbuf);
         fs::create_dir_all(self.path_by_height())?;
         self.cache = None;
@@ -304,7 +322,7 @@ impl CostBasisData {
             .collect::<BTreeMap<Height, PathBuf>>())
     }
 
-    pub fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {
+    pub(crate) fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {
         self.apply_pending();
 
         if cleanup {

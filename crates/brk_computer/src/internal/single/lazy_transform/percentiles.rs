@@ -3,9 +3,9 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
 use schemars::JsonSchema;
-use vecdb::{LazyVecFrom1, UnaryTransform, VecIndex};
+use vecdb::{ReadableBoxedVec, LazyVecFrom1, UnaryTransform, VecIndex};
 
-use crate::internal::{ComputedVecValue, Percentiles};
+use crate::internal::ComputedVecValue;
 
 #[derive(Clone, Traversable)]
 pub struct LazyPercentiles<I, T, S1T = T>
@@ -27,37 +27,22 @@ where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
 {
-    pub fn from_percentiles<F: UnaryTransform<S1T, T>>(
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn from_boxed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        source: &Percentiles<I, S1T>,
+        pct10: ReadableBoxedVec<I, S1T>,
+        pct25: ReadableBoxedVec<I, S1T>,
+        median: ReadableBoxedVec<I, S1T>,
+        pct75: ReadableBoxedVec<I, S1T>,
+        pct90: ReadableBoxedVec<I, S1T>,
     ) -> Self {
         Self {
-            pct10: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_pct10"),
-                version,
-                source.boxed_pct10(),
-            ),
-            pct25: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_pct25"),
-                version,
-                source.boxed_pct25(),
-            ),
-            median: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_median"),
-                version,
-                source.boxed_median(),
-            ),
-            pct75: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_pct75"),
-                version,
-                source.boxed_pct75(),
-            ),
-            pct90: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_pct90"),
-                version,
-                source.boxed_pct90(),
-            ),
+            pct10: LazyVecFrom1::transformed::<F>(&format!("{name}_pct10"), version, pct10),
+            pct25: LazyVecFrom1::transformed::<F>(&format!("{name}_pct25"), version, pct25),
+            median: LazyVecFrom1::transformed::<F>(&format!("{name}_median"), version, median),
+            pct75: LazyVecFrom1::transformed::<F>(&format!("{name}_pct75"), version, pct75),
+            pct90: LazyVecFrom1::transformed::<F>(&format!("{name}_pct90"), version, pct90),
         }
     }
 }

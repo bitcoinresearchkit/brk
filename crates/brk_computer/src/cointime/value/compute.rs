@@ -1,17 +1,16 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, Close, Dollars, StoredF64};
-use vecdb::{Exit, TypedVecIterator};
+use brk_types::{Bitcoin, Dollars, StoredF64};
+use vecdb::Exit;
 
 use super::super::activity;
 use super::Vecs;
-use crate::{ComputeIndexes, distribution, indexes, price};
+use crate::{ComputeIndexes, distribution, prices};
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
-        price: &price::Vecs,
+        prices: &prices::Vecs,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         exit: &Exit,
@@ -36,14 +35,14 @@ impl Vecs {
             .metrics
             .supply
             .total
-            .bitcoin
+            .btc
             .height;
 
         self.cointime_value_destroyed
-            .compute_all(indexes, starting_indexes, exit, |vec| {
+            .compute(starting_indexes, exit,|vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
-                    &price.usd.split.close.height,
+                    &prices.usd.price,
                     &coinblocks_destroyed.height,
                     exit,
                 )?;
@@ -51,10 +50,10 @@ impl Vecs {
             })?;
 
         self.cointime_value_created
-            .compute_all(indexes, starting_indexes, exit, |vec| {
+            .compute(starting_indexes, exit,|vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
-                    &price.usd.split.close.height,
+                    &prices.usd.price,
                     &activity.coinblocks_created.height,
                     exit,
                 )?;
@@ -62,10 +61,10 @@ impl Vecs {
             })?;
 
         self.cointime_value_stored
-            .compute_all(indexes, starting_indexes, exit, |vec| {
+            .compute(starting_indexes, exit,|vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
-                    &price.usd.split.close.height,
+                    &prices.usd.price,
                     &activity.coinblocks_stored.height,
                     exit,
                 )?;
@@ -76,14 +75,13 @@ impl Vecs {
         // Supply-adjusted to account for growing supply over time
         // This is a key input for Reserve Risk / HODL Bank calculation
         self.vocdd
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                let mut supply_iter = circulating_supply.into_iter();
-                vec.compute_transform2(
+            .compute(starting_indexes, exit,|vec| {
+                vec.compute_transform3(
                     starting_indexes.height,
-                    &price.usd.split.close.height,
+                    &prices.usd.price,
                     &coindays_destroyed.height,
-                    |(i, price, cdd, _): (_, Close<Dollars>, StoredF64, _)| {
-                        let supply: Bitcoin = supply_iter.get_unwrap(i);
+                    circulating_supply,
+                    |(i, price, cdd, supply, _): (_, Dollars, StoredF64, Bitcoin, _)| {
                         let supply_f64 = f64::from(supply);
                         if supply_f64 == 0.0 {
                             (i, StoredF64::from(0.0))

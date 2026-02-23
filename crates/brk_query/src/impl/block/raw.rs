@@ -1,6 +1,6 @@
 use brk_error::{Error, Result};
 use brk_types::{BlockHash, Height};
-use vecdb::{AnyVec, GenericStoredVec};
+use vecdb::{AnyVec, ReadableVec};
 
 use crate::Query;
 
@@ -20,8 +20,8 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let position = computer.positions.block_position.read_once(height)?;
-        let size = indexer.vecs.blocks.total_size.read_once(height)?;
+        let position = computer.positions.block_position.collect_one(height).unwrap();
+        let size = indexer.vecs.blocks.total_size.collect_one(height).unwrap();
 
         reader.read_raw_bytes(position, *size as usize)
     }

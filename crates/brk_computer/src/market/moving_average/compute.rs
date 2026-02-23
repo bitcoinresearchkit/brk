@@ -1,17 +1,20 @@
 use brk_error::Result;
-use vecdb::Exit;
+use brk_types::Dollars;
+use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, price};
+use crate::{ComputeIndexes, blocks, indexes, prices};
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
-        price: &price::Vecs,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
+        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close = &price.usd.split.close.dateindex;
+        let close = &prices.usd.price;
 
         for (sma, period) in [
             (&mut self.price_1w_sma, 7),
@@ -31,11 +34,15 @@ impl Vecs {
             (&mut self.price_200w_sma, 200 * 7),
             (&mut self.price_4y_sma, 4 * 365),
         ] {
-            sma.compute_all(price, starting_indexes, exit, |v| {
-                v.compute_sma(starting_indexes.dateindex, close, period, exit)?;
+            let window_starts = blocks.count.start_vec(period);
+            sma.compute_all(blocks, prices, starting_indexes, exit, |v| {
+                v.compute_rolling_average(starting_indexes.height, window_starts, close, exit)?;
                 Ok(())
             })?;
         }
+
+        let h2d = &indexes.height.day1;
+        let closes: Vec<Dollars> = prices.usd.split.close.day1.collect();
 
         for (ema, period) in [
             (&mut self.price_1w_ema, 7),
@@ -55,12 +62,37 @@ impl Vecs {
             (&mut self.price_200w_ema, 200 * 7),
             (&mut self.price_4y_ema, 4 * 365),
         ] {
-            ema.compute_all(price, starting_indexes, exit, |v| {
-                v.compute_ema(starting_indexes.dateindex, close, period, exit)?;
+            let k = 2.0f64 / (period as f64 + 1.0);
+
+            // Compute date-level EMA, then expand to height level
+            let date_ema = compute_date_ema(&closes, k);
+
+            ema.compute_all(blocks, prices, starting_indexes, exit, |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    h2d,
+                    |(h, date, ..)| (h, Dollars::from(date_ema[date.to_usize()])),
+                    exit,
+                )?;
                 Ok(())
             })?;
         }
 
         Ok(())
     }
+}
+
+fn compute_date_ema(closes: &[Dollars], k: f64) -> Vec<f64> {
+    let mut date_ema: Vec<f64> = Vec::with_capacity(closes.len());
+    let mut ema_val = 0.0f64;
+    for (d, close) in closes.iter().enumerate() {
+        let close = f64::from(*close);
+        if d == 0 {
+            ema_val = close;
+        } else {
+            ema_val = close * k + ema_val * (1.0 - k);
+        }
+        date_ema.push(ema_val);
+    }
+    date_ema
 }

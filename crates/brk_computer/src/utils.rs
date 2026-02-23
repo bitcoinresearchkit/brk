@@ -20,7 +20,7 @@ impl<T> OptionExt<T> for Option<T> {
     }
 }
 
-pub fn get_percentile<T>(sorted: &[T], percentile: f64) -> T
+pub(crate) fn get_percentile<T>(sorted: &[T], percentile: f64) -> T
 where
     T: Clone + Div<usize, Output = T> + Add<T, Output = T>,
 {

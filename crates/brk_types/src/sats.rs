@@ -11,7 +11,7 @@ use vecdb::{CheckedSub, Formattable, Pco, SaturatingAdd};
 
 use crate::StoredF64;
 
-use super::{Bitcoin, CentsUnsigned, Dollars, Height};
+use super::{Bitcoin, Cents, Dollars, Height};
 
 /// Satoshis
 #[derive(
@@ -198,7 +198,7 @@ impl Sum for Sats {
 impl Div<Dollars> for Sats {
     type Output = Self;
     fn div(self, rhs: Dollars) -> Self::Output {
-        let raw_cents = u64::from(CentsUnsigned::from(rhs));
+        let raw_cents = u64::from(Cents::from(rhs));
         if raw_cents != 0 {
             Self(self.0 * 100 / raw_cents)
         } else {
@@ -346,7 +346,8 @@ impl std::fmt::Display for Sats {
 
 impl Formattable for Sats {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }

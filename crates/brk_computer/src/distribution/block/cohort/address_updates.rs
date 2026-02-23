@@ -15,7 +15,7 @@ use super::with_source::{EmptyAddressDataWithSource, FundedAddressDataWithSource
 /// - New funded address: push to funded storage
 /// - Updated funded address (was funded): update in place
 /// - Transition empty -> funded: delete from empty, push to funded
-pub fn process_funded_addresses(
+pub(crate) fn process_funded_addresses(
     addresses_data: &mut AddressesDataVecs,
     funded_updates: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
 ) -> Result<AddressTypeToTypeIndexMap<AnyAddressIndex>> {
@@ -86,7 +86,7 @@ pub fn process_funded_addresses(
 /// - New empty address: push to empty storage
 /// - Updated empty address (was empty): update in place
 /// - Transition funded -> empty: delete from funded, push to empty
-pub fn process_empty_addresses(
+pub(crate) fn process_empty_addresses(
     addresses_data: &mut AddressesDataVecs,
     empty_updates: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
 ) -> Result<AddressTypeToTypeIndexMap<AnyAddressIndex>> {

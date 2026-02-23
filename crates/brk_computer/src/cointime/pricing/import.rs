@@ -5,17 +5,17 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromDateRatio, PriceFromHeight},
+    internal::{ComputedFromHeightRatio, PriceFromHeight},
 };
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let vaulted_price = PriceFromHeight::forced_import(db, "vaulted_price", version, indexes)?;
-        let vaulted_price_ratio = ComputedFromDateRatio::forced_import(
+        let vaulted_price_ratio = ComputedFromHeightRatio::forced_import(
             db,
             "vaulted_price",
             Some(&vaulted_price),
@@ -25,7 +25,7 @@ impl Vecs {
         )?;
 
         let active_price = PriceFromHeight::forced_import(db, "active_price", version, indexes)?;
-        let active_price_ratio = ComputedFromDateRatio::forced_import(
+        let active_price_ratio = ComputedFromHeightRatio::forced_import(
             db,
             "active_price",
             Some(&active_price),
@@ -36,7 +36,7 @@ impl Vecs {
 
         let true_market_mean =
             PriceFromHeight::forced_import(db, "true_market_mean", version, indexes)?;
-        let true_market_mean_ratio = ComputedFromDateRatio::forced_import(
+        let true_market_mean_ratio = ComputedFromHeightRatio::forced_import(
             db,
             "true_market_mean",
             Some(&true_market_mean),
@@ -47,7 +47,7 @@ impl Vecs {
 
         let cointime_price =
             PriceFromHeight::forced_import(db, "cointime_price", version, indexes)?;
-        let cointime_price_ratio = ComputedFromDateRatio::forced_import(
+        let cointime_price_ratio = ComputedFromHeightRatio::forced_import(
             db,
             "cointime_price",
             Some(&cointime_price),

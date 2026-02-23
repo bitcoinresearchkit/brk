@@ -6,7 +6,7 @@ use brk_traversable::Traversable;
 use brk_types::{TxIndex, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{CollectableVec, Database, Exit, LazyVecFrom2};
+use vecdb::{Database, Exit, LazyVecFrom2, ReadableVec, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, indexes,
@@ -15,9 +15,9 @@ use crate::{
 
 const VERSION: Version = Version::ZERO;
 
-#[derive(Clone, Deref, DerefMut, Traversable)]
+#[derive(Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyFromTxDistribution<T, S1, S2>
+pub struct LazyFromTxDistribution<T, S1, S2, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1: ComputedVecValue,
@@ -27,7 +27,7 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub distribution: TxDerivedDistribution<T>,
+    pub distribution: TxDerivedDistribution<T, M>,
 }
 
 impl<T, S1, S2> LazyFromTxDistribution<T, S1, S2>
@@ -36,7 +36,7 @@ where
     S1: ComputedVecValue + JsonSchema,
     S2: ComputedVecValue + JsonSchema,
 {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
@@ -51,7 +51,7 @@ where
         })
     }
 
-    pub fn derive_from(
+    pub(crate) fn derive_from(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
@@ -59,7 +59,7 @@ where
         exit: &Exit,
     ) -> Result<()>
     where
-        LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>: CollectableVec<TxIndex, T>,
+        LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>: ReadableVec<TxIndex, T>,
     {
         self.distribution
             .derive_from(indexer, indexes, starting_indexes, &self.txindex, exit)

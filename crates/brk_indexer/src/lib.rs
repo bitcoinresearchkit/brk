@@ -7,7 +7,7 @@ use brk_iterator::Blocks;
 use brk_rpc::Client;
 use brk_types::Height;
 use tracing::{debug, info};
-use vecdb::{Exit, ReadableVec};
+use vecdb::{Exit, ReadOnlyClone, ReadableVec, Ro, Rw, StorageMode};
 mod constants;
 mod indexes;
 mod processor;
@@ -24,10 +24,20 @@ pub use brk_types::Indexes;
 pub use stores::Stores;
 pub use vecs::*;
 
-#[derive(Clone)]
-pub struct Indexer {
-    pub vecs: Vecs,
+pub struct Indexer<M: StorageMode = Rw> {
+    pub vecs: Vecs<M>,
     pub stores: Stores,
+}
+
+impl ReadOnlyClone for Indexer {
+    type ReadOnly = Indexer<Ro>;
+
+    fn read_only_clone(&self) -> Indexer<Ro> {
+        Indexer {
+            vecs: self.vecs.read_only_clone(),
+            stores: self.stores.clone(),
+        }
+    }
 }
 
 impl Indexer {

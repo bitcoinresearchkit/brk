@@ -1,29 +1,40 @@
-//! ComputedHeightDerivedLast - dateindex storage + difficultyepoch + lazy time periods.
-
-use brk_error::Result;
+//! ComputedHeightDerivedLast - lazy time periods + epochs (last value).
 
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, DifficultyEpoch, Height, Version};
-use derive_more::{Deref, DerefMut};
+use brk_types::{
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4, Minute1, Minute10,
+    Minute30, Minute5, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+};
 use schemars::JsonSchema;
-use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec};
+use vecdb::{ReadableBoxedVec, ReadableCloneableVec};
 
 use crate::{
-    ComputeIndexes, indexes,
-    internal::{ComputedVecValue, LazyDateDerivedLast, LastVec, LazyLast, NumericValue},
+    indexes,
+    internal::{ComputedVecValue, LazyLast, NumericValue, SparseLast},
 };
 
-#[derive(Clone, Deref, DerefMut, Traversable)]
+#[derive(Clone, Traversable)]
 #[traversable(merge)]
 pub struct ComputedHeightDerivedLast<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    pub dateindex: LastVec<DateIndex, T>,
-    #[deref]
-    #[deref_mut]
-    #[traversable(flatten)]
-    pub dates: LazyDateDerivedLast<T>,
+    pub minute1: LazyLast<Minute1, T, Height, Height>,
+    pub minute5: LazyLast<Minute5, T, Height, Height>,
+    pub minute10: LazyLast<Minute10, T, Height, Height>,
+    pub minute30: LazyLast<Minute30, T, Height, Height>,
+    pub hour1: LazyLast<Hour1, T, Height, Height>,
+    pub hour4: LazyLast<Hour4, T, Height, Height>,
+    pub hour12: LazyLast<Hour12, T, Height, Height>,
+    pub day1: LazyLast<Day1, T, Height, Height>,
+    pub day3: LazyLast<Day3, T, Height, Height>,
+    pub week1: LazyLast<Week1, T, Height, Height>,
+    pub month1: LazyLast<Month1, T, Height, Height>,
+    pub month3: LazyLast<Month3, T, Height, Height>,
+    pub month6: LazyLast<Month6, T, Height, Height>,
+    pub year1: LazyLast<Year1, T, Height, Height>,
+    pub year10: LazyLast<Year10, T, Height, Height>,
+    pub halvingepoch: LazyLast<HalvingEpoch, T, Height, HalvingEpoch>,
     pub difficultyepoch: LazyLast<DifficultyEpoch, T, Height, DifficultyEpoch>,
 }
 
@@ -33,42 +44,54 @@ impl<T> ComputedHeightDerivedLast<T>
 where
     T: NumericValue + JsonSchema,
 {
-    pub fn forced_import(
-        db: &Database,
+    pub(crate) fn forced_import(
         name: &str,
-        height_source: IterableBoxedVec<Height, T>,
+        height_source: ReadableBoxedVec<Height, T>,
         version: Version,
         indexes: &indexes::Vecs,
-    ) -> Result<Self> {
-        let dateindex = LastVec::forced_import(db, name, version + VERSION)?;
+    ) -> Self {
         let v = version + VERSION;
 
-        Ok(Self {
-            dates: LazyDateDerivedLast::from_source(name, v, dateindex.boxed_clone(), indexes),
-            difficultyepoch: LazyLast::from_source(
-                name,
-                v,
-                height_source,
-                indexes.difficultyepoch.identity.boxed_clone(),
-            ),
-            dateindex,
-        })
-    }
+        macro_rules! period {
+            ($idx:ident) => {
+                LazyLast::from_height_source(
+                    name,
+                    v,
+                    height_source.clone(),
+                    indexes.$idx.first_height.read_only_boxed_clone(),
+                )
+            };
+        }
 
-    pub fn derive_from(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
-        height_source: &impl IterableVec<Height, T>,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.dateindex.compute_last(
-            starting_indexes.dateindex,
-            height_source,
-            &indexes.dateindex.first_height,
-            &indexes.dateindex.height_count,
-            exit,
-        )?;
-        Ok(())
+        macro_rules! epoch {
+            ($idx:ident) => {
+                LazyLast::from_source(
+                    name,
+                    v,
+                    height_source.clone(),
+                    indexes.$idx.identity.read_only_boxed_clone(),
+                )
+            };
+        }
+
+        Self {
+            minute1: period!(minute1),
+            minute5: period!(minute5),
+            minute10: period!(minute10),
+            minute30: period!(minute30),
+            hour1: period!(hour1),
+            hour4: period!(hour4),
+            hour12: period!(hour12),
+            day1: period!(day1),
+            day3: period!(day3),
+            week1: period!(week1),
+            month1: period!(month1),
+            month3: period!(month3),
+            month6: period!(month6),
+            year1: period!(year1),
+            year10: period!(year10),
+            halvingepoch: epoch!(halvingepoch),
+            difficultyepoch: epoch!(difficultyepoch),
+        }
     }
 }

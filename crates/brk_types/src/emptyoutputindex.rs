@@ -79,7 +79,8 @@ impl fmt::Display for EmptyOutputIndex {
 
 impl Formattable for EmptyOutputIndex {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }

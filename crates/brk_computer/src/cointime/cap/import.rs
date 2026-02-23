@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{indexes, internal::ComputedFromHeightLast};
 
 impl Vecs {
-    pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
+    pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         Ok(Self {
             thermo_cap: ComputedFromHeightLast::forced_import(db, "thermo_cap", version, indexes)?,
             investor_cap: ComputedFromHeightLast::forced_import(db, "investor_cap", version, indexes)?,

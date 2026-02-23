@@ -4,7 +4,7 @@ use brk_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2, VecIndex};
+use vecdb::{BinaryTransform, ReadableBoxedVec, ReadableCloneableVec, LazyVecFrom2, VecIndex};
 
 use crate::internal::{ComputedVecValue, LazyLast};
 
@@ -24,7 +24,7 @@ where
     S1T: ComputedVecValue + JsonSchema,
     S2T: ComputedVecValue + JsonSchema,
 {
-    pub fn from_lazy_last<
+    pub(crate) fn from_lazy_last<
         F: BinaryTransform<S1T, S2T, T>,
         S1I: VecIndex + 'static,
         S2I: VecIndex + 'static,
@@ -43,16 +43,16 @@ where
         Self(LazyVecFrom2::transformed::<F>(
             name,
             version,
-            source1.boxed_clone(),
-            source2.boxed_clone(),
+            source1.read_only_boxed_clone(),
+            source2.read_only_boxed_clone(),
         ))
     }
 
-    pub fn from_vecs<F: BinaryTransform<S1T, S2T, T>>(
+    pub(crate) fn from_vecs<F: BinaryTransform<S1T, S2T, T>>(
         name: &str,
         version: Version,
-        source1: IterableBoxedVec<I, S1T>,
-        source2: IterableBoxedVec<I, S2T>,
+        source1: ReadableBoxedVec<I, S1T>,
+        source2: ReadableBoxedVec<I, S2T>,
     ) -> Self {
         Self(LazyVecFrom2::transformed::<F>(
             name, version, source1, source2,

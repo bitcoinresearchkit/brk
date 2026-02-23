@@ -6,13 +6,13 @@ edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
-include = ["src/**/*", "website/**/*", "examples/**/*", "Cargo.toml", "README.md"]
+include = ["src/**/*", "website/**/*", "Cargo.toml", "README.md"]
 
 [dependencies]
 axum = { workspace = true }
 include_dir = "0.7"
 # importmap = { path = "../../../importmap", features = ["embedded"] }
-importmap = { version = "0.4.0", features = ["embedded"] }
+importmap = { version = "0.4.1", features = ["embedded"] }
 serde = { workspace = true }
 tracing = { workspace = true }
 

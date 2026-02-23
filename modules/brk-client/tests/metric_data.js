@@ -10,14 +10,19 @@ const client = new BrkClient("http://localhost:3110");
 console.log("Testing MetricData helpers...\n");
 
 // Fetch a date-based metric
-console.log("1. Fetching price data (dateindex):");
-const price = await client.metrics.price.usd.split.close.by.dateindex.first(5);
+console.log("1. Fetching price data (day1):");
+const price = await client.metrics.prices.usd.split.close.by.day1.first(5);
 console.log(
   `   Total: ${price.total}, Start: ${price.start}, End: ${price.end}`,
 );
 
+// Test isDateBased
+console.log("\n2. isDateBased:");
+if (!price.isDateBased) throw new Error("day1 should be date-based");
+console.log(`   day1: ${price.isDateBased}`);
+
 // Test indexes()
-console.log("\n2. indexes():");
+console.log("\n3. indexes():");
 const indexes = price.indexes();
 console.log(`   ${JSON.stringify(indexes)}`);
 if (indexes.length !== 5) throw new Error("Expected 5 indexes");
@@ -25,7 +30,7 @@ if (indexes[0] !== price.start)
   throw new Error("First index should equal start");
 
 // Test dates()
-console.log("\n3. dates():");
+console.log("\n4. dates():");
 const dates = price.dates();
 console.log(
   `   First: ${dates[0].toISOString()}, Last: ${dates[dates.length - 1].toISOString()}`,
@@ -42,81 +47,79 @@ if (
   );
 }
 
-// Test toIndexMap()
-console.log("\n4. toIndexMap():");
-const indexMap = price.toIndexMap();
+// Test keys() - date-based returns dates
+console.log("\n5. keys() (date-based):");
+const keys = price.keys();
+console.log(`   Length: ${keys.length}, First: ${keys[0].toISOString()}`);
+if (keys.length !== 5) throw new Error("Expected 5 keys");
+if (!(keys[0] instanceof Date)) throw new Error("Expected Date keys for day1");
+
+// Test entries()
+console.log("\n6. entries():");
+const entries = price.entries();
 console.log(
-  `   Size: ${indexMap.size}, First value: ${indexMap.get(price.start)}`,
+  `   First: [${entries[0][0].toISOString()}, ${entries[0][1]}]`,
 );
-if (indexMap.size !== 5) throw new Error("Expected map size 5");
-if (indexMap.get(price.start) !== price.data[0])
-  throw new Error("First value mismatch");
-
-// Test toDateMap()
-console.log("\n5. toDateMap():");
-const dateMap = price.toDateMap();
-console.log(`   Size: ${dateMap.size}`);
-if (dateMap.size !== 5) throw new Error("Expected map size 5");
-
-// Test indexEntries()
-console.log("\n6. indexEntries():");
-const indexEntries = price.indexEntries();
-console.log(`   First: [${indexEntries[0][0]}, ${indexEntries[0][1]}]`);
-if (indexEntries[0][0] !== price.start)
-  throw new Error("First entry index mismatch");
-if (indexEntries[0][1] !== price.data[0])
+if (entries[0][1] !== price.data[0])
   throw new Error("First entry value mismatch");
 
-// Test dateEntries()
-console.log("\n7. dateEntries():");
-const dateEntries = price.dateEntries();
-console.log(
-  `   First: [${dateEntries[0][0].toISOString()}, ${dateEntries[0][1]}]`,
-);
-if (dateEntries[0][1] !== price.data[0])
-  throw new Error("First entry value mismatch");
+// Test toMap()
+console.log("\n7. toMap():");
+const map = price.toMap();
+console.log(`   Size: ${map.size}`);
+if (map.size !== 5) throw new Error("Expected map size 5");
 
-// Test iter()
-console.log("\n8. iter():");
-const iterResult = [...price.iter()];
-console.log(
-  `   Length: ${iterResult.length}, First: [${iterResult[0][0]}, ${iterResult[0][1]}]`,
-);
-if (iterResult.length !== 5) throw new Error("Expected 5 items");
-
-// Test iterDates()
-console.log("\n9. iterDates():");
-const iterDatesResult = [...price.iterDates()];
-console.log(
-  `   Length: ${iterDatesResult.length}, First date: ${iterDatesResult[0][0].toISOString()}`,
-);
-if (iterDatesResult.length !== 5) throw new Error("Expected 5 items");
-
-// Test Symbol.iterator (for...of)
-console.log("\n10. for...of iteration:");
+// Test Symbol.iterator (for...of) - date-based should yield [date, value]
+console.log("\n8. for...of iteration (date-based):");
 let count = 0;
-for (const [idx, val] of price.iter()) {
+for (const [key, val] of price) {
+  if (count === 0 && !(key instanceof Date))
+    throw new Error("Expected Date keys in iteration for date-based");
   count++;
 }
 console.log(`   Iterated ${count} items`);
 if (count !== 5) throw new Error("Expected 5 iterations");
 
 // Test with non-date-based index (height)
-console.log("\n11. Testing height-based metric:");
-const heightMetric =
-  await client.metrics.price.usd.split.close.by.height.last(3);
+console.log("\n9. Testing height-based metric:");
+const heightMetric = await client.metrics.prices.usd.price.by.height.last(3);
 console.log(
   `   Total: ${heightMetric.total}, Start: ${heightMetric.start}, End: ${heightMetric.end}`,
 );
-const heightIndexes = heightMetric.indexes();
-console.log(`   Indexes: ${JSON.stringify(heightIndexes)}`);
-if (heightIndexes[0] !== heightMetric.start)
-  throw new Error("Height index mismatch");
+if (heightMetric.isDateBased) throw new Error("height should not be date-based");
+
+// Test keys() - non-date returns numbers
+const heightKeys = heightMetric.keys();
+console.log(`   keys(): ${JSON.stringify(heightKeys)}`);
+if (typeof heightKeys[0] !== "number")
+  throw new Error("Expected number keys for height");
+
+// Test entries() - non-date returns [number, value]
+const heightEntries = heightMetric.entries();
+console.log(`   entries()[0]: [${heightEntries[0][0]}, ${heightEntries[0][1]}]`);
+if (heightEntries[0][0] !== heightMetric.start)
+  throw new Error("First entry index mismatch");
+
+// Test toMap() - non-date
+const heightMap = heightMetric.toMap();
+if (heightMap.size !== 3) throw new Error("Expected map size 3");
+if (heightMap.get(heightMetric.start) !== heightMetric.data[0])
+  throw new Error("First value mismatch");
+
+// Test for...of on non-date metric
+console.log("\n10. for...of iteration (height):");
+let heightCount = 0;
+for (const [key, val] of heightMetric) {
+  if (heightCount === 0 && typeof key !== "number")
+    throw new Error("Expected number keys for height iteration");
+  heightCount++;
+}
+console.log(`   Iterated ${heightCount} items`);
 
 // Test different date indexes
-console.log("\n12. Testing monthindex:");
+console.log("\n11. Testing month1:");
 const monthMetric =
-  await client.metrics.price.usd.split.close.by.monthindex.first(3);
+  await client.metrics.prices.usd.split.close.by.month1.first(3);
 const monthDates = monthMetric.dates();
 console.log(`   First month: ${monthDates[0].toISOString()}`);
 // MonthIndex 0 = Jan 1, 2009
@@ -129,8 +132,8 @@ if (
 }
 
 // Test indexToDate directly
-console.log("\n13. Testing indexToDate():");
-const genesis = client.indexToDate("dateindex", 0);
+console.log("\n12. Testing indexToDate():");
+const genesis = client.indexToDate("day1", 0);
 if (
   genesis.getFullYear() !== 2009 ||
   genesis.getMonth() !== 0 ||
@@ -138,7 +141,7 @@ if (
 ) {
   throw new Error(`Expected genesis 2009-01-03, got ${genesis.toISOString()}`);
 }
-const dayOne = client.indexToDate("dateindex", 1);
+const dayOne = client.indexToDate("day1", 1);
 if (
   dayOne.getFullYear() !== 2009 ||
   dayOne.getMonth() !== 0 ||
@@ -146,20 +149,20 @@ if (
 ) {
   throw new Error(`Expected day one 2009-01-09, got ${dayOne.toISOString()}`);
 }
-console.log(`   dateindex 0: ${genesis.toISOString()}`);
-console.log(`   dateindex 1: ${dayOne.toISOString()}`);
+console.log(`   day1 0: ${genesis.toISOString()}`);
+console.log(`   day1 1: ${dayOne.toISOString()}`);
 
-// Test weekindex
-const week0 = client.indexToDate("weekindex", 0);
-const week1 = client.indexToDate("weekindex", 1);
+// Test week1
+const week0 = client.indexToDate("week1", 0);
+const week1 = client.indexToDate("week1", 1);
 if (week0.getTime() !== genesis.getTime())
-  throw new Error("weekindex 0 should equal genesis");
-console.log(`   weekindex 0: ${week0.toISOString()}`);
-console.log(`   weekindex 1: ${week1.toISOString()}`);
+  throw new Error("week1 0 should equal genesis");
+console.log(`   week1 0: ${week0.toISOString()}`);
+console.log(`   week1 1: ${week1.toISOString()}`);
 
-// Test yearindex
-const year0 = client.indexToDate("yearindex", 0);
-const year1 = client.indexToDate("yearindex", 1);
+// Test year1
+const year0 = client.indexToDate("year1", 0);
+const year1 = client.indexToDate("year1", 1);
 if (
   year0.getFullYear() !== 2009 ||
   year0.getMonth() !== 0 ||
@@ -167,55 +170,61 @@ if (
 ) {
   throw new Error(`Expected 2009-01-01, got ${year0.toISOString()}`);
 }
-if (year1.getFullYear() !== 2010) throw new Error("yearindex 1 should be 2010");
-console.log(`   yearindex 0: ${year0.toISOString()}`);
-console.log(`   yearindex 1: ${year1.toISOString()}`);
+if (year1.getFullYear() !== 2010) throw new Error("year1 1 should be 2010");
+console.log(`   year1 0: ${year0.toISOString()}`);
+console.log(`   year1 1: ${year1.toISOString()}`);
 
-// Test quarterindex
-const q0 = client.indexToDate("quarterindex", 0);
-const q1 = client.indexToDate("quarterindex", 1);
-if (q0.getMonth() !== 0) throw new Error("Q0 should be January");
-if (q1.getMonth() !== 3) throw new Error("Q1 should be April");
-console.log(`   quarterindex 0: ${q0.toISOString()}`);
-console.log(`   quarterindex 1: ${q1.toISOString()}`);
+// Test month3
+const q0 = client.indexToDate("month3", 0);
+const q1 = client.indexToDate("month3", 1);
+if (q0.getMonth() !== 0) throw new Error("month3 0 should be January");
+if (q1.getMonth() !== 3) throw new Error("month3 1 should be April");
+console.log(`   month3 0: ${q0.toISOString()}`);
+console.log(`   month3 1: ${q1.toISOString()}`);
 
-// Test semesterindex
-const s0 = client.indexToDate("semesterindex", 0);
-const s1 = client.indexToDate("semesterindex", 1);
-if (s0.getMonth() !== 0) throw new Error("S0 should be January");
-if (s1.getMonth() !== 6) throw new Error("S1 should be July");
-console.log(`   semesterindex 0: ${s0.toISOString()}`);
-console.log(`   semesterindex 1: ${s1.toISOString()}`);
+// Test month6
+const s0 = client.indexToDate("month6", 0);
+const s1 = client.indexToDate("month6", 1);
+if (s0.getMonth() !== 0) throw new Error("month6 0 should be January");
+if (s1.getMonth() !== 6) throw new Error("month6 1 should be July");
+console.log(`   month6 0: ${s0.toISOString()}`);
+console.log(`   month6 1: ${s1.toISOString()}`);
 
-// Test decadeindex
-const d0 = client.indexToDate("decadeindex", 0);
-const d1 = client.indexToDate("decadeindex", 1);
-if (d0.getFullYear() !== 2009) throw new Error("decadeindex 0 should be 2009");
-if (d1.getFullYear() !== 2019) throw new Error("decadeindex 1 should be 2019");
-console.log(`   decadeindex 0: ${d0.toISOString()}`);
-console.log(`   decadeindex 1: ${d1.toISOString()}`);
+// Test year10
+const d0 = client.indexToDate("year10", 0);
+const d1 = client.indexToDate("year10", 1);
+if (d0.getFullYear() !== 2009) throw new Error("year10 0 should be 2009");
+if (d1.getFullYear() !== 2019) throw new Error("year10 1 should be 2019");
+console.log(`   year10 0: ${d0.toISOString()}`);
+console.log(`   year10 1: ${d1.toISOString()}`);
 
-// Test isDateIndex
-console.log("\n14. Testing isDateIndex():");
-const dateIndexes = /** @type {const} */ ([
-  "dateindex",
-  "weekindex",
-  "monthindex",
-  "yearindex",
-  "quarterindex",
-  "semesterindex",
-  "decadeindex",
-]);
-const nonDateIndexes = /** @type {const} */ (["height", "txindex"]);
-for (const idx of dateIndexes) {
-  if (!client.isDateIndex(idx))
-    throw new Error(`${idx} should be a date index`);
-}
-for (const idx of nonDateIndexes) {
-  if (client.isDateIndex(idx))
-    throw new Error(`${idx} should not be a date index`);
-}
-console.log(`   Date indexes: ${dateIndexes.join(", ")} ✓`);
-console.log(`   Non-date indexes: ${nonDateIndexes.join(", ")} ✓`);
+// Test dateToIndex
+console.log("\n13. Testing dateToIndex():");
+const idx = client.dateToIndex("day1", new Date(Date.UTC(2009, 0, 9)));
+if (idx !== 1) throw new Error(`Expected day1 index 1, got ${idx}`);
+console.log(`   day1 2009-01-09: ${idx}`);
+
+const monthIdx = client.dateToIndex("month1", new Date(Date.UTC(2010, 0, 1)));
+if (monthIdx !== 12) throw new Error(`Expected month1 index 12, got ${monthIdx}`);
+console.log(`   month1 2010-01-01: ${monthIdx}`);
+
+const yearIdx = client.dateToIndex("year1", new Date(Date.UTC(2019, 0, 1)));
+if (yearIdx !== 10) throw new Error(`Expected year1 index 10, got ${yearIdx}`);
+console.log(`   year1 2019-01-01: ${yearIdx}`);
+
+// Test roundtrip: indexToDate -> dateToIndex
+const testDate = client.indexToDate("day1", 100);
+const roundtrip = client.dateToIndex("day1", testDate);
+if (roundtrip !== 100) throw new Error(`Roundtrip failed: expected 100, got ${roundtrip}`);
+console.log(`   Roundtrip day1 100: ${testDate.toISOString()} -> ${roundtrip}`);
+
+// Test slice with Date
+console.log("\n14. Testing slice with Date:");
+const dateSlice = await client.metrics.prices.usd.split.close.by.day1
+  .slice(new Date(Date.UTC(2020, 0, 1)), new Date(Date.UTC(2020, 0, 4)))
+  .fetch();
+console.log(`   Slice start: ${dateSlice.start}, end: ${dateSlice.end}, items: ${dateSlice.data.length}`);
+if (dateSlice.data.length !== dateSlice.end - dateSlice.start)
+  throw new Error("Slice data length mismatch");
 
 console.log("\nAll MetricData tests passed!");

@@ -54,9 +54,9 @@ pub fn to_camel_case(s: &str) -> String {
     }
 }
 
-/// Convert an Index to a snake_case field name (e.g., DateIndex -> dateindex).
+/// Convert an Index to a snake_case field name (e.g., Day1 -> day1).
 pub fn index_to_field_name(index: &Index) -> String {
-    to_snake_case(index.serialize_long())
+    to_snake_case(index.name())
 }
 
 /// Generate a child type/struct/class name (e.g., ParentName + child_name -> ParentName_ChildName).

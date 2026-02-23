@@ -1,46 +1,54 @@
 use brk_error::Result;
 use vecdb::Exit;
 
-use crate::{blocks, distribution, price, ComputeIndexes};
+use crate::{ComputeIndexes, blocks, distribution, indexes, mining, prices};
 
 use super::Vecs;
 
 impl Vecs {
-    pub fn compute(
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn compute(
         &mut self,
-        price: &price::Vecs,
+        indexes: &indexes::Vecs,
+        prices: &prices::Vecs,
         blocks: &blocks::Vecs,
+        mining: &mining::Vecs,
         distribution: &distribution::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         // ATH metrics (independent)
-        self.ath.compute(price, starting_indexes, exit)?;
+        self.ath.compute(prices, starting_indexes, exit)?;
 
         // Lookback metrics (independent)
-        self.lookback.compute(price, starting_indexes, exit)?;
+        self.lookback
+            .compute(blocks, prices, starting_indexes, exit)?;
 
         // Returns metrics (depends on lookback)
-        self.returns.compute(starting_indexes, exit)?;
+        self.returns
+            .compute(indexes, blocks, starting_indexes, exit)?;
 
         // Volatility: all fields are lazy (derived from returns SD)
 
         // Range metrics (independent)
-        self.range.compute(price, starting_indexes, exit)?;
+        self.range
+            .compute(prices, blocks, starting_indexes, exit)?;
 
         // Moving average metrics (independent)
-        self.moving_average.compute(price, starting_indexes, exit)?;
+        self.moving_average
+            .compute(blocks, prices, indexes, starting_indexes, exit)?;
 
         // DCA metrics (depends on lookback for lump sum comparison)
         self.dca
-            .compute(price, &self.lookback, starting_indexes, exit)?;
+            .compute(indexes, prices, blocks, &self.lookback, starting_indexes, exit)?;
 
         self.indicators.compute(
-            &blocks.rewards,
+            indexes,
+            &mining.rewards,
             &self.returns,
-            &self.moving_average,
             &self.range,
-            price,
+            prices,
+            blocks,
             distribution,
             starting_indexes,
             exit,

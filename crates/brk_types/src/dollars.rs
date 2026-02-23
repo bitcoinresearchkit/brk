@@ -3,7 +3,7 @@ use std::{
     f64,
     hash::{Hash, Hasher},
     iter::Sum,
-    ops::{Add, AddAssign, Div, Mul, Neg, Sub},
+    ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
 };
 
 use derive_more::Deref;
@@ -350,6 +350,12 @@ impl AddAssign for Dollars {
     }
 }
 
+impl SubAssign for Dollars {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = Dollars::from(CentsSigned::from(*self) - CentsSigned::from(rhs));
+    }
+}
+
 impl CheckedSub for Dollars {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         if self.is_nan() {
@@ -428,7 +434,8 @@ impl std::fmt::Display for Dollars {
 
 impl Formattable for Dollars {
     #[inline(always)]
-    fn may_need_escaping() -> bool {
-        false
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+        use std::fmt::Write;
+        write!(f, "{}", self)
     }
 }

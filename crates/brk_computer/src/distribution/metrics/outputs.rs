@@ -2,22 +2,22 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, StoredF64, StoredU64};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec};
+use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::{ComputeIndexes, indexes, internal::{ComputedFromDateLast, ComputedFromHeightLast}};
+use crate::{ComputeIndexes, blocks, internal::ComputedFromHeightLast};
 
 use super::ImportConfig;
 
 /// Output metrics for a cohort.
-#[derive(Clone, Traversable)]
-pub struct OutputsMetrics {
-    pub utxo_count: ComputedFromHeightLast<StoredU64>,
-    pub utxo_count_30d_change: ComputedFromDateLast<StoredF64>,
+#[derive(Traversable)]
+pub struct OutputsMetrics<M: StorageMode = Rw> {
+    pub utxo_count: ComputedFromHeightLast<StoredU64, M>,
+    pub utxo_count_30d_change: ComputedFromHeightLast<StoredF64, M>,
 }
 
 impl OutputsMetrics {
     /// Import output metrics from database.
-    pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
+    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             utxo_count: ComputedFromHeightLast::forced_import(
                 cfg.db,
@@ -25,7 +25,7 @@ impl OutputsMetrics {
                 cfg.version,
                 cfg.indexes,
             )?,
-            utxo_count_30d_change: ComputedFromDateLast::forced_import(
+            utxo_count_30d_change: ComputedFromHeightLast::forced_import(
                 cfg.db,
                 &cfg.name("utxo_count_30d_change"),
                 cfg.version,
@@ -35,12 +35,12 @@ impl OutputsMetrics {
     }
 
     /// Get minimum length across height-indexed vectors.
-    pub fn min_len(&self) -> usize {
+    pub(crate) fn min_len(&self) -> usize {
         self.utxo_count.height.len()
     }
 
     /// Push utxo count to height-indexed vector.
-    pub fn truncate_push(&mut self, height: Height, utxo_count: u64) -> Result<()> {
+    pub(crate) fn truncate_push(&mut self, height: Height, utxo_count: u64) -> Result<()> {
         self.utxo_count
             .height
             .truncate_push(height, StoredU64::from(utxo_count))?;
@@ -48,16 +48,12 @@ impl OutputsMetrics {
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        vec![
-            &mut self.utxo_count.height as &mut dyn AnyStoredVec,
-            &mut self.utxo_count_30d_change.dateindex as &mut dyn AnyStoredVec,
-        ]
-        .into_par_iter()
+    pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        vec![&mut self.utxo_count.height as &mut dyn AnyStoredVec].into_par_iter()
     }
 
     /// Compute aggregate values from separate cohorts.
-    pub fn compute_from_stateful(
+    pub(crate) fn compute_from_stateful(
         &mut self,
         starting_indexes: &ComputeIndexes,
         others: &[&Self],
@@ -74,26 +70,19 @@ impl OutputsMetrics {
         Ok(())
     }
 
-    /// Compute derived metrics (dateindex from height).
-    pub fn compute_rest(
+    /// Compute derived metrics.
+    pub(crate) fn compute_rest(
         &mut self,
-        indexes: &indexes::Vecs,
+        blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.utxo_count
-            .compute_rest(indexes, starting_indexes, exit)?;
-
-        self.utxo_count_30d_change
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_change(
-                    starting_indexes.dateindex,
-                    &*self.utxo_count.dateindex,
-                    30,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.utxo_count_30d_change.height.compute_rolling_change(
+            starting_indexes.height,
+            &blocks.count.height_1m_ago,
+            &self.utxo_count.height,
+            exit,
+        )?;
 
         Ok(())
     }

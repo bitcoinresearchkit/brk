@@ -9,7 +9,7 @@ use crate::{ComputeIndexes, indexes, inputs};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,

@@ -1,13 +1,10 @@
-use brk_types::{Age, CentsUnsigned, Height};
+use brk_types::{Age, Height};
 use rustc_hash::FxHashMap;
 use vecdb::VecIndex;
 
-use crate::{
-    distribution::{
-        compute::PriceRangeMax,
-        state::{BlockState, Transacted},
-    },
-    utils::OptionExt,
+use crate::distribution::{
+    compute::PriceRangeMax,
+    state::{BlockState, Transacted},
 };
 
 use super::groups::UTXOCohorts;
@@ -20,11 +17,11 @@ impl UTXOCohorts {
     ///
     /// `price_range_max` is used to compute the peak price during each UTXO's holding period
     /// for accurate peak regret calculation.
-    pub fn send(
+    pub(crate) fn send(
         &mut self,
         height_to_sent: FxHashMap<Height, Transacted>,
         chain_state: &mut [BlockState],
-        price_range_max: Option<&PriceRangeMax>,
+        price_range_max: &PriceRangeMax,
     ) {
         if chain_state.is_empty() {
             return;
@@ -46,12 +43,11 @@ impl UTXOCohorts {
             let age = Age::new(last_timestamp, block_state.timestamp, blocks_old);
 
             // Compute peak price during holding period for peak regret
-            // This is the max HIGH price between receive and send heights
-            let peak_price: Option<CentsUnsigned> =
-                price_range_max.map(|t| t.max_between(receive_height, send_height));
+            // This is the max price between receive and send heights
+            let peak_price = price_range_max.max_between(receive_height, send_height);
 
             // Update age range cohort (direct index lookup)
-            self.0.age_range.get_mut(age).state.um().send_utxo(
+            self.0.age_range.get_mut(age).state.as_mut().unwrap().send_utxo(
                 &sent.spendable_supply,
                 current_price,
                 prev_price,
@@ -64,7 +60,7 @@ impl UTXOCohorts {
                 .epoch
                 .mut_vec_from_height(receive_height)
                 .state
-                .um()
+                .as_mut().unwrap()
                 .send_utxo(
                     &sent.spendable_supply,
                     current_price,
@@ -78,7 +74,7 @@ impl UTXOCohorts {
                 .year
                 .mut_vec_from_timestamp(block_state.timestamp)
                 .state
-                .um()
+                .as_mut().unwrap()
                 .send_utxo(
                     &sent.spendable_supply,
                     current_price,
@@ -92,24 +88,26 @@ impl UTXOCohorts {
                 .spendable
                 .iter_typed()
                 .for_each(|(output_type, supply_state)| {
-                    self.0
-                        .type_
-                        .get_mut(output_type)
-                        .state
-                        .um()
-                        .send_utxo(supply_state, current_price, prev_price, peak_price, age)
+                    self.0.type_.get_mut(output_type).state.as_mut().unwrap().send_utxo(
+                        supply_state,
+                        current_price,
+                        prev_price,
+                        peak_price,
+                        age,
+                    )
                 });
 
             // Update amount range cohorts
             sent.by_size_group
                 .iter_typed()
                 .for_each(|(group, supply_state)| {
-                    self.0
-                        .amount_range
-                        .get_mut(group)
-                        .state
-                        .um()
-                        .send_utxo(supply_state, current_price, prev_price, peak_price, age);
+                    self.0.amount_range.get_mut(group).state.as_mut().unwrap().send_utxo(
+                        supply_state,
+                        current_price,
+                        prev_price,
+                        peak_price,
+                        age,
+                    );
                 });
         }
     }

@@ -3,48 +3,49 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::{ComputedFromDateLast, ValueFromHeightSum, ValueFromDateLast}, price};
+use crate::{
+    indexes,
+    internal::{ComputedFromHeightLast, ValueFromHeightLast, ValueFromHeightSum},
+    prices,
+};
 
 impl Vecs {
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
     ) -> Result<Self> {
         let v2 = Version::TWO;
-        let compute_dollars = price.is_some();
-
         Ok(Self {
-            sent_sum: ValueFromHeightSum::forced_import(
-                db,
-                "sent_sum",
-                version,
-                indexes,
-                price,
-            )?,
+            sent_sum: ValueFromHeightSum::forced_import(db, "sent_sum", version, indexes, prices)?,
             received_sum: ValueFromHeightSum::forced_import(
                 db,
                 "received_sum",
                 version,
                 indexes,
-                price,
+                prices,
             )?,
-            annualized_volume: ValueFromDateLast::forced_import(
+            annualized_volume: ValueFromHeightLast::forced_import(
                 db,
                 "annualized_volume",
                 version,
-                compute_dollars,
+                indexes,
+                prices,
+            )?,
+            tx_per_sec: ComputedFromHeightLast::forced_import(
+                db,
+                "tx_per_sec",
+                version + v2,
                 indexes,
             )?,
-            tx_per_sec: ComputedFromDateLast::forced_import(db, "tx_per_sec", version + v2, indexes)?,
-            outputs_per_sec: ComputedFromDateLast::forced_import(
+            outputs_per_sec: ComputedFromHeightLast::forced_import(
                 db,
                 "outputs_per_sec",
                 version + v2,
                 indexes,
             )?,
-            inputs_per_sec: ComputedFromDateLast::forced_import(
+            inputs_per_sec: ComputedFromHeightLast::forced_import(
                 db,
                 "inputs_per_sec",
                 version + v2,

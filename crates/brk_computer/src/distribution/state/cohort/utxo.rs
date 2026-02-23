@@ -6,26 +6,24 @@ use derive_more::{Deref, DerefMut};
 
 use super::{super::cost_basis::RealizedState, base::CohortState};
 
-#[derive(Clone, Deref, DerefMut)]
+#[derive(Deref, DerefMut)]
 pub struct UTXOCohortState(CohortState);
 
 impl UTXOCohortState {
-    pub fn new(path: &Path, name: &str, compute_dollars: bool) -> Self {
-        Self(CohortState::new(path, name, compute_dollars))
+    pub(crate) fn new(path: &Path, name: &str) -> Self {
+        Self(CohortState::new(path, name))
     }
 
-    pub fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
+    pub(crate) fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
         self.0.reset_cost_basis_data_if_needed()
     }
 
     /// Reset state for fresh start.
-    pub fn reset(&mut self) {
+    pub(crate) fn reset(&mut self) {
         self.0.supply = SupplyState::default();
         self.0.sent = Sats::ZERO;
         self.0.satblocks_destroyed = Sats::ZERO;
         self.0.satdays_destroyed = Sats::ZERO;
-        if let Some(realized) = self.0.realized.as_mut() {
-            *realized = RealizedState::default();
-        }
+        self.0.realized = RealizedState::default();
     }
 }

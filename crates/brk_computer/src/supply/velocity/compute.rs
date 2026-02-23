@@ -2,45 +2,37 @@ use brk_error::Result;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, distribution, transactions};
+use crate::{blocks, ComputeIndexes, distribution, transactions};
 
 impl Vecs {
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
+        blocks: &blocks::Vecs,
         transactions: &transactions::Vecs,
         distribution: &distribution::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        // velocity = annualized_volume / circulating_supply
+        // velocity = rolling_1y_sum(volume) / circulating_supply
         let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.total;
 
-        // BTC velocity
-        self.btc.compute_all(starting_indexes, exit, |v| {
-            v.compute_divide(
-                starting_indexes.dateindex,
-                &*transactions.volume.annualized_volume.bitcoin.dateindex,
-                &*circulating_supply.bitcoin.dateindex,
-                exit,
-            )?;
-            Ok(())
-        })?;
+        // BTC velocity at height level
+        self.btc.height.compute_rolling_ratio(
+            starting_indexes.height,
+            &blocks.count.height_1y_ago,
+            &transactions.volume.sent_sum.sats.height,
+            &circulating_supply.sats.height,
+            exit,
+        )?;
 
-        // USD velocity
-        if let Some(usd_velocity) = self.usd.as_mut()
-            && let Some(supply_usd) = circulating_supply.dollars.as_ref()
-            && let Some(volume_usd) = transactions.volume.annualized_volume.dollars.as_ref()
-        {
-            usd_velocity.compute_all(starting_indexes, exit, |v| {
-                v.compute_divide(
-                    starting_indexes.dateindex,
-                    &volume_usd.dateindex,
-                    &supply_usd.dateindex.0,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        }
+        // USD velocity at height level
+        self.usd.height.compute_rolling_ratio(
+            starting_indexes.height,
+            &blocks.count.height_1y_ago,
+            &transactions.volume.sent_sum.usd.height,
+            &circulating_supply.usd.height,
+            exit,
+        )?;
 
         Ok(())
     }

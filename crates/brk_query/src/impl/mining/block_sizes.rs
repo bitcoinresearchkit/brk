@@ -1,8 +1,8 @@
 use brk_error::Result;
 use brk_types::{BlockSizeEntry, BlockSizesWeights, BlockWeightEntry, TimePeriod};
-use vecdb::{IterableVec, VecIndex};
+use vecdb::{ReadableVec, VecIndex};
 
-use super::dateindex_iter::DateIndexIter;
+use super::day1_iter::Day1Iter;
 use crate::Query;
 
 impl Query {
@@ -13,34 +13,30 @@ impl Query {
             .to_usize()
             .saturating_sub(time_period.block_count());
 
-        let iter = DateIndexIter::new(computer, start, current_height.to_usize());
+        let iter = Day1Iter::new(computer, start, current_height.to_usize());
 
-        let mut sizes_vec = computer
+        let sizes_vec = &computer
             .blocks
             .size
             .size
-            .dateindex
-            .distribution
-            .average()
-            .iter();
-        let mut weights_vec = computer
+            .day1
+            .average;
+        let weights_vec = &computer
             .blocks
             .weight
             .weight
-            .dateindex
-            .distribution
-            .average()
-            .iter();
+            .day1
+            .average;
 
         let entries: Vec<_> = iter.collect(|di, ts, h| {
-            let size = sizes_vec.get(di).map(|s| *s);
-            let weight = weights_vec.get(di).map(|w| *w);
+            let size = sizes_vec.collect_one(di).map(|s| *s);
+            let weight = weights_vec.collect_one(di).map(|w| *w);
             Some((h.into(), (*ts), size, weight))
         });
 
         let sizes = entries
             .iter()
-            .filter_map(|(h, ts, size, _)| {
+            .filter_map(|(h, ts, size, _): &(u32, _, _, _)| {
                 size.map(|s| BlockSizeEntry {
                     avg_height: *h,
                     timestamp: *ts,
@@ -51,7 +47,7 @@ impl Query {
 
         let weights = entries
             .iter()
-            .filter_map(|(h, ts, _, weight)| {
+            .filter_map(|(h, ts, _, weight): &(u32, _, _, _)| {
                 weight.map(|w| BlockWeightEntry {
                     avg_height: *h,
                     timestamp: *ts,

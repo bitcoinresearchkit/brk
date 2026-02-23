@@ -3,29 +3,29 @@ use std::path::Path;
 use brk_cohort::{CohortContext, Filter, Filtered, StateLevel};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{CentsUnsigned, DateIndex, Dollars, Height, Version};
+use brk_types::{Cents, Dollars, Height, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
+use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{ComputeIndexes, distribution::state::UTXOCohortState, indexes, price};
+use crate::{ComputeIndexes, blocks, distribution::state::UTXOCohortState, indexes, prices};
 
 use crate::distribution::metrics::{CohortMetrics, ImportConfig, RealizedMetrics, SupplyMetrics};
 
 use super::super::traits::{CohortVecs, DynCohortVecs};
 
 /// UTXO cohort with metrics and optional runtime state.
-#[derive(Clone, Traversable)]
-pub struct UTXOCohortVecs {
+#[derive(Traversable)]
+pub struct UTXOCohortVecs<M: StorageMode = Rw> {
     /// Starting height when state was imported
     state_starting_height: Option<Height>,
 
     /// Runtime state for block-by-block processing (separate cohorts only)
     #[traversable(skip)]
-    pub state: Option<UTXOCohortState>,
+    pub state: Option<Box<UTXOCohortState>>,
 
     /// Metric vectors
     #[traversable(flatten)]
-    pub metrics: CohortMetrics,
+    pub metrics: CohortMetrics<M>,
 }
 
 impl UTXOCohortVecs {
@@ -37,19 +37,18 @@ impl UTXOCohortVecs {
     /// `up_to_1h_realized` is used for cohorts where `compute_adjusted()` is true,
     /// to create lazy adjusted vecs: adjusted = cohort - up_to_1h.
     #[allow(clippy::too_many_arguments)]
-    pub fn forced_import(
+    pub(crate) fn forced_import(
         db: &Database,
         filter: Filter,
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        prices: &prices::Vecs,
         states_path: &Path,
         state_level: StateLevel,
         all_supply: Option<&SupplyMetrics>,
         up_to_1h_realized: Option<&RealizedMetrics>,
     ) -> Result<Self> {
-        let compute_dollars = price.is_some();
         let full_name = CohortContext::Utxo.full_name(&filter, name);
 
         let cfg = ImportConfig {
@@ -59,7 +58,7 @@ impl UTXOCohortVecs {
             context: CohortContext::Utxo,
             version,
             indexes,
-            price,
+            prices,
             up_to_1h_realized,
         };
 
@@ -67,11 +66,7 @@ impl UTXOCohortVecs {
             state_starting_height: None,
 
             state: if state_level.is_full() {
-                Some(UTXOCohortState::new(
-                    states_path,
-                    &full_name,
-                    compute_dollars,
-                ))
+                Some(Box::new(UTXOCohortState::new(states_path, &full_name)))
             } else {
                 None
             },
@@ -80,18 +75,8 @@ impl UTXOCohortVecs {
         })
     }
 
-    /// Get the starting height when state was imported.
-    pub fn state_starting_height(&self) -> Option<Height> {
-        self.state_starting_height
-    }
-
-    /// Set the state starting height.
-    pub fn set_state_starting_height(&mut self, height: Height) {
-        self.state_starting_height = Some(height);
-    }
-
     /// Reset state starting height to zero and reset state values.
-    pub fn reset_state_starting_height(&mut self) {
+    pub(crate) fn reset_state_starting_height(&mut self) {
         self.state_starting_height = Some(Height::ZERO);
         if let Some(state) = self.state.as_mut() {
             state.reset();
@@ -99,12 +84,12 @@ impl UTXOCohortVecs {
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
-    pub fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         self.metrics.par_iter_mut()
     }
 
     /// Commit state to disk (separate from vec writes for parallelization).
-    pub fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
+    pub(crate) fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
         if let Some(state) = self.state.as_mut() {
             state.write(height, cleanup)?;
         }
@@ -123,10 +108,6 @@ impl DynCohortVecs for UTXOCohortVecs {
         self.metrics.min_stateful_height_len()
     }
 
-    fn min_stateful_dateindex_len(&self) -> usize {
-        self.metrics.min_stateful_dateindex_len()
-    }
-
     fn reset_state_starting_height(&mut self) {
         self.state_starting_height = Some(Height::ZERO);
         if let Some(state) = self.state.as_mut() {
@@ -135,8 +116,6 @@ impl DynCohortVecs for UTXOCohortVecs {
     }
 
     fn import_state(&mut self, starting_height: Height) -> Result<Height> {
-        use vecdb::GenericStoredVec;
-
         // Import state from runtime state if present
         if let Some(state) = self.state.as_mut() {
             // State files are saved AT height H, so to resume at H+1 we need to import at H
@@ -152,13 +131,15 @@ impl DynCohortVecs for UTXOCohortVecs {
                     .total
                     .sats
                     .height
-                    .read_once(prev_height)?;
+                    .collect_one(prev_height)
+                    .unwrap();
                 state.supply.utxo_count = *self
                     .metrics
                     .outputs
                     .utxo_count
                     .height
-                    .read_once(prev_height)?;
+                    .collect_one(prev_height)
+                    .unwrap();
 
                 // Restore realized cap from persisted exact values
                 state.restore_realized_cap();
@@ -197,16 +178,12 @@ impl DynCohortVecs for UTXOCohortVecs {
     fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
-        height_price: Option<CentsUnsigned>,
-        dateindex: Option<DateIndex>,
-        date_price: Option<Option<CentsUnsigned>>,
+        height_price: Cents,
     ) -> Result<()> {
         if let Some(state) = self.state.as_mut() {
             self.metrics.compute_then_truncate_push_unrealized_states(
                 height,
                 height_price,
-                dateindex,
-                date_price,
                 state,
             )?;
         }
@@ -215,13 +192,13 @@ impl DynCohortVecs for UTXOCohortVecs {
 
     fn compute_rest_part1(
         &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
-            .compute_rest_part1(indexes, price, starting_indexes, exit)
+            .compute_rest_part1(blocks, prices, starting_indexes, exit)
     }
 }
 
@@ -241,19 +218,17 @@ impl CohortVecs for UTXOCohortVecs {
 
     fn compute_rest_part2(
         &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
-        height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
-        dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
+        height_to_market_cap: Option<&impl ReadableVec<Height, Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics.compute_rest_part2(
-            indexes,
-            price,
+            blocks,
+            prices,
             starting_indexes,
             height_to_market_cap,
-            dateindex_to_market_cap,
             exit,
         )
     }
