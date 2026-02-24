@@ -57,6 +57,20 @@ impl BrkClient {{
             index,
         )
     }}
+
+    /// Create a dynamic date-based metric endpoint builder.
+    ///
+    /// Returns `Err` if the index is not date-based.
+    pub fn date_metric(&self, metric: impl Into<Metric>, index: Index) -> Result<DateMetricEndpointBuilder<serde_json::Value>> {{
+        if !index.is_date_based() {{
+            return Err(BrkError {{ message: format!("{{}} is not a date-based index", index.name()) }});
+        }}
+        Ok(DateMetricEndpointBuilder::new(
+            self.base.clone(),
+            Arc::from(metric.into().as_str()),
+            index,
+        ))
+    }}
 "#,
         VERSION = VERSION
     )

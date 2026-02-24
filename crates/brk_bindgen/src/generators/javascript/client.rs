@@ -128,20 +128,14 @@ function dateToIndex(index, d) {{
  * Wrap raw metric data with helper methods.
  * @template T
  * @param {{MetricData<T>}} raw - Raw JSON response
- * @returns {{MetricData<T>}}
+ * @returns {{DateMetricData<T>}}
  */
 function _wrapMetricData(raw) {{
   const {{ index, start, end, data }} = raw;
   const _dateBased = _DATE_INDEXES.has(index);
-  return /** @type {{MetricData<T>}} */ ({{
+  return /** @type {{DateMetricData<T>}} */ ({{
     ...raw,
     isDateBased: _dateBased,
-    dates() {{
-      /** @type {{globalThis.Date[]}} */
-      const result = [];
-      for (let i = start; i < end; i++) result.push(indexToDate(index, i));
-      return result;
-    }},
     indexes() {{
       /** @type {{number[]}} */
       const result = [];
@@ -149,41 +143,48 @@ function _wrapMetricData(raw) {{
       return result;
     }},
     keys() {{
-      return _dateBased ? this.dates() : this.indexes();
+      return this.indexes();
     }},
     entries() {{
-      /** @type {{Array<[globalThis.Date | number, T]>}} */
+      /** @type {{Array<[number, T]>}} */
       const result = [];
-      if (_dateBased) {{
-        for (let i = 0; i < data.length; i++) result.push([indexToDate(index, start + i), data[i]]);
-      }} else {{
-        for (let i = 0; i < data.length; i++) result.push([start + i, data[i]]);
-      }}
+      for (let i = 0; i < data.length; i++) result.push([start + i, data[i]]);
       return result;
     }},
     toMap() {{
-      /** @type {{Map<globalThis.Date | number, T>}} */
+      /** @type {{Map<number, T>}} */
       const map = new Map();
-      if (_dateBased) {{
-        for (let i = 0; i < data.length; i++) map.set(indexToDate(index, start + i), data[i]);
-      }} else {{
-        for (let i = 0; i < data.length; i++) map.set(start + i, data[i]);
-      }}
+      for (let i = 0; i < data.length; i++) map.set(start + i, data[i]);
       return map;
     }},
     *[Symbol.iterator]() {{
-      if (_dateBased) {{
-        for (let i = 0; i < data.length; i++) yield [indexToDate(index, start + i), data[i]];
-      }} else {{
-        for (let i = 0; i < data.length; i++) yield [start + i, data[i]];
-      }}
+      for (let i = 0; i < data.length; i++) yield /** @type {{[number, T]}} */ ([start + i, data[i]]);
+    }},
+    // DateMetricData methods (only meaningful for date-based indexes)
+    dates() {{
+      /** @type {{globalThis.Date[]}} */
+      const result = [];
+      for (let i = start; i < end; i++) result.push(indexToDate(index, i));
+      return result;
+    }},
+    dateEntries() {{
+      /** @type {{Array<[globalThis.Date, T]>}} */
+      const result = [];
+      for (let i = 0; i < data.length; i++) result.push([indexToDate(index, start + i), data[i]]);
+      return result;
+    }},
+    toDateMap() {{
+      /** @type {{Map<globalThis.Date, T>}} */
+      const map = new Map();
+      for (let i = 0; i < data.length; i++) map.set(indexToDate(index, start + i), data[i]);
+      return map;
     }},
   }});
 }}
 
 /**
  * @template T
- * @typedef {{Object}} MetricData
+ * @typedef {{Object}} MetricDataBase
  * @property {{number}} version - Version of the metric data
  * @property {{Index}} index - The index type used for this query
  * @property {{number}} total - Total number of data points
@@ -192,26 +193,33 @@ function _wrapMetricData(raw) {{
  * @property {{string}} stamp - ISO 8601 timestamp of when the response was generated
  * @property {{T[]}} data - The metric data
  * @property {{boolean}} isDateBased - Whether this metric uses a date-based index
- * @property {{() => (globalThis.Date[] | number[])}} keys - Get keys (dates for date-based, index numbers otherwise)
- * @property {{() => Array<[globalThis.Date | number, T]>}} entries - Get [key, value] pairs (dates for date-based, index numbers otherwise)
- * @property {{() => Map<globalThis.Date | number, T>}} toMap - Return data as Map (dates for date-based, index numbers otherwise)
- * @property {{() => globalThis.Date[]}} dates - Get dates (date-based indexes only, throws otherwise)
  * @property {{() => number[]}} indexes - Get index numbers
+ * @property {{() => number[]}} keys - Get keys as index numbers (alias for indexes)
+ * @property {{() => Array<[number, T]>}} entries - Get [index, value] pairs
+ * @property {{() => Map<number, T>}} toMap - Convert to Map<index, value>
  */
+
+/** @template T @typedef {{MetricDataBase<T> & Iterable<[number, T]>}} MetricData */
+
+/**
+ * @template T
+ * @typedef {{Object}} DateMetricDataExtras
+ * @property {{() => globalThis.Date[]}} dates - Get dates for each data point
+ * @property {{() => Array<[globalThis.Date, T]>}} dateEntries - Get [date, value] pairs
+ * @property {{() => Map<globalThis.Date, T>}} toDateMap - Convert to Map<date, value>
+ */
+
+/** @template T @typedef {{MetricData<T> & DateMetricDataExtras<T>}} DateMetricData */
 /** @typedef {{MetricData<any>}} AnyMetricData */
 
-/**
- * Thenable interface for await support.
- * @template T
- * @typedef {{(onfulfilled?: (value: MetricData<T>) => MetricData<T>, onrejected?: (reason: Error) => never) => Promise<MetricData<T>>}} Thenable
- */
+/** @template T @typedef {{(onfulfilled?: (value: MetricData<T>) => any, onrejected?: (reason: Error) => never) => Promise<MetricData<T>>}} Thenable */
+/** @template T @typedef {{(onfulfilled?: (value: DateMetricData<T>) => any, onrejected?: (reason: Error) => never) => Promise<DateMetricData<T>>}} DateThenable */
 
 /**
- * Metric endpoint builder. Callable (returns itself) so both .by.day1 and .by.day1() work.
  * @template T
  * @typedef {{Object}} MetricEndpointBuilder
  * @property {{(index: number) => SingleItemBuilder<T>}} get - Get single item at index
- * @property {{(start?: number | globalThis.Date, end?: number | globalThis.Date) => RangeBuilder<T>}} slice - Slice by index or Date
+ * @property {{(start?: number, end?: number) => RangeBuilder<T>}} slice - Slice by index
  * @property {{(n: number) => RangeBuilder<T>}} first - Get first n items
  * @property {{(n: number) => RangeBuilder<T>}} last - Get last n items
  * @property {{(n: number) => SkippedBuilder<T>}} skip - Skip first n items, chain with take()
@@ -220,38 +228,66 @@ function _wrapMetricData(raw) {{
  * @property {{Thenable<T>}} then - Thenable (await endpoint)
  * @property {{string}} path - The endpoint path
  */
-/** @typedef {{MetricEndpointBuilder<any>}} AnyMetricEndpointBuilder */
 
 /**
  * @template T
- * @typedef {{Object}} SingleItemBuilder
+ * @typedef {{Object}} DateMetricEndpointBuilder
+ * @property {{(index: number | globalThis.Date) => DateSingleItemBuilder<T>}} get - Get single item at index or Date
+ * @property {{(start?: number | globalThis.Date, end?: number | globalThis.Date) => DateRangeBuilder<T>}} slice - Slice by index or Date
+ * @property {{(n: number) => DateRangeBuilder<T>}} first - Get first n items
+ * @property {{(n: number) => DateRangeBuilder<T>}} last - Get last n items
+ * @property {{(n: number) => DateSkippedBuilder<T>}} skip - Skip first n items, chain with take()
+ * @property {{(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>}} fetch - Fetch all data
+ * @property {{() => Promise<string>}} fetchCsv - Fetch all data as CSV
+ * @property {{DateThenable<T>}} then - Thenable (await endpoint)
+ * @property {{string}} path - The endpoint path
+ */
+
+/** @typedef {{MetricEndpointBuilder<any>}} AnyMetricEndpointBuilder */
+
+/** @template T @typedef {{Object}} SingleItemBuilder
  * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} fetch - Fetch the item
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{Thenable<T>}} then - Thenable
  */
 
-/**
- * @template T
- * @typedef {{Object}} SkippedBuilder
+/** @template T @typedef {{Object}} DateSingleItemBuilder
+ * @property {{(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>}} fetch - Fetch the item
+ * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
+ * @property {{DateThenable<T>}} then - Thenable
+ */
+
+/** @template T @typedef {{Object}} SkippedBuilder
  * @property {{(n: number) => RangeBuilder<T>}} take - Take n items after skipped position
  * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} fetch - Fetch from skipped position to end
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{Thenable<T>}} then - Thenable
  */
 
-/**
- * @template T
- * @typedef {{Object}} RangeBuilder
+/** @template T @typedef {{Object}} DateSkippedBuilder
+ * @property {{(n: number) => DateRangeBuilder<T>}} take - Take n items after skipped position
+ * @property {{(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>}} fetch - Fetch from skipped position to end
+ * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
+ * @property {{DateThenable<T>}} then - Thenable
+ */
+
+/** @template T @typedef {{Object}} RangeBuilder
  * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} fetch - Fetch the range
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{Thenable<T>}} then - Thenable
+ */
+
+/** @template T @typedef {{Object}} DateRangeBuilder
+ * @property {{(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>}} fetch - Fetch the range
+ * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
+ * @property {{DateThenable<T>}} then - Thenable
  */
 
 /**
  * @template T
  * @typedef {{Object}} MetricPattern
  * @property {{string}} name - The metric name
- * @property {{Readonly<Partial<Record<Index, MetricEndpointBuilder<T>>>>}} by - Index endpoints as lazy getters. Access via .by.day1 or .by['day1']
+ * @property {{Readonly<Partial<Record<Index, MetricEndpointBuilder<T>>>>}} by - Index endpoints as lazy getters
  * @property {{() => readonly Index[]}} indexes - Get the list of available indexes
  * @property {{(index: Index) => MetricEndpointBuilder<T>|undefined}} get - Get an endpoint for a specific index
  */
@@ -264,7 +300,7 @@ function _wrapMetricData(raw) {{
  * @param {{BrkClientBase}} client
  * @param {{string}} name - The metric vec name
  * @param {{Index}} index - The index name
- * @returns {{MetricEndpointBuilder<T>}}
+ * @returns {{DateMetricEndpointBuilder<T>}}
  */
 function _endpoint(client, name, index) {{
   const p = `/api/metric/${{name}}/${{index}}`;
@@ -287,7 +323,7 @@ function _endpoint(client, name, index) {{
   /**
    * @param {{number}} [start]
    * @param {{number}} [end]
-   * @returns {{RangeBuilder<T>}}
+   * @returns {{DateRangeBuilder<T>}}
    */
   const rangeBuilder = (start, end) => ({{
     fetch(onUpdate) {{ return client._fetchMetricData(buildPath(start, end), onUpdate); }},
@@ -297,7 +333,7 @@ function _endpoint(client, name, index) {{
 
   /**
    * @param {{number}} idx
-   * @returns {{SingleItemBuilder<T>}}
+   * @returns {{DateSingleItemBuilder<T>}}
    */
   const singleItemBuilder = (idx) => ({{
     fetch(onUpdate) {{ return client._fetchMetricData(buildPath(idx, idx + 1), onUpdate); }},
@@ -307,7 +343,7 @@ function _endpoint(client, name, index) {{
 
   /**
    * @param {{number}} start
-   * @returns {{SkippedBuilder<T>}}
+   * @returns {{DateSkippedBuilder<T>}}
    */
   const skippedBuilder = (start) => ({{
     take(n) {{ return rangeBuilder(start, start + n); }},
@@ -316,9 +352,9 @@ function _endpoint(client, name, index) {{
     then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
   }});
 
-  /** @type {{MetricEndpointBuilder<T>}} */
+  /** @type {{DateMetricEndpointBuilder<T>}} */
   const endpoint = {{
-    get(idx) {{ return singleItemBuilder(idx); }},
+    get(idx) {{ if (idx instanceof Date) idx = dateToIndex(index, idx); return singleItemBuilder(idx); }},
     slice(start, end) {{
       if (start instanceof Date) start = dateToIndex(index, start);
       if (end instanceof Date) end = dateToIndex(index, end);
@@ -345,7 +381,8 @@ class BrkClientBase {{
    */
   constructor(options) {{
     const isString = typeof options === 'string';
-    this.baseUrl = isString ? options : options.baseUrl;
+    const rawUrl = isString ? options : options.baseUrl;
+    this.baseUrl = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl;
     this.timeout = isString ? 5000 : (options.timeout ?? 5000);
     /** @type {{Promise<Cache | null>}} */
     this._cachePromise = _openCache(isString ? undefined : options.cache);
@@ -359,8 +396,7 @@ class BrkClientBase {{
    * @returns {{Promise<Response>}}
    */
   async get(path) {{
-    const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
-    const url = `${{base}}${{path}}`;
+    const url = `${{this.baseUrl}}${{path}}`;
     const res = await fetch(url, {{ signal: AbortSignal.timeout(this.timeout) }});
     if (!res.ok) throw new BrkError(`HTTP ${{res.status}}: ${{url}}`, res.status);
     return res;
@@ -374,8 +410,7 @@ class BrkClientBase {{
    * @returns {{Promise<T>}}
    */
   async getJson(path, onUpdate) {{
-    const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
-    const url = `${{base}}${{path}}`;
+    const url = `${{this.baseUrl}}${{path}}`;
     const cache = this._cache ?? await this._cachePromise;
 
     let resolved = false;
@@ -437,8 +472,8 @@ class BrkClientBase {{
    * Fetch metric data and wrap with helper methods (internal)
    * @template T
    * @param {{string}} path
-   * @param {{(value: MetricData<T>) => void}} [onUpdate]
-   * @returns {{Promise<MetricData<T>>}}
+   * @param {{(value: DateMetricData<T>) => void}} [onUpdate]
+   * @returns {{Promise<DateMetricData<T>>}}
    */
   async _fetchMetricData(path, onUpdate) {{
     const wrappedOnUpdate = onUpdate ? (/** @type {{MetricData<T>}} */ raw) => onUpdate(_wrapMetricData(raw)) : undefined;
@@ -566,7 +601,7 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
  * @param {{readonly Index[]}} indexes - The supported indexes
  */
 function _mp(client, name, indexes) {{
-  const by = /** @type {{any}} */ ({{}});
+  const by = {{}};
   for (const idx of indexes) {{
     Object.defineProperty(by, idx, {{
       get() {{ return _endpoint(client, name, idx); }},
@@ -577,8 +612,9 @@ function _mp(client, name, indexes) {{
   return {{
     name,
     by,
+    /** @returns {{readonly Index[]}} */
     indexes() {{ return indexes; }},
-    /** @param {{Index}} index */
+    /** @param {{Index}} index @returns {{MetricEndpointBuilder<T>|undefined}} */
     get(index) {{ return indexes.includes(index) ? _endpoint(client, name, index) : undefined; }}
   }};
 }}
@@ -593,10 +629,12 @@ function _mp(client, name, indexes) {{
             .indexes
             .iter()
             .map(|idx| {
-                format!(
-                    "readonly {}: MetricEndpointBuilder<T>",
-                    idx.name()
-                )
+                let builder = if idx.is_date_based() {
+                    "DateMetricEndpointBuilder"
+                } else {
+                    "MetricEndpointBuilder"
+                };
+                format!("readonly {}: {}<T>", idx.name(), builder)
             })
             .collect();
         let by_type = format!("{{ {} }}", by_fields.join(", "));
@@ -617,7 +655,8 @@ function _mp(client, name, indexes) {{
         .unwrap();
         writeln!(
             output,
-            "function create{}(client, name) {{ return _mp(client, name, _i{}); }}",
+            "function create{}(client, name) {{ return /** @type {{{}<T>}} */ (_mp(client, name, _i{})); }}",
+            pattern.name,
             pattern.name,
             i + 1
         )

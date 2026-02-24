@@ -622,25 +622,25 @@ export function createNetworkSection() {
                 title: "Block Count (Rolling)",
                 bottom: [
                   line({
-                    metric: blocks.count._24hBlockCount,
+                    metric: blocks.count.blockCount24hSum,
                     name: "24h",
                     color: colors.time._24h,
                     unit: Unit.count,
                   }),
                   line({
-                    metric: blocks.count._1wBlockCount,
+                    metric: blocks.count.blockCount1wSum,
                     name: "1w",
                     color: colors.time._1w,
                     unit: Unit.count,
                   }),
                   line({
-                    metric: blocks.count._1mBlockCount,
+                    metric: blocks.count.blockCount1mSum,
                     name: "1m",
                     color: colors.time._1m,
                     unit: Unit.count,
                   }),
                   line({
-                    metric: blocks.count._1yBlockCount,
+                    metric: blocks.count.blockCount1ySum,
                     name: "1y",
                     color: colors.time._1y,
                     unit: Unit.count,

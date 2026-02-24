@@ -998,20 +998,14 @@ function dateToIndex(index, d) {
  * Wrap raw metric data with helper methods.
  * @template T
  * @param {MetricData<T>} raw - Raw JSON response
- * @returns {MetricData<T>}
+ * @returns {DateMetricData<T>}
  */
 function _wrapMetricData(raw) {
   const { index, start, end, data } = raw;
   const _dateBased = _DATE_INDEXES.has(index);
-  return /** @type {MetricData<T>} */ ({
+  return /** @type {DateMetricData<T>} */ ({
     ...raw,
     isDateBased: _dateBased,
-    dates() {
-      /** @type {globalThis.Date[]} */
-      const result = [];
-      for (let i = start; i < end; i++) result.push(indexToDate(index, i));
-      return result;
-    },
     indexes() {
       /** @type {number[]} */
       const result = [];
@@ -1019,41 +1013,48 @@ function _wrapMetricData(raw) {
       return result;
     },
     keys() {
-      return _dateBased ? this.dates() : this.indexes();
+      return this.indexes();
     },
     entries() {
-      /** @type {Array<[globalThis.Date | number, T]>} */
+      /** @type {Array<[number, T]>} */
       const result = [];
-      if (_dateBased) {
-        for (let i = 0; i < data.length; i++) result.push([indexToDate(index, start + i), data[i]]);
-      } else {
-        for (let i = 0; i < data.length; i++) result.push([start + i, data[i]]);
-      }
+      for (let i = 0; i < data.length; i++) result.push([start + i, data[i]]);
       return result;
     },
     toMap() {
-      /** @type {Map<globalThis.Date | number, T>} */
+      /** @type {Map<number, T>} */
       const map = new Map();
-      if (_dateBased) {
-        for (let i = 0; i < data.length; i++) map.set(indexToDate(index, start + i), data[i]);
-      } else {
-        for (let i = 0; i < data.length; i++) map.set(start + i, data[i]);
-      }
+      for (let i = 0; i < data.length; i++) map.set(start + i, data[i]);
       return map;
     },
     *[Symbol.iterator]() {
-      if (_dateBased) {
-        for (let i = 0; i < data.length; i++) yield [indexToDate(index, start + i), data[i]];
-      } else {
-        for (let i = 0; i < data.length; i++) yield [start + i, data[i]];
-      }
+      for (let i = 0; i < data.length; i++) yield /** @type {[number, T]} */ ([start + i, data[i]]);
+    },
+    // DateMetricData methods (only meaningful for date-based indexes)
+    dates() {
+      /** @type {globalThis.Date[]} */
+      const result = [];
+      for (let i = start; i < end; i++) result.push(indexToDate(index, i));
+      return result;
+    },
+    dateEntries() {
+      /** @type {Array<[globalThis.Date, T]>} */
+      const result = [];
+      for (let i = 0; i < data.length; i++) result.push([indexToDate(index, start + i), data[i]]);
+      return result;
+    },
+    toDateMap() {
+      /** @type {Map<globalThis.Date, T>} */
+      const map = new Map();
+      for (let i = 0; i < data.length; i++) map.set(indexToDate(index, start + i), data[i]);
+      return map;
     },
   });
 }
 
 /**
  * @template T
- * @typedef {Object} MetricData
+ * @typedef {Object} MetricDataBase
  * @property {number} version - Version of the metric data
  * @property {Index} index - The index type used for this query
  * @property {number} total - Total number of data points
@@ -1062,26 +1063,33 @@ function _wrapMetricData(raw) {
  * @property {string} stamp - ISO 8601 timestamp of when the response was generated
  * @property {T[]} data - The metric data
  * @property {boolean} isDateBased - Whether this metric uses a date-based index
- * @property {() => (globalThis.Date[] | number[])} keys - Get keys (dates for date-based, index numbers otherwise)
- * @property {() => Array<[globalThis.Date | number, T]>} entries - Get [key, value] pairs (dates for date-based, index numbers otherwise)
- * @property {() => Map<globalThis.Date | number, T>} toMap - Return data as Map (dates for date-based, index numbers otherwise)
- * @property {() => globalThis.Date[]} dates - Get dates (date-based indexes only, throws otherwise)
  * @property {() => number[]} indexes - Get index numbers
+ * @property {() => number[]} keys - Get keys as index numbers (alias for indexes)
+ * @property {() => Array<[number, T]>} entries - Get [index, value] pairs
+ * @property {() => Map<number, T>} toMap - Convert to Map<index, value>
  */
+
+/** @template T @typedef {MetricDataBase<T> & Iterable<[number, T]>} MetricData */
+
+/**
+ * @template T
+ * @typedef {Object} DateMetricDataExtras
+ * @property {() => globalThis.Date[]} dates - Get dates for each data point
+ * @property {() => Array<[globalThis.Date, T]>} dateEntries - Get [date, value] pairs
+ * @property {() => Map<globalThis.Date, T>} toDateMap - Convert to Map<date, value>
+ */
+
+/** @template T @typedef {MetricData<T> & DateMetricDataExtras<T>} DateMetricData */
 /** @typedef {MetricData<any>} AnyMetricData */
 
-/**
- * Thenable interface for await support.
- * @template T
- * @typedef {(onfulfilled?: (value: MetricData<T>) => MetricData<T>, onrejected?: (reason: Error) => never) => Promise<MetricData<T>>} Thenable
- */
+/** @template T @typedef {(onfulfilled?: (value: MetricData<T>) => any, onrejected?: (reason: Error) => never) => Promise<MetricData<T>>} Thenable */
+/** @template T @typedef {(onfulfilled?: (value: DateMetricData<T>) => any, onrejected?: (reason: Error) => never) => Promise<DateMetricData<T>>} DateThenable */
 
 /**
- * Metric endpoint builder. Callable (returns itself) so both .by.day1 and .by.day1() work.
  * @template T
  * @typedef {Object} MetricEndpointBuilder
  * @property {(index: number) => SingleItemBuilder<T>} get - Get single item at index
- * @property {(start?: number | globalThis.Date, end?: number | globalThis.Date) => RangeBuilder<T>} slice - Slice by index or Date
+ * @property {(start?: number, end?: number) => RangeBuilder<T>} slice - Slice by index
  * @property {(n: number) => RangeBuilder<T>} first - Get first n items
  * @property {(n: number) => RangeBuilder<T>} last - Get last n items
  * @property {(n: number) => SkippedBuilder<T>} skip - Skip first n items, chain with take()
@@ -1090,38 +1098,66 @@ function _wrapMetricData(raw) {
  * @property {Thenable<T>} then - Thenable (await endpoint)
  * @property {string} path - The endpoint path
  */
-/** @typedef {MetricEndpointBuilder<any>} AnyMetricEndpointBuilder */
 
 /**
  * @template T
- * @typedef {Object} SingleItemBuilder
+ * @typedef {Object} DateMetricEndpointBuilder
+ * @property {(index: number | globalThis.Date) => DateSingleItemBuilder<T>} get - Get single item at index or Date
+ * @property {(start?: number | globalThis.Date, end?: number | globalThis.Date) => DateRangeBuilder<T>} slice - Slice by index or Date
+ * @property {(n: number) => DateRangeBuilder<T>} first - Get first n items
+ * @property {(n: number) => DateRangeBuilder<T>} last - Get last n items
+ * @property {(n: number) => DateSkippedBuilder<T>} skip - Skip first n items, chain with take()
+ * @property {(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>} fetch - Fetch all data
+ * @property {() => Promise<string>} fetchCsv - Fetch all data as CSV
+ * @property {DateThenable<T>} then - Thenable (await endpoint)
+ * @property {string} path - The endpoint path
+ */
+
+/** @typedef {MetricEndpointBuilder<any>} AnyMetricEndpointBuilder */
+
+/** @template T @typedef {Object} SingleItemBuilder
  * @property {(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>} fetch - Fetch the item
  * @property {() => Promise<string>} fetchCsv - Fetch as CSV
  * @property {Thenable<T>} then - Thenable
  */
 
-/**
- * @template T
- * @typedef {Object} SkippedBuilder
+/** @template T @typedef {Object} DateSingleItemBuilder
+ * @property {(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>} fetch - Fetch the item
+ * @property {() => Promise<string>} fetchCsv - Fetch as CSV
+ * @property {DateThenable<T>} then - Thenable
+ */
+
+/** @template T @typedef {Object} SkippedBuilder
  * @property {(n: number) => RangeBuilder<T>} take - Take n items after skipped position
  * @property {(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>} fetch - Fetch from skipped position to end
  * @property {() => Promise<string>} fetchCsv - Fetch as CSV
  * @property {Thenable<T>} then - Thenable
  */
 
-/**
- * @template T
- * @typedef {Object} RangeBuilder
+/** @template T @typedef {Object} DateSkippedBuilder
+ * @property {(n: number) => DateRangeBuilder<T>} take - Take n items after skipped position
+ * @property {(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>} fetch - Fetch from skipped position to end
+ * @property {() => Promise<string>} fetchCsv - Fetch as CSV
+ * @property {DateThenable<T>} then - Thenable
+ */
+
+/** @template T @typedef {Object} RangeBuilder
  * @property {(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>} fetch - Fetch the range
  * @property {() => Promise<string>} fetchCsv - Fetch as CSV
  * @property {Thenable<T>} then - Thenable
+ */
+
+/** @template T @typedef {Object} DateRangeBuilder
+ * @property {(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>} fetch - Fetch the range
+ * @property {() => Promise<string>} fetchCsv - Fetch as CSV
+ * @property {DateThenable<T>} then - Thenable
  */
 
 /**
  * @template T
  * @typedef {Object} MetricPattern
  * @property {string} name - The metric name
- * @property {Readonly<Partial<Record<Index, MetricEndpointBuilder<T>>>>} by - Index endpoints as lazy getters. Access via .by.day1 or .by['day1']
+ * @property {Readonly<Partial<Record<Index, MetricEndpointBuilder<T>>>>} by - Index endpoints as lazy getters
  * @property {() => readonly Index[]} indexes - Get the list of available indexes
  * @property {(index: Index) => MetricEndpointBuilder<T>|undefined} get - Get an endpoint for a specific index
  */
@@ -1134,7 +1170,7 @@ function _wrapMetricData(raw) {
  * @param {BrkClientBase} client
  * @param {string} name - The metric vec name
  * @param {Index} index - The index name
- * @returns {MetricEndpointBuilder<T>}
+ * @returns {DateMetricEndpointBuilder<T>}
  */
 function _endpoint(client, name, index) {
   const p = `/api/metric/${name}/${index}`;
@@ -1157,7 +1193,7 @@ function _endpoint(client, name, index) {
   /**
    * @param {number} [start]
    * @param {number} [end]
-   * @returns {RangeBuilder<T>}
+   * @returns {DateRangeBuilder<T>}
    */
   const rangeBuilder = (start, end) => ({
     fetch(onUpdate) { return client._fetchMetricData(buildPath(start, end), onUpdate); },
@@ -1167,7 +1203,7 @@ function _endpoint(client, name, index) {
 
   /**
    * @param {number} idx
-   * @returns {SingleItemBuilder<T>}
+   * @returns {DateSingleItemBuilder<T>}
    */
   const singleItemBuilder = (idx) => ({
     fetch(onUpdate) { return client._fetchMetricData(buildPath(idx, idx + 1), onUpdate); },
@@ -1177,7 +1213,7 @@ function _endpoint(client, name, index) {
 
   /**
    * @param {number} start
-   * @returns {SkippedBuilder<T>}
+   * @returns {DateSkippedBuilder<T>}
    */
   const skippedBuilder = (start) => ({
     take(n) { return rangeBuilder(start, start + n); },
@@ -1186,9 +1222,9 @@ function _endpoint(client, name, index) {
     then(resolve, reject) { return this.fetch().then(resolve, reject); },
   });
 
-  /** @type {MetricEndpointBuilder<T>} */
+  /** @type {DateMetricEndpointBuilder<T>} */
   const endpoint = {
-    get(idx) { return singleItemBuilder(idx); },
+    get(idx) { if (idx instanceof Date) idx = dateToIndex(index, idx); return singleItemBuilder(idx); },
     slice(start, end) {
       if (start instanceof Date) start = dateToIndex(index, start);
       if (end instanceof Date) end = dateToIndex(index, end);
@@ -1215,7 +1251,8 @@ class BrkClientBase {
    */
   constructor(options) {
     const isString = typeof options === 'string';
-    this.baseUrl = isString ? options : options.baseUrl;
+    const rawUrl = isString ? options : options.baseUrl;
+    this.baseUrl = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl;
     this.timeout = isString ? 5000 : (options.timeout ?? 5000);
     /** @type {Promise<Cache | null>} */
     this._cachePromise = _openCache(isString ? undefined : options.cache);
@@ -1229,8 +1266,7 @@ class BrkClientBase {
    * @returns {Promise<Response>}
    */
   async get(path) {
-    const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
-    const url = `${base}${path}`;
+    const url = `${this.baseUrl}${path}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(this.timeout) });
     if (!res.ok) throw new BrkError(`HTTP ${res.status}: ${url}`, res.status);
     return res;
@@ -1244,8 +1280,7 @@ class BrkClientBase {
    * @returns {Promise<T>}
    */
   async getJson(path, onUpdate) {
-    const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
-    const url = `${base}${path}`;
+    const url = `${this.baseUrl}${path}`;
     const cache = this._cache ?? await this._cachePromise;
 
     let resolved = false;
@@ -1307,8 +1342,8 @@ class BrkClientBase {
    * Fetch metric data and wrap with helper methods (internal)
    * @template T
    * @param {string} path
-   * @param {(value: MetricData<T>) => void} [onUpdate]
-   * @returns {Promise<MetricData<T>>}
+   * @param {(value: DateMetricData<T>) => void} [onUpdate]
+   * @returns {Promise<DateMetricData<T>>}
    */
   async _fetchMetricData(path, onUpdate) {
     const wrappedOnUpdate = onUpdate ? (/** @type {MetricData<T>} */ raw) => onUpdate(_wrapMetricData(raw)) : undefined;
@@ -1382,7 +1417,7 @@ const _i37 = /** @type {const} */ (["emptyaddressindex"]);
  * @param {readonly Index[]} indexes - The supported indexes
  */
 function _mp(client, name, indexes) {
-  const by = /** @type {any} */ ({});
+  const by = {};
   for (const idx of indexes) {
     Object.defineProperty(by, idx, {
       get() { return _endpoint(client, name, idx); },
@@ -1393,123 +1428,124 @@ function _mp(client, name, indexes) {
   return {
     name,
     by,
+    /** @returns {readonly Index[]} */
     indexes() { return indexes; },
-    /** @param {Index} index */
+    /** @param {Index} index @returns {MetricEndpointBuilder<T>|undefined} */
     get(index) { return indexes.includes(index) ? _endpoint(client, name, index) : undefined; }
   };
 }
 
-/** @template T @typedef {{ name: string, by: { readonly minute1: MetricEndpointBuilder<T>, readonly minute5: MetricEndpointBuilder<T>, readonly minute10: MetricEndpointBuilder<T>, readonly minute30: MetricEndpointBuilder<T>, readonly hour1: MetricEndpointBuilder<T>, readonly hour4: MetricEndpointBuilder<T>, readonly hour12: MetricEndpointBuilder<T>, readonly day1: MetricEndpointBuilder<T>, readonly day3: MetricEndpointBuilder<T>, readonly week1: MetricEndpointBuilder<T>, readonly month1: MetricEndpointBuilder<T>, readonly month3: MetricEndpointBuilder<T>, readonly month6: MetricEndpointBuilder<T>, readonly year1: MetricEndpointBuilder<T>, readonly year10: MetricEndpointBuilder<T>, readonly halvingepoch: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T>, readonly height: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern1 */
+/** @template T @typedef {{ name: string, by: { readonly minute1: DateMetricEndpointBuilder<T>, readonly minute5: DateMetricEndpointBuilder<T>, readonly minute10: DateMetricEndpointBuilder<T>, readonly minute30: DateMetricEndpointBuilder<T>, readonly hour1: DateMetricEndpointBuilder<T>, readonly hour4: DateMetricEndpointBuilder<T>, readonly hour12: DateMetricEndpointBuilder<T>, readonly day1: DateMetricEndpointBuilder<T>, readonly day3: DateMetricEndpointBuilder<T>, readonly week1: DateMetricEndpointBuilder<T>, readonly month1: DateMetricEndpointBuilder<T>, readonly month3: DateMetricEndpointBuilder<T>, readonly month6: DateMetricEndpointBuilder<T>, readonly year1: DateMetricEndpointBuilder<T>, readonly year10: DateMetricEndpointBuilder<T>, readonly halvingepoch: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T>, readonly height: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern1 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern1<T>} */
-function createMetricPattern1(client, name) { return _mp(client, name, _i1); }
-/** @template T @typedef {{ name: string, by: { readonly minute1: MetricEndpointBuilder<T>, readonly minute5: MetricEndpointBuilder<T>, readonly minute10: MetricEndpointBuilder<T>, readonly minute30: MetricEndpointBuilder<T>, readonly hour1: MetricEndpointBuilder<T>, readonly hour4: MetricEndpointBuilder<T>, readonly hour12: MetricEndpointBuilder<T>, readonly day1: MetricEndpointBuilder<T>, readonly day3: MetricEndpointBuilder<T>, readonly week1: MetricEndpointBuilder<T>, readonly month1: MetricEndpointBuilder<T>, readonly month3: MetricEndpointBuilder<T>, readonly month6: MetricEndpointBuilder<T>, readonly year1: MetricEndpointBuilder<T>, readonly year10: MetricEndpointBuilder<T>, readonly halvingepoch: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern2 */
+function createMetricPattern1(client, name) { return /** @type {MetricPattern1<T>} */ (_mp(client, name, _i1)); }
+/** @template T @typedef {{ name: string, by: { readonly minute1: DateMetricEndpointBuilder<T>, readonly minute5: DateMetricEndpointBuilder<T>, readonly minute10: DateMetricEndpointBuilder<T>, readonly minute30: DateMetricEndpointBuilder<T>, readonly hour1: DateMetricEndpointBuilder<T>, readonly hour4: DateMetricEndpointBuilder<T>, readonly hour12: DateMetricEndpointBuilder<T>, readonly day1: DateMetricEndpointBuilder<T>, readonly day3: DateMetricEndpointBuilder<T>, readonly week1: DateMetricEndpointBuilder<T>, readonly month1: DateMetricEndpointBuilder<T>, readonly month3: DateMetricEndpointBuilder<T>, readonly month6: DateMetricEndpointBuilder<T>, readonly year1: DateMetricEndpointBuilder<T>, readonly year10: DateMetricEndpointBuilder<T>, readonly halvingepoch: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern2 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern2<T>} */
-function createMetricPattern2(client, name) { return _mp(client, name, _i2); }
-/** @template T @typedef {{ name: string, by: { readonly minute1: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern3 */
+function createMetricPattern2(client, name) { return /** @type {MetricPattern2<T>} */ (_mp(client, name, _i2)); }
+/** @template T @typedef {{ name: string, by: { readonly minute1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern3 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern3<T>} */
-function createMetricPattern3(client, name) { return _mp(client, name, _i3); }
-/** @template T @typedef {{ name: string, by: { readonly minute5: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern4 */
+function createMetricPattern3(client, name) { return /** @type {MetricPattern3<T>} */ (_mp(client, name, _i3)); }
+/** @template T @typedef {{ name: string, by: { readonly minute5: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern4 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern4<T>} */
-function createMetricPattern4(client, name) { return _mp(client, name, _i4); }
-/** @template T @typedef {{ name: string, by: { readonly minute10: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern5 */
+function createMetricPattern4(client, name) { return /** @type {MetricPattern4<T>} */ (_mp(client, name, _i4)); }
+/** @template T @typedef {{ name: string, by: { readonly minute10: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern5 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern5<T>} */
-function createMetricPattern5(client, name) { return _mp(client, name, _i5); }
-/** @template T @typedef {{ name: string, by: { readonly minute30: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern6 */
+function createMetricPattern5(client, name) { return /** @type {MetricPattern5<T>} */ (_mp(client, name, _i5)); }
+/** @template T @typedef {{ name: string, by: { readonly minute30: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern6 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern6<T>} */
-function createMetricPattern6(client, name) { return _mp(client, name, _i6); }
-/** @template T @typedef {{ name: string, by: { readonly hour1: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern7 */
+function createMetricPattern6(client, name) { return /** @type {MetricPattern6<T>} */ (_mp(client, name, _i6)); }
+/** @template T @typedef {{ name: string, by: { readonly hour1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern7 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern7<T>} */
-function createMetricPattern7(client, name) { return _mp(client, name, _i7); }
-/** @template T @typedef {{ name: string, by: { readonly hour4: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern8 */
+function createMetricPattern7(client, name) { return /** @type {MetricPattern7<T>} */ (_mp(client, name, _i7)); }
+/** @template T @typedef {{ name: string, by: { readonly hour4: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern8 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern8<T>} */
-function createMetricPattern8(client, name) { return _mp(client, name, _i8); }
-/** @template T @typedef {{ name: string, by: { readonly hour12: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern9 */
+function createMetricPattern8(client, name) { return /** @type {MetricPattern8<T>} */ (_mp(client, name, _i8)); }
+/** @template T @typedef {{ name: string, by: { readonly hour12: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern9 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern9<T>} */
-function createMetricPattern9(client, name) { return _mp(client, name, _i9); }
-/** @template T @typedef {{ name: string, by: { readonly day1: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern10 */
+function createMetricPattern9(client, name) { return /** @type {MetricPattern9<T>} */ (_mp(client, name, _i9)); }
+/** @template T @typedef {{ name: string, by: { readonly day1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern10 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern10<T>} */
-function createMetricPattern10(client, name) { return _mp(client, name, _i10); }
-/** @template T @typedef {{ name: string, by: { readonly day3: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern11 */
+function createMetricPattern10(client, name) { return /** @type {MetricPattern10<T>} */ (_mp(client, name, _i10)); }
+/** @template T @typedef {{ name: string, by: { readonly day3: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern11 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern11<T>} */
-function createMetricPattern11(client, name) { return _mp(client, name, _i11); }
-/** @template T @typedef {{ name: string, by: { readonly week1: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern12 */
+function createMetricPattern11(client, name) { return /** @type {MetricPattern11<T>} */ (_mp(client, name, _i11)); }
+/** @template T @typedef {{ name: string, by: { readonly week1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern12 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern12<T>} */
-function createMetricPattern12(client, name) { return _mp(client, name, _i12); }
-/** @template T @typedef {{ name: string, by: { readonly month1: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern13 */
+function createMetricPattern12(client, name) { return /** @type {MetricPattern12<T>} */ (_mp(client, name, _i12)); }
+/** @template T @typedef {{ name: string, by: { readonly month1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern13 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern13<T>} */
-function createMetricPattern13(client, name) { return _mp(client, name, _i13); }
-/** @template T @typedef {{ name: string, by: { readonly month3: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern14 */
+function createMetricPattern13(client, name) { return /** @type {MetricPattern13<T>} */ (_mp(client, name, _i13)); }
+/** @template T @typedef {{ name: string, by: { readonly month3: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern14 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern14<T>} */
-function createMetricPattern14(client, name) { return _mp(client, name, _i14); }
-/** @template T @typedef {{ name: string, by: { readonly month6: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern15 */
+function createMetricPattern14(client, name) { return /** @type {MetricPattern14<T>} */ (_mp(client, name, _i14)); }
+/** @template T @typedef {{ name: string, by: { readonly month6: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern15 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern15<T>} */
-function createMetricPattern15(client, name) { return _mp(client, name, _i15); }
-/** @template T @typedef {{ name: string, by: { readonly year1: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern16 */
+function createMetricPattern15(client, name) { return /** @type {MetricPattern15<T>} */ (_mp(client, name, _i15)); }
+/** @template T @typedef {{ name: string, by: { readonly year1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern16 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern16<T>} */
-function createMetricPattern16(client, name) { return _mp(client, name, _i16); }
-/** @template T @typedef {{ name: string, by: { readonly year10: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern17 */
+function createMetricPattern16(client, name) { return /** @type {MetricPattern16<T>} */ (_mp(client, name, _i16)); }
+/** @template T @typedef {{ name: string, by: { readonly year10: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern17 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern17<T>} */
-function createMetricPattern17(client, name) { return _mp(client, name, _i17); }
+function createMetricPattern17(client, name) { return /** @type {MetricPattern17<T>} */ (_mp(client, name, _i17)); }
 /** @template T @typedef {{ name: string, by: { readonly halvingepoch: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern18 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern18<T>} */
-function createMetricPattern18(client, name) { return _mp(client, name, _i18); }
+function createMetricPattern18(client, name) { return /** @type {MetricPattern18<T>} */ (_mp(client, name, _i18)); }
 /** @template T @typedef {{ name: string, by: { readonly difficultyepoch: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern19 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern19<T>} */
-function createMetricPattern19(client, name) { return _mp(client, name, _i19); }
+function createMetricPattern19(client, name) { return /** @type {MetricPattern19<T>} */ (_mp(client, name, _i19)); }
 /** @template T @typedef {{ name: string, by: { readonly height: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern20 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern20<T>} */
-function createMetricPattern20(client, name) { return _mp(client, name, _i20); }
+function createMetricPattern20(client, name) { return /** @type {MetricPattern20<T>} */ (_mp(client, name, _i20)); }
 /** @template T @typedef {{ name: string, by: { readonly txindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern21 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern21<T>} */
-function createMetricPattern21(client, name) { return _mp(client, name, _i21); }
+function createMetricPattern21(client, name) { return /** @type {MetricPattern21<T>} */ (_mp(client, name, _i21)); }
 /** @template T @typedef {{ name: string, by: { readonly txinindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern22 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern22<T>} */
-function createMetricPattern22(client, name) { return _mp(client, name, _i22); }
+function createMetricPattern22(client, name) { return /** @type {MetricPattern22<T>} */ (_mp(client, name, _i22)); }
 /** @template T @typedef {{ name: string, by: { readonly txoutindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern23 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern23<T>} */
-function createMetricPattern23(client, name) { return _mp(client, name, _i23); }
+function createMetricPattern23(client, name) { return /** @type {MetricPattern23<T>} */ (_mp(client, name, _i23)); }
 /** @template T @typedef {{ name: string, by: { readonly emptyoutputindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern24 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern24<T>} */
-function createMetricPattern24(client, name) { return _mp(client, name, _i24); }
+function createMetricPattern24(client, name) { return /** @type {MetricPattern24<T>} */ (_mp(client, name, _i24)); }
 /** @template T @typedef {{ name: string, by: { readonly opreturnindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern25 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern25<T>} */
-function createMetricPattern25(client, name) { return _mp(client, name, _i25); }
+function createMetricPattern25(client, name) { return /** @type {MetricPattern25<T>} */ (_mp(client, name, _i25)); }
 /** @template T @typedef {{ name: string, by: { readonly p2aaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern26 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern26<T>} */
-function createMetricPattern26(client, name) { return _mp(client, name, _i26); }
+function createMetricPattern26(client, name) { return /** @type {MetricPattern26<T>} */ (_mp(client, name, _i26)); }
 /** @template T @typedef {{ name: string, by: { readonly p2msoutputindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern27 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern27<T>} */
-function createMetricPattern27(client, name) { return _mp(client, name, _i27); }
+function createMetricPattern27(client, name) { return /** @type {MetricPattern27<T>} */ (_mp(client, name, _i27)); }
 /** @template T @typedef {{ name: string, by: { readonly p2pk33addressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern28 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern28<T>} */
-function createMetricPattern28(client, name) { return _mp(client, name, _i28); }
+function createMetricPattern28(client, name) { return /** @type {MetricPattern28<T>} */ (_mp(client, name, _i28)); }
 /** @template T @typedef {{ name: string, by: { readonly p2pk65addressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern29 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern29<T>} */
-function createMetricPattern29(client, name) { return _mp(client, name, _i29); }
+function createMetricPattern29(client, name) { return /** @type {MetricPattern29<T>} */ (_mp(client, name, _i29)); }
 /** @template T @typedef {{ name: string, by: { readonly p2pkhaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern30 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern30<T>} */
-function createMetricPattern30(client, name) { return _mp(client, name, _i30); }
+function createMetricPattern30(client, name) { return /** @type {MetricPattern30<T>} */ (_mp(client, name, _i30)); }
 /** @template T @typedef {{ name: string, by: { readonly p2shaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern31 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern31<T>} */
-function createMetricPattern31(client, name) { return _mp(client, name, _i31); }
+function createMetricPattern31(client, name) { return /** @type {MetricPattern31<T>} */ (_mp(client, name, _i31)); }
 /** @template T @typedef {{ name: string, by: { readonly p2traddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern32 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern32<T>} */
-function createMetricPattern32(client, name) { return _mp(client, name, _i32); }
+function createMetricPattern32(client, name) { return /** @type {MetricPattern32<T>} */ (_mp(client, name, _i32)); }
 /** @template T @typedef {{ name: string, by: { readonly p2wpkhaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern33 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern33<T>} */
-function createMetricPattern33(client, name) { return _mp(client, name, _i33); }
+function createMetricPattern33(client, name) { return /** @type {MetricPattern33<T>} */ (_mp(client, name, _i33)); }
 /** @template T @typedef {{ name: string, by: { readonly p2wshaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern34 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern34<T>} */
-function createMetricPattern34(client, name) { return _mp(client, name, _i34); }
+function createMetricPattern34(client, name) { return /** @type {MetricPattern34<T>} */ (_mp(client, name, _i34)); }
 /** @template T @typedef {{ name: string, by: { readonly unknownoutputindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern35 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern35<T>} */
-function createMetricPattern35(client, name) { return _mp(client, name, _i35); }
+function createMetricPattern35(client, name) { return /** @type {MetricPattern35<T>} */ (_mp(client, name, _i35)); }
 /** @template T @typedef {{ name: string, by: { readonly fundedaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern36 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern36<T>} */
-function createMetricPattern36(client, name) { return _mp(client, name, _i36); }
+function createMetricPattern36(client, name) { return /** @type {MetricPattern36<T>} */ (_mp(client, name, _i36)); }
 /** @template T @typedef {{ name: string, by: { readonly emptyaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern37 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern37<T>} */
-function createMetricPattern37(client, name) { return _mp(client, name, _i37); }
+function createMetricPattern37(client, name) { return /** @type {MetricPattern37<T>} */ (_mp(client, name, _i37)); }
 
 // Reusable structural pattern factories
 

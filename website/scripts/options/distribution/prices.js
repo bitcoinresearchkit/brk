@@ -28,10 +28,30 @@ function createCompareChart(tree, title) {
     name: "Compare",
     title: title("Prices"),
     top: [
-      price({ metric: tree.realized.realizedPrice, name: "Realized", color: colors.realized }),
-      price({ metric: tree.realized.investorPrice, name: "Investor", color: colors.investor }),
-      price({ metric: tree.realized.upperPriceBand, name: "I²/R", color: colors.stat.max, style: 2, defaultActive: false }),
-      price({ metric: tree.realized.lowerPriceBand, name: "R²/I", color: colors.stat.min, style: 2, defaultActive: false }),
+      price({
+        metric: tree.realized.realizedPrice,
+        name: "Realized",
+        color: colors.realized,
+      }),
+      price({
+        metric: tree.realized.investorPrice,
+        name: "Investor",
+        color: colors.investor,
+      }),
+      price({
+        metric: tree.realized.upperPriceBand,
+        name: "I²/R",
+        color: colors.stat.max,
+        style: 2,
+        defaultActive: false,
+      }),
+      price({
+        metric: tree.realized.lowerPriceBand,
+        name: "R²/I",
+        color: colors.stat.min,
+        style: 2,
+        defaultActive: false,
+      }),
     ],
   };
 }

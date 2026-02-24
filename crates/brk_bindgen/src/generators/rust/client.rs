@@ -200,45 +200,39 @@ impl EndpointConfig {{
     }}
 }}
 
-/// Initial builder for metric endpoint queries.
+/// Builder for metric endpoint queries.
 ///
-/// Use method chaining to specify the data range, then call `fetch()` or `fetch_csv()` to execute.
+/// Parameterized by element type `T` and response type `D` (defaults to `MetricData<T>`).
+/// For date-based indexes, use `DateMetricEndpointBuilder<T>` which sets `D = DateMetricData<T>`.
 ///
 /// # Examples
 /// ```ignore
-/// // Fetch all data
-/// let data = endpoint.fetch()?;
-///
-/// // Get single item at index 5
-/// let data = endpoint.get(5).fetch()?;
-///
-/// // Get first 10 using range
-/// let data = endpoint.range(..10).fetch()?;
-///
-/// // Get range [100, 200)
-/// let data = endpoint.range(100..200).fetch()?;
-///
-/// // Get first 10 (convenience)
-/// let data = endpoint.take(10).fetch()?;
-///
-/// // Get last 10
-/// let data = endpoint.last(10).fetch()?;
-///
-/// // Iterator-style chaining
-/// let data = endpoint.skip(100).take(10).fetch()?;
+/// let data = endpoint.fetch()?;                   // all data
+/// let data = endpoint.get(5).fetch()?;             // single item
+/// let data = endpoint.range(..10).fetch()?;        // first 10
+/// let data = endpoint.range(100..200).fetch()?;    // range [100, 200)
+/// let data = endpoint.take(10).fetch()?;           // first 10 (convenience)
+/// let data = endpoint.last(10).fetch()?;           // last 10
+/// let data = endpoint.skip(100).take(10).fetch()?; // iterator-style
 /// ```
-pub struct MetricEndpointBuilder<T> {{
+pub struct MetricEndpointBuilder<T, D = MetricData<T>> {{
     config: EndpointConfig,
-    _marker: std::marker::PhantomData<T>,
+    _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }}
 
-impl<T: DeserializeOwned> MetricEndpointBuilder<T> {{
+/// Builder for date-based metric endpoint queries.
+///
+/// Like `MetricEndpointBuilder` but returns `DateMetricData` and provides
+/// date-based access methods (`get_date`, `date_range`).
+pub type DateMetricEndpointBuilder<T> = MetricEndpointBuilder<T, DateMetricData<T>>;
+
+impl<T: DeserializeOwned, D: DeserializeOwned> MetricEndpointBuilder<T, D> {{
     pub fn new(client: Arc<BrkClientBase>, name: Arc<str>, index: Index) -> Self {{
         Self {{ config: EndpointConfig::new(client, name, index), _marker: std::marker::PhantomData }}
     }}
 
     /// Select a specific index position.
-    pub fn get(mut self, index: usize) -> SingleItemBuilder<T> {{
+    pub fn get(mut self, index: usize) -> SingleItemBuilder<T, D> {{
         self.config.start = Some(index as i64);
         self.config.end = Some(index as i64 + 1);
         SingleItemBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
@@ -252,7 +246,7 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T> {{
     /// endpoint.range(100..110)  // indices 100-109
     /// endpoint.range(100..)     // from 100 to end
     /// ```
-    pub fn range<R: RangeBounds<usize>>(mut self, range: R) -> RangeBuilder<T> {{
+    pub fn range<R: RangeBounds<usize>>(mut self, range: R) -> RangeBuilder<T, D> {{
         self.config.start = match range.start_bound() {{
             Bound::Included(&n) => Some(n as i64),
             Bound::Excluded(&n) => Some(n as i64 + 1),
@@ -267,12 +261,12 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T> {{
     }}
 
     /// Take the first n items.
-    pub fn take(self, n: usize) -> RangeBuilder<T> {{
+    pub fn take(self, n: usize) -> RangeBuilder<T, D> {{
         self.range(..n)
     }}
 
     /// Take the last n items.
-    pub fn last(mut self, n: usize) -> RangeBuilder<T> {{
+    pub fn last(mut self, n: usize) -> RangeBuilder<T, D> {{
         if n == 0 {{
             self.config.end = Some(0);
         }} else {{
@@ -282,13 +276,13 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T> {{
     }}
 
     /// Skip the first n items. Chain with `take(n)` to get a range.
-    pub fn skip(mut self, n: usize) -> SkippedBuilder<T> {{
+    pub fn skip(mut self, n: usize) -> SkippedBuilder<T, D> {{
         self.config.start = Some(n as i64);
         SkippedBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
     }}
 
     /// Fetch all data as parsed JSON.
-    pub fn fetch(self) -> Result<MetricData<T>> {{
+    pub fn fetch(self) -> Result<D> {{
         self.config.get_json(None)
     }}
 
@@ -303,15 +297,47 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T> {{
     }}
 }}
 
-/// Builder for single item access.
-pub struct SingleItemBuilder<T> {{
-    config: EndpointConfig,
-    _marker: std::marker::PhantomData<T>,
+/// Date-specific methods available only on `DateMetricEndpointBuilder`.
+impl<T: DeserializeOwned> MetricEndpointBuilder<T, DateMetricData<T>> {{
+    /// Select a specific date position (for day-precision or coarser indexes).
+    pub fn get_date(self, date: Date) -> SingleItemBuilder<T, DateMetricData<T>> {{
+        let index = self.config.index.date_to_index(date).unwrap_or(0);
+        self.get(index)
+    }}
+
+    /// Select a date range (for day-precision or coarser indexes).
+    pub fn date_range(self, start: Date, end: Date) -> RangeBuilder<T, DateMetricData<T>> {{
+        let s = self.config.index.date_to_index(start).unwrap_or(0);
+        let e = self.config.index.date_to_index(end).unwrap_or(0);
+        self.range(s..e)
+    }}
+
+    /// Select a specific timestamp position (works for all date-based indexes including sub-daily).
+    pub fn get_timestamp(self, ts: Timestamp) -> SingleItemBuilder<T, DateMetricData<T>> {{
+        let index = self.config.index.timestamp_to_index(ts).unwrap_or(0);
+        self.get(index)
+    }}
+
+    /// Select a timestamp range (works for all date-based indexes including sub-daily).
+    pub fn timestamp_range(self, start: Timestamp, end: Timestamp) -> RangeBuilder<T, DateMetricData<T>> {{
+        let s = self.config.index.timestamp_to_index(start).unwrap_or(0);
+        let e = self.config.index.timestamp_to_index(end).unwrap_or(0);
+        self.range(s..e)
+    }}
 }}
 
-impl<T: DeserializeOwned> SingleItemBuilder<T> {{
+/// Builder for single item access.
+pub struct SingleItemBuilder<T, D = MetricData<T>> {{
+    config: EndpointConfig,
+    _marker: std::marker::PhantomData<fn() -> (T, D)>,
+}}
+
+/// Date-aware single item builder.
+pub type DateSingleItemBuilder<T> = SingleItemBuilder<T, DateMetricData<T>>;
+
+impl<T: DeserializeOwned, D: DeserializeOwned> SingleItemBuilder<T, D> {{
     /// Fetch the single item.
-    pub fn fetch(self) -> Result<MetricData<T>> {{
+    pub fn fetch(self) -> Result<D> {{
         self.config.get_json(None)
     }}
 
@@ -322,21 +348,24 @@ impl<T: DeserializeOwned> SingleItemBuilder<T> {{
 }}
 
 /// Builder after calling `skip(n)`. Chain with `take(n)` to specify count.
-pub struct SkippedBuilder<T> {{
+pub struct SkippedBuilder<T, D = MetricData<T>> {{
     config: EndpointConfig,
-    _marker: std::marker::PhantomData<T>,
+    _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }}
 
-impl<T: DeserializeOwned> SkippedBuilder<T> {{
+/// Date-aware skipped builder.
+pub type DateSkippedBuilder<T> = SkippedBuilder<T, DateMetricData<T>>;
+
+impl<T: DeserializeOwned, D: DeserializeOwned> SkippedBuilder<T, D> {{
     /// Take n items after the skipped position.
-    pub fn take(mut self, n: usize) -> RangeBuilder<T> {{
+    pub fn take(mut self, n: usize) -> RangeBuilder<T, D> {{
         let start = self.config.start.unwrap_or(0);
         self.config.end = Some(start + n as i64);
         RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
     }}
 
     /// Fetch from the skipped position to the end.
-    pub fn fetch(self) -> Result<MetricData<T>> {{
+    pub fn fetch(self) -> Result<D> {{
         self.config.get_json(None)
     }}
 
@@ -347,14 +376,17 @@ impl<T: DeserializeOwned> SkippedBuilder<T> {{
 }}
 
 /// Builder with range fully specified.
-pub struct RangeBuilder<T> {{
+pub struct RangeBuilder<T, D = MetricData<T>> {{
     config: EndpointConfig,
-    _marker: std::marker::PhantomData<T>,
+    _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }}
 
-impl<T: DeserializeOwned> RangeBuilder<T> {{
+/// Date-aware range builder.
+pub type DateRangeBuilder<T> = RangeBuilder<T, DateMetricData<T>>;
+
+impl<T: DeserializeOwned, D: DeserializeOwned> RangeBuilder<T, D> {{
     /// Fetch the range as parsed JSON.
-    pub fn fetch(self) -> Result<MetricData<T>> {{
+    pub fn fetch(self) -> Result<D> {{
         self.config.get_json(None)
     }}
 
@@ -389,12 +421,17 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
     }
     writeln!(output).unwrap();
 
-    // Generate helper function
+    // Generate helper functions
     writeln!(
         output,
         r#"#[inline]
 fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> MetricEndpointBuilder<T> {{
     MetricEndpointBuilder::new(c.clone(), n.clone(), i)
+}}
+
+#[inline]
+fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> DateMetricEndpointBuilder<T> {{
+    DateMetricEndpointBuilder::new(c.clone(), n.clone(), i)
 }}
 "#
     )
@@ -412,12 +449,21 @@ fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> M
         writeln!(output, "impl<T: DeserializeOwned> {}<T> {{", by_name).unwrap();
         for index in &pattern.indexes {
             let method_name = index_to_field_name(index);
-            writeln!(
-                output,
-                "    pub fn {}(&self) -> MetricEndpointBuilder<T> {{ _ep(&self.client, &self.name, Index::{}) }}",
-                method_name, index
-            )
-            .unwrap();
+            if index.is_date_based() {
+                writeln!(
+                    output,
+                    "    pub fn {}(&self) -> DateMetricEndpointBuilder<T> {{ _dep(&self.client, &self.name, Index::{}) }}",
+                    method_name, index
+                )
+                .unwrap();
+            } else {
+                writeln!(
+                    output,
+                    "    pub fn {}(&self) -> MetricEndpointBuilder<T> {{ _ep(&self.client, &self.name, Index::{}) }}",
+                    method_name, index
+                )
+                .unwrap();
+            }
         }
         writeln!(output, "}}\n").unwrap();
 

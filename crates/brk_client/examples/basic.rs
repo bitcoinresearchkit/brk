@@ -14,7 +14,7 @@ fn main() -> brk_client::Result<()> {
     });
 
     // Fetch price data using the typed metrics API
-    // Using new idiomatic API: last(3).fetch()
+    // day1() returns DateMetricEndpointBuilder, so fetch() returns DateMetricData
     let price_close = client
         .metrics()
         .prices
@@ -25,9 +25,17 @@ fn main() -> brk_client::Result<()> {
         .day1()
         .last(3)
         .fetch()?;
-    println!("Last 3 price close values: {:?}", price_close);
+    println!("Last 3 price close values:");
+    // iter_dates() returns Option (None for sub-daily indexes)
+    for (date, value) in price_close.iter_dates().unwrap() {
+        println!("  {}: {}", date, value);
+    }
+    // iter_timestamps() works for all date-based indexes including sub-daily
+    for (ts, value) in price_close.iter_timestamps() {
+        println!("  {}: {}", ts, value);
+    }
 
-    // Fetch block data
+    // Fetch block data with height index (non-date, returns MetricData)
     let block_count = client
         .metrics()
         .blocks
@@ -38,9 +46,12 @@ fn main() -> brk_client::Result<()> {
         .day1()
         .last(3)
         .fetch()?;
-    println!("Last 3 block count values: {:?}", block_count);
+    println!("Last 3 block count values:");
+    for (date, value) in block_count.iter_dates().unwrap() {
+        println!("  {}: {}", date, value);
+    }
 
-    // Fetch supply data
+    // Fetch supply data as CSV
     dbg!(client.metrics().supply.circulating.btc.by.day1().path());
     let circulating = client
         .metrics()
@@ -51,9 +62,19 @@ fn main() -> brk_client::Result<()> {
         .day1()
         .last(3)
         .fetch_csv()?;
-    println!("Last 3 circulating supply values: {:?}", circulating);
+    println!("Last 3 circulating supply (CSV): {:?}", circulating);
 
-    // Using generic metric fetching
+    // Using dynamic metric fetching with date_metric() for date-based indexes
+    let date_metric = client
+        .date_metric(Metric::from("price_close"), Index::Day1)?
+        .last(3)
+        .fetch()?;
+    println!("Dynamic date metric fetch:");
+    for (date, value) in date_metric.iter_dates().unwrap() {
+        println!("  {}: {}", date, value);
+    }
+
+    // Using generic metric fetching (returns FormatResponse)
     let metricdata = client.get_metric(
         Metric::from("price_close"),
         Index::Day1,

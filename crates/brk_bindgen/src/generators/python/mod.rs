@@ -29,7 +29,7 @@ pub fn generate_python_client(
     writeln!(output, "from dataclasses import dataclass").unwrap();
     writeln!(
         output,
-        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol, overload, Iterator, Tuple, TYPE_CHECKING"
+        "from typing import TypeVar, Generic, Any, Dict, Optional, List, Iterator, Literal, TypedDict, Union, Protocol, overload, Tuple, TYPE_CHECKING"
     )
     .unwrap();
     writeln!(

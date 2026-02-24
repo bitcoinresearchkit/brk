@@ -238,7 +238,11 @@ export function createGroupedCostBasisSection({ list, all, title }) {
  * @param {{ list: readonly (CohortAll | CohortFull | CohortWithPercentiles)[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCostBasisSectionWithPercentiles({ list, all, title }) {
+export function createGroupedCostBasisSectionWithPercentiles({
+  list,
+  all,
+  title,
+}) {
   return {
     name: "Cost Basis",
     tree: [

@@ -193,6 +193,7 @@ export function createMarketSection() {
     range,
     indicators,
     lookback,
+    dca,
   } = market;
 
   const shortPeriodsBase = [
@@ -671,45 +672,297 @@ export function createMarketSection() {
         tree: [
           {
             name: "RSI",
-            title: "RSI (14d)",
-            bottom: [
-              line({
-                metric: indicators.rsi._1d.rsi,
-                name: "RSI",
-                color: colors.indicator.main,
-                unit: Unit.index,
-              }),
-              line({
-                metric: indicators.rsi._1d.rsiMax,
-                name: "Max",
-                color: colors.stat.max,
-                defaultActive: false,
-                unit: Unit.index,
-              }),
-              line({
-                metric: indicators.rsi._1d.rsiMin,
-                name: "Min",
-                color: colors.stat.min,
-                defaultActive: false,
-                unit: Unit.index,
-              }),
-              priceLine({ unit: Unit.index, number: 70 }),
-              priceLine({ unit: Unit.index, number: 50, defaultActive: false }),
-              priceLine({ unit: Unit.index, number: 30 }),
+            tree: [
+              {
+                name: "Compare",
+                title: "RSI Comparison",
+                bottom: [
+                  line({
+                    metric: indicators.rsi._1d.rsi,
+                    name: "1d",
+                    color: colors.time._24h,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1w.rsi,
+                    name: "1w",
+                    color: colors.time._1w,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1m.rsi,
+                    name: "1m",
+                    color: colors.time._1m,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1y.rsi,
+                    name: "1y",
+                    color: colors.time._1y,
+                    unit: Unit.index,
+                  }),
+                  priceLine({ unit: Unit.index, number: 70 }),
+                  priceLine({ unit: Unit.index, number: 30 }),
+                ],
+              },
+              {
+                name: "1 Day",
+                title: "RSI (1d)",
+                bottom: [
+                  line({
+                    metric: indicators.rsi._1d.rsi,
+                    name: "RSI",
+                    color: colors.indicator.main,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1d.rsiMax,
+                    name: "Max",
+                    color: colors.stat.max,
+                    defaultActive: false,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1d.rsiMin,
+                    name: "Min",
+                    color: colors.stat.min,
+                    defaultActive: false,
+                    unit: Unit.index,
+                  }),
+                  priceLine({ unit: Unit.index, number: 70 }),
+                  priceLine({
+                    unit: Unit.index,
+                    number: 50,
+                    defaultActive: false,
+                  }),
+                  priceLine({ unit: Unit.index, number: 30 }),
+                ],
+              },
+              {
+                name: "1 Week",
+                title: "RSI (1w)",
+                bottom: [
+                  line({
+                    metric: indicators.rsi._1w.rsi,
+                    name: "RSI",
+                    color: colors.indicator.main,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1w.rsiMax,
+                    name: "Max",
+                    color: colors.stat.max,
+                    defaultActive: false,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1w.rsiMin,
+                    name: "Min",
+                    color: colors.stat.min,
+                    defaultActive: false,
+                    unit: Unit.index,
+                  }),
+                  priceLine({ unit: Unit.index, number: 70 }),
+                  priceLine({
+                    unit: Unit.index,
+                    number: 50,
+                    defaultActive: false,
+                  }),
+                  priceLine({ unit: Unit.index, number: 30 }),
+                ],
+              },
+              {
+                name: "1 Month",
+                title: "RSI (1m)",
+                bottom: [
+                  line({
+                    metric: indicators.rsi._1m.rsi,
+                    name: "RSI",
+                    color: colors.indicator.main,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1m.rsiMax,
+                    name: "Max",
+                    color: colors.stat.max,
+                    defaultActive: false,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1m.rsiMin,
+                    name: "Min",
+                    color: colors.stat.min,
+                    defaultActive: false,
+                    unit: Unit.index,
+                  }),
+                  priceLine({ unit: Unit.index, number: 70 }),
+                  priceLine({
+                    unit: Unit.index,
+                    number: 50,
+                    defaultActive: false,
+                  }),
+                  priceLine({ unit: Unit.index, number: 30 }),
+                ],
+              },
+              {
+                name: "1 Year",
+                title: "RSI (1y)",
+                bottom: [
+                  line({
+                    metric: indicators.rsi._1y.rsi,
+                    name: "RSI",
+                    color: colors.indicator.main,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1y.rsiMax,
+                    name: "Max",
+                    color: colors.stat.max,
+                    defaultActive: false,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1y.rsiMin,
+                    name: "Min",
+                    color: colors.stat.min,
+                    defaultActive: false,
+                    unit: Unit.index,
+                  }),
+                  priceLine({ unit: Unit.index, number: 70 }),
+                  priceLine({
+                    unit: Unit.index,
+                    number: 50,
+                    defaultActive: false,
+                  }),
+                  priceLine({ unit: Unit.index, number: 30 }),
+                ],
+              },
             ],
           },
           {
             name: "StochRSI",
-            title: "Stochastic RSI",
+            tree: [
+              {
+                name: "Compare",
+                title: "Stochastic RSI Comparison",
+                bottom: [
+                  line({
+                    metric: indicators.rsi._1d.stochRsiK,
+                    name: "1d K",
+                    color: colors.time._24h,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1w.stochRsiK,
+                    name: "1w K",
+                    color: colors.time._1w,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1m.stochRsiK,
+                    name: "1m K",
+                    color: colors.time._1m,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1y.stochRsiK,
+                    name: "1y K",
+                    color: colors.time._1y,
+                    unit: Unit.index,
+                  }),
+                  ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
+                ],
+              },
+              {
+                name: "1 Day",
+                title: "Stochastic RSI (1d)",
+                bottom: [
+                  line({
+                    metric: indicators.rsi._1d.stochRsiK,
+                    name: "K",
+                    color: colors.indicator.fast,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1d.stochRsiD,
+                    name: "D",
+                    color: colors.indicator.slow,
+                    unit: Unit.index,
+                  }),
+                  ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
+                ],
+              },
+              {
+                name: "1 Week",
+                title: "Stochastic RSI (1w)",
+                bottom: [
+                  line({
+                    metric: indicators.rsi._1w.stochRsiK,
+                    name: "K",
+                    color: colors.indicator.fast,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1w.stochRsiD,
+                    name: "D",
+                    color: colors.indicator.slow,
+                    unit: Unit.index,
+                  }),
+                  ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
+                ],
+              },
+              {
+                name: "1 Month",
+                title: "Stochastic RSI (1m)",
+                bottom: [
+                  line({
+                    metric: indicators.rsi._1m.stochRsiK,
+                    name: "K",
+                    color: colors.indicator.fast,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1m.stochRsiD,
+                    name: "D",
+                    color: colors.indicator.slow,
+                    unit: Unit.index,
+                  }),
+                  ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
+                ],
+              },
+              {
+                name: "1 Year",
+                title: "Stochastic RSI (1y)",
+                bottom: [
+                  line({
+                    metric: indicators.rsi._1y.stochRsiK,
+                    name: "K",
+                    color: colors.indicator.fast,
+                    unit: Unit.index,
+                  }),
+                  line({
+                    metric: indicators.rsi._1y.stochRsiD,
+                    name: "D",
+                    color: colors.indicator.slow,
+                    unit: Unit.index,
+                  }),
+                  ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
+                ],
+              },
+            ],
+          },
+          {
+            name: "Stochastic",
+            title: "Stochastic Oscillator",
             bottom: [
               line({
-                metric: indicators.rsi._1d.stochRsiK,
+                metric: indicators.stochK,
                 name: "K",
                 color: colors.indicator.fast,
                 unit: Unit.index,
               }),
               line({
-                metric: indicators.rsi._1d.stochRsiD,
+                metric: indicators.stochD,
                 name: "D",
                 color: colors.indicator.slow,
                 unit: Unit.index,
@@ -719,25 +972,129 @@ export function createMarketSection() {
           },
           {
             name: "MACD",
-            title: "MACD",
-            bottom: [
-              line({
-                metric: indicators.macd._1d.line,
-                name: "MACD",
-                color: colors.indicator.fast,
-                unit: Unit.usd,
-              }),
-              line({
-                metric: indicators.macd._1d.signal,
-                name: "Signal",
-                color: colors.indicator.slow,
-                unit: Unit.usd,
-              }),
-              histogram({
-                metric: indicators.macd._1d.histogram,
-                name: "Histogram",
-                unit: Unit.usd,
-              }),
+            tree: [
+              {
+                name: "Compare",
+                title: "MACD Comparison",
+                bottom: [
+                  line({
+                    metric: indicators.macd._1d.line,
+                    name: "1d",
+                    color: colors.time._24h,
+                    unit: Unit.usd,
+                  }),
+                  line({
+                    metric: indicators.macd._1w.line,
+                    name: "1w",
+                    color: colors.time._1w,
+                    unit: Unit.usd,
+                  }),
+                  line({
+                    metric: indicators.macd._1m.line,
+                    name: "1m",
+                    color: colors.time._1m,
+                    unit: Unit.usd,
+                  }),
+                  line({
+                    metric: indicators.macd._1y.line,
+                    name: "1y",
+                    color: colors.time._1y,
+                    unit: Unit.usd,
+                  }),
+                ],
+              },
+              {
+                name: "1 Day",
+                title: "MACD (1d)",
+                bottom: [
+                  line({
+                    metric: indicators.macd._1d.line,
+                    name: "MACD",
+                    color: colors.indicator.fast,
+                    unit: Unit.usd,
+                  }),
+                  line({
+                    metric: indicators.macd._1d.signal,
+                    name: "Signal",
+                    color: colors.indicator.slow,
+                    unit: Unit.usd,
+                  }),
+                  histogram({
+                    metric: indicators.macd._1d.histogram,
+                    name: "Histogram",
+                    unit: Unit.usd,
+                  }),
+                ],
+              },
+              {
+                name: "1 Week",
+                title: "MACD (1w)",
+                bottom: [
+                  line({
+                    metric: indicators.macd._1w.line,
+                    name: "MACD",
+                    color: colors.indicator.fast,
+                    unit: Unit.usd,
+                  }),
+                  line({
+                    metric: indicators.macd._1w.signal,
+                    name: "Signal",
+                    color: colors.indicator.slow,
+                    unit: Unit.usd,
+                  }),
+                  histogram({
+                    metric: indicators.macd._1w.histogram,
+                    name: "Histogram",
+                    unit: Unit.usd,
+                  }),
+                ],
+              },
+              {
+                name: "1 Month",
+                title: "MACD (1m)",
+                bottom: [
+                  line({
+                    metric: indicators.macd._1m.line,
+                    name: "MACD",
+                    color: colors.indicator.fast,
+                    unit: Unit.usd,
+                  }),
+                  line({
+                    metric: indicators.macd._1m.signal,
+                    name: "Signal",
+                    color: colors.indicator.slow,
+                    unit: Unit.usd,
+                  }),
+                  histogram({
+                    metric: indicators.macd._1m.histogram,
+                    name: "Histogram",
+                    unit: Unit.usd,
+                  }),
+                ],
+              },
+              {
+                name: "1 Year",
+                title: "MACD (1y)",
+                bottom: [
+                  line({
+                    metric: indicators.macd._1y.line,
+                    name: "MACD",
+                    color: colors.indicator.fast,
+                    unit: Unit.usd,
+                  }),
+                  line({
+                    metric: indicators.macd._1y.signal,
+                    name: "Signal",
+                    color: colors.indicator.slow,
+                    unit: Unit.usd,
+                  }),
+                  histogram({
+                    metric: indicators.macd._1y.histogram,
+                    name: "Histogram",
+                    unit: Unit.usd,
+                  }),
+                ],
+              },
             ],
           },
         ],
@@ -760,6 +1117,18 @@ export function createMarketSection() {
           },
           historicalSubSection("Short-term", shortPeriods),
           historicalSubSection("Long-term", longPeriods),
+        ],
+      },
+
+      {
+        name: "DCA",
+        title: "Dollar Cost Average Sats/Day",
+        bottom: [
+          line({
+            metric: dca.dcaSatsPerDay,
+            name: "Sats/Day",
+            unit: Unit.sats,
+          }),
         ],
       },
 

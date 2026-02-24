@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol, overload, Iterator, Tuple, TYPE_CHECKING
+from typing import TypeVar, Generic, Any, Dict, Optional, List, Iterator, Literal, TypedDict, Union, Protocol, overload, Tuple, TYPE_CHECKING
 from http.client import HTTPSConnection, HTTPConnection
 from urllib.parse import urlparse
 from datetime import date, datetime, timedelta, timezone
@@ -1085,16 +1085,16 @@ class BrkClientBase:
         """Make a GET request and return text."""
         return self.get(path).decode()
 
-    def close(self):
+    def close(self) -> None:
         """Close the HTTP client."""
         if self._conn:
             self._conn.close()
             self._conn = None
 
-    def __enter__(self):
+    def __enter__(self) -> BrkClientBase:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         self.close()
 
 
@@ -1199,7 +1199,7 @@ def _date_to_index(index: str, d: Union[date, datetime]) -> int:
 
 @dataclass
 class MetricData(Generic[T]):
-    """Metric data with range information."""
+    """Metric data with range information. Always int-indexed."""
     version: int
     index: Index
     total: int
@@ -1213,63 +1213,96 @@ class MetricData(Generic[T]):
         """Whether this metric uses a date-based index."""
         return self.index in _DATE_INDEXES
 
-    def dates(self) -> list:
-        """Get dates for the index range. Date-based indexes only, throws otherwise."""
-        return [_index_to_date(self.index, i) for i in range(self.start, self.end)]
-
     def indexes(self) -> List[int]:
         """Get raw index numbers."""
         return list(range(self.start, self.end))
 
-    def keys(self) -> list:
-        """Get keys: dates for date-based indexes, index numbers otherwise."""
-        return self.dates() if self.is_date_based else self.indexes()
+    def keys(self) -> List[int]:
+        """Get keys as index numbers."""
+        return self.indexes()
 
-    def items(self) -> list:
-        """Get (key, value) pairs: keys are dates for date-based, numbers otherwise."""
-        return list(zip(self.keys(), self.data))
+    def items(self) -> List[Tuple[int, T]]:
+        """Get (index, value) pairs."""
+        return list(zip(self.indexes(), self.data))
 
-    def to_dict(self) -> dict:
-        """Return {key: value} dict: keys are dates for date-based, numbers otherwise."""
-        return dict(zip(self.keys(), self.data))
+    def to_dict(self) -> Dict[int, T]:
+        """Return {index: value} dict."""
+        return dict(zip(self.indexes(), self.data))
 
-    def __iter__(self):
-        """Iterate over (key, value) pairs. Keys are dates for date-based, numbers otherwise."""
-        return iter(zip(self.keys(), self.data))
+    def __iter__(self) -> Iterator[Tuple[int, T]]:
+        """Iterate over (index, value) pairs."""
+        return iter(zip(self.indexes(), self.data))
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def to_polars(self) -> pl.DataFrame:
+        """Convert to Polars DataFrame with 'index' and 'value' columns."""
+        try:
+            import polars as pl  # type: ignore[import-not-found]
+        except ImportError:
+            raise ImportError("polars is required: pip install polars")
+        return pl.DataFrame({"index": self.indexes(), "value": self.data})
+
+    def to_pandas(self) -> pd.DataFrame:
+        """Convert to Pandas DataFrame with 'index' and 'value' columns."""
+        try:
+            import pandas as pd  # type: ignore[import-not-found]
+        except ImportError:
+            raise ImportError("pandas is required: pip install pandas")
+        return pd.DataFrame({"index": self.indexes(), "value": self.data})
+
+
+@dataclass
+class DateMetricData(MetricData[T]):
+    """Metric data with date-based index. Extends MetricData with date methods."""
+
+    def dates(self) -> List[Union[date, datetime]]:
+        """Get dates for the index range. Returns datetime for sub-daily indexes, date for daily+."""
+        return [_index_to_date(self.index, i) for i in range(self.start, self.end)]
+
+    def date_items(self) -> List[Tuple[Union[date, datetime], T]]:
+        """Get (date, value) pairs."""
+        return list(zip(self.dates(), self.data))
+
+    def to_date_dict(self) -> Dict[Union[date, datetime], T]:
+        """Return {date: value} dict."""
+        return dict(zip(self.dates(), self.data))
 
     def to_polars(self, with_dates: bool = True) -> pl.DataFrame:
-        """Convert to Polars DataFrame. Requires polars to be installed.
+        """Convert to Polars DataFrame.
 
         Returns a DataFrame with columns:
-        - 'date' and 'value' if with_dates=True and index is date-based
+        - 'date' and 'value' if with_dates=True (default)
         - 'index' and 'value' otherwise
         """
         try:
             import polars as pl  # type: ignore[import-not-found]
         except ImportError:
             raise ImportError("polars is required: pip install polars")
-        if with_dates and self.is_date_based:
+        if with_dates:
             return pl.DataFrame({"date": self.dates(), "value": self.data})
         return pl.DataFrame({"index": self.indexes(), "value": self.data})
 
     def to_pandas(self, with_dates: bool = True) -> pd.DataFrame:
-        """Convert to Pandas DataFrame. Requires pandas to be installed.
+        """Convert to Pandas DataFrame.
 
         Returns a DataFrame with columns:
-        - 'date' and 'value' if with_dates=True and index is date-based
+        - 'date' and 'value' if with_dates=True (default)
         - 'index' and 'value' otherwise
         """
         try:
             import pandas as pd  # type: ignore[import-not-found]
         except ImportError:
             raise ImportError("pandas is required: pip install pandas")
-        if with_dates and self.is_date_based:
+        if with_dates:
             return pd.DataFrame({"date": self.dates(), "value": self.data})
         return pd.DataFrame({"index": self.indexes(), "value": self.data})
 
 
-# Type alias for non-generic usage
+# Type aliases for non-generic usage
 AnyMetricData = MetricData[Any]
+AnyDateMetricData = DateMetricData[Any]
 
 
 class _EndpointConfig:
@@ -1303,8 +1336,14 @@ class _EndpointConfig:
         p = self.path()
         return f"{p}?{query}" if query else p
 
-    def get_metric(self) -> MetricData:
+    def _new(self, start: Optional[int] = None, end: Optional[int] = None) -> _EndpointConfig:
+        return _EndpointConfig(self.client, self.name, self.index, start, end)
+
+    def get_metric(self) -> MetricData[Any]:
         return MetricData(**self.client.get_json(self._build_path()))
+
+    def get_date_metric(self) -> DateMetricData[Any]:
+        return DateMetricData(**self.client.get_json(self._build_path()))
 
     def get_csv(self) -> str:
         return self.client.get_text(self._build_path(format='csv'))
@@ -1349,10 +1388,7 @@ class SkippedBuilder(Generic[T]):
     def take(self, n: int) -> RangeBuilder[T]:
         """Take n items after the skipped position."""
         start = self._config.start or 0
-        return RangeBuilder(_EndpointConfig(
-            self._config.client, self._config.name, self._config.index,
-            start, start + n
-        ))
+        return RangeBuilder(self._config._new(start, start + n))
 
     def fetch(self) -> MetricData[T]:
         """Fetch from skipped position to end."""
@@ -1363,29 +1399,35 @@ class SkippedBuilder(Generic[T]):
         return self._config.get_csv()
 
 
-class MetricEndpointBuilder(Generic[T]):
-    """Builder for metric endpoint queries.
+class DateRangeBuilder(RangeBuilder[T]):
+    """Range builder that returns DateMetricData."""
+    def fetch(self) -> DateMetricData[T]:
+        return self._config.get_date_metric()
 
-    Use method chaining to specify the data range, then call fetch() or fetch_csv() to execute.
+
+class DateSingleItemBuilder(SingleItemBuilder[T]):
+    """Single item builder that returns DateMetricData."""
+    def fetch(self) -> DateMetricData[T]:
+        return self._config.get_date_metric()
+
+
+class DateSkippedBuilder(SkippedBuilder[T]):
+    """Skipped builder that returns DateMetricData."""
+    def take(self, n: int) -> DateRangeBuilder[T]:
+        start = self._config.start or 0
+        return DateRangeBuilder(self._config._new(start, start + n))
+    def fetch(self) -> DateMetricData[T]:
+        return self._config.get_date_metric()
+
+
+class MetricEndpointBuilder(Generic[T]):
+    """Builder for metric endpoint queries with int-based indexing.
 
     Examples:
-        # Fetch all data
         data = endpoint.fetch()
-
-        # Single item access
         data = endpoint[5].fetch()
-
-        # Slice syntax (Python-native)
-        data = endpoint[:10].fetch()      # First 10
-        data = endpoint[-5:].fetch()      # Last 5
-        data = endpoint[100:110].fetch()  # Range
-
-        # Convenience methods (pandas-style)
-        data = endpoint.head().fetch()    # First 10 (default)
-        data = endpoint.head(20).fetch()  # First 20
-        data = endpoint.tail(5).fetch()   # Last 5
-
-        # Iterator-style chaining
+        data = endpoint[:10].fetch()
+        data = endpoint.head(20).fetch()
         data = endpoint.skip(100).take(10).fetch()
     """
 
@@ -1397,66 +1439,30 @@ class MetricEndpointBuilder(Generic[T]):
     @overload
     def __getitem__(self, key: slice) -> RangeBuilder[T]: ...
 
-    def __getitem__(self, key: Union[int, slice, date, datetime]) -> Union[SingleItemBuilder[T], RangeBuilder[T]]:
-        """Access single item or slice. Accepts dates for date-based indexes.
-
-        Examples:
-            endpoint[5]                                    # Single item at index 5
-            endpoint[:10]                                  # First 10
-            endpoint[-5:]                                  # Last 5
-            endpoint[100:110]                              # Range 100-109
-            endpoint[date(2020, 1, 1):date(2023, 1, 1)]   # Date range
-            endpoint[date(2020, 1, 1):]                    # Since date
-        """
-        if isinstance(key, (date, datetime)):
-            idx = _date_to_index(self._config.index, key)
-            return SingleItemBuilder(_EndpointConfig(
-                self._config.client, self._config.name, self._config.index,
-                idx, idx + 1
-            ))
+    def __getitem__(self, key: Union[int, slice]) -> Union[SingleItemBuilder[T], RangeBuilder[T]]:
+        """Access single item or slice by integer index."""
         if isinstance(key, int):
-            return SingleItemBuilder(_EndpointConfig(
-                self._config.client, self._config.name, self._config.index,
-                key, key + 1
-            ))
-        start, stop = key.start, key.stop
-        if isinstance(start, (date, datetime)):
-            start = _date_to_index(self._config.index, start)
-        if isinstance(stop, (date, datetime)):
-            stop = _date_to_index(self._config.index, stop)
-        return RangeBuilder(_EndpointConfig(
-            self._config.client, self._config.name, self._config.index,
-            start, stop
-        ))
+            return SingleItemBuilder(self._config._new(key, key + 1))
+        return RangeBuilder(self._config._new(key.start, key.stop))
 
     def head(self, n: int = 10) -> RangeBuilder[T]:
-        """Get the first n items (pandas-style)."""
-        return RangeBuilder(_EndpointConfig(
-            self._config.client, self._config.name, self._config.index,
-            None, n
-        ))
+        """Get the first n items."""
+        return RangeBuilder(self._config._new(end=n))
 
     def tail(self, n: int = 10) -> RangeBuilder[T]:
-        """Get the last n items (pandas-style)."""
-        start, end = (None, 0) if n == 0 else (-n, None)
-        return RangeBuilder(_EndpointConfig(
-            self._config.client, self._config.name, self._config.index,
-            start, end
-        ))
+        """Get the last n items."""
+        return RangeBuilder(self._config._new(end=0) if n == 0 else self._config._new(start=-n))
 
     def skip(self, n: int) -> SkippedBuilder[T]:
-        """Skip the first n items. Chain with take() to get a range."""
-        return SkippedBuilder(_EndpointConfig(
-            self._config.client, self._config.name, self._config.index,
-            n, None
-        ))
+        """Skip the first n items."""
+        return SkippedBuilder(self._config._new(start=n))
 
     def fetch(self) -> MetricData[T]:
-        """Fetch all data as parsed JSON."""
+        """Fetch all data."""
         return self._config.get_metric()
 
     def fetch_csv(self) -> str:
-        """Fetch all data as CSV string."""
+        """Fetch all data as CSV."""
         return self._config.get_csv()
 
     def path(self) -> str:
@@ -1464,8 +1470,72 @@ class MetricEndpointBuilder(Generic[T]):
         return self._config.path()
 
 
-# Type alias for non-generic usage
+class DateMetricEndpointBuilder(Generic[T]):
+    """Builder for metric endpoint queries with date-based indexing.
+
+    Accepts dates in __getitem__ and returns DateMetricData from fetch().
+
+    Examples:
+        data = endpoint.fetch()
+        data = endpoint[date(2020, 1, 1)].fetch()
+        data = endpoint[date(2020, 1, 1):date(2023, 1, 1)].fetch()
+        data = endpoint[:10].fetch()
+    """
+
+    def __init__(self, client: BrkClientBase, name: str, index: Index):
+        self._config = _EndpointConfig(client, name, index)
+
+    @overload
+    def __getitem__(self, key: int) -> DateSingleItemBuilder[T]: ...
+    @overload
+    def __getitem__(self, key: datetime) -> DateSingleItemBuilder[T]: ...
+    @overload
+    def __getitem__(self, key: date) -> DateSingleItemBuilder[T]: ...
+    @overload
+    def __getitem__(self, key: slice) -> DateRangeBuilder[T]: ...
+
+    def __getitem__(self, key: Union[int, slice, date, datetime]) -> Union[DateSingleItemBuilder[T], DateRangeBuilder[T]]:
+        """Access single item or slice. Accepts int, date, or datetime."""
+        if isinstance(key, (date, datetime)):
+            idx = _date_to_index(self._config.index, key)
+            return DateSingleItemBuilder(self._config._new(idx, idx + 1))
+        if isinstance(key, int):
+            return DateSingleItemBuilder(self._config._new(key, key + 1))
+        start, stop = key.start, key.stop
+        if isinstance(start, (date, datetime)):
+            start = _date_to_index(self._config.index, start)
+        if isinstance(stop, (date, datetime)):
+            stop = _date_to_index(self._config.index, stop)
+        return DateRangeBuilder(self._config._new(start, stop))
+
+    def head(self, n: int = 10) -> DateRangeBuilder[T]:
+        """Get the first n items."""
+        return DateRangeBuilder(self._config._new(end=n))
+
+    def tail(self, n: int = 10) -> DateRangeBuilder[T]:
+        """Get the last n items."""
+        return DateRangeBuilder(self._config._new(end=0) if n == 0 else self._config._new(start=-n))
+
+    def skip(self, n: int) -> DateSkippedBuilder[T]:
+        """Skip the first n items."""
+        return DateSkippedBuilder(self._config._new(start=n))
+
+    def fetch(self) -> DateMetricData[T]:
+        """Fetch all data."""
+        return self._config.get_date_metric()
+
+    def fetch_csv(self) -> str:
+        """Fetch all data as CSV."""
+        return self._config.get_csv()
+
+    def path(self) -> str:
+        """Get the base endpoint path."""
+        return self._config.path()
+
+
+# Type aliases for non-generic usage
 AnyMetricEndpointBuilder = MetricEndpointBuilder[Any]
+AnyDateMetricEndpointBuilder = DateMetricEndpointBuilder[Any]
 
 
 class MetricPattern(Protocol[T]):
@@ -1527,25 +1597,28 @@ _i37 = ('emptyaddressindex',)
 def _ep(c: BrkClientBase, n: str, i: Index) -> MetricEndpointBuilder[Any]:
     return MetricEndpointBuilder(c, n, i)
 
+def _dep(c: BrkClientBase, n: str, i: Index) -> DateMetricEndpointBuilder[Any]:
+    return DateMetricEndpointBuilder(c, n, i)
+
 # Index accessor classes
 
 class _MetricPattern1By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute1')
-    def minute5(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute5')
-    def minute10(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute10')
-    def minute30(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute30')
-    def hour1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'hour1')
-    def hour4(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'hour4')
-    def hour12(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'hour12')
-    def day1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'day1')
-    def day3(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'day3')
-    def week1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'week1')
-    def month1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'month1')
-    def month3(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'month3')
-    def month6(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'month6')
-    def year1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'year1')
-    def year10(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'year10')
+    def minute1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute1')
+    def minute5(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute5')
+    def minute10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute10')
+    def minute30(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute30')
+    def hour1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour1')
+    def hour4(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour4')
+    def hour12(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour12')
+    def day1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'day1')
+    def day3(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'day3')
+    def week1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'week1')
+    def month1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month1')
+    def month3(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month3')
+    def month6(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month6')
+    def year1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'year1')
+    def year10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'year10')
     def halvingepoch(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'halvingepoch')
     def difficultyepoch(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'difficultyepoch')
     def height(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'height')
@@ -1560,21 +1633,21 @@ class MetricPattern1(Generic[T]):
 
 class _MetricPattern2By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute1')
-    def minute5(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute5')
-    def minute10(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute10')
-    def minute30(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute30')
-    def hour1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'hour1')
-    def hour4(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'hour4')
-    def hour12(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'hour12')
-    def day1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'day1')
-    def day3(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'day3')
-    def week1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'week1')
-    def month1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'month1')
-    def month3(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'month3')
-    def month6(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'month6')
-    def year1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'year1')
-    def year10(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'year10')
+    def minute1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute1')
+    def minute5(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute5')
+    def minute10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute10')
+    def minute30(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute30')
+    def hour1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour1')
+    def hour4(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour4')
+    def hour12(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour12')
+    def day1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'day1')
+    def day3(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'day3')
+    def week1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'week1')
+    def month1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month1')
+    def month3(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month3')
+    def month6(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month6')
+    def year1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'year1')
+    def year10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'year10')
     def halvingepoch(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'halvingepoch')
     def difficultyepoch(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'difficultyepoch')
 
@@ -1588,7 +1661,7 @@ class MetricPattern2(Generic[T]):
 
 class _MetricPattern3By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute1')
+    def minute1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute1')
 
 class MetricPattern3(Generic[T]):
     by: _MetricPattern3By[T]
@@ -1600,7 +1673,7 @@ class MetricPattern3(Generic[T]):
 
 class _MetricPattern4By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute5(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute5')
+    def minute5(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute5')
 
 class MetricPattern4(Generic[T]):
     by: _MetricPattern4By[T]
@@ -1612,7 +1685,7 @@ class MetricPattern4(Generic[T]):
 
 class _MetricPattern5By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute10(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute10')
+    def minute10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute10')
 
 class MetricPattern5(Generic[T]):
     by: _MetricPattern5By[T]
@@ -1624,7 +1697,7 @@ class MetricPattern5(Generic[T]):
 
 class _MetricPattern6By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute30(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'minute30')
+    def minute30(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute30')
 
 class MetricPattern6(Generic[T]):
     by: _MetricPattern6By[T]
@@ -1636,7 +1709,7 @@ class MetricPattern6(Generic[T]):
 
 class _MetricPattern7By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def hour1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'hour1')
+    def hour1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour1')
 
 class MetricPattern7(Generic[T]):
     by: _MetricPattern7By[T]
@@ -1648,7 +1721,7 @@ class MetricPattern7(Generic[T]):
 
 class _MetricPattern8By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def hour4(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'hour4')
+    def hour4(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour4')
 
 class MetricPattern8(Generic[T]):
     by: _MetricPattern8By[T]
@@ -1660,7 +1733,7 @@ class MetricPattern8(Generic[T]):
 
 class _MetricPattern9By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def hour12(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'hour12')
+    def hour12(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour12')
 
 class MetricPattern9(Generic[T]):
     by: _MetricPattern9By[T]
@@ -1672,7 +1745,7 @@ class MetricPattern9(Generic[T]):
 
 class _MetricPattern10By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def day1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'day1')
+    def day1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'day1')
 
 class MetricPattern10(Generic[T]):
     by: _MetricPattern10By[T]
@@ -1684,7 +1757,7 @@ class MetricPattern10(Generic[T]):
 
 class _MetricPattern11By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def day3(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'day3')
+    def day3(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'day3')
 
 class MetricPattern11(Generic[T]):
     by: _MetricPattern11By[T]
@@ -1696,7 +1769,7 @@ class MetricPattern11(Generic[T]):
 
 class _MetricPattern12By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def week1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'week1')
+    def week1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'week1')
 
 class MetricPattern12(Generic[T]):
     by: _MetricPattern12By[T]
@@ -1708,7 +1781,7 @@ class MetricPattern12(Generic[T]):
 
 class _MetricPattern13By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def month1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'month1')
+    def month1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month1')
 
 class MetricPattern13(Generic[T]):
     by: _MetricPattern13By[T]
@@ -1720,7 +1793,7 @@ class MetricPattern13(Generic[T]):
 
 class _MetricPattern14By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def month3(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'month3')
+    def month3(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month3')
 
 class MetricPattern14(Generic[T]):
     by: _MetricPattern14By[T]
@@ -1732,7 +1805,7 @@ class MetricPattern14(Generic[T]):
 
 class _MetricPattern15By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def month6(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'month6')
+    def month6(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month6')
 
 class MetricPattern15(Generic[T]):
     by: _MetricPattern15By[T]
@@ -1744,7 +1817,7 @@ class MetricPattern15(Generic[T]):
 
 class _MetricPattern16By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def year1(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'year1')
+    def year1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'year1')
 
 class MetricPattern16(Generic[T]):
     by: _MetricPattern16By[T]
@@ -1756,7 +1829,7 @@ class MetricPattern16(Generic[T]):
 
 class _MetricPattern17By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def year10(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'year10')
+    def year10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'year10')
 
 class MetricPattern17(Generic[T]):
     by: _MetricPattern17By[T]

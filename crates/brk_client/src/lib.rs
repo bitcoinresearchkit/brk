@@ -172,45 +172,39 @@ impl EndpointConfig {
     }
 }
 
-/// Initial builder for metric endpoint queries.
+/// Builder for metric endpoint queries.
 ///
-/// Use method chaining to specify the data range, then call `fetch()` or `fetch_csv()` to execute.
+/// Parameterized by element type `T` and response type `D` (defaults to `MetricData<T>`).
+/// For date-based indexes, use `DateMetricEndpointBuilder<T>` which sets `D = DateMetricData<T>`.
 ///
 /// # Examples
 /// ```ignore
-/// // Fetch all data
-/// let data = endpoint.fetch()?;
-///
-/// // Get single item at index 5
-/// let data = endpoint.get(5).fetch()?;
-///
-/// // Get first 10 using range
-/// let data = endpoint.range(..10).fetch()?;
-///
-/// // Get range [100, 200)
-/// let data = endpoint.range(100..200).fetch()?;
-///
-/// // Get first 10 (convenience)
-/// let data = endpoint.take(10).fetch()?;
-///
-/// // Get last 10
-/// let data = endpoint.last(10).fetch()?;
-///
-/// // Iterator-style chaining
-/// let data = endpoint.skip(100).take(10).fetch()?;
+/// let data = endpoint.fetch()?;                   // all data
+/// let data = endpoint.get(5).fetch()?;             // single item
+/// let data = endpoint.range(..10).fetch()?;        // first 10
+/// let data = endpoint.range(100..200).fetch()?;    // range [100, 200)
+/// let data = endpoint.take(10).fetch()?;           // first 10 (convenience)
+/// let data = endpoint.last(10).fetch()?;           // last 10
+/// let data = endpoint.skip(100).take(10).fetch()?; // iterator-style
 /// ```
-pub struct MetricEndpointBuilder<T> {
+pub struct MetricEndpointBuilder<T, D = MetricData<T>> {
     config: EndpointConfig,
-    _marker: std::marker::PhantomData<T>,
+    _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }
 
-impl<T: DeserializeOwned> MetricEndpointBuilder<T> {
+/// Builder for date-based metric endpoint queries.
+///
+/// Like `MetricEndpointBuilder` but returns `DateMetricData` and provides
+/// date-based access methods (`get_date`, `date_range`).
+pub type DateMetricEndpointBuilder<T> = MetricEndpointBuilder<T, DateMetricData<T>>;
+
+impl<T: DeserializeOwned, D: DeserializeOwned> MetricEndpointBuilder<T, D> {
     pub fn new(client: Arc<BrkClientBase>, name: Arc<str>, index: Index) -> Self {
         Self { config: EndpointConfig::new(client, name, index), _marker: std::marker::PhantomData }
     }
 
     /// Select a specific index position.
-    pub fn get(mut self, index: usize) -> SingleItemBuilder<T> {
+    pub fn get(mut self, index: usize) -> SingleItemBuilder<T, D> {
         self.config.start = Some(index as i64);
         self.config.end = Some(index as i64 + 1);
         SingleItemBuilder { config: self.config, _marker: std::marker::PhantomData }
@@ -224,7 +218,7 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T> {
     /// endpoint.range(100..110)  // indices 100-109
     /// endpoint.range(100..)     // from 100 to end
     /// ```
-    pub fn range<R: RangeBounds<usize>>(mut self, range: R) -> RangeBuilder<T> {
+    pub fn range<R: RangeBounds<usize>>(mut self, range: R) -> RangeBuilder<T, D> {
         self.config.start = match range.start_bound() {
             Bound::Included(&n) => Some(n as i64),
             Bound::Excluded(&n) => Some(n as i64 + 1),
@@ -239,12 +233,12 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T> {
     }
 
     /// Take the first n items.
-    pub fn take(self, n: usize) -> RangeBuilder<T> {
+    pub fn take(self, n: usize) -> RangeBuilder<T, D> {
         self.range(..n)
     }
 
     /// Take the last n items.
-    pub fn last(mut self, n: usize) -> RangeBuilder<T> {
+    pub fn last(mut self, n: usize) -> RangeBuilder<T, D> {
         if n == 0 {
             self.config.end = Some(0);
         } else {
@@ -254,13 +248,13 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T> {
     }
 
     /// Skip the first n items. Chain with `take(n)` to get a range.
-    pub fn skip(mut self, n: usize) -> SkippedBuilder<T> {
+    pub fn skip(mut self, n: usize) -> SkippedBuilder<T, D> {
         self.config.start = Some(n as i64);
         SkippedBuilder { config: self.config, _marker: std::marker::PhantomData }
     }
 
     /// Fetch all data as parsed JSON.
-    pub fn fetch(self) -> Result<MetricData<T>> {
+    pub fn fetch(self) -> Result<D> {
         self.config.get_json(None)
     }
 
@@ -275,15 +269,47 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T> {
     }
 }
 
-/// Builder for single item access.
-pub struct SingleItemBuilder<T> {
-    config: EndpointConfig,
-    _marker: std::marker::PhantomData<T>,
+/// Date-specific methods available only on `DateMetricEndpointBuilder`.
+impl<T: DeserializeOwned> MetricEndpointBuilder<T, DateMetricData<T>> {
+    /// Select a specific date position (for day-precision or coarser indexes).
+    pub fn get_date(self, date: Date) -> SingleItemBuilder<T, DateMetricData<T>> {
+        let index = self.config.index.date_to_index(date).unwrap_or(0);
+        self.get(index)
+    }
+
+    /// Select a date range (for day-precision or coarser indexes).
+    pub fn date_range(self, start: Date, end: Date) -> RangeBuilder<T, DateMetricData<T>> {
+        let s = self.config.index.date_to_index(start).unwrap_or(0);
+        let e = self.config.index.date_to_index(end).unwrap_or(0);
+        self.range(s..e)
+    }
+
+    /// Select a specific timestamp position (works for all date-based indexes including sub-daily).
+    pub fn get_timestamp(self, ts: Timestamp) -> SingleItemBuilder<T, DateMetricData<T>> {
+        let index = self.config.index.timestamp_to_index(ts).unwrap_or(0);
+        self.get(index)
+    }
+
+    /// Select a timestamp range (works for all date-based indexes including sub-daily).
+    pub fn timestamp_range(self, start: Timestamp, end: Timestamp) -> RangeBuilder<T, DateMetricData<T>> {
+        let s = self.config.index.timestamp_to_index(start).unwrap_or(0);
+        let e = self.config.index.timestamp_to_index(end).unwrap_or(0);
+        self.range(s..e)
+    }
 }
 
-impl<T: DeserializeOwned> SingleItemBuilder<T> {
+/// Builder for single item access.
+pub struct SingleItemBuilder<T, D = MetricData<T>> {
+    config: EndpointConfig,
+    _marker: std::marker::PhantomData<fn() -> (T, D)>,
+}
+
+/// Date-aware single item builder.
+pub type DateSingleItemBuilder<T> = SingleItemBuilder<T, DateMetricData<T>>;
+
+impl<T: DeserializeOwned, D: DeserializeOwned> SingleItemBuilder<T, D> {
     /// Fetch the single item.
-    pub fn fetch(self) -> Result<MetricData<T>> {
+    pub fn fetch(self) -> Result<D> {
         self.config.get_json(None)
     }
 
@@ -294,21 +320,24 @@ impl<T: DeserializeOwned> SingleItemBuilder<T> {
 }
 
 /// Builder after calling `skip(n)`. Chain with `take(n)` to specify count.
-pub struct SkippedBuilder<T> {
+pub struct SkippedBuilder<T, D = MetricData<T>> {
     config: EndpointConfig,
-    _marker: std::marker::PhantomData<T>,
+    _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }
 
-impl<T: DeserializeOwned> SkippedBuilder<T> {
+/// Date-aware skipped builder.
+pub type DateSkippedBuilder<T> = SkippedBuilder<T, DateMetricData<T>>;
+
+impl<T: DeserializeOwned, D: DeserializeOwned> SkippedBuilder<T, D> {
     /// Take n items after the skipped position.
-    pub fn take(mut self, n: usize) -> RangeBuilder<T> {
+    pub fn take(mut self, n: usize) -> RangeBuilder<T, D> {
         let start = self.config.start.unwrap_or(0);
         self.config.end = Some(start + n as i64);
         RangeBuilder { config: self.config, _marker: std::marker::PhantomData }
     }
 
     /// Fetch from the skipped position to the end.
-    pub fn fetch(self) -> Result<MetricData<T>> {
+    pub fn fetch(self) -> Result<D> {
         self.config.get_json(None)
     }
 
@@ -319,14 +348,17 @@ impl<T: DeserializeOwned> SkippedBuilder<T> {
 }
 
 /// Builder with range fully specified.
-pub struct RangeBuilder<T> {
+pub struct RangeBuilder<T, D = MetricData<T>> {
     config: EndpointConfig,
-    _marker: std::marker::PhantomData<T>,
+    _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }
 
-impl<T: DeserializeOwned> RangeBuilder<T> {
+/// Date-aware range builder.
+pub type DateRangeBuilder<T> = RangeBuilder<T, DateMetricData<T>>;
+
+impl<T: DeserializeOwned, D: DeserializeOwned> RangeBuilder<T, D> {
     /// Fetch the range as parsed JSON.
-    pub fn fetch(self) -> Result<MetricData<T>> {
+    pub fn fetch(self) -> Result<D> {
         self.config.get_json(None)
     }
 
@@ -381,25 +413,30 @@ fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> M
     MetricEndpointBuilder::new(c.clone(), n.clone(), i)
 }
 
+#[inline]
+fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> DateMetricEndpointBuilder<T> {
+    DateMetricEndpointBuilder::new(c.clone(), n.clone(), i)
+}
+
 // Index accessor structs
 
 pub struct MetricPattern1By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern1By<T> {
-    pub fn minute1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute1) }
-    pub fn minute5(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute5) }
-    pub fn minute10(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute10) }
-    pub fn minute30(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute30) }
-    pub fn hour1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Hour1) }
-    pub fn hour4(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Hour4) }
-    pub fn hour12(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Hour12) }
-    pub fn day1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Day1) }
-    pub fn day3(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Day3) }
-    pub fn week1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Week1) }
-    pub fn month1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Month1) }
-    pub fn month3(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Month3) }
-    pub fn month6(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Month6) }
-    pub fn year1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Year1) }
-    pub fn year10(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Year10) }
+    pub fn minute1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute1) }
+    pub fn minute5(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute5) }
+    pub fn minute10(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute10) }
+    pub fn minute30(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute30) }
+    pub fn hour1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour1) }
+    pub fn hour4(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour4) }
+    pub fn hour12(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour12) }
+    pub fn day1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day1) }
+    pub fn day3(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day3) }
+    pub fn week1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Week1) }
+    pub fn month1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month1) }
+    pub fn month3(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month3) }
+    pub fn month6(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month6) }
+    pub fn year1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year1) }
+    pub fn year10(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year10) }
     pub fn halvingepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::HalvingEpoch) }
     pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DifficultyEpoch) }
     pub fn height(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Height) }
@@ -416,21 +453,21 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern1<T> { fn get(&self,
 
 pub struct MetricPattern2By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern2By<T> {
-    pub fn minute1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute1) }
-    pub fn minute5(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute5) }
-    pub fn minute10(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute10) }
-    pub fn minute30(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute30) }
-    pub fn hour1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Hour1) }
-    pub fn hour4(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Hour4) }
-    pub fn hour12(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Hour12) }
-    pub fn day1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Day1) }
-    pub fn day3(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Day3) }
-    pub fn week1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Week1) }
-    pub fn month1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Month1) }
-    pub fn month3(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Month3) }
-    pub fn month6(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Month6) }
-    pub fn year1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Year1) }
-    pub fn year10(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Year10) }
+    pub fn minute1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute1) }
+    pub fn minute5(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute5) }
+    pub fn minute10(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute10) }
+    pub fn minute30(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute30) }
+    pub fn hour1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour1) }
+    pub fn hour4(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour4) }
+    pub fn hour12(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour12) }
+    pub fn day1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day1) }
+    pub fn day3(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day3) }
+    pub fn week1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Week1) }
+    pub fn month1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month1) }
+    pub fn month3(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month3) }
+    pub fn month6(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month6) }
+    pub fn year1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year1) }
+    pub fn year10(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year10) }
     pub fn halvingepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::HalvingEpoch) }
     pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DifficultyEpoch) }
 }
@@ -446,7 +483,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern2<T> { fn get(&self,
 
 pub struct MetricPattern3By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern3By<T> {
-    pub fn minute1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute1) }
+    pub fn minute1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute1) }
 }
 
 pub struct MetricPattern3<T> { name: Arc<str>, pub by: MetricPattern3By<T> }
@@ -460,7 +497,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern3<T> { fn get(&self,
 
 pub struct MetricPattern4By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern4By<T> {
-    pub fn minute5(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute5) }
+    pub fn minute5(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute5) }
 }
 
 pub struct MetricPattern4<T> { name: Arc<str>, pub by: MetricPattern4By<T> }
@@ -474,7 +511,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern4<T> { fn get(&self,
 
 pub struct MetricPattern5By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern5By<T> {
-    pub fn minute10(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute10) }
+    pub fn minute10(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute10) }
 }
 
 pub struct MetricPattern5<T> { name: Arc<str>, pub by: MetricPattern5By<T> }
@@ -488,7 +525,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern5<T> { fn get(&self,
 
 pub struct MetricPattern6By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern6By<T> {
-    pub fn minute30(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Minute30) }
+    pub fn minute30(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute30) }
 }
 
 pub struct MetricPattern6<T> { name: Arc<str>, pub by: MetricPattern6By<T> }
@@ -502,7 +539,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern6<T> { fn get(&self,
 
 pub struct MetricPattern7By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern7By<T> {
-    pub fn hour1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Hour1) }
+    pub fn hour1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour1) }
 }
 
 pub struct MetricPattern7<T> { name: Arc<str>, pub by: MetricPattern7By<T> }
@@ -516,7 +553,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern7<T> { fn get(&self,
 
 pub struct MetricPattern8By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern8By<T> {
-    pub fn hour4(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Hour4) }
+    pub fn hour4(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour4) }
 }
 
 pub struct MetricPattern8<T> { name: Arc<str>, pub by: MetricPattern8By<T> }
@@ -530,7 +567,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern8<T> { fn get(&self,
 
 pub struct MetricPattern9By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern9By<T> {
-    pub fn hour12(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Hour12) }
+    pub fn hour12(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour12) }
 }
 
 pub struct MetricPattern9<T> { name: Arc<str>, pub by: MetricPattern9By<T> }
@@ -544,7 +581,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern9<T> { fn get(&self,
 
 pub struct MetricPattern10By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern10By<T> {
-    pub fn day1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Day1) }
+    pub fn day1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day1) }
 }
 
 pub struct MetricPattern10<T> { name: Arc<str>, pub by: MetricPattern10By<T> }
@@ -558,7 +595,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern10<T> { fn get(&self
 
 pub struct MetricPattern11By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern11By<T> {
-    pub fn day3(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Day3) }
+    pub fn day3(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day3) }
 }
 
 pub struct MetricPattern11<T> { name: Arc<str>, pub by: MetricPattern11By<T> }
@@ -572,7 +609,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern11<T> { fn get(&self
 
 pub struct MetricPattern12By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern12By<T> {
-    pub fn week1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Week1) }
+    pub fn week1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Week1) }
 }
 
 pub struct MetricPattern12<T> { name: Arc<str>, pub by: MetricPattern12By<T> }
@@ -586,7 +623,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern12<T> { fn get(&self
 
 pub struct MetricPattern13By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern13By<T> {
-    pub fn month1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Month1) }
+    pub fn month1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month1) }
 }
 
 pub struct MetricPattern13<T> { name: Arc<str>, pub by: MetricPattern13By<T> }
@@ -600,7 +637,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern13<T> { fn get(&self
 
 pub struct MetricPattern14By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern14By<T> {
-    pub fn month3(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Month3) }
+    pub fn month3(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month3) }
 }
 
 pub struct MetricPattern14<T> { name: Arc<str>, pub by: MetricPattern14By<T> }
@@ -614,7 +651,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern14<T> { fn get(&self
 
 pub struct MetricPattern15By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern15By<T> {
-    pub fn month6(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Month6) }
+    pub fn month6(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month6) }
 }
 
 pub struct MetricPattern15<T> { name: Arc<str>, pub by: MetricPattern15By<T> }
@@ -628,7 +665,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern15<T> { fn get(&self
 
 pub struct MetricPattern16By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern16By<T> {
-    pub fn year1(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Year1) }
+    pub fn year1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year1) }
 }
 
 pub struct MetricPattern16<T> { name: Arc<str>, pub by: MetricPattern16By<T> }
@@ -642,7 +679,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern16<T> { fn get(&self
 
 pub struct MetricPattern17By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern17By<T> {
-    pub fn year10(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Year10) }
+    pub fn year10(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year10) }
 }
 
 pub struct MetricPattern17<T> { name: Arc<str>, pub by: MetricPattern17By<T> }
@@ -6855,6 +6892,20 @@ impl BrkClient {
             Arc::from(metric.into().as_str()),
             index,
         )
+    }
+
+    /// Create a dynamic date-based metric endpoint builder.
+    ///
+    /// Returns `Err` if the index is not date-based.
+    pub fn date_metric(&self, metric: impl Into<Metric>, index: Index) -> Result<DateMetricEndpointBuilder<serde_json::Value>> {
+        if !index.is_date_based() {
+            return Err(BrkError { message: format!("{} is not a date-based index", index.name()) });
+        }
+        Ok(DateMetricEndpointBuilder::new(
+            self.base.clone(),
+            Arc::from(metric.into().as_str()),
+            index,
+        ))
     }
 
     /// Compact OpenAPI specification

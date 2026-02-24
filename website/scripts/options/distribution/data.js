@@ -89,17 +89,15 @@ export function buildCohortData() {
   });
 
   // Age range cohorts
-  const dateRange = entries(utxoCohorts.ageRange).map(
-    ([key, tree], i, arr) => {
-      const names = AGE_RANGE_NAMES[key];
-      return {
-        name: names.short,
-        title: `UTXOs ${names.long}`,
-        color: colors.at(i, arr.length),
-        tree,
-      };
-    },
-  );
+  const dateRange = entries(utxoCohorts.ageRange).map(([key, tree], i, arr) => {
+    const names = AGE_RANGE_NAMES[key];
+    return {
+      name: names.short,
+      title: `UTXOs ${names.long}`,
+      color: colors.at(i, arr.length),
+      tree,
+    };
+  });
 
   // Epoch cohorts
   const epoch = entries(utxoCohorts.epoch).map(([key, tree], i, arr) => {

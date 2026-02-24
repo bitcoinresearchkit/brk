@@ -15,7 +15,13 @@
 
 import { Unit } from "../../utils/units.js";
 import { line, baseline } from "../series.js";
-import { satsBtcUsd, satsBtcUsdBaseline, mapCohorts, mapCohortsWithAll, flatMapCohortsWithAll } from "../shared.js";
+import {
+  satsBtcUsd,
+  satsBtcUsdBaseline,
+  mapCohorts,
+  mapCohortsWithAll,
+  flatMapCohortsWithAll,
+} from "../shared.js";
 import { colors } from "../../utils/colors.js";
 import { priceLines } from "../constants.js";
 
@@ -26,10 +32,27 @@ import { priceLines } from "../constants.js";
  */
 function baseSupplySeries(tree) {
   return [
-    ...satsBtcUsd({ pattern: tree.supply.total, name: "Total", color: colors.default }),
-    ...satsBtcUsd({ pattern: tree.unrealized.supplyInProfit, name: "In Profit", color: colors.profit }),
-    ...satsBtcUsd({ pattern: tree.unrealized.supplyInLoss, name: "In Loss", color: colors.loss }),
-    ...satsBtcUsd({ pattern: tree.supply.halved, name: "Halved", color: colors.gray, style: 4 }),
+    ...satsBtcUsd({
+      pattern: tree.supply.total,
+      name: "Total",
+      color: colors.default,
+    }),
+    ...satsBtcUsd({
+      pattern: tree.unrealized.supplyInProfit,
+      name: "In Profit",
+      color: colors.profit,
+    }),
+    ...satsBtcUsd({
+      pattern: tree.unrealized.supplyInLoss,
+      name: "In Loss",
+      color: colors.loss,
+    }),
+    ...satsBtcUsd({
+      pattern: tree.supply.halved,
+      name: "Halved",
+      color: colors.gray,
+      style: 4,
+    }),
   ];
 }
 
@@ -40,8 +63,18 @@ function baseSupplySeries(tree) {
  */
 function ownSupplyPctSeries(tree) {
   return [
-    line({ metric: tree.relative.supplyInProfitRelToOwnSupply, name: "In Profit", color: colors.profit, unit: Unit.pctOwn }),
-    line({ metric: tree.relative.supplyInLossRelToOwnSupply, name: "In Loss", color: colors.loss, unit: Unit.pctOwn }),
+    line({
+      metric: tree.relative.supplyInProfitRelToOwnSupply,
+      name: "In Profit",
+      color: colors.profit,
+      unit: Unit.pctOwn,
+    }),
+    line({
+      metric: tree.relative.supplyInLossRelToOwnSupply,
+      name: "In Loss",
+      color: colors.loss,
+      unit: Unit.pctOwn,
+    }),
     ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
   ];
 }
@@ -53,9 +86,24 @@ function ownSupplyPctSeries(tree) {
  */
 function circulatingSupplyPctSeries(tree) {
   return [
-    line({ metric: tree.relative.supplyRelToCirculatingSupply, name: "Total", color: colors.default, unit: Unit.pctSupply }),
-    line({ metric: tree.relative.supplyInProfitRelToCirculatingSupply, name: "In Profit", color: colors.profit, unit: Unit.pctSupply }),
-    line({ metric: tree.relative.supplyInLossRelToCirculatingSupply, name: "In Loss", color: colors.loss, unit: Unit.pctSupply }),
+    line({
+      metric: tree.relative.supplyRelToCirculatingSupply,
+      name: "Total",
+      color: colors.default,
+      unit: Unit.pctSupply,
+    }),
+    line({
+      metric: tree.relative.supplyInProfitRelToCirculatingSupply,
+      name: "In Profit",
+      color: colors.profit,
+      unit: Unit.pctSupply,
+    }),
+    line({
+      metric: tree.relative.supplyInLossRelToCirculatingSupply,
+      name: "In Loss",
+      color: colors.loss,
+      unit: Unit.pctSupply,
+    }),
   ];
 }
 
@@ -99,7 +147,12 @@ function grouped30dUtxoCountChangeChart(list, all, title) {
     name: "UTXO Count",
     title: title("UTXO Count 30d Change"),
     bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-      baseline({ metric: tree.outputs.utxoCount30dChange, name, unit: Unit.count, color }),
+      baseline({
+        metric: tree.outputs.utxoCount30dChange,
+        name,
+        unit: Unit.count,
+        color,
+      }),
     ),
   };
 }
@@ -157,7 +210,12 @@ function singleAddressCountChart(cohort, title) {
     name: "Address Count",
     title: title("Address Count"),
     bottom: [
-      line({ metric: cohort.addrCount.count, name: "Address Count", color: cohort.color, unit: Unit.count }),
+      line({
+        metric: cohort.addrCount.count,
+        name: "Address Count",
+        color: cohort.color,
+        unit: Unit.count,
+      }),
     ],
   };
 }
@@ -271,10 +329,27 @@ function createSingleSupplySeriesWithRelative(cohort) {
 function createSingleSupplySeriesWithOwnSupply(cohort) {
   const { tree } = cohort;
   return [
-    ...satsBtcUsd({ pattern: tree.unrealized.supplyInProfit, name: "In Profit", color: colors.profit }),
-    ...satsBtcUsd({ pattern: tree.unrealized.supplyInLoss, name: "In Loss", color: colors.loss }),
-    ...satsBtcUsd({ pattern: tree.supply.total, name: "Total", color: colors.default }),
-    ...satsBtcUsd({ pattern: tree.supply.halved, name: "Halved", color: colors.gray, style: 4 }),
+    ...satsBtcUsd({
+      pattern: tree.unrealized.supplyInProfit,
+      name: "In Profit",
+      color: colors.profit,
+    }),
+    ...satsBtcUsd({
+      pattern: tree.unrealized.supplyInLoss,
+      name: "In Loss",
+      color: colors.loss,
+    }),
+    ...satsBtcUsd({
+      pattern: tree.supply.total,
+      name: "Total",
+      color: colors.default,
+    }),
+    ...satsBtcUsd({
+      pattern: tree.supply.halved,
+      name: "Halved",
+      color: colors.gray,
+      style: 4,
+    }),
     ...ownSupplyPctSeries(tree),
   ];
 }
@@ -518,7 +593,12 @@ export function createGroupedHoldingsSectionAddress({ list, all, title }) {
             name: "Address Count",
             title: title("Address Count 30d Change"),
             bottom: mapCohortsWithAll(list, all, ({ name, color, addrCount }) =>
-              baseline({ metric: addrCount._30dChange, name, unit: Unit.count, color }),
+              baseline({
+                metric: addrCount._30dChange,
+                name,
+                unit: Unit.count,
+                color,
+              }),
             ),
           },
         ],
@@ -532,7 +612,11 @@ export function createGroupedHoldingsSectionAddress({ list, all, title }) {
  * @param {{ list: readonly AddressCohortObject[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedHoldingsSectionAddressAmount({ list, all, title }) {
+export function createGroupedHoldingsSectionAddressAmount({
+  list,
+  all,
+  title,
+}) {
   return {
     name: "Holdings",
     tree: [
@@ -635,7 +719,12 @@ export function createGroupedHoldingsSectionAddressAmount({ list, all, title }) 
             name: "Address Count",
             title: title("Address Count 30d Change"),
             bottom: mapCohortsWithAll(list, all, ({ name, color, addrCount }) =>
-              baseline({ metric: addrCount._30dChange, name, unit: Unit.count, color }),
+              baseline({
+                metric: addrCount._30dChange,
+                name,
+                unit: Unit.count,
+                color,
+              }),
             ),
           },
         ],
@@ -703,7 +792,11 @@ export function createGroupedHoldingsSection({ list, all, title }) {
  * @param {{ list: readonly (CohortAgeRange | CohortBasicWithoutMarketCap)[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedHoldingsSectionWithOwnSupply({ list, all, title }) {
+export function createGroupedHoldingsSectionWithOwnSupply({
+  list,
+  all,
+  title,
+}) {
   return {
     name: "Holdings",
     tree: [

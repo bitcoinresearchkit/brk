@@ -6,7 +6,13 @@ import { Unit } from "../../utils/units.js";
 import { line, baseline, dots, dotsBaseline } from "../series.js";
 import { colors } from "../../utils/colors.js";
 import { priceLine, priceLines } from "../constants.js";
-import { satsBtcUsd, satsBtcUsdFrom, mapCohorts, mapCohortsWithAll, flatMapCohortsWithAll } from "../shared.js";
+import {
+  satsBtcUsd,
+  satsBtcUsdFrom,
+  mapCohorts,
+  mapCohortsWithAll,
+  flatMapCohortsWithAll,
+} from "../shared.js";
 
 // ============================================================================
 // Core Series Builders (Composable Primitives)
@@ -28,13 +34,33 @@ import { satsBtcUsd, satsBtcUsdFrom, mapCohorts, mapCohortsWithAll, flatMapCohor
  */
 function pnlLines(metrics, unit) {
   const series = [
-    line({ metric: metrics.profit, name: "Profit", color: colors.profit, unit }),
+    line({
+      metric: metrics.profit,
+      name: "Profit",
+      color: colors.profit,
+      unit,
+    }),
     line({ metric: metrics.loss, name: "Loss", color: colors.loss, unit }),
   ];
   if (metrics.total) {
-    series.push(line({ metric: metrics.total, name: "Total", color: colors.default, unit }));
+    series.push(
+      line({
+        metric: metrics.total,
+        name: "Total",
+        color: colors.default,
+        unit,
+      }),
+    );
   }
-  series.push(line({ metric: metrics.negLoss, name: "Negative Loss", color: colors.loss, unit, defaultActive: false }));
+  series.push(
+    line({
+      metric: metrics.negLoss,
+      name: "Negative Loss",
+      color: colors.loss,
+      unit,
+      defaultActive: false,
+    }),
+  );
   return series;
 }
 
@@ -83,7 +109,10 @@ function getUnrealizedMetrics(tree) {
  */
 function unrealizedUsd(m) {
   return [
-    ...pnlLines({ profit: m.profit, loss: m.loss, negLoss: m.negLoss, total: m.total }, Unit.usd),
+    ...pnlLines(
+      { profit: m.profit, loss: m.loss, negLoss: m.negLoss, total: m.total },
+      Unit.usd,
+    ),
     priceLine({ unit: Unit.usd, defaultActive: false }),
   ];
 }
@@ -709,6 +738,166 @@ function sentInPnlTree(tree, title) {
 }
 
 // ============================================================================
+// Rolling Realized Helpers
+// ============================================================================
+
+/**
+ * Rolling realized value tree for single cohort (available on all realized patterns)
+ * @param {AnyRealizedPattern} r
+ * @param {(metric: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function singleRollingRealizedValueTree(r, title) {
+  return [
+    {
+      name: "Compare",
+      title: title("Rolling Realized Value"),
+      bottom: [
+        line({ metric: r.realizedValue24h, name: "24h", color: colors.time._24h, unit: Unit.usd }),
+        line({ metric: r.realizedValue7d, name: "7d", color: colors.time._1w, unit: Unit.usd }),
+        line({ metric: r.realizedValue30d, name: "30d", color: colors.time._1m, unit: Unit.usd }),
+        line({ metric: r.realizedValue1y, name: "1y", color: colors.time._1y, unit: Unit.usd }),
+      ],
+    },
+    { name: "24h", title: title("Realized Value (24h)"), bottom: [line({ metric: r.realizedValue24h, name: "Value", unit: Unit.usd })] },
+    { name: "7d", title: title("Realized Value (7d)"), bottom: [line({ metric: r.realizedValue7d, name: "Value", unit: Unit.usd })] },
+    { name: "30d", title: title("Realized Value (30d)"), bottom: [line({ metric: r.realizedValue30d, name: "Value", unit: Unit.usd })] },
+    { name: "1y", title: title("Realized Value (1y)"), bottom: [line({ metric: r.realizedValue1y, name: "Value", unit: Unit.usd })] },
+  ];
+}
+
+/**
+ * Rolling realized tree with P/L for single cohort (for RealizedWithExtras patterns)
+ * @param {RealizedWithExtras} r
+ * @param {(metric: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function singleRollingRealizedTreeWithExtras(r, title) {
+  return [
+    {
+      name: "Value",
+      tree: singleRollingRealizedValueTree(r, title),
+    },
+    {
+      name: "Profit",
+      tree: [
+        {
+          name: "Compare",
+          title: title("Rolling Realized Profit"),
+          bottom: [
+            line({ metric: r.realizedProfit24h, name: "24h", color: colors.time._24h, unit: Unit.usd }),
+            line({ metric: r.realizedProfit7d, name: "7d", color: colors.time._1w, unit: Unit.usd }),
+            line({ metric: r.realizedProfit30d, name: "30d", color: colors.time._1m, unit: Unit.usd }),
+            line({ metric: r.realizedProfit1y, name: "1y", color: colors.time._1y, unit: Unit.usd }),
+          ],
+        },
+        { name: "24h", title: title("Realized Profit (24h)"), bottom: [line({ metric: r.realizedProfit24h, name: "Profit", color: colors.profit, unit: Unit.usd })] },
+        { name: "7d", title: title("Realized Profit (7d)"), bottom: [line({ metric: r.realizedProfit7d, name: "Profit", color: colors.profit, unit: Unit.usd })] },
+        { name: "30d", title: title("Realized Profit (30d)"), bottom: [line({ metric: r.realizedProfit30d, name: "Profit", color: colors.profit, unit: Unit.usd })] },
+        { name: "1y", title: title("Realized Profit (1y)"), bottom: [line({ metric: r.realizedProfit1y, name: "Profit", color: colors.profit, unit: Unit.usd })] },
+      ],
+    },
+    {
+      name: "Loss",
+      tree: [
+        {
+          name: "Compare",
+          title: title("Rolling Realized Loss"),
+          bottom: [
+            line({ metric: r.realizedLoss24h, name: "24h", color: colors.time._24h, unit: Unit.usd }),
+            line({ metric: r.realizedLoss7d, name: "7d", color: colors.time._1w, unit: Unit.usd }),
+            line({ metric: r.realizedLoss30d, name: "30d", color: colors.time._1m, unit: Unit.usd }),
+            line({ metric: r.realizedLoss1y, name: "1y", color: colors.time._1y, unit: Unit.usd }),
+          ],
+        },
+        { name: "24h", title: title("Realized Loss (24h)"), bottom: [line({ metric: r.realizedLoss24h, name: "Loss", color: colors.loss, unit: Unit.usd })] },
+        { name: "7d", title: title("Realized Loss (7d)"), bottom: [line({ metric: r.realizedLoss7d, name: "Loss", color: colors.loss, unit: Unit.usd })] },
+        { name: "30d", title: title("Realized Loss (30d)"), bottom: [line({ metric: r.realizedLoss30d, name: "Loss", color: colors.loss, unit: Unit.usd })] },
+        { name: "1y", title: title("Realized Loss (1y)"), bottom: [line({ metric: r.realizedLoss1y, name: "Loss", color: colors.loss, unit: Unit.usd })] },
+      ],
+    },
+    {
+      name: "P/L Ratio",
+      tree: [
+        {
+          name: "Compare",
+          title: title("Rolling Realized P/L Ratio"),
+          bottom: [
+            baseline({ metric: r.realizedProfitToLossRatio24h, name: "24h", color: colors.time._24h, unit: Unit.ratio }),
+            baseline({ metric: r.realizedProfitToLossRatio7d, name: "7d", color: colors.time._1w, unit: Unit.ratio }),
+            baseline({ metric: r.realizedProfitToLossRatio30d, name: "30d", color: colors.time._1m, unit: Unit.ratio }),
+            baseline({ metric: r.realizedProfitToLossRatio1y, name: "1y", color: colors.time._1y, unit: Unit.ratio }),
+          ],
+        },
+        { name: "24h", title: title("Realized P/L Ratio (24h)"), bottom: [baseline({ metric: r.realizedProfitToLossRatio24h, name: "P/L Ratio", unit: Unit.ratio })] },
+        { name: "7d", title: title("Realized P/L Ratio (7d)"), bottom: [baseline({ metric: r.realizedProfitToLossRatio7d, name: "P/L Ratio", unit: Unit.ratio })] },
+        { name: "30d", title: title("Realized P/L Ratio (30d)"), bottom: [baseline({ metric: r.realizedProfitToLossRatio30d, name: "P/L Ratio", unit: Unit.ratio })] },
+        { name: "1y", title: title("Realized P/L Ratio (1y)"), bottom: [baseline({ metric: r.realizedProfitToLossRatio1y, name: "P/L Ratio", unit: Unit.ratio })] },
+      ],
+    },
+  ];
+}
+
+/**
+ * Grouped rolling realized value charts (available on all realized patterns)
+ * @param {readonly CohortObject[]} list
+ * @param {CohortObject} all
+ * @param {(metric: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function groupedRollingRealizedValueCharts(list, all, title) {
+  return [
+    { name: "24h", title: title("Realized Value (24h)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedValue24h, name, color, unit: Unit.usd })) },
+    { name: "7d", title: title("Realized Value (7d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedValue7d, name, color, unit: Unit.usd })) },
+    { name: "30d", title: title("Realized Value (30d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedValue30d, name, color, unit: Unit.usd })) },
+    { name: "1y", title: title("Realized Value (1y)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedValue1y, name, color, unit: Unit.usd })) },
+  ];
+}
+
+/**
+ * Grouped rolling realized charts with P/L (for RealizedWithExtras cohorts)
+ * @param {readonly (CohortAgeRange | CohortLongTerm | CohortAll | CohortFull)[]} list
+ * @param {CohortAll} all
+ * @param {(metric: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function groupedRollingRealizedChartsWithExtras(list, all, title) {
+  return [
+    {
+      name: "Value",
+      tree: groupedRollingRealizedValueCharts(list, all, title),
+    },
+    {
+      name: "Profit",
+      tree: [
+        { name: "24h", title: title("Realized Profit (24h)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedProfit24h, name, color, unit: Unit.usd })) },
+        { name: "7d", title: title("Realized Profit (7d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedProfit7d, name, color, unit: Unit.usd })) },
+        { name: "30d", title: title("Realized Profit (30d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedProfit30d, name, color, unit: Unit.usd })) },
+        { name: "1y", title: title("Realized Profit (1y)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedProfit1y, name, color, unit: Unit.usd })) },
+      ],
+    },
+    {
+      name: "Loss",
+      tree: [
+        { name: "24h", title: title("Realized Loss (24h)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedLoss24h, name, color, unit: Unit.usd })) },
+        { name: "7d", title: title("Realized Loss (7d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedLoss7d, name, color, unit: Unit.usd })) },
+        { name: "30d", title: title("Realized Loss (30d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedLoss30d, name, color, unit: Unit.usd })) },
+        { name: "1y", title: title("Realized Loss (1y)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.realizedLoss1y, name, color, unit: Unit.usd })) },
+      ],
+    },
+    {
+      name: "P/L Ratio",
+      tree: [
+        { name: "24h", title: title("Realized P/L Ratio (24h)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.realizedProfitToLossRatio24h, name, color, unit: Unit.ratio })) },
+        { name: "7d", title: title("Realized P/L Ratio (7d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.realizedProfitToLossRatio7d, name, color, unit: Unit.ratio })) },
+        { name: "30d", title: title("Realized P/L Ratio (30d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.realizedProfitToLossRatio30d, name, color, unit: Unit.ratio })) },
+        { name: "1y", title: title("Realized P/L Ratio (1y)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.realizedProfitToLossRatio1y, name, color, unit: Unit.ratio })) },
+      ],
+    },
+  ];
+}
+
+// ============================================================================
 // Realized Subfolder Builders
 // ============================================================================
 
@@ -716,9 +905,10 @@ function sentInPnlTree(tree, title) {
  * Base realized subfolder (no P/L ratio)
  * @param {{ realized: AnyRealizedPattern }} tree
  * @param {(metric: string) => string} title
+ * @param {PartialOptionsTree} [rollingTree]
  * @returns {PartialOptionsGroup}
  */
-function realizedSubfolder(tree, title) {
+function realizedSubfolder(tree, title, rollingTree) {
   const r = tree.realized;
   return {
     name: "Realized",
@@ -762,6 +952,10 @@ function realizedSubfolder(tree, title) {
         ],
       },
       {
+        name: "Rolling",
+        tree: rollingTree ?? singleRollingRealizedValueTree(r, title),
+      },
+      {
         name: "Cumulative",
         tree: [
           {
@@ -797,21 +991,21 @@ function realizedSubfolder(tree, title) {
 }
 
 /**
- * Realized subfolder with P/L ratio
+ * Realized subfolder with P/L ratio and rolling P/L
  * @param {{ realized: RealizedWithExtras }} tree
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsGroup}
  */
 function realizedSubfolderWithExtras(tree, title) {
-  const base = realizedSubfolder(tree, title);
   const r = tree.realized;
+  const base = realizedSubfolder(tree, title, singleRollingRealizedTreeWithExtras(r, title));
   // Insert P/L Ratio after Total (index 3)
   base.tree.splice(4, 0, {
     name: "P/L Ratio",
     title: title("Realized Profit/Loss Ratio"),
     bottom: [
       baseline({
-        metric: r.realizedProfitToLossRatio,
+        metric: r.realizedProfitToLossRatio1y,
         name: "P/L Ratio",
         unit: Unit.ratio,
       }),
@@ -1706,7 +1900,7 @@ function groupedRealizedPnlSumWithExtras(list, all, title) {
       title: title("Realized Profit/Loss Ratio"),
       bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         baseline({
-          metric: tree.realized.realizedProfitToLossRatio,
+          metric: tree.realized.realizedProfitToLossRatio1y,
           name,
           color,
           unit: Unit.ratio,
@@ -1930,6 +2124,10 @@ function groupedRealizedSubfolder(list, all, title) {
         ),
       },
       {
+        name: "Rolling",
+        tree: groupedRollingRealizedValueCharts(list, all, title),
+      },
+      {
         name: "Cumulative",
         tree: [
           { name: "P&L", tree: groupedRealizedPnlCumulative(list, all, title) },
@@ -1986,6 +2184,10 @@ function groupedRealizedSubfolderWithExtras(list, all, title) {
             unit: Unit.usd,
           }),
         ),
+      },
+      {
+        name: "Rolling",
+        tree: groupedRollingRealizedChartsWithExtras(list, all, title),
       },
       {
         name: "Cumulative",
@@ -2050,7 +2252,10 @@ export function createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({
       { name: "Unrealized", tree: groupedPnlCharts(list, all, title) },
       groupedRealizedSubfolder(list, all, title),
       { name: "Volume", tree: groupedSentInPnl(list, all, title) },
-      { name: "Invested Capital", tree: groupedInvestedCapital(list, all, title) },
+      {
+        name: "Invested Capital",
+        tree: groupedInvestedCapital(list, all, title),
+      },
       groupedSentiment(list, all, title),
     ],
   };
@@ -2089,7 +2294,10 @@ export function createGroupedProfitabilitySectionWithInvestedCapitalPct({
       },
       groupedRealizedSubfolderWithExtras(list, all, title),
       { name: "Volume", tree: groupedSentInPnl(list, all, title) },
-      { name: "Invested Capital", tree: groupedInvestedCapital(list, all, title) },
+      {
+        name: "Invested Capital",
+        tree: groupedInvestedCapital(list, all, title),
+      },
       groupedSentiment(list, all, title),
     ],
   };
@@ -2100,7 +2308,11 @@ export function createGroupedProfitabilitySectionWithInvestedCapitalPct({
  * @param {{ list: readonly (CohortFull | CohortBasicWithMarketCap)[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedProfitabilitySectionWithNupl({ list, all, title }) {
+export function createGroupedProfitabilitySectionWithNupl({
+  list,
+  all,
+  title,
+}) {
   return {
     name: "Profitability",
     tree: [
@@ -2124,7 +2336,10 @@ export function createGroupedProfitabilitySectionWithNupl({ list, all, title }) 
       },
       groupedRealizedSubfolder(list, all, title),
       { name: "Volume", tree: groupedSentInPnl(list, all, title) },
-      { name: "Invested Capital", tree: groupedInvestedCapital(list, all, title) },
+      {
+        name: "Invested Capital",
+        tree: groupedInvestedCapital(list, all, title),
+      },
       groupedSentiment(list, all, title),
     ],
   };
@@ -2135,7 +2350,11 @@ export function createGroupedProfitabilitySectionWithNupl({ list, all, title }) 
  * @param {{ list: readonly CohortLongTerm[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedProfitabilitySectionLongTerm({ list, all, title }) {
+export function createGroupedProfitabilitySectionLongTerm({
+  list,
+  all,
+  title,
+}) {
   return {
     name: "Profitability",
     tree: [
@@ -2181,7 +2400,10 @@ export function createGroupedProfitabilitySectionLongTerm({ list, all, title }) 
       },
       groupedRealizedSubfolderWithExtras(list, all, title),
       { name: "Volume", tree: groupedSentInPnl(list, all, title) },
-      { name: "Invested Capital", tree: groupedInvestedCapital(list, all, title) },
+      {
+        name: "Invested Capital",
+        tree: groupedInvestedCapital(list, all, title),
+      },
       groupedSentiment(list, all, title),
     ],
   };
@@ -2242,7 +2464,10 @@ export function createGroupedProfitabilitySectionWithPeakRegret({
       },
       groupedRealizedSubfolder(list, all, title),
       { name: "Volume", tree: groupedSentInPnl(list, all, title) },
-      { name: "Invested Capital", tree: groupedInvestedCapital(list, all, title) },
+      {
+        name: "Invested Capital",
+        tree: groupedInvestedCapital(list, all, title),
+      },
       groupedSentiment(list, all, title),
     ],
   };

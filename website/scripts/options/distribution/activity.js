@@ -13,44 +13,16 @@
 
 import { Unit } from "../../utils/units.js";
 import { line, baseline, dotsBaseline, dots } from "../series.js";
-import { satsBtcUsd, mapCohortsWithAll, flatMapCohortsWithAll } from "../shared.js";
+import {
+  satsBtcUsd,
+  mapCohortsWithAll,
+  flatMapCohortsWithAll,
+} from "../shared.js";
 import { colors } from "../../utils/colors.js";
 
 // ============================================================================
 // Shared Helpers
 // ============================================================================
-
-/**
- * Create SOPR series from realized pattern (30d > 7d > raw order)
- * @param {{ sopr: AnyMetricPattern, sopr7dEma: AnyMetricPattern, sopr30dEma: AnyMetricPattern }} realized
- * @param {string} rawName - Name for the raw SOPR series
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-function soprSeries(realized, rawName = "SOPR") {
-  return [
-    baseline({
-      metric: realized.sopr30dEma,
-      name: "30d EMA",
-      color: colors.bi.p3,
-      unit: Unit.ratio,
-      base: 1,
-    }),
-    baseline({
-      metric: realized.sopr7dEma,
-      name: "7d EMA",
-      color: colors.bi.p2,
-      unit: Unit.ratio,
-      base: 1,
-    }),
-    dotsBaseline({
-      metric: realized.sopr,
-      name: rawName,
-      color: colors.bi.p1,
-      unit: Unit.ratio,
-      base: 1,
-    }),
-  ];
-}
 
 /**
  * Create grouped SOPR chart entries (Raw, 7d EMA, 30d EMA)
@@ -237,17 +209,307 @@ function coinsDestroyedTree(list, all, title) {
 }
 
 // ============================================================================
-// SOPR Helpers
+// Rolling Helpers
 // ============================================================================
 
 /**
- * Create SOPR series for single cohort (30d > 7d > raw order)
- * @param {UtxoCohortObject | CohortWithoutRelative} cohort
- * @returns {AnyFetchedSeriesBlueprint[]}
+ * Rolling SOPR tree for single cohort
+ * @param {Object} m
+ * @param {AnyMetricPattern} m.s24h
+ * @param {AnyMetricPattern} m.s7d
+ * @param {AnyMetricPattern} m.s30d
+ * @param {AnyMetricPattern} m.s1y
+ * @param {AnyMetricPattern} m.ema24h7d
+ * @param {AnyMetricPattern} m.ema24h30d
+ * @param {(metric: string) => string} title
+ * @param {string} prefix
+ * @returns {PartialOptionsTree}
  */
-function createSingleSoprSeries(cohort) {
-  return soprSeries(cohort.tree.realized);
+function singleRollingSoprTree(m, title, prefix = "") {
+  return [
+    {
+      name: "Compare",
+      title: title(`Rolling ${prefix}SOPR`),
+      bottom: [
+        baseline({ metric: m.s24h, name: "24h", color: colors.time._24h, unit: Unit.ratio, base: 1 }),
+        baseline({ metric: m.s7d, name: "7d", color: colors.time._1w, unit: Unit.ratio, base: 1 }),
+        baseline({ metric: m.s30d, name: "30d", color: colors.time._1m, unit: Unit.ratio, base: 1 }),
+        baseline({ metric: m.s1y, name: "1y", color: colors.time._1y, unit: Unit.ratio, base: 1 }),
+      ],
+    },
+    {
+      name: "24h",
+      title: title(`${prefix}SOPR (24h)`),
+      bottom: [
+        baseline({ metric: m.ema24h30d, name: "30d EMA", color: colors.bi.p3, unit: Unit.ratio, base: 1 }),
+        baseline({ metric: m.ema24h7d, name: "7d EMA", color: colors.bi.p2, unit: Unit.ratio, base: 1 }),
+        dotsBaseline({ metric: m.s24h, name: "24h", color: colors.bi.p1, unit: Unit.ratio, base: 1 }),
+      ],
+    },
+    {
+      name: "7d",
+      title: title(`${prefix}SOPR (7d)`),
+      bottom: [baseline({ metric: m.s7d, name: "SOPR", unit: Unit.ratio, base: 1 })],
+    },
+    {
+      name: "30d",
+      title: title(`${prefix}SOPR (30d)`),
+      bottom: [baseline({ metric: m.s30d, name: "SOPR", unit: Unit.ratio, base: 1 })],
+    },
+    {
+      name: "1y",
+      title: title(`${prefix}SOPR (1y)`),
+      bottom: [baseline({ metric: m.s1y, name: "SOPR", unit: Unit.ratio, base: 1 })],
+    },
+  ];
 }
+
+/**
+ * Rolling sell side risk tree for single cohort
+ * @param {AnyRealizedPattern} r
+ * @param {(metric: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function singleRollingSellSideRiskTree(r, title) {
+  return [
+    {
+      name: "Compare",
+      title: title("Rolling Sell Side Risk"),
+      bottom: [
+        line({ metric: r.sellSideRiskRatio24h, name: "24h", color: colors.time._24h, unit: Unit.ratio }),
+        line({ metric: r.sellSideRiskRatio7d, name: "7d", color: colors.time._1w, unit: Unit.ratio }),
+        line({ metric: r.sellSideRiskRatio30d, name: "30d", color: colors.time._1m, unit: Unit.ratio }),
+        line({ metric: r.sellSideRiskRatio1y, name: "1y", color: colors.time._1y, unit: Unit.ratio }),
+      ],
+    },
+    {
+      name: "24h",
+      title: title("Sell Side Risk (24h)"),
+      bottom: [
+        line({ metric: r.sellSideRiskRatio24h30dEma, name: "30d EMA", color: colors.time._1m, unit: Unit.ratio }),
+        line({ metric: r.sellSideRiskRatio24h7dEma, name: "7d EMA", color: colors.time._1w, unit: Unit.ratio }),
+        dots({ metric: r.sellSideRiskRatio24h, name: "Raw", color: colors.bitcoin, unit: Unit.ratio }),
+      ],
+    },
+    {
+      name: "7d",
+      title: title("Sell Side Risk (7d)"),
+      bottom: [line({ metric: r.sellSideRiskRatio7d, name: "Risk", unit: Unit.ratio })],
+    },
+    {
+      name: "30d",
+      title: title("Sell Side Risk (30d)"),
+      bottom: [line({ metric: r.sellSideRiskRatio30d, name: "Risk", unit: Unit.ratio })],
+    },
+    {
+      name: "1y",
+      title: title("Sell Side Risk (1y)"),
+      bottom: [line({ metric: r.sellSideRiskRatio1y, name: "Risk", unit: Unit.ratio })],
+    },
+  ];
+}
+
+/**
+ * Rolling value created/destroyed tree for single cohort
+ * @param {Object} m
+ * @param {AnyMetricPattern} m.created24h
+ * @param {AnyMetricPattern} m.created7d
+ * @param {AnyMetricPattern} m.created30d
+ * @param {AnyMetricPattern} m.created1y
+ * @param {AnyMetricPattern} m.destroyed24h
+ * @param {AnyMetricPattern} m.destroyed7d
+ * @param {AnyMetricPattern} m.destroyed30d
+ * @param {AnyMetricPattern} m.destroyed1y
+ * @param {(metric: string) => string} title
+ * @param {string} prefix
+ * @returns {PartialOptionsTree}
+ */
+function singleRollingValueTree(m, title, prefix = "") {
+  return [
+    {
+      name: "Compare",
+      tree: [
+        {
+          name: "Created",
+          title: title(`Rolling ${prefix}Value Created`),
+          bottom: [
+            line({ metric: m.created24h, name: "24h", color: colors.time._24h, unit: Unit.usd }),
+            line({ metric: m.created7d, name: "7d", color: colors.time._1w, unit: Unit.usd }),
+            line({ metric: m.created30d, name: "30d", color: colors.time._1m, unit: Unit.usd }),
+            line({ metric: m.created1y, name: "1y", color: colors.time._1y, unit: Unit.usd }),
+          ],
+        },
+        {
+          name: "Destroyed",
+          title: title(`Rolling ${prefix}Value Destroyed`),
+          bottom: [
+            line({ metric: m.destroyed24h, name: "24h", color: colors.time._24h, unit: Unit.usd }),
+            line({ metric: m.destroyed7d, name: "7d", color: colors.time._1w, unit: Unit.usd }),
+            line({ metric: m.destroyed30d, name: "30d", color: colors.time._1m, unit: Unit.usd }),
+            line({ metric: m.destroyed1y, name: "1y", color: colors.time._1y, unit: Unit.usd }),
+          ],
+        },
+      ],
+    },
+    {
+      name: "24h",
+      title: title(`${prefix}Value Created & Destroyed (24h)`),
+      bottom: [
+        line({ metric: m.created24h, name: "Created", color: colors.usd, unit: Unit.usd }),
+        line({ metric: m.destroyed24h, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+      ],
+    },
+    {
+      name: "7d",
+      title: title(`${prefix}Value Created & Destroyed (7d)`),
+      bottom: [
+        line({ metric: m.created7d, name: "Created", color: colors.usd, unit: Unit.usd }),
+        line({ metric: m.destroyed7d, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+      ],
+    },
+    {
+      name: "30d",
+      title: title(`${prefix}Value Created & Destroyed (30d)`),
+      bottom: [
+        line({ metric: m.created30d, name: "Created", color: colors.usd, unit: Unit.usd }),
+        line({ metric: m.destroyed30d, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+      ],
+    },
+    {
+      name: "1y",
+      title: title(`${prefix}Value Created & Destroyed (1y)`),
+      bottom: [
+        line({ metric: m.created1y, name: "Created", color: colors.usd, unit: Unit.usd }),
+        line({ metric: m.destroyed1y, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+      ],
+    },
+  ];
+}
+
+/**
+ * Rolling SOPR charts for grouped cohorts
+ * @template {{ color: Color, name: string }} T
+ * @param {readonly T[]} list
+ * @param {T} all
+ * @param {(item: T) => AnyMetricPattern} get24h
+ * @param {(item: T) => AnyMetricPattern} get7d
+ * @param {(item: T) => AnyMetricPattern} get30d
+ * @param {(item: T) => AnyMetricPattern} get1y
+ * @param {(metric: string) => string} title
+ * @param {string} prefix
+ * @returns {PartialOptionsTree}
+ */
+function groupedRollingSoprCharts(list, all, get24h, get7d, get30d, get1y, title, prefix = "") {
+  return [
+    {
+      name: "24h",
+      title: title(`${prefix}SOPR (24h)`),
+      bottom: mapCohortsWithAll(list, all, (c) =>
+        baseline({ metric: get24h(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
+      ),
+    },
+    {
+      name: "7d",
+      title: title(`${prefix}SOPR (7d)`),
+      bottom: mapCohortsWithAll(list, all, (c) =>
+        baseline({ metric: get7d(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
+      ),
+    },
+    {
+      name: "30d",
+      title: title(`${prefix}SOPR (30d)`),
+      bottom: mapCohortsWithAll(list, all, (c) =>
+        baseline({ metric: get30d(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
+      ),
+    },
+    {
+      name: "1y",
+      title: title(`${prefix}SOPR (1y)`),
+      bottom: mapCohortsWithAll(list, all, (c) =>
+        baseline({ metric: get1y(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
+      ),
+    },
+  ];
+}
+
+/**
+ * Rolling sell side risk charts for grouped cohorts
+ * @param {readonly CohortObject[]} list
+ * @param {CohortObject} all
+ * @param {(metric: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function groupedRollingSellSideRiskCharts(list, all, title) {
+  return [
+    {
+      name: "24h",
+      title: title("Sell Side Risk (24h)"),
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+        line({ metric: tree.realized.sellSideRiskRatio24h, name, color, unit: Unit.ratio }),
+      ),
+    },
+    {
+      name: "7d",
+      title: title("Sell Side Risk (7d)"),
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+        line({ metric: tree.realized.sellSideRiskRatio7d, name, color, unit: Unit.ratio }),
+      ),
+    },
+    {
+      name: "30d",
+      title: title("Sell Side Risk (30d)"),
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+        line({ metric: tree.realized.sellSideRiskRatio30d, name, color, unit: Unit.ratio }),
+      ),
+    },
+    {
+      name: "1y",
+      title: title("Sell Side Risk (1y)"),
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+        line({ metric: tree.realized.sellSideRiskRatio1y, name, color, unit: Unit.ratio }),
+      ),
+    },
+  ];
+}
+
+/**
+ * Rolling value created/destroyed charts for grouped cohorts
+ * @template {{ color: Color, name: string }} T
+ * @param {readonly T[]} list
+ * @param {T} all
+ * @param {readonly { name: string, getCreated: (item: T) => AnyMetricPattern, getDestroyed: (item: T) => AnyMetricPattern }[]} windows
+ * @param {(metric: string) => string} title
+ * @param {string} prefix
+ * @returns {PartialOptionsTree}
+ */
+function groupedRollingValueCharts(list, all, windows, title, prefix = "") {
+  return [
+    {
+      name: "Created",
+      tree: windows.map((w) => ({
+        name: w.name,
+        title: title(`${prefix}Value Created (${w.name})`),
+        bottom: mapCohortsWithAll(list, all, (item) =>
+          line({ metric: w.getCreated(item), name: item.name, color: item.color, unit: Unit.usd }),
+        ),
+      })),
+    },
+    {
+      name: "Destroyed",
+      tree: windows.map((w) => ({
+        name: w.name,
+        title: title(`${prefix}Value Destroyed (${w.name})`),
+        bottom: mapCohortsWithAll(list, all, (item) =>
+          line({ metric: w.getDestroyed(item), name: item.name, color: item.color, unit: Unit.usd }),
+        ),
+      })),
+    },
+  ];
+}
+
+// ============================================================================
+// SOPR Helpers
+// ============================================================================
 
 /**
  * Create SOPR tree with normal and adjusted sub-sections
@@ -256,23 +518,21 @@ function createSingleSoprSeries(cohort) {
  * @returns {PartialOptionsTree}
  */
 function createSingleSoprTreeWithAdjusted(cohort, title) {
-  const { realized } = cohort.tree;
+  const r = cohort.tree.realized;
   return [
     {
       name: "Normal",
-      title: title("SOPR"),
-      bottom: soprSeries(realized),
+      tree: singleRollingSoprTree(
+        { s24h: r.sopr24h, s7d: r.sopr7d, s30d: r.sopr30d, s1y: r.sopr1y, ema24h7d: r.sopr24h7dEma, ema24h30d: r.sopr24h30dEma },
+        title,
+      ),
     },
     {
       name: "Adjusted",
-      title: title("Adjusted SOPR"),
-      bottom: soprSeries(
-        {
-          sopr: realized.adjustedSopr,
-          sopr7dEma: realized.adjustedSopr7dEma,
-          sopr30dEma: realized.adjustedSopr30dEma,
-        },
-        "Adjusted SOPR",
+      tree: singleRollingSoprTree(
+        { s24h: r.adjustedSopr24h, s7d: r.adjustedSopr7d, s30d: r.adjustedSopr30d, s1y: r.adjustedSopr1y, ema24h7d: r.adjustedSopr24h7dEma, ema24h30d: r.adjustedSopr24h30dEma },
+        title,
+        "Adjusted ",
       ),
     },
   ];
@@ -308,27 +568,56 @@ function createGroupedSoprTreeWithAdjusted(list, all, title) {
   return [
     {
       name: "Normal",
-      tree: groupedSoprCharts(
-        list,
-        all,
-        (c) => c.tree.realized.sopr,
-        (c) => c.tree.realized.sopr7dEma,
-        (c) => c.tree.realized.sopr30dEma,
-        title,
-        "",
-      ),
+      tree: [
+        ...groupedSoprCharts(
+          list,
+          all,
+          (c) => c.tree.realized.sopr,
+          (c) => c.tree.realized.sopr7dEma,
+          (c) => c.tree.realized.sopr30dEma,
+          title,
+          "",
+        ),
+        {
+          name: "Rolling",
+          tree: groupedRollingSoprCharts(
+            list,
+            all,
+            (c) => c.tree.realized.sopr24h,
+            (c) => c.tree.realized.sopr7d,
+            (c) => c.tree.realized.sopr30d,
+            (c) => c.tree.realized.sopr1y,
+            title,
+          ),
+        },
+      ],
     },
     {
       name: "Adjusted",
-      tree: groupedSoprCharts(
-        list,
-        all,
-        (c) => c.tree.realized.adjustedSopr,
-        (c) => c.tree.realized.adjustedSopr7dEma,
-        (c) => c.tree.realized.adjustedSopr30dEma,
-        title,
-        "Adjusted ",
-      ),
+      tree: [
+        ...groupedSoprCharts(
+          list,
+          all,
+          (c) => c.tree.realized.adjustedSopr,
+          (c) => c.tree.realized.adjustedSopr7dEma,
+          (c) => c.tree.realized.adjustedSopr30dEma,
+          title,
+          "Adjusted ",
+        ),
+        {
+          name: "Rolling",
+          tree: groupedRollingSoprCharts(
+            list,
+            all,
+            (c) => c.tree.realized.adjustedSopr24h,
+            (c) => c.tree.realized.adjustedSopr7d,
+            (c) => c.tree.realized.adjustedSopr30d,
+            (c) => c.tree.realized.adjustedSopr1y,
+            title,
+            "Adjusted ",
+          ),
+        },
+      ],
     },
   ];
 }
@@ -344,6 +633,7 @@ function createGroupedSoprTreeWithAdjusted(list, all, title) {
  * @param {(metric: string) => string} args.title
  * @param {AnyFetchedSeriesBlueprint[]} [args.valueMetrics] - Optional additional value metrics
  * @param {PartialOptionsTree} [args.soprTree] - Optional SOPR tree override
+ * @param {PartialOptionsTree} [args.valueRollingTree] - Optional value rolling tree override
  * @returns {PartialOptionsGroup}
  */
 export function createActivitySection({
@@ -351,6 +641,7 @@ export function createActivitySection({
   title,
   valueMetrics = [],
   soprTree,
+  valueRollingTree,
 }) {
   const { tree, color } = cohort;
 
@@ -431,17 +722,18 @@ export function createActivitySection({
           },
         ],
       },
-      soprTree
-        ? { name: "SOPR", tree: soprTree }
-        : {
-            name: "SOPR",
-            title: title("SOPR"),
-            bottom: createSingleSoprSeries(cohort),
-          },
+      {
+        name: "SOPR",
+        tree:
+          soprTree ??
+          singleRollingSoprTree(
+            { s24h: tree.realized.sopr24h, s7d: tree.realized.sopr7d, s30d: tree.realized.sopr30d, s1y: tree.realized.sopr1y, ema24h7d: tree.realized.sopr24h7dEma, ema24h30d: tree.realized.sopr24h30dEma },
+            title,
+          ),
+      },
       {
         name: "Sell Side Risk",
-        title: title("Sell Side Risk Ratio"),
-        bottom: createSingleSellSideRiskSeries(tree),
+        tree: singleRollingSellSideRiskTree(tree.realized, title),
       },
       {
         name: "Value",
@@ -499,6 +791,20 @@ export function createActivitySection({
                 ],
               },
             ],
+          },
+          {
+            name: "Rolling",
+            tree:
+              valueRollingTree ??
+              singleRollingValueTree(
+                {
+                  created24h: tree.realized.valueCreated24h, created7d: tree.realized.valueCreated7d,
+                  created30d: tree.realized.valueCreated30d, created1y: tree.realized.valueCreated1y,
+                  destroyed24h: tree.realized.valueDestroyed24h, destroyed7d: tree.realized.valueDestroyed7d,
+                  destroyed30d: tree.realized.valueDestroyed30d, destroyed1y: tree.realized.valueDestroyed1y,
+                },
+                title,
+              ),
           },
         ],
       },
@@ -573,6 +879,33 @@ export function createActivitySectionWithAdjusted({ cohort, title }) {
         unit: Unit.usd,
         defaultActive: false,
       }),
+    ],
+    valueRollingTree: [
+      {
+        name: "Normal",
+        tree: singleRollingValueTree(
+          {
+            created24h: tree.realized.valueCreated24h, created7d: tree.realized.valueCreated7d,
+            created30d: tree.realized.valueCreated30d, created1y: tree.realized.valueCreated1y,
+            destroyed24h: tree.realized.valueDestroyed24h, destroyed7d: tree.realized.valueDestroyed7d,
+            destroyed30d: tree.realized.valueDestroyed30d, destroyed1y: tree.realized.valueDestroyed1y,
+          },
+          title,
+        ),
+      },
+      {
+        name: "Adjusted",
+        tree: singleRollingValueTree(
+          {
+            created24h: tree.realized.adjustedValueCreated24h, created7d: tree.realized.adjustedValueCreated7d,
+            created30d: tree.realized.adjustedValueCreated30d, created1y: tree.realized.adjustedValueCreated1y,
+            destroyed24h: tree.realized.adjustedValueDestroyed24h, destroyed7d: tree.realized.adjustedValueDestroyed7d,
+            destroyed30d: tree.realized.adjustedValueDestroyed30d, destroyed1y: tree.realized.adjustedValueDestroyed1y,
+          },
+          title,
+          "Adjusted ",
+        ),
+      },
     ],
   });
 }
@@ -701,16 +1034,45 @@ export function createGroupedActivitySection({
       },
       {
         name: "SOPR",
-        tree: soprTree ?? createGroupedSoprTree(list, all, title),
+        tree: soprTree ?? [
+          ...createGroupedSoprTree(list, all, title),
+          {
+            name: "Rolling",
+            tree: groupedRollingSoprCharts(
+              list,
+              all,
+              (c) => c.tree.realized.sopr24h,
+              (c) => c.tree.realized.sopr7d,
+              (c) => c.tree.realized.sopr30d,
+              (c) => c.tree.realized.sopr1y,
+              title,
+            ),
+          },
+        ],
       },
       {
         name: "Sell Side Risk",
-        title: title("Sell Side Risk Ratio"),
-        bottom: createGroupedSellSideRiskSeries(list, all),
+        tree: groupedRollingSellSideRiskCharts(list, all, title),
       },
       {
         name: "Value",
-        tree: valueTree ?? createGroupedValueTree(list, all, title),
+        tree: valueTree ?? [
+          ...createGroupedValueTree(list, all, title),
+          {
+            name: "Rolling",
+            tree: groupedRollingValueCharts(
+              list,
+              all,
+              [
+                { name: "24h", getCreated: (c) => c.tree.realized.valueCreated24h, getDestroyed: (c) => c.tree.realized.valueDestroyed24h },
+                { name: "7d", getCreated: (c) => c.tree.realized.valueCreated7d, getDestroyed: (c) => c.tree.realized.valueDestroyed7d },
+                { name: "30d", getCreated: (c) => c.tree.realized.valueCreated30d, getDestroyed: (c) => c.tree.realized.valueDestroyed30d },
+                { name: "1y", getCreated: (c) => c.tree.realized.valueCreated1y, getDestroyed: (c) => c.tree.realized.valueDestroyed1y },
+              ],
+              title,
+            ),
+          },
+        ],
       },
       { name: "Coins Destroyed", tree: coinsDestroyedTree(list, all, title) },
     ],
@@ -786,6 +1148,40 @@ function createGroupedValueTreeWithAdjusted(list, all, title) {
       ],
     },
     { name: "Breakdown", tree: valueBreakdownTree(list, all, title) },
+    {
+      name: "Rolling",
+      tree: [
+        {
+          name: "Normal",
+          tree: groupedRollingValueCharts(
+            list,
+            all,
+            [
+              { name: "24h", getCreated: (c) => c.tree.realized.valueCreated24h, getDestroyed: (c) => c.tree.realized.valueDestroyed24h },
+              { name: "7d", getCreated: (c) => c.tree.realized.valueCreated7d, getDestroyed: (c) => c.tree.realized.valueDestroyed7d },
+              { name: "30d", getCreated: (c) => c.tree.realized.valueCreated30d, getDestroyed: (c) => c.tree.realized.valueDestroyed30d },
+              { name: "1y", getCreated: (c) => c.tree.realized.valueCreated1y, getDestroyed: (c) => c.tree.realized.valueDestroyed1y },
+            ],
+            title,
+          ),
+        },
+        {
+          name: "Adjusted",
+          tree: groupedRollingValueCharts(
+            list,
+            all,
+            [
+              { name: "24h", getCreated: (c) => c.tree.realized.adjustedValueCreated24h, getDestroyed: (c) => c.tree.realized.adjustedValueDestroyed24h },
+              { name: "7d", getCreated: (c) => c.tree.realized.adjustedValueCreated7d, getDestroyed: (c) => c.tree.realized.adjustedValueDestroyed7d },
+              { name: "30d", getCreated: (c) => c.tree.realized.adjustedValueCreated30d, getDestroyed: (c) => c.tree.realized.adjustedValueDestroyed30d },
+              { name: "1y", getCreated: (c) => c.tree.realized.adjustedValueCreated1y, getDestroyed: (c) => c.tree.realized.adjustedValueDestroyed1y },
+            ],
+            title,
+            "Adjusted ",
+          ),
+        },
+      ],
+    },
   ];
 }
 
@@ -804,50 +1200,6 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
   });
 }
 
-/**
- * Create sell side risk ratio series for single cohort
- * @param {{ realized: AnyRealizedPattern }} tree
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-function createSingleSellSideRiskSeries(tree) {
-  return [
-    line({
-      metric: tree.realized.sellSideRiskRatio30dEma,
-      name: "30d EMA",
-      color: colors.time._1m,
-      unit: Unit.ratio,
-    }),
-    line({
-      metric: tree.realized.sellSideRiskRatio7dEma,
-      name: "7d EMA",
-      color: colors.time._1w,
-      unit: Unit.ratio,
-    }),
-    dots({
-      metric: tree.realized.sellSideRiskRatio,
-      name: "Raw",
-      color: colors.bitcoin,
-      unit: Unit.ratio,
-    }),
-  ];
-}
-
-/**
- * Create sell side risk ratio series for grouped cohorts
- * @param {readonly CohortObject[]} list
- * @param {CohortObject} all
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-function createGroupedSellSideRiskSeries(list, all) {
-  return flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-    line({
-      metric: tree.realized.sellSideRiskRatio,
-      name,
-      color,
-      unit: Unit.ratio,
-    }),
-  ]);
-}
 
 /**
  * Create value created & destroyed series for single cohort

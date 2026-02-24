@@ -77,27 +77,27 @@ export function createMiningSection() {
         title: `Dominance: ${name}`,
         bottom: [
           dots({
-            metric: pool._24hDominance,
+            metric: pool.dominance24h,
             name: "24h",
             color: colors.time._24h,
             unit: Unit.percentage,
             defaultActive: false,
           }),
           line({
-            metric: pool._1wDominance,
+            metric: pool.dominance1w,
             name: "1w",
             color: colors.time._1w,
             unit: Unit.percentage,
             defaultActive: false,
           }),
           line({
-            metric: pool._1mDominance,
+            metric: pool.dominance1m,
             name: "1m",
             color: colors.time._1m,
             unit: Unit.percentage,
           }),
           line({
-            metric: pool._1yDominance,
+            metric: pool.dominance1y,
             name: "1y",
             color: colors.time._1y,
             unit: Unit.percentage,
@@ -125,28 +125,28 @@ export function createMiningSection() {
                 unit: Unit.count,
               }),
               line({
-                metric: pool._24hBlocksMined,
+                metric: pool.blocksMined24hSum,
                 name: "24h",
                 color: colors.time._24h,
                 unit: Unit.count,
                 defaultActive: false,
               }),
               line({
-                metric: pool._1wBlocksMined,
+                metric: pool.blocksMined1wSum,
                 name: "1w",
                 color: colors.time._1w,
                 unit: Unit.count,
                 defaultActive: false,
               }),
               line({
-                metric: pool._1mBlocksMined,
+                metric: pool.blocksMined1mSum,
                 name: "1m",
                 color: colors.time._1m,
                 unit: Unit.count,
                 defaultActive: false,
               }),
               line({
-                metric: pool._1yBlocksMined,
+                metric: pool.blocksMined1ySum,
                 name: "1y",
                 color: colors.time._1y,
                 unit: Unit.count,
@@ -406,11 +406,78 @@ export function createMiningSection() {
                     name: "sum",
                   }),
                   ...satsBtcUsd({
-                    pattern: mining.rewards._24hCoinbaseSum,
+                    pattern: mining.rewards.coinbase24hSum,
                     name: "24h",
                     color: colors.time._24h,
                     defaultActive: false,
                   }),
+                ],
+              },
+              {
+                name: "Rolling",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Coinbase Rolling Sum",
+                    bottom: [
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.coinbase24hSum,
+                        name: "24h",
+                        color: colors.time._24h,
+                      }),
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.coinbase7dSum,
+                        name: "7d",
+                        color: colors.time._1w,
+                      }),
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.coinbase30dSum,
+                        name: "30d",
+                        color: colors.time._1m,
+                      }),
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.coinbase1ySum,
+                        name: "1y",
+                        color: colors.time._1y,
+                      }),
+                    ],
+                  },
+                  {
+                    name: "24h",
+                    title: "Coinbase 24h Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.coinbase24hSum,
+                      name: "24h",
+                      color: colors.time._24h,
+                    }),
+                  },
+                  {
+                    name: "7d",
+                    title: "Coinbase 7d Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.coinbase7dSum,
+                      name: "7d",
+                      color: colors.time._1w,
+                    }),
+                  },
+                  {
+                    name: "30d",
+                    title: "Coinbase 30d Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.coinbase30dSum,
+                      name: "30d",
+                      color: colors.time._1m,
+                    }),
+                  },
+                  {
+                    name: "1y",
+                    title: "Coinbase 1y Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.coinbase1ySum,
+                      name: "1y",
+                      color: colors.time._1y,
+                    }),
+                  },
                 ],
               },
               {
@@ -484,6 +551,73 @@ export function createMiningSection() {
                 }),
               },
               {
+                name: "Rolling",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Fee Rolling Sum",
+                    bottom: [
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.fee24hSum,
+                        name: "24h",
+                        color: colors.time._24h,
+                      }),
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.fee7dSum,
+                        name: "7d",
+                        color: colors.time._1w,
+                      }),
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.fee30dSum,
+                        name: "30d",
+                        color: colors.time._1m,
+                      }),
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.fee1ySum,
+                        name: "1y",
+                        color: colors.time._1y,
+                      }),
+                    ],
+                  },
+                  {
+                    name: "24h",
+                    title: "Fee 24h Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.fee24hSum,
+                      name: "24h",
+                      color: colors.time._24h,
+                    }),
+                  },
+                  {
+                    name: "7d",
+                    title: "Fee 7d Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.fee7dSum,
+                      name: "7d",
+                      color: colors.time._1w,
+                    }),
+                  },
+                  {
+                    name: "30d",
+                    title: "Fee 30d Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.fee30dSum,
+                      name: "30d",
+                      color: colors.time._1m,
+                    }),
+                  },
+                  {
+                    name: "1y",
+                    title: "Fee 1y Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.fee1ySum,
+                      name: "1y",
+                      color: colors.time._1y,
+                    }),
+                  },
+                ],
+              },
+              {
                 name: "Distribution",
                 title: "Transaction Fee Revenue per Block Distribution",
                 bottom: distributionBtcSatsUsd(transactions.fees.fee),
@@ -501,20 +635,174 @@ export function createMiningSection() {
           },
           {
             name: "Dominance",
-            title: "Revenue Dominance",
-            bottom: [
-              line({
-                metric: mining.rewards.subsidyDominance,
-                name: "Subsidy",
-                color: colors.mining.subsidy,
-                unit: Unit.percentage,
-              }),
-              line({
-                metric: mining.rewards.feeDominance24h,
-                name: "Fees",
-                color: colors.mining.fee,
-                unit: Unit.percentage,
-              }),
+            tree: [
+              {
+                name: "Compare",
+                tree: [
+                  {
+                    name: "Subsidy",
+                    title: "Subsidy Dominance",
+                    bottom: [
+                      line({
+                        metric: mining.rewards.subsidyDominance,
+                        name: "All-time",
+                        color: colors.time.all,
+                        unit: Unit.percentage,
+                      }),
+                      line({
+                        metric: mining.rewards.subsidyDominance24h,
+                        name: "24h",
+                        color: colors.time._24h,
+                        unit: Unit.percentage,
+                      }),
+                      line({
+                        metric: mining.rewards.subsidyDominance7d,
+                        name: "7d",
+                        color: colors.time._1w,
+                        unit: Unit.percentage,
+                      }),
+                      line({
+                        metric: mining.rewards.subsidyDominance30d,
+                        name: "30d",
+                        color: colors.time._1m,
+                        unit: Unit.percentage,
+                      }),
+                      line({
+                        metric: mining.rewards.subsidyDominance1y,
+                        name: "1y",
+                        color: colors.time._1y,
+                        unit: Unit.percentage,
+                      }),
+                    ],
+                  },
+                  {
+                    name: "Fees",
+                    title: "Fee Dominance",
+                    bottom: [
+                      line({
+                        metric: mining.rewards.feeDominance,
+                        name: "All-time",
+                        color: colors.time.all,
+                        unit: Unit.percentage,
+                      }),
+                      line({
+                        metric: mining.rewards.feeDominance24h,
+                        name: "24h",
+                        color: colors.time._24h,
+                        unit: Unit.percentage,
+                      }),
+                      line({
+                        metric: mining.rewards.feeDominance7d,
+                        name: "7d",
+                        color: colors.time._1w,
+                        unit: Unit.percentage,
+                      }),
+                      line({
+                        metric: mining.rewards.feeDominance30d,
+                        name: "30d",
+                        color: colors.time._1m,
+                        unit: Unit.percentage,
+                      }),
+                      line({
+                        metric: mining.rewards.feeDominance1y,
+                        name: "1y",
+                        color: colors.time._1y,
+                        unit: Unit.percentage,
+                      }),
+                    ],
+                  },
+                ],
+              },
+              {
+                name: "All-time",
+                title: "Revenue Dominance (All-time)",
+                bottom: [
+                  line({
+                    metric: mining.rewards.subsidyDominance,
+                    name: "Subsidy",
+                    color: colors.mining.subsidy,
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: mining.rewards.feeDominance,
+                    name: "Fees",
+                    color: colors.mining.fee,
+                    unit: Unit.percentage,
+                  }),
+                ],
+              },
+              {
+                name: "24h",
+                title: "Revenue Dominance (24h)",
+                bottom: [
+                  line({
+                    metric: mining.rewards.subsidyDominance24h,
+                    name: "Subsidy",
+                    color: colors.mining.subsidy,
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: mining.rewards.feeDominance24h,
+                    name: "Fees",
+                    color: colors.mining.fee,
+                    unit: Unit.percentage,
+                  }),
+                ],
+              },
+              {
+                name: "7d",
+                title: "Revenue Dominance (7d)",
+                bottom: [
+                  line({
+                    metric: mining.rewards.subsidyDominance7d,
+                    name: "Subsidy",
+                    color: colors.mining.subsidy,
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: mining.rewards.feeDominance7d,
+                    name: "Fees",
+                    color: colors.mining.fee,
+                    unit: Unit.percentage,
+                  }),
+                ],
+              },
+              {
+                name: "30d",
+                title: "Revenue Dominance (30d)",
+                bottom: [
+                  line({
+                    metric: mining.rewards.subsidyDominance30d,
+                    name: "Subsidy",
+                    color: colors.mining.subsidy,
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: mining.rewards.feeDominance30d,
+                    name: "Fees",
+                    color: colors.mining.fee,
+                    unit: Unit.percentage,
+                  }),
+                ],
+              },
+              {
+                name: "1y",
+                title: "Revenue Dominance (1y)",
+                bottom: [
+                  line({
+                    metric: mining.rewards.subsidyDominance1y,
+                    name: "Subsidy",
+                    color: colors.mining.subsidy,
+                    unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: mining.rewards.feeDominance1y,
+                    name: "Fees",
+                    color: colors.mining.fee,
+                    unit: Unit.percentage,
+                  }),
+                ],
+              },
             ],
           },
           {
@@ -675,7 +963,7 @@ export function createMiningSection() {
                 title: "Dominance: Major Pools (1m)",
                 bottom: majorPools.map((p, i) =>
                   line({
-                    metric: p.pool._1mDominance,
+                    metric: p.pool.dominance1m,
                     name: p.name,
                     color: colors.at(i, majorPools.length),
                     unit: Unit.percentage,
@@ -687,7 +975,7 @@ export function createMiningSection() {
                 title: "Blocks Mined: Major Pools (1m)",
                 bottom: majorPools.map((p, i) =>
                   line({
-                    metric: p.pool._1mBlocksMined,
+                    metric: p.pool.blocksMined1mSum,
                     name: p.name,
                     color: colors.at(i, majorPools.length),
                     unit: Unit.count,
@@ -717,7 +1005,7 @@ export function createMiningSection() {
                 title: "Dominance: AntPool & Friends (1m)",
                 bottom: antpoolFriends.map((p, i) =>
                   line({
-                    metric: p.pool._1mDominance,
+                    metric: p.pool.dominance1m,
                     name: p.name,
                     color: colors.at(i, antpoolFriends.length),
                     unit: Unit.percentage,
@@ -729,7 +1017,7 @@ export function createMiningSection() {
                 title: "Blocks Mined: AntPool & Friends (1m)",
                 bottom: antpoolFriends.map((p, i) =>
                   line({
-                    metric: p.pool._1mBlocksMined,
+                    metric: p.pool.blocksMined1mSum,
                     name: p.name,
                     color: colors.at(i, antpoolFriends.length),
                     unit: Unit.count,

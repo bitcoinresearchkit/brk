@@ -54,7 +54,7 @@
  * @typedef {Brk._0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern} Ratio1ySdPattern
  * @typedef {Brk.Dollars} Dollars
  * CoinbasePattern: patterns with btc/sats/usd each having base + sum + cumulative + stats
- * @typedef {Brk.BtcSatsUsdPattern4} CoinbasePattern
+ * @typedef {Brk.BtcSatsUsdPattern3} CoinbasePattern
  * ActivePriceRatioPattern: ratio pattern with price (extended)
  * @typedef {Brk.PriceRatioPattern} ActivePriceRatioPattern
  * AnyRatioPattern: full ratio patterns (with or without price) - has ratio, percentiles, z-scores
@@ -62,7 +62,7 @@
  * ValuePattern: patterns with minimal stats (sum, cumulative only) for btc/sats/usd
  * @typedef {Brk.BtcSatsUsdPattern5 | Brk.BtcSatsUsdPattern2} ValuePattern
  * FullValuePattern: patterns with full stats (base, sum, cumulative, average, percentiles) for btc/sats/usd
- * @typedef {Brk.BtcSatsUsdPattern4} FullValuePattern
+ * @typedef {Brk.BtcSatsUsdPattern3} FullValuePattern
  * SumValuePattern: patterns with sum stats (sum, cumulative, average, percentiles - no base) for bitcoin/sats/dollars
  * @typedef {{btc: SumStatsPattern<any>, sats: SumStatsPattern<any>, usd: SumStatsPattern<any>}} SumValuePattern
  * AnyValuePatternType: union of all value pattern types
@@ -118,13 +118,17 @@
  * @typedef {Brk.AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2<T>} SumStatsPattern
  */
 /**
+ * Full stats pattern for Bitcoin (non-generic variant with btc-specific indexes)
+ * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2} BtcFullStatsPattern
+ */
+/**
  * Count pattern: sum and cumulative only
  * @template T
  * @typedef {Brk.CumulativeSumPattern<T>} CountPattern
  */
 /**
  * Any stats pattern union - patterns with sum/cumulative + percentiles
- * @typedef {SumStatsPattern<any> | FullStatsPattern<any> | BlockSizePattern} AnyStatsPattern
+ * @typedef {SumStatsPattern<any> | FullStatsPattern<any> | BtcFullStatsPattern | BlockSizePattern} AnyStatsPattern
  */
 
 /**
@@ -140,7 +144,7 @@
  * @typedef {Brk.MetricsTree_Market_Dca} MarketDca
  * @typedef {Brk._10y2y3y4y5y6y8yPattern} PeriodCagrPattern
  * Full stats pattern union (both generic and non-generic variants)
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<any> | FullStatsPattern<any>} AnyFullStatsPattern
+ * @typedef {FullStatsPattern<any> | BtcFullStatsPattern} AnyFullStatsPattern
  *
  * DCA period keys - derived from pattern types
  * @typedef {keyof Brk._10y2y3y4y5y6y8yPattern} LongPeriodKey

@@ -321,7 +321,12 @@ export function createAddressCohortFolder(cohort) {
  * @param {CohortGroupFull} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCohortFolderFull({ name, title: groupTitle, list, all }) {
+export function createGroupedCohortFolderFull({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
   const title = formatCohortTitle(groupTitle);
   return {
     name: name || "all",
@@ -340,7 +345,12 @@ export function createGroupedCohortFolderFull({ name, title: groupTitle, list, a
  * @param {CohortGroupWithAdjusted} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCohortFolderWithAdjusted({ name, title: groupTitle, list, all }) {
+export function createGroupedCohortFolderWithAdjusted({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
   const title = formatCohortTitle(groupTitle);
   return {
     name: name || "all",
@@ -359,7 +369,12 @@ export function createGroupedCohortFolderWithAdjusted({ name, title: groupTitle,
  * @param {CohortGroupWithNuplPercentiles} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCohortFolderWithNupl({ name, title: groupTitle, list, all }) {
+export function createGroupedCohortFolderWithNupl({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
   const title = formatCohortTitle(groupTitle);
   return {
     name: name || "all",
@@ -378,7 +393,12 @@ export function createGroupedCohortFolderWithNupl({ name, title: groupTitle, lis
  * @param {CohortGroupLongTerm} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCohortFolderLongTerm({ name, title: groupTitle, list, all }) {
+export function createGroupedCohortFolderLongTerm({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
   const title = formatCohortTitle(groupTitle);
   return {
     name: name || "all",
@@ -397,7 +417,12 @@ export function createGroupedCohortFolderLongTerm({ name, title: groupTitle, lis
  * @param {CohortGroupAgeRange} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCohortFolderAgeRange({ name, title: groupTitle, list, all }) {
+export function createGroupedCohortFolderAgeRange({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
   const title = formatCohortTitle(groupTitle);
   return {
     name: name || "all",
@@ -406,7 +431,11 @@ export function createGroupedCohortFolderAgeRange({ name, title: groupTitle, lis
       createGroupedValuationSectionWithOwnMarketCap({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedCostBasisSectionWithPercentiles({ list, all, title }),
-      createGroupedProfitabilitySectionWithInvestedCapitalPct({ list, all, title }),
+      createGroupedProfitabilitySectionWithInvestedCapitalPct({
+        list,
+        all,
+        title,
+      }),
       createGroupedActivitySection({ list, all, title }),
     ],
   };
@@ -416,7 +445,12 @@ export function createGroupedCohortFolderAgeRange({ name, title: groupTitle, lis
  * @param {CohortGroupMinAge} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCohortFolderMinAge({ name, title: groupTitle, list, all }) {
+export function createGroupedCohortFolderMinAge({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
   const title = formatCohortTitle(groupTitle);
   return {
     name: name || "all",
@@ -435,7 +469,12 @@ export function createGroupedCohortFolderMinAge({ name, title: groupTitle, list,
  * @param {CohortGroupBasicWithMarketCap} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCohortFolderBasicWithMarketCap({ name, title: groupTitle, list, all }) {
+export function createGroupedCohortFolderBasicWithMarketCap({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
   const title = formatCohortTitle(groupTitle);
   return {
     name: name || "all",
@@ -454,7 +493,12 @@ export function createGroupedCohortFolderBasicWithMarketCap({ name, title: group
  * @param {CohortGroupBasicWithoutMarketCap} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCohortFolderBasicWithoutMarketCap({ name, title: groupTitle, list, all }) {
+export function createGroupedCohortFolderBasicWithoutMarketCap({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
   const title = formatCohortTitle(groupTitle);
   return {
     name: name || "all",
@@ -463,7 +507,11 @@ export function createGroupedCohortFolderBasicWithoutMarketCap({ name, title: gr
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedCostBasisSection({ list, all, title }),
-      createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({ list, all, title }),
+      createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({
+        list,
+        all,
+        title,
+      }),
       createGroupedActivitySection({ list, all, title }),
     ],
   };
@@ -473,7 +521,12 @@ export function createGroupedCohortFolderBasicWithoutMarketCap({ name, title: gr
  * @param {CohortGroupAddress} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCohortFolderAddress({ name, title: groupTitle, list, all }) {
+export function createGroupedCohortFolderAddress({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
   const title = formatCohortTitle(groupTitle);
   return {
     name: name || "all",
@@ -482,7 +535,11 @@ export function createGroupedCohortFolderAddress({ name, title: groupTitle, list
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedCostBasisSection({ list, all, title }),
-      createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({ list, all, title }),
+      createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({
+        list,
+        all,
+        title,
+      }),
       createGroupedActivitySection({ list, all, title }),
     ],
   };
@@ -492,7 +549,12 @@ export function createGroupedCohortFolderAddress({ name, title: groupTitle, list
  * @param {CohortGroupWithoutRelative} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedCohortFolderWithoutRelative({ name, title: groupTitle, list, all }) {
+export function createGroupedCohortFolderWithoutRelative({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
   const title = formatCohortTitle(groupTitle);
   return {
     name: name || "all",
@@ -511,7 +573,12 @@ export function createGroupedCohortFolderWithoutRelative({ name, title: groupTit
  * @param {AddressCohortGroupObject} args
  * @returns {PartialOptionsGroup}
  */
-export function createGroupedAddressCohortFolder({ name, title: groupTitle, list, all }) {
+export function createGroupedAddressCohortFolder({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
   const title = formatCohortTitle(groupTitle);
   return {
     name: name || "all",

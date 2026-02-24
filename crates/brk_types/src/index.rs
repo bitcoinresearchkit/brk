@@ -244,8 +244,47 @@ impl Index {
         Some(Timestamp::new(INDEX_EPOCH + i as u32 * interval))
     }
 
-    /// Convert an index value to a date for date-based indexes.
-    /// Returns None for non-date-based or sub-daily indexes.
+    /// Convert a date to an index value for day-precision or coarser indexes.
+    /// Returns None for sub-daily indexes (use `timestamp_to_index` instead),
+    /// non-date-based indexes, or dates before genesis.
+    pub fn date_to_index(&self, date: Date) -> Option<usize> {
+        if date < Date::INDEX_ZERO {
+            return None;
+        }
+        match self {
+            Self::Day1 => Day1::try_from(date).ok().map(usize::from),
+            Self::Day3 => Some(usize::from(Day3::from_timestamp(Timestamp::from(date)))),
+            Self::Week1 => Some(usize::from(Week1::from(date))),
+            Self::Month1 => Some(usize::from(Month1::from(date))),
+            Self::Month3 => Some(usize::from(Month3::from(Month1::from(date)))),
+            Self::Month6 => Some(usize::from(Month6::from(Month1::from(date)))),
+            Self::Year1 => Some(usize::from(Year1::from(date))),
+            Self::Year10 => Some(usize::from(Year10::from(date))),
+            _ => None,
+        }
+    }
+
+    /// Convert a timestamp to an index value for any date-based index.
+    /// Works for both sub-daily (minute, hour) and daily+ indexes.
+    /// Returns None for non-date-based indexes.
+    pub fn timestamp_to_index(&self, ts: Timestamp) -> Option<usize> {
+        let interval = match self {
+            Self::Minute1 => MINUTE1_INTERVAL,
+            Self::Minute5 => MINUTE5_INTERVAL,
+            Self::Minute10 => MINUTE10_INTERVAL,
+            Self::Minute30 => MINUTE30_INTERVAL,
+            Self::Hour1 => HOUR1_INTERVAL,
+            Self::Hour4 => HOUR4_INTERVAL,
+            Self::Hour12 => HOUR12_INTERVAL,
+            Self::Day3 => DAY3_INTERVAL,
+            _ => return self.date_to_index(Date::from(ts)),
+        };
+        Some(((*ts - INDEX_EPOCH) / interval) as usize)
+    }
+
+    /// Convert an index value to a date for day-precision or coarser indexes.
+    /// Returns None for sub-daily indexes (use `index_to_timestamp` instead)
+    /// and non-date-based indexes.
     pub fn index_to_date(&self, i: usize) -> Option<Date> {
         match self {
             Self::Day1 => Some(Date::from(Day1::from(i))),
@@ -400,5 +439,70 @@ mod tests {
     #[test]
     fn test_index_to_date_txindex_returns_none() {
         assert!(Index::TxIndex.index_to_date(100).is_none());
+    }
+
+    #[test]
+    fn test_date_to_index_day1_genesis() {
+        assert_eq!(Index::Day1.date_to_index(Date::INDEX_ZERO), Some(0));
+    }
+
+    #[test]
+    fn test_date_to_index_day1_one() {
+        assert_eq!(Index::Day1.date_to_index(Date::INDEX_ONE), Some(1));
+    }
+
+    #[test]
+    fn test_date_to_index_roundtrip_day1() {
+        let date = Index::Day1.index_to_date(100).unwrap();
+        assert_eq!(Index::Day1.date_to_index(date), Some(100));
+    }
+
+    #[test]
+    fn test_date_to_index_roundtrip_week1() {
+        let date = Index::Week1.index_to_date(50).unwrap();
+        assert_eq!(Index::Week1.date_to_index(date), Some(50));
+    }
+
+    #[test]
+    fn test_date_to_index_roundtrip_month1() {
+        let date = Index::Month1.index_to_date(24).unwrap();
+        assert_eq!(Index::Month1.date_to_index(date), Some(24));
+    }
+
+    #[test]
+    fn test_date_to_index_roundtrip_year1() {
+        let date = Index::Year1.index_to_date(5).unwrap();
+        assert_eq!(Index::Year1.date_to_index(date), Some(5));
+    }
+
+    #[test]
+    fn test_date_to_index_roundtrip_month3() {
+        let date = Index::Month3.index_to_date(4).unwrap();
+        assert_eq!(Index::Month3.date_to_index(date), Some(4));
+    }
+
+    #[test]
+    fn test_date_to_index_roundtrip_month6() {
+        let date = Index::Month6.index_to_date(2).unwrap();
+        assert_eq!(Index::Month6.date_to_index(date), Some(2));
+    }
+
+    #[test]
+    fn test_date_to_index_roundtrip_year10() {
+        let date = Index::Year10.index_to_date(1).unwrap();
+        assert_eq!(Index::Year10.date_to_index(date), Some(1));
+    }
+
+    #[test]
+    fn test_date_to_index_pre_genesis_returns_none() {
+        let pre_genesis = Date::new(2009, 1, 2);
+        assert!(Index::Day1.date_to_index(pre_genesis).is_none());
+        assert!(Index::Week1.date_to_index(pre_genesis).is_none());
+        assert!(Index::Month1.date_to_index(pre_genesis).is_none());
+    }
+
+    #[test]
+    fn test_date_to_index_height_returns_none() {
+        assert!(Index::Height.date_to_index(Date::INDEX_ZERO).is_none());
     }
 }
