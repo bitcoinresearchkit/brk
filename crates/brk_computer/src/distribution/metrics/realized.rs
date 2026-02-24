@@ -14,12 +14,11 @@ use crate::{
     ComputeIndexes, blocks,
     distribution::state::RealizedState,
     internal::{
-        CentsUnsignedToDollars, ComputedFromHeightLast, ComputedFromHeightRatio,
-        ComputedFromHeightSum, ComputedFromHeightSumCum, DollarsMinus, DollarsPlus,
-        DollarsSquaredDivide, LazyBinaryFromHeightLast, LazyBinaryFromHeightSum,
-        LazyBinaryFromHeightSumCum, LazyBinaryPriceFromHeight,
-        LazyComputedValueFromHeightSumCum, LazyFromHeightLast, LazyFromHeightSum,
-        LazyFromHeightSumCum, LazyPriceFromCents, PercentageDollarsF32, Price, PriceFromHeight,
+        CentsUnsignedToDollars, ComputedFromHeightCum, ComputedFromHeightLast,
+        ComputedFromHeightRatio, DollarsMinus, DollarsPlus,
+        DollarsSquaredDivide, LazyBinaryFromHeightLast,
+        LazyBinaryPriceFromHeight, LazyComputedValueFromHeightCum, LazyFromHeightLast,
+        LazyPriceFromCents, PercentageDollarsF32, Price, PriceFromHeight,
         Ratio64, StoredF32Identity, ValueEmaFromHeight,
     },
     prices,
@@ -58,24 +57,24 @@ pub struct RealizedMetrics<M: StorageMode = Rw> {
     pub mvrv: LazyFromHeightLast<StoredF32>,
 
     // === Realized Profit/Loss ===
-    pub realized_profit: ComputedFromHeightSumCum<Dollars, M>,
+    pub realized_profit: ComputedFromHeightCum<Dollars, M>,
     pub realized_profit_7d_ema: ComputedFromHeightLast<Dollars, M>,
-    pub realized_loss: ComputedFromHeightSumCum<Dollars, M>,
+    pub realized_loss: ComputedFromHeightCum<Dollars, M>,
     pub realized_loss_7d_ema: ComputedFromHeightLast<Dollars, M>,
-    pub neg_realized_loss: LazyFromHeightSumCum<Dollars>,
-    pub net_realized_pnl: ComputedFromHeightSumCum<Dollars, M>,
+    pub neg_realized_loss: LazyFromHeightLast<Dollars>,
+    pub net_realized_pnl: ComputedFromHeightCum<Dollars, M>,
     pub net_realized_pnl_7d_ema: ComputedFromHeightLast<Dollars, M>,
-    pub realized_value: ComputedFromHeightSum<Dollars, M>,
+    pub realized_value: ComputedFromHeightLast<Dollars, M>,
 
     // === Realized vs Realized Cap Ratios (lazy) ===
     pub realized_profit_rel_to_realized_cap:
-        LazyBinaryFromHeightSumCum<StoredF32, Dollars, Dollars>,
-    pub realized_loss_rel_to_realized_cap: LazyBinaryFromHeightSumCum<StoredF32, Dollars, Dollars>,
+        LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
+    pub realized_loss_rel_to_realized_cap: LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
     pub net_realized_pnl_rel_to_realized_cap:
-        LazyBinaryFromHeightSumCum<StoredF32, Dollars, Dollars>,
+        LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
 
     // === Total Realized PnL ===
-    pub total_realized_pnl: LazyFromHeightSum<Dollars>,
+    pub total_realized_pnl: LazyFromHeightLast<Dollars>,
 
     // === Realized Profit/Loss Rolling Sums ===
     pub realized_profit_24h: Option<ComputedFromHeightLast<Dollars, M>>,
@@ -94,22 +93,22 @@ pub struct RealizedMetrics<M: StorageMode = Rw> {
     pub realized_profit_to_loss_ratio_1y: Option<LazyBinaryFromHeightLast<StoredF64, Dollars, Dollars>>,
 
     // === Value Created/Destroyed Splits (stored) ===
-    pub profit_value_created: ComputedFromHeightSum<Dollars, M>,
-    pub profit_value_destroyed: ComputedFromHeightSum<Dollars, M>,
-    pub loss_value_created: ComputedFromHeightSum<Dollars, M>,
-    pub loss_value_destroyed: ComputedFromHeightSum<Dollars, M>,
+    pub profit_value_created: ComputedFromHeightLast<Dollars, M>,
+    pub profit_value_destroyed: ComputedFromHeightLast<Dollars, M>,
+    pub loss_value_created: ComputedFromHeightLast<Dollars, M>,
+    pub loss_value_destroyed: ComputedFromHeightLast<Dollars, M>,
 
     // === Value Created/Destroyed Totals (lazy: profit + loss) ===
-    pub value_created: LazyBinaryFromHeightSum<Dollars, Dollars, Dollars>,
-    pub value_destroyed: LazyBinaryFromHeightSum<Dollars, Dollars, Dollars>,
+    pub value_created: LazyBinaryFromHeightLast<Dollars, Dollars, Dollars>,
+    pub value_destroyed: LazyBinaryFromHeightLast<Dollars, Dollars, Dollars>,
 
     // === Capitulation/Profit Flow (lazy aliases) ===
-    pub capitulation_flow: LazyFromHeightSum<Dollars>,
-    pub profit_flow: LazyFromHeightSum<Dollars>,
+    pub capitulation_flow: LazyFromHeightLast<Dollars>,
+    pub profit_flow: LazyFromHeightLast<Dollars>,
 
     // === Adjusted Value (lazy: cohort - up_to_1h) ===
-    pub adjusted_value_created: Option<LazyBinaryFromHeightSum<Dollars, Dollars, Dollars>>,
-    pub adjusted_value_destroyed: Option<LazyBinaryFromHeightSum<Dollars, Dollars, Dollars>>,
+    pub adjusted_value_created: Option<LazyBinaryFromHeightLast<Dollars, Dollars, Dollars>>,
+    pub adjusted_value_destroyed: Option<LazyBinaryFromHeightLast<Dollars, Dollars, Dollars>>,
 
     // === Value Created/Destroyed Rolling Sums ===
     pub value_created_24h: ComputedFromHeightLast<Dollars, M>,
@@ -179,17 +178,17 @@ pub struct RealizedMetrics<M: StorageMode = Rw> {
     /// Realized peak regret: Σ((peak - sell_price) × sats)
     /// where peak = max price during holding period.
     /// "How much more could have been made by selling at peak instead"
-    pub peak_regret: ComputedFromHeightSumCum<Dollars, M>,
+    pub peak_regret: ComputedFromHeightCum<Dollars, M>,
     /// Peak regret as % of realized cap
-    pub peak_regret_rel_to_realized_cap: LazyBinaryFromHeightSum<StoredF32, Dollars, Dollars>,
+    pub peak_regret_rel_to_realized_cap: LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
 
     // === Sent in Profit/Loss ===
     /// Sats sent in profit (sats/btc/usd)
-    pub sent_in_profit: LazyComputedValueFromHeightSumCum<M>,
+    pub sent_in_profit: LazyComputedValueFromHeightCum<M>,
     /// 14-day EMA of sent in profit (sats, btc, usd)
     pub sent_in_profit_14d_ema: ValueEmaFromHeight<M>,
     /// Sats sent in loss (sats/btc/usd)
-    pub sent_in_loss: LazyComputedValueFromHeightSumCum<M>,
+    pub sent_in_loss: LazyComputedValueFromHeightCum<M>,
     /// 14-day EMA of sent in loss (sats, btc, usd)
     pub sent_in_loss_14d_ema: ValueEmaFromHeight<M>,
 }
@@ -218,7 +217,7 @@ impl RealizedMetrics {
             &realized_cap_cents,
         );
 
-        let realized_profit = ComputedFromHeightSumCum::forced_import(
+        let realized_profit = ComputedFromHeightCum::forced_import(
             cfg.db,
             &cfg.name("realized_profit"),
             cfg.version,
@@ -232,7 +231,7 @@ impl RealizedMetrics {
             cfg.indexes,
         )?;
 
-        let realized_loss = ComputedFromHeightSumCum::forced_import(
+        let realized_loss = ComputedFromHeightCum::forced_import(
             cfg.db,
             &cfg.name("realized_loss"),
             cfg.version,
@@ -246,14 +245,14 @@ impl RealizedMetrics {
             cfg.indexes,
         )?;
 
-        let neg_realized_loss = LazyFromHeightSumCum::from_computed::<Negate>(
+        let neg_realized_loss = LazyFromHeightLast::from_computed::<Negate>(
             &cfg.name("neg_realized_loss"),
             cfg.version + v1,
             realized_loss.height.read_only_boxed_clone(),
             &realized_loss,
         );
 
-        let net_realized_pnl = ComputedFromHeightSumCum::forced_import(
+        let net_realized_pnl = ComputedFromHeightCum::forced_import(
             cfg.db,
             &cfg.name("net_realized_pnl"),
             cfg.version,
@@ -267,7 +266,7 @@ impl RealizedMetrics {
             cfg.indexes,
         )?;
 
-        let peak_regret = ComputedFromHeightSumCum::forced_import(
+        let peak_regret = ComputedFromHeightCum::forced_import(
             cfg.db,
             &cfg.name("realized_peak_regret"),
             cfg.version + v2,
@@ -275,7 +274,7 @@ impl RealizedMetrics {
         )?;
 
         // realized_value is the source for total_realized_pnl (they're identical)
-        let realized_value = ComputedFromHeightSum::forced_import(
+        let realized_value = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("realized_value"),
             cfg.version,
@@ -283,7 +282,7 @@ impl RealizedMetrics {
         )?;
 
         // total_realized_pnl is a lazy alias to realized_value
-        let total_realized_pnl = LazyFromHeightSum::from_computed::<Ident>(
+        let total_realized_pnl = LazyFromHeightLast::from_computed::<Ident>(
             &cfg.name("total_realized_pnl"),
             cfg.version + v1,
             realized_value.height.read_only_boxed_clone(),
@@ -292,31 +291,25 @@ impl RealizedMetrics {
 
         // Construct lazy ratio vecs
         let realized_profit_rel_to_realized_cap =
-            LazyBinaryFromHeightSumCum::from_computed_lazy_last::<PercentageDollarsF32, _>(
+            LazyBinaryFromHeightLast::from_block_last_and_lazy_block_last::<PercentageDollarsF32, _>(
                 &cfg.name("realized_profit_rel_to_realized_cap"),
                 cfg.version + v1,
-                realized_profit.height.read_only_boxed_clone(),
-                realized_cap.height.read_only_boxed_clone(),
                 &realized_profit,
                 &realized_cap,
             );
 
         let realized_loss_rel_to_realized_cap =
-            LazyBinaryFromHeightSumCum::from_computed_lazy_last::<PercentageDollarsF32, _>(
+            LazyBinaryFromHeightLast::from_block_last_and_lazy_block_last::<PercentageDollarsF32, _>(
                 &cfg.name("realized_loss_rel_to_realized_cap"),
                 cfg.version + v1,
-                realized_loss.height.read_only_boxed_clone(),
-                realized_cap.height.read_only_boxed_clone(),
                 &realized_loss,
                 &realized_cap,
             );
 
         let net_realized_pnl_rel_to_realized_cap =
-            LazyBinaryFromHeightSumCum::from_computed_lazy_last::<PercentageDollarsF32, _>(
+            LazyBinaryFromHeightLast::from_block_last_and_lazy_block_last::<PercentageDollarsF32, _>(
                 &cfg.name("net_realized_pnl_rel_to_realized_cap"),
                 cfg.version + v1,
-                net_realized_pnl.height.read_only_boxed_clone(),
-                realized_cap.height.read_only_boxed_clone(),
                 &net_realized_pnl,
                 &realized_cap,
             );
@@ -375,28 +368,28 @@ impl RealizedMetrics {
             BytesVec::forced_import(cfg.db, &cfg.name("investor_cap_raw"), cfg.version)?;
 
         // Import the 4 splits (stored)
-        let profit_value_created = ComputedFromHeightSum::forced_import(
+        let profit_value_created = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("profit_value_created"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let profit_value_destroyed = ComputedFromHeightSum::forced_import(
+        let profit_value_destroyed = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("profit_value_destroyed"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let loss_value_created = ComputedFromHeightSum::forced_import(
+        let loss_value_created = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("loss_value_created"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let loss_value_destroyed = ComputedFromHeightSum::forced_import(
+        let loss_value_destroyed = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("loss_value_destroyed"),
             cfg.version,
@@ -404,14 +397,14 @@ impl RealizedMetrics {
         )?;
 
         // Create lazy totals (profit + loss)
-        let value_created = LazyBinaryFromHeightSum::from_computed::<DollarsPlus>(
+        let value_created = LazyBinaryFromHeightLast::from_computed_last::<DollarsPlus>(
             &cfg.name("value_created"),
             cfg.version,
             &profit_value_created,
             &loss_value_created,
         );
 
-        let value_destroyed = LazyBinaryFromHeightSum::from_computed::<DollarsPlus>(
+        let value_destroyed = LazyBinaryFromHeightLast::from_computed_last::<DollarsPlus>(
             &cfg.name("value_destroyed"),
             cfg.version,
             &profit_value_destroyed,
@@ -419,14 +412,14 @@ impl RealizedMetrics {
         );
 
         // Create lazy aliases
-        let capitulation_flow = LazyFromHeightSum::from_computed::<Ident>(
+        let capitulation_flow = LazyFromHeightLast::from_computed::<Ident>(
             &cfg.name("capitulation_flow"),
             cfg.version,
             loss_value_destroyed.height.read_only_boxed_clone(),
             &loss_value_destroyed,
         );
 
-        let profit_flow = LazyFromHeightSum::from_computed::<Ident>(
+        let profit_flow = LazyFromHeightLast::from_computed::<Ident>(
             &cfg.name("profit_flow"),
             cfg.version,
             profit_value_destroyed.height.read_only_boxed_clone(),
@@ -437,7 +430,7 @@ impl RealizedMetrics {
         let adjusted_value_created =
             (compute_adjusted && cfg.up_to_1h_realized.is_some()).then(|| {
                 let up_to_1h = cfg.up_to_1h_realized.unwrap();
-                LazyBinaryFromHeightSum::from_binary::<
+                LazyBinaryFromHeightLast::from_both_binary_block::<
                     DollarsMinus,
                     Dollars,
                     Dollars,
@@ -453,7 +446,7 @@ impl RealizedMetrics {
         let adjusted_value_destroyed =
             (compute_adjusted && cfg.up_to_1h_realized.is_some()).then(|| {
                 let up_to_1h = cfg.up_to_1h_realized.unwrap();
-                LazyBinaryFromHeightSum::from_binary::<
+                LazyBinaryFromHeightLast::from_both_binary_block::<
                     DollarsMinus,
                     Dollars,
                     Dollars,
@@ -626,17 +619,13 @@ impl RealizedMetrics {
             sell_side_risk_ratio_24h_30d_ema.height.read_only_boxed_clone(), &sell_side_risk_ratio_24h_30d_ema,
         );
 
-        let peak_regret_rel_to_realized_cap = LazyBinaryFromHeightSum::from_sumcum_lazy_last::<
-            PercentageDollarsF32,
-            _,
-        >(
-            &cfg.name("peak_regret_rel_to_realized_cap"),
-            cfg.version + v1,
-            peak_regret.height.read_only_boxed_clone(),
-            realized_cap.height.read_only_boxed_clone(),
-            &peak_regret,
-            &realized_cap,
-        );
+        let peak_regret_rel_to_realized_cap =
+            LazyBinaryFromHeightLast::from_block_last_and_lazy_block_last::<PercentageDollarsF32, _>(
+                &cfg.name("peak_regret_rel_to_realized_cap"),
+                cfg.version + v1,
+                &peak_regret,
+                &realized_cap,
+            );
 
         Ok(Self {
             // === Realized Cap ===
@@ -814,7 +803,7 @@ impl RealizedMetrics {
             peak_regret_rel_to_realized_cap,
 
             // === Sent in Profit/Loss ===
-            sent_in_profit: LazyComputedValueFromHeightSumCum::forced_import(
+            sent_in_profit: LazyComputedValueFromHeightCum::forced_import(
                 cfg.db,
                 &cfg.name("sent_in_profit"),
                 cfg.version,
@@ -827,7 +816,7 @@ impl RealizedMetrics {
                 cfg.version,
                 cfg.indexes,
             )?,
-            sent_in_loss: LazyComputedValueFromHeightSumCum::forced_import(
+            sent_in_loss: LazyComputedValueFromHeightCum::forced_import(
                 cfg.db,
                 &cfg.name("sent_in_loss"),
                 cfg.version,
@@ -1099,15 +1088,15 @@ impl RealizedMetrics {
         // realized_cap_cents: ComputedFromHeightLast - day1 is lazy, nothing to compute
         // investor_price_cents: ComputedFromHeightLast - day1 is lazy, nothing to compute
 
-        // realized_profit/loss: ComputedFromHeightSumCum - compute cumulative from height
+        // realized_profit/loss: ComputedFromHeightCum - compute cumulative from height
         self.realized_profit
-            .compute_cumulative(starting_indexes, exit)?;
+            .compute_cumulative(starting_indexes.height, exit)?;
         self.realized_loss
-            .compute_cumulative(starting_indexes, exit)?;
+            .compute_cumulative(starting_indexes.height, exit)?;
 
         // net_realized_pnl = profit - loss
         self.net_realized_pnl
-            .compute(starting_indexes, exit, |vec| {
+            .compute(starting_indexes.height, exit, |vec| {
                 vec.compute_subtract(
                     starting_indexes.height,
                     &self.realized_profit.height,
@@ -1120,7 +1109,7 @@ impl RealizedMetrics {
         // realized_value = profit + loss
         // Note: total_realized_pnl is a lazy alias to realized_value since both
         // compute profit + loss with sum aggregation, making them identical.
-        // ComputedFromHeightSum: day1 is lazy, just compute the height vec directly
+        // ComputedFromHeightLast: day1 is lazy, just compute the height vec directly
         self.realized_value.height.compute_add(
             starting_indexes.height,
             &self.realized_profit.height,
@@ -1130,17 +1119,17 @@ impl RealizedMetrics {
 
         // Compute derived aggregations for the 4 splits
         // (value_created, value_destroyed, capitulation_flow, profit_flow are derived lazily)
-        // ComputedFromHeightSum: day1 is lazy, nothing to compute
+        // ComputedFromHeightLast: day1 is lazy, nothing to compute
 
-        // ATH regret: ComputedFromHeightSumCum - compute cumulative from height
+        // ATH regret: ComputedFromHeightCum - compute cumulative from height
         self.peak_regret
-            .compute_cumulative(starting_indexes, exit)?;
+            .compute_cumulative(starting_indexes.height, exit)?;
 
-        // Volume at profit/loss: LazyComputedValueFromHeightSumCum - compute cumulative
+        // Volume at profit/loss: LazyComputedValueFromHeightCum - compute cumulative
         self.sent_in_profit
-            .compute_cumulative(starting_indexes, exit)?;
+            .compute_cumulative(starting_indexes.height, exit)?;
         self.sent_in_loss
-            .compute_cumulative(starting_indexes, exit)?;
+            .compute_cumulative(starting_indexes.height, exit)?;
 
         Ok(())
     }
@@ -1378,7 +1367,7 @@ impl RealizedMetrics {
             .compute_rolling_change(
                 starting_indexes.height,
                 &blocks.count.height_1m_ago,
-                &*self.net_realized_pnl.rest.height_cumulative,
+                &self.net_realized_pnl.cumulative.height,
                 exit,
             )?;
 

@@ -35,7 +35,7 @@ impl Vecs {
                         version,
                         prices.usd.price.read_only_boxed_clone(),
                         price_ago.height.read_only_boxed_clone(),
-                        &prices.usd.split.close,
+                        &prices.usd.close,
                         &price_ago.rest,
                     )
                 });

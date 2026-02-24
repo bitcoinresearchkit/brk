@@ -2,7 +2,7 @@ use std::{
     cmp::Ordering,
     f64,
     iter::Sum,
-    ops::{Add, AddAssign, Div, Mul, Sub},
+    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
 use derive_more::Deref;
@@ -133,6 +133,12 @@ impl Add for StoredF64 {
 impl AddAssign for StoredF64 {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
+    }
+}
+
+impl SubAssign for StoredF64 {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs
     }
 }
 

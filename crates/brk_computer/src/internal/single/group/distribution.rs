@@ -68,14 +68,6 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Distribution<I, T> {
         self.min_max_average.boxed_average()
     }
 
-    pub(crate) fn boxed_min(&self) -> ReadableBoxedVec<I, T> {
-        self.min_max_average.boxed_min()
-    }
-
-    pub(crate) fn boxed_max(&self) -> ReadableBoxedVec<I, T> {
-        self.min_max_average.boxed_max()
-    }
-
     pub fn read_only_clone(&self) -> Distribution<I, T, Ro> {
         Distribution {
             min_max_average: self.min_max_average.read_only_clone(),

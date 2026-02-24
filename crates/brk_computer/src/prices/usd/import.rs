@@ -1,11 +1,11 @@
 use brk_types::Version;
-use vecdb::{ReadableCloneableVec, LazyVecFrom1};
+use vecdb::{LazyVecFrom1, ReadableCloneableVec};
 
 use super::super::cents;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{CentsUnsignedToDollars, ComputedHeightDerivedOHLC, ComputedHeightDerivedSplitOHLC},
+    internal::{CentsUnsignedToDollars, ComputedHeightDerivedLast, LazyEagerIndexes},
 };
 
 impl Vecs {
@@ -20,20 +20,27 @@ impl Vecs {
             cents.price.read_only_boxed_clone(),
         );
 
-        let split = ComputedHeightDerivedSplitOHLC::forced_import(
-            "price",
+        // Dollars are monotonically increasing from cents, so open→open, high→high, low→low
+        let open =
+            LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>("price_usd_open", version, &cents.open);
+        let high =
+            LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>("price_usd_high", version, &cents.high);
+        let low =
+            LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>("price_usd_low", version, &cents.low);
+
+        let close = ComputedHeightDerivedLast::forced_import(
+            "price_usd_close",
+            price.read_only_boxed_clone(),
             version,
             indexes,
-            price.read_only_boxed_clone(),
         );
 
-        let ohlc = ComputedHeightDerivedOHLC::forced_import(
-            "price_usd",
-            version,
-            indexes,
-            price.read_only_boxed_clone(),
-        );
-
-        Self { price, split, ohlc }
+        Self {
+            price,
+            open,
+            high,
+            low,
+            close,
+        }
     }
 }

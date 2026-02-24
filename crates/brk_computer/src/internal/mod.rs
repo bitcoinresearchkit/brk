@@ -1,9 +1,19 @@
 mod compute;
+mod distribution_stats;
+mod eager_indexes;
+mod indexes;
+mod lazy_eager_indexes;
 mod multi;
 mod single;
 mod traits;
+mod windows;
 
 pub(crate) use compute::*;
+pub(crate) use distribution_stats::*;
+pub(crate) use eager_indexes::*;
+pub(crate) use indexes::*;
+pub(crate) use lazy_eager_indexes::*;
 pub(crate) use multi::*;
 pub(crate) use single::*;
 pub(crate) use traits::*;
+pub(crate) use windows::*;

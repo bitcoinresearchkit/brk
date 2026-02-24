@@ -25,11 +25,12 @@ impl Vecs {
             exit,
         )?;
 
-        // Hashrate metrics (uses rewards.coinbase_24h_sum — disjoint field borrow)
+        // Hashrate metrics (disjoint field borrow via coinbase_sum)
         self.hashrate.compute(
             &blocks.count,
             &blocks.difficulty,
-            &self.rewards.coinbase_24h_sum,
+            &self.rewards.coinbase_sum._24h.sats.height,
+            &self.rewards.coinbase_sum._24h.usd.height,
             starting_indexes,
             exit,
         )?;

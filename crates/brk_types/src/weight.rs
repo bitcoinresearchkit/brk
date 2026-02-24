@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Div};
+use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
 
 use derive_more::Deref;
 use schemars::JsonSchema;
@@ -8,6 +8,7 @@ use vecdb::{Formattable, Pco};
 /// Transaction or block weight in weight units (WU)
 #[derive(
     Debug,
+    Default,
     Deref,
     Clone,
     Copy,
@@ -96,6 +97,19 @@ impl Add for Weight {
 impl AddAssign for Weight {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
+    }
+}
+
+impl Sub for Weight {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0)
+    }
+}
+
+impl SubAssign for Weight {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs
     }
 }
 

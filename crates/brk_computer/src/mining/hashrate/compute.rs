@@ -1,11 +1,10 @@
 use brk_error::Result;
-use brk_types::{StoredF32, StoredF64};
-use vecdb::Exit;
+use brk_types::{Dollars, Height, Sats, StoredF32, StoredF64};
+use vecdb::{Exit, ReadableVec};
 
 use super::Vecs;
 use crate::{
     blocks::{self, ONE_TERA_HASH, TARGET_BLOCKS_PER_DAY_F64},
-    internal::StoredValueFromHeightLast,
     ComputeIndexes,
     traits::ComputeDrawdown,
 };
@@ -15,13 +14,14 @@ impl Vecs {
         &mut self,
         count_vecs: &blocks::CountVecs,
         difficulty_vecs: &blocks::DifficultyVecs,
-        coinbase_sum_24h: &StoredValueFromHeightLast,
+        coinbase_sats_24h_sum: &impl ReadableVec<Height, Sats>,
+        coinbase_usd_24h_sum: &impl ReadableVec<Height, Dollars>,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.hash_rate.height.compute_transform2(
             starting_indexes.height,
-            &count_vecs.block_count_24h_sum.height,
+            &count_vecs.block_count_sum._24h.height,
             &difficulty_vecs.as_hash.height,
             |(i, block_count_sum, difficulty_as_hash, ..)| {
                 (
@@ -78,7 +78,7 @@ impl Vecs {
 
         self.hash_price_ths.height.compute_transform2(
             starting_indexes.height,
-            &coinbase_sum_24h.usd.height,
+            coinbase_usd_24h_sum,
             &self.hash_rate.height,
             |(i, coinbase_sum, hashrate, ..)| {
                 let hashrate_ths = *hashrate / ONE_TERA_HASH;
@@ -101,7 +101,7 @@ impl Vecs {
 
         self.hash_value_ths.height.compute_transform2(
             starting_indexes.height,
-            &coinbase_sum_24h.sats.height,
+            coinbase_sats_24h_sum,
             &self.hash_rate.height,
             |(i, coinbase_sum, hashrate, ..)| {
                 let hashrate_ths = *hashrate / ONE_TERA_HASH;

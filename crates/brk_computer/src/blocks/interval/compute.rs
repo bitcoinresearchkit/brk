@@ -4,12 +4,13 @@ use brk_types::{CheckedSub, Timestamp};
 use vecdb::{Exit, ReadableVec};
 
 use super::Vecs;
-use crate::ComputeIndexes;
+use crate::{blocks, ComputeIndexes};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
+        count_vecs: &blocks::CountVecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -31,6 +32,15 @@ impl Vecs {
             },
             exit,
         )?;
+
+        let window_starts = count_vecs.window_starts();
+        self.interval_rolling.compute_distribution(
+            starting_indexes.height,
+            &window_starts,
+            &self.interval.height,
+            exit,
+        )?;
+
         Ok(())
     }
 }

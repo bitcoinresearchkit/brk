@@ -65,25 +65,8 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Full<I, T> {
         )
     }
 
-    // Boxed accessors
-    pub(crate) fn boxed_average(&self) -> ReadableBoxedVec<I, T> {
-        self.distribution.boxed_average()
-    }
-
-    pub(crate) fn boxed_min(&self) -> ReadableBoxedVec<I, T> {
-        self.distribution.boxed_min()
-    }
-
-    pub(crate) fn boxed_max(&self) -> ReadableBoxedVec<I, T> {
-        self.distribution.boxed_max()
-    }
-
     pub(crate) fn boxed_sum(&self) -> ReadableBoxedVec<I, T> {
         self.sum_cum.sum.0.read_only_boxed_clone()
-    }
-
-    pub(crate) fn boxed_cumulative(&self) -> ReadableBoxedVec<I, T> {
-        self.sum_cum.cumulative.0.read_only_boxed_clone()
     }
 
     pub fn read_only_clone(&self) -> Full<I, T, Ro> {

@@ -53,7 +53,7 @@ impl Vecs {
                         version,
                         prices.usd.price.read_only_boxed_clone(),
                         average_price.height.read_only_boxed_clone(),
-                        &prices.usd.split.close,
+                        &prices.usd.close,
                         &average_price.rest,
                     )
                 });
@@ -124,7 +124,7 @@ impl Vecs {
                         version,
                         prices.usd.price.read_only_boxed_clone(),
                         lookback_price.height.read_only_boxed_clone(),
-                        &prices.usd.split.close,
+                        &prices.usd.close,
                         &lookback_price.rest,
                     )
                 });
@@ -193,7 +193,7 @@ impl Vecs {
                         version,
                         prices.usd.price.read_only_boxed_clone(),
                         average_price.height.read_only_boxed_clone(),
-                        &prices.usd.split.close,
+                        &prices.usd.close,
                         &average_price.rest,
                     )
                 });

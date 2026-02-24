@@ -124,14 +124,12 @@ impl Computer {
                     )?))
                 })?;
 
-                // Import scripts module (depends on outputs for adoption ratio denominators)
                 let scripts_handle = big_thread().spawn_scoped(s, || -> Result<_> {
                     Ok(Box::new(scripts::Vecs::forced_import(
                         &computed_path,
                         VERSION,
                         &indexes,
                         &prices,
-                        &outputs,
                     )?))
                 })?;
 
@@ -275,7 +273,8 @@ impl Computer {
         // 2. Prices
         info!("Computing prices...");
         let i = Instant::now();
-        self.prices.compute(indexer, &starting_indexes, exit)?;
+        self.prices
+            .compute(indexer, &self.indexes, &starting_indexes, exit)?;
         info!("Computed prices in {:?}", i.elapsed());
 
         // 3. Main scope
@@ -289,47 +288,40 @@ impl Computer {
                 Ok(())
             });
 
-            // Nested scope: blocks (mut) runs in parallel with inputs chain
-            // The nested scope ensures blocks' mutable borrow ends before transactions
-            thread::scope(|inner| -> Result<()> {
-                let blocks = inner.spawn(|| -> Result<()> {
-                    info!("Computing blocks...");
-                    let i = Instant::now();
-                    self.blocks
-                        .compute(indexer, &self.indexes, &starting_indexes, exit)?;
-                    info!("Computed blocks in {:?}", i.elapsed());
-                    Ok(())
-                });
+            // Blocks first (needed for window starts used by scripts, transactions, etc.)
+            info!("Computing blocks...");
+            let i = Instant::now();
+            self.blocks
+                .compute(indexer, &self.indexes, &starting_indexes, exit)?;
+            info!("Computed blocks in {:?}", i.elapsed());
 
-                // Inputs → scripts → outputs (sequential)
-                info!("Computing inputs...");
-                let i = Instant::now();
-                self.inputs
-                    .compute(indexer, &self.indexes, &starting_indexes, exit)?;
-                info!("Computed inputs in {:?}", i.elapsed());
+            // Inputs → scripts → outputs (sequential)
+            info!("Computing inputs...");
+            let i = Instant::now();
+            self.inputs
+                .compute(indexer, &self.indexes, &self.blocks, &starting_indexes, exit)?;
+            info!("Computed inputs in {:?}", i.elapsed());
 
-                info!("Computing scripts...");
-                let i = Instant::now();
-                self.scripts.compute(indexer, &starting_indexes, exit)?;
-                info!("Computed scripts in {:?}", i.elapsed());
+            info!("Computing scripts...");
+            let i = Instant::now();
+            self.scripts
+                .compute(indexer, &self.blocks, &self.outputs, &starting_indexes, exit)?;
+            info!("Computed scripts in {:?}", i.elapsed());
 
-                info!("Computing outputs...");
-                let i = Instant::now();
-                self.outputs.compute(
-                    indexer,
-                    &self.indexes,
-                    &self.inputs,
-                    &self.scripts,
-                    &starting_indexes,
-                    exit,
-                )?;
-                info!("Computed outputs in {:?}", i.elapsed());
+            info!("Computing outputs...");
+            let i = Instant::now();
+            self.outputs.compute(
+                indexer,
+                &self.indexes,
+                &self.inputs,
+                &self.scripts,
+                &self.blocks,
+                &starting_indexes,
+                exit,
+            )?;
+            info!("Computed outputs in {:?}", i.elapsed());
 
-                blocks.join().unwrap()?;
-                Ok(())
-            })?;
-
-            // Transactions (needs blocks for count/interval)
+            // Transactions (needs blocks for count/interval, prices for USD conversion)
             info!("Computing transactions...");
             let i = Instant::now();
             self.transactions.compute(
@@ -338,6 +330,7 @@ impl Computer {
                 &self.blocks,
                 &self.inputs,
                 &self.outputs,
+                &self.prices,
                 &starting_indexes,
                 exit,
             )?;

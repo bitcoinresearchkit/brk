@@ -6,7 +6,7 @@ use vecdb::{Database, ReadableCloneableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedHeightDerivedFull, LazyFromHeightTransformDistribution, WeightToFullness},
+    internal::{ComputedFromHeightLast, ComputedHeightDerivedCumFull, RollingDistribution},
 };
 
 impl Vecs {
@@ -16,7 +16,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let weight = ComputedHeightDerivedFull::forced_import(
+        let weight = ComputedHeightDerivedCumFull::forced_import(
             db,
             "block_weight",
             indexer.vecs.blocks.weight.read_only_boxed_clone(),
@@ -24,13 +24,16 @@ impl Vecs {
             indexes,
         )?;
 
-        let fullness = LazyFromHeightTransformDistribution::from_derived::<WeightToFullness>(
-            "block_fullness",
-            version,
-            indexer.vecs.blocks.weight.read_only_boxed_clone(),
-            &weight,
-        );
+        let fullness =
+            ComputedFromHeightLast::forced_import(db, "block_fullness", version, indexes)?;
 
-        Ok(Self { weight, fullness })
+        let fullness_rolling =
+            RollingDistribution::forced_import(db, "block_fullness", version, indexes)?;
+
+        Ok(Self {
+            weight,
+            fullness,
+            fullness_rolling,
+        })
     }
 }

@@ -3,15 +3,18 @@ use brk_types::{Bitcoin, CheckedSub, StoredF64};
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, distribution};
+use crate::{ComputeIndexes, blocks, distribution};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         starting_indexes: &ComputeIndexes,
+        blocks: &blocks::Vecs,
         distribution: &distribution::Vecs,
         exit: &Exit,
     ) -> Result<()> {
+        let window_starts = blocks.count.window_starts();
+
         let circulating_supply = &distribution
             .utxo_cohorts
             .all
@@ -22,7 +25,7 @@ impl Vecs {
             .height;
 
         self.coinblocks_created
-            .compute(starting_indexes, exit, |vec| {
+            .compute(starting_indexes.height, &window_starts, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
                     circulating_supply,
@@ -40,7 +43,7 @@ impl Vecs {
             .coinblocks_destroyed;
 
         self.coinblocks_stored
-            .compute(starting_indexes, exit, |vec| {
+            .compute(starting_indexes.height, &window_starts, exit, |vec| {
                 vec.compute_transform2(
                     starting_indexes.height,
                     &self.coinblocks_created.height,
@@ -53,8 +56,8 @@ impl Vecs {
 
         self.liveliness.height.compute_divide(
             starting_indexes.height,
-            &*coinblocks_destroyed.height_cumulative,
-            &*self.coinblocks_created.height_cumulative,
+            &coinblocks_destroyed.cumulative.height,
+            &self.coinblocks_created.cumulative.height,
             exit,
         )?;
 

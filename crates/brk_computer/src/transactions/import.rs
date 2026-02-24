@@ -25,7 +25,7 @@ impl Vecs {
 
         let count = CountVecs::forced_import(&db, version, indexer, indexes)?;
         let size = SizeVecs::forced_import(&db, version, indexer, indexes)?;
-        let fees = FeesVecs::forced_import(&db, version, indexer, indexes, prices)?;
+        let fees = FeesVecs::forced_import(&db, version, indexes)?;
         let versions = VersionsVecs::forced_import(&db, version, indexes)?;
         let volume = VolumeVecs::forced_import(&db, version, indexes, prices)?;
 

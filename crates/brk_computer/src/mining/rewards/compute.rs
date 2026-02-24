@@ -48,61 +48,20 @@ impl Vecs {
             Ok(())
         })?;
 
-        self.coinbase_24h_sum.compute_rolling_sum(
+        let window_starts = count_vecs.window_starts();
+        self.coinbase_sum.compute_rolling_sum(
             starting_indexes.height,
-            &count_vecs.height_24h_ago,
-            &self.coinbase.sats.height,
-            &self.coinbase.usd.height,
-            exit,
-        )?;
-        self.coinbase_7d_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &count_vecs.height_1w_ago,
-            &self.coinbase.sats.height,
-            &self.coinbase.usd.height,
-            exit,
-        )?;
-        self.coinbase_30d_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &count_vecs.height_1m_ago,
-            &self.coinbase.sats.height,
-            &self.coinbase.usd.height,
-            exit,
-        )?;
-        self.coinbase_1y_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &count_vecs.height_1y_ago,
+            &window_starts,
             &self.coinbase.sats.height,
             &self.coinbase.usd.height,
             exit,
         )?;
 
-        let fee_sats_source = transactions_fees.fee.sats.height.sum_cum.sum.inner();
-        let fee_usd_source = &transactions_fees.fee.usd.height.sum;
-        self.fee_24h_sum.compute_rolling_sum(
+        let fee_sats_source = transactions_fees.fee.sum_cum.sum.inner();
+        let fee_usd_source = &transactions_fees.fee_usd_sum;
+        self.fee_sum.compute_rolling_sum(
             starting_indexes.height,
-            &count_vecs.height_24h_ago,
-            fee_sats_source,
-            fee_usd_source,
-            exit,
-        )?;
-        self.fee_7d_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &count_vecs.height_1w_ago,
-            fee_sats_source,
-            fee_usd_source,
-            exit,
-        )?;
-        self.fee_30d_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &count_vecs.height_1m_ago,
-            fee_sats_source,
-            fee_usd_source,
-            exit,
-        )?;
-        self.fee_1y_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &count_vecs.height_1y_ago,
+            &window_starts,
             fee_sats_source,
             fee_usd_source,
             exit,
@@ -112,7 +71,7 @@ impl Vecs {
             vec.compute_transform2(
                 starting_indexes.height,
                 &self.coinbase.sats.height,
-                transactions_fees.fee.sats.height.sum_cum.sum.inner(),
+                transactions_fees.fee.sum_cum.sum.inner(),
                 |(height, coinbase, fees, ..)| {
                     (
                         height,
@@ -145,7 +104,7 @@ impl Vecs {
         // All-time cumulative fee dominance
         self.fee_dominance.height.compute_percentage(
             starting_indexes.height,
-            transactions_fees.fee.sats.height.sum_cum.cumulative.inner(),
+            transactions_fees.fee.sum_cum.cumulative.inner(),
             self.coinbase.sats.rest.height_cumulative.inner(),
             exit,
         )?;
@@ -153,26 +112,26 @@ impl Vecs {
         // Rolling fee dominance = sum(fees) / sum(coinbase) * 100
         self.fee_dominance_24h.height.compute_percentage(
             starting_indexes.height,
-            &self.fee_24h_sum.sats.height,
-            &self.coinbase_24h_sum.sats.height,
+            &self.fee_sum._24h.sats.height,
+            &self.coinbase_sum._24h.sats.height,
             exit,
         )?;
         self.fee_dominance_7d.height.compute_percentage(
             starting_indexes.height,
-            &self.fee_7d_sum.sats.height,
-            &self.coinbase_7d_sum.sats.height,
+            &self.fee_sum._7d.sats.height,
+            &self.coinbase_sum._7d.sats.height,
             exit,
         )?;
         self.fee_dominance_30d.height.compute_percentage(
             starting_indexes.height,
-            &self.fee_30d_sum.sats.height,
-            &self.coinbase_30d_sum.sats.height,
+            &self.fee_sum._30d.sats.height,
+            &self.coinbase_sum._30d.sats.height,
             exit,
         )?;
         self.fee_dominance_1y.height.compute_percentage(
             starting_indexes.height,
-            &self.fee_1y_sum.sats.height,
-            &self.coinbase_1y_sum.sats.height,
+            &self.fee_sum._1y.sats.height,
+            &self.coinbase_sum._1y.sats.height,
             exit,
         )?;
 

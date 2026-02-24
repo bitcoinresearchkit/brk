@@ -67,7 +67,7 @@ pub(crate) fn process_blocks(
 
     // From transactions and inputs/outputs (via .height or .height.sum_cum.sum patterns):
     let height_to_tx_count = &transactions.count.tx_count.height;
-    let height_to_output_count = &outputs.count.total_count.height.sum_cum.sum.0;
+    let height_to_output_count = &outputs.count.total_count.sum_cum.sum.0;
     let height_to_input_count = &inputs.count.height.sum_cum.sum.0;
     // From blocks:
     let height_to_timestamp = &blocks.time.timestamp_monotonic;
@@ -114,8 +114,11 @@ pub(crate) fn process_blocks(
     debug!("building txindex_to_height RangeMap");
     let mut txindex_to_height: RangeMap<TxIndex, Height> = {
         let first_txindex_len = indexer.vecs.transactions.first_txindex.len();
-        let all_first_txindexes: Vec<TxIndex> =
-            indexer.vecs.transactions.first_txindex.collect_range_at(0, first_txindex_len);
+        let all_first_txindexes: Vec<TxIndex> = indexer
+            .vecs
+            .transactions
+            .first_txindex
+            .collect_range_at(0, first_txindex_len);
         let mut map = RangeMap::with_capacity(first_txindex_len);
         for first_txindex in all_first_txindexes {
             map.push(first_txindex);
@@ -129,14 +132,46 @@ pub(crate) fn process_blocks(
     let mut txin_iters = TxInReaders::new(indexer, inputs, &mut txindex_to_height);
 
     // Pre-collect first address indexes per type for the block range
-    let first_p2a_vec = indexer.vecs.addresses.first_p2aaddressindex.collect_range_at(start_usize, end_usize);
-    let first_p2pk33_vec = indexer.vecs.addresses.first_p2pk33addressindex.collect_range_at(start_usize, end_usize);
-    let first_p2pk65_vec = indexer.vecs.addresses.first_p2pk65addressindex.collect_range_at(start_usize, end_usize);
-    let first_p2pkh_vec = indexer.vecs.addresses.first_p2pkhaddressindex.collect_range_at(start_usize, end_usize);
-    let first_p2sh_vec = indexer.vecs.addresses.first_p2shaddressindex.collect_range_at(start_usize, end_usize);
-    let first_p2tr_vec = indexer.vecs.addresses.first_p2traddressindex.collect_range_at(start_usize, end_usize);
-    let first_p2wpkh_vec = indexer.vecs.addresses.first_p2wpkhaddressindex.collect_range_at(start_usize, end_usize);
-    let first_p2wsh_vec = indexer.vecs.addresses.first_p2wshaddressindex.collect_range_at(start_usize, end_usize);
+    let first_p2a_vec = indexer
+        .vecs
+        .addresses
+        .first_p2aaddressindex
+        .collect_range_at(start_usize, end_usize);
+    let first_p2pk33_vec = indexer
+        .vecs
+        .addresses
+        .first_p2pk33addressindex
+        .collect_range_at(start_usize, end_usize);
+    let first_p2pk65_vec = indexer
+        .vecs
+        .addresses
+        .first_p2pk65addressindex
+        .collect_range_at(start_usize, end_usize);
+    let first_p2pkh_vec = indexer
+        .vecs
+        .addresses
+        .first_p2pkhaddressindex
+        .collect_range_at(start_usize, end_usize);
+    let first_p2sh_vec = indexer
+        .vecs
+        .addresses
+        .first_p2shaddressindex
+        .collect_range_at(start_usize, end_usize);
+    let first_p2tr_vec = indexer
+        .vecs
+        .addresses
+        .first_p2traddressindex
+        .collect_range_at(start_usize, end_usize);
+    let first_p2wpkh_vec = indexer
+        .vecs
+        .addresses
+        .first_p2wpkhaddressindex
+        .collect_range_at(start_usize, end_usize);
+    let first_p2wsh_vec = indexer
+        .vecs
+        .addresses
+        .first_p2wshaddressindex
+        .collect_range_at(start_usize, end_usize);
 
     // Track running totals - recover from previous height if resuming
     debug!("recovering addr_counts from height {}", starting_height);
@@ -423,7 +458,7 @@ pub(crate) fn process_blocks(
         )?;
 
         // Compute unrealized peak regret by age range (once per day)
-        if let Some(day1) = day1_opt {
+        if day1_opt.is_some() {
             vecs.utxo_cohorts.compute_and_push_peak_regret(
                 chain_state,
                 height,

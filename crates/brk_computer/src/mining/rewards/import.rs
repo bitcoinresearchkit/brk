@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightLast, StoredValueFromHeightLast, ValueFromHeightFull, ValueFromHeightSumCum},
+    internal::{ComputedFromHeightLast, StoredValueRollingWindows, ValueFromHeightFull, ValueFromHeightSumCum},
     prices,
 };
 
@@ -17,14 +17,8 @@ impl Vecs {
         prices: &prices::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            coinbase_24h_sum: StoredValueFromHeightLast::forced_import(db, "coinbase_24h_sum", version, indexes)?,
-            coinbase_7d_sum: StoredValueFromHeightLast::forced_import(db, "coinbase_7d_sum", version, indexes)?,
-            coinbase_30d_sum: StoredValueFromHeightLast::forced_import(db, "coinbase_30d_sum", version, indexes)?,
-            coinbase_1y_sum: StoredValueFromHeightLast::forced_import(db, "coinbase_1y_sum", version, indexes)?,
-            fee_24h_sum: StoredValueFromHeightLast::forced_import(db, "fee_24h_sum", version, indexes)?,
-            fee_7d_sum: StoredValueFromHeightLast::forced_import(db, "fee_7d_sum", version, indexes)?,
-            fee_30d_sum: StoredValueFromHeightLast::forced_import(db, "fee_30d_sum", version, indexes)?,
-            fee_1y_sum: StoredValueFromHeightLast::forced_import(db, "fee_1y_sum", version, indexes)?,
+            coinbase_sum: StoredValueRollingWindows::forced_import(db, "coinbase_sum", version, indexes)?,
+            fee_sum: StoredValueRollingWindows::forced_import(db, "fee_sum", version, indexes)?,
             coinbase: ValueFromHeightFull::forced_import(db, "coinbase", version, indexes, prices)?,
             subsidy: ValueFromHeightFull::forced_import(db, "subsidy", version, indexes, prices)?,
             unclaimed_rewards: ValueFromHeightSumCum::forced_import(

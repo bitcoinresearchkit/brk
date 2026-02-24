@@ -1,17 +1,14 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, PoolSlug, Sats, StoredF32, StoredU16, StoredU32};
-use vecdb::{
-    Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, Version,
-};
+use vecdb::{Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{
     blocks,
     indexes::{self, ComputeIndexes},
     internal::{
-        ComputedFromHeightLast, ComputedFromHeightSumCum, DollarsPlus,
-        LazyBinaryFromHeightLast, LazyValueFromHeightSumCum, MaskSats, PercentageU32F32, SatsPlus,
-        SatsPlusToBitcoin, ValueBinaryFromHeight,
+        ComputedFromHeightLast, ComputedFromHeightSumCum, LazyBinaryFromHeightLast,
+        LazyValueFromHeightSumCum, MaskSats, PercentageU32F32,
     },
     mining, prices, transactions,
 };
@@ -27,7 +24,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub blocks_mined_1y_sum: ComputedFromHeightLast<StoredU32, M>,
     pub subsidy: LazyValueFromHeightSumCum<StoredU32, Sats, M>,
     pub fee: LazyValueFromHeightSumCum<StoredU32, Sats, M>,
-    pub coinbase: ValueBinaryFromHeight,
+    pub coinbase: LazyValueFromHeightSumCum<StoredU32, Sats, M>,
     pub dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
 
     pub dominance_24h: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
@@ -97,7 +94,17 @@ impl Vecs {
             version,
             indexes,
             blocks_mined.height.read_only_boxed_clone(),
-            transactions.fees.fee.sats.height.boxed_sum(),
+            transactions.fees.fee.boxed_sum(),
+            prices,
+        )?;
+
+        let coinbase = LazyValueFromHeightSumCum::forced_import::<MaskSats>(
+            db,
+            &suffix("coinbase"),
+            version,
+            indexes,
+            blocks_mined.height.read_only_boxed_clone(),
+            mining.rewards.coinbase.sats.height.read_only_boxed_clone(),
             prices,
         )?;
 
@@ -112,25 +119,25 @@ impl Vecs {
                 &suffix("dominance_24h"),
                 version,
                 &blocks_mined_24h_sum,
-                &blocks.count.block_count_24h_sum,
+                &blocks.count.block_count_sum._24h,
             ),
             dominance_1w: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
                 &suffix("dominance_1w"),
                 version,
                 &blocks_mined_1w_sum,
-                &blocks.count.block_count_1w_sum,
+                &blocks.count.block_count_sum._7d,
             ),
             dominance_1m: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
                 &suffix("dominance_1m"),
                 version,
                 &blocks_mined_1m_sum,
-                &blocks.count.block_count_1m_sum,
+                &blocks.count.block_count_sum._30d,
             ),
             dominance_1y: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
                 &suffix("dominance_1y"),
                 version,
                 &blocks_mined_1y_sum,
-                &blocks.count.block_count_1y_sum,
+                &blocks.count.block_count_sum._1y,
             ),
             slug,
             blocks_mined,
@@ -138,13 +145,7 @@ impl Vecs {
             blocks_mined_1w_sum,
             blocks_mined_1m_sum,
             blocks_mined_1y_sum,
-            coinbase: ValueBinaryFromHeight::from_lazy::<
-                SatsPlus,
-                SatsPlusToBitcoin,
-                DollarsPlus,
-                StoredU32,
-                Sats,
-            >(&suffix("coinbase"), version, &subsidy, &fee),
+            coinbase,
             subsidy,
             fee,
             blocks_since_block: ComputedFromHeightLast::forced_import(
@@ -169,25 +170,24 @@ impl Vecs {
         blocks: &blocks::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.blocks_mined
-            .compute(starting_indexes, exit, |vec| {
-                vec.compute_transform(
-                    starting_indexes.height,
-                    height_to_pool,
-                    |(h, id, ..)| {
-                        (
-                            h,
-                            if id == self.slug {
-                                StoredU32::ONE
-                            } else {
-                                StoredU32::ZERO
-                            },
-                        )
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.blocks_mined.compute(starting_indexes, exit, |vec| {
+            vec.compute_transform(
+                starting_indexes.height,
+                height_to_pool,
+                |(h, id, ..)| {
+                    (
+                        h,
+                        if id == self.slug {
+                            StoredU32::ONE
+                        } else {
+                            StoredU32::ZERO
+                        },
+                    )
+                },
+                exit,
+            )?;
+            Ok(())
+        })?;
 
         // Compute rolling window blocks mined using the start heights from blocks.count
         self.blocks_mined_24h_sum.height.compute_rolling_sum(
@@ -222,6 +222,8 @@ impl Vecs {
 
         self.fee.compute_cumulative(starting_indexes, exit)?;
 
+        self.coinbase.compute_cumulative(starting_indexes, exit)?;
+
         {
             let mut prev = StoredU32::ZERO;
             self.blocks_since_block.height.compute_transform(
@@ -243,7 +245,12 @@ impl Vecs {
         self.days_since_block.height.compute_transform(
             starting_indexes.height,
             &self.blocks_since_block.height,
-            |(h, blocks, ..)| (h, StoredU16::from(u16::try_from(*blocks).unwrap_or(u16::MAX))),
+            |(h, blocks, ..)| {
+                (
+                    h,
+                    StoredU16::from(u16::try_from(*blocks).unwrap_or(u16::MAX)),
+                )
+            },
             exit,
         )?;
 

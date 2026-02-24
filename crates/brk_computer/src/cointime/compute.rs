@@ -18,7 +18,7 @@ impl Vecs {
     ) -> Result<()> {
         // Activity computes first (liveliness, vaultedness, etc.)
         self.activity
-            .compute(starting_indexes, distribution, exit)?;
+            .compute(starting_indexes, blocks, distribution, exit)?;
 
         // Supply computes next (depends on activity)
         self.supply.compute(
@@ -36,6 +36,7 @@ impl Vecs {
         self.value.compute(
             starting_indexes,
             prices,
+            blocks,
             distribution,
             &self.activity,
             exit,

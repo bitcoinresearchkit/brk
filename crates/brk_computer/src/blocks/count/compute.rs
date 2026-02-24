@@ -158,28 +158,16 @@ impl Vecs {
         )?;
 
         // Compute rolling window block counts
-        self.block_count_24h_sum.height.compute_transform(
+        let ws = crate::internal::WindowStarts {
+            _24h: &self.height_24h_ago,
+            _7d: &self.height_1w_ago,
+            _30d: &self.height_1m_ago,
+            _1y: &self.height_1y_ago,
+        };
+        self.block_count_sum.compute_rolling_sum(
             starting_indexes.height,
-            &self.height_24h_ago,
-            |(h, start, ..)| (h, StoredU32::from(*h + 1 - *start)),
-            exit,
-        )?;
-        self.block_count_1w_sum.height.compute_transform(
-            starting_indexes.height,
-            &self.height_1w_ago,
-            |(h, start, ..)| (h, StoredU32::from(*h + 1 - *start)),
-            exit,
-        )?;
-        self.block_count_1m_sum.height.compute_transform(
-            starting_indexes.height,
-            &self.height_1m_ago,
-            |(h, start, ..)| (h, StoredU32::from(*h + 1 - *start)),
-            exit,
-        )?;
-        self.block_count_1y_sum.height.compute_transform(
-            starting_indexes.height,
-            &self.height_1y_ago,
-            |(h, start, ..)| (h, StoredU32::from(*h + 1 - *start)),
+            &ws,
+            &self.block_count.height,
             exit,
         )?;
 

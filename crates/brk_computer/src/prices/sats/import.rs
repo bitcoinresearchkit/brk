@@ -1,11 +1,11 @@
 use brk_types::Version;
-use vecdb::{ReadableCloneableVec, LazyVecFrom1};
+use vecdb::{LazyVecFrom1, ReadableCloneableVec};
 
 use super::super::cents;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{CentsUnsignedToSats, ComputedHeightDerivedOHLC, ComputedHeightDerivedSplitOHLC},
+    internal::{CentsUnsignedToSats, ComputedHeightDerivedLast, LazyEagerIndexes},
 };
 
 impl Vecs {
@@ -20,20 +20,27 @@ impl Vecs {
             cents.price.read_only_boxed_clone(),
         );
 
-        let split = ComputedHeightDerivedSplitOHLC::forced_import(
-            "price_sats",
+        // Sats are inversely related to cents (sats = 10B/cents), so high↔low are swapped
+        let open =
+            LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToSats>("price_sats_open", version, &cents.open);
+        let high =
+            LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToSats>("price_sats_high", version, &cents.low);
+        let low =
+            LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToSats>("price_sats_low", version, &cents.high);
+
+        let close = ComputedHeightDerivedLast::forced_import(
+            "price_sats_close",
+            price.read_only_boxed_clone(),
             version,
             indexes,
-            price.read_only_boxed_clone(),
         );
 
-        let ohlc = ComputedHeightDerivedOHLC::forced_import(
-            "price_sats",
-            version,
-            indexes,
-            price.read_only_boxed_clone(),
-        );
-
-        Self { price, split, ohlc }
+        Self {
+            price,
+            open,
+            high,
+            low,
+            close,
+        }
     }
 }

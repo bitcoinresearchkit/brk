@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::{Height, StoredU32, StoredU64};
 use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeightLast, ComputedFromHeightSumCum, ConstantVecs};
+use crate::internal::{ComputedFromHeightSumCum, ConstantVecs, RollingWindows, WindowStarts};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
@@ -40,13 +40,20 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub height_8y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub height_10y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     // Rolling window block counts
-    pub block_count_24h_sum: ComputedFromHeightLast<StoredU32, M>,
-    pub block_count_1w_sum: ComputedFromHeightLast<StoredU32, M>,
-    pub block_count_1m_sum: ComputedFromHeightLast<StoredU32, M>,
-    pub block_count_1y_sum: ComputedFromHeightLast<StoredU32, M>,
+    pub block_count_sum: RollingWindows<StoredU32, M>,
 }
 
 impl Vecs {
+    /// Get the standard 4 rolling window start heights (24h, 7d, 30d, 1y).
+    pub fn window_starts(&self) -> WindowStarts<'_> {
+        WindowStarts {
+            _24h: &self.height_24h_ago,
+            _7d: &self.height_1w_ago,
+            _30d: &self.height_1m_ago,
+            _1y: &self.height_1y_ago,
+        }
+    }
+
     pub fn start_vec(&self, days: usize) -> &EagerVec<PcoVec<Height, Height>> {
         match days {
             1 => &self.height_24h_ago,

@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Div};
+use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
 
 use derive_more::Deref;
 use schemars::JsonSchema;
@@ -89,6 +89,19 @@ impl Add for StoredU64 {
 impl AddAssign for StoredU64 {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
+    }
+}
+
+impl Sub for StoredU64 {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0)
+    }
+}
+
+impl SubAssign for StoredU64 {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs
     }
 }
 

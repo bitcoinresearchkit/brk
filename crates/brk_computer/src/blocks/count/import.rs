@@ -5,7 +5,7 @@ use vecdb::{Database, ImportableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{BlockCountTarget, ComputedFromHeightLast, ComputedFromHeightSumCum, ConstantVecs},
+    internal::{BlockCountTarget, ComputedFromHeightSumCum, ConstantVecs, RollingWindows},
 };
 
 impl Vecs {
@@ -52,27 +52,9 @@ impl Vecs {
             height_6y_ago: ImportableVec::forced_import(db, "height_6y_ago", version)?,
             height_8y_ago: ImportableVec::forced_import(db, "height_8y_ago", version)?,
             height_10y_ago: ImportableVec::forced_import(db, "height_10y_ago", version)?,
-            block_count_24h_sum: ComputedFromHeightLast::forced_import(
+            block_count_sum: RollingWindows::forced_import(
                 db,
-                "block_count_24h_sum",
-                version,
-                indexes,
-            )?,
-            block_count_1w_sum: ComputedFromHeightLast::forced_import(
-                db,
-                "block_count_1w_sum",
-                version,
-                indexes,
-            )?,
-            block_count_1m_sum: ComputedFromHeightLast::forced_import(
-                db,
-                "block_count_1m_sum",
-                version,
-                indexes,
-            )?,
-            block_count_1y_sum: ComputedFromHeightLast::forced_import(
-                db,
-                "block_count_1y_sum",
+                "block_count_sum",
                 version,
                 indexes,
             )?,

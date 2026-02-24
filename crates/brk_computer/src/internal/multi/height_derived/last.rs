@@ -1,42 +1,48 @@
 //! ComputedHeightDerivedLast - lazy time periods + epochs (last value).
+//!
+//! Newtype on `Indexes` with `LazyLast` per field.
 
 use brk_traversable::Traversable;
 use brk_types::{
     Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4, Minute1, Minute10,
     Minute30, Minute5, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
+use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{ReadableBoxedVec, ReadableCloneableVec};
 
 use crate::{
     indexes,
-    internal::{ComputedVecValue, LazyLast, NumericValue, SparseLast},
+    indexes_from,
+    internal::{ComputedVecValue, Indexes, LazyLast, NumericValue},
 };
 
-#[derive(Clone, Traversable)]
-#[traversable(merge)]
-pub struct ComputedHeightDerivedLast<T>
+/// All 17 time-period/epoch `LazyLast` vecs, packed as a newtype on `Indexes`.
+pub type ComputedHeightDerivedLastInner<T> = Indexes<
+    LazyLast<Minute1, T, Height, Height>,
+    LazyLast<Minute5, T, Height, Height>,
+    LazyLast<Minute10, T, Height, Height>,
+    LazyLast<Minute30, T, Height, Height>,
+    LazyLast<Hour1, T, Height, Height>,
+    LazyLast<Hour4, T, Height, Height>,
+    LazyLast<Hour12, T, Height, Height>,
+    LazyLast<Day1, T, Height, Height>,
+    LazyLast<Day3, T, Height, Height>,
+    LazyLast<Week1, T, Height, Height>,
+    LazyLast<Month1, T, Height, Height>,
+    LazyLast<Month3, T, Height, Height>,
+    LazyLast<Month6, T, Height, Height>,
+    LazyLast<Year1, T, Height, Height>,
+    LazyLast<Year10, T, Height, Height>,
+    LazyLast<HalvingEpoch, T, Height, HalvingEpoch>,
+    LazyLast<DifficultyEpoch, T, Height, DifficultyEpoch>,
+>;
+
+#[derive(Clone, Deref, DerefMut, Traversable)]
+#[traversable(transparent)]
+pub struct ComputedHeightDerivedLast<T>(pub ComputedHeightDerivedLastInner<T>)
 where
-    T: ComputedVecValue + PartialOrd + JsonSchema,
-{
-    pub minute1: LazyLast<Minute1, T, Height, Height>,
-    pub minute5: LazyLast<Minute5, T, Height, Height>,
-    pub minute10: LazyLast<Minute10, T, Height, Height>,
-    pub minute30: LazyLast<Minute30, T, Height, Height>,
-    pub hour1: LazyLast<Hour1, T, Height, Height>,
-    pub hour4: LazyLast<Hour4, T, Height, Height>,
-    pub hour12: LazyLast<Hour12, T, Height, Height>,
-    pub day1: LazyLast<Day1, T, Height, Height>,
-    pub day3: LazyLast<Day3, T, Height, Height>,
-    pub week1: LazyLast<Week1, T, Height, Height>,
-    pub month1: LazyLast<Month1, T, Height, Height>,
-    pub month3: LazyLast<Month3, T, Height, Height>,
-    pub month6: LazyLast<Month6, T, Height, Height>,
-    pub year1: LazyLast<Year1, T, Height, Height>,
-    pub year10: LazyLast<Year10, T, Height, Height>,
-    pub halvingepoch: LazyLast<HalvingEpoch, T, Height, HalvingEpoch>,
-    pub difficultyepoch: LazyLast<DifficultyEpoch, T, Height, DifficultyEpoch>,
-}
+    T: ComputedVecValue + PartialOrd + JsonSchema;
 
 const VERSION: Version = Version::ZERO;
 
@@ -74,24 +80,6 @@ where
             };
         }
 
-        Self {
-            minute1: period!(minute1),
-            minute5: period!(minute5),
-            minute10: period!(minute10),
-            minute30: period!(minute30),
-            hour1: period!(hour1),
-            hour4: period!(hour4),
-            hour12: period!(hour12),
-            day1: period!(day1),
-            day3: period!(day3),
-            week1: period!(week1),
-            month1: period!(month1),
-            month3: period!(month3),
-            month6: period!(month6),
-            year1: period!(year1),
-            year10: period!(year10),
-            halvingepoch: epoch!(halvingepoch),
-            difficultyepoch: epoch!(difficultyepoch),
-        }
+        Self(indexes_from!(period, epoch))
     }
 }

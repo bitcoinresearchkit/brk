@@ -4,17 +4,20 @@ use vecdb::Exit;
 
 use super::super::activity;
 use super::Vecs;
-use crate::{ComputeIndexes, distribution, prices};
+use crate::{ComputeIndexes, blocks, distribution, prices};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         starting_indexes: &ComputeIndexes,
         prices: &prices::Vecs,
+        blocks: &blocks::Vecs,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         exit: &Exit,
     ) -> Result<()> {
+        let window_starts = blocks.count.window_starts();
+
         let coinblocks_destroyed = &distribution
             .utxo_cohorts
             .all
@@ -39,7 +42,7 @@ impl Vecs {
             .height;
 
         self.cointime_value_destroyed
-            .compute(starting_indexes, exit,|vec| {
+            .compute(starting_indexes.height, &window_starts, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.usd.price,
@@ -50,7 +53,7 @@ impl Vecs {
             })?;
 
         self.cointime_value_created
-            .compute(starting_indexes, exit,|vec| {
+            .compute(starting_indexes.height, &window_starts, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.usd.price,
@@ -61,7 +64,7 @@ impl Vecs {
             })?;
 
         self.cointime_value_stored
-            .compute(starting_indexes, exit,|vec| {
+            .compute(starting_indexes.height, &window_starts, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.usd.price,
@@ -75,7 +78,7 @@ impl Vecs {
         // Supply-adjusted to account for growing supply over time
         // This is a key input for Reserve Risk / HODL Bank calculation
         self.vocdd
-            .compute(starting_indexes, exit,|vec| {
+            .compute(starting_indexes.height, &window_starts, exit, |vec| {
                 vec.compute_transform3(
                     starting_indexes.height,
                     &prices.usd.price,

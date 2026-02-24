@@ -100,7 +100,7 @@ impl Vecs {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let nvt = LazyBinaryFromHeightLast::from_lazy_binary_block_last_and_lazy_binary_sum::<
+        let nvt = LazyBinaryFromHeightLast::from_both_lazy_binary_computed_block_last::<
             Ratio32,
             _,
             _,

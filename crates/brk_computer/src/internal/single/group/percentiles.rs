@@ -1,9 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use schemars::JsonSchema;
-use vecdb::{
-    Database, ReadableBoxedVec, ReadableCloneableVec, Ro, Rw, StorageMode, VecIndex, Version,
-};
+use vecdb::{Database, Ro, Rw, StorageMode, VecIndex, Version};
 
 use crate::internal::{ComputedVecValue, MedianVec, Pct10Vec, Pct25Vec, Pct75Vec, Pct90Vec};
 
@@ -26,27 +24,6 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Percentiles<I, T> {
             pct75: Pct75Vec::forced_import(db, name, version)?,
             pct90: Pct90Vec::forced_import(db, name, version)?,
         })
-    }
-
-    // Boxed accessors
-    pub(crate) fn boxed_pct10(&self) -> ReadableBoxedVec<I, T> {
-        self.pct10.0.read_only_boxed_clone()
-    }
-
-    pub(crate) fn boxed_pct25(&self) -> ReadableBoxedVec<I, T> {
-        self.pct25.0.read_only_boxed_clone()
-    }
-
-    pub(crate) fn boxed_median(&self) -> ReadableBoxedVec<I, T> {
-        self.median.0.read_only_boxed_clone()
-    }
-
-    pub(crate) fn boxed_pct75(&self) -> ReadableBoxedVec<I, T> {
-        self.pct75.0.read_only_boxed_clone()
-    }
-
-    pub(crate) fn boxed_pct90(&self) -> ReadableBoxedVec<I, T> {
-        self.pct90.0.read_only_boxed_clone()
     }
 
     pub fn read_only_clone(&self) -> Percentiles<I, T, Ro> {

@@ -1,9 +1,11 @@
 use brk_traversable::Traversable;
-use brk_types::StoredU64;
-use derive_more::{Deref, DerefMut};
+use brk_types::{Height, StoredU64};
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::TxDerivedFull;
+use crate::internal::{Full, RollingFull};
 
-#[derive(Deref, DerefMut, Traversable)]
-pub struct Vecs<M: StorageMode = Rw>(pub TxDerivedFull<StoredU64, M>);
+#[derive(Traversable)]
+pub struct Vecs<M: StorageMode = Rw> {
+    pub height: Full<Height, StoredU64, M>,
+    pub rolling: RollingFull<StoredU64, M>,
+}

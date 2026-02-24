@@ -1,11 +1,11 @@
 use brk_traversable::Traversable;
-use brk_types::{StoredU64, Weight};
+use brk_types::StoredU64;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedHeightDerivedFull, LazyComputedFromHeightFull};
+use crate::internal::{ComputedFromHeightCumFull, ComputedHeightDerivedCumFull};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub vbytes: LazyComputedFromHeightFull<StoredU64, Weight, M>,
-    pub size: ComputedHeightDerivedFull<StoredU64, M>,
+    pub vbytes: ComputedFromHeightCumFull<StoredU64, M>,
+    pub size: ComputedHeightDerivedCumFull<StoredU64, M>,
 }

@@ -46,15 +46,6 @@ where
         Self::from_source_inner(&format!("{name}_min"), version, source, len_source)
     }
 
-    pub(crate) fn from_source_raw(
-        name: &str,
-        version: Version,
-        source: ReadableBoxedVec<S1I, T>,
-        len_source: ReadableBoxedVec<I, S2T>,
-    ) -> Self {
-        Self::from_source_inner(name, version, source, len_source)
-    }
-
     fn from_source_inner(
         name: &str,
         version: Version,
@@ -115,15 +106,6 @@ where
         first_height: ReadableBoxedVec<I, Height>,
     ) -> Self {
         Self::from_height_source_inner(&format!("{name}_min"), version, source, first_height)
-    }
-
-    pub(crate) fn from_height_source_raw(
-        name: &str,
-        version: Version,
-        source: ReadableBoxedVec<Height, T>,
-        first_height: ReadableBoxedVec<I, Height>,
-    ) -> Self {
-        Self::from_height_source_inner(name, version, source, first_height)
     }
 
     fn from_height_source_inner(

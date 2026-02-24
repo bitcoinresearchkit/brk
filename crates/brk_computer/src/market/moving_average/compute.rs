@@ -42,7 +42,7 @@ impl Vecs {
         }
 
         let h2d = &indexes.height.day1;
-        let closes: Vec<Dollars> = prices.usd.split.close.day1.collect();
+        let closes: Vec<Dollars> = prices.usd.close.day1.collect();
 
         for (ema, period) in [
             (&mut self.price_1w_ema, 7),

@@ -14,11 +14,19 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.interval.compute(indexer, starting_indexes, exit)?;
+        self.time.timestamp.compute_first(
+            starting_indexes,
+            &indexer.vecs.blocks.timestamp,
+            indexes,
+            exit,
+        )?;
         self.count
             .compute(indexer, &self.time, starting_indexes, exit)?;
-        self.size.compute(indexer, starting_indexes, exit)?;
-        self.weight.compute(indexer, starting_indexes, exit)?;
+        self.interval
+            .compute(indexer, &self.count, starting_indexes, exit)?;
+        self.size.compute(indexer, &self.count, starting_indexes, exit)?;
+        self.weight
+            .compute(indexer, &self.count, starting_indexes, exit)?;
         self.difficulty
             .compute(indexer, indexes, starting_indexes, exit)?;
         self.halving.compute(indexes, starting_indexes, exit)?;

@@ -4,31 +4,42 @@ use brk_types::{Height, StoredU64};
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, indexes, inputs, scripts};
+use crate::{ComputeIndexes, blocks, indexes, inputs, scripts};
 
 impl Vecs {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         inputs_count: &inputs::CountVecs,
         scripts_count: &scripts::CountVecs,
+        blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.total_count.derive_from(
-            indexer,
-            indexes,
-            starting_indexes,
+        self.total_count.compute_with_skip(
+            starting_indexes.height,
             &indexes.txindex.output_count,
+            &indexer.vecs.transactions.first_txindex,
+            &indexes.height.txindex_count,
+            exit,
+            0,
+        )?;
+
+        let window_starts = blocks.count.window_starts();
+        self.total_count_rolling.compute(
+            starting_indexes.height,
+            &window_starts,
+            self.total_count.sum_cum.sum.inner(),
             exit,
         )?;
 
         self.utxo_count.height.compute_transform3(
             starting_indexes.height,
-            &*self.total_count.height.sum_cum.cumulative,
+            &*self.total_count.sum_cum.cumulative,
             &*inputs_count.height.sum_cum.cumulative,
-            &*scripts_count.opreturn.height_cumulative,
+            &scripts_count.opreturn.cumulative.height,
             |(h, output_count, input_count, opreturn_count, ..)| {
                 let block_count = u64::from(h + 1_usize);
                 // -1 > genesis output is unspendable

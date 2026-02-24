@@ -1,12 +1,11 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{Database, ReadableCloneableVec};
+use vecdb::Database;
 
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightFull, LazyBinaryFromHeightFull, PercentageU64F32},
-    outputs,
+    internal::{ComputedFromHeightCumSum, ComputedFromHeightLast},
 };
 
 impl Vecs {
@@ -14,40 +13,21 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        outputs: &outputs::Vecs,
     ) -> Result<Self> {
-        let p2a = ComputedFromHeightFull::forced_import(db, "p2a_count", version, indexes)?;
-        let p2ms = ComputedFromHeightFull::forced_import(db, "p2ms_count", version, indexes)?;
-        let p2pk33 = ComputedFromHeightFull::forced_import(db, "p2pk33_count", version, indexes)?;
-        let p2pk65 = ComputedFromHeightFull::forced_import(db, "p2pk65_count", version, indexes)?;
-        let p2pkh = ComputedFromHeightFull::forced_import(db, "p2pkh_count", version, indexes)?;
-        let p2sh = ComputedFromHeightFull::forced_import(db, "p2sh_count", version, indexes)?;
-        let p2tr = ComputedFromHeightFull::forced_import(db, "p2tr_count", version, indexes)?;
-        let p2wpkh = ComputedFromHeightFull::forced_import(db, "p2wpkh_count", version, indexes)?;
-        let p2wsh = ComputedFromHeightFull::forced_import(db, "p2wsh_count", version, indexes)?;
-
-        // Aggregate counts (computed from per-type counts)
-        let segwit = ComputedFromHeightFull::forced_import(db, "segwit_count", version, indexes)?;
-
-        // Adoption ratios (lazy)
-        // Uses outputs.count.count as denominator (total output count)
-        // At height level: per-block ratio; at day1 level: sum-based ratio (% of new outputs)
-        let taproot_adoption = LazyBinaryFromHeightFull::from_height_and_txindex::<PercentageU64F32>(
-            "taproot_adoption",
-            version,
-            p2tr.height.read_only_boxed_clone(),
-            outputs.count.total_count.height.sum_cum.sum.0.read_only_boxed_clone(),
-            &p2tr,
-            &outputs.count.total_count,
-        );
-        let segwit_adoption = LazyBinaryFromHeightFull::from_height_and_txindex::<PercentageU64F32>(
-            "segwit_adoption",
-            version,
-            segwit.height.read_only_boxed_clone(),
-            outputs.count.total_count.height.sum_cum.sum.0.read_only_boxed_clone(),
-            &segwit,
-            &outputs.count.total_count,
-        );
+        let p2a = ComputedFromHeightCumSum::forced_import(db, "p2a_count", version, indexes)?;
+        let p2ms = ComputedFromHeightCumSum::forced_import(db, "p2ms_count", version, indexes)?;
+        let p2pk33 =
+            ComputedFromHeightCumSum::forced_import(db, "p2pk33_count", version, indexes)?;
+        let p2pk65 =
+            ComputedFromHeightCumSum::forced_import(db, "p2pk65_count", version, indexes)?;
+        let p2pkh = ComputedFromHeightCumSum::forced_import(db, "p2pkh_count", version, indexes)?;
+        let p2sh = ComputedFromHeightCumSum::forced_import(db, "p2sh_count", version, indexes)?;
+        let p2tr = ComputedFromHeightCumSum::forced_import(db, "p2tr_count", version, indexes)?;
+        let p2wpkh =
+            ComputedFromHeightCumSum::forced_import(db, "p2wpkh_count", version, indexes)?;
+        let p2wsh = ComputedFromHeightCumSum::forced_import(db, "p2wsh_count", version, indexes)?;
+        let segwit =
+            ComputedFromHeightCumSum::forced_import(db, "segwit_count", version, indexes)?;
 
         Ok(Self {
             p2a,
@@ -59,22 +39,37 @@ impl Vecs {
             p2tr,
             p2wpkh,
             p2wsh,
-            opreturn: ComputedFromHeightFull::forced_import(db, "opreturn_count", version, indexes)?,
-            emptyoutput: ComputedFromHeightFull::forced_import(
+            opreturn: ComputedFromHeightCumSum::forced_import(
+                db,
+                "opreturn_count",
+                version,
+                indexes,
+            )?,
+            emptyoutput: ComputedFromHeightCumSum::forced_import(
                 db,
                 "emptyoutput_count",
                 version,
                 indexes,
             )?,
-            unknownoutput: ComputedFromHeightFull::forced_import(
+            unknownoutput: ComputedFromHeightCumSum::forced_import(
                 db,
                 "unknownoutput_count",
                 version,
                 indexes,
             )?,
             segwit,
-            taproot_adoption,
-            segwit_adoption,
+            taproot_adoption: ComputedFromHeightLast::forced_import(
+                db,
+                "taproot_adoption",
+                version,
+                indexes,
+            )?,
+            segwit_adoption: ComputedFromHeightLast::forced_import(
+                db,
+                "segwit_adoption",
+                version,
+                indexes,
+            )?,
         })
     }
 }

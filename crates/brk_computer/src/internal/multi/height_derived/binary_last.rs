@@ -1,44 +1,53 @@
 //! Lazy binary transform for derived block with Last aggregation only.
+//!
+//! Newtype on `Indexes` with `LazyBinaryTransformLast` per field.
 
 use brk_traversable::Traversable;
 use brk_types::{
     Day1, Day3, DifficultyEpoch, HalvingEpoch, Hour1, Hour12, Hour4, Minute1, Minute10, Minute30,
     Minute5, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
+use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{BinaryTransform, ReadableCloneableVec};
 
-use crate::internal::{
-    ComputedFromHeightLast, ComputedFromHeightSumCum, ComputedVecValue,
-    LazyBinaryTransformLast, LazyFromHeightLast, NumericValue,
+use crate::{
+    indexes_from,
+    internal::{
+        ComputedFromHeightLast, ComputedFromHeightSumCum, ComputedVecValue, Indexes,
+        LazyBinaryTransformLast, LazyFromHeightLast, NumericValue,
+    },
 };
 
-#[derive(Clone, Traversable)]
-#[traversable(merge)]
-pub struct LazyBinaryHeightDerivedLast<T, S1T = T, S2T = T>
+pub type LazyBinaryHeightDerivedLastInner<T, S1T, S2T> = Indexes<
+    LazyBinaryTransformLast<Minute1, T, S1T, S2T>,
+    LazyBinaryTransformLast<Minute5, T, S1T, S2T>,
+    LazyBinaryTransformLast<Minute10, T, S1T, S2T>,
+    LazyBinaryTransformLast<Minute30, T, S1T, S2T>,
+    LazyBinaryTransformLast<Hour1, T, S1T, S2T>,
+    LazyBinaryTransformLast<Hour4, T, S1T, S2T>,
+    LazyBinaryTransformLast<Hour12, T, S1T, S2T>,
+    LazyBinaryTransformLast<Day1, T, S1T, S2T>,
+    LazyBinaryTransformLast<Day3, T, S1T, S2T>,
+    LazyBinaryTransformLast<Week1, T, S1T, S2T>,
+    LazyBinaryTransformLast<Month1, T, S1T, S2T>,
+    LazyBinaryTransformLast<Month3, T, S1T, S2T>,
+    LazyBinaryTransformLast<Month6, T, S1T, S2T>,
+    LazyBinaryTransformLast<Year1, T, S1T, S2T>,
+    LazyBinaryTransformLast<Year10, T, S1T, S2T>,
+    LazyBinaryTransformLast<HalvingEpoch, T, S1T, S2T>,
+    LazyBinaryTransformLast<DifficultyEpoch, T, S1T, S2T>,
+>;
+
+#[derive(Clone, Deref, DerefMut, Traversable)]
+#[traversable(transparent)]
+pub struct LazyBinaryHeightDerivedLast<T, S1T = T, S2T = T>(
+    pub LazyBinaryHeightDerivedLastInner<T, S1T, S2T>,
+)
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue,
-    S2T: ComputedVecValue,
-{
-    pub minute1: LazyBinaryTransformLast<Minute1, T, S1T, S2T>,
-    pub minute5: LazyBinaryTransformLast<Minute5, T, S1T, S2T>,
-    pub minute10: LazyBinaryTransformLast<Minute10, T, S1T, S2T>,
-    pub minute30: LazyBinaryTransformLast<Minute30, T, S1T, S2T>,
-    pub hour1: LazyBinaryTransformLast<Hour1, T, S1T, S2T>,
-    pub hour4: LazyBinaryTransformLast<Hour4, T, S1T, S2T>,
-    pub hour12: LazyBinaryTransformLast<Hour12, T, S1T, S2T>,
-    pub day1: LazyBinaryTransformLast<Day1, T, S1T, S2T>,
-    pub day3: LazyBinaryTransformLast<Day3, T, S1T, S2T>,
-    pub week1: LazyBinaryTransformLast<Week1, T, S1T, S2T>,
-    pub month1: LazyBinaryTransformLast<Month1, T, S1T, S2T>,
-    pub month3: LazyBinaryTransformLast<Month3, T, S1T, S2T>,
-    pub month6: LazyBinaryTransformLast<Month6, T, S1T, S2T>,
-    pub year1: LazyBinaryTransformLast<Year1, T, S1T, S2T>,
-    pub year10: LazyBinaryTransformLast<Year10, T, S1T, S2T>,
-    pub halvingepoch: LazyBinaryTransformLast<HalvingEpoch, T, S1T, S2T>,
-    pub difficultyepoch: LazyBinaryTransformLast<DifficultyEpoch, T, S1T, S2T>,
-}
+    S2T: ComputedVecValue;
 
 const VERSION: Version = Version::ZERO;
 
@@ -71,25 +80,7 @@ where
             };
         }
 
-        Self {
-            minute1: period!(minute1),
-            minute5: period!(minute5),
-            minute10: period!(minute10),
-            minute30: period!(minute30),
-            hour1: period!(hour1),
-            hour4: period!(hour4),
-            hour12: period!(hour12),
-            day1: period!(day1),
-            day3: period!(day3),
-            week1: period!(week1),
-            month1: period!(month1),
-            month3: period!(month3),
-            month6: period!(month6),
-            year1: period!(year1),
-            year10: period!(year10),
-            halvingepoch: period!(halvingepoch),
-            difficultyepoch: period!(difficultyepoch),
-        }
+        Self(indexes_from!(period))
     }
 
     pub(crate) fn from_computed_last<F: BinaryTransform<S1T, S2T, T>>(
@@ -115,25 +106,7 @@ where
             };
         }
 
-        Self {
-            minute1: period!(minute1),
-            minute5: period!(minute5),
-            minute10: period!(minute10),
-            minute30: period!(minute30),
-            hour1: period!(hour1),
-            hour4: period!(hour4),
-            hour12: period!(hour12),
-            day1: period!(day1),
-            day3: period!(day3),
-            week1: period!(week1),
-            month1: period!(month1),
-            month3: period!(month3),
-            month6: period!(month6),
-            year1: period!(year1),
-            year10: period!(year10),
-            halvingepoch: period!(halvingepoch),
-            difficultyepoch: period!(difficultyepoch),
-        }
+        Self(indexes_from!(period))
     }
 
     pub(crate) fn from_lazy_block_last_and_block_last<F, S1SourceT>(
@@ -160,25 +133,7 @@ where
             };
         }
 
-        Self {
-            minute1: period!(minute1),
-            minute5: period!(minute5),
-            minute10: period!(minute10),
-            minute30: period!(minute30),
-            hour1: period!(hour1),
-            hour4: period!(hour4),
-            hour12: period!(hour12),
-            day1: period!(day1),
-            day3: period!(day3),
-            week1: period!(week1),
-            month1: period!(month1),
-            month3: period!(month3),
-            month6: period!(month6),
-            year1: period!(year1),
-            year10: period!(year10),
-            halvingepoch: period!(halvingepoch),
-            difficultyepoch: period!(difficultyepoch),
-        }
+        Self(indexes_from!(period))
     }
 
     pub(crate) fn from_block_last_and_lazy_block_last<F, S2SourceT>(
@@ -205,24 +160,6 @@ where
             };
         }
 
-        Self {
-            minute1: period!(minute1),
-            minute5: period!(minute5),
-            minute10: period!(minute10),
-            minute30: period!(minute30),
-            hour1: period!(hour1),
-            hour4: period!(hour4),
-            hour12: period!(hour12),
-            day1: period!(day1),
-            day3: period!(day3),
-            week1: period!(week1),
-            month1: period!(month1),
-            month3: period!(month3),
-            month6: period!(month6),
-            year1: period!(year1),
-            year10: period!(year10),
-            halvingepoch: period!(halvingepoch),
-            difficultyepoch: period!(difficultyepoch),
-        }
+        Self(indexes_from!(period))
     }
 }

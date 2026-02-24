@@ -8,16 +8,23 @@ use tracing::info;
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, StorageMode, WritableVec, VecIndex};
 
 use super::Vecs;
-use crate::ComputeIndexes;
+use crate::{ComputeIndexes, indexes};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
+        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.compute_prices(indexer, starting_indexes, exit)?;
+        self.open
+            .compute_first(starting_indexes, &self.price, indexes, exit)?;
+        self.high
+            .compute_max(starting_indexes, &self.price, indexes, exit)?;
+        self.low
+            .compute_min(starting_indexes, &self.price, indexes, exit)?;
         Ok(())
     }
 

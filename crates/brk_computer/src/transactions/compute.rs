@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use vecdb::Exit;
 
-use crate::{blocks, indexes, inputs, outputs, ComputeIndexes};
+use crate::{blocks, indexes, inputs, outputs, prices, ComputeIndexes};
 
 use super::Vecs;
 
@@ -15,12 +15,13 @@ impl Vecs {
         blocks: &blocks::Vecs,
         inputs: &inputs::Vecs,
         outputs: &outputs::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         // Count computes first
         self.count
-            .compute(indexer, starting_indexes, exit)?;
+            .compute(indexer, &blocks.count, starting_indexes, exit)?;
 
         // Versions depends on count
         self.versions
@@ -30,12 +31,14 @@ impl Vecs {
         self.size
             .compute(indexer, indexes, starting_indexes, exit)?;
 
-        // Fees depends on size
+        // Fees depends on size, blocks (window starts), prices (USD conversion)
         self.fees.compute(
             indexer,
             indexes,
             inputs,
             &self.size,
+            blocks,
+            prices,
             starting_indexes,
             exit,
         )?;

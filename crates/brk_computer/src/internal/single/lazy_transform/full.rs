@@ -3,9 +3,9 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
 use schemars::JsonSchema;
-use vecdb::{ReadableBoxedVec, LazyVecFrom1, UnaryTransform, VecIndex};
+use vecdb::{LazyVecFrom1, ReadableBoxedVec, UnaryTransform, VecIndex};
 
-use crate::internal::{ComputedVecValue, Full};
+use crate::internal::ComputedVecValue;
 
 use super::LazyPercentiles;
 
@@ -31,27 +31,6 @@ where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
 {
-    pub(crate) fn from_stats_aggregate<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        source: &Full<I, S1T>,
-    ) -> Self {
-        Self::from_boxed::<F>(
-            name,
-            version,
-            source.boxed_average(),
-            source.boxed_min(),
-            source.boxed_max(),
-            source.distribution.percentiles.boxed_pct10(),
-            source.distribution.percentiles.boxed_pct25(),
-            source.distribution.percentiles.boxed_median(),
-            source.distribution.percentiles.boxed_pct75(),
-            source.distribution.percentiles.boxed_pct90(),
-            source.boxed_sum(),
-            source.boxed_cumulative(),
-        )
-    }
-
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn from_boxed<F: UnaryTransform<S1T, T>>(
         name: &str,
@@ -71,9 +50,15 @@ where
             average: LazyVecFrom1::transformed::<F>(&format!("{name}_average"), version, average),
             min: LazyVecFrom1::transformed::<F>(&format!("{name}_min"), version, min),
             max: LazyVecFrom1::transformed::<F>(&format!("{name}_max"), version, max),
-            percentiles: LazyPercentiles::from_boxed::<F>(name, version, pct10, pct25, median, pct75, pct90),
+            percentiles: LazyPercentiles::from_boxed::<F>(
+                name, version, pct10, pct25, median, pct75, pct90,
+            ),
             sum: LazyVecFrom1::transformed::<F>(&format!("{name}_sum"), version, sum),
-            cumulative: LazyVecFrom1::transformed::<F>(&format!("{name}_cumulative"), version, cumulative),
+            cumulative: LazyVecFrom1::transformed::<F>(
+                &format!("{name}_cumulative"),
+                version,
+                cumulative,
+            ),
         }
     }
 }

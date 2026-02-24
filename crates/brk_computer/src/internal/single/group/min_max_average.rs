@@ -1,7 +1,9 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use schemars::JsonSchema;
-use vecdb::{Database, ReadableBoxedVec, ReadableCloneableVec, Ro, Rw, StorageMode, VecIndex, Version};
+use vecdb::{
+    Database, ReadableBoxedVec, ReadableCloneableVec, Ro, Rw, StorageMode, VecIndex, Version,
+};
 
 use crate::internal::{AverageVec, ComputedVecValue};
 
@@ -26,14 +28,6 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> MinMaxAverage<I, T> {
     // Boxed accessors
     pub(crate) fn boxed_average(&self) -> ReadableBoxedVec<I, T> {
         self.average.0.read_only_boxed_clone()
-    }
-
-    pub(crate) fn boxed_min(&self) -> ReadableBoxedVec<I, T> {
-        self.minmax.min.0.read_only_boxed_clone()
-    }
-
-    pub(crate) fn boxed_max(&self) -> ReadableBoxedVec<I, T> {
-        self.minmax.max.0.read_only_boxed_clone()
     }
 
     pub fn read_only_clone(&self) -> MinMaxAverage<I, T, Ro> {

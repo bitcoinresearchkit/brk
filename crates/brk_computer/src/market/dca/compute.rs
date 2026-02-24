@@ -23,7 +23,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let h2d = &indexes.height.day1;
-        let close = &prices.usd.split.close.day1;
+        let close = &prices.usd.close.day1;
 
         let first_price_di = Day1::try_from(Date::new(2010, 7, 12))
             .unwrap()

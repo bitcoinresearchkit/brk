@@ -6,7 +6,7 @@ use vecdb::{Database, ReadableCloneableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightLast, ComputedFromHeightSum, ComputedHeightDerivedLast},
+    internal::{ComputedFromHeightLast, ComputedHeightDerivedLast},
 };
 
 impl Vecs {
@@ -26,7 +26,7 @@ impl Vecs {
                 indexes,
             ),
             as_hash: ComputedFromHeightLast::forced_import(db, "difficulty_as_hash", version, indexes)?,
-            adjustment: ComputedFromHeightSum::forced_import(db, "difficulty_adjustment", version, indexes)?,
+            adjustment: ComputedFromHeightLast::forced_import(db, "difficulty_adjustment", version, indexes)?,
             epoch: ComputedFromHeightLast::forced_import(db, "difficulty_epoch", version, indexes)?,
             blocks_before_next_adjustment: ComputedFromHeightLast::forced_import(
                 db,

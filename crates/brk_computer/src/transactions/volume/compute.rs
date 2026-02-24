@@ -46,6 +46,23 @@ impl Vecs {
             exit,
         )?;
 
+        // Rolling sums for sent and received
+        let window_starts = blocks.count.window_starts();
+        self.sent_sum_rolling.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.sent_sum.sats.height,
+            &self.sent_sum.usd.height,
+            exit,
+        )?;
+        self.received_sum_rolling.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.received_sum.sats.height,
+            &self.received_sum.usd.height,
+            exit,
+        )?;
+
         // tx_per_sec: per-block tx count / block interval
         self.tx_per_sec.height.compute_transform2(
             starting_indexes.height,
@@ -83,7 +100,7 @@ impl Vecs {
         // outputs_per_sec: per-block output count / block interval
         self.outputs_per_sec.height.compute_transform2(
             starting_indexes.height,
-            &outputs_count.total_count.height.sum_cum.sum.0,
+            &outputs_count.total_count.sum_cum.sum.0,
             &blocks.interval.interval.height,
             |(h, output_count, interval, ..)| {
                 let interval_f64 = f64::from(*interval);

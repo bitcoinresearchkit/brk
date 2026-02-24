@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{StoredBool, TxIndex, Version};
-use vecdb::{Database, ReadableCloneableVec, LazyVecFrom2};
+use vecdb::{Database, LazyVecFrom2, ReadableCloneableVec};
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedFromHeightFull};
+use crate::{indexes, internal::ComputedFromHeightCumFull};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -24,7 +24,9 @@ impl Vecs {
         );
 
         Ok(Self {
-            tx_count: ComputedFromHeightFull::forced_import(db, "tx_count", version, indexes)?,
+            tx_count: ComputedFromHeightCumFull::forced_import(
+                db, "tx_count", version, indexes,
+            )?,
             is_coinbase: txindex_to_is_coinbase,
         })
     }

@@ -1,18 +1,12 @@
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_types::{Date, Height, Version};
-use vecdb::{Database, EagerVec, ImportableVec, ReadableCloneableVec, LazyVecFrom1};
+use vecdb::{Database, EagerVec, ImportableVec, LazyVecFrom1, ReadableCloneableVec};
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedHeightDerivedFirst};
+use crate::internal::EagerIndexes;
 
 impl Vecs {
-    pub(crate) fn forced_import(
-        db: &Database,
-        version: Version,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
+    pub(crate) fn forced_import(db: &Database, version: Version) -> Result<Self> {
         let timestamp_monotonic =
             EagerVec::forced_import(db, "timestamp_monotonic", version)?;
 
@@ -24,12 +18,7 @@ impl Vecs {
                 |_height: Height, timestamp| Date::from(timestamp),
             ),
             timestamp_monotonic,
-            timestamp: ComputedHeightDerivedFirst::forced_import(
-                "timestamp",
-                indexer.vecs.blocks.timestamp.read_only_boxed_clone(),
-                version,
-                indexes,
-            ),
+            timestamp: EagerIndexes::forced_import(db, "timestamp", version)?,
         })
     }
 }

@@ -6,11 +6,13 @@ use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{BinaryTransform, ReadableBoxedVec, ReadableCloneableVec, LazyVecFrom2};
 
-use crate::internal::{
-    ComputedFromHeightLast, ComputedFromHeightSumCum, ComputedHeightDerivedLast, ComputedVecValue,
-    LazyBinaryComputedFromHeightLast, LazyBinaryComputedFromHeightSum,
-    LazyBinaryHeightDerivedLast, LazyBinaryTransformLast,
-    LazyFromHeightLast, NumericValue,
+use crate::{
+    indexes_from,
+    internal::{
+        ComputedFromHeightLast, ComputedFromHeightSumCum, ComputedHeightDerivedLast,
+        ComputedVecValue, LazyBinaryComputedFromHeightLast, LazyBinaryHeightDerivedLast,
+        LazyBinaryTransformLast, LazyFromHeightLast, NumericValue,
+    },
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -43,25 +45,7 @@ macro_rules! build_rest {
                 )
             };
         }
-        Box::new(LazyBinaryHeightDerivedLast {
-            minute1: period!(minute1),
-            minute5: period!(minute5),
-            minute10: period!(minute10),
-            minute30: period!(minute30),
-            hour1: period!(hour1),
-            hour4: period!(hour4),
-            hour12: period!(hour12),
-            day1: period!(day1),
-            day3: period!(day3),
-            week1: period!(week1),
-            month1: period!(month1),
-            month3: period!(month3),
-            month6: period!(month6),
-            year1: period!(year1),
-            year10: period!(year10),
-            halvingepoch: period!(halvingepoch),
-            difficultyepoch: period!(difficultyepoch),
-        })
+        Box::new(LazyBinaryHeightDerivedLast(indexes_from!(period)))
     }};
 }
 
@@ -269,12 +253,12 @@ where
         }
     }
 
-    /// Create from a LazyBinaryComputedFromHeightLast and a LazyBinaryComputedFromHeightSum.
-    pub(crate) fn from_lazy_binary_block_last_and_lazy_binary_sum<F, S1aT, S1bT, S2aT, S2bT>(
+    /// Create from two LazyBinaryComputedFromHeightLast sources.
+    pub(crate) fn from_both_lazy_binary_computed_block_last<F, S1aT, S1bT, S2aT, S2bT>(
         name: &str,
         version: Version,
         source1: &LazyBinaryComputedFromHeightLast<S1T, S1aT, S1bT>,
-        source2: &LazyBinaryComputedFromHeightSum<S2T, S2aT, S2bT>,
+        source2: &LazyBinaryComputedFromHeightLast<S2T, S2aT, S2bT>,
     ) -> Self
     where
         F: BinaryTransform<S1T, S2T, T>,

@@ -6,11 +6,9 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{
-    Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableCloneableVec, Rw, StorageMode,
-};
+use vecdb::{Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec, Rw, StorageMode};
 
-use crate::{ComputeIndexes, indexes};
+use crate::indexes;
 
 use crate::internal::{ComputedHeightDerivedFull, ComputedVecValue, NumericValue};
 
@@ -51,17 +49,9 @@ where
             indexes,
         )?;
 
-        Ok(Self { height, rest: Box::new(rest) })
-    }
-
-    pub(crate) fn compute(
-        &mut self,
-        starting_indexes: &ComputeIndexes,
-        exit: &Exit,
-        mut compute: impl FnMut(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
-    ) -> Result<()> {
-        compute(&mut self.height)?;
-        self.rest.compute_cumulative(starting_indexes, &self.height, exit)?;
-        Ok(())
+        Ok(Self {
+            height,
+            rest: Box::new(rest),
+        })
     }
 }
