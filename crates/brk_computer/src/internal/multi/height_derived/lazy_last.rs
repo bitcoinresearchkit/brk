@@ -4,8 +4,8 @@
 
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Hour1, Hour12, Hour4, Minute1, Minute10, Minute30,
-    Minute5, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Hour1, Hour4, Hour12, Minute1, Minute5, Minute10,
+    Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -19,29 +19,30 @@ use crate::{
     },
 };
 
-pub type LazyHeightDerivedLastInner<T, S1T> = Indexes<
-    LazyTransformLast<Minute1, T, S1T>,
-    LazyTransformLast<Minute5, T, S1T>,
-    LazyTransformLast<Minute10, T, S1T>,
-    LazyTransformLast<Minute30, T, S1T>,
-    LazyTransformLast<Hour1, T, S1T>,
-    LazyTransformLast<Hour4, T, S1T>,
-    LazyTransformLast<Hour12, T, S1T>,
-    LazyTransformLast<Day1, T, S1T>,
-    LazyTransformLast<Day3, T, S1T>,
-    LazyTransformLast<Week1, T, S1T>,
-    LazyTransformLast<Month1, T, S1T>,
-    LazyTransformLast<Month3, T, S1T>,
-    LazyTransformLast<Month6, T, S1T>,
-    LazyTransformLast<Year1, T, S1T>,
-    LazyTransformLast<Year10, T, S1T>,
-    LazyTransformLast<HalvingEpoch, T, S1T>,
-    LazyTransformLast<DifficultyEpoch, T, S1T>,
->;
-
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct LazyHeightDerivedLast<T, S1T = T>(pub LazyHeightDerivedLastInner<T, S1T>)
+pub struct LazyHeightDerivedLast<T, S1T = T>(
+    #[allow(clippy::type_complexity)]
+    pub  Indexes<
+        LazyTransformLast<Minute1, T, S1T>,
+        LazyTransformLast<Minute5, T, S1T>,
+        LazyTransformLast<Minute10, T, S1T>,
+        LazyTransformLast<Minute30, T, S1T>,
+        LazyTransformLast<Hour1, T, S1T>,
+        LazyTransformLast<Hour4, T, S1T>,
+        LazyTransformLast<Hour12, T, S1T>,
+        LazyTransformLast<Day1, T, S1T>,
+        LazyTransformLast<Day3, T, S1T>,
+        LazyTransformLast<Week1, T, S1T>,
+        LazyTransformLast<Month1, T, S1T>,
+        LazyTransformLast<Month3, T, S1T>,
+        LazyTransformLast<Month6, T, S1T>,
+        LazyTransformLast<Year1, T, S1T>,
+        LazyTransformLast<Year10, T, S1T>,
+        LazyTransformLast<HalvingEpoch, T, S1T>,
+        LazyTransformLast<DifficultyEpoch, T, S1T>,
+    >,
+)
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue;

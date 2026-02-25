@@ -12,7 +12,7 @@ use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{ComputeIndexes, blocks, distribution::DynCohortVecs, indexes, prices};
 
-use crate::distribution::metrics::SupplyMetrics;
+use crate::distribution::metrics::{CohortMetricsBase, SupplyMetrics};
 
 use super::{super::traits::CohortVecs, vecs::AddressCohortVecs};
 
@@ -33,7 +33,7 @@ impl AddressCohorts {
         indexes: &indexes::Vecs,
         prices: &prices::Vecs,
         states_path: &Path,
-        all_supply: Option<&SupplyMetrics>,
+        all_supply: &SupplyMetrics,
     ) -> Result<Self> {
         let v = version + VERSION;
 
@@ -140,7 +140,7 @@ impl AddressCohorts {
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
-        height_to_market_cap: Option<&HM>,
+        height_to_market_cap: &HM,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -198,12 +198,8 @@ impl AddressCohorts {
 
     /// Reset cost_basis_data for all separate cohorts (called during fresh start).
     pub(crate) fn reset_separate_cost_basis_data(&mut self) -> Result<()> {
-        self.par_iter_separate_mut().try_for_each(|v| {
-            if let Some(state) = v.state.as_mut() {
-                state.reset_cost_basis_data_if_needed()?;
-            }
-            Ok(())
-        })
+        self.par_iter_separate_mut()
+            .try_for_each(|v| v.reset_cost_basis_data_if_needed())
     }
 
     /// Validate computed versions for all separate cohorts.

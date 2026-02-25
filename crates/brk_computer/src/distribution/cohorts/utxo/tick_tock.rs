@@ -1,11 +1,12 @@
 use brk_cohort::AGE_BOUNDARIES;
 use brk_types::{ONE_HOUR_IN_SEC, Timestamp};
+use vecdb::Rw;
 
 use crate::distribution::state::BlockState;
 
 use super::groups::UTXOCohorts;
 
-impl UTXOCohorts {
+impl UTXOCohorts<Rw> {
     /// Handle age transitions when processing a new block.
     ///
     /// UTXOs age with each block. When they cross hour boundaries,
@@ -32,7 +33,7 @@ impl UTXOCohorts {
         // Cohort i covers hours [BOUNDARIES[i-1], BOUNDARIES[i])
         // Cohort 0 covers [0, 1) hours
         // Cohort 20 covers [15*365*24, infinity) hours
-        let mut age_cohorts: Vec<_> = self.0.age_range.iter_mut().map(|v| &mut v.state).collect();
+        let mut age_cohorts: Vec<_> = self.age_range.iter_mut().map(|v| &mut v.state).collect();
 
         // For each boundary (in hours), find blocks that just crossed it
         for (boundary_idx, &boundary_hours) in AGE_BOUNDARIES.iter().enumerate() {

@@ -8,7 +8,8 @@ use crate::internal::{ComputedFromHeightSumCum, ConstantVecs, RollingWindows, Wi
 pub struct Vecs<M: StorageMode = Rw> {
     pub block_count_target: ConstantVecs<StoredU64>,
     pub block_count: ComputedFromHeightSumCum<StoredU32, M>,
-    // Rolling window starts (height-indexed only, no date aggregation needed)
+    pub block_count_sum: RollingWindows<StoredU32, M>,
+
     pub height_24h_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub height_3d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub height_1w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
@@ -39,8 +40,6 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub height_6y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub height_8y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub height_10y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    // Rolling window block counts
-    pub block_count_sum: RollingWindows<StoredU32, M>,
 }
 
 impl Vecs {

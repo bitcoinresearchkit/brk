@@ -520,17 +520,13 @@ pub(crate) fn process_blocks(
 
 /// Reset per-block values for all separate cohorts.
 fn reset_block_values(utxo_cohorts: &mut UTXOCohorts, address_cohorts: &mut AddressCohorts) {
-    utxo_cohorts.iter_separate_mut().for_each(|v| {
-        if let Some(state) = v.state.as_mut() {
-            state.reset_single_iteration_values();
-        }
-    });
+    utxo_cohorts
+        .iter_separate_mut()
+        .for_each(|v| v.reset_single_iteration_values());
 
-    address_cohorts.iter_separate_mut().for_each(|v| {
-        if let Some(state) = v.state.as_mut() {
-            state.inner.reset_single_iteration_values();
-        }
-    });
+    address_cohorts
+        .iter_separate_mut()
+        .for_each(|v| v.reset_single_iteration_values());
 }
 
 /// Push cohort states to height-indexed vectors.

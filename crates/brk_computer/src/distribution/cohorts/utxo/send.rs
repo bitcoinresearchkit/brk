@@ -1,6 +1,6 @@
 use brk_types::{Age, Height};
 use rustc_hash::FxHashMap;
-use vecdb::VecIndex;
+use vecdb::{Rw, VecIndex};
 
 use crate::distribution::{
     compute::PriceRangeMax,
@@ -9,7 +9,7 @@ use crate::distribution::{
 
 use super::groups::UTXOCohorts;
 
-impl UTXOCohorts {
+impl UTXOCohorts<Rw> {
     /// Process spent inputs for this block.
     ///
     /// Each input references a UTXO created at some previous height.
@@ -47,7 +47,7 @@ impl UTXOCohorts {
             let peak_price = price_range_max.max_between(receive_height, send_height);
 
             // Update age range cohort (direct index lookup)
-            self.0.age_range.get_mut(age).state.as_mut().unwrap().send_utxo(
+            self.age_range.get_mut(age).state.as_mut().unwrap().send_utxo(
                 &sent.spendable_supply,
                 current_price,
                 prev_price,
@@ -56,8 +56,7 @@ impl UTXOCohorts {
             );
 
             // Update epoch cohort (direct lookup by height)
-            self.0
-                .epoch
+            self.epoch
                 .mut_vec_from_height(receive_height)
                 .state
                 .as_mut().unwrap()
@@ -70,8 +69,7 @@ impl UTXOCohorts {
                 );
 
             // Update year cohort (direct lookup by timestamp)
-            self.0
-                .year
+            self.year
                 .mut_vec_from_timestamp(block_state.timestamp)
                 .state
                 .as_mut().unwrap()
@@ -88,7 +86,7 @@ impl UTXOCohorts {
                 .spendable
                 .iter_typed()
                 .for_each(|(output_type, supply_state)| {
-                    self.0.type_.get_mut(output_type).state.as_mut().unwrap().send_utxo(
+                    self.type_.get_mut(output_type).state.as_mut().unwrap().send_utxo(
                         supply_state,
                         current_price,
                         prev_price,
@@ -101,7 +99,7 @@ impl UTXOCohorts {
             sent.by_size_group
                 .iter_typed()
                 .for_each(|(group, supply_state)| {
-                    self.0.amount_range.get_mut(group).state.as_mut().unwrap().send_utxo(
+                    self.amount_range.get_mut(group).state.as_mut().unwrap().send_utxo(
                         supply_state,
                         current_price,
                         prev_price,

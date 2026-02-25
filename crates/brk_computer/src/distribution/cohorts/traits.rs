@@ -38,9 +38,27 @@ pub trait DynCohortVecs: Send + Sync {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()>;
+
+    /// Compute net_sentiment.height for separate cohorts (greed - pain).
+    fn compute_net_sentiment_height(
+        &mut self,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()>;
+
+    /// Write state checkpoint to disk.
+    fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()>;
+
+    /// Reset cost basis data (called during fresh start).
+    fn reset_cost_basis_data_if_needed(&mut self) -> Result<()>;
+
+    /// Reset per-block iteration values.
+    fn reset_single_iteration_values(&mut self);
 }
 
 /// Static dispatch trait for cohort vectors with additional methods.
+///
+/// Used by address cohorts where all cohorts share the same concrete type.
 pub trait CohortVecs: DynCohortVecs {
     /// Compute aggregate cohort from component cohorts.
     fn compute_from_stateful(
@@ -56,7 +74,7 @@ pub trait CohortVecs: DynCohortVecs {
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
-        height_to_market_cap: Option<&impl ReadableVec<Height, Dollars>>,
+        height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()>;
 }

@@ -33,10 +33,6 @@ impl AddressCohortState {
         self.inner.realized = RealizedState::default();
     }
 
-    pub(crate) fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
-        self.inner.reset_cost_basis_data_if_needed()
-    }
-
     pub(crate) fn send(
         &mut self,
         addressdata: &mut FundedAddressData,

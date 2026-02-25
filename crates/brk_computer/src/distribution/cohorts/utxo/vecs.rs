@@ -1,22 +1,23 @@
-use std::path::Path;
-
-use brk_cohort::{CohortContext, Filter, Filtered, StateLevel};
+use brk_cohort::{Filter, Filtered};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, Version};
-use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
+use brk_types::{Cents, Height, Version};
+use vecdb::{Exit, ReadableVec};
 
-use crate::{ComputeIndexes, blocks, distribution::state::UTXOCohortState, indexes, prices};
+use crate::{ComputeIndexes, blocks, distribution::state::UTXOCohortState, prices};
 
-use crate::distribution::metrics::{CohortMetrics, ImportConfig, RealizedMetrics, SupplyMetrics};
+use crate::distribution::metrics::CohortMetricsBase;
 
-use super::super::traits::{CohortVecs, DynCohortVecs};
+use super::super::traits::DynCohortVecs;
 
 /// UTXO cohort with metrics and optional runtime state.
+///
+/// Generic over the metrics type to support different cohort configurations
+/// (e.g. AllCohortMetrics, ExtendedCohortMetrics, BasicCohortMetrics, etc.)
 #[derive(Traversable)]
-pub struct UTXOCohortVecs<M: StorageMode = Rw> {
+pub struct UTXOCohortVecs<Metrics> {
     /// Starting height when state was imported
+    #[traversable(skip)]
     state_starting_height: Option<Height>,
 
     /// Runtime state for block-by-block processing (separate cohorts only)
@@ -25,85 +26,28 @@ pub struct UTXOCohortVecs<M: StorageMode = Rw> {
 
     /// Metric vectors
     #[traversable(flatten)]
-    pub metrics: CohortMetrics<M>,
+    pub metrics: Metrics,
 }
 
-impl UTXOCohortVecs {
-    /// Import UTXO cohort from database.
-    ///
-    /// `all_supply` is the supply metrics from the "all" cohort, used as global
-    /// sources for `*_rel_to_market_cap` ratios. Pass `None` for the "all" cohort itself.
-    ///
-    /// `up_to_1h_realized` is used for cohorts where `compute_adjusted()` is true,
-    /// to create lazy adjusted vecs: adjusted = cohort - up_to_1h.
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn forced_import(
-        db: &Database,
-        filter: Filter,
-        name: &str,
-        version: Version,
-        indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
-        states_path: &Path,
-        state_level: StateLevel,
-        all_supply: Option<&SupplyMetrics>,
-        up_to_1h_realized: Option<&RealizedMetrics>,
-    ) -> Result<Self> {
-        let full_name = CohortContext::Utxo.full_name(&filter, name);
-
-        let cfg = ImportConfig {
-            db,
-            filter,
-            full_name: &full_name,
-            context: CohortContext::Utxo,
-            version,
-            indexes,
-            prices,
-            up_to_1h_realized,
-        };
-
-        Ok(Self {
+impl<Metrics> UTXOCohortVecs<Metrics> {
+    /// Create a new UTXOCohortVecs with state and metrics.
+    pub(crate) fn new(state: Option<Box<UTXOCohortState>>, metrics: Metrics) -> Self {
+        Self {
             state_starting_height: None,
-
-            state: if state_level.is_full() {
-                Some(Box::new(UTXOCohortState::new(states_path, &full_name)))
-            } else {
-                None
-            },
-
-            metrics: CohortMetrics::forced_import(&cfg, all_supply)?,
-        })
-    }
-
-    /// Reset state starting height to zero and reset state values.
-    pub(crate) fn reset_state_starting_height(&mut self) {
-        self.state_starting_height = Some(Height::ZERO);
-        if let Some(state) = self.state.as_mut() {
-            state.reset();
+            state,
+            metrics,
         }
     }
 
-    /// Returns a parallel iterator over all vecs for parallel writing.
-    pub(crate) fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        self.metrics.par_iter_mut()
-    }
-
-    /// Commit state to disk (separate from vec writes for parallelization).
-    pub(crate) fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
-        if let Some(state) = self.state.as_mut() {
-            state.write(height, cleanup)?;
-        }
-        Ok(())
-    }
 }
 
-impl Filtered for UTXOCohortVecs {
+impl<Metrics: CohortMetricsBase + Traversable> Filtered for UTXOCohortVecs<Metrics> {
     fn filter(&self) -> &Filter {
-        &self.metrics.filter
+        self.metrics.filter()
     }
 }
 
-impl DynCohortVecs for UTXOCohortVecs {
+impl<Metrics: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<Metrics> {
     fn min_stateful_height_len(&self) -> usize {
         self.metrics.min_stateful_height_len()
     }
@@ -116,18 +60,13 @@ impl DynCohortVecs for UTXOCohortVecs {
     }
 
     fn import_state(&mut self, starting_height: Height) -> Result<Height> {
-        // Import state from runtime state if present
         if let Some(state) = self.state.as_mut() {
-            // State files are saved AT height H, so to resume at H+1 we need to import at H
-            // Decrement first, then increment result to match expected starting_height
             if let Some(mut prev_height) = starting_height.decremented() {
-                // Import cost_basis_data state file (may adjust prev_height to actual file found)
                 prev_height = state.import_at_or_before(prev_height)?;
 
-                // Restore supply state from height-indexed vectors
                 state.supply.value = self
                     .metrics
-                    .supply
+                    .supply()
                     .total
                     .sats
                     .height
@@ -135,20 +74,18 @@ impl DynCohortVecs for UTXOCohortVecs {
                     .unwrap();
                 state.supply.utxo_count = *self
                     .metrics
-                    .outputs
+                    .outputs()
                     .utxo_count
                     .height
                     .collect_one(prev_height)
                     .unwrap();
 
-                // Restore realized cap from persisted exact values
                 state.restore_realized_cap();
 
                 let result = prev_height.incremented();
                 self.state_starting_height = Some(result);
                 Ok(result)
             } else {
-                // starting_height is 0, nothing to import
                 self.state_starting_height = Some(Height::ZERO);
                 Ok(Height::ZERO)
             }
@@ -167,7 +104,6 @@ impl DynCohortVecs for UTXOCohortVecs {
             return Ok(());
         }
 
-        // Push from state to metrics
         if let Some(state) = self.state.as_ref() {
             self.metrics.truncate_push(height, state)?;
         }
@@ -181,11 +117,8 @@ impl DynCohortVecs for UTXOCohortVecs {
         height_price: Cents,
     ) -> Result<()> {
         if let Some(state) = self.state.as_mut() {
-            self.metrics.compute_then_truncate_push_unrealized_states(
-                height,
-                height_price,
-                state,
-            )?;
+            self.metrics
+                .compute_then_truncate_push_unrealized_states(height, height_price, state)?;
         }
         Ok(())
     }
@@ -200,36 +133,33 @@ impl DynCohortVecs for UTXOCohortVecs {
         self.metrics
             .compute_rest_part1(blocks, prices, starting_indexes, exit)
     }
-}
 
-impl CohortVecs for UTXOCohortVecs {
-    fn compute_from_stateful(
+    fn compute_net_sentiment_height(
         &mut self,
         starting_indexes: &ComputeIndexes,
-        others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.metrics.compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| &v.metrics).collect::<Vec<_>>(),
-            exit,
-        )
+        self.metrics
+            .compute_net_sentiment_height(starting_indexes, exit)
     }
 
-    fn compute_rest_part2(
-        &mut self,
-        blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
-        height_to_market_cap: Option<&impl ReadableVec<Height, Dollars>>,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.metrics.compute_rest_part2(
-            blocks,
-            prices,
-            starting_indexes,
-            height_to_market_cap,
-            exit,
-        )
+    fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
+        if let Some(state) = self.state.as_mut() {
+            state.write(height, cleanup)?;
+        }
+        Ok(())
+    }
+
+    fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
+        if let Some(state) = self.state.as_mut() {
+            state.reset_cost_basis_data_if_needed()?;
+        }
+        Ok(())
+    }
+
+    fn reset_single_iteration_values(&mut self) {
+        if let Some(state) = self.state.as_mut() {
+            state.reset_single_iteration_values();
+        }
     }
 }

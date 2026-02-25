@@ -90,7 +90,7 @@ impl Vecs {
             indexes,
             prices,
             &states_path,
-            Some(&utxo_cohorts.all.metrics.supply),
+            &utxo_cohorts.all.metrics.supply,
         )?;
 
         // Create address data BytesVecs first so we can also use them for identity mappings
@@ -374,7 +374,7 @@ impl Vecs {
             blocks,
             prices,
             starting_indexes,
-            Some(&height_to_market_cap),
+            &height_to_market_cap,
             exit,
         )?;
 

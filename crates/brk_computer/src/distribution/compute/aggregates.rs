@@ -54,7 +54,7 @@ pub(crate) fn compute_rest_part2<HM>(
     blocks: &blocks::Vecs,
     prices: &prices::Vecs,
     starting_indexes: &ComputeIndexes,
-    height_to_market_cap: Option<&HM>,
+    height_to_market_cap: &HM,
     exit: &Exit,
 ) -> Result<()>
 where

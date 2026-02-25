@@ -1,10 +1,11 @@
 use brk_types::{Cents, Height, Timestamp};
+use vecdb::Rw;
 
 use crate::distribution::state::Transacted;
 
 use super::groups::UTXOCohorts;
 
-impl UTXOCohorts {
+impl UTXOCohorts<Rw> {
     /// Process received outputs for this block.
     ///
     /// New UTXOs are added to:
@@ -23,15 +24,9 @@ impl UTXOCohorts {
         let supply_state = received.spendable_supply;
 
         // New UTXOs go into up_to_1h, current epoch, and current year
-        [
-            &mut self.0.age_range.up_to_1h,
-            self.0.epoch.mut_vec_from_height(height),
-            self.0.year.mut_vec_from_timestamp(timestamp),
-        ]
-        .into_iter()
-        .for_each(|v| {
-            v.state.as_mut().unwrap().receive_utxo(&supply_state, price);
-        });
+        self.age_range.up_to_1h.state.as_mut().unwrap().receive_utxo(&supply_state, price);
+        self.epoch.mut_vec_from_height(height).state.as_mut().unwrap().receive_utxo(&supply_state, price);
+        self.year.mut_vec_from_timestamp(timestamp).state.as_mut().unwrap().receive_utxo(&supply_state, price);
 
         // Update output type cohorts
         self.type_

@@ -7,7 +7,6 @@ use crate::internal::{ComputedFromHeightLast, ComputedHeightDerivedLast};
 /// Difficulty metrics: raw difficulty, derived stats, adjustment, and countdown
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    /// Raw difficulty with day1/period stats - merges with indexer's raw
     pub raw: ComputedHeightDerivedLast<StoredF64>,
     pub as_hash: ComputedFromHeightLast<StoredF32, M>,
     pub adjustment: ComputedFromHeightLast<StoredF32, M>,

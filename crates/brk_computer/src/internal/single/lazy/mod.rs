@@ -200,6 +200,5 @@ pub use max::*;
 pub use min::*;
 pub use percentile::*;
 pub use percentiles::*;
-pub use sparse_last::*;
 pub use sum::*;
 pub use sum_cum::*;

@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_traversable::{Traversable, TreeNode};
 use brk_types::{Dollars, Height, StoredF32, Version};
 use vecdb::{
-    AnyExportableVec, AnyVec, Database, ReadOnlyClone, Ro, Rw, StorageMode, WritableVec,
+    AnyExportableVec, Database, ReadOnlyClone, Ro, Rw, StorageMode, WritableVec,
 };
 
 use crate::indexes;
@@ -88,16 +88,6 @@ impl PercentilesVecs {
         });
 
         Ok(Self { vecs })
-    }
-
-    /// Get minimum length across height-indexed vectors written in block loop.
-    pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.vecs
-            .iter()
-            .filter_map(|v| v.as_ref())
-            .map(|v| v.height.len())
-            .min()
-            .unwrap_or(usize::MAX)
     }
 
     /// Push percentile prices at this height.

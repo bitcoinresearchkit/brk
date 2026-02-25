@@ -15,7 +15,7 @@ use crate::{
     prices,
 };
 
-use crate::distribution::metrics::{CohortMetrics, ImportConfig, SupplyMetrics};
+use crate::distribution::metrics::{BasicCohortMetrics, CohortMetricsBase, ImportConfig, SupplyMetrics};
 
 use super::super::traits::{CohortVecs, DynCohortVecs};
 
@@ -33,7 +33,7 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
 
     /// Metric vectors
     #[traversable(flatten)]
-    pub metrics: CohortMetrics<M>,
+    pub metrics: BasicCohortMetrics<M>,
 
     pub addr_count: ComputedFromHeightLast<StoredU64, M>,
     pub addr_count_30d_change: ComputedFromHeightLast<StoredF64, M>,
@@ -43,7 +43,7 @@ impl AddressCohortVecs {
     /// Import address cohort from database.
     ///
     /// `all_supply` is the supply metrics from the "all" cohort, used as global
-    /// sources for `*_rel_to_market_cap` ratios. Pass `None` if not available.
+    /// sources for `*_rel_to_market_cap` ratios.
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn forced_import(
         db: &Database,
@@ -53,7 +53,7 @@ impl AddressCohortVecs {
         indexes: &indexes::Vecs,
         prices: &prices::Vecs,
         states_path: Option<&Path>,
-        all_supply: Option<&SupplyMetrics>,
+        all_supply: &SupplyMetrics,
     ) -> Result<Self> {
         let full_name = CohortContext::Address.full_name(&filter, name);
 
@@ -65,7 +65,6 @@ impl AddressCohortVecs {
             version,
             indexes,
             prices,
-            up_to_1h_realized: None,
         };
 
         Ok(Self {
@@ -74,7 +73,7 @@ impl AddressCohortVecs {
             state: states_path
                 .map(|path| Box::new(AddressCohortState::new(path, &full_name))),
 
-            metrics: CohortMetrics::forced_import(&cfg, all_supply)?,
+            metrics: BasicCohortMetrics::forced_import(&cfg, all_supply)?,
 
             addr_count: ComputedFromHeightLast::forced_import(
                 db,
@@ -227,6 +226,35 @@ impl DynCohortVecs for AddressCohortVecs {
             .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
         Ok(())
     }
+
+    fn compute_net_sentiment_height(
+        &mut self,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.metrics
+            .compute_net_sentiment_height(starting_indexes, exit)
+    }
+
+    fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
+        if let Some(state) = self.state.as_mut() {
+            state.inner.write(height, cleanup)?;
+        }
+        Ok(())
+    }
+
+    fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
+        if let Some(state) = self.state.as_mut() {
+            state.inner.reset_cost_basis_data_if_needed()?;
+        }
+        Ok(())
+    }
+
+    fn reset_single_iteration_values(&mut self) {
+        if let Some(state) = self.state.as_mut() {
+            state.inner.reset_single_iteration_values();
+        }
+    }
 }
 
 impl CohortVecs for AddressCohortVecs {
@@ -258,7 +286,7 @@ impl CohortVecs for AddressCohortVecs {
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
-        height_to_market_cap: Option<&impl ReadableVec<Height, Dollars>>,
+        height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics.compute_rest_part2(
