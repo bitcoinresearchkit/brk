@@ -8,12 +8,12 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, ReadableVec,
-    Rw, Stamp, StorageMode, VecIndex,
+    AnyStoredVec, BytesVec, Database, ImportableVec, PcoVec, ReadableVec, Rw, Stamp, StorageMode,
+    VecIndex, WritableVec,
 };
 
-use crate::readers::AddressReaders;
 use crate::parallel_import;
+use crate::readers::AddressReaders;
 
 #[derive(Traversable)]
 pub struct AddressesVecs<M: StorageMode = Rw> {
@@ -212,30 +212,14 @@ impl AddressesVecs {
 
     pub fn push_bytes_if_needed(&mut self, index: TypeIndex, bytes: AddressBytes) -> Result<()> {
         match bytes {
-            AddressBytes::P2PK65(bytes) => self
-                .p2pk65bytes
-                .checked_push(index.into(), bytes)?,
-            AddressBytes::P2PK33(bytes) => self
-                .p2pk33bytes
-                .checked_push(index.into(), bytes)?,
-            AddressBytes::P2PKH(bytes) => self
-                .p2pkhbytes
-                .checked_push(index.into(), bytes)?,
-            AddressBytes::P2SH(bytes) => self
-                .p2shbytes
-                .checked_push(index.into(), bytes)?,
-            AddressBytes::P2WPKH(bytes) => self
-                .p2wpkhbytes
-                .checked_push(index.into(), bytes)?,
-            AddressBytes::P2WSH(bytes) => self
-                .p2wshbytes
-                .checked_push(index.into(), bytes)?,
-            AddressBytes::P2TR(bytes) => self
-                .p2trbytes
-                .checked_push(index.into(), bytes)?,
-            AddressBytes::P2A(bytes) => self
-                .p2abytes
-                .checked_push(index.into(), bytes)?,
+            AddressBytes::P2PK65(bytes) => self.p2pk65bytes.checked_push(index.into(), bytes)?,
+            AddressBytes::P2PK33(bytes) => self.p2pk33bytes.checked_push(index.into(), bytes)?,
+            AddressBytes::P2PKH(bytes) => self.p2pkhbytes.checked_push(index.into(), bytes)?,
+            AddressBytes::P2SH(bytes) => self.p2shbytes.checked_push(index.into(), bytes)?,
+            AddressBytes::P2WPKH(bytes) => self.p2wpkhbytes.checked_push(index.into(), bytes)?,
+            AddressBytes::P2WSH(bytes) => self.p2wshbytes.checked_push(index.into(), bytes)?,
+            AddressBytes::P2TR(bytes) => self.p2trbytes.checked_push(index.into(), bytes)?,
+            AddressBytes::P2A(bytes) => self.p2abytes.checked_push(index.into(), bytes)?,
         };
         Ok(())
     }
@@ -271,38 +255,14 @@ impl AddressesVecs {
         }
 
         match address_type {
-            OutputType::P2PK65 => make_iter!(
-                self.first_p2pk65addressindex,
-                self.p2pk65bytes
-            ),
-            OutputType::P2PK33 => make_iter!(
-                self.first_p2pk33addressindex,
-                self.p2pk33bytes
-            ),
-            OutputType::P2PKH => make_iter!(
-                self.first_p2pkhaddressindex,
-                self.p2pkhbytes
-            ),
-            OutputType::P2SH => make_iter!(
-                self.first_p2shaddressindex,
-                self.p2shbytes
-            ),
-            OutputType::P2WPKH => make_iter!(
-                self.first_p2wpkhaddressindex,
-                self.p2wpkhbytes
-            ),
-            OutputType::P2WSH => make_iter!(
-                self.first_p2wshaddressindex,
-                self.p2wshbytes
-            ),
-            OutputType::P2TR => make_iter!(
-                self.first_p2traddressindex,
-                self.p2trbytes
-            ),
-            OutputType::P2A => make_iter!(
-                self.first_p2aaddressindex,
-                self.p2abytes
-            ),
+            OutputType::P2PK65 => make_iter!(self.first_p2pk65addressindex, self.p2pk65bytes),
+            OutputType::P2PK33 => make_iter!(self.first_p2pk33addressindex, self.p2pk33bytes),
+            OutputType::P2PKH => make_iter!(self.first_p2pkhaddressindex, self.p2pkhbytes),
+            OutputType::P2SH => make_iter!(self.first_p2shaddressindex, self.p2shbytes),
+            OutputType::P2WPKH => make_iter!(self.first_p2wpkhaddressindex, self.p2wpkhbytes),
+            OutputType::P2WSH => make_iter!(self.first_p2wshaddressindex, self.p2wshbytes),
+            OutputType::P2TR => make_iter!(self.first_p2traddressindex, self.p2trbytes),
+            OutputType::P2A => make_iter!(self.first_p2aaddressindex, self.p2abytes),
             _ => Ok(Box::new(std::iter::empty())),
         }
     }

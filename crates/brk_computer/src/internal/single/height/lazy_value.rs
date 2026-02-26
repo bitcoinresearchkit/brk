@@ -4,7 +4,7 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
 use vecdb::{ReadableCloneableVec, LazyVecFrom1, UnaryTransform};
 
-use crate::internal::{SatsToBitcoin, ValueFromHeightLast};
+use crate::internal::ValueFromHeightLast;
 
 const VERSION: Version = Version::ZERO;
 
@@ -19,13 +19,14 @@ pub struct LazyValueHeight {
 }
 
 impl LazyValueHeight {
-    pub(crate) fn from_block_source<SatsTransform, DollarsTransform>(
+    pub(crate) fn from_block_source<SatsTransform, BitcoinTransform, DollarsTransform>(
         name: &str,
         source: &ValueFromHeightLast,
         version: Version,
     ) -> Self
     where
         SatsTransform: UnaryTransform<Sats, Sats>,
+        BitcoinTransform: UnaryTransform<Sats, Bitcoin>,
         DollarsTransform: UnaryTransform<Dollars, Dollars>,
     {
         let v = version + VERSION;
@@ -33,7 +34,7 @@ impl LazyValueHeight {
         let sats =
             LazyVecFrom1::transformed::<SatsTransform>(name, v, source.sats.height.read_only_boxed_clone());
 
-        let btc = LazyVecFrom1::transformed::<SatsToBitcoin>(
+        let btc = LazyVecFrom1::transformed::<BitcoinTransform>(
             &format!("{name}_btc"),
             v,
             source.sats.height.read_only_boxed_clone(),

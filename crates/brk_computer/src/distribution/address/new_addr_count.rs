@@ -1,25 +1,23 @@
 //! New address count: delta of total_addr_count (global + per-type)
 
+//! New address count: delta of total_addr_count (global + per-type)
+
 use brk_cohort::{ByAddressType, zip_by_addresstype};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{StoredU64, Version};
+use brk_types::{Height, StoredU64, Version};
 use vecdb::{Database, Exit, Ident, Rw, StorageMode};
 
-use crate::{ComputeIndexes, indexes, internal::LazyComputedFromHeightFull};
+use crate::{indexes, internal::{LazyComputedFromHeightFull, WindowStarts}};
 
 use super::TotalAddrCountVecs;
-
-/// New addresses by type - identity transform with stored day1 stats
-/// The delta is computed at the compute step, not lazily
-pub type NewAddrCountByType<M = Rw> = ByAddressType<LazyComputedFromHeightFull<StoredU64, StoredU64, M>>;
 
 /// New address count per block (global + per-type)
 #[derive(Traversable)]
 pub struct NewAddrCountVecs<M: StorageMode = Rw> {
     pub all: LazyComputedFromHeightFull<StoredU64, StoredU64, M>,
     #[traversable(flatten)]
-    pub by_addresstype: NewAddrCountByType<M>,
+    pub by_addresstype: ByAddressType<LazyComputedFromHeightFull<StoredU64, StoredU64, M>>,
 }
 
 impl NewAddrCountVecs {
@@ -37,7 +35,7 @@ impl NewAddrCountVecs {
             indexes,
         )?;
 
-        let by_addresstype: NewAddrCountByType =
+        let by_addresstype: ByAddressType<LazyComputedFromHeightFull<StoredU64, StoredU64>> =
             zip_by_addresstype(&total_addr_count.by_addresstype, |name, total| {
                 LazyComputedFromHeightFull::forced_import::<Ident>(
                     db,
@@ -54,14 +52,15 @@ impl NewAddrCountVecs {
         })
     }
 
-    pub(crate) fn compute_cumulative(
+    pub(crate) fn compute(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        max_from: Height,
+        windows: &WindowStarts<'_>,
         exit: &Exit,
     ) -> Result<()> {
-        self.all.compute_cumulative(starting_indexes, exit)?;
+        self.all.compute(max_from, windows, exit)?;
         for vecs in self.by_addresstype.values_mut() {
-            vecs.compute_cumulative(starting_indexes, exit)?;
+            vecs.compute(max_from, windows, exit)?;
         }
         Ok(())
     }

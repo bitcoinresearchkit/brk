@@ -16,7 +16,11 @@ pub struct MinVec<I: VecIndex, T: ComputedVecValue + JsonSchema, M: StorageMode 
 
 impl<I: VecIndex, T: ComputedVecValue + JsonSchema> MinVec<I, T> {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
-        Ok(Self(EagerVec::forced_import(db, &format!("{name}_min"), version)?))
+        Ok(Self(EagerVec::forced_import(
+            db,
+            &format!("{name}_min"),
+            version,
+        )?))
     }
 
     pub fn read_only_clone(&self) -> MinVec<I, T, Ro> {

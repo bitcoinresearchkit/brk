@@ -7,14 +7,14 @@ use crate::internal::{ComputedVecValue, CumulativeVec, SumVec};
 
 /// Sum + Cumulative (12% of usage)
 #[derive(Traversable)]
-pub struct SumCum<I: VecIndex, T: ComputedVecValue + JsonSchema, M: StorageMode = Rw> {
+pub struct SumCumulative<I: VecIndex, T: ComputedVecValue + JsonSchema, M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub sum: SumVec<I, T, M>,
     #[traversable(flatten)]
     pub cumulative: CumulativeVec<I, T, M>,
 }
 
-impl<I: VecIndex, T: ComputedVecValue + JsonSchema> SumCum<I, T> {
+impl<I: VecIndex, T: ComputedVecValue + JsonSchema> SumCumulative<I, T> {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self {
             sum: SumVec::forced_import(db, name, version)?,
@@ -22,8 +22,8 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> SumCum<I, T> {
         })
     }
 
-    pub fn read_only_clone(&self) -> SumCum<I, T, Ro> {
-        SumCum {
+    pub fn read_only_clone(&self) -> SumCumulative<I, T, Ro> {
+        SumCumulative {
             sum: self.sum.read_only_clone(),
             cumulative: self.cumulative.read_only_clone(),
         }

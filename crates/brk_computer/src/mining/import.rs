@@ -5,7 +5,7 @@ use brk_traversable::Traversable;
 use brk_types::Version;
 use vecdb::{Database, PAGE_SIZE};
 
-use crate::{indexes, prices};
+use crate::indexes;
 
 use super::{HashrateVecs, RewardsVecs, Vecs};
 
@@ -14,14 +14,13 @@ impl Vecs {
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join(super::DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
         let version = parent_version;
 
-        let rewards = RewardsVecs::forced_import(&db, version, indexes, prices)?;
+        let rewards = RewardsVecs::forced_import(&db, version, indexes)?;
         let hashrate = HashrateVecs::forced_import(&db, version, indexes)?;
 
         let this = Self {

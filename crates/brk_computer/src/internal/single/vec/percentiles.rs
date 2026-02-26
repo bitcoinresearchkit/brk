@@ -19,8 +19,16 @@ macro_rules! define_percentile_vec {
         );
 
         impl<I: VecIndex, T: ComputedVecValue + JsonSchema> $name<I, T> {
-            pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
-                Ok(Self(EagerVec::forced_import(db, &format!("{name}_{}", $suffix), version)?))
+            pub(crate) fn forced_import(
+                db: &Database,
+                name: &str,
+                version: Version,
+            ) -> Result<Self> {
+                Ok(Self(EagerVec::forced_import(
+                    db,
+                    &format!("{name}_{}", $suffix),
+                    version,
+                )?))
             }
 
             pub fn read_only_clone(&self) -> $name<I, T, Ro> {
@@ -30,8 +38,28 @@ macro_rules! define_percentile_vec {
     };
 }
 
-define_percentile_vec!(Pct10Vec, "pct10", "10th percentile in an aggregation period");
-define_percentile_vec!(Pct25Vec, "pct25", "25th percentile in an aggregation period");
-define_percentile_vec!(MedianVec, "median", "Median (50th percentile) in an aggregation period");
-define_percentile_vec!(Pct75Vec, "pct75", "75th percentile in an aggregation period");
-define_percentile_vec!(Pct90Vec, "pct90", "90th percentile in an aggregation period");
+define_percentile_vec!(
+    Pct10Vec,
+    "pct10",
+    "10th percentile in an aggregation period"
+);
+define_percentile_vec!(
+    Pct25Vec,
+    "pct25",
+    "25th percentile in an aggregation period"
+);
+define_percentile_vec!(
+    MedianVec,
+    "median",
+    "Median (50th percentile) in an aggregation period"
+);
+define_percentile_vec!(
+    Pct75Vec,
+    "pct75",
+    "75th percentile in an aggregation period"
+);
+define_percentile_vec!(
+    Pct90Vec,
+    "pct90",
+    "90th percentile in an aggregation period"
+);

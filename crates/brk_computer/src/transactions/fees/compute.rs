@@ -82,7 +82,7 @@ impl Vecs {
         // Compute fee USD sum per block: price * Bitcoin::from(sats)
         self.fee_usd_sum.compute_transform2(
             starting_indexes.height,
-            self.fee.sum_cum.sum.inner(),
+            self.fee.sum_cumulative.sum.inner(),
             &prices.usd.price,
             |(h, sats, price, ..)| (h, price * Bitcoin::from(sats)),
             exit,
@@ -93,7 +93,7 @@ impl Vecs {
         self.fee_rolling.compute(
             starting_indexes.height,
             &window_starts,
-            self.fee.sum_cum.sum.inner(),
+            self.fee.sum_cumulative.sum.inner(),
             exit,
         )?;
 
@@ -101,7 +101,7 @@ impl Vecs {
         self.fee_rate_rolling.compute_distribution(
             starting_indexes.height,
             &window_starts,
-            &self.fee_rate.min_max_average.average.0,
+            &self.fee_rate.average.0,
             exit,
         )?;
 

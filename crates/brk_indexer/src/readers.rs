@@ -1,8 +1,8 @@
 use brk_types::{
     OutputType, P2AAddressIndex, P2ABytes, P2PK33AddressIndex, P2PK33Bytes, P2PK65AddressIndex,
     P2PK65Bytes, P2PKHAddressIndex, P2PKHBytes, P2SHAddressIndex, P2SHBytes, P2TRAddressIndex,
-    P2TRBytes, P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, TxIndex,
-    TxOutIndex, Txid, TypeIndex,
+    P2TRBytes, P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, TxIndex, TxOutIndex,
+    Txid, TypeIndex,
 };
 use vecdb::{BytesStrategy, VecReader};
 
@@ -25,12 +25,9 @@ pub struct AddressReaders {
 /// random access without recomputing `region.start() + HEADER_OFFSET` per read.
 pub struct Readers {
     pub txid: VecReader<TxIndex, Txid, BytesStrategy<Txid>>,
-    pub txindex_to_first_txoutindex:
-        VecReader<TxIndex, TxOutIndex, BytesStrategy<TxOutIndex>>,
-    pub txoutindex_to_outputtype:
-        VecReader<TxOutIndex, OutputType, BytesStrategy<OutputType>>,
-    pub txoutindex_to_typeindex:
-        VecReader<TxOutIndex, TypeIndex, BytesStrategy<TypeIndex>>,
+    pub txindex_to_first_txoutindex: VecReader<TxIndex, TxOutIndex, BytesStrategy<TxOutIndex>>,
+    pub txoutindex_to_outputtype: VecReader<TxOutIndex, OutputType, BytesStrategy<OutputType>>,
+    pub txoutindex_to_typeindex: VecReader<TxOutIndex, TypeIndex, BytesStrategy<TypeIndex>>,
     pub addressbytes: AddressReaders,
 }
 

@@ -4,7 +4,7 @@ use brk_types::StoredF32;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{blocks, ComputeIndexes, indexes, inputs, outputs};
+use crate::{blocks, ComputeIndexes, indexes, inputs, outputs, prices};
 use crate::transactions::{count, fees};
 
 impl Vecs {
@@ -14,6 +14,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
         count_vecs: &count::Vecs,
         fees_vecs: &fees::Vecs,
         inputs_count: &inputs::CountVecs,
@@ -38,6 +39,12 @@ impl Vecs {
             exit,
         )?;
 
+        // Compute USD from sats × price
+        self.sent_sum
+            .compute(prices, starting_indexes.height, exit)?;
+        self.received_sum
+            .compute(prices, starting_indexes.height, exit)?;
+
         // Annualized volume: rolling 1y sum of per-block sent volume
         self.annualized_volume.sats.height.compute_rolling_sum(
             starting_indexes.height,
@@ -45,6 +52,8 @@ impl Vecs {
             &self.sent_sum.sats.height,
             exit,
         )?;
+        self.annualized_volume
+            .compute(prices, starting_indexes.height, exit)?;
 
         // Rolling sums for sent and received
         let window_starts = blocks.count.window_starts();
@@ -83,7 +92,7 @@ impl Vecs {
         // inputs_per_sec: per-block input count / block interval
         self.inputs_per_sec.height.compute_transform2(
             starting_indexes.height,
-            &inputs_count.height.sum_cum.sum.0,
+            &inputs_count.height.sum_cumulative.sum.0,
             &blocks.interval.interval.height,
             |(h, input_count, interval, ..)| {
                 let interval_f64 = f64::from(*interval);
@@ -100,7 +109,7 @@ impl Vecs {
         // outputs_per_sec: per-block output count / block interval
         self.outputs_per_sec.height.compute_transform2(
             starting_indexes.height,
-            &outputs_count.total_count.sum_cum.sum.0,
+            &outputs_count.total_count.sum_cumulative.sum.0,
             &blocks.interval.interval.height,
             |(h, output_count, interval, ..)| {
                 let interval_f64 = f64::from(*interval);

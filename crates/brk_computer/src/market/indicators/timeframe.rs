@@ -1,43 +1,29 @@
 use brk_types::{Day1, Dollars, Month1, StoredF32, Week1, Year1};
-use vecdb::{ReadableVec, VecIndex};
+use vecdb::{ReadableOptionVec, VecIndex};
 
 use crate::{market::returns::Vecs as ReturnsVecs, prices};
 
-/// Returns period-level returns data
 pub(super) fn collect_returns(tf: &str, returns: &ReturnsVecs) -> Vec<f32> {
-    match tf {
-        "1d" => {
-            let data: Vec<StoredF32> = returns.price_returns._1d.day1.collect();
-            data.into_iter().map(|v| *v).collect()
-        }
-        "1w" => {
-            let data: Vec<StoredF32> = returns.price_returns._1w.week1.collect();
-            data.into_iter().map(|v| *v).collect()
-        }
-        "1m" => {
-            let data: Vec<StoredF32> = returns.price_returns._1m.month1.collect();
-            data.into_iter().map(|v| *v).collect()
-        }
-        "1y" => {
-            let data: Vec<StoredF32> = returns.price_returns._1y.year1.collect();
-            data.into_iter().map(|v| *v).collect()
-        }
+    let data: Vec<StoredF32> = match tf {
+        "1d" => returns.price_returns._1d.day1.collect_or_default(),
+        "1w" => returns.price_returns._1w.week1.collect_or_default(),
+        "1m" => returns.price_returns._1m.month1.collect_or_default(),
+        "1y" => returns.price_returns._1y.year1.collect_or_default(),
         _ => unreachable!(),
-    }
+    };
+    data.into_iter().map(|v| *v).collect()
 }
 
-/// Returns period-level close prices
 pub(super) fn collect_closes(tf: &str, prices: &prices::Vecs) -> Vec<Dollars> {
     match tf {
-        "1d" => prices.usd.close.day1.collect(),
-        "1w" => prices.usd.close.week1.collect(),
-        "1m" => prices.usd.close.month1.collect(),
-        "1y" => prices.usd.close.year1.collect(),
+        "1d" => prices.usd.close.day1.collect_or_default(),
+        "1w" => prices.usd.close.week1.collect_or_default(),
+        "1m" => prices.usd.close.month1.collect_or_default(),
+        "1y" => prices.usd.close.year1.collect_or_default(),
         _ => unreachable!(),
     }
 }
 
-/// Maps a Day1 to a period-level index for the given timeframe
 #[inline]
 pub(super) fn date_to_period(tf: &str, di: Day1) -> usize {
     match tf {

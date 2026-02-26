@@ -27,8 +27,8 @@ impl Vecs {
 
         let count = CountVecs::forced_import(&db, version, indexes)?;
         let interval = IntervalVecs::forced_import(&db, version, indexes)?;
-        let size = SizeVecs::forced_import(&db, version, indexer, indexes)?;
-        let weight = WeightVecs::forced_import(&db, version, indexer, indexes)?;
+        let size = SizeVecs::forced_import(&db, version, indexes)?;
+        let weight = WeightVecs::forced_import(&db, version, indexes)?;
         let time = TimeVecs::forced_import(&db, version)?;
         let difficulty = DifficultyVecs::forced_import(&db, version, indexer, indexes)?;
         let halving = HalvingVecs::forced_import(&db, version, indexes)?;

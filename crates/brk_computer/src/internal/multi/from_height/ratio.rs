@@ -1,23 +1,19 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, StoredF32, Version};
-use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, WritableVec, ReadableVec,
-    PcoVec, Rw, StorageMode, VecIndex,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
+    WritableVec,
 };
 
 use crate::{
-    blocks, indexes, ComputeIndexes,
-    internal::{
-        ComputedFromHeightStdDev, ComputedVecValue, LazyBinaryFromHeightLast,
-        LazyFromHeightLast, Price, PriceTimesRatio, StandardDeviationVecsOptions,
-    },
+    ComputeIndexes, blocks, indexes,
+    internal::{ComputedFromHeightStdDev, Price, StandardDeviationVecsOptions},
     prices,
     utils::get_percentile,
 };
 
-use super::{ComputedFromHeightLast, PriceFromHeight};
+use super::ComputedFromHeightLast;
 
 #[derive(Traversable)]
 pub struct ComputedFromHeightRatio<M: StorageMode = Rw> {
@@ -32,12 +28,12 @@ pub struct ComputedFromHeightRatio<M: StorageMode = Rw> {
     pub ratio_pct5: Option<ComputedFromHeightLast<StoredF32, M>>,
     pub ratio_pct2: Option<ComputedFromHeightLast<StoredF32, M>>,
     pub ratio_pct1: Option<ComputedFromHeightLast<StoredF32, M>>,
-    pub ratio_pct99_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub ratio_pct98_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub ratio_pct95_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub ratio_pct5_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub ratio_pct2_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub ratio_pct1_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
+    pub ratio_pct99_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub ratio_pct98_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub ratio_pct95_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub ratio_pct5_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub ratio_pct2_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub ratio_pct1_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
 
     pub ratio_sd: Option<ComputedFromHeightStdDev<M>>,
     pub ratio_4y_sd: Option<ComputedFromHeightStdDev<M>>,
@@ -74,10 +70,7 @@ impl ComputedFromHeightRatio {
         // Only compute price internally when metric_price is None
         let price = metric_price
             .is_none()
-            .then(|| PriceFromHeight::forced_import(db, name, v, indexes).unwrap());
-
-        // Use provided metric_price, falling back to internally computed price
-        let effective_price = metric_price.or(price.as_ref().map(|p| &p.usd));
+            .then(|| Price::forced_import(db, name, v, indexes).unwrap());
 
         macro_rules! import_sd {
             ($suffix:expr, $days:expr) => {
@@ -88,7 +81,6 @@ impl ComputedFromHeightRatio {
                     v,
                     indexes,
                     StandardDeviationVecsOptions::default().add_all(),
-                    effective_price,
                 )
                 .unwrap()
             };
@@ -103,14 +95,19 @@ impl ComputedFromHeightRatio {
 
         macro_rules! lazy_usd {
             ($ratio:expr, $suffix:expr) => {
-                effective_price.zip($ratio.as_ref()).map(|(mp, r)| {
-                    Price::from_computed_price_and_band::<PriceTimesRatio>(
-                        &format!("{name}_{}", $suffix),
-                        v,
-                        mp,
-                        r,
-                    )
-                })
+                if !extended {
+                    None
+                } else {
+                    $ratio.as_ref().map(|_| {
+                        Price::forced_import(
+                            db,
+                            &format!("{name}_{}", $suffix),
+                            v,
+                            indexes,
+                        )
+                        .unwrap()
+                    })
+                }
             };
         }
 
@@ -138,10 +135,9 @@ impl ComputedFromHeightRatio {
         })
     }
 
-    pub(crate) fn forced_import_from_lazy<S1T: ComputedVecValue + JsonSchema>(
+    pub(crate) fn forced_import_from_lazy(
         db: &Database,
         name: &str,
-        metric_price: &LazyFromHeightLast<Dollars, S1T>,
         version: Version,
         indexes: &indexes::Vecs,
         extended: bool,
@@ -169,7 +165,6 @@ impl ComputedFromHeightRatio {
                     v,
                     indexes,
                     StandardDeviationVecsOptions::default().add_all(),
-                    Some(metric_price),
                 )
                 .unwrap()
             };
@@ -184,13 +179,9 @@ impl ComputedFromHeightRatio {
 
         macro_rules! lazy_usd {
             ($ratio:expr, $suffix:expr) => {
-                $ratio.as_ref().map(|r| {
-                    Price::from_lazy_price_and_band::<PriceTimesRatio, S1T>(
-                        &format!("{name}_{}", $suffix),
-                        v,
-                        metric_price,
-                        r,
-                    )
+                $ratio.as_ref().map(|_| {
+                    Price::forced_import(db, &format!("{name}_{}", $suffix), v, indexes)
+                        .unwrap()
                 })
             };
         }
@@ -394,6 +385,51 @@ impl ComputedFromHeightRatio {
             };
         }
         compute_sd!(ratio_sd, ratio_4y_sd, ratio_2y_sd, ratio_1y_sd);
+
+        Ok(())
+    }
+
+    /// Compute USD ratio bands: usd_band = metric_price * ratio_percentile
+    pub(crate) fn compute_usd_bands(
+        &mut self,
+        starting_indexes: &ComputeIndexes,
+        metric_price: &impl ReadableVec<Height, Dollars>,
+        exit: &Exit,
+    ) -> Result<()> {
+        use crate::internal::PriceTimesRatio;
+
+        macro_rules! compute_band {
+            ($usd_field:ident, $band_field:ident) => {
+                if let Some(usd) = self.$usd_field.as_mut() {
+                    if let Some(band) = self.$band_field.as_ref() {
+                        usd.usd
+                            .compute_binary::<Dollars, StoredF32, PriceTimesRatio>(
+                                starting_indexes.height,
+                                metric_price,
+                                &band.height,
+                                exit,
+                            )?;
+                    }
+                }
+            };
+        }
+
+        compute_band!(ratio_pct99_usd, ratio_pct99);
+        compute_band!(ratio_pct98_usd, ratio_pct98);
+        compute_band!(ratio_pct95_usd, ratio_pct95);
+        compute_band!(ratio_pct5_usd, ratio_pct5);
+        compute_band!(ratio_pct2_usd, ratio_pct2);
+        compute_band!(ratio_pct1_usd, ratio_pct1);
+
+        // Stddev USD bands
+        macro_rules! compute_sd_usd {
+            ($($field:ident),*) => {
+                $(if let Some(sd) = self.$field.as_mut() {
+                    sd.compute_usd_bands(starting_indexes, metric_price, exit)?;
+                })*
+            };
+        }
+        compute_sd_usd!(ratio_sd, ratio_4y_sd, ratio_2y_sd, ratio_1y_sd);
 
         Ok(())
     }

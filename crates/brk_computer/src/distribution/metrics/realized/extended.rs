@@ -6,7 +6,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 use crate::{
     ComputeIndexes, blocks,
     internal::{
-        ComputedFromHeightLast, LazyBinaryFromHeightLast, Ratio64,
+        ComputedFromHeightLast, Ratio64,
     },
 };
 
@@ -29,11 +29,11 @@ pub struct RealizedExtended<M: StorageMode = Rw> {
     pub realized_loss_30d: ComputedFromHeightLast<Dollars, M>,
     pub realized_loss_1y: ComputedFromHeightLast<Dollars, M>,
 
-    // === Realized Profit to Loss Ratio (lazy from rolling sums) ===
-    pub realized_profit_to_loss_ratio_24h: LazyBinaryFromHeightLast<StoredF64, Dollars, Dollars>,
-    pub realized_profit_to_loss_ratio_7d: LazyBinaryFromHeightLast<StoredF64, Dollars, Dollars>,
-    pub realized_profit_to_loss_ratio_30d: LazyBinaryFromHeightLast<StoredF64, Dollars, Dollars>,
-    pub realized_profit_to_loss_ratio_1y: LazyBinaryFromHeightLast<StoredF64, Dollars, Dollars>,
+    // === Realized Profit to Loss Ratio (from rolling sums) ===
+    pub realized_profit_to_loss_ratio_24h: ComputedFromHeightLast<StoredF64, M>,
+    pub realized_profit_to_loss_ratio_7d: ComputedFromHeightLast<StoredF64, M>,
+    pub realized_profit_to_loss_ratio_30d: ComputedFromHeightLast<StoredF64, M>,
+    pub realized_profit_to_loss_ratio_1y: ComputedFromHeightLast<StoredF64, M>,
 }
 
 impl RealizedExtended {
@@ -46,28 +46,6 @@ impl RealizedExtended {
             };
         }
 
-        let realized_profit_24h = import_rolling!("realized_profit_24h");
-        let realized_profit_7d = import_rolling!("realized_profit_7d");
-        let realized_profit_30d = import_rolling!("realized_profit_30d");
-        let realized_profit_1y = import_rolling!("realized_profit_1y");
-        let realized_loss_24h = import_rolling!("realized_loss_24h");
-        let realized_loss_7d = import_rolling!("realized_loss_7d");
-        let realized_loss_30d = import_rolling!("realized_loss_30d");
-        let realized_loss_1y = import_rolling!("realized_loss_1y");
-
-        let realized_profit_to_loss_ratio_24h = LazyBinaryFromHeightLast::from_computed_last::<Ratio64>(
-            &cfg.name("realized_profit_to_loss_ratio_24h"), cfg.version + v1, &realized_profit_24h, &realized_loss_24h,
-        );
-        let realized_profit_to_loss_ratio_7d = LazyBinaryFromHeightLast::from_computed_last::<Ratio64>(
-            &cfg.name("realized_profit_to_loss_ratio_7d"), cfg.version + v1, &realized_profit_7d, &realized_loss_7d,
-        );
-        let realized_profit_to_loss_ratio_30d = LazyBinaryFromHeightLast::from_computed_last::<Ratio64>(
-            &cfg.name("realized_profit_to_loss_ratio_30d"), cfg.version + v1, &realized_profit_30d, &realized_loss_30d,
-        );
-        let realized_profit_to_loss_ratio_1y = LazyBinaryFromHeightLast::from_computed_last::<Ratio64>(
-            &cfg.name("realized_profit_to_loss_ratio_1y"), cfg.version + v1, &realized_profit_1y, &realized_loss_1y,
-        );
-
         Ok(RealizedExtended {
             realized_cap_rel_to_own_market_cap: ComputedFromHeightLast::forced_import(
                 cfg.db,
@@ -75,18 +53,18 @@ impl RealizedExtended {
                 cfg.version,
                 cfg.indexes,
             )?,
-            realized_profit_24h,
-            realized_profit_7d,
-            realized_profit_30d,
-            realized_profit_1y,
-            realized_loss_24h,
-            realized_loss_7d,
-            realized_loss_30d,
-            realized_loss_1y,
-            realized_profit_to_loss_ratio_24h,
-            realized_profit_to_loss_ratio_7d,
-            realized_profit_to_loss_ratio_30d,
-            realized_profit_to_loss_ratio_1y,
+            realized_profit_24h: import_rolling!("realized_profit_24h"),
+            realized_profit_7d: import_rolling!("realized_profit_7d"),
+            realized_profit_30d: import_rolling!("realized_profit_30d"),
+            realized_profit_1y: import_rolling!("realized_profit_1y"),
+            realized_loss_24h: import_rolling!("realized_loss_24h"),
+            realized_loss_7d: import_rolling!("realized_loss_7d"),
+            realized_loss_30d: import_rolling!("realized_loss_30d"),
+            realized_loss_1y: import_rolling!("realized_loss_1y"),
+            realized_profit_to_loss_ratio_24h: import_rolling!("realized_profit_to_loss_ratio_24h"),
+            realized_profit_to_loss_ratio_7d: import_rolling!("realized_profit_to_loss_ratio_7d"),
+            realized_profit_to_loss_ratio_30d: import_rolling!("realized_profit_to_loss_ratio_30d"),
+            realized_profit_to_loss_ratio_1y: import_rolling!("realized_profit_to_loss_ratio_1y"),
         })
     }
 
@@ -114,6 +92,20 @@ impl RealizedExtended {
             &base.realized_cap.height,
             height_to_market_cap,
             exit,
+        )?;
+
+        // Realized profit to loss ratios
+        self.realized_profit_to_loss_ratio_24h.compute_binary::<Dollars, Dollars, Ratio64>(
+            starting_indexes.height, &self.realized_profit_24h.height, &self.realized_loss_24h.height, exit,
+        )?;
+        self.realized_profit_to_loss_ratio_7d.compute_binary::<Dollars, Dollars, Ratio64>(
+            starting_indexes.height, &self.realized_profit_7d.height, &self.realized_loss_7d.height, exit,
+        )?;
+        self.realized_profit_to_loss_ratio_30d.compute_binary::<Dollars, Dollars, Ratio64>(
+            starting_indexes.height, &self.realized_profit_30d.height, &self.realized_loss_30d.height, exit,
+        )?;
+        self.realized_profit_to_loss_ratio_1y.compute_binary::<Dollars, Dollars, Ratio64>(
+            starting_indexes.height, &self.realized_profit_1y.height, &self.realized_loss_1y.height, exit,
         )?;
 
         Ok(())

@@ -6,10 +6,11 @@ use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{ReadableBoxedVec, ReadableCloneableVec, LazyVecFrom1, UnaryTransform};
 
-use crate::internal::{
-    ComputedFromHeightLast,
-    ComputedVecValue, LazyBinaryComputedFromHeightLast, LazyBinaryFromHeightLast,
-    LazyHeightDerivedLast, NumericValue,
+use crate::{
+    indexes,
+    internal::{
+        ComputedFromHeightLast, ComputedVecValue, LazyHeightDerivedLast, NumericValue,
+    },
 };
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -48,22 +49,19 @@ where
         }
     }
 
-    pub(crate) fn from_lazy_binary_computed<F, S1aT, S1bT>(
+    pub(crate) fn from_height_source<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
         height_source: ReadableBoxedVec<Height, S1T>,
-        source: &LazyBinaryComputedFromHeightLast<S1T, S1aT, S1bT>,
+        indexes: &indexes::Vecs,
     ) -> Self
     where
-        F: UnaryTransform<S1T, T>,
         S1T: NumericValue,
-        S1aT: ComputedVecValue + JsonSchema,
-        S1bT: ComputedVecValue + JsonSchema,
     {
         let v = version + VERSION;
         Self {
-            height: LazyVecFrom1::transformed::<F>(name, v, height_source),
-            rest: Box::new(LazyHeightDerivedLast::from_derived_computed::<F>(name, v, &source.rest)),
+            height: LazyVecFrom1::transformed::<F>(name, v, height_source.clone()),
+            rest: Box::new(LazyHeightDerivedLast::from_height_source::<F>(name, v, height_source, indexes)),
         }
     }
 
@@ -84,21 +82,4 @@ where
         }
     }
 
-    /// Create by unary-transforming a LazyBinaryFromHeightLast source.
-    pub(crate) fn from_binary<F, S1aT, S1bT>(
-        name: &str,
-        version: Version,
-        source: &LazyBinaryFromHeightLast<S1T, S1aT, S1bT>,
-    ) -> Self
-    where
-        F: UnaryTransform<S1T, T>,
-        S1aT: ComputedVecValue + JsonSchema,
-        S1bT: ComputedVecValue + JsonSchema,
-    {
-        let v = version + VERSION;
-        Self {
-            height: LazyVecFrom1::transformed::<F>(name, v, source.height.read_only_boxed_clone()),
-            rest: Box::new(LazyHeightDerivedLast::from_binary::<F, _, _>(name, v, &source.rest)),
-        }
-    }
 }

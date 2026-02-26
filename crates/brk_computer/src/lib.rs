@@ -110,7 +110,7 @@ impl Computer {
 
                 // Import mining module (separate database)
                 let mining_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                    Ok(Box::new(mining::Vecs::forced_import(&computed_path, VERSION, &indexes, &prices)?))
+                    Ok(Box::new(mining::Vecs::forced_import(&computed_path, VERSION, &indexes)?))
                 })?;
 
                 // Import transactions module
@@ -120,7 +120,6 @@ impl Computer {
                         VERSION,
                         indexer,
                         &indexes,
-                        &prices,
                     )?))
                 })?;
 
@@ -129,12 +128,11 @@ impl Computer {
                         &computed_path,
                         VERSION,
                         &indexes,
-                        &prices,
                     )?))
                 })?;
 
                 let cointime = Box::new(
-                    cointime::Vecs::forced_import(&computed_path, VERSION, &indexes, &prices)?
+                    cointime::Vecs::forced_import(&computed_path, VERSION, &indexes)?
                 );
 
                 let blocks = blocks_handle.join().unwrap()?;
@@ -142,15 +140,10 @@ impl Computer {
                 let transactions = transactions_handle.join().unwrap()?;
                 let scripts = scripts_handle.join().unwrap()?;
 
-                // pools depends on blocks, mining, and transactions for lazy dominance vecs
                 let pools = Box::new(pools::Vecs::forced_import(
                     &computed_path,
                     VERSION,
                     &indexes,
-                    &prices,
-                    &blocks,
-                    &mining,
-                    &transactions,
                 )?);
 
                 Ok((blocks, mining, transactions, scripts, pools, cointime))
@@ -163,26 +156,22 @@ impl Computer {
         // Threads inside
         let i = Instant::now();
         let distribution = Box::new(
-            distribution::Vecs::forced_import(&computed_path, VERSION, &indexes, &prices)?
+            distribution::Vecs::forced_import(&computed_path, VERSION, &indexes)?
         );
         info!("Imported distribution in {:?}", i.elapsed());
 
         // Supply must be imported after distribution (references distribution's supply)
         let i = Instant::now();
         let supply = Box::new(
-            supply::Vecs::forced_import(&computed_path, VERSION, &indexes, &prices, &distribution)?
+            supply::Vecs::forced_import(&computed_path, VERSION, &indexes, &distribution)?
         );
         info!("Imported supply in {:?}", i.elapsed());
 
-        // Market must be imported after distribution and transactions (for NVT indicator)
         let i = Instant::now();
         let market = Box::new(market::Vecs::forced_import(
             &computed_path,
             VERSION,
             &indexes,
-            &prices,
-            &distribution,
-            &transactions,
         )?);
         info!("Imported market in {:?}", i.elapsed());
 
@@ -305,7 +294,7 @@ impl Computer {
             info!("Computing scripts...");
             let i = Instant::now();
             self.scripts
-                .compute(indexer, &self.blocks, &self.outputs, &starting_indexes, exit)?;
+                .compute(indexer, &self.blocks, &self.outputs, &self.prices, &starting_indexes, exit)?;
             info!("Computed scripts in {:?}", i.elapsed());
 
             info!("Computing outputs...");
@@ -344,6 +333,7 @@ impl Computer {
                 &self.indexes,
                 &self.blocks,
                 &self.transactions,
+                &self.prices,
                 &starting_indexes,
                 exit,
             )?;
@@ -367,6 +357,9 @@ impl Computer {
                     indexer,
                     &self.indexes,
                     &self.blocks,
+                    &self.prices,
+                    &self.mining,
+                    &self.transactions,
                     &starting_indexes_clone,
                     exit,
                 )?;
@@ -404,6 +397,7 @@ impl Computer {
                     &self.blocks,
                     &self.mining,
                     &self.distribution,
+                    &self.transactions,
                     &starting_indexes,
                     exit,
                 )?;
@@ -418,6 +412,7 @@ impl Computer {
                 &self.blocks,
                 &self.mining,
                 &self.transactions,
+                &self.prices,
                 &self.distribution,
                 &starting_indexes,
                 exit,

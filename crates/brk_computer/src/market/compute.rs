@@ -1,7 +1,7 @@
 use brk_error::Result;
 use vecdb::Exit;
 
-use crate::{ComputeIndexes, blocks, distribution, indexes, mining, prices};
+use crate::{ComputeIndexes, blocks, distribution, indexes, mining, prices, transactions};
 
 use super::Vecs;
 
@@ -14,6 +14,7 @@ impl Vecs {
         blocks: &blocks::Vecs,
         mining: &mining::Vecs,
         distribution: &distribution::Vecs,
+        transactions: &transactions::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -26,9 +27,11 @@ impl Vecs {
 
         // Returns metrics (depends on lookback)
         self.returns
-            .compute(indexes, blocks, starting_indexes, exit)?;
+            .compute(indexes, prices, blocks, &self.lookback, starting_indexes, exit)?;
 
-        // Volatility: all fields are lazy (derived from returns SD)
+        // Volatility (depends on returns)
+        self.volatility
+            .compute(&self.returns, starting_indexes.height, exit)?;
 
         // Range metrics (independent)
         self.range
@@ -50,6 +53,8 @@ impl Vecs {
             prices,
             blocks,
             distribution,
+            transactions,
+            &self.moving_average,
             starting_indexes,
             exit,
         )?;

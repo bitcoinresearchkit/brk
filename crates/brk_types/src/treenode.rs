@@ -416,9 +416,9 @@ mod tests {
                 assert!(sum_indexes.contains(&Index::Week1));
                 assert!(sum_indexes.contains(&Index::Month1));
 
-                let cum_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
-                assert!(cum_indexes.contains(&Index::Week1));
-                assert!(cum_indexes.contains(&Index::Month1));
+                let cumulative_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
+                assert!(cumulative_indexes.contains(&Index::Week1));
+                assert!(cumulative_indexes.contains(&Index::Month1));
             }
             _ => panic!("Expected branch"),
         }
@@ -447,9 +447,9 @@ mod tests {
                 assert_eq!(map.len(), 2);
 
                 // cumulative merged: Height + Day1
-                let cum_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
-                assert!(cum_indexes.contains(&Index::Height));
-                assert!(cum_indexes.contains(&Index::Day1));
+                let cumulative_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
+                assert!(cumulative_indexes.contains(&Index::Height));
+                assert!(cumulative_indexes.contains(&Index::Day1));
 
                 // sum only has Day1
                 let sum_indexes = get_leaf_indexes(map.get("sum").unwrap()).unwrap();
@@ -509,11 +509,11 @@ mod tests {
                 assert!(sum_indexes.contains(&Index::DifficultyEpoch));
 
                 // cumulative: Height, Day1, Week1, DifficultyEpoch
-                let cum_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
-                assert!(cum_indexes.contains(&Index::Height));
-                assert!(cum_indexes.contains(&Index::Day1));
-                assert!(cum_indexes.contains(&Index::Week1));
-                assert!(cum_indexes.contains(&Index::DifficultyEpoch));
+                let cumulative_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
+                assert!(cumulative_indexes.contains(&Index::Height));
+                assert!(cumulative_indexes.contains(&Index::Day1));
+                assert!(cumulative_indexes.contains(&Index::Week1));
+                assert!(cumulative_indexes.contains(&Index::DifficultyEpoch));
             }
             _ => panic!("Expected branch"),
         }
@@ -704,9 +704,9 @@ mod tests {
                 assert!(sum_indexes.contains(&Index::Day1));
                 assert!(sum_indexes.contains(&Index::Week1));
 
-                let cum_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
-                assert!(cum_indexes.contains(&Index::Day1));
-                assert!(cum_indexes.contains(&Index::Week1));
+                let cumulative_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
+                assert!(cumulative_indexes.contains(&Index::Day1));
+                assert!(cumulative_indexes.contains(&Index::Week1));
             }
             _ => panic!("Expected branch with sum and cumulative"),
         }
@@ -881,13 +881,13 @@ mod tests {
                 assert_eq!(base_indexes.len(), 1);
 
                 // cumulative should include Height (from height_cumulative)
-                let cum_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
+                let cumulative_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
                 assert!(
-                    cum_indexes.contains(&Index::Height),
+                    cumulative_indexes.contains(&Index::Height),
                     "cumulative should include Height"
                 );
-                assert!(cum_indexes.contains(&Index::Day1));
-                assert!(cum_indexes.contains(&Index::Week1));
+                assert!(cumulative_indexes.contains(&Index::Day1));
+                assert!(cumulative_indexes.contains(&Index::Week1));
 
                 // average, min, max, sum should have Day1 and Week1 only
                 for key in ["average", "min", "max", "sum"] {
@@ -1057,9 +1057,9 @@ mod tests {
                 assert!(matches!(map.get("sum"), Some(TreeNode::Leaf(_))));
 
                 // cumulative: Height merged with rest's cumulative
-                let cum_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
-                assert!(cum_indexes.contains(&Index::Height));
-                assert!(cum_indexes.contains(&Index::Day1));
+                let cumulative_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
+                assert!(cumulative_indexes.contains(&Index::Height));
+                assert!(cumulative_indexes.contains(&Index::Day1));
             }
             _ => panic!("Expected branch"),
         }

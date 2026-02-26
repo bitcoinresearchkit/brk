@@ -1,25 +1,22 @@
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_types::Version;
-use vecdb::{Database, ReadableCloneableVec};
+use vecdb::Database;
 
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightLast, ComputedHeightDerivedCumFull, RollingDistribution},
+    internal::{ComputedFromHeightLast, ComputedHeightDerivedCumulativeFull, RollingDistribution},
 };
 
 impl Vecs {
     pub(crate) fn forced_import(
         db: &Database,
         version: Version,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let weight = ComputedHeightDerivedCumFull::forced_import(
+        let weight = ComputedHeightDerivedCumulativeFull::forced_import(
             db,
             "block_weight",
-            indexer.vecs.blocks.weight.read_only_boxed_clone(),
             version,
             indexes,
         )?;

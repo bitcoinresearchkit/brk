@@ -1,30 +1,27 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use schemars::JsonSchema;
-use vecdb::{
-    Database, Exit, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Ro, Rw, StorageMode,
-    VecIndex, VecValue, Version,
-};
+use vecdb::{Database, Exit, ReadableVec, Ro, Rw, StorageMode, VecIndex, VecValue, Version};
 
 use crate::internal::ComputedVecValue;
 
-use super::{Distribution, SumCum};
+use super::{Distribution, SumCumulative};
 
-/// Full stats aggregate: distribution + sum_cum
+/// Full stats aggregate: distribution + sum_cumulative
 /// Matches the common full_stats() pattern: average + minmax + percentiles + sum + cumulative
 #[derive(Traversable)]
 pub struct Full<I: VecIndex, T: ComputedVecValue + JsonSchema, M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub distribution: Distribution<I, T, M>,
     #[traversable(flatten)]
-    pub sum_cum: SumCum<I, T, M>,
+    pub sum_cumulative: SumCumulative<I, T, M>,
 }
 
 impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Full<I, T> {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self {
             distribution: Distribution::forced_import(db, name, version)?,
-            sum_cum: SumCum::forced_import(db, name, version)?,
+            sum_cumulative: SumCumulative::forced_import(db, name, version)?,
         })
     }
 
@@ -52,27 +49,23 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Full<I, T> {
             skip_count,
             None, // first
             None, // last
-            Some(&mut self.distribution.min_max_average.minmax.min.0),
-            Some(&mut self.distribution.min_max_average.minmax.max.0),
-            Some(&mut self.distribution.min_max_average.average.0),
-            Some(&mut self.sum_cum.sum.0),
-            Some(&mut self.sum_cum.cumulative.0),
-            Some(&mut self.distribution.percentiles.median.0),
-            Some(&mut self.distribution.percentiles.pct10.0),
-            Some(&mut self.distribution.percentiles.pct25.0),
-            Some(&mut self.distribution.percentiles.pct75.0),
-            Some(&mut self.distribution.percentiles.pct90.0),
+            Some(&mut self.distribution.min.0),
+            Some(&mut self.distribution.max.0),
+            Some(&mut self.distribution.average.0),
+            Some(&mut self.sum_cumulative.sum.0),
+            Some(&mut self.sum_cumulative.cumulative.0),
+            Some(&mut self.distribution.median.0),
+            Some(&mut self.distribution.pct10.0),
+            Some(&mut self.distribution.pct25.0),
+            Some(&mut self.distribution.pct75.0),
+            Some(&mut self.distribution.pct90.0),
         )
-    }
-
-    pub(crate) fn boxed_sum(&self) -> ReadableBoxedVec<I, T> {
-        self.sum_cum.sum.0.read_only_boxed_clone()
     }
 
     pub fn read_only_clone(&self) -> Full<I, T, Ro> {
         Full {
             distribution: self.distribution.read_only_clone(),
-            sum_cum: self.sum_cum.read_only_clone(),
+            sum_cumulative: self.sum_cumulative.read_only_clone(),
         }
     }
 }

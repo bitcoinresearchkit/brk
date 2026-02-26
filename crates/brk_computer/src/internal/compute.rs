@@ -314,3 +314,108 @@ where
 
     Ok(())
 }
+
+/// Compute distribution stats from windowed ranges of a source vec.
+///
+/// For each index `i`, reads all source items from groups `window_starts[i]..=i`
+/// and computes average, min, max, median, and percentiles across the full window.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn compute_aggregations_windowed<I, T, A>(
+    max_from: I,
+    source: &impl ReadableVec<A, T>,
+    first_indexes: &impl ReadableVec<I, A>,
+    count_indexes: &impl ReadableVec<I, StoredU64>,
+    window_starts: &impl ReadableVec<I, I>,
+    exit: &Exit,
+    min: &mut EagerVec<PcoVec<I, T>>,
+    max: &mut EagerVec<PcoVec<I, T>>,
+    average: &mut EagerVec<PcoVec<I, T>>,
+    median: &mut EagerVec<PcoVec<I, T>>,
+    pct10: &mut EagerVec<PcoVec<I, T>>,
+    pct25: &mut EagerVec<PcoVec<I, T>>,
+    pct75: &mut EagerVec<PcoVec<I, T>>,
+    pct90: &mut EagerVec<PcoVec<I, T>>,
+) -> Result<()>
+where
+    I: VecIndex,
+    T: ComputedVecValue + JsonSchema,
+    A: VecIndex + VecValue + CheckedSub<A>,
+{
+    let combined_version =
+        source.version() + first_indexes.version() + count_indexes.version() + window_starts.version();
+
+    let mut idx = max_from;
+    for vec in [&mut *min, &mut *max, &mut *average, &mut *median, &mut *pct10, &mut *pct25, &mut *pct75, &mut *pct90] {
+        idx = validate_and_start(vec, combined_version, idx)?;
+    }
+    let index = idx;
+
+    let start = index.to_usize();
+    let fi_len = first_indexes.len();
+
+    let first_indexes_batch: Vec<A> = first_indexes.collect_range_at(start, fi_len);
+    let count_indexes_batch: Vec<StoredU64> = count_indexes.collect_range_at(start, fi_len);
+    let window_starts_batch: Vec<I> = window_starts.collect_range_at(start, fi_len);
+
+    let zero = T::from(0_usize);
+
+    first_indexes_batch
+        .iter()
+        .zip(count_indexes_batch.iter())
+        .zip(window_starts_batch.iter())
+        .enumerate()
+        .try_for_each(|(j, ((fi, ci), ws))| -> Result<()> {
+            let idx = start + j;
+            let window_start_offset = ws.to_usize();
+
+            // Last tx index (exclusive) of current block
+            let count = u64::from(*ci) as usize;
+            let range_end_usize = fi.to_usize() + count;
+
+            // First tx index of the window start block
+            let range_start_usize = if window_start_offset >= start {
+                first_indexes_batch[window_start_offset - start].to_usize()
+            } else {
+                first_indexes
+                    .collect_one_at(window_start_offset)
+                    .unwrap()
+                    .to_usize()
+            };
+
+            let effective_count = range_end_usize.saturating_sub(range_start_usize);
+
+            if effective_count == 0 {
+                for vec in [&mut *min, &mut *max, &mut *average, &mut *median, &mut *pct10, &mut *pct25, &mut *pct75, &mut *pct90] {
+                    vec.truncate_push_at(idx, zero)?;
+                }
+            } else {
+                let mut values: Vec<T> =
+                    source.collect_range_at(range_start_usize, range_end_usize);
+
+                // Compute sum before sorting
+                let len = values.len();
+                let sum_val = values.iter().copied().fold(T::from(0), |a, b| a + b);
+                let avg = sum_val / len;
+
+                values.sort_unstable();
+
+                max.truncate_push_at(idx, *values.last().unwrap())?;
+                pct90.truncate_push_at(idx, get_percentile(&values, 0.90))?;
+                pct75.truncate_push_at(idx, get_percentile(&values, 0.75))?;
+                median.truncate_push_at(idx, get_percentile(&values, 0.50))?;
+                pct25.truncate_push_at(idx, get_percentile(&values, 0.25))?;
+                pct10.truncate_push_at(idx, get_percentile(&values, 0.10))?;
+                min.truncate_push_at(idx, *values.first().unwrap())?;
+                average.truncate_push_at(idx, avg)?;
+            }
+
+            Ok(())
+        })?;
+
+    let _lock = exit.lock();
+    for vec in [min, max, average, median, pct10, pct25, pct75, pct90] {
+        vec.write()?;
+    }
+
+    Ok(())
+}

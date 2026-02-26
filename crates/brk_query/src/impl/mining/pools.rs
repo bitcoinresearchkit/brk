@@ -32,7 +32,7 @@ impl Query {
         for (pool_id, pool_vecs) in &computer.pools.vecs {
             let cumulative = &pool_vecs
                 .blocks_mined
-                .height_cumulative;
+                .cumulative.height;
 
             let count_at_end: u32 = *cumulative.collect_one(current_height).unwrap_or_default();
 
@@ -100,7 +100,7 @@ impl Query {
 
         let cumulative = &pool_vecs
             .blocks_mined
-            .height_cumulative;
+            .cumulative.height;
 
         // Get total blocks (all time)
         let total_all: u32 = *cumulative.collect_one(current_height).unwrap_or_default();

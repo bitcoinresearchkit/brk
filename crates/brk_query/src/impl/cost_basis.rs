@@ -4,7 +4,7 @@ use brk_error::{Error, Result};
 use brk_types::{
     CostBasisBucket, CostBasisDistribution, CostBasisFormatted, CostBasisValue, Date, Day1,
 };
-use vecdb::ReadableVec;
+use vecdb::ReadableOptionVec;
 
 use crate::Query;
 
@@ -87,7 +87,7 @@ impl Query {
             .cents
             .close
             .day1
-            .collect_one(day1)
+            .collect_one_flat(day1)
             .ok_or_else(|| Error::NotFound(format!("No price data for {date}")))?;
         Ok(distribution.format(bucket, value, spot))
     }

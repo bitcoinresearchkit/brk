@@ -135,10 +135,16 @@ impl<'a> BlockProcessor<'a> {
         out: &mut FxHashSet<OutPoint>,
     ) {
         out.clear();
-        out.extend(txins.iter().filter_map(|(_, input_source)| match input_source {
-            InputSource::SameBlock { outpoint, .. } if !outpoint.is_coinbase() => Some(*outpoint),
-            _ => None,
-        }));
+        out.extend(
+            txins
+                .iter()
+                .filter_map(|(_, input_source)| match input_source {
+                    InputSource::SameBlock { outpoint, .. } if !outpoint.is_coinbase() => {
+                        Some(*outpoint)
+                    }
+                    _ => None,
+                }),
+        );
     }
 }
 
@@ -165,13 +171,23 @@ pub(super) fn finalize_inputs(
                 outpoint,
             } => {
                 if outpoint.is_coinbase() {
-                    (vin, txindex, outpoint, OutputType::Unknown, TypeIndex::COINBASE)
+                    (
+                        vin,
+                        txindex,
+                        outpoint,
+                        OutputType::Unknown,
+                        TypeIndex::COINBASE,
+                    )
                 } else {
                     let info = same_block_output_info
                         .remove(&outpoint)
                         .ok_or(Error::Internal("Same-block output not found"))
                         .inspect_err(|_| {
-                            error!(?outpoint, remaining = same_block_output_info.len(), "Same-block output not found");
+                            error!(
+                                ?outpoint,
+                                remaining = same_block_output_info.len(),
+                                "Same-block output not found"
+                            );
                         })?;
                     (vin, txindex, outpoint, info.outputtype, info.typeindex)
                 }
@@ -195,10 +211,7 @@ pub(super) fn finalize_inputs(
 
         addr_txindex_stores
             .get_mut_unwrap(addresstype)
-            .insert(
-                AddressIndexTxIndex::from((addressindex, txindex)),
-                Unit,
-            );
+            .insert(AddressIndexTxIndex::from((addressindex, txindex)), Unit);
 
         addr_outpoint_stores
             .get_mut_unwrap(addresstype)

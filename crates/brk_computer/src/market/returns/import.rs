@@ -1,17 +1,16 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{Database, EagerVec, ImportableVec, ReadableCloneableVec};
+use vecdb::{Database, EagerVec, ImportableVec};
 
-use super::super::lookback::{self, LOOKBACK_PERIOD_NAMES};
+use super::super::lookback::ByLookbackPeriod;
 use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ComputedFromHeightLast, ComputedFromHeightStdDev, LazyBinaryFromHeightLast,
-        PercentageDiffDollars, StandardDeviationVecsOptions,
+        ComputedFromHeightLast, ComputedFromHeightStdDev,
+        StandardDeviationVecsOptions,
     },
     market::dca::ByDcaCagr,
-    prices,
 };
 
 impl Vecs {
@@ -19,26 +18,17 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
-        lookback: &lookback::Vecs,
     ) -> Result<Self> {
         let v1 = Version::ONE;
 
-        let price_returns =
-            LOOKBACK_PERIOD_NAMES
-                .zip_ref(&lookback.price_ago)
-                .map(|(name, price_ago)| {
-                    LazyBinaryFromHeightLast::from_height_and_derived_last::<
-                        PercentageDiffDollars,
-                    >(
-                        &format!("{name}_price_returns"),
-                        version,
-                        prices.usd.price.read_only_boxed_clone(),
-                        price_ago.height.read_only_boxed_clone(),
-                        &prices.usd.close,
-                        &price_ago.rest,
-                    )
-                });
+        let price_returns = ByLookbackPeriod::try_new(|name, _days| {
+            ComputedFromHeightLast::forced_import(
+                db,
+                &format!("{name}_price_returns"),
+                version,
+                indexes,
+            )
+        })?;
 
         // CAGR (computed, 2y+ only)
         let cagr = ByDcaCagr::try_new(|name, _days| {
@@ -52,7 +42,6 @@ impl Vecs {
             version + v1,
             indexes,
             StandardDeviationVecsOptions::default(),
-            None,
         )?;
         let _1d_returns_1m_sd = ComputedFromHeightStdDev::forced_import(
             db,
@@ -61,7 +50,6 @@ impl Vecs {
             version + v1,
             indexes,
             StandardDeviationVecsOptions::default(),
-            None,
         )?;
         let _1d_returns_1y_sd = ComputedFromHeightStdDev::forced_import(
             db,
@@ -70,7 +58,6 @@ impl Vecs {
             version + v1,
             indexes,
             StandardDeviationVecsOptions::default(),
-            None,
         )?;
 
         let downside_returns = EagerVec::forced_import(db, "downside_returns", version)?;
@@ -81,7 +68,6 @@ impl Vecs {
             version + v1,
             indexes,
             StandardDeviationVecsOptions::default(),
-            None,
         )?;
         let downside_1m_sd = ComputedFromHeightStdDev::forced_import(
             db,
@@ -90,7 +76,6 @@ impl Vecs {
             version + v1,
             indexes,
             StandardDeviationVecsOptions::default(),
-            None,
         )?;
         let downside_1y_sd = ComputedFromHeightStdDev::forced_import(
             db,
@@ -99,7 +84,6 @@ impl Vecs {
             version + v1,
             indexes,
             StandardDeviationVecsOptions::default(),
-            None,
         )?;
 
         Ok(Self {

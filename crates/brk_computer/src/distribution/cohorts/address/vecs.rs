@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_cohort::{CohortContext, Filter, Filtered};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, StoredF64, StoredU64, Version};
+use brk_types::{Cents, Dollars, Height, Sats, StoredF64, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, WritableVec, ReadableVec, Rw, StorageMode};
 
@@ -15,7 +15,7 @@ use crate::{
     prices,
 };
 
-use crate::distribution::metrics::{BasicCohortMetrics, CohortMetricsBase, ImportConfig, SupplyMetrics};
+use crate::distribution::metrics::{BasicCohortMetrics, CohortMetricsBase, ImportConfig};
 
 use super::super::traits::{CohortVecs, DynCohortVecs};
 
@@ -41,19 +41,13 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
 
 impl AddressCohortVecs {
     /// Import address cohort from database.
-    ///
-    /// `all_supply` is the supply metrics from the "all" cohort, used as global
-    /// sources for `*_rel_to_market_cap` ratios.
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn forced_import(
         db: &Database,
         filter: Filter,
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
         states_path: Option<&Path>,
-        all_supply: &SupplyMetrics,
     ) -> Result<Self> {
         let full_name = CohortContext::Address.full_name(&filter, name);
 
@@ -64,7 +58,6 @@ impl AddressCohortVecs {
             context: CohortContext::Address,
             version,
             indexes,
-            prices,
         };
 
         Ok(Self {
@@ -73,7 +66,7 @@ impl AddressCohortVecs {
             state: states_path
                 .map(|path| Box::new(AddressCohortState::new(path, &full_name))),
 
-            metrics: BasicCohortMetrics::forced_import(&cfg, all_supply)?,
+            metrics: BasicCohortMetrics::forced_import(&cfg)?,
 
             addr_count: ComputedFromHeightLast::forced_import(
                 db,
@@ -287,6 +280,7 @@ impl CohortVecs for AddressCohortVecs {
         prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
+        all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics.compute_rest_part2(
@@ -294,6 +288,7 @@ impl CohortVecs for AddressCohortVecs {
             prices,
             starting_indexes,
             height_to_market_cap,
+            all_supply_sats,
             exit,
         )?;
         Ok(())

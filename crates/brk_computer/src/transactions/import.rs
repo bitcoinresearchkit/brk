@@ -6,7 +6,7 @@ use brk_traversable::Traversable;
 use brk_types::Version;
 use vecdb::{Database, PAGE_SIZE};
 
-use crate::{indexes, prices};
+use crate::indexes;
 
 use super::{CountVecs, FeesVecs, SizeVecs, Vecs, VersionsVecs, VolumeVecs};
 
@@ -16,7 +16,6 @@ impl Vecs {
         parent_version: Version,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join(super::DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
@@ -24,10 +23,10 @@ impl Vecs {
         let version = parent_version;
 
         let count = CountVecs::forced_import(&db, version, indexer, indexes)?;
-        let size = SizeVecs::forced_import(&db, version, indexer, indexes)?;
+        let size = SizeVecs::forced_import(&db, version, indexer)?;
         let fees = FeesVecs::forced_import(&db, version, indexes)?;
         let versions = VersionsVecs::forced_import(&db, version, indexes)?;
-        let volume = VolumeVecs::forced_import(&db, version, indexes, prices)?;
+        let volume = VolumeVecs::forced_import(&db, version, indexes)?;
 
         let this = Self {
             db,

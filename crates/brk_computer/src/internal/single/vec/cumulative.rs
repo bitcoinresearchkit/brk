@@ -3,8 +3,7 @@ use brk_traversable::Traversable;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    Database, EagerVec, ImportableVec, PcoVec, ReadableBoxedVec, ReadableCloneableVec, Ro, Rw,
-    StorageMode, StoredVec, VecIndex, Version,
+    Database, EagerVec, ImportableVec, PcoVec, Ro, Rw, StorageMode, StoredVec, VecIndex, Version,
 };
 
 use crate::internal::ComputedVecValue;
@@ -28,10 +27,6 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> CumulativeVec<I, T> {
     #[inline]
     pub(crate) fn inner(&self) -> &EagerVec<PcoVec<I, T>> {
         &self.0
-    }
-
-    pub(crate) fn read_only_boxed_clone(&self) -> ReadableBoxedVec<I, T> {
-        self.0.read_only_boxed_clone()
     }
 
     pub fn read_only_clone(&self) -> CumulativeVec<I, T, Ro> {

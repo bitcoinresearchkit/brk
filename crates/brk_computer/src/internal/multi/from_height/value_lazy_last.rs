@@ -1,13 +1,11 @@
 //! Lazy value wrapper for ValueFromHeightLast - all transforms are lazy.
 
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Sats, Version};
+use brk_types::{Bitcoin, Dollars, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::UnaryTransform;
 
-use crate::internal::{
-    LazyValueHeight, LazyValueHeightDerivedLast, SatsToBitcoin, ValueFromHeightLast,
-};
+use crate::internal::{LazyValueHeight, LazyValueHeightDerivedLast, ValueFromHeightLast};
 
 const VERSION: Version = Version::ZERO;
 
@@ -24,22 +22,23 @@ pub struct LazyValueFromHeightLast {
 }
 
 impl LazyValueFromHeightLast {
-    pub(crate) fn from_block_source<SatsTransform, DollarsTransform>(
+    pub(crate) fn from_block_source<SatsTransform, BitcoinTransform, DollarsTransform>(
         name: &str,
         source: &ValueFromHeightLast,
         version: Version,
     ) -> Self
     where
         SatsTransform: UnaryTransform<Sats, Sats>,
+        BitcoinTransform: UnaryTransform<Sats, Bitcoin>,
         DollarsTransform: UnaryTransform<Dollars, Dollars>,
     {
         let v = version + VERSION;
 
         let height =
-            LazyValueHeight::from_block_source::<SatsTransform, DollarsTransform>(name, source, v);
+            LazyValueHeight::from_block_source::<SatsTransform, BitcoinTransform, DollarsTransform>(name, source, v);
 
         let rest =
-            LazyValueHeightDerivedLast::from_block_source::<SatsTransform, SatsToBitcoin, DollarsTransform>(
+            LazyValueHeightDerivedLast::from_block_source::<SatsTransform, BitcoinTransform, DollarsTransform>(
                 name, source, v,
             );
 

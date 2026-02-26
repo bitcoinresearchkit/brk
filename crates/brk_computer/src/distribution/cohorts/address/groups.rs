@@ -5,14 +5,14 @@ use brk_cohort::{
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Version};
+use brk_types::{Dollars, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{ComputeIndexes, blocks, distribution::DynCohortVecs, indexes, prices};
 
-use crate::distribution::metrics::{CohortMetricsBase, SupplyMetrics};
+use crate::distribution::metrics::CohortMetricsBase;
 
 use super::{super::traits::CohortVecs, vecs::AddressCohortVecs};
 
@@ -24,16 +24,11 @@ pub struct AddressCohorts<M: StorageMode = Rw>(AddressGroups<AddressCohortVecs<M
 
 impl AddressCohorts {
     /// Import all Address cohorts from database.
-    ///
-    /// `all_supply` is the supply metrics from the UTXO "all" cohort, used as global
-    /// sources for `*_rel_to_market_cap` ratios.
     pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
         states_path: &Path,
-        all_supply: &SupplyMetrics,
     ) -> Result<Self> {
         let v = version + VERSION;
 
@@ -43,7 +38,7 @@ impl AddressCohorts {
                       has_state: bool|
          -> Result<AddressCohortVecs> {
             let sp = if has_state { Some(states_path) } else { None };
-            AddressCohortVecs::forced_import(db, filter, name, v, indexes, prices, sp, all_supply)
+            AddressCohortVecs::forced_import(db, filter, name, v, indexes, sp)
         };
 
         let full = |f: Filter, name: &'static str| create(f, name, true);
@@ -135,16 +130,18 @@ impl AddressCohorts {
     }
 
     /// Second phase of post-processing: compute relative metrics.
-    pub(crate) fn compute_rest_part2<HM>(
+    pub(crate) fn compute_rest_part2<HM, AS>(
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         height_to_market_cap: &HM,
+        all_supply_sats: &AS,
         exit: &Exit,
     ) -> Result<()>
     where
         HM: ReadableVec<Height, Dollars> + Sync,
+        AS: ReadableVec<Height, Sats> + Sync,
     {
         self.0.par_iter_mut().try_for_each(|v| {
             v.compute_rest_part2(
@@ -152,6 +149,7 @@ impl AddressCohorts {
                 prices,
                 starting_indexes,
                 height_to_market_cap,
+                all_supply_sats,
                 exit,
             )
         })

@@ -75,6 +75,7 @@ where
         prices,
         starting_indexes,
         height_to_market_cap,
+        &utxo_cohorts.all.metrics.supply.total.sats.height,
         exit,
     )?;
 

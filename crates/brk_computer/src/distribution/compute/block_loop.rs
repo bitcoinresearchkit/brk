@@ -65,10 +65,10 @@ pub(crate) fn process_blocks(
     let height_to_first_txoutindex = &indexer.vecs.outputs.first_txoutindex;
     let height_to_first_txinindex = &indexer.vecs.inputs.first_txinindex;
 
-    // From transactions and inputs/outputs (via .height or .height.sum_cum.sum patterns):
+    // From transactions and inputs/outputs (via .height or .height.sum_cumulative.sum patterns):
     let height_to_tx_count = &transactions.count.tx_count.height;
-    let height_to_output_count = &outputs.count.total_count.sum_cum.sum.0;
-    let height_to_input_count = &inputs.count.height.sum_cum.sum.0;
+    let height_to_output_count = &outputs.count.total_count.sum_cumulative.sum.0;
+    let height_to_input_count = &inputs.count.height.sum_cumulative.sum.0;
     // From blocks:
     let height_to_timestamp = &blocks.time.timestamp_monotonic;
     let height_to_date = &blocks.time.date;

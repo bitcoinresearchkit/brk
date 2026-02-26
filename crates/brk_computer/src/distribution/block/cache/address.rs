@@ -1,24 +1,24 @@
 use brk_cohort::ByAddressType;
 use brk_error::Result;
-use brk_types::{AnyAddressDataIndexEnum, FundedAddressData, OutputType, TypeIndex};
+use brk_types::{
+    AnyAddressDataIndexEnum, EmptyAddressData, FundedAddressData, OutputType, TxIndex, TypeIndex,
+};
+use smallvec::SmallVec;
 
 use crate::distribution::{
     address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs},
     compute::VecsReaders,
 };
 
-use super::super::cohort::{
-    EmptyAddressDataWithSource, FundedAddressDataWithSource, TxIndexVec, WithAddressDataSource,
-    update_tx_counts,
-};
+use super::super::cohort::{WithAddressDataSource, update_tx_counts};
 use super::lookup::AddressLookup;
 
 /// Cache for address data within a flush interval.
 pub struct AddressCache {
     /// Addresses with non-zero balance
-    funded: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
+    funded: AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
     /// Addresses that became empty (zero balance)
-    empty: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
+    empty: AddressTypeToTypeIndexMap<WithAddressDataSource<EmptyAddressData>>,
 }
 
 impl Default for AddressCache {
@@ -49,7 +49,7 @@ impl AddressCache {
 
     /// Merge address data into funded cache.
     #[inline]
-    pub(crate) fn merge_funded(&mut self, data: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>) {
+    pub(crate) fn merge_funded(&mut self, data: AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>) {
         self.funded.merge_mut(data);
     }
 
@@ -63,7 +63,7 @@ impl AddressCache {
     }
 
     /// Update transaction counts for addresses.
-    pub(crate) fn update_tx_counts(&mut self, txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>) {
+    pub(crate) fn update_tx_counts(&mut self, txindex_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>) {
         update_tx_counts(&mut self.funded, &mut self.empty, txindex_vecs);
     }
 
@@ -71,8 +71,8 @@ impl AddressCache {
     pub(crate) fn take(
         &mut self,
     ) -> (
-        AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
-        AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
+        AddressTypeToTypeIndexMap<WithAddressDataSource<EmptyAddressData>>,
+        AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
     ) {
         (
             std::mem::take(&mut self.empty),
@@ -93,7 +93,7 @@ pub(crate) fn load_uncached_address_data(
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
-) -> Result<Option<FundedAddressDataWithSource>> {
+) -> Result<Option<WithAddressDataSource<FundedAddressData>>> {
     // Check if this is a new address (typeindex >= first for this height)
     let first = *first_addressindexes.get(address_type).unwrap();
     if first <= typeindex {

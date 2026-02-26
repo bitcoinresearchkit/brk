@@ -1,46 +1,43 @@
-//! ComputedHeightDerivedLast - lazy time periods + epochs (last value).
-//!
-//! Newtype on `Indexes` with `LazyLast` per field.
+//! ComputedHeightDerivedLast — sparse time periods + dense epochs (last value).
 
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4, Minute1, Minute10,
-    Minute30, Minute5, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute1, Minute5,
+    Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{ReadableBoxedVec, ReadableCloneableVec};
+use vecdb::{LazyAggVec, ReadableBoxedVec, ReadableCloneableVec};
 
 use crate::{
-    indexes,
-    indexes_from,
-    internal::{ComputedVecValue, Indexes, LazyLast, NumericValue},
+    indexes, indexes_from,
+    internal::{ComputedVecValue, Indexes, NumericValue},
 };
-
-/// All 17 time-period/epoch `LazyLast` vecs, packed as a newtype on `Indexes`.
-pub type ComputedHeightDerivedLastInner<T> = Indexes<
-    LazyLast<Minute1, T, Height, Height>,
-    LazyLast<Minute5, T, Height, Height>,
-    LazyLast<Minute10, T, Height, Height>,
-    LazyLast<Minute30, T, Height, Height>,
-    LazyLast<Hour1, T, Height, Height>,
-    LazyLast<Hour4, T, Height, Height>,
-    LazyLast<Hour12, T, Height, Height>,
-    LazyLast<Day1, T, Height, Height>,
-    LazyLast<Day3, T, Height, Height>,
-    LazyLast<Week1, T, Height, Height>,
-    LazyLast<Month1, T, Height, Height>,
-    LazyLast<Month3, T, Height, Height>,
-    LazyLast<Month6, T, Height, Height>,
-    LazyLast<Year1, T, Height, Height>,
-    LazyLast<Year10, T, Height, Height>,
-    LazyLast<HalvingEpoch, T, Height, HalvingEpoch>,
-    LazyLast<DifficultyEpoch, T, Height, DifficultyEpoch>,
->;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct ComputedHeightDerivedLast<T>(pub ComputedHeightDerivedLastInner<T>)
+pub struct ComputedHeightDerivedLast<T>(
+    #[allow(clippy::type_complexity)]
+    pub  Indexes<
+        LazyAggVec<Minute1, Option<T>, Height, Height, T>,
+        LazyAggVec<Minute5, Option<T>, Height, Height, T>,
+        LazyAggVec<Minute10, Option<T>, Height, Height, T>,
+        LazyAggVec<Minute30, Option<T>, Height, Height, T>,
+        LazyAggVec<Hour1, Option<T>, Height, Height, T>,
+        LazyAggVec<Hour4, Option<T>, Height, Height, T>,
+        LazyAggVec<Hour12, Option<T>, Height, Height, T>,
+        LazyAggVec<Day1, Option<T>, Height, Height, T>,
+        LazyAggVec<Day3, Option<T>, Height, Height, T>,
+        LazyAggVec<Week1, Option<T>, Height, Height, T>,
+        LazyAggVec<Month1, Option<T>, Height, Height, T>,
+        LazyAggVec<Month3, Option<T>, Height, Height, T>,
+        LazyAggVec<Month6, Option<T>, Height, Height, T>,
+        LazyAggVec<Year1, Option<T>, Height, Height, T>,
+        LazyAggVec<Year10, Option<T>, Height, Height, T>,
+        LazyAggVec<HalvingEpoch, T, Height, HalvingEpoch>,
+        LazyAggVec<DifficultyEpoch, T, Height, DifficultyEpoch>,
+    >,
+)
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 
@@ -60,7 +57,7 @@ where
 
         macro_rules! period {
             ($idx:ident) => {
-                LazyLast::from_height_source(
+                LazyAggVec::sparse_from_first_index(
                     name,
                     v,
                     height_source.clone(),
@@ -71,7 +68,7 @@ where
 
         macro_rules! epoch {
             ($idx:ident) => {
-                LazyLast::from_source(
+                LazyAggVec::from_source(
                     name,
                     v,
                     height_source.clone(),

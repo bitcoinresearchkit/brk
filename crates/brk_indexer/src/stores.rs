@@ -272,21 +272,24 @@ impl Stores {
         let start = starting_indexes.txindex.to_usize();
         let end = vecs.transactions.txid.len();
         let mut current_index = start;
-        vecs.transactions.txid.for_each_range_at(start, end, |txid| {
-            let txindex = TxIndex::from(current_index);
-            let txidprefix = TxidPrefix::from(&txid);
+        vecs.transactions
+            .txid
+            .for_each_range_at(start, end, |txid| {
+                let txindex = TxIndex::from(current_index);
+                let txidprefix = TxidPrefix::from(&txid);
 
-            let is_known_dup = DUPLICATE_TXID_PREFIXES
-                .iter()
-                .any(|(dup_prefix, dup_txindex)| {
-                    txindex == *dup_txindex && txidprefix == *dup_prefix
-                });
+                let is_known_dup =
+                    DUPLICATE_TXID_PREFIXES
+                        .iter()
+                        .any(|(dup_prefix, dup_txindex)| {
+                            txindex == *dup_txindex && txidprefix == *dup_prefix
+                        });
 
-            if !is_known_dup {
-                self.txidprefix_to_txindex.remove(txidprefix);
-            }
-            current_index += 1;
-        });
+                if !is_known_dup {
+                    self.txidprefix_to_txindex.remove(txidprefix);
+                }
+                current_index += 1;
+            });
 
         self.txidprefix_to_txindex.clear_caches();
     }
@@ -302,8 +305,10 @@ impl Stores {
         let rollback_start = starting_indexes.txoutindex.to_usize();
         let rollback_end = vecs.outputs.outputtype.len();
 
-        let txindexes: Vec<TxIndex> =
-            vecs.outputs.txindex.collect_range_at(rollback_start, rollback_end);
+        let txindexes: Vec<TxIndex> = vecs
+            .outputs
+            .txindex
+            .collect_range_at(rollback_start, rollback_end);
 
         for (i, txoutindex) in (rollback_start..rollback_end).enumerate() {
             let outputtype = txoutindex_to_outputtype_reader.get(txoutindex);

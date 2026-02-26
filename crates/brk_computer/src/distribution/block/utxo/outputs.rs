@@ -1,6 +1,7 @@
 use brk_cohort::ByAddressType;
 use brk_error::Result;
-use brk_types::{Sats, TxIndex, TypeIndex};
+use brk_types::{FundedAddressData, Sats, TxIndex, TypeIndex};
+use smallvec::SmallVec;
 
 use crate::distribution::{
     address::{
@@ -12,7 +13,7 @@ use crate::distribution::{
 
 use super::super::{
     cache::{AddressCache, load_uncached_address_data},
-    cohort::{FundedAddressDataWithSource, TxIndexVec},
+    cohort::WithAddressDataSource,
 };
 
 /// Result of processing outputs for a block.
@@ -22,9 +23,9 @@ pub struct OutputsResult {
     /// Per-address-type received data: (typeindex, value) for each address.
     pub received_data: AddressTypeToVec<(TypeIndex, Sats)>,
     /// Address data looked up during processing, keyed by (address_type, typeindex).
-    pub address_data: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
+    pub address_data: AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
     /// Transaction indexes per address for tx_count tracking.
-    pub txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>,
+    pub txindex_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
 }
 
 /// Process outputs (new UTXOs) for a block.
@@ -51,9 +52,9 @@ pub(crate) fn process_outputs(
     let mut transacted = Transacted::default();
     let mut received_data = AddressTypeToVec::with_capacity(estimated_per_type);
     let mut address_data =
-        AddressTypeToTypeIndexMap::<FundedAddressDataWithSource>::with_capacity(estimated_per_type);
+        AddressTypeToTypeIndexMap::<WithAddressDataSource<FundedAddressData>>::with_capacity(estimated_per_type);
     let mut txindex_vecs =
-        AddressTypeToTypeIndexMap::<TxIndexVec>::with_capacity(estimated_per_type);
+        AddressTypeToTypeIndexMap::<SmallVec<[TxIndex; 4]>>::with_capacity(estimated_per_type);
 
     // Single pass: read from pre-collected vecs and accumulate
     for (local_idx, txoutdata) in txoutdata_vec.iter().enumerate() {

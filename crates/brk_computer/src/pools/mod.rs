@@ -7,8 +7,8 @@ use brk_traversable::Traversable;
 use brk_types::{Address, AddressBytes, Height, OutputType, PoolSlug, Pools, TxOutIndex, pools};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Database, Exit, WritableVec, ImportableVec, ReadableVec,
-    PAGE_SIZE, Rw, StorageMode, VecIndex, Version,
+    AnyStoredVec, AnyVec, BytesVec, Database, Exit, ImportableVec, PAGE_SIZE, ReadableVec, Rw,
+    StorageMode, VecIndex, Version, WritableVec,
 };
 
 mod vecs;
@@ -35,10 +35,6 @@ impl Vecs {
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
-        blocks: &blocks::Vecs,
-        mining: &mining::Vecs,
-        transactions: &transactions::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
@@ -51,17 +47,8 @@ impl Vecs {
             vecs: pools
                 .iter()
                 .map(|pool| {
-                    vecs::Vecs::forced_import(
-                        &db,
-                        pool.slug,
-                        version,
-                        indexes,
-                        prices,
-                        blocks,
-                        mining,
-                        transactions,
-                    )
-                    .map(|vecs| (pool.slug, vecs))
+                    vecs::Vecs::forced_import(&db, pool.slug, version, indexes)
+                        .map(|vecs| (pool.slug, vecs))
                 })
                 .collect::<Result<BTreeMap<_, _>>>()?,
             pools,
@@ -78,25 +65,42 @@ impl Vecs {
         Ok(this)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
+        mining: &mining::Vecs,
+        transactions: &transactions::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(indexer, indexes, blocks, starting_indexes, exit)?;
+        self.compute_(
+            indexer,
+            indexes,
+            blocks,
+            prices,
+            mining,
+            transactions,
+            starting_indexes,
+            exit,
+        )?;
         let _lock = exit.lock();
         self.db.compact()?;
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn compute_(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
+        mining: &mining::Vecs,
+        transactions: &transactions::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -107,6 +111,9 @@ impl Vecs {
                 starting_indexes,
                 &self.height_to_pool,
                 blocks,
+                prices,
+                mining,
+                transactions,
                 exit,
             )
         })?;
@@ -128,14 +135,11 @@ impl Vecs {
             indexer.vecs.transactions.first_txoutindex.reader();
         let txoutindex_to_outputtype_reader = indexer.vecs.outputs.outputtype.reader();
         let txoutindex_to_typeindex_reader = indexer.vecs.outputs.typeindex.reader();
-        let p2pk65addressindex_to_p2pk65bytes_reader =
-            indexer.vecs.addresses.p2pk65bytes.reader();
-        let p2pk33addressindex_to_p2pk33bytes_reader =
-            indexer.vecs.addresses.p2pk33bytes.reader();
+        let p2pk65addressindex_to_p2pk65bytes_reader = indexer.vecs.addresses.p2pk65bytes.reader();
+        let p2pk33addressindex_to_p2pk33bytes_reader = indexer.vecs.addresses.p2pk33bytes.reader();
         let p2pkhaddressindex_to_p2pkhbytes_reader = indexer.vecs.addresses.p2pkhbytes.reader();
         let p2shaddressindex_to_p2shbytes_reader = indexer.vecs.addresses.p2shbytes.reader();
-        let p2wpkhaddressindex_to_p2wpkhbytes_reader =
-            indexer.vecs.addresses.p2wpkhbytes.reader();
+        let p2wpkhaddressindex_to_p2wpkhbytes_reader = indexer.vecs.addresses.p2wpkhbytes.reader();
         let p2wshaddressindex_to_p2wshbytes_reader = indexer.vecs.addresses.p2wshbytes.reader();
         let p2traddressindex_to_p2trbytes_reader = indexer.vecs.addresses.p2trbytes.reader();
         let p2aaddressindex_to_p2abytes_reader = indexer.vecs.addresses.p2abytes.reader();

@@ -18,56 +18,56 @@ impl Vecs {
     ) -> Result<()> {
         let price = &prices.usd.price;
 
-        self.price_1w_min.height.compute_rolling_min_from_starts(
+        self.price_1w_min.usd.height.compute_rolling_min_from_starts(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
             price,
             exit,
         )?;
 
-        self.price_1w_max.height.compute_rolling_max_from_starts(
+        self.price_1w_max.usd.height.compute_rolling_max_from_starts(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
             price,
             exit,
         )?;
 
-        self.price_2w_min.height.compute_rolling_min_from_starts(
+        self.price_2w_min.usd.height.compute_rolling_min_from_starts(
             starting_indexes.height,
             &blocks.count.height_2w_ago,
             price,
             exit,
         )?;
 
-        self.price_2w_max.height.compute_rolling_max_from_starts(
+        self.price_2w_max.usd.height.compute_rolling_max_from_starts(
             starting_indexes.height,
             &blocks.count.height_2w_ago,
             price,
             exit,
         )?;
 
-        self.price_1m_min.height.compute_rolling_min_from_starts(
+        self.price_1m_min.usd.height.compute_rolling_min_from_starts(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             price,
             exit,
         )?;
 
-        self.price_1m_max.height.compute_rolling_max_from_starts(
+        self.price_1m_max.usd.height.compute_rolling_max_from_starts(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             price,
             exit,
         )?;
 
-        self.price_1y_min.height.compute_rolling_min_from_starts(
+        self.price_1y_min.usd.height.compute_rolling_min_from_starts(
             starting_indexes.height,
             &blocks.count.height_1y_ago,
             price,
             exit,
         )?;
 
-        self.price_1y_max.height.compute_rolling_max_from_starts(
+        self.price_1y_max.usd.height.compute_rolling_max_from_starts(
             starting_indexes.height,
             &blocks.count.height_1y_ago,
             price,
@@ -107,8 +107,8 @@ impl Vecs {
         self.price_2w_choppiness_index.height.compute_transform3(
             starting_indexes.height,
             &self.price_true_range_2w_sum.height,
-            &self.price_2w_max.height,
-            &self.price_2w_min.height,
+            &self.price_2w_max.usd.height,
+            &self.price_2w_min.usd.height,
             |(h, tr_sum, max, min, ..)| {
                 let range = *max - *min;
                 let ci = if range > 0.0 {

@@ -4,17 +4,22 @@ use brk_types::{Height, OutputType, Sats, TxOutIndex};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, WritableVec, VecIndex};
 
 use super::Vecs;
-use crate::ComputeIndexes;
+use crate::{ComputeIndexes, blocks, prices};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
+        count_vecs: &blocks::CountVecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
+        let window_starts = count_vecs.window_starts();
+
         self.opreturn
-            .compute(starting_indexes, exit, |height_vec| {
+            .compute(starting_indexes.height, &window_starts, prices, exit, |height_vec| {
+
                 // Validate computed versions against dependencies
                 let dep_version = indexer.vecs.outputs.first_txoutindex.version()
                     + indexer.vecs.outputs.outputtype.version()

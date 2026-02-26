@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_types::Dollars;
-use vecdb::{Exit, ReadableVec, VecIndex};
+use vecdb::{Exit, ReadableOptionVec, VecIndex};
 
 use super::Vecs;
 use crate::{ComputeIndexes, blocks, indexes, prices};
@@ -42,7 +42,7 @@ impl Vecs {
         }
 
         let h2d = &indexes.height.day1;
-        let closes: Vec<Dollars> = prices.usd.close.day1.collect();
+        let closes: Vec<Dollars> = prices.usd.close.day1.collect_or_default();
 
         for (ema, period) in [
             (&mut self.price_1w_ema, 7),

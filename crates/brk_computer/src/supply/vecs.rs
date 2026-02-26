@@ -4,8 +4,7 @@ use vecdb::{Database, Rw, StorageMode};
 
 use super::{burned, velocity};
 use crate::internal::{
-    ComputedFromHeightLast, LazyBinaryComputedFromHeightLast, LazyFromHeightLast,
-    LazyValueFromHeightLast,
+    ComputedFromHeightLast, LazyFromHeightLast, LazyValueFromHeightLast,
 };
 
 #[derive(Traversable)]
@@ -20,5 +19,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub market_cap: LazyFromHeightLast<Dollars>,
     pub market_cap_growth_rate: ComputedFromHeightLast<StoredF32, M>,
     pub realized_cap_growth_rate: ComputedFromHeightLast<StoredF32, M>,
-    pub cap_growth_rate_diff: LazyBinaryComputedFromHeightLast<StoredF32>,
+    pub cap_growth_rate_diff: ComputedFromHeightLast<StoredF32, M>,
 }

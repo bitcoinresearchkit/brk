@@ -1,131 +1,117 @@
+use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Sats, StoredF32, StoredF64, Version};
+use brk_types::{Dollars, Height, Sats, StoredF32, StoredF64, Version};
+use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
-    LazyBinaryComputedFromHeightLast, LazyBinaryFromHeightLast, LazyFromHeightLast,
+    ComputedFromHeightLast,
     NegPercentageDollarsF32, PercentageDollarsF32, PercentageSatsF64,
 };
 
-use crate::distribution::metrics::{ImportConfig, SupplyMetrics, UnrealizedBase};
+use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
 
 /// Base relative metrics (always computed when relative is enabled).
 /// All fields are non-Optional - market_cap and realized_cap are always
 /// available when relative metrics are enabled.
-#[derive(Clone, Traversable)]
-pub struct RelativeBase {
+#[derive(Traversable)]
+pub struct RelativeBase<M: StorageMode = Rw> {
     // === Supply in Profit/Loss Relative to Own Supply ===
-    pub supply_in_profit_rel_to_own_supply: LazyBinaryFromHeightLast<StoredF64, Sats, Sats>,
-    pub supply_in_loss_rel_to_own_supply: LazyBinaryFromHeightLast<StoredF64, Sats, Sats>,
+    pub supply_in_profit_rel_to_own_supply: ComputedFromHeightLast<StoredF64, M>,
+    pub supply_in_loss_rel_to_own_supply: ComputedFromHeightLast<StoredF64, M>,
 
     // === Unrealized vs Market Cap ===
-    pub unrealized_profit_rel_to_market_cap: LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
-    pub unrealized_loss_rel_to_market_cap: LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
-    pub neg_unrealized_loss_rel_to_market_cap:
-        LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
-    pub net_unrealized_pnl_rel_to_market_cap:
-        LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
-    pub nupl: LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
+    pub unrealized_profit_rel_to_market_cap: ComputedFromHeightLast<StoredF32, M>,
+    pub unrealized_loss_rel_to_market_cap: ComputedFromHeightLast<StoredF32, M>,
+    pub neg_unrealized_loss_rel_to_market_cap: ComputedFromHeightLast<StoredF32, M>,
+    pub net_unrealized_pnl_rel_to_market_cap: ComputedFromHeightLast<StoredF32, M>,
+    pub nupl: ComputedFromHeightLast<StoredF32, M>,
 
     // === Invested Capital in Profit/Loss as % of Realized Cap ===
-    pub invested_capital_in_profit_pct: LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
-    pub invested_capital_in_loss_pct: LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
+    pub invested_capital_in_profit_pct: ComputedFromHeightLast<StoredF32, M>,
+    pub invested_capital_in_loss_pct: ComputedFromHeightLast<StoredF32, M>,
 }
 
 impl RelativeBase {
-    /// Import base relative metrics.
-    ///
-    /// `market_cap` is either `all_supply.total.usd` (for non-"all" cohorts)
-    /// or `supply.total.usd` (for the "all" cohort itself).
-    pub(crate) fn forced_import(
-        cfg: &ImportConfig,
-        unrealized: &UnrealizedBase,
-        supply: &SupplyMetrics,
-        market_cap: &LazyBinaryComputedFromHeightLast<Dollars, Sats, Dollars>,
-        realized_cap: &LazyFromHeightLast<Dollars, Cents>,
-    ) -> Self {
+    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
         let v2 = Version::new(2);
 
-        Self {
-            supply_in_profit_rel_to_own_supply:
-                LazyBinaryFromHeightLast::from_computed_last::<PercentageSatsF64>(
-                    &cfg.name("supply_in_profit_rel_to_own_supply"),
-                    cfg.version + v1,
-                    &unrealized.supply_in_profit.sats,
-                    &supply.total.sats,
-                ),
-            supply_in_loss_rel_to_own_supply:
-                LazyBinaryFromHeightLast::from_computed_last::<PercentageSatsF64>(
-                    &cfg.name("supply_in_loss_rel_to_own_supply"),
-                    cfg.version + v1,
-                    &unrealized.supply_in_loss.sats,
-                    &supply.total.sats,
-                ),
+        Ok(Self {
+            supply_in_profit_rel_to_own_supply: ComputedFromHeightLast::forced_import(
+                cfg.db, &cfg.name("supply_in_profit_rel_to_own_supply"), cfg.version + v1, cfg.indexes,
+            )?,
+            supply_in_loss_rel_to_own_supply: ComputedFromHeightLast::forced_import(
+                cfg.db, &cfg.name("supply_in_loss_rel_to_own_supply"), cfg.version + v1, cfg.indexes,
+            )?,
+            unrealized_profit_rel_to_market_cap: ComputedFromHeightLast::forced_import(
+                cfg.db, &cfg.name("unrealized_profit_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
+            )?,
+            unrealized_loss_rel_to_market_cap: ComputedFromHeightLast::forced_import(
+                cfg.db, &cfg.name("unrealized_loss_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
+            )?,
+            neg_unrealized_loss_rel_to_market_cap: ComputedFromHeightLast::forced_import(
+                cfg.db, &cfg.name("neg_unrealized_loss_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
+            )?,
+            net_unrealized_pnl_rel_to_market_cap: ComputedFromHeightLast::forced_import(
+                cfg.db, &cfg.name("net_unrealized_pnl_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
+            )?,
+            nupl: ComputedFromHeightLast::forced_import(
+                cfg.db, &cfg.name("nupl"), cfg.version + v2, cfg.indexes,
+            )?,
+            invested_capital_in_profit_pct: ComputedFromHeightLast::forced_import(
+                cfg.db, &cfg.name("invested_capital_in_profit_pct"), cfg.version, cfg.indexes,
+            )?,
+            invested_capital_in_loss_pct: ComputedFromHeightLast::forced_import(
+                cfg.db, &cfg.name("invested_capital_in_loss_pct"), cfg.version, cfg.indexes,
+            )?,
+        })
+    }
 
-            unrealized_profit_rel_to_market_cap:
-                LazyBinaryFromHeightLast::from_block_last_and_lazy_binary_computed_block_last::<
-                    PercentageDollarsF32, _, _,
-                >(
-                    &cfg.name("unrealized_profit_rel_to_market_cap"),
-                    cfg.version + v2,
-                    &unrealized.unrealized_profit,
-                    market_cap,
-                ),
-            unrealized_loss_rel_to_market_cap:
-                LazyBinaryFromHeightLast::from_block_last_and_lazy_binary_computed_block_last::<
-                    PercentageDollarsF32, _, _,
-                >(
-                    &cfg.name("unrealized_loss_rel_to_market_cap"),
-                    cfg.version + v2,
-                    &unrealized.unrealized_loss,
-                    market_cap,
-                ),
-            neg_unrealized_loss_rel_to_market_cap:
-                LazyBinaryFromHeightLast::from_block_last_and_lazy_binary_computed_block_last::<
-                    NegPercentageDollarsF32, _, _,
-                >(
-                    &cfg.name("neg_unrealized_loss_rel_to_market_cap"),
-                    cfg.version + v2,
-                    &unrealized.unrealized_loss,
-                    market_cap,
-                ),
-            net_unrealized_pnl_rel_to_market_cap:
-                LazyBinaryFromHeightLast::from_binary_block_and_lazy_binary_block_last::<
-                    PercentageDollarsF32, _, _, _, _,
-                >(
-                    &cfg.name("net_unrealized_pnl_rel_to_market_cap"),
-                    cfg.version + v2,
-                    &unrealized.net_unrealized_pnl,
-                    market_cap,
-                ),
-            nupl:
-                LazyBinaryFromHeightLast::from_binary_block_and_lazy_binary_block_last::<
-                    PercentageDollarsF32, _, _, _, _,
-                >(
-                    &cfg.name("nupl"),
-                    cfg.version + v2,
-                    &unrealized.net_unrealized_pnl,
-                    market_cap,
-                ),
-
-            invested_capital_in_profit_pct:
-                LazyBinaryFromHeightLast::from_block_last_and_lazy_block_last::<
-                    PercentageDollarsF32, _,
-                >(
-                    &cfg.name("invested_capital_in_profit_pct"),
-                    cfg.version,
-                    &unrealized.invested_capital_in_profit,
-                    realized_cap,
-                ),
-            invested_capital_in_loss_pct:
-                LazyBinaryFromHeightLast::from_block_last_and_lazy_block_last::<
-                    PercentageDollarsF32, _,
-                >(
-                    &cfg.name("invested_capital_in_loss_pct"),
-                    cfg.version,
-                    &unrealized.invested_capital_in_loss,
-                    realized_cap,
-                ),
-        }
+    pub(crate) fn compute(
+        &mut self,
+        max_from: Height,
+        unrealized: &UnrealizedBase,
+        realized: &RealizedBase,
+        supply_total_sats: &impl ReadableVec<Height, Sats>,
+        market_cap: &impl ReadableVec<Height, Dollars>,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.supply_in_profit_rel_to_own_supply
+            .compute_binary::<Sats, Sats, PercentageSatsF64>(
+                max_from, &unrealized.supply_in_profit.sats.height, supply_total_sats, exit,
+            )?;
+        self.supply_in_loss_rel_to_own_supply
+            .compute_binary::<Sats, Sats, PercentageSatsF64>(
+                max_from, &unrealized.supply_in_loss.sats.height, supply_total_sats, exit,
+            )?;
+        self.unrealized_profit_rel_to_market_cap
+            .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
+                max_from, &unrealized.unrealized_profit.height, market_cap, exit,
+            )?;
+        self.unrealized_loss_rel_to_market_cap
+            .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
+                max_from, &unrealized.unrealized_loss.height, market_cap, exit,
+            )?;
+        self.neg_unrealized_loss_rel_to_market_cap
+            .compute_binary::<Dollars, Dollars, NegPercentageDollarsF32>(
+                max_from, &unrealized.unrealized_loss.height, market_cap, exit,
+            )?;
+        self.net_unrealized_pnl_rel_to_market_cap
+            .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
+                max_from, &unrealized.net_unrealized_pnl.height, market_cap, exit,
+            )?;
+        self.nupl
+            .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
+                max_from, &unrealized.net_unrealized_pnl.height, market_cap, exit,
+            )?;
+        self.invested_capital_in_profit_pct
+            .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
+                max_from, &unrealized.invested_capital_in_profit.height, &realized.realized_cap.height, exit,
+            )?;
+        self.invested_capital_in_loss_pct
+            .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
+                max_from, &unrealized.invested_capital_in_loss.height, &realized.realized_cap.height, exit,
+            )?;
+        Ok(())
     }
 }

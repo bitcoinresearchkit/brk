@@ -1,12 +1,10 @@
 use brk_error::Result;
 use brk_traversable::{Traversable, TreeNode};
 use brk_types::{Dollars, Height, StoredF32, Version};
-use vecdb::{
-    AnyExportableVec, Database, ReadOnlyClone, Ro, Rw, StorageMode, WritableVec,
-};
+use vecdb::{AnyExportableVec, Database, ReadOnlyClone, Ro, Rw, StorageMode, WritableVec};
 
 use crate::indexes;
-use crate::internal::{ComputedFromHeightLast, Price, PriceFromHeight};
+use crate::internal::{ComputedFromHeightLast, Price};
 
 pub const PERCENTILES: [u8; 19] = [
     5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95,
@@ -15,7 +13,10 @@ pub const PERCENTILES_LEN: usize = PERCENTILES.len();
 
 /// Compute spot percentile rank by interpolating within percentile bands.
 /// Returns a value between 0 and 100 indicating where spot sits in the distribution.
-pub(crate) fn compute_spot_percentile_rank(percentile_prices: &[Dollars; PERCENTILES_LEN], spot: Dollars) -> StoredF32 {
+pub(crate) fn compute_spot_percentile_rank(
+    percentile_prices: &[Dollars; PERCENTILES_LEN],
+    spot: Dollars,
+) -> StoredF32 {
     if spot.is_nan() || percentile_prices[0].is_nan() {
         return StoredF32::NAN;
     }
@@ -83,7 +84,8 @@ impl PercentilesVecs {
         let vecs = PERCENTILES.map(|p| {
             compute.then(|| {
                 let metric_name = format!("{prefix}_pct{p:02}");
-                PriceFromHeight::forced_import(db, &metric_name, version + VERSION, indexes).unwrap()
+                Price::forced_import(db, &metric_name, version + VERSION, indexes)
+                    .unwrap()
             })
         });
 
@@ -98,7 +100,7 @@ impl PercentilesVecs {
     ) -> Result<()> {
         for (i, vec) in self.vecs.iter_mut().enumerate() {
             if let Some(v) = vec {
-                v.height.truncate_push(height, percentile_prices[i])?;
+                v.usd.height.truncate_push(height, percentile_prices[i])?;
             }
         }
         Ok(())
@@ -107,7 +109,7 @@ impl PercentilesVecs {
     /// Validate computed versions or reset if mismatched.
     pub(crate) fn validate_computed_version_or_reset(&mut self, version: Version) -> Result<()> {
         for vec in self.vecs.iter_mut().flatten() {
-            vec.height.validate_computed_version_or_reset(version)?;
+            vec.usd.height.validate_computed_version_or_reset(version)?;
         }
         Ok(())
     }
@@ -118,7 +120,10 @@ impl ReadOnlyClone for PercentilesVecs {
 
     fn read_only_clone(&self) -> Self::ReadOnly {
         PercentilesVecs {
-            vecs: self.vecs.each_ref().map(|v| v.as_ref().map(|p| p.read_only_clone())),
+            vecs: self
+                .vecs
+                .each_ref()
+                .map(|v| v.as_ref().map(|p| p.read_only_clone())),
         }
     }
 }

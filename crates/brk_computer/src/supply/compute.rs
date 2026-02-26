@@ -1,8 +1,9 @@
 use brk_error::Result;
+use brk_types::StoredF32;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, distribution, mining, scripts, transactions};
+use crate::{ComputeIndexes, blocks, distribution, mining, prices, scripts, transactions};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -12,13 +13,14 @@ impl Vecs {
         blocks: &blocks::Vecs,
         mining: &mining::Vecs,
         transactions: &transactions::Vecs,
+        prices: &prices::Vecs,
         distribution: &distribution::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         // 1. Compute burned/unspendable supply
         self.burned
-            .compute(scripts, mining, starting_indexes, exit)?;
+            .compute(scripts, mining, &blocks.count, prices, starting_indexes, exit)?;
 
         // 2. Compute inflation rate at height level: (supply[h] - supply[1y_ago]) / supply[1y_ago] * 100
         let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.total.sats;
@@ -52,7 +54,14 @@ impl Vecs {
                 exit,
             )?;
 
-        // Note: circulating, market_cap, cap_growth_rate_diff are lazy
+        // 5. Compute cap growth rate diff: market_cap_growth_rate - realized_cap_growth_rate
+        self.cap_growth_rate_diff.height.compute_transform2(
+            starting_indexes.height,
+            &self.market_cap_growth_rate.height,
+            &self.realized_cap_growth_rate.height,
+            |(h, a, b, ..)| (h, StoredF32::from(*a - *b)),
+            exit,
+        )?;
 
         let _lock = exit.lock();
         self.db.compact()?;

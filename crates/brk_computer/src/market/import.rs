@@ -5,7 +5,7 @@ use brk_traversable::Traversable;
 use brk_types::Version;
 use vecdb::{Database, PAGE_SIZE};
 
-use crate::{distribution, indexes, prices, transactions};
+use crate::indexes;
 
 use super::{
     AthVecs, DcaVecs, IndicatorsVecs, LookbackVecs, MovingAverageVecs, RangeVecs, ReturnsVecs,
@@ -17,29 +17,23 @@ impl Vecs {
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
-        distribution: &distribution::Vecs,
-        transactions: &transactions::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join(super::DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let version = parent_version;
 
-        let ath = AthVecs::forced_import(&db, version, indexes, prices)?;
+        let ath = AthVecs::forced_import(&db, version, indexes)?;
         let lookback = LookbackVecs::forced_import(&db, version, indexes)?;
-        let returns = ReturnsVecs::forced_import(&db, version, indexes, prices, &lookback)?;
-        let volatility = VolatilityVecs::forced_import(version, &returns);
+        let returns = ReturnsVecs::forced_import(&db, version, indexes)?;
+        let volatility = VolatilityVecs::forced_import(&db, version, indexes, &returns)?;
         let range = RangeVecs::forced_import(&db, version, indexes)?;
         let moving_average = MovingAverageVecs::forced_import(&db, version, indexes)?;
-        let dca = DcaVecs::forced_import(&db, version, indexes, prices, &lookback)?;
+        let dca = DcaVecs::forced_import(&db, version, indexes)?;
         let indicators = IndicatorsVecs::forced_import(
             &db,
             version,
             indexes,
-            distribution,
-            transactions,
-            &moving_average,
         )?;
 
         let this = Self {

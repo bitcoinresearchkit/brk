@@ -2,27 +2,40 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use schemars::JsonSchema;
 use vecdb::{
-    Database, Exit, ReadableBoxedVec, ReadableVec, Ro, Rw, StorageMode, VecIndex, VecValue, Version,
+    Database, Exit, ReadableVec, Ro, Rw, StorageMode, VecIndex, VecValue, Version,
 };
 
-use crate::internal::ComputedVecValue;
+use crate::internal::{
+    AverageVec, ComputedVecValue, MaxVec, MedianVec, MinVec, Pct10Vec, Pct25Vec, Pct75Vec,
+    Pct90Vec,
+};
 
-use super::{MinMaxAverage, Percentiles};
-
-/// Distribution stats (average + minmax + percentiles)
+/// Distribution stats (average + min + max + percentiles) — flat 8-field struct.
 #[derive(Traversable)]
 pub struct Distribution<I: VecIndex, T: ComputedVecValue + JsonSchema, M: StorageMode = Rw> {
+    pub average: AverageVec<I, T, M>,
     #[traversable(flatten)]
-    pub min_max_average: MinMaxAverage<I, T, M>,
+    pub min: MinVec<I, T, M>,
     #[traversable(flatten)]
-    pub percentiles: Percentiles<I, T, M>,
+    pub max: MaxVec<I, T, M>,
+    pub pct10: Pct10Vec<I, T, M>,
+    pub pct25: Pct25Vec<I, T, M>,
+    pub median: MedianVec<I, T, M>,
+    pub pct75: Pct75Vec<I, T, M>,
+    pub pct90: Pct90Vec<I, T, M>,
 }
 
 impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Distribution<I, T> {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self {
-            min_max_average: MinMaxAverage::forced_import(db, name, version)?,
-            percentiles: Percentiles::forced_import(db, name, version)?,
+            average: AverageVec::forced_import(db, name, version)?,
+            min: MinVec::forced_import(db, name, version)?,
+            max: MaxVec::forced_import(db, name, version)?,
+            pct10: Pct10Vec::forced_import(db, name, version)?,
+            pct25: Pct25Vec::forced_import(db, name, version)?,
+            median: MedianVec::forced_import(db, name, version)?,
+            pct75: Pct75Vec::forced_import(db, name, version)?,
+            pct90: Pct90Vec::forced_import(db, name, version)?,
         })
     }
 
@@ -50,28 +63,63 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Distribution<I, T> {
             skip_count,
             None, // first
             None, // last
-            Some(&mut self.min_max_average.minmax.min.0),
-            Some(&mut self.min_max_average.minmax.max.0),
-            Some(&mut self.min_max_average.average.0),
+            Some(&mut self.min.0),
+            Some(&mut self.max.0),
+            Some(&mut self.average.0),
             None, // sum
             None, // cumulative
-            Some(&mut self.percentiles.median.0),
-            Some(&mut self.percentiles.pct10.0),
-            Some(&mut self.percentiles.pct25.0),
-            Some(&mut self.percentiles.pct75.0),
-            Some(&mut self.percentiles.pct90.0),
+            Some(&mut self.median.0),
+            Some(&mut self.pct10.0),
+            Some(&mut self.pct25.0),
+            Some(&mut self.pct75.0),
+            Some(&mut self.pct90.0),
         )
     }
 
-    // Boxed accessors
-    pub(crate) fn boxed_average(&self) -> ReadableBoxedVec<I, T> {
-        self.min_max_average.boxed_average()
+    /// Compute distribution stats from all items in a rolling window of groups.
+    ///
+    /// For each index `i`, reads all source items from groups `window_starts[i]..=i`
+    /// and computes distribution stats across the entire window.
+    pub(crate) fn compute_from_window<A>(
+        &mut self,
+        max_from: I,
+        source: &impl ReadableVec<A, T>,
+        first_indexes: &impl ReadableVec<I, A>,
+        count_indexes: &impl ReadableVec<I, brk_types::StoredU64>,
+        window_starts: &impl ReadableVec<I, I>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        A: VecIndex + VecValue + brk_types::CheckedSub<A>,
+    {
+        crate::internal::compute_aggregations_windowed(
+            max_from,
+            source,
+            first_indexes,
+            count_indexes,
+            window_starts,
+            exit,
+            &mut self.min.0,
+            &mut self.max.0,
+            &mut self.average.0,
+            &mut self.median.0,
+            &mut self.pct10.0,
+            &mut self.pct25.0,
+            &mut self.pct75.0,
+            &mut self.pct90.0,
+        )
     }
 
     pub fn read_only_clone(&self) -> Distribution<I, T, Ro> {
         Distribution {
-            min_max_average: self.min_max_average.read_only_clone(),
-            percentiles: self.percentiles.read_only_clone(),
+            average: self.average.read_only_clone(),
+            min: self.min.read_only_clone(),
+            max: self.max.read_only_clone(),
+            pct10: self.pct10.read_only_clone(),
+            pct25: self.pct25.read_only_clone(),
+            median: self.median.read_only_clone(),
+            pct75: self.pct75.read_only_clone(),
+            pct90: self.pct90.read_only_clone(),
         }
     }
 }

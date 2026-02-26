@@ -1,7 +1,7 @@
 //! RollingWindows - newtype on Windows with ComputedFromHeightLast per window duration.
 //!
 //! Each of the 4 windows (24h, 7d, 30d, 1y) contains a height-level stored vec
-//! plus all 17 LazyLast index views.
+//! plus all 17 LazyAggVec index views.
 
 use std::ops::SubAssign;
 
@@ -80,99 +80,6 @@ where
             ._1y
             .height
             .compute_rolling_sum(max_from, windows._1y, source, exit)?;
-        Ok(())
-    }
-
-    pub(crate) fn compute_rolling_min<A>(
-        &mut self,
-        max_from: Height,
-        windows: &WindowStarts<'_>,
-        source: &impl ReadableVec<Height, A>,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        A: vecdb::VecValue + Ord,
-        T: From<A>,
-    {
-        use crate::traits::ComputeRollingMinFromStarts;
-        self.0
-            ._24h
-            .height
-            .compute_rolling_min_from_starts(max_from, windows._24h, source, exit)?;
-        self.0
-            ._7d
-            .height
-            .compute_rolling_min_from_starts(max_from, windows._7d, source, exit)?;
-        self.0
-            ._30d
-            .height
-            .compute_rolling_min_from_starts(max_from, windows._30d, source, exit)?;
-        self.0
-            ._1y
-            .height
-            .compute_rolling_min_from_starts(max_from, windows._1y, source, exit)?;
-        Ok(())
-    }
-
-    pub(crate) fn compute_rolling_max<A>(
-        &mut self,
-        max_from: Height,
-        windows: &WindowStarts<'_>,
-        source: &impl ReadableVec<Height, A>,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        A: vecdb::VecValue + Ord,
-        T: From<A>,
-    {
-        use crate::traits::ComputeRollingMaxFromStarts;
-        self.0
-            ._24h
-            .height
-            .compute_rolling_max_from_starts(max_from, windows._24h, source, exit)?;
-        self.0
-            ._7d
-            .height
-            .compute_rolling_max_from_starts(max_from, windows._7d, source, exit)?;
-        self.0
-            ._30d
-            .height
-            .compute_rolling_max_from_starts(max_from, windows._30d, source, exit)?;
-        self.0
-            ._1y
-            .height
-            .compute_rolling_max_from_starts(max_from, windows._1y, source, exit)?;
-        Ok(())
-    }
-
-    pub(crate) fn compute_rolling_average<A>(
-        &mut self,
-        max_from: Height,
-        windows: &WindowStarts<'_>,
-        source: &impl ReadableVec<Height, A>,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        A: vecdb::VecValue,
-        f64: From<A> + From<T>,
-        T: From<f64> + Default,
-    {
-        self.0
-            ._24h
-            .height
-            .compute_rolling_average(max_from, windows._24h, source, exit)?;
-        self.0
-            ._7d
-            .height
-            .compute_rolling_average(max_from, windows._7d, source, exit)?;
-        self.0
-            ._30d
-            .height
-            .compute_rolling_average(max_from, windows._30d, source, exit)?;
-        self.0
-            ._1y
-            .height
-            .compute_rolling_average(max_from, windows._1y, source, exit)?;
         Ok(())
     }
 }

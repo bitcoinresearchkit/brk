@@ -130,9 +130,9 @@ impl Vecs {
         self.segwit.compute(starting_indexes.height, &window_starts, exit, |v| {
             Ok(v.compute_transform3(
                 starting_indexes.height,
-                &self.p2wpkh.last.height,
-                &self.p2wsh.last.height,
-                &self.p2tr.last.height,
+                &self.p2wpkh.height,
+                &self.p2wsh.height,
+                &self.p2tr.height,
                 |(h, p2wpkh, p2wsh, p2tr, ..)| {
                     (h, StoredU64::from(*p2wpkh + *p2wsh + *p2tr))
                 },
@@ -143,8 +143,8 @@ impl Vecs {
         // Adoption ratios: per-block ratio of script type / total outputs
         self.taproot_adoption.height.compute_transform2(
             starting_indexes.height,
-            &self.p2tr.last.height,
-            &outputs_count.total_count.sum_cum.sum.0,
+            &self.p2tr.height,
+            &outputs_count.total_count.sum_cumulative.sum.0,
             |(h, p2tr, total, ..)| {
                 let ratio = if *total > 0 {
                     StoredF32::from(*p2tr as f64 / *total as f64)
@@ -158,8 +158,8 @@ impl Vecs {
 
         self.segwit_adoption.height.compute_transform2(
             starting_indexes.height,
-            &self.segwit.last.height,
-            &outputs_count.total_count.sum_cum.sum.0,
+            &self.segwit.height,
+            &outputs_count.total_count.sum_cumulative.sum.0,
             |(h, segwit, total, ..)| {
                 let ratio = if *total > 0 {
                     StoredF32::from(*segwit as f64 / *total as f64)

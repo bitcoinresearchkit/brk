@@ -2,7 +2,9 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, OutputType, Sats, TxIndex, TxOutIndex, TypeIndex, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, Rw, Stamp, StorageMode};
+use vecdb::{
+    AnyStoredVec, BytesVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec,
+};
 
 use crate::parallel_import;
 
@@ -17,13 +19,7 @@ pub struct OutputsVecs<M: StorageMode = Rw> {
 
 impl OutputsVecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
-        let (
-            first_txoutindex,
-            value,
-            outputtype,
-            typeindex,
-            txindex,
-        ) = parallel_import! {
+        let (first_txoutindex, value, outputtype, typeindex, txindex) = parallel_import! {
             first_txoutindex = PcoVec::forced_import(db, "first_txoutindex", version),
             value = BytesVec::forced_import(db, "value", version),
             outputtype = BytesVec::forced_import(db, "outputtype", version),

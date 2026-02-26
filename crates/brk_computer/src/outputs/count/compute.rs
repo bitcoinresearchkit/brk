@@ -31,14 +31,14 @@ impl Vecs {
         self.total_count_rolling.compute(
             starting_indexes.height,
             &window_starts,
-            self.total_count.sum_cum.sum.inner(),
+            self.total_count.sum_cumulative.sum.inner(),
             exit,
         )?;
 
         self.utxo_count.height.compute_transform3(
             starting_indexes.height,
-            &*self.total_count.sum_cum.cumulative,
-            &*inputs_count.height.sum_cum.cumulative,
+            &*self.total_count.sum_cumulative.cumulative,
+            &*inputs_count.height.sum_cumulative.cumulative,
             &scripts_count.opreturn.cumulative.height,
             |(h, output_count, input_count, opreturn_count, ..)| {
                 let block_count = u64::from(h + 1_usize);

@@ -1,16 +1,4 @@
-use brk_types::{
-    EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, TxIndex,
-};
-use smallvec::SmallVec;
-
-/// Funded address data with source tracking for flush operations.
-pub type FundedAddressDataWithSource = WithAddressDataSource<FundedAddressData>;
-
-/// Empty address data with source tracking for flush operations.
-pub type EmptyAddressDataWithSource = WithAddressDataSource<EmptyAddressData>;
-
-/// SmallVec for transaction indexes - most addresses have few transactions per block.
-pub type TxIndexVec = SmallVec<[TxIndex; 4]>;
+use brk_types::{EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex};
 
 /// Address data wrapped with its source location for flush operations.
 ///

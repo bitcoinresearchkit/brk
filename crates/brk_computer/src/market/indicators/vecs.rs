@@ -1,8 +1,8 @@
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, StoredF32};
-use vecdb::{LazyVecFrom2, Rw, StorageMode};
+use brk_types::StoredF32;
+use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeightLast, LazyBinaryFromHeightLast};
+use crate::internal::ComputedFromHeightLast;
 
 pub const TIMEFRAME_NAMES: [&str; 4] = ["1d", "1w", "1m", "1y"];
 
@@ -41,7 +41,7 @@ pub struct RsiChain<M: StorageMode = Rw> {
     pub losses: ComputedFromHeightLast<StoredF32, M>,
     pub average_gain: ComputedFromHeightLast<StoredF32, M>,
     pub average_loss: ComputedFromHeightLast<StoredF32, M>,
-    pub rsi: LazyVecFrom2<Height, StoredF32, Height, StoredF32, Height, StoredF32>,
+    pub rsi: ComputedFromHeightLast<StoredF32, M>,
     pub rsi_min: ComputedFromHeightLast<StoredF32, M>,
     pub rsi_max: ComputedFromHeightLast<StoredF32, M>,
     pub stoch_rsi: ComputedFromHeightLast<StoredF32, M>,
@@ -53,20 +53,20 @@ pub struct RsiChain<M: StorageMode = Rw> {
 pub struct MacdChain<M: StorageMode = Rw> {
     pub line: ComputedFromHeightLast<StoredF32, M>,
     pub signal: ComputedFromHeightLast<StoredF32, M>,
-    pub histogram: LazyVecFrom2<Height, StoredF32, Height, StoredF32, Height, StoredF32>,
+    pub histogram: ComputedFromHeightLast<StoredF32, M>,
 }
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub puell_multiple: ComputedFromHeightLast<StoredF32, M>,
-    pub nvt: LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
+    pub nvt: ComputedFromHeightLast<StoredF32, M>,
 
     pub rsi: ByIndicatorTimeframe<RsiChain<M>>,
 
     pub stoch_k: ComputedFromHeightLast<StoredF32, M>,
     pub stoch_d: ComputedFromHeightLast<StoredF32, M>,
 
-    pub pi_cycle: LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
+    pub pi_cycle: ComputedFromHeightLast<StoredF32, M>,
 
     pub macd: ByIndicatorTimeframe<MacdChain<M>>,
 

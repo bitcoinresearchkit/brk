@@ -4,19 +4,23 @@ use brk_types::{CheckedSub, HalvingEpoch, Sats, StoredF32};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, indexes, transactions};
+use crate::{ComputeIndexes, blocks, indexes, prices, transactions};
 
 impl Vecs {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         count_vecs: &blocks::CountVecs,
         transactions_fees: &transactions::FeesVecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.coinbase.compute(starting_indexes, exit, |vec| {
+        let window_starts = count_vecs.window_starts();
+
+        self.coinbase.compute(starting_indexes.height, &window_starts, prices, exit, |vec| {
             // Cursors avoid per-height PcoVec page decompression for the
             // tx-indexed lookups.  Coinbase txindex values are strictly
             // increasing, so the cursors only advance forward.
@@ -48,7 +52,6 @@ impl Vecs {
             Ok(())
         })?;
 
-        let window_starts = count_vecs.window_starts();
         self.coinbase_sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
@@ -57,7 +60,7 @@ impl Vecs {
             exit,
         )?;
 
-        let fee_sats_source = transactions_fees.fee.sum_cum.sum.inner();
+        let fee_sats_source = transactions_fees.fee.sum_cumulative.sum.inner();
         let fee_usd_source = &transactions_fees.fee_usd_sum;
         self.fee_sum.compute_rolling_sum(
             starting_indexes.height,
@@ -67,11 +70,11 @@ impl Vecs {
             exit,
         )?;
 
-        self.subsidy.compute(starting_indexes, exit, |vec| {
+        self.subsidy.compute(starting_indexes.height, &window_starts, prices, exit, |vec| {
             vec.compute_transform2(
                 starting_indexes.height,
                 &self.coinbase.sats.height,
-                transactions_fees.fee.sum_cum.sum.inner(),
+                transactions_fees.fee.sum_cumulative.sum.inner(),
                 |(height, coinbase, fees, ..)| {
                     (
                         height,
@@ -87,7 +90,7 @@ impl Vecs {
         })?;
 
         self.unclaimed_rewards
-            .compute(starting_indexes, exit, |vec| {
+            .compute(starting_indexes.height, &window_starts, prices, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
                     &self.subsidy.sats.height,
@@ -104,8 +107,8 @@ impl Vecs {
         // All-time cumulative fee dominance
         self.fee_dominance.height.compute_percentage(
             starting_indexes.height,
-            transactions_fees.fee.sum_cum.cumulative.inner(),
-            self.coinbase.sats.rest.height_cumulative.inner(),
+            transactions_fees.fee.sum_cumulative.cumulative.inner(),
+            &self.coinbase.sats.cumulative.height,
             exit,
         )?;
 
@@ -138,8 +141,8 @@ impl Vecs {
         // All-time cumulative subsidy dominance
         self.subsidy_dominance.height.compute_percentage(
             starting_indexes.height,
-            self.subsidy.sats.rest.height_cumulative.inner(),
-            self.coinbase.sats.rest.height_cumulative.inner(),
+            &self.subsidy.sats.cumulative.height,
+            &self.coinbase.sats.cumulative.height,
             exit,
         )?;
 

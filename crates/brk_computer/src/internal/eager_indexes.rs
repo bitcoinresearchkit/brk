@@ -7,43 +7,44 @@ use brk_error::Result;
 
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4, Minute1, Minute10,
-    Minute30, Minute5, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute1, Minute5,
+    Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, VecIndex};
-
-use crate::{
-    indexes,
-    indexes_from,
-    internal::{ComputedVecValue, Indexes, NumericValue},
-    ComputeIndexes,
+use vecdb::{
+    Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
 };
 
-pub type EagerIndexesInner<T, M> = Indexes<
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Minute1, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Minute5, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Minute10, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Minute30, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Hour1, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Hour4, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Hour12, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Day1, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Day3, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Week1, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Month1, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Month3, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Month6, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Year1, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<Year10, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<HalvingEpoch, T>>>,
-    <M as StorageMode>::Stored<EagerVec<PcoVec<DifficultyEpoch, T>>>,
->;
+use crate::{
+    ComputeIndexes, indexes, indexes_from,
+    internal::{ComputedVecValue, Indexes, NumericValue},
+};
 
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct EagerIndexes<T, M: StorageMode = Rw>(pub EagerIndexesInner<T, M>)
+pub struct EagerIndexes<T, M: StorageMode = Rw>(
+    #[allow(clippy::type_complexity)]
+    pub  Indexes<
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Minute1, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Minute5, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Minute10, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Minute30, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Hour1, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Hour4, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Hour12, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Day1, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Day3, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Week1, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Month1, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Month3, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Month6, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Year1, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Year10, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<HalvingEpoch, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<DifficultyEpoch, T>>>,
+    >,
+)
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 

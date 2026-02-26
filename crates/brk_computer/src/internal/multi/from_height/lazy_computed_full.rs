@@ -1,33 +1,34 @@
-//! LazyComputedFromHeightFull - block full with lazy height transform.
+//! LazyComputedFromHeightCumulativeFull - block full with lazy height transform + cumulative + rolling.
+
+use std::ops::SubAssign;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{Database, Exit, ReadableCloneableVec, LazyVecFrom1, UnaryTransform, Rw, StorageMode};
+use vecdb::{Database, Exit, LazyVecFrom1, ReadableCloneableVec, Rw, StorageMode, UnaryTransform};
 
 use crate::{
-    ComputeIndexes,
     indexes,
-    internal::{ComputedVecValue, ComputedHeightDerivedFull, NumericValue},
+    internal::{ComputedHeightDerivedCumulativeFull, ComputedVecValue, NumericValue, WindowStarts},
 };
 
 const VERSION: Version = Version::ZERO;
 
-/// Block full aggregation with lazy height transform + computed derived indexes.
+/// Block full aggregation with lazy height transform + cumulative + rolling windows.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(merge)]
 pub struct LazyComputedFromHeightFull<T, S = T, M: StorageMode = Rw>
 where
-    T: ComputedVecValue + PartialOrd + JsonSchema,
+    T: NumericValue + JsonSchema,
     S: ComputedVecValue,
 {
     #[traversable(rename = "base")]
     pub height: LazyVecFrom1<Height, T, Height, S>,
     #[deref]
     #[deref_mut]
-    pub rest: Box<ComputedHeightDerivedFull<T, M>>,
+    pub rest: Box<ComputedHeightDerivedCumulativeFull<T, M>>,
 }
 
 impl<T, S> LazyComputedFromHeightFull<T, S>
@@ -46,18 +47,29 @@ where
 
         let height = LazyVecFrom1::transformed::<F>(name, v, source.read_only_boxed_clone());
 
-        let rest =
-            ComputedHeightDerivedFull::forced_import(db, name, height.read_only_boxed_clone(), v, indexes)?;
+        let rest = ComputedHeightDerivedCumulativeFull::forced_import(
+            db,
+            name,
+            v,
+            indexes,
+        )?;
 
-        Ok(Self { height, rest: Box::new(rest) })
+        Ok(Self {
+            height,
+            rest: Box::new(rest),
+        })
     }
 
-    pub(crate) fn compute_cumulative(
+    pub(crate) fn compute(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        max_from: Height,
+        windows: &WindowStarts<'_>,
         exit: &Exit,
-    ) -> Result<()> {
-        self.rest
-            .compute_cumulative(starting_indexes, &self.height, exit)
+    ) -> Result<()>
+    where
+        T: From<f64> + Default + SubAssign + Copy + Ord,
+        f64: From<T>,
+    {
+        self.rest.compute(max_from, windows, &self.height, exit)
     }
 }

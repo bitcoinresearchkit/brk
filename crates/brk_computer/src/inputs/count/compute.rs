@@ -27,7 +27,7 @@ impl Vecs {
         self.rolling.compute(
             starting_indexes.height,
             &window_starts,
-            self.height.sum_cum.sum.inner(),
+            self.height.sum_cumulative.sum.inner(),
             exit,
         )?;
 

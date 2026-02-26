@@ -3,18 +3,14 @@ use std::mem;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, StoredF32, Version};
-use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, WritableVec, ReadableVec,
-    PcoVec, Rw, StorageMode, VecIndex,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
+    WritableVec,
 };
 
-use crate::{blocks, indexes, ComputeIndexes};
+use crate::{ComputeIndexes, blocks, indexes};
 
-use crate::internal::{
-    ComputedFromHeightLast, ComputedVecValue, LazyBinaryFromHeightLast, LazyFromHeightLast,
-    Price, PriceTimesRatio,
-};
+use crate::internal::{ComputedFromHeightLast, Price};
 
 #[derive(Default)]
 pub struct StandardDeviationVecsOptions {
@@ -67,19 +63,19 @@ pub struct ComputedFromHeightStdDev<M: StorageMode = Rw> {
     pub m2_5sd: Option<ComputedFromHeightLast<StoredF32, M>>,
     pub m3sd: Option<ComputedFromHeightLast<StoredF32, M>>,
 
-    pub _0sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub p0_5sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub p1sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub p1_5sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub p2sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub p2_5sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub p3sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub m0_5sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub m1sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub m1_5sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub m2sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub m2_5sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
-    pub m3sd_usd: Option<Price<LazyBinaryFromHeightLast<Dollars, Dollars, StoredF32>>>,
+    pub _0sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub p0_5sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub p1sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub p1_5sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub p2sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub p2_5sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub p3sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub m0_5sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub m1sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub m1_5sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub m2sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub m2_5sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub m3sd_usd: Option<Price<ComputedFromHeightLast<Dollars, M>>>,
 }
 
 impl ComputedFromHeightStdDev {
@@ -91,7 +87,6 @@ impl ComputedFromHeightStdDev {
         parent_version: Version,
         indexes: &indexes::Vecs,
         options: StandardDeviationVecsOptions,
-        metric_price: Option<&ComputedFromHeightLast<Dollars>>,
     ) -> Result<Self> {
         let version = parent_version + Version::TWO;
 
@@ -121,23 +116,21 @@ impl ComputedFromHeightStdDev {
         let m2_5sd = options.bands().then(|| import!("m2_5sd"));
         let m3sd = options.bands().then(|| import!("m3sd"));
 
-        // Create USD bands using the metric price (the denominator of the ratio).
-        // This converts ratio bands back to USD: usd_band = metric_price * ratio_band
+        // Import USD price band vecs (computed eagerly at compute time)
         macro_rules! lazy_usd {
             ($band:expr, $suffix:expr) => {
                 if !options.price_bands() {
                     None
-                } else if let Some(mp) = metric_price {
-                    $band.as_ref().map(|b| {
-                        Price::from_computed_price_and_band::<PriceTimesRatio>(
+                } else {
+                    $band.as_ref().map(|_| {
+                        Price::forced_import(
+                            db,
                             &format!("{name}_{}", $suffix),
                             version,
-                            mp,
-                            b,
+                            indexes,
                         )
+                        .unwrap()
                     })
-                } else {
-                    None
                 }
             };
         }
@@ -177,15 +170,13 @@ impl ComputedFromHeightStdDev {
         })
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn forced_import_from_lazy<S1T: ComputedVecValue + JsonSchema>(
+    pub(crate) fn forced_import_from_lazy(
         db: &Database,
         name: &str,
         days: usize,
         parent_version: Version,
         indexes: &indexes::Vecs,
         options: StandardDeviationVecsOptions,
-        metric_price: Option<&LazyFromHeightLast<Dollars, S1T>>,
     ) -> Result<Self> {
         let version = parent_version + Version::TWO;
 
@@ -216,21 +207,21 @@ impl ComputedFromHeightStdDev {
         let m3sd = options.bands().then(|| import!("m3sd"));
 
         // For lazy metric price, use from_lazy_block_last_and_block_last.
-        // PriceTimesRatio: BinaryTransform<Dollars, StoredF32, Dollars>
-        // source1 = metric_price (Dollars, lazy), source2 = band (StoredF32, computed)
         macro_rules! lazy_usd {
             ($band:expr, $suffix:expr) => {
-                metric_price
-                    .zip($band.as_ref())
-                    .filter(|_| options.price_bands())
-                    .map(|(mp, b)| {
-                        Price::from_lazy_price_and_band::<PriceTimesRatio, S1T>(
+                if !options.price_bands() {
+                    None
+                } else {
+                    $band.as_ref().map(|_| {
+                        Price::forced_import(
+                            db,
                             &format!("{name}_{}", $suffix),
                             version,
-                            mp,
-                            b,
+                            indexes,
                         )
+                        .unwrap()
                     })
+                }
             };
         }
 
@@ -277,29 +268,21 @@ impl ComputedFromHeightStdDev {
         // 1. Compute SMA using the appropriate lookback vec (or full-history SMA)
         if self.days != usize::MAX {
             let window_starts = blocks.count.start_vec(self.days);
-            self.sma
-                .as_mut()
-                .unwrap()
-                .height
-                .compute_rolling_average(
-                    starting_indexes.height,
-                    window_starts,
-                    source,
-                    exit,
-                )?;
+            self.sma.as_mut().unwrap().height.compute_rolling_average(
+                starting_indexes.height,
+                window_starts,
+                source,
+                exit,
+            )?;
         } else {
             // Full history SMA (days == usize::MAX)
-            self.sma
-                .as_mut()
-                .unwrap()
-                .height
-                .compute_sma_(
-                    starting_indexes.height,
-                    source,
-                    self.days,
-                    exit,
-                    None,
-                )?;
+            self.sma.as_mut().unwrap().height.compute_sma_(
+                starting_indexes.height,
+                source,
+                self.days,
+                exit,
+                None,
+            )?;
         }
 
         let sma_opt: Option<&EagerVec<PcoVec<Height, StoredF32>>> = None;
@@ -407,7 +390,8 @@ impl ComputedFromHeightStdDev {
             // This is the population SD of all daily values relative to the current SMA
             let sd = if n > 0 {
                 let nf = n as f64;
-                let variance = welford_sum_sq / nf - 2.0 * avg_f64 * welford_sum / nf + avg_f64 * avg_f64;
+                let variance =
+                    welford_sum_sq / nf - 2.0 * avg_f64 * welford_sum / nf + avg_f64 * avg_f64;
                 StoredF32::from(variance.max(0.0).sqrt() as f32)
             } else {
                 StoredF32::from(0.0_f32)
@@ -467,6 +451,48 @@ impl ComputedFromHeightStdDev {
                 exit,
             )?;
         }
+
+        Ok(())
+    }
+
+    /// Compute USD price bands: usd_band = metric_price * band_ratio
+    pub(crate) fn compute_usd_bands(
+        &mut self,
+        starting_indexes: &ComputeIndexes,
+        metric_price: &impl ReadableVec<Height, Dollars>,
+        exit: &Exit,
+    ) -> Result<()> {
+        use crate::internal::PriceTimesRatio;
+
+        macro_rules! compute_band {
+            ($usd_field:ident, $band_field:ident) => {
+                if let Some(usd) = self.$usd_field.as_mut() {
+                    if let Some(band) = self.$band_field.as_ref() {
+                        usd.usd
+                            .compute_binary::<Dollars, StoredF32, PriceTimesRatio>(
+                                starting_indexes.height,
+                                metric_price,
+                                &band.height,
+                                exit,
+                            )?;
+                    }
+                }
+            };
+        }
+
+        compute_band!(_0sd_usd, sma);
+        compute_band!(p0_5sd_usd, p0_5sd);
+        compute_band!(p1sd_usd, p1sd);
+        compute_band!(p1_5sd_usd, p1_5sd);
+        compute_band!(p2sd_usd, p2sd);
+        compute_band!(p2_5sd_usd, p2_5sd);
+        compute_band!(p3sd_usd, p3sd);
+        compute_band!(m0_5sd_usd, m0_5sd);
+        compute_band!(m1sd_usd, m1sd);
+        compute_band!(m1_5sd_usd, m1_5sd);
+        compute_band!(m2sd_usd, m2sd);
+        compute_band!(m2_5sd_usd, m2_5sd);
+        compute_band!(m3sd_usd, m3sd);
 
         Ok(())
     }

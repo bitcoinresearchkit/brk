@@ -9,8 +9,8 @@ use brk_types::{
 };
 use tracing::{debug, info};
 use vecdb::{
-    AnyVec, BytesVec, Database, Exit, WritableVec, ImportableVec, ReadableCloneableVec,
-    ReadableVec, Rw, StorageMode, LazyVecFrom1, PAGE_SIZE, Stamp,
+    AnyVec, BytesVec, Database, Exit, ImportableVec, LazyVecFrom1, PAGE_SIZE, ReadOnlyClone,
+    ReadableCloneableVec, ReadableVec, Rw, Stamp, StorageMode, WritableVec,
 };
 
 use crate::{
@@ -50,12 +50,12 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub empty_addr_count: AddrCountsVecs<M>,
     pub address_activity: AddressActivityVecs<M>,
 
-    /// Total addresses ever seen (addr_count + empty_addr_count) - lazy, global + per-type
-    pub total_addr_count: TotalAddrCountVecs,
+    /// Total addresses ever seen (addr_count + empty_addr_count) - stored, global + per-type
+    pub total_addr_count: TotalAddrCountVecs<M>,
     /// New addresses per block (delta of total) - lazy height, stored day1 stats, global + per-type
     pub new_addr_count: NewAddrCountVecs<M>,
-    /// Growth rate (new / addr_count) - lazy ratio with distribution stats, global + per-type
-    pub growth_rate: GrowthRateVecs,
+    /// Growth rate (new / addr_count) - stored ratio with distribution stats, global + per-type
+    pub growth_rate: GrowthRateVecs<M>,
 
     pub fundedaddressindex:
         LazyVecFrom1<FundedAddressIndex, FundedAddressIndex, FundedAddressIndex, FundedAddressData>,
@@ -70,7 +70,6 @@ impl Vecs {
         parent: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
     ) -> Result<Self> {
         let db_path = parent.join(super::DB_NAME);
         let states_path = db_path.join("states");
@@ -81,17 +80,9 @@ impl Vecs {
 
         let version = parent_version + VERSION;
 
-        let utxo_cohorts = UTXOCohorts::forced_import(&db, version, indexes, prices, &states_path)?;
+        let utxo_cohorts = UTXOCohorts::forced_import(&db, version, indexes, &states_path)?;
 
-        // Create address cohorts with reference to utxo "all" cohort's supply for global ratios
-        let address_cohorts = AddressCohorts::forced_import(
-            &db,
-            version,
-            indexes,
-            prices,
-            &states_path,
-            &utxo_cohorts.all.metrics.supply,
-        )?;
+        let address_cohorts = AddressCohorts::forced_import(&db, version, indexes, &states_path)?;
 
         // Create address data BytesVecs first so we can also use them for identity mappings
         let fundedaddressindex_to_fundedaddressdata = BytesVec::forced_import_with(
@@ -123,21 +114,15 @@ impl Vecs {
         let address_activity =
             AddressActivityVecs::forced_import(&db, "address_activity", version, indexes)?;
 
-        // Lazy total = addr_count + empty_addr_count (global + per-type, with all derived indexes)
-        let total_addr_count = TotalAddrCountVecs::forced_import(
-            version,
-            indexes,
-            &addr_count,
-            &empty_addr_count,
-        )?;
+        // Stored total = addr_count + empty_addr_count (global + per-type, with all derived indexes)
+        let total_addr_count = TotalAddrCountVecs::forced_import(&db, version, indexes)?;
 
         // Lazy delta of total (global + per-type)
         let new_addr_count =
             NewAddrCountVecs::forced_import(&db, version, indexes, &total_addr_count)?;
 
         // Growth rate: new / addr_count (global + per-type)
-        let growth_rate =
-            GrowthRateVecs::forced_import(version, indexes, &new_addr_count, &addr_count)?;
+        let growth_rate = GrowthRateVecs::forced_import(&db, version, indexes)?;
 
         let this = Self {
             supply_state: BytesVec::forced_import_with(
@@ -359,14 +344,38 @@ impl Vecs {
         self.empty_addr_count
             .compute_rest(blocks, starting_indexes, exit)?;
 
-        // 6d. Compute new_addr_count cumulative (height is lazy delta)
+        // 6c. Compute total_addr_count = addr_count + empty_addr_count
+        self.total_addr_count.compute(
+            starting_indexes.height,
+            &self.addr_count,
+            &self.empty_addr_count,
+            exit,
+        )?;
+
+        // 6d. Compute new_addr_count cumulative + rolling (height is lazy delta)
+        let window_starts = blocks.count.window_starts();
         self.new_addr_count
-            .compute_cumulative(starting_indexes, exit)?;
+            .compute(starting_indexes.height, &window_starts, exit)?;
+
+        // 6e. Compute growth_rate = new_addr_count / addr_count
+        self.growth_rate.compute(
+            starting_indexes.height,
+            &window_starts,
+            &self.new_addr_count,
+            &self.addr_count,
+            exit,
+        )?;
 
         // 7. Compute rest part2 (relative metrics)
-        let supply_metrics = &self.utxo_cohorts.all.metrics.supply;
-
-        let height_to_market_cap = supply_metrics.total.usd.height.clone();
+        let height_to_market_cap = self
+            .utxo_cohorts
+            .all
+            .metrics
+            .supply
+            .total
+            .usd
+            .height
+            .read_only_clone();
 
         aggregates::compute_rest_part2(
             &mut self.utxo_cohorts,
@@ -400,5 +409,4 @@ impl Vecs {
             .min(Height::from(self.empty_addr_count.min_stateful_height()))
             .min(Height::from(self.address_activity.min_stateful_height()))
     }
-
 }

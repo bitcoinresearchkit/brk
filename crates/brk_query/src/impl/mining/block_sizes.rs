@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_types::{BlockSizeEntry, BlockSizesWeights, BlockWeightEntry, TimePeriod};
-use vecdb::{ReadableVec, VecIndex};
+use vecdb::{ReadableOptionVec, VecIndex};
 
 use super::day1_iter::Day1Iter;
 use crate::Query;
@@ -36,8 +36,8 @@ impl Query {
             .day1;
 
         let entries: Vec<_> = iter.collect(|di, ts, h| {
-            let size: Option<u64> = sizes_vec.collect_one(di).map(|s| *s);
-            let weight: Option<u64> = weights_vec.collect_one(di).map(|w| *w);
+            let size: Option<u64> = sizes_vec.collect_one_flat(di).map(|s| *s);
+            let weight: Option<u64> = weights_vec.collect_one_flat(di).map(|w| *w);
             Some((u32::from(h), (*ts), size, weight))
         });
 

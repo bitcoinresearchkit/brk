@@ -172,40 +172,6 @@ impl<T> ByDcaPeriod<T> {
         .into_iter()
     }
 
-    pub(crate) fn zip_ref<'a, U>(&'a self, other: &'a ByDcaPeriod<U>) -> ByDcaPeriod<(&'a T, &'a U)> {
-        ByDcaPeriod {
-            _1w: (&self._1w, &other._1w),
-            _1m: (&self._1m, &other._1m),
-            _3m: (&self._3m, &other._3m),
-            _6m: (&self._6m, &other._6m),
-            _1y: (&self._1y, &other._1y),
-            _2y: (&self._2y, &other._2y),
-            _3y: (&self._3y, &other._3y),
-            _4y: (&self._4y, &other._4y),
-            _5y: (&self._5y, &other._5y),
-            _6y: (&self._6y, &other._6y),
-            _8y: (&self._8y, &other._8y),
-            _10y: (&self._10y, &other._10y),
-        }
-    }
-
-    pub(crate) fn map<U, F: FnMut(T) -> U>(self, mut f: F) -> ByDcaPeriod<U> {
-        ByDcaPeriod {
-            _1w: f(self._1w),
-            _1m: f(self._1m),
-            _3m: f(self._3m),
-            _6m: f(self._6m),
-            _1y: f(self._1y),
-            _2y: f(self._2y),
-            _3y: f(self._3y),
-            _4y: f(self._4y),
-            _5y: f(self._5y),
-            _6y: f(self._6y),
-            _8y: f(self._8y),
-            _10y: f(self._10y),
-        }
-    }
-
 }
 
 /// Generic wrapper for DCA CAGR data (periods >= 2 years)

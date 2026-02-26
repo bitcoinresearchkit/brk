@@ -1,3 +1,4 @@
+mod block_windows;
 mod compute;
 mod distribution_stats;
 mod eager_indexes;
@@ -8,6 +9,7 @@ mod single;
 mod traits;
 mod windows;
 
+pub(crate) use block_windows::*;
 pub(crate) use compute::*;
 pub(crate) use distribution_stats::*;
 pub(crate) use eager_indexes::*;

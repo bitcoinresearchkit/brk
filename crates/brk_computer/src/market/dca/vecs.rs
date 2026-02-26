@@ -4,7 +4,7 @@ use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod};
 use crate::internal::{
-    ComputedFromHeightLast, LazyBinaryFromHeightLast, Price, ValueFromHeightLast,
+    ComputedFromHeightLast, Price, ValueFromHeightLast,
 };
 
 /// Dollar-cost averaging metrics by time period and year class
@@ -17,7 +17,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     // DCA by period - KISS types
     pub period_stack: ByDcaPeriod<ValueFromHeightLast<M>>,
     pub period_average_price: ByDcaPeriod<Price<ComputedFromHeightLast<Dollars, M>>>,
-    pub period_returns: ByDcaPeriod<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
+    pub period_returns: ByDcaPeriod<ComputedFromHeightLast<StoredF32, M>>,
     pub period_cagr: ByDcaCagr<ComputedFromHeightLast<StoredF32, M>>,
 
     // DCA by period - profitability
@@ -28,7 +28,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 
     // Lump sum by period (for comparison with DCA) - KISS types
     pub period_lump_sum_stack: ByDcaPeriod<ValueFromHeightLast<M>>,
-    pub period_lump_sum_returns: ByDcaPeriod<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
+    pub period_lump_sum_returns: ByDcaPeriod<ComputedFromHeightLast<StoredF32, M>>,
 
     // Lump sum by period - profitability
     pub period_lump_sum_days_in_profit: ByDcaPeriod<ComputedFromHeightLast<StoredU32, M>>,
@@ -39,7 +39,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     // DCA by year class - KISS types
     pub class_stack: ByDcaClass<ValueFromHeightLast<M>>,
     pub class_average_price: ByDcaClass<Price<ComputedFromHeightLast<Dollars, M>>>,
-    pub class_returns: ByDcaClass<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
+    pub class_returns: ByDcaClass<ComputedFromHeightLast<StoredF32, M>>,
 
     // DCA by year class - profitability
     pub class_days_in_profit: ByDcaClass<ComputedFromHeightLast<StoredU32, M>>,

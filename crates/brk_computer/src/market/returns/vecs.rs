@@ -1,16 +1,16 @@
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, StoredF32};
+use brk_types::{Height, StoredF32};
 use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use crate::{
-    internal::{ComputedFromHeightLast, ComputedFromHeightStdDev, LazyBinaryFromHeightLast},
+    internal::{ComputedFromHeightLast, ComputedFromHeightStdDev},
     market::{dca::ByDcaCagr, lookback::ByLookbackPeriod},
 };
 
 /// Price returns, CAGR, and returns standard deviation metrics
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub price_returns: ByLookbackPeriod<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
+    pub price_returns: ByLookbackPeriod<ComputedFromHeightLast<StoredF32, M>>,
 
     // CAGR (computed from returns, 2y+ only)
     pub cagr: ByDcaCagr<ComputedFromHeightLast<StoredF32, M>>,

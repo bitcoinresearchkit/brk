@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_types::{Bitcoin, Day1, Date, Dollars, Height, Sats, StoredF32, StoredU32};
-use vecdb::{AnyVec, EagerVec, Exit, ReadableVec, PcoVec, PcoVecValue, VecIndex};
+use vecdb::{AnyVec, EagerVec, Exit, ReadableOptionVec, ReadableVec, PcoVec, PcoVecValue, VecIndex};
 
 use super::{ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     ComputeIndexes, blocks, indexes,
-    internal::{ComputedFromHeightLast, LazyBinaryFromHeightLast},
+    internal::{ComputedFromHeightLast, PercentageDiffDollars},
     market::lookback,
     prices,
 };
@@ -42,7 +42,7 @@ impl Vecs {
                     if same_day {
                         (h, Sats::ZERO)
                     } else {
-                        let s = close.collect_one(di).map(sats_from_dca).unwrap_or(Sats::ZERO);
+                        let s = close.collect_one_flat(di).map(sats_from_dca).unwrap_or(Sats::ZERO);
                         (h, s)
                     }
                 },
@@ -89,10 +89,24 @@ impl Vecs {
             )?;
         }
 
+        // DCA by period - returns (compute from average price)
+        for (returns, (average_price, _)) in self
+            .period_returns
+            .iter_mut()
+            .zip(self.period_average_price.iter_with_days())
+        {
+            returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
+                starting_indexes.height,
+                &prices.usd.price,
+                &average_price.usd.height,
+                exit,
+            )?;
+        }
+
         // DCA by period - CAGR (computed from returns)
         for (cagr, returns, days) in self.period_cagr.zip_mut_with_period(&self.period_returns) {
             let years = days as f32 / 365.0;
-            let returns_data: Vec<StoredF32> = returns.day1.collect();
+            let returns_data: Vec<StoredF32> = returns.day1.collect_or_default();
             cagr.height.compute_transform(
                 starting_indexes.height,
                 h2d,
@@ -142,6 +156,21 @@ impl Vecs {
             )?;
         }
 
+        // Lump sum by period - returns (compute from lookback price)
+        let lookback_dca2 = lookback.price_ago.as_dca_period();
+        for (returns, (lookback_price, _)) in self
+            .period_lump_sum_returns
+            .iter_mut()
+            .zip(lookback_dca2.iter_with_days())
+        {
+            returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
+                starting_indexes.height,
+                &prices.usd.price,
+                &lookback_price.usd.height,
+                exit,
+            )?;
+        }
+
         // Lump sum by period - profitability
         compute_period_rolling(
             &mut self.period_lump_sum_days_in_profit,
@@ -187,7 +216,7 @@ impl Vecs {
                         } else {
                             Sats::ZERO
                         };
-                        let s = close.collect_one(di).map(sats_from_dca).unwrap_or(Sats::ZERO);
+                        let s = close.collect_one_flat(di).map(sats_from_dca).unwrap_or(Sats::ZERO);
                         (h, prev + s)
                     }
                 },
@@ -222,6 +251,21 @@ impl Vecs {
             )?;
         }
 
+        // DCA by year class - returns (compute from average price)
+        for (returns, average_price) in self
+            .class_returns
+            .iter_mut()
+            .zip(self.class_average_price.iter())
+        {
+
+            returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
+                starting_indexes.height,
+                &prices.usd.price,
+                &average_price.usd.height,
+                exit,
+            )?;
+        }
+
         // DCA by year class - profitability
         compute_class_cumulative(
             &mut self.class_days_in_profit,
@@ -252,7 +296,7 @@ fn compute_period_rolling(
     days_in_loss: &mut ByDcaPeriod<ComputedFromHeightLast<StoredU32>>,
     min_return: &mut ByDcaPeriod<ComputedFromHeightLast<StoredF32>>,
     max_return: &mut ByDcaPeriod<ComputedFromHeightLast<StoredF32>>,
-    returns: &ByDcaPeriod<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
+    returns: &ByDcaPeriod<ComputedFromHeightLast<StoredF32>>,
     blocks: &blocks::Vecs,
     h2d: &EagerVec<PcoVec<Height, Day1>>,
     starting_indexes: &ComputeIndexes,
@@ -266,7 +310,7 @@ fn compute_period_rolling(
         .zip(returns.iter_with_days())
     {
         let window_starts = blocks.count.start_vec(days as usize);
-        let returns_data: Vec<StoredF32> = ret.day1.collect();
+        let returns_data: Vec<StoredF32> = ret.day1.collect_or_default();
 
         compute_rolling(
             &mut dip.height, h2d, &returns_data, window_starts, starting_indexes.height, exit,
@@ -307,7 +351,7 @@ fn compute_class_cumulative(
     days_in_loss: &mut ByDcaClass<ComputedFromHeightLast<StoredU32>>,
     min_return: &mut ByDcaClass<ComputedFromHeightLast<StoredF32>>,
     max_return: &mut ByDcaClass<ComputedFromHeightLast<StoredF32>>,
-    returns: &ByDcaClass<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
+    returns: &ByDcaClass<ComputedFromHeightLast<StoredF32>>,
     h2d: &EagerVec<PcoVec<Height, Day1>>,
     starting_indexes: &ComputeIndexes,
     exit: &Exit,
@@ -323,25 +367,25 @@ fn compute_class_cumulative(
         .zip(start_days)
     {
         compute_cumulative(
-            &mut dip.height, h2d, &*ret.day1, from, starting_indexes.height, exit,
+            &mut dip.height, h2d, &ret.day1, from, starting_indexes.height, exit,
             StoredU32::ZERO,
             |prev, ret| if *ret > 0.0 { prev + StoredU32::ONE } else { prev },
         )?;
 
         compute_cumulative(
-            &mut dil.height, h2d, &*ret.day1, from, starting_indexes.height, exit,
+            &mut dil.height, h2d, &ret.day1, from, starting_indexes.height, exit,
             StoredU32::ZERO,
             |prev, ret| if *ret < 0.0 { prev + StoredU32::ONE } else { prev },
         )?;
 
         compute_cumulative(
-            &mut minr.height, h2d, &*ret.day1, from, starting_indexes.height, exit,
+            &mut minr.height, h2d, &ret.day1, from, starting_indexes.height, exit,
             StoredF32::from(f32::MAX),
             |prev, ret| if *ret < *prev { ret } else { prev },
         )?;
 
         compute_cumulative(
-            &mut maxr.height, h2d, &*ret.day1, from, starting_indexes.height, exit,
+            &mut maxr.height, h2d, &ret.day1, from, starting_indexes.height, exit,
             StoredF32::from(f32::MIN),
             |prev, ret| if *ret > *prev { ret } else { prev },
         )?;
@@ -405,7 +449,7 @@ fn compute_rolling<T: PcoVecValue + Default>(
 fn compute_cumulative<T: PcoVecValue + Default>(
     output: &mut EagerVec<PcoVec<Height, T>>,
     h2d: &EagerVec<PcoVec<Height, Day1>>,
-    returns: &impl ReadableVec<Day1, StoredF32>,
+    returns: &impl ReadableOptionVec<Day1, StoredF32>,
     from_day1: Day1,
     starting_height: Height,
     exit: &Exit,
@@ -441,7 +485,7 @@ fn compute_cumulative<T: PcoVecValue + Default>(
                 } else {
                     initial
                 };
-                let ret = returns.collect_one(di).unwrap_or_default();
+                let ret = returns.collect_one_flat(di).unwrap_or_default();
                 (h, accumulate(prev, ret))
             }
         },

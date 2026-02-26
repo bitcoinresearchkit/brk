@@ -1,9 +1,13 @@
 use brk_error::Result;
-use brk_types::{Day1, StoredF32};
+use brk_types::{Day1, Dollars, StoredF32};
 use vecdb::{Exit, ReadableVec};
 
 use super::{super::range, Vecs};
-use crate::{ComputeIndexes, blocks, distribution, indexes, mining, prices};
+use crate::{
+    ComputeIndexes, blocks, distribution, indexes,
+    internal::Ratio32,
+    mining, prices, transactions,
+};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -16,6 +20,8 @@ impl Vecs {
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
         distribution: &distribution::Vecs,
+        transactions: &transactions::Vecs,
+        moving_average: &super::super::moving_average::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -32,8 +38,8 @@ impl Vecs {
             self.stoch_k.height.compute_transform3(
                 starting_indexes.height,
                 price,
-                &range.price_2w_min.height,
-                &range.price_2w_max.height,
+                &range.price_2w_min.usd.height,
+                &range.price_2w_max.usd.height,
                 |(h, close, low, high, ..)| {
                     let range = *high - *low;
                     let stoch = if range == 0.0 {
@@ -91,6 +97,22 @@ impl Vecs {
             &h2d,
             total_heights,
             starting_indexes,
+            exit,
+        )?;
+
+        // NVT: realized_cap / tx_volume_24h
+        self.nvt.compute_binary::<Dollars, Dollars, Ratio32>(
+            starting_indexes.height,
+            &distribution.utxo_cohorts.all.metrics.supply.total.usd.height,
+            &transactions.volume.sent_sum.usd.height,
+            exit,
+        )?;
+
+        // Pi Cycle: sma_111d / sma_350d_x2
+        self.pi_cycle.compute_binary::<Dollars, Dollars, Ratio32>(
+            starting_indexes.height,
+            &moving_average.price_111d_sma.price.as_ref().unwrap().usd.height,
+            &moving_average.price_350d_sma_x2.usd.height,
             exit,
         )?;
 

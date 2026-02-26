@@ -1,21 +1,9 @@
-mod binary_last;
-mod cum_full;
-mod distribution;
-mod full;
+mod cumulative_full;
 mod last;
-mod lazy_full;
 mod lazy_last;
-mod lazy_sum_cum;
-mod sum_cum;
 mod value_lazy_last;
 
-pub use binary_last::*;
-pub use cum_full::*;
-pub use distribution::*;
-pub use full::*;
+pub use cumulative_full::*;
 pub use last::*;
-pub use lazy_full::*;
 pub use lazy_last::*;
-pub use lazy_sum_cum::*;
-pub use sum_cum::*;
 pub use value_lazy_last::*;

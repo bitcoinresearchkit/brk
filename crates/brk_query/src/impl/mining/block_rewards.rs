@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_types::{BlockRewardsEntry, TimePeriod};
-use vecdb::{ReadableVec, VecIndex};
+use vecdb::{ReadableOptionVec, VecIndex};
 
 use super::day1_iter::Day1Iter;
 use crate::Query;
@@ -20,11 +20,14 @@ impl Query {
             .rewards
             .coinbase
             .sats
-            .day1
-            .average;
+            .rolling
+            .distribution
+            .average
+            ._24h
+            .day1;
 
         Ok(iter.collect(|di, ts, h| {
-            rewards_vec.collect_one(di).map(|reward| BlockRewardsEntry {
+            rewards_vec.collect_one_flat(di).map(|reward| BlockRewardsEntry {
                 avg_height: h.into(),
                 timestamp: *ts,
                 avg_rewards: *reward,

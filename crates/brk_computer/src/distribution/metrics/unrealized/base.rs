@@ -10,8 +10,7 @@ use crate::{
     ComputeIndexes,
     distribution::state::UnrealizedState,
     internal::{
-        ComputedFromHeightLast, DollarsMinus, DollarsPlus, LazyBinaryFromHeightLast,
-        LazyFromHeightLast, ValueFromHeightLast,
+        ComputedFromHeightLast, LazyFromHeightLast, ValueFromHeightLast,
     },
     prices,
 };
@@ -48,8 +47,8 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
     pub neg_unrealized_loss: LazyFromHeightLast<Dollars>,
 
     // === Net and Total ===
-    pub net_unrealized_pnl: LazyBinaryFromHeightLast<Dollars>,
-    pub total_unrealized_pnl: LazyBinaryFromHeightLast<Dollars>,
+    pub net_unrealized_pnl: ComputedFromHeightLast<Dollars, M>,
+    pub total_unrealized_pnl: ComputedFromHeightLast<Dollars, M>,
 }
 
 impl UnrealizedBase {
@@ -59,14 +58,12 @@ impl UnrealizedBase {
             &cfg.name("supply_in_profit"),
             cfg.version,
             cfg.indexes,
-            cfg.prices,
         )?;
         let supply_in_loss = ValueFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("supply_in_loss"),
             cfg.version,
             cfg.indexes,
-            cfg.prices,
         )?;
 
         let unrealized_profit = ComputedFromHeightLast::forced_import(
@@ -142,18 +139,18 @@ impl UnrealizedBase {
             &unrealized_loss,
         );
 
-        let net_unrealized_pnl = LazyBinaryFromHeightLast::from_computed_last::<DollarsMinus>(
+        let net_unrealized_pnl = ComputedFromHeightLast::forced_import(
+            cfg.db,
             &cfg.name("net_unrealized_pnl"),
             cfg.version,
-            &unrealized_profit,
-            &unrealized_loss,
-        );
-        let total_unrealized_pnl = LazyBinaryFromHeightLast::from_computed_last::<DollarsPlus>(
+            cfg.indexes,
+        )?;
+        let total_unrealized_pnl = ComputedFromHeightLast::forced_import(
+            cfg.db,
             &cfg.name("total_unrealized_pnl"),
             cfg.version,
-            &unrealized_profit,
-            &unrealized_loss,
-        );
+            cfg.indexes,
+        )?;
 
         Ok(Self {
             supply_in_profit,
@@ -240,7 +237,9 @@ impl UnrealizedBase {
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
             &mut self.supply_in_profit.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.sats.height,
+            &mut self.supply_in_profit.usd.height as &mut dyn AnyStoredVec,
+            &mut self.supply_in_loss.sats.height as &mut dyn AnyStoredVec,
+            &mut self.supply_in_loss.usd.height as &mut dyn AnyStoredVec,
             &mut self.unrealized_profit.height,
             &mut self.unrealized_loss.height,
             &mut self.invested_capital_in_profit.height,
@@ -416,6 +415,19 @@ impl UnrealizedBase {
                     Cents::new((spot_u128 - investor_price_winners) as u64).to_dollars(),
                 )
             },
+            exit,
+        )?;
+
+        self.net_unrealized_pnl.height.compute_subtract(
+            starting_indexes.height,
+            &self.unrealized_profit.height,
+            &self.unrealized_loss.height,
+            exit,
+        )?;
+        self.total_unrealized_pnl.height.compute_add(
+            starting_indexes.height,
+            &self.unrealized_profit.height,
+            &self.unrealized_loss.height,
             exit,
         )?;
 

@@ -1,36 +1,46 @@
+use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Sats, StoredF32};
+use brk_types::{Dollars, Height, StoredF32};
+use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
-    ComputedFromHeightLast, LazyBinaryComputedFromHeightLast, LazyBinaryFromHeightLast,
-    PercentageDollarsF32,
+    ComputedFromHeightLast, PercentageDollarsF32,
 };
 
 use crate::distribution::metrics::ImportConfig;
 
 /// Peak regret relative metric.
-#[derive(Clone, Traversable)]
-pub struct RelativePeakRegret {
+#[derive(Traversable)]
+pub struct RelativePeakRegret<M: StorageMode = Rw> {
     pub unrealized_peak_regret_rel_to_market_cap:
-        LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>,
+        ComputedFromHeightLast<StoredF32, M>,
 }
 
 impl RelativePeakRegret {
     pub(crate) fn forced_import(
         cfg: &ImportConfig,
-        peak_regret: &ComputedFromHeightLast<Dollars>,
-        market_cap: &LazyBinaryComputedFromHeightLast<Dollars, Sats, Dollars>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        Ok(Self {
             unrealized_peak_regret_rel_to_market_cap:
-                LazyBinaryFromHeightLast::from_block_last_and_lazy_binary_computed_block_last::<
-                    PercentageDollarsF32, _, _,
-                >(
+                ComputedFromHeightLast::forced_import(
+                    cfg.db,
                     &cfg.name("unrealized_peak_regret_rel_to_market_cap"),
                     cfg.version,
-                    peak_regret,
-                    market_cap,
-                ),
-        }
+                    cfg.indexes,
+                )?,
+        })
+    }
+
+    pub(crate) fn compute(
+        &mut self,
+        max_from: Height,
+        peak_regret: &impl ReadableVec<Height, Dollars>,
+        market_cap: &impl ReadableVec<Height, Dollars>,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.unrealized_peak_regret_rel_to_market_cap
+            .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
+                max_from, peak_regret, market_cap, exit,
+            )
     }
 }

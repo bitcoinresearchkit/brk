@@ -131,37 +131,4 @@ impl<T> ByDcaClass<T> {
         ]
     }
 
-    pub(crate) fn zip_ref<'a, U>(&'a self, other: &'a ByDcaClass<U>) -> ByDcaClass<(&'a T, &'a U)> {
-        ByDcaClass {
-            _2015: (&self._2015, &other._2015),
-            _2016: (&self._2016, &other._2016),
-            _2017: (&self._2017, &other._2017),
-            _2018: (&self._2018, &other._2018),
-            _2019: (&self._2019, &other._2019),
-            _2020: (&self._2020, &other._2020),
-            _2021: (&self._2021, &other._2021),
-            _2022: (&self._2022, &other._2022),
-            _2023: (&self._2023, &other._2023),
-            _2024: (&self._2024, &other._2024),
-            _2025: (&self._2025, &other._2025),
-            _2026: (&self._2026, &other._2026),
-        }
-    }
-
-    pub(crate) fn map<U, F: FnMut(T) -> U>(self, mut f: F) -> ByDcaClass<U> {
-        ByDcaClass {
-            _2015: f(self._2015),
-            _2016: f(self._2016),
-            _2017: f(self._2017),
-            _2018: f(self._2018),
-            _2019: f(self._2019),
-            _2020: f(self._2020),
-            _2021: f(self._2021),
-            _2022: f(self._2022),
-            _2023: f(self._2023),
-            _2024: f(self._2024),
-            _2025: f(self._2025),
-            _2026: f(self._2026),
-        }
-    }
 }

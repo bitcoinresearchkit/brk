@@ -1,17 +1,14 @@
 use std::time::Instant;
 
 use brk_error::Result;
-use brk_types::Height;
+use brk_types::{EmptyAddressData, FundedAddressData, Height};
 use rayon::prelude::*;
 use tracing::info;
 use vecdb::{AnyStoredVec, WritableVec, Stamp};
 
 use crate::distribution::{
     Vecs,
-    block::{
-        EmptyAddressDataWithSource, FundedAddressDataWithSource, process_empty_addresses,
-        process_funded_addresses,
-    },
+    block::{WithAddressDataSource, process_empty_addresses, process_funded_addresses},
     state::BlockState,
 };
 
@@ -28,8 +25,8 @@ use super::super::address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAdd
 pub(crate) fn process_address_updates(
     addresses_data: &mut AddressesDataVecs,
     address_indexes: &mut AnyAddressIndexesVecs,
-    empty_updates: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
-    funded_updates: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
+    empty_updates: AddressTypeToTypeIndexMap<WithAddressDataSource<EmptyAddressData>>,
+    funded_updates: AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
 ) -> Result<()> {
     info!("Processing address updates...");
 

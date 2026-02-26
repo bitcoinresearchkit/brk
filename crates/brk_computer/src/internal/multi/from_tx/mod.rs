@@ -1,3 +1,3 @@
-mod lazy_distribution;
+mod distribution;
 
-pub use lazy_distribution::*;
+pub use distribution::*;

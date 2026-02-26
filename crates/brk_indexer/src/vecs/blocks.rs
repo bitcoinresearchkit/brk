@@ -2,7 +2,9 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{BlockHash, Height, StoredF64, StoredU64, Timestamp, Version, Weight};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, BytesVec, Database, WritableVec, ImportableVec, PcoVec, Rw, Stamp, StorageMode};
+use vecdb::{
+    AnyStoredVec, BytesVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec,
+};
 
 use crate::parallel_import;
 
@@ -45,8 +47,7 @@ impl BlocksVecs {
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.total_size
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.weight
-            .truncate_if_needed_with_stamp(height, stamp)?;
+        self.weight.truncate_if_needed_with_stamp(height, stamp)?;
         Ok(())
     }
 

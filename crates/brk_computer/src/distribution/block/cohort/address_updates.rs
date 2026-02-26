@@ -7,7 +7,7 @@ use vecdb::AnyVec;
 
 use crate::distribution::{AddressTypeToTypeIndexMap, AddressesDataVecs};
 
-use super::with_source::{EmptyAddressDataWithSource, FundedAddressDataWithSource};
+use super::with_source::WithAddressDataSource;
 
 /// Process funded address data updates.
 ///
@@ -17,7 +17,7 @@ use super::with_source::{EmptyAddressDataWithSource, FundedAddressDataWithSource
 /// - Transition empty -> funded: delete from empty, push to funded
 pub(crate) fn process_funded_addresses(
     addresses_data: &mut AddressesDataVecs,
-    funded_updates: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
+    funded_updates: AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
 ) -> Result<AddressTypeToTypeIndexMap<AnyAddressIndex>> {
     let total: usize = funded_updates.iter().map(|(_, m)| m.len()).sum();
 
@@ -28,13 +28,13 @@ pub(crate) fn process_funded_addresses(
     for (address_type, items) in funded_updates.into_iter() {
         for (typeindex, source) in items {
             match source {
-                FundedAddressDataWithSource::New(data) => {
+                WithAddressDataSource::New(data) => {
                     pushes.push((address_type, typeindex, data));
                 }
-                FundedAddressDataWithSource::FromFunded(index, data) => {
+                WithAddressDataSource::FromFunded(index, data) => {
                     updates.push((index, data));
                 }
-                FundedAddressDataWithSource::FromEmpty(empty_index, data) => {
+                WithAddressDataSource::FromEmpty(empty_index, data) => {
                     deletes.push(empty_index);
                     pushes.push((address_type, typeindex, data));
                 }
@@ -88,7 +88,7 @@ pub(crate) fn process_funded_addresses(
 /// - Transition funded -> empty: delete from funded, push to empty
 pub(crate) fn process_empty_addresses(
     addresses_data: &mut AddressesDataVecs,
-    empty_updates: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
+    empty_updates: AddressTypeToTypeIndexMap<WithAddressDataSource<EmptyAddressData>>,
 ) -> Result<AddressTypeToTypeIndexMap<AnyAddressIndex>> {
     let total: usize = empty_updates.iter().map(|(_, m)| m.len()).sum();
 
@@ -99,13 +99,13 @@ pub(crate) fn process_empty_addresses(
     for (address_type, items) in empty_updates.into_iter() {
         for (typeindex, source) in items {
             match source {
-                EmptyAddressDataWithSource::New(data) => {
+                WithAddressDataSource::New(data) => {
                     pushes.push((address_type, typeindex, data));
                 }
-                EmptyAddressDataWithSource::FromEmpty(index, data) => {
+                WithAddressDataSource::FromEmpty(index, data) => {
                     updates.push((index, data));
                 }
-                EmptyAddressDataWithSource::FromFunded(funded_index, data) => {
+                WithAddressDataSource::FromFunded(funded_index, data) => {
                     deletes.push(funded_index);
                     pushes.push((address_type, typeindex, data));
                 }

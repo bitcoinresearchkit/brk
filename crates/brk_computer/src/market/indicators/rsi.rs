@@ -26,6 +26,7 @@ pub(super) fn compute(
         &mut chain.losses.height,
         &mut chain.average_gain.height,
         &mut chain.average_loss.height,
+        &mut chain.rsi.height,
         &mut chain.rsi_min.height,
         &mut chain.rsi_max.height,
         &mut chain.stoch_rsi.height,
@@ -100,6 +101,7 @@ pub(super) fn compute(
     expand!(chain.losses.height, losses);
     expand!(chain.average_gain.height, avg_gain);
     expand!(chain.average_loss.height, avg_loss);
+    expand!(chain.rsi.height, rsi);
     expand!(chain.rsi_min.height, rsi_min);
     expand!(chain.rsi_max.height, rsi_max);
     expand!(chain.stoch_rsi.height, stoch_rsi);
@@ -112,6 +114,7 @@ pub(super) fn compute(
         chain.losses.height.write()?;
         chain.average_gain.height.write()?;
         chain.average_loss.height.write()?;
+        chain.rsi.height.write()?;
         chain.rsi_min.height.write()?;
         chain.rsi_max.height.write()?;
         chain.stoch_rsi.height.write()?;

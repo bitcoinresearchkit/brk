@@ -153,12 +153,23 @@ pub trait CohortMetricsBase: Send + Sync {
         exit: &Exit,
     ) -> Result<()> {
         self.supply_mut()
+            .compute(prices, starting_indexes.height, exit)?;
+        self.supply_mut()
             .compute_rest_part1(blocks, starting_indexes, exit)?;
         self.outputs_mut()
             .compute_rest(blocks, starting_indexes, exit)?;
         self.activity_mut()
+            .sent
+            .compute(prices, starting_indexes.height, exit)?;
+        self.activity_mut()
             .compute_rest_part1(blocks, starting_indexes, exit)?;
 
+        self.realized_base_mut()
+            .sent_in_profit
+            .compute(prices, starting_indexes.height, exit)?;
+        self.realized_base_mut()
+            .sent_in_loss
+            .compute(prices, starting_indexes.height, exit)?;
         self.realized_base_mut()
             .compute_rest_part1(starting_indexes, exit)?;
 

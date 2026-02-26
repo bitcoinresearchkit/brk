@@ -11,8 +11,8 @@ use brk_types::{
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Database, ReadableVec, WritableVec, ImportOptions, ImportableVec,
-    Reader, Rw, Stamp, StorageMode,
+    AnyStoredVec, AnyVec, BytesVec, Database, ImportOptions, ImportableVec, ReadableVec, Reader,
+    Rw, Stamp, StorageMode, WritableVec,
 };
 
 use super::super::AddressTypeToTypeIndexMap;

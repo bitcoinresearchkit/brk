@@ -1,14 +1,20 @@
 use brk_error::Result;
 use brk_types::{Height, Indexes};
 use tracing::{debug, info};
-use vecdb::{AnyStoredVec, WritableVec, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue};
+use vecdb::{AnyStoredVec, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue, WritableVec};
 
 use crate::{Stores, Vecs};
 
 /// Extension trait for Indexes with brk_indexer-specific functionality.
 pub trait IndexesExt {
     fn checked_push(&self, vecs: &mut Vecs) -> Result<()>;
-    fn from_vecs_and_stores(required_height: Height, vecs: &mut Vecs, stores: &Stores) -> Option<Self> where Self: Sized;
+    fn from_vecs_and_stores(
+        required_height: Height,
+        vecs: &mut Vecs,
+        stores: &Stores,
+    ) -> Option<Self>
+    where
+        Self: Sized;
 }
 
 impl IndexesExt for Indexes {
@@ -63,7 +69,11 @@ impl IndexesExt for Indexes {
         Ok(())
     }
 
-    fn from_vecs_and_stores(required_height: Height, vecs: &mut Vecs, stores: &Stores) -> Option<Indexes> {
+    fn from_vecs_and_stores(
+        required_height: Height,
+        vecs: &mut Vecs,
+        stores: &Stores,
+    ) -> Option<Indexes> {
         debug!("Creating indexes from vecs and stores...");
 
         // Local data height: minimum of vecs and stores
@@ -159,11 +169,17 @@ impl IndexesExt for Indexes {
             starting_height,
         )?;
 
-        let txinindex =
-            starting_index(&vecs.inputs.first_txinindex, &vecs.inputs.outpoint, starting_height)?;
+        let txinindex = starting_index(
+            &vecs.inputs.first_txinindex,
+            &vecs.inputs.outpoint,
+            starting_height,
+        )?;
 
-        let txoutindex =
-            starting_index(&vecs.outputs.first_txoutindex, &vecs.outputs.value, starting_height)?;
+        let txoutindex = starting_index(
+            &vecs.outputs.first_txoutindex,
+            &vecs.outputs.value,
+            starting_height,
+        )?;
 
         let unknownoutputindex = starting_index(
             &vecs.scripts.first_unknownoutputindex,

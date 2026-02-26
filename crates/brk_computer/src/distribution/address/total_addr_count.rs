@@ -1,57 +1,85 @@
 //! Total address count: addr_count + empty_addr_count (global + per-type)
 
-use brk_cohort::{ByAddressType, zip2_by_addresstype};
+use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{StoredU64, Version};
-use vecdb::ReadableCloneableVec;
+use brk_types::{Height, StoredU64, Version};
+use vecdb::{Database, Exit, Rw, StorageMode};
 
-use crate::{indexes, internal::{LazyBinaryComputedFromHeightLast, U64Plus}};
+use crate::{indexes, internal::ComputedFromHeightLast};
 
 use super::AddrCountsVecs;
 
-/// Total addresses by type - lazy sum with all derived indexes
-pub type TotalAddrCountByType =
-    ByAddressType<LazyBinaryComputedFromHeightLast<StoredU64, StoredU64, StoredU64>>;
-
 /// Total address count (global + per-type) with all derived indexes
-#[derive(Clone, Traversable)]
-pub struct TotalAddrCountVecs {
-    pub all: LazyBinaryComputedFromHeightLast<StoredU64, StoredU64, StoredU64>,
+#[derive(Traversable)]
+pub struct TotalAddrCountVecs<M: StorageMode = Rw> {
+    pub all: ComputedFromHeightLast<StoredU64, M>,
     #[traversable(flatten)]
-    pub by_addresstype: TotalAddrCountByType,
+    pub by_addresstype: ByAddressType<ComputedFromHeightLast<StoredU64, M>>,
 }
 
 impl TotalAddrCountVecs {
     pub(crate) fn forced_import(
+        db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        addr_count: &AddrCountsVecs,
-        empty_addr_count: &AddrCountsVecs,
     ) -> Result<Self> {
-        let all = LazyBinaryComputedFromHeightLast::forced_import::<U64Plus>(
+        let all = ComputedFromHeightLast::forced_import(
+            db,
             "total_addr_count",
             version,
-            addr_count.all.count.height.read_only_boxed_clone(),
-            empty_addr_count.all.count.height.read_only_boxed_clone(),
             indexes,
-        );
+        )?;
 
-        let by_addresstype: TotalAddrCountByType = zip2_by_addresstype(
-            &addr_count.by_addresstype,
-            &empty_addr_count.by_addresstype,
-            |name, addr, empty| {
-                Ok(LazyBinaryComputedFromHeightLast::forced_import::<U64Plus>(
+        let by_addresstype: ByAddressType<ComputedFromHeightLast<StoredU64>> = ByAddressType::new_with_name(
+            |name| {
+                ComputedFromHeightLast::forced_import(
+                    db,
                     &format!("{name}_total_addr_count"),
                     version,
-                    addr.count.height.read_only_boxed_clone(),
-                    empty.count.height.read_only_boxed_clone(),
                     indexes,
-                ))
+                )
             },
         )?;
 
         Ok(Self { all, by_addresstype })
     }
 
+    /// Eagerly compute total = addr_count + empty_addr_count.
+    pub(crate) fn compute(
+        &mut self,
+        max_from: Height,
+        addr_count: &AddrCountsVecs,
+        empty_addr_count: &AddrCountsVecs,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.all.height.compute_transform2(
+            max_from,
+            &addr_count.all.count.height,
+            &empty_addr_count.all.count.height,
+            |(h, a, b, ..)| (h, StoredU64::from(*a + *b)),
+            exit,
+        )?;
+
+        for ((_, total), ((_, addr), (_, empty))) in self
+            .by_addresstype
+            .iter_mut()
+            .zip(
+                addr_count
+                    .by_addresstype
+                    .iter()
+                    .zip(empty_addr_count.by_addresstype.iter()),
+            )
+        {
+            total.height.compute_transform2(
+                max_from,
+                &addr.count.height,
+                &empty.count.height,
+                |(h, a, b, ..)| (h, StoredU64::from(*a + *b)),
+                exit,
+            )?;
+        }
+
+        Ok(())
+    }
 }

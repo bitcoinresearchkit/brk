@@ -1,7 +1,7 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, Version};
+use brk_types::{Cents, Dollars, Height, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
@@ -24,7 +24,7 @@ pub struct PeakRegretCohortMetrics<M: StorageMode = Rw> {
     pub realized: Box<RealizedBase<M>>,
     pub cost_basis: Box<CostBasisBase<M>>,
     pub unrealized: Box<UnrealizedWithPeakRegret<M>>,
-    pub relative: Box<RelativeWithPeakRegret>,
+    pub relative: Box<RelativeWithPeakRegret<M>>,
 }
 
 impl CohortMetricsBase for PeakRegretCohortMetrics {
@@ -72,20 +72,12 @@ impl CohortMetricsBase for PeakRegretCohortMetrics {
 impl PeakRegretCohortMetrics {
     pub(crate) fn forced_import(
         cfg: &ImportConfig,
-        all_supply: &SupplyMetrics,
     ) -> Result<Self> {
         let supply = SupplyMetrics::forced_import(cfg)?;
         let unrealized = UnrealizedWithPeakRegret::forced_import(cfg)?;
         let realized = RealizedBase::forced_import(cfg)?;
 
-        let relative = RelativeWithPeakRegret::forced_import(
-            cfg,
-            &unrealized.base,
-            &supply,
-            all_supply,
-            &realized,
-            &unrealized.peak_regret_ext.peak_regret,
-        );
+        let relative = RelativeWithPeakRegret::forced_import(cfg)?;
 
         Ok(Self {
             filter: cfg.filter.clone(),
@@ -105,6 +97,7 @@ impl PeakRegretCohortMetrics {
         prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
+        all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
         self.realized.compute_rest_part2_base(
@@ -114,7 +107,20 @@ impl PeakRegretCohortMetrics {
             &self.supply.total.btc.height,
             height_to_market_cap,
             exit,
-        )
+        )?;
+
+        self.relative.compute(
+            starting_indexes.height,
+            &self.unrealized.base,
+            &self.realized,
+            &self.supply.total.sats.height,
+            height_to_market_cap,
+            all_supply_sats,
+            &self.unrealized.peak_regret_ext.peak_regret.height,
+            exit,
+        )?;
+
+        Ok(())
     }
 
 }

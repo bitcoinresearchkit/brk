@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::Dollars;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeightRatio, LazyPriceFromHeight};
+use crate::internal::{ComputedFromHeightRatio, LazyFromHeightLast, Price};
 
 /// Simple and exponential moving average metrics
 #[derive(Traversable)]
@@ -41,7 +41,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub price_200w_ema: ComputedFromHeightRatio<M>,
     pub price_4y_ema: ComputedFromHeightRatio<M>,
 
-    pub price_200d_sma_x2_4: LazyPriceFromHeight<Dollars>,
-    pub price_200d_sma_x0_8: LazyPriceFromHeight<Dollars>,
-    pub price_350d_sma_x2: LazyPriceFromHeight<Dollars>,
+    pub price_200d_sma_x2_4: Price<LazyFromHeightLast<Dollars, Dollars>>,
+    pub price_200d_sma_x0_8: Price<LazyFromHeightLast<Dollars, Dollars>>,
+    pub price_350d_sma_x2: Price<LazyFromHeightLast<Dollars, Dollars>>,
 }

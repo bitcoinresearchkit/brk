@@ -15,17 +15,24 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
+        // Block count height + cumulative first (rolling computed after window starts)
         self.block_count.height.compute_range(
             starting_indexes.height,
             &indexer.vecs.blocks.weight,
             |h| (h, StoredU32::from(1_u32)),
             exit,
         )?;
-        self.block_count
-            .compute_cumulative(starting_indexes, exit)?;
+        self.block_count.cumulative.height.compute_cumulative(
+            starting_indexes.height,
+            &self.block_count.height,
+            exit,
+        )?;
 
         // Compute rolling window starts (collect monotonic data once for all windows)
         let monotonic_data: Vec<Timestamp> = time.timestamp_monotonic.collect();
+        self.compute_rolling_start_hours(&monotonic_data, time, starting_indexes, exit, 1, |s| {
+            &mut s.height_1h_ago
+        })?;
         self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 1, |s| {
             &mut s.height_24h_ago
         })?;
@@ -157,13 +164,19 @@ impl Vecs {
             |s| &mut s.height_10y_ago,
         )?;
 
-        // Compute rolling window block counts
+        // Compute rolling window block counts (both block_count's own rolling + separate block_count_sum)
         let ws = crate::internal::WindowStarts {
             _24h: &self.height_24h_ago,
             _7d: &self.height_1w_ago,
             _30d: &self.height_1m_ago,
             _1y: &self.height_1y_ago,
         };
+        self.block_count.rolling.compute_rolling_sum(
+            starting_indexes.height,
+            &ws,
+            &self.block_count.height,
+            exit,
+        )?;
         self.block_count_sum.compute_rolling_sum(
             starting_indexes.height,
             &ws,
@@ -192,6 +205,35 @@ impl Vecs {
             &time.timestamp_monotonic,
             |(h, t, ..)| {
                 while t.difference_in_days_between(monotonic_data[prev.to_usize()]) >= days {
+                    prev.increment();
+                    if prev > h {
+                        unreachable!()
+                    }
+                }
+                (h, prev)
+            },
+            exit,
+        )?)
+    }
+
+    fn compute_rolling_start_hours<F>(
+        &mut self,
+        monotonic_data: &[Timestamp],
+        time: &time::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+        hours: usize,
+        get_field: F,
+    ) -> Result<()>
+    where
+        F: FnOnce(&mut Self) -> &mut EagerVec<PcoVec<Height, Height>>,
+    {
+        let mut prev = Height::ZERO;
+        Ok(get_field(self).compute_transform(
+            starting_indexes.height,
+            &time.timestamp_monotonic,
+            |(h, t, ..)| {
+                while t.difference_in_hours_between(monotonic_data[prev.to_usize()]) >= hours {
                     prev.increment();
                     if prev > h {
                         unreachable!()

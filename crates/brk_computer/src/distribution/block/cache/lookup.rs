@@ -1,10 +1,8 @@
-use brk_types::{FundedAddressData, OutputType, TypeIndex};
+use brk_types::{EmptyAddressData, FundedAddressData, OutputType, TypeIndex};
 
 use crate::distribution::address::AddressTypeToTypeIndexMap;
 
-use super::super::cohort::{
-    EmptyAddressDataWithSource, FundedAddressDataWithSource, WithAddressDataSource,
-};
+use super::super::cohort::WithAddressDataSource;
 
 /// Tracking status of an address - determines cohort update strategy.
 #[derive(Clone, Copy)]
@@ -19,8 +17,8 @@ pub enum TrackingStatus {
 
 /// Context for looking up and storing address data during block processing.
 pub struct AddressLookup<'a> {
-    pub funded: &'a mut AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
-    pub empty: &'a mut AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
+    pub funded: &'a mut AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
+    pub empty: &'a mut AddressTypeToTypeIndexMap<WithAddressDataSource<EmptyAddressData>>,
 }
 
 impl<'a> AddressLookup<'a> {
@@ -28,7 +26,7 @@ impl<'a> AddressLookup<'a> {
         &mut self,
         output_type: OutputType,
         type_index: TypeIndex,
-    ) -> (&mut FundedAddressDataWithSource, TrackingStatus) {
+    ) -> (&mut WithAddressDataSource<FundedAddressData>, TrackingStatus) {
         use std::collections::hash_map::Entry;
 
         let map = self.funded.get_mut(output_type).unwrap();
@@ -83,7 +81,7 @@ impl<'a> AddressLookup<'a> {
         &mut self,
         output_type: OutputType,
         type_index: TypeIndex,
-    ) -> &mut FundedAddressDataWithSource {
+    ) -> &mut WithAddressDataSource<FundedAddressData> {
         self.funded
             .get_mut(output_type)
             .unwrap()

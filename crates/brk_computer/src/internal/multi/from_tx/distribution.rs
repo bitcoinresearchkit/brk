@@ -3,19 +3,16 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{TxIndex, Version};
-use derive_more::{Deref, DerefMut};
+use brk_types::TxIndex;
 use schemars::JsonSchema;
-use vecdb::{Database, Exit, LazyVecFrom2, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, Exit, LazyVecFrom2, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ComputedVecValue, TxDerivedDistribution, NumericValue},
+    internal::{BlockWindowStarts, ComputedVecValue, NumericValue, TxDerivedDistribution},
 };
 
-const VERSION: Version = Version::ZERO;
-
-#[derive(Deref, DerefMut, Traversable)]
+#[derive(Traversable)]
 #[traversable(merge)]
 pub struct LazyFromTxDistribution<T, S1, S2, M: StorageMode = Rw>
 where
@@ -24,8 +21,6 @@ where
     S2: ComputedVecValue,
 {
     pub txindex: LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>,
-    #[deref]
-    #[deref_mut]
     #[traversable(flatten)]
     pub distribution: TxDerivedDistribution<T, M>,
 }
@@ -41,10 +36,8 @@ where
         name: &str,
         version: Version,
         txindex: LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>,
-        indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
-        let distribution = TxDerivedDistribution::forced_import(db, name, v, indexes)?;
+        let distribution = TxDerivedDistribution::forced_import(db, name, version)?;
         Ok(Self {
             txindex,
             distribution,
@@ -56,12 +49,21 @@ where
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
+        block_windows: &BlockWindowStarts<'_>,
         exit: &Exit,
     ) -> Result<()>
     where
+        T: Copy + Ord + From<f64> + Default,
+        f64: From<T>,
         LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>: ReadableVec<TxIndex, T>,
     {
-        self.distribution
-            .derive_from(indexer, indexes, starting_indexes, &self.txindex, exit)
+        self.distribution.derive_from(
+            indexer,
+            indexes,
+            starting_indexes,
+            block_windows,
+            &self.txindex,
+            exit,
+        )
     }
 }

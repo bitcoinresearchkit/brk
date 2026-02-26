@@ -5,19 +5,19 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightCumSum, ComputedFromHeightLast},
+    internal::{ComputedFromHeightCumulativeSum, ComputedFromHeightLast},
 };
 
 impl Vecs {
     pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         Ok(Self {
-            coinblocks_created: ComputedFromHeightCumSum::forced_import(
+            coinblocks_created: ComputedFromHeightCumulativeSum::forced_import(
                 db,
                 "coinblocks_created",
                 version,
                 indexes,
             )?,
-            coinblocks_stored: ComputedFromHeightCumSum::forced_import(
+            coinblocks_stored: ComputedFromHeightCumulativeSum::forced_import(
                 db,
                 "coinblocks_stored",
                 version,

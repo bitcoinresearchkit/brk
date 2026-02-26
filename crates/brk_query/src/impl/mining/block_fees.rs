@@ -15,7 +15,7 @@ impl Query {
 
         let iter = Day1Iter::new(computer, start, current_height.to_usize());
 
-        let cumulative = &computer.transactions.fees.fee.sum_cum.cumulative;
+        let cumulative = &computer.transactions.fees.fee.sum_cumulative.cumulative;
         let first_height = &computer.indexes.day1.first_height;
 
         Ok(iter.collect(|di, ts, h| {
@@ -28,13 +28,13 @@ impl Query {
                 return None;
             }
 
-            let cum_end = cumulative.collect_one_at(h_end.to_usize() - 1)?;
-            let cum_start = if h_start.to_usize() > 0 {
+            let cumulative_end = cumulative.collect_one_at(h_end.to_usize() - 1)?;
+            let cumulative_start = if h_start.to_usize() > 0 {
                 cumulative.collect_one_at(h_start.to_usize() - 1).unwrap_or(Sats::ZERO)
             } else {
                 Sats::ZERO
             };
-            let daily_sum = cum_end - cum_start;
+            let daily_sum = cumulative_end - cumulative_start;
             let avg_fees = Sats::from(*daily_sum / block_count as u64);
 
             Some(BlockFeesEntry {

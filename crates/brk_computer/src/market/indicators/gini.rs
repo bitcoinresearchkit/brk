@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_types::{Day1, Sats, StoredF32, StoredU64, Version};
-use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableOptionVec, VecIndex, WritableVec};
 
 use crate::{ComputeIndexes, distribution, internal::ComputedFromHeightLast};
 
@@ -47,11 +47,11 @@ pub(super) fn compute(
     // Pre-collect all daily data
     let supply_data: Vec<Vec<Sats>> = supply_vecs
         .iter()
-        .map(|v| ReadableVec::collect(*v))
+        .map(|v| v.collect_or_default())
         .collect();
     let count_data: Vec<Vec<StoredU64>> = count_vecs
         .iter()
-        .map(|v| ReadableVec::collect(*v))
+        .map(|v| v.collect_or_default())
         .collect();
     let num_days = supply_data.first().map_or(0, |v| v.len());
 
@@ -95,14 +95,14 @@ fn gini_from_lorenz(buckets: &[(u64, u64)]) -> f32 {
         return 0.0;
     }
 
-    let (mut cum_count, mut cum_supply, mut area) = (0u64, 0u64, 0.0f64);
+    let (mut cumulative_count, mut cumulative_supply, mut area) = (0u64, 0u64, 0.0f64);
     let (tc, ts) = (total_count as f64, total_supply as f64);
 
     for &(count, supply) in buckets {
-        let (p0, w0) = (cum_count as f64 / tc, cum_supply as f64 / ts);
-        cum_count += count;
-        cum_supply += supply;
-        let (p1, w1) = (cum_count as f64 / tc, cum_supply as f64 / ts);
+        let (p0, w0) = (cumulative_count as f64 / tc, cumulative_supply as f64 / ts);
+        cumulative_count += count;
+        cumulative_supply += supply;
+        let (p1, w1) = (cumulative_count as f64 / tc, cumulative_supply as f64 / ts);
         area += (p1 - p0) * (w0 + w1) / 2.0;
     }
 

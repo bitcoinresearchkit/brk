@@ -1,19 +1,19 @@
-//! TxDerivedDistribution - computes TxIndex data to height Distribution + lazy time periods + epochs.
+//! TxDerivedDistribution - per-block + rolling window distribution stats from tx-level data.
+//!
+//! Computes true distribution stats (average, min, max, median, percentiles) by reading
+//! actual tx values for each scope: current block, last 1h, last 24h.
 
 use brk_error::Result;
 use brk_indexer::Indexer;
 
 use brk_traversable::Traversable;
-use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4, Minute1, Minute10,
-    Minute30, Minute5, Month1, Month3, Month6, TxIndex, Version, Week1, Year1, Year10,
-};
+use brk_types::{Height, TxIndex};
 use schemars::JsonSchema;
-use vecdb::{Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ComputedVecValue, Distribution, LazyDistribution, NumericValue},
+    internal::{BlockRollingDistribution, BlockWindowStarts, ComputedVecValue, Distribution, NumericValue},
 };
 
 #[derive(Traversable)]
@@ -22,27 +22,10 @@ pub struct TxDerivedDistribution<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    pub height: Distribution<Height, T, M>,
-    pub minute1: LazyDistribution<Minute1, T, Height, Height>,
-    pub minute5: LazyDistribution<Minute5, T, Height, Height>,
-    pub minute10: LazyDistribution<Minute10, T, Height, Height>,
-    pub minute30: LazyDistribution<Minute30, T, Height, Height>,
-    pub hour1: LazyDistribution<Hour1, T, Height, Height>,
-    pub hour4: LazyDistribution<Hour4, T, Height, Height>,
-    pub hour12: LazyDistribution<Hour12, T, Height, Height>,
-    pub day1: LazyDistribution<Day1, T, Height, Height>,
-    pub day3: LazyDistribution<Day3, T, Height, Height>,
-    pub week1: LazyDistribution<Week1, T, Height, Height>,
-    pub month1: LazyDistribution<Month1, T, Height, Height>,
-    pub month3: LazyDistribution<Month3, T, Height, Height>,
-    pub month6: LazyDistribution<Month6, T, Height, Height>,
-    pub year1: LazyDistribution<Year1, T, Height, Height>,
-    pub year10: LazyDistribution<Year10, T, Height, Height>,
-    pub halvingepoch: LazyDistribution<HalvingEpoch, T, Height, HalvingEpoch>,
-    pub difficultyepoch: LazyDistribution<DifficultyEpoch, T, Height, DifficultyEpoch>,
+    pub block: Distribution<Height, T, M>,
+    #[traversable(flatten)]
+    pub rolling: BlockRollingDistribution<T, M>,
 }
-
-const VERSION: Version = Version::ZERO;
 
 impl<T> TxDerivedDistribution<T>
 where
@@ -52,71 +35,11 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let height = Distribution::forced_import(db, name, version + VERSION)?;
-        let v = version + VERSION;
+        let block = Distribution::forced_import(db, name, version)?;
+        let rolling = BlockRollingDistribution::forced_import(db, name, version)?;
 
-        macro_rules! period {
-            ($idx:ident) => {
-                LazyDistribution::from_height_source(
-                    name,
-                    v,
-                    height.boxed_average(),
-                    indexes.$idx.first_height.read_only_boxed_clone(),
-                )
-            };
-        }
-
-        macro_rules! epoch {
-            ($idx:ident) => {
-                LazyDistribution::from_source(
-                    name,
-                    v,
-                    height.boxed_average(),
-                    indexes.$idx.identity.read_only_boxed_clone(),
-                )
-            };
-        }
-
-        let minute1 = period!(minute1);
-        let minute5 = period!(minute5);
-        let minute10 = period!(minute10);
-        let minute30 = period!(minute30);
-        let hour1 = period!(hour1);
-        let hour4 = period!(hour4);
-        let hour12 = period!(hour12);
-        let day1 = period!(day1);
-        let day3 = period!(day3);
-        let week1 = period!(week1);
-        let month1 = period!(month1);
-        let month3 = period!(month3);
-        let month6 = period!(month6);
-        let year1 = period!(year1);
-        let year10 = period!(year10);
-        let halvingepoch = epoch!(halvingepoch);
-        let difficultyepoch = epoch!(difficultyepoch);
-
-        Ok(Self {
-            height,
-            minute1,
-            minute5,
-            minute10,
-            minute30,
-            hour1,
-            hour4,
-            hour12,
-            day1,
-            day3,
-            week1,
-            month1,
-            month3,
-            month6,
-            year1,
-            year10,
-            halvingepoch,
-            difficultyepoch,
-        })
+        Ok(Self { block, rolling })
     }
 
     pub(crate) fn derive_from(
@@ -124,31 +47,72 @@ where
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
+        block_windows: &BlockWindowStarts<'_>,
         txindex_source: &impl ReadableVec<TxIndex, T>,
         exit: &Exit,
-    ) -> Result<()> {
-        self.derive_from_with_skip(indexer, indexes, starting_indexes, txindex_source, exit, 0)
+    ) -> Result<()>
+    where
+        T: Copy + Ord + From<f64> + Default,
+        f64: From<T>,
+    {
+        self.derive_from_with_skip(
+            indexer,
+            indexes,
+            starting_indexes,
+            block_windows,
+            txindex_source,
+            exit,
+            0,
+        )
     }
 
-    /// Derive from source, skipping first N transactions per block from all calculations.
+    /// Derive from source, skipping first N transactions per block from per-block stats.
     ///
     /// Use `skip_count: 1` to exclude coinbase transactions from fee/feerate stats.
+    /// Rolling window distributions do NOT skip (negligible impact over many blocks).
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn derive_from_with_skip(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
+        block_windows: &BlockWindowStarts<'_>,
         txindex_source: &impl ReadableVec<TxIndex, T>,
         exit: &Exit,
         skip_count: usize,
-    ) -> Result<()> {
-        self.height.compute_with_skip(
+    ) -> Result<()>
+    where
+        T: Copy + Ord + From<f64> + Default,
+        f64: From<T>,
+    {
+        // Per-block distribution (supports skip for coinbase exclusion)
+        self.block.compute_with_skip(
             starting_indexes.height,
             txindex_source,
             &indexer.vecs.transactions.first_txindex,
             &indexes.height.txindex_count,
             exit,
             skip_count,
+        )?;
+
+        // 1h rolling: true distribution from all txs in last hour
+        self.rolling._1h.compute_from_window(
+            starting_indexes.height,
+            txindex_source,
+            &indexer.vecs.transactions.first_txindex,
+            &indexes.height.txindex_count,
+            block_windows._1h,
+            exit,
+        )?;
+
+        // 24h rolling: true distribution from all txs in last 24 hours
+        self.rolling._24h.compute_from_window(
+            starting_indexes.height,
+            txindex_source,
+            &indexer.vecs.transactions.first_txindex,
+            &indexes.height.txindex_count,
+            block_windows._24h,
+            exit,
         )?;
 
         Ok(())

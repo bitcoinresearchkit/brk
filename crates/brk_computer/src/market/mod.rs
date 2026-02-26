@@ -31,7 +31,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub ath: AthVecs<M>,
     pub lookback: LookbackVecs<M>,
     pub returns: ReturnsVecs<M>,
-    pub volatility: VolatilityVecs,
+    pub volatility: VolatilityVecs<M>,
     pub range: RangeVecs<M>,
     pub moving_average: MovingAverageVecs<M>,
     pub dca: DcaVecs<M>,

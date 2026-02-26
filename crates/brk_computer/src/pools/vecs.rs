@@ -1,14 +1,14 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, PoolSlug, Sats, StoredF32, StoredU16, StoredU32};
-use vecdb::{Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, Version};
+use brk_types::{Height, PoolSlug, StoredF32, StoredU16, StoredU32};
+use vecdb::{BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{
     blocks,
     indexes::{self, ComputeIndexes},
     internal::{
-        ComputedFromHeightLast, ComputedFromHeightSumCum, LazyBinaryFromHeightLast,
-        LazyValueFromHeightSumCum, MaskSats, PercentageU32F32,
+        ComputedFromHeightCumulativeSum, ComputedFromHeightLast, MaskSats, PercentageU32F32,
+        ValueFromHeightSumCumulative,
     },
     mining, prices, transactions,
 };
@@ -17,41 +17,36 @@ use crate::{
 pub struct Vecs<M: StorageMode = Rw> {
     slug: PoolSlug,
 
-    pub blocks_mined: ComputedFromHeightSumCum<StoredU32, M>,
+    pub blocks_mined: ComputedFromHeightCumulativeSum<StoredU32, M>,
     pub blocks_mined_24h_sum: ComputedFromHeightLast<StoredU32, M>,
     pub blocks_mined_1w_sum: ComputedFromHeightLast<StoredU32, M>,
     pub blocks_mined_1m_sum: ComputedFromHeightLast<StoredU32, M>,
     pub blocks_mined_1y_sum: ComputedFromHeightLast<StoredU32, M>,
-    pub subsidy: LazyValueFromHeightSumCum<StoredU32, Sats, M>,
-    pub fee: LazyValueFromHeightSumCum<StoredU32, Sats, M>,
-    pub coinbase: LazyValueFromHeightSumCum<StoredU32, Sats, M>,
-    pub dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
+    pub subsidy: ValueFromHeightSumCumulative<M>,
+    pub fee: ValueFromHeightSumCumulative<M>,
+    pub coinbase: ValueFromHeightSumCumulative<M>,
+    pub dominance: ComputedFromHeightLast<StoredF32, M>,
 
-    pub dominance_24h: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
-    pub dominance_1w: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
-    pub dominance_1m: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
-    pub dominance_1y: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
+    pub dominance_24h: ComputedFromHeightLast<StoredF32, M>,
+    pub dominance_1w: ComputedFromHeightLast<StoredF32, M>,
+    pub dominance_1m: ComputedFromHeightLast<StoredF32, M>,
+    pub dominance_1y: ComputedFromHeightLast<StoredF32, M>,
     pub blocks_since_block: ComputedFromHeightLast<StoredU32, M>,
     pub days_since_block: ComputedFromHeightLast<StoredU16, M>,
 }
 
 impl Vecs {
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn forced_import(
         db: &Database,
         slug: PoolSlug,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
-        blocks: &blocks::Vecs,
-        mining: &mining::Vecs,
-        transactions: &transactions::Vecs,
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
         let version = parent_version;
 
         let blocks_mined =
-            ComputedFromHeightSumCum::forced_import(db, &suffix("blocks_mined"), version, indexes)?;
+            ComputedFromHeightCumulativeSum::forced_import(db, &suffix("blocks_mined"), version, indexes)?;
 
         let blocks_mined_24h_sum = ComputedFromHeightLast::forced_import(
             db,
@@ -78,67 +73,31 @@ impl Vecs {
             indexes,
         )?;
 
-        let subsidy = LazyValueFromHeightSumCum::forced_import::<MaskSats>(
-            db,
-            &suffix("subsidy"),
-            version,
-            indexes,
-            blocks_mined.height.read_only_boxed_clone(),
-            mining.rewards.subsidy.sats.height.read_only_boxed_clone(),
-            prices,
-        )?;
+        let subsidy =
+            ValueFromHeightSumCumulative::forced_import(db, &suffix("subsidy"), version, indexes)?;
 
-        let fee = LazyValueFromHeightSumCum::forced_import::<MaskSats>(
-            db,
-            &suffix("fee"),
-            version,
-            indexes,
-            blocks_mined.height.read_only_boxed_clone(),
-            transactions.fees.fee.boxed_sum(),
-            prices,
-        )?;
+        let fee = ValueFromHeightSumCumulative::forced_import(db, &suffix("fee"), version, indexes)?;
 
-        let coinbase = LazyValueFromHeightSumCum::forced_import::<MaskSats>(
-            db,
-            &suffix("coinbase"),
-            version,
-            indexes,
-            blocks_mined.height.read_only_boxed_clone(),
-            mining.rewards.coinbase.sats.height.read_only_boxed_clone(),
-            prices,
-        )?;
+        let coinbase =
+            ValueFromHeightSumCumulative::forced_import(db, &suffix("coinbase"), version, indexes)?;
+
+        let dominance =
+            ComputedFromHeightLast::forced_import(db, &suffix("dominance"), version, indexes)?;
+        let dominance_24h =
+            ComputedFromHeightLast::forced_import(db, &suffix("dominance_24h"), version, indexes)?;
+        let dominance_1w =
+            ComputedFromHeightLast::forced_import(db, &suffix("dominance_1w"), version, indexes)?;
+        let dominance_1m =
+            ComputedFromHeightLast::forced_import(db, &suffix("dominance_1m"), version, indexes)?;
+        let dominance_1y =
+            ComputedFromHeightLast::forced_import(db, &suffix("dominance_1y"), version, indexes)?;
 
         Ok(Self {
-            dominance: LazyBinaryFromHeightLast::from_computed_sum_cum::<PercentageU32F32>(
-                &suffix("dominance"),
-                version,
-                &blocks_mined,
-                &blocks.count.block_count,
-            ),
-            dominance_24h: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
-                &suffix("dominance_24h"),
-                version,
-                &blocks_mined_24h_sum,
-                &blocks.count.block_count_sum._24h,
-            ),
-            dominance_1w: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
-                &suffix("dominance_1w"),
-                version,
-                &blocks_mined_1w_sum,
-                &blocks.count.block_count_sum._7d,
-            ),
-            dominance_1m: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
-                &suffix("dominance_1m"),
-                version,
-                &blocks_mined_1m_sum,
-                &blocks.count.block_count_sum._30d,
-            ),
-            dominance_1y: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
-                &suffix("dominance_1y"),
-                version,
-                &blocks_mined_1y_sum,
-                &blocks.count.block_count_sum._1y,
-            ),
+            dominance,
+            dominance_24h,
+            dominance_1w,
+            dominance_1m,
+            dominance_1y,
             slug,
             blocks_mined,
             blocks_mined_24h_sum,
@@ -163,14 +122,20 @@ impl Vecs {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         starting_indexes: &ComputeIndexes,
         height_to_pool: &impl ReadableVec<Height, PoolSlug>,
         blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
+        mining: &mining::Vecs,
+        transactions: &transactions::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.blocks_mined.compute(starting_indexes, exit, |vec| {
+        let window_starts = blocks.count.window_starts();
+
+        self.blocks_mined.compute(starting_indexes.height, &window_starts, exit, |vec| {
             vec.compute_transform(
                 starting_indexes.height,
                 height_to_pool,
@@ -218,11 +183,77 @@ impl Vecs {
             exit,
         )?;
 
-        self.subsidy.compute_cumulative(starting_indexes, exit)?;
+        self.dominance
+            .compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
+                starting_indexes.height,
+                &self.blocks_mined.cumulative.height,
+                &blocks.count.block_count.cumulative.height,
+                exit,
+            )?;
 
-        self.fee.compute_cumulative(starting_indexes, exit)?;
+        self.dominance_24h
+            .compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
+                starting_indexes.height,
+                &self.blocks_mined_24h_sum.height,
+                &blocks.count.block_count_sum._24h.height,
+                exit,
+            )?;
 
-        self.coinbase.compute_cumulative(starting_indexes, exit)?;
+        self.dominance_1w
+            .compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
+                starting_indexes.height,
+                &self.blocks_mined_1w_sum.height,
+                &blocks.count.block_count_sum._7d.height,
+                exit,
+            )?;
+
+        self.dominance_1m
+            .compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
+                starting_indexes.height,
+                &self.blocks_mined_1m_sum.height,
+                &blocks.count.block_count_sum._30d.height,
+                exit,
+            )?;
+
+        self.dominance_1y
+            .compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
+                starting_indexes.height,
+                &self.blocks_mined_1y_sum.height,
+                &blocks.count.block_count_sum._1y.height,
+                exit,
+            )?;
+
+        self.subsidy
+            .compute(starting_indexes.height, &window_starts, prices, exit, |vec| {
+                Ok(vec.compute_transform2(
+                    starting_indexes.height,
+                    &self.blocks_mined.height,
+                    &mining.rewards.subsidy.sats.height,
+                    |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
+                    exit,
+                )?)
+            })?;
+
+        self.fee.compute(starting_indexes.height, &window_starts, prices, exit, |vec| {
+            Ok(vec.compute_transform2(
+                starting_indexes.height,
+                &self.blocks_mined.height,
+                &*transactions.fees.fee.sum_cumulative.sum,
+                |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
+                exit,
+            )?)
+        })?;
+
+        self.coinbase
+            .compute(starting_indexes.height, &window_starts, prices, exit, |vec| {
+                Ok(vec.compute_transform2(
+                    starting_indexes.height,
+                    &self.blocks_mined.height,
+                    &mining.rewards.coinbase.sats.height,
+                    |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
+                    exit,
+                )?)
+            })?;
 
         {
             let mut prev = StoredU32::ZERO;

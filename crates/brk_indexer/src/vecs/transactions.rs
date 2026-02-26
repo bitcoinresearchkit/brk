@@ -5,7 +5,9 @@ use brk_types::{
     Version,
 };
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, BytesVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec};
+use vecdb::{
+    AnyStoredVec, BytesVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec,
+};
 
 use crate::parallel_import;
 

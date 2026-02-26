@@ -6,7 +6,10 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{
+    BinaryTransform, Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableCloneableVec,
+    ReadableVec, Rw, StorageMode, VecValue,
+};
 
 use crate::indexes;
 
@@ -41,9 +44,39 @@ where
 
         let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, v)?;
 
-        let rest =
-            ComputedHeightDerivedLast::forced_import(name, height.read_only_boxed_clone(), v, indexes);
+        let rest = ComputedHeightDerivedLast::forced_import(
+            name,
+            height.read_only_boxed_clone(),
+            v,
+            indexes,
+        );
 
-        Ok(Self { height, rest: Box::new(rest) })
+        Ok(Self {
+            height,
+            rest: Box::new(rest),
+        })
+    }
+
+    /// Eagerly compute this vec as a binary transform of two sources.
+    pub(crate) fn compute_binary<S1T, S2T, F>(
+        &mut self,
+        max_from: Height,
+        source1: &impl ReadableVec<Height, S1T>,
+        source2: &impl ReadableVec<Height, S2T>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        S1T: VecValue,
+        S2T: VecValue,
+        F: BinaryTransform<S1T, S2T, T>,
+    {
+        self.height.compute_transform2(
+            max_from,
+            source1,
+            source2,
+            |(h, s1, s2, ..)| (h, F::apply(s1, s2)),
+            exit,
+        )?;
+        Ok(())
     }
 }

@@ -1,15 +1,14 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{Database, ReadableCloneableVec};
+use vecdb::Database;
 
 use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ComputedFromHeightLast, LazyBinaryFromHeightLast, LazyHeightDerivedLast,
-        PercentageDiffDollars, PriceFromHeight, StoredU16ToYears,
+        ComputedFromHeightLast, LazyHeightDerivedLast,
+        Price, StoredU16ToYears,
     },
-    prices,
 };
 
 impl Vecs {
@@ -17,9 +16,8 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
     ) -> Result<Self> {
-        let price_ath = PriceFromHeight::forced_import(db, "price_ath", version, indexes)?;
+        let price_ath = Price::forced_import(db, "price_ath", version, indexes)?;
 
         let max_days_between_price_aths = ComputedFromHeightLast::forced_import(
             db,
@@ -45,14 +43,7 @@ impl Vecs {
         );
 
         let price_drawdown =
-            LazyBinaryFromHeightLast::from_height_and_derived_last::<PercentageDiffDollars>(
-                "price_drawdown",
-                version,
-                prices.usd.price.read_only_boxed_clone(),
-                price_ath.height.read_only_boxed_clone(),
-                &prices.usd.close,
-                &price_ath.rest,
-            );
+            ComputedFromHeightLast::forced_import(db, "price_drawdown", version, indexes)?;
 
         Ok(Self {
             price_ath,

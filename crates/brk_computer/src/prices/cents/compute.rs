@@ -5,7 +5,7 @@ use brk_indexer::Indexer;
 use brk_oracle::{Config, NUM_BINS, Oracle, START_HEIGHT, bin_to_cents, cents_to_bin};
 use brk_types::{Cents, OutputType, Sats, TxIndex, TxOutIndex};
 use tracing::info;
-use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, StorageMode, WritableVec, VecIndex};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, StorageMode, VecIndex, WritableVec};
 
 use super::Vecs;
 use crate::{ComputeIndexes, indexes};
@@ -102,7 +102,11 @@ impl Vecs {
 
     /// Feed a range of blocks from the indexer into an Oracle (skipping coinbase),
     /// returning per-block ref_bin values.
-    fn feed_blocks<M: StorageMode>(oracle: &mut Oracle, indexer: &Indexer<M>, range: Range<usize>) -> Vec<f64> {
+    fn feed_blocks<M: StorageMode>(
+        oracle: &mut Oracle,
+        indexer: &Indexer<M>,
+        range: Range<usize>,
+    ) -> Vec<f64> {
         let total_txs = indexer.vecs.transactions.height.len();
         let total_outputs = indexer.vecs.outputs.value.len();
 
@@ -183,10 +187,7 @@ impl<M: StorageMode> Vecs<M> {
     pub fn live_oracle<IM: StorageMode>(&self, indexer: &Indexer<IM>) -> Result<Oracle> {
         let config = Config::default();
         let height = indexer.vecs.blocks.timestamp.len();
-        let last_cents = self
-            .price
-            .collect_one_at(self.price.len() - 1)
-            .unwrap();
+        let last_cents = self.price.collect_one_at(self.price.len() - 1).unwrap();
         let seed_bin = cents_to_bin(last_cents.inner() as f64);
         let window_size = config.window_size;
         let oracle = Oracle::from_checkpoint(seed_bin, config, |o| {

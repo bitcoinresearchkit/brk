@@ -2,13 +2,13 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Sats, Version};
 
-use crate::{ComputeIndexes, blocks};
+use crate::{ComputeIndexes, blocks, prices};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::internal::{
-    HalfPriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin,
-    LazyBinaryValueFromHeightLast, ValueChangeFromHeight, ValueFromHeightLast,
+    HalveDollars, HalveSats, HalveSatsToBitcoin,
+    LazyValueFromHeightLast, ValueChangeFromHeight, ValueFromHeightLast,
 };
 
 use super::ImportConfig;
@@ -17,7 +17,7 @@ use super::ImportConfig;
 #[derive(Traversable)]
 pub struct SupplyMetrics<M: StorageMode = Rw> {
     pub total: ValueFromHeightLast<M>,
-    pub halved: LazyBinaryValueFromHeightLast,
+    pub halved: LazyValueFromHeightLast,
     /// 30-day change in supply (net position change) - sats, btc, usd
     pub _30d_change: ValueChangeFromHeight<M>,
 }
@@ -30,15 +30,13 @@ impl SupplyMetrics {
             &cfg.name("supply"),
             cfg.version,
             cfg.indexes,
-            cfg.prices,
         )?;
 
-        let supply_halved = LazyBinaryValueFromHeightLast::from_block_source::<
+        let supply_halved = LazyValueFromHeightLast::from_block_source::<
             HalveSats,
             HalveSatsToBitcoin,
-            HalfPriceTimesSats,
             HalveDollars,
-        >(&cfg.name("supply_halved"), &supply, cfg.prices, cfg.version);
+        >(&cfg.name("supply_halved"), &supply, cfg.version);
 
         let _30d_change = ValueChangeFromHeight::forced_import(
             cfg.db,
@@ -67,7 +65,21 @@ impl SupplyMetrics {
 
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        vec![&mut self.total.sats.height as &mut dyn AnyStoredVec].into_par_iter()
+        vec![
+            &mut self.total.sats.height as &mut dyn AnyStoredVec,
+            &mut self.total.usd.height as &mut dyn AnyStoredVec,
+        ]
+        .into_par_iter()
+    }
+
+    /// Eagerly compute USD height values from sats × price.
+    pub(crate) fn compute(
+        &mut self,
+        prices: &prices::Vecs,
+        max_from: Height,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.total.compute(prices, max_from, exit)
     }
 
     /// Validate computed versions against base version.

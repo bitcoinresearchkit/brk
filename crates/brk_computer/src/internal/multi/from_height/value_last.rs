@@ -1,30 +1,26 @@
 //! Value type for Last pattern from Height.
 //!
-//! Height-level USD value is lazy: `sats * price`.
+//! Height-level USD value is stored (eagerly computed from sats × price).
 //! Day1 last is stored since it requires finding the last value within each date.
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Dollars, Sats, Version};
-use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
+use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
+use vecdb::{Database, Exit, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
-    indexes,
-    internal::{
-        ComputedFromHeightLast, LazyBinaryComputedFromHeightLast, LazyFromHeightLast,
-        SatsTimesPrice, SatsToBitcoin,
-    },
-    prices,
+    indexes, prices,
+    internal::{ComputedFromHeightLast, LazyFromHeightLast, SatsToBitcoin},
 };
 
 #[derive(Traversable)]
 pub struct ValueFromHeightLast<M: StorageMode = Rw> {
     pub sats: ComputedFromHeightLast<Sats, M>,
     pub btc: LazyFromHeightLast<Bitcoin, Sats>,
-    pub usd: LazyBinaryComputedFromHeightLast<Dollars, Sats, Dollars>,
+    pub usd: ComputedFromHeightLast<Dollars, M>,
 }
 
-const VERSION: Version = Version::ONE; // Bumped for lazy height dollars
+const VERSION: Version = Version::TWO; // Bumped for stored height dollars
 
 impl ValueFromHeightLast {
     pub(crate) fn forced_import(
@@ -32,7 +28,6 @@ impl ValueFromHeightLast {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
     ) -> Result<Self> {
         let v = version + VERSION;
 
@@ -45,18 +40,32 @@ impl ValueFromHeightLast {
             &sats,
         );
 
-        let usd = LazyBinaryComputedFromHeightLast::forced_import::<SatsTimesPrice>(
-            &format!("{name}_usd"),
-            v,
-            sats.height.read_only_boxed_clone(),
-            prices.usd.price.read_only_boxed_clone(),
-            indexes,
-        );
+        let usd = ComputedFromHeightLast::forced_import(db, &format!("{name}_usd"), v, indexes)?;
 
         Ok(Self {
             sats,
             btc,
             usd,
         })
+    }
+
+    /// Eagerly compute USD height values: sats[h] * price[h].
+    pub(crate) fn compute(
+        &mut self,
+        prices: &prices::Vecs,
+        max_from: Height,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.usd.height.compute_transform2(
+            max_from,
+            &self.sats.height,
+            &prices.usd.price,
+            |(h, sats, price, ..)| {
+                let btc = *sats as f64 / 100_000_000.0;
+                (h, Dollars::from(*price * btc))
+            },
+            exit,
+        )?;
+        Ok(())
     }
 }

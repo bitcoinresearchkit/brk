@@ -11,7 +11,7 @@ use brk_types::{
     StoredF32, Timestamp, Version,
 };
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode, VecIndex, WritableVec};
+use vecdb::{AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, VecIndex, WritableVec};
 
 use crate::{
     ComputeIndexes, blocks,
@@ -24,7 +24,7 @@ use crate::{
 use crate::distribution::metrics::{
     AdjustedCohortMetrics, AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase,
     ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig, PeakRegretCohortMetrics,
-    RealizedBase, SupplyMetrics,
+    SupplyMetrics,
 };
 
 use super::vecs::UTXOCohortVecs;
@@ -68,7 +68,6 @@ impl UTXOCohorts<Rw> {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
         states_path: &Path,
     ) -> Result<Self> {
         let v = version + VERSION;
@@ -82,7 +81,6 @@ impl UTXOCohorts<Rw> {
             context: CohortContext::Utxo,
             version: v + Version::ONE,
             indexes,
-            prices,
         };
         let all_supply = SupplyMetrics::forced_import(&all_cfg)?;
 
@@ -90,7 +88,6 @@ impl UTXOCohorts<Rw> {
 
         // age_range: ExtendedCohortMetrics with full state
         let age_range = {
-            let s = &all_supply;
             ByAgeRange::try_new(&|f: Filter, name: &'static str| -> Result<_> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
                 let cfg = ImportConfig {
@@ -100,12 +97,11 @@ impl UTXOCohorts<Rw> {
                     context: CohortContext::Utxo,
                     version: v,
                     indexes,
-                    prices,
                 };
                 let state = Some(Box::new(UTXOCohortState::new(states_path, &full_name)));
                 Ok(UTXOCohortVecs::new(
                     state,
-                    ExtendedCohortMetrics::forced_import(&cfg, s)?,
+                    ExtendedCohortMetrics::forced_import(&cfg)?,
                 ))
             })?
         };
@@ -121,12 +117,11 @@ impl UTXOCohorts<Rw> {
                     context: CohortContext::Utxo,
                     version: v,
                     indexes,
-                    prices,
                 };
                 let state = Some(Box::new(UTXOCohortState::new(states_path, &full_name)));
                 Ok(UTXOCohortVecs::new(
                     state,
-                    BasicCohortMetrics::forced_import(&cfg, &all_supply)?,
+                    BasicCohortMetrics::forced_import(&cfg)?,
                 ))
             };
 
@@ -135,18 +130,13 @@ impl UTXOCohorts<Rw> {
         let year = ByYear::try_new(&basic_separate)?;
         let type_ = BySpendableType::try_new(&basic_separate)?;
 
-        // Phase 3: Get up_to_1h realized for adjusted computation.
-        let up_to_1h_realized: &RealizedBase = &age_range.up_to_1h.metrics.realized;
-
-        // Phase 4: Import "all" cohort with pre-imported supply.
+        // Phase 3: Import "all" cohort with pre-imported supply.
         let all = UTXOCohortVecs::new(
             None,
-            AllCohortMetrics::forced_import_with_supply(&all_cfg, all_supply, up_to_1h_realized)?,
+            AllCohortMetrics::forced_import_with_supply(&all_cfg, all_supply)?,
         );
 
-        let all_supply_ref = &all.metrics.supply;
-
-        // Phase 5: Import aggregate cohorts.
+        // Phase 4: Import aggregate cohorts.
 
         // sth: ExtendedAdjustedCohortMetrics
         let sth = {
@@ -159,14 +149,11 @@ impl UTXOCohorts<Rw> {
                 context: CohortContext::Utxo,
                 version: v,
                 indexes,
-                prices,
             };
             UTXOCohortVecs::new(
                 None,
                 ExtendedAdjustedCohortMetrics::forced_import(
                     &cfg,
-                    all_supply_ref,
-                    up_to_1h_realized,
                 )?,
             )
         };
@@ -182,17 +169,15 @@ impl UTXOCohorts<Rw> {
                 context: CohortContext::Utxo,
                 version: v,
                 indexes,
-                prices,
             };
             UTXOCohortVecs::new(
                 None,
-                ExtendedCohortMetrics::forced_import(&cfg, all_supply_ref)?,
+                ExtendedCohortMetrics::forced_import(&cfg)?,
             )
         };
 
         // max_age: AdjustedCohortMetrics (adjusted + peak_regret)
         let max_age = {
-            let s = all_supply_ref;
             ByMaxAge::try_new(&|f: Filter, name: &'static str| -> Result<_> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
                 let cfg = ImportConfig {
@@ -202,18 +187,16 @@ impl UTXOCohorts<Rw> {
                     context: CohortContext::Utxo,
                     version: v,
                     indexes,
-                    prices,
                 };
                 Ok(UTXOCohortVecs::new(
                     None,
-                    AdjustedCohortMetrics::forced_import(&cfg, s, up_to_1h_realized)?,
+                    AdjustedCohortMetrics::forced_import(&cfg)?,
                 ))
             })?
         };
 
         // min_age: PeakRegretCohortMetrics
         let min_age = {
-            let s = all_supply_ref;
             ByMinAge::try_new(&|f: Filter, name: &'static str| -> Result<_> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
                 let cfg = ImportConfig {
@@ -223,11 +206,10 @@ impl UTXOCohorts<Rw> {
                     context: CohortContext::Utxo,
                     version: v,
                     indexes,
-                    prices,
                 };
                 Ok(UTXOCohortVecs::new(
                     None,
-                    PeakRegretCohortMetrics::forced_import(&cfg, s)?,
+                    PeakRegretCohortMetrics::forced_import(&cfg)?,
                 ))
             })?
         };
@@ -243,11 +225,10 @@ impl UTXOCohorts<Rw> {
                     context: CohortContext::Utxo,
                     version: v,
                     indexes,
-                    prices,
                 };
                 Ok(UTXOCohortVecs::new(
                     None,
-                    BasicCohortMetrics::forced_import(&cfg, all_supply_ref)?,
+                    BasicCohortMetrics::forced_import(&cfg)?,
                 ))
             };
 
@@ -647,18 +628,32 @@ impl UTXOCohorts<Rw> {
     where
         HM: ReadableVec<Height, Dollars> + Sync,
     {
+        // Get up_to_1h value sources for adjusted computation (cloned to avoid borrow conflicts).
+        let up_to_1h_value_created = self.age_range.up_to_1h.metrics.realized.value_created.height.read_only_clone();
+        let up_to_1h_value_destroyed = self.age_range.up_to_1h.metrics.realized.value_destroyed.height.read_only_clone();
+
+        // "all" cohort computed first (no all_supply_sats needed).
         self.all.metrics.compute_rest_part2(
             blocks,
             prices,
             starting_indexes,
             height_to_market_cap,
+            &up_to_1h_value_created,
+            &up_to_1h_value_destroyed,
             exit,
         )?;
+
+        // Clone all_supply_sats for non-all cohorts.
+        let all_supply_sats = self.all.metrics.supply.total.sats.height.read_only_clone();
+
         self.sth.metrics.compute_rest_part2(
             blocks,
             prices,
             starting_indexes,
             height_to_market_cap,
+            &up_to_1h_value_created,
+            &up_to_1h_value_destroyed,
+            &all_supply_sats,
             exit,
         )?;
         self.lth.metrics.compute_rest_part2(
@@ -666,6 +661,7 @@ impl UTXOCohorts<Rw> {
             prices,
             starting_indexes,
             height_to_market_cap,
+            &all_supply_sats,
             exit,
         )?;
         self.age_range.par_iter_mut().try_for_each(|v| {
@@ -674,6 +670,7 @@ impl UTXOCohorts<Rw> {
                 prices,
                 starting_indexes,
                 height_to_market_cap,
+                &all_supply_sats,
                 exit,
             )
         })?;
@@ -683,6 +680,9 @@ impl UTXOCohorts<Rw> {
                 prices,
                 starting_indexes,
                 height_to_market_cap,
+                &up_to_1h_value_created,
+                &up_to_1h_value_destroyed,
+                &all_supply_sats,
                 exit,
             )
         })?;
@@ -692,6 +692,7 @@ impl UTXOCohorts<Rw> {
                 prices,
                 starting_indexes,
                 height_to_market_cap,
+                &all_supply_sats,
                 exit,
             )
         })?;
@@ -701,6 +702,7 @@ impl UTXOCohorts<Rw> {
                 prices,
                 starting_indexes,
                 height_to_market_cap,
+                &all_supply_sats,
                 exit,
             )
         })?;
@@ -710,6 +712,7 @@ impl UTXOCohorts<Rw> {
                 prices,
                 starting_indexes,
                 height_to_market_cap,
+                &all_supply_sats,
                 exit,
             )
         })?;
@@ -719,6 +722,7 @@ impl UTXOCohorts<Rw> {
                 prices,
                 starting_indexes,
                 height_to_market_cap,
+                &all_supply_sats,
                 exit,
             )
         })?;
@@ -728,6 +732,7 @@ impl UTXOCohorts<Rw> {
                 prices,
                 starting_indexes,
                 height_to_market_cap,
+                &all_supply_sats,
                 exit,
             )
         })?;
@@ -737,6 +742,7 @@ impl UTXOCohorts<Rw> {
                 prices,
                 starting_indexes,
                 height_to_market_cap,
+                &all_supply_sats,
                 exit,
             )
         })?;
@@ -746,6 +752,7 @@ impl UTXOCohorts<Rw> {
                 prices,
                 starting_indexes,
                 height_to_market_cap,
+                &all_supply_sats,
                 exit,
             )
         })?;

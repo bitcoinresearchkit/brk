@@ -1,7 +1,7 @@
 //! RollingDistribution - 8 distribution stats, each a RollingWindows.
 //!
 //! Computes average, min, max, p10, p25, median, p75, p90 rolling windows
-//! from a single source vec.
+//! from a single source vec in a single sorted-vec pass per window.
 
 use brk_error::Result;
 
@@ -14,15 +14,13 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{ComputedVecValue, DistributionStats, NumericValue, RollingWindows, WindowStarts},
-    traits::compute_rolling_percentiles_from_starts,
+    traits::compute_rolling_distribution_from_starts,
 };
 
 /// 8 distribution stats × 4 windows = 32 stored height vecs, each with 17 index views.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct RollingDistribution<T, M: StorageMode = Rw>(
-    pub DistributionStats<RollingWindows<T, M>>,
-)
+pub struct RollingDistribution<T, M: StorageMode = Rw>(pub DistributionStats<RollingWindows<T, M>>)
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 
@@ -53,9 +51,10 @@ where
 
     /// Compute all 8 distribution stats across all 4 windows from a single source.
     ///
-    /// - average: running sum / count (O(n) per window)
-    /// - min/max: deque-based (O(n) amortized per window)
-    /// - p10/p25/median/p75/p90: single-pass sorted vec per window
+    /// Uses a single sorted-vec pass per window that extracts all 8 stats:
+    /// - average: running sum / count
+    /// - min/max: first/last of sorted vec
+    /// - p10/p25/median/p75/p90: percentile interpolation from sorted vec
     pub(crate) fn compute_distribution(
         &mut self,
         max_from: Height,
@@ -67,24 +66,14 @@ where
         T: Copy + Ord + From<f64> + Default,
         f64: From<T>,
     {
-        // Average: O(n) per window using running sum
-        self.0
-            .average
-            .compute_rolling_average(max_from, windows, source, exit)?;
-
-        // Min/Max: O(n) amortized per window using deques
-        self.0
-            .min
-            .compute_rolling_min(max_from, windows, source, exit)?;
-        self.0
-            .max
-            .compute_rolling_max(max_from, windows, source, exit)?;
-
-        // Percentiles + median: single-pass per window using sorted vec
-        compute_rolling_percentiles_from_starts(
+        // Single pass per window: all 8 stats extracted from one sorted vec
+        compute_rolling_distribution_from_starts(
             max_from,
             windows._24h,
             source,
+            &mut self.0.average._24h.height,
+            &mut self.0.min._24h.height,
+            &mut self.0.max._24h.height,
             &mut self.0.p10._24h.height,
             &mut self.0.p25._24h.height,
             &mut self.0.median._24h.height,
@@ -92,10 +81,13 @@ where
             &mut self.0.p90._24h.height,
             exit,
         )?;
-        compute_rolling_percentiles_from_starts(
+        compute_rolling_distribution_from_starts(
             max_from,
             windows._7d,
             source,
+            &mut self.0.average._7d.height,
+            &mut self.0.min._7d.height,
+            &mut self.0.max._7d.height,
             &mut self.0.p10._7d.height,
             &mut self.0.p25._7d.height,
             &mut self.0.median._7d.height,
@@ -103,10 +95,13 @@ where
             &mut self.0.p90._7d.height,
             exit,
         )?;
-        compute_rolling_percentiles_from_starts(
+        compute_rolling_distribution_from_starts(
             max_from,
             windows._30d,
             source,
+            &mut self.0.average._30d.height,
+            &mut self.0.min._30d.height,
+            &mut self.0.max._30d.height,
             &mut self.0.p10._30d.height,
             &mut self.0.p25._30d.height,
             &mut self.0.median._30d.height,
@@ -114,10 +109,13 @@ where
             &mut self.0.p90._30d.height,
             exit,
         )?;
-        compute_rolling_percentiles_from_starts(
+        compute_rolling_distribution_from_starts(
             max_from,
             windows._1y,
             source,
+            &mut self.0.average._1y.height,
+            &mut self.0.min._1y.height,
+            &mut self.0.max._1y.height,
             &mut self.0.p10._1y.height,
             &mut self.0.p25._1y.height,
             &mut self.0.median._1y.height,

@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_types::{Day1, DifficultyEntry, HashrateEntry, HashrateSummary, Height, TimePeriod};
-use vecdb::{ReadableVec, VecIndex};
+use vecdb::{ReadableOptionVec, ReadableVec, VecIndex};
 
 use super::epochs::iter_difficulty_epochs;
 use crate::Query;
@@ -27,8 +27,8 @@ impl Query {
             .hashrate
             .hash_rate
             .day1
-            .collect_one(current_day1)
-            .unwrap() as u128;
+            .collect_one_flat(current_day1)
+            .unwrap_or_default() as u128;
 
         // Calculate start height based on time period
         let end = current_height.to_usize();
@@ -61,11 +61,11 @@ impl Query {
         while di <= end_day1.to_usize() {
             let day1 = Day1::from(di);
             if let (Some(hr), Some(timestamp)) =
-                (hashrate_vec.collect_one(day1), timestamp_vec.collect_one(day1))
+                (hashrate_vec.collect_one_flat(day1), timestamp_vec.collect_one(day1))
             {
                 hashrates.push(HashrateEntry {
                     timestamp,
-                    avg_hashrate: (*hr) as u128,
+                    avg_hashrate: *hr as u128,
                 });
             }
             di += step;

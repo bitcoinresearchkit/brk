@@ -1,7 +1,8 @@
 use brk_error::Result;
 use brk_types::StoredF32;
 use vecdb::{
-    AnyVec, EagerVec, Exit, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue, WritableVec,
+    AnyStoredVec, AnyVec, EagerVec, Exit, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue,
+    WritableVec,
 };
 
 mod pricing;
@@ -280,21 +281,27 @@ where
     }
 }
 
-/// Compute rolling percentiles (p10, p25, median, p75, p90) in a single pass.
+/// Compute all 8 rolling distribution stats (avg, min, max, p10, p25, median, p75, p90)
+/// in a single sorted-vec pass per window.
 ///
-/// Maintains one sorted vec per window, extracting all 5 percentiles at each position.
-/// Much faster than 5 separate passes since sorted vec maintenance is the bottleneck.
+/// Since the percentile pass already sorts data, min = sorted[0], max = sorted[last],
+/// and average = running_sum / count — all extracted at negligible extra cost.
+/// This replaces 3 separate passes (avg, min, max) + 1 percentile pass = 4 passes
+/// with a single unified pass.
 #[allow(clippy::too_many_arguments)]
-pub fn compute_rolling_percentiles_from_starts<I, T, A>(
+pub fn compute_rolling_distribution_from_starts<I, T, A>(
     max_from: I,
     window_starts: &impl ReadableVec<I, I>,
     values: &impl ReadableVec<I, A>,
+    average_out: &mut EagerVec<PcoVec<I, T>>,
+    min_out: &mut EagerVec<PcoVec<I, T>>,
+    max_out: &mut EagerVec<PcoVec<I, T>>,
     p10_out: &mut EagerVec<PcoVec<I, T>>,
     p25_out: &mut EagerVec<PcoVec<I, T>>,
     median_out: &mut EagerVec<PcoVec<I, T>>,
     p75_out: &mut EagerVec<PcoVec<I, T>>,
     p90_out: &mut EagerVec<PcoVec<I, T>>,
-    _exit: &Exit,
+    exit: &Exit,
 ) -> Result<()>
 where
     I: VecIndex,
@@ -303,21 +310,31 @@ where
     f64: From<A>,
 {
     let version = window_starts.version() + values.version();
+
+    average_out.validate_computed_version_or_reset(version)?;
+    min_out.validate_computed_version_or_reset(version)?;
+    max_out.validate_computed_version_or_reset(version)?;
     p10_out.validate_computed_version_or_reset(version)?;
     p25_out.validate_computed_version_or_reset(version)?;
     median_out.validate_computed_version_or_reset(version)?;
     p75_out.validate_computed_version_or_reset(version)?;
     p90_out.validate_computed_version_or_reset(version)?;
 
+    average_out.truncate_if_needed(max_from)?;
+    min_out.truncate_if_needed(max_from)?;
+    max_out.truncate_if_needed(max_from)?;
     p10_out.truncate_if_needed(max_from)?;
     p25_out.truncate_if_needed(max_from)?;
     median_out.truncate_if_needed(max_from)?;
     p75_out.truncate_if_needed(max_from)?;
     p90_out.truncate_if_needed(max_from)?;
 
-    // All 5 vecs should be at the same length; use min to be safe
-    let skip = p10_out
+    // All 8 vecs should be at the same length; use min to be safe
+    let skip = average_out
         .len()
+        .min(min_out.len())
+        .min(max_out.len())
+        .min(p10_out.len())
         .min(p25_out.len())
         .min(median_out.len())
         .min(p75_out.len())
@@ -336,17 +353,19 @@ where
     let partial_values: Vec<A> = values.collect_range_at(range_start, end);
 
     let mut sorted: Vec<f64> = Vec::new();
+    let mut running_sum: f64 = 0.0;
     let mut prev_start_usize: usize = range_start;
 
-    // Reconstruct sorted state from historical data
+    // Reconstruct sorted state + running sum from historical data
     if skip > 0 {
-        (range_start..skip).for_each(|idx| {
+        for idx in range_start..skip {
             let v = f64::from(partial_values[idx - range_start]);
+            running_sum += v;
             let pos = sorted
                 .binary_search_by(|a| a.partial_cmp(&v).unwrap_or(std::cmp::Ordering::Equal))
                 .unwrap_or_else(|x| x);
             sorted.insert(pos, v);
-        });
+        }
     }
 
     let starts_batch = window_starts.collect_range_at(skip, end);
@@ -354,6 +373,7 @@ where
     for (j, start) in starts_batch.into_iter().enumerate() {
         let i = skip + j;
         let v = f64::from(partial_values[i - range_start]);
+        running_sum += v;
         let pos = sorted
             .binary_search_by(|a| a.partial_cmp(&v).unwrap_or(std::cmp::Ordering::Equal))
             .unwrap_or_else(|x| x);
@@ -362,6 +382,7 @@ where
         let start_usize = start.to_usize();
         while prev_start_usize < start_usize {
             let old = f64::from(partial_values[prev_start_usize - range_start]);
+            running_sum -= old;
             if let Ok(pos) = sorted
                 .binary_search_by(|a| a.partial_cmp(&old).unwrap_or(std::cmp::Ordering::Equal))
             {
@@ -373,19 +394,48 @@ where
         let len = sorted.len();
         if len == 0 {
             let zero = T::from(0.0);
+            average_out.checked_push_at(i, zero)?;
+            min_out.checked_push_at(i, zero)?;
+            max_out.checked_push_at(i, zero)?;
             p10_out.checked_push_at(i, zero)?;
             p25_out.checked_push_at(i, zero)?;
             median_out.checked_push_at(i, zero)?;
             p75_out.checked_push_at(i, zero)?;
             p90_out.checked_push_at(i, zero)?;
         } else {
+            average_out.checked_push_at(i, T::from(running_sum / len as f64))?;
+            min_out.checked_push_at(i, T::from(sorted[0]))?;
+            max_out.checked_push_at(i, T::from(sorted[len - 1]))?;
             p10_out.checked_push_at(i, T::from(percentile_of_sorted(&sorted, 0.10)))?;
             p25_out.checked_push_at(i, T::from(percentile_of_sorted(&sorted, 0.25)))?;
             median_out.checked_push_at(i, T::from(percentile_of_sorted(&sorted, 0.50)))?;
             p75_out.checked_push_at(i, T::from(percentile_of_sorted(&sorted, 0.75)))?;
             p90_out.checked_push_at(i, T::from(percentile_of_sorted(&sorted, 0.90)))?;
         }
+
+        if average_out.batch_limit_reached() {
+            let _lock = exit.lock();
+            average_out.write()?;
+            min_out.write()?;
+            max_out.write()?;
+            p10_out.write()?;
+            p25_out.write()?;
+            median_out.write()?;
+            p75_out.write()?;
+            p90_out.write()?;
+        }
     }
+
+    // Final flush
+    let _lock = exit.lock();
+    average_out.write()?;
+    min_out.write()?;
+    max_out.write()?;
+    p10_out.write()?;
+    p25_out.write()?;
+    median_out.write()?;
+    p75_out.write()?;
+    p90_out.write()?;
 
     Ok(())
 }

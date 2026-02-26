@@ -1,26 +1,21 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, StoredF64, Version};
-use vecdb::{Exit, Ident, ReadableCloneableVec, Rw, StorageMode};
+use brk_types::{Dollars, Height, StoredF64, Version};
+use vecdb::{Exit, Ident, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{
-        ComputedFromHeightLast, DollarsMinus, LazyBinaryFromHeightLast,
-        LazyFromHeightLast, Ratio64,
-    },
+    internal::{ComputedFromHeightLast, LazyFromHeightLast, Ratio64},
 };
 
 use crate::distribution::metrics::ImportConfig;
 
-use super::RealizedBase;
-
 /// Adjusted realized metrics (only for adjusted cohorts: all, sth, max_age).
 #[derive(Traversable)]
 pub struct RealizedAdjusted<M: StorageMode = Rw> {
-    // === Adjusted Value (lazy: cohort - up_to_1h) ===
-    pub adjusted_value_created: LazyBinaryFromHeightLast<Dollars, Dollars, Dollars>,
-    pub adjusted_value_destroyed: LazyBinaryFromHeightLast<Dollars, Dollars, Dollars>,
+    // === Adjusted Value (computed: cohort - up_to_1h) ===
+    pub adjusted_value_created: ComputedFromHeightLast<Dollars, M>,
+    pub adjusted_value_destroyed: ComputedFromHeightLast<Dollars, M>,
 
     // === Adjusted Value Created/Destroyed Rolling Sums ===
     pub adjusted_value_created_24h: ComputedFromHeightLast<Dollars, M>,
@@ -34,10 +29,10 @@ pub struct RealizedAdjusted<M: StorageMode = Rw> {
 
     // === Adjusted SOPR (rolling window ratios) ===
     pub adjusted_sopr: LazyFromHeightLast<StoredF64>,
-    pub adjusted_sopr_24h: LazyBinaryFromHeightLast<StoredF64, Dollars, Dollars>,
-    pub adjusted_sopr_7d: LazyBinaryFromHeightLast<StoredF64, Dollars, Dollars>,
-    pub adjusted_sopr_30d: LazyBinaryFromHeightLast<StoredF64, Dollars, Dollars>,
-    pub adjusted_sopr_1y: LazyBinaryFromHeightLast<StoredF64, Dollars, Dollars>,
+    pub adjusted_sopr_24h: ComputedFromHeightLast<StoredF64, M>,
+    pub adjusted_sopr_7d: ComputedFromHeightLast<StoredF64, M>,
+    pub adjusted_sopr_30d: ComputedFromHeightLast<StoredF64, M>,
+    pub adjusted_sopr_1y: ComputedFromHeightLast<StoredF64, M>,
     pub adjusted_sopr_24h_7d_ema: ComputedFromHeightLast<StoredF64, M>,
     pub adjusted_sopr_7d_ema: LazyFromHeightLast<StoredF64>,
     pub adjusted_sopr_24h_30d_ema: ComputedFromHeightLast<StoredF64, M>,
@@ -45,35 +40,32 @@ pub struct RealizedAdjusted<M: StorageMode = Rw> {
 }
 
 impl RealizedAdjusted {
-    pub(crate) fn forced_import(
-        cfg: &ImportConfig,
-        base: &RealizedBase,
-        up_to_1h: &RealizedBase,
-    ) -> Result<Self> {
+    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
 
         macro_rules! import_rolling {
             ($name:expr) => {
-                ComputedFromHeightLast::forced_import(cfg.db, &cfg.name($name), cfg.version + v1, cfg.indexes)?
+                ComputedFromHeightLast::forced_import(
+                    cfg.db,
+                    &cfg.name($name),
+                    cfg.version + v1,
+                    cfg.indexes,
+                )?
             };
         }
 
-        let adjusted_value_created = LazyBinaryFromHeightLast::from_both_binary_block::<
-            DollarsMinus, Dollars, Dollars, Dollars, Dollars,
-        >(
+        let adjusted_value_created = ComputedFromHeightLast::forced_import(
+            cfg.db,
             &cfg.name("adjusted_value_created"),
             cfg.version,
-            &base.value_created,
-            &up_to_1h.value_created,
-        );
-        let adjusted_value_destroyed = LazyBinaryFromHeightLast::from_both_binary_block::<
-            DollarsMinus, Dollars, Dollars, Dollars, Dollars,
-        >(
+            cfg.indexes,
+        )?;
+        let adjusted_value_destroyed = ComputedFromHeightLast::forced_import(
+            cfg.db,
             &cfg.name("adjusted_value_destroyed"),
             cfg.version,
-            &base.value_destroyed,
-            &up_to_1h.value_destroyed,
-        );
+            cfg.indexes,
+        )?;
 
         let adjusted_value_created_24h = import_rolling!("adjusted_value_created_24h");
         let adjusted_value_created_7d = import_rolling!("adjusted_value_created_7d");
@@ -84,31 +76,50 @@ impl RealizedAdjusted {
         let adjusted_value_destroyed_30d = import_rolling!("adjusted_value_destroyed_30d");
         let adjusted_value_destroyed_1y = import_rolling!("adjusted_value_destroyed_1y");
 
-        let adjusted_sopr_24h = LazyBinaryFromHeightLast::from_computed_last::<Ratio64>(
-            &cfg.name("adjusted_sopr_24h"), cfg.version + v1, &adjusted_value_created_24h, &adjusted_value_destroyed_24h,
-        );
-        let adjusted_sopr_7d = LazyBinaryFromHeightLast::from_computed_last::<Ratio64>(
-            &cfg.name("adjusted_sopr_7d"), cfg.version + v1, &adjusted_value_created_7d, &adjusted_value_destroyed_7d,
-        );
-        let adjusted_sopr_30d = LazyBinaryFromHeightLast::from_computed_last::<Ratio64>(
-            &cfg.name("adjusted_sopr_30d"), cfg.version + v1, &adjusted_value_created_30d, &adjusted_value_destroyed_30d,
-        );
-        let adjusted_sopr_1y = LazyBinaryFromHeightLast::from_computed_last::<Ratio64>(
-            &cfg.name("adjusted_sopr_1y"), cfg.version + v1, &adjusted_value_created_1y, &adjusted_value_destroyed_1y,
-        );
-        let adjusted_sopr = LazyFromHeightLast::from_binary::<Ident, Dollars, Dollars>(
-            &cfg.name("adjusted_sopr"), cfg.version + v1, &adjusted_sopr_24h,
+        let adjusted_sopr_24h = ComputedFromHeightLast::forced_import(
+            cfg.db,
+            &cfg.name("adjusted_sopr_24h"),
+            cfg.version + v1,
+            cfg.indexes,
+        )?;
+        let adjusted_sopr_7d = ComputedFromHeightLast::forced_import(
+            cfg.db,
+            &cfg.name("adjusted_sopr_7d"),
+            cfg.version + v1,
+            cfg.indexes,
+        )?;
+        let adjusted_sopr_30d = ComputedFromHeightLast::forced_import(
+            cfg.db,
+            &cfg.name("adjusted_sopr_30d"),
+            cfg.version + v1,
+            cfg.indexes,
+        )?;
+        let adjusted_sopr_1y = ComputedFromHeightLast::forced_import(
+            cfg.db,
+            &cfg.name("adjusted_sopr_1y"),
+            cfg.version + v1,
+            cfg.indexes,
+        )?;
+        let adjusted_sopr = LazyFromHeightLast::from_computed::<Ident>(
+            &cfg.name("adjusted_sopr"),
+            cfg.version + v1,
+            adjusted_sopr_24h.height.read_only_boxed_clone(),
+            &adjusted_sopr_24h,
         );
 
         let adjusted_sopr_24h_7d_ema = import_rolling!("adjusted_sopr_24h_7d_ema");
         let adjusted_sopr_7d_ema = LazyFromHeightLast::from_computed::<Ident>(
-            &cfg.name("adjusted_sopr_7d_ema"), cfg.version + v1,
-            adjusted_sopr_24h_7d_ema.height.read_only_boxed_clone(), &adjusted_sopr_24h_7d_ema,
+            &cfg.name("adjusted_sopr_7d_ema"),
+            cfg.version + v1,
+            adjusted_sopr_24h_7d_ema.height.read_only_boxed_clone(),
+            &adjusted_sopr_24h_7d_ema,
         );
         let adjusted_sopr_24h_30d_ema = import_rolling!("adjusted_sopr_24h_30d_ema");
         let adjusted_sopr_30d_ema = LazyFromHeightLast::from_computed::<Ident>(
-            &cfg.name("adjusted_sopr_30d_ema"), cfg.version + v1,
-            adjusted_sopr_24h_30d_ema.height.read_only_boxed_clone(), &adjusted_sopr_24h_30d_ema,
+            &cfg.name("adjusted_sopr_30d_ema"),
+            cfg.version + v1,
+            adjusted_sopr_24h_30d_ema.height.read_only_boxed_clone(),
+            &adjusted_sopr_24h_30d_ema,
         );
 
         Ok(RealizedAdjusted {
@@ -134,36 +145,137 @@ impl RealizedAdjusted {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2_adj(
         &mut self,
         blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
+        base_value_created: &impl ReadableVec<Height, Dollars>,
+        base_value_destroyed: &impl ReadableVec<Height, Dollars>,
+        up_to_1h_value_created: &impl ReadableVec<Height, Dollars>,
+        up_to_1h_value_destroyed: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
+        // Compute adjusted_value_created = base.value_created - up_to_1h.value_created
+        self.adjusted_value_created.height.compute_subtract(
+            starting_indexes.height,
+            base_value_created,
+            up_to_1h_value_created,
+            exit,
+        )?;
+        self.adjusted_value_destroyed.height.compute_subtract(
+            starting_indexes.height,
+            base_value_destroyed,
+            up_to_1h_value_destroyed,
+            exit,
+        )?;
+
         // Adjusted value created/destroyed rolling sums
-        self.adjusted_value_created_24h.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_24h_ago, &self.adjusted_value_created.height, exit)?;
-        self.adjusted_value_created_7d.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1w_ago, &self.adjusted_value_created.height, exit)?;
-        self.adjusted_value_created_30d.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1m_ago, &self.adjusted_value_created.height, exit)?;
-        self.adjusted_value_created_1y.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1y_ago, &self.adjusted_value_created.height, exit)?;
-
-        self.adjusted_value_destroyed_24h.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_24h_ago, &self.adjusted_value_destroyed.height, exit)?;
-        self.adjusted_value_destroyed_7d.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1w_ago, &self.adjusted_value_destroyed.height, exit)?;
-        self.adjusted_value_destroyed_30d.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1m_ago, &self.adjusted_value_destroyed.height, exit)?;
-        self.adjusted_value_destroyed_1y.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1y_ago, &self.adjusted_value_destroyed.height, exit)?;
-
-        // Adjusted SOPR EMAs
-        self.adjusted_sopr_24h_7d_ema.height.compute_rolling_average(
+        self.adjusted_value_created_24h.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_24h_ago,
+            &self.adjusted_value_created.height,
+            exit,
+        )?;
+        self.adjusted_value_created_7d.height.compute_rolling_sum(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
-            &self.adjusted_sopr.height,
+            &self.adjusted_value_created.height,
             exit,
         )?;
-        self.adjusted_sopr_24h_30d_ema.height.compute_rolling_average(
+        self.adjusted_value_created_30d.height.compute_rolling_sum(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
-            &self.adjusted_sopr.height,
+            &self.adjusted_value_created.height,
             exit,
         )?;
+        self.adjusted_value_created_1y.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_1y_ago,
+            &self.adjusted_value_created.height,
+            exit,
+        )?;
+
+        self.adjusted_value_destroyed_24h
+            .height
+            .compute_rolling_sum(
+                starting_indexes.height,
+                &blocks.count.height_24h_ago,
+                &self.adjusted_value_destroyed.height,
+                exit,
+            )?;
+        self.adjusted_value_destroyed_7d
+            .height
+            .compute_rolling_sum(
+                starting_indexes.height,
+                &blocks.count.height_1w_ago,
+                &self.adjusted_value_destroyed.height,
+                exit,
+            )?;
+        self.adjusted_value_destroyed_30d
+            .height
+            .compute_rolling_sum(
+                starting_indexes.height,
+                &blocks.count.height_1m_ago,
+                &self.adjusted_value_destroyed.height,
+                exit,
+            )?;
+        self.adjusted_value_destroyed_1y
+            .height
+            .compute_rolling_sum(
+                starting_indexes.height,
+                &blocks.count.height_1y_ago,
+                &self.adjusted_value_destroyed.height,
+                exit,
+            )?;
+
+        // SOPR ratios from rolling sums
+        self.adjusted_sopr_24h
+            .compute_binary::<Dollars, Dollars, Ratio64>(
+                starting_indexes.height,
+                &self.adjusted_value_created_24h.height,
+                &self.adjusted_value_destroyed_24h.height,
+                exit,
+            )?;
+        self.adjusted_sopr_7d
+            .compute_binary::<Dollars, Dollars, Ratio64>(
+                starting_indexes.height,
+                &self.adjusted_value_created_7d.height,
+                &self.adjusted_value_destroyed_7d.height,
+                exit,
+            )?;
+        self.adjusted_sopr_30d
+            .compute_binary::<Dollars, Dollars, Ratio64>(
+                starting_indexes.height,
+                &self.adjusted_value_created_30d.height,
+                &self.adjusted_value_destroyed_30d.height,
+                exit,
+            )?;
+        self.adjusted_sopr_1y
+            .compute_binary::<Dollars, Dollars, Ratio64>(
+                starting_indexes.height,
+                &self.adjusted_value_created_1y.height,
+                &self.adjusted_value_destroyed_1y.height,
+                exit,
+            )?;
+
+        // Adjusted SOPR EMAs
+        self.adjusted_sopr_24h_7d_ema
+            .height
+            .compute_rolling_average(
+                starting_indexes.height,
+                &blocks.count.height_1w_ago,
+                &self.adjusted_sopr.height,
+                exit,
+            )?;
+        self.adjusted_sopr_24h_30d_ema
+            .height
+            .compute_rolling_average(
+                starting_indexes.height,
+                &blocks.count.height_1m_ago,
+                &self.adjusted_sopr.height,
+                exit,
+            )?;
 
         Ok(())
     }

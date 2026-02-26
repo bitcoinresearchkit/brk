@@ -1,7 +1,7 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, Version};
+use brk_types::{Cents, Dollars, Height, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
@@ -25,7 +25,7 @@ pub struct ExtendedAdjustedCohortMetrics<M: StorageMode = Rw> {
     pub realized: Box<RealizedWithExtendedAdjusted<M>>,
     pub cost_basis: Box<CostBasisWithExtended<M>>,
     pub unrealized: Box<UnrealizedWithPeakRegret<M>>,
-    pub relative: Box<RelativeWithExtended>,
+    pub relative: Box<RelativeWithExtended<M>>,
 }
 
 impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
@@ -76,21 +76,12 @@ impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
 impl ExtendedAdjustedCohortMetrics {
     pub(crate) fn forced_import(
         cfg: &ImportConfig,
-        all_supply: &SupplyMetrics,
-        up_to_1h: &RealizedBase,
     ) -> Result<Self> {
         let supply = SupplyMetrics::forced_import(cfg)?;
         let unrealized = UnrealizedWithPeakRegret::forced_import(cfg)?;
-        let realized = RealizedWithExtendedAdjusted::forced_import(cfg, up_to_1h)?;
+        let realized = RealizedWithExtendedAdjusted::forced_import(cfg)?;
 
-        let relative = RelativeWithExtended::forced_import(
-            cfg,
-            &unrealized.base,
-            &supply,
-            all_supply,
-            &realized.base,
-            &unrealized.peak_regret_ext.peak_regret,
-        );
+        let relative = RelativeWithExtended::forced_import(cfg)?;
 
         Ok(Self {
             filter: cfg.filter.clone(),
@@ -104,12 +95,16 @@ impl ExtendedAdjustedCohortMetrics {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
+        up_to_1h_value_created: &impl ReadableVec<Height, Dollars>,
+        up_to_1h_value_destroyed: &impl ReadableVec<Height, Dollars>,
+        all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
         self.realized.compute_rest_part2(
@@ -118,8 +113,24 @@ impl ExtendedAdjustedCohortMetrics {
             starting_indexes,
             &self.supply.total.btc.height,
             height_to_market_cap,
+            up_to_1h_value_created,
+            up_to_1h_value_destroyed,
             exit,
-        )
+        )?;
+
+        self.relative.compute(
+            starting_indexes.height,
+            &self.unrealized.base,
+            &self.realized.base,
+            &self.supply.total.sats.height,
+            height_to_market_cap,
+            all_supply_sats,
+            &self.supply.total.usd.height,
+            &self.unrealized.peak_regret_ext.peak_regret.height,
+            exit,
+        )?;
+
+        Ok(())
     }
 
 }

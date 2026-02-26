@@ -100,14 +100,14 @@ impl CostBasisExtended {
                 .vecs
                 .iter_mut()
                 .flatten()
-                .map(|v| &mut v.height as &mut dyn AnyStoredVec),
+                .map(|v| &mut v.usd.height as &mut dyn AnyStoredVec),
         );
         vecs.extend(
             self.invested_capital
                 .vecs
                 .iter_mut()
                 .flatten()
-                .map(|v| &mut v.height as &mut dyn AnyStoredVec),
+                .map(|v| &mut v.usd.height as &mut dyn AnyStoredVec),
         );
         vecs.push(&mut self.spot_cost_basis_percentile.height);
         vecs.push(&mut self.spot_invested_capital_percentile.height);

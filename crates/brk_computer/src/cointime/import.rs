@@ -9,14 +9,13 @@ use super::{
     ActivityVecs, AdjustedVecs, CapVecs, DB_NAME, PricingVecs, ReserveRiskVecs, SupplyVecs,
     VERSION, ValueVecs, Vecs,
 };
-use crate::{indexes, prices};
+use crate::indexes;
 
 impl Vecs {
     pub(crate) fn forced_import(
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
@@ -24,7 +23,7 @@ impl Vecs {
         let version = parent_version + VERSION;
         let v1 = version + Version::ONE;
         let activity = ActivityVecs::forced_import(&db, version, indexes)?;
-        let supply = SupplyVecs::forced_import(&db, v1, indexes, prices)?;
+        let supply = SupplyVecs::forced_import(&db, v1, indexes)?;
         let value = ValueVecs::forced_import(&db, v1, indexes)?;
         let cap = CapVecs::forced_import(&db, v1, indexes)?;
         let pricing = PricingVecs::forced_import(&db, version, indexes)?;

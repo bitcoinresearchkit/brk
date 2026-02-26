@@ -6,7 +6,6 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{ComputedFromHeightLast, StoredValueRollingWindows, ValueFromHeightLast},
-    prices,
 };
 
 impl Vecs {
@@ -14,18 +13,17 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
     ) -> Result<Self> {
         let v2 = Version::TWO;
         Ok(Self {
             sent_sum: ValueFromHeightLast::forced_import(
-                db, "sent_sum", version, indexes, prices,
+                db, "sent_sum", version, indexes,
             )?,
             sent_sum_rolling: StoredValueRollingWindows::forced_import(
                 db, "sent_sum", version, indexes,
             )?,
             received_sum: ValueFromHeightLast::forced_import(
-                db, "received_sum", version, indexes, prices,
+                db, "received_sum", version, indexes,
             )?,
             received_sum_rolling: StoredValueRollingWindows::forced_import(
                 db, "received_sum", version, indexes,
@@ -35,7 +33,6 @@ impl Vecs {
                 "annualized_volume",
                 version,
                 indexes,
-                prices,
             )?,
             tx_per_sec: ComputedFromHeightLast::forced_import(
                 db,

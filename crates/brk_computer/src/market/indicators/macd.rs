@@ -41,6 +41,18 @@ pub(super) fn compute(
             .min(starting_indexes.height.to_usize()),
     )?;
 
+    chain
+        .histogram
+        .height
+        .validate_computed_version_or_reset(source_version)?;
+    chain.histogram.height.truncate_if_needed_at(
+        chain
+            .histogram
+            .height
+            .len()
+            .min(starting_indexes.height.to_usize()),
+    )?;
+
     let start_height = chain.line.height.len();
     if start_height >= total_heights {
         return Ok(());
@@ -58,6 +70,8 @@ pub(super) fn compute(
 
     let macd_signal = compute_ema(&macd_line, 9);
 
+    let macd_histogram: Vec<f32> = macd_line.iter().zip(macd_signal.iter()).map(|(a, b)| a - b).collect();
+
     // Expand to Height
     (start_height..total_heights).for_each(|h| {
         let pi = date_to_period(tf, h2d[h]);
@@ -71,12 +85,18 @@ pub(super) fn compute(
         } else {
             StoredF32::NAN
         });
+        chain.histogram.height.push(if pi < macd_histogram.len() {
+            StoredF32::from(macd_histogram[pi])
+        } else {
+            StoredF32::NAN
+        });
     });
 
     {
         let _lock = exit.lock();
         chain.line.height.write()?;
         chain.signal.height.write()?;
+        chain.histogram.height.write()?;
     }
 
     Ok(())

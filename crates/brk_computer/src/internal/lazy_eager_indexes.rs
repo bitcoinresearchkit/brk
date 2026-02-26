@@ -5,8 +5,8 @@
 
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Minute1, Minute10, Minute30, Minute5, Month1,
-    Month3, Month6, Version, Week1, Year1, Year10, Hour1, Hour4, Hour12,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Hour1, Hour4, Hour12, Minute1, Minute5, Minute10,
+    Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -17,29 +17,30 @@ use crate::{
     internal::{ComputedVecValue, EagerIndexes, Indexes},
 };
 
-pub type LazyEagerIndexesInner<T, S> = Indexes<
-    LazyVecFrom1<Minute1, T, Minute1, S>,
-    LazyVecFrom1<Minute5, T, Minute5, S>,
-    LazyVecFrom1<Minute10, T, Minute10, S>,
-    LazyVecFrom1<Minute30, T, Minute30, S>,
-    LazyVecFrom1<Hour1, T, Hour1, S>,
-    LazyVecFrom1<Hour4, T, Hour4, S>,
-    LazyVecFrom1<Hour12, T, Hour12, S>,
-    LazyVecFrom1<Day1, T, Day1, S>,
-    LazyVecFrom1<Day3, T, Day3, S>,
-    LazyVecFrom1<Week1, T, Week1, S>,
-    LazyVecFrom1<Month1, T, Month1, S>,
-    LazyVecFrom1<Month3, T, Month3, S>,
-    LazyVecFrom1<Month6, T, Month6, S>,
-    LazyVecFrom1<Year1, T, Year1, S>,
-    LazyVecFrom1<Year10, T, Year10, S>,
-    LazyVecFrom1<HalvingEpoch, T, HalvingEpoch, S>,
-    LazyVecFrom1<DifficultyEpoch, T, DifficultyEpoch, S>,
->;
-
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct LazyEagerIndexes<T, S>(pub LazyEagerIndexesInner<T, S>)
+pub struct LazyEagerIndexes<T, S>(
+    #[allow(clippy::type_complexity)]
+    pub  Indexes<
+        LazyVecFrom1<Minute1, T, Minute1, S>,
+        LazyVecFrom1<Minute5, T, Minute5, S>,
+        LazyVecFrom1<Minute10, T, Minute10, S>,
+        LazyVecFrom1<Minute30, T, Minute30, S>,
+        LazyVecFrom1<Hour1, T, Hour1, S>,
+        LazyVecFrom1<Hour4, T, Hour4, S>,
+        LazyVecFrom1<Hour12, T, Hour12, S>,
+        LazyVecFrom1<Day1, T, Day1, S>,
+        LazyVecFrom1<Day3, T, Day3, S>,
+        LazyVecFrom1<Week1, T, Week1, S>,
+        LazyVecFrom1<Month1, T, Month1, S>,
+        LazyVecFrom1<Month3, T, Month3, S>,
+        LazyVecFrom1<Month6, T, Month6, S>,
+        LazyVecFrom1<Year1, T, Year1, S>,
+        LazyVecFrom1<Year10, T, Year10, S>,
+        LazyVecFrom1<HalvingEpoch, T, HalvingEpoch, S>,
+        LazyVecFrom1<DifficultyEpoch, T, DifficultyEpoch, S>,
+    >,
+)
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S: ComputedVecValue;

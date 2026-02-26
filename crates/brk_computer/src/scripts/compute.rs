@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use vecdb::Exit;
 
-use crate::{blocks, outputs, ComputeIndexes};
+use crate::{blocks, outputs, prices, ComputeIndexes};
 
 use super::Vecs;
 
@@ -12,6 +12,7 @@ impl Vecs {
         indexer: &Indexer,
         blocks: &blocks::Vecs,
         outputs: &outputs::Vecs,
+        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -19,7 +20,7 @@ impl Vecs {
             .compute(indexer, &blocks.count, &outputs.count, starting_indexes, exit)?;
 
         self.value
-            .compute(indexer, starting_indexes, exit)?;
+            .compute(indexer, &blocks.count, prices, starting_indexes, exit)?;
 
         let _lock = exit.lock();
         self.db.compact()?;

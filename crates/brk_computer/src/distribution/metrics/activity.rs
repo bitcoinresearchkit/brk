@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, AnyVec, EagerVec, Exit, ImportableVec, PcoVec, Rw, Sto
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{ComputedFromHeightCumSum, LazyComputedValueFromHeightCum, ValueEmaFromHeight},
+    internal::{ComputedFromHeightCumulativeSum, LazyComputedValueFromHeightCumulative, ValueEmaFromHeight},
 };
 
 use super::ImportConfig;
@@ -15,7 +15,7 @@ use super::ImportConfig;
 #[derive(Traversable)]
 pub struct ActivityMetrics<M: StorageMode = Rw> {
     /// Total satoshis sent at each height + derived indexes
-    pub sent: LazyComputedValueFromHeightCum<M>,
+    pub sent: LazyComputedValueFromHeightCumulative<M>,
 
     /// 14-day EMA of sent supply (sats, btc, usd)
     pub sent_14d_ema: ValueEmaFromHeight<M>,
@@ -27,22 +27,21 @@ pub struct ActivityMetrics<M: StorageMode = Rw> {
     pub satdays_destroyed: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
 
     /// Coin-blocks destroyed (in BTC rather than sats)
-    pub coinblocks_destroyed: ComputedFromHeightCumSum<StoredF64, M>,
+    pub coinblocks_destroyed: ComputedFromHeightCumulativeSum<StoredF64, M>,
 
     /// Coin-days destroyed (in BTC rather than sats)
-    pub coindays_destroyed: ComputedFromHeightCumSum<StoredF64, M>,
+    pub coindays_destroyed: ComputedFromHeightCumulativeSum<StoredF64, M>,
 }
 
 impl ActivityMetrics {
     /// Import activity metrics from database.
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            sent: LazyComputedValueFromHeightCum::forced_import(
+            sent: LazyComputedValueFromHeightCumulative::forced_import(
                 cfg.db,
                 &cfg.name("sent"),
                 cfg.version,
                 cfg.indexes,
-                cfg.prices,
             )?,
 
             sent_14d_ema: ValueEmaFromHeight::forced_import(
@@ -64,14 +63,14 @@ impl ActivityMetrics {
                 cfg.version,
             )?,
 
-            coinblocks_destroyed: ComputedFromHeightCumSum::forced_import(
+            coinblocks_destroyed: ComputedFromHeightCumulativeSum::forced_import(
                 cfg.db,
                 &cfg.name("coinblocks_destroyed"),
                 cfg.version,
                 cfg.indexes,
             )?,
 
-            coindays_destroyed: ComputedFromHeightCumSum::forced_import(
+            coindays_destroyed: ComputedFromHeightCumulativeSum::forced_import(
                 cfg.db,
                 &cfg.name("coindays_destroyed"),
                 cfg.version,
@@ -164,8 +163,6 @@ impl ActivityMetrics {
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = blocks.count.window_starts();
-
-        self.sent.compute_cumulative(starting_indexes.height, exit)?;
 
         // 14-day rolling average of sent (sats and dollars)
         self.sent_14d_ema.compute_rolling_average(

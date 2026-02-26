@@ -1,15 +1,15 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, Version};
+use brk_types::{Cents, Dollars, Height, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{ComputeIndexes, blocks, distribution::state::CohortState, prices};
 
 use crate::distribution::metrics::{
-    ActivityMetrics, CohortMetricsBase, CostBasisBase, ImportConfig, OutputsMetrics, RealizedBase,
-    RelativeWithRelToAll, SupplyMetrics, UnrealizedBase,
+    ActivityMetrics, CohortMetricsBase, CostBasisBase, ImportConfig, OutputsMetrics,
+    RealizedBase, RelativeWithRelToAll, SupplyMetrics, UnrealizedBase,
 };
 
 /// Basic cohort metrics: no extensions, with relative (rel_to_all).
@@ -24,7 +24,7 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     pub realized: Box<RealizedBase<M>>,
     pub cost_basis: Box<CostBasisBase<M>>,
     pub unrealized: Box<UnrealizedBase<M>>,
-    pub relative: Box<RelativeWithRelToAll>,
+    pub relative: Box<RelativeWithRelToAll<M>>,
 }
 
 impl CohortMetricsBase for BasicCohortMetrics {
@@ -70,15 +70,12 @@ impl CohortMetricsBase for BasicCohortMetrics {
 impl BasicCohortMetrics {
     pub(crate) fn forced_import(
         cfg: &ImportConfig,
-        all_supply: &SupplyMetrics,
     ) -> Result<Self> {
         let supply = SupplyMetrics::forced_import(cfg)?;
         let unrealized = UnrealizedBase::forced_import(cfg)?;
         let realized = RealizedBase::forced_import(cfg)?;
 
-        let relative = RelativeWithRelToAll::forced_import(
-            cfg, &unrealized, &supply, all_supply, &realized,
-        );
+        let relative = RelativeWithRelToAll::forced_import(cfg)?;
 
         Ok(Self {
             filter: cfg.filter.clone(),
@@ -102,6 +99,7 @@ impl BasicCohortMetrics {
         prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
+        all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
         self.realized.compute_rest_part2_base(
@@ -111,7 +109,19 @@ impl BasicCohortMetrics {
             &self.supply.total.btc.height,
             height_to_market_cap,
             exit,
-        )
+        )?;
+
+        self.relative.compute(
+            starting_indexes.height,
+            &self.unrealized,
+            &self.realized,
+            &self.supply.total.sats.height,
+            height_to_market_cap,
+            all_supply_sats,
+            exit,
+        )?;
+
+        Ok(())
     }
 
     pub(crate) fn compute_from_stateful(

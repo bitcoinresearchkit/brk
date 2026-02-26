@@ -2,7 +2,7 @@ use brk_cohort::{CohortContext, Filter};
 use brk_types::Version;
 use vecdb::Database;
 
-use crate::{indexes, prices};
+use crate::indexes;
 
 /// Configuration for importing metrics.
 pub struct ImportConfig<'a> {
@@ -12,7 +12,6 @@ pub struct ImportConfig<'a> {
     pub context: CohortContext,
     pub version: Version,
     pub indexes: &'a indexes::Vecs,
-    pub prices: &'a prices::Vecs,
 }
 
 impl<'a> ImportConfig<'a> {

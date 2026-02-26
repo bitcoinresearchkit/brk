@@ -9,11 +9,10 @@ use super::Vecs;
 use crate::{
     distribution, indexes,
     internal::{
-        ComputedFromHeightLast, DifferenceF32, DollarsIdentity,
-        LazyBinaryComputedFromHeightLast, LazyFromHeightLast, LazyValueFromHeightLast,
-        SatsIdentity,
+        ComputedFromHeightLast, DollarsIdentity,
+        LazyFromHeightLast, LazyValueFromHeightLast,
+        SatsIdentity, SatsToBitcoin,
     },
-    prices,
 };
 
 const VERSION: Version = Version::ONE;
@@ -23,7 +22,6 @@ impl Vecs {
         parent: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
         distribution: &distribution::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent.join(super::DB_NAME))?;
@@ -33,14 +31,14 @@ impl Vecs {
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
         // Circulating supply - lazy refs to distribution
-        let circulating = LazyValueFromHeightLast::from_block_source::<SatsIdentity, DollarsIdentity>(
+        let circulating = LazyValueFromHeightLast::from_block_source::<SatsIdentity, SatsToBitcoin, DollarsIdentity>(
             "circulating_supply",
             &supply_metrics.total,
             version,
         );
 
         // Burned/unspendable supply - computed from scripts
-        let burned = super::burned::Vecs::forced_import(&db, version, indexes, prices)?;
+        let burned = super::burned::Vecs::forced_import(&db, version, indexes)?;
 
         // Inflation rate
         let inflation =
@@ -51,7 +49,7 @@ impl Vecs {
             super::velocity::Vecs::forced_import(&db, version, indexes)?;
 
         // Market cap - lazy identity from distribution supply in USD
-        let market_cap = LazyFromHeightLast::from_lazy_binary_computed::<DollarsIdentity, _, _>(
+        let market_cap = LazyFromHeightLast::from_computed::<DollarsIdentity>(
             "market_cap",
             version,
             supply_metrics.total.usd.height.read_only_boxed_clone(),
@@ -72,13 +70,7 @@ impl Vecs {
             indexes,
         )?;
         let cap_growth_rate_diff =
-            LazyBinaryComputedFromHeightLast::forced_import::<DifferenceF32>(
-                "cap_growth_rate_diff",
-                version,
-                market_cap_growth_rate.height.read_only_boxed_clone(),
-                realized_cap_growth_rate.height.read_only_boxed_clone(),
-                indexes,
-            );
+            ComputedFromHeightLast::forced_import(&db, "cap_growth_rate_diff", version, indexes)?;
 
         let this = Self {
             db,

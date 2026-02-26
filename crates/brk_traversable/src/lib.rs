@@ -9,8 +9,8 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
     AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CompressionStrategy, EagerVec, Formattable,
-    LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, RawStrategy, ReadOnlyCompressedVec, ReadOnlyRawVec,
-    StoredVec, VecIndex, VecValue,
+    LazyAggVec, LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, RawStrategy, ReadOnlyCompressedVec,
+    ReadOnlyRawVec, StoredVec, VecIndex, VecValue,
 };
 
 pub trait Traversable {
@@ -214,6 +214,23 @@ where
 
     fn to_tree_node(&self) -> TreeNode {
         make_leaf::<I, T, _>(self)
+    }
+}
+
+impl<I, O, S1I, S2T, S1T> Traversable for LazyAggVec<I, O, S1I, S2T, S1T>
+where
+    I: VecIndex,
+    O: VecValue + Formattable + Serialize + JsonSchema,
+    S1I: VecIndex,
+    S2T: VecValue,
+    S1T: VecValue,
+{
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
+    }
+
+    fn to_tree_node(&self) -> TreeNode {
+        make_leaf::<I, O, _>(self)
     }
 }
 

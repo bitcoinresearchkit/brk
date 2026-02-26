@@ -57,8 +57,7 @@ impl BlockProcessor<'_> {
 
         let addr_hash_stores = &mut self.stores.addresstype_to_addresshash_to_addressindex;
         let addr_txindex_stores = &mut self.stores.addresstype_to_addressindex_and_txindex;
-        let addr_outpoint_stores =
-            &mut self.stores.addresstype_to_addressindex_and_unspentoutpoint;
+        let addr_outpoint_stores = &mut self.stores.addresstype_to_addressindex_and_unspentoutpoint;
         let txidprefix_store = &mut self.stores.txidprefix_to_txindex;
 
         let (finalize_result, metadata_result) = rayon::join(

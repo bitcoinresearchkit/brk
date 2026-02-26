@@ -1,6 +1,9 @@
+use brk_types::{EmptyAddressData, FundedAddressData, TxIndex};
+use smallvec::SmallVec;
+
 use crate::distribution::address::AddressTypeToTypeIndexMap;
 
-use super::with_source::{EmptyAddressDataWithSource, FundedAddressDataWithSource, TxIndexVec};
+use super::with_source::WithAddressDataSource;
 
 /// Update tx_count for addresses based on unique transactions they participated in.
 ///
@@ -11,9 +14,9 @@ use super::with_source::{EmptyAddressDataWithSource, FundedAddressDataWithSource
 /// Addresses are looked up in funded_cache first, then empty_cache.
 /// NOTE: This should be called AFTER merging parallel-fetched address data into funded_cache.
 pub(crate) fn update_tx_counts(
-    funded_cache: &mut AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
-    empty_cache: &mut AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
-    mut txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>,
+    funded_cache: &mut AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
+    empty_cache: &mut AddressTypeToTypeIndexMap<WithAddressDataSource<EmptyAddressData>>,
+    mut txindex_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
 ) {
     // First, deduplicate txindex_vecs for addresses that appear multiple times in a block
     for (_, map) in txindex_vecs.iter_mut() {

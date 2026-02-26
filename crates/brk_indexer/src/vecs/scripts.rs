@@ -4,7 +4,7 @@ use brk_types::{
     EmptyOutputIndex, Height, OpReturnIndex, P2MSOutputIndex, TxIndex, UnknownOutputIndex, Version,
 };
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, WritableVec, ImportableVec, PcoVec, Rw, Stamp, StorageMode};
+use vecdb::{AnyStoredVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec};
 
 use crate::parallel_import;
 

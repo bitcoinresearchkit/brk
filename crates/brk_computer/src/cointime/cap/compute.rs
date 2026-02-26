@@ -36,7 +36,7 @@ impl Vecs {
 
         self.thermo_cap.height.compute_transform(
             starting_indexes.height,
-            &*mining.rewards.subsidy.usd.height_cumulative,
+            &mining.rewards.subsidy.usd.cumulative.height,
             |(i, v, ..)| (i, v),
             exit,
         )?;

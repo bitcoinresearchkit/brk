@@ -1,8 +1,9 @@
 use brk_cohort::ByAddressType;
 use brk_error::Result;
-use brk_types::{Height, OutputType, Sats, TxIndex, TypeIndex};
+use brk_types::{FundedAddressData, Height, OutputType, Sats, TxIndex, TypeIndex};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 
 use crate::distribution::{
     address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs},
@@ -14,7 +15,7 @@ use crate::distribution::address::HeightToAddressTypeToVec;
 
 use super::super::{
     cache::{AddressCache, load_uncached_address_data},
-    cohort::{FundedAddressDataWithSource, TxIndexVec},
+    cohort::WithAddressDataSource,
 };
 
 /// Result of processing inputs for a block.
@@ -24,9 +25,9 @@ pub struct InputsResult {
     /// Per-height, per-address-type sent data: (typeindex, value) for each address.
     pub sent_data: HeightToAddressTypeToVec<(TypeIndex, Sats)>,
     /// Address data looked up during processing, keyed by (address_type, typeindex).
-    pub address_data: AddressTypeToTypeIndexMap<FundedAddressDataWithSource>,
+    pub address_data: AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
     /// Transaction indexes per address for tx_count tracking.
-    pub txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>,
+    pub txindex_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
 }
 
 /// Process inputs (spent UTXOs) for a block.
@@ -101,9 +102,9 @@ pub(crate) fn process_inputs(
     );
     let mut sent_data = HeightToAddressTypeToVec::with_capacity(estimated_unique_heights);
     let mut address_data =
-        AddressTypeToTypeIndexMap::<FundedAddressDataWithSource>::with_capacity(estimated_per_type);
+        AddressTypeToTypeIndexMap::<WithAddressDataSource<FundedAddressData>>::with_capacity(estimated_per_type);
     let mut txindex_vecs =
-        AddressTypeToTypeIndexMap::<TxIndexVec>::with_capacity(estimated_per_type);
+        AddressTypeToTypeIndexMap::<SmallVec<[TxIndex; 4]>>::with_capacity(estimated_per_type);
 
     for (prev_height, value, output_type, addr_info) in items {
         height_to_sent

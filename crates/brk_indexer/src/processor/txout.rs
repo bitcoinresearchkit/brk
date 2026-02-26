@@ -6,8 +6,8 @@ use brk_types::{
     Sats, TxIndex, TxOutIndex, TypeIndex, Unit, Vout,
 };
 use rayon::prelude::*;
-use tracing::error;
 use rustc_hash::{FxHashMap, FxHashSet};
+use tracing::error;
 use vecdb::{BytesVec, WritableVec};
 
 use super::{BlockProcessor, ProcessedOutput, SameBlockOutputInfo};
@@ -68,17 +68,21 @@ impl<'a> BlockProcessor<'a> {
                         });
 
                     if check_collisions && let Some(typeindex) = existing_typeindex {
-                        let prev_addressbytes = self.vecs.addresses.get_bytes_by_type(
-                            addresstype,
-                            typeindex,
-                            &self.readers.addressbytes,
-                        )
-                        .ok_or(Error::Internal("Missing addressbytes"))?;
+                        let prev_addressbytes = self
+                            .vecs
+                            .addresses
+                            .get_bytes_by_type(addresstype, typeindex, &self.readers.addressbytes)
+                            .ok_or(Error::Internal("Missing addressbytes"))?;
 
                         if prev_addressbytes != address_bytes {
                             error!(
-                                ?height, ?vout, ?block_txindex, ?addresstype,
-                                ?prev_addressbytes, ?address_bytes, ?typeindex,
+                                ?height,
+                                ?vout,
+                                ?block_txindex,
+                                ?addresstype,
+                                ?prev_addressbytes,
+                                ?address_bytes,
+                                ?typeindex,
                                 "Address hash collision"
                             );
                             return Err(Error::Internal("Address hash collision"));
@@ -202,10 +206,7 @@ pub(super) fn finalize_outputs(
 
             addr_txindex_stores
                 .get_mut_unwrap(addresstype)
-                .insert(
-                    AddressIndexTxIndex::from((addressindex, txindex)),
-                    Unit,
-                );
+                .insert(AddressIndexTxIndex::from((addressindex, txindex)), Unit);
         }
 
         let outpoint = OutPoint::new(txindex, vout);
@@ -224,10 +225,7 @@ pub(super) fn finalize_outputs(
 
             addr_outpoint_stores
                 .get_mut_unwrap(addresstype)
-                .insert(
-                    AddressIndexOutPoint::from((addressindex, outpoint)),
-                    Unit,
-                );
+                .insert(AddressIndexOutPoint::from((addressindex, outpoint)), Unit);
         }
     }
 

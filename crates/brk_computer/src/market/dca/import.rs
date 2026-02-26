@@ -1,16 +1,14 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{Database, ImportableVec, ReadableCloneableVec};
+use vecdb::{Database, ImportableVec};
 
-use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, DCA_CLASS_NAMES, DCA_PERIOD_NAMES, Vecs};
+use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     indexes,
     internal::{
-        ComputedFromHeightLast, LazyBinaryFromHeightLast, PercentageDiffDollars, PriceFromHeight,
+        ComputedFromHeightLast, Price,
         ValueFromHeightLast,
     },
-    market::lookback,
-    prices,
 };
 
 impl Vecs {
@@ -18,8 +16,6 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
-        lookback: &lookback::Vecs,
     ) -> Result<Self> {
         // DCA by period - stack (KISS)
         let period_stack = ByDcaPeriod::try_new(|name, _days| {
@@ -28,13 +24,12 @@ impl Vecs {
                 &format!("{name}_dca_stack"),
                 version,
                 indexes,
-                prices,
             )
         })?;
 
         // DCA by period - average price
         let period_average_price = ByDcaPeriod::try_new(|name, _days| {
-            PriceFromHeight::forced_import(
+            Price::forced_import(
                 db,
                 &format!("{name}_dca_average_price"),
                 version,
@@ -42,21 +37,14 @@ impl Vecs {
             )
         })?;
 
-        let period_returns =
-            DCA_PERIOD_NAMES
-                .zip_ref(&period_average_price)
-                .map(|(name, average_price)| {
-                    LazyBinaryFromHeightLast::from_height_and_derived_last::<
-                        PercentageDiffDollars,
-                    >(
-                        &format!("{name}_dca_returns"),
-                        version,
-                        prices.usd.price.read_only_boxed_clone(),
-                        average_price.height.read_only_boxed_clone(),
-                        &prices.usd.close,
-                        &average_price.rest,
-                    )
-                });
+        let period_returns = ByDcaPeriod::try_new(|name, _days| {
+            ComputedFromHeightLast::forced_import(
+                db,
+                &format!("{name}_dca_returns"),
+                version,
+                indexes,
+            )
+        })?;
 
         // DCA by period - CAGR
         let period_cagr = ByDcaCagr::try_new(|name, _days| {
@@ -107,27 +95,18 @@ impl Vecs {
                 &format!("{name}_lump_sum_stack"),
                 version,
                 indexes,
-                prices,
             )
         })?;
 
         // Lump sum by period - returns
-        let lookback_dca = lookback.price_ago.as_dca_period();
-        let period_lump_sum_returns =
-            DCA_PERIOD_NAMES
-                .zip_ref(&lookback_dca)
-                .map(|(name, lookback_price)| {
-                    LazyBinaryFromHeightLast::from_height_and_derived_last::<
-                        PercentageDiffDollars,
-                    >(
-                        &format!("{name}_lump_sum_returns"),
-                        version,
-                        prices.usd.price.read_only_boxed_clone(),
-                        lookback_price.height.read_only_boxed_clone(),
-                        &prices.usd.close,
-                        &lookback_price.rest,
-                    )
-                });
+        let period_lump_sum_returns = ByDcaPeriod::try_new(|name, _days| {
+            ComputedFromHeightLast::forced_import(
+                db,
+                &format!("{name}_lump_sum_returns"),
+                version,
+                indexes,
+            )
+        })?;
 
         // Lump sum by period - profitability
         let period_lump_sum_days_in_profit = ByDcaPeriod::try_new(|name, _days| {
@@ -173,30 +152,22 @@ impl Vecs {
                 &format!("{name}_stack"),
                 version,
                 indexes,
-                prices,
             )
         })?;
 
         // DCA by year class - average price
         let class_average_price = ByDcaClass::try_new(|name, _year, _day1| {
-            PriceFromHeight::forced_import(db, &format!("{name}_average_price"), version, indexes)
+            Price::forced_import(db, &format!("{name}_average_price"), version, indexes)
         })?;
 
-        let class_returns =
-            DCA_CLASS_NAMES
-                .zip_ref(&class_average_price)
-                .map(|(name, average_price)| {
-                    LazyBinaryFromHeightLast::from_height_and_derived_last::<
-                        PercentageDiffDollars,
-                    >(
-                        &format!("{name}_returns"),
-                        version,
-                        prices.usd.price.read_only_boxed_clone(),
-                        average_price.height.read_only_boxed_clone(),
-                        &prices.usd.close,
-                        &average_price.rest,
-                    )
-                });
+        let class_returns = ByDcaClass::try_new(|name, _year, _day1| {
+            ComputedFromHeightLast::forced_import(
+                db,
+                &format!("{name}_returns"),
+                version,
+                indexes,
+            )
+        })?;
 
         // DCA by year class - profitability
         let class_days_in_profit = ByDcaClass::try_new(|name, _year, _day1| {
