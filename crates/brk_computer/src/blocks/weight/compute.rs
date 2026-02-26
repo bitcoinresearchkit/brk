@@ -23,18 +23,19 @@ impl Vecs {
             exit,
         )?;
 
-        self.fullness.height.compute_transform(
-            starting_indexes.height,
-            &indexer.vecs.blocks.weight,
-            |(h, weight, ..)| (h, StoredF32::from(weight.fullness())),
-            exit,
-        )?;
-
-        self.fullness_rolling.compute_distribution(
+        self.fullness.compute(
             starting_indexes.height,
             &window_starts,
-            &self.fullness.height,
             exit,
+            |vec| {
+                vec.compute_transform(
+                    starting_indexes.height,
+                    &indexer.vecs.blocks.weight,
+                    |(h, weight, ..)| (h, StoredF32::from(weight.fullness())),
+                    exit,
+                )?;
+                Ok(())
+            },
         )?;
 
         Ok(())

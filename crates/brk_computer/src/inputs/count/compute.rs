@@ -14,21 +14,21 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.height.compute_with_skip(
-            starting_indexes.height,
-            &indexes.txindex.input_count,
-            &indexer.vecs.transactions.first_txindex,
-            &indexes.height.txindex_count,
-            exit,
-            0,
-        )?;
-
         let window_starts = blocks.count.window_starts();
-        self.rolling.compute(
+        self.0.compute(
             starting_indexes.height,
             &window_starts,
-            self.height.sum_cumulative.sum.inner(),
             exit,
+            |full| {
+                full.compute_with_skip(
+                    starting_indexes.height,
+                    &indexes.txindex.input_count,
+                    &indexer.vecs.transactions.first_txindex,
+                    &indexes.height.txindex_count,
+                    exit,
+                    0,
+                )
+            },
         )?;
 
         Ok(())

@@ -60,13 +60,21 @@ impl Vecs {
         )?;
 
         // Skip coinbase (first tx per block) since it has no fee
-        self.fee.compute_with_skip(
+        let window_starts = blocks.count.window_starts();
+        self.fee.compute(
             starting_indexes.height,
-            &self.fee_txindex,
-            &indexer.vecs.transactions.first_txindex,
-            &indexes.height.txindex_count,
+            &window_starts,
             exit,
-            1,
+            |full| {
+                full.compute_with_skip(
+                    starting_indexes.height,
+                    &self.fee_txindex,
+                    &indexer.vecs.transactions.first_txindex,
+                    &indexes.height.txindex_count,
+                    exit,
+                    1,
+                )
+            },
         )?;
 
         // Skip coinbase (first tx per block) since it has no feerate
@@ -82,18 +90,9 @@ impl Vecs {
         // Compute fee USD sum per block: price * Bitcoin::from(sats)
         self.fee_usd_sum.compute_transform2(
             starting_indexes.height,
-            self.fee.sum_cumulative.sum.inner(),
+            self.fee.height.sum_cumulative.sum.inner(),
             &prices.usd.price,
             |(h, sats, price, ..)| (h, price * Bitcoin::from(sats)),
-            exit,
-        )?;
-
-        // Rolling fee stats (from per-block sum)
-        let window_starts = blocks.count.window_starts();
-        self.fee_rolling.compute(
-            starting_indexes.height,
-            &window_starts,
-            self.fee.sum_cumulative.sum.inner(),
             exit,
         )?;
 

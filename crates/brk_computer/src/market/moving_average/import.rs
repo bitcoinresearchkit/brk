@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightRatio, DollarsTimesTenths, Price},
+    internal::{ComputedFromHeightPriceWithRatioExtended, DollarsTimesTenths, Price},
 };
 
 impl Vecs {
@@ -14,265 +14,21 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let price_1w_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_1w_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_8d_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_8d_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_13d_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_13d_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_21d_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_21d_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_1m_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_1m_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_34d_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_34d_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_55d_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_55d_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_89d_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_89d_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_111d_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_111d_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_144d_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_144d_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_200d_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_200d_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_350d_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_350d_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_1y_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_1y_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_2y_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_2y_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_200w_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_200w_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_4y_sma = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_4y_sma",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
+        macro_rules! import {
+            ($name:expr) => {
+                ComputedFromHeightPriceWithRatioExtended::forced_import(
+                    db,
+                    $name,
+                    version,
+                    indexes,
+                )?
+            };
+        }
 
-        let price_1w_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_1w_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_8d_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_8d_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_12d_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_12d_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_13d_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_13d_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_21d_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_21d_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_26d_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_26d_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_1m_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_1m_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_34d_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_34d_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_55d_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_55d_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_89d_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_89d_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_144d_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_144d_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_200d_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_200d_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_1y_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_1y_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_2y_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_2y_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_200w_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_200w_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
-        let price_4y_ema = ComputedFromHeightRatio::forced_import(
-            db,
-            "price_4y_ema",
-            None,
-            version,
-            indexes,
-            true,
-        )?;
+        let price_200d_sma = import!("price_200d_sma");
+        let price_350d_sma = import!("price_350d_sma");
 
-        let price_200d_sma_source = &price_200d_sma.price.as_ref().unwrap().usd;
+        let price_200d_sma_source = &price_200d_sma.price.usd;
         let price_200d_sma_x2_4 = Price::from_computed::<DollarsTimesTenths<24>>(
             "price_200d_sma_x2_4",
             version,
@@ -284,7 +40,7 @@ impl Vecs {
             price_200d_sma_source,
         );
 
-        let price_350d_sma_source = &price_350d_sma.price.as_ref().unwrap().usd;
+        let price_350d_sma_source = &price_350d_sma.price.usd;
         let price_350d_sma_x2 = Price::from_computed::<DollarsTimesTenths<20>>(
             "price_350d_sma_x2",
             version,
@@ -292,39 +48,39 @@ impl Vecs {
         );
 
         Ok(Self {
-            price_1w_sma,
-            price_8d_sma,
-            price_13d_sma,
-            price_21d_sma,
-            price_1m_sma,
-            price_34d_sma,
-            price_55d_sma,
-            price_89d_sma,
-            price_111d_sma,
-            price_144d_sma,
+            price_1w_sma: import!("price_1w_sma"),
+            price_8d_sma: import!("price_8d_sma"),
+            price_13d_sma: import!("price_13d_sma"),
+            price_21d_sma: import!("price_21d_sma"),
+            price_1m_sma: import!("price_1m_sma"),
+            price_34d_sma: import!("price_34d_sma"),
+            price_55d_sma: import!("price_55d_sma"),
+            price_89d_sma: import!("price_89d_sma"),
+            price_111d_sma: import!("price_111d_sma"),
+            price_144d_sma: import!("price_144d_sma"),
             price_200d_sma,
             price_350d_sma,
-            price_1y_sma,
-            price_2y_sma,
-            price_200w_sma,
-            price_4y_sma,
+            price_1y_sma: import!("price_1y_sma"),
+            price_2y_sma: import!("price_2y_sma"),
+            price_200w_sma: import!("price_200w_sma"),
+            price_4y_sma: import!("price_4y_sma"),
 
-            price_1w_ema,
-            price_8d_ema,
-            price_12d_ema,
-            price_13d_ema,
-            price_21d_ema,
-            price_26d_ema,
-            price_1m_ema,
-            price_34d_ema,
-            price_55d_ema,
-            price_89d_ema,
-            price_144d_ema,
-            price_200d_ema,
-            price_1y_ema,
-            price_2y_ema,
-            price_200w_ema,
-            price_4y_ema,
+            price_1w_ema: import!("price_1w_ema"),
+            price_8d_ema: import!("price_8d_ema"),
+            price_12d_ema: import!("price_12d_ema"),
+            price_13d_ema: import!("price_13d_ema"),
+            price_21d_ema: import!("price_21d_ema"),
+            price_26d_ema: import!("price_26d_ema"),
+            price_1m_ema: import!("price_1m_ema"),
+            price_34d_ema: import!("price_34d_ema"),
+            price_55d_ema: import!("price_55d_ema"),
+            price_89d_ema: import!("price_89d_ema"),
+            price_144d_ema: import!("price_144d_ema"),
+            price_200d_ema: import!("price_200d_ema"),
+            price_1y_ema: import!("price_1y_ema"),
+            price_2y_ema: import!("price_2y_ema"),
+            price_200w_ema: import!("price_200w_ema"),
+            price_4y_ema: import!("price_4y_ema"),
 
             price_200d_sma_x2_4,
             price_200d_sma_x0_8,

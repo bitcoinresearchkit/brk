@@ -142,9 +142,7 @@ impl RealizedBase {
         let v1 = Version::ONE;
         let v2 = Version::new(2);
         let v3 = Version::new(3);
-        let extended = cfg.extended();
-
-        // Import combined types using forced_import which handles height + derived
+            // Import combined types using forced_import which handles height + derived
         let realized_cap_cents = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("realized_cap_cents"),
@@ -270,12 +268,11 @@ impl RealizedBase {
             &investor_price_cents,
         );
 
-        let investor_price_extra = ComputedFromHeightRatio::forced_import_from_lazy(
+        let investor_price_extra = ComputedFromHeightRatio::forced_import(
             cfg.db,
             &cfg.name("investor_price"),
             cfg.version,
             cfg.indexes,
-            extended,
         )?;
 
         let lower_price_band = Price::forced_import(
@@ -350,10 +347,8 @@ impl RealizedBase {
         let realized_price_extra = ComputedFromHeightRatio::forced_import(
             cfg.db,
             &cfg.name("realized_price"),
-            Some(&realized_price.usd),
             cfg.version + v1,
             cfg.indexes,
-            extended,
         )?;
 
         let mvrv = LazyFromHeightLast::from_computed::<StoredF32Identity>(
@@ -845,28 +840,16 @@ impl RealizedBase {
             exit,
         )?;
 
-        self.realized_price_extra.compute_rest(
-            blocks,
-            prices,
+        self.realized_price_extra.compute_ratio(
             starting_indexes,
-            exit,
-            Some(&self.realized_price.usd.height),
-        )?;
-        self.realized_price_extra.compute_usd_bands(
-            starting_indexes,
+            &prices.usd.price,
             &self.realized_price.usd.height,
             exit,
         )?;
 
-        self.investor_price_extra.compute_rest(
-            blocks,
-            prices,
+        self.investor_price_extra.compute_ratio(
             starting_indexes,
-            exit,
-            Some(&self.investor_price.usd.height),
-        )?;
-        self.investor_price_extra.compute_usd_bands(
-            starting_indexes,
+            &prices.usd.price,
             &self.investor_price.usd.height,
             exit,
         )?;

@@ -36,14 +36,12 @@ impl CostBasisExtended {
                 &cfg.name("cost_basis"),
                 cfg.version,
                 cfg.indexes,
-                true,
             )?,
             invested_capital: PercentilesVecs::forced_import(
                 cfg.db,
                 &cfg.name("invested_capital"),
                 cfg.version,
                 cfg.indexes,
-                true,
             )?,
             spot_cost_basis_percentile: ComputedFromHeightLast::forced_import(
                 cfg.db,
@@ -99,14 +97,12 @@ impl CostBasisExtended {
             self.percentiles
                 .vecs
                 .iter_mut()
-                .flatten()
                 .map(|v| &mut v.usd.height as &mut dyn AnyStoredVec),
         );
         vecs.extend(
             self.invested_capital
                 .vecs
                 .iter_mut()
-                .flatten()
                 .map(|v| &mut v.usd.height as &mut dyn AnyStoredVec),
         );
         vecs.push(&mut self.spot_cost_basis_percentile.height);

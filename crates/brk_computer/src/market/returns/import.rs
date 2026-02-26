@@ -6,10 +6,8 @@ use super::super::lookback::ByLookbackPeriod;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{
-        ComputedFromHeightLast, ComputedFromHeightStdDev,
-        StandardDeviationVecsOptions,
-    },
+    internal::ComputedFromHeightLast,
+    internal::ComputedFromHeightStdDev,
     market::dca::ByDcaCagr,
 };
 
@@ -41,7 +39,6 @@ impl Vecs {
             7,
             version + v1,
             indexes,
-            StandardDeviationVecsOptions::default(),
         )?;
         let _1d_returns_1m_sd = ComputedFromHeightStdDev::forced_import(
             db,
@@ -49,7 +46,6 @@ impl Vecs {
             30,
             version + v1,
             indexes,
-            StandardDeviationVecsOptions::default(),
         )?;
         let _1d_returns_1y_sd = ComputedFromHeightStdDev::forced_import(
             db,
@@ -57,7 +53,6 @@ impl Vecs {
             365,
             version + v1,
             indexes,
-            StandardDeviationVecsOptions::default(),
         )?;
 
         let downside_returns = EagerVec::forced_import(db, "downside_returns", version)?;
@@ -67,7 +62,6 @@ impl Vecs {
             7,
             version + v1,
             indexes,
-            StandardDeviationVecsOptions::default(),
         )?;
         let downside_1m_sd = ComputedFromHeightStdDev::forced_import(
             db,
@@ -75,7 +69,6 @@ impl Vecs {
             30,
             version + v1,
             indexes,
-            StandardDeviationVecsOptions::default(),
         )?;
         let downside_1y_sd = ComputedFromHeightStdDev::forced_import(
             db,
@@ -83,7 +76,6 @@ impl Vecs {
             365,
             version + v1,
             indexes,
-            StandardDeviationVecsOptions::default(),
         )?;
 
         Ok(Self {

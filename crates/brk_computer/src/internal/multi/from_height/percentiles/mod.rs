@@ -68,7 +68,7 @@ pub(crate) fn compute_spot_percentile_rank(
 }
 
 pub struct PercentilesVecs<M: StorageMode = Rw> {
-    pub vecs: [Option<Price<ComputedFromHeightLast<Dollars, M>>>; PERCENTILES_LEN],
+    pub vecs: [Price<ComputedFromHeightLast<Dollars, M>>; PERCENTILES_LEN],
 }
 
 const VERSION: Version = Version::ONE;
@@ -79,15 +79,17 @@ impl PercentilesVecs {
         prefix: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        compute: bool,
     ) -> Result<Self> {
-        let vecs = PERCENTILES.map(|p| {
-            compute.then(|| {
+        let vecs = PERCENTILES
+            .into_iter()
+            .map(|p| {
                 let metric_name = format!("{prefix}_pct{p:02}");
                 Price::forced_import(db, &metric_name, version + VERSION, indexes)
-                    .unwrap()
             })
-        });
+            .collect::<Result<Vec<_>>>()?
+            .try_into()
+            .ok()
+            .expect("PERCENTILES length mismatch");
 
         Ok(Self { vecs })
     }
@@ -98,17 +100,15 @@ impl PercentilesVecs {
         height: Height,
         percentile_prices: &[Dollars; PERCENTILES_LEN],
     ) -> Result<()> {
-        for (i, vec) in self.vecs.iter_mut().enumerate() {
-            if let Some(v) = vec {
-                v.usd.height.truncate_push(height, percentile_prices[i])?;
-            }
+        for (i, v) in self.vecs.iter_mut().enumerate() {
+            v.usd.height.truncate_push(height, percentile_prices[i])?;
         }
         Ok(())
     }
 
     /// Validate computed versions or reset if mismatched.
     pub(crate) fn validate_computed_version_or_reset(&mut self, version: Version) -> Result<()> {
-        for vec in self.vecs.iter_mut().flatten() {
+        for vec in self.vecs.iter_mut() {
             vec.usd.height.validate_computed_version_or_reset(version)?;
         }
         Ok(())
@@ -123,7 +123,7 @@ impl ReadOnlyClone for PercentilesVecs {
             vecs: self
                 .vecs
                 .each_ref()
-                .map(|v| v.as_ref().map(|p| p.read_only_clone())),
+                .map(|v| v.read_only_clone()),
         }
     }
 }
@@ -137,7 +137,7 @@ where
             PERCENTILES
                 .iter()
                 .zip(self.vecs.iter())
-                .filter_map(|(p, v)| v.as_ref().map(|v| (format!("pct{p:02}"), v.to_tree_node())))
+                .map(|(p, v)| (format!("pct{p:02}"), v.to_tree_node()))
                 .collect(),
         )
     }
@@ -145,7 +145,6 @@ where
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         self.vecs
             .iter()
-            .flatten()
             .flat_map(|p| p.iter_any_exportable())
     }
 }

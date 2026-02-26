@@ -60,7 +60,7 @@ impl Vecs {
             exit,
         )?;
 
-        let fee_sats_source = transactions_fees.fee.sum_cumulative.sum.inner();
+        let fee_sats_source = transactions_fees.fee.height.sum_cumulative.sum.inner();
         let fee_usd_source = &transactions_fees.fee_usd_sum;
         self.fee_sum.compute_rolling_sum(
             starting_indexes.height,
@@ -74,7 +74,7 @@ impl Vecs {
             vec.compute_transform2(
                 starting_indexes.height,
                 &self.coinbase.sats.height,
-                transactions_fees.fee.sum_cumulative.sum.inner(),
+                transactions_fees.fee.height.sum_cumulative.sum.inner(),
                 |(height, coinbase, fees, ..)| {
                     (
                         height,
@@ -107,7 +107,7 @@ impl Vecs {
         // All-time cumulative fee dominance
         self.fee_dominance.height.compute_percentage(
             starting_indexes.height,
-            transactions_fees.fee.sum_cumulative.cumulative.inner(),
+            transactions_fees.fee.height.sum_cumulative.cumulative.inner(),
             &self.coinbase.sats.cumulative.height,
             exit,
         )?;

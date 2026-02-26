@@ -5,11 +5,6 @@ use vecdb::{
     WritableVec,
 };
 
-mod pricing;
-
-// TODO: Re-export when Phase 3 (Pricing migration) is complete
-// pub use pricing::{Priced, Pricing, Unpriced};
-
 pub trait ComputeRollingMinFromStarts<I: VecIndex, T> {
     fn compute_rolling_min_from_starts<A>(
         &mut self,

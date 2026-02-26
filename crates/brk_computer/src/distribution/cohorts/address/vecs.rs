@@ -55,7 +55,6 @@ impl AddressCohortVecs {
             db,
             filter,
             full_name: &full_name,
-            context: CohortContext::Address,
             version,
             indexes,
         };

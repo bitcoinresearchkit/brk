@@ -10,7 +10,10 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableCloneableVec, Rw, StorageM
 
 use crate::{
     indexes,
-    internal::{ComputedFromHeightCumulativeFull, LazyFromHeightLast, SatsToBitcoin, WindowStarts},
+    internal::{
+        ComputedFromHeightCumulativeFull, LazyFromHeightLast, SatsToBitcoin, SatsToDollars,
+        WindowStarts,
+    },
     prices,
 };
 
@@ -58,14 +61,10 @@ impl ValueFromHeightFull {
         self.sats.compute(max_from, windows, exit, compute_sats)?;
 
         self.usd.compute(max_from, windows, exit, |vec| {
-            Ok(vec.compute_transform2(
+            Ok(vec.compute_binary::<Sats, Dollars, SatsToDollars>(
                 max_from,
                 &self.sats.height,
                 &prices.usd.price,
-                |(h, sats, price, ..)| {
-                    let btc = *sats as f64 / 100_000_000.0;
-                    (h, Dollars::from(*price * btc))
-                },
                 exit,
             )?)
         })

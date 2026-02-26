@@ -70,11 +70,10 @@ where
         S2T: VecValue,
         F: BinaryTransform<S1T, S2T, T>,
     {
-        self.height.compute_transform2(
+        self.height.compute_binary::<S1T, S2T, F>(
             max_from,
             source1,
             source2,
-            |(h, s1, s2, ..)| (h, F::apply(s1, s2)),
             exit,
         )?;
         Ok(())

@@ -4,13 +4,11 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{ReadableBoxedVec, ReadableCloneableVec, LazyVecFrom1, UnaryTransform};
+use vecdb::{LazyVecFrom1, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform};
 
 use crate::{
     indexes,
-    internal::{
-        ComputedFromHeightLast, ComputedVecValue, LazyHeightDerivedLast, NumericValue,
-    },
+    internal::{ComputedFromHeightLast, ComputedVecValue, LazyHeightDerivedLast, NumericValue},
 };
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -61,7 +59,12 @@ where
         let v = version + VERSION;
         Self {
             height: LazyVecFrom1::transformed::<F>(name, v, height_source.clone()),
-            rest: Box::new(LazyHeightDerivedLast::from_height_source::<F>(name, v, height_source, indexes)),
+            rest: Box::new(LazyHeightDerivedLast::from_height_source::<F>(
+                name,
+                v,
+                height_source,
+                indexes,
+            )),
         }
     }
 
@@ -78,8 +81,11 @@ where
         let v = version + VERSION;
         Self {
             height: LazyVecFrom1::transformed::<F>(name, v, source.height.read_only_boxed_clone()),
-            rest: Box::new(LazyHeightDerivedLast::from_lazy::<F, S2T>(name, v, &source.rest)),
+            rest: Box::new(LazyHeightDerivedLast::from_lazy::<F, S2T>(
+                name,
+                v,
+                &source.rest,
+            )),
         }
     }
-
 }

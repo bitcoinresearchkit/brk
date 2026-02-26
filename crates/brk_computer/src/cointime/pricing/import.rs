@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightRatio, Price},
+    internal::{ComputedFromHeightRatioExtended, Price},
 };
 
 impl Vecs {
@@ -15,46 +15,24 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let vaulted_price = Price::forced_import(db, "vaulted_price", version, indexes)?;
-        let vaulted_price_ratio = ComputedFromHeightRatio::forced_import(
-            db,
-            "vaulted_price",
-            Some(&vaulted_price.usd),
-            version,
-            indexes,
-            true,
-        )?;
+        let vaulted_price_ratio =
+            ComputedFromHeightRatioExtended::forced_import(db, "vaulted_price", version, indexes)?;
 
         let active_price = Price::forced_import(db, "active_price", version, indexes)?;
-        let active_price_ratio = ComputedFromHeightRatio::forced_import(
-            db,
-            "active_price",
-            Some(&active_price.usd),
-            version,
-            indexes,
-            true,
-        )?;
+        let active_price_ratio =
+            ComputedFromHeightRatioExtended::forced_import(db, "active_price", version, indexes)?;
 
-        let true_market_mean =
-            Price::forced_import(db, "true_market_mean", version, indexes)?;
-        let true_market_mean_ratio = ComputedFromHeightRatio::forced_import(
+        let true_market_mean = Price::forced_import(db, "true_market_mean", version, indexes)?;
+        let true_market_mean_ratio = ComputedFromHeightRatioExtended::forced_import(
             db,
             "true_market_mean",
-            Some(&true_market_mean.usd),
             version,
             indexes,
-            true,
         )?;
 
-        let cointime_price =
-            Price::forced_import(db, "cointime_price", version, indexes)?;
-        let cointime_price_ratio = ComputedFromHeightRatio::forced_import(
-            db,
-            "cointime_price",
-            Some(&cointime_price.usd),
-            version,
-            indexes,
-            true,
-        )?;
+        let cointime_price = Price::forced_import(db, "cointime_price", version, indexes)?;
+        let cointime_price_ratio =
+            ComputedFromHeightRatioExtended::forced_import(db, "cointime_price", version, indexes)?;
 
         Ok(Self {
             vaulted_price,

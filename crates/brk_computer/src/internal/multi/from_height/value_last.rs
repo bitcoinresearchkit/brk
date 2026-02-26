@@ -10,7 +10,7 @@ use vecdb::{Database, Exit, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
     indexes, prices,
-    internal::{ComputedFromHeightLast, LazyFromHeightLast, SatsToBitcoin},
+    internal::{ComputedFromHeightLast, LazyFromHeightLast, SatsToBitcoin, SatsToDollars},
 };
 
 #[derive(Traversable)]
@@ -56,14 +56,10 @@ impl ValueFromHeightLast {
         max_from: Height,
         exit: &Exit,
     ) -> Result<()> {
-        self.usd.height.compute_transform2(
+        self.usd.compute_binary::<Sats, Dollars, SatsToDollars>(
             max_from,
             &self.sats.height,
             &prices.usd.price,
-            |(h, sats, price, ..)| {
-                let btc = *sats as f64 / 100_000_000.0;
-                (h, Dollars::from(*price * btc))
-            },
             exit,
         )?;
         Ok(())

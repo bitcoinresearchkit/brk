@@ -47,7 +47,7 @@ impl Vecs {
             prices,
             starting_indexes,
             exit,
-            Some(&self.vaulted_price.usd.height),
+            &self.vaulted_price.usd.height,
         )?;
 
         self.active_price.usd.height.compute_multiply(
@@ -62,7 +62,7 @@ impl Vecs {
             prices,
             starting_indexes,
             exit,
-            Some(&self.active_price.usd.height),
+            &self.active_price.usd.height,
         )?;
 
         self.true_market_mean.usd.height.compute_divide(
@@ -77,7 +77,7 @@ impl Vecs {
             prices,
             starting_indexes,
             exit,
-            Some(&self.true_market_mean.usd.height),
+            &self.true_market_mean.usd.height,
         )?;
 
         // cointime_price = cointime_cap / circulating_supply
@@ -93,7 +93,7 @@ impl Vecs {
             prices,
             starting_indexes,
             exit,
-            Some(&self.cointime_price.usd.height),
+            &self.cointime_price.usd.height,
         )?;
 
         Ok(())

@@ -20,7 +20,7 @@ impl Vecs {
         self.btc.height.compute_rolling_ratio(
             starting_indexes.height,
             &blocks.count.height_1y_ago,
-            &transactions.volume.sent_sum.sats.height,
+            &transactions.volume.sent_sum.sats,
             &circulating_supply.sats.height,
             exit,
         )?;
@@ -29,7 +29,7 @@ impl Vecs {
         self.usd.height.compute_rolling_ratio(
             starting_indexes.height,
             &blocks.count.height_1y_ago,
-            &transactions.volume.sent_sum.usd.height,
+            &transactions.volume.sent_sum.usd,
             &circulating_supply.usd.height,
             exit,
         )?;

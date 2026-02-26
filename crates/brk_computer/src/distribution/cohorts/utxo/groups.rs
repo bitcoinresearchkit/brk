@@ -78,7 +78,6 @@ impl UTXOCohorts<Rw> {
             db,
             filter: Filter::All,
             full_name: &all_full_name,
-            context: CohortContext::Utxo,
             version: v + Version::ONE,
             indexes,
         };
@@ -94,7 +93,6 @@ impl UTXOCohorts<Rw> {
                     db,
                     filter: f,
                     full_name: &full_name,
-                    context: CohortContext::Utxo,
                     version: v,
                     indexes,
                 };
@@ -114,7 +112,6 @@ impl UTXOCohorts<Rw> {
                     db,
                     filter: f,
                     full_name: &full_name,
-                    context: CohortContext::Utxo,
                     version: v,
                     indexes,
                 };
@@ -146,7 +143,6 @@ impl UTXOCohorts<Rw> {
                 db,
                 filter: f,
                 full_name: &full_name,
-                context: CohortContext::Utxo,
                 version: v,
                 indexes,
             };
@@ -166,7 +162,6 @@ impl UTXOCohorts<Rw> {
                 db,
                 filter: f,
                 full_name: &full_name,
-                context: CohortContext::Utxo,
                 version: v,
                 indexes,
             };
@@ -184,7 +179,6 @@ impl UTXOCohorts<Rw> {
                     db,
                     filter: f,
                     full_name: &full_name,
-                    context: CohortContext::Utxo,
                     version: v,
                     indexes,
                 };
@@ -203,7 +197,6 @@ impl UTXOCohorts<Rw> {
                     db,
                     filter: f,
                     full_name: &full_name,
-                    context: CohortContext::Utxo,
                     version: v,
                     indexes,
                 };
@@ -222,7 +215,6 @@ impl UTXOCohorts<Rw> {
                     db,
                     filter: f,
                     full_name: &full_name,
-                    context: CohortContext::Utxo,
                     version: v,
                     indexes,
                 };

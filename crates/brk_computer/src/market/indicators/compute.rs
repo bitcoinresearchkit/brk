@@ -104,14 +104,14 @@ impl Vecs {
         self.nvt.compute_binary::<Dollars, Dollars, Ratio32>(
             starting_indexes.height,
             &distribution.utxo_cohorts.all.metrics.supply.total.usd.height,
-            &transactions.volume.sent_sum.usd.height,
+            &transactions.volume.sent_sum.usd,
             exit,
         )?;
 
         // Pi Cycle: sma_111d / sma_350d_x2
         self.pi_cycle.compute_binary::<Dollars, Dollars, Ratio32>(
             starting_indexes.height,
-            &moving_average.price_111d_sma.price.as_ref().unwrap().usd.height,
+            &moving_average.price_111d_sma.price.usd.height,
             &moving_average.price_350d_sma_x2.usd.height,
             exit,
         )?;

@@ -238,7 +238,7 @@ impl Vecs {
             Ok(vec.compute_transform2(
                 starting_indexes.height,
                 &self.blocks_mined.height,
-                &*transactions.fees.fee.sum_cumulative.sum,
+                &*transactions.fees.fee.height.sum_cumulative.sum,
                 |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
                 exit,
             )?)

@@ -5,9 +5,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{
-        ComputedFromHeightLast, Ratio64,
-    },
+    internal::{ComputedFromHeightLast, ComputedFromHeightRatioExtension, Ratio64},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -34,6 +32,10 @@ pub struct RealizedExtended<M: StorageMode = Rw> {
     pub realized_profit_to_loss_ratio_7d: ComputedFromHeightLast<StoredF64, M>,
     pub realized_profit_to_loss_ratio_30d: ComputedFromHeightLast<StoredF64, M>,
     pub realized_profit_to_loss_ratio_1y: ComputedFromHeightLast<StoredF64, M>,
+
+    // === Extended ratio metrics for realized/investor price ===
+    pub realized_price_ratio_ext: ComputedFromHeightRatioExtension<M>,
+    pub investor_price_ratio_ext: ComputedFromHeightRatioExtension<M>,
 }
 
 impl RealizedExtended {
@@ -42,7 +44,12 @@ impl RealizedExtended {
 
         macro_rules! import_rolling {
             ($name:expr) => {
-                ComputedFromHeightLast::forced_import(cfg.db, &cfg.name($name), cfg.version + v1, cfg.indexes)?
+                ComputedFromHeightLast::forced_import(
+                    cfg.db,
+                    &cfg.name($name),
+                    cfg.version + v1,
+                    cfg.indexes,
+                )?
             };
         }
 
@@ -65,9 +72,22 @@ impl RealizedExtended {
             realized_profit_to_loss_ratio_7d: import_rolling!("realized_profit_to_loss_ratio_7d"),
             realized_profit_to_loss_ratio_30d: import_rolling!("realized_profit_to_loss_ratio_30d"),
             realized_profit_to_loss_ratio_1y: import_rolling!("realized_profit_to_loss_ratio_1y"),
+            realized_price_ratio_ext: ComputedFromHeightRatioExtension::forced_import(
+                cfg.db,
+                &cfg.name("realized_price"),
+                cfg.version + v1,
+                cfg.indexes,
+            )?,
+            investor_price_ratio_ext: ComputedFromHeightRatioExtension::forced_import(
+                cfg.db,
+                &cfg.name("investor_price"),
+                cfg.version,
+                cfg.indexes,
+            )?,
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2_ext(
         &mut self,
         base: &RealizedBase,
@@ -77,35 +97,118 @@ impl RealizedExtended {
         exit: &Exit,
     ) -> Result<()> {
         // Realized profit/loss rolling sums
-        self.realized_profit_24h.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_24h_ago, &base.realized_profit.height, exit)?;
-        self.realized_profit_7d.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1w_ago, &base.realized_profit.height, exit)?;
-        self.realized_profit_30d.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1m_ago, &base.realized_profit.height, exit)?;
-        self.realized_profit_1y.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1y_ago, &base.realized_profit.height, exit)?;
-        self.realized_loss_24h.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_24h_ago, &base.realized_loss.height, exit)?;
-        self.realized_loss_7d.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1w_ago, &base.realized_loss.height, exit)?;
-        self.realized_loss_30d.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1m_ago, &base.realized_loss.height, exit)?;
-        self.realized_loss_1y.height.compute_rolling_sum(starting_indexes.height, &blocks.count.height_1y_ago, &base.realized_loss.height, exit)?;
-
-        // Realized cap relative to own market cap
-        self.realized_cap_rel_to_own_market_cap.height.compute_percentage(
+        self.realized_profit_24h.height.compute_rolling_sum(
             starting_indexes.height,
-            &base.realized_cap.height,
-            height_to_market_cap,
+            &blocks.count.height_24h_ago,
+            &base.realized_profit.height,
+            exit,
+        )?;
+        self.realized_profit_7d.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_1w_ago,
+            &base.realized_profit.height,
+            exit,
+        )?;
+        self.realized_profit_30d.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_1m_ago,
+            &base.realized_profit.height,
+            exit,
+        )?;
+        self.realized_profit_1y.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_1y_ago,
+            &base.realized_profit.height,
+            exit,
+        )?;
+        self.realized_loss_24h.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_24h_ago,
+            &base.realized_loss.height,
+            exit,
+        )?;
+        self.realized_loss_7d.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_1w_ago,
+            &base.realized_loss.height,
+            exit,
+        )?;
+        self.realized_loss_30d.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_1m_ago,
+            &base.realized_loss.height,
+            exit,
+        )?;
+        self.realized_loss_1y.height.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_1y_ago,
+            &base.realized_loss.height,
             exit,
         )?;
 
+        // Realized cap relative to own market cap
+        self.realized_cap_rel_to_own_market_cap
+            .height
+            .compute_percentage(
+                starting_indexes.height,
+                &base.realized_cap.height,
+                height_to_market_cap,
+                exit,
+            )?;
+
         // Realized profit to loss ratios
-        self.realized_profit_to_loss_ratio_24h.compute_binary::<Dollars, Dollars, Ratio64>(
-            starting_indexes.height, &self.realized_profit_24h.height, &self.realized_loss_24h.height, exit,
+        self.realized_profit_to_loss_ratio_24h
+            .compute_binary::<Dollars, Dollars, Ratio64>(
+                starting_indexes.height,
+                &self.realized_profit_24h.height,
+                &self.realized_loss_24h.height,
+                exit,
+            )?;
+        self.realized_profit_to_loss_ratio_7d
+            .compute_binary::<Dollars, Dollars, Ratio64>(
+                starting_indexes.height,
+                &self.realized_profit_7d.height,
+                &self.realized_loss_7d.height,
+                exit,
+            )?;
+        self.realized_profit_to_loss_ratio_30d
+            .compute_binary::<Dollars, Dollars, Ratio64>(
+                starting_indexes.height,
+                &self.realized_profit_30d.height,
+                &self.realized_loss_30d.height,
+                exit,
+            )?;
+        self.realized_profit_to_loss_ratio_1y
+            .compute_binary::<Dollars, Dollars, Ratio64>(
+                starting_indexes.height,
+                &self.realized_profit_1y.height,
+                &self.realized_loss_1y.height,
+                exit,
+            )?;
+
+        // Extended ratio metrics
+        self.realized_price_ratio_ext.compute_rest(
+            blocks,
+            starting_indexes,
+            exit,
+            &base.realized_price_extra.ratio.height,
         )?;
-        self.realized_profit_to_loss_ratio_7d.compute_binary::<Dollars, Dollars, Ratio64>(
-            starting_indexes.height, &self.realized_profit_7d.height, &self.realized_loss_7d.height, exit,
+        self.realized_price_ratio_ext.compute_usd_bands(
+            starting_indexes,
+            &base.realized_price.usd.height,
+            exit,
         )?;
-        self.realized_profit_to_loss_ratio_30d.compute_binary::<Dollars, Dollars, Ratio64>(
-            starting_indexes.height, &self.realized_profit_30d.height, &self.realized_loss_30d.height, exit,
+
+        self.investor_price_ratio_ext.compute_rest(
+            blocks,
+            starting_indexes,
+            exit,
+            &base.investor_price_extra.ratio.height,
         )?;
-        self.realized_profit_to_loss_ratio_1y.compute_binary::<Dollars, Dollars, Ratio64>(
-            starting_indexes.height, &self.realized_profit_1y.height, &self.realized_loss_1y.height, exit,
+        self.investor_price_ratio_ext.compute_usd_bands(
+            starting_indexes,
+            &base.investor_price.usd.height,
+            exit,
         )?;
 
         Ok(())

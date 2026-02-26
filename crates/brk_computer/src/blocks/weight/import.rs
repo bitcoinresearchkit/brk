@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightLast, ComputedHeightDerivedCumulativeFull, RollingDistribution},
+    internal::{ComputedFromHeightDistribution, ComputedHeightDerivedCumulativeFull},
 };
 
 impl Vecs {
@@ -22,15 +22,8 @@ impl Vecs {
         )?;
 
         let fullness =
-            ComputedFromHeightLast::forced_import(db, "block_fullness", version, indexes)?;
+            ComputedFromHeightDistribution::forced_import(db, "block_fullness", version, indexes)?;
 
-        let fullness_rolling =
-            RollingDistribution::forced_import(db, "block_fullness", version, indexes)?;
-
-        Ok(Self {
-            weight,
-            fullness,
-            fullness_rolling,
-        })
+        Ok(Self { weight, fullness })
     }
 }

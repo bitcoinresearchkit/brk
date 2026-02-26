@@ -1,5 +1,3 @@
-# BRK single-container Docker Compose configuration
-
 name: brk
 
 services:
@@ -11,36 +9,17 @@ services:
     container_name: brk
     restart: unless-stopped
     ports:
-      - 7070:3110 # Map host port 7070 to container port 3110
+      - 7070:3110
     volumes:
-      # Bitcoin Core data directory (read-only)
-      # For access to raw block data
       - ${BITCOIN_DATA_DIR:-/path/to/bitcoin}:/bitcoin:ro
-      # BRK data directory for outputs and state
-      # Option 1: Use a named volume (default)
       - ${BRK_DATA_VOLUME:-brk-data}:/home/brk/.brk
-      # Option 2: Use a bind mount (uncomment and set BRK_DATA_DIR in .env)
+      # Bind mount alternative (uncomment and set BRK_DATA_DIR in .env):
       # - ${BRK_DATA_DIR:-./brk-data}:/home/brk/.brk
-    environment:
-      # Bitcoin Core configuration
-      - BITCOINDIR=/bitcoin
-      - BLOCKSDIR=/bitcoin/blocks
-
-      # RPC configuration (required for processor)
-      - RPCCONNECT=${BTC_RPC_HOST:-localhost}
-      - RPCPORT=${BTC_RPC_PORT:-8332}
-      # - RPCCOOKIEFILE=/bitcoin/.cookie
-
-      # Username/password authentication
-      - RPCUSER=${BTC_RPC_USER}
-      - RPCPASSWORD=${BTC_RPC_PASSWORD}
-
-      # BRK configuration
-      - BRKDIR=/home/brk/.brk
-      - FETCH=${BRK_FETCH:-true}
     command:
       - --bitcoindir
       - /bitcoin
+      - --blocksdir
+      - /bitcoin/blocks
       - --brkdir
       - /home/brk/.brk
       - --rpcconnect
@@ -49,8 +28,11 @@ services:
       - "${BTC_RPC_USER:-bitcoin}"
       - --rpcpassword
       - "${BTC_RPC_PASSWORD:-bitcoin}"
+      # Cookie file alternative (uncomment and remove rpcuser/rpcpassword above):
+      # - --rpccookiefile
+      # - /bitcoin/.cookie
     healthcheck:
-      test: ["CMD", "sh", "-c", "pgrep -f brk && nc -z localhost 3110"]
+      test: ["CMD", "curl", "-sf", "http://localhost:3110/health"]
       interval: 30s
       timeout: 10s
       retries: 3

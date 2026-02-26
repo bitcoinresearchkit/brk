@@ -1,4 +1,4 @@
-use brk_cohort::{CohortContext, Filter};
+use brk_cohort::Filter;
 use brk_types::Version;
 use vecdb::Database;
 
@@ -9,17 +9,11 @@ pub struct ImportConfig<'a> {
     pub db: &'a Database,
     pub filter: Filter,
     pub full_name: &'a str,
-    pub context: CohortContext,
     pub version: Version,
     pub indexes: &'a indexes::Vecs,
 }
 
 impl<'a> ImportConfig<'a> {
-    /// Whether this is an extended cohort (more relative metrics).
-    pub(crate) fn extended(&self) -> bool {
-        self.filter.is_extended(self.context)
-    }
-
     /// Get full metric name with filter prefix.
     pub(crate) fn name(&self, suffix: &str) -> String {
         if self.full_name.is_empty() {

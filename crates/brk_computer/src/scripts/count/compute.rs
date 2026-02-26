@@ -144,7 +144,7 @@ impl Vecs {
         self.taproot_adoption.height.compute_transform2(
             starting_indexes.height,
             &self.p2tr.height,
-            &outputs_count.total_count.sum_cumulative.sum.0,
+            &outputs_count.total_count.height.sum_cumulative.sum.0,
             |(h, p2tr, total, ..)| {
                 let ratio = if *total > 0 {
                     StoredF32::from(*p2tr as f64 / *total as f64)
@@ -159,7 +159,7 @@ impl Vecs {
         self.segwit_adoption.height.compute_transform2(
             starting_indexes.height,
             &self.segwit.height,
-            &outputs_count.total_count.sum_cumulative.sum.0,
+            &outputs_count.total_count.height.sum_cumulative.sum.0,
             |(h, segwit, total, ..)| {
                 let ratio = if *total > 0 {
                     StoredF32::from(*segwit as f64 / *total as f64)

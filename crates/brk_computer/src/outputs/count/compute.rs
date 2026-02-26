@@ -18,26 +18,26 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.total_count.compute_with_skip(
-            starting_indexes.height,
-            &indexes.txindex.output_count,
-            &indexer.vecs.transactions.first_txindex,
-            &indexes.height.txindex_count,
-            exit,
-            0,
-        )?;
-
         let window_starts = blocks.count.window_starts();
-        self.total_count_rolling.compute(
+        self.total_count.compute(
             starting_indexes.height,
             &window_starts,
-            self.total_count.sum_cumulative.sum.inner(),
             exit,
+            |full| {
+                full.compute_with_skip(
+                    starting_indexes.height,
+                    &indexes.txindex.output_count,
+                    &indexer.vecs.transactions.first_txindex,
+                    &indexes.height.txindex_count,
+                    exit,
+                    0,
+                )
+            },
         )?;
 
         self.utxo_count.height.compute_transform3(
             starting_indexes.height,
-            &*self.total_count.sum_cumulative.cumulative,
+            &*self.total_count.height.sum_cumulative.cumulative,
             &*inputs_count.height.sum_cumulative.cumulative,
             &scripts_count.opreturn.cumulative.height,
             |(h, output_count, input_count, opreturn_count, ..)| {
