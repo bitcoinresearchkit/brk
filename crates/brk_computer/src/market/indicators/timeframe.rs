@@ -5,7 +5,7 @@ use crate::{market::returns::Vecs as ReturnsVecs, prices};
 
 pub(super) fn collect_returns(tf: &str, returns: &ReturnsVecs) -> Vec<f32> {
     let data: Vec<StoredF32> = match tf {
-        "1d" => returns.price_returns._1d.day1.collect_or_default(),
+        "1d" => returns.price_returns._24h.day1.collect_or_default(),
         "1w" => returns.price_returns._1w.week1.collect_or_default(),
         "1m" => returns.price_returns._1m.month1.collect_or_default(),
         "1y" => returns.price_returns._1y.year1.collect_or_default(),

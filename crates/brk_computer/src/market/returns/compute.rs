@@ -55,19 +55,19 @@ impl Vecs {
             )?;
         }
 
-        let _1d_price_returns_height = &self.price_returns._1d.height;
+        let _24h_price_returns_height = &self.price_returns._24h.height;
 
         self._1d_returns_1w_sd
-            .compute_all(blocks, starting_indexes, exit, _1d_price_returns_height)?;
+            .compute_all(blocks, starting_indexes, exit, _24h_price_returns_height)?;
         self._1d_returns_1m_sd
-            .compute_all(blocks, starting_indexes, exit, _1d_price_returns_height)?;
+            .compute_all(blocks, starting_indexes, exit, _24h_price_returns_height)?;
         self._1d_returns_1y_sd
-            .compute_all(blocks, starting_indexes, exit, _1d_price_returns_height)?;
+            .compute_all(blocks, starting_indexes, exit, _24h_price_returns_height)?;
 
         // Downside returns: min(return, 0)
         self.downside_returns.compute_transform(
             starting_indexes.height,
-            _1d_price_returns_height,
+            _24h_price_returns_height,
             |(i, ret, ..)| (i, StoredF32::from((*ret).min(0.0))),
             exit,
         )?;

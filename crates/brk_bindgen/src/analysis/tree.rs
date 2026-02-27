@@ -513,10 +513,10 @@ mod tests {
 
     #[test]
     fn test_get_pattern_instance_base_suffix_mode_price_ago() {
-        // Simulates price_ago pattern: price_1d_ago, price_1w_ago, price_10y_ago
+        // Simulates price_ago pattern: price_24h_ago, price_1w_ago, price_10y_ago
         // Common prefix is "price_", so this is suffix mode
         let tree = make_branch(vec![
-            ("_1d", make_leaf("price_1d_ago")),
+            ("_24h", make_leaf("price_24h_ago")),
             ("_1w", make_leaf("price_1w_ago")),
             ("_1m", make_leaf("price_1m_ago")),
             ("_10y", make_leaf("price_10y_ago")),
@@ -524,16 +524,16 @@ mod tests {
 
         let result = get_pattern_instance_base(&tree);
         assert_eq!(result.base, "price");
-        assert!(result.is_suffix_mode); // Suffix mode: _m(base, "1d_ago")
+        assert!(result.is_suffix_mode); // Suffix mode: _m(base, "24h_ago")
         assert!(!result.has_outlier);
     }
 
     #[test]
     fn test_get_pattern_instance_base_prefix_mode_price_returns() {
-        // Simulates price_returns pattern: 1d_price_returns, 1w_price_returns, 10y_price_returns
+        // Simulates price_returns pattern: 24h_price_returns, 1w_price_returns, 10y_price_returns
         // Common suffix is "_price_returns", so this is prefix mode
         let tree = make_branch(vec![
-            ("_1d", make_leaf("1d_price_returns")),
+            ("_24h", make_leaf("24h_price_returns")),
             ("_1w", make_leaf("1w_price_returns")),
             ("_1m", make_leaf("1m_price_returns")),
             ("_10y", make_leaf("10y_price_returns")),
@@ -541,7 +541,7 @@ mod tests {
 
         let result = get_pattern_instance_base(&tree);
         assert_eq!(result.base, "price_returns");
-        assert!(!result.is_suffix_mode); // Prefix mode: _p("1d_", base)
+        assert!(!result.is_suffix_mode); // Prefix mode: _p("24h_", base)
         assert!(!result.has_outlier);
     }
 

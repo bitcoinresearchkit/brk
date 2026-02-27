@@ -50,6 +50,8 @@ CentsSats = int
 # Used for precise accumulation of investor cap values: Σ(price² × sats).
 # investor_price = investor_cap_raw / realized_cap_raw
 CentsSquaredSats = int
+# Closing price value for a time period
+Close = Cents
 # Cohort identifier for cost basis distribution.
 Cohort = str
 # Bucket type for cost basis aggregation.
@@ -78,9 +80,13 @@ FundedAddressIndex = TypeIndex
 HalvingEpoch = int
 # Hex-encoded string
 Hex = str
+# Highest price value for a time period
+High = Cents
 Hour1 = int
 Hour12 = int
 Hour4 = int
+# Lowest price value for a time period
+Low = Cents
 # Virtual size in vbytes (weight / 4, rounded up)
 VSize = int
 # Metric name
@@ -100,6 +106,8 @@ Minute5 = int
 Month1 = int
 Month3 = int
 Month6 = int
+# Opening price value for a time period
+Open = Cents
 OpReturnIndex = TypeIndex
 OutPoint = int
 # Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
@@ -666,6 +674,33 @@ class MetricWithIndex(TypedDict):
     """
     metric: Metric
     index: Index
+
+class OHLCCents(TypedDict):
+    """
+    OHLC (Open, High, Low, Close) data in cents
+    """
+    open: Open
+    high: High
+    low: Low
+    close: Close
+
+class OHLCDollars(TypedDict):
+    """
+    OHLC (Open, High, Low, Close) data in dollars
+    """
+    open: Open
+    high: High
+    low: Low
+    close: Close
+
+class OHLCSats(TypedDict):
+    """
+    OHLC (Open, High, Low, Close) data in satoshis
+    """
+    open: Open
+    high: High
+    low: Low
+    close: Close
 
 class PaginatedMetrics(TypedDict):
     """
@@ -2991,17 +3026,6 @@ class InvestedMaxMinPercentilesSpotPattern:
         self.spot_cost_basis_percentile: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'spot_cost_basis_percentile'))
         self.spot_invested_capital_percentile: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'spot_invested_capital_percentile'))
 
-class CloseHighLowOpenPricePattern(Generic[T]):
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.close: MetricPattern2[T] = MetricPattern2(client, _m(acc, 'close'))
-        self.high: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern[T] = Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'high'))
-        self.low: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern[T] = Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'low'))
-        self.open: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern[T] = Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'open'))
-        self.price: MetricPattern20[T] = MetricPattern20(client, acc)
-
 class _1y24h30d7dPattern2:
     """Pattern struct for repeated tree structure."""
     
@@ -3086,6 +3110,15 @@ class BtcSatsUsdPattern:
         self.btc: MetricPattern1[Bitcoin] = MetricPattern1(client, _m(acc, 'btc'))
         self.sats: MetricPattern1[Sats] = MetricPattern1(client, acc)
         self.usd: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'usd'))
+
+class CentsSatsUsdPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.cents: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern[OHLCCents] = Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'cents'))
+        self.sats: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern[OHLCSats] = Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'sats'))
+        self.usd: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern[OHLCDollars] = Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, acc)
 
 class HistogramLineSignalPattern:
     """Pattern struct for repeated tree structure."""
@@ -4476,13 +4509,38 @@ class MetricsTree_Pools:
         self.height_to_pool: MetricPattern20[PoolSlug] = MetricPattern20(client, 'pool')
         self.vecs: MetricsTree_Pools_Vecs = MetricsTree_Pools_Vecs(client)
 
+class MetricsTree_Prices_Split_Close:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cents: MetricPattern2[Cents] = MetricPattern2(client, 'price_close_cents')
+        self.usd: MetricPattern2[Dollars] = MetricPattern2(client, 'price_close')
+        self.sats: MetricPattern2[Sats] = MetricPattern2(client, 'price_close_sats')
+
+class MetricsTree_Prices_Split:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.open: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_open')
+        self.high: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_high')
+        self.low: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_low')
+        self.close: MetricsTree_Prices_Split_Close = MetricsTree_Prices_Split_Close(client)
+
+class MetricsTree_Prices_Price:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cents: MetricPattern20[Cents] = MetricPattern20(client, 'price_cents')
+        self.usd: MetricPattern20[Dollars] = MetricPattern20(client, 'price')
+        self.sats: MetricPattern20[Sats] = MetricPattern20(client, 'price_sats')
+
 class MetricsTree_Prices:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.cents: CloseHighLowOpenPricePattern[Cents] = CloseHighLowOpenPricePattern(client, 'price_cents')
-        self.usd: CloseHighLowOpenPricePattern[Dollars] = CloseHighLowOpenPricePattern(client, 'price_usd')
-        self.sats: CloseHighLowOpenPricePattern[Sats] = CloseHighLowOpenPricePattern(client, 'price_sats')
+        self.split: MetricsTree_Prices_Split = MetricsTree_Prices_Split(client)
+        self.ohlc: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_ohlc')
+        self.price: MetricsTree_Prices_Price = MetricsTree_Prices_Price(client)
 
 class MetricsTree_Distribution_AnyAddressIndexes:
     """Metrics tree node."""

@@ -19,7 +19,7 @@ pub(super) fn compute(
     starting_indexes: &ComputeIndexes,
     exit: &Exit,
 ) -> Result<()> {
-    let source_version = returns.price_returns._1d.height.version();
+    let source_version = returns.price_returns._24h.height.version();
 
     let vecs = [
         &mut chain.gains.height,

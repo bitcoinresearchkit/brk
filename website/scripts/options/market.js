@@ -197,7 +197,7 @@ export function createMarketSection() {
   } = market;
 
   const shortPeriodsBase = [
-    { id: "1d", returns: returns.priceReturns._1d, lookback: lookback._1d },
+    { id: "24h", returns: returns.priceReturns._24h, lookback: lookback._24h },
     { id: "1w", returns: returns.priceReturns._1w, lookback: lookback._1w },
     { id: "1m", returns: returns.priceReturns._1m, lookback: lookback._1m },
     {

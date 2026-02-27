@@ -2,9 +2,9 @@ use brk_traversable::Traversable;
 
 use crate::market::dca::ByDcaPeriod;
 
-/// Lookback period days (includes 1d, unlike DCA)
+/// Lookback period days (includes 24h, unlike DCA)
 pub const LOOKBACK_PERIOD_DAYS: ByLookbackPeriod<u32> = ByLookbackPeriod {
-    _1d: 1,
+    _24h: 1,
     _1w: 7,
     _1m: 30,
     _3m: 3 * 30,
@@ -21,7 +21,7 @@ pub const LOOKBACK_PERIOD_DAYS: ByLookbackPeriod<u32> = ByLookbackPeriod {
 
 /// Lookback period names
 pub const LOOKBACK_PERIOD_NAMES: ByLookbackPeriod<&'static str> = ByLookbackPeriod {
-    _1d: "1d",
+    _24h: "24h",
     _1w: "1w",
     _1m: "1m",
     _3m: "3m",
@@ -36,10 +36,10 @@ pub const LOOKBACK_PERIOD_NAMES: ByLookbackPeriod<&'static str> = ByLookbackPeri
     _10y: "10y",
 };
 
-/// Generic wrapper for lookback period-based data (includes 1d)
+/// Generic wrapper for lookback period-based data (includes 24h)
 #[derive(Clone, Default, Traversable)]
 pub struct ByLookbackPeriod<T> {
-    pub _1d: T,
+    pub _24h: T,
     pub _1w: T,
     pub _1m: T,
     pub _3m: T,
@@ -62,7 +62,7 @@ impl<T> ByLookbackPeriod<T> {
         let n = LOOKBACK_PERIOD_NAMES;
         let d = LOOKBACK_PERIOD_DAYS;
         Ok(Self {
-            _1d: create(n._1d, d._1d)?,
+            _24h: create(n._24h, d._24h)?,
             _1w: create(n._1w, d._1w)?,
             _1m: create(n._1m, d._1m)?,
             _3m: create(n._3m, d._3m)?,
@@ -81,7 +81,7 @@ impl<T> ByLookbackPeriod<T> {
     pub(crate) fn iter_with_days(&self) -> impl Iterator<Item = (&T, u32)> {
         let d = LOOKBACK_PERIOD_DAYS;
         [
-            (&self._1d, d._1d),
+            (&self._24h, d._24h),
             (&self._1w, d._1w),
             (&self._1m, d._1m),
             (&self._3m, d._3m),
@@ -101,7 +101,7 @@ impl<T> ByLookbackPeriod<T> {
     pub(crate) fn iter_mut_with_days(&mut self) -> impl Iterator<Item = (&mut T, u32)> {
         let d = LOOKBACK_PERIOD_DAYS;
         [
-            (&mut self._1d, d._1d),
+            (&mut self._24h, d._24h),
             (&mut self._1w, d._1w),
             (&mut self._1m, d._1m),
             (&mut self._3m, d._3m),
@@ -118,7 +118,7 @@ impl<T> ByLookbackPeriod<T> {
         .into_iter()
     }
 
-    /// Get the DCA-matching subset (excludes 1d)
+    /// Get the DCA-matching subset (excludes 24h)
     pub(crate) fn as_dca_period(&self) -> ByDcaPeriod<&T> {
         ByDcaPeriod {
             _1w: &self._1w,

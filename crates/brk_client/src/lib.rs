@@ -2864,28 +2864,6 @@ impl InvestedMaxMinPercentilesSpotPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CloseHighLowOpenPricePattern<T> {
-    pub close: MetricPattern2<T>,
-    pub high: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<T>,
-    pub low: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<T>,
-    pub open: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<T>,
-    pub price: MetricPattern20<T>,
-}
-
-impl<T: DeserializeOwned> CloseHighLowOpenPricePattern<T> {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            close: MetricPattern2::new(client.clone(), _m(&acc, "close")),
-            high: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern::new(client.clone(), _m(&acc, "high")),
-            low: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern::new(client.clone(), _m(&acc, "low")),
-            open: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern::new(client.clone(), _m(&acc, "open")),
-            price: MetricPattern20::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct _1y24h30d7dPattern2 {
     pub _1y: BtcSatsUsdPattern,
     pub _24h: BtcSatsUsdPattern,
@@ -3051,6 +3029,24 @@ impl BtcSatsUsdPattern {
             btc: MetricPattern1::new(client.clone(), _m(&acc, "btc")),
             sats: MetricPattern1::new(client.clone(), acc.clone()),
             usd: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CentsSatsUsdPattern {
+    pub cents: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<OHLCCents>,
+    pub sats: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<OHLCSats>,
+    pub usd: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<OHLCDollars>,
+}
+
+impl CentsSatsUsdPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            cents: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern::new(client.clone(), _m(&acc, "cents")),
+            sats: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern::new(client.clone(), _m(&acc, "sats")),
+            usd: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -5973,17 +5969,70 @@ impl MetricsTree_Pools_Vecs {
 
 /// Metrics tree node.
 pub struct MetricsTree_Prices {
-    pub cents: CloseHighLowOpenPricePattern<Cents>,
-    pub usd: CloseHighLowOpenPricePattern<Dollars>,
-    pub sats: CloseHighLowOpenPricePattern<Sats>,
+    pub split: MetricsTree_Prices_Split,
+    pub ohlc: CentsSatsUsdPattern,
+    pub price: MetricsTree_Prices_Price,
 }
 
 impl MetricsTree_Prices {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            cents: CloseHighLowOpenPricePattern::new(client.clone(), "price_cents".to_string()),
-            usd: CloseHighLowOpenPricePattern::new(client.clone(), "price_usd".to_string()),
-            sats: CloseHighLowOpenPricePattern::new(client.clone(), "price_sats".to_string()),
+            split: MetricsTree_Prices_Split::new(client.clone(), format!("{base_path}_split")),
+            ohlc: CentsSatsUsdPattern::new(client.clone(), "price_ohlc".to_string()),
+            price: MetricsTree_Prices_Price::new(client.clone(), format!("{base_path}_price")),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Prices_Split {
+    pub open: CentsSatsUsdPattern,
+    pub high: CentsSatsUsdPattern,
+    pub low: CentsSatsUsdPattern,
+    pub close: MetricsTree_Prices_Split_Close,
+}
+
+impl MetricsTree_Prices_Split {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            open: CentsSatsUsdPattern::new(client.clone(), "price_open".to_string()),
+            high: CentsSatsUsdPattern::new(client.clone(), "price_high".to_string()),
+            low: CentsSatsUsdPattern::new(client.clone(), "price_low".to_string()),
+            close: MetricsTree_Prices_Split_Close::new(client.clone(), format!("{base_path}_close")),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Prices_Split_Close {
+    pub cents: MetricPattern2<Cents>,
+    pub usd: MetricPattern2<Dollars>,
+    pub sats: MetricPattern2<Sats>,
+}
+
+impl MetricsTree_Prices_Split_Close {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            cents: MetricPattern2::new(client.clone(), "price_close_cents".to_string()),
+            usd: MetricPattern2::new(client.clone(), "price_close".to_string()),
+            sats: MetricPattern2::new(client.clone(), "price_close_sats".to_string()),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Prices_Price {
+    pub cents: MetricPattern20<Cents>,
+    pub usd: MetricPattern20<Dollars>,
+    pub sats: MetricPattern20<Sats>,
+}
+
+impl MetricsTree_Prices_Price {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            cents: MetricPattern20::new(client.clone(), "price_cents".to_string()),
+            usd: MetricPattern20::new(client.clone(), "price".to_string()),
+            sats: MetricPattern20::new(client.clone(), "price_sats".to_string()),
         }
     }
 }

@@ -187,6 +187,11 @@
  * @typedef {number} CentsSquaredSats
  */
 /**
+ * Closing price value for a time period
+ *
+ * @typedef {Cents} Close
+ */
+/**
  * Cohort identifier for cost basis distribution.
  *
  * @typedef {string} Cohort
@@ -363,6 +368,11 @@
  *
  * @typedef {string} Hex
  */
+/**
+ * Highest price value for a time period
+ *
+ * @typedef {Cents} High
+ */
 /** @typedef {number} Hour1 */
 /** @typedef {number} Hour12 */
 /** @typedef {number} Hour4 */
@@ -387,6 +397,11 @@
 /**
  * @typedef {Object} LimitParam
  * @property {Limit=} limit
+ */
+/**
+ * Lowest price value for a time period
+ *
+ * @typedef {Cents} Low
  */
 /**
  * Block info in a mempool.space like format for fee estimation.
@@ -473,7 +488,39 @@
 /** @typedef {number} Month1 */
 /** @typedef {number} Month3 */
 /** @typedef {number} Month6 */
+/**
+ * OHLC (Open, High, Low, Close) data in cents
+ *
+ * @typedef {Object} OHLCCents
+ * @property {Open} open
+ * @property {High} high
+ * @property {Low} low
+ * @property {Close} close
+ */
+/**
+ * OHLC (Open, High, Low, Close) data in dollars
+ *
+ * @typedef {Object} OHLCDollars
+ * @property {Open} open
+ * @property {High} high
+ * @property {Low} low
+ * @property {Close} close
+ */
+/**
+ * OHLC (Open, High, Low, Close) data in satoshis
+ *
+ * @typedef {Object} OHLCSats
+ * @property {Open} open
+ * @property {High} high
+ * @property {Low} low
+ * @property {Close} close
+ */
 /** @typedef {TypeIndex} OpReturnIndex */
+/**
+ * Opening price value for a time period
+ *
+ * @typedef {Cents} Open
+ */
 /** @typedef {number} OutPoint */
 /**
  * Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
@@ -3508,33 +3555,6 @@ function createInvestedMaxMinPercentilesSpotPattern(client, acc) {
 }
 
 /**
- * @template T
- * @typedef {Object} CloseHighLowOpenPricePattern
- * @property {MetricPattern2<T>} close
- * @property {Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<T>} high
- * @property {Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<T>} low
- * @property {Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<T>} open
- * @property {MetricPattern20<T>} price
- */
-
-/**
- * Create a CloseHighLowOpenPricePattern pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CloseHighLowOpenPricePattern<T>}
- */
-function createCloseHighLowOpenPricePattern(client, acc) {
-  return {
-    close: createMetricPattern2(client, _m(acc, 'close')),
-    high: createDay1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'high')),
-    low: createDay1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'low')),
-    open: createDay1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'open')),
-    price: createMetricPattern20(client, acc),
-  };
-}
-
-/**
  * @typedef {Object} _1y24h30d7dPattern2
  * @property {BtcSatsUsdPattern} _1y
  * @property {BtcSatsUsdPattern} _24h
@@ -3732,6 +3752,27 @@ function createBtcSatsUsdPattern(client, acc) {
     btc: createMetricPattern1(client, _m(acc, 'btc')),
     sats: createMetricPattern1(client, acc),
     usd: createMetricPattern1(client, _m(acc, 'usd')),
+  };
+}
+
+/**
+ * @typedef {Object} CentsSatsUsdPattern
+ * @property {Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<OHLCCents>} cents
+ * @property {Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<OHLCSats>} sats
+ * @property {Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<OHLCDollars>} usd
+ */
+
+/**
+ * Create a CentsSatsUsdPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CentsSatsUsdPattern}
+ */
+function createCentsSatsUsdPattern(client, acc) {
+  return {
+    cents: createDay1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'cents')),
+    sats: createDay1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'sats')),
+    usd: createDay1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, acc),
   };
 }
 
@@ -5178,9 +5219,31 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Prices
- * @property {CloseHighLowOpenPricePattern<Cents>} cents
- * @property {CloseHighLowOpenPricePattern<Dollars>} usd
- * @property {CloseHighLowOpenPricePattern<Sats>} sats
+ * @property {MetricsTree_Prices_Split} split
+ * @property {CentsSatsUsdPattern} ohlc
+ * @property {MetricsTree_Prices_Price} price
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Prices_Split
+ * @property {CentsSatsUsdPattern} open
+ * @property {CentsSatsUsdPattern} high
+ * @property {CentsSatsUsdPattern} low
+ * @property {MetricsTree_Prices_Split_Close} close
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Prices_Split_Close
+ * @property {MetricPattern2<Cents>} cents
+ * @property {MetricPattern2<Dollars>} usd
+ * @property {MetricPattern2<Sats>} sats
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Prices_Price
+ * @property {MetricPattern20<Cents>} cents
+ * @property {MetricPattern20<Dollars>} usd
+ * @property {MetricPattern20<Sats>} sats
  */
 
 /**
@@ -7449,9 +7512,22 @@ class BrkClient extends BrkClientBase {
         },
       },
       prices: {
-        cents: createCloseHighLowOpenPricePattern(this, 'price_cents'),
-        usd: createCloseHighLowOpenPricePattern(this, 'price_usd'),
-        sats: createCloseHighLowOpenPricePattern(this, 'price_sats'),
+        split: {
+          open: createCentsSatsUsdPattern(this, 'price_open'),
+          high: createCentsSatsUsdPattern(this, 'price_high'),
+          low: createCentsSatsUsdPattern(this, 'price_low'),
+          close: {
+            cents: createMetricPattern2(this, 'price_close_cents'),
+            usd: createMetricPattern2(this, 'price_close'),
+            sats: createMetricPattern2(this, 'price_close_sats'),
+          },
+        },
+        ohlc: createCentsSatsUsdPattern(this, 'price_ohlc'),
+        price: {
+          cents: createMetricPattern20(this, 'price_cents'),
+          usd: createMetricPattern20(this, 'price'),
+          sats: createMetricPattern20(this, 'price_sats'),
+        },
       },
       distribution: {
         supplyState: createMetricPattern20(this, 'supply_state'),
