@@ -1,8 +1,8 @@
 use brk_traversable::Traversable;
-use brk_types::{StoredF32, StoredU64};
+use brk_types::StoredU64;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeightCumulativeSum, ComputedFromHeightLast};
+use crate::internal::ComputedFromHeightCumulativeSum;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
@@ -23,8 +23,4 @@ pub struct Vecs<M: StorageMode = Rw> {
     // Aggregate counts
     /// SegWit output count (p2wpkh + p2wsh + p2tr)
     pub segwit: ComputedFromHeightCumulativeSum<StoredU64, M>,
-
-    // Adoption ratios (stored per-block, lazy period views)
-    pub taproot_adoption: ComputedFromHeightLast<StoredF32, M>,
-    pub segwit_adoption: ComputedFromHeightLast<StoredF32, M>,
 }

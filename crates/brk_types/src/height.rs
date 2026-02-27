@@ -8,13 +8,11 @@ use byteview::ByteView;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{Bytes, CheckedSub, Formattable, FromCoarserIndex, Pco, PrintableIndex, Stamp};
+use vecdb::{Bytes, CheckedSub, Formattable, Pco, PrintableIndex, Stamp};
 
-use super::{DifficultyEpoch, HalvingEpoch};
+use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING, FromCoarserIndex};
 
-use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING};
-
-use super::StoredU64;
+use super::{DifficultyEpoch, HalvingEpoch, StoredU64};
 
 /// Block height
 #[derive(

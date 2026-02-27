@@ -7,7 +7,7 @@ use vecdb::{Database, PAGE_SIZE};
 
 use crate::indexes;
 
-use super::{CountVecs, ValueVecs, Vecs};
+use super::{AdoptionVecs, CountVecs, ValueVecs, Vecs};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -22,8 +22,9 @@ impl Vecs {
 
         let count = CountVecs::forced_import(&db, version, indexes)?;
         let value = ValueVecs::forced_import(&db, version, indexes)?;
+        let adoption = AdoptionVecs::forced_import(&db, version, indexes)?;
 
-        let this = Self { db, count, value };
+        let this = Self { db, count, value, adoption };
 
         this.db.retain_regions(
             this.iter_any_exportable()

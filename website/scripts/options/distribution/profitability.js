@@ -519,21 +519,21 @@ function realizedPnlSum(tree) {
       unit: Unit.usd,
     }),
     dots({
-      metric: r.realizedProfit.sum,
+      metric: r.realizedProfit.height,
       name: "Profit",
       color: colors.profit,
       unit: Unit.usd,
       defaultActive: false,
     }),
     dots({
-      metric: r.negRealizedLoss.sum,
+      metric: r.negRealizedLoss,
       name: "Negative Loss",
       color: colors.loss,
       unit: Unit.usd,
       defaultActive: false,
     }),
     dots({
-      metric: r.realizedLoss.sum,
+      metric: r.realizedLoss.height,
       name: "Loss",
       color: colors.loss,
       unit: Unit.usd,
@@ -547,13 +547,13 @@ function realizedPnlSum(tree) {
       defaultActive: false,
     }),
     baseline({
-      metric: r.realizedProfitRelToRealizedCap.sum,
+      metric: r.realizedProfitRelToRealizedCap,
       name: "Profit",
       color: colors.profit,
       unit: Unit.pctRcap,
     }),
     baseline({
-      metric: r.realizedLossRelToRealizedCap.sum,
+      metric: r.realizedLossRelToRealizedCap,
       name: "Loss",
       color: colors.loss,
       unit: Unit.pctRcap,
@@ -575,13 +575,13 @@ function realizedNetPnlSum(tree) {
       unit: Unit.usd,
     }),
     dotsBaseline({
-      metric: r.netRealizedPnl.sum,
+      metric: r.netRealizedPnl.height,
       name: "Net",
       unit: Unit.usd,
       defaultActive: false,
     }),
     baseline({
-      metric: r.netRealizedPnlRelToRealizedCap.sum,
+      metric: r.netRealizedPnlRelToRealizedCap,
       name: "Net",
       unit: Unit.pctRcap,
     }),
@@ -609,20 +609,20 @@ function realizedPnlCumulative(tree) {
       unit: Unit.usd,
     }),
     line({
-      metric: r.negRealizedLoss.cumulative,
+      metric: r.negRealizedLoss,
       name: "Negative Loss",
       color: colors.loss,
       unit: Unit.usd,
       defaultActive: false,
     }),
     baseline({
-      metric: r.realizedProfitRelToRealizedCap.cumulative,
+      metric: r.realizedProfitRelToRealizedCap,
       name: "Profit",
       color: colors.profit,
       unit: Unit.pctRcap,
     }),
     baseline({
-      metric: r.realizedLossRelToRealizedCap.cumulative,
+      metric: r.realizedLossRelToRealizedCap,
       name: "Loss",
       color: colors.loss,
       unit: Unit.pctRcap,
@@ -644,7 +644,7 @@ function realizedNetPnlCumulative(tree) {
       unit: Unit.usd,
     }),
     baseline({
-      metric: r.netRealizedPnlRelToRealizedCap.cumulative,
+      metric: r.netRealizedPnlRelToRealizedCap,
       name: "Net",
       unit: Unit.pctRcap,
     }),
@@ -704,13 +704,13 @@ function sentInPnlTree(tree, title) {
         }),
         ...satsBtcUsdFrom({
           source: r.sentInProfit,
-          key: "sum",
+          key: "base",
           name: "In Profit",
           color: colors.profit,
         }),
         ...satsBtcUsdFrom({
           source: r.sentInLoss,
-          key: "sum",
+          key: "base",
           name: "In Loss",
           color: colors.loss,
         }),
@@ -945,7 +945,7 @@ function realizedSubfolder(tree, title, rollingTree) {
         title: title("Realized Peak Regret"),
         bottom: [
           line({
-            metric: r.peakRegret.sum,
+            metric: r.peakRegret.height,
             name: "Peak Regret",
             unit: Unit.usd,
           }),
@@ -1839,7 +1839,7 @@ function groupedRealizedPnlSum(list, all, title) {
       title: title("Realized Profit"),
       bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
-          metric: tree.realized.realizedProfit.sum,
+          metric: tree.realized.realizedProfit.height,
           name,
           color,
           unit: Unit.usd,
@@ -1851,7 +1851,7 @@ function groupedRealizedPnlSum(list, all, title) {
       title: title("Realized Loss"),
       bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
-          metric: tree.realized.negRealizedLoss.sum,
+          metric: tree.realized.negRealizedLoss,
           name,
           color,
           unit: Unit.usd,
@@ -1936,7 +1936,7 @@ function groupedRealizedPnlCumulative(list, all, title) {
       title: title("Cumulative Realized Loss"),
       bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         line({
-          metric: tree.realized.negRealizedLoss.cumulative,
+          metric: tree.realized.realizedLoss.cumulative,
           name,
           color,
           unit: Unit.usd,
@@ -1973,7 +1973,7 @@ function groupedSentInPnl(list, all, title) {
             ...flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
               satsBtcUsdFrom({
                 source: tree.realized.sentInProfit,
-                key: "sum",
+                key: "base",
                 name,
                 color,
               }),
@@ -1995,7 +1995,7 @@ function groupedSentInPnl(list, all, title) {
             ...flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
               satsBtcUsdFrom({
                 source: tree.realized.sentInLoss,
-                key: "sum",
+                key: "base",
                 name,
                 color,
               }),
@@ -2104,7 +2104,7 @@ function groupedRealizedSubfolder(list, all, title) {
         title: title("Net Realized P&L"),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
-            metric: tree.realized.netRealizedPnl.sum,
+            metric: tree.realized.netRealizedPnl.height,
             name,
             color,
             unit: Unit.usd,
@@ -2166,7 +2166,7 @@ function groupedRealizedSubfolderWithExtras(list, all, title) {
         title: title("Net Realized P&L"),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
-            metric: tree.realized.netRealizedPnl.sum,
+            metric: tree.realized.netRealizedPnl.height,
             name,
             color,
             unit: Unit.usd,

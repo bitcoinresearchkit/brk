@@ -56,7 +56,7 @@ def test_fetch_typed_metric():
     )
     print(e)
     f = (
-        client.metrics.distribution.address_cohorts.amount_range._10k_sats_to_100k_sats.activity.sent.usd.cumulative.by.day1()
+        client.metrics.distribution.address_cohorts.amount_range._10k_sats_to_100k_sats.activity.sent.cumulative.usd.by.day1()
         .tail(10)
         .fetch()
     )

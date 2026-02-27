@@ -6,20 +6,19 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::ByUnit,
+    internal::{ByUnit, WindowStarts, Windows},
 };
+
+/// Rolling sum only, window-first then unit.
+///
+/// Tree: `_24h.sats.height`, `_24h.btc.height`, etc.
+#[derive(Deref, DerefMut, Traversable)]
+#[traversable(transparent)]
+pub struct RollingSumByUnit<M: StorageMode = Rw>(pub Windows<ByUnit<M>>);
 
 const VERSION: Version = Version::ZERO;
 
-#[derive(Deref, DerefMut, Traversable)]
-#[traversable(transparent)]
-pub struct StoredValueFromHeightLast<M: StorageMode = Rw> {
-    #[deref]
-    #[deref_mut]
-    pub base: ByUnit<M>,
-}
-
-impl StoredValueFromHeightLast {
+impl RollingSumByUnit {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -27,27 +26,21 @@ impl StoredValueFromHeightLast {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let v = version + VERSION;
-        Ok(Self {
-            base: ByUnit::forced_import(db, name, v, indexes)?,
-        })
+        Ok(Self(Windows::<ByUnit>::forced_import(db, &format!("{name}_sum"), v, indexes)?))
     }
 
     pub(crate) fn compute_rolling_sum(
         &mut self,
         max_from: Height,
-        window_starts: &impl ReadableVec<Height, Height>,
+        windows: &WindowStarts<'_>,
         sats_source: &impl ReadableVec<Height, Sats>,
         usd_source: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.base
-            .sats
-            .height
-            .compute_rolling_sum(max_from, window_starts, sats_source, exit)?;
-        self.base
-            .usd
-            .height
-            .compute_rolling_sum(max_from, window_starts, usd_source, exit)?;
+        for (w, starts) in self.0.as_mut_array().into_iter().zip(windows.as_array()) {
+            w.sats.height.compute_rolling_sum(max_from, starts, sats_source, exit)?;
+            w.usd.height.compute_rolling_sum(max_from, starts, usd_source, exit)?;
+        }
         Ok(())
     }
 }

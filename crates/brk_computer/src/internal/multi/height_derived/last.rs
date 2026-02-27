@@ -2,12 +2,14 @@
 
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute1, Minute5,
-    Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, DifficultyEpoch, FromCoarserIndex, HalvingEpoch, Height, Hour1, Hour4, Hour12,
+    Minute1, Minute5, Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{LazyAggVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec};
+use vecdb::{
+    Cursor, LazyAggVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, VecIndex, VecValue,
+};
 
 use crate::{
     indexes, indexes_from,
@@ -77,13 +79,45 @@ where
             };
         }
 
+        fn for_each_range_from_coarser<
+            I: VecIndex,
+            O: VecValue,
+            S1I: VecIndex + FromCoarserIndex<I>,
+            S2T: VecValue,
+        >(
+            from: usize,
+            to: usize,
+            source: &ReadableBoxedVec<S1I, O>,
+            mapping: &ReadableBoxedVec<I, S2T>,
+            f: &mut dyn FnMut(O),
+        ) {
+            let mapping_len = mapping.len();
+            let source_len = source.len();
+            let mut cursor = Cursor::from_dyn(&**source);
+            for i in from..to {
+                if i >= mapping_len {
+                    break;
+                }
+                let target = S1I::max_from(I::from(i), source_len);
+                if cursor.position() <= target {
+                    cursor.advance(target - cursor.position());
+                    if let Some(v) = cursor.next() {
+                        f(v);
+                    }
+                } else if let Some(v) = source.collect_one_at(target) {
+                    f(v);
+                }
+            }
+        }
+
         macro_rules! epoch {
             ($idx:ident) => {
-                LazyAggVec::from_source(
+                LazyAggVec::new(
                     name,
                     v,
                     height_source.clone(),
                     indexes.$idx.identity.read_only_boxed_clone(),
+                    for_each_range_from_coarser,
                 )
             };
         }

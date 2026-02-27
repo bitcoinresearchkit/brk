@@ -1,7 +1,7 @@
 import { colors } from "../utils/colors.js";
 import { brk } from "../client.js";
 import { Unit } from "../utils/units.js";
-import { dots, line, price } from "./series.js";
+import { dots, line, price, rollingWindowsTree } from "./series.js";
 import { satsBtcUsd, createPriceRatioCharts } from "./shared.js";
 
 /**
@@ -255,11 +255,11 @@ export function createCointimeSection() {
             name: "Compare",
             tree: [
               {
-                name: "Sum",
+                name: "Base",
                 title: "Coinblocks",
                 bottom: coinblocks.map(({ pattern, name, color }) =>
                   line({
-                    metric: pattern.sum,
+                    metric: pattern.height,
                     name,
                     color,
                     unit: Unit.coinblocks,
@@ -284,17 +284,18 @@ export function createCointimeSection() {
             name,
             tree: [
               {
-                name: "Sum",
+                name: "Base",
                 title,
                 bottom: [
                   line({
-                    metric: pattern.sum,
+                    metric: pattern.height,
                     name,
                     color,
                     unit: Unit.coinblocks,
                   }),
                 ],
               },
+              rollingWindowsTree({ windows: pattern.sum, title, unit: Unit.coinblocks }),
               {
                 name: "Cumulative",
                 title: `${title} (Total)`,
@@ -320,14 +321,14 @@ export function createCointimeSection() {
             name: "Compare",
             tree: [
               {
-                name: "Sum",
+                name: "Base",
                 title: "Cointime Value",
                 bottom: [
                   ...cointimeValues.map(({ pattern, name, color }) =>
-                    line({ metric: pattern.sum, name, color, unit: Unit.usd }),
+                    line({ metric: pattern.height, name, color, unit: Unit.usd }),
                   ),
                   line({
-                    metric: vocdd.pattern.sum,
+                    metric: vocdd.pattern.height,
                     name: vocdd.name,
                     color: vocdd.color,
                     unit: Unit.usd,
@@ -360,12 +361,13 @@ export function createCointimeSection() {
             name,
             tree: [
               {
-                name: "Sum",
+                name: "Base",
                 title,
                 bottom: [
-                  line({ metric: pattern.sum, name, color, unit: Unit.usd }),
+                  line({ metric: pattern.height, name, color, unit: Unit.usd }),
                 ],
               },
+              rollingWindowsTree({ windows: pattern.sum, title, unit: Unit.usd }),
               {
                 name: "Cumulative",
                 title: `${title} (Total)`,
@@ -384,11 +386,11 @@ export function createCointimeSection() {
             name: vocdd.name,
             tree: [
               {
-                name: "Sum",
+                name: "Base",
                 title: vocdd.title,
                 bottom: [
                   line({
-                    metric: vocdd.pattern.sum,
+                    metric: vocdd.pattern.height,
                     name: vocdd.name,
                     color: vocdd.color,
                     unit: Unit.usd,
@@ -401,6 +403,7 @@ export function createCointimeSection() {
                   }),
                 ],
               },
+              rollingWindowsTree({ windows: vocdd.pattern.sum, title: vocdd.title, unit: Unit.usd }),
               {
                 name: "Cumulative",
                 title: `${vocdd.title} (Total)`,

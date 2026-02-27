@@ -7,9 +7,9 @@ use brk_error::Error;
 use jiff::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, FromCoarserIndex, Pco, PrintableIndex};
+use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
-use crate::{Year10, Month1, Month3, Month6, Week1, Year1};
+use crate::{FromCoarserIndex, Month1, Month3, Month6, Week1, Year1, Year10};
 
 use super::Date;
 

@@ -237,7 +237,7 @@ impl Vecs {
                 Ok(vec.compute_transform2(
                     starting_indexes.height,
                     &self.blocks_mined.height,
-                    &mining.rewards.subsidy.sats.height,
+                    &mining.rewards.subsidy.base.sats.height,
                     |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
                     exit,
                 )?)
@@ -253,7 +253,7 @@ impl Vecs {
                 Ok(vec.compute_transform2(
                     starting_indexes.height,
                     &self.blocks_mined.height,
-                    &mining.rewards.fees.sats.height,
+                    &mining.rewards.fees.base.sats.height,
                     |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
                     exit,
                 )?)
@@ -269,7 +269,7 @@ impl Vecs {
                 Ok(vec.compute_transform2(
                     starting_indexes.height,
                     &self.blocks_mined.height,
-                    &mining.rewards.coinbase.sats.height,
+                    &mining.rewards.coinbase.base.sats.height,
                     |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
                     exit,
                 )?)

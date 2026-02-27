@@ -3,10 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{
-    indexes,
-    internal::{ComputedFromHeightCumulativeSum, ComputedFromHeightLast},
-};
+use crate::{indexes, internal::ComputedFromHeightCumulativeSum};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -58,18 +55,6 @@ impl Vecs {
                 indexes,
             )?,
             segwit,
-            taproot_adoption: ComputedFromHeightLast::forced_import(
-                db,
-                "taproot_adoption",
-                version,
-                indexes,
-            )?,
-            segwit_adoption: ComputedFromHeightLast::forced_import(
-                db,
-                "segwit_adoption",
-                version,
-                indexes,
-            )?,
         })
     }
 }

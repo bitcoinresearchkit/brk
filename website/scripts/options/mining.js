@@ -9,11 +9,11 @@ import {
   dots,
   dotted,
   distributionBtcSatsUsd,
+  rollingWindowsTree,
 } from "./series.js";
 import {
   satsBtcUsd,
   satsBtcUsdFrom,
-  satsBtcUsdFromFull,
   revenueBtcSatsUsd,
 } from "./shared.js";
 import { brk } from "../client.js";
@@ -53,7 +53,7 @@ const ANTPOOL_AND_FRIENDS_IDS = /** @type {const} */ ([
  * @returns {PartialOptionsGroup}
  */
 export function createMiningSection() {
-  const { blocks, transactions, pools, mining } = brk.metrics;
+  const { blocks, pools, mining } = brk.metrics;
 
   // Pre-compute pool entries with resolved names
   const poolData = entries(pools.vecs).map(([id, pool]) => ({
@@ -116,44 +116,17 @@ export function createMiningSection() {
         name: "Blocks Mined",
         tree: [
           {
-            name: "Sum",
+            name: "Base",
             title: `Blocks Mined: ${name}`,
             bottom: [
               line({
-                metric: pool.blocksMined.sum,
-                name: "sum",
+                metric: pool.blocksMined.height,
+                name: "base",
                 unit: Unit.count,
-              }),
-              line({
-                metric: pool.blocksMined24hSum,
-                name: "24h",
-                color: colors.time._24h,
-                unit: Unit.count,
-                defaultActive: false,
-              }),
-              line({
-                metric: pool.blocksMined1wSum,
-                name: "1w",
-                color: colors.time._1w,
-                unit: Unit.count,
-                defaultActive: false,
-              }),
-              line({
-                metric: pool.blocksMined1mSum,
-                name: "1m",
-                color: colors.time._1m,
-                unit: Unit.count,
-                defaultActive: false,
-              }),
-              line({
-                metric: pool.blocksMined1ySum,
-                name: "1y",
-                color: colors.time._1y,
-                unit: Unit.count,
-                defaultActive: false,
               }),
             ],
           },
+          rollingWindowsTree({ windows: pool.blocksMined.sum, title: `Blocks Mined: ${name}`, unit: Unit.count }),
           {
             name: "Cumulative",
             title: `Blocks Mined: ${name} (Total)`,
@@ -177,7 +150,7 @@ export function createMiningSection() {
               coinbase: pool.coinbase,
               subsidy: pool.subsidy,
               fee: pool.fee,
-              key: "sum",
+              key: "base",
             }),
           },
           {
@@ -372,8 +345,8 @@ export function createMiningSection() {
                 bottom: revenueBtcSatsUsd({
                   coinbase: mining.rewards.coinbase,
                   subsidy: mining.rewards.subsidy,
-                  fee: transactions.fees.fee,
-                  key: "sum",
+                  fee: mining.rewards.fees,
+                  key: "base",
                 }),
               },
               {
@@ -382,7 +355,7 @@ export function createMiningSection() {
                 bottom: revenueBtcSatsUsd({
                   coinbase: mining.rewards.coinbase,
                   subsidy: mining.rewards.subsidy,
-                  fee: transactions.fees.fee,
+                  fee: mining.rewards.fees,
                   key: "cumulative",
                 }),
               },
@@ -394,24 +367,11 @@ export function createMiningSection() {
               {
                 name: "Sum",
                 title: "Coinbase Rewards",
-                bottom: [
-                  ...satsBtcUsdFromFull({
-                    source: mining.rewards.coinbase,
-                    key: "base",
-                    name: "sum",
-                  }),
-                  ...satsBtcUsdFrom({
-                    source: mining.rewards.coinbase,
-                    key: "sum",
-                    name: "sum",
-                  }),
-                  ...satsBtcUsd({
-                    pattern: mining.rewards.coinbase24hSum,
-                    name: "24h",
-                    color: colors.time._24h,
-                    defaultActive: false,
-                  }),
-                ],
+                bottom: satsBtcUsdFrom({
+                  source: mining.rewards.coinbase,
+                  key: "base",
+                  name: "sum",
+                }),
               },
               {
                 name: "Rolling",
@@ -421,22 +381,22 @@ export function createMiningSection() {
                     title: "Coinbase Rolling Sum",
                     bottom: [
                       ...satsBtcUsd({
-                        pattern: mining.rewards.coinbase24hSum,
+                        pattern: mining.rewards.coinbase._24h.sum,
                         name: "24h",
                         color: colors.time._24h,
                       }),
                       ...satsBtcUsd({
-                        pattern: mining.rewards.coinbase7dSum,
+                        pattern: mining.rewards.coinbase._7d.sum,
                         name: "7d",
                         color: colors.time._1w,
                       }),
                       ...satsBtcUsd({
-                        pattern: mining.rewards.coinbase30dSum,
+                        pattern: mining.rewards.coinbase._30d.sum,
                         name: "30d",
                         color: colors.time._1m,
                       }),
                       ...satsBtcUsd({
-                        pattern: mining.rewards.coinbase1ySum,
+                        pattern: mining.rewards.coinbase._1y.sum,
                         name: "1y",
                         color: colors.time._1y,
                       }),
@@ -446,7 +406,7 @@ export function createMiningSection() {
                     name: "24h",
                     title: "Coinbase 24h Rolling Sum",
                     bottom: satsBtcUsd({
-                      pattern: mining.rewards.coinbase24hSum,
+                      pattern: mining.rewards.coinbase._24h.sum,
                       name: "24h",
                       color: colors.time._24h,
                     }),
@@ -455,7 +415,7 @@ export function createMiningSection() {
                     name: "7d",
                     title: "Coinbase 7d Rolling Sum",
                     bottom: satsBtcUsd({
-                      pattern: mining.rewards.coinbase7dSum,
+                      pattern: mining.rewards.coinbase._7d.sum,
                       name: "7d",
                       color: colors.time._1w,
                     }),
@@ -464,7 +424,7 @@ export function createMiningSection() {
                     name: "30d",
                     title: "Coinbase 30d Rolling Sum",
                     bottom: satsBtcUsd({
-                      pattern: mining.rewards.coinbase30dSum,
+                      pattern: mining.rewards.coinbase._30d.sum,
                       name: "30d",
                       color: colors.time._1m,
                     }),
@@ -473,7 +433,7 @@ export function createMiningSection() {
                     name: "1y",
                     title: "Coinbase 1y Rolling Sum",
                     bottom: satsBtcUsd({
-                      pattern: mining.rewards.coinbase1ySum,
+                      pattern: mining.rewards.coinbase._1y.sum,
                       name: "1y",
                       color: colors.time._1y,
                     }),
@@ -483,7 +443,7 @@ export function createMiningSection() {
               {
                 name: "Distribution",
                 title: "Coinbase Rewards per Block Distribution",
-                bottom: distributionBtcSatsUsd(mining.rewards.coinbase),
+                bottom: distributionBtcSatsUsd(mining.rewards.coinbase._24h),
               },
               {
                 name: "Cumulative",
@@ -503,14 +463,9 @@ export function createMiningSection() {
                 name: "Sum",
                 title: "Block Subsidy",
                 bottom: [
-                  ...satsBtcUsdFromFull({
-                    source: mining.rewards.subsidy,
-                    key: "base",
-                    name: "sum",
-                  }),
                   ...satsBtcUsdFrom({
                     source: mining.rewards.subsidy,
-                    key: "sum",
+                    key: "base",
                     name: "sum",
                   }),
                   line({
@@ -523,9 +478,76 @@ export function createMiningSection() {
                 ],
               },
               {
+                name: "Rolling",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Subsidy Rolling Sum",
+                    bottom: [
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.subsidy._24h.sum,
+                        name: "24h",
+                        color: colors.time._24h,
+                      }),
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.subsidy._7d.sum,
+                        name: "7d",
+                        color: colors.time._1w,
+                      }),
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.subsidy._30d.sum,
+                        name: "30d",
+                        color: colors.time._1m,
+                      }),
+                      ...satsBtcUsd({
+                        pattern: mining.rewards.subsidy._1y.sum,
+                        name: "1y",
+                        color: colors.time._1y,
+                      }),
+                    ],
+                  },
+                  {
+                    name: "24h",
+                    title: "Subsidy 24h Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.subsidy._24h.sum,
+                      name: "24h",
+                      color: colors.time._24h,
+                    }),
+                  },
+                  {
+                    name: "7d",
+                    title: "Subsidy 7d Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.subsidy._7d.sum,
+                      name: "7d",
+                      color: colors.time._1w,
+                    }),
+                  },
+                  {
+                    name: "30d",
+                    title: "Subsidy 30d Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.subsidy._30d.sum,
+                      name: "30d",
+                      color: colors.time._1m,
+                    }),
+                  },
+                  {
+                    name: "1y",
+                    title: "Subsidy 1y Rolling Sum",
+                    bottom: satsBtcUsd({
+                      pattern: mining.rewards.subsidy._1y.sum,
+                      name: "1y",
+                      color: colors.time._1y,
+                    }),
+                  },
+                ],
+              },
+              {
                 name: "Distribution",
                 title: "Block Subsidy Distribution",
-                bottom: distributionBtcSatsUsd(mining.rewards.subsidy),
+                bottom: distributionBtcSatsUsd(mining.rewards.subsidy._24h),
               },
               {
                 name: "Cumulative",
@@ -545,8 +567,8 @@ export function createMiningSection() {
                 name: "Sum",
                 title: "Transaction Fee Revenue per Block",
                 bottom: satsBtcUsdFrom({
-                  source: transactions.fees.fee,
-                  key: "sum",
+                  source: mining.rewards.fees,
+                  key: "base",
                   name: "sum",
                 }),
               },
@@ -558,22 +580,22 @@ export function createMiningSection() {
                     title: "Fee Rolling Sum",
                     bottom: [
                       ...satsBtcUsd({
-                        pattern: mining.rewards.fee24hSum,
+                        pattern: mining.rewards.fees._24h.sum,
                         name: "24h",
                         color: colors.time._24h,
                       }),
                       ...satsBtcUsd({
-                        pattern: mining.rewards.fee7dSum,
+                        pattern: mining.rewards.fees._7d.sum,
                         name: "7d",
                         color: colors.time._1w,
                       }),
                       ...satsBtcUsd({
-                        pattern: mining.rewards.fee30dSum,
+                        pattern: mining.rewards.fees._30d.sum,
                         name: "30d",
                         color: colors.time._1m,
                       }),
                       ...satsBtcUsd({
-                        pattern: mining.rewards.fee1ySum,
+                        pattern: mining.rewards.fees._1y.sum,
                         name: "1y",
                         color: colors.time._1y,
                       }),
@@ -583,7 +605,7 @@ export function createMiningSection() {
                     name: "24h",
                     title: "Fee 24h Rolling Sum",
                     bottom: satsBtcUsd({
-                      pattern: mining.rewards.fee24hSum,
+                      pattern: mining.rewards.fees._24h.sum,
                       name: "24h",
                       color: colors.time._24h,
                     }),
@@ -592,7 +614,7 @@ export function createMiningSection() {
                     name: "7d",
                     title: "Fee 7d Rolling Sum",
                     bottom: satsBtcUsd({
-                      pattern: mining.rewards.fee7dSum,
+                      pattern: mining.rewards.fees._7d.sum,
                       name: "7d",
                       color: colors.time._1w,
                     }),
@@ -601,7 +623,7 @@ export function createMiningSection() {
                     name: "30d",
                     title: "Fee 30d Rolling Sum",
                     bottom: satsBtcUsd({
-                      pattern: mining.rewards.fee30dSum,
+                      pattern: mining.rewards.fees._30d.sum,
                       name: "30d",
                       color: colors.time._1m,
                     }),
@@ -610,7 +632,7 @@ export function createMiningSection() {
                     name: "1y",
                     title: "Fee 1y Rolling Sum",
                     bottom: satsBtcUsd({
-                      pattern: mining.rewards.fee1ySum,
+                      pattern: mining.rewards.fees._1y.sum,
                       name: "1y",
                       color: colors.time._1y,
                     }),
@@ -620,13 +642,13 @@ export function createMiningSection() {
               {
                 name: "Distribution",
                 title: "Transaction Fee Revenue per Block Distribution",
-                bottom: distributionBtcSatsUsd(transactions.fees.fee),
+                bottom: distributionBtcSatsUsd(mining.rewards.fees._24h),
               },
               {
                 name: "Cumulative",
                 title: "Transaction Fee Revenue (Total)",
                 bottom: satsBtcUsdFrom({
-                  source: transactions.fees.fee,
+                  source: mining.rewards.fees,
                   key: "cumulative",
                   name: "all-time",
                 }),
@@ -813,7 +835,7 @@ export function createMiningSection() {
                 title: "Unclaimed Rewards",
                 bottom: satsBtcUsdFrom({
                   source: mining.rewards.unclaimedRewards,
-                  key: "sum",
+                  key: "base",
                   name: "sum",
                 }),
               },
@@ -988,7 +1010,7 @@ export function createMiningSection() {
                 bottom: majorPools.flatMap((p, i) =>
                   satsBtcUsdFrom({
                     source: p.pool.coinbase,
-                    key: "sum",
+                    key: "base",
                     name: p.name,
                     color: colors.at(i, majorPools.length),
                   }),
@@ -1030,7 +1052,7 @@ export function createMiningSection() {
                 bottom: antpoolFriends.flatMap((p, i) =>
                   satsBtcUsdFrom({
                     source: p.pool.coinbase,
-                    key: "sum",
+                    key: "base",
                     name: p.name,
                     color: colors.at(i, antpoolFriends.length),
                   }),

@@ -84,8 +84,8 @@ impl Vecs {
             |vec| {
                 vec.compute_transform2(
                     starting_indexes.height,
-                    &self.coinbase.sats.height,
-                    &self.fees.sats.height,
+                    &self.coinbase.base.sats.height,
+                    &self.fees.base.sats.height,
                     |(height, coinbase, fees, ..)| {
                         (
                             height,
@@ -109,7 +109,7 @@ impl Vecs {
             |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
-                    &self.subsidy.sats.height,
+                    &self.subsidy.base.sats.height,
                     |(height, subsidy, ..)| {
                         let halving = HalvingEpoch::from(height);
                         let expected = Sats::FIFTY_BTC / 2_usize.pow(halving.to_usize() as u32);
@@ -124,42 +124,42 @@ impl Vecs {
         // All-time cumulative fee dominance
         self.fee_dominance.height.compute_percentage(
             starting_indexes.height,
-            &self.fees.sats.cumulative.height,
-            &self.coinbase.sats.cumulative.height,
+            &self.fees.cumulative.sats.height,
+            &self.coinbase.cumulative.sats.height,
             exit,
         )?;
 
         // Rolling fee dominance = sum(fees) / sum(coinbase) * 100
         self.fee_dominance_24h.height.compute_percentage(
             starting_indexes.height,
-            &self.fees.sats.rolling.sum._24h.height,
-            &self.coinbase.sats.rolling.sum._24h.height,
+            &self.fees.rolling._24h.sum.sats.height,
+            &self.coinbase.rolling._24h.sum.sats.height,
             exit,
         )?;
         self.fee_dominance_7d.height.compute_percentage(
             starting_indexes.height,
-            &self.fees.sats.rolling.sum._7d.height,
-            &self.coinbase.sats.rolling.sum._7d.height,
+            &self.fees.rolling._7d.sum.sats.height,
+            &self.coinbase.rolling._7d.sum.sats.height,
             exit,
         )?;
         self.fee_dominance_30d.height.compute_percentage(
             starting_indexes.height,
-            &self.fees.sats.rolling.sum._30d.height,
-            &self.coinbase.sats.rolling.sum._30d.height,
+            &self.fees.rolling._30d.sum.sats.height,
+            &self.coinbase.rolling._30d.sum.sats.height,
             exit,
         )?;
         self.fee_dominance_1y.height.compute_percentage(
             starting_indexes.height,
-            &self.fees.sats.rolling.sum._1y.height,
-            &self.coinbase.sats.rolling.sum._1y.height,
+            &self.fees.rolling._1y.sum.sats.height,
+            &self.coinbase.rolling._1y.sum.sats.height,
             exit,
         )?;
 
         // All-time cumulative subsidy dominance
         self.subsidy_dominance.height.compute_percentage(
             starting_indexes.height,
-            &self.subsidy.sats.cumulative.height,
-            &self.coinbase.sats.cumulative.height,
+            &self.subsidy.cumulative.sats.height,
+            &self.coinbase.cumulative.sats.height,
             exit,
         )?;
 
@@ -193,7 +193,7 @@ impl Vecs {
         self.subsidy_usd_1y_sma.height.compute_rolling_average(
             starting_indexes.height,
             &count_vecs.height_1y_ago,
-            &self.coinbase.usd.height,
+            &self.coinbase.base.usd.height,
             exit,
         )?;
 

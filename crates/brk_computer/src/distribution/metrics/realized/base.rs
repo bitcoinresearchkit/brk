@@ -582,8 +582,8 @@ impl RealizedBase {
             .min(self.loss_value_created.height.len())
             .min(self.loss_value_destroyed.height.len())
             .min(self.peak_regret.height.len())
-            .min(self.sent_in_profit.sats.height.len())
-            .min(self.sent_in_loss.sats.height.len())
+            .min(self.sent_in_profit.base.sats.height.len())
+            .min(self.sent_in_loss.base.sats.height.len())
     }
 
     /// Push realized state values to height-indexed vectors.
@@ -619,10 +619,12 @@ impl RealizedBase {
             .height
             .truncate_push(height, state.peak_regret().to_dollars())?;
         self.sent_in_profit
+            .base
             .sats
             .height
             .truncate_push(height, state.sent_in_profit())?;
         self.sent_in_loss
+            .base
             .sats
             .height
             .truncate_push(height, state.sent_in_loss())?;
@@ -644,8 +646,8 @@ impl RealizedBase {
             &mut self.loss_value_created.height,
             &mut self.loss_value_destroyed.height,
             &mut self.peak_regret.height,
-            &mut self.sent_in_profit.sats.height,
-            &mut self.sent_in_loss.sats.height,
+            &mut self.sent_in_profit.base.sats.height,
+            &mut self.sent_in_loss.base.sats.height,
         ]
     }
 
@@ -778,19 +780,19 @@ impl RealizedBase {
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        self.sent_in_profit.sats.height.compute_sum_of_others(
+        self.sent_in_profit.base.sats.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.sent_in_profit.sats.height)
+                .map(|v| &v.sent_in_profit.base.sats.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        self.sent_in_loss.sats.height.compute_sum_of_others(
+        self.sent_in_loss.base.sats.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.sent_in_loss.sats.height)
+                .map(|v| &v.sent_in_loss.base.sats.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
@@ -1045,15 +1047,15 @@ impl RealizedBase {
         self.sent_in_profit_14d_ema.compute_rolling_average(
             starting_indexes.height,
             &blocks.count.height_2w_ago,
-            &self.sent_in_profit.sats.height,
-            &self.sent_in_profit.usd.height,
+            &self.sent_in_profit.base.sats.height,
+            &self.sent_in_profit.base.usd.height,
             exit,
         )?;
         self.sent_in_loss_14d_ema.compute_rolling_average(
             starting_indexes.height,
             &blocks.count.height_2w_ago,
-            &self.sent_in_loss.sats.height,
-            &self.sent_in_loss.usd.height,
+            &self.sent_in_loss.base.sats.height,
+            &self.sent_in_loss.base.usd.height,
             exit,
         )?;
 

@@ -47,7 +47,7 @@ export function price({
 
 /**
  * Create percentile series (max/min/median/pct75/pct25/pct90/pct10) from any stats pattern
- * @param {StatsPattern<any> | BaseStatsPattern<any> | FullStatsPattern<any> | AnyStatsPattern} pattern
+ * @param {DistributionStats} pattern
  * @param {Unit} unit
  * @param {string} title
  * @returns {AnyFetchedSeriesBlueprint[]}
@@ -356,9 +356,10 @@ export function histogram({
 }
 
 /**
- * Create series from a BaseStatsPattern (base + avg + percentiles, NO sum)
+ * Create series from an AverageHeightMaxMedianMinP10P25P75P90Pattern (height + rolling stats)
  * @param {Object} args
- * @param {BaseStatsPattern<any>} args.pattern
+ * @param {{ height: AnyMetricPattern } & Record<string, any>} args.pattern - Pattern with .height and rolling stats (p10/p25/p75/p90 as _1y24h30d7dPattern)
+ * @param {string} args.window - Rolling window key (e.g., '_24h', '_7d', '_30d', '_1y')
  * @param {Unit} args.unit
  * @param {string} [args.title]
  * @param {Color} [args.baseColor]
@@ -367,34 +368,37 @@ export function histogram({
  */
 export function fromBaseStatsPattern({
   pattern,
+  window,
   unit,
   title = "",
   baseColor,
   avgActive = true,
 }) {
   const { stat } = colors;
+  const stats = statsAtWindow(pattern, window);
   return [
     dots({
-      metric: pattern.base,
+      metric: pattern.height,
       name: title || "base",
       color: baseColor,
       unit,
     }),
     dots({
-      metric: pattern.average,
+      metric: stats.average,
       name: `${title} avg`.trim(),
       color: stat.avg,
       unit,
       defaultActive: avgActive,
     }),
-    ...percentileSeries(pattern, unit, title),
+    ...percentileSeries(stats, unit, title),
   ];
 }
 
 /**
- * Create series from any pattern with avg + percentiles (works with StatsPattern, SumStatsPattern, etc.)
+ * Create series from a flat stats pattern (average + pct percentiles as single metrics)
+ * Use statsAtWindow() to extract from patterns with _1y24h30d7dPattern stats
  * @param {Object} args
- * @param {StatsPattern<any> | BaseStatsPattern<any> | FullStatsPattern<any> | AnyStatsPattern} args.pattern
+ * @param {{ average: AnyMetricPattern, median: AnyMetricPattern, max: AnyMetricPattern, min: AnyMetricPattern, pct75: AnyMetricPattern, pct25: AnyMetricPattern, pct90: AnyMetricPattern, pct10: AnyMetricPattern }} args.pattern
  * @param {Unit} args.unit
  * @param {string} [args.title]
  * @returns {AnyFetchedSeriesBlueprint[]}
@@ -412,14 +416,96 @@ export function fromStatsPattern({ pattern, unit, title = "" }) {
 }
 
 /**
- * Create distribution series for btc/sats/usd from a value pattern with stats (average + percentiles)
- * @param {FullValuePattern | SumValuePattern} source
+ * Extract stats at a specific rolling window from patterns with _1y24h30d7dPattern stats
+ * @param {Record<string, any>} pattern - Pattern with pct10/pct25/pct75/pct90 and average/median/max/min as _1y24h30d7dPattern
+ * @param {string} window
+ */
+export function statsAtWindow(pattern, window) {
+  return {
+    average: pattern.average[window],
+    median: pattern.median[window],
+    max: pattern.max[window],
+    min: pattern.min[window],
+    pct75: pattern.pct75[window],
+    pct25: pattern.pct25[window],
+    pct90: pattern.pct90[window],
+    pct10: pattern.pct10[window],
+  };
+}
+
+/**
+ * Create a Rolling folder tree from a _1y24h30d7dPattern (4 rolling windows)
+ * @param {Object} args
+ * @param {{ _24h: AnyMetricPattern, _7d: AnyMetricPattern, _30d: AnyMetricPattern, _1y: AnyMetricPattern }} args.windows
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsGroup}
+ */
+export function rollingWindowsTree({ windows, title, unit }) {
+  return {
+    name: "Rolling",
+    tree: [
+      {
+        name: "Compare",
+        title: `${title} Rolling`,
+        bottom: [
+          line({ metric: windows._24h, name: "24h", color: colors.time._24h, unit }),
+          line({ metric: windows._7d, name: "7d", color: colors.time._1w, unit }),
+          line({ metric: windows._30d, name: "30d", color: colors.time._1m, unit }),
+          line({ metric: windows._1y, name: "1y", color: colors.time._1y, unit }),
+        ],
+      },
+      {
+        name: "24h",
+        title: `${title} 24h`,
+        bottom: [line({ metric: windows._24h, name: "24h", color: colors.time._24h, unit })],
+      },
+      {
+        name: "7d",
+        title: `${title} 7d`,
+        bottom: [line({ metric: windows._7d, name: "7d", color: colors.time._1w, unit })],
+      },
+      {
+        name: "30d",
+        title: `${title} 30d`,
+        bottom: [line({ metric: windows._30d, name: "30d", color: colors.time._1m, unit })],
+      },
+      {
+        name: "1y",
+        title: `${title} 1y`,
+        bottom: [line({ metric: windows._1y, name: "1y", color: colors.time._1y, unit })],
+      },
+    ],
+  };
+}
+
+/**
+ * Map a rolling window slot's stats to a specific unit, producing a stats-compatible pattern
+ * @param {RollingWindowSlot} slot - Rolling window slot (e.g., pattern.rolling._24h)
+ * @param {BtcSatsUsdKey} unitKey
+ */
+function rollingSlotForUnit(slot, unitKey) {
+  return {
+    average: slot.average[unitKey],
+    median: slot.median[unitKey],
+    max: slot.max[unitKey],
+    min: slot.min[unitKey],
+    pct75: slot.pct75[unitKey],
+    pct25: slot.pct25[unitKey],
+    pct90: slot.pct90[unitKey],
+    pct10: slot.pct10[unitKey],
+  };
+}
+
+/**
+ * Create distribution series for btc/sats/usd from a rolling window slot
+ * @param {RollingWindowSlot} slot - Rolling window slot (e.g., pattern.rolling._24h)
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export const distributionBtcSatsUsd = (source) => [
-  ...fromStatsPattern({ pattern: source.btc, unit: Unit.btc }),
-  ...fromStatsPattern({ pattern: source.sats, unit: Unit.sats }),
-  ...fromStatsPattern({ pattern: source.usd, unit: Unit.usd }),
+export const distributionBtcSatsUsd = (slot) => [
+  ...fromStatsPattern({ pattern: rollingSlotForUnit(slot, "btc"), unit: Unit.btc }),
+  ...fromStatsPattern({ pattern: rollingSlotForUnit(slot, "sats"), unit: Unit.sats }),
+  ...fromStatsPattern({ pattern: rollingSlotForUnit(slot, "usd"), unit: Unit.usd }),
 ];
 
 /**
@@ -460,7 +546,7 @@ export function fromSupplyPattern({ pattern, title, color }) {
 
 /**
  * Create distribution series (avg + percentiles)
- * @param {StatsPattern<any> | BaseStatsPattern<any> | FullStatsPattern<any> | AnyStatsPattern} pattern
+ * @param {DistributionStats} pattern
  * @param {Unit} unit
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
@@ -556,9 +642,10 @@ function btcSatsUsdSeries({ metrics, name, color, defaultActive }) {
 }
 
 /**
- * Split pattern with base + sum + distribution + cumulative into 3 charts
+ * Split flat per-block pattern into charts (Sum/Rolling/Distribution/Cumulative)
+ * Pattern has: .height, .cumulative, .sum (windowed), .average/.pct10/... (windowed, flat)
  * @param {Object} args
- * @param {FullStatsPattern<any>} args.pattern
+ * @param {FullPerBlockPattern} args.pattern
  * @param {string} args.title
  * @param {Unit} args.unit
  * @param {string} [args.distributionSuffix]
@@ -577,15 +664,13 @@ export function chartsFromFull({
     {
       name: "Sum",
       title,
-      bottom: [
-        { metric: pattern.base, title: "sum", unit },
-        { metric: pattern.sum, title: "sum", unit },
-      ],
+      bottom: [{ metric: pattern.height, title: "base", unit }],
     },
+    rollingWindowsTree({ windows: pattern.sum, title, unit }),
     {
       name: "Distribution",
       title: distTitle,
-      bottom: distributionSeries(pattern, unit),
+      bottom: distributionSeries(statsAtWindow(pattern, "_24h"), unit),
     },
     {
       name: "Cumulative",
@@ -596,9 +681,9 @@ export function chartsFromFull({
 }
 
 /**
- * Split pattern into 3 charts with "per Block" in distribution title
+ * Split pattern into 4 charts with "per Block" in distribution title
  * @param {Object} args
- * @param {FullStatsPattern<any>} args.pattern
+ * @param {FullPerBlockPattern} args.pattern
  * @param {string} args.title
  * @param {Unit} args.unit
  * @returns {PartialOptionsTree}
@@ -609,7 +694,7 @@ export const chartsFromFullPerBlock = (args) =>
 /**
  * Split pattern with sum + distribution + cumulative into 3 charts (no base)
  * @param {Object} args
- * @param {AnyStatsPattern} args.pattern
+ * @param {FullStatsPattern} args.pattern
  * @param {string} args.title
  * @param {Unit} args.unit
  * @param {string} [args.distributionSuffix]
@@ -647,7 +732,7 @@ export function chartsFromSum({
 /**
  * Split pattern into 3 charts with "per Block" in distribution title (no base)
  * @param {Object} args
- * @param {AnyStatsPattern} args.pattern
+ * @param {FullStatsPattern} args.pattern
  * @param {string} args.title
  * @param {Unit} args.unit
  * @returns {PartialOptionsTree}
@@ -656,7 +741,7 @@ export const chartsFromSumPerBlock = (args) =>
   chartsFromSum({ ...args, distributionSuffix: "per Block" });
 
 /**
- * Split pattern with sum + cumulative into 2 charts
+ * Split pattern with rolling sum windows + cumulative into charts
  * @param {Object} args
  * @param {CountPattern<any>} args.pattern
  * @param {string} args.title
@@ -666,11 +751,7 @@ export const chartsFromSumPerBlock = (args) =>
  */
 export function chartsFromCount({ pattern, title, unit, color }) {
   return [
-    {
-      name: "Sum",
-      title,
-      bottom: [{ metric: pattern.sum, title: "sum", color, unit }],
-    },
+    rollingWindowsTree({ windows: pattern.sum, title, unit }),
     {
       name: "Cumulative",
       title: `${title} (Total)`,
@@ -680,46 +761,7 @@ export function chartsFromCount({ pattern, title, unit, color }) {
 }
 
 /**
- * Split value pattern (btc/sats/usd with sum + cumulative) into 2 charts
- * @param {Object} args
- * @param {ValuePattern} args.pattern
- * @param {string} args.title
- * @param {Color} [args.color]
- * @returns {PartialOptionsTree}
- */
-export function chartsFromValue({ pattern, title, color }) {
-  return [
-    {
-      name: "Sum",
-      title,
-      bottom: btcSatsUsdSeries({
-        metrics: {
-          btc: pattern.btc.sum,
-          sats: pattern.sats.sum,
-          usd: pattern.usd.sum,
-        },
-        name: "sum",
-        color,
-      }),
-    },
-    {
-      name: "Cumulative",
-      title: `${title} (Total)`,
-      bottom: btcSatsUsdSeries({
-        metrics: {
-          btc: pattern.btc.cumulative,
-          sats: pattern.sats.cumulative,
-          usd: pattern.usd.cumulative,
-        },
-        name: "all-time",
-        color,
-      }),
-    },
-  ];
-}
-
-/**
- * Split btc/sats/usd pattern with full stats into 3 charts
+ * Split BaseCumulativeRollingPattern into 3 charts (Sum/Distribution/Cumulative)
  * @param {Object} args
  * @param {CoinbasePattern} args.pattern
  * @param {string} args.title
@@ -731,44 +773,23 @@ export function chartsFromValueFull({ pattern, title }) {
       name: "Sum",
       title,
       bottom: [
+        ...btcSatsUsdSeries({ metrics: pattern.base, name: "sum" }),
         ...btcSatsUsdSeries({
-          metrics: {
-            btc: pattern.btc.base,
-            sats: pattern.sats.base,
-            usd: pattern.usd.base,
-          },
-          name: "sum",
-        }),
-        ...btcSatsUsdSeries({
-          metrics: {
-            btc: pattern.btc.sum,
-            sats: pattern.sats.sum,
-            usd: pattern.usd.sum,
-          },
-          name: "sum",
+          metrics: pattern._24h.sum,
+          name: "24h sum",
+          defaultActive: false,
         }),
       ],
     },
     {
       name: "Distribution",
       title: `${title} Distribution`,
-      bottom: [
-        ...distributionSeries(pattern.btc, Unit.btc),
-        ...distributionSeries(pattern.sats, Unit.sats),
-        ...distributionSeries(pattern.usd, Unit.usd),
-      ],
+      bottom: distributionBtcSatsUsd(pattern._24h),
     },
     {
       name: "Cumulative",
       title: `${title} (Total)`,
-      bottom: btcSatsUsdSeries({
-        metrics: {
-          btc: pattern.btc.cumulative,
-          sats: pattern.sats.cumulative,
-          usd: pattern.usd.cumulative,
-        },
-        name: "all-time",
-      }),
+      bottom: btcSatsUsdSeries({ metrics: pattern.cumulative, name: "all-time" }),
     },
   ];
 }

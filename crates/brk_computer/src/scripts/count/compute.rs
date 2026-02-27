@@ -1,18 +1,16 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::StoredF32;
 use brk_types::StoredU64;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, outputs};
+use crate::{ComputeIndexes, blocks};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         count_vecs: &blocks::CountVecs,
-        outputs_count: &outputs::CountVecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -150,37 +148,6 @@ impl Vecs {
                     exit,
                 )?)
             })?;
-
-        // Adoption ratios: per-block ratio of script type / total outputs
-        self.taproot_adoption.height.compute_transform2(
-            starting_indexes.height,
-            &self.p2tr.height,
-            &outputs_count.total_count.full.sum_cumulative.sum.0,
-            |(h, p2tr, total, ..)| {
-                let ratio = if *total > 0 {
-                    StoredF32::from(*p2tr as f64 / *total as f64)
-                } else {
-                    StoredF32::from(0.0)
-                };
-                (h, ratio)
-            },
-            exit,
-        )?;
-
-        self.segwit_adoption.height.compute_transform2(
-            starting_indexes.height,
-            &self.segwit.height,
-            &outputs_count.total_count.full.sum_cumulative.sum.0,
-            |(h, segwit, total, ..)| {
-                let ratio = if *total > 0 {
-                    StoredF32::from(*segwit as f64 / *total as f64)
-                } else {
-                    StoredF32::from(0.0)
-                };
-                (h, ratio)
-            },
-            exit,
-        )?;
 
         Ok(())
     }

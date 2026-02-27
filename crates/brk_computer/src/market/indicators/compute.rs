@@ -27,7 +27,7 @@ impl Vecs {
     ) -> Result<()> {
         self.puell_multiple.height.compute_divide(
             starting_indexes.height,
-            &rewards.coinbase.usd.height,
+            &rewards.coinbase.base.usd.height,
             &rewards.subsidy_usd_1y_sma.height,
             exit,
         )?;

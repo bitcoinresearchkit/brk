@@ -82,6 +82,7 @@ impl ActivityMetrics {
     /// Get minimum length across height-indexed vectors.
     pub(crate) fn min_len(&self) -> usize {
         self.sent
+            .base
             .sats
             .height
             .len()
@@ -97,7 +98,7 @@ impl ActivityMetrics {
         satblocks_destroyed: Sats,
         satdays_destroyed: Sats,
     ) -> Result<()> {
-        self.sent.sats.height.truncate_push(height, sent)?;
+        self.sent.base.sats.height.truncate_push(height, sent)?;
         self.satblocks_destroyed
             .truncate_push(height, satblocks_destroyed)?;
         self.satdays_destroyed
@@ -108,7 +109,7 @@ impl ActivityMetrics {
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         vec![
-            &mut self.sent.sats.height as &mut dyn AnyStoredVec,
+            &mut self.sent.base.sats.height as &mut dyn AnyStoredVec,
             &mut self.satblocks_destroyed as &mut dyn AnyStoredVec,
             &mut self.satdays_destroyed as &mut dyn AnyStoredVec,
         ]
@@ -128,11 +129,11 @@ impl ActivityMetrics {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.sent.sats.height.compute_sum_of_others(
+        self.sent.base.sats.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.sent.sats.height)
+                .map(|v| &v.sent.base.sats.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
@@ -168,8 +169,8 @@ impl ActivityMetrics {
         self.sent_14d_ema.compute_rolling_average(
             starting_indexes.height,
             &blocks.count.height_2w_ago,
-            &self.sent.sats.height,
-            &self.sent.usd.height,
+            &self.sent.base.sats.height,
+            &self.sent.base.usd.height,
             exit,
         )?;
 

@@ -19,11 +19,11 @@ impl Query {
             .mining
             .rewards
             .coinbase
-            .sats
             .rolling
+            ._24h
             .distribution
             .average
-            ._24h
+            .sats
             .day1;
 
         Ok(iter.collect(|di, ts, h| {

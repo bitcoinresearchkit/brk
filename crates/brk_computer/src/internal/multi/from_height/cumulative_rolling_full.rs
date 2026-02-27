@@ -23,6 +23,7 @@ where
 {
     pub height: M::Stored<EagerVec<PcoVec<Height, T>>>,
     pub cumulative: ComputedFromHeightLast<T, M>,
+    #[traversable(flatten)]
     pub rolling: RollingFull<T, M>,
 }
 

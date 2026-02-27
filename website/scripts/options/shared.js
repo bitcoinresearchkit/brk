@@ -146,10 +146,10 @@ export function satsBtcUsdBaseline({ pattern, name, color, defaultActive }) {
 }
 
 /**
- * Create sats/btc/usd series from any value pattern using sum or cumulative key
+ * Create sats/btc/usd series from any value pattern using base or cumulative key
  * @param {Object} args
  * @param {AnyValuePatternType} args.source
- * @param {'sum' | 'cumulative'} args.key
+ * @param {'base' | 'cumulative'} args.key
  * @param {string} args.name
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]
@@ -157,11 +157,7 @@ export function satsBtcUsdBaseline({ pattern, name, color, defaultActive }) {
  */
 export function satsBtcUsdFrom({ source, key, name, color, defaultActive }) {
   return satsBtcUsd({
-    pattern: {
-      btc: source.btc[key],
-      sats: source.sats[key],
-      usd: source.usd[key],
-    },
+    pattern: source[key],
     name,
     color,
     defaultActive,
@@ -169,10 +165,10 @@ export function satsBtcUsdFrom({ source, key, name, color, defaultActive }) {
 }
 
 /**
- * Create sats/btc/usd series from a full value pattern using base or average key
+ * Create sats/btc/usd series from a full value pattern using base or cumulative key
  * @param {Object} args
  * @param {FullValuePattern} args.source
- * @param {'base' | 'average'} args.key
+ * @param {'base' | 'cumulative'} args.key
  * @param {string} args.name
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]
@@ -186,11 +182,7 @@ export function satsBtcUsdFromFull({
   defaultActive,
 }) {
   return satsBtcUsd({
-    pattern: {
-      btc: source.btc[key],
-      sats: source.sats[key],
-      usd: source.usd[key],
-    },
+    pattern: source[key],
     name,
     color,
     defaultActive,
@@ -203,7 +195,7 @@ export function satsBtcUsdFromFull({
  * @param {AnyValuePatternType} args.coinbase
  * @param {AnyValuePatternType} args.subsidy
  * @param {AnyValuePatternType} args.fee
- * @param {'sum' | 'cumulative'} args.key
+ * @param {'base' | 'cumulative'} args.key
  * @returns {FetchedLineSeriesBlueprint[]}
  */
 export function revenueBtcSatsUsd({ coinbase, subsidy, fee, key }) {
@@ -223,6 +215,47 @@ export function revenueBtcSatsUsd({ coinbase, subsidy, fee, key }) {
     ...satsBtcUsdFrom({
       source: fee,
       key,
+      name: "Fees",
+      color: colors.mining.fee,
+    }),
+  ];
+}
+
+/**
+ * Create sats/btc/usd series from a rolling window (24h/7d/30d/1y sum)
+ * @param {Object} args
+ * @param {AnyValuePattern} args.pattern - A BtcSatsUsdPattern (e.g., source.rolling._24h.sum)
+ * @param {string} args.name
+ * @param {Color} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @returns {FetchedLineSeriesBlueprint[]}
+ */
+export function satsBtcUsdRolling({ pattern, name, color, defaultActive }) {
+  return satsBtcUsd({ pattern, name, color, defaultActive });
+}
+
+/**
+ * Create coinbase/subsidy/fee rolling sum series from separate sources
+ * @param {Object} args
+ * @param {AnyValuePattern} args.coinbase - Rolling sum pattern (e.g., mining.rewards.coinbase.rolling._24h.sum)
+ * @param {AnyValuePattern} args.subsidy
+ * @param {AnyValuePattern} args.fee
+ * @returns {FetchedLineSeriesBlueprint[]}
+ */
+export function revenueRollingBtcSatsUsd({ coinbase, subsidy, fee }) {
+  return [
+    ...satsBtcUsd({
+      pattern: coinbase,
+      name: "Coinbase",
+      color: colors.mining.coinbase,
+    }),
+    ...satsBtcUsd({
+      pattern: subsidy,
+      name: "Subsidy",
+      color: colors.mining.subsidy,
+    }),
+    ...satsBtcUsd({
+      pattern: fee,
       name: "Fees",
       color: colors.mining.fee,
     }),

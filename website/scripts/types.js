@@ -33,40 +33,41 @@
  * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts} UtxoCohortTree
  * @typedef {Brk.MetricsTree_Distribution_AddressCohorts} AddressCohortTree
  * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_All} AllUtxoPattern
- * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_Term_Short} ShortTermPattern
- * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_Term_Long} LongTermPattern
+ * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_Sth} ShortTermPattern
+ * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} LongTermPattern
  * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_All_Relative} AllRelativePattern
+ * @typedef {keyof Brk.BtcSatsUsdPattern} BtcSatsUsdKey
  * @typedef {Brk.BtcSatsUsdPattern} SupplyPattern
- * @typedef {Brk.MetricsTree_Blocks_Size} BlockSizePattern
+ * @typedef {Brk.AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} BlockSizePattern
  * @typedef {keyof Brk.MetricsTree_Distribution_UtxoCohorts_Type} SpendableType
  * @typedef {keyof Brk.MetricsTree_Distribution_AnyAddressIndexes} AddressableType
  *
  * Brk pattern types (using new pattern names)
- * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} MaxAgePattern
+ * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4} MaxAgePattern
  * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} AgeRangePattern
  * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} UtxoAmountPattern
  * @typedef {Brk.ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern} AddressAmountPattern
  * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4} BasicUtxoPattern
- * MinAgePattern: minAge cohorts have peakRegret in unrealized (Pattern6)
- * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern6} MinAgePattern
+ * MinAgePattern: minAge cohorts have peakRegret in unrealized
+ * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} MinAgePattern
  * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} EpochPattern
- * @typedef {Brk.ActivityCostOutputsRealizedSupplyUnrealizedPattern} EmptyPattern
+ * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} EmptyPattern
  * @typedef {Brk._0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern} Ratio1ySdPattern
  * @typedef {Brk.Dollars} Dollars
- * CoinbasePattern: patterns with btc/sats/usd each having base + sum + cumulative + stats
- * @typedef {Brk.BtcSatsUsdPattern3} CoinbasePattern
+ * CoinbasePattern: base + cumulative + rolling windows (flattened)
+ * @typedef {Brk._1y24h30d7dBaseCumulativePattern} CoinbasePattern
  * ActivePriceRatioPattern: ratio pattern with price (extended)
  * @typedef {Brk.PriceRatioPattern} ActivePriceRatioPattern
  * AnyRatioPattern: full ratio patterns (with or without price) - has ratio, percentiles, z-scores
  * @typedef {Brk.RatioPattern | Brk.PriceRatioPattern} AnyRatioPattern
- * ValuePattern: patterns with minimal stats (sum, cumulative only) for btc/sats/usd
- * @typedef {Brk.BtcSatsUsdPattern5 | Brk.BtcSatsUsdPattern2} ValuePattern
- * FullValuePattern: patterns with full stats (base, sum, cumulative, average, percentiles) for btc/sats/usd
- * @typedef {Brk.BtcSatsUsdPattern3} FullValuePattern
- * SumValuePattern: patterns with sum stats (sum, cumulative, average, percentiles - no base) for bitcoin/sats/dollars
- * @typedef {{btc: SumStatsPattern<any>, sats: SumStatsPattern<any>, usd: SumStatsPattern<any>}} SumValuePattern
+ * ValuePattern: patterns with base + cumulative (no rolling)
+ * @typedef {Brk.BaseCumulativeSumPattern | Brk.BaseCumulativePattern} ValuePattern
+ * FullValuePattern: base + cumulative + rolling windows (flattened)
+ * @typedef {Brk._1y24h30d7dBaseCumulativePattern} FullValuePattern
+ * RollingWindowSlot: a single rolling window with stats (average, pct10, pct25, median, pct75, pct90, max, min, sum) per unit
+ * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern2} RollingWindowSlot
  * AnyValuePatternType: union of all value pattern types
- * @typedef {ValuePattern | FullValuePattern} AnyValuePatternType
+ * @typedef {Brk._1y24h30d7dBaseCumulativePattern | Brk.BaseCumulativeSumPattern | Brk.BaseCumulativePattern} AnyValuePatternType
  * @typedef {Brk.AnyMetricPattern} AnyMetricPattern
  * @typedef {Brk.SatsUsdPattern} ActivePricePattern
  * @typedef {Brk.AnyMetricEndpointBuilder} AnyMetricEndpoint
@@ -78,11 +79,11 @@
  * - GlobalPeakRelativePattern: GlobalRelativePattern + unrealizedPeakRegretRelToMarketCap
  * - OwnRelativePattern: has RelToOwnMarketCap metrics (netUnrealizedPnlRelToOwnMarketCap, etc)
  * - FullRelativePattern: has BOTH RelToMarketCap AND RelToOwnMarketCap + unrealizedPeakRegretRelToMarketCap
- * @typedef {Brk.InvestedSupplyPattern} BasicRelativePattern
+ * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern} BasicRelativePattern
  * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern} GlobalRelativePattern
- * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern3} GlobalPeakRelativePattern
- * @typedef {Brk.InvestedNegNetSupplyUnrealizedPattern} OwnRelativePattern
- * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern4} FullRelativePattern
+ * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern4} GlobalPeakRelativePattern
+ * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern2} OwnRelativePattern
+ * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern2} FullRelativePattern
  * @typedef {Brk.GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} UnrealizedPattern
  * @typedef {Brk.GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} UnrealizedFullPattern
  *
@@ -98,37 +99,43 @@
  * @typedef {Brk.MetricEndpointBuilder<T>} MetricEndpoint
  */
 /**
- * Stats pattern: average, min, max, percentiles (NO base)
+ * Stats pattern: average, min, max, percentiles (height-only indexes, NO base)
  * @template T
- * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90TxindexPattern<T>} StatsPattern
+ * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} StatsPattern
  */
 /**
- * Base stats pattern: base, average, min, max, percentiles (NO sum/cumulative)
+ * Base stats pattern: height, average, min, max, percentiles (windowed, NO sum/cumulative)
  * @template T
- * @typedef {Brk.AverageBaseMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} BaseStatsPattern
+ * @typedef {Brk.AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} BaseStatsPattern
  */
 /**
- * Full stats pattern: base, average, sum, cumulative, min, max, percentiles
- * @template T
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<T>} FullStatsPattern
+ * Full stats pattern: cumulative, sum, average, min, max, percentiles + rolling
+ * @typedef {Brk.AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern} FullStatsPattern
  */
 /**
- * Sum stats pattern: average, sum, cumulative, percentiles (NO base)
- * @template T
- * @typedef {Brk.AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2<T>} SumStatsPattern
+ * Sum stats pattern: cumulative, sum, average, min, max, percentiles + rolling (same as FullStatsPattern)
+ * @typedef {Brk.AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern} SumStatsPattern
  */
 /**
- * Full stats pattern for Bitcoin (non-generic variant with btc-specific indexes)
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2} BtcFullStatsPattern
+ * Full stats pattern for Bitcoin (non-generic variant) - same as FullStatsPattern
+ * @typedef {Brk.AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern} BtcFullStatsPattern
  */
 /**
- * Count pattern: sum and cumulative only
+ * Count pattern: height, cumulative, and rolling sum windows
  * @template T
- * @typedef {Brk.CumulativeSumPattern<T>} CountPattern
+ * @typedef {Brk.CumulativeHeightSumPattern<T>} CountPattern
+ */
+/**
+ * Full per-block pattern: height, cumulative, sum, and distribution stats (all flat)
+ * @typedef {Brk.AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} FullPerBlockPattern
  */
 /**
  * Any stats pattern union - patterns with sum/cumulative + percentiles
- * @typedef {SumStatsPattern<any> | FullStatsPattern<any> | BtcFullStatsPattern | BlockSizePattern} AnyStatsPattern
+ * @typedef {FullStatsPattern | BtcFullStatsPattern} AnyStatsPattern
+ */
+/**
+ * Distribution stats: 8 metric fields (average, min, max, median, pct10/25/75/90)
+ * @typedef {{ average: AnyMetricPattern, min: AnyMetricPattern, max: AnyMetricPattern, median: AnyMetricPattern, pct10: AnyMetricPattern, pct25: AnyMetricPattern, pct75: AnyMetricPattern, pct90: AnyMetricPattern }} DistributionStats
  */
 
 /**
@@ -144,7 +151,7 @@
  * @typedef {Brk.MetricsTree_Market_Dca} MarketDca
  * @typedef {Brk._10y2y3y4y5y6y8yPattern} PeriodCagrPattern
  * Full stats pattern union (both generic and non-generic variants)
- * @typedef {FullStatsPattern<any> | BtcFullStatsPattern} AnyFullStatsPattern
+ * @typedef {FullStatsPattern | BtcFullStatsPattern} AnyFullStatsPattern
  *
  * DCA period keys - derived from pattern types
  * @typedef {keyof Brk._10y2y3y4y5y6y8yPattern} LongPeriodKey

@@ -87,7 +87,7 @@ export function createChart({ parent, brk, fitContent }) {
   const getTimeEndpoint = (idx) =>
     idx === "height"
       ? brk.metrics.blocks.time.timestampMonotonic.by[idx]
-      : brk.metrics.blocks.time.timestamp.by[idx];
+      : /** @type {any} */ (brk.metrics.blocks.time.timestamp)[idx].by[idx];
 
   const index = {
     /** @type {Set<(index: ChartableIndex) => void>} */
@@ -137,7 +137,7 @@ export function createChart({ parent, brk, fitContent }) {
       if (cached) {
         this.data = cached;
       }
-      endpoint.slice(-10000).fetch((result) => {
+      endpoint.slice(-10000).fetch((/** @type {any} */ result) => {
         if (currentGen !== generation) return;
         cache.set(endpoint.path, result);
         this.data = result;

@@ -1,29 +1,25 @@
 use brk_error::Result;
-use brk_traversable::Traversable;
 use schemars::JsonSchema;
 use vecdb::{
-    Database, Exit, ReadableVec, Ro, Rw, StorageMode, VecIndex, VecValue, Version,
+    Database, Exit, ReadableVec, Ro, Rw, VecIndex, VecValue, Version,
 };
 
 use crate::internal::{
-    AverageVec, ComputedVecValue, MaxVec, MedianVec, MinVec, Pct10Vec, Pct25Vec, Pct75Vec,
-    Pct90Vec,
+    AverageVec, ComputedVecValue, DistributionStats, MaxVec, MedianVec, MinVec, Pct10Vec,
+    Pct25Vec, Pct75Vec, Pct90Vec,
 };
 
-/// Distribution stats (average + min + max + percentiles) — flat 8-field struct.
-#[derive(Traversable)]
-pub struct Distribution<I: VecIndex, T: ComputedVecValue + JsonSchema, M: StorageMode = Rw> {
-    pub average: AverageVec<I, T, M>,
-    #[traversable(flatten)]
-    pub min: MinVec<I, T, M>,
-    #[traversable(flatten)]
-    pub max: MaxVec<I, T, M>,
-    pub pct10: Pct10Vec<I, T, M>,
-    pub pct25: Pct25Vec<I, T, M>,
-    pub median: MedianVec<I, T, M>,
-    pub pct75: Pct75Vec<I, T, M>,
-    pub pct90: Pct90Vec<I, T, M>,
-}
+/// Distribution stats (average + min + max + percentiles) — concrete vec type alias.
+pub type Distribution<I, T, M = Rw> = DistributionStats<
+    AverageVec<I, T, M>,
+    MinVec<I, T, M>,
+    MaxVec<I, T, M>,
+    Pct10Vec<I, T, M>,
+    Pct25Vec<I, T, M>,
+    MedianVec<I, T, M>,
+    Pct75Vec<I, T, M>,
+    Pct90Vec<I, T, M>,
+>;
 
 impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Distribution<I, T> {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
@@ -111,7 +107,7 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Distribution<I, T> {
     }
 
     pub fn read_only_clone(&self) -> Distribution<I, T, Ro> {
-        Distribution {
+        DistributionStats {
             average: self.average.read_only_clone(),
             min: self.min.read_only_clone(),
             max: self.max.read_only_clone(),

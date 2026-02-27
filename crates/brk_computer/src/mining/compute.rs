@@ -31,8 +31,8 @@ impl Vecs {
         self.hashrate.compute(
             &blocks.count,
             &blocks.difficulty,
-            &self.rewards.coinbase.sats.rolling.sum._24h.height,
-            &self.rewards.coinbase.usd.rolling.sum._24h.height,
+            &self.rewards.coinbase.rolling._24h.sum.sats.height,
+            &self.rewards.coinbase.rolling._24h.sum.usd.height,
             starting_indexes,
             exit,
         )?;

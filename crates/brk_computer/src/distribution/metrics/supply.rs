@@ -66,8 +66,8 @@ impl SupplyMetrics {
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         vec![
-            &mut self.total.sats.height as &mut dyn AnyStoredVec,
-            &mut self.total.usd.height as &mut dyn AnyStoredVec,
+            &mut self.total.base.sats.height as &mut dyn AnyStoredVec,
+            &mut self.total.base.usd.height as &mut dyn AnyStoredVec,
         ]
         .into_par_iter()
     }

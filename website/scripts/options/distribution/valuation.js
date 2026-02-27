@@ -76,7 +76,7 @@ export function createValuationSectionFull({ cohort, title }) {
       createRatioChart({
         title,
         pricePattern: tree.realized.realizedPrice,
-        ratio: tree.realized.realizedPriceExtra,
+        ratio: { ...tree.realized.realizedPriceExtra, ...tree.realized.realizedPriceRatioExt },
         color,
         name: "MVRV",
       }),

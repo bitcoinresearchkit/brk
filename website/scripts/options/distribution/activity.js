@@ -174,13 +174,13 @@ function coinsDestroyedTree(list, all, title) {
       title: title("Coins Destroyed"),
       bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
         line({
-          metric: tree.activity.coinblocksDestroyed.sum,
+          metric: tree.activity.coinblocksDestroyed.sum._24h,
           name,
           color,
           unit: Unit.coinblocks,
         }),
         line({
-          metric: tree.activity.coindaysDestroyed.sum,
+          metric: tree.activity.coindaysDestroyed.sum._24h,
           name,
           color,
           unit: Unit.coindays,
@@ -677,19 +677,19 @@ export function createActivitySection({
                 defaultActive: false,
               }),
               line({
-                metric: tree.activity.sent.sats.sum,
+                metric: tree.activity.sent.base.sats,
                 name: "sum",
                 color,
                 unit: Unit.sats,
               }),
               line({
-                metric: tree.activity.sent.btc.sum,
+                metric: tree.activity.sent.base.btc,
                 name: "sum",
                 color,
                 unit: Unit.btc,
               }),
               line({
-                metric: tree.activity.sent.usd.sum,
+                metric: tree.activity.sent.base.usd,
                 name: "sum",
                 color,
                 unit: Unit.usd,
@@ -701,19 +701,19 @@ export function createActivitySection({
             title: title("Sent Volume (Total)"),
             bottom: [
               line({
-                metric: tree.activity.sent.sats.cumulative,
+                metric: tree.activity.sent.cumulative.sats,
                 name: "all-time",
                 color,
                 unit: Unit.sats,
               }),
               line({
-                metric: tree.activity.sent.btc.cumulative,
+                metric: tree.activity.sent.cumulative.btc,
                 name: "all-time",
                 color,
                 unit: Unit.btc,
               }),
               line({
-                metric: tree.activity.sent.usd.cumulative,
+                metric: tree.activity.sent.cumulative.usd,
                 name: "all-time",
                 color,
                 unit: Unit.usd,
@@ -816,13 +816,13 @@ export function createActivitySection({
             title: title("Coins Destroyed"),
             bottom: [
               line({
-                metric: tree.activity.coinblocksDestroyed.sum,
+                metric: tree.activity.coinblocksDestroyed.sum._24h,
                 name: "Coinblocks",
                 color,
                 unit: Unit.coinblocks,
               }),
               line({
-                metric: tree.activity.coindaysDestroyed.sum,
+                metric: tree.activity.coindaysDestroyed.sum._24h,
                 name: "Coindays",
                 color,
                 unit: Unit.coindays,
@@ -1021,9 +1021,9 @@ export function createGroupedActivitySection({
             bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
               satsBtcUsd({
                 pattern: {
-                  sats: tree.activity.sent.sats.sum,
-                  btc: tree.activity.sent.btc.sum,
-                  usd: tree.activity.sent.usd.sum,
+                  sats: tree.activity.sent.base.sats,
+                  btc: tree.activity.sent.base.btc,
+                  usd: tree.activity.sent.base.usd,
                 },
                 name,
                 color,

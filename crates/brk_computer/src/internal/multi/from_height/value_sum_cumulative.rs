@@ -1,29 +1,22 @@
-//! Value type for SumCumulative pattern from Height.
-//!
-//! Height-level USD sum is stored (eagerly computed from sats × price).
-//! Uses CumSum: stored base + cumulative + rolling sum windows.
-
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
-use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableCloneableVec, Rw, StorageMode};
+use brk_types::{Dollars, Height, Sats, Version};
+use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
-    indexes, prices,
-    internal::{
-        ComputedFromHeightCumulativeSum, LazyFromHeightLast, SatsToBitcoin, SatsToDollars,
-        WindowStarts,
-    },
+    indexes,
+    internal::{ByUnit, RollingSumByUnit, SatsToDollars, WindowStarts},
+    prices,
 };
 
 #[derive(Traversable)]
 pub struct ValueFromHeightSumCumulative<M: StorageMode = Rw> {
-    pub sats: ComputedFromHeightCumulativeSum<Sats, M>,
-    pub btc: LazyFromHeightLast<Bitcoin, Sats>,
-    pub usd: ComputedFromHeightCumulativeSum<Dollars, M>,
+    pub base: ByUnit<M>,
+    pub cumulative: ByUnit<M>,
+    pub sum: RollingSumByUnit<M>,
 }
 
-const VERSION: Version = Version::TWO; // Bumped for stored height dollars
+const VERSION: Version = Version::TWO;
 
 impl ValueFromHeightSumCumulative {
     pub(crate) fn forced_import(
@@ -34,19 +27,11 @@ impl ValueFromHeightSumCumulative {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let sats = ComputedFromHeightCumulativeSum::forced_import(db, name, v, indexes)?;
-
-        let btc = LazyFromHeightLast::from_height_source::<SatsToBitcoin>(
-            &format!("{name}_btc"),
-            v,
-            sats.height.read_only_boxed_clone(),
-            indexes,
-        );
-
-        let usd =
-            ComputedFromHeightCumulativeSum::forced_import(db, &format!("{name}_usd"), v, indexes)?;
-
-        Ok(Self { sats, btc, usd })
+        Ok(Self {
+            base: ByUnit::forced_import(db, name, v, indexes)?,
+            cumulative: ByUnit::forced_import(db, &format!("{name}_cumulative"), v, indexes)?,
+            sum: RollingSumByUnit::forced_import(db, name, v, indexes)?,
+        })
     }
 
     pub(crate) fn compute(
@@ -57,15 +42,36 @@ impl ValueFromHeightSumCumulative {
         exit: &Exit,
         compute_sats: impl FnOnce(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     ) -> Result<()> {
-        self.sats.compute(max_from, windows, exit, compute_sats)?;
+        compute_sats(&mut self.base.sats.height)?;
 
-        self.usd.compute(max_from, windows, exit, |vec| {
-            Ok(vec.compute_binary::<Sats, Dollars, SatsToDollars>(
+        self.cumulative
+            .sats
+            .height
+            .compute_cumulative(max_from, &self.base.sats.height, exit)?;
+
+        self.base
+            .usd
+            .height
+            .compute_binary::<Sats, Dollars, SatsToDollars>(
                 max_from,
-                &self.sats.height,
+                &self.base.sats.height,
                 &prices.price.usd,
                 exit,
-            )?)
-        })
+            )?;
+
+        self.cumulative
+            .usd
+            .height
+            .compute_cumulative(max_from, &self.base.usd.height, exit)?;
+
+        self.sum.compute_rolling_sum(
+            max_from,
+            windows,
+            &self.base.sats.height,
+            &self.base.usd.height,
+            exit,
+        )?;
+
+        Ok(())
     }
 }

@@ -21,6 +21,7 @@ pub struct ValueFromHeightLastRolling<M: StorageMode = Rw> {
     #[deref_mut]
     #[traversable(flatten)]
     pub value: ValueFromHeight<M>,
+    #[traversable(flatten)]
     pub rolling: StoredValueRollingWindows<M>,
 }
 

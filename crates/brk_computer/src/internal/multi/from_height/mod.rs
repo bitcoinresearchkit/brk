@@ -1,3 +1,4 @@
+mod by_unit;
 mod constant;
 mod cumulative;
 mod cumulative_rolling_full;
@@ -21,6 +22,7 @@ mod value_lazy_computed_cumulative;
 mod value_lazy_last;
 mod value_sum_cumulative;
 
+pub use by_unit::*;
 pub use constant::*;
 pub use cumulative::*;
 pub use cumulative_rolling_full::*;

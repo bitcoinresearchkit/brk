@@ -1,15 +1,14 @@
 mod block_count_target;
 mod cents_to_dollars;
 mod cents_to_sats;
-mod ohlc_cents_to_dollars;
-mod ohlc_cents_to_sats;
-
 mod dollar_halve;
 mod dollar_identity;
 mod dollar_plus;
 mod dollar_times_tenths;
 mod dollars_to_sats_fract;
 mod f32_identity;
+mod ohlc_cents_to_dollars;
+mod ohlc_cents_to_sats;
 mod percentage_diff_close_dollars;
 mod percentage_dollars_f32;
 mod percentage_dollars_f32_neg;
@@ -18,7 +17,7 @@ mod percentage_u32_f32;
 mod price_times_ratio;
 mod ratio32;
 mod ratio64;
-
+mod ratio_u64_f32;
 mod return_f32_tenths;
 mod return_i8;
 mod return_u16;
@@ -52,13 +51,12 @@ pub use percentage_dollars_f32_neg::*;
 pub use percentage_sats_f64::*;
 pub use percentage_u32_f32::*;
 pub use price_times_ratio::*;
-
 pub use ratio32::*;
 pub use ratio64::*;
+pub use ratio_u64_f32::*;
 pub use return_f32_tenths::*;
 pub use return_i8::*;
 pub use return_u16::*;
-
 pub use sat_halve::*;
 pub use sat_halve_to_bitcoin::*;
 pub use sat_identity::*;

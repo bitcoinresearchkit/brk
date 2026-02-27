@@ -22,11 +22,11 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, prices, exit, |height_vec| {
                 // Validate computed versions against dependencies
 
-                let opreturn_dep_version = scripts.value.opreturn.sats.height.version();
+                let opreturn_dep_version = scripts.value.opreturn.base.sats.height.version();
                 height_vec.validate_computed_version_or_reset(opreturn_dep_version)?;
 
                 // Copy per-block opreturn values from scripts
-                let scripts_target = scripts.value.opreturn.sats.height.len();
+                let scripts_target = scripts.value.opreturn.base.sats.height.len();
                 if scripts_target > 0 {
                     let target_height = Height::from(scripts_target - 1);
                     let current_len = height_vec.len();
@@ -36,7 +36,7 @@ impl Vecs {
                     if starting_height <= target_height {
                         let start = starting_height.to_usize();
                         let end = target_height.to_usize() + 1;
-                        scripts.value.opreturn.sats.height.fold_range_at(
+                        scripts.value.opreturn.base.sats.height.fold_range_at(
                             start, end, start,
                             |idx, value| {
                                 height_vec.truncate_push(Height::from(idx), value).unwrap();
@@ -52,8 +52,8 @@ impl Vecs {
 
         // 2. Compute unspendable supply = opreturn + unclaimed_rewards + genesis (at height 0)
         // Get reference to opreturn height vec for computing unspendable
-        let opreturn_height = &self.opreturn.sats.height;
-        let unclaimed_height = &mining.rewards.unclaimed_rewards.sats.height;
+        let opreturn_height = &self.opreturn.base.sats.height;
+        let unclaimed_height = &mining.rewards.unclaimed_rewards.base.sats.height;
 
         self.unspendable
             .compute(starting_indexes.height, &window_starts, prices, exit, |height_vec| {

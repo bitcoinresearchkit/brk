@@ -30,8 +30,8 @@ use super::{
         vecs::Vecs,
     },
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
-    BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, TxInReaders, TxOutReaders,
-    IndexToTxIndexBuf, VecsReaders,
+    BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, IndexToTxIndexBuf, TxInReaders,
+    TxOutReaders, VecsReaders,
 };
 
 /// Process all blocks from starting_height to last_height.
@@ -278,7 +278,7 @@ pub(crate) fn process_blocks(
             let outputs_handle = scope.spawn(|| {
                 // Process outputs (receive)
                 process_outputs(
-                    &txoutindex_to_txindex,
+                    txoutindex_to_txindex,
                     &txoutdata_vec,
                     &first_addressindexes,
                     &cache,

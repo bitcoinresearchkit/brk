@@ -9,11 +9,11 @@ pub struct DistributionStats<A, B = A, C = A, D = A, E = A, F = A, G = A, H = A>
     pub average: A,
     pub min: B,
     pub max: C,
-    pub p10: D,
-    pub p25: E,
+    pub pct10: D,
+    pub pct25: E,
     pub median: F,
-    pub p75: G,
-    pub p90: H,
+    pub pct75: G,
+    pub pct90: H,
 }
 
 impl<A> DistributionStats<A> {
@@ -22,11 +22,11 @@ impl<A> DistributionStats<A> {
         f(&mut self.average)?;
         f(&mut self.min)?;
         f(&mut self.max)?;
-        f(&mut self.p10)?;
-        f(&mut self.p25)?;
+        f(&mut self.pct10)?;
+        f(&mut self.pct25)?;
         f(&mut self.median)?;
-        f(&mut self.p75)?;
-        f(&mut self.p90)?;
+        f(&mut self.pct75)?;
+        f(&mut self.pct90)?;
         Ok(())
     }
 
@@ -35,11 +35,11 @@ impl<A> DistributionStats<A> {
         f(&self.average)
             .min(f(&self.min))
             .min(f(&self.max))
-            .min(f(&self.p10))
-            .min(f(&self.p25))
+            .min(f(&self.pct10))
+            .min(f(&self.pct25))
             .min(f(&self.median))
-            .min(f(&self.p75))
-            .min(f(&self.p90))
+            .min(f(&self.pct75))
+            .min(f(&self.pct90))
     }
 
 }

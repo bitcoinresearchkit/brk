@@ -18,9 +18,9 @@ fn main() -> brk_client::Result<()> {
     let price_close = client
         .metrics()
         .prices
-        .usd
         .split
         .close
+        .usd
         .by
         .day1()
         .last(3)

@@ -163,9 +163,8 @@
  *   - AgeRangePattern (ageRange.*)
  * @typedef {LongTermPattern | AgeRangePattern} PatternWithPercentiles
  *
- * Patterns with RelToMarketCap in relative (RelativePattern):
- *   - BasicUtxoPattern (minAge.*, geAmount.*, ltAmount.*)
- * @typedef {BasicUtxoPattern} PatternBasicWithMarketCap
+ * Patterns with RelToMarketCap in relative (geAmount.*, ltAmount.*):
+ * @typedef {UtxoAmountPattern | AddressAmountPattern} PatternBasicWithMarketCap
  *
  * Patterns without RelToMarketCap in relative (RelativePattern4):
  *   - EpochPattern (epoch.*, amountRange.*, year.*, type.*)
