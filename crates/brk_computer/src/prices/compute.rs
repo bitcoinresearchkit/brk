@@ -37,7 +37,6 @@ impl Vecs {
             &self.split.high.cents,
             &self.split.low.cents,
             &self.split.close.cents,
-            indexes,
             exit,
         )?;
 

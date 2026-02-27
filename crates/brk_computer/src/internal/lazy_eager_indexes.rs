@@ -59,7 +59,7 @@ where
         macro_rules! period {
             ($idx:ident) => {
                 LazyVecFrom1::transformed::<Transform>(
-                    &format!("{name}_{}", stringify!($idx)),
+                    name,
                     version,
                     source.$idx.read_only_boxed_clone(),
                 )

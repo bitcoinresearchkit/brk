@@ -1,6 +1,6 @@
 import { createHeader } from "../utils/dom.js";
 import { chartElement } from "../utils/elements.js";
-import { serdeChartableIndex } from "../utils/serde.js";
+import { INDEX_FROM_LABEL } from "../utils/serde.js";
 import { Unit } from "../utils/units.js";
 import { createChart } from "../chart/index.js";
 import { colors } from "../utils/colors.js";
@@ -45,7 +45,7 @@ export function init() {
     const usdPrice = {
       type: "Candlestick",
       title: "Price",
-      metric: brk.metrics.prices.ohlc.usd.day1,
+      metric: brk.metrics.prices.ohlc.usd,
     };
     result.set(Unit.usd, [usdPrice, ...(optionTop.get(Unit.usd) ?? [])]);
 
@@ -54,7 +54,7 @@ export function init() {
     const satsPrice = {
       type: "Candlestick",
       title: "Price",
-      metric: brk.metrics.prices.ohlc.sats.day1,
+      metric: brk.metrics.prices.ohlc.sats,
       colors: /** @type {const} */ ([colors.bi.p1[1], colors.bi.p1[0]]),
     };
     result.set(Unit.sats, [satsPrice, ...(optionTop.get(Unit.sats) ?? [])]);
@@ -104,24 +104,32 @@ export function init() {
   onPrice(updatePriceWithLatest);
 }
 
-const ALL_CHOICES = /** @satisfies {ChartableIndexName[]} */ ([
-  "timestamp",
-  "date",
-  "week",
-  "month",
-  "month3",
-  "month6",
-  "year",
-  "year10",
-]);
+/** @type {{ label: string, items: IndexLabel[] }[]} */
+const ALL_GROUPS = [
+  { label: "Height", items: ["blk", "halv", "diff"] },
+  {
+    label: "Time",
+    items: [
+      "1mn", "5mn", "10mn", "30mn",
+      "1h", "4h", "12h",
+      "1d", "3d", "1w",
+      "1m", "3m", "6m",
+      "1y", "10y",
+    ],
+  },
+];
+
+const ALL_CHOICES = /** @satisfies {IndexLabel[]} */ (
+  ALL_GROUPS.flatMap((g) => g.items)
+);
 
 /**
  * @param {ChartOption} opt
- * @returns {ChartableIndexName[]}
+ * @returns {{ choices: IndexLabel[], groups: { label: string, items: IndexLabel[] }[] }}
  */
 function computeChoices(opt) {
   if (!opt.top().size && !opt.bottom().size) {
-    return [...ALL_CHOICES];
+    return { choices: [...ALL_CHOICES], groups: ALL_GROUPS };
   }
   const rawIndexes = new Set(
     [Array.from(opt.top().values()), Array.from(opt.bottom().values())]
@@ -133,8 +141,16 @@ function computeChoices(opt) {
       .flatMap((blueprint) => blueprint.metric.indexes()),
   );
 
-  return ALL_CHOICES.filter((choice) =>
-    rawIndexes.has(serdeChartableIndex.deserialize(choice)),
-  );
+  const groups = ALL_GROUPS
+    .map(({ label, items }) => ({
+      label,
+      items: items.filter((choice) => rawIndexes.has(INDEX_FROM_LABEL[choice])),
+    }))
+    .filter(({ items }) => items.length > 0);
+
+  return {
+    choices: groups.flatMap((g) => g.items),
+    groups,
+  };
 }
 

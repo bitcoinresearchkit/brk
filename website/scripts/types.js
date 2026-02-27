@@ -17,7 +17,7 @@
  *
  * @import { UnitObject as Unit } from "./utils/units.js"
  *
- * @import { ChartableIndexName } from "./utils/serde.js";
+ * @import { ChartableIndex, IndexLabel } from "./utils/serde.js";
  */
 
 // import uFuzzy = require("./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts");
@@ -215,6 +215,4 @@
  * Generic tree node type for walking
  * @typedef {AnyMetricPattern | Record<string, unknown>} TreeNode
  *
- * Chartable index IDs (subset of IndexName that can be charted)
- * @typedef {"height" | "day1" | "week1" | "month1" | "month3" | "month6" | "year1" | "year10"} ChartableIndex
  */

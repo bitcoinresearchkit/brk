@@ -65,10 +65,17 @@ impl Computer {
         let i = Instant::now();
         let (indexes, positions) = thread::scope(|s| -> Result<_> {
             let positions_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                Ok(Box::new(positions::Vecs::forced_import(&computed_path, VERSION)?))
+                Ok(Box::new(positions::Vecs::forced_import(
+                    &computed_path,
+                    VERSION,
+                )?))
             })?;
 
-            let indexes = Box::new(indexes::Vecs::forced_import(&computed_path, VERSION, indexer)?);
+            let indexes = Box::new(indexes::Vecs::forced_import(
+                &computed_path,
+                VERSION,
+                indexer,
+            )?);
             let positions = positions_handle.join().unwrap()?;
 
             Ok((indexes, positions))
@@ -79,11 +86,19 @@ impl Computer {
         let i = Instant::now();
         let (inputs, outputs) = thread::scope(|s| -> Result<_> {
             let inputs_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                Ok(Box::new(inputs::Vecs::forced_import(&computed_path, VERSION, &indexes)?))
+                Ok(Box::new(inputs::Vecs::forced_import(
+                    &computed_path,
+                    VERSION,
+                    &indexes,
+                )?))
             })?;
 
             let outputs_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                Ok(Box::new(outputs::Vecs::forced_import(&computed_path, VERSION, &indexes)?))
+                Ok(Box::new(outputs::Vecs::forced_import(
+                    &computed_path,
+                    VERSION,
+                    &indexes,
+                )?))
             })?;
 
             let inputs = inputs_handle.join().unwrap()?;
@@ -96,7 +111,11 @@ impl Computer {
         let i = Instant::now();
         let constants = Box::new(constants::Vecs::new(VERSION, &indexes));
         // Price must be created before market since market's lazy vecs reference price
-        let prices = Box::new(prices::Vecs::forced_import(&computed_path, VERSION, &indexes)?);
+        let prices = Box::new(prices::Vecs::forced_import(
+            &computed_path,
+            VERSION,
+            &indexes,
+        )?);
         info!("Imported price/constants in {:?}", i.elapsed());
 
         let i = Instant::now();
@@ -104,12 +123,21 @@ impl Computer {
             thread::scope(|s| -> Result<_> {
                 // Import blocks module (no longer needs prices)
                 let blocks_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                    Ok(Box::new(blocks::Vecs::forced_import(&computed_path, VERSION, indexer, &indexes)?))
+                    Ok(Box::new(blocks::Vecs::forced_import(
+                        &computed_path,
+                        VERSION,
+                        indexer,
+                        &indexes,
+                    )?))
                 })?;
 
                 // Import mining module (separate database)
                 let mining_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                    Ok(Box::new(mining::Vecs::forced_import(&computed_path, VERSION, &indexes)?))
+                    Ok(Box::new(mining::Vecs::forced_import(
+                        &computed_path,
+                        VERSION,
+                        &indexes,
+                    )?))
                 })?;
 
                 // Import transactions module
@@ -130,9 +158,11 @@ impl Computer {
                     )?))
                 })?;
 
-                let cointime = Box::new(
-                    cointime::Vecs::forced_import(&computed_path, VERSION, &indexes)?
-                );
+                let cointime = Box::new(cointime::Vecs::forced_import(
+                    &computed_path,
+                    VERSION,
+                    &indexes,
+                )?);
 
                 let blocks = blocks_handle.join().unwrap()?;
                 let mining = mining_handle.join().unwrap()?;
@@ -154,16 +184,21 @@ impl Computer {
 
         // Threads inside
         let i = Instant::now();
-        let distribution = Box::new(
-            distribution::Vecs::forced_import(&computed_path, VERSION, &indexes)?
-        );
+        let distribution = Box::new(distribution::Vecs::forced_import(
+            &computed_path,
+            VERSION,
+            &indexes,
+        )?);
         info!("Imported distribution in {:?}", i.elapsed());
 
         // Supply must be imported after distribution (references distribution's supply)
         let i = Instant::now();
-        let supply = Box::new(
-            supply::Vecs::forced_import(&computed_path, VERSION, &indexes, &distribution)?
-        );
+        let supply = Box::new(supply::Vecs::forced_import(
+            &computed_path,
+            VERSION,
+            &indexes,
+            &distribution,
+        )?);
         info!("Imported supply in {:?}", i.elapsed());
 
         let i = Instant::now();
@@ -286,14 +321,25 @@ impl Computer {
             // Inputs → scripts → outputs (sequential)
             info!("Computing inputs...");
             let i = Instant::now();
-            self.inputs
-                .compute(indexer, &self.indexes, &self.blocks, &starting_indexes, exit)?;
+            self.inputs.compute(
+                indexer,
+                &self.indexes,
+                &self.blocks,
+                &starting_indexes,
+                exit,
+            )?;
             info!("Computed inputs in {:?}", i.elapsed());
 
             info!("Computing scripts...");
             let i = Instant::now();
-            self.scripts
-                .compute(indexer, &self.blocks, &self.outputs, &self.prices, &starting_indexes, exit)?;
+            self.scripts.compute(
+                indexer,
+                &self.blocks,
+                &self.outputs,
+                &self.prices,
+                &starting_indexes,
+                exit,
+            )?;
             info!("Computed scripts in {:?}", i.elapsed());
 
             info!("Computing outputs...");

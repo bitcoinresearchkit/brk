@@ -96,7 +96,7 @@ impl PrintableIndex for DifficultyEpoch {
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["difficulty", "difficultyepoch"]
+        &["difficulty", "difficultyepoch", "diff"]
     }
 }
 

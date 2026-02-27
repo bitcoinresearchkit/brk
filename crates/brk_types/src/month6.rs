@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
-use super::Month1;
+use super::{Date, Month1, Timestamp};
 
 #[derive(
     Debug,
@@ -24,6 +24,12 @@ use super::Month1;
     JsonSchema,
 )]
 pub struct Month6(u8);
+
+impl Month6 {
+    pub fn to_timestamp(&self) -> Timestamp {
+        Timestamp::from(Date::from(*self))
+    }
+}
 
 impl From<u8> for Month6 {
     #[inline]
@@ -101,7 +107,7 @@ impl PrintableIndex for Month6 {
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["semester", "s", "month6", "semesterindex"]
+        &["semester", "s", "month6", "semesterindex", "6m", "6mo"]
     }
 }
 

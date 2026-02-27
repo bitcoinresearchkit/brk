@@ -272,7 +272,7 @@ impl PrintableIndex for Height {
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["h", "height"]
+        &["h", "height", "blk", "block"]
     }
 }
 

@@ -238,10 +238,12 @@ export function createRadios({
  * @param {(choice: T) => string} [args.toKey]
  * @param {(choice: T) => string} [args.toLabel]
  * @param {boolean} [args.sorted]
+ * @param {{ label: string, items: T[] }[]} [args.groups]
  */
 export function createSelect({
   id,
   choices: unsortedChoices,
+  groups,
   initialValue,
   onChange,
   sorted,
@@ -271,15 +273,27 @@ export function createSelect({
     select.name = id ?? "";
     field.append(select);
 
-    choices.forEach((choice) => {
+    /** @param {T} choice */
+    const createOption = (choice) => {
       const option = window.document.createElement("option");
       option.value = toKey(choice);
       option.textContent = toLabel(choice);
       if (toKey(choice) === initialKey) {
         option.selected = true;
       }
-      select.append(option);
-    });
+      return option;
+    };
+
+    if (groups) {
+      groups.forEach(({ label, items }) => {
+        const optgroup = window.document.createElement("optgroup");
+        optgroup.label = label;
+        items.forEach((choice) => optgroup.append(createOption(choice)));
+        select.append(optgroup);
+      });
+    } else {
+      choices.forEach((choice) => select.append(createOption(choice)));
+    }
 
     select.addEventListener("change", () => {
       onChange?.(fromKey(select.value));

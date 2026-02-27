@@ -1,3 +1,5 @@
+import { entries, fromEntries } from "./array.js";
+
 export const serdeBool = {
   /**
    * @param {boolean} v
@@ -17,64 +19,21 @@ export const serdeBool = {
   },
 };
 
-/**
- * @typedef {"timestamp" | "date" | "week" | "month" | "month3" | "month6" | "year" | "year10"} ChartableIndexName
- */
+export const INDEX_LABEL = /** @type {const} */ ({
+  height: "blk",
+  minute1: "1mn", minute5: "5mn", minute10: "10mn", minute30: "30mn",
+  hour1: "1h", hour4: "4h", hour12: "12h",
+  day1: "1d", day3: "3d", week1: "1w",
+  month1: "1m", month3: "3m", month6: "6m",
+  year1: "1y", year10: "10y",
+  halvingepoch: "halv", difficultyepoch: "diff",
+});
 
-export const serdeChartableIndex = {
-  /**
-   * @param {IndexName} v
-   * @returns {ChartableIndexName | null}
-   */
-  serialize(v) {
-    switch (v) {
-      case "day1":
-        return "date";
-      case "year10":
-        return "year10";
-      case "height":
-        return "timestamp";
-      case "month1":
-        return "month";
-      case "month3":
-        return "month3";
-      case "month6":
-        return "month6";
-      case "week1":
-        return "week";
-      case "year1":
-        return "year";
-      default:
-        return null;
-    }
-  },
-  /**
-   * @param {ChartableIndexName} v
-   * @returns {ChartableIndex}
-   */
-  deserialize(v) {
-    switch (v) {
-      case "timestamp":
-        return "height";
-      case "date":
-        return "day1";
-      case "week":
-        return "week1";
-      case "month":
-        return "month1";
-      case "month3":
-        return "month3";
-      case "month6":
-        return "month6";
-      case "year":
-        return "year1";
-      case "year10":
-        return "year10";
-      default:
-        throw Error("todo");
-    }
-  },
-};
+/** @typedef {typeof INDEX_LABEL} IndexLabelMap */
+/** @typedef {keyof IndexLabelMap} ChartableIndex */
+/** @typedef {IndexLabelMap[ChartableIndex]} IndexLabel */
+
+export const INDEX_FROM_LABEL = fromEntries(entries(INDEX_LABEL).map(([k, v]) => [v, k]));
 
 /**
  * @typedef {"" |

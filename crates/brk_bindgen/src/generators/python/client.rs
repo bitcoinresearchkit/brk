@@ -162,7 +162,7 @@ def _index_to_date(index: str, i: int) -> Union[date, datetime]:
     elif index == 'day1':
         return _GENESIS if i == 0 else _DAY_ONE + timedelta(days=i - 1)
     elif index == 'day3':
-        return _EPOCH.date() + timedelta(days=i * 3)
+        return _EPOCH.date() - timedelta(days=1) + timedelta(days=i * 3)
     elif index == 'week1':
         return _GENESIS + timedelta(weeks=i)
     elif index == 'month1':
@@ -202,7 +202,7 @@ def _date_to_index(index: str, d: Union[date, datetime]) -> int:
             return 0
         return 1 + (dd - _DAY_ONE).days
     elif index == 'day3':
-        return (dd - date(2009, 1, 1)).days // 3
+        return (dd - date(2008, 12, 31)).days // 3
     elif index == 'week1':
         return (dd - _GENESIS).days // 7
     elif index == 'month1':

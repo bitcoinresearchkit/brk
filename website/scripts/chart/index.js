@@ -13,7 +13,7 @@ import { createRadios, createSelect } from "../utils/dom.js";
 import { createPersistedValue } from "../utils/persisted.js";
 import { onChange as onThemeChange } from "../utils/theme.js";
 import { throttle, debounce } from "../utils/timing.js";
-import { serdeBool, serdeChartableIndex } from "../utils/serde.js";
+import { serdeBool, INDEX_FROM_LABEL } from "../utils/serde.js";
 import { stringToId, numberToShortUSFormat } from "../utils/format.js";
 import { style } from "../utils/elements.js";
 import { Unit } from "../utils/units.js";
@@ -87,22 +87,23 @@ export function createChart({ parent, brk, fitContent }) {
   const getTimeEndpoint = (idx) =>
     idx === "height"
       ? brk.metrics.blocks.time.timestampMonotonic.by[idx]
-      : /** @type {any} */ (brk.metrics.blocks.time.timestamp)[idx].by[idx];
+      : brk.metrics.blocks.time.timestamp.by[idx];
 
   const index = {
     /** @type {Set<(index: ChartableIndex) => void>} */
     onChange: new Set(),
 
     get() {
-      return serdeChartableIndex.deserialize(index.name.value);
+      return INDEX_FROM_LABEL[index.name.value];
     },
 
     name: createPersistedValue({
-      defaultValue: /** @type {ChartableIndexName} */ ("date"),
+      defaultValue: /** @type {IndexLabel} */ ("1d"),
       storageKey: "chart-index",
       urlKey: "i",
       serialize: (v) => v,
-      deserialize: (s) => /** @type {ChartableIndexName} */ (s),
+      deserialize: (s) =>
+        /** @type {IndexLabel} */ (s in INDEX_FROM_LABEL ? s : "1d"),
       onChange: () => {
         range.set(null);
         index.onChange.forEach((cb) => cb(index.get()));
@@ -323,7 +324,12 @@ export function createChart({ parent, brk, fitContent }) {
 
     ichart.applyOptions({
       timeScale: {
-        timeVisible: index === "height",
+        timeVisible:
+          index === "height" ||
+          index === "difficultyepoch" ||
+          index === "halvingepoch" ||
+          index.startsWith("minute") ||
+          index.startsWith("hour"),
         ...(!fitContent
           ? {
               minBarSpacing,
@@ -1420,20 +1426,22 @@ export function createChart({ parent, brk, fitContent }) {
   /** @type {HTMLElement | null} */
   let indexField = null;
 
-  const lastTd = ichart.chartElement().querySelector("table > tr:last-child > td:nth-child(2)");
+  const lastTd = ichart
+    .chartElement()
+    .querySelector("table > tr:last-child > td:nth-child(2)");
 
   const chart = {
     get panes() {
       return blueprints.panes;
     },
 
-    /** @param {ChartableIndexName[]} choices */
-    setIndexChoices(choices) {
+    /** @param {{ choices: IndexLabel[], groups: { label: string, items: IndexLabel[] }[] }} arg */
+    setIndexChoices({ choices, groups }) {
       if (indexField) indexField.remove();
 
       let currentValue = choices.includes(preferredIndex)
         ? preferredIndex
-        : (choices[0] ?? "date");
+        : (choices[0] ?? "1d");
 
       if (currentValue !== index.name.value) {
         index.name.set(currentValue);
@@ -1446,6 +1454,7 @@ export function createChart({ parent, brk, fitContent }) {
           index.name.set(v);
         },
         choices,
+        groups,
         id: "index",
       });
       const sep = document.createElement("span");

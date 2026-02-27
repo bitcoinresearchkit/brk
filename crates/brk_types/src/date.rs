@@ -14,10 +14,8 @@ use super::{Day1, Year10, Month1, Month3, Month6, Timestamp, Week1, Year1};
 pub struct Date(u32);
 
 impl Date {
-    pub const INDEX_ZERO: Self = Self(20090103);
-    pub const INDEX_ZERO_: Date_ = Date_::constant(2009, 1, 3);
-    pub const INDEX_ONE: Self = Self(20090109);
-    pub const INDEX_ONE_: Date_ = Date_::constant(2009, 1, 9);
+    pub const INDEX_ZERO: Self = Self(20090101);
+    pub const INDEX_ZERO_: Date_ = Date_::constant(2009, 1, 1);
     pub const MIN_RATIO: Self = Self(20120101);
 
     pub fn new(year: u16, month: u8, day: u8) -> Self {
@@ -99,22 +97,18 @@ impl From<Timestamp> for Date {
 impl From<Day1> for Date {
     #[inline]
     fn from(value: Day1) -> Self {
-        if value == Day1::default() {
-            Date::INDEX_ZERO
-        } else {
-            Self::from(
-                Self::INDEX_ONE_
-                    .checked_add(Span::new().days(i64::from(value) - 1))
-                    .unwrap(),
-            )
-        }
+        Self::from(
+            Self::INDEX_ZERO_
+                .checked_add(Span::new().days(i64::from(value)))
+                .unwrap(),
+        )
     }
 }
 
 impl From<Week1> for Date {
     #[inline]
     fn from(value: Week1) -> Self {
-        // Week 0 starts at genesis (2009-01-03), add i weeks
+        // Week 0 starts at 2009-01-01, add i weeks
         Self::from(
             Self::INDEX_ZERO_
                 .checked_add(Span::new().weeks(i64::from(u16::from(value))))
@@ -279,49 +273,48 @@ mod tests {
 
     #[test]
     fn test_date_from_day1_zero() {
-        // Day1 0 is genesis: Jan 3, 2009
+        // Day1 0 is Jan 1, 2009
         let date = Date::from(Day1::from(0_usize));
         assert_eq!(date, Date::INDEX_ZERO);
+        assert_eq!(date.year(), 2009);
+        assert_eq!(date.month(), 1);
+        assert_eq!(date.day(), 1);
+    }
+
+    #[test]
+    fn test_date_from_day1_two() {
+        // Day1 2 is Jan 3, 2009 (genesis)
+        let date = Date::from(Day1::from(2_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 3);
     }
 
     #[test]
-    fn test_date_from_day1_one() {
-        // Day1 1 is Jan 9, 2009 (6 day gap after genesis)
-        let date = Date::from(Day1::from(1_usize));
-        assert_eq!(date, Date::INDEX_ONE);
+    fn test_date_from_day1_eight() {
+        // Day1 8 is Jan 9, 2009
+        let date = Date::from(Day1::from(8_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
         assert_eq!(date.day(), 9);
     }
 
     #[test]
-    fn test_date_from_day1_two() {
-        // Day1 2 is Jan 10, 2009
-        let date = Date::from(Day1::from(2_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 10);
-    }
-
-    #[test]
     fn test_date_from_week1_zero() {
-        // Week1 0 starts at genesis: Jan 3, 2009
+        // Week1 0 starts at Jan 1, 2009
         let date = Date::from(Week1::from(0_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 3);
+        assert_eq!(date.day(), 1);
     }
 
     #[test]
     fn test_date_from_week1_one() {
-        // Week1 1 is Jan 10, 2009 (one week after genesis)
+        // Week1 1 is Jan 8, 2009 (one week after epoch)
         let date = Date::from(Week1::from(1_usize));
         assert_eq!(date.year(), 2009);
         assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 10);
+        assert_eq!(date.day(), 8);
     }
 
     #[test]

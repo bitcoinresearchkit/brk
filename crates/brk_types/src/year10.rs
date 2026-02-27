@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
-use super::{Date, Day1, Year1};
+use super::{Date, Day1, Timestamp, Year1};
 
 #[derive(
     Debug,
@@ -24,6 +24,12 @@ use super::{Date, Day1, Year1};
     JsonSchema,
 )]
 pub struct Year10(u8);
+
+impl Year10 {
+    pub fn to_timestamp(&self) -> Timestamp {
+        Timestamp::from(Date::from(*self))
+    }
+}
 
 impl From<u8> for Year10 {
     #[inline]

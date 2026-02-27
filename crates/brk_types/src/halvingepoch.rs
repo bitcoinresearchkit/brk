@@ -102,7 +102,7 @@ impl PrintableIndex for HalvingEpoch {
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["halving", "halvingepoch"]
+        &["halving", "halvingepoch", "halv"]
     }
 }
 

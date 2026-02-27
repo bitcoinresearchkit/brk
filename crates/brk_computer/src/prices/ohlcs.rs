@@ -10,18 +10,18 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
     BytesVec, BytesVecValue, Database, EagerVec, Exit, Formattable, ImportableVec, LazyVecFrom1,
-    ReadableCloneableVec, ReadableVec, Rw, StorageMode, UnaryTransform,
+    ReadableCloneableVec, Rw, StorageMode, UnaryTransform,
 };
 
 use crate::{
-    ComputeIndexes, indexes, indexes_from,
+    ComputeIndexes, indexes_from,
     internal::{ComputedHeightDerivedLast, EagerIndexes, Indexes},
 };
 
 // ── EagerOhlcIndexes ─────────────────────────────────────────────────
 
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(transparent)]
+#[traversable(merge)]
 pub struct OhlcVecs<T, M: StorageMode = Rw>(
     #[allow(clippy::type_complexity)]
     pub  Indexes<
@@ -58,7 +58,7 @@ where
 
         macro_rules! period {
             ($idx:ident) => {
-                ImportableVec::forced_import(db, &format!("{name}_{}", stringify!($idx)), v)?
+                ImportableVec::forced_import(db, name, v)?
             };
         }
 
@@ -67,7 +67,6 @@ where
 }
 
 impl OhlcVecs<OHLCCents> {
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_from_split(
         &mut self,
         starting_indexes: &ComputeIndexes,
@@ -75,26 +74,24 @@ impl OhlcVecs<OHLCCents> {
         high: &EagerIndexes<Cents>,
         low: &EagerIndexes<Cents>,
         close: &ComputedHeightDerivedLast<Cents>,
-        indexes: &indexes::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         macro_rules! period {
             ($field:ident) => {
-                self.0.$field.compute_transform(
+                self.0.$field.compute_transform4(
                     starting_indexes.$field,
-                    &indexes.$field.first_height,
-                    |(idx, _first_h, _)| {
-                        let o = open.$field.collect_one(idx).unwrap_or_default();
-                        let h = high.$field.collect_one(idx).unwrap_or_default();
-                        let l = low.$field.collect_one(idx).unwrap_or_default();
-                        let c = close.$field.collect_one(idx).flatten().unwrap_or_default();
+                    &open.$field,
+                    &high.$field,
+                    &low.$field,
+                    &close.$field,
+                    |(idx, o, h, l, c, _)| {
                         (
                             idx,
                             OHLCCents {
                                 open: Open::new(o),
                                 high: High::new(h),
                                 low: Low::new(l),
-                                close: Close::new(c),
+                                close: Close::new(c.unwrap_or_default()),
                             },
                         )
                     },
@@ -105,14 +102,13 @@ impl OhlcVecs<OHLCCents> {
 
         macro_rules! epoch {
             ($field:ident) => {
-                self.0.$field.compute_transform(
+                self.0.$field.compute_transform4(
                     starting_indexes.$field,
-                    &indexes.$field.first_height,
-                    |(idx, _first_h, _)| {
-                        let o = open.$field.collect_one(idx).unwrap_or_default();
-                        let h = high.$field.collect_one(idx).unwrap_or_default();
-                        let l = low.$field.collect_one(idx).unwrap_or_default();
-                        let c = close.$field.collect_one(idx).unwrap_or_default();
+                    &open.$field,
+                    &high.$field,
+                    &low.$field,
+                    &close.$field,
+                    |(idx, o, h, l, c, _)| {
                         (
                             idx,
                             OHLCCents {
@@ -153,7 +149,7 @@ impl OhlcVecs<OHLCCents> {
 // ── LazyOhlcIndexes ──────────────────────────────────────────────────
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
-#[traversable(transparent)]
+#[traversable(merge)]
 pub struct LazyOhlcVecs<T, S>(
     #[allow(clippy::type_complexity)]
     pub  Indexes<
@@ -193,7 +189,7 @@ where
         macro_rules! period {
             ($idx:ident) => {
                 LazyVecFrom1::transformed::<Transform>(
-                    &format!("{name}_{}", stringify!($idx)),
+                    name,
                     version,
                     source.$idx.read_only_boxed_clone(),
                 )

@@ -13,7 +13,8 @@ use brk_types::{
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
+    AnyVec, Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode,
+    VecIndex, WritableVec,
 };
 
 use crate::{
@@ -59,7 +60,7 @@ where
 
         macro_rules! period {
             ($idx:ident) => {
-                ImportableVec::forced_import(db, &format!("{name}_{}", stringify!($idx)), v)?
+                ImportableVec::forced_import(db, name, v)?
             };
         }
 
@@ -76,15 +77,10 @@ where
     ) -> Result<()> {
         macro_rules! period {
             ($field:ident) => {
-                self.0.$field.compute_transform(
+                self.0.$field.compute_indirect(
                     starting_indexes.$field,
                     &indexes.$field.first_height,
-                    |(idx, first_h, _)| {
-                        let v = height_source
-                            .collect_one(first_h)
-                            .unwrap_or_else(|| T::from(0_usize));
-                        (idx, v)
-                    },
+                    height_source,
                     exit,
                 )?;
             };
@@ -122,25 +118,17 @@ where
         let src_len = height_source.len();
 
         macro_rules! period {
-            ($field:ident) => {{
-                let fh = &indexes.$field.first_height;
-                self.0.$field.compute_transform(
+            ($field:ident) => {
+                compute_period_extremum(
+                    &mut self.0.$field,
                     starting_indexes.$field,
-                    fh,
-                    |(idx, first_h, _)| {
-                        let end_h = Height::from(
-                            fh.collect_one_at(idx.to_usize() + 1)
-                                .map(|h: Height| h.to_usize())
-                                .unwrap_or(src_len),
-                        );
-                        let v = height_source
-                            .max(first_h, end_h)
-                            .unwrap_or_else(|| T::from(0_usize));
-                        (idx, v)
-                    },
+                    &indexes.$field.first_height,
+                    height_source,
+                    src_len,
+                    T::max,
                     exit,
                 )?;
-            }};
+            };
         }
 
         period!(minute1);
@@ -175,25 +163,17 @@ where
         let src_len = height_source.len();
 
         macro_rules! period {
-            ($field:ident) => {{
-                let fh = &indexes.$field.first_height;
-                self.0.$field.compute_transform(
+            ($field:ident) => {
+                compute_period_extremum(
+                    &mut self.0.$field,
                     starting_indexes.$field,
-                    fh,
-                    |(idx, first_h, _)| {
-                        let end_h = Height::from(
-                            fh.collect_one_at(idx.to_usize() + 1)
-                                .map(|h: Height| h.to_usize())
-                                .unwrap_or(src_len),
-                        );
-                        let v = height_source
-                            .min(first_h, end_h)
-                            .unwrap_or_else(|| T::from(0_usize));
-                        (idx, v)
-                    },
+                    &indexes.$field.first_height,
+                    height_source,
+                    src_len,
+                    T::min,
                     exit,
                 )?;
-            }};
+            };
         }
 
         period!(minute1);
@@ -216,4 +196,61 @@ where
 
         Ok(())
     }
+}
+
+/// Compute per-period extremum (max or min) of height_source values.
+///
+/// Each period's range is `[fh[i]..fh[i+1])` of height_source.
+/// Uses a cursor on height_source so each page is decompressed at most once.
+fn compute_period_extremum<I: VecIndex, T: ComputedVecValue + JsonSchema>(
+    out: &mut EagerVec<PcoVec<I, T>>,
+    starting_index: I,
+    fh: &impl ReadableVec<I, Height>,
+    height_source: &impl ReadableVec<Height, T>,
+    src_len: usize,
+    better: fn(T, T) -> T,
+    exit: &Exit,
+) -> Result<()> {
+    out.validate_and_truncate(fh.version() + height_source.version(), starting_index)?;
+    let mut cursor = height_source.cursor();
+    Ok(out.repeat_until_complete(exit, |this| {
+        let skip = this.len();
+        let end = fh.len();
+        if skip >= end {
+            return Ok(());
+        }
+
+        let fh_batch: Vec<Height> = fh.collect_range_at(skip, (end + 1).min(fh.len()));
+
+        if cursor.position() < fh_batch[0].to_usize() {
+            cursor.advance(fh_batch[0].to_usize() - cursor.position());
+        }
+
+        for j in 0..(end - skip) {
+            let first_h = fh_batch[j].to_usize();
+            let end_h = fh_batch.get(j + 1).map_or(src_len, |h| h.to_usize());
+
+            if cursor.position() < first_h {
+                cursor.advance(first_h - cursor.position());
+            }
+
+            let range_len = end_h.saturating_sub(first_h);
+            let v = if range_len > 0 {
+                cursor
+                    .fold(range_len, None, |acc, b| {
+                        Some(match acc {
+                            Some(a) => better(a, b),
+                            None => b,
+                        })
+                    })
+                    .unwrap_or_else(|| T::from(0_usize))
+            } else {
+                T::from(0_usize)
+            };
+
+            this.checked_push_at(skip + j, v)?;
+        }
+
+        Ok(())
+    })?)
 }

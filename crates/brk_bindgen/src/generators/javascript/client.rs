@@ -81,7 +81,7 @@ function indexToDate(index, i) {{
     case 'hour4': return new Date(_EPOCH_MS + i * 14400000);
     case 'hour12': return new Date(_EPOCH_MS + i * 43200000);
     case 'day1': return i === 0 ? _GENESIS : new Date(_DAY_ONE.getTime() + (i - 1) * _MS_PER_DAY);
-    case 'day3': return new Date(_EPOCH_MS + i * 259200000);
+    case 'day3': return new Date(_EPOCH_MS - 86400000 + i * 259200000);
     case 'week1': return new Date(_GENESIS.getTime() + i * _MS_PER_WEEK);
     case 'month1': return _addMonths(i);
     case 'month3': return _addMonths(i * 3);
@@ -113,7 +113,7 @@ function dateToIndex(index, d) {{
       if (ms < _DAY_ONE.getTime()) return 0;
       return 1 + Math.floor((ms - _DAY_ONE.getTime()) / _MS_PER_DAY);
     }}
-    case 'day3': return Math.floor((ms - _EPOCH_MS) / 259200000);
+    case 'day3': return Math.floor((ms - _EPOCH_MS + 86400000) / 259200000);
     case 'week1': return Math.floor((ms - _GENESIS.getTime()) / _MS_PER_WEEK);
     case 'month1': return (d.getFullYear() - 2009) * 12 + d.getMonth();
     case 'month3': return (d.getFullYear() - 2009) * 4 + Math.floor(d.getMonth() / 3);

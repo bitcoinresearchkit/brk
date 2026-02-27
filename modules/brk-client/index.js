@@ -951,7 +951,7 @@ function indexToDate(index, i) {
     case 'hour4': return new Date(_EPOCH_MS + i * 14400000);
     case 'hour12': return new Date(_EPOCH_MS + i * 43200000);
     case 'day1': return i === 0 ? _GENESIS : new Date(_DAY_ONE.getTime() + (i - 1) * _MS_PER_DAY);
-    case 'day3': return new Date(_EPOCH_MS + i * 259200000);
+    case 'day3': return new Date(_EPOCH_MS - 86400000 + i * 259200000);
     case 'week1': return new Date(_GENESIS.getTime() + i * _MS_PER_WEEK);
     case 'month1': return _addMonths(i);
     case 'month3': return _addMonths(i * 3);
@@ -983,7 +983,7 @@ function dateToIndex(index, d) {
       if (ms < _DAY_ONE.getTime()) return 0;
       return 1 + Math.floor((ms - _DAY_ONE.getTime()) / _MS_PER_DAY);
     }
-    case 'day3': return Math.floor((ms - _EPOCH_MS) / 259200000);
+    case 'day3': return Math.floor((ms - _EPOCH_MS + 86400000) / 259200000);
     case 'week1': return Math.floor((ms - _GENESIS.getTime()) / _MS_PER_WEEK);
     case 'month1': return (d.getFullYear() - 2009) * 12 + d.getMonth();
     case 'month3': return (d.getFullYear() - 2009) * 4 + Math.floor(d.getMonth() / 3);
@@ -2711,57 +2711,6 @@ function createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(c
 }
 
 /**
- * @template T
- * @typedef {Object} Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern
- * @property {MetricPattern10<T>} day1
- * @property {MetricPattern11<T>} day3
- * @property {MetricPattern19<T>} difficultyepoch
- * @property {MetricPattern18<T>} halvingepoch
- * @property {MetricPattern7<T>} hour1
- * @property {MetricPattern9<T>} hour12
- * @property {MetricPattern8<T>} hour4
- * @property {MetricPattern3<T>} minute1
- * @property {MetricPattern5<T>} minute10
- * @property {MetricPattern6<T>} minute30
- * @property {MetricPattern4<T>} minute5
- * @property {MetricPattern13<T>} month1
- * @property {MetricPattern14<T>} month3
- * @property {MetricPattern15<T>} month6
- * @property {MetricPattern12<T>} week1
- * @property {MetricPattern16<T>} year1
- * @property {MetricPattern17<T>} year10
- */
-
-/**
- * Create a Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<T>}
- */
-function createDay1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, acc) {
-  return {
-    day1: createMetricPattern10(client, _m(acc, 'day1')),
-    day3: createMetricPattern11(client, _m(acc, 'day3')),
-    difficultyepoch: createMetricPattern19(client, _m(acc, 'difficultyepoch')),
-    halvingepoch: createMetricPattern18(client, _m(acc, 'halvingepoch')),
-    hour1: createMetricPattern7(client, _m(acc, 'hour1')),
-    hour12: createMetricPattern9(client, _m(acc, 'hour12')),
-    hour4: createMetricPattern8(client, _m(acc, 'hour4')),
-    minute1: createMetricPattern3(client, _m(acc, 'minute1')),
-    minute10: createMetricPattern5(client, _m(acc, 'minute10')),
-    minute30: createMetricPattern6(client, _m(acc, 'minute30')),
-    minute5: createMetricPattern4(client, _m(acc, 'minute5')),
-    month1: createMetricPattern13(client, _m(acc, 'month1')),
-    month3: createMetricPattern14(client, _m(acc, 'month3')),
-    month6: createMetricPattern15(client, _m(acc, 'month6')),
-    week1: createMetricPattern12(client, _m(acc, 'week1')),
-    year1: createMetricPattern16(client, _m(acc, 'year1')),
-    year10: createMetricPattern17(client, _m(acc, 'year10')),
-  };
-}
-
-/**
  * @typedef {Object} GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern
  * @property {MetricPattern1<Dollars>} greedIndex
  * @property {MetricPattern1<Dollars>} investedCapitalInLoss
@@ -3818,9 +3767,9 @@ function createBtcSatsUsdPattern(client, acc) {
 
 /**
  * @typedef {Object} CentsSatsUsdPattern
- * @property {Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<OHLCCents>} cents
- * @property {Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<OHLCSats>} sats
- * @property {Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern<OHLCDollars>} usd
+ * @property {MetricPattern2<Cents>} cents
+ * @property {MetricPattern2<Sats>} sats
+ * @property {MetricPattern2<Dollars>} usd
  */
 
 /**
@@ -3831,9 +3780,9 @@ function createBtcSatsUsdPattern(client, acc) {
  */
 function createCentsSatsUsdPattern(client, acc) {
   return {
-    cents: createDay1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'cents')),
-    sats: createDay1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'sats')),
-    usd: createDay1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, acc),
+    cents: createMetricPattern2(client, _m(acc, 'cents')),
+    sats: createMetricPattern2(client, _m(acc, 'sats')),
+    usd: createMetricPattern2(client, acc),
   };
 }
 
@@ -4099,31 +4048,9 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Blocks_Time
- * @property {MetricsTree_Blocks_Time_Timestamp} timestamp
+ * @property {MetricPattern1<Timestamp>} timestamp
  * @property {MetricPattern20<Date>} date
  * @property {MetricPattern20<Timestamp>} timestampMonotonic
- */
-
-/**
- * @typedef {Object} MetricsTree_Blocks_Time_Timestamp
- * @property {MetricPattern20<Timestamp>} base
- * @property {MetricPattern3<Timestamp>} minute1
- * @property {MetricPattern4<Timestamp>} minute5
- * @property {MetricPattern5<Timestamp>} minute10
- * @property {MetricPattern6<Timestamp>} minute30
- * @property {MetricPattern7<Timestamp>} hour1
- * @property {MetricPattern8<Timestamp>} hour4
- * @property {MetricPattern9<Timestamp>} hour12
- * @property {MetricPattern10<Timestamp>} day1
- * @property {MetricPattern11<Timestamp>} day3
- * @property {MetricPattern12<Timestamp>} week1
- * @property {MetricPattern13<Timestamp>} month1
- * @property {MetricPattern14<Timestamp>} month3
- * @property {MetricPattern15<Timestamp>} month6
- * @property {MetricPattern16<Timestamp>} year1
- * @property {MetricPattern17<Timestamp>} year10
- * @property {MetricPattern18<Timestamp>} halvingepoch
- * @property {MetricPattern19<Timestamp>} difficultyepoch
  */
 
 /**
@@ -5280,7 +5207,7 @@ function createRatioPattern2(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Prices
  * @property {MetricsTree_Prices_Split} split
- * @property {CentsSatsUsdPattern} ohlc
+ * @property {MetricsTree_Prices_Ohlc} ohlc
  * @property {MetricsTree_Prices_Price} price
  */
 
@@ -5297,6 +5224,13 @@ function createRatioPattern2(client, acc) {
  * @property {MetricPattern2<Cents>} cents
  * @property {MetricPattern2<Dollars>} usd
  * @property {MetricPattern2<Sats>} sats
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Prices_Ohlc
+ * @property {MetricPattern2<OHLCCents>} cents
+ * @property {MetricPattern2<OHLCDollars>} usd
+ * @property {MetricPattern2<OHLCSats>} sats
  */
 
 /**
@@ -6660,26 +6594,7 @@ class BrkClient extends BrkClientBase {
           daysBeforeNextAdjustment: createMetricPattern1(this, 'days_before_next_difficulty_adjustment'),
         },
         time: {
-          timestamp: {
-            base: createMetricPattern20(this, 'timestamp'),
-            minute1: createMetricPattern3(this, 'timestamp_minute1'),
-            minute5: createMetricPattern4(this, 'timestamp_minute5'),
-            minute10: createMetricPattern5(this, 'timestamp_minute10'),
-            minute30: createMetricPattern6(this, 'timestamp_minute30'),
-            hour1: createMetricPattern7(this, 'timestamp_hour1'),
-            hour4: createMetricPattern8(this, 'timestamp_hour4'),
-            hour12: createMetricPattern9(this, 'timestamp_hour12'),
-            day1: createMetricPattern10(this, 'timestamp_day1'),
-            day3: createMetricPattern11(this, 'timestamp_day3'),
-            week1: createMetricPattern12(this, 'timestamp_week1'),
-            month1: createMetricPattern13(this, 'timestamp_month1'),
-            month3: createMetricPattern14(this, 'timestamp_month3'),
-            month6: createMetricPattern15(this, 'timestamp_month6'),
-            year1: createMetricPattern16(this, 'timestamp_year1'),
-            year10: createMetricPattern17(this, 'timestamp_year10'),
-            halvingepoch: createMetricPattern18(this, 'timestamp_halvingepoch'),
-            difficultyepoch: createMetricPattern19(this, 'timestamp_difficultyepoch'),
-          },
+          timestamp: createMetricPattern1(this, 'timestamp'),
           date: createMetricPattern20(this, 'date'),
           timestampMonotonic: createMetricPattern20(this, 'timestamp_monotonic'),
         },
@@ -7584,7 +7499,11 @@ class BrkClient extends BrkClientBase {
             sats: createMetricPattern2(this, 'price_close_sats'),
           },
         },
-        ohlc: createCentsSatsUsdPattern(this, 'price_ohlc'),
+        ohlc: {
+          cents: createMetricPattern2(this, 'price_ohlc_cents'),
+          usd: createMetricPattern2(this, 'price_ohlc'),
+          sats: createMetricPattern2(this, 'price_ohlc_sats'),
+        },
         price: {
           cents: createMetricPattern20(this, 'price_cents'),
           usd: createMetricPattern20(this, 'price'),

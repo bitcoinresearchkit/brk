@@ -28,6 +28,10 @@ impl Minute10 {
     pub fn from_timestamp(ts: Timestamp) -> Self {
         Self((*ts - INDEX_EPOCH) / MINUTE10_INTERVAL)
     }
+
+    pub fn to_timestamp(&self) -> Timestamp {
+        Timestamp::new(INDEX_EPOCH + self.0 * MINUTE10_INTERVAL)
+    }
 }
 
 impl From<Minute10> for usize {

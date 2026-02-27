@@ -1,5 +1,5 @@
 import { localhost } from "../utils/env.js";
-import { serdeChartableIndex } from "../utils/serde.js";
+import { INDEX_LABEL } from "../utils/serde.js";
 
 /**
  * Check if a metric pattern has at least one chartable index
@@ -8,7 +8,7 @@ import { serdeChartableIndex } from "../utils/serde.js";
  */
 function hasChartableIndex(node) {
   const indexes = node.indexes();
-  return indexes.some((idx) => serdeChartableIndex.serialize(idx) !== null);
+  return indexes.some((idx) => idx in INDEX_LABEL);
 }
 
 /**

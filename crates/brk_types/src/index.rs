@@ -238,7 +238,7 @@ impl Index {
             Self::Hour1 => HOUR1_INTERVAL,
             Self::Hour4 => HOUR4_INTERVAL,
             Self::Hour12 => HOUR12_INTERVAL,
-            Self::Day3 => DAY3_INTERVAL,
+            Self::Day3 => return Some(Day3::from(i).to_timestamp()),
             _ => return self.index_to_date(i).map(|d| d.into()),
         };
         Some(Timestamp::new(INDEX_EPOCH + i as u32 * interval))
@@ -276,7 +276,7 @@ impl Index {
             Self::Hour1 => HOUR1_INTERVAL,
             Self::Hour4 => HOUR4_INTERVAL,
             Self::Hour12 => HOUR12_INTERVAL,
-            Self::Day3 => DAY3_INTERVAL,
+            Self::Day3 => return Some(usize::from(Day3::from_timestamp(ts))),
             _ => return self.date_to_index(Date::from(ts)),
         };
         Some(((*ts - INDEX_EPOCH) / interval) as usize)
@@ -442,13 +442,13 @@ mod tests {
     }
 
     #[test]
-    fn test_date_to_index_day1_genesis() {
+    fn test_date_to_index_day1_zero() {
         assert_eq!(Index::Day1.date_to_index(Date::INDEX_ZERO), Some(0));
     }
 
     #[test]
-    fn test_date_to_index_day1_one() {
-        assert_eq!(Index::Day1.date_to_index(Date::INDEX_ONE), Some(1));
+    fn test_date_to_index_day1_genesis() {
+        assert_eq!(Index::Day1.date_to_index(Date::new(2009, 1, 3)), Some(2));
     }
 
     #[test]
@@ -494,11 +494,11 @@ mod tests {
     }
 
     #[test]
-    fn test_date_to_index_pre_genesis_returns_none() {
-        let pre_genesis = Date::new(2009, 1, 2);
-        assert!(Index::Day1.date_to_index(pre_genesis).is_none());
-        assert!(Index::Week1.date_to_index(pre_genesis).is_none());
-        assert!(Index::Month1.date_to_index(pre_genesis).is_none());
+    fn test_date_to_index_pre_epoch_returns_none() {
+        let pre_epoch = Date::new(2008, 12, 31);
+        assert!(Index::Day1.date_to_index(pre_epoch).is_none());
+        assert!(Index::Week1.date_to_index(pre_epoch).is_none());
+        assert!(Index::Month1.date_to_index(pre_epoch).is_none());
     }
 
     #[test]

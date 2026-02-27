@@ -1140,7 +1140,7 @@ def _index_to_date(index: str, i: int) -> Union[date, datetime]:
     elif index == 'day1':
         return _GENESIS if i == 0 else _DAY_ONE + timedelta(days=i - 1)
     elif index == 'day3':
-        return _EPOCH.date() + timedelta(days=i * 3)
+        return _EPOCH.date() - timedelta(days=1) + timedelta(days=i * 3)
     elif index == 'week1':
         return _GENESIS + timedelta(weeks=i)
     elif index == 'month1':
@@ -1180,7 +1180,7 @@ def _date_to_index(index: str, d: Union[date, datetime]) -> int:
             return 0
         return 1 + (dd - _DAY_ONE).days
     elif index == 'day3':
-        return (dd - date(2009, 1, 1)).days // 3
+        return (dd - date(2008, 12, 31)).days // 3
     elif index == 'week1':
         return (dd - _GENESIS).days // 7
     elif index == 'month1':
@@ -2645,29 +2645,6 @@ class GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern:
         self.unrealized_loss: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'unrealized_loss'))
         self.unrealized_profit: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'unrealized_profit'))
 
-class Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(Generic[T]):
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.day1: MetricPattern10[T] = MetricPattern10(client, _m(acc, 'day1'))
-        self.day3: MetricPattern11[T] = MetricPattern11(client, _m(acc, 'day3'))
-        self.difficultyepoch: MetricPattern19[T] = MetricPattern19(client, _m(acc, 'difficultyepoch'))
-        self.halvingepoch: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'halvingepoch'))
-        self.hour1: MetricPattern7[T] = MetricPattern7(client, _m(acc, 'hour1'))
-        self.hour12: MetricPattern9[T] = MetricPattern9(client, _m(acc, 'hour12'))
-        self.hour4: MetricPattern8[T] = MetricPattern8(client, _m(acc, 'hour4'))
-        self.minute1: MetricPattern3[T] = MetricPattern3(client, _m(acc, 'minute1'))
-        self.minute10: MetricPattern5[T] = MetricPattern5(client, _m(acc, 'minute10'))
-        self.minute30: MetricPattern6[T] = MetricPattern6(client, _m(acc, 'minute30'))
-        self.minute5: MetricPattern4[T] = MetricPattern4(client, _m(acc, 'minute5'))
-        self.month1: MetricPattern13[T] = MetricPattern13(client, _m(acc, 'month1'))
-        self.month3: MetricPattern14[T] = MetricPattern14(client, _m(acc, 'month3'))
-        self.month6: MetricPattern15[T] = MetricPattern15(client, _m(acc, 'month6'))
-        self.week1: MetricPattern12[T] = MetricPattern12(client, _m(acc, 'week1'))
-        self.year1: MetricPattern16[T] = MetricPattern16(client, _m(acc, 'year1'))
-        self.year10: MetricPattern17[T] = MetricPattern17(client, _m(acc, 'year10'))
-
 class GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -3145,9 +3122,9 @@ class CentsSatsUsdPattern:
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.cents: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern[OHLCCents] = Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'cents'))
-        self.sats: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern[OHLCSats] = Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, _m(acc, 'sats'))
-        self.usd: Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern[OHLCDollars] = Day1Day3DifficultyepochHalvingepochHour1Hour12Hour4Minute1Minute10Minute30Minute5Month1Month3Month6Week1Year1Year10Pattern(client, acc)
+        self.cents: MetricPattern2[Cents] = MetricPattern2(client, _m(acc, 'cents'))
+        self.sats: MetricPattern2[Sats] = MetricPattern2(client, _m(acc, 'sats'))
+        self.usd: MetricPattern2[Dollars] = MetricPattern2(client, acc)
 
 class HistogramLineSignalPattern:
     """Pattern struct for repeated tree structure."""
@@ -3251,34 +3228,11 @@ class MetricsTree_Blocks_Difficulty:
         self.blocks_before_next_adjustment: MetricPattern1[StoredU32] = MetricPattern1(client, 'blocks_before_next_difficulty_adjustment')
         self.days_before_next_adjustment: MetricPattern1[StoredF32] = MetricPattern1(client, 'days_before_next_difficulty_adjustment')
 
-class MetricsTree_Blocks_Time_Timestamp:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.base: MetricPattern20[Timestamp] = MetricPattern20(client, 'timestamp')
-        self.minute1: MetricPattern3[Timestamp] = MetricPattern3(client, 'timestamp_minute1')
-        self.minute5: MetricPattern4[Timestamp] = MetricPattern4(client, 'timestamp_minute5')
-        self.minute10: MetricPattern5[Timestamp] = MetricPattern5(client, 'timestamp_minute10')
-        self.minute30: MetricPattern6[Timestamp] = MetricPattern6(client, 'timestamp_minute30')
-        self.hour1: MetricPattern7[Timestamp] = MetricPattern7(client, 'timestamp_hour1')
-        self.hour4: MetricPattern8[Timestamp] = MetricPattern8(client, 'timestamp_hour4')
-        self.hour12: MetricPattern9[Timestamp] = MetricPattern9(client, 'timestamp_hour12')
-        self.day1: MetricPattern10[Timestamp] = MetricPattern10(client, 'timestamp_day1')
-        self.day3: MetricPattern11[Timestamp] = MetricPattern11(client, 'timestamp_day3')
-        self.week1: MetricPattern12[Timestamp] = MetricPattern12(client, 'timestamp_week1')
-        self.month1: MetricPattern13[Timestamp] = MetricPattern13(client, 'timestamp_month1')
-        self.month3: MetricPattern14[Timestamp] = MetricPattern14(client, 'timestamp_month3')
-        self.month6: MetricPattern15[Timestamp] = MetricPattern15(client, 'timestamp_month6')
-        self.year1: MetricPattern16[Timestamp] = MetricPattern16(client, 'timestamp_year1')
-        self.year10: MetricPattern17[Timestamp] = MetricPattern17(client, 'timestamp_year10')
-        self.halvingepoch: MetricPattern18[Timestamp] = MetricPattern18(client, 'timestamp_halvingepoch')
-        self.difficultyepoch: MetricPattern19[Timestamp] = MetricPattern19(client, 'timestamp_difficultyepoch')
-
 class MetricsTree_Blocks_Time:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.timestamp: MetricsTree_Blocks_Time_Timestamp = MetricsTree_Blocks_Time_Timestamp(client)
+        self.timestamp: MetricPattern1[Timestamp] = MetricPattern1(client, 'timestamp')
         self.date: MetricPattern20[Date] = MetricPattern20(client, 'date')
         self.timestamp_monotonic: MetricPattern20[Timestamp] = MetricPattern20(client, 'timestamp_monotonic')
 
@@ -4560,6 +4514,14 @@ class MetricsTree_Prices_Split:
         self.low: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_low')
         self.close: MetricsTree_Prices_Split_Close = MetricsTree_Prices_Split_Close(client)
 
+class MetricsTree_Prices_Ohlc:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cents: MetricPattern2[OHLCCents] = MetricPattern2(client, 'price_ohlc_cents')
+        self.usd: MetricPattern2[OHLCDollars] = MetricPattern2(client, 'price_ohlc')
+        self.sats: MetricPattern2[OHLCSats] = MetricPattern2(client, 'price_ohlc_sats')
+
 class MetricsTree_Prices_Price:
     """Metrics tree node."""
     
@@ -4573,7 +4535,7 @@ class MetricsTree_Prices:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.split: MetricsTree_Prices_Split = MetricsTree_Prices_Split(client)
-        self.ohlc: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_ohlc')
+        self.ohlc: MetricsTree_Prices_Ohlc = MetricsTree_Prices_Ohlc(client)
         self.price: MetricsTree_Prices_Price = MetricsTree_Prices_Price(client)
 
 class MetricsTree_Distribution_AnyAddressIndexes:

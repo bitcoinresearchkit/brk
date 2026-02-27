@@ -204,7 +204,7 @@ pub(crate) fn process_blocks(
     debug!("AddressCache created, entering main loop");
 
     // Cache for day1 lookups - same day1 repeats ~140 times per day
-    let mut cached_day1 = Day1::default();
+    let mut cached_day1: Option<Day1> = None;
     let mut cached_date_first_height = Height::ZERO;
     let mut cached_date_height_count = StoredU64::default();
 
@@ -428,12 +428,12 @@ pub(crate) fn process_blocks(
         // avoiding redundant PcoVec page decompressions.
         let date = height_to_date_vec[offset];
         let day1 = Day1::try_from(date).unwrap();
-        let (date_first_height, date_height_count) = if day1 == cached_day1 {
+        let (date_first_height, date_height_count) = if cached_day1 == Some(day1) {
             (cached_date_first_height, cached_date_height_count)
         } else {
             let fh: Height = day1_to_first_height.collect_one(day1).unwrap();
             let hc = day1_to_height_count.collect_one(day1).unwrap();
-            cached_day1 = day1;
+            cached_day1 = Some(day1);
             cached_date_first_height = fh;
             cached_date_height_count = hc;
             (fh, hc)

@@ -28,6 +28,10 @@ impl Hour12 {
     pub fn from_timestamp(ts: Timestamp) -> Self {
         Self((*ts - INDEX_EPOCH) / HOUR12_INTERVAL)
     }
+
+    pub fn to_timestamp(&self) -> Timestamp {
+        Timestamp::new(INDEX_EPOCH + self.0 * HOUR12_INTERVAL)
+    }
 }
 
 impl From<Hour12> for usize {

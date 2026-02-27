@@ -14,12 +14,49 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.time.timestamp.compute_first(
-            starting_indexes,
-            &indexer.vecs.blocks.timestamp,
-            indexes,
-            exit,
-        )?;
+        {
+            let ts = &mut self.time.timestamp;
+
+            macro_rules! period {
+                ($field:ident) => {
+                    ts.$field.compute_transform(
+                        starting_indexes.$field,
+                        &indexes.$field.first_height,
+                        |(idx, _, _)| (idx, idx.to_timestamp()),
+                        exit,
+                    )?;
+                };
+            }
+
+            period!(minute1);
+            period!(minute5);
+            period!(minute10);
+            period!(minute30);
+            period!(hour1);
+            period!(hour4);
+            period!(hour12);
+            period!(day1);
+            period!(day3);
+            period!(week1);
+            period!(month1);
+            period!(month3);
+            period!(month6);
+            period!(year1);
+            period!(year10);
+
+            ts.halvingepoch.compute_indirect(
+                starting_indexes.halvingepoch,
+                &indexes.halvingepoch.first_height,
+                &indexer.vecs.blocks.timestamp,
+                exit,
+            )?;
+            ts.difficultyepoch.compute_indirect(
+                starting_indexes.difficultyepoch,
+                &indexes.difficultyepoch.first_height,
+                &indexer.vecs.blocks.timestamp,
+                exit,
+            )?;
+        }
         self.count
             .compute(indexer, &self.time, starting_indexes, exit)?;
         self.interval

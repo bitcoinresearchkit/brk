@@ -291,9 +291,9 @@ class TestIndexToDate:
 
     def test_day3(self, day3_metric):
         dates = day3_metric.dates()
-        assert dates[0] == date(2009, 1, 1)  # epoch
-        assert dates[1] == date(2009, 1, 4)  # +3 days
-        assert dates[2] == date(2009, 1, 7)  # +6 days
+        assert dates[0] == date(2008, 12, 31)  # epoch - 1 day (TradingView-aligned)
+        assert dates[1] == date(2009, 1, 3)  # +3 days
+        assert dates[2] == date(2009, 1, 6)  # +6 days
 
     def test_hour1_returns_datetime(self, hour1_metric):
         """Sub-daily indexes return datetime, not date."""

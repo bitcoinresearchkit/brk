@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
-use super::{Date, Day1};
+use super::{Date, Day1, Timestamp};
 
 #[derive(
     Debug,
@@ -24,6 +24,12 @@ use super::{Date, Day1};
     JsonSchema,
 )]
 pub struct Week1(u16);
+
+impl Week1 {
+    pub fn to_timestamp(&self) -> Timestamp {
+        Timestamp::from(Date::from(*self))
+    }
+}
 
 impl From<u16> for Week1 {
     #[inline]

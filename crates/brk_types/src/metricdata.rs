@@ -237,14 +237,14 @@ mod tests {
         let metric = date_based_metric();
         let dates: Vec<_> = metric.dates().unwrap().collect();
         assert_eq!(dates.len(), 5);
-        // Day1 0 = Jan 3, 2009 (genesis)
+        // Day1 0 = Jan 1, 2009
         assert_eq!(dates[0].year(), 2009);
         assert_eq!(dates[0].month(), 1);
-        assert_eq!(dates[0].day(), 3);
-        // Day1 1 = Jan 9, 2009 (day one)
+        assert_eq!(dates[0].day(), 1);
+        // Day1 1 = Jan 2, 2009
         assert_eq!(dates[1].year(), 2009);
         assert_eq!(dates[1].month(), 1);
-        assert_eq!(dates[1].day(), 9);
+        assert_eq!(dates[1].day(), 2);
     }
 
     #[test]
@@ -271,13 +271,13 @@ mod tests {
         let metric = date_based_metric();
         let pairs: Vec<_> = metric.iter_dates().unwrap().collect();
         assert_eq!(pairs.len(), 5);
-        // First pair: (Jan 3 2009, 100)
+        // First pair: (Jan 1 2009, 100)
         assert_eq!(pairs[0].0.year(), 2009);
         assert_eq!(pairs[0].0.month(), 1);
-        assert_eq!(pairs[0].0.day(), 3);
+        assert_eq!(pairs[0].0.day(), 1);
         assert_eq!(pairs[0].1, &100);
-        // Second pair: (Jan 9 2009, 200)
-        assert_eq!(pairs[1].0.day(), 9);
+        // Second pair: (Jan 2 2009, 200)
+        assert_eq!(pairs[1].0.day(), 2);
         assert_eq!(pairs[1].1, &200);
     }
 
@@ -315,7 +315,7 @@ mod tests {
         let date_metric = DateMetricData::try_new(metric).unwrap();
         let pairs: Vec<_> = date_metric.iter_dates().unwrap().collect();
         assert_eq!(pairs.len(), 5);
-        assert_eq!(pairs[0].0.day(), 3);
+        assert_eq!(pairs[0].0.day(), 1);
         assert_eq!(pairs[0].1, &100);
     }
 
@@ -545,8 +545,8 @@ mod tests {
     #[test]
     fn test_timestamp_to_index_day1_via_date_fallback() {
         // Day1 goes through date_to_index fallback
-        // 2009-01-09 = Day1 index 1
+        // 2009-01-09 = Day1 index 8
         let ts = Timestamp::from(Date::new(2009, 1, 9));
-        assert_eq!(Index::Day1.timestamp_to_index(ts), Some(1));
+        assert_eq!(Index::Day1.timestamp_to_index(ts), Some(8));
     }
 }

@@ -11,7 +11,7 @@ use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use crate::{FromCoarserIndex, Month1, Month3, Month6, Week1, Year1, Year10};
 
-use super::Date;
+use super::{Date, Timestamp};
 
 #[derive(
     Debug,
@@ -31,6 +31,10 @@ pub struct Day1(u16);
 
 impl Day1 {
     pub const BYTES: usize = size_of::<Self>();
+
+    pub fn to_timestamp(&self) -> Timestamp {
+        Timestamp::from(Date::from(*self))
+    }
 }
 
 impl From<Day1> for usize {
@@ -74,14 +78,8 @@ impl TryFrom<Date> for Day1 {
         let value_ = jiff::civil::Date::from(value);
         if value_ < Date::INDEX_ZERO_ {
             Err(Error::UnindexableDate)
-        } else if value == Date::INDEX_ZERO {
-            Ok(Self(0))
-        } else if value_ < Date::INDEX_ONE_ {
-            Err(Error::UnindexableDate)
-        } else if value == Date::INDEX_ONE {
-            Ok(Self(1))
         } else {
-            Ok(Self(Date::INDEX_ONE_.until(value_)?.get_days() as u16 + 1))
+            Ok(Self(Date::INDEX_ZERO_.until(value_)?.get_days() as u16))
         }
     }
 }
@@ -101,40 +99,21 @@ impl Rem<usize> for Day1 {
 
 impl FromCoarserIndex<Week1> for Day1 {
     fn min_from(coarser: Week1) -> usize {
-        let coarser = usize::from(coarser);
-        if coarser == 0 {
-            0
-        } else if coarser == 1 {
-            1
-        } else {
-            4 + (coarser - 2) * 7
-        }
+        usize::from(coarser) * 7
     }
 
     fn max_from_(coarser: Week1) -> usize {
-        let coarser = usize::from(coarser);
-        if coarser == 0 {
-            0
-        } else if coarser == 1 {
-            3
-        } else {
-            3 + (coarser - 1) * 7
-        }
+        usize::from(coarser) * 7 + 6
     }
 }
 
 impl FromCoarserIndex<Month1> for Day1 {
     fn min_from(coarser: Month1) -> usize {
-        let coarser = u16::from(coarser);
-        if coarser == 0 {
-            0
-        } else {
-            let d = Date::new(2009, 1, 1)
-                .into_jiff()
-                .checked_add(Span::new().months(coarser))
-                .unwrap();
-            Day1::try_from(Date::from(d)).unwrap().into()
-        }
+        let d = Date::new(2009, 1, 1)
+            .into_jiff()
+            .checked_add(Span::new().months(u16::from(coarser)))
+            .unwrap();
+        Day1::try_from(Date::from(d)).unwrap().into()
     }
 
     fn max_from_(coarser: Month1) -> usize {
@@ -148,16 +127,11 @@ impl FromCoarserIndex<Month1> for Day1 {
 
 impl FromCoarserIndex<Month3> for Day1 {
     fn min_from(coarser: Month3) -> usize {
-        let coarser = u8::from(coarser);
-        if coarser == 0 {
-            0
-        } else {
-            let d = Date::new(2009, 1, 1)
-                .into_jiff()
-                .checked_add(Span::new().months(3 * coarser))
-                .unwrap();
-            Day1::try_from(Date::from(d)).unwrap().into()
-        }
+        let d = Date::new(2009, 1, 1)
+            .into_jiff()
+            .checked_add(Span::new().months(3 * u8::from(coarser)))
+            .unwrap();
+        Day1::try_from(Date::from(d)).unwrap().into()
     }
 
     fn max_from_(coarser: Month3) -> usize {
@@ -171,16 +145,11 @@ impl FromCoarserIndex<Month3> for Day1 {
 
 impl FromCoarserIndex<Month6> for Day1 {
     fn min_from(coarser: Month6) -> usize {
-        let coarser = u8::from(coarser);
-        if coarser == 0 {
-            0
-        } else {
-            let d = Date::new(2009, 1, 1)
-                .into_jiff()
-                .checked_add(Span::new().months(6 * coarser))
-                .unwrap();
-            Day1::try_from(Date::from(d)).unwrap().into()
-        }
+        let d = Date::new(2009, 1, 1)
+            .into_jiff()
+            .checked_add(Span::new().months(6 * u8::from(coarser)))
+            .unwrap();
+        Day1::try_from(Date::from(d)).unwrap().into()
     }
 
     fn max_from_(coarser: Month6) -> usize {
@@ -194,14 +163,9 @@ impl FromCoarserIndex<Month6> for Day1 {
 
 impl FromCoarserIndex<Year1> for Day1 {
     fn min_from(coarser: Year1) -> usize {
-        let coarser = u8::from(coarser);
-        if coarser == 0 {
-            0
-        } else {
-            Self::try_from(Date::new(2009 + coarser as u16, 1, 1))
-                .unwrap()
-                .into()
-        }
+        Self::try_from(Date::new(2009 + u8::from(coarser) as u16, 1, 1))
+            .unwrap()
+            .into()
     }
 
     fn max_from_(coarser: Year1) -> usize {
@@ -215,6 +179,7 @@ impl FromCoarserIndex<Year10> for Day1 {
     fn min_from(coarser: Year10) -> usize {
         let coarser = u8::from(coarser);
         if coarser == 0 {
+            // Decade 0 starts at 2000, before INDEX_ZERO (2009-01-01)
             0
         } else {
             Self::try_from(Date::new(2000 + 10 * coarser as u16, 1, 1))
