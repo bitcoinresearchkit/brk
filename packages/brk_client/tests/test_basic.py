@@ -41,7 +41,7 @@ def test_fetch_typed_metric():
     print(a)
     b = client.metrics.outputs.count.utxo_count.by.height().tail(10).fetch()
     print(b)
-    c = client.metrics.prices.usd.split.close.by.day1().tail(10).fetch()
+    c = client.metrics.prices.split.close.usd.by.day1().tail(10).fetch()
     print(c)
     d = (
         client.metrics.market.dca.period_lump_sum_stack._10y.usd.by.day1()
@@ -61,5 +61,5 @@ def test_fetch_typed_metric():
         .fetch()
     )
     print(f)
-    g = client.metrics.prices.usd.ohlc.by.day1().tail(10).fetch()
+    g = client.metrics.prices.ohlc.usd.by.day1().tail(10).fetch()
     print(g)

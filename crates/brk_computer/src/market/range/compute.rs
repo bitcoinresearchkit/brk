@@ -16,7 +16,7 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let price = &prices.usd.price;
+        let price = &prices.price.usd;
 
         self.price_1w_min.usd.height.compute_rolling_min_from_starts(
             starting_indexes.height,

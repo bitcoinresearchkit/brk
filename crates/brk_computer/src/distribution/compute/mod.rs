@@ -7,10 +7,7 @@ mod write;
 
 pub(crate) use block_loop::process_blocks;
 pub(crate) use context::{ComputeContext, PriceRangeMax};
-pub(crate) use readers::{
-    TxInReaders, TxOutData, TxOutReaders, VecsReaders, build_txinindex_to_txindex,
-    build_txoutindex_to_txindex,
-};
+pub(crate) use readers::{IndexToTxIndexBuf, TxInReaders, TxOutData, TxOutReaders, VecsReaders};
 pub(crate) use recover::{StartMode, determine_start_mode, recover_state, reset_state};
 
 /// Flush checkpoint interval (every N blocks).

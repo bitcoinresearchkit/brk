@@ -31,7 +31,7 @@ use super::{
     },
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
     BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, TxInReaders, TxOutReaders,
-    VecsReaders, build_txinindex_to_txindex, build_txoutindex_to_txindex,
+    IndexToTxIndexBuf, VecsReaders,
 };
 
 /// Process all blocks from starting_height to last_height.
@@ -78,7 +78,7 @@ pub(crate) fn process_blocks(
     let txindex_to_input_count = &indexes.txindex.input_count;
 
     // From price - use cents for computation:
-    let height_to_price = &prices.cents.price;
+    let height_to_price = &prices.price.cents;
 
     // Access pre-computed vectors from context for thread-safe access
     let height_to_price_vec = &ctx.height_to_price;
@@ -127,9 +127,11 @@ pub(crate) fn process_blocks(
     };
     debug!("txindex_to_height RangeMap built");
 
-    // Create reusable iterators for sequential txout/txin reads (16KB buffered)
+    // Create reusable iterators and buffers for per-block reads
     let mut txout_iters = TxOutReaders::new(indexer);
     let mut txin_iters = TxInReaders::new(indexer, inputs, &mut txindex_to_height);
+    let mut txout_to_txindex_buf = IndexToTxIndexBuf::new();
+    let mut txin_to_txindex_buf = IndexToTxIndexBuf::new();
 
     // Pre-collect first address indexes per type for the block range
     let first_p2a_vec = indexer
@@ -230,11 +232,11 @@ pub(crate) fn process_blocks(
         debug_assert_eq!(ctx.timestamp_at(height), timestamp);
         debug_assert_eq!(ctx.price_at(height), block_price);
 
-        // Build txindex mappings for this block (pass ReadableVec refs directly)
+        // Build txindex mappings for this block (reuses internal buffers)
         let txoutindex_to_txindex =
-            build_txoutindex_to_txindex(first_txindex, tx_count, txindex_to_output_count);
+            txout_to_txindex_buf.build(first_txindex, tx_count, txindex_to_output_count);
         let txinindex_to_txindex =
-            build_txinindex_to_txindex(first_txindex, tx_count, txindex_to_input_count);
+            txin_to_txindex_buf.build(first_txindex, tx_count, txindex_to_input_count);
 
         // Get first address indexes for this height from pre-collected vecs
         let first_addressindexes = ByAddressType {

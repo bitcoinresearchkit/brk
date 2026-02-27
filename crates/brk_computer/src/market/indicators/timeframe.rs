@@ -16,10 +16,10 @@ pub(super) fn collect_returns(tf: &str, returns: &ReturnsVecs) -> Vec<f32> {
 
 pub(super) fn collect_closes(tf: &str, prices: &prices::Vecs) -> Vec<Dollars> {
     match tf {
-        "1d" => prices.usd.split.close.day1.collect_or_default(),
-        "1w" => prices.usd.split.close.week1.collect_or_default(),
-        "1m" => prices.usd.split.close.month1.collect_or_default(),
-        "1y" => prices.usd.split.close.year1.collect_or_default(),
+        "1d" => prices.split.close.usd.day1.collect_or_default(),
+        "1w" => prices.split.close.usd.week1.collect_or_default(),
+        "1m" => prices.split.close.usd.month1.collect_or_default(),
+        "1y" => prices.split.close.usd.year1.collect_or_default(),
         _ => unreachable!(),
     }
 }

@@ -153,42 +153,39 @@ impl VecsReaders {
     }
 }
 
-/// Build txoutindex -> txindex mapping for a block.
-pub(crate) fn build_txoutindex_to_txindex(
-    block_first_txindex: TxIndex,
-    block_tx_count: u64,
-    txindex_to_count: &impl ReadableVec<TxIndex, StoredU64>,
-) -> Vec<TxIndex> {
-    build_index_to_txindex(block_first_txindex, block_tx_count, txindex_to_count)
+/// Reusable buffers for per-block txindex mapping construction.
+pub(crate) struct IndexToTxIndexBuf {
+    counts: Vec<StoredU64>,
+    result: Vec<TxIndex>,
 }
 
-/// Build txinindex -> txindex mapping for a block.
-pub(crate) fn build_txinindex_to_txindex(
-    block_first_txindex: TxIndex,
-    block_tx_count: u64,
-    txindex_to_count: &impl ReadableVec<TxIndex, StoredU64>,
-) -> Vec<TxIndex> {
-    build_index_to_txindex(block_first_txindex, block_tx_count, txindex_to_count)
-}
-
-/// Build index -> txindex mapping for a block (shared implementation).
-fn build_index_to_txindex(
-    block_first_txindex: TxIndex,
-    block_tx_count: u64,
-    txindex_to_count: &impl ReadableVec<TxIndex, StoredU64>,
-) -> Vec<TxIndex> {
-    let first = block_first_txindex.to_usize();
-
-    let counts: Vec<StoredU64> =
-        txindex_to_count.collect_range_at(first, first + block_tx_count as usize);
-
-    let total: u64 = counts.iter().map(|c| u64::from(*c)).sum();
-    let mut result = Vec::with_capacity(total as usize);
-
-    for (offset, count) in counts.iter().enumerate() {
-        let txindex = TxIndex::from(first + offset);
-        result.extend(std::iter::repeat_n(txindex, u64::from(*count) as usize));
+impl IndexToTxIndexBuf {
+    pub(crate) fn new() -> Self {
+        Self {
+            counts: Vec::new(),
+            result: Vec::new(),
+        }
     }
 
-    result
+    /// Build index -> txindex mapping for a block, reusing internal buffers.
+    pub(crate) fn build(
+        &mut self,
+        block_first_txindex: TxIndex,
+        block_tx_count: u64,
+        txindex_to_count: &impl ReadableVec<TxIndex, StoredU64>,
+    ) -> &[TxIndex] {
+        let first = block_first_txindex.to_usize();
+        txindex_to_count.collect_range_into_at(first, first + block_tx_count as usize, &mut self.counts);
+
+        let total: u64 = self.counts.iter().map(|c| u64::from(*c)).sum();
+        self.result.clear();
+        self.result.reserve(total as usize);
+
+        for (offset, count) in self.counts.iter().enumerate() {
+            let txindex = TxIndex::from(first + offset);
+            self.result.extend(std::iter::repeat_n(txindex, u64::from(*count) as usize));
+        }
+
+        &self.result
+    }
 }

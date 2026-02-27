@@ -331,31 +331,38 @@ impl UnrealizedBase {
             .min()
             .unwrap_or(0);
 
+        // Pre-collect all cohort data to avoid per-element BytesVec reads in nested loop
+        let invested_profit_ranges: Vec<Vec<CentsSats>> = others
+            .iter()
+            .map(|o| o.invested_capital_in_profit_raw.collect_range_at(start, end))
+            .collect();
+        let invested_loss_ranges: Vec<Vec<CentsSats>> = others
+            .iter()
+            .map(|o| o.invested_capital_in_loss_raw.collect_range_at(start, end))
+            .collect();
+        let investor_profit_ranges: Vec<Vec<CentsSquaredSats>> = others
+            .iter()
+            .map(|o| o.investor_cap_in_profit_raw.collect_range_at(start, end))
+            .collect();
+        let investor_loss_ranges: Vec<Vec<CentsSquaredSats>> = others
+            .iter()
+            .map(|o| o.investor_cap_in_loss_raw.collect_range_at(start, end))
+            .collect();
+
         for i in start..end {
             let height = Height::from(i);
+            let local_i = i - start;
 
             let mut sum_invested_profit = CentsSats::ZERO;
             let mut sum_invested_loss = CentsSats::ZERO;
             let mut sum_investor_profit = CentsSquaredSats::ZERO;
             let mut sum_investor_loss = CentsSquaredSats::ZERO;
 
-            for o in others.iter() {
-                sum_invested_profit += o
-                    .invested_capital_in_profit_raw
-                    .collect_one_at(i)
-                    .unwrap();
-                sum_invested_loss += o
-                    .invested_capital_in_loss_raw
-                    .collect_one_at(i)
-                    .unwrap();
-                sum_investor_profit += o
-                    .investor_cap_in_profit_raw
-                    .collect_one_at(i)
-                    .unwrap();
-                sum_investor_loss += o
-                    .investor_cap_in_loss_raw
-                    .collect_one_at(i)
-                    .unwrap();
+            for idx in 0..others.len() {
+                sum_invested_profit += invested_profit_ranges[idx][local_i];
+                sum_invested_loss += invested_loss_ranges[idx][local_i];
+                sum_investor_profit += investor_profit_ranges[idx][local_i];
+                sum_investor_loss += investor_loss_ranges[idx][local_i];
             }
 
             self.invested_capital_in_profit_raw
@@ -383,7 +390,7 @@ impl UnrealizedBase {
             starting_indexes.height,
             &self.investor_cap_in_loss_raw,
             &self.invested_capital_in_loss_raw,
-            &prices.cents.price,
+            &prices.price.cents,
             |(h, investor_cap, invested_cap, spot, ..)| {
                 if invested_cap.inner() == 0 {
                     return (h, Dollars::ZERO);
@@ -403,7 +410,7 @@ impl UnrealizedBase {
             starting_indexes.height,
             &self.investor_cap_in_profit_raw,
             &self.invested_capital_in_profit_raw,
-            &prices.cents.price,
+            &prices.price.cents,
             |(h, investor_cap, invested_cap, spot, ..)| {
                 if invested_cap.inner() == 0 {
                     return (h, Dollars::ZERO);

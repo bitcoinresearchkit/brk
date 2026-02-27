@@ -1,22 +1,28 @@
+pub(crate) mod by_unit;
 mod compute;
 pub(crate) mod ohlcs;
-pub(crate) mod split;
-
-pub mod cents;
-pub mod sats;
-pub mod usd;
-
-pub use cents::Vecs as CentsVecs;
-pub use sats::Vecs as SatsVecs;
-pub use usd::Vecs as UsdVecs;
 
 use std::path::Path;
 
 use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::{Database, Rw, StorageMode, PAGE_SIZE};
+use vecdb::{
+    Database, ImportableVec, LazyVecFrom1, PcoVec, ReadableCloneableVec, Rw, StorageMode,
+    PAGE_SIZE,
+};
 
-use crate::indexes;
+use crate::{
+    indexes,
+    internal::{
+        CentsUnsignedToDollars, CentsUnsignedToSats, ComputedHeightDerivedLast, EagerIndexes,
+        LazyEagerIndexes, OhlcCentsToDollars, OhlcCentsToSats,
+    },
+};
+
+use by_unit::{
+    OhlcByUnit, PriceByUnit, SplitByUnit, SplitCloseByUnit, SplitIndexesByUnit,
+};
+use ohlcs::{LazyOhlcVecs, OhlcVecs};
 
 pub const DB_NAME: &str = "prices";
 
@@ -25,9 +31,9 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub(crate) db: Database,
 
-    pub cents: CentsVecs<M>,
-    pub usd: UsdVecs,
-    pub sats: SatsVecs,
+    pub split: SplitByUnit<M>,
+    pub ohlc: OhlcByUnit<M>,
+    pub price: PriceByUnit<M>,
 }
 
 impl Vecs {
@@ -56,15 +62,143 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> brk_error::Result<Self> {
-        let cents = CentsVecs::forced_import(db, version, indexes)?;
-        let usd = UsdVecs::forced_import(version, indexes, &cents);
-        let sats = SatsVecs::forced_import(version, indexes, &cents);
+        let version = version + Version::new(11);
+
+        // ── Cents (eager, stored) ───────────────────────────────────
+
+        let price_cents = PcoVec::forced_import(db, "price_cents", version)?;
+
+        let open_cents = EagerIndexes::forced_import(db, "price_open_cents", version)?;
+        let high_cents = EagerIndexes::forced_import(db, "price_high_cents", version)?;
+        let low_cents = EagerIndexes::forced_import(db, "price_low_cents", version)?;
+
+        let close_cents = ComputedHeightDerivedLast::forced_import(
+            "price_close_cents",
+            price_cents.read_only_boxed_clone(),
+            version,
+            indexes,
+        );
+
+        let ohlc_cents = OhlcVecs::forced_import(db, "price_ohlc_cents", version)?;
+
+        // ── USD (lazy from cents) ───────────────────────────────────
+
+        let price_usd = LazyVecFrom1::transformed::<CentsUnsignedToDollars>(
+            "price",
+            version,
+            price_cents.read_only_boxed_clone(),
+        );
+
+        let open_usd = LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>(
+            "price_open",
+            version,
+            &open_cents,
+        );
+        let high_usd = LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>(
+            "price_high",
+            version,
+            &high_cents,
+        );
+        let low_usd = LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>(
+            "price_low",
+            version,
+            &low_cents,
+        );
+
+        let close_usd = ComputedHeightDerivedLast::forced_import(
+            "price_close",
+            price_usd.read_only_boxed_clone(),
+            version,
+            indexes,
+        );
+
+        let ohlc_usd = LazyOhlcVecs::from_eager_ohlc_indexes::<OhlcCentsToDollars>(
+            "price_ohlc",
+            version,
+            &ohlc_cents,
+        );
+
+        // ── Sats (lazy from cents, high↔low swapped) ───────────────
+
+        let price_sats = LazyVecFrom1::transformed::<CentsUnsignedToSats>(
+            "price_sats",
+            version,
+            price_cents.read_only_boxed_clone(),
+        );
+
+        let open_sats = LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToSats>(
+            "price_open_sats",
+            version,
+            &open_cents,
+        );
+        // Sats are inversely related to cents (sats = 10B/cents), so high↔low are swapped
+        let high_sats = LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToSats>(
+            "price_high_sats",
+            version,
+            &low_cents,
+        );
+        let low_sats = LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToSats>(
+            "price_low_sats",
+            version,
+            &high_cents,
+        );
+
+        let close_sats = ComputedHeightDerivedLast::forced_import(
+            "price_close_sats",
+            price_sats.read_only_boxed_clone(),
+            version,
+            indexes,
+        );
+
+        // OhlcCentsToSats handles the high↔low swap internally
+        let ohlc_sats = LazyOhlcVecs::from_eager_ohlc_indexes::<OhlcCentsToSats>(
+            "price_ohlc_sats",
+            version,
+            &ohlc_cents,
+        );
+
+        // ── Assemble pivoted structure ──────────────────────────────
+
+        let split = SplitByUnit {
+            open: SplitIndexesByUnit {
+                cents: open_cents,
+                usd: open_usd,
+                sats: open_sats,
+            },
+            high: SplitIndexesByUnit {
+                cents: high_cents,
+                usd: high_usd,
+                sats: high_sats,
+            },
+            low: SplitIndexesByUnit {
+                cents: low_cents,
+                usd: low_usd,
+                sats: low_sats,
+            },
+            close: SplitCloseByUnit {
+                cents: close_cents,
+                usd: close_usd,
+                sats: close_sats,
+            },
+        };
+
+        let ohlc = OhlcByUnit {
+            cents: ohlc_cents,
+            usd: ohlc_usd,
+            sats: ohlc_sats,
+        };
+
+        let price = PriceByUnit {
+            cents: price_cents,
+            usd: price_usd,
+            sats: price_sats,
+        };
 
         Ok(Self {
             db: db.clone(),
-            cents,
-            usd,
-            sats,
+            split,
+            ohlc,
+            price,
         })
     }
 

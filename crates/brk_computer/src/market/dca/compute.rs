@@ -23,7 +23,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let h2d = &indexes.height.day1;
-        let close = &prices.usd.split.close.day1;
+        let close = &prices.split.close.usd.day1;
 
         let first_price_di = Day1::try_from(Date::new(2010, 7, 12))
             .unwrap()
@@ -97,7 +97,7 @@ impl Vecs {
         {
             returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
                 starting_indexes.height,
-                &prices.usd.price,
+                &prices.price.usd,
                 &average_price.usd.height,
                 exit,
             )?;
@@ -165,7 +165,7 @@ impl Vecs {
         {
             returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
                 starting_indexes.height,
-                &prices.usd.price,
+                &prices.price.usd,
                 &lookback_price.usd.height,
                 exit,
             )?;
@@ -188,11 +188,16 @@ impl Vecs {
         let start_days = super::ByDcaClass::<()>::start_days();
         for (stack, day1) in self.class_stack.iter_mut().zip(start_days) {
             let mut last_di: Option<Day1> = None;
+            let mut prev_value = if sh > 0 {
+                stack.sats.height.collect_one_at(sh - 1).unwrap_or_default()
+            } else {
+                Sats::ZERO
+            };
 
             stack.sats.height.compute_transform(
                 starting_indexes.height,
                 h2d,
-                |(h, di, this)| {
+                |(h, di, _)| {
                     let hi = h.to_usize();
 
                     if last_di.is_none() && hi > 0 {
@@ -201,6 +206,7 @@ impl Vecs {
 
                     if di < day1 {
                         last_di = Some(di);
+                        prev_value = Sats::ZERO;
                         return (h, Sats::ZERO);
                     }
 
@@ -208,17 +214,19 @@ impl Vecs {
                     last_di = Some(di);
 
                     let same_day = prev_di.is_some_and(|prev| prev == di);
-                    if same_day {
-                        (h, this.collect_one_at(hi - 1).unwrap_or_default())
+                    let result = if same_day {
+                        prev_value
                     } else {
                         let prev = if hi > 0 && prev_di.is_some_and(|pd| pd >= day1) {
-                            this.collect_one_at(hi - 1).unwrap_or_default()
+                            prev_value
                         } else {
                             Sats::ZERO
                         };
                         let s = close.collect_one_flat(di).map(sats_from_dca).unwrap_or(Sats::ZERO);
-                        (h, prev + s)
-                    }
+                        prev + s
+                    };
+                    prev_value = result;
+                    (h, result)
                 },
                 exit,
             )?;
@@ -260,7 +268,7 @@ impl Vecs {
 
             returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
                 starting_indexes.height,
-                &prices.usd.price,
+                &prices.price.usd,
                 &average_price.usd.height,
                 exit,
             )?;
@@ -457,11 +465,17 @@ fn compute_cumulative<T: PcoVecValue + Default>(
     mut accumulate: impl FnMut(T, StoredF32) -> T,
 ) -> Result<()> {
     let mut last_di: Option<Day1> = None;
+    let sh = starting_height.to_usize();
+    let mut prev_value = if sh > 0 {
+        output.collect_one_at(sh - 1).unwrap_or_default()
+    } else {
+        T::default()
+    };
 
     output.compute_transform(
         starting_height,
         h2d,
-        |(h, di, this)| {
+        |(h, di, _)| {
             let hi = h.to_usize();
 
             if last_di.is_none() && hi > 0 {
@@ -470,6 +484,7 @@ fn compute_cumulative<T: PcoVecValue + Default>(
 
             if di < from_day1 {
                 last_di = Some(di);
+                prev_value = T::default();
                 return (h, T::default());
             }
 
@@ -477,17 +492,19 @@ fn compute_cumulative<T: PcoVecValue + Default>(
             last_di = Some(di);
 
             let same_day = prev_di.is_some_and(|prev| prev == di);
-            if same_day {
-                (h, this.collect_one_at(hi - 1).unwrap_or_default())
+            let result = if same_day {
+                prev_value
             } else {
                 let prev = if hi > 0 && prev_di.is_some_and(|pd| pd >= from_day1) {
-                    this.collect_one_at(hi - 1).unwrap_or_default()
+                    prev_value
                 } else {
                     initial
                 };
                 let ret = returns.collect_one_flat(di).unwrap_or_default();
-                (h, accumulate(prev, ret))
-            }
+                accumulate(prev, ret)
+            };
+            prev_value = result;
+            (h, result)
         },
         exit,
     )?;

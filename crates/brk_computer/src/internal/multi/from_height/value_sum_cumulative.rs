@@ -63,7 +63,7 @@ impl ValueFromHeightSumCumulative {
             Ok(vec.compute_binary::<Sats, Dollars, SatsToDollars>(
                 max_from,
                 &self.sats.height,
-                &prices.usd.price,
+                &prices.price.usd,
                 exit,
             )?)
         })

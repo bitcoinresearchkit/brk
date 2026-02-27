@@ -697,15 +697,26 @@ impl RealizedBase {
             .min(self.investor_price_cents.height.len());
         let end = others.iter().map(|o| o.cap_raw.len()).min().unwrap_or(0);
 
+        // Pre-collect all cohort data to avoid per-element BytesVec reads in nested loop
+        let cap_ranges: Vec<Vec<CentsSats>> = others
+            .iter()
+            .map(|o| o.cap_raw.collect_range_at(start, end))
+            .collect();
+        let investor_cap_ranges: Vec<Vec<CentsSquaredSats>> = others
+            .iter()
+            .map(|o| o.investor_cap_raw.collect_range_at(start, end))
+            .collect();
+
         for i in start..end {
             let height = Height::from(i);
+            let local_i = i - start;
 
             let mut sum_cap = CentsSats::ZERO;
             let mut sum_investor_cap = CentsSquaredSats::ZERO;
 
-            for o in others.iter() {
-                sum_cap += o.cap_raw.collect_one_at(i).unwrap();
-                sum_investor_cap += o.investor_cap_raw.collect_one_at(i).unwrap();
+            for idx in 0..others.len() {
+                sum_cap += cap_ranges[idx][local_i];
+                sum_investor_cap += investor_cap_ranges[idx][local_i];
             }
 
             self.cap_raw.truncate_push(height, sum_cap)?;
@@ -842,14 +853,14 @@ impl RealizedBase {
 
         self.realized_price_extra.compute_ratio(
             starting_indexes,
-            &prices.usd.price,
+            &prices.price.usd,
             &self.realized_price.usd.height,
             exit,
         )?;
 
         self.investor_price_extra.compute_ratio(
             starting_indexes,
-            &prices.usd.price,
+            &prices.price.usd,
             &self.investor_price.usd.height,
             exit,
         )?;

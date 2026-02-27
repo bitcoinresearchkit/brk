@@ -249,7 +249,7 @@ impl Vecs {
             // Recover chain_state from stored values
             debug!("recovering chain_state from stored values");
             let height_to_timestamp = &blocks.time.timestamp_monotonic;
-            let height_to_price = &prices.cents.price;
+            let height_to_price = &prices.price.cents;
 
             let end = usize::from(recovered_height);
             let timestamp_data: Vec<_> = height_to_timestamp.collect_range_at(0, end);

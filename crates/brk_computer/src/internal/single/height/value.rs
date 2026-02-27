@@ -51,7 +51,7 @@ impl ValueFromHeight {
         self.usd.compute_binary::<Sats, Dollars, SatsToDollars>(
             max_from,
             &self.sats,
-            &prices.usd.price,
+            &prices.price.usd,
             exit,
         )?;
         Ok(())

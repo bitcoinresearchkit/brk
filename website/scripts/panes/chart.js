@@ -45,7 +45,7 @@ export function init() {
     const usdPrice = {
       type: "Candlestick",
       title: "Price",
-      metric: brk.metrics.prices.usd.ohlc,
+      metric: brk.metrics.prices.ohlc.usd,
     };
     result.set(Unit.usd, [usdPrice, ...(optionTop.get(Unit.usd) ?? [])]);
 
@@ -54,7 +54,7 @@ export function init() {
     const satsPrice = {
       type: "Candlestick",
       title: "Price",
-      metric: brk.metrics.prices.sats.ohlc,
+      metric: brk.metrics.prices.ohlc.sats,
       colors: /** @type {const} */ ([colors.bi.p1[1], colors.bi.p1[0]]),
     };
     result.set(Unit.sats, [satsPrice, ...(optionTop.get(Unit.sats) ?? [])]);

@@ -14,7 +14,7 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close = &prices.usd.price;
+        let close = &prices.price.usd;
 
         for (sma, period) in [
             (&mut self.price_1w_sma, 7),
@@ -42,7 +42,7 @@ impl Vecs {
         }
 
         let h2d = &indexes.height.day1;
-        let closes: Vec<Dollars> = prices.usd.split.close.day1.collect_or_default();
+        let closes: Vec<Dollars> = prices.split.close.usd.day1.collect_or_default();
 
         for (ema, period) in [
             (&mut self.price_1w_ema, 7),

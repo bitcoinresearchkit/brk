@@ -11,7 +11,7 @@ console.log("Testing MetricData helpers...\n");
 
 // Fetch a date-based metric
 console.log("1. Fetching price data (day1):");
-const price = await client.metrics.prices.usd.split.close.by.day1.first(5);
+const price = await client.metrics.prices.split.close.usd.by.day1.first(5);
 console.log(
   `   Total: ${price.total}, Start: ${price.start}, End: ${price.end}`,
 );
@@ -95,7 +95,7 @@ if (count !== 5) throw new Error("Expected 5 iterations");
 
 // Test with non-date-based index (height)
 console.log("\n11. Testing height-based metric:");
-const heightMetric = await client.metrics.prices.usd.price.by.height.last(3);
+const heightMetric = await client.metrics.prices.price.usd.by.height.last(3);
 console.log(
   `   Total: ${heightMetric.total}, Start: ${heightMetric.start}, End: ${heightMetric.end}`,
 );
@@ -135,7 +135,7 @@ console.log(`   Iterated ${heightCount} items`);
 // Test different date indexes
 console.log("\n13. Testing month1:");
 const monthMetric =
-  await client.metrics.prices.usd.split.close.by.month1.first(3);
+  await client.metrics.prices.split.close.usd.by.month1.first(3);
 const monthDates = monthMetric.dates();
 console.log(`   First month: ${monthDates[0].toISOString()}`);
 // MonthIndex 0 = Jan 1, 2009
@@ -238,7 +238,7 @@ console.log(`   Roundtrip day1 100: ${testDate.toISOString()} -> ${roundtrip}`);
 
 // Test slice with Date
 console.log("\n16. Testing slice with Date:");
-const dateSlice = await client.metrics.prices.usd.split.close.by.day1
+const dateSlice = await client.metrics.prices.split.close.usd.by.day1
   .slice(new Date(Date.UTC(2020, 0, 1)), new Date(Date.UTC(2020, 0, 4)))
   .fetch();
 console.log(

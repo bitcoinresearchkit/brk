@@ -84,9 +84,9 @@ impl Query {
         let day1 = Day1::try_from(date).map_err(|e| Error::Parse(e.to_string()))?;
         let price = &self.computer().prices;
         let spot = price
-            .cents
             .split
             .close
+            .cents
             .day1
             .collect_one_flat(day1)
             .ok_or_else(|| Error::NotFound(format!("No price data for {date}")))?;

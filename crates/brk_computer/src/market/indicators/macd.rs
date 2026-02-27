@@ -15,7 +15,7 @@ pub(super) fn compute(
     starting_indexes: &ComputeIndexes,
     exit: &Exit,
 ) -> Result<()> {
-    let source_version = prices.usd.price.version();
+    let source_version = prices.price.usd.version();
 
     chain
         .line

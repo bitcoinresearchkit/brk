@@ -34,7 +34,7 @@ impl Vecs {
 
         // Stochastic Oscillator: K = (close - low_2w) / (high_2w - low_2w) * 100
         {
-            let price = &prices.usd.price;
+            let price = &prices.price.usd;
             self.stoch_k.height.compute_transform3(
                 starting_indexes.height,
                 price,
