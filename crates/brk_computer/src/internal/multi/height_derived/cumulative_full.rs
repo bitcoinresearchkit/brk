@@ -17,12 +17,10 @@ use crate::{
 };
 
 #[derive(Traversable)]
-#[traversable(merge)]
 pub struct ComputedHeightDerivedCumulativeFull<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    #[traversable(flatten)]
     pub cumulative: ComputedFromHeightLast<T, M>,
     #[traversable(flatten)]
     pub rolling: RollingFull<T, M>,

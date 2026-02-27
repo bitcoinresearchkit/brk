@@ -4,8 +4,8 @@ use brk_types::StoredF32;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{blocks, ComputeIndexes, indexes, inputs, outputs, prices};
 use crate::transactions::{count, fees};
+use crate::{ComputeIndexes, blocks, indexes, inputs, outputs, prices};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -87,7 +87,7 @@ impl Vecs {
         // inputs_per_sec: per-block input count / block interval
         self.inputs_per_sec.height.compute_transform2(
             starting_indexes.height,
-            &inputs_count.height.sum_cumulative.sum.0,
+            &inputs_count.full.sum_cumulative.sum.0,
             &blocks.interval.height,
             |(h, input_count, interval, ..)| {
                 let interval_f64 = f64::from(*interval);
@@ -104,7 +104,7 @@ impl Vecs {
         // outputs_per_sec: per-block output count / block interval
         self.outputs_per_sec.height.compute_transform2(
             starting_indexes.height,
-            &outputs_count.total_count.height.sum_cumulative.sum.0,
+            &outputs_count.total_count.full.sum_cumulative.sum.0,
             &blocks.interval.height,
             |(h, output_count, interval, ..)| {
                 let interval_f64 = f64::from(*interval);

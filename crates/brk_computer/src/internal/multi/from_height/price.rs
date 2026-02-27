@@ -17,9 +17,7 @@ use crate::{
 
 /// Generic price metric with both USD and sats representations.
 #[derive(Clone, Traversable)]
-#[traversable(merge)]
 pub struct Price<U> {
-    #[traversable(flatten)]
     pub usd: U,
     pub sats: LazyFromHeightLast<SatsFract, Dollars>,
 }
@@ -65,4 +63,3 @@ where
         Self { usd, sats }
     }
 }
-

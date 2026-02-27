@@ -15,7 +15,7 @@ impl Query {
 
         let iter = Day1Iter::new(computer, start, current_height.to_usize());
 
-        let cumulative = &computer.transactions.fees.fee.height.sum_cumulative.cumulative;
+        let cumulative = &computer.mining.rewards.fees.sats.cumulative.height;
         let first_height = &computer.indexes.day1.first_height;
 
         Ok(iter.collect(|di, ts, h| {
@@ -30,7 +30,9 @@ impl Query {
 
             let cumulative_end = cumulative.collect_one_at(h_end.to_usize() - 1)?;
             let cumulative_start = if h_start.to_usize() > 0 {
-                cumulative.collect_one_at(h_start.to_usize() - 1).unwrap_or(Sats::ZERO)
+                cumulative
+                    .collect_one_at(h_start.to_usize() - 1)
+                    .unwrap_or(Sats::ZERO)
             } else {
                 Sats::ZERO
             };

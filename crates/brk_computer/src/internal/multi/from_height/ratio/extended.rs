@@ -9,7 +9,6 @@ use crate::{ComputeIndexes, blocks, indexes, prices};
 use super::{ComputedFromHeightRatio, ComputedFromHeightRatioExtension};
 
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct ComputedFromHeightRatioExtended<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
@@ -44,12 +43,8 @@ impl ComputedFromHeightRatioExtended {
         let close_price = &prices.usd.price;
         self.base
             .compute_ratio(starting_indexes, close_price, metric_price, exit)?;
-        self.extended.compute_rest(
-            blocks,
-            starting_indexes,
-            exit,
-            &self.base.ratio.height,
-        )?;
+        self.extended
+            .compute_rest(blocks, starting_indexes, exit, &self.base.ratio.height)?;
         self.extended
             .compute_usd_bands(starting_indexes, metric_price, exit)?;
         Ok(())

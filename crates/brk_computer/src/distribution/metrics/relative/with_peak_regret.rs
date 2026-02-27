@@ -11,7 +11,6 @@ use super::{RelativeBase, RelativePeakRegret, RelativeToAll};
 /// Relative metrics with rel_to_all + peak_regret (no extended).
 /// Used by: max_age, min_age cohorts.
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct RelativeWithPeakRegret<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]

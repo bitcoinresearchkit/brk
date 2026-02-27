@@ -9,11 +9,8 @@ use crate::internal::{
 /// Volume metrics
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    #[traversable(flatten)]
     pub sent_sum: ValueFromHeightLastRolling<M>,
-    #[traversable(flatten)]
     pub received_sum: ValueFromHeightLastRolling<M>,
-    #[traversable(flatten)]
     pub annualized_volume: ValueFromHeightLast<M>,
     pub tx_per_sec: ComputedFromHeightLast<StoredF32, M>,
     pub outputs_per_sec: ComputedFromHeightLast<StoredF32, M>,

@@ -16,7 +16,6 @@ use crate::{
 };
 
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct ValueFromHeightLastRolling<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]

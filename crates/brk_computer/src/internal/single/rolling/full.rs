@@ -18,12 +18,10 @@ use crate::{
 
 /// Sum (4 windows) + Distribution (8 stats × 4 windows) = 36 stored height vecs.
 #[derive(Traversable)]
-#[traversable(merge)]
 pub struct RollingFull<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    #[traversable(flatten)]
     pub sum: RollingWindows<T, M>,
     #[traversable(flatten)]
     pub distribution: RollingDistribution<T, M>,

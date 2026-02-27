@@ -18,15 +18,12 @@ use crate::{
 };
 
 #[derive(Traversable)]
-#[traversable(merge)]
 pub struct ComputedFromHeightCumulativeSum<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
     pub height: M::Stored<EagerVec<PcoVec<Height, T>>>,
-    #[traversable(flatten)]
     pub cumulative: ComputedFromHeightLast<T, M>,
-    #[traversable(flatten)]
     pub rolling: RollingWindows<T, M>,
 }
 

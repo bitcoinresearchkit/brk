@@ -17,14 +17,12 @@ use crate::{
 };
 
 #[derive(Traversable)]
-#[traversable(merge)]
 pub struct ComputedFromHeightFull<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
     #[traversable(flatten)]
-    pub height: Full<Height, T, M>,
-    #[traversable(flatten)]
+    pub full: Full<Height, T, M>,
     pub rolling: RollingFull<T, M>,
 }
 
@@ -45,7 +43,10 @@ where
         let height = Full::forced_import(db, name, v)?;
         let rolling = RollingFull::forced_import(db, name, v, indexes)?;
 
-        Ok(Self { height, rolling })
+        Ok(Self {
+            full: height,
+            rolling,
+        })
     }
 
     /// Compute Full stats via closure, then rolling windows from the per-block sum.
@@ -60,11 +61,11 @@ where
         T: From<f64> + Default + SubAssign + Copy + Ord,
         f64: From<T>,
     {
-        compute_full(&mut self.height)?;
+        compute_full(&mut self.full)?;
         self.rolling.compute(
             max_from,
             windows,
-            self.height.sum_cumulative.sum.inner(),
+            self.full.sum_cumulative.sum.inner(),
             exit,
         )?;
         Ok(())

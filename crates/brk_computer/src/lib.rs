@@ -359,7 +359,6 @@ impl Computer {
                     &self.blocks,
                     &self.prices,
                     &self.mining,
-                    &self.transactions,
                     &starting_indexes_clone,
                     exit,
                 )?;

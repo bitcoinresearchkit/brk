@@ -11,7 +11,6 @@ use super::{RelativeBase, RelativeToAll};
 /// Relative metrics with rel_to_all (no extended, no peak_regret).
 /// Used by: epoch, year, type, amount, address cohorts.
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct RelativeWithRelToAll<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]

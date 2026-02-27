@@ -31,14 +31,13 @@ impl Vecs {
         self.size
             .compute(indexer, indexes, &blocks.count, starting_indexes, exit)?;
 
-        // Fees depends on size, blocks (window starts), prices (USD conversion)
+        // Fees depends on size, blocks (window starts)
         self.fees.compute(
             indexer,
             indexes,
             inputs,
             &self.size,
             blocks,
-            prices,
             starting_indexes,
             exit,
         )?;

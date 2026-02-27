@@ -12,7 +12,6 @@ use super::{RealizedAdjusted, RealizedBase, RealizedExtended};
 
 /// Realized metrics with guaranteed extended AND adjusted (no Options).
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct RealizedWithExtendedAdjusted<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]

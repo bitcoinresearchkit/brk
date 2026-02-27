@@ -18,7 +18,6 @@ const VERSION: Version = Version::ZERO;
 
 /// Block full aggregation with lazy height transform + cumulative + rolling windows.
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct LazyComputedFromHeightFull<T, S = T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
@@ -47,12 +46,7 @@ where
 
         let height = LazyVecFrom1::transformed::<F>(name, v, source.read_only_boxed_clone());
 
-        let rest = ComputedHeightDerivedCumulativeFull::forced_import(
-            db,
-            name,
-            v,
-            indexes,
-        )?;
+        let rest = ComputedHeightDerivedCumulativeFull::forced_import(db, name, v, indexes)?;
 
         Ok(Self {
             height,

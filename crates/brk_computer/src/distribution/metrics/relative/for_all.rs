@@ -10,7 +10,6 @@ use super::{RelativeBase, RelativeExtendedOwnPnl, RelativePeakRegret};
 
 /// Relative metrics for the "all" cohort (base + own_pnl + peak_regret, NO rel_to_all).
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct RelativeForAll<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]

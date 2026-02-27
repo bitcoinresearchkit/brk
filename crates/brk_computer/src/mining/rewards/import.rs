@@ -5,7 +5,10 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightLast, StoredValueRollingWindows, ValueFromHeightFull, ValueFromHeightSumCumulative},
+    internal::{
+        ComputedFromHeightLast, ValueFromHeightFull,
+        ValueFromHeightSumCumulative,
+    },
 };
 
 impl Vecs {
@@ -15,10 +18,9 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            coinbase_sum: StoredValueRollingWindows::forced_import(db, "coinbase_sum", version, indexes)?,
-            fee_sum: StoredValueRollingWindows::forced_import(db, "fee_sum", version, indexes)?,
             coinbase: ValueFromHeightFull::forced_import(db, "coinbase", version, indexes)?,
             subsidy: ValueFromHeightFull::forced_import(db, "subsidy", version, indexes)?,
+            fees: ValueFromHeightFull::forced_import(db, "fees", version, indexes)?,
             unclaimed_rewards: ValueFromHeightSumCumulative::forced_import(
                 db,
                 "unclaimed_rewards",

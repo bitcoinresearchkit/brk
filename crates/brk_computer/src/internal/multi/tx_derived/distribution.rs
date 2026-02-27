@@ -13,11 +13,12 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{BlockRollingDistribution, BlockWindowStarts, ComputedVecValue, Distribution, NumericValue},
+    internal::{
+        BlockRollingDistribution, BlockWindowStarts, ComputedVecValue, Distribution, NumericValue,
+    },
 };
 
 #[derive(Traversable)]
-#[traversable(merge)]
 pub struct TxDerivedDistribution<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
@@ -31,11 +32,7 @@ impl<T> TxDerivedDistribution<T>
 where
     T: NumericValue + JsonSchema,
 {
-    pub(crate) fn forced_import(
-        db: &Database,
-        name: &str,
-        version: Version,
-    ) -> Result<Self> {
+    pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         let block = Distribution::forced_import(db, name, version)?;
         let rolling = BlockRollingDistribution::forced_import(db, name, version)?;
 

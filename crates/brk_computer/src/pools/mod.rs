@@ -16,7 +16,7 @@ mod vecs;
 use crate::{
     blocks,
     indexes::{self, ComputeIndexes},
-    mining, prices, transactions,
+    mining, prices,
 };
 
 pub const DB_NAME: &str = "pools";
@@ -73,7 +73,6 @@ impl Vecs {
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         mining: &mining::Vecs,
-        transactions: &transactions::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -83,7 +82,6 @@ impl Vecs {
             blocks,
             prices,
             mining,
-            transactions,
             starting_indexes,
             exit,
         )?;
@@ -100,7 +98,6 @@ impl Vecs {
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         mining: &mining::Vecs,
-        transactions: &transactions::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -113,7 +110,6 @@ impl Vecs {
                 blocks,
                 prices,
                 mining,
-                transactions,
                 exit,
             )
         })?;

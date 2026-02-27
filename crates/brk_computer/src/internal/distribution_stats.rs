@@ -5,7 +5,6 @@
 use brk_traversable::Traversable;
 
 #[derive(Clone, Traversable)]
-#[traversable(merge)]
 pub struct DistributionStats<A, B = A, C = A, D = A, E = A, F = A, G = A, H = A> {
     pub average: A,
     pub min: B,

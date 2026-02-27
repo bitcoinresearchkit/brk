@@ -24,11 +24,6 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> CumulativeVec<I, T> {
         )?))
     }
 
-    #[inline]
-    pub(crate) fn inner(&self) -> &EagerVec<PcoVec<I, T>> {
-        &self.0
-    }
-
     pub fn read_only_clone(&self) -> CumulativeVec<I, T, Ro> {
         CumulativeVec(StoredVec::read_only_clone(&self.0))
     }

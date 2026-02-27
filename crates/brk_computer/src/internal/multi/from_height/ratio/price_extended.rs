@@ -10,7 +10,6 @@ use crate::{ComputeIndexes, blocks, indexes, prices};
 use super::ComputedFromHeightRatioExtended;
 
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct ComputedFromHeightPriceWithRatioExtended<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]

@@ -16,7 +16,6 @@ use crate::indexes;
 use crate::internal::{ComputedVecValue, NumericValue, RollingDistribution, WindowStarts};
 
 #[derive(Traversable)]
-#[traversable(merge)]
 pub struct ComputedFromHeightDistribution<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,

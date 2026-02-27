@@ -1,7 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, StoredF32, Version};
-use vecdb::{AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex, WritableVec};
+use vecdb::{
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
+    WritableVec,
+};
 
 use crate::{ComputeIndexes, blocks, indexes};
 
@@ -10,7 +13,6 @@ use crate::internal::{ComputedFromHeightLast, Price};
 use super::ComputedFromHeightStdDev;
 
 #[derive(Traversable)]
-#[traversable(merge)]
 pub struct ComputedFromHeightStdDevExtended<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub base: ComputedFromHeightStdDev<M>,
@@ -68,12 +70,7 @@ impl ComputedFromHeightStdDevExtended {
 
         macro_rules! import_usd {
             ($suffix:expr) => {
-                Price::forced_import(
-                    db,
-                    &format!("{name}_{}", $suffix),
-                    version,
-                    indexes,
-                )?
+                Price::forced_import(db, &format!("{name}_{}", $suffix), version, indexes)?
             };
         }
 
@@ -115,7 +112,8 @@ impl ComputedFromHeightStdDevExtended {
         exit: &Exit,
         source: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
-        self.base.compute_all(blocks, starting_indexes, exit, source)?;
+        self.base
+            .compute_all(blocks, starting_indexes, exit, source)?;
 
         let sma_opt: Option<&EagerVec<PcoVec<Height, StoredF32>>> = None;
         self.compute_bands(starting_indexes, exit, sma_opt, source)
@@ -148,37 +146,54 @@ impl ComputedFromHeightStdDevExtended {
         let source_len = source.len();
         let source_data = source.collect_range_at(start, source_len);
 
-        let sma_len = sma_opt.map(|s| s.len()).unwrap_or(self.base.sma.height.len());
+        let sma_len = sma_opt
+            .map(|s| s.len())
+            .unwrap_or(self.base.sma.height.len());
         let sma_data: Vec<StoredF32> = if let Some(sma) = sma_opt {
             sma.collect_range_at(start, sma_len)
         } else {
             self.base.sma.height.collect_range_at(start, sma_len)
         };
-        let sd_data = self.base.sd.height.collect_range_at(start, self.base.sd.height.len());
+        let sd_data = self
+            .base
+            .sd
+            .height
+            .collect_range_at(start, self.base.sd.height.len());
 
         for (offset, _ratio) in source_data.into_iter().enumerate() {
             let index = start + offset;
             let average = sma_data[offset];
             let sd = sd_data[offset];
 
-            self.p0_5sd.height.truncate_push_at(index, average + StoredF32::from(0.5 * *sd))?;
+            self.p0_5sd
+                .height
+                .truncate_push_at(index, average + StoredF32::from(0.5 * *sd))?;
             self.p1sd.height.truncate_push_at(index, average + sd)?;
-            self.p1_5sd.height.truncate_push_at(index, average + StoredF32::from(1.5 * *sd))?;
+            self.p1_5sd
+                .height
+                .truncate_push_at(index, average + StoredF32::from(1.5 * *sd))?;
             self.p2sd.height.truncate_push_at(index, average + 2 * sd)?;
-            self.p2_5sd.height.truncate_push_at(index, average + StoredF32::from(2.5 * *sd))?;
+            self.p2_5sd
+                .height
+                .truncate_push_at(index, average + StoredF32::from(2.5 * *sd))?;
             self.p3sd.height.truncate_push_at(index, average + 3 * sd)?;
-            self.m0_5sd.height.truncate_push_at(index, average - StoredF32::from(0.5 * *sd))?;
+            self.m0_5sd
+                .height
+                .truncate_push_at(index, average - StoredF32::from(0.5 * *sd))?;
             self.m1sd.height.truncate_push_at(index, average - sd)?;
-            self.m1_5sd.height.truncate_push_at(index, average - StoredF32::from(1.5 * *sd))?;
+            self.m1_5sd
+                .height
+                .truncate_push_at(index, average - StoredF32::from(1.5 * *sd))?;
             self.m2sd.height.truncate_push_at(index, average - 2 * sd)?;
-            self.m2_5sd.height.truncate_push_at(index, average - StoredF32::from(2.5 * *sd))?;
+            self.m2_5sd
+                .height
+                .truncate_push_at(index, average - StoredF32::from(2.5 * *sd))?;
             self.m3sd.height.truncate_push_at(index, average - 3 * sd)?;
         }
 
         {
             let _lock = exit.lock();
-            self.mut_band_height_vecs()
-                .try_for_each(|v| v.flush())?;
+            self.mut_band_height_vecs().try_for_each(|v| v.flush())?;
         }
 
         if let Some(sma) = sma_opt {
@@ -213,7 +228,8 @@ impl ComputedFromHeightStdDevExtended {
 
         macro_rules! compute_band {
             ($usd_field:ident, $band_source:expr) => {
-                self.$usd_field.usd
+                self.$usd_field
+                    .usd
                     .compute_binary::<Dollars, StoredF32, PriceTimesRatio>(
                         starting_indexes.height,
                         metric_price,

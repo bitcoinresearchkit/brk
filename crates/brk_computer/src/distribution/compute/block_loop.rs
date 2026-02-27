@@ -67,8 +67,8 @@ pub(crate) fn process_blocks(
 
     // From transactions and inputs/outputs (via .height or .height.sum_cumulative.sum patterns):
     let height_to_tx_count = &transactions.count.tx_count.height;
-    let height_to_output_count = &outputs.count.total_count.height.sum_cumulative.sum.0;
-    let height_to_input_count = &inputs.count.height.sum_cumulative.sum.0;
+    let height_to_output_count = &outputs.count.total_count.full.sum_cumulative.sum.0;
+    let height_to_input_count = &inputs.count.full.sum_cumulative.sum.0;
     // From blocks:
     let height_to_timestamp = &blocks.time.timestamp_monotonic;
     let height_to_date = &blocks.time.date;

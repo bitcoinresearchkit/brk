@@ -10,7 +10,7 @@ use crate::{
         ComputedFromHeightCumulativeSum, ComputedFromHeightLast, MaskSats, PercentageU32F32,
         ValueFromHeightSumCumulative,
     },
-    mining, prices, transactions,
+    mining, prices,
 };
 
 #[derive(Traversable)]
@@ -45,8 +45,12 @@ impl Vecs {
         let suffix = |s: &str| format!("{}_{s}", slug);
         let version = parent_version;
 
-        let blocks_mined =
-            ComputedFromHeightCumulativeSum::forced_import(db, &suffix("blocks_mined"), version, indexes)?;
+        let blocks_mined = ComputedFromHeightCumulativeSum::forced_import(
+            db,
+            &suffix("blocks_mined"),
+            version,
+            indexes,
+        )?;
 
         let blocks_mined_24h_sum = ComputedFromHeightLast::forced_import(
             db,
@@ -76,7 +80,8 @@ impl Vecs {
         let subsidy =
             ValueFromHeightSumCumulative::forced_import(db, &suffix("subsidy"), version, indexes)?;
 
-        let fee = ValueFromHeightSumCumulative::forced_import(db, &suffix("fee"), version, indexes)?;
+        let fee =
+            ValueFromHeightSumCumulative::forced_import(db, &suffix("fee"), version, indexes)?;
 
         let coinbase =
             ValueFromHeightSumCumulative::forced_import(db, &suffix("coinbase"), version, indexes)?;
@@ -130,29 +135,29 @@ impl Vecs {
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         mining: &mining::Vecs,
-        transactions: &transactions::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = blocks.count.window_starts();
 
-        self.blocks_mined.compute(starting_indexes.height, &window_starts, exit, |vec| {
-            vec.compute_transform(
-                starting_indexes.height,
-                height_to_pool,
-                |(h, id, ..)| {
-                    (
-                        h,
-                        if id == self.slug {
-                            StoredU32::ONE
-                        } else {
-                            StoredU32::ZERO
-                        },
-                    )
-                },
-                exit,
-            )?;
-            Ok(())
-        })?;
+        self.blocks_mined
+            .compute(starting_indexes.height, &window_starts, exit, |vec| {
+                vec.compute_transform(
+                    starting_indexes.height,
+                    height_to_pool,
+                    |(h, id, ..)| {
+                        (
+                            h,
+                            if id == self.slug {
+                                StoredU32::ONE
+                            } else {
+                                StoredU32::ZERO
+                            },
+                        )
+                    },
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
         // Compute rolling window blocks mined using the start heights from blocks.count
         self.blocks_mined_24h_sum.height.compute_rolling_sum(
@@ -223,8 +228,12 @@ impl Vecs {
                 exit,
             )?;
 
-        self.subsidy
-            .compute(starting_indexes.height, &window_starts, prices, exit, |vec| {
+        self.subsidy.compute(
+            starting_indexes.height,
+            &window_starts,
+            prices,
+            exit,
+            |vec| {
                 Ok(vec.compute_transform2(
                     starting_indexes.height,
                     &self.blocks_mined.height,
@@ -232,20 +241,31 @@ impl Vecs {
                     |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
                     exit,
                 )?)
-            })?;
+            },
+        )?;
 
-        self.fee.compute(starting_indexes.height, &window_starts, prices, exit, |vec| {
-            Ok(vec.compute_transform2(
-                starting_indexes.height,
-                &self.blocks_mined.height,
-                &*transactions.fees.fee.height.sum_cumulative.sum,
-                |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
-                exit,
-            )?)
-        })?;
+        self.fee.compute(
+            starting_indexes.height,
+            &window_starts,
+            prices,
+            exit,
+            |vec| {
+                Ok(vec.compute_transform2(
+                    starting_indexes.height,
+                    &self.blocks_mined.height,
+                    &mining.rewards.fees.sats.height,
+                    |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
+                    exit,
+                )?)
+            },
+        )?;
 
-        self.coinbase
-            .compute(starting_indexes.height, &window_starts, prices, exit, |vec| {
+        self.coinbase.compute(
+            starting_indexes.height,
+            &window_starts,
+            prices,
+            exit,
+            |vec| {
                 Ok(vec.compute_transform2(
                     starting_indexes.height,
                     &self.blocks_mined.height,
@@ -253,7 +273,8 @@ impl Vecs {
                     |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
                     exit,
                 )?)
-            })?;
+            },
+        )?;
 
         {
             let mut prev = StoredU32::ZERO;

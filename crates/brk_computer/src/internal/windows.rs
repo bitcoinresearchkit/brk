@@ -5,7 +5,6 @@
 use brk_traversable::Traversable;
 
 #[derive(Clone, Traversable)]
-#[traversable(merge)]
 pub struct Windows<A, B = A, C = A, D = A> {
     #[traversable(rename = "24h")]
     pub _24h: A,

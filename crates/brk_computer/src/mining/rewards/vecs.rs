@@ -2,15 +2,17 @@ use brk_traversable::Traversable;
 use brk_types::{Dollars, StoredF32};
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeightLast, StoredValueRollingWindows, ValueFromHeightFull, ValueFromHeightSumCumulative};
+use crate::internal::{
+    ComputedFromHeightLast, ValueFromHeightFull,
+    ValueFromHeightSumCumulative,
+};
 
 /// Coinbase/subsidy/rewards metrics
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub coinbase_sum: StoredValueRollingWindows<M>,
-    pub fee_sum: StoredValueRollingWindows<M>,
     pub coinbase: ValueFromHeightFull<M>,
     pub subsidy: ValueFromHeightFull<M>,
+    pub fees: ValueFromHeightFull<M>,
     pub unclaimed_rewards: ValueFromHeightSumCumulative<M>,
     pub fee_dominance: ComputedFromHeightLast<StoredF32, M>,
     pub fee_dominance_24h: ComputedFromHeightLast<StoredF32, M>,

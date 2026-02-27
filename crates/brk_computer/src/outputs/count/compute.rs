@@ -19,11 +19,8 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = blocks.count.window_starts();
-        self.total_count.compute(
-            starting_indexes.height,
-            &window_starts,
-            exit,
-            |full| {
+        self.total_count
+            .compute(starting_indexes.height, &window_starts, exit, |full| {
                 full.compute_with_skip(
                     starting_indexes.height,
                     &indexes.txindex.output_count,
@@ -32,13 +29,12 @@ impl Vecs {
                     exit,
                     0,
                 )
-            },
-        )?;
+            })?;
 
         self.utxo_count.height.compute_transform3(
             starting_indexes.height,
-            &*self.total_count.height.sum_cumulative.cumulative,
-            &*inputs_count.height.sum_cumulative.cumulative,
+            &*self.total_count.full.sum_cumulative.cumulative,
+            &*inputs_count.full.sum_cumulative.cumulative,
             &scripts_count.opreturn.cumulative.height,
             |(h, output_count, input_count, opreturn_count, ..)| {
                 let block_count = u64::from(h + 1_usize);

@@ -9,7 +9,6 @@ use super::{UnrealizedBase, UnrealizedPeakRegret};
 
 /// Unrealized metrics with guaranteed peak regret (no Option).
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct UnrealizedWithPeakRegret<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
@@ -26,5 +25,4 @@ impl UnrealizedWithPeakRegret {
             peak_regret_ext: UnrealizedPeakRegret::forced_import(cfg)?,
         })
     }
-
 }

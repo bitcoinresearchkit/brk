@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Bitcoin, FeeRate, Sats};
+use brk_types::{FeeRate, Sats};
 use vecdb::{Exit, unlikely};
 
 use super::super::size;
 use super::Vecs;
-use crate::{blocks, indexes, inputs, prices, ComputeIndexes};
+use crate::{ComputeIndexes, blocks, indexes, inputs};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -16,7 +16,6 @@ impl Vecs {
         txins: &inputs::Vecs,
         size_vecs: &size::Vecs,
         blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -36,7 +35,7 @@ impl Vecs {
             exit,
         )?;
 
-        self.fee_txindex.compute_transform2(
+        self.fee.txindex.compute_transform2(
             starting_indexes.txindex,
             &self.input_value,
             &self.output_value,
@@ -51,57 +50,34 @@ impl Vecs {
             exit,
         )?;
 
-        self.fee_rate_txindex.compute_transform2(
+        self.fee_rate.txindex.compute_transform2(
             starting_indexes.txindex,
-            &self.fee_txindex,
+            &self.fee.txindex,
             &size_vecs.vsize.txindex,
             |(txindex, fee, vsize, ..)| (txindex, FeeRate::from((fee, vsize))),
             exit,
         )?;
 
-        // Skip coinbase (first tx per block) since it has no fee
-        let window_starts = blocks.count.window_starts();
-        self.fee.compute(
-            starting_indexes.height,
-            &window_starts,
-            exit,
-            |full| {
-                full.compute_with_skip(
-                    starting_indexes.height,
-                    &self.fee_txindex,
-                    &indexer.vecs.transactions.first_txindex,
-                    &indexes.height.txindex_count,
-                    exit,
-                    1,
-                )
-            },
-        )?;
+        let block_windows = blocks.count.block_window_starts();
 
-        // Skip coinbase (first tx per block) since it has no feerate
-        self.fee_rate.compute_with_skip(
-            starting_indexes.height,
-            &self.fee_rate_txindex,
-            &indexer.vecs.transactions.first_txindex,
-            &indexes.height.txindex_count,
+        // Skip coinbase (first tx per block) since it has fee=0
+        self.fee.derive_from_with_skip(
+            indexer,
+            indexes,
+            starting_indexes,
+            &block_windows,
             exit,
             1,
         )?;
 
-        // Compute fee USD sum per block: price * Bitcoin::from(sats)
-        self.fee_usd_sum.compute_transform2(
-            starting_indexes.height,
-            self.fee.height.sum_cumulative.sum.inner(),
-            &prices.usd.price,
-            |(h, sats, price, ..)| (h, price * Bitcoin::from(sats)),
+        // Skip coinbase (first tx per block) since it has no feerate
+        self.fee_rate.derive_from_with_skip(
+            indexer,
+            indexes,
+            starting_indexes,
+            &block_windows,
             exit,
-        )?;
-
-        // Rolling fee rate distribution (from per-block average)
-        self.fee_rate_rolling.compute_distribution(
-            starting_indexes.height,
-            &window_starts,
-            &self.fee_rate.average.0,
-            exit,
+            1,
         )?;
 
         Ok(())

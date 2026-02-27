@@ -10,7 +10,6 @@ use super::{CostBasisBase, CostBasisExtended};
 
 /// Cost basis metrics with guaranteed extended (no Option).
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct CostBasisWithExtended<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
@@ -31,5 +30,4 @@ impl CostBasisWithExtended {
     pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.extended.validate_computed_versions(base_version)
     }
-
 }
