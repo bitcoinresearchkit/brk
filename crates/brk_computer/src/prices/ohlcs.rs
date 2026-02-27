@@ -10,7 +10,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
     BytesVec, BytesVecValue, Database, EagerVec, Exit, Formattable, ImportableVec, LazyVecFrom1,
-    ReadableCloneableVec, Rw, StorageMode, UnaryTransform,
+    ReadableCloneableVec, ReadableVec, Rw, StorageMode, UnaryTransform,
 };
 
 use crate::{
@@ -47,7 +47,7 @@ pub struct OhlcVecs<T, M: StorageMode = Rw>(
 where
     T: BytesVecValue + Formattable + Serialize + JsonSchema;
 
-const EAGER_VERSION: Version = Version::ZERO;
+const EAGER_VERSION: Version = Version::ONE;
 
 impl<T> OhlcVecs<T>
 where
@@ -84,14 +84,22 @@ impl OhlcVecs<OHLCCents> {
                     &high.$field,
                     &low.$field,
                     &close.$field,
-                    |(idx, o, h, l, c, _)| {
+                    |(idx, o, h, l, c, this)| {
                         (
                             idx,
-                            OHLCCents {
-                                open: Open::new(o),
-                                high: High::new(h),
-                                low: Low::new(l),
-                                close: Close::new(c.unwrap_or_default()),
+                            if let Some(c) = c {
+                                OHLCCents {
+                                    open: Open::new(o),
+                                    high: High::new(h),
+                                    low: Low::new(l),
+                                    close: Close::new(c),
+                                }
+                            } else {
+                                // Empty period (no blocks): flat candle at previous close
+                                let prev_close = Close::new(
+                                    this.collect_last().map_or(o, |prev| *prev.close),
+                                );
+                                OHLCCents::from(prev_close)
                             },
                         )
                     },

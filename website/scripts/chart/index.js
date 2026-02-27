@@ -1383,6 +1383,25 @@ export function createChart({ parent, brk, fitContent }) {
               serieses.addCandlestick({ ...common, colors: blueprint.colors }),
             );
             break;
+          case "Price":
+            if (idx === "height" || idx.startsWith("minute")) {
+              pane.series.push(
+                serieses.addLine({
+                  ...common,
+                  color: colors.default,
+                  options: { ...common.options, priceLineVisible: true },
+                }),
+              );
+            } else {
+              pane.series.push(
+                serieses.addCandlestick({
+                  ...common,
+                  metric: blueprint.ohlcMetric,
+                  colors: blueprint.colors,
+                }),
+              );
+            }
+            break;
           case "Dots":
             pane.series.push(
               serieses.addDots({

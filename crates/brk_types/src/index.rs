@@ -17,7 +17,7 @@ use super::{
     timestamp::INDEX_EPOCH,
     minute1::MINUTE1_INTERVAL, minute5::MINUTE5_INTERVAL, minute10::MINUTE10_INTERVAL,
     minute30::MINUTE30_INTERVAL, hour1::HOUR1_INTERVAL, hour4::HOUR4_INTERVAL,
-    hour12::HOUR12_INTERVAL, day3::DAY3_INTERVAL,
+    hour12::HOUR12_INTERVAL,
 };
 
 /// Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),

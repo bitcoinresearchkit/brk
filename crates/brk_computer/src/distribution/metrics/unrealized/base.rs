@@ -390,7 +390,7 @@ impl UnrealizedBase {
             starting_indexes.height,
             &self.investor_cap_in_loss_raw,
             &self.invested_capital_in_loss_raw,
-            &prices.price.cents,
+            &prices.price.cents.height,
             |(h, investor_cap, invested_cap, spot, ..)| {
                 if invested_cap.inner() == 0 {
                     return (h, Dollars::ZERO);
@@ -410,7 +410,7 @@ impl UnrealizedBase {
             starting_indexes.height,
             &self.investor_cap_in_profit_raw,
             &self.invested_capital_in_profit_raw,
-            &prices.price.cents,
+            &prices.price.cents.height,
             |(h, investor_cap, invested_cap, spot, ..)| {
                 if invested_cap.inner() == 0 {
                     return (h, Dollars::ZERO);

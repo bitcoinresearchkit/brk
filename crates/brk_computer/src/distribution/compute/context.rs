@@ -125,7 +125,7 @@ impl ComputeContext {
             blocks.time.timestamp_monotonic.collect();
 
         let height_to_price: Vec<Cents> =
-            prices.price.cents.collect();
+            prices.price.cents.height.collect();
 
         // Build sparse table for O(1) range max queries on prices
         // Used for computing peak price during UTXO holding periods (peak regret)

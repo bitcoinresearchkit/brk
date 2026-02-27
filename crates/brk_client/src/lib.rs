@@ -6015,17 +6015,17 @@ impl MetricsTree_Prices_Ohlc {
 
 /// Metrics tree node.
 pub struct MetricsTree_Prices_Price {
-    pub cents: MetricPattern20<Cents>,
-    pub usd: MetricPattern20<Dollars>,
-    pub sats: MetricPattern20<Sats>,
+    pub cents: MetricPattern1<Cents>,
+    pub usd: MetricPattern1<Dollars>,
+    pub sats: MetricPattern1<Sats>,
 }
 
 impl MetricsTree_Prices_Price {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            cents: MetricPattern20::new(client.clone(), "price_cents".to_string()),
-            usd: MetricPattern20::new(client.clone(), "price".to_string()),
-            sats: MetricPattern20::new(client.clone(), "price_sats".to_string()),
+            cents: MetricPattern1::new(client.clone(), "price_cents".to_string()),
+            usd: MetricPattern1::new(client.clone(), "price".to_string()),
+            sats: MetricPattern1::new(client.clone(), "price_sats".to_string()),
         }
     }
 }

@@ -6,16 +6,14 @@ use std::path::Path;
 
 use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::{
-    Database, ImportableVec, LazyVecFrom1, PcoVec, ReadableCloneableVec, Rw, StorageMode,
-    PAGE_SIZE,
-};
+use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode, PAGE_SIZE};
 
 use crate::{
     indexes,
     internal::{
-        CentsUnsignedToDollars, CentsUnsignedToSats, ComputedHeightDerivedLast, EagerIndexes,
-        LazyEagerIndexes, OhlcCentsToDollars, OhlcCentsToSats,
+        CentsUnsignedToDollars, CentsUnsignedToSats, ComputedFromHeightLast,
+        ComputedHeightDerivedLast, EagerIndexes, LazyEagerIndexes, LazyFromHeightLast,
+        OhlcCentsToDollars, OhlcCentsToSats,
     },
 };
 
@@ -66,7 +64,8 @@ impl Vecs {
 
         // ── Cents (eager, stored) ───────────────────────────────────
 
-        let price_cents = PcoVec::forced_import(db, "price_cents", version)?;
+        let price_cents =
+            ComputedFromHeightLast::forced_import(db, "price_cents", version, indexes)?;
 
         let open_cents = EagerIndexes::forced_import(db, "price_open_cents", version)?;
         let high_cents = EagerIndexes::forced_import(db, "price_high_cents", version)?;
@@ -74,7 +73,7 @@ impl Vecs {
 
         let close_cents = ComputedHeightDerivedLast::forced_import(
             "price_close_cents",
-            price_cents.read_only_boxed_clone(),
+            price_cents.height.read_only_boxed_clone(),
             version,
             indexes,
         );
@@ -83,10 +82,11 @@ impl Vecs {
 
         // ── USD (lazy from cents) ───────────────────────────────────
 
-        let price_usd = LazyVecFrom1::transformed::<CentsUnsignedToDollars>(
+        let price_usd = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
             "price",
             version,
-            price_cents.read_only_boxed_clone(),
+            price_cents.height.read_only_boxed_clone(),
+            &price_cents,
         );
 
         let open_usd = LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>(
@@ -107,7 +107,7 @@ impl Vecs {
 
         let close_usd = ComputedHeightDerivedLast::forced_import(
             "price_close",
-            price_usd.read_only_boxed_clone(),
+            price_usd.height.read_only_boxed_clone(),
             version,
             indexes,
         );
@@ -120,10 +120,11 @@ impl Vecs {
 
         // ── Sats (lazy from cents, high↔low swapped) ───────────────
 
-        let price_sats = LazyVecFrom1::transformed::<CentsUnsignedToSats>(
+        let price_sats = LazyFromHeightLast::from_computed::<CentsUnsignedToSats>(
             "price_sats",
             version,
-            price_cents.read_only_boxed_clone(),
+            price_cents.height.read_only_boxed_clone(),
+            &price_cents,
         );
 
         let open_sats = LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToSats>(
@@ -145,7 +146,7 @@ impl Vecs {
 
         let close_sats = ComputedHeightDerivedLast::forced_import(
             "price_close_sats",
-            price_sats.read_only_boxed_clone(),
+            price_sats.height.read_only_boxed_clone(),
             version,
             indexes,
         );

@@ -22,15 +22,15 @@ impl Vecs {
         self.split
             .open
             .cents
-            .compute_first(starting_indexes, &self.price.cents, indexes, exit)?;
+            .compute_first(starting_indexes, &self.price.cents.height, indexes, exit)?;
         self.split
             .high
             .cents
-            .compute_max(starting_indexes, &self.price.cents, indexes, exit)?;
+            .compute_max(starting_indexes, &self.price.cents.height, indexes, exit)?;
         self.split
             .low
             .cents
-            .compute_min(starting_indexes, &self.price.cents, indexes, exit)?;
+            .compute_min(starting_indexes, &self.price.cents.height, indexes, exit)?;
         self.ohlc.cents.compute_from_split(
             starting_indexes,
             &self.split.open.cents,
@@ -55,6 +55,7 @@ impl Vecs {
             indexer.vecs.outputs.value.version() + indexer.vecs.outputs.outputtype.version();
         self.price
             .cents
+            .height
             .validate_computed_version_or_reset(source_version)?;
 
         let total_heights = indexer.vecs.blocks.timestamp.len();
@@ -64,27 +65,32 @@ impl Vecs {
         }
 
         // Reorg: truncate to starting_indexes
-        let truncate_to = self.price.cents.len().min(starting_indexes.height.to_usize());
-        self.price.cents.truncate_if_needed_at(truncate_to)?;
+        let truncate_to = self
+            .price
+            .cents
+            .height
+            .len()
+            .min(starting_indexes.height.to_usize());
+        self.price.cents.height.truncate_if_needed_at(truncate_to)?;
 
-        if self.price.cents.len() < START_HEIGHT {
-            for line in brk_oracle::PRICES.lines().skip(self.price.cents.len()) {
-                if self.price.cents.len() >= START_HEIGHT {
+        if self.price.cents.height.len() < START_HEIGHT {
+            for line in brk_oracle::PRICES.lines().skip(self.price.cents.height.len()) {
+                if self.price.cents.height.len() >= START_HEIGHT {
                     break;
                 }
                 let dollars: f64 = line.parse().unwrap_or(0.0);
                 let cents = (dollars * 100.0).round() as u64;
-                self.price.cents.push(Cents::new(cents));
+                self.price.cents.height.push(Cents::new(cents));
             }
         }
 
-        if self.price.cents.len() >= total_heights {
+        if self.price.cents.height.len() >= total_heights {
             return Ok(());
         }
 
         let config = Config::default();
-        let committed = self.price.cents.len();
-        let prev_cents = self.price.cents.collect_one_at(committed - 1).unwrap();
+        let committed = self.price.cents.height.len();
+        let prev_cents = self.price.cents.height.collect_one_at(committed - 1).unwrap();
         let seed_bin = cents_to_bin(prev_cents.inner() as f64);
         let warmup = config.window_size.min(committed - START_HEIGHT);
         let mut oracle = Oracle::from_checkpoint(seed_bin, config, |o| {
@@ -100,7 +106,7 @@ impl Vecs {
         let ref_bins = Self::feed_blocks(&mut oracle, indexer, committed..total_heights);
 
         for (i, ref_bin) in ref_bins.into_iter().enumerate() {
-            self.price.cents.push(Cents::new(bin_to_cents(ref_bin)));
+            self.price.cents.height.push(Cents::new(bin_to_cents(ref_bin)));
 
             let progress = ((i + 1) * 100 / num_new) as u8;
             if i > 0 && progress > ((i * 100 / num_new) as u8) {
@@ -110,10 +116,13 @@ impl Vecs {
 
         {
             let _lock = exit.lock();
-            self.price.cents.write()?;
+            self.price.cents.height.write()?;
         }
 
-        info!("Oracle prices complete: {} committed", self.price.cents.len());
+        info!(
+            "Oracle prices complete: {} committed",
+            self.price.cents.height.len()
+        );
 
         Ok(())
     }
@@ -201,7 +210,12 @@ impl<M: StorageMode> Vecs<M> {
     pub fn live_oracle<IM: StorageMode>(&self, indexer: &Indexer<IM>) -> Result<Oracle> {
         let config = Config::default();
         let height = indexer.vecs.blocks.timestamp.len();
-        let last_cents = self.price.cents.collect_one_at(self.price.cents.len() - 1).unwrap();
+        let last_cents = self
+            .price
+            .cents
+            .height
+            .collect_one_at(self.price.cents.height.len() - 1)
+            .unwrap();
         let seed_bin = cents_to_bin(last_cents.inner() as f64);
         let window_size = config.window_size;
         let oracle = Oracle::from_checkpoint(seed_bin, config, |o| {

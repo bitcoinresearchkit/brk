@@ -1,8 +1,11 @@
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, OHLCCents, OHLCDollars, OHLCSats, Sats};
-use vecdb::{LazyVecFrom1, PcoVec, Rw, StorageMode};
+use brk_types::{Cents, Dollars, OHLCCents, OHLCDollars, OHLCSats, Sats};
+use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedHeightDerivedLast, EagerIndexes, LazyEagerIndexes};
+use crate::internal::{
+    ComputedFromHeightLast, ComputedHeightDerivedLast, EagerIndexes, LazyEagerIndexes,
+    LazyFromHeightLast,
+};
 
 use super::ohlcs::{LazyOhlcVecs, OhlcVecs};
 
@@ -43,7 +46,7 @@ pub struct OhlcByUnit<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct PriceByUnit<M: StorageMode = Rw> {
-    pub cents: M::Stored<PcoVec<Height, Cents>>,
-    pub usd: LazyVecFrom1<Height, Dollars, Height, Cents>,
-    pub sats: LazyVecFrom1<Height, Sats, Height, Cents>,
+    pub cents: ComputedFromHeightLast<Cents, M>,
+    pub usd: LazyFromHeightLast<Dollars, Cents>,
+    pub sats: LazyFromHeightLast<Sats, Cents>,
 }

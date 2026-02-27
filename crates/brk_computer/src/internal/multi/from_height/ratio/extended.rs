@@ -40,7 +40,7 @@ impl ComputedFromHeightRatioExtended {
         exit: &Exit,
         metric_price: &impl ReadableVec<Height, Dollars>,
     ) -> Result<()> {
-        let close_price = &prices.price.usd;
+        let close_price = &prices.price.usd.height;
         self.base
             .compute_ratio(starting_indexes, close_price, metric_price, exit)?;
         self.extended

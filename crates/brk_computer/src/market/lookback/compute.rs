@@ -13,7 +13,7 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close_data: Vec<Dollars> = prices.price.usd.collect();
+        let close_data: Vec<Dollars> = prices.price.usd.height.collect();
 
         for (price_ago, days) in self.price_ago.iter_mut_with_days() {
             let window_starts = blocks.count.start_vec(days as usize);

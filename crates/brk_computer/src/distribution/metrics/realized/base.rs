@@ -855,14 +855,14 @@ impl RealizedBase {
 
         self.realized_price_extra.compute_ratio(
             starting_indexes,
-            &prices.price.usd,
+            &prices.price.usd.height,
             &self.realized_price.usd.height,
             exit,
         )?;
 
         self.investor_price_extra.compute_ratio(
             starting_indexes,
-            &prices.price.usd,
+            &prices.price.usd.height,
             &self.investor_price.usd.height,
             exit,
         )?;

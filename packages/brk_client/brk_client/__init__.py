@@ -4526,9 +4526,9 @@ class MetricsTree_Prices_Price:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.cents: MetricPattern20[Cents] = MetricPattern20(client, 'price_cents')
-        self.usd: MetricPattern20[Dollars] = MetricPattern20(client, 'price')
-        self.sats: MetricPattern20[Sats] = MetricPattern20(client, 'price_sats')
+        self.cents: MetricPattern1[Cents] = MetricPattern1(client, 'price_cents')
+        self.usd: MetricPattern1[Dollars] = MetricPattern1(client, 'price')
+        self.sats: MetricPattern1[Sats] = MetricPattern1(client, 'price_sats')
 
 class MetricsTree_Prices:
     """Metrics tree node."""

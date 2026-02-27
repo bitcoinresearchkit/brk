@@ -78,7 +78,7 @@ pub(crate) fn process_blocks(
     let txindex_to_input_count = &indexes.txindex.input_count;
 
     // From price - use cents for computation:
-    let height_to_price = &prices.price.cents;
+    let height_to_price = &prices.price.cents.height;
 
     // Access pre-computed vectors from context for thread-safe access
     let height_to_price_vec = &ctx.height_to_price;

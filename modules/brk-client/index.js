@@ -5235,9 +5235,9 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Prices_Price
- * @property {MetricPattern20<Cents>} cents
- * @property {MetricPattern20<Dollars>} usd
- * @property {MetricPattern20<Sats>} sats
+ * @property {MetricPattern1<Cents>} cents
+ * @property {MetricPattern1<Dollars>} usd
+ * @property {MetricPattern1<Sats>} sats
  */
 
 /**
@@ -7505,9 +7505,9 @@ class BrkClient extends BrkClientBase {
           sats: createMetricPattern2(this, 'price_ohlc_sats'),
         },
         price: {
-          cents: createMetricPattern20(this, 'price_cents'),
-          usd: createMetricPattern20(this, 'price'),
-          sats: createMetricPattern20(this, 'price_sats'),
+          cents: createMetricPattern1(this, 'price_cents'),
+          usd: createMetricPattern1(this, 'price'),
+          sats: createMetricPattern1(this, 'price_sats'),
         },
       },
       distribution: {

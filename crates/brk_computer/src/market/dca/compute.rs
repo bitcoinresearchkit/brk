@@ -97,7 +97,7 @@ impl Vecs {
         {
             returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
                 starting_indexes.height,
-                &prices.price.usd,
+                &prices.price.usd.height,
                 &average_price.usd.height,
                 exit,
             )?;
@@ -165,7 +165,7 @@ impl Vecs {
         {
             returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
                 starting_indexes.height,
-                &prices.price.usd,
+                &prices.price.usd.height,
                 &lookback_price.usd.height,
                 exit,
             )?;
@@ -268,7 +268,7 @@ impl Vecs {
 
             returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
                 starting_indexes.height,
-                &prices.price.usd,
+                &prices.price.usd.height,
                 &average_price.usd.height,
                 exit,
             )?;

@@ -370,7 +370,7 @@ export function createMarketSection() {
         title: "Sats per Dollar",
         bottom: [
           line({
-            metric: prices.split.close.sats,
+            metric: prices.price.sats,
             name: "Sats/$",
             unit: Unit.sats,
           }),

@@ -40,24 +40,28 @@ export function init() {
     /** @type {Map<Unit, AnyFetchedSeriesBlueprint[]>} */
     const result = new Map();
 
-    // USD price + option blueprints
-    /** @type {FetchedCandlestickSeriesBlueprint} */
-    const usdPrice = {
-      type: "Candlestick",
-      title: "Price",
-      metric: brk.metrics.prices.ohlc.usd,
-    };
-    result.set(Unit.usd, [usdPrice, ...(optionTop.get(Unit.usd) ?? [])]);
+    const { ohlc, price } = brk.metrics.prices;
 
-    // Sats price + option blueprints
-    /** @type {FetchedCandlestickSeriesBlueprint} */
-    const satsPrice = {
-      type: "Candlestick",
-      title: "Price",
-      metric: brk.metrics.prices.ohlc.sats,
-      colors: /** @type {const} */ ([colors.bi.p1[1], colors.bi.p1[0]]),
-    };
-    result.set(Unit.sats, [satsPrice, ...(optionTop.get(Unit.sats) ?? [])]);
+    result.set(Unit.usd, [
+      /** @type {AnyFetchedSeriesBlueprint} */ ({
+        type: "Price",
+        title: "Price",
+        metric: price.usd,
+        ohlcMetric: ohlc.usd,
+      }),
+      ...(optionTop.get(Unit.usd) ?? []),
+    ]);
+
+    result.set(Unit.sats, [
+      /** @type {AnyFetchedSeriesBlueprint} */ ({
+        type: "Price",
+        title: "Price",
+        metric: price.sats,
+        ohlcMetric: ohlc.sats,
+        colors: /** @type {const} */ ([colors.bi.p1[1], colors.bi.p1[0]]),
+      }),
+      ...(optionTop.get(Unit.sats) ?? []),
+    ]);
 
     return result;
   }
@@ -70,9 +74,7 @@ export function init() {
     const unit = chart.panes[0].unit;
     if (!priceSeries?.hasData() || !unit) return;
 
-    const last = /** @type {CandlestickData | undefined} */ (
-      priceSeries.getData().at(-1)
-    );
+    const last = priceSeries.getData().at(-1);
     if (!last) return;
 
     // Convert to sats if needed
@@ -81,7 +83,13 @@ export function init() {
         ? Math.floor(ONE_BTC_IN_SATS / latest)
         : latest;
 
-    priceSeries.update({ ...last, close });
+    if ("close" in last) {
+      // Candlestick data
+      priceSeries.update({ ...last, close });
+    } else {
+      // Line data
+      priceSeries.update({ ...last, value: close });
+    }
   }
 
   // Set up the setOption function

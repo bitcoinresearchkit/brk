@@ -14,7 +14,7 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close = &prices.price.usd;
+        let close = &prices.price.usd.height;
 
         for (sma, period) in [
             (&mut self.price_1w_sma, 7),

@@ -42,7 +42,14 @@
  * @property {BaselineSeriesPartialOptions} [options]
  * @typedef {BaseSeriesBlueprint & DotsBaselineSeriesBlueprintSpecific} DotsBaselineSeriesBlueprint
  *
- * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint | HistogramSeriesBlueprint | DotsSeriesBlueprint | DotsBaselineSeriesBlueprint} AnySeriesBlueprint
+ * @typedef {Object} PriceSeriesBlueprintSpecific
+ * @property {"Price"} type
+ * @property {AnyMetricPattern} ohlcMetric - OHLC metric for candlestick (>= 1h indexes)
+ * @property {[Color, Color]} [colors]
+ * @property {CandlestickSeriesPartialOptions} [options]
+ * @typedef {BaseSeriesBlueprint & PriceSeriesBlueprintSpecific} PriceSeriesBlueprint
+ *
+ * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint | HistogramSeriesBlueprint | DotsSeriesBlueprint | DotsBaselineSeriesBlueprint | PriceSeriesBlueprint} AnySeriesBlueprint
  *
  * @typedef {AnySeriesBlueprint["type"]} SeriesType
  *

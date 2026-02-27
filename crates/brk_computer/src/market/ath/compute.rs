@@ -14,7 +14,7 @@ impl Vecs {
     ) -> Result<()> {
         self.price_ath.usd.height.compute_all_time_high(
             starting_indexes.height,
-            &prices.price.usd,
+            &prices.price.usd.height,
             exit,
         )?;
 
@@ -22,7 +22,7 @@ impl Vecs {
         self.days_since_price_ath.height.compute_transform2(
             starting_indexes.height,
             &self.price_ath.usd.height,
-            &prices.price.usd,
+            &prices.price.usd.height,
             |(i, ath, price, slf)| {
                 if prev.is_none() {
                     let i = i.to_usize();
