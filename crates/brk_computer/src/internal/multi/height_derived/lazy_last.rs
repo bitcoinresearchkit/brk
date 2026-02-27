@@ -9,7 +9,9 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{LazyVecFrom1, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecIndex, VecValue};
+use vecdb::{
+    LazyVecFrom1, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecIndex, VecValue,
+};
 
 use crate::{
     indexes, indexes_from,
@@ -108,7 +110,8 @@ where
     where
         S1T: NumericValue,
     {
-        let derived = ComputedHeightDerivedLast::forced_import(name, height_source, version, indexes);
+        let derived =
+            ComputedHeightDerivedLast::forced_import(name, height_source, version, indexes);
         Self::from_derived_computed::<F>(name, version, &derived)
     }
 

@@ -48,19 +48,18 @@ impl Vecs {
         while batch_start < target {
             let batch_end = (batch_start + BATCH_SIZE).min(target);
 
-            let outpoints = indexer.vecs.inputs.outpoint.collect_range_at(batch_start, batch_end);
-
             entries.clear();
-            for (j, outpoint) in outpoints.into_iter().enumerate() {
-                let txinindex = TxInIndex::from(batch_start + j);
+            let mut j = 0usize;
+            indexer.vecs.inputs.outpoint.for_each_range_at(batch_start, batch_end, |outpoint| {
                 entries.push(Entry {
-                    txinindex,
+                    txinindex: TxInIndex::from(batch_start + j),
                     txindex: outpoint.txindex(),
                     vout: outpoint.vout(),
                     txoutindex: TxOutIndex::COINBASE,
                     value: Sats::MAX,
                 });
-            }
+                j += 1;
+            });
 
             // Coinbase entries (txindex MAX) sorted to end
             entries.sort_unstable_by_key(|e| e.txindex);

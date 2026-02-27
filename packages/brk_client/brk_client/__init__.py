@@ -2660,7 +2660,7 @@ class BlocksCoinbaseDaysDominanceFeeSubsidyPattern:
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.blocks_mined: CumulativeHeightRollingPattern[StoredU32] = CumulativeHeightRollingPattern(client, _m(acc, 'blocks_mined'))
+        self.blocks_mined: CumulativeHeightSumPattern[StoredU32] = CumulativeHeightSumPattern(client, _m(acc, 'blocks_mined'))
         self.blocks_mined_1m_sum: MetricPattern1[StoredU32] = MetricPattern1(client, _m(acc, 'blocks_mined_1m_sum'))
         self.blocks_mined_1w_sum: MetricPattern1[StoredU32] = MetricPattern1(client, _m(acc, 'blocks_mined_1w_sum'))
         self.blocks_mined_1y_sum: MetricPattern1[StoredU32] = MetricPattern1(client, _m(acc, 'blocks_mined_1y_sum'))
@@ -2972,8 +2972,8 @@ class CoinblocksCoindaysSatblocksSatdaysSentPattern:
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.coinblocks_destroyed: CumulativeHeightRollingPattern[StoredF64] = CumulativeHeightRollingPattern(client, _m(acc, 'coinblocks_destroyed'))
-        self.coindays_destroyed: CumulativeHeightRollingPattern[StoredF64] = CumulativeHeightRollingPattern(client, _m(acc, 'coindays_destroyed'))
+        self.coinblocks_destroyed: CumulativeHeightSumPattern[StoredF64] = CumulativeHeightSumPattern(client, _m(acc, 'coinblocks_destroyed'))
+        self.coindays_destroyed: CumulativeHeightSumPattern[StoredF64] = CumulativeHeightSumPattern(client, _m(acc, 'coindays_destroyed'))
         self.satblocks_destroyed: MetricPattern20[Sats] = MetricPattern20(client, _m(acc, 'satblocks_destroyed'))
         self.satdays_destroyed: MetricPattern20[Sats] = MetricPattern20(client, _m(acc, 'satdays_destroyed'))
         self.sent: BtcSatsUsdPattern2 = BtcSatsUsdPattern2(client, _m(acc, 'sent'))
@@ -3060,7 +3060,7 @@ class BtcSatsUsdPattern2:
         self.sats: CumulativeHeightPattern[Sats] = CumulativeHeightPattern(client, acc)
         self.usd: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'usd'))
 
-class BtcSatsUsdPattern4:
+class BtcSatsUsdPattern3:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
@@ -3069,14 +3069,14 @@ class BtcSatsUsdPattern4:
         self.sats: CumulativeHeightRollingPattern[Sats] = CumulativeHeightRollingPattern(client, acc)
         self.usd: CumulativeHeightRollingPattern[Dollars] = CumulativeHeightRollingPattern(client, _m(acc, 'usd'))
 
-class BtcSatsUsdPattern3:
+class BtcSatsUsdPattern4:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
         self.btc: MetricPattern1[Bitcoin] = MetricPattern1(client, _m(acc, 'btc'))
-        self.sats: CumulativeHeightRollingPattern2[Sats] = CumulativeHeightRollingPattern2(client, acc)
-        self.usd: CumulativeHeightRollingPattern2[Dollars] = CumulativeHeightRollingPattern2(client, _m(acc, 'usd'))
+        self.sats: CumulativeHeightSumPattern[Sats] = CumulativeHeightSumPattern(client, acc)
+        self.usd: CumulativeHeightSumPattern[Dollars] = CumulativeHeightSumPattern(client, _m(acc, 'usd'))
 
 class BtcSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
@@ -3096,7 +3096,7 @@ class HistogramLineSignalPattern:
         self.line: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'line_1y'))
         self.signal: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'signal_1y'))
 
-class CumulativeHeightRollingPattern2(Generic[T]):
+class CumulativeHeightRollingPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
@@ -3105,14 +3105,14 @@ class CumulativeHeightRollingPattern2(Generic[T]):
         self.height: MetricPattern20[T] = MetricPattern20(client, acc)
         self.rolling: AverageMaxMedianMinP10P25P75P90SumPattern = AverageMaxMedianMinP10P25P75P90SumPattern(client, acc)
 
-class CumulativeHeightRollingPattern(Generic[T]):
+class CumulativeHeightSumPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
         self.cumulative: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'cumulative'))
         self.height: MetricPattern20[T] = MetricPattern20(client, acc)
-        self.rolling: _1y24h30d7dPattern[T] = _1y24h30d7dPattern(client, acc)
+        self.sum: _1y24h30d7dPattern[T] = _1y24h30d7dPattern(client, acc)
 
 class _30dCountPattern:
     """Pattern struct for repeated tree structure."""
@@ -3242,7 +3242,7 @@ class MetricsTree_Blocks_Count:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.block_count_target: MetricPattern1[StoredU64] = MetricPattern1(client, 'block_count_target')
-        self.block_count: CumulativeHeightRollingPattern[StoredU32] = CumulativeHeightRollingPattern(client, 'block_count')
+        self.block_count: CumulativeHeightSumPattern[StoredU32] = CumulativeHeightSumPattern(client, 'block_count')
         self.block_count_sum: _1y24h30d7dPattern[StoredU32] = _1y24h30d7dPattern(client, 'block_count_sum')
         self.height_1h_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_1h_ago')
         self.height_24h_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_24h_ago')
@@ -3296,7 +3296,7 @@ class MetricsTree_Blocks:
         self.count: MetricsTree_Blocks_Count = MetricsTree_Blocks_Count(client)
         self.interval: AverageHeightMaxMedianMinP10P25P75P90Pattern[Timestamp] = AverageHeightMaxMedianMinP10P25P75P90Pattern(client, 'block_interval')
         self.halving: MetricsTree_Blocks_Halving = MetricsTree_Blocks_Halving(client)
-        self.vbytes: CumulativeHeightRollingPattern2[StoredU64] = CumulativeHeightRollingPattern2(client, 'block_vbytes')
+        self.vbytes: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'block_vbytes')
         self.size: AverageCumulativeMaxMedianMinP10P25P75P90SumPattern = AverageCumulativeMaxMedianMinP10P25P75P90SumPattern(client, 'block_size')
         self.fullness: AverageHeightMaxMedianMinP10P25P75P90Pattern[StoredF32] = AverageHeightMaxMedianMinP10P25P75P90Pattern(client, 'block_fullness')
 
@@ -3304,7 +3304,7 @@ class MetricsTree_Transactions_Count:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.tx_count: CumulativeHeightRollingPattern2[StoredU64] = CumulativeHeightRollingPattern2(client, 'tx_count')
+        self.tx_count: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'tx_count')
         self.is_coinbase: MetricPattern21[StoredBool] = MetricPattern21(client, 'is_coinbase')
 
 class MetricsTree_Transactions_Size:
@@ -3327,9 +3327,9 @@ class MetricsTree_Transactions_Versions:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.v1: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'tx_v1')
-        self.v2: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'tx_v2')
-        self.v3: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'tx_v3')
+        self.v1: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'tx_v1')
+        self.v2: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'tx_v2')
+        self.v3: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'tx_v3')
 
 class MetricsTree_Transactions_Volume:
     """Metrics tree node."""
@@ -3431,19 +3431,19 @@ class MetricsTree_Scripts_Count:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.p2a: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'p2a_count')
-        self.p2ms: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'p2ms_count')
-        self.p2pk33: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'p2pk33_count')
-        self.p2pk65: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'p2pk65_count')
-        self.p2pkh: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'p2pkh_count')
-        self.p2sh: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'p2sh_count')
-        self.p2tr: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'p2tr_count')
-        self.p2wpkh: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'p2wpkh_count')
-        self.p2wsh: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'p2wsh_count')
-        self.opreturn: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'opreturn_count')
-        self.emptyoutput: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'emptyoutput_count')
-        self.unknownoutput: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'unknownoutput_count')
-        self.segwit: CumulativeHeightRollingPattern[StoredU64] = CumulativeHeightRollingPattern(client, 'segwit_count')
+        self.p2a: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'p2a_count')
+        self.p2ms: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'p2ms_count')
+        self.p2pk33: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'p2pk33_count')
+        self.p2pk65: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'p2pk65_count')
+        self.p2pkh: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'p2pkh_count')
+        self.p2sh: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'p2sh_count')
+        self.p2tr: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'p2tr_count')
+        self.p2wpkh: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'p2wpkh_count')
+        self.p2wsh: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'p2wsh_count')
+        self.opreturn: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'opreturn_count')
+        self.emptyoutput: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'emptyoutput_count')
+        self.unknownoutput: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'unknownoutput_count')
+        self.segwit: CumulativeHeightSumPattern[StoredU64] = CumulativeHeightSumPattern(client, 'segwit_count')
         self.taproot_adoption: MetricPattern1[StoredF32] = MetricPattern1(client, 'taproot_adoption')
         self.segwit_adoption: MetricPattern1[StoredF32] = MetricPattern1(client, 'segwit_adoption')
 
@@ -3528,8 +3528,8 @@ class MetricsTree_Cointime_Activity:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.coinblocks_created: CumulativeHeightRollingPattern[StoredF64] = CumulativeHeightRollingPattern(client, 'coinblocks_created')
-        self.coinblocks_stored: CumulativeHeightRollingPattern[StoredF64] = CumulativeHeightRollingPattern(client, 'coinblocks_stored')
+        self.coinblocks_created: CumulativeHeightSumPattern[StoredF64] = CumulativeHeightSumPattern(client, 'coinblocks_created')
+        self.coinblocks_stored: CumulativeHeightSumPattern[StoredF64] = CumulativeHeightSumPattern(client, 'coinblocks_stored')
         self.liveliness: MetricPattern1[StoredF64] = MetricPattern1(client, 'liveliness')
         self.vaultedness: MetricPattern1[StoredF64] = MetricPattern1(client, 'vaultedness')
         self.activity_to_vaultedness_ratio: MetricPattern1[StoredF64] = MetricPattern1(client, 'activity_to_vaultedness_ratio')
@@ -3545,10 +3545,10 @@ class MetricsTree_Cointime_Value:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.cointime_value_destroyed: CumulativeHeightRollingPattern[StoredF64] = CumulativeHeightRollingPattern(client, 'cointime_value_destroyed')
-        self.cointime_value_created: CumulativeHeightRollingPattern[StoredF64] = CumulativeHeightRollingPattern(client, 'cointime_value_created')
-        self.cointime_value_stored: CumulativeHeightRollingPattern[StoredF64] = CumulativeHeightRollingPattern(client, 'cointime_value_stored')
-        self.vocdd: CumulativeHeightRollingPattern[StoredF64] = CumulativeHeightRollingPattern(client, 'vocdd')
+        self.cointime_value_destroyed: CumulativeHeightSumPattern[StoredF64] = CumulativeHeightSumPattern(client, 'cointime_value_destroyed')
+        self.cointime_value_created: CumulativeHeightSumPattern[StoredF64] = CumulativeHeightSumPattern(client, 'cointime_value_created')
+        self.cointime_value_stored: CumulativeHeightSumPattern[StoredF64] = CumulativeHeightSumPattern(client, 'cointime_value_stored')
+        self.vocdd: CumulativeHeightSumPattern[StoredF64] = CumulativeHeightSumPattern(client, 'vocdd')
 
 class MetricsTree_Cointime_Cap:
     """Metrics tree node."""

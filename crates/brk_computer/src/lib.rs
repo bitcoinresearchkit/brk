@@ -27,7 +27,6 @@ mod scripts;
 mod supply;
 mod traits;
 mod transactions;
-mod utils;
 
 use indexes::ComputeIndexes;
 

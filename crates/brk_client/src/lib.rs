@@ -2193,7 +2193,7 @@ impl GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct BlocksCoinbaseDaysDominanceFeeSubsidyPattern {
-    pub blocks_mined: CumulativeHeightRollingPattern<StoredU32>,
+    pub blocks_mined: CumulativeHeightSumPattern<StoredU32>,
     pub blocks_mined_1m_sum: MetricPattern1<StoredU32>,
     pub blocks_mined_1w_sum: MetricPattern1<StoredU32>,
     pub blocks_mined_1y_sum: MetricPattern1<StoredU32>,
@@ -2214,7 +2214,7 @@ impl BlocksCoinbaseDaysDominanceFeeSubsidyPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            blocks_mined: CumulativeHeightRollingPattern::new(client.clone(), _m(&acc, "blocks_mined")),
+            blocks_mined: CumulativeHeightSumPattern::new(client.clone(), _m(&acc, "blocks_mined")),
             blocks_mined_1m_sum: MetricPattern1::new(client.clone(), _m(&acc, "blocks_mined_1m_sum")),
             blocks_mined_1w_sum: MetricPattern1::new(client.clone(), _m(&acc, "blocks_mined_1w_sum")),
             blocks_mined_1y_sum: MetricPattern1::new(client.clone(), _m(&acc, "blocks_mined_1y_sum")),
@@ -2817,8 +2817,8 @@ impl BalanceBothReactivatedReceivingSendingPattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct CoinblocksCoindaysSatblocksSatdaysSentPattern {
-    pub coinblocks_destroyed: CumulativeHeightRollingPattern<StoredF64>,
-    pub coindays_destroyed: CumulativeHeightRollingPattern<StoredF64>,
+    pub coinblocks_destroyed: CumulativeHeightSumPattern<StoredF64>,
+    pub coindays_destroyed: CumulativeHeightSumPattern<StoredF64>,
     pub satblocks_destroyed: MetricPattern20<Sats>,
     pub satdays_destroyed: MetricPattern20<Sats>,
     pub sent: BtcSatsUsdPattern2,
@@ -2829,8 +2829,8 @@ impl CoinblocksCoindaysSatblocksSatdaysSentPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            coinblocks_destroyed: CumulativeHeightRollingPattern::new(client.clone(), _m(&acc, "coinblocks_destroyed")),
-            coindays_destroyed: CumulativeHeightRollingPattern::new(client.clone(), _m(&acc, "coindays_destroyed")),
+            coinblocks_destroyed: CumulativeHeightSumPattern::new(client.clone(), _m(&acc, "coinblocks_destroyed")),
+            coindays_destroyed: CumulativeHeightSumPattern::new(client.clone(), _m(&acc, "coindays_destroyed")),
             satblocks_destroyed: MetricPattern20::new(client.clone(), _m(&acc, "satblocks_destroyed")),
             satdays_destroyed: MetricPattern20::new(client.clone(), _m(&acc, "satdays_destroyed")),
             sent: BtcSatsUsdPattern2::new(client.clone(), _m(&acc, "sent")),
@@ -3002,13 +3002,13 @@ impl BtcSatsUsdPattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct BtcSatsUsdPattern4 {
+pub struct BtcSatsUsdPattern3 {
     pub btc: MetricPattern1<Bitcoin>,
     pub sats: CumulativeHeightRollingPattern<Sats>,
     pub usd: CumulativeHeightRollingPattern<Dollars>,
 }
 
-impl BtcSatsUsdPattern4 {
+impl BtcSatsUsdPattern3 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
@@ -3020,19 +3020,19 @@ impl BtcSatsUsdPattern4 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct BtcSatsUsdPattern3 {
+pub struct BtcSatsUsdPattern4 {
     pub btc: MetricPattern1<Bitcoin>,
-    pub sats: CumulativeHeightRollingPattern2<Sats>,
-    pub usd: CumulativeHeightRollingPattern2<Dollars>,
+    pub sats: CumulativeHeightSumPattern<Sats>,
+    pub usd: CumulativeHeightSumPattern<Dollars>,
 }
 
-impl BtcSatsUsdPattern3 {
+impl BtcSatsUsdPattern4 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             btc: MetricPattern1::new(client.clone(), _m(&acc, "btc")),
-            sats: CumulativeHeightRollingPattern2::new(client.clone(), acc.clone()),
-            usd: CumulativeHeightRollingPattern2::new(client.clone(), _m(&acc, "usd")),
+            sats: CumulativeHeightSumPattern::new(client.clone(), acc.clone()),
+            usd: CumulativeHeightSumPattern::new(client.clone(), _m(&acc, "usd")),
         }
     }
 }
@@ -3074,13 +3074,13 @@ impl HistogramLineSignalPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CumulativeHeightRollingPattern2<T> {
+pub struct CumulativeHeightRollingPattern<T> {
     pub cumulative: MetricPattern1<T>,
     pub height: MetricPattern20<T>,
     pub rolling: AverageMaxMedianMinP10P25P75P90SumPattern,
 }
 
-impl<T: DeserializeOwned> CumulativeHeightRollingPattern2<T> {
+impl<T: DeserializeOwned> CumulativeHeightRollingPattern<T> {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
@@ -3092,19 +3092,19 @@ impl<T: DeserializeOwned> CumulativeHeightRollingPattern2<T> {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CumulativeHeightRollingPattern<T> {
+pub struct CumulativeHeightSumPattern<T> {
     pub cumulative: MetricPattern1<T>,
     pub height: MetricPattern20<T>,
-    pub rolling: _1y24h30d7dPattern<T>,
+    pub sum: _1y24h30d7dPattern<T>,
 }
 
-impl<T: DeserializeOwned> CumulativeHeightRollingPattern<T> {
+impl<T: DeserializeOwned> CumulativeHeightSumPattern<T> {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
             height: MetricPattern20::new(client.clone(), acc.clone()),
-            rolling: _1y24h30d7dPattern::new(client.clone(), acc.clone()),
+            sum: _1y24h30d7dPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -3290,7 +3290,7 @@ pub struct MetricsTree_Blocks {
     pub count: MetricsTree_Blocks_Count,
     pub interval: AverageHeightMaxMedianMinP10P25P75P90Pattern<Timestamp>,
     pub halving: MetricsTree_Blocks_Halving,
-    pub vbytes: CumulativeHeightRollingPattern2<StoredU64>,
+    pub vbytes: CumulativeHeightRollingPattern<StoredU64>,
     pub size: AverageCumulativeMaxMedianMinP10P25P75P90SumPattern,
     pub fullness: AverageHeightMaxMedianMinP10P25P75P90Pattern<StoredF32>,
 }
@@ -3306,7 +3306,7 @@ impl MetricsTree_Blocks {
             count: MetricsTree_Blocks_Count::new(client.clone(), format!("{base_path}_count")),
             interval: AverageHeightMaxMedianMinP10P25P75P90Pattern::new(client.clone(), "block_interval".to_string()),
             halving: MetricsTree_Blocks_Halving::new(client.clone(), format!("{base_path}_halving")),
-            vbytes: CumulativeHeightRollingPattern2::new(client.clone(), "block_vbytes".to_string()),
+            vbytes: CumulativeHeightRollingPattern::new(client.clone(), "block_vbytes".to_string()),
             size: AverageCumulativeMaxMedianMinP10P25P75P90SumPattern::new(client.clone(), "block_size".to_string()),
             fullness: AverageHeightMaxMedianMinP10P25P75P90Pattern::new(client.clone(), "block_fullness".to_string()),
         }
@@ -3436,7 +3436,7 @@ impl MetricsTree_Blocks_Weight {
 /// Metrics tree node.
 pub struct MetricsTree_Blocks_Count {
     pub block_count_target: MetricPattern1<StoredU64>,
-    pub block_count: CumulativeHeightRollingPattern<StoredU32>,
+    pub block_count: CumulativeHeightSumPattern<StoredU32>,
     pub block_count_sum: _1y24h30d7dPattern<StoredU32>,
     pub height_1h_ago: MetricPattern20<Height>,
     pub height_24h_ago: MetricPattern20<Height>,
@@ -3475,7 +3475,7 @@ impl MetricsTree_Blocks_Count {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             block_count_target: MetricPattern1::new(client.clone(), "block_count_target".to_string()),
-            block_count: CumulativeHeightRollingPattern::new(client.clone(), "block_count".to_string()),
+            block_count: CumulativeHeightSumPattern::new(client.clone(), "block_count".to_string()),
             block_count_sum: _1y24h30d7dPattern::new(client.clone(), "block_count_sum".to_string()),
             height_1h_ago: MetricPattern20::new(client.clone(), "height_1h_ago".to_string()),
             height_24h_ago: MetricPattern20::new(client.clone(), "height_24h_ago".to_string()),
@@ -3572,14 +3572,14 @@ impl MetricsTree_Transactions {
 
 /// Metrics tree node.
 pub struct MetricsTree_Transactions_Count {
-    pub tx_count: CumulativeHeightRollingPattern2<StoredU64>,
+    pub tx_count: CumulativeHeightRollingPattern<StoredU64>,
     pub is_coinbase: MetricPattern21<StoredBool>,
 }
 
 impl MetricsTree_Transactions_Count {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            tx_count: CumulativeHeightRollingPattern2::new(client.clone(), "tx_count".to_string()),
+            tx_count: CumulativeHeightRollingPattern::new(client.clone(), "tx_count".to_string()),
             is_coinbase: MetricPattern21::new(client.clone(), "is_coinbase".to_string()),
         }
     }
@@ -3621,17 +3621,17 @@ impl MetricsTree_Transactions_Fees {
 
 /// Metrics tree node.
 pub struct MetricsTree_Transactions_Versions {
-    pub v1: CumulativeHeightRollingPattern<StoredU64>,
-    pub v2: CumulativeHeightRollingPattern<StoredU64>,
-    pub v3: CumulativeHeightRollingPattern<StoredU64>,
+    pub v1: CumulativeHeightSumPattern<StoredU64>,
+    pub v2: CumulativeHeightSumPattern<StoredU64>,
+    pub v3: CumulativeHeightSumPattern<StoredU64>,
 }
 
 impl MetricsTree_Transactions_Versions {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            v1: CumulativeHeightRollingPattern::new(client.clone(), "tx_v1".to_string()),
-            v2: CumulativeHeightRollingPattern::new(client.clone(), "tx_v2".to_string()),
-            v3: CumulativeHeightRollingPattern::new(client.clone(), "tx_v3".to_string()),
+            v1: CumulativeHeightSumPattern::new(client.clone(), "tx_v1".to_string()),
+            v2: CumulativeHeightSumPattern::new(client.clone(), "tx_v2".to_string()),
+            v3: CumulativeHeightSumPattern::new(client.clone(), "tx_v3".to_string()),
         }
     }
 }
@@ -3828,19 +3828,19 @@ impl MetricsTree_Scripts {
 
 /// Metrics tree node.
 pub struct MetricsTree_Scripts_Count {
-    pub p2a: CumulativeHeightRollingPattern<StoredU64>,
-    pub p2ms: CumulativeHeightRollingPattern<StoredU64>,
-    pub p2pk33: CumulativeHeightRollingPattern<StoredU64>,
-    pub p2pk65: CumulativeHeightRollingPattern<StoredU64>,
-    pub p2pkh: CumulativeHeightRollingPattern<StoredU64>,
-    pub p2sh: CumulativeHeightRollingPattern<StoredU64>,
-    pub p2tr: CumulativeHeightRollingPattern<StoredU64>,
-    pub p2wpkh: CumulativeHeightRollingPattern<StoredU64>,
-    pub p2wsh: CumulativeHeightRollingPattern<StoredU64>,
-    pub opreturn: CumulativeHeightRollingPattern<StoredU64>,
-    pub emptyoutput: CumulativeHeightRollingPattern<StoredU64>,
-    pub unknownoutput: CumulativeHeightRollingPattern<StoredU64>,
-    pub segwit: CumulativeHeightRollingPattern<StoredU64>,
+    pub p2a: CumulativeHeightSumPattern<StoredU64>,
+    pub p2ms: CumulativeHeightSumPattern<StoredU64>,
+    pub p2pk33: CumulativeHeightSumPattern<StoredU64>,
+    pub p2pk65: CumulativeHeightSumPattern<StoredU64>,
+    pub p2pkh: CumulativeHeightSumPattern<StoredU64>,
+    pub p2sh: CumulativeHeightSumPattern<StoredU64>,
+    pub p2tr: CumulativeHeightSumPattern<StoredU64>,
+    pub p2wpkh: CumulativeHeightSumPattern<StoredU64>,
+    pub p2wsh: CumulativeHeightSumPattern<StoredU64>,
+    pub opreturn: CumulativeHeightSumPattern<StoredU64>,
+    pub emptyoutput: CumulativeHeightSumPattern<StoredU64>,
+    pub unknownoutput: CumulativeHeightSumPattern<StoredU64>,
+    pub segwit: CumulativeHeightSumPattern<StoredU64>,
     pub taproot_adoption: MetricPattern1<StoredF32>,
     pub segwit_adoption: MetricPattern1<StoredF32>,
 }
@@ -3848,19 +3848,19 @@ pub struct MetricsTree_Scripts_Count {
 impl MetricsTree_Scripts_Count {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            p2a: CumulativeHeightRollingPattern::new(client.clone(), "p2a_count".to_string()),
-            p2ms: CumulativeHeightRollingPattern::new(client.clone(), "p2ms_count".to_string()),
-            p2pk33: CumulativeHeightRollingPattern::new(client.clone(), "p2pk33_count".to_string()),
-            p2pk65: CumulativeHeightRollingPattern::new(client.clone(), "p2pk65_count".to_string()),
-            p2pkh: CumulativeHeightRollingPattern::new(client.clone(), "p2pkh_count".to_string()),
-            p2sh: CumulativeHeightRollingPattern::new(client.clone(), "p2sh_count".to_string()),
-            p2tr: CumulativeHeightRollingPattern::new(client.clone(), "p2tr_count".to_string()),
-            p2wpkh: CumulativeHeightRollingPattern::new(client.clone(), "p2wpkh_count".to_string()),
-            p2wsh: CumulativeHeightRollingPattern::new(client.clone(), "p2wsh_count".to_string()),
-            opreturn: CumulativeHeightRollingPattern::new(client.clone(), "opreturn_count".to_string()),
-            emptyoutput: CumulativeHeightRollingPattern::new(client.clone(), "emptyoutput_count".to_string()),
-            unknownoutput: CumulativeHeightRollingPattern::new(client.clone(), "unknownoutput_count".to_string()),
-            segwit: CumulativeHeightRollingPattern::new(client.clone(), "segwit_count".to_string()),
+            p2a: CumulativeHeightSumPattern::new(client.clone(), "p2a_count".to_string()),
+            p2ms: CumulativeHeightSumPattern::new(client.clone(), "p2ms_count".to_string()),
+            p2pk33: CumulativeHeightSumPattern::new(client.clone(), "p2pk33_count".to_string()),
+            p2pk65: CumulativeHeightSumPattern::new(client.clone(), "p2pk65_count".to_string()),
+            p2pkh: CumulativeHeightSumPattern::new(client.clone(), "p2pkh_count".to_string()),
+            p2sh: CumulativeHeightSumPattern::new(client.clone(), "p2sh_count".to_string()),
+            p2tr: CumulativeHeightSumPattern::new(client.clone(), "p2tr_count".to_string()),
+            p2wpkh: CumulativeHeightSumPattern::new(client.clone(), "p2wpkh_count".to_string()),
+            p2wsh: CumulativeHeightSumPattern::new(client.clone(), "p2wsh_count".to_string()),
+            opreturn: CumulativeHeightSumPattern::new(client.clone(), "opreturn_count".to_string()),
+            emptyoutput: CumulativeHeightSumPattern::new(client.clone(), "emptyoutput_count".to_string()),
+            unknownoutput: CumulativeHeightSumPattern::new(client.clone(), "unknownoutput_count".to_string()),
+            segwit: CumulativeHeightSumPattern::new(client.clone(), "segwit_count".to_string()),
             taproot_adoption: MetricPattern1::new(client.clone(), "taproot_adoption".to_string()),
             segwit_adoption: MetricPattern1::new(client.clone(), "segwit_adoption".to_string()),
         }
@@ -4023,8 +4023,8 @@ impl MetricsTree_Cointime {
 
 /// Metrics tree node.
 pub struct MetricsTree_Cointime_Activity {
-    pub coinblocks_created: CumulativeHeightRollingPattern<StoredF64>,
-    pub coinblocks_stored: CumulativeHeightRollingPattern<StoredF64>,
+    pub coinblocks_created: CumulativeHeightSumPattern<StoredF64>,
+    pub coinblocks_stored: CumulativeHeightSumPattern<StoredF64>,
     pub liveliness: MetricPattern1<StoredF64>,
     pub vaultedness: MetricPattern1<StoredF64>,
     pub activity_to_vaultedness_ratio: MetricPattern1<StoredF64>,
@@ -4033,8 +4033,8 @@ pub struct MetricsTree_Cointime_Activity {
 impl MetricsTree_Cointime_Activity {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            coinblocks_created: CumulativeHeightRollingPattern::new(client.clone(), "coinblocks_created".to_string()),
-            coinblocks_stored: CumulativeHeightRollingPattern::new(client.clone(), "coinblocks_stored".to_string()),
+            coinblocks_created: CumulativeHeightSumPattern::new(client.clone(), "coinblocks_created".to_string()),
+            coinblocks_stored: CumulativeHeightSumPattern::new(client.clone(), "coinblocks_stored".to_string()),
             liveliness: MetricPattern1::new(client.clone(), "liveliness".to_string()),
             vaultedness: MetricPattern1::new(client.clone(), "vaultedness".to_string()),
             activity_to_vaultedness_ratio: MetricPattern1::new(client.clone(), "activity_to_vaultedness_ratio".to_string()),
@@ -4059,19 +4059,19 @@ impl MetricsTree_Cointime_Supply {
 
 /// Metrics tree node.
 pub struct MetricsTree_Cointime_Value {
-    pub cointime_value_destroyed: CumulativeHeightRollingPattern<StoredF64>,
-    pub cointime_value_created: CumulativeHeightRollingPattern<StoredF64>,
-    pub cointime_value_stored: CumulativeHeightRollingPattern<StoredF64>,
-    pub vocdd: CumulativeHeightRollingPattern<StoredF64>,
+    pub cointime_value_destroyed: CumulativeHeightSumPattern<StoredF64>,
+    pub cointime_value_created: CumulativeHeightSumPattern<StoredF64>,
+    pub cointime_value_stored: CumulativeHeightSumPattern<StoredF64>,
+    pub vocdd: CumulativeHeightSumPattern<StoredF64>,
 }
 
 impl MetricsTree_Cointime_Value {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            cointime_value_destroyed: CumulativeHeightRollingPattern::new(client.clone(), "cointime_value_destroyed".to_string()),
-            cointime_value_created: CumulativeHeightRollingPattern::new(client.clone(), "cointime_value_created".to_string()),
-            cointime_value_stored: CumulativeHeightRollingPattern::new(client.clone(), "cointime_value_stored".to_string()),
-            vocdd: CumulativeHeightRollingPattern::new(client.clone(), "vocdd".to_string()),
+            cointime_value_destroyed: CumulativeHeightSumPattern::new(client.clone(), "cointime_value_destroyed".to_string()),
+            cointime_value_created: CumulativeHeightSumPattern::new(client.clone(), "cointime_value_created".to_string()),
+            cointime_value_stored: CumulativeHeightSumPattern::new(client.clone(), "cointime_value_stored".to_string()),
+            vocdd: CumulativeHeightSumPattern::new(client.clone(), "vocdd".to_string()),
         }
     }
 }

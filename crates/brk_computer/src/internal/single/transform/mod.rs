@@ -1,6 +1,8 @@
 mod block_count_target;
 mod cents_to_dollars;
 mod cents_to_sats;
+mod ohlc_cents_to_dollars;
+mod ohlc_cents_to_sats;
 
 mod dollar_halve;
 mod dollar_identity;
@@ -35,6 +37,8 @@ mod volatility_sqrt7;
 pub use block_count_target::*;
 pub use cents_to_dollars::*;
 pub use cents_to_sats::*;
+pub use ohlc_cents_to_dollars::*;
+pub use ohlc_cents_to_sats::*;
 
 pub use dollar_halve::*;
 pub use dollar_identity::*;

@@ -11,7 +11,7 @@ use vecdb::{
     VecValue,
 };
 
-use crate::utils::get_percentile;
+use brk_types::get_percentile;
 
 use super::ComputedVecValue;
 
@@ -358,6 +358,7 @@ where
     let window_starts_batch: Vec<I> = window_starts.collect_range_at(start, fi_len);
 
     let zero = T::from(0_usize);
+    let mut values: Vec<T> = Vec::new();
 
     first_indexes_batch
         .iter()
@@ -389,8 +390,7 @@ where
                     vec.truncate_push_at(idx, zero)?;
                 }
             } else {
-                let mut values: Vec<T> =
-                    source.collect_range_at(range_start_usize, range_end_usize);
+                source.collect_range_into_at(range_start_usize, range_end_usize, &mut values);
 
                 // Compute sum before sorting
                 let len = values.len();

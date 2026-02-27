@@ -7,7 +7,7 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{LazyAggVec, ReadableBoxedVec, ReadableCloneableVec};
+use vecdb::{LazyAggVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec};
 
 use crate::{
     indexes, indexes_from,
@@ -40,6 +40,17 @@ pub struct ComputedHeightDerivedLast<T>(
 )
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
+
+/// Already read-only (no StorageMode); cloning is sufficient.
+impl<T> ReadOnlyClone for ComputedHeightDerivedLast<T>
+where
+    T: ComputedVecValue + PartialOrd + JsonSchema,
+{
+    type ReadOnly = Self;
+    fn read_only_clone(&self) -> Self {
+        self.clone()
+    }
+}
 
 const VERSION: Version = Version::ZERO;
 

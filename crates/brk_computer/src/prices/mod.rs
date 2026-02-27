@@ -1,4 +1,6 @@
 mod compute;
+pub(crate) mod ohlcs;
+pub(crate) mod split;
 
 pub mod cents;
 pub mod sats;

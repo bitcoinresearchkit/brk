@@ -2763,7 +2763,7 @@ function createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(clien
 
 /**
  * @typedef {Object} BlocksCoinbaseDaysDominanceFeeSubsidyPattern
- * @property {CumulativeHeightRollingPattern<StoredU32>} blocksMined
+ * @property {CumulativeHeightSumPattern<StoredU32>} blocksMined
  * @property {MetricPattern1<StoredU32>} blocksMined1mSum
  * @property {MetricPattern1<StoredU32>} blocksMined1wSum
  * @property {MetricPattern1<StoredU32>} blocksMined1ySum
@@ -2788,7 +2788,7 @@ function createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(clien
  */
 function createBlocksCoinbaseDaysDominanceFeeSubsidyPattern(client, acc) {
   return {
-    blocksMined: createCumulativeHeightRollingPattern(client, _m(acc, 'blocks_mined')),
+    blocksMined: createCumulativeHeightSumPattern(client, _m(acc, 'blocks_mined')),
     blocksMined1mSum: createMetricPattern1(client, _m(acc, 'blocks_mined_1m_sum')),
     blocksMined1wSum: createMetricPattern1(client, _m(acc, 'blocks_mined_1w_sum')),
     blocksMined1ySum: createMetricPattern1(client, _m(acc, 'blocks_mined_1y_sum')),
@@ -3455,8 +3455,8 @@ function createBalanceBothReactivatedReceivingSendingPattern(client, acc) {
 
 /**
  * @typedef {Object} CoinblocksCoindaysSatblocksSatdaysSentPattern
- * @property {CumulativeHeightRollingPattern<StoredF64>} coinblocksDestroyed
- * @property {CumulativeHeightRollingPattern<StoredF64>} coindaysDestroyed
+ * @property {CumulativeHeightSumPattern<StoredF64>} coinblocksDestroyed
+ * @property {CumulativeHeightSumPattern<StoredF64>} coindaysDestroyed
  * @property {MetricPattern20<Sats>} satblocksDestroyed
  * @property {MetricPattern20<Sats>} satdaysDestroyed
  * @property {BtcSatsUsdPattern2} sent
@@ -3471,8 +3471,8 @@ function createBalanceBothReactivatedReceivingSendingPattern(client, acc) {
  */
 function createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc) {
   return {
-    coinblocksDestroyed: createCumulativeHeightRollingPattern(client, _m(acc, 'coinblocks_destroyed')),
-    coindaysDestroyed: createCumulativeHeightRollingPattern(client, _m(acc, 'coindays_destroyed')),
+    coinblocksDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coinblocks_destroyed')),
+    coindaysDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coindays_destroyed')),
     satblocksDestroyed: createMetricPattern20(client, _m(acc, 'satblocks_destroyed')),
     satdaysDestroyed: createMetricPattern20(client, _m(acc, 'satdays_destroyed')),
     sent: createBtcSatsUsdPattern2(client, _m(acc, 'sent')),
@@ -3673,31 +3673,10 @@ function createBtcSatsUsdPattern2(client, acc) {
 }
 
 /**
- * @typedef {Object} BtcSatsUsdPattern4
+ * @typedef {Object} BtcSatsUsdPattern3
  * @property {MetricPattern1<Bitcoin>} btc
  * @property {CumulativeHeightRollingPattern<Sats>} sats
  * @property {CumulativeHeightRollingPattern<Dollars>} usd
- */
-
-/**
- * Create a BtcSatsUsdPattern4 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {BtcSatsUsdPattern4}
- */
-function createBtcSatsUsdPattern4(client, acc) {
-  return {
-    btc: createMetricPattern1(client, _m(acc, 'btc')),
-    sats: createCumulativeHeightRollingPattern(client, acc),
-    usd: createCumulativeHeightRollingPattern(client, _m(acc, 'usd')),
-  };
-}
-
-/**
- * @typedef {Object} BtcSatsUsdPattern3
- * @property {MetricPattern1<Bitcoin>} btc
- * @property {CumulativeHeightRollingPattern2<Sats>} sats
- * @property {CumulativeHeightRollingPattern2<Dollars>} usd
  */
 
 /**
@@ -3709,8 +3688,29 @@ function createBtcSatsUsdPattern4(client, acc) {
 function createBtcSatsUsdPattern3(client, acc) {
   return {
     btc: createMetricPattern1(client, _m(acc, 'btc')),
-    sats: createCumulativeHeightRollingPattern2(client, acc),
-    usd: createCumulativeHeightRollingPattern2(client, _m(acc, 'usd')),
+    sats: createCumulativeHeightRollingPattern(client, acc),
+    usd: createCumulativeHeightRollingPattern(client, _m(acc, 'usd')),
+  };
+}
+
+/**
+ * @typedef {Object} BtcSatsUsdPattern4
+ * @property {MetricPattern1<Bitcoin>} btc
+ * @property {CumulativeHeightSumPattern<Sats>} sats
+ * @property {CumulativeHeightSumPattern<Dollars>} usd
+ */
+
+/**
+ * Create a BtcSatsUsdPattern4 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {BtcSatsUsdPattern4}
+ */
+function createBtcSatsUsdPattern4(client, acc) {
+  return {
+    btc: createMetricPattern1(client, _m(acc, 'btc')),
+    sats: createCumulativeHeightSumPattern(client, acc),
+    usd: createCumulativeHeightSumPattern(client, _m(acc, 'usd')),
   };
 }
 
@@ -3758,33 +3758,10 @@ function createHistogramLineSignalPattern(client, acc) {
 
 /**
  * @template T
- * @typedef {Object} CumulativeHeightRollingPattern2
- * @property {MetricPattern1<T>} cumulative
- * @property {MetricPattern20<T>} height
- * @property {AverageMaxMedianMinP10P25P75P90SumPattern} rolling
- */
-
-/**
- * Create a CumulativeHeightRollingPattern2 pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CumulativeHeightRollingPattern2<T>}
- */
-function createCumulativeHeightRollingPattern2(client, acc) {
-  return {
-    cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
-    height: createMetricPattern20(client, acc),
-    rolling: createAverageMaxMedianMinP10P25P75P90SumPattern(client, acc),
-  };
-}
-
-/**
- * @template T
  * @typedef {Object} CumulativeHeightRollingPattern
  * @property {MetricPattern1<T>} cumulative
  * @property {MetricPattern20<T>} height
- * @property {_1y24h30d7dPattern<T>} rolling
+ * @property {AverageMaxMedianMinP10P25P75P90SumPattern} rolling
  */
 
 /**
@@ -3798,7 +3775,30 @@ function createCumulativeHeightRollingPattern(client, acc) {
   return {
     cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
     height: createMetricPattern20(client, acc),
-    rolling: create_1y24h30d7dPattern(client, acc),
+    rolling: createAverageMaxMedianMinP10P25P75P90SumPattern(client, acc),
+  };
+}
+
+/**
+ * @template T
+ * @typedef {Object} CumulativeHeightSumPattern
+ * @property {MetricPattern1<T>} cumulative
+ * @property {MetricPattern20<T>} height
+ * @property {_1y24h30d7dPattern<T>} sum
+ */
+
+/**
+ * Create a CumulativeHeightSumPattern pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CumulativeHeightSumPattern<T>}
+ */
+function createCumulativeHeightSumPattern(client, acc) {
+  return {
+    cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
+    height: createMetricPattern20(client, acc),
+    sum: create_1y24h30d7dPattern(client, acc),
   };
 }
 
@@ -3986,7 +3986,7 @@ function createRatioPattern2(client, acc) {
  * @property {MetricsTree_Blocks_Count} count
  * @property {AverageHeightMaxMedianMinP10P25P75P90Pattern<Timestamp>} interval
  * @property {MetricsTree_Blocks_Halving} halving
- * @property {CumulativeHeightRollingPattern2<StoredU64>} vbytes
+ * @property {CumulativeHeightRollingPattern<StoredU64>} vbytes
  * @property {AverageCumulativeMaxMedianMinP10P25P75P90SumPattern} size
  * @property {AverageHeightMaxMedianMinP10P25P75P90Pattern<StoredF32>} fullness
  */
@@ -4048,7 +4048,7 @@ function createRatioPattern2(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Blocks_Count
  * @property {MetricPattern1<StoredU64>} blockCountTarget
- * @property {CumulativeHeightRollingPattern<StoredU32>} blockCount
+ * @property {CumulativeHeightSumPattern<StoredU32>} blockCount
  * @property {_1y24h30d7dPattern<StoredU32>} blockCountSum
  * @property {MetricPattern20<Height>} height1hAgo
  * @property {MetricPattern20<Height>} height24hAgo
@@ -4111,7 +4111,7 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Transactions_Count
- * @property {CumulativeHeightRollingPattern2<StoredU64>} txCount
+ * @property {CumulativeHeightRollingPattern<StoredU64>} txCount
  * @property {MetricPattern21<StoredBool>} isCoinbase
  */
 
@@ -4131,9 +4131,9 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Transactions_Versions
- * @property {CumulativeHeightRollingPattern<StoredU64>} v1
- * @property {CumulativeHeightRollingPattern<StoredU64>} v2
- * @property {CumulativeHeightRollingPattern<StoredU64>} v3
+ * @property {CumulativeHeightSumPattern<StoredU64>} v1
+ * @property {CumulativeHeightSumPattern<StoredU64>} v2
+ * @property {CumulativeHeightSumPattern<StoredU64>} v3
  */
 
 /**
@@ -4221,19 +4221,19 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Scripts_Count
- * @property {CumulativeHeightRollingPattern<StoredU64>} p2a
- * @property {CumulativeHeightRollingPattern<StoredU64>} p2ms
- * @property {CumulativeHeightRollingPattern<StoredU64>} p2pk33
- * @property {CumulativeHeightRollingPattern<StoredU64>} p2pk65
- * @property {CumulativeHeightRollingPattern<StoredU64>} p2pkh
- * @property {CumulativeHeightRollingPattern<StoredU64>} p2sh
- * @property {CumulativeHeightRollingPattern<StoredU64>} p2tr
- * @property {CumulativeHeightRollingPattern<StoredU64>} p2wpkh
- * @property {CumulativeHeightRollingPattern<StoredU64>} p2wsh
- * @property {CumulativeHeightRollingPattern<StoredU64>} opreturn
- * @property {CumulativeHeightRollingPattern<StoredU64>} emptyoutput
- * @property {CumulativeHeightRollingPattern<StoredU64>} unknownoutput
- * @property {CumulativeHeightRollingPattern<StoredU64>} segwit
+ * @property {CumulativeHeightSumPattern<StoredU64>} p2a
+ * @property {CumulativeHeightSumPattern<StoredU64>} p2ms
+ * @property {CumulativeHeightSumPattern<StoredU64>} p2pk33
+ * @property {CumulativeHeightSumPattern<StoredU64>} p2pk65
+ * @property {CumulativeHeightSumPattern<StoredU64>} p2pkh
+ * @property {CumulativeHeightSumPattern<StoredU64>} p2sh
+ * @property {CumulativeHeightSumPattern<StoredU64>} p2tr
+ * @property {CumulativeHeightSumPattern<StoredU64>} p2wpkh
+ * @property {CumulativeHeightSumPattern<StoredU64>} p2wsh
+ * @property {CumulativeHeightSumPattern<StoredU64>} opreturn
+ * @property {CumulativeHeightSumPattern<StoredU64>} emptyoutput
+ * @property {CumulativeHeightSumPattern<StoredU64>} unknownoutput
+ * @property {CumulativeHeightSumPattern<StoredU64>} segwit
  * @property {MetricPattern1<StoredF32>} taprootAdoption
  * @property {MetricPattern1<StoredF32>} segwitAdoption
  */
@@ -4308,8 +4308,8 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Cointime_Activity
- * @property {CumulativeHeightRollingPattern<StoredF64>} coinblocksCreated
- * @property {CumulativeHeightRollingPattern<StoredF64>} coinblocksStored
+ * @property {CumulativeHeightSumPattern<StoredF64>} coinblocksCreated
+ * @property {CumulativeHeightSumPattern<StoredF64>} coinblocksStored
  * @property {MetricPattern1<StoredF64>} liveliness
  * @property {MetricPattern1<StoredF64>} vaultedness
  * @property {MetricPattern1<StoredF64>} activityToVaultednessRatio
@@ -4323,10 +4323,10 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Cointime_Value
- * @property {CumulativeHeightRollingPattern<StoredF64>} cointimeValueDestroyed
- * @property {CumulativeHeightRollingPattern<StoredF64>} cointimeValueCreated
- * @property {CumulativeHeightRollingPattern<StoredF64>} cointimeValueStored
- * @property {CumulativeHeightRollingPattern<StoredF64>} vocdd
+ * @property {CumulativeHeightSumPattern<StoredF64>} cointimeValueDestroyed
+ * @property {CumulativeHeightSumPattern<StoredF64>} cointimeValueCreated
+ * @property {CumulativeHeightSumPattern<StoredF64>} cointimeValueStored
+ * @property {CumulativeHeightSumPattern<StoredF64>} vocdd
  */
 
 /**
@@ -6576,7 +6576,7 @@ class BrkClient extends BrkClientBase {
         },
         count: {
           blockCountTarget: createMetricPattern1(this, 'block_count_target'),
-          blockCount: createCumulativeHeightRollingPattern(this, 'block_count'),
+          blockCount: createCumulativeHeightSumPattern(this, 'block_count'),
           blockCountSum: create_1y24h30d7dPattern(this, 'block_count_sum'),
           height1hAgo: createMetricPattern20(this, 'height_1h_ago'),
           height24hAgo: createMetricPattern20(this, 'height_24h_ago'),
@@ -6616,7 +6616,7 @@ class BrkClient extends BrkClientBase {
           blocksBeforeNextHalving: createMetricPattern1(this, 'blocks_before_next_halving'),
           daysBeforeNextHalving: createMetricPattern1(this, 'days_before_next_halving'),
         },
-        vbytes: createCumulativeHeightRollingPattern2(this, 'block_vbytes'),
+        vbytes: createCumulativeHeightRollingPattern(this, 'block_vbytes'),
         size: createAverageCumulativeMaxMedianMinP10P25P75P90SumPattern(this, 'block_size'),
         fullness: createAverageHeightMaxMedianMinP10P25P75P90Pattern(this, 'block_fullness'),
       },
@@ -6632,7 +6632,7 @@ class BrkClient extends BrkClientBase {
         firstTxinindex: createMetricPattern21(this, 'first_txinindex'),
         firstTxoutindex: createMetricPattern21(this, 'first_txoutindex'),
         count: {
-          txCount: createCumulativeHeightRollingPattern2(this, 'tx_count'),
+          txCount: createCumulativeHeightRollingPattern(this, 'tx_count'),
           isCoinbase: createMetricPattern21(this, 'is_coinbase'),
         },
         size: {
@@ -6646,9 +6646,9 @@ class BrkClient extends BrkClientBase {
           feeRate: create_1h24hBlockTxindexPattern(this, 'fee_rate'),
         },
         versions: {
-          v1: createCumulativeHeightRollingPattern(this, 'tx_v1'),
-          v2: createCumulativeHeightRollingPattern(this, 'tx_v2'),
-          v3: createCumulativeHeightRollingPattern(this, 'tx_v3'),
+          v1: createCumulativeHeightSumPattern(this, 'tx_v1'),
+          v2: createCumulativeHeightSumPattern(this, 'tx_v2'),
+          v3: createCumulativeHeightSumPattern(this, 'tx_v3'),
         },
         volume: {
           sentSum: createBtcRollingSatsUsdPattern(this, 'sent_sum'),
@@ -6713,19 +6713,19 @@ class BrkClient extends BrkClientBase {
         p2msToTxindex: createMetricPattern27(this, 'txindex'),
         unknownToTxindex: createMetricPattern35(this, 'txindex'),
         count: {
-          p2a: createCumulativeHeightRollingPattern(this, 'p2a_count'),
-          p2ms: createCumulativeHeightRollingPattern(this, 'p2ms_count'),
-          p2pk33: createCumulativeHeightRollingPattern(this, 'p2pk33_count'),
-          p2pk65: createCumulativeHeightRollingPattern(this, 'p2pk65_count'),
-          p2pkh: createCumulativeHeightRollingPattern(this, 'p2pkh_count'),
-          p2sh: createCumulativeHeightRollingPattern(this, 'p2sh_count'),
-          p2tr: createCumulativeHeightRollingPattern(this, 'p2tr_count'),
-          p2wpkh: createCumulativeHeightRollingPattern(this, 'p2wpkh_count'),
-          p2wsh: createCumulativeHeightRollingPattern(this, 'p2wsh_count'),
-          opreturn: createCumulativeHeightRollingPattern(this, 'opreturn_count'),
-          emptyoutput: createCumulativeHeightRollingPattern(this, 'emptyoutput_count'),
-          unknownoutput: createCumulativeHeightRollingPattern(this, 'unknownoutput_count'),
-          segwit: createCumulativeHeightRollingPattern(this, 'segwit_count'),
+          p2a: createCumulativeHeightSumPattern(this, 'p2a_count'),
+          p2ms: createCumulativeHeightSumPattern(this, 'p2ms_count'),
+          p2pk33: createCumulativeHeightSumPattern(this, 'p2pk33_count'),
+          p2pk65: createCumulativeHeightSumPattern(this, 'p2pk65_count'),
+          p2pkh: createCumulativeHeightSumPattern(this, 'p2pkh_count'),
+          p2sh: createCumulativeHeightSumPattern(this, 'p2sh_count'),
+          p2tr: createCumulativeHeightSumPattern(this, 'p2tr_count'),
+          p2wpkh: createCumulativeHeightSumPattern(this, 'p2wpkh_count'),
+          p2wsh: createCumulativeHeightSumPattern(this, 'p2wsh_count'),
+          opreturn: createCumulativeHeightSumPattern(this, 'opreturn_count'),
+          emptyoutput: createCumulativeHeightSumPattern(this, 'emptyoutput_count'),
+          unknownoutput: createCumulativeHeightSumPattern(this, 'unknownoutput_count'),
+          segwit: createCumulativeHeightSumPattern(this, 'segwit_count'),
           taprootAdoption: createMetricPattern1(this, 'taproot_adoption'),
           segwitAdoption: createMetricPattern1(this, 'segwit_adoption'),
         },
@@ -6777,8 +6777,8 @@ class BrkClient extends BrkClientBase {
       },
       cointime: {
         activity: {
-          coinblocksCreated: createCumulativeHeightRollingPattern(this, 'coinblocks_created'),
-          coinblocksStored: createCumulativeHeightRollingPattern(this, 'coinblocks_stored'),
+          coinblocksCreated: createCumulativeHeightSumPattern(this, 'coinblocks_created'),
+          coinblocksStored: createCumulativeHeightSumPattern(this, 'coinblocks_stored'),
           liveliness: createMetricPattern1(this, 'liveliness'),
           vaultedness: createMetricPattern1(this, 'vaultedness'),
           activityToVaultednessRatio: createMetricPattern1(this, 'activity_to_vaultedness_ratio'),
@@ -6788,10 +6788,10 @@ class BrkClient extends BrkClientBase {
           activeSupply: createBtcSatsUsdPattern(this, 'active_supply'),
         },
         value: {
-          cointimeValueDestroyed: createCumulativeHeightRollingPattern(this, 'cointime_value_destroyed'),
-          cointimeValueCreated: createCumulativeHeightRollingPattern(this, 'cointime_value_created'),
-          cointimeValueStored: createCumulativeHeightRollingPattern(this, 'cointime_value_stored'),
-          vocdd: createCumulativeHeightRollingPattern(this, 'vocdd'),
+          cointimeValueDestroyed: createCumulativeHeightSumPattern(this, 'cointime_value_destroyed'),
+          cointimeValueCreated: createCumulativeHeightSumPattern(this, 'cointime_value_created'),
+          cointimeValueStored: createCumulativeHeightSumPattern(this, 'cointime_value_stored'),
+          vocdd: createCumulativeHeightSumPattern(this, 'vocdd'),
         },
         cap: {
           thermoCap: createMetricPattern1(this, 'thermo_cap'),

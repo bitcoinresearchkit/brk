@@ -11,8 +11,6 @@ use brk_types::{
 use rustc_hash::FxHashMap;
 use vecdb::Bytes;
 
-use crate::utils::OptionExt;
-
 use super::{CachedUnrealizedState, Percentiles, UnrealizedState};
 
 /// Type alias for the price-to-sats map used in cost basis data.
@@ -97,17 +95,17 @@ impl CostBasisData {
 
     pub(crate) fn iter(&self) -> impl Iterator<Item = (CentsCompact, &Sats)> {
         self.assert_pending_empty();
-        self.state.u().base.map.iter().map(|(&k, v)| (k, v))
+        self.state.as_ref().unwrap().base.map.iter().map(|(&k, v)| (k, v))
     }
 
     pub(crate) fn is_empty(&self) -> bool {
-        self.pending.is_empty() && self.state.u().base.map.is_empty()
+        self.pending.is_empty() && self.state.as_ref().unwrap().base.map.is_empty()
     }
 
     pub(crate) fn first_key_value(&self) -> Option<(CentsCompact, &Sats)> {
         self.assert_pending_empty();
         self.state
-            .u()
+            .as_ref().unwrap()
             .base
             .map
             .first_key_value()
@@ -117,7 +115,7 @@ impl CostBasisData {
     pub(crate) fn last_key_value(&self) -> Option<(CentsCompact, &Sats)> {
         self.assert_pending_empty();
         self.state
-            .u()
+            .as_ref().unwrap()
             .base
             .map
             .last_key_value()
@@ -127,13 +125,13 @@ impl CostBasisData {
     /// Get the exact cap_raw value (not recomputed from map).
     pub(crate) fn cap_raw(&self) -> CentsSats {
         self.assert_pending_empty();
-        self.state.u().cap_raw
+        self.state.as_ref().unwrap().cap_raw
     }
 
     /// Get the exact investor_cap_raw value (not recomputed from map).
     pub(crate) fn investor_cap_raw(&self) -> CentsSquaredSats {
         self.assert_pending_empty();
-        self.state.u().investor_cap_raw
+        self.state.as_ref().unwrap().investor_cap_raw
     }
 
     /// Increment with pre-computed typed values.
@@ -181,7 +179,7 @@ impl CostBasisData {
             self.percentiles_dirty = true;
         }
         for (cents, (inc, dec)) in self.pending.drain() {
-            let entry = self.state.um().base.map.entry(cents).or_default();
+            let entry = self.state.as_mut().unwrap().base.map.entry(cents).or_default();
             *entry += inc;
             if *entry < dec {
                 panic!(
@@ -198,12 +196,12 @@ impl CostBasisData {
             }
             *entry -= dec;
             if *entry == Sats::ZERO {
-                self.state.um().base.map.remove(&cents);
+                self.state.as_mut().unwrap().base.map.remove(&cents);
             }
         }
 
         // Apply raw values
-        let state = self.state.um();
+        let state = self.state.as_mut().unwrap();
         state.cap_raw += self.pending_raw.cap_inc;
 
         // Check for underflow before subtracting
@@ -271,7 +269,7 @@ impl CostBasisData {
             );
         }
 
-        let map = &self.state.u().base.map;
+        let map = &self.state.as_ref().unwrap().base.map;
 
         let date_state =
             date_price.map(|p| CachedUnrealizedState::compute_full_standalone(p.into(), map));
@@ -336,7 +334,7 @@ impl CostBasisData {
             }
         }
 
-        fs::write(self.path_state(height), self.state.u().serialize()?)?;
+        fs::write(self.path_state(height), self.state.as_ref().unwrap().serialize()?)?;
 
         Ok(())
     }

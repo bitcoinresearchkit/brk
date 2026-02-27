@@ -19,12 +19,24 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_prices(indexer, starting_indexes, exit)?;
-        self.open
+        self.split
+            .open
             .compute_first(starting_indexes, &self.price, indexes, exit)?;
-        self.high
+        self.split
+            .high
             .compute_max(starting_indexes, &self.price, indexes, exit)?;
-        self.low
+        self.split
+            .low
             .compute_min(starting_indexes, &self.price, indexes, exit)?;
+        self.ohlc.compute_from_split(
+            starting_indexes,
+            &self.split.open,
+            &self.split.high,
+            &self.split.low,
+            &self.split.close,
+            indexes,
+            exit,
+        )?;
         Ok(())
     }
 
@@ -132,6 +144,10 @@ impl Vecs {
         // across blocks, so the cursor only advances forward.
         let mut txout_cursor = indexer.vecs.transactions.first_txoutindex.cursor();
 
+        // Reusable buffers — avoid per-block allocation
+        let mut values: Vec<Sats> = Vec::new();
+        let mut output_types: Vec<OutputType> = Vec::new();
+
         for (idx, _h) in range.enumerate() {
             let first_txindex = first_txindexes[idx];
             let next_first_txindex = first_txindexes
@@ -156,16 +172,8 @@ impl Vecs {
                 .unwrap_or(TxOutIndex::from(total_outputs))
                 .to_usize();
 
-            let values: Vec<Sats> = indexer
-                .vecs
-                .outputs
-                .value
-                .collect_range_at(out_start, out_end);
-            let output_types: Vec<OutputType> = indexer
-                .vecs
-                .outputs
-                .outputtype
-                .collect_range_at(out_start, out_end);
+            indexer.vecs.outputs.value.collect_range_into_at(out_start, out_end, &mut values);
+            indexer.vecs.outputs.outputtype.collect_range_into_at(out_start, out_end, &mut output_types);
 
             let mut hist = [0u32; NUM_BINS];
             for i in 0..values.len() {

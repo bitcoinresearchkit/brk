@@ -72,18 +72,9 @@ impl StoredValueRollingWindows {
         usd_source: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.0
-            ._24h
-            .compute_rolling_sum(max_from, windows._24h, sats_source, usd_source, exit)?;
-        self.0
-            ._7d
-            .compute_rolling_sum(max_from, windows._7d, sats_source, usd_source, exit)?;
-        self.0
-            ._30d
-            .compute_rolling_sum(max_from, windows._30d, sats_source, usd_source, exit)?;
-        self.0
-            ._1y
-            .compute_rolling_sum(max_from, windows._1y, sats_source, usd_source, exit)?;
+        for (w, starts) in self.0.as_mut_array().into_iter().zip(windows.as_array()) {
+            w.compute_rolling_sum(max_from, starts, sats_source, usd_source, exit)?;
+        }
         Ok(())
     }
 }

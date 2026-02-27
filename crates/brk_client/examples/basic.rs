@@ -42,6 +42,7 @@ fn main() -> brk_client::Result<()> {
         .count
         .block_count
         .sum
+        ._24h
         .by
         .day1()
         .last(3)

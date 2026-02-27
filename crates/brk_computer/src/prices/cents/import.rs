@@ -5,6 +5,7 @@ use vecdb::{Database, ImportableVec, PcoVec, ReadableCloneableVec};
 use super::Vecs;
 use crate::indexes;
 use crate::internal::{ComputedHeightDerivedLast, EagerIndexes};
+use crate::prices::{ohlcs::OhlcVecs, split::SplitOhlc};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -16,23 +17,26 @@ impl Vecs {
 
         let price = PcoVec::forced_import(db, "price_cents", version)?;
 
-        let open = EagerIndexes::forced_import(db, "price_cents_open", version)?;
-        let high = EagerIndexes::forced_import(db, "price_cents_high", version)?;
-        let low = EagerIndexes::forced_import(db, "price_cents_low", version)?;
+        let open = EagerIndexes::forced_import(db, "price_open_cents", version)?;
+        let high = EagerIndexes::forced_import(db, "price_high_cents", version)?;
+        let low = EagerIndexes::forced_import(db, "price_low_cents", version)?;
 
         let close = ComputedHeightDerivedLast::forced_import(
-            "price_cents_close",
+            "price_close_cents",
             price.read_only_boxed_clone(),
             version,
             indexes,
         );
 
-        Ok(Self {
-            price,
+        let split = SplitOhlc {
             open,
             high,
             low,
             close,
-        })
+        };
+
+        let ohlc = OhlcVecs::forced_import(db, "price_ohlc_cents", version)?;
+
+        Ok(Self { split, ohlc, price })
     }
 }

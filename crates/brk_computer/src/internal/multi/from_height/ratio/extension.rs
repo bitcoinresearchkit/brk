@@ -6,8 +6,8 @@ use vecdb::{AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec,
 use crate::{
     ComputeIndexes, blocks, indexes,
     internal::{ComputedFromHeightStdDevExtended, Price},
-    utils::get_percentile,
 };
+use brk_types::get_percentile;
 
 use super::super::ComputedFromHeightLast;
 

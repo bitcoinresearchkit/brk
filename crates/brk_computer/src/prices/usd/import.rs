@@ -3,9 +3,12 @@ use vecdb::{LazyVecFrom1, ReadableCloneableVec};
 
 use super::super::cents;
 use super::Vecs;
+use crate::prices::{ohlcs::LazyOhlcVecs, split::SplitOhlc};
 use crate::{
     indexes,
-    internal::{CentsUnsignedToDollars, ComputedHeightDerivedLast, LazyEagerIndexes},
+    internal::{
+        CentsUnsignedToDollars, ComputedHeightDerivedLast, LazyEagerIndexes, OhlcCentsToDollars,
+    },
 };
 
 impl Vecs {
@@ -15,32 +18,48 @@ impl Vecs {
         cents: &cents::Vecs,
     ) -> Self {
         let price = LazyVecFrom1::transformed::<CentsUnsignedToDollars>(
-            "price_usd",
+            "price",
             version,
             cents.price.read_only_boxed_clone(),
         );
 
         // Dollars are monotonically increasing from cents, so open→open, high→high, low→low
-        let open =
-            LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>("price_usd_open", version, &cents.open);
-        let high =
-            LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>("price_usd_high", version, &cents.high);
-        let low =
-            LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>("price_usd_low", version, &cents.low);
+        let open = LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>(
+            "price_open",
+            version,
+            &cents.split.open,
+        );
+        let high = LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>(
+            "price_high",
+            version,
+            &cents.split.high,
+        );
+        let low = LazyEagerIndexes::from_eager_indexes::<CentsUnsignedToDollars>(
+            "price_low",
+            version,
+            &cents.split.low,
+        );
 
         let close = ComputedHeightDerivedLast::forced_import(
-            "price_usd_close",
+            "price_close",
             price.read_only_boxed_clone(),
             version,
             indexes,
         );
 
-        Self {
-            price,
+        let split = SplitOhlc {
             open,
             high,
             low,
             close,
-        }
+        };
+
+        let ohlc = LazyOhlcVecs::from_eager_ohlc_indexes::<OhlcCentsToDollars>(
+            "price_ohlc",
+            version,
+            &cents.ohlc,
+        );
+
+        Self { split, ohlc, price }
     }
 }

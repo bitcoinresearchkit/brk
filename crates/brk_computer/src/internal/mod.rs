@@ -6,6 +6,7 @@ mod indexes;
 mod lazy_eager_indexes;
 mod multi;
 mod single;
+pub(crate) mod sliding_window;
 mod traits;
 mod windows;
 

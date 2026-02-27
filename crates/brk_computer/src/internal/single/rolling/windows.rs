@@ -26,6 +26,12 @@ pub struct WindowStarts<'a> {
     pub _1y: &'a EagerVec<PcoVec<Height, Height>>,
 }
 
+impl<'a> WindowStarts<'a> {
+    pub fn as_array(&self) -> [&'a EagerVec<PcoVec<Height, Height>>; 4] {
+        [self._24h, self._7d, self._30d, self._1y]
+    }
+}
+
 /// 4 rolling window vecs (24h, 7d, 30d, 1y), each with height data + all 17 index views.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
@@ -64,22 +70,9 @@ where
     where
         T: Default + SubAssign,
     {
-        self.0
-            ._24h
-            .height
-            .compute_rolling_sum(max_from, windows._24h, source, exit)?;
-        self.0
-            ._7d
-            .height
-            .compute_rolling_sum(max_from, windows._7d, source, exit)?;
-        self.0
-            ._30d
-            .height
-            .compute_rolling_sum(max_from, windows._30d, source, exit)?;
-        self.0
-            ._1y
-            .height
-            .compute_rolling_sum(max_from, windows._1y, source, exit)?;
+        for (w, starts) in self.0.as_mut_array().into_iter().zip(windows.as_array()) {
+            w.height.compute_rolling_sum(max_from, starts, source, exit)?;
+        }
         Ok(())
     }
 }

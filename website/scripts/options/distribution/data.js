@@ -55,7 +55,7 @@ export function buildCohortData() {
     name: shortNames.short,
     title: shortNames.long,
     color: colors.term.short,
-    tree: utxoCohorts.term.short,
+    tree: utxoCohorts.sth,
   };
 
   const longNames = TERM_NAMES.long;
@@ -63,7 +63,7 @@ export function buildCohortData() {
     name: longNames.short,
     title: longNames.long,
     color: colors.term.long,
-    tree: utxoCohorts.term.long,
+    tree: utxoCohorts.lth,
   };
 
   // Max age cohorts (up to X time)

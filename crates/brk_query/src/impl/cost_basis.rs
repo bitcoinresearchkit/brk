@@ -85,6 +85,7 @@ impl Query {
         let price = &self.computer().prices;
         let spot = price
             .cents
+            .split
             .close
             .day1
             .collect_one_flat(day1)

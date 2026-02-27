@@ -24,7 +24,7 @@ where
 {
     pub height: M::Stored<EagerVec<PcoVec<Height, T>>>,
     pub cumulative: ComputedFromHeightLast<T, M>,
-    pub rolling: RollingWindows<T, M>,
+    pub sum: RollingWindows<T, M>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -49,7 +49,7 @@ where
         Ok(Self {
             height,
             cumulative,
-            rolling,
+            sum: rolling,
         })
     }
 
@@ -68,7 +68,7 @@ where
         self.cumulative
             .height
             .compute_cumulative(max_from, &self.height, exit)?;
-        self.rolling
+        self.sum
             .compute_rolling_sum(max_from, windows, &self.height, exit)?;
         Ok(())
     }

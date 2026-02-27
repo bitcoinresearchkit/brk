@@ -128,7 +128,7 @@ pub(crate) fn process_blocks(
     debug!("txindex_to_height RangeMap built");
 
     // Create reusable iterators for sequential txout/txin reads (16KB buffered)
-    let txout_iters = TxOutReaders::new(indexer);
+    let mut txout_iters = TxOutReaders::new(indexer);
     let mut txin_iters = TxInReaders::new(indexer, inputs, &mut txindex_to_height);
 
     // Pre-collect first address indexes per type for the block range

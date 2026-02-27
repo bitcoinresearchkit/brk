@@ -98,18 +98,15 @@ impl Vecs {
                 first_txinindex_data[batch_end_height.to_usize() + 1 - offset].to_usize()
             };
 
-            // Collect and process txins
+            // Stream txins directly into pairs — avoids intermediate Vec allocation
             pairs.clear();
-            let txoutindexes: Vec<TxOutIndex> = txinindex_to_txoutindex.collect_range_at(txin_start, txin_end);
-            for (j, txoutindex) in txoutindexes.into_iter().enumerate() {
-                let txinindex = TxInIndex::from(txin_start + j);
-
-                if txoutindex.is_coinbase() {
-                    continue;
+            let mut j = txin_start;
+            txinindex_to_txoutindex.for_each_range_at(txin_start, txin_end, |txoutindex: TxOutIndex| {
+                if !txoutindex.is_coinbase() {
+                    pairs.push((txoutindex, TxInIndex::from(j)));
                 }
-
-                pairs.push((txoutindex, txinindex));
-            }
+                j += 1;
+            });
 
             pairs.sort_unstable_by_key(|(txoutindex, _)| *txoutindex);
 

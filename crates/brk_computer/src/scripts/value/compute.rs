@@ -62,16 +62,17 @@ impl Vecs {
                     let out_start = first_txoutindex.to_usize();
                     let out_end = next_first_txoutindex.to_usize();
 
-                    // Sum opreturn values — batch read both ranges for the block
-                    let values = indexer.vecs.outputs.value.collect_range_at(out_start, out_end);
+                    // Sum opreturn values — fold over both vecs without allocation
                     let opreturn_value = indexer.vecs.outputs.outputtype.fold_range_at(
                         out_start, out_end,
-                        (Sats::ZERO, 0_usize),
-                        |(mut sum, idx), ot| {
-                            if ot == OutputType::OpReturn {
-                                sum += values[idx];
-                            }
-                            (sum, idx + 1)
+                        (Sats::ZERO, out_start),
+                        |(sum, vi), ot| {
+                            let new_sum = if ot == OutputType::OpReturn {
+                                sum + indexer.vecs.outputs.value.collect_one_at(vi).unwrap()
+                            } else {
+                                sum
+                            };
+                            (new_sum, vi + 1)
                         },
                     ).0;
 

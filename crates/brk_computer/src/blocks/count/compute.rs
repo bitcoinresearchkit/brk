@@ -171,7 +171,7 @@ impl Vecs {
             _30d: &self.height_1m_ago,
             _1y: &self.height_1y_ago,
         };
-        self.block_count.rolling.compute_rolling_sum(
+        self.block_count.sum.compute_rolling_sum(
             starting_indexes.height,
             &ws,
             &self.block_count.height,

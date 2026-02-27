@@ -15,3 +15,9 @@ pub struct Windows<A, B = A, C = A, D = A> {
     #[traversable(rename = "1y")]
     pub _1y: D,
 }
+
+impl<A> Windows<A> {
+    pub fn as_mut_array(&mut self) -> [&mut A; 4] {
+        [&mut self._24h, &mut self._7d, &mut self._30d, &mut self._1y]
+    }
+}
