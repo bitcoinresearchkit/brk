@@ -5,7 +5,7 @@ use brk_types::{Bitcoin, Dollars, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::UnaryTransform;
 
-use crate::internal::{LazyValueHeight, LazyValueHeightDerivedLast, ValueFromHeightLast};
+use crate::internal::{LazyValueFromHeight, LazyValueHeightDerivedLast, ValueFromHeightLast};
 
 const VERSION: Version = Version::ZERO;
 
@@ -14,7 +14,7 @@ const VERSION: Version = Version::ZERO;
 #[traversable(merge)]
 pub struct LazyValueFromHeightLast {
     #[traversable(flatten)]
-    pub height: LazyValueHeight,
+    pub height: LazyValueFromHeight,
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
@@ -35,7 +35,7 @@ impl LazyValueFromHeightLast {
         let v = version + VERSION;
 
         let height =
-            LazyValueHeight::from_block_source::<SatsTransform, BitcoinTransform, DollarsTransform>(name, source, v);
+            LazyValueFromHeight::from_block_source::<SatsTransform, BitcoinTransform, DollarsTransform>(name, source, v);
 
         let rest =
             LazyValueHeightDerivedLast::from_block_source::<SatsTransform, BitcoinTransform, DollarsTransform>(

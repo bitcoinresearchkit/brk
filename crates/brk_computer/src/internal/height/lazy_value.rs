@@ -12,13 +12,13 @@ const VERSION: Version = Version::ZERO;
 ///
 /// All fields are lazy transforms from existing sources - no storage.
 #[derive(Clone, Traversable)]
-pub struct LazyValueHeight {
+pub struct LazyValueFromHeight {
     pub sats: LazyVecFrom1<Height, Sats, Height, Sats>,
     pub btc: LazyVecFrom1<Height, Bitcoin, Height, Sats>,
     pub usd: LazyVecFrom1<Height, Dollars, Height, Dollars>,
 }
 
-impl LazyValueHeight {
+impl LazyValueFromHeight {
     pub(crate) fn from_block_source<SatsTransform, BitcoinTransform, DollarsTransform>(
         name: &str,
         source: &ValueFromHeightLast,
