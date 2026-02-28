@@ -27,17 +27,16 @@ impl Vecs {
         self.versions
             .compute(indexer, &blocks.count, starting_indexes, exit)?;
 
-        // Size computes next (uses BlockWindowStarts for 1h/24h rolling)
+        // Size computes next (uses 6-block rolling window)
         self.size
-            .compute(indexer, indexes, &blocks.count, starting_indexes, exit)?;
+            .compute(indexer, indexes, starting_indexes, exit)?;
 
-        // Fees depends on size, blocks (window starts)
+        // Fees depends on size
         self.fees.compute(
             indexer,
             indexes,
             inputs,
             &self.size,
-            blocks,
             starting_indexes,
             exit,
         )?;

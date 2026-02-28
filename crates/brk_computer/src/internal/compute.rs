@@ -315,17 +315,17 @@ where
     Ok(())
 }
 
-/// Compute distribution stats from windowed ranges of a source vec.
+/// Compute distribution stats from a fixed n-block rolling window.
 ///
-/// For each index `i`, reads all source items from groups `window_starts[i]..=i`
+/// For each height `h`, aggregates all source items from blocks `max(0, h - n_blocks + 1)..=h`
 /// and computes average, min, max, median, and percentiles across the full window.
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn compute_aggregations_windowed<I, T, A>(
+pub(crate) fn compute_aggregations_nblock_window<I, T, A>(
     max_from: I,
     source: &impl ReadableVec<A, T>,
     first_indexes: &impl ReadableVec<I, A>,
     count_indexes: &impl ReadableVec<I, StoredU64>,
-    window_starts: &impl ReadableVec<I, I>,
+    n_blocks: usize,
     exit: &Exit,
     min: &mut EagerVec<PcoVec<I, T>>,
     max: &mut EagerVec<PcoVec<I, T>>,
@@ -342,7 +342,7 @@ where
     A: VecIndex + VecValue + CheckedSub<A>,
 {
     let combined_version =
-        source.version() + first_indexes.version() + count_indexes.version() + window_starts.version();
+        source.version() + first_indexes.version() + count_indexes.version();
 
     let mut idx = max_from;
     for vec in [&mut *min, &mut *max, &mut *average, &mut *median, &mut *pct10, &mut *pct25, &mut *pct75, &mut *pct90] {
@@ -353,35 +353,30 @@ where
     let start = index.to_usize();
     let fi_len = first_indexes.len();
 
-    let first_indexes_batch: Vec<A> = first_indexes.collect_range_at(start, fi_len);
+    // Only fetch first_indexes from the earliest possible window start
+    let batch_start = start.saturating_sub(n_blocks - 1);
+    let first_indexes_batch: Vec<A> = first_indexes.collect_range_at(batch_start, fi_len);
     let count_indexes_batch: Vec<StoredU64> = count_indexes.collect_range_at(start, fi_len);
-    let window_starts_batch: Vec<I> = window_starts.collect_range_at(start, fi_len);
 
     let zero = T::from(0_usize);
     let mut values: Vec<T> = Vec::new();
 
-    first_indexes_batch
+    count_indexes_batch
         .iter()
-        .zip(count_indexes_batch.iter())
-        .zip(window_starts_batch.iter())
         .enumerate()
-        .try_for_each(|(j, ((fi, ci), ws))| -> Result<()> {
+        .try_for_each(|(j, ci)| -> Result<()> {
             let idx = start + j;
-            let window_start_offset = ws.to_usize();
+
+            // Window start: max(0, idx - n_blocks + 1)
+            let window_start = idx.saturating_sub(n_blocks - 1);
 
             // Last tx index (exclusive) of current block
             let count = u64::from(*ci) as usize;
+            let fi = first_indexes_batch[idx - batch_start];
             let range_end_usize = fi.to_usize() + count;
 
             // First tx index of the window start block
-            let range_start_usize = if window_start_offset >= start {
-                first_indexes_batch[window_start_offset - start].to_usize()
-            } else {
-                first_indexes
-                    .collect_one_at(window_start_offset)
-                    .unwrap()
-                    .to_usize()
-            };
+            let range_start_usize = first_indexes_batch[window_start - batch_start].to_usize();
 
             let effective_count = range_end_usize.saturating_sub(range_start_usize);
 

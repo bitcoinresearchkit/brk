@@ -72,28 +72,27 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Distribution<I, T> {
         )
     }
 
-    /// Compute distribution stats from all items in a rolling window of groups.
+    /// Compute distribution stats from a fixed n-block rolling window.
     ///
-    /// For each index `i`, reads all source items from groups `window_starts[i]..=i`
-    /// and computes distribution stats across the entire window.
-    pub(crate) fn compute_from_window<A>(
+    /// For each index `i`, aggregates all source items from blocks `max(0, i - n_blocks + 1)..=i`.
+    pub(crate) fn compute_from_nblocks<A>(
         &mut self,
         max_from: I,
         source: &impl ReadableVec<A, T>,
         first_indexes: &impl ReadableVec<I, A>,
         count_indexes: &impl ReadableVec<I, brk_types::StoredU64>,
-        window_starts: &impl ReadableVec<I, I>,
+        n_blocks: usize,
         exit: &Exit,
     ) -> Result<()>
     where
         A: VecIndex + VecValue + brk_types::CheckedSub<A>,
     {
-        crate::internal::compute_aggregations_windowed(
+        crate::internal::compute_aggregations_nblock_window(
             max_from,
             source,
             first_indexes,
             count_indexes,
-            window_starts,
+            n_blocks,
             exit,
             &mut self.min.0,
             &mut self.max.0,

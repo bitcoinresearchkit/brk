@@ -2952,26 +2952,6 @@ impl _1y24h30d7dPattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct _1h24hBlockTxindexPattern<T> {
-    pub _1h: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>,
-    pub _24h: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>,
-    pub block: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>,
-    pub txindex: MetricPattern21<T>,
-}
-
-impl<T: DeserializeOwned> _1h24hBlockTxindexPattern<T> {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            _1h: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), _m(&acc, "1h")),
-            _24h: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), _m(&acc, "24h")),
-            block: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), acc.clone()),
-            txindex: MetricPattern21::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct _1y24h30d7dPattern<T> {
     pub _1y: MetricPattern1<T>,
     pub _24h: MetricPattern1<T>,
@@ -3077,6 +3057,24 @@ impl HistogramLineSignalPattern {
             histogram: MetricPattern1::new(client.clone(), _m(&acc, "histogram_1y")),
             line: MetricPattern1::new(client.clone(), _m(&acc, "line_1y")),
             signal: MetricPattern1::new(client.clone(), _m(&acc, "signal_1y")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _6bBlockTxindexPattern<T> {
+    pub _6b: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>,
+    pub block: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>,
+    pub txindex: MetricPattern21<T>,
+}
+
+impl<T: DeserializeOwned> _6bBlockTxindexPattern<T> {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            _6b: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), _m(&acc, "6b")),
+            block: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), acc.clone()),
+            txindex: MetricPattern21::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -3546,15 +3544,15 @@ impl MetricsTree_Transactions_Count {
 
 /// Metrics tree node.
 pub struct MetricsTree_Transactions_Size {
-    pub vsize: _1h24hBlockTxindexPattern<VSize>,
-    pub weight: _1h24hBlockTxindexPattern<Weight>,
+    pub vsize: _6bBlockTxindexPattern<VSize>,
+    pub weight: _6bBlockTxindexPattern<Weight>,
 }
 
 impl MetricsTree_Transactions_Size {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            vsize: _1h24hBlockTxindexPattern::new(client.clone(), "tx_vsize".to_string()),
-            weight: _1h24hBlockTxindexPattern::new(client.clone(), "tx_weight".to_string()),
+            vsize: _6bBlockTxindexPattern::new(client.clone(), "tx_vsize".to_string()),
+            weight: _6bBlockTxindexPattern::new(client.clone(), "tx_weight".to_string()),
         }
     }
 }
@@ -3563,8 +3561,8 @@ impl MetricsTree_Transactions_Size {
 pub struct MetricsTree_Transactions_Fees {
     pub input_value: MetricPattern21<Sats>,
     pub output_value: MetricPattern21<Sats>,
-    pub fee: _1h24hBlockTxindexPattern<Sats>,
-    pub fee_rate: _1h24hBlockTxindexPattern<FeeRate>,
+    pub fee: _6bBlockTxindexPattern<Sats>,
+    pub fee_rate: _6bBlockTxindexPattern<FeeRate>,
 }
 
 impl MetricsTree_Transactions_Fees {
@@ -3572,8 +3570,8 @@ impl MetricsTree_Transactions_Fees {
         Self {
             input_value: MetricPattern21::new(client.clone(), "input_value".to_string()),
             output_value: MetricPattern21::new(client.clone(), "output_value".to_string()),
-            fee: _1h24hBlockTxindexPattern::new(client.clone(), "fee".to_string()),
-            fee_rate: _1h24hBlockTxindexPattern::new(client.clone(), "fee_rate".to_string()),
+            fee: _6bBlockTxindexPattern::new(client.clone(), "fee".to_string()),
+            fee_rate: _6bBlockTxindexPattern::new(client.clone(), "fee_rate".to_string()),
         }
     }
 }

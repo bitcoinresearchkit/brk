@@ -3,7 +3,7 @@ use brk_types::{Height, StoredU32, StoredU64};
 use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use crate::internal::{
-    BlockWindowStarts, ComputedFromHeightCumulativeSum, ConstantVecs, RollingWindows, WindowStarts,
+    ComputedFromHeightCumulativeSum, ConstantVecs, RollingWindows, WindowStarts,
 };
 
 #[derive(Traversable)]
@@ -53,14 +53,6 @@ impl Vecs {
             _7d: &self.height_1w_ago,
             _30d: &self.height_1m_ago,
             _1y: &self.height_1y_ago,
-        }
-    }
-
-    /// Get the 2 block-count rolling window start heights (1h, 24h) for tx-derived metrics.
-    pub fn block_window_starts(&self) -> BlockWindowStarts<'_> {
-        BlockWindowStarts {
-            _1h: &self.height_1h_ago,
-            _24h: &self.height_24h_ago,
         }
     }
 

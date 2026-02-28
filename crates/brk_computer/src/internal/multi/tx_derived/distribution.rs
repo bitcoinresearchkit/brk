@@ -1,7 +1,7 @@
 //! TxDerivedDistribution - per-block + rolling window distribution stats from tx-level data.
 //!
 //! Computes true distribution stats (average, min, max, median, percentiles) by reading
-//! actual tx values for each scope: current block, last 1h, last 24h.
+//! actual tx values for each scope: current block, last 6 blocks.
 
 use brk_error::Result;
 use brk_indexer::Indexer;
@@ -14,7 +14,7 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode, Version};
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        BlockRollingDistribution, BlockWindowStarts, ComputedVecValue, Distribution, NumericValue,
+        BlockRollingDistribution, ComputedVecValue, Distribution, NumericValue,
     },
 };
 
@@ -44,7 +44,6 @@ where
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
-        block_windows: &BlockWindowStarts<'_>,
         txindex_source: &impl ReadableVec<TxIndex, T>,
         exit: &Exit,
     ) -> Result<()>
@@ -56,7 +55,6 @@ where
             indexer,
             indexes,
             starting_indexes,
-            block_windows,
             txindex_source,
             exit,
             0,
@@ -73,7 +71,6 @@ where
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
-        block_windows: &BlockWindowStarts<'_>,
         txindex_source: &impl ReadableVec<TxIndex, T>,
         exit: &Exit,
         skip_count: usize,
@@ -92,23 +89,13 @@ where
             skip_count,
         )?;
 
-        // 1h rolling: true distribution from all txs in last hour
-        self.rolling._1h.compute_from_window(
+        // 6-block rolling: true distribution from all txs in last 6 blocks
+        self.rolling._6b.compute_from_nblocks(
             starting_indexes.height,
             txindex_source,
             &indexer.vecs.transactions.first_txindex,
             &indexes.height.txindex_count,
-            block_windows._1h,
-            exit,
-        )?;
-
-        // 24h rolling: true distribution from all txs in last 24 hours
-        self.rolling._24h.compute_from_window(
-            starting_indexes.height,
-            txindex_source,
-            &indexer.vecs.transactions.first_txindex,
-            &indexes.height.txindex_count,
-            block_windows._24h,
+            6,
             exit,
         )?;
 

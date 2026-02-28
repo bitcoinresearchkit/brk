@@ -5,7 +5,7 @@ use vecdb::{Exit, unlikely};
 
 use super::super::size;
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, indexes, inputs};
+use crate::{ComputeIndexes, indexes, inputs};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -15,7 +15,6 @@ impl Vecs {
         indexes: &indexes::Vecs,
         txins: &inputs::Vecs,
         size_vecs: &size::Vecs,
-        blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -58,14 +57,11 @@ impl Vecs {
             exit,
         )?;
 
-        let block_windows = blocks.count.block_window_starts();
-
         // Skip coinbase (first tx per block) since it has fee=0
         self.fee.derive_from_with_skip(
             indexer,
             indexes,
             starting_indexes,
-            &block_windows,
             exit,
             1,
         )?;
@@ -75,7 +71,6 @@ impl Vecs {
             indexer,
             indexes,
             starting_indexes,
-            &block_windows,
             exit,
             1,
         )?;

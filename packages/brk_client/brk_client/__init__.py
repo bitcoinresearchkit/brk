@@ -3070,16 +3070,6 @@ class _1y24h30d7dPattern2:
         self._30d: BtcSatsUsdPattern = BtcSatsUsdPattern(client, _m(acc, '30d'))
         self._7d: BtcSatsUsdPattern = BtcSatsUsdPattern(client, _m(acc, '7d'))
 
-class _1h24hBlockTxindexPattern(Generic[T]):
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self._1h: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern[T] = AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, '1h'))
-        self._24h: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern[T] = AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, '24h'))
-        self.block: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern[T] = AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc)
-        self.txindex: MetricPattern21[T] = MetricPattern21(client, acc)
-
 class _1y24h30d7dPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
@@ -3134,6 +3124,15 @@ class HistogramLineSignalPattern:
         self.histogram: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'histogram_1y'))
         self.line: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'line_1y'))
         self.signal: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'signal_1y'))
+
+class _6bBlockTxindexPattern(Generic[T]):
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self._6b: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern[T] = AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, '6b'))
+        self.block: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern[T] = AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc)
+        self.txindex: MetricPattern21[T] = MetricPattern21(client, acc)
 
 class CumulativeHeightSumPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
@@ -3326,8 +3325,8 @@ class MetricsTree_Transactions_Size:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.vsize: _1h24hBlockTxindexPattern[VSize] = _1h24hBlockTxindexPattern(client, 'tx_vsize')
-        self.weight: _1h24hBlockTxindexPattern[Weight] = _1h24hBlockTxindexPattern(client, 'tx_weight')
+        self.vsize: _6bBlockTxindexPattern[VSize] = _6bBlockTxindexPattern(client, 'tx_vsize')
+        self.weight: _6bBlockTxindexPattern[Weight] = _6bBlockTxindexPattern(client, 'tx_weight')
 
 class MetricsTree_Transactions_Fees:
     """Metrics tree node."""
@@ -3335,8 +3334,8 @@ class MetricsTree_Transactions_Fees:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.input_value: MetricPattern21[Sats] = MetricPattern21(client, 'input_value')
         self.output_value: MetricPattern21[Sats] = MetricPattern21(client, 'output_value')
-        self.fee: _1h24hBlockTxindexPattern[Sats] = _1h24hBlockTxindexPattern(client, 'fee')
-        self.fee_rate: _1h24hBlockTxindexPattern[FeeRate] = _1h24hBlockTxindexPattern(client, 'fee_rate')
+        self.fee: _6bBlockTxindexPattern[Sats] = _6bBlockTxindexPattern(client, 'fee')
+        self.fee_rate: _6bBlockTxindexPattern[FeeRate] = _6bBlockTxindexPattern(client, 'fee_rate')
 
 class MetricsTree_Transactions_Versions:
     """Metrics tree node."""

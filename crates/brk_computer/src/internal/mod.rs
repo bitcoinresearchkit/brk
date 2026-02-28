@@ -1,4 +1,3 @@
-mod block_windows;
 mod compute;
 mod distribution_stats;
 mod eager_indexes;
@@ -8,9 +7,9 @@ mod multi;
 mod single;
 pub(crate) mod sliding_window;
 mod traits;
+mod transform;
 mod windows;
 
-pub(crate) use block_windows::*;
 pub(crate) use compute::*;
 pub(crate) use distribution_stats::*;
 pub(crate) use eager_indexes::*;
@@ -19,4 +18,5 @@ pub(crate) use lazy_eager_indexes::*;
 pub(crate) use multi::*;
 pub(crate) use single::*;
 pub(crate) use traits::*;
+pub use transform::*;
 pub(crate) use windows::*;

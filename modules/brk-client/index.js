@@ -3654,31 +3654,6 @@ function create_1y24h30d7dPattern2(client, acc) {
 
 /**
  * @template T
- * @typedef {Object} _1h24hBlockTxindexPattern
- * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} _1h
- * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} _24h
- * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} block
- * @property {MetricPattern21<T>} txindex
- */
-
-/**
- * Create a _1h24hBlockTxindexPattern pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_1h24hBlockTxindexPattern<T>}
- */
-function create_1h24hBlockTxindexPattern(client, acc) {
-  return {
-    _1h: createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, '1h')),
-    _24h: createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, '24h')),
-    block: createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc),
-    txindex: createMetricPattern21(client, acc),
-  };
-}
-
-/**
- * @template T
  * @typedef {Object} _1y24h30d7dPattern
  * @property {MetricPattern1<T>} _1y
  * @property {MetricPattern1<T>} _24h
@@ -3804,6 +3779,29 @@ function createHistogramLineSignalPattern(client, acc) {
     histogram: createMetricPattern1(client, _m(acc, 'histogram_1y')),
     line: createMetricPattern1(client, _m(acc, 'line_1y')),
     signal: createMetricPattern1(client, _m(acc, 'signal_1y')),
+  };
+}
+
+/**
+ * @template T
+ * @typedef {Object} _6bBlockTxindexPattern
+ * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} _6b
+ * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} block
+ * @property {MetricPattern21<T>} txindex
+ */
+
+/**
+ * Create a _6bBlockTxindexPattern pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_6bBlockTxindexPattern<T>}
+ */
+function create_6bBlockTxindexPattern(client, acc) {
+  return {
+    _6b: createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, '6b')),
+    block: createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc),
+    txindex: createMetricPattern21(client, acc),
   };
 }
 
@@ -4140,16 +4138,16 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Transactions_Size
- * @property {_1h24hBlockTxindexPattern<VSize>} vsize
- * @property {_1h24hBlockTxindexPattern<Weight>} weight
+ * @property {_6bBlockTxindexPattern<VSize>} vsize
+ * @property {_6bBlockTxindexPattern<Weight>} weight
  */
 
 /**
  * @typedef {Object} MetricsTree_Transactions_Fees
  * @property {MetricPattern21<Sats>} inputValue
  * @property {MetricPattern21<Sats>} outputValue
- * @property {_1h24hBlockTxindexPattern<Sats>} fee
- * @property {_1h24hBlockTxindexPattern<FeeRate>} feeRate
+ * @property {_6bBlockTxindexPattern<Sats>} fee
+ * @property {_6bBlockTxindexPattern<FeeRate>} feeRate
  */
 
 /**
@@ -6674,14 +6672,14 @@ class BrkClient extends BrkClientBase {
           isCoinbase: createMetricPattern21(this, 'is_coinbase'),
         },
         size: {
-          vsize: create_1h24hBlockTxindexPattern(this, 'tx_vsize'),
-          weight: create_1h24hBlockTxindexPattern(this, 'tx_weight'),
+          vsize: create_6bBlockTxindexPattern(this, 'tx_vsize'),
+          weight: create_6bBlockTxindexPattern(this, 'tx_weight'),
         },
         fees: {
           inputValue: createMetricPattern21(this, 'input_value'),
           outputValue: createMetricPattern21(this, 'output_value'),
-          fee: create_1h24hBlockTxindexPattern(this, 'fee'),
-          feeRate: create_1h24hBlockTxindexPattern(this, 'fee_rate'),
+          fee: create_6bBlockTxindexPattern(this, 'fee'),
+          feeRate: create_6bBlockTxindexPattern(this, 'fee_rate'),
         },
         versions: {
           v1: createCumulativeHeightSumPattern(this, 'tx_v1'),

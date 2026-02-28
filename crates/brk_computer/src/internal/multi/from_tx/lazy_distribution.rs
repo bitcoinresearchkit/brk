@@ -9,7 +9,7 @@ use vecdb::{Database, Exit, LazyVecFrom2, ReadableVec, Rw, StorageMode, Version}
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{BlockWindowStarts, ComputedVecValue, NumericValue, TxDerivedDistribution},
+    internal::{ComputedVecValue, NumericValue, TxDerivedDistribution},
 };
 
 #[derive(Traversable)]
@@ -48,7 +48,6 @@ where
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
-        block_windows: &BlockWindowStarts<'_>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -60,7 +59,6 @@ where
             indexer,
             indexes,
             starting_indexes,
-            block_windows,
             &self.txindex,
             exit,
         )
