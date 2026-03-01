@@ -67,7 +67,7 @@ impl SupplyMetrics {
     pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         vec![
             &mut self.total.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.total.base.usd.height as &mut dyn AnyStoredVec,
+            &mut self.total.base.cents.height as &mut dyn AnyStoredVec,
         ]
         .into_par_iter()
     }
@@ -117,7 +117,7 @@ impl SupplyMetrics {
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             &self.total.sats.height,
-            &self.total.usd.height,
+            &self.total.cents.height,
             exit,
         )
     }

@@ -1,4 +1,5 @@
 use brk_error::Result;
+use brk_types::Cents;
 use vecdb::Exit;
 
 use super::super::{activity, cap, supply};
@@ -32,13 +33,16 @@ impl Vecs {
             .metrics
             .realized
             .realized_price
-            .usd
+            .cents
             .height;
 
-        self.vaulted_price.usd.height.compute_divide(
+        self.vaulted_price.cents.height.compute_transform2(
             starting_indexes.height,
             realized_price,
             &activity.vaultedness.height,
+            |(i, price, vaultedness, ..)| {
+                (i, Cents::from(f64::from(price) / f64::from(vaultedness)))
+            },
             exit,
         )?;
 
@@ -47,13 +51,16 @@ impl Vecs {
             prices,
             starting_indexes,
             exit,
-            &self.vaulted_price.usd.height,
+            &self.vaulted_price.cents.height,
         )?;
 
-        self.active_price.usd.height.compute_multiply(
+        self.active_price.cents.height.compute_transform2(
             starting_indexes.height,
             realized_price,
             &activity.liveliness.height,
+            |(i, price, liveliness, ..)| {
+                (i, Cents::from(f64::from(price) * f64::from(liveliness)))
+            },
             exit,
         )?;
 
@@ -62,13 +69,16 @@ impl Vecs {
             prices,
             starting_indexes,
             exit,
-            &self.active_price.usd.height,
+            &self.active_price.cents.height,
         )?;
 
-        self.true_market_mean.usd.height.compute_divide(
+        self.true_market_mean.cents.height.compute_transform2(
             starting_indexes.height,
             &cap.investor_cap.height,
             &supply.active_supply.btc.height,
+            |(i, cap_dollars, supply_btc, ..)| {
+                (i, Cents::from(f64::from(Cents::from(cap_dollars)) / f64::from(supply_btc)))
+            },
             exit,
         )?;
 
@@ -77,14 +87,17 @@ impl Vecs {
             prices,
             starting_indexes,
             exit,
-            &self.true_market_mean.usd.height,
+            &self.true_market_mean.cents.height,
         )?;
 
         // cointime_price = cointime_cap / circulating_supply
-        self.cointime_price.usd.height.compute_divide(
+        self.cointime_price.cents.height.compute_transform2(
             starting_indexes.height,
             &cap.cointime_cap.height,
             circulating_supply,
+            |(i, cap_dollars, supply_btc, ..)| {
+                (i, Cents::from(f64::from(Cents::from(cap_dollars)) / f64::from(supply_btc)))
+            },
             exit,
         )?;
 
@@ -93,7 +106,7 @@ impl Vecs {
             prices,
             starting_indexes,
             exit,
-            &self.cointime_price.usd.height,
+            &self.cointime_price.cents.height,
         )?;
 
         Ok(())

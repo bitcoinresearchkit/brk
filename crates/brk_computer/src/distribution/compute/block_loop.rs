@@ -451,10 +451,9 @@ pub(crate) fn process_blocks(
         )?;
 
         // Compute and push percentiles for aggregate cohorts (all, sth, lth)
-        let spot = block_price.to_dollars();
         vecs.utxo_cohorts.truncate_push_aggregate_percentiles(
             height,
-            spot,
+            block_price,
             day1_opt,
             &vecs.states_path,
         )?;

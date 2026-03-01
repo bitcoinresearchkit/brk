@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Sats, Version};
+use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
@@ -47,11 +47,11 @@ impl RollingFullSlot {
         max_from: Height,
         starts: &impl ReadableVec<Height, Height>,
         sats_source: &impl ReadableVec<Height, Sats>,
-        usd_source: &impl ReadableVec<Height, Dollars>,
+        cents_source: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         self.sum.sats.height.compute_rolling_sum(max_from, starts, sats_source, exit)?;
-        self.sum.usd.height.compute_rolling_sum(max_from, starts, usd_source, exit)?;
+        self.sum.cents.height.compute_rolling_sum(max_from, starts, cents_source, exit)?;
 
         let d = &mut self.distribution;
 
@@ -64,11 +64,11 @@ impl RollingFullSlot {
         )?;
 
         compute_rolling_distribution_from_starts(
-            max_from, starts, usd_source,
-            &mut d.average.usd.height, &mut d.min.usd.height,
-            &mut d.max.usd.height, &mut d.pct10.usd.height,
-            &mut d.pct25.usd.height, &mut d.median.usd.height,
-            &mut d.pct75.usd.height, &mut d.pct90.usd.height, exit,
+            max_from, starts, cents_source,
+            &mut d.average.cents.height, &mut d.min.cents.height,
+            &mut d.max.cents.height, &mut d.pct10.cents.height,
+            &mut d.pct25.cents.height, &mut d.median.cents.height,
+            &mut d.pct75.cents.height, &mut d.pct90.cents.height, exit,
         )?;
 
         Ok(())
@@ -105,11 +105,11 @@ impl RollingFullByUnit {
         max_from: Height,
         windows: &WindowStarts<'_>,
         sats_source: &impl ReadableVec<Height, Sats>,
-        usd_source: &impl ReadableVec<Height, Dollars>,
+        cents_source: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         for (slot, starts) in self.0.as_mut_array().into_iter().zip(windows.as_array()) {
-            slot.compute(max_from, starts, sats_source, usd_source, exit)?;
+            slot.compute(max_from, starts, sats_source, cents_source, exit)?;
         }
         Ok(())
     }

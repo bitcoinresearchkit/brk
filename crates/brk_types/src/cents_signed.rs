@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{Formattable, Pco};
+use vecdb::{CheckedSub, Formattable, Pco};
 
 use super::Dollars;
 
@@ -87,6 +87,13 @@ impl From<CentsSigned> for f64 {
     #[inline]
     fn from(value: CentsSigned) -> Self {
         value.0 as f64
+    }
+}
+
+impl From<f64> for CentsSigned {
+    #[inline]
+    fn from(value: f64) -> Self {
+        Self(value as i64)
     }
 }
 
@@ -235,6 +242,12 @@ impl Mul<usize> for CentsSigned {
     #[inline]
     fn mul(self, rhs: usize) -> Self::Output {
         Self(self.0 * rhs as i64)
+    }
+}
+
+impl CheckedSub for CentsSigned {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self)
     }
 }
 

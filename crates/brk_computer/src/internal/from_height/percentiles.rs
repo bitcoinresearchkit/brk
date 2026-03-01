@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::{Traversable, TreeNode};
-use brk_types::{Dollars, Height, StoredF32, Version};
+use brk_types::{Cents, Height, StoredF32, Version};
 use vecdb::{AnyExportableVec, Database, ReadOnlyClone, Ro, Rw, StorageMode, WritableVec};
 
 use crate::indexes;
@@ -14,10 +14,10 @@ pub const PERCENTILES_LEN: usize = PERCENTILES.len();
 /// Compute spot percentile rank by interpolating within percentile bands.
 /// Returns a value between 0 and 100 indicating where spot sits in the distribution.
 pub(crate) fn compute_spot_percentile_rank(
-    percentile_prices: &[Dollars; PERCENTILES_LEN],
-    spot: Dollars,
+    percentile_prices: &[Cents; PERCENTILES_LEN],
+    spot: Cents,
 ) -> StoredF32 {
-    if spot.is_nan() || percentile_prices[0].is_nan() {
+    if spot == Cents::ZERO && percentile_prices[0] == Cents::ZERO {
         return StoredF32::NAN;
     }
 
@@ -68,7 +68,7 @@ pub(crate) fn compute_spot_percentile_rank(
 }
 
 pub struct PercentilesVecs<M: StorageMode = Rw> {
-    pub vecs: [Price<ComputedFromHeightLast<Dollars, M>>; PERCENTILES_LEN],
+    pub vecs: [Price<ComputedFromHeightLast<Cents, M>>; PERCENTILES_LEN],
 }
 
 const VERSION: Version = Version::ONE;
@@ -94,14 +94,14 @@ impl PercentilesVecs {
         Ok(Self { vecs })
     }
 
-    /// Push percentile prices at this height.
+    /// Push percentile prices at this height (in cents).
     pub(crate) fn truncate_push(
         &mut self,
         height: Height,
-        percentile_prices: &[Dollars; PERCENTILES_LEN],
+        percentile_prices: &[Cents; PERCENTILES_LEN],
     ) -> Result<()> {
         for (i, v) in self.vecs.iter_mut().enumerate() {
-            v.usd.height.truncate_push(height, percentile_prices[i])?;
+            v.cents.height.truncate_push(height, percentile_prices[i])?;
         }
         Ok(())
     }
@@ -109,7 +109,7 @@ impl PercentilesVecs {
     /// Validate computed versions or reset if mismatched.
     pub(crate) fn validate_computed_version_or_reset(&mut self, version: Version) -> Result<()> {
         for vec in self.vecs.iter_mut() {
-            vec.usd.height.validate_computed_version_or_reset(version)?;
+            vec.cents.height.validate_computed_version_or_reset(version)?;
         }
         Ok(())
     }
@@ -130,7 +130,7 @@ impl ReadOnlyClone for PercentilesVecs {
 
 impl<M: StorageMode> Traversable for PercentilesVecs<M>
 where
-    Price<ComputedFromHeightLast<Dollars, M>>: Traversable,
+    Price<ComputedFromHeightLast<Cents, M>>: Traversable,
 {
     fn to_tree_node(&self) -> TreeNode {
         TreeNode::Branch(

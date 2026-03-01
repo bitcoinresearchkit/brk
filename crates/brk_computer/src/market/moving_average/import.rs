@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightPriceWithRatioExtended, DollarsTimesTenths, Price},
+    internal::{CentsTimesTenths, ComputedFromHeightPriceWithRatioExtended, Price},
 };
 
 impl Vecs {
@@ -28,20 +28,20 @@ impl Vecs {
         let price_200d_sma = import!("price_200d_sma");
         let price_350d_sma = import!("price_350d_sma");
 
-        let price_200d_sma_source = &price_200d_sma.price.usd;
-        let price_200d_sma_x2_4 = Price::from_computed::<DollarsTimesTenths<24>>(
+        let price_200d_sma_source = &price_200d_sma.price.cents;
+        let price_200d_sma_x2_4 = Price::from_cents_source::<CentsTimesTenths<24>>(
             "price_200d_sma_x2_4",
             version,
             price_200d_sma_source,
         );
-        let price_200d_sma_x0_8 = Price::from_computed::<DollarsTimesTenths<8>>(
+        let price_200d_sma_x0_8 = Price::from_cents_source::<CentsTimesTenths<8>>(
             "price_200d_sma_x0_8",
             version,
             price_200d_sma_source,
         );
 
-        let price_350d_sma_source = &price_350d_sma.price.usd;
-        let price_350d_sma_x2 = Price::from_computed::<DollarsTimesTenths<20>>(
+        let price_350d_sma_source = &price_350d_sma.price.cents;
+        let price_350d_sma_x2 = Price::from_cents_source::<CentsTimesTenths<20>>(
             "price_350d_sma_x2",
             version,
             price_350d_sma_source,

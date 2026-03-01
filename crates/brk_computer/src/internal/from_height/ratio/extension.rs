@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, StoredF32, Version};
+use brk_types::{Cents, Height, StoredF32, Version};
 use vecdb::{AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex, WritableVec};
 
 use crate::{
@@ -21,12 +21,12 @@ pub struct ComputedFromHeightRatioExtension<M: StorageMode = Rw> {
     pub ratio_pct5: ComputedFromHeightLast<StoredF32, M>,
     pub ratio_pct2: ComputedFromHeightLast<StoredF32, M>,
     pub ratio_pct1: ComputedFromHeightLast<StoredF32, M>,
-    pub ratio_pct99_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub ratio_pct98_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub ratio_pct95_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub ratio_pct5_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub ratio_pct2_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub ratio_pct1_usd: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub ratio_pct99_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub ratio_pct98_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub ratio_pct95_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub ratio_pct5_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub ratio_pct2_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub ratio_pct1_price: Price<ComputedFromHeightLast<Cents, M>>,
 
     pub ratio_sd: ComputedFromHeightStdDevExtended<M>,
     pub ratio_4y_sd: ComputedFromHeightStdDevExtended<M>,
@@ -68,7 +68,7 @@ impl ComputedFromHeightRatioExtension {
             };
         }
 
-        macro_rules! import_usd {
+        macro_rules! import_price {
             ($suffix:expr) => {
                 Price::forced_import(db, &format!("{name}_{}", $suffix), v, indexes)?
             };
@@ -87,12 +87,12 @@ impl ComputedFromHeightRatioExtension {
             ratio_pct5: import!("ratio_pct5"),
             ratio_pct2: import!("ratio_pct2"),
             ratio_pct1: import!("ratio_pct1"),
-            ratio_pct99_usd: import_usd!("ratio_pct99_usd"),
-            ratio_pct98_usd: import_usd!("ratio_pct98_usd"),
-            ratio_pct95_usd: import_usd!("ratio_pct95_usd"),
-            ratio_pct5_usd: import_usd!("ratio_pct5_usd"),
-            ratio_pct2_usd: import_usd!("ratio_pct2_usd"),
-            ratio_pct1_usd: import_usd!("ratio_pct1_usd"),
+            ratio_pct99_price: import_price!("ratio_pct99"),
+            ratio_pct98_price: import_price!("ratio_pct98"),
+            ratio_pct95_price: import_price!("ratio_pct95"),
+            ratio_pct5_price: import_price!("ratio_pct5"),
+            ratio_pct2_price: import_price!("ratio_pct2"),
+            ratio_pct1_price: import_price!("ratio_pct1"),
         })
     }
 
@@ -219,20 +219,20 @@ impl ComputedFromHeightRatioExtension {
         Ok(())
     }
 
-    /// Compute USD ratio bands: usd_band = metric_price * ratio_percentile
-    pub(crate) fn compute_usd_bands(
+    /// Compute cents ratio bands: cents_band = metric_price_cents * ratio_percentile
+    pub(crate) fn compute_cents_bands(
         &mut self,
         starting_indexes: &ComputeIndexes,
-        metric_price: &impl ReadableVec<Height, Dollars>,
+        metric_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        use crate::internal::PriceTimesRatio;
+        use crate::internal::PriceTimesRatioCents;
 
         macro_rules! compute_band {
             ($usd_field:ident, $band_source:expr) => {
                 self.$usd_field
-                    .usd
-                    .compute_binary::<Dollars, StoredF32, PriceTimesRatio>(
+                    .cents
+                    .compute_binary::<Cents, StoredF32, PriceTimesRatioCents>(
                         starting_indexes.height,
                         metric_price,
                         $band_source,
@@ -241,22 +241,22 @@ impl ComputedFromHeightRatioExtension {
             };
         }
 
-        compute_band!(ratio_pct99_usd, &self.ratio_pct99.height);
-        compute_band!(ratio_pct98_usd, &self.ratio_pct98.height);
-        compute_band!(ratio_pct95_usd, &self.ratio_pct95.height);
-        compute_band!(ratio_pct5_usd, &self.ratio_pct5.height);
-        compute_band!(ratio_pct2_usd, &self.ratio_pct2.height);
-        compute_band!(ratio_pct1_usd, &self.ratio_pct1.height);
+        compute_band!(ratio_pct99_price, &self.ratio_pct99.height);
+        compute_band!(ratio_pct98_price, &self.ratio_pct98.height);
+        compute_band!(ratio_pct95_price, &self.ratio_pct95.height);
+        compute_band!(ratio_pct5_price, &self.ratio_pct5.height);
+        compute_band!(ratio_pct2_price, &self.ratio_pct2.height);
+        compute_band!(ratio_pct1_price, &self.ratio_pct1.height);
 
-        // Stddev USD bands
+        // Stddev cents bands
         self.ratio_sd
-            .compute_usd_bands(starting_indexes, metric_price, exit)?;
+            .compute_cents_bands(starting_indexes, metric_price, exit)?;
         self.ratio_4y_sd
-            .compute_usd_bands(starting_indexes, metric_price, exit)?;
+            .compute_cents_bands(starting_indexes, metric_price, exit)?;
         self.ratio_2y_sd
-            .compute_usd_bands(starting_indexes, metric_price, exit)?;
+            .compute_cents_bands(starting_indexes, metric_price, exit)?;
         self.ratio_1y_sd
-            .compute_usd_bands(starting_indexes, metric_price, exit)?;
+            .compute_cents_bands(starting_indexes, metric_price, exit)?;
 
         Ok(())
     }

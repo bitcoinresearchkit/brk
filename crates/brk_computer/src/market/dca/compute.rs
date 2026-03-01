@@ -1,11 +1,11 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, Day1, Date, Dollars, Height, Sats, StoredF32, StoredU32};
+use brk_types::{Bitcoin, Cents, Day1, Date, Dollars, Height, Sats, StoredF32, StoredU32};
 use vecdb::{AnyVec, EagerVec, Exit, ReadableOptionVec, ReadableVec, PcoVec, PcoVecValue, VecIndex};
 
 use super::{ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     ComputeIndexes, blocks, indexes,
-    internal::{ComputedFromHeightLast, PercentageDiffDollars},
+    internal::{ComputedFromHeightLast, PercentageDiffCents},
     market::lookback,
     prices,
 };
@@ -69,7 +69,7 @@ impl Vecs {
         {
             let days = days as usize;
             let stack_data = stack.sats.height.collect_range_at(sh, stack.sats.height.len());
-            average_price.usd.height.compute_transform(
+            average_price.cents.height.compute_transform(
                 starting_indexes.height,
                 h2d,
                 |(h, di, _)| {
@@ -79,9 +79,9 @@ impl Vecs {
                         let num_days = days
                             .min(di_usize + 1)
                             .min(di_usize + 1 - first_price_di);
-                        DCA_AMOUNT * num_days / Bitcoin::from(stack_sats)
+                        Cents::from(DCA_AMOUNT * num_days / Bitcoin::from(stack_sats))
                     } else {
-                        Dollars::NAN
+                        Cents::ZERO
                     };
                     (h, avg)
                 },
@@ -95,10 +95,10 @@ impl Vecs {
             .iter_mut()
             .zip(self.period_average_price.iter_with_days())
         {
-            returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
+            returns.compute_binary::<Cents, Cents, PercentageDiffCents>(
                 starting_indexes.height,
-                &prices.price.usd.height,
-                &average_price.usd.height,
+                &prices.price.cents.height,
+                &average_price.cents.height,
                 exit,
             )?;
         }
@@ -139,16 +139,16 @@ impl Vecs {
             self.period_lump_sum_stack.zip_mut_with_days(&lookback_dca)
         {
             let total_invested = DCA_AMOUNT * days as usize;
-            let lookback_data = lookback_price.usd.height.collect_range_at(sh, lookback_price.usd.height.len());
+            let lookback_data = lookback_price.cents.height.collect_range_at(sh, lookback_price.cents.height.len());
             stack.sats.height.compute_transform(
                 starting_indexes.height,
                 h2d,
                 |(h, _di, _)| {
                     let lp = lookback_data[h.to_usize() - sh];
-                    let sats = if lp == Dollars::ZERO {
+                    let sats = if lp == Cents::ZERO {
                         Sats::ZERO
                     } else {
-                        Sats::from(Bitcoin::from(total_invested / lp))
+                        Sats::from(Bitcoin::from(total_invested / Dollars::from(lp)))
                     };
                     (h, sats)
                 },
@@ -163,10 +163,10 @@ impl Vecs {
             .iter_mut()
             .zip(lookback_dca2.iter_with_days())
         {
-            returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
+            returns.compute_binary::<Cents, Cents, PercentageDiffCents>(
                 starting_indexes.height,
-                &prices.price.usd.height,
-                &lookback_price.usd.height,
+                &prices.price.cents.height,
+                &lookback_price.cents.height,
                 exit,
             )?;
         }
@@ -242,17 +242,17 @@ impl Vecs {
         {
             let from_usize = from.to_usize();
             let stack_data = stack.sats.height.collect_range_at(sh, stack.sats.height.len());
-            average_price.usd.height.compute_transform(
+            average_price.cents.height.compute_transform(
                 starting_indexes.height,
                 h2d,
                 |(h, di, _)| {
                     let di_usize = di.to_usize();
                     if di_usize < from_usize {
-                        return (h, Dollars::NAN);
+                        return (h, Cents::ZERO);
                     }
                     let stack_sats = stack_data[h.to_usize() - sh];
                     let num_days = di_usize + 1 - from_usize;
-                    let avg = DCA_AMOUNT * num_days / Bitcoin::from(stack_sats);
+                    let avg = Cents::from(DCA_AMOUNT * num_days / Bitcoin::from(stack_sats));
                     (h, avg)
                 },
                 exit,
@@ -266,10 +266,10 @@ impl Vecs {
             .zip(self.class_average_price.iter())
         {
 
-            returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
+            returns.compute_binary::<Cents, Cents, PercentageDiffCents>(
                 starting_indexes.height,
-                &prices.price.usd.height,
-                &average_price.usd.height,
+                &prices.price.cents.height,
+                &average_price.cents.height,
                 exit,
             )?;
         }

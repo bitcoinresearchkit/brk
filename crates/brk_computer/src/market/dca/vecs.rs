@@ -1,5 +1,5 @@
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Sats, StoredF32, StoredU32};
+use brk_types::{Cents, Height, Sats, StoredF32, StoredU32};
 use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod};
@@ -16,7 +16,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 
     // DCA by period - KISS types
     pub period_stack: ByDcaPeriod<ValueFromHeightLast<M>>,
-    pub period_average_price: ByDcaPeriod<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub period_average_price: ByDcaPeriod<Price<ComputedFromHeightLast<Cents, M>>>,
     pub period_returns: ByDcaPeriod<ComputedFromHeightLast<StoredF32, M>>,
     pub period_cagr: ByDcaCagr<ComputedFromHeightLast<StoredF32, M>>,
 
@@ -38,7 +38,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 
     // DCA by year class - KISS types
     pub class_stack: ByDcaClass<ValueFromHeightLast<M>>,
-    pub class_average_price: ByDcaClass<Price<ComputedFromHeightLast<Dollars, M>>>,
+    pub class_average_price: ByDcaClass<Price<ComputedFromHeightLast<Cents, M>>>,
     pub class_returns: ByDcaClass<ComputedFromHeightLast<StoredF32, M>>,
 
     // DCA by year class - profitability

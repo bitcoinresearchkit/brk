@@ -99,8 +99,8 @@ impl AdjustedCohortMetrics {
         prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
-        up_to_1h_value_created: &impl ReadableVec<Height, Dollars>,
-        up_to_1h_value_destroyed: &impl ReadableVec<Height, Dollars>,
+        up_to_1h_value_created: &impl ReadableVec<Height, Cents>,
+        up_to_1h_value_destroyed: &impl ReadableVec<Height, Cents>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {

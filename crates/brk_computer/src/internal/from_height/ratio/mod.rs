@@ -8,7 +8,7 @@ pub use price_extended::*;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, StoredF32, Version};
+use brk_types::{Cents, Height, StoredF32, Version};
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{ComputeIndexes, indexes};
@@ -36,12 +36,12 @@ impl ComputedFromHeightRatio {
         })
     }
 
-    /// Compute ratio = close_price / metric_price at height level
+    /// Compute ratio = close_price / metric_price at height level (both in cents)
     pub(crate) fn compute_ratio(
         &mut self,
         starting_indexes: &ComputeIndexes,
-        close_price: &impl ReadableVec<Height, Dollars>,
-        metric_price: &impl ReadableVec<Height, Dollars>,
+        close_price: &impl ReadableVec<Height, Cents>,
+        metric_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         self.ratio.height.compute_transform2(
@@ -49,10 +49,10 @@ impl ComputedFromHeightRatio {
             close_price,
             metric_price,
             |(i, close, price, ..)| {
-                if price == Dollars::ZERO {
+                if price == Cents::ZERO {
                     (i, StoredF32::from(1.0))
                 } else {
-                    (i, StoredF32::from(close / price))
+                    (i, StoredF32::from(f64::from(close) / f64::from(price)))
                 }
             },
             exit,

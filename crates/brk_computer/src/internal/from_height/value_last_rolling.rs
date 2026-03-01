@@ -41,7 +41,7 @@ impl ValueFromHeightLastRolling {
         })
     }
 
-    /// Compute sats height via closure, then USD from price, then rolling windows.
+    /// Compute sats height via closure, then cents from price, then rolling windows.
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
@@ -51,12 +51,12 @@ impl ValueFromHeightLastRolling {
         compute_sats: impl FnOnce(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     ) -> Result<()> {
         compute_sats(&mut self.value.sats)?;
-        self.value.compute_usd(prices, max_from, exit)?;
+        self.value.compute_cents(prices, max_from, exit)?;
         self.rolling.compute_rolling_sum(
             max_from,
             windows,
             &self.value.sats,
-            &self.value.usd,
+            &self.value.cents,
             exit,
         )?;
         Ok(())

@@ -87,10 +87,9 @@ impl CohortMetricsBase for AllCohortMetrics {
         self.unrealized
             .base
             .truncate_push(height, &height_unrealized_state)?;
-        let spot = height_price.to_dollars();
         self.cost_basis
             .extended
-            .truncate_push_percentiles(height, state, spot)?;
+            .truncate_push_percentiles(height, state, height_price)?;
         Ok(())
     }
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
@@ -140,8 +139,8 @@ impl AllCohortMetrics {
         prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
-        up_to_1h_value_created: &impl ReadableVec<Height, Dollars>,
-        up_to_1h_value_destroyed: &impl ReadableVec<Height, Dollars>,
+        up_to_1h_value_created: &impl ReadableVec<Height, Cents>,
+        up_to_1h_value_destroyed: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         self.realized.compute_rest_part2(

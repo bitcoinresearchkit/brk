@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height};
+use brk_types::{Cents, Height};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -15,10 +15,10 @@ use crate::distribution::metrics::ImportConfig;
 #[derive(Traversable)]
 pub struct CostBasisBase<M: StorageMode = Rw> {
     /// Minimum cost basis for any UTXO at this height
-    pub min: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub min: Price<ComputedFromHeightLast<Cents, M>>,
 
     /// Maximum cost basis for any UTXO at this height
-    pub max: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub max: Price<ComputedFromHeightLast<Cents, M>>,
 }
 
 impl CostBasisBase {
@@ -40,7 +40,7 @@ impl CostBasisBase {
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.min.usd.height.len().min(self.max.usd.height.len())
+        self.min.cents.height.len().min(self.max.cents.height.len())
     }
 
     pub(crate) fn truncate_push_minmax(
@@ -48,27 +48,27 @@ impl CostBasisBase {
         height: Height,
         state: &CohortState,
     ) -> Result<()> {
-        self.min.usd.height.truncate_push(
+        self.min.cents.height.truncate_push(
             height,
             state
                 .cost_basis_data_first_key_value()
-                .map(|(cents, _)| cents.into())
-                .unwrap_or(Dollars::NAN),
+                .map(|(cents, _)| cents)
+                .unwrap_or(Cents::ZERO),
         )?;
-        self.max.usd.height.truncate_push(
+        self.max.cents.height.truncate_push(
             height,
             state
                 .cost_basis_data_last_key_value()
-                .map(|(cents, _)| cents.into())
-                .unwrap_or(Dollars::NAN),
+                .map(|(cents, _)| cents)
+                .unwrap_or(Cents::ZERO),
         )?;
         Ok(())
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
-            &mut self.min.usd.height as &mut dyn AnyStoredVec,
-            &mut self.max.usd.height,
+            &mut self.min.cents.height as &mut dyn AnyStoredVec,
+            &mut self.max.cents.height,
         ]
     }
 
@@ -78,14 +78,14 @@ impl CostBasisBase {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.min.usd.height.compute_min_of_others(
+        self.min.cents.height.compute_min_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.min.usd.height).collect::<Vec<_>>(),
+            &others.iter().map(|v| &v.min.cents.height).collect::<Vec<_>>(),
             exit,
         )?;
-        self.max.usd.height.compute_max_of_others(
+        self.max.cents.height.compute_max_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.max.usd.height).collect::<Vec<_>>(),
+            &others.iter().map(|v| &v.max.cents.height).collect::<Vec<_>>(),
             exit,
         )?;
         Ok(())

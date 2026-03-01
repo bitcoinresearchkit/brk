@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, StoredF32, Version};
+use brk_types::{Cents, Height, StoredF32, Version};
 use vecdb::{AnyStoredVec, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -62,14 +62,14 @@ impl CostBasisExtended {
         &mut self,
         height: Height,
         state: &mut CohortState,
-        spot: Dollars,
+        spot: Cents,
     ) -> Result<()> {
         let computed = state.compute_percentiles();
 
         let sat_prices = computed
             .as_ref()
-            .map(|p| p.sat_weighted.map(|c| c.to_dollars()))
-            .unwrap_or([Dollars::NAN; PERCENTILES_LEN]);
+            .map(|p| p.sat_weighted)
+            .unwrap_or([Cents::ZERO; PERCENTILES_LEN]);
 
         self.percentiles.truncate_push(height, &sat_prices)?;
         let rank = compute_spot_percentile_rank(&sat_prices, spot);
@@ -79,8 +79,8 @@ impl CostBasisExtended {
 
         let usd_prices = computed
             .as_ref()
-            .map(|p| p.usd_weighted.map(|c| c.to_dollars()))
-            .unwrap_or([Dollars::NAN; PERCENTILES_LEN]);
+            .map(|p| p.usd_weighted)
+            .unwrap_or([Cents::ZERO; PERCENTILES_LEN]);
 
         self.invested_capital.truncate_push(height, &usd_prices)?;
         let rank = compute_spot_percentile_rank(&usd_prices, spot);
@@ -97,13 +97,13 @@ impl CostBasisExtended {
             self.percentiles
                 .vecs
                 .iter_mut()
-                .map(|v| &mut v.usd.height as &mut dyn AnyStoredVec),
+                .map(|v| &mut v.cents.height as &mut dyn AnyStoredVec),
         );
         vecs.extend(
             self.invested_capital
                 .vecs
                 .iter_mut()
-                .map(|v| &mut v.usd.height as &mut dyn AnyStoredVec),
+                .map(|v| &mut v.cents.height as &mut dyn AnyStoredVec),
         );
         vecs.push(&mut self.spot_cost_basis_percentile.height);
         vecs.push(&mut self.spot_invested_capital_percentile.height);

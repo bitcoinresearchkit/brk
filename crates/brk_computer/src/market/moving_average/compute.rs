@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::Dollars;
+use brk_types::Cents;
 use vecdb::{Exit, ReadableOptionVec, VecIndex};
 
 use super::Vecs;
@@ -14,7 +14,7 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close = &prices.price.usd.height;
+        let close = &prices.price.cents.height;
 
         for (sma, period) in [
             (&mut self.price_1w_sma, 7),
@@ -42,7 +42,7 @@ impl Vecs {
         }
 
         let h2d = &indexes.height.day1;
-        let closes: Vec<Dollars> = prices.split.close.usd.day1.collect_or_default();
+        let closes: Vec<Cents> = prices.split.close.cents.day1.collect_or_default();
 
         for (ema, period) in [
             (&mut self.price_1w_ema, 7),
@@ -71,7 +71,7 @@ impl Vecs {
                 v.compute_transform(
                     starting_indexes.height,
                     h2d,
-                    |(h, date, ..)| (h, Dollars::from(date_ema[date.to_usize()])),
+                    |(h, date, ..)| (h, Cents::from(date_ema[date.to_usize()])),
                     exit,
                 )?;
                 Ok(())
@@ -82,7 +82,7 @@ impl Vecs {
     }
 }
 
-fn compute_date_ema(closes: &[Dollars], k: f64) -> Vec<f64> {
+fn compute_date_ema(closes: &[Cents], k: f64) -> Vec<f64> {
     let mut date_ema: Vec<f64> = Vec::with_capacity(closes.len());
     let mut ema_val = 0.0f64;
     for (d, close) in closes.iter().enumerate() {

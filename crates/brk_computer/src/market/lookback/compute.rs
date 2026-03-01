@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::Dollars;
+use brk_types::Cents;
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
@@ -13,11 +13,11 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close_data: Vec<Dollars> = prices.price.usd.height.collect();
+        let close_data: Vec<Cents> = prices.price.cents.height.collect();
 
         for (price_ago, days) in self.price_ago.iter_mut_with_days() {
             let window_starts = blocks.count.start_vec(days as usize);
-            price_ago.usd.height.compute_transform(
+            price_ago.cents.height.compute_transform(
                 starting_indexes.height,
                 window_starts,
                 |(h, start_h, _)| {

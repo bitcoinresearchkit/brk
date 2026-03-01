@@ -1,65 +1,104 @@
-//! Generic price wrapper with both USD and sats representations.
+//! Generic price wrapper with cents, USD, and sats representations.
 //!
-//! All prices use this single struct with different USD types.
+//! All prices use this single struct with different cents types.
+//! USD is always lazily derived from cents via CentsUnsignedToDollars.
 //! Sats is always lazily derived from USD via DollarsToSatsFract.
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, SatsFract, Version};
+use brk_types::{Cents, Dollars, SatsFract, Version};
 use schemars::JsonSchema;
 use vecdb::{Database, ReadableCloneableVec, UnaryTransform};
 
 use super::{ComputedFromHeightLast, LazyFromHeightLast};
 use crate::{
     indexes,
-    internal::{ComputedVecValue, DollarsToSatsFract, NumericValue},
+    internal::{CentsUnsignedToDollars, ComputedVecValue, DollarsToSatsFract, NumericValue},
 };
 
-/// Generic price metric with both USD and sats representations.
+/// Generic price metric with cents, USD, and sats representations.
 #[derive(Clone, Traversable)]
-pub struct Price<U> {
-    pub usd: U,
+pub struct Price<C> {
+    pub cents: C,
+    pub usd: LazyFromHeightLast<Dollars, Cents>,
     pub sats: LazyFromHeightLast<SatsFract, Dollars>,
 }
 
-impl Price<ComputedFromHeightLast<Dollars>> {
+impl Price<ComputedFromHeightLast<Cents>> {
+    /// Import from database: stored cents, lazy USD + sats.
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let usd = ComputedFromHeightLast::forced_import(db, name, version, indexes)?;
-        let sats = LazyFromHeightLast::from_computed::<DollarsToSatsFract>(
+        let cents = ComputedFromHeightLast::forced_import(
+            db,
+            &format!("{name}_cents"),
+            version,
+            indexes,
+        )?;
+        let usd = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
+            &format!("{name}_usd"),
+            version,
+            cents.height.read_only_boxed_clone(),
+            &cents,
+        );
+        let sats = LazyFromHeightLast::from_lazy::<DollarsToSatsFract, Cents>(
             &format!("{name}_sats"),
             version,
-            usd.height.read_only_boxed_clone(),
             &usd,
         );
-        Ok(Self { usd, sats })
+        Ok(Self { cents, usd, sats })
+    }
+
+    /// Wrap an already-imported ComputedFromHeightLast<Cents> with lazy USD + sats.
+    pub(crate) fn from_cents(
+        name: &str,
+        version: Version,
+        cents: ComputedFromHeightLast<Cents>,
+    ) -> Self {
+        let usd = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
+            &format!("{name}_usd"),
+            version,
+            cents.height.read_only_boxed_clone(),
+            &cents,
+        );
+        let sats = LazyFromHeightLast::from_lazy::<DollarsToSatsFract, Cents>(
+            &format!("{name}_sats"),
+            version,
+            &usd,
+        );
+        Self { cents, usd, sats }
     }
 }
 
-impl<ST> Price<LazyFromHeightLast<Dollars, ST>>
+impl<ST> Price<LazyFromHeightLast<Cents, ST>>
 where
     ST: ComputedVecValue + NumericValue + JsonSchema + 'static,
 {
-    pub(crate) fn from_computed<F: UnaryTransform<ST, Dollars>>(
+    /// Create from a computed source, applying a transform to produce Cents.
+    pub(crate) fn from_cents_source<F: UnaryTransform<ST, Cents>>(
         name: &str,
         version: Version,
         source: &ComputedFromHeightLast<ST>,
     ) -> Self {
-        let usd = LazyFromHeightLast::from_computed::<F>(
-            name,
+        let cents = LazyFromHeightLast::from_computed::<F>(
+            &format!("{name}_cents"),
             version,
             source.height.read_only_boxed_clone(),
             source,
         );
-        let sats = LazyFromHeightLast::from_lazy::<DollarsToSatsFract, ST>(
+        let usd = LazyFromHeightLast::from_lazy::<CentsUnsignedToDollars, ST>(
+            &format!("{name}_usd"),
+            version,
+            &cents,
+        );
+        let sats = LazyFromHeightLast::from_lazy::<DollarsToSatsFract, Cents>(
             &format!("{name}_sats"),
             version,
             &usd,
         );
-        Self { usd, sats }
+        Self { cents, usd, sats }
     }
 }

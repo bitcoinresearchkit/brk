@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, StoredF32, Version};
+use brk_types::{Cents, Height, StoredF32, Version};
 use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
     WritableVec,
@@ -32,19 +32,19 @@ pub struct ComputedFromHeightStdDevExtended<M: StorageMode = Rw> {
     pub m2_5sd: ComputedFromHeightLast<StoredF32, M>,
     pub m3sd: ComputedFromHeightLast<StoredF32, M>,
 
-    pub _0sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub p0_5sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub p1sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub p1_5sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub p2sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub p2_5sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub p3sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub m0_5sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub m1sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub m1_5sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub m2sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub m2_5sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
-    pub m3sd_usd: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub _0sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub p0_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub p1sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub p1_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub p2sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub p2_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub p3sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub m0_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub m1sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub m1_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub m2sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub m2_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub m3sd_price: Price<ComputedFromHeightLast<Cents, M>>,
 }
 
 impl ComputedFromHeightStdDevExtended {
@@ -68,7 +68,7 @@ impl ComputedFromHeightStdDevExtended {
             };
         }
 
-        macro_rules! import_usd {
+        macro_rules! import_price {
             ($suffix:expr) => {
                 Price::forced_import(db, &format!("{name}_{}", $suffix), version, indexes)?
             };
@@ -89,19 +89,19 @@ impl ComputedFromHeightStdDevExtended {
             m2sd: import!("m2sd"),
             m2_5sd: import!("m2_5sd"),
             m3sd: import!("m3sd"),
-            _0sd_usd: import_usd!("0sd_usd"),
-            p0_5sd_usd: import_usd!("p0_5sd_usd"),
-            p1sd_usd: import_usd!("p1sd_usd"),
-            p1_5sd_usd: import_usd!("p1_5sd_usd"),
-            p2sd_usd: import_usd!("p2sd_usd"),
-            p2_5sd_usd: import_usd!("p2_5sd_usd"),
-            p3sd_usd: import_usd!("p3sd_usd"),
-            m0_5sd_usd: import_usd!("m0_5sd_usd"),
-            m1sd_usd: import_usd!("m1sd_usd"),
-            m1_5sd_usd: import_usd!("m1_5sd_usd"),
-            m2sd_usd: import_usd!("m2sd_usd"),
-            m2_5sd_usd: import_usd!("m2_5sd_usd"),
-            m3sd_usd: import_usd!("m3sd_usd"),
+            _0sd_price: import_price!("0sd"),
+            p0_5sd_price: import_price!("p0_5sd"),
+            p1sd_price: import_price!("p1sd"),
+            p1_5sd_price: import_price!("p1_5sd"),
+            p2sd_price: import_price!("p2sd"),
+            p2_5sd_price: import_price!("p2_5sd"),
+            p3sd_price: import_price!("p3sd"),
+            m0_5sd_price: import_price!("m0_5sd"),
+            m1sd_price: import_price!("m1sd"),
+            m1_5sd_price: import_price!("m1_5sd"),
+            m2sd_price: import_price!("m2sd"),
+            m2_5sd_price: import_price!("m2_5sd"),
+            m3sd_price: import_price!("m3sd"),
         })
     }
 
@@ -217,20 +217,20 @@ impl ComputedFromHeightStdDevExtended {
         Ok(())
     }
 
-    /// Compute USD price bands: usd_band = metric_price * band_ratio
-    pub(crate) fn compute_usd_bands(
+    /// Compute cents price bands: cents_band = metric_price_cents * band_ratio
+    pub(crate) fn compute_cents_bands(
         &mut self,
         starting_indexes: &ComputeIndexes,
-        metric_price: &impl ReadableVec<Height, Dollars>,
+        metric_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        use crate::internal::PriceTimesRatio;
+        use crate::internal::PriceTimesRatioCents;
 
         macro_rules! compute_band {
             ($usd_field:ident, $band_source:expr) => {
                 self.$usd_field
-                    .usd
-                    .compute_binary::<Dollars, StoredF32, PriceTimesRatio>(
+                    .cents
+                    .compute_binary::<Cents, StoredF32, PriceTimesRatioCents>(
                         starting_indexes.height,
                         metric_price,
                         $band_source,
@@ -239,19 +239,19 @@ impl ComputedFromHeightStdDevExtended {
             };
         }
 
-        compute_band!(_0sd_usd, &self.base.sma.height);
-        compute_band!(p0_5sd_usd, &self.p0_5sd.height);
-        compute_band!(p1sd_usd, &self.p1sd.height);
-        compute_band!(p1_5sd_usd, &self.p1_5sd.height);
-        compute_band!(p2sd_usd, &self.p2sd.height);
-        compute_band!(p2_5sd_usd, &self.p2_5sd.height);
-        compute_band!(p3sd_usd, &self.p3sd.height);
-        compute_band!(m0_5sd_usd, &self.m0_5sd.height);
-        compute_band!(m1sd_usd, &self.m1sd.height);
-        compute_band!(m1_5sd_usd, &self.m1_5sd.height);
-        compute_band!(m2sd_usd, &self.m2sd.height);
-        compute_band!(m2_5sd_usd, &self.m2_5sd.height);
-        compute_band!(m3sd_usd, &self.m3sd.height);
+        compute_band!(_0sd_price, &self.base.sma.height);
+        compute_band!(p0_5sd_price, &self.p0_5sd.height);
+        compute_band!(p1sd_price, &self.p1sd.height);
+        compute_band!(p1_5sd_price, &self.p1_5sd.height);
+        compute_band!(p2sd_price, &self.p2sd.height);
+        compute_band!(p2_5sd_price, &self.p2_5sd.height);
+        compute_band!(p3sd_price, &self.p3sd.height);
+        compute_band!(m0_5sd_price, &self.m0_5sd.height);
+        compute_band!(m1sd_price, &self.m1sd.height);
+        compute_band!(m1_5sd_price, &self.m1_5sd.height);
+        compute_band!(m2sd_price, &self.m2sd.height);
+        compute_band!(m2_5sd_price, &self.m2_5sd.height);
+        compute_band!(m3sd_price, &self.m3sd.height);
 
         Ok(())
     }

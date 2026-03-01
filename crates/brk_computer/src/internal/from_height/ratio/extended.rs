@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Version};
+use brk_types::{Cents, Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
@@ -31,22 +31,22 @@ impl ComputedFromHeightRatioExtended {
         })
     }
 
-    /// Compute ratio and all extended metrics from an externally-provided metric price.
+    /// Compute ratio and all extended metrics from an externally-provided metric price (in cents).
     pub(crate) fn compute_rest(
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
-        metric_price: &impl ReadableVec<Height, Dollars>,
+        metric_price: &impl ReadableVec<Height, Cents>,
     ) -> Result<()> {
-        let close_price = &prices.price.usd.height;
+        let close_price = &prices.price.cents.height;
         self.base
             .compute_ratio(starting_indexes, close_price, metric_price, exit)?;
         self.extended
             .compute_rest(blocks, starting_indexes, exit, &self.base.ratio.height)?;
         self.extended
-            .compute_usd_bands(starting_indexes, metric_price, exit)?;
+            .compute_cents_bands(starting_indexes, metric_price, exit)?;
         Ok(())
     }
 }

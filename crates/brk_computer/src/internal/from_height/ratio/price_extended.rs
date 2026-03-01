@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Version};
+use brk_types::{Cents, Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
@@ -15,7 +15,7 @@ pub struct ComputedFromHeightPriceWithRatioExtended<M: StorageMode = Rw> {
     #[deref_mut]
     #[traversable(flatten)]
     pub inner: ComputedFromHeightRatioExtended<M>,
-    pub price: Price<ComputedFromHeightLast<Dollars, M>>,
+    pub price: Price<ComputedFromHeightLast<Cents, M>>,
 }
 
 impl ComputedFromHeightPriceWithRatioExtended {
@@ -32,7 +32,7 @@ impl ComputedFromHeightPriceWithRatioExtended {
         })
     }
 
-    /// Compute price via closure, then compute ratio + extended metrics.
+    /// Compute price via closure (in cents), then compute ratio + extended metrics.
     pub(crate) fn compute_all<F>(
         &mut self,
         blocks: &blocks::Vecs,
@@ -42,15 +42,15 @@ impl ComputedFromHeightPriceWithRatioExtended {
         mut compute_price: F,
     ) -> Result<()>
     where
-        F: FnMut(&mut EagerVec<PcoVec<Height, Dollars>>) -> Result<()>,
+        F: FnMut(&mut EagerVec<PcoVec<Height, Cents>>) -> Result<()>,
     {
-        compute_price(&mut self.price.usd.height)?;
+        compute_price(&mut self.price.cents.height)?;
         self.inner.compute_rest(
             blocks,
             prices,
             starting_indexes,
             exit,
-            &self.price.usd.height,
+            &self.price.cents.height,
         )?;
         Ok(())
     }

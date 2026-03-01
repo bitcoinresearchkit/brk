@@ -170,7 +170,7 @@ impl ActivityMetrics {
             starting_indexes.height,
             &blocks.count.height_2w_ago,
             &self.sent.base.sats.height,
-            &self.sent.base.usd.height,
+            &self.sent.base.cents.height,
             exit,
         )?;
 

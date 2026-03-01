@@ -12,17 +12,17 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.price_ath.usd.height.compute_all_time_high(
+        self.price_ath.cents.height.compute_all_time_high(
             starting_indexes.height,
-            &prices.price.usd.height,
+            &prices.price.cents.height,
             exit,
         )?;
 
         let mut prev = None;
         self.days_since_price_ath.height.compute_transform2(
             starting_indexes.height,
-            &self.price_ath.usd.height,
-            &prices.price.usd.height,
+            &self.price_ath.cents.height,
+            &prices.price.cents.height,
             |(i, ath, price, slf)| {
                 if prev.is_none() {
                     let i = i.to_usize();
@@ -32,7 +32,7 @@ impl Vecs {
                         StoredU16::default()
                     });
                 }
-                let days = if *price == *ath {
+                let days = if price == ath {
                     StoredU16::default()
                 } else {
                     prev.unwrap() + StoredU16::new(1)
@@ -65,8 +65,8 @@ impl Vecs {
 
         self.price_drawdown.height.compute_drawdown(
             starting_indexes.height,
-            &prices.price.usd.height,
-            &self.price_ath.usd.height,
+            &prices.price.cents.height,
+            &self.price_ath.cents.height,
             exit,
         )?;
 

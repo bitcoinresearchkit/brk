@@ -1,7 +1,7 @@
 //! Lazy value type for Last pattern across all height-derived indexes.
 
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Dollars, Sats, Version};
+use brk_types::{Bitcoin, Cents, Dollars, Sats, Version};
 use vecdb::UnaryTransform;
 
 use crate::internal::{LazyHeightDerivedLast, ValueFromHeightLast};
@@ -40,7 +40,7 @@ impl LazyValueHeightDerivedLast {
             &source.sats.rest,
         );
 
-        let usd = LazyHeightDerivedLast::from_derived_computed::<DollarsTransform>(
+        let usd = LazyHeightDerivedLast::from_lazy::<DollarsTransform, Cents>(
             &format!("{name}_usd"),
             v,
             &source.usd.rest,

@@ -1,17 +1,17 @@
 //! Value type with height-level data only (no period-derived views).
 //!
-//! Stores sats and USD per height, plus a lazy btc transform.
+//! Stores sats and cents per height, plus lazy btc and usd transforms.
 //! Use when period views are unnecessary (e.g., rolling windows provide windowed data).
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
+use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
 use vecdb::{
     Database, EagerVec, Exit, ImportableVec, LazyVecFrom1, PcoVec, ReadableCloneableVec, Rw,
     StorageMode,
 };
 
-use crate::{internal::{SatsToBitcoin, SatsToDollars}, prices};
+use crate::{internal::{CentsUnsignedToDollars, SatsToBitcoin, SatsToCents}, prices};
 
 const VERSION: Version = Version::TWO; // Match ValueFromHeightLast versioning
 
@@ -19,7 +19,8 @@ const VERSION: Version = Version::TWO; // Match ValueFromHeightLast versioning
 pub struct ValueFromHeight<M: StorageMode = Rw> {
     pub sats: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
     pub btc: LazyVecFrom1<Height, Bitcoin, Height, Sats>,
-    pub usd: M::Stored<EagerVec<PcoVec<Height, Dollars>>>,
+    pub cents: M::Stored<EagerVec<PcoVec<Height, Cents>>>,
+    pub usd: LazyVecFrom1<Height, Dollars, Height, Cents>,
 }
 
 impl ValueFromHeight {
@@ -36,22 +37,28 @@ impl ValueFromHeight {
             v,
             sats.read_only_boxed_clone(),
         );
-        let usd = EagerVec::forced_import(db, &format!("{name}_usd"), v)?;
+        let cents: EagerVec<PcoVec<Height, Cents>> =
+            EagerVec::forced_import(db, &format!("{name}_cents"), v)?;
+        let usd = LazyVecFrom1::transformed::<CentsUnsignedToDollars>(
+            &format!("{name}_usd"),
+            v,
+            cents.read_only_boxed_clone(),
+        );
 
-        Ok(Self { sats, btc, usd })
+        Ok(Self { sats, btc, cents, usd })
     }
 
-    /// Eagerly compute USD height values: sats[h] * price[h].
-    pub(crate) fn compute_usd(
+    /// Eagerly compute cents height values: sats[h] * price_cents[h] / 1e8.
+    pub(crate) fn compute_cents(
         &mut self,
         prices: &prices::Vecs,
         max_from: Height,
         exit: &Exit,
     ) -> Result<()> {
-        self.usd.compute_binary::<Sats, Dollars, SatsToDollars>(
+        self.cents.compute_binary::<Sats, Cents, SatsToCents>(
             max_from,
             &self.sats,
-            &prices.price.usd.height,
+            &prices.price.cents.height,
             exit,
         )?;
         Ok(())

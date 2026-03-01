@@ -56,8 +56,7 @@ impl CohortMetricsBase for ExtendedCohortMetrics {
         self.cost_basis.truncate_push_minmax(height, state)?;
         let (height_unrealized_state, _) = state.compute_unrealized_states(height_price, None);
         self.unrealized.base.truncate_push(height, &height_unrealized_state)?;
-        let spot = height_price.to_dollars();
-        self.cost_basis.extended.truncate_push_percentiles(height, state, spot)?;
+        self.cost_basis.extended.truncate_push_percentiles(height, state, height_price)?;
         Ok(())
     }
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

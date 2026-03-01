@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{Formattable, Pco};
+use vecdb::{CheckedSub, Formattable, Pco};
 
 use super::{CentsSats, Dollars, Sats};
 
@@ -255,6 +255,12 @@ impl Div<usize> for Cents {
     #[inline]
     fn div(self, rhs: usize) -> Self::Output {
         Self(self.0 / rhs as u64)
+    }
+}
+
+impl CheckedSub for Cents {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self)
     }
 }
 

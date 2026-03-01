@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, StoredF32, StoredF64, Version};
+use brk_types::{Cents, Dollars, Height, StoredF32, StoredF64, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{ComputedFromHeightLast, ComputedFromHeightRatioExtension, Ratio64},
+    internal::{ComputedFromHeightLast, ComputedFromHeightRatioExtension, RatioCents64},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -18,14 +18,14 @@ pub struct RealizedExtended<M: StorageMode = Rw> {
     pub realized_cap_rel_to_own_market_cap: ComputedFromHeightLast<StoredF32, M>,
 
     // === Realized Profit/Loss Rolling Sums ===
-    pub realized_profit_24h: ComputedFromHeightLast<Dollars, M>,
-    pub realized_profit_7d: ComputedFromHeightLast<Dollars, M>,
-    pub realized_profit_30d: ComputedFromHeightLast<Dollars, M>,
-    pub realized_profit_1y: ComputedFromHeightLast<Dollars, M>,
-    pub realized_loss_24h: ComputedFromHeightLast<Dollars, M>,
-    pub realized_loss_7d: ComputedFromHeightLast<Dollars, M>,
-    pub realized_loss_30d: ComputedFromHeightLast<Dollars, M>,
-    pub realized_loss_1y: ComputedFromHeightLast<Dollars, M>,
+    pub realized_profit_24h: ComputedFromHeightLast<Cents, M>,
+    pub realized_profit_7d: ComputedFromHeightLast<Cents, M>,
+    pub realized_profit_30d: ComputedFromHeightLast<Cents, M>,
+    pub realized_profit_1y: ComputedFromHeightLast<Cents, M>,
+    pub realized_loss_24h: ComputedFromHeightLast<Cents, M>,
+    pub realized_loss_7d: ComputedFromHeightLast<Cents, M>,
+    pub realized_loss_30d: ComputedFromHeightLast<Cents, M>,
+    pub realized_loss_1y: ComputedFromHeightLast<Cents, M>,
 
     // === Realized Profit to Loss Ratio (from rolling sums) ===
     pub realized_profit_to_loss_ratio_24h: ComputedFromHeightLast<StoredF64, M>,
@@ -158,28 +158,28 @@ impl RealizedExtended {
 
         // Realized profit to loss ratios
         self.realized_profit_to_loss_ratio_24h
-            .compute_binary::<Dollars, Dollars, Ratio64>(
+            .compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,
                 &self.realized_profit_24h.height,
                 &self.realized_loss_24h.height,
                 exit,
             )?;
         self.realized_profit_to_loss_ratio_7d
-            .compute_binary::<Dollars, Dollars, Ratio64>(
+            .compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,
                 &self.realized_profit_7d.height,
                 &self.realized_loss_7d.height,
                 exit,
             )?;
         self.realized_profit_to_loss_ratio_30d
-            .compute_binary::<Dollars, Dollars, Ratio64>(
+            .compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,
                 &self.realized_profit_30d.height,
                 &self.realized_loss_30d.height,
                 exit,
             )?;
         self.realized_profit_to_loss_ratio_1y
-            .compute_binary::<Dollars, Dollars, Ratio64>(
+            .compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,
                 &self.realized_profit_1y.height,
                 &self.realized_loss_1y.height,
@@ -193,9 +193,9 @@ impl RealizedExtended {
             exit,
             &base.realized_price_extra.ratio.height,
         )?;
-        self.realized_price_ratio_ext.compute_usd_bands(
+        self.realized_price_ratio_ext.compute_cents_bands(
             starting_indexes,
-            &base.realized_price.usd.height,
+            &base.realized_price.cents.height,
             exit,
         )?;
 
@@ -205,9 +205,9 @@ impl RealizedExtended {
             exit,
             &base.investor_price_extra.ratio.height,
         )?;
-        self.investor_price_ratio_ext.compute_usd_bands(
+        self.investor_price_ratio_ext.compute_cents_bands(
             starting_indexes,
-            &base.investor_price.usd.height,
+            &base.investor_price.cents.height,
             exit,
         )?;
 

@@ -2,7 +2,7 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::Version;
+use brk_types::{Cents, Version};
 use vecdb::{Database, ReadableCloneableVec, PAGE_SIZE};
 
 use super::Vecs;
@@ -49,10 +49,9 @@ impl Vecs {
             super::velocity::Vecs::forced_import(&db, version, indexes)?;
 
         // Market cap - lazy identity from distribution supply in USD
-        let market_cap = LazyFromHeightLast::from_computed::<DollarsIdentity>(
+        let market_cap = LazyFromHeightLast::from_lazy::<DollarsIdentity, Cents>(
             "market_cap",
             version,
-            supply_metrics.total.usd.height.read_only_boxed_clone(),
             &supply_metrics.total.usd,
         );
 

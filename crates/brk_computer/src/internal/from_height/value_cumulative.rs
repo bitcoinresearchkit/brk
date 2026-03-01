@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Sats, Version};
+use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ByUnit, SatsToDollars},
+    internal::{ByUnit, SatsToCents},
     prices,
 };
 
@@ -44,18 +44,18 @@ impl ValueFromHeightCumulative {
             .compute_cumulative(max_from, &self.base.sats.height, exit)?;
 
         self.base
-            .usd
-            .compute_binary::<Sats, Dollars, SatsToDollars>(
+            .cents
+            .compute_binary::<Sats, Cents, SatsToCents>(
                 max_from,
                 &self.base.sats.height,
-                &prices.price.usd.height,
+                &prices.price.cents.height,
                 exit,
             )?;
 
         self.cumulative
-            .usd
+            .cents
             .height
-            .compute_cumulative(max_from, &self.base.usd.height, exit)?;
+            .compute_cumulative(max_from, &self.base.cents.height, exit)?;
 
         Ok(())
     }

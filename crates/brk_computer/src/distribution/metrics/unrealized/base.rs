@@ -237,9 +237,9 @@ impl UnrealizedBase {
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
             &mut self.supply_in_profit.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_profit.base.usd.height as &mut dyn AnyStoredVec,
+            &mut self.supply_in_profit.base.cents.height as &mut dyn AnyStoredVec,
             &mut self.supply_in_loss.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.base.usd.height as &mut dyn AnyStoredVec,
+            &mut self.supply_in_loss.base.cents.height as &mut dyn AnyStoredVec,
             &mut self.unrealized_profit.height,
             &mut self.unrealized_loss.height,
             &mut self.invested_capital_in_profit.height,

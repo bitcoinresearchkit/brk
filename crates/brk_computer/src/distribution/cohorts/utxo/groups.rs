@@ -828,7 +828,7 @@ impl UTXOCohorts<Rw> {
     pub(crate) fn truncate_push_aggregate_percentiles(
         &mut self,
         height: Height,
-        spot: Dollars,
+        spot: Cents,
         day1_opt: Option<Day1>,
         states_path: &Path,
     ) -> Result<()> {
@@ -895,7 +895,7 @@ impl UTXOCohorts<Rw> {
                 .collect();
 
             if total_sats == 0 {
-                let nan_prices = [Dollars::NAN; PERCENTILES_LEN];
+                let nan_prices = [Cents::ZERO; PERCENTILES_LEN];
                 target
                     .extended
                     .percentiles
@@ -928,8 +928,8 @@ impl UTXOCohorts<Rw> {
             let sat_targets = PERCENTILES.map(|p| total_sats * u64::from(p) / 100);
             let usd_targets = PERCENTILES.map(|p| total_usd * u128::from(p) / 100);
 
-            let mut sat_result = [Dollars::NAN; PERCENTILES_LEN];
-            let mut usd_result = [Dollars::NAN; PERCENTILES_LEN];
+            let mut sat_result = [Cents::ZERO; PERCENTILES_LEN];
+            let mut usd_result = [Cents::ZERO; PERCENTILES_LEN];
 
             let mut cumsum_sats: u64 = 0;
             let mut cumsum_usd: u128 = 0;
@@ -953,13 +953,12 @@ impl UTXOCohorts<Rw> {
                 cumsum_usd += usd;
 
                 if sat_idx < PERCENTILES_LEN || usd_idx < PERCENTILES_LEN {
-                    let dollars = price.to_dollars();
                     while sat_idx < PERCENTILES_LEN && cumsum_sats >= sat_targets[sat_idx] {
-                        sat_result[sat_idx] = dollars;
+                        sat_result[sat_idx] = price;
                         sat_idx += 1;
                     }
                     while usd_idx < PERCENTILES_LEN && cumsum_usd >= usd_targets[usd_idx] {
-                        usd_result[usd_idx] = dollars;
+                        usd_result[usd_idx] = price;
                         usd_idx += 1;
                     }
                 }

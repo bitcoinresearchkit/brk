@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Dollars, Height};
+use brk_types::{Bitcoin, Cents, Dollars, Height};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
@@ -43,8 +43,8 @@ impl RealizedWithExtendedAdjusted {
         starting_indexes: &ComputeIndexes,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
-        up_to_1h_value_created: &impl ReadableVec<Height, Dollars>,
-        up_to_1h_value_destroyed: &impl ReadableVec<Height, Dollars>,
+        up_to_1h_value_created: &impl ReadableVec<Height, Cents>,
+        up_to_1h_value_destroyed: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         self.base.compute_rest_part2_base(

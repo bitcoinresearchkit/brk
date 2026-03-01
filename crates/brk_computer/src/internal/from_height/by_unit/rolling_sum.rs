@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Sats, Version};
+use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
@@ -34,12 +34,12 @@ impl RollingSumByUnit {
         max_from: Height,
         windows: &WindowStarts<'_>,
         sats_source: &impl ReadableVec<Height, Sats>,
-        usd_source: &impl ReadableVec<Height, Dollars>,
+        cents_source: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         for (w, starts) in self.0.as_mut_array().into_iter().zip(windows.as_array()) {
             w.sats.height.compute_rolling_sum(max_from, starts, sats_source, exit)?;
-            w.usd.height.compute_rolling_sum(max_from, starts, usd_source, exit)?;
+            w.cents.height.compute_rolling_sum(max_from, starts, cents_source, exit)?;
         }
         Ok(())
     }
