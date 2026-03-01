@@ -20,9 +20,9 @@ use brk_traversable::Traversable;
 use brk_types::{Height, StoredU32, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, Database, Rw, StorageMode, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
-use crate::{indexes, internal::ComputedFromHeightDistribution};
+use crate::{indexes, internal::{ComputedFromHeightDistribution, WindowStarts}};
 
 /// Per-block activity counts - reset each block.
 ///
@@ -187,6 +187,20 @@ impl ActivityCountVecs {
         Ok(())
     }
 
+    pub(crate) fn compute_rest(
+        &mut self,
+        max_from: Height,
+        windows: &WindowStarts<'_>,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.reactivated.compute_rest(max_from, windows, exit)?;
+        self.sending.compute_rest(max_from, windows, exit)?;
+        self.receiving.compute_rest(max_from, windows, exit)?;
+        self.balance_increased.compute_rest(max_from, windows, exit)?;
+        self.balance_decreased.compute_rest(max_from, windows, exit)?;
+        self.both.compute_rest(max_from, windows, exit)?;
+        Ok(())
+    }
 }
 
 /// Per-address-type activity count vecs.
@@ -253,6 +267,18 @@ impl AddressTypeToActivityCountVecs {
         Ok(())
     }
 
+    pub(crate) fn compute_rest(
+        &mut self,
+        max_from: Height,
+        windows: &WindowStarts<'_>,
+        exit: &Exit,
+    ) -> Result<()> {
+        for type_vecs in self.0.values_mut() {
+            type_vecs.compute_rest(max_from, windows, exit)?;
+        }
+        Ok(())
+    }
+
     pub(crate) fn truncate_push_height(
         &mut self,
         height: Height,
@@ -312,6 +338,17 @@ impl AddressActivityVecs {
     pub(crate) fn reset_height(&mut self) -> Result<()> {
         self.all.reset_height()?;
         self.by_addresstype.reset_height()?;
+        Ok(())
+    }
+
+    pub(crate) fn compute_rest(
+        &mut self,
+        max_from: Height,
+        windows: &WindowStarts<'_>,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.all.compute_rest(max_from, windows, exit)?;
+        self.by_addresstype.compute_rest(max_from, windows, exit)?;
         Ok(())
     }
 

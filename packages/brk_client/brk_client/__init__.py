@@ -2813,22 +2813,6 @@ class AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
         self.pct90: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'p90'))
         self.sum: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'sum'))
 
-class AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.average: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'average'))
-        self.cumulative: MetricPattern1[StoredU64] = MetricPattern1(client, _m(acc, 'cumulative'))
-        self.max: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'max'))
-        self.median: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'median'))
-        self.min: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'min'))
-        self.pct10: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'p10'))
-        self.pct25: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'p25'))
-        self.pct75: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'p75'))
-        self.pct90: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'p90'))
-        self.sum: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'sum'))
-
 class AverageGainsLossesRsiStochPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -3159,14 +3143,6 @@ class BaseCumulativePattern:
         self.base: BtcSatsUsdPattern = BtcSatsUsdPattern(client, acc)
         self.cumulative: BtcSatsUsdPattern = BtcSatsUsdPattern(client, _m(acc, 'cumulative'))
 
-class BaseRestPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.base: MetricPattern20[StoredU64] = MetricPattern20(client, acc)
-        self.rest: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc)
-
 class CumulativeHeightPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -3298,6 +3274,21 @@ class MetricsTree_Blocks_Halving:
         self.blocks_before_next_halving: MetricPattern1[StoredU32] = MetricPattern1(client, 'blocks_before_next_halving')
         self.days_before_next_halving: MetricPattern1[StoredF32] = MetricPattern1(client, 'days_before_next_halving')
 
+class MetricsTree_Blocks_Size:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cumulative: MetricPattern1[StoredU64] = MetricPattern1(client, 'block_size_cumulative')
+        self.sum: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, 'block_size_sum')
+        self.average: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, 'block_size_average')
+        self.min: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, 'block_size_min')
+        self.max: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, 'block_size_max')
+        self.pct10: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, 'block_size_p10')
+        self.pct25: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, 'block_size_p25')
+        self.median: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, 'block_size_median')
+        self.pct75: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, 'block_size_p75')
+        self.pct90: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, 'block_size_p90')
+
 class MetricsTree_Blocks:
     """Metrics tree node."""
     
@@ -3311,7 +3302,7 @@ class MetricsTree_Blocks:
         self.interval: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern[Timestamp] = AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, 'block_interval')
         self.halving: MetricsTree_Blocks_Halving = MetricsTree_Blocks_Halving(client)
         self.vbytes: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'block_vbytes')
-        self.size: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'block_size')
+        self.size: MetricsTree_Blocks_Size = MetricsTree_Blocks_Size(client)
         self.fullness: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern[StoredF32] = AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, 'block_fullness')
 
 class MetricsTree_Transactions_Count:
@@ -4890,15 +4881,15 @@ class MetricsTree_Distribution_NewAddrCount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.all: BaseRestPattern = BaseRestPattern(client, 'new_addr_count')
-        self.p2pk65: BaseRestPattern = BaseRestPattern(client, 'p2pk65_new_addr_count')
-        self.p2pk33: BaseRestPattern = BaseRestPattern(client, 'p2pk33_new_addr_count')
-        self.p2pkh: BaseRestPattern = BaseRestPattern(client, 'p2pkh_new_addr_count')
-        self.p2sh: BaseRestPattern = BaseRestPattern(client, 'p2sh_new_addr_count')
-        self.p2wpkh: BaseRestPattern = BaseRestPattern(client, 'p2wpkh_new_addr_count')
-        self.p2wsh: BaseRestPattern = BaseRestPattern(client, 'p2wsh_new_addr_count')
-        self.p2tr: BaseRestPattern = BaseRestPattern(client, 'p2tr_new_addr_count')
-        self.p2a: BaseRestPattern = BaseRestPattern(client, 'p2a_new_addr_count')
+        self.all: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'new_addr_count')
+        self.p2pk65: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2pk65_new_addr_count')
+        self.p2pk33: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2pk33_new_addr_count')
+        self.p2pkh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2pkh_new_addr_count')
+        self.p2sh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2sh_new_addr_count')
+        self.p2wpkh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2wpkh_new_addr_count')
+        self.p2wsh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2wsh_new_addr_count')
+        self.p2tr: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2tr_new_addr_count')
+        self.p2a: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2a_new_addr_count')
 
 class MetricsTree_Distribution_GrowthRate:
     """Metrics tree node."""

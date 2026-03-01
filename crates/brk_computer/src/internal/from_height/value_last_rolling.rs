@@ -1,7 +1,7 @@
 //! Value type for Height + Rolling pattern.
 //!
 //! Combines ValueFromHeight (sats/btc/usd per height, no period views) with
-//! StoredValueRollingWindows (rolling sums across 4 windows).
+//! ValueFromHeightLastWindows (rolling sums across 4 windows).
 
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -11,7 +11,7 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{StoredValueRollingWindows, ValueFromHeight, WindowStarts},
+    internal::{ValueFromHeightLastWindows, ValueFromHeight, WindowStarts},
     prices,
 };
 
@@ -22,7 +22,7 @@ pub struct ValueFromHeightLastRolling<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub value: ValueFromHeight<M>,
     #[traversable(flatten)]
-    pub rolling: StoredValueRollingWindows<M>,
+    pub rolling: ValueFromHeightLastWindows<M>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -37,7 +37,7 @@ impl ValueFromHeightLastRolling {
         let v = version + VERSION;
         Ok(Self {
             value: ValueFromHeight::forced_import(db, name, v)?,
-            rolling: StoredValueRollingWindows::forced_import(db, name, v, indexes)?,
+            rolling: ValueFromHeightLastWindows::forced_import(db, name, v, indexes)?,
         })
     }
 

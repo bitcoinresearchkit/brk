@@ -262,7 +262,7 @@ impl RealizedAdjusted {
         // Adjusted SOPR EMAs
         self.adjusted_sopr_24h_7d_ema
             .height
-            .compute_rolling_average(
+            .compute_rolling_ema(
                 starting_indexes.height,
                 &blocks.count.height_1w_ago,
                 &self.adjusted_sopr.height,
@@ -270,7 +270,7 @@ impl RealizedAdjusted {
             )?;
         self.adjusted_sopr_24h_30d_ema
             .height
-            .compute_rolling_average(
+            .compute_rolling_ema(
                 starting_indexes.height,
                 &blocks.count.height_1m_ago,
                 &self.adjusted_sopr.height,

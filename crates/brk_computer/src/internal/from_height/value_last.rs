@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{Database, Exit, Rw, StorageMode};
+use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes, prices,
@@ -44,6 +44,44 @@ impl ValueFromHeightLast {
             &prices.price.usd.height,
             exit,
         )?;
+        Ok(())
+    }
+
+    pub(crate) fn compute_rolling_sum(
+        &mut self,
+        max_from: Height,
+        window_starts: &impl ReadableVec<Height, Height>,
+        sats_source: &impl ReadableVec<Height, Sats>,
+        usd_source: &impl ReadableVec<Height, Dollars>,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.base
+            .sats
+            .height
+            .compute_rolling_sum(max_from, window_starts, sats_source, exit)?;
+        self.base
+            .usd
+            .height
+            .compute_rolling_sum(max_from, window_starts, usd_source, exit)?;
+        Ok(())
+    }
+
+    pub(crate) fn compute_ema(
+        &mut self,
+        starting_height: Height,
+        window_starts: &impl ReadableVec<Height, Height>,
+        sats_source: &impl ReadableVec<Height, Sats>,
+        dollars_source: &(impl ReadableVec<Height, Dollars> + Sync),
+        exit: &Exit,
+    ) -> Result<()> {
+        self.base
+            .sats
+            .height
+            .compute_rolling_ema(starting_height, window_starts, sats_source, exit)?;
+        self.base
+            .usd
+            .height
+            .compute_rolling_ema(starting_height, window_starts, dollars_source, exit)?;
         Ok(())
     }
 }

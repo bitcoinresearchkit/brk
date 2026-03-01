@@ -13,9 +13,9 @@ use crate::{
     distribution::state::RealizedState,
     internal::{
         CentsUnsignedToDollars, ComputedFromHeightCumulative, ComputedFromHeightLast,
-        ComputedFromHeightRatio, DollarsPlus, LazyComputedValueFromHeightCumulative, LazyFromHeightLast,
+        ComputedFromHeightRatio, DollarsPlus, ValueFromHeightCumulative, LazyFromHeightLast,
         PercentageDollarsF32, Price, Ratio64,
-        StoredF32Identity, ValueEmaFromHeight,
+        StoredF32Identity, ValueFromHeightLast,
     },
     prices,
 };
@@ -130,10 +130,10 @@ pub struct RealizedBase<M: StorageMode = Rw> {
     pub peak_regret_rel_to_realized_cap: ComputedFromHeightLast<StoredF32, M>,
 
     // === Sent in Profit/Loss ===
-    pub sent_in_profit: LazyComputedValueFromHeightCumulative<M>,
-    pub sent_in_profit_14d_ema: ValueEmaFromHeight<M>,
-    pub sent_in_loss: LazyComputedValueFromHeightCumulative<M>,
-    pub sent_in_loss_14d_ema: ValueEmaFromHeight<M>,
+    pub sent_in_profit: ValueFromHeightCumulative<M>,
+    pub sent_in_profit_14d_ema: ValueFromHeightLast<M>,
+    pub sent_in_loss: ValueFromHeightCumulative<M>,
+    pub sent_in_loss_14d_ema: ValueFromHeightLast<M>,
 }
 
 impl RealizedBase {
@@ -540,25 +540,25 @@ impl RealizedBase {
                 )?,
             peak_regret,
             peak_regret_rel_to_realized_cap,
-            sent_in_profit: LazyComputedValueFromHeightCumulative::forced_import(
+            sent_in_profit: ValueFromHeightCumulative::forced_import(
                 cfg.db,
                 &cfg.name("sent_in_profit"),
                 cfg.version,
                 cfg.indexes,
             )?,
-            sent_in_profit_14d_ema: ValueEmaFromHeight::forced_import(
+            sent_in_profit_14d_ema: ValueFromHeightLast::forced_import(
                 cfg.db,
                 &cfg.name("sent_in_profit_14d_ema"),
                 cfg.version,
                 cfg.indexes,
             )?,
-            sent_in_loss: LazyComputedValueFromHeightCumulative::forced_import(
+            sent_in_loss: ValueFromHeightCumulative::forced_import(
                 cfg.db,
                 &cfg.name("sent_in_loss"),
                 cfg.version,
                 cfg.indexes,
             )?,
-            sent_in_loss_14d_ema: ValueEmaFromHeight::forced_import(
+            sent_in_loss_14d_ema: ValueFromHeightLast::forced_import(
                 cfg.db,
                 &cfg.name("sent_in_loss_14d_ema"),
                 cfg.version,
@@ -1021,14 +1021,14 @@ impl RealizedBase {
                 exit,
             )?;
 
-        // 7d rolling averages
-        self.realized_profit_7d_ema.height.compute_rolling_average(
+        // 7d EMAs
+        self.realized_profit_7d_ema.height.compute_rolling_ema(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
             &self.realized_profit.height,
             exit,
         )?;
-        self.realized_loss_7d_ema.height.compute_rolling_average(
+        self.realized_loss_7d_ema.height.compute_rolling_ema(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
             &self.realized_loss.height,
@@ -1036,22 +1036,22 @@ impl RealizedBase {
         )?;
         self.net_realized_pnl_7d_ema
             .height
-            .compute_rolling_average(
+            .compute_rolling_ema(
                 starting_indexes.height,
                 &blocks.count.height_1w_ago,
                 &self.net_realized_pnl.height,
                 exit,
             )?;
 
-        // 14-day rolling average of sent in profit/loss
-        self.sent_in_profit_14d_ema.compute_rolling_average(
+        // 14-day EMA of sent in profit/loss
+        self.sent_in_profit_14d_ema.compute_ema(
             starting_indexes.height,
             &blocks.count.height_2w_ago,
             &self.sent_in_profit.base.sats.height,
             &self.sent_in_profit.base.usd.height,
             exit,
         )?;
-        self.sent_in_loss_14d_ema.compute_rolling_average(
+        self.sent_in_loss_14d_ema.compute_ema(
             starting_indexes.height,
             &blocks.count.height_2w_ago,
             &self.sent_in_loss.base.sats.height,
@@ -1060,13 +1060,13 @@ impl RealizedBase {
         )?;
 
         // SOPR EMAs
-        self.sopr_24h_7d_ema.height.compute_rolling_average(
+        self.sopr_24h_7d_ema.height.compute_rolling_ema(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
             &self.sopr.height,
             exit,
         )?;
-        self.sopr_24h_30d_ema.height.compute_rolling_average(
+        self.sopr_24h_30d_ema.height.compute_rolling_ema(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             &self.sopr.height,
@@ -1076,7 +1076,7 @@ impl RealizedBase {
         // Sell side risk EMAs
         self.sell_side_risk_ratio_24h_7d_ema
             .height
-            .compute_rolling_average(
+            .compute_rolling_ema(
                 starting_indexes.height,
                 &blocks.count.height_1w_ago,
                 &self.sell_side_risk_ratio.height,
@@ -1084,7 +1084,7 @@ impl RealizedBase {
             )?;
         self.sell_side_risk_ratio_24h_30d_ema
             .height
-            .compute_rolling_average(
+            .compute_rolling_ema(
                 starting_indexes.height,
                 &blocks.count.height_1m_ago,
                 &self.sell_side_risk_ratio.height,

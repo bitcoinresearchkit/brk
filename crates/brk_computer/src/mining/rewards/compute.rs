@@ -193,7 +193,7 @@ impl Vecs {
         self.subsidy_usd_1y_sma.height.compute_rolling_average(
             starting_indexes.height,
             &count_vecs.height_1y_ago,
-            &self.coinbase.base.usd.height,
+            &self.subsidy.base.usd.height,
             exit,
         )?;
 

@@ -8,7 +8,7 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::internal::{
     HalveDollars, HalveSats, HalveSatsToBitcoin,
-    LazyValueFromHeightLast, ValueChangeFromHeight, ValueFromHeightLast,
+    LazyValueFromHeightLast, ValueFromHeightChange, ValueFromHeightLast,
 };
 
 use super::ImportConfig;
@@ -19,7 +19,7 @@ pub struct SupplyMetrics<M: StorageMode = Rw> {
     pub total: ValueFromHeightLast<M>,
     pub halved: LazyValueFromHeightLast,
     /// 30-day change in supply (net position change) - sats, btc, usd
-    pub _30d_change: ValueChangeFromHeight<M>,
+    pub _30d_change: ValueFromHeightChange<M>,
 }
 
 impl SupplyMetrics {
@@ -38,7 +38,7 @@ impl SupplyMetrics {
             HalveDollars,
         >(&cfg.name("supply_halved"), &supply, cfg.version);
 
-        let _30d_change = ValueChangeFromHeight::forced_import(
+        let _30d_change = ValueFromHeightChange::forced_import(
             cfg.db,
             &cfg.name("_30d_change"),
             cfg.version,

@@ -10,14 +10,14 @@ use crate::{
 };
 
 #[derive(Traversable)]
-pub struct LazyComputedValueFromHeightCumulative<M: StorageMode = Rw> {
+pub struct ValueFromHeightCumulative<M: StorageMode = Rw> {
     pub base: ByUnit<M>,
     pub cumulative: ByUnit<M>,
 }
 
 const VERSION: Version = Version::ONE;
 
-impl LazyComputedValueFromHeightCumulative {
+impl ValueFromHeightCumulative {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,

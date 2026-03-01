@@ -1,4 +1,4 @@
-//! StoredValueRollingWindows - window-first ordering.
+//! ValueFromHeightLastWindows - window-first ordering.
 //!
 //! Access pattern: `coinbase_sum._24h.sats.height`
 //! Each window (24h, 7d, 30d, 1y) contains sats (stored) + btc (lazy) + usd (stored).
@@ -14,21 +14,21 @@ use brk_types::{Dollars, Sats};
 
 use crate::{
     indexes,
-    internal::{StoredValueFromHeightLast, WindowStarts, Windows},
+    internal::{ValueFromHeightLast, WindowStarts, Windows},
 };
 
 const VERSION: Version = Version::ZERO;
 
-/// Stored value rolling windows — window-first, currency-last.
+/// Value rolling windows — window-first, currency-last.
 ///
-/// Each window contains `StoredValueFromHeightLast` (sats + btc lazy + usd).
+/// Each window contains `ValueFromHeightLast` (sats + btc lazy + usd).
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct StoredValueRollingWindows<M: StorageMode = Rw>(
-    pub Windows<StoredValueFromHeightLast<M>>,
+pub struct ValueFromHeightLastWindows<M: StorageMode = Rw>(
+    pub Windows<ValueFromHeightLast<M>>,
 );
 
-impl StoredValueRollingWindows {
+impl ValueFromHeightLastWindows {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -37,25 +37,25 @@ impl StoredValueRollingWindows {
     ) -> Result<Self> {
         let v = version + VERSION;
         Ok(Self(Windows {
-            _24h: StoredValueFromHeightLast::forced_import(
+            _24h: ValueFromHeightLast::forced_import(
                 db,
                 &format!("{name}_24h"),
                 v,
                 indexes,
             )?,
-            _7d: StoredValueFromHeightLast::forced_import(
+            _7d: ValueFromHeightLast::forced_import(
                 db,
                 &format!("{name}_7d"),
                 v,
                 indexes,
             )?,
-            _30d: StoredValueFromHeightLast::forced_import(
+            _30d: ValueFromHeightLast::forced_import(
                 db,
                 &format!("{name}_30d"),
                 v,
                 indexes,
             )?,
-            _1y: StoredValueFromHeightLast::forced_import(
+            _1y: ValueFromHeightLast::forced_import(
                 db,
                 &format!("{name}_1y"),
                 v,

@@ -3078,41 +3078,6 @@ function createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern
 }
 
 /**
- * @typedef {Object} AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern
- * @property {_1y24h30d7dPattern<StoredU64>} average
- * @property {MetricPattern1<StoredU64>} cumulative
- * @property {_1y24h30d7dPattern<StoredU64>} max
- * @property {_1y24h30d7dPattern<StoredU64>} median
- * @property {_1y24h30d7dPattern<StoredU64>} min
- * @property {_1y24h30d7dPattern<StoredU64>} pct10
- * @property {_1y24h30d7dPattern<StoredU64>} pct25
- * @property {_1y24h30d7dPattern<StoredU64>} pct75
- * @property {_1y24h30d7dPattern<StoredU64>} pct90
- * @property {_1y24h30d7dPattern<StoredU64>} sum
- */
-
-/**
- * Create a AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern}
- */
-function createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
-  return {
-    average: create_1y24h30d7dPattern(client, _m(acc, 'average')),
-    cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
-    max: create_1y24h30d7dPattern(client, _m(acc, 'max')),
-    median: create_1y24h30d7dPattern(client, _m(acc, 'median')),
-    min: create_1y24h30d7dPattern(client, _m(acc, 'min')),
-    pct10: create_1y24h30d7dPattern(client, _m(acc, 'p10')),
-    pct25: create_1y24h30d7dPattern(client, _m(acc, 'p25')),
-    pct75: create_1y24h30d7dPattern(client, _m(acc, 'p75')),
-    pct90: create_1y24h30d7dPattern(client, _m(acc, 'p90')),
-    sum: create_1y24h30d7dPattern(client, _m(acc, 'sum')),
-  };
-}
-
-/**
  * @typedef {Object} AverageGainsLossesRsiStochPattern
  * @property {MetricPattern1<StoredF32>} averageGain
  * @property {MetricPattern1<StoredF32>} averageLoss
@@ -3867,25 +3832,6 @@ function createBaseCumulativePattern(client, acc) {
 }
 
 /**
- * @typedef {Object} BaseRestPattern
- * @property {MetricPattern20<StoredU64>} base
- * @property {AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} rest
- */
-
-/**
- * Create a BaseRestPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {BaseRestPattern}
- */
-function createBaseRestPattern(client, acc) {
-  return {
-    base: createMetricPattern20(client, acc),
-    rest: createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc),
-  };
-}
-
-/**
  * @typedef {Object} CumulativeHeightPattern
  * @property {MetricPattern1<Dollars>} cumulative
  * @property {MetricPattern20<Dollars>} height
@@ -4030,7 +3976,7 @@ function createRatioPattern2(client, acc) {
  * @property {AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern<Timestamp>} interval
  * @property {MetricsTree_Blocks_Halving} halving
  * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} vbytes
- * @property {AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} size
+ * @property {MetricsTree_Blocks_Size} size
  * @property {AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern<StoredF32>} fullness
  */
 
@@ -4109,6 +4055,20 @@ function createRatioPattern2(client, acc) {
  * @property {MetricPattern1<HalvingEpoch>} epoch
  * @property {MetricPattern1<StoredU32>} blocksBeforeNextHalving
  * @property {MetricPattern1<StoredF32>} daysBeforeNextHalving
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Blocks_Size
+ * @property {MetricPattern1<StoredU64>} cumulative
+ * @property {_1y24h30d7dPattern<StoredU64>} sum
+ * @property {_1y24h30d7dPattern<StoredU64>} average
+ * @property {_1y24h30d7dPattern<StoredU64>} min
+ * @property {_1y24h30d7dPattern<StoredU64>} max
+ * @property {_1y24h30d7dPattern<StoredU64>} pct10
+ * @property {_1y24h30d7dPattern<StoredU64>} pct25
+ * @property {_1y24h30d7dPattern<StoredU64>} median
+ * @property {_1y24h30d7dPattern<StoredU64>} pct75
+ * @property {_1y24h30d7dPattern<StoredU64>} pct90
  */
 
 /**
@@ -5585,15 +5545,15 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_NewAddrCount
- * @property {BaseRestPattern} all
- * @property {BaseRestPattern} p2pk65
- * @property {BaseRestPattern} p2pk33
- * @property {BaseRestPattern} p2pkh
- * @property {BaseRestPattern} p2sh
- * @property {BaseRestPattern} p2wpkh
- * @property {BaseRestPattern} p2wsh
- * @property {BaseRestPattern} p2tr
- * @property {BaseRestPattern} p2a
+ * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} all
+ * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2pk65
+ * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2pk33
+ * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2pkh
+ * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2sh
+ * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2wpkh
+ * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2wsh
+ * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2tr
+ * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2a
  */
 
 /**
@@ -6653,7 +6613,18 @@ class BrkClient extends BrkClientBase {
           daysBeforeNextHalving: createMetricPattern1(this, 'days_before_next_halving'),
         },
         vbytes: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'block_vbytes'),
-        size: createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'block_size'),
+        size: {
+          cumulative: createMetricPattern1(this, 'block_size_cumulative'),
+          sum: create_1y24h30d7dPattern(this, 'block_size_sum'),
+          average: create_1y24h30d7dPattern(this, 'block_size_average'),
+          min: create_1y24h30d7dPattern(this, 'block_size_min'),
+          max: create_1y24h30d7dPattern(this, 'block_size_max'),
+          pct10: create_1y24h30d7dPattern(this, 'block_size_p10'),
+          pct25: create_1y24h30d7dPattern(this, 'block_size_p25'),
+          median: create_1y24h30d7dPattern(this, 'block_size_median'),
+          pct75: create_1y24h30d7dPattern(this, 'block_size_p75'),
+          pct90: create_1y24h30d7dPattern(this, 'block_size_p90'),
+        },
         fullness: createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(this, 'block_fullness'),
       },
       transactions: {
@@ -7784,15 +7755,15 @@ class BrkClient extends BrkClientBase {
           p2a: createMetricPattern1(this, 'p2a_total_addr_count'),
         },
         newAddrCount: {
-          all: createBaseRestPattern(this, 'new_addr_count'),
-          p2pk65: createBaseRestPattern(this, 'p2pk65_new_addr_count'),
-          p2pk33: createBaseRestPattern(this, 'p2pk33_new_addr_count'),
-          p2pkh: createBaseRestPattern(this, 'p2pkh_new_addr_count'),
-          p2sh: createBaseRestPattern(this, 'p2sh_new_addr_count'),
-          p2wpkh: createBaseRestPattern(this, 'p2wpkh_new_addr_count'),
-          p2wsh: createBaseRestPattern(this, 'p2wsh_new_addr_count'),
-          p2tr: createBaseRestPattern(this, 'p2tr_new_addr_count'),
-          p2a: createBaseRestPattern(this, 'p2a_new_addr_count'),
+          all: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'new_addr_count'),
+          p2pk65: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2pk65_new_addr_count'),
+          p2pk33: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2pk33_new_addr_count'),
+          p2pkh: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2pkh_new_addr_count'),
+          p2sh: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2sh_new_addr_count'),
+          p2wpkh: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2wpkh_new_addr_count'),
+          p2wsh: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2wsh_new_addr_count'),
+          p2tr: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2tr_new_addr_count'),
+          p2a: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2a_new_addr_count'),
         },
         growthRate: {
           all: createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(this, 'growth_rate'),

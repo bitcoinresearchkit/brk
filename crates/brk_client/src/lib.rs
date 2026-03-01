@@ -2438,38 +2438,6 @@ impl AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern {
-    pub average: _1y24h30d7dPattern<StoredU64>,
-    pub cumulative: MetricPattern1<StoredU64>,
-    pub max: _1y24h30d7dPattern<StoredU64>,
-    pub median: _1y24h30d7dPattern<StoredU64>,
-    pub min: _1y24h30d7dPattern<StoredU64>,
-    pub pct10: _1y24h30d7dPattern<StoredU64>,
-    pub pct25: _1y24h30d7dPattern<StoredU64>,
-    pub pct75: _1y24h30d7dPattern<StoredU64>,
-    pub pct90: _1y24h30d7dPattern<StoredU64>,
-    pub sum: _1y24h30d7dPattern<StoredU64>,
-}
-
-impl AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            average: _1y24h30d7dPattern::new(client.clone(), _m(&acc, "average")),
-            cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
-            max: _1y24h30d7dPattern::new(client.clone(), _m(&acc, "max")),
-            median: _1y24h30d7dPattern::new(client.clone(), _m(&acc, "median")),
-            min: _1y24h30d7dPattern::new(client.clone(), _m(&acc, "min")),
-            pct10: _1y24h30d7dPattern::new(client.clone(), _m(&acc, "p10")),
-            pct25: _1y24h30d7dPattern::new(client.clone(), _m(&acc, "p25")),
-            pct75: _1y24h30d7dPattern::new(client.clone(), _m(&acc, "p75")),
-            pct90: _1y24h30d7dPattern::new(client.clone(), _m(&acc, "p90")),
-            sum: _1y24h30d7dPattern::new(client.clone(), _m(&acc, "sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct AverageGainsLossesRsiStochPattern {
     pub average_gain: MetricPattern1<StoredF32>,
     pub average_loss: MetricPattern1<StoredF32>,
@@ -3130,22 +3098,6 @@ impl BaseCumulativePattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct BaseRestPattern {
-    pub base: MetricPattern20<StoredU64>,
-    pub rest: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
-}
-
-impl BaseRestPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            base: MetricPattern20::new(client.clone(), acc.clone()),
-            rest: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct CumulativeHeightPattern {
     pub cumulative: MetricPattern1<Dollars>,
     pub height: MetricPattern20<Dollars>,
@@ -3295,7 +3247,7 @@ pub struct MetricsTree_Blocks {
     pub interval: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern<Timestamp>,
     pub halving: MetricsTree_Blocks_Halving,
     pub vbytes: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
-    pub size: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
+    pub size: MetricsTree_Blocks_Size,
     pub fullness: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern<StoredF32>,
 }
 
@@ -3311,7 +3263,7 @@ impl MetricsTree_Blocks {
             interval: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), "block_interval".to_string()),
             halving: MetricsTree_Blocks_Halving::new(client.clone(), format!("{base_path}_halving")),
             vbytes: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "block_vbytes".to_string()),
-            size: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "block_size".to_string()),
+            size: MetricsTree_Blocks_Size::new(client.clone(), format!("{base_path}_size")),
             fullness: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), "block_fullness".to_string()),
         }
     }
@@ -3482,6 +3434,37 @@ impl MetricsTree_Blocks_Halving {
             epoch: MetricPattern1::new(client.clone(), "halving_epoch".to_string()),
             blocks_before_next_halving: MetricPattern1::new(client.clone(), "blocks_before_next_halving".to_string()),
             days_before_next_halving: MetricPattern1::new(client.clone(), "days_before_next_halving".to_string()),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Blocks_Size {
+    pub cumulative: MetricPattern1<StoredU64>,
+    pub sum: _1y24h30d7dPattern<StoredU64>,
+    pub average: _1y24h30d7dPattern<StoredU64>,
+    pub min: _1y24h30d7dPattern<StoredU64>,
+    pub max: _1y24h30d7dPattern<StoredU64>,
+    pub pct10: _1y24h30d7dPattern<StoredU64>,
+    pub pct25: _1y24h30d7dPattern<StoredU64>,
+    pub median: _1y24h30d7dPattern<StoredU64>,
+    pub pct75: _1y24h30d7dPattern<StoredU64>,
+    pub pct90: _1y24h30d7dPattern<StoredU64>,
+}
+
+impl MetricsTree_Blocks_Size {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            cumulative: MetricPattern1::new(client.clone(), "block_size_cumulative".to_string()),
+            sum: _1y24h30d7dPattern::new(client.clone(), "block_size_sum".to_string()),
+            average: _1y24h30d7dPattern::new(client.clone(), "block_size_average".to_string()),
+            min: _1y24h30d7dPattern::new(client.clone(), "block_size_min".to_string()),
+            max: _1y24h30d7dPattern::new(client.clone(), "block_size_max".to_string()),
+            pct10: _1y24h30d7dPattern::new(client.clone(), "block_size_p10".to_string()),
+            pct25: _1y24h30d7dPattern::new(client.clone(), "block_size_p25".to_string()),
+            median: _1y24h30d7dPattern::new(client.clone(), "block_size_median".to_string()),
+            pct75: _1y24h30d7dPattern::new(client.clone(), "block_size_p75".to_string()),
+            pct90: _1y24h30d7dPattern::new(client.clone(), "block_size_p90".to_string()),
         }
     }
 }
@@ -6786,29 +6769,29 @@ impl MetricsTree_Distribution_TotalAddrCount {
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_NewAddrCount {
-    pub all: BaseRestPattern,
-    pub p2pk65: BaseRestPattern,
-    pub p2pk33: BaseRestPattern,
-    pub p2pkh: BaseRestPattern,
-    pub p2sh: BaseRestPattern,
-    pub p2wpkh: BaseRestPattern,
-    pub p2wsh: BaseRestPattern,
-    pub p2tr: BaseRestPattern,
-    pub p2a: BaseRestPattern,
+    pub all: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
+    pub p2pk65: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
+    pub p2pk33: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
+    pub p2pkh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
+    pub p2sh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
+    pub p2wpkh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
+    pub p2wsh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
+    pub p2tr: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
+    pub p2a: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
 }
 
 impl MetricsTree_Distribution_NewAddrCount {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            all: BaseRestPattern::new(client.clone(), "new_addr_count".to_string()),
-            p2pk65: BaseRestPattern::new(client.clone(), "p2pk65_new_addr_count".to_string()),
-            p2pk33: BaseRestPattern::new(client.clone(), "p2pk33_new_addr_count".to_string()),
-            p2pkh: BaseRestPattern::new(client.clone(), "p2pkh_new_addr_count".to_string()),
-            p2sh: BaseRestPattern::new(client.clone(), "p2sh_new_addr_count".to_string()),
-            p2wpkh: BaseRestPattern::new(client.clone(), "p2wpkh_new_addr_count".to_string()),
-            p2wsh: BaseRestPattern::new(client.clone(), "p2wsh_new_addr_count".to_string()),
-            p2tr: BaseRestPattern::new(client.clone(), "p2tr_new_addr_count".to_string()),
-            p2a: BaseRestPattern::new(client.clone(), "p2a_new_addr_count".to_string()),
+            all: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "new_addr_count".to_string()),
+            p2pk65: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "p2pk65_new_addr_count".to_string()),
+            p2pk33: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "p2pk33_new_addr_count".to_string()),
+            p2pkh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "p2pkh_new_addr_count".to_string()),
+            p2sh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "p2sh_new_addr_count".to_string()),
+            p2wpkh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "p2wpkh_new_addr_count".to_string()),
+            p2wsh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "p2wsh_new_addr_count".to_string()),
+            p2tr: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "p2tr_new_addr_count".to_string()),
+            p2a: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "p2a_new_addr_count".to_string()),
         }
     }
 }

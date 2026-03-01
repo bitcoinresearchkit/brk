@@ -14,13 +14,13 @@ const VERSION: Version = Version::ZERO;
 
 /// Change values indexed by height - sats (stored), btc (lazy), usd (stored).
 #[derive(Traversable)]
-pub struct ValueChangeFromHeight<M: StorageMode = Rw> {
+pub struct ValueFromHeightChange<M: StorageMode = Rw> {
     pub sats: ComputedFromHeightLast<SatsSigned, M>,
     pub btc: LazyFromHeightLast<Bitcoin, SatsSigned>,
     pub usd: ComputedFromHeightLast<Dollars, M>,
 }
 
-impl ValueChangeFromHeight {
+impl ValueFromHeightChange {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,

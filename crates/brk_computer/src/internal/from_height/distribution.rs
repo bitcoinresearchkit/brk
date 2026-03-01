@@ -58,6 +58,20 @@ where
         f64: From<T>,
     {
         compute_height(&mut self.height)?;
+        self.compute_rest(max_from, windows, exit)
+    }
+
+    /// Compute rolling distribution from already-populated height data.
+    pub(crate) fn compute_rest(
+        &mut self,
+        max_from: Height,
+        windows: &WindowStarts<'_>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: Copy + Ord + From<f64> + Default,
+        f64: From<T>,
+    {
         self.rolling
             .compute_distribution(max_from, windows, &self.height, exit)?;
         Ok(())

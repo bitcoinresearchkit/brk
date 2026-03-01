@@ -52,7 +52,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 
     /// Total addresses ever seen (addr_count + empty_addr_count) - stored, global + per-type
     pub total_addr_count: TotalAddrCountVecs<M>,
-    /// New addresses per block (delta of total) - lazy height, stored day1 stats, global + per-type
+    /// New addresses per block (delta of total) - stored height + cumulative + rolling, global + per-type
     pub new_addr_count: NewAddrCountVecs<M>,
     /// Growth rate (new / addr_count) - stored ratio with distribution stats, global + per-type
     pub growth_rate: GrowthRateVecs<M>,
@@ -117,9 +117,9 @@ impl Vecs {
         // Stored total = addr_count + empty_addr_count (global + per-type, with all derived indexes)
         let total_addr_count = TotalAddrCountVecs::forced_import(&db, version, indexes)?;
 
-        // Lazy delta of total (global + per-type)
+        // Per-block delta of total (global + per-type)
         let new_addr_count =
-            NewAddrCountVecs::forced_import(&db, version, indexes, &total_addr_count)?;
+            NewAddrCountVecs::forced_import(&db, version, indexes)?;
 
         // Growth rate: new / addr_count (global + per-type)
         let growth_rate = GrowthRateVecs::forced_import(&db, version, indexes)?;
@@ -352,10 +352,12 @@ impl Vecs {
             exit,
         )?;
 
-        // 6d. Compute new_addr_count cumulative + rolling (height is lazy delta)
         let window_starts = blocks.count.window_starts();
+
+        self.address_activity
+            .compute_rest(starting_indexes.height, &window_starts, exit)?;
         self.new_addr_count
-            .compute(starting_indexes.height, &window_starts, exit)?;
+            .compute(starting_indexes.height, &window_starts, &self.total_addr_count, exit)?;
 
         // 6e. Compute growth_rate = new_addr_count / addr_count
         self.growth_rate.compute(

@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, AnyVec, EagerVec, Exit, ImportableVec, PcoVec, Rw, Sto
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{ComputedFromHeightCumulativeSum, LazyComputedValueFromHeightCumulative, ValueEmaFromHeight},
+    internal::{ComputedFromHeightCumulativeSum, ValueFromHeightCumulative, ValueFromHeightLast},
 };
 
 use super::ImportConfig;
@@ -15,10 +15,10 @@ use super::ImportConfig;
 #[derive(Traversable)]
 pub struct ActivityMetrics<M: StorageMode = Rw> {
     /// Total satoshis sent at each height + derived indexes
-    pub sent: LazyComputedValueFromHeightCumulative<M>,
+    pub sent: ValueFromHeightCumulative<M>,
 
     /// 14-day EMA of sent supply (sats, btc, usd)
-    pub sent_14d_ema: ValueEmaFromHeight<M>,
+    pub sent_14d_ema: ValueFromHeightLast<M>,
 
     /// Satoshi-blocks destroyed (supply * blocks_old when spent)
     pub satblocks_destroyed: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
@@ -37,14 +37,14 @@ impl ActivityMetrics {
     /// Import activity metrics from database.
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            sent: LazyComputedValueFromHeightCumulative::forced_import(
+            sent: ValueFromHeightCumulative::forced_import(
                 cfg.db,
                 &cfg.name("sent"),
                 cfg.version,
                 cfg.indexes,
             )?,
 
-            sent_14d_ema: ValueEmaFromHeight::forced_import(
+            sent_14d_ema: ValueFromHeightLast::forced_import(
                 cfg.db,
                 &cfg.name("sent_14d_ema"),
                 cfg.version,
@@ -165,8 +165,8 @@ impl ActivityMetrics {
     ) -> Result<()> {
         let window_starts = blocks.count.window_starts();
 
-        // 14-day rolling average of sent (sats and dollars)
-        self.sent_14d_ema.compute_rolling_average(
+        // 14-day EMA of sent (sats and dollars)
+        self.sent_14d_ema.compute_ema(
             starting_indexes.height,
             &blocks.count.height_2w_ago,
             &self.sent.base.sats.height,

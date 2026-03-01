@@ -27,7 +27,7 @@ impl Vecs {
     ) -> Result<()> {
         self.puell_multiple.height.compute_divide(
             starting_indexes.height,
-            &rewards.coinbase.base.usd.height,
+            &rewards.subsidy.base.usd.height,
             &rewards.subsidy_usd_1y_sma.height,
             exit,
         )?;
@@ -100,11 +100,11 @@ impl Vecs {
             exit,
         )?;
 
-        // NVT: realized_cap / tx_volume_24h
+        // NVT: market_cap / tx_volume_24h
         self.nvt.compute_binary::<Dollars, Dollars, Ratio32>(
             starting_indexes.height,
             &distribution.utxo_cohorts.all.metrics.supply.total.usd.height,
-            &transactions.volume.sent_sum.usd,
+            &transactions.volume.sent_sum.rolling._24h.usd.height,
             exit,
         )?;
 
