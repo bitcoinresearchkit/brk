@@ -1,9 +1,9 @@
 use brk_traversable::Traversable;
-use brk_types::{Dollars, StoredF32};
+use brk_types::{Cents, StoredF32};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{
-    ComputedFromHeightLast, ValueFromHeightFull,
+    ComputedFromHeightLast, FiatFromHeightLast, ValueFromHeightFull,
     ValueFromHeightSumCumulative,
 };
 
@@ -24,5 +24,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub subsidy_dominance_7d: ComputedFromHeightLast<StoredF32, M>,
     pub subsidy_dominance_30d: ComputedFromHeightLast<StoredF32, M>,
     pub subsidy_dominance_1y: ComputedFromHeightLast<StoredF32, M>,
-    pub subsidy_usd_1y_sma: ComputedFromHeightLast<Dollars, M>,
+    pub subsidy_usd_1y_sma: FiatFromHeightLast<Cents, M>,
 }

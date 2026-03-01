@@ -109,11 +109,12 @@ pub trait CohortMetricsBase: Send + Sync {
             .collect();
         let values: Vec<_> = others
             .iter()
-            .map(|o| &o.unrealized_base().net_sentiment.height)
+            .map(|o| &o.unrealized_base().net_sentiment.cents.height)
             .collect();
 
         self.unrealized_base_mut()
             .net_sentiment
+            .cents
             .height
             .compute_weighted_average_of_others(starting_indexes.height, &weights, &values, exit)?;
 
@@ -133,11 +134,12 @@ pub trait CohortMetricsBase: Send + Sync {
             .collect();
         let values: Vec<_> = others
             .iter()
-            .map(|o| &o.unrealized_base().net_sentiment.height)
+            .map(|o| &o.unrealized_base().net_sentiment.cents.height)
             .collect();
 
         self.unrealized_base_mut()
             .net_sentiment
+            .cents
             .height
             .compute_weighted_average_of_others(starting_indexes.height, &weights, &values, exit)?;
 

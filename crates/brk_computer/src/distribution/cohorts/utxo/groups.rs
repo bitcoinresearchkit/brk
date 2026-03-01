@@ -1091,8 +1091,9 @@ impl UTXOCohorts<Rw> {
                     .unrealized
                     .peak_regret_ext
                     .peak_regret
+                    .cents
                     .height
-                    .truncate_push(current_height, Dollars::ZERO)?;
+                    .truncate_push(current_height, Cents::ZERO)?;
             }
             return Ok(());
         }
@@ -1116,12 +1117,12 @@ impl UTXOCohorts<Rw> {
             }
         });
 
-        let regrets: [Dollars; 21] = ranges
+        let regrets: [Cents; 21] = ranges
             .into_par_iter()
             .map(|(range_start, range_end)| {
                 let effective_start = range_start.max(start_height);
                 if effective_start >= range_end {
-                    return Dollars::ZERO;
+                    return Cents::ZERO;
                 }
 
                 let mut regret: u128 = 0;
@@ -1146,7 +1147,7 @@ impl UTXOCohorts<Rw> {
                     };
                 }
 
-                Cents::new((regret / Sats::ONE_BTC_U128) as u64).to_dollars()
+                Cents::new((regret / Sats::ONE_BTC_U128) as u64)
             })
             .collect::<Vec<_>>()
             .try_into()
@@ -1158,6 +1159,7 @@ impl UTXOCohorts<Rw> {
                 .unrealized
                 .peak_regret_ext
                 .peak_regret
+                .cents
                 .height
                 .truncate_push(current_height, regret)?;
         }

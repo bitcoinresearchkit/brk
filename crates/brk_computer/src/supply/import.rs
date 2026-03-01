@@ -3,14 +3,13 @@ use std::path::Path;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, Version};
-use vecdb::{Database, ReadableCloneableVec, PAGE_SIZE};
+use vecdb::{Database, PAGE_SIZE};
 
 use super::Vecs;
 use crate::{
     distribution, indexes,
     internal::{
-        ComputedFromHeightLast, DollarsIdentity,
-        LazyFromHeightLast, LazyValueFromHeightLast,
+        ComputedFromHeightLast, DollarsIdentity, LazyFromHeightLast, LazyValueFromHeightLast,
         SatsIdentity, SatsToBitcoin,
     },
 };
@@ -31,11 +30,11 @@ impl Vecs {
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
         // Circulating supply - lazy refs to distribution
-        let circulating = LazyValueFromHeightLast::from_block_source::<SatsIdentity, SatsToBitcoin, DollarsIdentity>(
-            "circulating_supply",
-            &supply_metrics.total,
-            version,
-        );
+        let circulating = LazyValueFromHeightLast::from_block_source::<
+            SatsIdentity,
+            SatsToBitcoin,
+            DollarsIdentity,
+        >("circulating_supply", &supply_metrics.total, version);
 
         // Burned/unspendable supply - computed from scripts
         let burned = super::burned::Vecs::forced_import(&db, version, indexes)?;
@@ -45,8 +44,7 @@ impl Vecs {
             ComputedFromHeightLast::forced_import(&db, "inflation_rate", version, indexes)?;
 
         // Velocity
-        let velocity =
-            super::velocity::Vecs::forced_import(&db, version, indexes)?;
+        let velocity = super::velocity::Vecs::forced_import(&db, version, indexes)?;
 
         // Market cap - lazy identity from distribution supply in USD
         let market_cap = LazyFromHeightLast::from_lazy::<DollarsIdentity, Cents>(

@@ -121,7 +121,7 @@ impl ExtendedCohortMetrics {
             height_to_market_cap,
             all_supply_sats,
             &self.supply.total.usd.height,
-            &self.unrealized.peak_regret_ext.peak_regret.height,
+            &self.unrealized.peak_regret_ext.peak_regret.usd.height,
             exit,
         )?;
 

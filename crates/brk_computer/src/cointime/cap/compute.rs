@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::Dollars;
+use brk_types::Cents;
 use vecdb::Exit;
 
 use super::super::{activity, value};
@@ -17,12 +17,12 @@ impl Vecs {
         value: &value::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        let realized_cap = &distribution
+        let realized_cap_cents = &distribution
             .utxo_cohorts
             .all
             .metrics
             .realized
-            .realized_cap
+            .realized_cap_cents
             .height;
 
         let circulating_supply = &distribution
@@ -34,36 +34,42 @@ impl Vecs {
             .btc
             .height;
 
-        self.thermo_cap.height.compute_transform(
+        self.thermo_cap.cents.height.compute_transform(
             starting_indexes.height,
-            &mining.rewards.subsidy.cumulative.usd.height,
+            &mining.rewards.subsidy.cumulative.cents.height,
             |(i, v, ..)| (i, v),
             exit,
         )?;
 
-        self.investor_cap.height.compute_subtract(
+        self.investor_cap.cents.height.compute_subtract(
             starting_indexes.height,
-            realized_cap,
-            &self.thermo_cap.height,
+            realized_cap_cents,
+            &self.thermo_cap.cents.height,
             exit,
         )?;
 
-        self.vaulted_cap.height.compute_divide(
+        self.vaulted_cap.cents.height.compute_transform2(
             starting_indexes.height,
-            realized_cap,
+            realized_cap_cents,
             &activity.vaultedness.height,
+            |(i, cap, vaultedness, ..)| {
+                (i, Cents::from(f64::from(cap) / f64::from(vaultedness)))
+            },
             exit,
         )?;
 
-        self.active_cap.height.compute_multiply(
+        self.active_cap.cents.height.compute_transform2(
             starting_indexes.height,
-            realized_cap,
+            realized_cap_cents,
             &activity.liveliness.height,
+            |(i, cap, liveliness, ..)| {
+                (i, Cents::from(f64::from(cap) * f64::from(liveliness)))
+            },
             exit,
         )?;
 
         // cointime_cap = (cointime_value_destroyed_cumulative * circulating_supply) / coinblocks_stored_cumulative
-        self.cointime_cap.height.compute_transform3(
+        self.cointime_cap.cents.height.compute_transform3(
             starting_indexes.height,
             &value.cointime_value_destroyed.cumulative.height,
             circulating_supply,
@@ -72,7 +78,7 @@ impl Vecs {
                 let destroyed: f64 = *destroyed;
                 let supply: f64 = supply.into();
                 let stored: f64 = *stored;
-                (i, Dollars::from(destroyed * supply / stored))
+                (i, Cents::from(destroyed * supply / stored))
             },
             exit,
         )?;

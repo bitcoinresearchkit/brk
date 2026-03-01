@@ -35,6 +35,7 @@ impl RelativePeakRegret {
         &mut self,
         max_from: Height,
         peak_regret: &impl ReadableVec<Height, Dollars>,
+
         market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {

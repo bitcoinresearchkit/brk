@@ -190,10 +190,10 @@ impl Vecs {
             exit,
         )?;
 
-        self.subsidy_usd_1y_sma.height.compute_rolling_average(
+        self.subsidy_usd_1y_sma.cents.height.compute_rolling_average(
             starting_indexes.height,
             &count_vecs.height_1y_ago,
-            &self.subsidy.base.usd.height,
+            &self.subsidy.base.cents.height,
             exit,
         )?;
 

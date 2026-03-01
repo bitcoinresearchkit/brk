@@ -69,19 +69,19 @@ impl RelativeExtendedOwnPnl {
     ) -> Result<()> {
         self.unrealized_profit_rel_to_own_total_unrealized_pnl
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.unrealized_profit.height, &unrealized.total_unrealized_pnl.height, exit,
+                max_from, &unrealized.unrealized_profit.usd.height, &unrealized.total_unrealized_pnl.usd.height, exit,
             )?;
         self.unrealized_loss_rel_to_own_total_unrealized_pnl
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.unrealized_loss.height, &unrealized.total_unrealized_pnl.height, exit,
+                max_from, &unrealized.unrealized_loss.usd.height, &unrealized.total_unrealized_pnl.usd.height, exit,
             )?;
         self.neg_unrealized_loss_rel_to_own_total_unrealized_pnl
             .compute_binary::<Dollars, Dollars, NegPercentageDollarsF32>(
-                max_from, &unrealized.unrealized_loss.height, &unrealized.total_unrealized_pnl.height, exit,
+                max_from, &unrealized.unrealized_loss.usd.height, &unrealized.total_unrealized_pnl.usd.height, exit,
             )?;
         self.net_unrealized_pnl_rel_to_own_total_unrealized_pnl
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.net_unrealized_pnl.height, &unrealized.total_unrealized_pnl.height, exit,
+                max_from, &unrealized.net_unrealized_pnl.usd.height, &unrealized.total_unrealized_pnl.usd.height, exit,
             )?;
         Ok(())
     }

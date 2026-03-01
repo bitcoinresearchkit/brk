@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ComputedFromHeightLast, ValueFromHeightFull,
+        ComputedFromHeightLast, FiatFromHeightLast, ValueFromHeightFull,
         ValueFromHeightSumCumulative,
     },
 };
@@ -87,7 +87,7 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            subsidy_usd_1y_sma: ComputedFromHeightLast::forced_import(
+            subsidy_usd_1y_sma: FiatFromHeightLast::forced_import(
                 db,
                 "subsidy_usd_1y_sma",
                 version,

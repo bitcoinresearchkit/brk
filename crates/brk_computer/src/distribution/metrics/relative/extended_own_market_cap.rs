@@ -69,19 +69,19 @@ impl RelativeExtendedOwnMarketCap {
     ) -> Result<()> {
         self.unrealized_profit_rel_to_own_market_cap
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.unrealized_profit.height, own_market_cap, exit,
+                max_from, &unrealized.unrealized_profit.usd.height, own_market_cap, exit,
             )?;
         self.unrealized_loss_rel_to_own_market_cap
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.unrealized_loss.height, own_market_cap, exit,
+                max_from, &unrealized.unrealized_loss.usd.height, own_market_cap, exit,
             )?;
         self.neg_unrealized_loss_rel_to_own_market_cap
             .compute_binary::<Dollars, Dollars, NegPercentageDollarsF32>(
-                max_from, &unrealized.unrealized_loss.height, own_market_cap, exit,
+                max_from, &unrealized.unrealized_loss.usd.height, own_market_cap, exit,
             )?;
         self.net_unrealized_pnl_rel_to_own_market_cap
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.net_unrealized_pnl.height, own_market_cap, exit,
+                max_from, &unrealized.net_unrealized_pnl.usd.height, own_market_cap, exit,
             )?;
         Ok(())
     }

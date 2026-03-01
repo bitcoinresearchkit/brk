@@ -1,6 +1,7 @@
 mod by_unit;
 mod constant;
 mod cumulative;
+mod fiat;
 mod cumulative_full;
 mod cumulative_sum;
 mod distribution;
@@ -23,6 +24,7 @@ pub use by_unit::*;
 pub use constant::*;
 pub use cumulative::*;
 pub use cumulative_full::*;
+pub use fiat::*;
 pub use cumulative_sum::*;
 pub use distribution::*;
 pub use full::*;

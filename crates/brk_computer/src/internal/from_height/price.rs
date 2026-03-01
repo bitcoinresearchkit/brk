@@ -32,12 +32,8 @@ impl Price<ComputedFromHeightLast<Cents>> {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let cents = ComputedFromHeightLast::forced_import(
-            db,
-            &format!("{name}_cents"),
-            version,
-            indexes,
-        )?;
+        let cents =
+            ComputedFromHeightLast::forced_import(db, &format!("{name}_cents"), version, indexes)?;
         let usd = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
             &format!("{name}_usd"),
             version,
@@ -50,26 +46,6 @@ impl Price<ComputedFromHeightLast<Cents>> {
             &usd,
         );
         Ok(Self { cents, usd, sats })
-    }
-
-    /// Wrap an already-imported ComputedFromHeightLast<Cents> with lazy USD + sats.
-    pub(crate) fn from_cents(
-        name: &str,
-        version: Version,
-        cents: ComputedFromHeightLast<Cents>,
-    ) -> Self {
-        let usd = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
-            &format!("{name}_usd"),
-            version,
-            cents.height.read_only_boxed_clone(),
-            &cents,
-        );
-        let sats = LazyFromHeightLast::from_lazy::<DollarsToSatsFract, Cents>(
-            &format!("{name}_sats"),
-            version,
-            &usd,
-        );
-        Self { cents, usd, sats }
     }
 }
 

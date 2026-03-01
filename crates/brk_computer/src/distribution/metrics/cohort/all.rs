@@ -160,7 +160,7 @@ impl AllCohortMetrics {
             &self.realized.base,
             &self.supply.total.sats.height,
             height_to_market_cap,
-            &self.unrealized.peak_regret_ext.peak_regret.height,
+            &self.unrealized.peak_regret_ext.peak_regret.usd.height,
             exit,
         )?;
 

@@ -74,10 +74,10 @@ impl Vecs {
 
         self.true_market_mean.cents.height.compute_transform2(
             starting_indexes.height,
-            &cap.investor_cap.height,
+            &cap.investor_cap.cents.height,
             &supply.active_supply.btc.height,
-            |(i, cap_dollars, supply_btc, ..)| {
-                (i, Cents::from(f64::from(Cents::from(cap_dollars)) / f64::from(supply_btc)))
+            |(i, cap_cents, supply_btc, ..)| {
+                (i, Cents::from(f64::from(cap_cents) / f64::from(supply_btc)))
             },
             exit,
         )?;
@@ -93,10 +93,10 @@ impl Vecs {
         // cointime_price = cointime_cap / circulating_supply
         self.cointime_price.cents.height.compute_transform2(
             starting_indexes.height,
-            &cap.cointime_cap.height,
+            &cap.cointime_cap.cents.height,
             circulating_supply,
-            |(i, cap_dollars, supply_btc, ..)| {
-                (i, Cents::from(f64::from(Cents::from(cap_dollars)) / f64::from(supply_btc)))
+            |(i, cap_cents, supply_btc, ..)| {
+                (i, Cents::from(f64::from(cap_cents) / f64::from(supply_btc)))
             },
             exit,
         )?;

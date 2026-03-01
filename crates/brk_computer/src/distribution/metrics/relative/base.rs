@@ -94,27 +94,27 @@ impl RelativeBase {
             )?;
         self.unrealized_profit_rel_to_market_cap
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.unrealized_profit.height, market_cap, exit,
+                max_from, &unrealized.unrealized_profit.usd.height, market_cap, exit,
             )?;
         self.unrealized_loss_rel_to_market_cap
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.unrealized_loss.height, market_cap, exit,
+                max_from, &unrealized.unrealized_loss.usd.height, market_cap, exit,
             )?;
         self.neg_unrealized_loss_rel_to_market_cap
             .compute_binary::<Dollars, Dollars, NegPercentageDollarsF32>(
-                max_from, &unrealized.unrealized_loss.height, market_cap, exit,
+                max_from, &unrealized.unrealized_loss.usd.height, market_cap, exit,
             )?;
         self.net_unrealized_pnl_rel_to_market_cap
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.net_unrealized_pnl.height, market_cap, exit,
+                max_from, &unrealized.net_unrealized_pnl.usd.height, market_cap, exit,
             )?;
         self.invested_capital_in_profit_pct
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.invested_capital_in_profit.height, &realized.realized_cap.height, exit,
+                max_from, &unrealized.invested_capital_in_profit.usd.height, &realized.realized_cap.height, exit,
             )?;
         self.invested_capital_in_loss_pct
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.invested_capital_in_loss.height, &realized.realized_cap.height, exit,
+                max_from, &unrealized.invested_capital_in_loss.usd.height, &realized.realized_cap.height, exit,
             )?;
         Ok(())
     }

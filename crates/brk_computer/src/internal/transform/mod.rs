@@ -1,6 +1,7 @@
 mod block_count_target;
 mod cents_plus;
 mod cents_signed_to_dollars;
+mod cents_subtract_to_cents_signed;
 mod cents_times_tenths;
 mod cents_to_dollars;
 mod cents_to_sats;
@@ -42,6 +43,7 @@ mod volatility_sqrt7;
 pub use block_count_target::*;
 pub use cents_plus::*;
 pub use cents_signed_to_dollars::*;
+pub use cents_subtract_to_cents_signed::*;
 pub use cents_times_tenths::*;
 pub use cents_to_dollars::*;
 pub use cents_to_sats::*;

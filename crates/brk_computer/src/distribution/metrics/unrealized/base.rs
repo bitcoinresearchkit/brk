@@ -1,8 +1,8 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, CentsSats, CentsSquaredSats, Dollars, Height, Version};
+use brk_types::{Cents, CentsSats, CentsSigned, CentsSquaredSats, Height, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Exit, ImportableVec, Negate, ReadableCloneableVec, ReadableVec,
+    AnyStoredVec, AnyVec, BytesVec, Exit, ImportableVec, ReadableCloneableVec, ReadableVec,
     Rw, StorageMode, WritableVec,
 };
 
@@ -10,10 +10,13 @@ use crate::{
     ComputeIndexes,
     distribution::state::UnrealizedState,
     internal::{
-        ComputedFromHeightLast, LazyFromHeightLast, ValueFromHeightLast,
+        CentsSubtractToCentsSigned, FiatFromHeightLast, LazyFromHeightLast, NegCentsUnsignedToDollars,
+        ValueFromHeightLast,
     },
     prices,
 };
+
+use brk_types::Dollars;
 
 use crate::distribution::metrics::ImportConfig;
 
@@ -25,12 +28,12 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
     pub supply_in_loss: ValueFromHeightLast<M>,
 
     // === Unrealized Profit/Loss ===
-    pub unrealized_profit: ComputedFromHeightLast<Dollars, M>,
-    pub unrealized_loss: ComputedFromHeightLast<Dollars, M>,
+    pub unrealized_profit: FiatFromHeightLast<Cents, M>,
+    pub unrealized_loss: FiatFromHeightLast<Cents, M>,
 
     // === Invested Capital in Profit/Loss ===
-    pub invested_capital_in_profit: ComputedFromHeightLast<Dollars, M>,
-    pub invested_capital_in_loss: ComputedFromHeightLast<Dollars, M>,
+    pub invested_capital_in_profit: FiatFromHeightLast<Cents, M>,
+    pub invested_capital_in_loss: FiatFromHeightLast<Cents, M>,
 
     // === Raw values for precise aggregation (used to compute pain/greed indices) ===
     pub invested_capital_in_profit_raw: M::Stored<BytesVec<Height, CentsSats>>,
@@ -39,16 +42,16 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
     pub investor_cap_in_loss_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 
     // === Pain/Greed Indices ===
-    pub pain_index: ComputedFromHeightLast<Dollars, M>,
-    pub greed_index: ComputedFromHeightLast<Dollars, M>,
-    pub net_sentiment: ComputedFromHeightLast<Dollars, M>,
+    pub pain_index: FiatFromHeightLast<Cents, M>,
+    pub greed_index: FiatFromHeightLast<Cents, M>,
+    pub net_sentiment: FiatFromHeightLast<CentsSigned, M>,
 
     // === Negated ===
-    pub neg_unrealized_loss: LazyFromHeightLast<Dollars>,
+    pub neg_unrealized_loss: LazyFromHeightLast<Dollars, Cents>,
 
     // === Net and Total ===
-    pub net_unrealized_pnl: ComputedFromHeightLast<Dollars, M>,
-    pub total_unrealized_pnl: ComputedFromHeightLast<Dollars, M>,
+    pub net_unrealized_pnl: FiatFromHeightLast<CentsSigned, M>,
+    pub total_unrealized_pnl: FiatFromHeightLast<Cents, M>,
 }
 
 impl UnrealizedBase {
@@ -66,26 +69,26 @@ impl UnrealizedBase {
             cfg.indexes,
         )?;
 
-        let unrealized_profit = ComputedFromHeightLast::forced_import(
+        let unrealized_profit = FiatFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("unrealized_profit"),
             cfg.version,
             cfg.indexes,
         )?;
-        let unrealized_loss = ComputedFromHeightLast::forced_import(
+        let unrealized_loss = FiatFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("unrealized_loss"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let invested_capital_in_profit = ComputedFromHeightLast::forced_import(
+        let invested_capital_in_profit = FiatFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("invested_capital_in_profit"),
             cfg.version,
             cfg.indexes,
         )?;
-        let invested_capital_in_loss = ComputedFromHeightLast::forced_import(
+        let invested_capital_in_loss = FiatFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("invested_capital_in_loss"),
             cfg.version,
@@ -113,39 +116,39 @@ impl UnrealizedBase {
             cfg.version,
         )?;
 
-        let pain_index = ComputedFromHeightLast::forced_import(
+        let pain_index = FiatFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("pain_index"),
             cfg.version,
             cfg.indexes,
         )?;
-        let greed_index = ComputedFromHeightLast::forced_import(
+        let greed_index = FiatFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("greed_index"),
             cfg.version,
             cfg.indexes,
         )?;
-        let net_sentiment = ComputedFromHeightLast::forced_import(
+        let net_sentiment = FiatFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("net_sentiment"),
             cfg.version + Version::ONE,
             cfg.indexes,
         )?;
 
-        let neg_unrealized_loss = LazyFromHeightLast::from_computed::<Negate>(
+        let neg_unrealized_loss = LazyFromHeightLast::from_computed::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_unrealized_loss"),
             cfg.version,
-            unrealized_loss.height.read_only_boxed_clone(),
-            &unrealized_loss,
+            unrealized_loss.cents.height.read_only_boxed_clone(),
+            &unrealized_loss.cents,
         );
 
-        let net_unrealized_pnl = ComputedFromHeightLast::forced_import(
+        let net_unrealized_pnl = FiatFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("net_unrealized_pnl"),
             cfg.version,
             cfg.indexes,
         )?;
-        let total_unrealized_pnl = ComputedFromHeightLast::forced_import(
+        let total_unrealized_pnl = FiatFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("total_unrealized_pnl"),
             cfg.version,
@@ -178,10 +181,10 @@ impl UnrealizedBase {
             .height
             .len()
             .min(self.supply_in_loss.sats.height.len())
-            .min(self.unrealized_profit.height.len())
-            .min(self.unrealized_loss.height.len())
-            .min(self.invested_capital_in_profit.height.len())
-            .min(self.invested_capital_in_loss.height.len())
+            .min(self.unrealized_profit.cents.height.len())
+            .min(self.unrealized_loss.cents.height.len())
+            .min(self.invested_capital_in_profit.cents.height.len())
+            .min(self.invested_capital_in_loss.cents.height.len())
             .min(self.invested_capital_in_profit_raw.len())
             .min(self.invested_capital_in_loss_raw.len())
             .min(self.investor_cap_in_profit_raw.len())
@@ -202,17 +205,21 @@ impl UnrealizedBase {
             .height
             .truncate_push(height, height_state.supply_in_loss)?;
         self.unrealized_profit
+            .cents
             .height
-            .truncate_push(height, height_state.unrealized_profit.to_dollars())?;
+            .truncate_push(height, height_state.unrealized_profit)?;
         self.unrealized_loss
+            .cents
             .height
-            .truncate_push(height, height_state.unrealized_loss.to_dollars())?;
+            .truncate_push(height, height_state.unrealized_loss)?;
         self.invested_capital_in_profit
+            .cents
             .height
-            .truncate_push(height, height_state.invested_capital_in_profit.to_dollars())?;
+            .truncate_push(height, height_state.invested_capital_in_profit)?;
         self.invested_capital_in_loss
+            .cents
             .height
-            .truncate_push(height, height_state.invested_capital_in_loss.to_dollars())?;
+            .truncate_push(height, height_state.invested_capital_in_loss)?;
 
         self.invested_capital_in_profit_raw.truncate_push(
             height,
@@ -240,10 +247,10 @@ impl UnrealizedBase {
             &mut self.supply_in_profit.base.cents.height as &mut dyn AnyStoredVec,
             &mut self.supply_in_loss.base.sats.height as &mut dyn AnyStoredVec,
             &mut self.supply_in_loss.base.cents.height as &mut dyn AnyStoredVec,
-            &mut self.unrealized_profit.height,
-            &mut self.unrealized_loss.height,
-            &mut self.invested_capital_in_profit.height,
-            &mut self.invested_capital_in_loss.height,
+            &mut self.unrealized_profit.cents.height,
+            &mut self.unrealized_loss.cents.height,
+            &mut self.invested_capital_in_profit.cents.height,
+            &mut self.invested_capital_in_loss.cents.height,
             &mut self.invested_capital_in_profit_raw as &mut dyn AnyStoredVec,
             &mut self.invested_capital_in_loss_raw as &mut dyn AnyStoredVec,
             &mut self.investor_cap_in_profit_raw as &mut dyn AnyStoredVec,
@@ -280,40 +287,43 @@ impl UnrealizedBase {
                 exit,
             )?;
         self.unrealized_profit
+            .cents
             .height
             .compute_sum_of_others(
                 starting_indexes.height,
                 &others
                     .iter()
-                    .map(|v| &v.unrealized_profit.height)
+                    .map(|v| &v.unrealized_profit.cents.height)
                     .collect::<Vec<_>>(),
                 exit,
             )?;
-        self.unrealized_loss.height.compute_sum_of_others(
+        self.unrealized_loss.cents.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.unrealized_loss.height)
+                .map(|v| &v.unrealized_loss.cents.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
         self.invested_capital_in_profit
+            .cents
             .height
             .compute_sum_of_others(
                 starting_indexes.height,
                 &others
                     .iter()
-                    .map(|v| &v.invested_capital_in_profit.height)
+                    .map(|v| &v.invested_capital_in_profit.cents.height)
                     .collect::<Vec<_>>(),
                 exit,
             )?;
         self.invested_capital_in_loss
+            .cents
             .height
             .compute_sum_of_others(
                 starting_indexes.height,
                 &others
                     .iter()
-                    .map(|v| &v.invested_capital_in_loss.height)
+                    .map(|v| &v.invested_capital_in_loss.cents.height)
                     .collect::<Vec<_>>(),
                 exit,
             )?;
@@ -386,55 +396,58 @@ impl UnrealizedBase {
         exit: &Exit,
     ) -> Result<()> {
         // Pain index: investor_price_of_losers - spot
-        self.pain_index.height.compute_transform3(
+        self.pain_index.cents.height.compute_transform3(
             starting_indexes.height,
             &self.investor_cap_in_loss_raw,
             &self.invested_capital_in_loss_raw,
             &prices.price.cents.height,
             |(h, investor_cap, invested_cap, spot, ..)| {
                 if invested_cap.inner() == 0 {
-                    return (h, Dollars::ZERO);
+                    return (h, Cents::ZERO);
                 }
                 let investor_price_losers = investor_cap.inner() / invested_cap.inner();
                 let spot_u128 = spot.as_u128();
                 (
                     h,
-                    Cents::new((investor_price_losers - spot_u128) as u64).to_dollars(),
+                    Cents::new((investor_price_losers - spot_u128) as u64),
                 )
             },
             exit,
         )?;
 
         // Greed index: spot - investor_price_of_winners
-        self.greed_index.height.compute_transform3(
+        self.greed_index.cents.height.compute_transform3(
             starting_indexes.height,
             &self.investor_cap_in_profit_raw,
             &self.invested_capital_in_profit_raw,
             &prices.price.cents.height,
             |(h, investor_cap, invested_cap, spot, ..)| {
                 if invested_cap.inner() == 0 {
-                    return (h, Dollars::ZERO);
+                    return (h, Cents::ZERO);
                 }
                 let investor_price_winners = investor_cap.inner() / invested_cap.inner();
                 let spot_u128 = spot.as_u128();
                 (
                     h,
-                    Cents::new((spot_u128 - investor_price_winners) as u64).to_dollars(),
+                    Cents::new((spot_u128 - investor_price_winners) as u64),
                 )
             },
             exit,
         )?;
 
-        self.net_unrealized_pnl.height.compute_subtract(
+        self.net_unrealized_pnl
+            .cents
+            .height
+            .compute_binary::<Cents, Cents, CentsSubtractToCentsSigned>(
+                starting_indexes.height,
+                &self.unrealized_profit.cents.height,
+                &self.unrealized_loss.cents.height,
+                exit,
+            )?;
+        self.total_unrealized_pnl.cents.height.compute_add(
             starting_indexes.height,
-            &self.unrealized_profit.height,
-            &self.unrealized_loss.height,
-            exit,
-        )?;
-        self.total_unrealized_pnl.height.compute_add(
-            starting_indexes.height,
-            &self.unrealized_profit.height,
-            &self.unrealized_loss.height,
+            &self.unrealized_profit.cents.height,
+            &self.unrealized_loss.cents.height,
             exit,
         )?;
 
@@ -447,11 +460,15 @@ impl UnrealizedBase {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        Ok(self.net_sentiment.height.compute_subtract(
-            starting_indexes.height,
-            &self.greed_index.height,
-            &self.pain_index.height,
-            exit,
-        )?)
+        self.net_sentiment
+            .cents
+            .height
+            .compute_binary::<Cents, Cents, CentsSubtractToCentsSigned>(
+                starting_indexes.height,
+                &self.greed_index.cents.height,
+                &self.pain_index.cents.height,
+                exit,
+            )?;
+        Ok(())
     }
 }
