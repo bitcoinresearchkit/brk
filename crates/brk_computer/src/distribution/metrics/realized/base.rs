@@ -867,6 +867,30 @@ impl RealizedBase {
             exit,
         )?;
 
+        self.lower_price_band.usd.height.compute_transform2(
+            starting_indexes.height,
+            &self.realized_price.usd.height,
+            &self.investor_price.usd.height,
+            |(i, rp, ip, ..)| {
+                let rp = f64::from(rp);
+                let ip = f64::from(ip);
+                (i, Dollars::from(rp * rp / ip))
+            },
+            exit,
+        )?;
+
+        self.upper_price_band.usd.height.compute_transform2(
+            starting_indexes.height,
+            &self.investor_price.usd.height,
+            &self.realized_price.usd.height,
+            |(i, ip, rp, ..)| {
+                let ip = f64::from(ip);
+                let rp = f64::from(rp);
+                (i, Dollars::from(ip * ip / rp))
+            },
+            exit,
+        )?;
+
         self.realized_cap_30d_delta.height.compute_rolling_change(
             starting_indexes.height,
             &blocks.count.height_1m_ago,

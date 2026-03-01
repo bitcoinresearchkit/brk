@@ -9,13 +9,13 @@ use crate::PairOutputIndex;
 
 use super::{
     Date, Day1, Day3, Year10, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
-    Height, Hour1, Hour4, Hour12, FundedAddressIndex, Minute1, Minute5, Minute10, Minute30,
+    Height, Hour1, Hour4, Hour12, FundedAddressIndex, Minute10, Minute30,
     Month1, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex,
     P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
     P2WPKHAddressIndex, P2WSHAddressIndex, Month3, Month6, Timestamp, TxInIndex, TxIndex,
     TxOutIndex, UnknownOutputIndex, Week1, Year1,
     timestamp::INDEX_EPOCH,
-    minute1::MINUTE1_INTERVAL, minute5::MINUTE5_INTERVAL, minute10::MINUTE10_INTERVAL,
+    minute10::MINUTE10_INTERVAL,
     minute30::MINUTE30_INTERVAL, hour1::HOUR1_INTERVAL, hour4::HOUR4_INTERVAL,
     hour12::HOUR12_INTERVAL,
 };
@@ -26,8 +26,6 @@ use super::{
 #[serde(rename_all = "lowercase")]
 #[schemars(example = Index::Day1)]
 pub enum Index {
-    Minute1,
-    Minute5,
     Minute10,
     Minute30,
     Hour1,
@@ -65,10 +63,8 @@ pub enum Index {
 }
 
 impl Index {
-    pub const fn all() -> [Self; 36] {
+    pub const fn all() -> [Self; 34] {
         [
-            Self::Minute1,
-            Self::Minute5,
             Self::Minute10,
             Self::Minute30,
             Self::Hour1,
@@ -108,8 +104,6 @@ impl Index {
 
     pub fn possible_values(&self) -> &'static [&'static str] {
         match self {
-            Self::Minute1 => Minute1::to_possible_strings(),
-            Self::Minute5 => Minute5::to_possible_strings(),
             Self::Minute10 => Minute10::to_possible_strings(),
             Self::Minute30 => Minute30::to_possible_strings(),
             Self::Hour1 => Hour1::to_possible_strings(),
@@ -157,8 +151,6 @@ impl Index {
 
     pub fn name(&self) -> &'static str {
         match self {
-            Self::Minute1 => <Minute1 as PrintableIndex>::to_string(),
-            Self::Minute5 => <Minute5 as PrintableIndex>::to_string(),
             Self::Minute10 => <Minute10 as PrintableIndex>::to_string(),
             Self::Minute30 => <Minute30 as PrintableIndex>::to_string(),
             Self::Hour1 => <Hour1 as PrintableIndex>::to_string(),
@@ -209,9 +201,7 @@ impl Index {
     pub const fn is_date_based(&self) -> bool {
         matches!(
             self,
-            Self::Minute1
-                | Self::Minute5
-                | Self::Minute10
+            Self::Minute10
                 | Self::Minute30
                 | Self::Hour1
                 | Self::Hour4
@@ -231,8 +221,6 @@ impl Index {
     /// Returns None for non-time-based indexes.
     pub fn index_to_timestamp(&self, i: usize) -> Option<Timestamp> {
         let interval = match self {
-            Self::Minute1 => MINUTE1_INTERVAL,
-            Self::Minute5 => MINUTE5_INTERVAL,
             Self::Minute10 => MINUTE10_INTERVAL,
             Self::Minute30 => MINUTE30_INTERVAL,
             Self::Hour1 => HOUR1_INTERVAL,
@@ -269,8 +257,6 @@ impl Index {
     /// Returns None for non-date-based indexes.
     pub fn timestamp_to_index(&self, ts: Timestamp) -> Option<usize> {
         let interval = match self {
-            Self::Minute1 => MINUTE1_INTERVAL,
-            Self::Minute5 => MINUTE5_INTERVAL,
             Self::Minute10 => MINUTE10_INTERVAL,
             Self::Minute30 => MINUTE30_INTERVAL,
             Self::Hour1 => HOUR1_INTERVAL,

@@ -1,8 +1,8 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Date, Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4, Minute1,
-    Minute10, Minute30, Minute5, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10,
+    Date, Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4,
+    Minute10, Minute30, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{EagerVec, Exit, LazyVecFrom1, PcoVec, Rw, StorageMode};
@@ -19,7 +19,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 
 /// Per-period timestamp indexes.
 ///
-/// Time-based periods (minute1–year10) are lazy: `idx.to_timestamp()` is a pure
+/// Time-based periods (minute10–year10) are lazy: `idx.to_timestamp()` is a pure
 /// function of the index, so no storage or decompression is needed.
 /// Epoch-based periods (halvingepoch, difficultyepoch) are eager: their timestamps
 /// come from block data via `compute_indirect`.
@@ -28,8 +28,6 @@ pub struct Vecs<M: StorageMode = Rw> {
 pub struct TimestampIndexes<M: StorageMode = Rw>(
     #[allow(clippy::type_complexity)]
     pub  Indexes<
-        LazyVecFrom1<Minute1, Timestamp, Minute1, Height>,
-        LazyVecFrom1<Minute5, Timestamp, Minute5, Height>,
         LazyVecFrom1<Minute10, Timestamp, Minute10, Height>,
         LazyVecFrom1<Minute30, Timestamp, Minute30, Height>,
         LazyVecFrom1<Hour1, Timestamp, Hour1, Height>,

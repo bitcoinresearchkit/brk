@@ -1,11 +1,12 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, Sats, StoredF32, StoredF64, Version};
-use vecdb::{Exit, ReadableVec, Rw, StorageMode};
+use vecdb::{Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
-    ComputedFromHeightLast,
+    ComputedFromHeightLast, LazyFromHeightLast,
     NegPercentageDollarsF32, PercentageDollarsF32, PercentageSatsF64,
+    StoredF32Identity,
 };
 
 use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
@@ -24,7 +25,7 @@ pub struct RelativeBase<M: StorageMode = Rw> {
     pub unrealized_loss_rel_to_market_cap: ComputedFromHeightLast<StoredF32, M>,
     pub neg_unrealized_loss_rel_to_market_cap: ComputedFromHeightLast<StoredF32, M>,
     pub net_unrealized_pnl_rel_to_market_cap: ComputedFromHeightLast<StoredF32, M>,
-    pub nupl: ComputedFromHeightLast<StoredF32, M>,
+    pub nupl: LazyFromHeightLast<StoredF32, StoredF32>,
 
     // === Invested Capital in Profit/Loss as % of Realized Cap ===
     pub invested_capital_in_profit_pct: ComputedFromHeightLast<StoredF32, M>,
@@ -35,6 +36,17 @@ impl RelativeBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
         let v2 = Version::new(2);
+
+        let net_unrealized_pnl_rel_to_market_cap = ComputedFromHeightLast::forced_import(
+            cfg.db, &cfg.name("net_unrealized_pnl_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
+        )?;
+
+        let nupl = LazyFromHeightLast::from_computed::<StoredF32Identity>(
+            &cfg.name("nupl"),
+            cfg.version + v2,
+            net_unrealized_pnl_rel_to_market_cap.height.read_only_boxed_clone(),
+            &net_unrealized_pnl_rel_to_market_cap,
+        );
 
         Ok(Self {
             supply_in_profit_rel_to_own_supply: ComputedFromHeightLast::forced_import(
@@ -52,12 +64,8 @@ impl RelativeBase {
             neg_unrealized_loss_rel_to_market_cap: ComputedFromHeightLast::forced_import(
                 cfg.db, &cfg.name("neg_unrealized_loss_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
             )?,
-            net_unrealized_pnl_rel_to_market_cap: ComputedFromHeightLast::forced_import(
-                cfg.db, &cfg.name("net_unrealized_pnl_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
-            )?,
-            nupl: ComputedFromHeightLast::forced_import(
-                cfg.db, &cfg.name("nupl"), cfg.version + v2, cfg.indexes,
-            )?,
+            net_unrealized_pnl_rel_to_market_cap,
+            nupl,
             invested_capital_in_profit_pct: ComputedFromHeightLast::forced_import(
                 cfg.db, &cfg.name("invested_capital_in_profit_pct"), cfg.version, cfg.indexes,
             )?,
@@ -97,10 +105,6 @@ impl RelativeBase {
                 max_from, &unrealized.unrealized_loss.height, market_cap, exit,
             )?;
         self.net_unrealized_pnl_rel_to_market_cap
-            .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
-                max_from, &unrealized.net_unrealized_pnl.height, market_cap, exit,
-            )?;
-        self.nupl
             .compute_binary::<Dollars, Dollars, PercentageDollarsF32>(
                 max_from, &unrealized.net_unrealized_pnl.height, market_cap, exit,
             )?;

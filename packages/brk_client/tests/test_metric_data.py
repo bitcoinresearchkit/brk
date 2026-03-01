@@ -68,20 +68,6 @@ def hour1_metric():
 
 
 @pytest.fixture
-def minute5_metric():
-    """DateMetricData with minute5 (sub-daily)."""
-    return DateMetricData(
-        version=1,
-        index="minute5",
-        total=500000,
-        start=0,
-        end=3,
-        stamp="2024-01-01T00:00:00Z",
-        data=[1, 2, 3],
-    )
-
-
-@pytest.fixture
 def week1_metric():
     """DateMetricData with week1."""
     return DateMetricData(
@@ -149,9 +135,6 @@ class TestIsDateBased:
 
     def test_hour1(self, hour1_metric):
         assert hour1_metric.is_date_based is True
-
-    def test_minute5(self, minute5_metric):
-        assert minute5_metric.is_date_based is True
 
     def test_week1(self, week1_metric):
         assert week1_metric.is_date_based is True
@@ -304,13 +287,6 @@ class TestIndexToDate:
         assert dates[1] == datetime(2009, 1, 1, 1, 0, 0, tzinfo=timezone.utc)
         assert dates[2] == datetime(2009, 1, 1, 2, 0, 0, tzinfo=timezone.utc)
 
-    def test_minute5_returns_datetime(self, minute5_metric):
-        dates = minute5_metric.dates()
-        assert isinstance(dates[0], datetime)
-        assert dates[0] == datetime(2009, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-        assert dates[1] == datetime(2009, 1, 1, 0, 5, 0, tzinfo=timezone.utc)
-        assert dates[2] == datetime(2009, 1, 1, 0, 10, 0, tzinfo=timezone.utc)
-
 
 # ============ _date_to_index conversions ============
 
@@ -358,13 +334,6 @@ class TestDateToIndex:
         assert _date_to_index("hour1", epoch) == 0
         assert _date_to_index("hour1", epoch + timedelta(hours=1)) == 1
         assert _date_to_index("hour1", epoch + timedelta(hours=24)) == 24
-
-    def test_minute5_with_datetime(self):
-        from brk_client import _date_to_index
-        epoch = datetime(2009, 1, 1, tzinfo=timezone.utc)
-        assert _date_to_index("minute5", epoch) == 0
-        assert _date_to_index("minute5", epoch + timedelta(minutes=5)) == 1
-        assert _date_to_index("minute5", epoch + timedelta(minutes=12)) == 2  # floor
 
     def test_hour1_with_plain_date(self):
         """Plain date is treated as midnight UTC for sub-daily."""

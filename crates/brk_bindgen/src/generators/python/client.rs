@@ -136,7 +136,7 @@ _GENESIS = date(2009, 1, 3)  # day1 0, week1 0
 _DAY_ONE = date(2009, 1, 9)  # day1 1 (6 day gap after genesis)
 _EPOCH = datetime(2009, 1, 1, tzinfo=timezone.utc)
 _DATE_INDEXES = frozenset([
-    'minute1', 'minute5', 'minute10', 'minute30',
+    'minute10', 'minute30',
     'hour1', 'hour4', 'hour12',
     'day1', 'day3', 'week1',
     'month1', 'month3', 'month6',
@@ -145,11 +145,7 @@ _DATE_INDEXES = frozenset([
 
 def _index_to_date(index: str, i: int) -> Union[date, datetime]:
     """Convert an index value to a date/datetime for date-based indexes."""
-    if index == 'minute1':
-        return _EPOCH + timedelta(minutes=i)
-    elif index == 'minute5':
-        return _EPOCH + timedelta(minutes=i * 5)
-    elif index == 'minute10':
+    if index == 'minute10':
         return _EPOCH + timedelta(minutes=i * 10)
     elif index == 'minute30':
         return _EPOCH + timedelta(minutes=i * 30)
@@ -187,13 +183,13 @@ def _date_to_index(index: str, d: Union[date, datetime]) -> int:
     Returns the floor index (latest index whose date is <= the given date).
     For sub-day indexes (minute*, hour*), a plain date is treated as midnight UTC.
     """
-    if index in ('minute1', 'minute5', 'minute10', 'minute30', 'hour1', 'hour4', 'hour12'):
+    if index in ('minute10', 'minute30', 'hour1', 'hour4', 'hour12'):
         if isinstance(d, datetime):
             dt = d if d.tzinfo else d.replace(tzinfo=timezone.utc)
         else:
             dt = datetime(d.year, d.month, d.day, tzinfo=timezone.utc)
         secs = int((dt - _EPOCH).total_seconds())
-        div = {{'minute1': 60, 'minute5': 300, 'minute10': 600, 'minute30': 1800,
+        div = {{'minute10': 600, 'minute30': 1800,
                'hour1': 3600, 'hour4': 14400, 'hour12': 43200}}
         return secs // div[index]
     dd = d.date() if isinstance(d, datetime) else d

@@ -99,10 +99,8 @@ Metric = str
 Version = int
 # Comma-separated list of metric names
 Metrics = str
-Minute1 = int
 Minute10 = int
 Minute30 = int
-Minute5 = int
 Month1 = int
 Month3 = int
 Month6 = int
@@ -180,7 +178,7 @@ Year1 = int
 Year10 = int
 # Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
 # block-based (height, txindex), and address/output type indexes.
-Index = Literal["minute1", "minute5", "minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halvingepoch", "difficultyepoch", "height", "txindex", "txinindex", "txoutindex", "emptyoutputindex", "opreturnindex", "p2aaddressindex", "p2msoutputindex", "p2pk33addressindex", "p2pk65addressindex", "p2pkhaddressindex", "p2shaddressindex", "p2traddressindex", "p2wpkhaddressindex", "p2wshaddressindex", "unknownoutputindex", "fundedaddressindex", "emptyaddressindex", "pairoutputindex"]
+Index = Literal["minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halvingepoch", "difficultyepoch", "height", "txindex", "txinindex", "txoutindex", "emptyoutputindex", "opreturnindex", "p2aaddressindex", "p2msoutputindex", "p2pk33addressindex", "p2pk65addressindex", "p2pkhaddressindex", "p2shaddressindex", "p2traddressindex", "p2wpkhaddressindex", "p2wshaddressindex", "unknownoutputindex", "fundedaddressindex", "emptyaddressindex", "pairoutputindex"]
 # Hierarchical tree node for organizing metrics into categories
 TreeNode = Union[dict[str, "TreeNode"], "MetricLeafWithSchema"]
 class AddressChainStats(TypedDict):
@@ -1114,7 +1112,7 @@ _GENESIS = date(2009, 1, 3)  # day1 0, week1 0
 _DAY_ONE = date(2009, 1, 9)  # day1 1 (6 day gap after genesis)
 _EPOCH = datetime(2009, 1, 1, tzinfo=timezone.utc)
 _DATE_INDEXES = frozenset([
-    'minute1', 'minute5', 'minute10', 'minute30',
+    'minute10', 'minute30',
     'hour1', 'hour4', 'hour12',
     'day1', 'day3', 'week1',
     'month1', 'month3', 'month6',
@@ -1123,11 +1121,7 @@ _DATE_INDEXES = frozenset([
 
 def _index_to_date(index: str, i: int) -> Union[date, datetime]:
     """Convert an index value to a date/datetime for date-based indexes."""
-    if index == 'minute1':
-        return _EPOCH + timedelta(minutes=i)
-    elif index == 'minute5':
-        return _EPOCH + timedelta(minutes=i * 5)
-    elif index == 'minute10':
+    if index == 'minute10':
         return _EPOCH + timedelta(minutes=i * 10)
     elif index == 'minute30':
         return _EPOCH + timedelta(minutes=i * 30)
@@ -1165,13 +1159,13 @@ def _date_to_index(index: str, d: Union[date, datetime]) -> int:
     Returns the floor index (latest index whose date is <= the given date).
     For sub-day indexes (minute*, hour*), a plain date is treated as midnight UTC.
     """
-    if index in ('minute1', 'minute5', 'minute10', 'minute30', 'hour1', 'hour4', 'hour12'):
+    if index in ('minute10', 'minute30', 'hour1', 'hour4', 'hour12'):
         if isinstance(d, datetime):
             dt = d if d.tzinfo else d.replace(tzinfo=timezone.utc)
         else:
             dt = datetime(d.year, d.month, d.day, tzinfo=timezone.utc)
         secs = int((dt - _EPOCH).total_seconds())
-        div = {'minute1': 60, 'minute5': 300, 'minute10': 600, 'minute30': 1800,
+        div = {'minute10': 600, 'minute30': 1800,
                'hour1': 3600, 'hour4': 14400, 'hour12': 43200}
         return secs // div[index]
     dd = d.date() if isinstance(d, datetime) else d
@@ -1556,43 +1550,41 @@ class MetricPattern(Protocol[T]):
 
 
 # Static index tuples
-_i1 = ('minute1', 'minute5', 'minute10', 'minute30', 'hour1', 'hour4', 'hour12', 'day1', 'day3', 'week1', 'month1', 'month3', 'month6', 'year1', 'year10', 'halvingepoch', 'difficultyepoch', 'height')
-_i2 = ('minute1', 'minute5', 'minute10', 'minute30', 'hour1', 'hour4', 'hour12', 'day1', 'day3', 'week1', 'month1', 'month3', 'month6', 'year1', 'year10', 'halvingepoch', 'difficultyepoch')
-_i3 = ('minute1',)
-_i4 = ('minute5',)
-_i5 = ('minute10',)
-_i6 = ('minute30',)
-_i7 = ('hour1',)
-_i8 = ('hour4',)
-_i9 = ('hour12',)
-_i10 = ('day1',)
-_i11 = ('day3',)
-_i12 = ('week1',)
-_i13 = ('month1',)
-_i14 = ('month3',)
-_i15 = ('month6',)
-_i16 = ('year1',)
-_i17 = ('year10',)
-_i18 = ('halvingepoch',)
-_i19 = ('difficultyepoch',)
-_i20 = ('height',)
-_i21 = ('txindex',)
-_i22 = ('txinindex',)
-_i23 = ('txoutindex',)
-_i24 = ('emptyoutputindex',)
-_i25 = ('opreturnindex',)
-_i26 = ('p2aaddressindex',)
-_i27 = ('p2msoutputindex',)
-_i28 = ('p2pk33addressindex',)
-_i29 = ('p2pk65addressindex',)
-_i30 = ('p2pkhaddressindex',)
-_i31 = ('p2shaddressindex',)
-_i32 = ('p2traddressindex',)
-_i33 = ('p2wpkhaddressindex',)
-_i34 = ('p2wshaddressindex',)
-_i35 = ('unknownoutputindex',)
-_i36 = ('fundedaddressindex',)
-_i37 = ('emptyaddressindex',)
+_i1 = ('minute10', 'minute30', 'hour1', 'hour4', 'hour12', 'day1', 'day3', 'week1', 'month1', 'month3', 'month6', 'year1', 'year10', 'halvingepoch', 'difficultyepoch', 'height')
+_i2 = ('minute10', 'minute30', 'hour1', 'hour4', 'hour12', 'day1', 'day3', 'week1', 'month1', 'month3', 'month6', 'year1', 'year10', 'halvingepoch', 'difficultyepoch')
+_i3 = ('minute10',)
+_i4 = ('minute30',)
+_i5 = ('hour1',)
+_i6 = ('hour4',)
+_i7 = ('hour12',)
+_i8 = ('day1',)
+_i9 = ('day3',)
+_i10 = ('week1',)
+_i11 = ('month1',)
+_i12 = ('month3',)
+_i13 = ('month6',)
+_i14 = ('year1',)
+_i15 = ('year10',)
+_i16 = ('halvingepoch',)
+_i17 = ('difficultyepoch',)
+_i18 = ('height',)
+_i19 = ('txindex',)
+_i20 = ('txinindex',)
+_i21 = ('txoutindex',)
+_i22 = ('emptyoutputindex',)
+_i23 = ('opreturnindex',)
+_i24 = ('p2aaddressindex',)
+_i25 = ('p2msoutputindex',)
+_i26 = ('p2pk33addressindex',)
+_i27 = ('p2pk65addressindex',)
+_i28 = ('p2pkhaddressindex',)
+_i29 = ('p2shaddressindex',)
+_i30 = ('p2traddressindex',)
+_i31 = ('p2wpkhaddressindex',)
+_i32 = ('p2wshaddressindex',)
+_i33 = ('unknownoutputindex',)
+_i34 = ('fundedaddressindex',)
+_i35 = ('emptyaddressindex',)
 
 def _ep(c: BrkClientBase, n: str, i: Index) -> MetricEndpointBuilder[Any]:
     return MetricEndpointBuilder(c, n, i)
@@ -1604,8 +1596,6 @@ def _dep(c: BrkClientBase, n: str, i: Index) -> DateMetricEndpointBuilder[Any]:
 
 class _MetricPattern1By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute1')
-    def minute5(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute5')
     def minute10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute10')
     def minute30(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute30')
     def hour1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour1')
@@ -1633,8 +1623,6 @@ class MetricPattern1(Generic[T]):
 
 class _MetricPattern2By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute1')
-    def minute5(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute5')
     def minute10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute10')
     def minute30(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute30')
     def hour1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour1')
@@ -1661,7 +1649,7 @@ class MetricPattern2(Generic[T]):
 
 class _MetricPattern3By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute1')
+    def minute10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute10')
 
 class MetricPattern3(Generic[T]):
     by: _MetricPattern3By[T]
@@ -1673,7 +1661,7 @@ class MetricPattern3(Generic[T]):
 
 class _MetricPattern4By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute5(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute5')
+    def minute30(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute30')
 
 class MetricPattern4(Generic[T]):
     by: _MetricPattern4By[T]
@@ -1685,7 +1673,7 @@ class MetricPattern4(Generic[T]):
 
 class _MetricPattern5By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute10')
+    def hour1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour1')
 
 class MetricPattern5(Generic[T]):
     by: _MetricPattern5By[T]
@@ -1697,7 +1685,7 @@ class MetricPattern5(Generic[T]):
 
 class _MetricPattern6By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute30(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'minute30')
+    def hour4(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour4')
 
 class MetricPattern6(Generic[T]):
     by: _MetricPattern6By[T]
@@ -1709,7 +1697,7 @@ class MetricPattern6(Generic[T]):
 
 class _MetricPattern7By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def hour1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour1')
+    def hour12(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour12')
 
 class MetricPattern7(Generic[T]):
     by: _MetricPattern7By[T]
@@ -1721,7 +1709,7 @@ class MetricPattern7(Generic[T]):
 
 class _MetricPattern8By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def hour4(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour4')
+    def day1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'day1')
 
 class MetricPattern8(Generic[T]):
     by: _MetricPattern8By[T]
@@ -1733,7 +1721,7 @@ class MetricPattern8(Generic[T]):
 
 class _MetricPattern9By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def hour12(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'hour12')
+    def day3(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'day3')
 
 class MetricPattern9(Generic[T]):
     by: _MetricPattern9By[T]
@@ -1745,7 +1733,7 @@ class MetricPattern9(Generic[T]):
 
 class _MetricPattern10By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def day1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'day1')
+    def week1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'week1')
 
 class MetricPattern10(Generic[T]):
     by: _MetricPattern10By[T]
@@ -1757,7 +1745,7 @@ class MetricPattern10(Generic[T]):
 
 class _MetricPattern11By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def day3(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'day3')
+    def month1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month1')
 
 class MetricPattern11(Generic[T]):
     by: _MetricPattern11By[T]
@@ -1769,7 +1757,7 @@ class MetricPattern11(Generic[T]):
 
 class _MetricPattern12By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def week1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'week1')
+    def month3(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month3')
 
 class MetricPattern12(Generic[T]):
     by: _MetricPattern12By[T]
@@ -1781,7 +1769,7 @@ class MetricPattern12(Generic[T]):
 
 class _MetricPattern13By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def month1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month1')
+    def month6(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month6')
 
 class MetricPattern13(Generic[T]):
     by: _MetricPattern13By[T]
@@ -1793,7 +1781,7 @@ class MetricPattern13(Generic[T]):
 
 class _MetricPattern14By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def month3(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month3')
+    def year1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'year1')
 
 class MetricPattern14(Generic[T]):
     by: _MetricPattern14By[T]
@@ -1805,7 +1793,7 @@ class MetricPattern14(Generic[T]):
 
 class _MetricPattern15By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def month6(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'month6')
+    def year10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'year10')
 
 class MetricPattern15(Generic[T]):
     by: _MetricPattern15By[T]
@@ -1817,7 +1805,7 @@ class MetricPattern15(Generic[T]):
 
 class _MetricPattern16By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def year1(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'year1')
+    def halvingepoch(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'halvingepoch')
 
 class MetricPattern16(Generic[T]):
     by: _MetricPattern16By[T]
@@ -1829,7 +1817,7 @@ class MetricPattern16(Generic[T]):
 
 class _MetricPattern17By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def year10(self) -> DateMetricEndpointBuilder[T]: return _dep(self._c, self._n, 'year10')
+    def difficultyepoch(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'difficultyepoch')
 
 class MetricPattern17(Generic[T]):
     by: _MetricPattern17By[T]
@@ -1841,7 +1829,7 @@ class MetricPattern17(Generic[T]):
 
 class _MetricPattern18By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def halvingepoch(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'halvingepoch')
+    def height(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'height')
 
 class MetricPattern18(Generic[T]):
     by: _MetricPattern18By[T]
@@ -1853,7 +1841,7 @@ class MetricPattern18(Generic[T]):
 
 class _MetricPattern19By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def difficultyepoch(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'difficultyepoch')
+    def txindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'txindex')
 
 class MetricPattern19(Generic[T]):
     by: _MetricPattern19By[T]
@@ -1865,7 +1853,7 @@ class MetricPattern19(Generic[T]):
 
 class _MetricPattern20By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def height(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'height')
+    def txinindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'txinindex')
 
 class MetricPattern20(Generic[T]):
     by: _MetricPattern20By[T]
@@ -1877,7 +1865,7 @@ class MetricPattern20(Generic[T]):
 
 class _MetricPattern21By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def txindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'txindex')
+    def txoutindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'txoutindex')
 
 class MetricPattern21(Generic[T]):
     by: _MetricPattern21By[T]
@@ -1889,7 +1877,7 @@ class MetricPattern21(Generic[T]):
 
 class _MetricPattern22By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def txinindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'txinindex')
+    def emptyoutputindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'emptyoutputindex')
 
 class MetricPattern22(Generic[T]):
     by: _MetricPattern22By[T]
@@ -1901,7 +1889,7 @@ class MetricPattern22(Generic[T]):
 
 class _MetricPattern23By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def txoutindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'txoutindex')
+    def opreturnindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'opreturnindex')
 
 class MetricPattern23(Generic[T]):
     by: _MetricPattern23By[T]
@@ -1913,7 +1901,7 @@ class MetricPattern23(Generic[T]):
 
 class _MetricPattern24By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def emptyoutputindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'emptyoutputindex')
+    def p2aaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2aaddressindex')
 
 class MetricPattern24(Generic[T]):
     by: _MetricPattern24By[T]
@@ -1925,7 +1913,7 @@ class MetricPattern24(Generic[T]):
 
 class _MetricPattern25By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def opreturnindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'opreturnindex')
+    def p2msoutputindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2msoutputindex')
 
 class MetricPattern25(Generic[T]):
     by: _MetricPattern25By[T]
@@ -1937,7 +1925,7 @@ class MetricPattern25(Generic[T]):
 
 class _MetricPattern26By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2aaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2aaddressindex')
+    def p2pk33addressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2pk33addressindex')
 
 class MetricPattern26(Generic[T]):
     by: _MetricPattern26By[T]
@@ -1949,7 +1937,7 @@ class MetricPattern26(Generic[T]):
 
 class _MetricPattern27By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2msoutputindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2msoutputindex')
+    def p2pk65addressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2pk65addressindex')
 
 class MetricPattern27(Generic[T]):
     by: _MetricPattern27By[T]
@@ -1961,7 +1949,7 @@ class MetricPattern27(Generic[T]):
 
 class _MetricPattern28By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2pk33addressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2pk33addressindex')
+    def p2pkhaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2pkhaddressindex')
 
 class MetricPattern28(Generic[T]):
     by: _MetricPattern28By[T]
@@ -1973,7 +1961,7 @@ class MetricPattern28(Generic[T]):
 
 class _MetricPattern29By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2pk65addressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2pk65addressindex')
+    def p2shaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2shaddressindex')
 
 class MetricPattern29(Generic[T]):
     by: _MetricPattern29By[T]
@@ -1985,7 +1973,7 @@ class MetricPattern29(Generic[T]):
 
 class _MetricPattern30By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2pkhaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2pkhaddressindex')
+    def p2traddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2traddressindex')
 
 class MetricPattern30(Generic[T]):
     by: _MetricPattern30By[T]
@@ -1997,7 +1985,7 @@ class MetricPattern30(Generic[T]):
 
 class _MetricPattern31By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2shaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2shaddressindex')
+    def p2wpkhaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2wpkhaddressindex')
 
 class MetricPattern31(Generic[T]):
     by: _MetricPattern31By[T]
@@ -2009,7 +1997,7 @@ class MetricPattern31(Generic[T]):
 
 class _MetricPattern32By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2traddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2traddressindex')
+    def p2wshaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2wshaddressindex')
 
 class MetricPattern32(Generic[T]):
     by: _MetricPattern32By[T]
@@ -2021,7 +2009,7 @@ class MetricPattern32(Generic[T]):
 
 class _MetricPattern33By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2wpkhaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2wpkhaddressindex')
+    def unknownoutputindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'unknownoutputindex')
 
 class MetricPattern33(Generic[T]):
     by: _MetricPattern33By[T]
@@ -2033,7 +2021,7 @@ class MetricPattern33(Generic[T]):
 
 class _MetricPattern34By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2wshaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'p2wshaddressindex')
+    def fundedaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'fundedaddressindex')
 
 class MetricPattern34(Generic[T]):
     by: _MetricPattern34By[T]
@@ -2045,7 +2033,7 @@ class MetricPattern34(Generic[T]):
 
 class _MetricPattern35By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def unknownoutputindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'unknownoutputindex')
+    def emptyaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'emptyaddressindex')
 
 class MetricPattern35(Generic[T]):
     by: _MetricPattern35By[T]
@@ -2054,30 +2042,6 @@ class MetricPattern35(Generic[T]):
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i35)
     def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i35 else None
-
-class _MetricPattern36By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def fundedaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'fundedaddressindex')
-
-class MetricPattern36(Generic[T]):
-    by: _MetricPattern36By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _MetricPattern36By(c, n)
-    @property
-    def name(self) -> str: return self._n
-    def indexes(self) -> List[str]: return list(_i36)
-    def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i36 else None
-
-class _MetricPattern37By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def emptyaddressindex(self) -> MetricEndpointBuilder[T]: return _ep(self._c, self._n, 'emptyaddressindex')
-
-class MetricPattern37(Generic[T]):
-    by: _MetricPattern37By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _MetricPattern37By(c, n)
-    @property
-    def name(self) -> str: return self._n
-    def indexes(self) -> List[str]: return list(_i37)
-    def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i37 else None
 
 # Reusable structural pattern classes
 
@@ -2105,9 +2069,9 @@ class AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSe
         self.adjusted_value_destroyed_24h: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'adjusted_value_destroyed_24h'))
         self.adjusted_value_destroyed_30d: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'adjusted_value_destroyed_30d'))
         self.adjusted_value_destroyed_7d: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'adjusted_value_destroyed_7d'))
-        self.cap_raw: MetricPattern20[CentsSats] = MetricPattern20(client, _m(acc, 'cap_raw'))
+        self.cap_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'cap_raw'))
         self.capitulation_flow: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'capitulation_flow'))
-        self.investor_cap_raw: MetricPattern20[CentsSquaredSats] = MetricPattern20(client, _m(acc, 'investor_cap_raw'))
+        self.investor_cap_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_raw'))
         self.investor_price: SatsUsdPattern = SatsUsdPattern(client, _m(acc, 'investor_price'))
         self.investor_price_cents: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'investor_price_cents'))
         self.investor_price_extra: RatioPattern2 = RatioPattern2(client, _m(acc, 'investor_price_ratio'))
@@ -2217,9 +2181,9 @@ class AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSe
         self.adjusted_value_destroyed_24h: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'adjusted_value_destroyed_24h'))
         self.adjusted_value_destroyed_30d: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'adjusted_value_destroyed_30d'))
         self.adjusted_value_destroyed_7d: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'adjusted_value_destroyed_7d'))
-        self.cap_raw: MetricPattern20[CentsSats] = MetricPattern20(client, _m(acc, 'cap_raw'))
+        self.cap_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'cap_raw'))
         self.capitulation_flow: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'capitulation_flow'))
-        self.investor_cap_raw: MetricPattern20[CentsSquaredSats] = MetricPattern20(client, _m(acc, 'investor_cap_raw'))
+        self.investor_cap_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_raw'))
         self.investor_price: SatsUsdPattern = SatsUsdPattern(client, _m(acc, 'investor_price'))
         self.investor_price_cents: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'investor_price_cents'))
         self.investor_price_extra: RatioPattern2 = RatioPattern2(client, _m(acc, 'investor_price_ratio'))
@@ -2295,9 +2259,9 @@ class CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTo
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.cap_raw: MetricPattern20[CentsSats] = MetricPattern20(client, _m(acc, 'cap_raw'))
+        self.cap_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'cap_raw'))
         self.capitulation_flow: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'capitulation_flow'))
-        self.investor_cap_raw: MetricPattern20[CentsSquaredSats] = MetricPattern20(client, _m(acc, 'investor_cap_raw'))
+        self.investor_cap_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_raw'))
         self.investor_price: SatsUsdPattern = SatsUsdPattern(client, _m(acc, 'investor_price'))
         self.investor_price_cents: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'investor_price_cents'))
         self.investor_price_extra: RatioPattern2 = RatioPattern2(client, _m(acc, 'investor_price_ratio'))
@@ -2388,9 +2352,9 @@ class CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTo
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.cap_raw: MetricPattern20[CentsSats] = MetricPattern20(client, _m(acc, 'cap_raw'))
+        self.cap_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'cap_raw'))
         self.capitulation_flow: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'capitulation_flow'))
-        self.investor_cap_raw: MetricPattern20[CentsSquaredSats] = MetricPattern20(client, _m(acc, 'investor_cap_raw'))
+        self.investor_cap_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_raw'))
         self.investor_price: SatsUsdPattern = SatsUsdPattern(client, _m(acc, 'investor_price'))
         self.investor_price_cents: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'investor_price_cents'))
         self.investor_price_extra: RatioPattern2 = RatioPattern2(client, _m(acc, 'investor_price_ratio'))
@@ -2629,11 +2593,11 @@ class GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern:
         """Create pattern node with accumulated metric name."""
         self.greed_index: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'greed_index'))
         self.invested_capital_in_loss: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'invested_capital_in_loss'))
-        self.invested_capital_in_loss_raw: MetricPattern20[CentsSats] = MetricPattern20(client, _m(acc, 'invested_capital_in_loss_raw'))
+        self.invested_capital_in_loss_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'invested_capital_in_loss_raw'))
         self.invested_capital_in_profit: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'invested_capital_in_profit'))
-        self.invested_capital_in_profit_raw: MetricPattern20[CentsSats] = MetricPattern20(client, _m(acc, 'invested_capital_in_profit_raw'))
-        self.investor_cap_in_loss_raw: MetricPattern20[CentsSquaredSats] = MetricPattern20(client, _m(acc, 'investor_cap_in_loss_raw'))
-        self.investor_cap_in_profit_raw: MetricPattern20[CentsSquaredSats] = MetricPattern20(client, _m(acc, 'investor_cap_in_profit_raw'))
+        self.invested_capital_in_profit_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'invested_capital_in_profit_raw'))
+        self.investor_cap_in_loss_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_in_loss_raw'))
+        self.investor_cap_in_profit_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_in_profit_raw'))
         self.neg_unrealized_loss: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'neg_unrealized_loss'))
         self.net_sentiment: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'net_sentiment'))
         self.net_unrealized_pnl: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'net_unrealized_pnl'))
@@ -2652,11 +2616,11 @@ class GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern:
         """Create pattern node with accumulated metric name."""
         self.greed_index: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'greed_index'))
         self.invested_capital_in_loss: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'invested_capital_in_loss'))
-        self.invested_capital_in_loss_raw: MetricPattern20[CentsSats] = MetricPattern20(client, _m(acc, 'invested_capital_in_loss_raw'))
+        self.invested_capital_in_loss_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'invested_capital_in_loss_raw'))
         self.invested_capital_in_profit: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'invested_capital_in_profit'))
-        self.invested_capital_in_profit_raw: MetricPattern20[CentsSats] = MetricPattern20(client, _m(acc, 'invested_capital_in_profit_raw'))
-        self.investor_cap_in_loss_raw: MetricPattern20[CentsSquaredSats] = MetricPattern20(client, _m(acc, 'investor_cap_in_loss_raw'))
-        self.investor_cap_in_profit_raw: MetricPattern20[CentsSquaredSats] = MetricPattern20(client, _m(acc, 'investor_cap_in_profit_raw'))
+        self.invested_capital_in_profit_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'invested_capital_in_profit_raw'))
+        self.investor_cap_in_loss_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_in_loss_raw'))
+        self.investor_cap_in_profit_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_in_profit_raw'))
         self.neg_unrealized_loss: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'neg_unrealized_loss'))
         self.net_sentiment: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'net_sentiment'))
         self.net_unrealized_pnl: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'net_unrealized_pnl'))
@@ -2784,17 +2748,17 @@ class AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern:
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.average: MetricPattern20[StoredU64] = MetricPattern20(client, _m(acc, 'average'))
-        self.cumulative: MetricPattern20[StoredU64] = MetricPattern20(client, _m(acc, 'cumulative'))
-        self.max: MetricPattern20[StoredU64] = MetricPattern20(client, _m(acc, 'max'))
-        self.median: MetricPattern20[StoredU64] = MetricPattern20(client, _m(acc, 'median'))
-        self.min: MetricPattern20[StoredU64] = MetricPattern20(client, _m(acc, 'min'))
-        self.pct10: MetricPattern20[StoredU64] = MetricPattern20(client, _m(acc, 'pct10'))
-        self.pct25: MetricPattern20[StoredU64] = MetricPattern20(client, _m(acc, 'pct25'))
-        self.pct75: MetricPattern20[StoredU64] = MetricPattern20(client, _m(acc, 'pct75'))
-        self.pct90: MetricPattern20[StoredU64] = MetricPattern20(client, _m(acc, 'pct90'))
+        self.average: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'average'))
+        self.cumulative: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'cumulative'))
+        self.max: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'max'))
+        self.median: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'median'))
+        self.min: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'min'))
+        self.pct10: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'pct10'))
+        self.pct25: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'pct25'))
+        self.pct75: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'pct75'))
+        self.pct90: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'pct90'))
         self.rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc)
-        self.sum: MetricPattern20[StoredU64] = MetricPattern20(client, _m(acc, 'sum'))
+        self.sum: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'sum'))
 
 class AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
     """Pattern struct for repeated tree structure."""
@@ -2803,7 +2767,7 @@ class AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
         """Create pattern node with accumulated metric name."""
         self.average: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'average'))
         self.cumulative: MetricPattern1[StoredU64] = MetricPattern1(client, _m(acc, 'cumulative'))
-        self.height: MetricPattern20[StoredU64] = MetricPattern20(client, acc)
+        self.height: MetricPattern18[StoredU64] = MetricPattern18(client, acc)
         self.max: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'max'))
         self.median: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'median'))
         self.min: _1y24h30d7dPattern[StoredU64] = _1y24h30d7dPattern(client, _m(acc, 'min'))
@@ -2895,7 +2859,7 @@ class AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(Generic[T]):
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
         self.average: _1y24h30d7dPattern[T] = _1y24h30d7dPattern(client, _m(acc, 'average'))
-        self.height: MetricPattern20[T] = MetricPattern20(client, acc)
+        self.height: MetricPattern18[T] = MetricPattern18(client, acc)
         self.max: _1y24h30d7dPattern[T] = _1y24h30d7dPattern(client, _m(acc, 'max'))
         self.median: _1y24h30d7dPattern[T] = _1y24h30d7dPattern(client, _m(acc, 'median'))
         self.min: _1y24h30d7dPattern[T] = _1y24h30d7dPattern(client, _m(acc, 'min'))
@@ -2909,14 +2873,14 @@ class AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(Generic[T]):
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.average: MetricPattern20[T] = MetricPattern20(client, _m(acc, 'average'))
-        self.max: MetricPattern20[T] = MetricPattern20(client, _m(acc, 'max'))
-        self.median: MetricPattern20[T] = MetricPattern20(client, _m(acc, 'median'))
-        self.min: MetricPattern20[T] = MetricPattern20(client, _m(acc, 'min'))
-        self.pct10: MetricPattern20[T] = MetricPattern20(client, _m(acc, 'pct10'))
-        self.pct25: MetricPattern20[T] = MetricPattern20(client, _m(acc, 'pct25'))
-        self.pct75: MetricPattern20[T] = MetricPattern20(client, _m(acc, 'pct75'))
-        self.pct90: MetricPattern20[T] = MetricPattern20(client, _m(acc, 'pct90'))
+        self.average: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'average'))
+        self.max: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'max'))
+        self.median: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'median'))
+        self.min: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'min'))
+        self.pct10: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'pct10'))
+        self.pct25: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'pct25'))
+        self.pct75: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'pct75'))
+        self.pct90: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'pct90'))
 
 class _10y2y3y4y5y6y8yPattern:
     """Pattern struct for repeated tree structure."""
@@ -2940,9 +2904,9 @@ class _1y24h30d7dBtcSatsUsdPattern:
         self._24h: BtcSatsUsdPattern = BtcSatsUsdPattern(client, _m(acc, '24h'))
         self._30d: BtcSatsUsdPattern = BtcSatsUsdPattern(client, _m(acc, '30d'))
         self._7d: BtcSatsUsdPattern = BtcSatsUsdPattern(client, _m(acc, '7d'))
-        self.btc: MetricPattern20[Bitcoin] = MetricPattern20(client, _m(acc, 'btc'))
-        self.sats: MetricPattern20[Sats] = MetricPattern20(client, acc)
-        self.usd: MetricPattern20[Dollars] = MetricPattern20(client, _m(acc, 'usd'))
+        self.btc: MetricPattern18[Bitcoin] = MetricPattern18(client, _m(acc, 'btc'))
+        self.sats: MetricPattern18[Sats] = MetricPattern18(client, acc)
+        self.usd: MetricPattern18[Dollars] = MetricPattern18(client, _m(acc, 'usd'))
 
 class ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
@@ -3027,8 +2991,8 @@ class CoinblocksCoindaysSatblocksSatdaysSentPattern:
         """Create pattern node with accumulated metric name."""
         self.coinblocks_destroyed: CumulativeHeightSumPattern[StoredF64] = CumulativeHeightSumPattern(client, _m(acc, 'coinblocks_destroyed'))
         self.coindays_destroyed: CumulativeHeightSumPattern[StoredF64] = CumulativeHeightSumPattern(client, _m(acc, 'coindays_destroyed'))
-        self.satblocks_destroyed: MetricPattern20[Sats] = MetricPattern20(client, _m(acc, 'satblocks_destroyed'))
-        self.satdays_destroyed: MetricPattern20[Sats] = MetricPattern20(client, _m(acc, 'satdays_destroyed'))
+        self.satblocks_destroyed: MetricPattern18[Sats] = MetricPattern18(client, _m(acc, 'satblocks_destroyed'))
+        self.satdays_destroyed: MetricPattern18[Sats] = MetricPattern18(client, _m(acc, 'satdays_destroyed'))
         self.sent: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent'))
         self.sent_14d_ema: BtcSatsUsdPattern = BtcSatsUsdPattern(client, _m(acc, 'sent_14d_ema'))
 
@@ -3116,7 +3080,7 @@ class _6bBlockTxindexPattern(Generic[T]):
         """Create pattern node with accumulated metric name."""
         self._6b: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern[T] = AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, '6b'))
         self.block: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern[T] = AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc)
-        self.txindex: MetricPattern21[T] = MetricPattern21(client, acc)
+        self.txindex: MetricPattern19[T] = MetricPattern19(client, acc)
 
 class CumulativeHeightSumPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
@@ -3124,7 +3088,7 @@ class CumulativeHeightSumPattern(Generic[T]):
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
         self.cumulative: MetricPattern1[T] = MetricPattern1(client, _m(acc, 'cumulative'))
-        self.height: MetricPattern20[T] = MetricPattern20(client, acc)
+        self.height: MetricPattern18[T] = MetricPattern18(client, acc)
         self.sum: _1y24h30d7dPattern[T] = _1y24h30d7dPattern(client, acc)
 
 class _30dCountPattern:
@@ -3149,7 +3113,7 @@ class CumulativeHeightPattern:
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
         self.cumulative: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'cumulative'))
-        self.height: MetricPattern20[Dollars] = MetricPattern20(client, acc)
+        self.height: MetricPattern18[Dollars] = MetricPattern18(client, acc)
 
 class MaxMinPattern:
     """Pattern struct for repeated tree structure."""
@@ -3208,14 +3172,14 @@ class MetricsTree_Blocks_Time:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.timestamp: MetricPattern1[Timestamp] = MetricPattern1(client, 'timestamp')
-        self.date: MetricPattern20[Date] = MetricPattern20(client, 'date')
-        self.timestamp_monotonic: MetricPattern20[Timestamp] = MetricPattern20(client, 'timestamp_monotonic')
+        self.date: MetricPattern18[Date] = MetricPattern18(client, 'date')
+        self.timestamp_monotonic: MetricPattern18[Timestamp] = MetricPattern18(client, 'timestamp_monotonic')
 
 class MetricsTree_Blocks_Weight:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.base: MetricPattern20[Weight] = MetricPattern20(client, 'block_weight')
+        self.base: MetricPattern18[Weight] = MetricPattern18(client, 'block_weight')
         self.cumulative: MetricPattern1[Weight] = MetricPattern1(client, 'block_weight_cumulative')
         self.sum: _1y24h30d7dPattern[Weight] = _1y24h30d7dPattern(client, 'block_weight_sum')
         self.average: _1y24h30d7dPattern[Weight] = _1y24h30d7dPattern(client, 'block_weight_average')
@@ -3234,37 +3198,37 @@ class MetricsTree_Blocks_Count:
         self.block_count_target: MetricPattern1[StoredU64] = MetricPattern1(client, 'block_count_target')
         self.block_count: CumulativeHeightSumPattern[StoredU32] = CumulativeHeightSumPattern(client, 'block_count')
         self.block_count_sum: _1y24h30d7dPattern[StoredU32] = _1y24h30d7dPattern(client, 'block_count_sum')
-        self.height_1h_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_1h_ago')
-        self.height_24h_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_24h_ago')
-        self.height_3d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_3d_ago')
-        self.height_1w_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_1w_ago')
-        self.height_8d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_8d_ago')
-        self.height_9d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_9d_ago')
-        self.height_12d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_12d_ago')
-        self.height_13d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_13d_ago')
-        self.height_2w_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_2w_ago')
-        self.height_21d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_21d_ago')
-        self.height_26d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_26d_ago')
-        self.height_1m_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_1m_ago')
-        self.height_34d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_34d_ago')
-        self.height_55d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_55d_ago')
-        self.height_2m_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_2m_ago')
-        self.height_89d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_89d_ago')
-        self.height_111d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_111d_ago')
-        self.height_144d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_144d_ago')
-        self.height_3m_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_3m_ago')
-        self.height_6m_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_6m_ago')
-        self.height_200d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_200d_ago')
-        self.height_350d_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_350d_ago')
-        self.height_1y_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_1y_ago')
-        self.height_2y_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_2y_ago')
-        self.height_200w_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_200w_ago')
-        self.height_3y_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_3y_ago')
-        self.height_4y_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_4y_ago')
-        self.height_5y_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_5y_ago')
-        self.height_6y_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_6y_ago')
-        self.height_8y_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_8y_ago')
-        self.height_10y_ago: MetricPattern20[Height] = MetricPattern20(client, 'height_10y_ago')
+        self.height_1h_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_1h_ago')
+        self.height_24h_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_24h_ago')
+        self.height_3d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_3d_ago')
+        self.height_1w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_1w_ago')
+        self.height_8d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_8d_ago')
+        self.height_9d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_9d_ago')
+        self.height_12d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_12d_ago')
+        self.height_13d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_13d_ago')
+        self.height_2w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_2w_ago')
+        self.height_21d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_21d_ago')
+        self.height_26d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_26d_ago')
+        self.height_1m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_1m_ago')
+        self.height_34d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_34d_ago')
+        self.height_55d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_55d_ago')
+        self.height_2m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_2m_ago')
+        self.height_89d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_89d_ago')
+        self.height_111d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_111d_ago')
+        self.height_144d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_144d_ago')
+        self.height_3m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_3m_ago')
+        self.height_6m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_6m_ago')
+        self.height_200d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_200d_ago')
+        self.height_350d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_350d_ago')
+        self.height_1y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_1y_ago')
+        self.height_2y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_2y_ago')
+        self.height_200w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_200w_ago')
+        self.height_3y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_3y_ago')
+        self.height_4y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_4y_ago')
+        self.height_5y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_5y_ago')
+        self.height_6y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_6y_ago')
+        self.height_8y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_8y_ago')
+        self.height_10y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_10y_ago')
 
 class MetricsTree_Blocks_Halving:
     """Metrics tree node."""
@@ -3293,10 +3257,10 @@ class MetricsTree_Blocks:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.blockhash: MetricPattern20[BlockHash] = MetricPattern20(client, 'blockhash')
+        self.blockhash: MetricPattern18[BlockHash] = MetricPattern18(client, 'blockhash')
         self.difficulty: MetricsTree_Blocks_Difficulty = MetricsTree_Blocks_Difficulty(client)
         self.time: MetricsTree_Blocks_Time = MetricsTree_Blocks_Time(client)
-        self.total_size: MetricPattern20[StoredU64] = MetricPattern20(client, 'total_size')
+        self.total_size: MetricPattern18[StoredU64] = MetricPattern18(client, 'total_size')
         self.weight: MetricsTree_Blocks_Weight = MetricsTree_Blocks_Weight(client)
         self.count: MetricsTree_Blocks_Count = MetricsTree_Blocks_Count(client)
         self.interval: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern[Timestamp] = AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, 'block_interval')
@@ -3310,7 +3274,7 @@ class MetricsTree_Transactions_Count:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.tx_count: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'tx_count')
-        self.is_coinbase: MetricPattern21[StoredBool] = MetricPattern21(client, 'is_coinbase')
+        self.is_coinbase: MetricPattern19[StoredBool] = MetricPattern19(client, 'is_coinbase')
 
 class MetricsTree_Transactions_Size:
     """Metrics tree node."""
@@ -3323,8 +3287,8 @@ class MetricsTree_Transactions_Fees:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.input_value: MetricPattern21[Sats] = MetricPattern21(client, 'input_value')
-        self.output_value: MetricPattern21[Sats] = MetricPattern21(client, 'output_value')
+        self.input_value: MetricPattern19[Sats] = MetricPattern19(client, 'input_value')
+        self.output_value: MetricPattern19[Sats] = MetricPattern19(client, 'output_value')
         self.fee: _6bBlockTxindexPattern[Sats] = _6bBlockTxindexPattern(client, 'fee')
         self.fee_rate: _6bBlockTxindexPattern[FeeRate] = _6bBlockTxindexPattern(client, 'fee_rate')
 
@@ -3351,16 +3315,16 @@ class MetricsTree_Transactions:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_txindex: MetricPattern20[TxIndex] = MetricPattern20(client, 'first_txindex')
-        self.height: MetricPattern21[Height] = MetricPattern21(client, 'height')
-        self.txid: MetricPattern21[Txid] = MetricPattern21(client, 'txid')
-        self.txversion: MetricPattern21[TxVersion] = MetricPattern21(client, 'txversion')
-        self.rawlocktime: MetricPattern21[RawLockTime] = MetricPattern21(client, 'rawlocktime')
-        self.base_size: MetricPattern21[StoredU32] = MetricPattern21(client, 'base_size')
-        self.total_size: MetricPattern21[StoredU32] = MetricPattern21(client, 'total_size')
-        self.is_explicitly_rbf: MetricPattern21[StoredBool] = MetricPattern21(client, 'is_explicitly_rbf')
-        self.first_txinindex: MetricPattern21[TxInIndex] = MetricPattern21(client, 'first_txinindex')
-        self.first_txoutindex: MetricPattern21[TxOutIndex] = MetricPattern21(client, 'first_txoutindex')
+        self.first_txindex: MetricPattern18[TxIndex] = MetricPattern18(client, 'first_txindex')
+        self.height: MetricPattern19[Height] = MetricPattern19(client, 'height')
+        self.txid: MetricPattern19[Txid] = MetricPattern19(client, 'txid')
+        self.txversion: MetricPattern19[TxVersion] = MetricPattern19(client, 'txversion')
+        self.rawlocktime: MetricPattern19[RawLockTime] = MetricPattern19(client, 'rawlocktime')
+        self.base_size: MetricPattern19[StoredU32] = MetricPattern19(client, 'base_size')
+        self.total_size: MetricPattern19[StoredU32] = MetricPattern19(client, 'total_size')
+        self.is_explicitly_rbf: MetricPattern19[StoredBool] = MetricPattern19(client, 'is_explicitly_rbf')
+        self.first_txinindex: MetricPattern19[TxInIndex] = MetricPattern19(client, 'first_txinindex')
+        self.first_txoutindex: MetricPattern19[TxOutIndex] = MetricPattern19(client, 'first_txoutindex')
         self.count: MetricsTree_Transactions_Count = MetricsTree_Transactions_Count(client)
         self.size: MetricsTree_Transactions_Size = MetricsTree_Transactions_Size(client)
         self.fees: MetricsTree_Transactions_Fees = MetricsTree_Transactions_Fees(client)
@@ -3371,18 +3335,18 @@ class MetricsTree_Inputs_Spent:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.txoutindex: MetricPattern22[TxOutIndex] = MetricPattern22(client, 'txoutindex')
-        self.value: MetricPattern22[Sats] = MetricPattern22(client, 'value')
+        self.txoutindex: MetricPattern20[TxOutIndex] = MetricPattern20(client, 'txoutindex')
+        self.value: MetricPattern20[Sats] = MetricPattern20(client, 'value')
 
 class MetricsTree_Inputs:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_txinindex: MetricPattern20[TxInIndex] = MetricPattern20(client, 'first_txinindex')
-        self.outpoint: MetricPattern22[OutPoint] = MetricPattern22(client, 'outpoint')
-        self.txindex: MetricPattern22[TxIndex] = MetricPattern22(client, 'txindex')
-        self.outputtype: MetricPattern22[OutputType] = MetricPattern22(client, 'outputtype')
-        self.typeindex: MetricPattern22[TypeIndex] = MetricPattern22(client, 'typeindex')
+        self.first_txinindex: MetricPattern18[TxInIndex] = MetricPattern18(client, 'first_txinindex')
+        self.outpoint: MetricPattern20[OutPoint] = MetricPattern20(client, 'outpoint')
+        self.txindex: MetricPattern20[TxIndex] = MetricPattern20(client, 'txindex')
+        self.outputtype: MetricPattern20[OutputType] = MetricPattern20(client, 'outputtype')
+        self.typeindex: MetricPattern20[TypeIndex] = MetricPattern20(client, 'typeindex')
         self.spent: MetricsTree_Inputs_Spent = MetricsTree_Inputs_Spent(client)
         self.count: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern = AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(client, 'input_count')
 
@@ -3390,7 +3354,7 @@ class MetricsTree_Outputs_Spent:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.txinindex: MetricPattern23[TxInIndex] = MetricPattern23(client, 'txinindex')
+        self.txinindex: MetricPattern21[TxInIndex] = MetricPattern21(client, 'txinindex')
 
 class MetricsTree_Outputs_Count:
     """Metrics tree node."""
@@ -3403,11 +3367,11 @@ class MetricsTree_Outputs:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_txoutindex: MetricPattern20[TxOutIndex] = MetricPattern20(client, 'first_txoutindex')
-        self.value: MetricPattern23[Sats] = MetricPattern23(client, 'value')
-        self.outputtype: MetricPattern23[OutputType] = MetricPattern23(client, 'outputtype')
-        self.typeindex: MetricPattern23[TypeIndex] = MetricPattern23(client, 'typeindex')
-        self.txindex: MetricPattern23[TxIndex] = MetricPattern23(client, 'txindex')
+        self.first_txoutindex: MetricPattern18[TxOutIndex] = MetricPattern18(client, 'first_txoutindex')
+        self.value: MetricPattern21[Sats] = MetricPattern21(client, 'value')
+        self.outputtype: MetricPattern21[OutputType] = MetricPattern21(client, 'outputtype')
+        self.typeindex: MetricPattern21[TypeIndex] = MetricPattern21(client, 'typeindex')
+        self.txindex: MetricPattern21[TxIndex] = MetricPattern21(client, 'txindex')
         self.spent: MetricsTree_Outputs_Spent = MetricsTree_Outputs_Spent(client)
         self.count: MetricsTree_Outputs_Count = MetricsTree_Outputs_Count(client)
 
@@ -3415,22 +3379,22 @@ class MetricsTree_Addresses:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_p2pk65addressindex: MetricPattern20[P2PK65AddressIndex] = MetricPattern20(client, 'first_p2pk65addressindex')
-        self.first_p2pk33addressindex: MetricPattern20[P2PK33AddressIndex] = MetricPattern20(client, 'first_p2pk33addressindex')
-        self.first_p2pkhaddressindex: MetricPattern20[P2PKHAddressIndex] = MetricPattern20(client, 'first_p2pkhaddressindex')
-        self.first_p2shaddressindex: MetricPattern20[P2SHAddressIndex] = MetricPattern20(client, 'first_p2shaddressindex')
-        self.first_p2wpkhaddressindex: MetricPattern20[P2WPKHAddressIndex] = MetricPattern20(client, 'first_p2wpkhaddressindex')
-        self.first_p2wshaddressindex: MetricPattern20[P2WSHAddressIndex] = MetricPattern20(client, 'first_p2wshaddressindex')
-        self.first_p2traddressindex: MetricPattern20[P2TRAddressIndex] = MetricPattern20(client, 'first_p2traddressindex')
-        self.first_p2aaddressindex: MetricPattern20[P2AAddressIndex] = MetricPattern20(client, 'first_p2aaddressindex')
-        self.p2pk65bytes: MetricPattern29[P2PK65Bytes] = MetricPattern29(client, 'p2pk65bytes')
-        self.p2pk33bytes: MetricPattern28[P2PK33Bytes] = MetricPattern28(client, 'p2pk33bytes')
-        self.p2pkhbytes: MetricPattern30[P2PKHBytes] = MetricPattern30(client, 'p2pkhbytes')
-        self.p2shbytes: MetricPattern31[P2SHBytes] = MetricPattern31(client, 'p2shbytes')
-        self.p2wpkhbytes: MetricPattern33[P2WPKHBytes] = MetricPattern33(client, 'p2wpkhbytes')
-        self.p2wshbytes: MetricPattern34[P2WSHBytes] = MetricPattern34(client, 'p2wshbytes')
-        self.p2trbytes: MetricPattern32[P2TRBytes] = MetricPattern32(client, 'p2trbytes')
-        self.p2abytes: MetricPattern26[P2ABytes] = MetricPattern26(client, 'p2abytes')
+        self.first_p2pk65addressindex: MetricPattern18[P2PK65AddressIndex] = MetricPattern18(client, 'first_p2pk65addressindex')
+        self.first_p2pk33addressindex: MetricPattern18[P2PK33AddressIndex] = MetricPattern18(client, 'first_p2pk33addressindex')
+        self.first_p2pkhaddressindex: MetricPattern18[P2PKHAddressIndex] = MetricPattern18(client, 'first_p2pkhaddressindex')
+        self.first_p2shaddressindex: MetricPattern18[P2SHAddressIndex] = MetricPattern18(client, 'first_p2shaddressindex')
+        self.first_p2wpkhaddressindex: MetricPattern18[P2WPKHAddressIndex] = MetricPattern18(client, 'first_p2wpkhaddressindex')
+        self.first_p2wshaddressindex: MetricPattern18[P2WSHAddressIndex] = MetricPattern18(client, 'first_p2wshaddressindex')
+        self.first_p2traddressindex: MetricPattern18[P2TRAddressIndex] = MetricPattern18(client, 'first_p2traddressindex')
+        self.first_p2aaddressindex: MetricPattern18[P2AAddressIndex] = MetricPattern18(client, 'first_p2aaddressindex')
+        self.p2pk65bytes: MetricPattern27[P2PK65Bytes] = MetricPattern27(client, 'p2pk65bytes')
+        self.p2pk33bytes: MetricPattern26[P2PK33Bytes] = MetricPattern26(client, 'p2pk33bytes')
+        self.p2pkhbytes: MetricPattern28[P2PKHBytes] = MetricPattern28(client, 'p2pkhbytes')
+        self.p2shbytes: MetricPattern29[P2SHBytes] = MetricPattern29(client, 'p2shbytes')
+        self.p2wpkhbytes: MetricPattern31[P2WPKHBytes] = MetricPattern31(client, 'p2wpkhbytes')
+        self.p2wshbytes: MetricPattern32[P2WSHBytes] = MetricPattern32(client, 'p2wshbytes')
+        self.p2trbytes: MetricPattern30[P2TRBytes] = MetricPattern30(client, 'p2trbytes')
+        self.p2abytes: MetricPattern24[P2ABytes] = MetricPattern24(client, 'p2abytes')
 
 class MetricsTree_Scripts_Count:
     """Metrics tree node."""
@@ -3467,14 +3431,14 @@ class MetricsTree_Scripts:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_emptyoutputindex: MetricPattern20[EmptyOutputIndex] = MetricPattern20(client, 'first_emptyoutputindex')
-        self.first_opreturnindex: MetricPattern20[OpReturnIndex] = MetricPattern20(client, 'first_opreturnindex')
-        self.first_p2msoutputindex: MetricPattern20[P2MSOutputIndex] = MetricPattern20(client, 'first_p2msoutputindex')
-        self.first_unknownoutputindex: MetricPattern20[UnknownOutputIndex] = MetricPattern20(client, 'first_unknownoutputindex')
-        self.empty_to_txindex: MetricPattern24[TxIndex] = MetricPattern24(client, 'txindex')
-        self.opreturn_to_txindex: MetricPattern25[TxIndex] = MetricPattern25(client, 'txindex')
-        self.p2ms_to_txindex: MetricPattern27[TxIndex] = MetricPattern27(client, 'txindex')
-        self.unknown_to_txindex: MetricPattern35[TxIndex] = MetricPattern35(client, 'txindex')
+        self.first_emptyoutputindex: MetricPattern18[EmptyOutputIndex] = MetricPattern18(client, 'first_emptyoutputindex')
+        self.first_opreturnindex: MetricPattern18[OpReturnIndex] = MetricPattern18(client, 'first_opreturnindex')
+        self.first_p2msoutputindex: MetricPattern18[P2MSOutputIndex] = MetricPattern18(client, 'first_p2msoutputindex')
+        self.first_unknownoutputindex: MetricPattern18[UnknownOutputIndex] = MetricPattern18(client, 'first_unknownoutputindex')
+        self.empty_to_txindex: MetricPattern22[TxIndex] = MetricPattern22(client, 'txindex')
+        self.opreturn_to_txindex: MetricPattern23[TxIndex] = MetricPattern23(client, 'txindex')
+        self.p2ms_to_txindex: MetricPattern25[TxIndex] = MetricPattern25(client, 'txindex')
+        self.unknown_to_txindex: MetricPattern33[TxIndex] = MetricPattern33(client, 'txindex')
         self.count: MetricsTree_Scripts_Count = MetricsTree_Scripts_Count(client)
         self.value: MetricsTree_Scripts_Value = MetricsTree_Scripts_Value(client)
         self.adoption: MetricsTree_Scripts_Adoption = MetricsTree_Scripts_Adoption(client)
@@ -3532,8 +3496,8 @@ class MetricsTree_Positions:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.block_position: MetricPattern20[BlkPosition] = MetricPattern20(client, 'position')
-        self.tx_position: MetricPattern21[BlkPosition] = MetricPattern21(client, 'position')
+        self.block_position: MetricPattern18[BlkPosition] = MetricPattern18(client, 'position')
+        self.tx_position: MetricPattern19[BlkPosition] = MetricPattern19(client, 'position')
 
 class MetricsTree_Cointime_Activity:
     """Metrics tree node."""
@@ -3596,8 +3560,8 @@ class MetricsTree_Cointime_ReserveRisk:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.vocdd_365d_median: MetricPattern20[StoredF64] = MetricPattern20(client, 'vocdd_365d_median')
-        self.hodl_bank: MetricPattern20[StoredF64] = MetricPattern20(client, 'hodl_bank')
+        self.vocdd_365d_median: MetricPattern18[StoredF64] = MetricPattern18(client, 'vocdd_365d_median')
+        self.hodl_bank: MetricPattern18[StoredF64] = MetricPattern18(client, 'hodl_bank')
         self.reserve_risk: MetricPattern1[StoredF64] = MetricPattern1(client, 'reserve_risk')
 
 class MetricsTree_Cointime:
@@ -3639,73 +3603,73 @@ class MetricsTree_Indexes_Address_P2pk33:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern28[P2PK33AddressIndex] = MetricPattern28(client, 'p2pk33addressindex')
+        self.identity: MetricPattern26[P2PK33AddressIndex] = MetricPattern26(client, 'p2pk33addressindex')
 
 class MetricsTree_Indexes_Address_P2pk65:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern29[P2PK65AddressIndex] = MetricPattern29(client, 'p2pk65addressindex')
+        self.identity: MetricPattern27[P2PK65AddressIndex] = MetricPattern27(client, 'p2pk65addressindex')
 
 class MetricsTree_Indexes_Address_P2pkh:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern30[P2PKHAddressIndex] = MetricPattern30(client, 'p2pkhaddressindex')
+        self.identity: MetricPattern28[P2PKHAddressIndex] = MetricPattern28(client, 'p2pkhaddressindex')
 
 class MetricsTree_Indexes_Address_P2sh:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern31[P2SHAddressIndex] = MetricPattern31(client, 'p2shaddressindex')
+        self.identity: MetricPattern29[P2SHAddressIndex] = MetricPattern29(client, 'p2shaddressindex')
 
 class MetricsTree_Indexes_Address_P2tr:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern32[P2TRAddressIndex] = MetricPattern32(client, 'p2traddressindex')
+        self.identity: MetricPattern30[P2TRAddressIndex] = MetricPattern30(client, 'p2traddressindex')
 
 class MetricsTree_Indexes_Address_P2wpkh:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern33[P2WPKHAddressIndex] = MetricPattern33(client, 'p2wpkhaddressindex')
+        self.identity: MetricPattern31[P2WPKHAddressIndex] = MetricPattern31(client, 'p2wpkhaddressindex')
 
 class MetricsTree_Indexes_Address_P2wsh:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern34[P2WSHAddressIndex] = MetricPattern34(client, 'p2wshaddressindex')
+        self.identity: MetricPattern32[P2WSHAddressIndex] = MetricPattern32(client, 'p2wshaddressindex')
 
 class MetricsTree_Indexes_Address_P2a:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern26[P2AAddressIndex] = MetricPattern26(client, 'p2aaddressindex')
+        self.identity: MetricPattern24[P2AAddressIndex] = MetricPattern24(client, 'p2aaddressindex')
 
 class MetricsTree_Indexes_Address_P2ms:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern27[P2MSOutputIndex] = MetricPattern27(client, 'p2msoutputindex')
+        self.identity: MetricPattern25[P2MSOutputIndex] = MetricPattern25(client, 'p2msoutputindex')
 
 class MetricsTree_Indexes_Address_Empty:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern24[EmptyOutputIndex] = MetricPattern24(client, 'emptyoutputindex')
+        self.identity: MetricPattern22[EmptyOutputIndex] = MetricPattern22(client, 'emptyoutputindex')
 
 class MetricsTree_Indexes_Address_Unknown:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern35[UnknownOutputIndex] = MetricPattern35(client, 'unknownoutputindex')
+        self.identity: MetricPattern33[UnknownOutputIndex] = MetricPattern33(client, 'unknownoutputindex')
 
 class MetricsTree_Indexes_Address_Opreturn:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern25[OpReturnIndex] = MetricPattern25(client, 'opreturnindex')
+        self.identity: MetricPattern23[OpReturnIndex] = MetricPattern23(client, 'opreturnindex')
 
 class MetricsTree_Indexes_Address:
     """Metrics tree node."""
@@ -3728,173 +3692,157 @@ class MetricsTree_Indexes_Height:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern20[Height] = MetricPattern20(client, 'height')
-        self.minute1: MetricPattern20[Minute1] = MetricPattern20(client, 'minute1')
-        self.minute5: MetricPattern20[Minute5] = MetricPattern20(client, 'minute5')
-        self.minute10: MetricPattern20[Minute10] = MetricPattern20(client, 'minute10')
-        self.minute30: MetricPattern20[Minute30] = MetricPattern20(client, 'minute30')
-        self.hour1: MetricPattern20[Hour1] = MetricPattern20(client, 'hour1')
-        self.hour4: MetricPattern20[Hour4] = MetricPattern20(client, 'hour4')
-        self.hour12: MetricPattern20[Hour12] = MetricPattern20(client, 'hour12')
-        self.day1: MetricPattern20[Day1] = MetricPattern20(client, 'day1')
-        self.day3: MetricPattern20[Day3] = MetricPattern20(client, 'day3')
-        self.difficultyepoch: MetricPattern20[DifficultyEpoch] = MetricPattern20(client, 'difficultyepoch')
-        self.halvingepoch: MetricPattern20[HalvingEpoch] = MetricPattern20(client, 'halvingepoch')
-        self.week1: MetricPattern20[Week1] = MetricPattern20(client, 'week1')
-        self.month1: MetricPattern20[Month1] = MetricPattern20(client, 'month1')
-        self.month3: MetricPattern20[Month3] = MetricPattern20(client, 'month3')
-        self.month6: MetricPattern20[Month6] = MetricPattern20(client, 'month6')
-        self.year1: MetricPattern20[Year1] = MetricPattern20(client, 'year1')
-        self.year10: MetricPattern20[Year10] = MetricPattern20(client, 'year10')
-        self.txindex_count: MetricPattern20[StoredU64] = MetricPattern20(client, 'txindex_count')
+        self.identity: MetricPattern18[Height] = MetricPattern18(client, 'height')
+        self.minute10: MetricPattern18[Minute10] = MetricPattern18(client, 'minute10')
+        self.minute30: MetricPattern18[Minute30] = MetricPattern18(client, 'minute30')
+        self.hour1: MetricPattern18[Hour1] = MetricPattern18(client, 'hour1')
+        self.hour4: MetricPattern18[Hour4] = MetricPattern18(client, 'hour4')
+        self.hour12: MetricPattern18[Hour12] = MetricPattern18(client, 'hour12')
+        self.day1: MetricPattern18[Day1] = MetricPattern18(client, 'day1')
+        self.day3: MetricPattern18[Day3] = MetricPattern18(client, 'day3')
+        self.difficultyepoch: MetricPattern18[DifficultyEpoch] = MetricPattern18(client, 'difficultyepoch')
+        self.halvingepoch: MetricPattern18[HalvingEpoch] = MetricPattern18(client, 'halvingepoch')
+        self.week1: MetricPattern18[Week1] = MetricPattern18(client, 'week1')
+        self.month1: MetricPattern18[Month1] = MetricPattern18(client, 'month1')
+        self.month3: MetricPattern18[Month3] = MetricPattern18(client, 'month3')
+        self.month6: MetricPattern18[Month6] = MetricPattern18(client, 'month6')
+        self.year1: MetricPattern18[Year1] = MetricPattern18(client, 'year1')
+        self.year10: MetricPattern18[Year10] = MetricPattern18(client, 'year10')
+        self.txindex_count: MetricPattern18[StoredU64] = MetricPattern18(client, 'txindex_count')
 
 class MetricsTree_Indexes_Difficultyepoch:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern19[DifficultyEpoch] = MetricPattern19(client, 'difficultyepoch')
-        self.first_height: MetricPattern19[Height] = MetricPattern19(client, 'first_height')
-        self.height_count: MetricPattern19[StoredU64] = MetricPattern19(client, 'height_count')
+        self.identity: MetricPattern17[DifficultyEpoch] = MetricPattern17(client, 'difficultyepoch')
+        self.first_height: MetricPattern17[Height] = MetricPattern17(client, 'first_height')
+        self.height_count: MetricPattern17[StoredU64] = MetricPattern17(client, 'height_count')
 
 class MetricsTree_Indexes_Halvingepoch:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern18[HalvingEpoch] = MetricPattern18(client, 'halvingepoch')
-        self.first_height: MetricPattern18[Height] = MetricPattern18(client, 'first_height')
-
-class MetricsTree_Indexes_Minute1:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern3[Minute1] = MetricPattern3(client, 'minute1')
-        self.first_height: MetricPattern3[Height] = MetricPattern3(client, 'minute1_first_height')
-
-class MetricsTree_Indexes_Minute5:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern4[Minute5] = MetricPattern4(client, 'minute5')
-        self.first_height: MetricPattern4[Height] = MetricPattern4(client, 'minute5_first_height')
+        self.identity: MetricPattern16[HalvingEpoch] = MetricPattern16(client, 'halvingepoch')
+        self.first_height: MetricPattern16[Height] = MetricPattern16(client, 'first_height')
 
 class MetricsTree_Indexes_Minute10:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern5[Minute10] = MetricPattern5(client, 'minute10')
-        self.first_height: MetricPattern5[Height] = MetricPattern5(client, 'minute10_first_height')
+        self.identity: MetricPattern3[Minute10] = MetricPattern3(client, 'minute10')
+        self.first_height: MetricPattern3[Height] = MetricPattern3(client, 'minute10_first_height')
 
 class MetricsTree_Indexes_Minute30:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern6[Minute30] = MetricPattern6(client, 'minute30')
-        self.first_height: MetricPattern6[Height] = MetricPattern6(client, 'minute30_first_height')
+        self.identity: MetricPattern4[Minute30] = MetricPattern4(client, 'minute30')
+        self.first_height: MetricPattern4[Height] = MetricPattern4(client, 'minute30_first_height')
 
 class MetricsTree_Indexes_Hour1:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern7[Hour1] = MetricPattern7(client, 'hour1')
-        self.first_height: MetricPattern7[Height] = MetricPattern7(client, 'hour1_first_height')
+        self.identity: MetricPattern5[Hour1] = MetricPattern5(client, 'hour1')
+        self.first_height: MetricPattern5[Height] = MetricPattern5(client, 'hour1_first_height')
 
 class MetricsTree_Indexes_Hour4:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern8[Hour4] = MetricPattern8(client, 'hour4')
-        self.first_height: MetricPattern8[Height] = MetricPattern8(client, 'hour4_first_height')
+        self.identity: MetricPattern6[Hour4] = MetricPattern6(client, 'hour4')
+        self.first_height: MetricPattern6[Height] = MetricPattern6(client, 'hour4_first_height')
 
 class MetricsTree_Indexes_Hour12:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern9[Hour12] = MetricPattern9(client, 'hour12')
-        self.first_height: MetricPattern9[Height] = MetricPattern9(client, 'hour12_first_height')
+        self.identity: MetricPattern7[Hour12] = MetricPattern7(client, 'hour12')
+        self.first_height: MetricPattern7[Height] = MetricPattern7(client, 'hour12_first_height')
 
 class MetricsTree_Indexes_Day1:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern10[Day1] = MetricPattern10(client, 'day1')
-        self.date: MetricPattern10[Date] = MetricPattern10(client, 'date')
-        self.first_height: MetricPattern10[Height] = MetricPattern10(client, 'first_height')
-        self.height_count: MetricPattern10[StoredU64] = MetricPattern10(client, 'height_count')
+        self.identity: MetricPattern8[Day1] = MetricPattern8(client, 'day1')
+        self.date: MetricPattern8[Date] = MetricPattern8(client, 'date')
+        self.first_height: MetricPattern8[Height] = MetricPattern8(client, 'first_height')
+        self.height_count: MetricPattern8[StoredU64] = MetricPattern8(client, 'height_count')
 
 class MetricsTree_Indexes_Day3:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern11[Day3] = MetricPattern11(client, 'day3')
-        self.first_height: MetricPattern11[Height] = MetricPattern11(client, 'day3_first_height')
+        self.identity: MetricPattern9[Day3] = MetricPattern9(client, 'day3')
+        self.first_height: MetricPattern9[Height] = MetricPattern9(client, 'day3_first_height')
 
 class MetricsTree_Indexes_Week1:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern12[Week1] = MetricPattern12(client, 'week1')
-        self.date: MetricPattern12[Date] = MetricPattern12(client, 'date')
-        self.first_height: MetricPattern12[Height] = MetricPattern12(client, 'week1_first_height')
+        self.identity: MetricPattern10[Week1] = MetricPattern10(client, 'week1')
+        self.date: MetricPattern10[Date] = MetricPattern10(client, 'date')
+        self.first_height: MetricPattern10[Height] = MetricPattern10(client, 'week1_first_height')
 
 class MetricsTree_Indexes_Month1:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern13[Month1] = MetricPattern13(client, 'month1')
-        self.date: MetricPattern13[Date] = MetricPattern13(client, 'date')
-        self.first_height: MetricPattern13[Height] = MetricPattern13(client, 'month1_first_height')
+        self.identity: MetricPattern11[Month1] = MetricPattern11(client, 'month1')
+        self.date: MetricPattern11[Date] = MetricPattern11(client, 'date')
+        self.first_height: MetricPattern11[Height] = MetricPattern11(client, 'month1_first_height')
 
 class MetricsTree_Indexes_Month3:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern14[Month3] = MetricPattern14(client, 'month3')
-        self.date: MetricPattern14[Date] = MetricPattern14(client, 'date')
-        self.first_height: MetricPattern14[Height] = MetricPattern14(client, 'month3_first_height')
+        self.identity: MetricPattern12[Month3] = MetricPattern12(client, 'month3')
+        self.date: MetricPattern12[Date] = MetricPattern12(client, 'date')
+        self.first_height: MetricPattern12[Height] = MetricPattern12(client, 'month3_first_height')
 
 class MetricsTree_Indexes_Month6:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern15[Month6] = MetricPattern15(client, 'month6')
-        self.date: MetricPattern15[Date] = MetricPattern15(client, 'date')
-        self.first_height: MetricPattern15[Height] = MetricPattern15(client, 'month6_first_height')
+        self.identity: MetricPattern13[Month6] = MetricPattern13(client, 'month6')
+        self.date: MetricPattern13[Date] = MetricPattern13(client, 'date')
+        self.first_height: MetricPattern13[Height] = MetricPattern13(client, 'month6_first_height')
 
 class MetricsTree_Indexes_Year1:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern16[Year1] = MetricPattern16(client, 'year1')
-        self.date: MetricPattern16[Date] = MetricPattern16(client, 'date')
-        self.first_height: MetricPattern16[Height] = MetricPattern16(client, 'year1_first_height')
+        self.identity: MetricPattern14[Year1] = MetricPattern14(client, 'year1')
+        self.date: MetricPattern14[Date] = MetricPattern14(client, 'date')
+        self.first_height: MetricPattern14[Height] = MetricPattern14(client, 'year1_first_height')
 
 class MetricsTree_Indexes_Year10:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern17[Year10] = MetricPattern17(client, 'year10')
-        self.date: MetricPattern17[Date] = MetricPattern17(client, 'date')
-        self.first_height: MetricPattern17[Height] = MetricPattern17(client, 'year10_first_height')
+        self.identity: MetricPattern15[Year10] = MetricPattern15(client, 'year10')
+        self.date: MetricPattern15[Date] = MetricPattern15(client, 'date')
+        self.first_height: MetricPattern15[Height] = MetricPattern15(client, 'year10_first_height')
 
 class MetricsTree_Indexes_Txindex:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern21[TxIndex] = MetricPattern21(client, 'txindex')
-        self.input_count: MetricPattern21[StoredU64] = MetricPattern21(client, 'input_count')
-        self.output_count: MetricPattern21[StoredU64] = MetricPattern21(client, 'output_count')
+        self.identity: MetricPattern19[TxIndex] = MetricPattern19(client, 'txindex')
+        self.input_count: MetricPattern19[StoredU64] = MetricPattern19(client, 'input_count')
+        self.output_count: MetricPattern19[StoredU64] = MetricPattern19(client, 'output_count')
 
 class MetricsTree_Indexes_Txinindex:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern22[TxInIndex] = MetricPattern22(client, 'txinindex')
+        self.identity: MetricPattern20[TxInIndex] = MetricPattern20(client, 'txinindex')
 
 class MetricsTree_Indexes_Txoutindex:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern23[TxOutIndex] = MetricPattern23(client, 'txoutindex')
+        self.identity: MetricPattern21[TxOutIndex] = MetricPattern21(client, 'txoutindex')
 
 class MetricsTree_Indexes:
     """Metrics tree node."""
@@ -3904,8 +3852,6 @@ class MetricsTree_Indexes:
         self.height: MetricsTree_Indexes_Height = MetricsTree_Indexes_Height(client)
         self.difficultyepoch: MetricsTree_Indexes_Difficultyepoch = MetricsTree_Indexes_Difficultyepoch(client)
         self.halvingepoch: MetricsTree_Indexes_Halvingepoch = MetricsTree_Indexes_Halvingepoch(client)
-        self.minute1: MetricsTree_Indexes_Minute1 = MetricsTree_Indexes_Minute1(client)
-        self.minute5: MetricsTree_Indexes_Minute5 = MetricsTree_Indexes_Minute5(client)
         self.minute10: MetricsTree_Indexes_Minute10 = MetricsTree_Indexes_Minute10(client)
         self.minute30: MetricsTree_Indexes_Minute30 = MetricsTree_Indexes_Minute30(client)
         self.hour1: MetricsTree_Indexes_Hour1 = MetricsTree_Indexes_Hour1(client)
@@ -3979,7 +3925,7 @@ class MetricsTree_Market_Returns:
         self._1d_returns_1w_sd: SdSmaPattern = SdSmaPattern(client, '1d_returns_1w_sd')
         self._1d_returns_1m_sd: SdSmaPattern = SdSmaPattern(client, '1d_returns_1m_sd')
         self._1d_returns_1y_sd: SdSmaPattern = SdSmaPattern(client, '1d_returns_1y_sd')
-        self.downside_returns: MetricPattern20[StoredF32] = MetricPattern20(client, 'downside_returns')
+        self.downside_returns: MetricPattern18[StoredF32] = MetricPattern18(client, 'downside_returns')
         self.downside_1w_sd: SdSmaPattern = SdSmaPattern(client, 'downside_1w_sd')
         self.downside_1m_sd: SdSmaPattern = SdSmaPattern(client, 'downside_1m_sd')
         self.downside_1y_sd: SdSmaPattern = SdSmaPattern(client, 'downside_1y_sd')
@@ -4177,7 +4123,7 @@ class MetricsTree_Market_Dca:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.dca_sats_per_day: MetricPattern20[Sats] = MetricPattern20(client, 'dca_sats_per_day')
+        self.dca_sats_per_day: MetricPattern18[Sats] = MetricPattern18(client, 'dca_sats_per_day')
         self.period_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'dca_stack')
         self.period_average_price: MetricsTree_Market_Dca_PeriodAveragePrice = MetricsTree_Market_Dca_PeriodAveragePrice(client)
         self.period_returns: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_returns')
@@ -4484,7 +4430,7 @@ class MetricsTree_Pools:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.height_to_pool: MetricPattern20[PoolSlug] = MetricPattern20(client, 'pool')
+        self.height_to_pool: MetricPattern18[PoolSlug] = MetricPattern18(client, 'pool')
         self.vecs: MetricsTree_Pools_Vecs = MetricsTree_Pools_Vecs(client)
 
 class MetricsTree_Prices_Split_Close:
@@ -4532,21 +4478,21 @@ class MetricsTree_Distribution_AnyAddressIndexes:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.p2a: MetricPattern26[AnyAddressIndex] = MetricPattern26(client, 'anyaddressindex')
-        self.p2pk33: MetricPattern28[AnyAddressIndex] = MetricPattern28(client, 'anyaddressindex')
-        self.p2pk65: MetricPattern29[AnyAddressIndex] = MetricPattern29(client, 'anyaddressindex')
-        self.p2pkh: MetricPattern30[AnyAddressIndex] = MetricPattern30(client, 'anyaddressindex')
-        self.p2sh: MetricPattern31[AnyAddressIndex] = MetricPattern31(client, 'anyaddressindex')
-        self.p2tr: MetricPattern32[AnyAddressIndex] = MetricPattern32(client, 'anyaddressindex')
-        self.p2wpkh: MetricPattern33[AnyAddressIndex] = MetricPattern33(client, 'anyaddressindex')
-        self.p2wsh: MetricPattern34[AnyAddressIndex] = MetricPattern34(client, 'anyaddressindex')
+        self.p2a: MetricPattern24[AnyAddressIndex] = MetricPattern24(client, 'anyaddressindex')
+        self.p2pk33: MetricPattern26[AnyAddressIndex] = MetricPattern26(client, 'anyaddressindex')
+        self.p2pk65: MetricPattern27[AnyAddressIndex] = MetricPattern27(client, 'anyaddressindex')
+        self.p2pkh: MetricPattern28[AnyAddressIndex] = MetricPattern28(client, 'anyaddressindex')
+        self.p2sh: MetricPattern29[AnyAddressIndex] = MetricPattern29(client, 'anyaddressindex')
+        self.p2tr: MetricPattern30[AnyAddressIndex] = MetricPattern30(client, 'anyaddressindex')
+        self.p2wpkh: MetricPattern31[AnyAddressIndex] = MetricPattern31(client, 'anyaddressindex')
+        self.p2wsh: MetricPattern32[AnyAddressIndex] = MetricPattern32(client, 'anyaddressindex')
 
 class MetricsTree_Distribution_AddressesData:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.funded: MetricPattern36[FundedAddressData] = MetricPattern36(client, 'fundedaddressdata')
-        self.empty: MetricPattern37[EmptyAddressData] = MetricPattern37(client, 'emptyaddressdata')
+        self.funded: MetricPattern34[FundedAddressData] = MetricPattern34(client, 'fundedaddressdata')
+        self.empty: MetricPattern35[EmptyAddressData] = MetricPattern35(client, 'emptyaddressdata')
 
 class MetricsTree_Distribution_UtxoCohorts_All_Relative:
     """Metrics tree node."""
@@ -4909,7 +4855,7 @@ class MetricsTree_Distribution:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.supply_state: MetricPattern20[SupplyState] = MetricPattern20(client, 'supply_state')
+        self.supply_state: MetricPattern18[SupplyState] = MetricPattern18(client, 'supply_state')
         self.any_address_indexes: MetricsTree_Distribution_AnyAddressIndexes = MetricsTree_Distribution_AnyAddressIndexes(client)
         self.addresses_data: MetricsTree_Distribution_AddressesData = MetricsTree_Distribution_AddressesData(client)
         self.utxo_cohorts: MetricsTree_Distribution_UtxoCohorts = MetricsTree_Distribution_UtxoCohorts(client)
@@ -4920,8 +4866,8 @@ class MetricsTree_Distribution:
         self.total_addr_count: MetricsTree_Distribution_TotalAddrCount = MetricsTree_Distribution_TotalAddrCount(client)
         self.new_addr_count: MetricsTree_Distribution_NewAddrCount = MetricsTree_Distribution_NewAddrCount(client)
         self.growth_rate: MetricsTree_Distribution_GrowthRate = MetricsTree_Distribution_GrowthRate(client)
-        self.fundedaddressindex: MetricPattern36[FundedAddressIndex] = MetricPattern36(client, 'fundedaddressindex')
-        self.emptyaddressindex: MetricPattern37[EmptyAddressIndex] = MetricPattern37(client, 'emptyaddressindex')
+        self.fundedaddressindex: MetricPattern34[FundedAddressIndex] = MetricPattern34(client, 'fundedaddressindex')
+        self.emptyaddressindex: MetricPattern35[EmptyAddressIndex] = MetricPattern35(client, 'emptyaddressindex')
 
 class MetricsTree_Supply_Burned:
     """Metrics tree node."""
@@ -4977,8 +4923,6 @@ class BrkClient(BrkClientBase):
     VERSION = "v0.1.9"
 
     INDEXES = [
-      "minute1",
-      "minute5",
       "minute10",
       "minute30",
       "hour1",

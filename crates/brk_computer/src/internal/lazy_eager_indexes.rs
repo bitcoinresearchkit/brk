@@ -5,8 +5,8 @@
 
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Hour1, Hour4, Hour12, Minute1, Minute5, Minute10,
-    Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Hour1, Hour4, Hour12,
+    Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -22,8 +22,6 @@ use crate::{
 pub struct LazyEagerIndexes<T, S>(
     #[allow(clippy::type_complexity)]
     pub  Indexes<
-        LazyVecFrom1<Minute1, T, Minute1, S>,
-        LazyVecFrom1<Minute5, T, Minute5, S>,
         LazyVecFrom1<Minute10, T, Minute10, S>,
         LazyVecFrom1<Minute30, T, Minute30, S>,
         LazyVecFrom1<Hour1, T, Hour1, S>,

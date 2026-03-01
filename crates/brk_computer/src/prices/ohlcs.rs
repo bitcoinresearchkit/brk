@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
     Cents, Close, Day1, Day3, DifficultyEpoch, HalvingEpoch, High, Hour1, Hour4, Hour12, Low,
-    Minute1, Minute5, Minute10, Minute30, Month1, Month3, Month6, OHLCCents, Open, Version, Week1,
+    Minute10, Minute30, Month1, Month3, Month6, OHLCCents, Open, Version, Week1,
     Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
@@ -14,7 +14,7 @@ use vecdb::{
 };
 
 use crate::{
-    ComputeIndexes, indexes_from,
+    ComputeIndexes, indexes_apply, indexes_from,
     internal::{ComputedHeightDerivedLast, EagerIndexes, Indexes},
 };
 
@@ -25,8 +25,6 @@ use crate::{
 pub struct OhlcVecs<T, M: StorageMode = Rw>(
     #[allow(clippy::type_complexity)]
     pub  Indexes<
-        <M as StorageMode>::Stored<EagerVec<BytesVec<Minute1, T>>>,
-        <M as StorageMode>::Stored<EagerVec<BytesVec<Minute5, T>>>,
         <M as StorageMode>::Stored<EagerVec<BytesVec<Minute10, T>>>,
         <M as StorageMode>::Stored<EagerVec<BytesVec<Minute30, T>>>,
         <M as StorageMode>::Stored<EagerVec<BytesVec<Hour1, T>>>,
@@ -132,23 +130,7 @@ impl OhlcVecs<OHLCCents> {
             };
         }
 
-        period!(minute1);
-        period!(minute5);
-        period!(minute10);
-        period!(minute30);
-        period!(hour1);
-        period!(hour4);
-        period!(hour12);
-        period!(day1);
-        period!(day3);
-        period!(week1);
-        period!(month1);
-        period!(month3);
-        period!(month6);
-        period!(year1);
-        period!(year10);
-        epoch!(halvingepoch);
-        epoch!(difficultyepoch);
+        indexes_apply!(period, epoch);
 
         Ok(())
     }
@@ -161,8 +143,6 @@ impl OhlcVecs<OHLCCents> {
 pub struct LazyOhlcVecs<T, S>(
     #[allow(clippy::type_complexity)]
     pub  Indexes<
-        LazyVecFrom1<Minute1, T, Minute1, S>,
-        LazyVecFrom1<Minute5, T, Minute5, S>,
         LazyVecFrom1<Minute10, T, Minute10, S>,
         LazyVecFrom1<Minute30, T, Minute30, S>,
         LazyVecFrom1<Hour1, T, Hour1, S>,

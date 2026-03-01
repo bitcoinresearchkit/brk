@@ -3,7 +3,7 @@ use brk_types::StoredU16;
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, prices};
+use crate::{ComputeIndexes, prices, traits::ComputeDrawdown};
 
 impl Vecs {
     pub(crate) fn compute(
@@ -60,6 +60,13 @@ impl Vecs {
                 prev.replace(max);
                 (i, max)
             },
+            exit,
+        )?;
+
+        self.price_drawdown.height.compute_drawdown(
+            starting_indexes.height,
+            &prices.price.usd.height,
+            &self.price_ath.usd.height,
             exit,
         )?;
 

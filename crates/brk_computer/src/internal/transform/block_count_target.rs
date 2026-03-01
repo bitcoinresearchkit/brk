@@ -1,14 +1,14 @@
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4, Minute1, Minute10,
-    Minute30, Minute5, Month1, Month3, Month6, StoredU64, Week1, Year1, Year10,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4,
+    Minute10, Minute30, Month1, Month3, Month6, StoredU64, Week1, Year1, Year10,
 };
 use vecdb::UnaryTransform;
 
 use crate::blocks::{
     TARGET_BLOCKS_PER_DAY, TARGET_BLOCKS_PER_DAY3, TARGET_BLOCKS_PER_DECADE,
     TARGET_BLOCKS_PER_HALVING, TARGET_BLOCKS_PER_HOUR1, TARGET_BLOCKS_PER_HOUR12,
-    TARGET_BLOCKS_PER_HOUR4, TARGET_BLOCKS_PER_MINUTE1, TARGET_BLOCKS_PER_MINUTE10,
-    TARGET_BLOCKS_PER_MINUTE30, TARGET_BLOCKS_PER_MINUTE5, TARGET_BLOCKS_PER_MONTH,
+    TARGET_BLOCKS_PER_HOUR4, TARGET_BLOCKS_PER_MINUTE10,
+    TARGET_BLOCKS_PER_MINUTE30, TARGET_BLOCKS_PER_MONTH,
     TARGET_BLOCKS_PER_QUARTER, TARGET_BLOCKS_PER_SEMESTER, TARGET_BLOCKS_PER_WEEK,
     TARGET_BLOCKS_PER_YEAR,
 };
@@ -19,20 +19,6 @@ impl UnaryTransform<Height, StoredU64> for BlockCountTarget {
     #[inline(always)]
     fn apply(_: Height) -> StoredU64 {
         StoredU64::from(TARGET_BLOCKS_PER_DAY)
-    }
-}
-
-impl UnaryTransform<Minute1, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Minute1) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_MINUTE1)
-    }
-}
-
-impl UnaryTransform<Minute5, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Minute5) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_MINUTE5)
     }
 }
 

@@ -7,10 +7,8 @@ mod height;
 mod hour1;
 mod hour12;
 mod hour4;
-mod minute1;
 mod minute10;
 mod minute30;
-mod minute5;
 mod month1;
 mod month3;
 mod month6;
@@ -27,7 +25,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    Date, Day1, Day3, Hour1, Hour4, Hour12, Indexes, Minute1, Minute5, Minute10, Minute30, Month1,
+    Date, Day1, Day3, Hour1, Hour4, Hour12, Indexes, Minute10, Minute30, Month1,
     Month3, Month6, Version, Week1, Year1, Year10,
 };
 use vecdb::{Database, Exit, PAGE_SIZE, ReadableVec, Rw, StorageMode};
@@ -44,8 +42,6 @@ pub use height::Vecs as HeightVecs;
 pub use hour1::Vecs as Hour1Vecs;
 pub use hour4::Vecs as Hour4Vecs;
 pub use hour12::Vecs as Hour12Vecs;
-pub use minute1::Vecs as Minute1Vecs;
-pub use minute5::Vecs as Minute5Vecs;
 pub use minute10::Vecs as Minute10Vecs;
 pub use minute30::Vecs as Minute30Vecs;
 pub use month1::Vecs as Month1Vecs;
@@ -68,8 +64,6 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub height: HeightVecs<M>,
     pub difficultyepoch: DifficultyEpochVecs<M>,
     pub halvingepoch: HalvingEpochVecs<M>,
-    pub minute1: Minute1Vecs<M>,
-    pub minute5: Minute5Vecs<M>,
     pub minute10: Minute10Vecs<M>,
     pub minute30: Minute30Vecs<M>,
     pub hour1: Hour1Vecs<M>,
@@ -104,8 +98,6 @@ impl Vecs {
             height: HeightVecs::forced_import(&db, version)?,
             difficultyepoch: DifficultyEpochVecs::forced_import(&db, version)?,
             halvingepoch: HalvingEpochVecs::forced_import(&db, version)?,
-            minute1: Minute1Vecs::forced_import(&db, version)?,
-            minute5: Minute5Vecs::forced_import(&db, version)?,
             minute10: Minute10Vecs::forced_import(&db, version)?,
             minute30: Minute30Vecs::forced_import(&db, version)?,
             hour1: Hour1Vecs::forced_import(&db, version)?,
@@ -189,22 +181,6 @@ impl Vecs {
         let decremented_starting_height = starting_indexes.height.decremented().unwrap_or_default();
 
         // --- Timestamp-based height → period mappings ---
-
-        // Minute1
-        self.height.minute1.compute_transform(
-            starting_indexes.height,
-            &blocks_time.timestamp_monotonic,
-            |(h, ts, _)| (h, Minute1::from_timestamp(ts)),
-            exit,
-        )?;
-
-        // Minute5
-        self.height.minute5.compute_transform(
-            starting_indexes.height,
-            &blocks_time.timestamp_monotonic,
-            |(h, ts, _)| (h, Minute5::from_timestamp(ts)),
-            exit,
-        )?;
 
         // Minute10
         self.height.minute10.compute_transform(
@@ -376,16 +352,6 @@ impl Vecs {
 
         // --- Starting values from height → period mappings ---
 
-        let starting_minute1 = self
-            .height
-            .minute1
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_minute5 = self
-            .height
-            .minute5
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
         let starting_minute10 = self
             .height
             .minute10
@@ -448,30 +414,6 @@ impl Vecs {
             .unwrap_or_default();
 
         // --- Compute period-level vecs (first_height + identity) ---
-
-        // Minute1
-        self.minute1.first_height.compute_first_per_index(
-            starting_indexes.height,
-            &self.height.minute1,
-            exit,
-        )?;
-        self.minute1.identity.compute_from_index(
-            starting_minute1,
-            &self.minute1.first_height,
-            exit,
-        )?;
-
-        // Minute5
-        self.minute5.first_height.compute_first_per_index(
-            starting_indexes.height,
-            &self.height.minute5,
-            exit,
-        )?;
-        self.minute5.identity.compute_from_index(
-            starting_minute5,
-            &self.minute5.first_height,
-            exit,
-        )?;
 
         // Minute10
         self.minute10.first_height.compute_first_per_index(
@@ -669,8 +611,6 @@ impl Vecs {
 
         Ok(ComputeIndexes::new(
             starting_indexes,
-            starting_minute1,
-            starting_minute5,
             starting_minute10,
             starting_minute30,
             starting_hour1,

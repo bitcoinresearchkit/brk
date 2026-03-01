@@ -26,11 +26,7 @@ pub(super) fn compute_ema(source: &[f32], period: usize) -> Vec<f32> {
     for (i, &val) in source.iter().enumerate() {
         if i < period {
             sum += val;
-            if i == period - 1 {
-                result.push(sum / period as f32);
-            } else {
-                result.push(val);
-            }
+            result.push(sum / (i + 1) as f32);
         } else {
             let prev = result[i - 1];
             result.push(val * k + prev * (1.0 - k));

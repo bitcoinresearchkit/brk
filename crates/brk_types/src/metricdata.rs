@@ -530,13 +530,6 @@ mod tests {
     }
 
     #[test]
-    fn test_timestamp_to_index_minute5() {
-        // INDEX_EPOCH + 15 minutes (= 3 * 5min intervals)
-        let ts = Timestamp::new(1230768000 + 900);
-        assert_eq!(Index::Minute5.timestamp_to_index(ts), Some(3));
-    }
-
-    #[test]
     fn test_timestamp_to_index_non_date_returns_none() {
         let ts = Timestamp::new(1230768000);
         assert!(Index::Height.timestamp_to_index(ts).is_none());

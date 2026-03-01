@@ -24,8 +24,6 @@ pub const DB_NAME: &str = "blocks";
 
 pub(crate) const TARGET_BLOCKS_PER_DAY_F64: f64 = 144.0;
 pub(crate) const TARGET_BLOCKS_PER_DAY_F32: f32 = 144.0;
-pub(crate) const TARGET_BLOCKS_PER_MINUTE1: u64 = 0;
-pub(crate) const TARGET_BLOCKS_PER_MINUTE5: u64 = 0;
 pub(crate) const TARGET_BLOCKS_PER_MINUTE10: u64 = 1;
 pub(crate) const TARGET_BLOCKS_PER_MINUTE30: u64 = 3;
 pub(crate) const TARGET_BLOCKS_PER_HOUR1: u64 = 6;

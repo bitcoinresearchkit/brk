@@ -43,7 +43,7 @@ impl Vecs {
                 |(h, close, low, high, ..)| {
                     let range = *high - *low;
                     let stoch = if range == 0.0 {
-                        StoredF32::from(50.0)
+                        StoredF32::NAN
                     } else {
                         StoredF32::from(((*close - *low) / range * 100.0) as f32)
                     };

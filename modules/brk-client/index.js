@@ -380,7 +380,7 @@
  * Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
  * block-based (height, txindex), and address/output type indexes.
  *
- * @typedef {("minute1"|"minute5"|"minute10"|"minute30"|"hour1"|"hour4"|"hour12"|"day1"|"day3"|"week1"|"month1"|"month3"|"month6"|"year1"|"year10"|"halvingepoch"|"difficultyepoch"|"height"|"txindex"|"txinindex"|"txoutindex"|"emptyoutputindex"|"opreturnindex"|"p2aaddressindex"|"p2msoutputindex"|"p2pk33addressindex"|"p2pk65addressindex"|"p2pkhaddressindex"|"p2shaddressindex"|"p2traddressindex"|"p2wpkhaddressindex"|"p2wshaddressindex"|"unknownoutputindex"|"fundedaddressindex"|"emptyaddressindex"|"pairoutputindex")} Index
+ * @typedef {("minute10"|"minute30"|"hour1"|"hour4"|"hour12"|"day1"|"day3"|"week1"|"month1"|"month3"|"month6"|"year1"|"year10"|"halvingepoch"|"difficultyepoch"|"height"|"txindex"|"txinindex"|"txoutindex"|"emptyoutputindex"|"opreturnindex"|"p2aaddressindex"|"p2msoutputindex"|"p2pk33addressindex"|"p2pk65addressindex"|"p2pkhaddressindex"|"p2shaddressindex"|"p2traddressindex"|"p2wpkhaddressindex"|"p2wshaddressindex"|"unknownoutputindex"|"fundedaddressindex"|"emptyaddressindex"|"pairoutputindex")} Index
  */
 /**
  * Information about an available index and its query aliases
@@ -481,10 +481,8 @@
  *
  * @typedef {string} Metrics
  */
-/** @typedef {number} Minute1 */
 /** @typedef {number} Minute10 */
 /** @typedef {number} Minute30 */
-/** @typedef {number} Minute5 */
 /** @typedef {number} Month1 */
 /** @typedef {number} Month3 */
 /** @typedef {number} Month6 */
@@ -925,7 +923,7 @@ const _MS_PER_DAY = 86400000;
 const _MS_PER_WEEK = 7 * _MS_PER_DAY;
 const _EPOCH_MS = 1230768000000;
 const _DATE_INDEXES = new Set([
-  'minute1', 'minute5', 'minute10', 'minute30',
+  'minute10', 'minute30',
   'hour1', 'hour4', 'hour12',
   'day1', 'day3', 'week1',
   'month1', 'month3', 'month6',
@@ -943,8 +941,6 @@ const _addMonths = (months) => new Date(2009, months, 1);
  */
 function indexToDate(index, i) {
   switch (index) {
-    case 'minute1': return new Date(_EPOCH_MS + i * 60000);
-    case 'minute5': return new Date(_EPOCH_MS + i * 300000);
     case 'minute10': return new Date(_EPOCH_MS + i * 600000);
     case 'minute30': return new Date(_EPOCH_MS + i * 1800000);
     case 'hour1': return new Date(_EPOCH_MS + i * 3600000);
@@ -972,8 +968,6 @@ function indexToDate(index, i) {
 function dateToIndex(index, d) {
   const ms = d.getTime();
   switch (index) {
-    case 'minute1': return Math.floor((ms - _EPOCH_MS) / 60000);
-    case 'minute5': return Math.floor((ms - _EPOCH_MS) / 300000);
     case 'minute10': return Math.floor((ms - _EPOCH_MS) / 600000);
     case 'minute30': return Math.floor((ms - _EPOCH_MS) / 1800000);
     case 'hour1': return Math.floor((ms - _EPOCH_MS) / 3600000);
@@ -1371,43 +1365,41 @@ const _p = (prefix, acc) => acc ? `${prefix}_${acc}` : prefix;
 
 // Index group constants and factory
 
-const _i1 = /** @type {const} */ (["minute1", "minute5", "minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halvingepoch", "difficultyepoch", "height"]);
-const _i2 = /** @type {const} */ (["minute1", "minute5", "minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halvingepoch", "difficultyepoch"]);
-const _i3 = /** @type {const} */ (["minute1"]);
-const _i4 = /** @type {const} */ (["minute5"]);
-const _i5 = /** @type {const} */ (["minute10"]);
-const _i6 = /** @type {const} */ (["minute30"]);
-const _i7 = /** @type {const} */ (["hour1"]);
-const _i8 = /** @type {const} */ (["hour4"]);
-const _i9 = /** @type {const} */ (["hour12"]);
-const _i10 = /** @type {const} */ (["day1"]);
-const _i11 = /** @type {const} */ (["day3"]);
-const _i12 = /** @type {const} */ (["week1"]);
-const _i13 = /** @type {const} */ (["month1"]);
-const _i14 = /** @type {const} */ (["month3"]);
-const _i15 = /** @type {const} */ (["month6"]);
-const _i16 = /** @type {const} */ (["year1"]);
-const _i17 = /** @type {const} */ (["year10"]);
-const _i18 = /** @type {const} */ (["halvingepoch"]);
-const _i19 = /** @type {const} */ (["difficultyepoch"]);
-const _i20 = /** @type {const} */ (["height"]);
-const _i21 = /** @type {const} */ (["txindex"]);
-const _i22 = /** @type {const} */ (["txinindex"]);
-const _i23 = /** @type {const} */ (["txoutindex"]);
-const _i24 = /** @type {const} */ (["emptyoutputindex"]);
-const _i25 = /** @type {const} */ (["opreturnindex"]);
-const _i26 = /** @type {const} */ (["p2aaddressindex"]);
-const _i27 = /** @type {const} */ (["p2msoutputindex"]);
-const _i28 = /** @type {const} */ (["p2pk33addressindex"]);
-const _i29 = /** @type {const} */ (["p2pk65addressindex"]);
-const _i30 = /** @type {const} */ (["p2pkhaddressindex"]);
-const _i31 = /** @type {const} */ (["p2shaddressindex"]);
-const _i32 = /** @type {const} */ (["p2traddressindex"]);
-const _i33 = /** @type {const} */ (["p2wpkhaddressindex"]);
-const _i34 = /** @type {const} */ (["p2wshaddressindex"]);
-const _i35 = /** @type {const} */ (["unknownoutputindex"]);
-const _i36 = /** @type {const} */ (["fundedaddressindex"]);
-const _i37 = /** @type {const} */ (["emptyaddressindex"]);
+const _i1 = /** @type {const} */ (["minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halvingepoch", "difficultyepoch", "height"]);
+const _i2 = /** @type {const} */ (["minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halvingepoch", "difficultyepoch"]);
+const _i3 = /** @type {const} */ (["minute10"]);
+const _i4 = /** @type {const} */ (["minute30"]);
+const _i5 = /** @type {const} */ (["hour1"]);
+const _i6 = /** @type {const} */ (["hour4"]);
+const _i7 = /** @type {const} */ (["hour12"]);
+const _i8 = /** @type {const} */ (["day1"]);
+const _i9 = /** @type {const} */ (["day3"]);
+const _i10 = /** @type {const} */ (["week1"]);
+const _i11 = /** @type {const} */ (["month1"]);
+const _i12 = /** @type {const} */ (["month3"]);
+const _i13 = /** @type {const} */ (["month6"]);
+const _i14 = /** @type {const} */ (["year1"]);
+const _i15 = /** @type {const} */ (["year10"]);
+const _i16 = /** @type {const} */ (["halvingepoch"]);
+const _i17 = /** @type {const} */ (["difficultyepoch"]);
+const _i18 = /** @type {const} */ (["height"]);
+const _i19 = /** @type {const} */ (["txindex"]);
+const _i20 = /** @type {const} */ (["txinindex"]);
+const _i21 = /** @type {const} */ (["txoutindex"]);
+const _i22 = /** @type {const} */ (["emptyoutputindex"]);
+const _i23 = /** @type {const} */ (["opreturnindex"]);
+const _i24 = /** @type {const} */ (["p2aaddressindex"]);
+const _i25 = /** @type {const} */ (["p2msoutputindex"]);
+const _i26 = /** @type {const} */ (["p2pk33addressindex"]);
+const _i27 = /** @type {const} */ (["p2pk65addressindex"]);
+const _i28 = /** @type {const} */ (["p2pkhaddressindex"]);
+const _i29 = /** @type {const} */ (["p2shaddressindex"]);
+const _i30 = /** @type {const} */ (["p2traddressindex"]);
+const _i31 = /** @type {const} */ (["p2wpkhaddressindex"]);
+const _i32 = /** @type {const} */ (["p2wshaddressindex"]);
+const _i33 = /** @type {const} */ (["unknownoutputindex"]);
+const _i34 = /** @type {const} */ (["fundedaddressindex"]);
+const _i35 = /** @type {const} */ (["emptyaddressindex"]);
 
 /**
  * Generic metric pattern factory.
@@ -1435,117 +1427,111 @@ function _mp(client, name, indexes) {
   };
 }
 
-/** @template T @typedef {{ name: string, by: { readonly minute1: DateMetricEndpointBuilder<T>, readonly minute5: DateMetricEndpointBuilder<T>, readonly minute10: DateMetricEndpointBuilder<T>, readonly minute30: DateMetricEndpointBuilder<T>, readonly hour1: DateMetricEndpointBuilder<T>, readonly hour4: DateMetricEndpointBuilder<T>, readonly hour12: DateMetricEndpointBuilder<T>, readonly day1: DateMetricEndpointBuilder<T>, readonly day3: DateMetricEndpointBuilder<T>, readonly week1: DateMetricEndpointBuilder<T>, readonly month1: DateMetricEndpointBuilder<T>, readonly month3: DateMetricEndpointBuilder<T>, readonly month6: DateMetricEndpointBuilder<T>, readonly year1: DateMetricEndpointBuilder<T>, readonly year10: DateMetricEndpointBuilder<T>, readonly halvingepoch: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T>, readonly height: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern1 */
+/** @template T @typedef {{ name: string, by: { readonly minute10: DateMetricEndpointBuilder<T>, readonly minute30: DateMetricEndpointBuilder<T>, readonly hour1: DateMetricEndpointBuilder<T>, readonly hour4: DateMetricEndpointBuilder<T>, readonly hour12: DateMetricEndpointBuilder<T>, readonly day1: DateMetricEndpointBuilder<T>, readonly day3: DateMetricEndpointBuilder<T>, readonly week1: DateMetricEndpointBuilder<T>, readonly month1: DateMetricEndpointBuilder<T>, readonly month3: DateMetricEndpointBuilder<T>, readonly month6: DateMetricEndpointBuilder<T>, readonly year1: DateMetricEndpointBuilder<T>, readonly year10: DateMetricEndpointBuilder<T>, readonly halvingepoch: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T>, readonly height: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern1 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern1<T>} */
 function createMetricPattern1(client, name) { return /** @type {MetricPattern1<T>} */ (_mp(client, name, _i1)); }
-/** @template T @typedef {{ name: string, by: { readonly minute1: DateMetricEndpointBuilder<T>, readonly minute5: DateMetricEndpointBuilder<T>, readonly minute10: DateMetricEndpointBuilder<T>, readonly minute30: DateMetricEndpointBuilder<T>, readonly hour1: DateMetricEndpointBuilder<T>, readonly hour4: DateMetricEndpointBuilder<T>, readonly hour12: DateMetricEndpointBuilder<T>, readonly day1: DateMetricEndpointBuilder<T>, readonly day3: DateMetricEndpointBuilder<T>, readonly week1: DateMetricEndpointBuilder<T>, readonly month1: DateMetricEndpointBuilder<T>, readonly month3: DateMetricEndpointBuilder<T>, readonly month6: DateMetricEndpointBuilder<T>, readonly year1: DateMetricEndpointBuilder<T>, readonly year10: DateMetricEndpointBuilder<T>, readonly halvingepoch: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern2 */
+/** @template T @typedef {{ name: string, by: { readonly minute10: DateMetricEndpointBuilder<T>, readonly minute30: DateMetricEndpointBuilder<T>, readonly hour1: DateMetricEndpointBuilder<T>, readonly hour4: DateMetricEndpointBuilder<T>, readonly hour12: DateMetricEndpointBuilder<T>, readonly day1: DateMetricEndpointBuilder<T>, readonly day3: DateMetricEndpointBuilder<T>, readonly week1: DateMetricEndpointBuilder<T>, readonly month1: DateMetricEndpointBuilder<T>, readonly month3: DateMetricEndpointBuilder<T>, readonly month6: DateMetricEndpointBuilder<T>, readonly year1: DateMetricEndpointBuilder<T>, readonly year10: DateMetricEndpointBuilder<T>, readonly halvingepoch: MetricEndpointBuilder<T>, readonly difficultyepoch: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern2 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern2<T>} */
 function createMetricPattern2(client, name) { return /** @type {MetricPattern2<T>} */ (_mp(client, name, _i2)); }
-/** @template T @typedef {{ name: string, by: { readonly minute1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern3 */
+/** @template T @typedef {{ name: string, by: { readonly minute10: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern3 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern3<T>} */
 function createMetricPattern3(client, name) { return /** @type {MetricPattern3<T>} */ (_mp(client, name, _i3)); }
-/** @template T @typedef {{ name: string, by: { readonly minute5: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern4 */
+/** @template T @typedef {{ name: string, by: { readonly minute30: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern4 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern4<T>} */
 function createMetricPattern4(client, name) { return /** @type {MetricPattern4<T>} */ (_mp(client, name, _i4)); }
-/** @template T @typedef {{ name: string, by: { readonly minute10: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern5 */
+/** @template T @typedef {{ name: string, by: { readonly hour1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern5 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern5<T>} */
 function createMetricPattern5(client, name) { return /** @type {MetricPattern5<T>} */ (_mp(client, name, _i5)); }
-/** @template T @typedef {{ name: string, by: { readonly minute30: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern6 */
+/** @template T @typedef {{ name: string, by: { readonly hour4: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern6 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern6<T>} */
 function createMetricPattern6(client, name) { return /** @type {MetricPattern6<T>} */ (_mp(client, name, _i6)); }
-/** @template T @typedef {{ name: string, by: { readonly hour1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern7 */
+/** @template T @typedef {{ name: string, by: { readonly hour12: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern7 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern7<T>} */
 function createMetricPattern7(client, name) { return /** @type {MetricPattern7<T>} */ (_mp(client, name, _i7)); }
-/** @template T @typedef {{ name: string, by: { readonly hour4: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern8 */
+/** @template T @typedef {{ name: string, by: { readonly day1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern8 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern8<T>} */
 function createMetricPattern8(client, name) { return /** @type {MetricPattern8<T>} */ (_mp(client, name, _i8)); }
-/** @template T @typedef {{ name: string, by: { readonly hour12: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern9 */
+/** @template T @typedef {{ name: string, by: { readonly day3: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern9 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern9<T>} */
 function createMetricPattern9(client, name) { return /** @type {MetricPattern9<T>} */ (_mp(client, name, _i9)); }
-/** @template T @typedef {{ name: string, by: { readonly day1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern10 */
+/** @template T @typedef {{ name: string, by: { readonly week1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern10 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern10<T>} */
 function createMetricPattern10(client, name) { return /** @type {MetricPattern10<T>} */ (_mp(client, name, _i10)); }
-/** @template T @typedef {{ name: string, by: { readonly day3: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern11 */
+/** @template T @typedef {{ name: string, by: { readonly month1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern11 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern11<T>} */
 function createMetricPattern11(client, name) { return /** @type {MetricPattern11<T>} */ (_mp(client, name, _i11)); }
-/** @template T @typedef {{ name: string, by: { readonly week1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern12 */
+/** @template T @typedef {{ name: string, by: { readonly month3: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern12 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern12<T>} */
 function createMetricPattern12(client, name) { return /** @type {MetricPattern12<T>} */ (_mp(client, name, _i12)); }
-/** @template T @typedef {{ name: string, by: { readonly month1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern13 */
+/** @template T @typedef {{ name: string, by: { readonly month6: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern13 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern13<T>} */
 function createMetricPattern13(client, name) { return /** @type {MetricPattern13<T>} */ (_mp(client, name, _i13)); }
-/** @template T @typedef {{ name: string, by: { readonly month3: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern14 */
+/** @template T @typedef {{ name: string, by: { readonly year1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern14 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern14<T>} */
 function createMetricPattern14(client, name) { return /** @type {MetricPattern14<T>} */ (_mp(client, name, _i14)); }
-/** @template T @typedef {{ name: string, by: { readonly month6: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern15 */
+/** @template T @typedef {{ name: string, by: { readonly year10: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern15 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern15<T>} */
 function createMetricPattern15(client, name) { return /** @type {MetricPattern15<T>} */ (_mp(client, name, _i15)); }
-/** @template T @typedef {{ name: string, by: { readonly year1: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern16 */
+/** @template T @typedef {{ name: string, by: { readonly halvingepoch: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern16 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern16<T>} */
 function createMetricPattern16(client, name) { return /** @type {MetricPattern16<T>} */ (_mp(client, name, _i16)); }
-/** @template T @typedef {{ name: string, by: { readonly year10: DateMetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern17 */
+/** @template T @typedef {{ name: string, by: { readonly difficultyepoch: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern17 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern17<T>} */
 function createMetricPattern17(client, name) { return /** @type {MetricPattern17<T>} */ (_mp(client, name, _i17)); }
-/** @template T @typedef {{ name: string, by: { readonly halvingepoch: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern18 */
+/** @template T @typedef {{ name: string, by: { readonly height: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern18 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern18<T>} */
 function createMetricPattern18(client, name) { return /** @type {MetricPattern18<T>} */ (_mp(client, name, _i18)); }
-/** @template T @typedef {{ name: string, by: { readonly difficultyepoch: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern19 */
+/** @template T @typedef {{ name: string, by: { readonly txindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern19 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern19<T>} */
 function createMetricPattern19(client, name) { return /** @type {MetricPattern19<T>} */ (_mp(client, name, _i19)); }
-/** @template T @typedef {{ name: string, by: { readonly height: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern20 */
+/** @template T @typedef {{ name: string, by: { readonly txinindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern20 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern20<T>} */
 function createMetricPattern20(client, name) { return /** @type {MetricPattern20<T>} */ (_mp(client, name, _i20)); }
-/** @template T @typedef {{ name: string, by: { readonly txindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern21 */
+/** @template T @typedef {{ name: string, by: { readonly txoutindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern21 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern21<T>} */
 function createMetricPattern21(client, name) { return /** @type {MetricPattern21<T>} */ (_mp(client, name, _i21)); }
-/** @template T @typedef {{ name: string, by: { readonly txinindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern22 */
+/** @template T @typedef {{ name: string, by: { readonly emptyoutputindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern22 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern22<T>} */
 function createMetricPattern22(client, name) { return /** @type {MetricPattern22<T>} */ (_mp(client, name, _i22)); }
-/** @template T @typedef {{ name: string, by: { readonly txoutindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern23 */
+/** @template T @typedef {{ name: string, by: { readonly opreturnindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern23 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern23<T>} */
 function createMetricPattern23(client, name) { return /** @type {MetricPattern23<T>} */ (_mp(client, name, _i23)); }
-/** @template T @typedef {{ name: string, by: { readonly emptyoutputindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern24 */
+/** @template T @typedef {{ name: string, by: { readonly p2aaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern24 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern24<T>} */
 function createMetricPattern24(client, name) { return /** @type {MetricPattern24<T>} */ (_mp(client, name, _i24)); }
-/** @template T @typedef {{ name: string, by: { readonly opreturnindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern25 */
+/** @template T @typedef {{ name: string, by: { readonly p2msoutputindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern25 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern25<T>} */
 function createMetricPattern25(client, name) { return /** @type {MetricPattern25<T>} */ (_mp(client, name, _i25)); }
-/** @template T @typedef {{ name: string, by: { readonly p2aaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern26 */
+/** @template T @typedef {{ name: string, by: { readonly p2pk33addressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern26 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern26<T>} */
 function createMetricPattern26(client, name) { return /** @type {MetricPattern26<T>} */ (_mp(client, name, _i26)); }
-/** @template T @typedef {{ name: string, by: { readonly p2msoutputindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern27 */
+/** @template T @typedef {{ name: string, by: { readonly p2pk65addressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern27 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern27<T>} */
 function createMetricPattern27(client, name) { return /** @type {MetricPattern27<T>} */ (_mp(client, name, _i27)); }
-/** @template T @typedef {{ name: string, by: { readonly p2pk33addressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern28 */
+/** @template T @typedef {{ name: string, by: { readonly p2pkhaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern28 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern28<T>} */
 function createMetricPattern28(client, name) { return /** @type {MetricPattern28<T>} */ (_mp(client, name, _i28)); }
-/** @template T @typedef {{ name: string, by: { readonly p2pk65addressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern29 */
+/** @template T @typedef {{ name: string, by: { readonly p2shaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern29 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern29<T>} */
 function createMetricPattern29(client, name) { return /** @type {MetricPattern29<T>} */ (_mp(client, name, _i29)); }
-/** @template T @typedef {{ name: string, by: { readonly p2pkhaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern30 */
+/** @template T @typedef {{ name: string, by: { readonly p2traddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern30 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern30<T>} */
 function createMetricPattern30(client, name) { return /** @type {MetricPattern30<T>} */ (_mp(client, name, _i30)); }
-/** @template T @typedef {{ name: string, by: { readonly p2shaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern31 */
+/** @template T @typedef {{ name: string, by: { readonly p2wpkhaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern31 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern31<T>} */
 function createMetricPattern31(client, name) { return /** @type {MetricPattern31<T>} */ (_mp(client, name, _i31)); }
-/** @template T @typedef {{ name: string, by: { readonly p2traddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern32 */
+/** @template T @typedef {{ name: string, by: { readonly p2wshaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern32 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern32<T>} */
 function createMetricPattern32(client, name) { return /** @type {MetricPattern32<T>} */ (_mp(client, name, _i32)); }
-/** @template T @typedef {{ name: string, by: { readonly p2wpkhaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern33 */
+/** @template T @typedef {{ name: string, by: { readonly unknownoutputindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern33 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern33<T>} */
 function createMetricPattern33(client, name) { return /** @type {MetricPattern33<T>} */ (_mp(client, name, _i33)); }
-/** @template T @typedef {{ name: string, by: { readonly p2wshaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern34 */
+/** @template T @typedef {{ name: string, by: { readonly fundedaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern34 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern34<T>} */
 function createMetricPattern34(client, name) { return /** @type {MetricPattern34<T>} */ (_mp(client, name, _i34)); }
-/** @template T @typedef {{ name: string, by: { readonly unknownoutputindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern35 */
+/** @template T @typedef {{ name: string, by: { readonly emptyaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern35 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern35<T>} */
 function createMetricPattern35(client, name) { return /** @type {MetricPattern35<T>} */ (_mp(client, name, _i35)); }
-/** @template T @typedef {{ name: string, by: { readonly fundedaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern36 */
-/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern36<T>} */
-function createMetricPattern36(client, name) { return /** @type {MetricPattern36<T>} */ (_mp(client, name, _i36)); }
-/** @template T @typedef {{ name: string, by: { readonly emptyaddressindex: MetricEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }} MetricPattern37 */
-/** @template T @param {BrkClientBase} client @param {string} name @returns {MetricPattern37<T>} */
-function createMetricPattern37(client, name) { return /** @type {MetricPattern37<T>} */ (_mp(client, name, _i37)); }
 
 // Reusable structural pattern factories
 
@@ -1570,9 +1556,9 @@ function createMetricPattern37(client, name) { return /** @type {MetricPattern37
  * @property {MetricPattern1<Dollars>} adjustedValueDestroyed24h
  * @property {MetricPattern1<Dollars>} adjustedValueDestroyed30d
  * @property {MetricPattern1<Dollars>} adjustedValueDestroyed7d
- * @property {MetricPattern20<CentsSats>} capRaw
+ * @property {MetricPattern18<CentsSats>} capRaw
  * @property {MetricPattern1<Dollars>} capitulationFlow
- * @property {MetricPattern20<CentsSquaredSats>} investorCapRaw
+ * @property {MetricPattern18<CentsSquaredSats>} investorCapRaw
  * @property {SatsUsdPattern} investorPrice
  * @property {MetricPattern1<Cents>} investorPriceCents
  * @property {RatioPattern2} investorPriceExtra
@@ -1686,9 +1672,9 @@ function createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitReali
     adjustedValueDestroyed24h: createMetricPattern1(client, _m(acc, 'adjusted_value_destroyed_24h')),
     adjustedValueDestroyed30d: createMetricPattern1(client, _m(acc, 'adjusted_value_destroyed_30d')),
     adjustedValueDestroyed7d: createMetricPattern1(client, _m(acc, 'adjusted_value_destroyed_7d')),
-    capRaw: createMetricPattern20(client, _m(acc, 'cap_raw')),
+    capRaw: createMetricPattern18(client, _m(acc, 'cap_raw')),
     capitulationFlow: createMetricPattern1(client, _m(acc, 'capitulation_flow')),
-    investorCapRaw: createMetricPattern20(client, _m(acc, 'investor_cap_raw')),
+    investorCapRaw: createMetricPattern18(client, _m(acc, 'investor_cap_raw')),
     investorPrice: createSatsUsdPattern(client, _m(acc, 'investor_price')),
     investorPriceCents: createMetricPattern1(client, _m(acc, 'investor_price_cents')),
     investorPriceExtra: createRatioPattern2(client, _m(acc, 'investor_price_ratio')),
@@ -1797,9 +1783,9 @@ function createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitReali
  * @property {MetricPattern1<Dollars>} adjustedValueDestroyed24h
  * @property {MetricPattern1<Dollars>} adjustedValueDestroyed30d
  * @property {MetricPattern1<Dollars>} adjustedValueDestroyed7d
- * @property {MetricPattern20<CentsSats>} capRaw
+ * @property {MetricPattern18<CentsSats>} capRaw
  * @property {MetricPattern1<Dollars>} capitulationFlow
- * @property {MetricPattern20<CentsSquaredSats>} investorCapRaw
+ * @property {MetricPattern18<CentsSquaredSats>} investorCapRaw
  * @property {SatsUsdPattern} investorPrice
  * @property {MetricPattern1<Cents>} investorPriceCents
  * @property {RatioPattern2} investorPriceExtra
@@ -1898,9 +1884,9 @@ function createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitReali
     adjustedValueDestroyed24h: createMetricPattern1(client, _m(acc, 'adjusted_value_destroyed_24h')),
     adjustedValueDestroyed30d: createMetricPattern1(client, _m(acc, 'adjusted_value_destroyed_30d')),
     adjustedValueDestroyed7d: createMetricPattern1(client, _m(acc, 'adjusted_value_destroyed_7d')),
-    capRaw: createMetricPattern20(client, _m(acc, 'cap_raw')),
+    capRaw: createMetricPattern18(client, _m(acc, 'cap_raw')),
     capitulationFlow: createMetricPattern1(client, _m(acc, 'capitulation_flow')),
-    investorCapRaw: createMetricPattern20(client, _m(acc, 'investor_cap_raw')),
+    investorCapRaw: createMetricPattern18(client, _m(acc, 'investor_cap_raw')),
     investorPrice: createSatsUsdPattern(client, _m(acc, 'investor_price')),
     investorPriceCents: createMetricPattern1(client, _m(acc, 'investor_price_cents')),
     investorPriceExtra: createRatioPattern2(client, _m(acc, 'investor_price_ratio')),
@@ -1975,9 +1961,9 @@ function createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitReali
 
 /**
  * @typedef {Object} CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2
- * @property {MetricPattern20<CentsSats>} capRaw
+ * @property {MetricPattern18<CentsSats>} capRaw
  * @property {MetricPattern1<Dollars>} capitulationFlow
- * @property {MetricPattern20<CentsSquaredSats>} investorCapRaw
+ * @property {MetricPattern18<CentsSquaredSats>} investorCapRaw
  * @property {SatsUsdPattern} investorPrice
  * @property {MetricPattern1<Cents>} investorPriceCents
  * @property {RatioPattern2} investorPriceExtra
@@ -2072,9 +2058,9 @@ function createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitReali
  */
 function createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2(client, acc) {
   return {
-    capRaw: createMetricPattern20(client, _m(acc, 'cap_raw')),
+    capRaw: createMetricPattern18(client, _m(acc, 'cap_raw')),
     capitulationFlow: createMetricPattern1(client, _m(acc, 'capitulation_flow')),
-    investorCapRaw: createMetricPattern20(client, _m(acc, 'investor_cap_raw')),
+    investorCapRaw: createMetricPattern18(client, _m(acc, 'investor_cap_raw')),
     investorPrice: createSatsUsdPattern(client, _m(acc, 'investor_price')),
     investorPriceCents: createMetricPattern1(client, _m(acc, 'investor_price_cents')),
     investorPriceExtra: createRatioPattern2(client, _m(acc, 'investor_price_ratio')),
@@ -2164,9 +2150,9 @@ function createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellS
 
 /**
  * @typedef {Object} CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern
- * @property {MetricPattern20<CentsSats>} capRaw
+ * @property {MetricPattern18<CentsSats>} capRaw
  * @property {MetricPattern1<Dollars>} capitulationFlow
- * @property {MetricPattern20<CentsSquaredSats>} investorCapRaw
+ * @property {MetricPattern18<CentsSquaredSats>} investorCapRaw
  * @property {SatsUsdPattern} investorPrice
  * @property {MetricPattern1<Cents>} investorPriceCents
  * @property {RatioPattern2} investorPriceExtra
@@ -2246,9 +2232,9 @@ function createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellS
  */
 function createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(client, acc) {
   return {
-    capRaw: createMetricPattern20(client, _m(acc, 'cap_raw')),
+    capRaw: createMetricPattern18(client, _m(acc, 'cap_raw')),
     capitulationFlow: createMetricPattern1(client, _m(acc, 'capitulation_flow')),
-    investorCapRaw: createMetricPattern20(client, _m(acc, 'investor_cap_raw')),
+    investorCapRaw: createMetricPattern18(client, _m(acc, 'investor_cap_raw')),
     investorPrice: createSatsUsdPattern(client, _m(acc, 'investor_price')),
     investorPriceCents: createMetricPattern1(client, _m(acc, 'investor_price_cents')),
     investorPriceExtra: createRatioPattern2(client, _m(acc, 'investor_price_ratio')),
@@ -2665,11 +2651,11 @@ function createRatioPattern3(client, acc) {
  * @typedef {Object} GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern
  * @property {MetricPattern1<Dollars>} greedIndex
  * @property {MetricPattern1<Dollars>} investedCapitalInLoss
- * @property {MetricPattern20<CentsSats>} investedCapitalInLossRaw
+ * @property {MetricPattern18<CentsSats>} investedCapitalInLossRaw
  * @property {MetricPattern1<Dollars>} investedCapitalInProfit
- * @property {MetricPattern20<CentsSats>} investedCapitalInProfitRaw
- * @property {MetricPattern20<CentsSquaredSats>} investorCapInLossRaw
- * @property {MetricPattern20<CentsSquaredSats>} investorCapInProfitRaw
+ * @property {MetricPattern18<CentsSats>} investedCapitalInProfitRaw
+ * @property {MetricPattern18<CentsSquaredSats>} investorCapInLossRaw
+ * @property {MetricPattern18<CentsSquaredSats>} investorCapInProfitRaw
  * @property {MetricPattern1<Dollars>} negUnrealizedLoss
  * @property {MetricPattern1<Dollars>} netSentiment
  * @property {MetricPattern1<Dollars>} netUnrealizedPnl
@@ -2692,11 +2678,11 @@ function createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(c
   return {
     greedIndex: createMetricPattern1(client, _m(acc, 'greed_index')),
     investedCapitalInLoss: createMetricPattern1(client, _m(acc, 'invested_capital_in_loss')),
-    investedCapitalInLossRaw: createMetricPattern20(client, _m(acc, 'invested_capital_in_loss_raw')),
+    investedCapitalInLossRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_loss_raw')),
     investedCapitalInProfit: createMetricPattern1(client, _m(acc, 'invested_capital_in_profit')),
-    investedCapitalInProfitRaw: createMetricPattern20(client, _m(acc, 'invested_capital_in_profit_raw')),
-    investorCapInLossRaw: createMetricPattern20(client, _m(acc, 'investor_cap_in_loss_raw')),
-    investorCapInProfitRaw: createMetricPattern20(client, _m(acc, 'investor_cap_in_profit_raw')),
+    investedCapitalInProfitRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_profit_raw')),
+    investorCapInLossRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_loss_raw')),
+    investorCapInProfitRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_profit_raw')),
     negUnrealizedLoss: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss')),
     netSentiment: createMetricPattern1(client, _m(acc, 'net_sentiment')),
     netUnrealizedPnl: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl')),
@@ -2714,11 +2700,11 @@ function createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(c
  * @typedef {Object} GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern
  * @property {MetricPattern1<Dollars>} greedIndex
  * @property {MetricPattern1<Dollars>} investedCapitalInLoss
- * @property {MetricPattern20<CentsSats>} investedCapitalInLossRaw
+ * @property {MetricPattern18<CentsSats>} investedCapitalInLossRaw
  * @property {MetricPattern1<Dollars>} investedCapitalInProfit
- * @property {MetricPattern20<CentsSats>} investedCapitalInProfitRaw
- * @property {MetricPattern20<CentsSquaredSats>} investorCapInLossRaw
- * @property {MetricPattern20<CentsSquaredSats>} investorCapInProfitRaw
+ * @property {MetricPattern18<CentsSats>} investedCapitalInProfitRaw
+ * @property {MetricPattern18<CentsSquaredSats>} investorCapInLossRaw
+ * @property {MetricPattern18<CentsSquaredSats>} investorCapInProfitRaw
  * @property {MetricPattern1<Dollars>} negUnrealizedLoss
  * @property {MetricPattern1<Dollars>} netSentiment
  * @property {MetricPattern1<Dollars>} netUnrealizedPnl
@@ -2740,11 +2726,11 @@ function createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(clien
   return {
     greedIndex: createMetricPattern1(client, _m(acc, 'greed_index')),
     investedCapitalInLoss: createMetricPattern1(client, _m(acc, 'invested_capital_in_loss')),
-    investedCapitalInLossRaw: createMetricPattern20(client, _m(acc, 'invested_capital_in_loss_raw')),
+    investedCapitalInLossRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_loss_raw')),
     investedCapitalInProfit: createMetricPattern1(client, _m(acc, 'invested_capital_in_profit')),
-    investedCapitalInProfitRaw: createMetricPattern20(client, _m(acc, 'invested_capital_in_profit_raw')),
-    investorCapInLossRaw: createMetricPattern20(client, _m(acc, 'investor_cap_in_loss_raw')),
-    investorCapInProfitRaw: createMetricPattern20(client, _m(acc, 'investor_cap_in_profit_raw')),
+    investedCapitalInProfitRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_profit_raw')),
+    investorCapInLossRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_loss_raw')),
+    investorCapInProfitRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_profit_raw')),
     negUnrealizedLoss: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss')),
     netSentiment: createMetricPattern1(client, _m(acc, 'net_sentiment')),
     netUnrealizedPnl: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl')),
@@ -3005,17 +2991,17 @@ function create_201520162017201820192020202120222023202420252026Pattern2(client,
 
 /**
  * @typedef {Object} AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern
- * @property {MetricPattern20<StoredU64>} average
- * @property {MetricPattern20<StoredU64>} cumulative
- * @property {MetricPattern20<StoredU64>} max
- * @property {MetricPattern20<StoredU64>} median
- * @property {MetricPattern20<StoredU64>} min
- * @property {MetricPattern20<StoredU64>} pct10
- * @property {MetricPattern20<StoredU64>} pct25
- * @property {MetricPattern20<StoredU64>} pct75
- * @property {MetricPattern20<StoredU64>} pct90
+ * @property {MetricPattern18<StoredU64>} average
+ * @property {MetricPattern18<StoredU64>} cumulative
+ * @property {MetricPattern18<StoredU64>} max
+ * @property {MetricPattern18<StoredU64>} median
+ * @property {MetricPattern18<StoredU64>} min
+ * @property {MetricPattern18<StoredU64>} pct10
+ * @property {MetricPattern18<StoredU64>} pct25
+ * @property {MetricPattern18<StoredU64>} pct75
+ * @property {MetricPattern18<StoredU64>} pct90
  * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern} rolling
- * @property {MetricPattern20<StoredU64>} sum
+ * @property {MetricPattern18<StoredU64>} sum
  */
 
 /**
@@ -3026,17 +3012,17 @@ function create_201520162017201820192020202120222023202420252026Pattern2(client,
  */
 function createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(client, acc) {
   return {
-    average: createMetricPattern20(client, _m(acc, 'average')),
-    cumulative: createMetricPattern20(client, _m(acc, 'cumulative')),
-    max: createMetricPattern20(client, _m(acc, 'max')),
-    median: createMetricPattern20(client, _m(acc, 'median')),
-    min: createMetricPattern20(client, _m(acc, 'min')),
-    pct10: createMetricPattern20(client, _m(acc, 'pct10')),
-    pct25: createMetricPattern20(client, _m(acc, 'pct25')),
-    pct75: createMetricPattern20(client, _m(acc, 'pct75')),
-    pct90: createMetricPattern20(client, _m(acc, 'pct90')),
+    average: createMetricPattern18(client, _m(acc, 'average')),
+    cumulative: createMetricPattern18(client, _m(acc, 'cumulative')),
+    max: createMetricPattern18(client, _m(acc, 'max')),
+    median: createMetricPattern18(client, _m(acc, 'median')),
+    min: createMetricPattern18(client, _m(acc, 'min')),
+    pct10: createMetricPattern18(client, _m(acc, 'pct10')),
+    pct25: createMetricPattern18(client, _m(acc, 'pct25')),
+    pct75: createMetricPattern18(client, _m(acc, 'pct75')),
+    pct90: createMetricPattern18(client, _m(acc, 'pct90')),
     rolling: createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc),
-    sum: createMetricPattern20(client, _m(acc, 'sum')),
+    sum: createMetricPattern18(client, _m(acc, 'sum')),
   };
 }
 
@@ -3044,7 +3030,7 @@ function createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPatter
  * @typedef {Object} AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern
  * @property {_1y24h30d7dPattern<StoredU64>} average
  * @property {MetricPattern1<StoredU64>} cumulative
- * @property {MetricPattern20<StoredU64>} height
+ * @property {MetricPattern18<StoredU64>} height
  * @property {_1y24h30d7dPattern<StoredU64>} max
  * @property {_1y24h30d7dPattern<StoredU64>} median
  * @property {_1y24h30d7dPattern<StoredU64>} min
@@ -3065,7 +3051,7 @@ function createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern
   return {
     average: create_1y24h30d7dPattern(client, _m(acc, 'average')),
     cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
-    height: createMetricPattern20(client, acc),
+    height: createMetricPattern18(client, acc),
     max: create_1y24h30d7dPattern(client, _m(acc, 'max')),
     median: create_1y24h30d7dPattern(client, _m(acc, 'median')),
     min: create_1y24h30d7dPattern(client, _m(acc, 'min')),
@@ -3248,7 +3234,7 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
  * @template T
  * @typedef {Object} AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern
  * @property {_1y24h30d7dPattern<T>} average
- * @property {MetricPattern20<T>} height
+ * @property {MetricPattern18<T>} height
  * @property {_1y24h30d7dPattern<T>} max
  * @property {_1y24h30d7dPattern<T>} median
  * @property {_1y24h30d7dPattern<T>} min
@@ -3268,7 +3254,7 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
 function createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc) {
   return {
     average: create_1y24h30d7dPattern(client, _m(acc, 'average')),
-    height: createMetricPattern20(client, acc),
+    height: createMetricPattern18(client, acc),
     max: create_1y24h30d7dPattern(client, _m(acc, 'max')),
     median: create_1y24h30d7dPattern(client, _m(acc, 'median')),
     min: create_1y24h30d7dPattern(client, _m(acc, 'min')),
@@ -3282,14 +3268,14 @@ function createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc)
 /**
  * @template T
  * @typedef {Object} AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern
- * @property {MetricPattern20<T>} average
- * @property {MetricPattern20<T>} max
- * @property {MetricPattern20<T>} median
- * @property {MetricPattern20<T>} min
- * @property {MetricPattern20<T>} pct10
- * @property {MetricPattern20<T>} pct25
- * @property {MetricPattern20<T>} pct75
- * @property {MetricPattern20<T>} pct90
+ * @property {MetricPattern18<T>} average
+ * @property {MetricPattern18<T>} max
+ * @property {MetricPattern18<T>} median
+ * @property {MetricPattern18<T>} min
+ * @property {MetricPattern18<T>} pct10
+ * @property {MetricPattern18<T>} pct25
+ * @property {MetricPattern18<T>} pct75
+ * @property {MetricPattern18<T>} pct90
  */
 
 /**
@@ -3301,14 +3287,14 @@ function createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc)
  */
 function createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc) {
   return {
-    average: createMetricPattern20(client, _m(acc, 'average')),
-    max: createMetricPattern20(client, _m(acc, 'max')),
-    median: createMetricPattern20(client, _m(acc, 'median')),
-    min: createMetricPattern20(client, _m(acc, 'min')),
-    pct10: createMetricPattern20(client, _m(acc, 'pct10')),
-    pct25: createMetricPattern20(client, _m(acc, 'pct25')),
-    pct75: createMetricPattern20(client, _m(acc, 'pct75')),
-    pct90: createMetricPattern20(client, _m(acc, 'pct90')),
+    average: createMetricPattern18(client, _m(acc, 'average')),
+    max: createMetricPattern18(client, _m(acc, 'max')),
+    median: createMetricPattern18(client, _m(acc, 'median')),
+    min: createMetricPattern18(client, _m(acc, 'min')),
+    pct10: createMetricPattern18(client, _m(acc, 'pct10')),
+    pct25: createMetricPattern18(client, _m(acc, 'pct25')),
+    pct75: createMetricPattern18(client, _m(acc, 'pct75')),
+    pct90: createMetricPattern18(client, _m(acc, 'pct90')),
   };
 }
 
@@ -3347,9 +3333,9 @@ function create_10y2y3y4y5y6y8yPattern(client, acc) {
  * @property {BtcSatsUsdPattern} _24h
  * @property {BtcSatsUsdPattern} _30d
  * @property {BtcSatsUsdPattern} _7d
- * @property {MetricPattern20<Bitcoin>} btc
- * @property {MetricPattern20<Sats>} sats
- * @property {MetricPattern20<Dollars>} usd
+ * @property {MetricPattern18<Bitcoin>} btc
+ * @property {MetricPattern18<Sats>} sats
+ * @property {MetricPattern18<Dollars>} usd
  */
 
 /**
@@ -3364,9 +3350,9 @@ function create_1y24h30d7dBtcSatsUsdPattern(client, acc) {
     _24h: createBtcSatsUsdPattern(client, _m(acc, '24h')),
     _30d: createBtcSatsUsdPattern(client, _m(acc, '30d')),
     _7d: createBtcSatsUsdPattern(client, _m(acc, '7d')),
-    btc: createMetricPattern20(client, _m(acc, 'btc')),
-    sats: createMetricPattern20(client, acc),
-    usd: createMetricPattern20(client, _m(acc, 'usd')),
+    btc: createMetricPattern18(client, _m(acc, 'btc')),
+    sats: createMetricPattern18(client, acc),
+    usd: createMetricPattern18(client, _m(acc, 'usd')),
   };
 }
 
@@ -3544,8 +3530,8 @@ function createBalanceBothReactivatedReceivingSendingPattern(client, acc) {
  * @typedef {Object} CoinblocksCoindaysSatblocksSatdaysSentPattern
  * @property {CumulativeHeightSumPattern<StoredF64>} coinblocksDestroyed
  * @property {CumulativeHeightSumPattern<StoredF64>} coindaysDestroyed
- * @property {MetricPattern20<Sats>} satblocksDestroyed
- * @property {MetricPattern20<Sats>} satdaysDestroyed
+ * @property {MetricPattern18<Sats>} satblocksDestroyed
+ * @property {MetricPattern18<Sats>} satdaysDestroyed
  * @property {BaseCumulativePattern} sent
  * @property {BtcSatsUsdPattern} sent14dEma
  */
@@ -3560,8 +3546,8 @@ function createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc) {
   return {
     coinblocksDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coinblocks_destroyed')),
     coindaysDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coindays_destroyed')),
-    satblocksDestroyed: createMetricPattern20(client, _m(acc, 'satblocks_destroyed')),
-    satdaysDestroyed: createMetricPattern20(client, _m(acc, 'satdays_destroyed')),
+    satblocksDestroyed: createMetricPattern18(client, _m(acc, 'satblocks_destroyed')),
+    satdaysDestroyed: createMetricPattern18(client, _m(acc, 'satdays_destroyed')),
     sent: createBaseCumulativePattern(client, _m(acc, 'sent')),
     sent14dEma: createBtcSatsUsdPattern(client, _m(acc, 'sent_14d_ema')),
   };
@@ -3752,7 +3738,7 @@ function createHistogramLineSignalPattern(client, acc) {
  * @typedef {Object} _6bBlockTxindexPattern
  * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} _6b
  * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} block
- * @property {MetricPattern21<T>} txindex
+ * @property {MetricPattern19<T>} txindex
  */
 
 /**
@@ -3766,7 +3752,7 @@ function create_6bBlockTxindexPattern(client, acc) {
   return {
     _6b: createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, '6b')),
     block: createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc),
-    txindex: createMetricPattern21(client, acc),
+    txindex: createMetricPattern19(client, acc),
   };
 }
 
@@ -3774,7 +3760,7 @@ function create_6bBlockTxindexPattern(client, acc) {
  * @template T
  * @typedef {Object} CumulativeHeightSumPattern
  * @property {MetricPattern1<T>} cumulative
- * @property {MetricPattern20<T>} height
+ * @property {MetricPattern18<T>} height
  * @property {_1y24h30d7dPattern<T>} sum
  */
 
@@ -3788,7 +3774,7 @@ function create_6bBlockTxindexPattern(client, acc) {
 function createCumulativeHeightSumPattern(client, acc) {
   return {
     cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
-    height: createMetricPattern20(client, acc),
+    height: createMetricPattern18(client, acc),
     sum: create_1y24h30d7dPattern(client, acc),
   };
 }
@@ -3834,7 +3820,7 @@ function createBaseCumulativePattern(client, acc) {
 /**
  * @typedef {Object} CumulativeHeightPattern
  * @property {MetricPattern1<Dollars>} cumulative
- * @property {MetricPattern20<Dollars>} height
+ * @property {MetricPattern18<Dollars>} height
  */
 
 /**
@@ -3846,7 +3832,7 @@ function createBaseCumulativePattern(client, acc) {
 function createCumulativeHeightPattern(client, acc) {
   return {
     cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
-    height: createMetricPattern20(client, acc),
+    height: createMetricPattern18(client, acc),
   };
 }
 
@@ -3967,10 +3953,10 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Blocks
- * @property {MetricPattern20<BlockHash>} blockhash
+ * @property {MetricPattern18<BlockHash>} blockhash
  * @property {MetricsTree_Blocks_Difficulty} difficulty
  * @property {MetricsTree_Blocks_Time} time
- * @property {MetricPattern20<StoredU64>} totalSize
+ * @property {MetricPattern18<StoredU64>} totalSize
  * @property {MetricsTree_Blocks_Weight} weight
  * @property {MetricsTree_Blocks_Count} count
  * @property {AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern<Timestamp>} interval
@@ -3993,13 +3979,13 @@ function createRatioPattern2(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Blocks_Time
  * @property {MetricPattern1<Timestamp>} timestamp
- * @property {MetricPattern20<Date>} date
- * @property {MetricPattern20<Timestamp>} timestampMonotonic
+ * @property {MetricPattern18<Date>} date
+ * @property {MetricPattern18<Timestamp>} timestampMonotonic
  */
 
 /**
  * @typedef {Object} MetricsTree_Blocks_Weight
- * @property {MetricPattern20<Weight>} base
+ * @property {MetricPattern18<Weight>} base
  * @property {MetricPattern1<Weight>} cumulative
  * @property {_1y24h30d7dPattern<Weight>} sum
  * @property {_1y24h30d7dPattern<Weight>} average
@@ -4017,37 +4003,37 @@ function createRatioPattern2(client, acc) {
  * @property {MetricPattern1<StoredU64>} blockCountTarget
  * @property {CumulativeHeightSumPattern<StoredU32>} blockCount
  * @property {_1y24h30d7dPattern<StoredU32>} blockCountSum
- * @property {MetricPattern20<Height>} height1hAgo
- * @property {MetricPattern20<Height>} height24hAgo
- * @property {MetricPattern20<Height>} height3dAgo
- * @property {MetricPattern20<Height>} height1wAgo
- * @property {MetricPattern20<Height>} height8dAgo
- * @property {MetricPattern20<Height>} height9dAgo
- * @property {MetricPattern20<Height>} height12dAgo
- * @property {MetricPattern20<Height>} height13dAgo
- * @property {MetricPattern20<Height>} height2wAgo
- * @property {MetricPattern20<Height>} height21dAgo
- * @property {MetricPattern20<Height>} height26dAgo
- * @property {MetricPattern20<Height>} height1mAgo
- * @property {MetricPattern20<Height>} height34dAgo
- * @property {MetricPattern20<Height>} height55dAgo
- * @property {MetricPattern20<Height>} height2mAgo
- * @property {MetricPattern20<Height>} height89dAgo
- * @property {MetricPattern20<Height>} height111dAgo
- * @property {MetricPattern20<Height>} height144dAgo
- * @property {MetricPattern20<Height>} height3mAgo
- * @property {MetricPattern20<Height>} height6mAgo
- * @property {MetricPattern20<Height>} height200dAgo
- * @property {MetricPattern20<Height>} height350dAgo
- * @property {MetricPattern20<Height>} height1yAgo
- * @property {MetricPattern20<Height>} height2yAgo
- * @property {MetricPattern20<Height>} height200wAgo
- * @property {MetricPattern20<Height>} height3yAgo
- * @property {MetricPattern20<Height>} height4yAgo
- * @property {MetricPattern20<Height>} height5yAgo
- * @property {MetricPattern20<Height>} height6yAgo
- * @property {MetricPattern20<Height>} height8yAgo
- * @property {MetricPattern20<Height>} height10yAgo
+ * @property {MetricPattern18<Height>} height1hAgo
+ * @property {MetricPattern18<Height>} height24hAgo
+ * @property {MetricPattern18<Height>} height3dAgo
+ * @property {MetricPattern18<Height>} height1wAgo
+ * @property {MetricPattern18<Height>} height8dAgo
+ * @property {MetricPattern18<Height>} height9dAgo
+ * @property {MetricPattern18<Height>} height12dAgo
+ * @property {MetricPattern18<Height>} height13dAgo
+ * @property {MetricPattern18<Height>} height2wAgo
+ * @property {MetricPattern18<Height>} height21dAgo
+ * @property {MetricPattern18<Height>} height26dAgo
+ * @property {MetricPattern18<Height>} height1mAgo
+ * @property {MetricPattern18<Height>} height34dAgo
+ * @property {MetricPattern18<Height>} height55dAgo
+ * @property {MetricPattern18<Height>} height2mAgo
+ * @property {MetricPattern18<Height>} height89dAgo
+ * @property {MetricPattern18<Height>} height111dAgo
+ * @property {MetricPattern18<Height>} height144dAgo
+ * @property {MetricPattern18<Height>} height3mAgo
+ * @property {MetricPattern18<Height>} height6mAgo
+ * @property {MetricPattern18<Height>} height200dAgo
+ * @property {MetricPattern18<Height>} height350dAgo
+ * @property {MetricPattern18<Height>} height1yAgo
+ * @property {MetricPattern18<Height>} height2yAgo
+ * @property {MetricPattern18<Height>} height200wAgo
+ * @property {MetricPattern18<Height>} height3yAgo
+ * @property {MetricPattern18<Height>} height4yAgo
+ * @property {MetricPattern18<Height>} height5yAgo
+ * @property {MetricPattern18<Height>} height6yAgo
+ * @property {MetricPattern18<Height>} height8yAgo
+ * @property {MetricPattern18<Height>} height10yAgo
  */
 
 /**
@@ -4073,16 +4059,16 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Transactions
- * @property {MetricPattern20<TxIndex>} firstTxindex
- * @property {MetricPattern21<Height>} height
- * @property {MetricPattern21<Txid>} txid
- * @property {MetricPattern21<TxVersion>} txversion
- * @property {MetricPattern21<RawLockTime>} rawlocktime
- * @property {MetricPattern21<StoredU32>} baseSize
- * @property {MetricPattern21<StoredU32>} totalSize
- * @property {MetricPattern21<StoredBool>} isExplicitlyRbf
- * @property {MetricPattern21<TxInIndex>} firstTxinindex
- * @property {MetricPattern21<TxOutIndex>} firstTxoutindex
+ * @property {MetricPattern18<TxIndex>} firstTxindex
+ * @property {MetricPattern19<Height>} height
+ * @property {MetricPattern19<Txid>} txid
+ * @property {MetricPattern19<TxVersion>} txversion
+ * @property {MetricPattern19<RawLockTime>} rawlocktime
+ * @property {MetricPattern19<StoredU32>} baseSize
+ * @property {MetricPattern19<StoredU32>} totalSize
+ * @property {MetricPattern19<StoredBool>} isExplicitlyRbf
+ * @property {MetricPattern19<TxInIndex>} firstTxinindex
+ * @property {MetricPattern19<TxOutIndex>} firstTxoutindex
  * @property {MetricsTree_Transactions_Count} count
  * @property {MetricsTree_Transactions_Size} size
  * @property {MetricsTree_Transactions_Fees} fees
@@ -4093,7 +4079,7 @@ function createRatioPattern2(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Transactions_Count
  * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} txCount
- * @property {MetricPattern21<StoredBool>} isCoinbase
+ * @property {MetricPattern19<StoredBool>} isCoinbase
  */
 
 /**
@@ -4104,8 +4090,8 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Transactions_Fees
- * @property {MetricPattern21<Sats>} inputValue
- * @property {MetricPattern21<Sats>} outputValue
+ * @property {MetricPattern19<Sats>} inputValue
+ * @property {MetricPattern19<Sats>} outputValue
  * @property {_6bBlockTxindexPattern<Sats>} fee
  * @property {_6bBlockTxindexPattern<FeeRate>} feeRate
  */
@@ -4129,35 +4115,35 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Inputs
- * @property {MetricPattern20<TxInIndex>} firstTxinindex
- * @property {MetricPattern22<OutPoint>} outpoint
- * @property {MetricPattern22<TxIndex>} txindex
- * @property {MetricPattern22<OutputType>} outputtype
- * @property {MetricPattern22<TypeIndex>} typeindex
+ * @property {MetricPattern18<TxInIndex>} firstTxinindex
+ * @property {MetricPattern20<OutPoint>} outpoint
+ * @property {MetricPattern20<TxIndex>} txindex
+ * @property {MetricPattern20<OutputType>} outputtype
+ * @property {MetricPattern20<TypeIndex>} typeindex
  * @property {MetricsTree_Inputs_Spent} spent
  * @property {AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern} count
  */
 
 /**
  * @typedef {Object} MetricsTree_Inputs_Spent
- * @property {MetricPattern22<TxOutIndex>} txoutindex
- * @property {MetricPattern22<Sats>} value
+ * @property {MetricPattern20<TxOutIndex>} txoutindex
+ * @property {MetricPattern20<Sats>} value
  */
 
 /**
  * @typedef {Object} MetricsTree_Outputs
- * @property {MetricPattern20<TxOutIndex>} firstTxoutindex
- * @property {MetricPattern23<Sats>} value
- * @property {MetricPattern23<OutputType>} outputtype
- * @property {MetricPattern23<TypeIndex>} typeindex
- * @property {MetricPattern23<TxIndex>} txindex
+ * @property {MetricPattern18<TxOutIndex>} firstTxoutindex
+ * @property {MetricPattern21<Sats>} value
+ * @property {MetricPattern21<OutputType>} outputtype
+ * @property {MetricPattern21<TypeIndex>} typeindex
+ * @property {MetricPattern21<TxIndex>} txindex
  * @property {MetricsTree_Outputs_Spent} spent
  * @property {MetricsTree_Outputs_Count} count
  */
 
 /**
  * @typedef {Object} MetricsTree_Outputs_Spent
- * @property {MetricPattern23<TxInIndex>} txinindex
+ * @property {MetricPattern21<TxInIndex>} txinindex
  */
 
 /**
@@ -4168,34 +4154,34 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Addresses
- * @property {MetricPattern20<P2PK65AddressIndex>} firstP2pk65addressindex
- * @property {MetricPattern20<P2PK33AddressIndex>} firstP2pk33addressindex
- * @property {MetricPattern20<P2PKHAddressIndex>} firstP2pkhaddressindex
- * @property {MetricPattern20<P2SHAddressIndex>} firstP2shaddressindex
- * @property {MetricPattern20<P2WPKHAddressIndex>} firstP2wpkhaddressindex
- * @property {MetricPattern20<P2WSHAddressIndex>} firstP2wshaddressindex
- * @property {MetricPattern20<P2TRAddressIndex>} firstP2traddressindex
- * @property {MetricPattern20<P2AAddressIndex>} firstP2aaddressindex
- * @property {MetricPattern29<P2PK65Bytes>} p2pk65bytes
- * @property {MetricPattern28<P2PK33Bytes>} p2pk33bytes
- * @property {MetricPattern30<P2PKHBytes>} p2pkhbytes
- * @property {MetricPattern31<P2SHBytes>} p2shbytes
- * @property {MetricPattern33<P2WPKHBytes>} p2wpkhbytes
- * @property {MetricPattern34<P2WSHBytes>} p2wshbytes
- * @property {MetricPattern32<P2TRBytes>} p2trbytes
- * @property {MetricPattern26<P2ABytes>} p2abytes
+ * @property {MetricPattern18<P2PK65AddressIndex>} firstP2pk65addressindex
+ * @property {MetricPattern18<P2PK33AddressIndex>} firstP2pk33addressindex
+ * @property {MetricPattern18<P2PKHAddressIndex>} firstP2pkhaddressindex
+ * @property {MetricPattern18<P2SHAddressIndex>} firstP2shaddressindex
+ * @property {MetricPattern18<P2WPKHAddressIndex>} firstP2wpkhaddressindex
+ * @property {MetricPattern18<P2WSHAddressIndex>} firstP2wshaddressindex
+ * @property {MetricPattern18<P2TRAddressIndex>} firstP2traddressindex
+ * @property {MetricPattern18<P2AAddressIndex>} firstP2aaddressindex
+ * @property {MetricPattern27<P2PK65Bytes>} p2pk65bytes
+ * @property {MetricPattern26<P2PK33Bytes>} p2pk33bytes
+ * @property {MetricPattern28<P2PKHBytes>} p2pkhbytes
+ * @property {MetricPattern29<P2SHBytes>} p2shbytes
+ * @property {MetricPattern31<P2WPKHBytes>} p2wpkhbytes
+ * @property {MetricPattern32<P2WSHBytes>} p2wshbytes
+ * @property {MetricPattern30<P2TRBytes>} p2trbytes
+ * @property {MetricPattern24<P2ABytes>} p2abytes
  */
 
 /**
  * @typedef {Object} MetricsTree_Scripts
- * @property {MetricPattern20<EmptyOutputIndex>} firstEmptyoutputindex
- * @property {MetricPattern20<OpReturnIndex>} firstOpreturnindex
- * @property {MetricPattern20<P2MSOutputIndex>} firstP2msoutputindex
- * @property {MetricPattern20<UnknownOutputIndex>} firstUnknownoutputindex
- * @property {MetricPattern24<TxIndex>} emptyToTxindex
- * @property {MetricPattern25<TxIndex>} opreturnToTxindex
- * @property {MetricPattern27<TxIndex>} p2msToTxindex
- * @property {MetricPattern35<TxIndex>} unknownToTxindex
+ * @property {MetricPattern18<EmptyOutputIndex>} firstEmptyoutputindex
+ * @property {MetricPattern18<OpReturnIndex>} firstOpreturnindex
+ * @property {MetricPattern18<P2MSOutputIndex>} firstP2msoutputindex
+ * @property {MetricPattern18<UnknownOutputIndex>} firstUnknownoutputindex
+ * @property {MetricPattern22<TxIndex>} emptyToTxindex
+ * @property {MetricPattern23<TxIndex>} opreturnToTxindex
+ * @property {MetricPattern25<TxIndex>} p2msToTxindex
+ * @property {MetricPattern33<TxIndex>} unknownToTxindex
  * @property {MetricsTree_Scripts_Count} count
  * @property {MetricsTree_Scripts_Value} value
  * @property {MetricsTree_Scripts_Adoption} adoption
@@ -4277,8 +4263,8 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Positions
- * @property {MetricPattern20<BlkPosition>} blockPosition
- * @property {MetricPattern21<BlkPosition>} txPosition
+ * @property {MetricPattern18<BlkPosition>} blockPosition
+ * @property {MetricPattern19<BlkPosition>} txPosition
  */
 
 /**
@@ -4345,8 +4331,8 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Cointime_ReserveRisk
- * @property {MetricPattern20<StoredF64>} vocdd365dMedian
- * @property {MetricPattern20<StoredF64>} hodlBank
+ * @property {MetricPattern18<StoredF64>} vocdd365dMedian
+ * @property {MetricPattern18<StoredF64>} hodlBank
  * @property {MetricPattern1<StoredF64>} reserveRisk
  */
 
@@ -4378,8 +4364,6 @@ function createRatioPattern2(client, acc) {
  * @property {MetricsTree_Indexes_Height} height
  * @property {MetricsTree_Indexes_Difficultyepoch} difficultyepoch
  * @property {MetricsTree_Indexes_Halvingepoch} halvingepoch
- * @property {MetricsTree_Indexes_Minute1} minute1
- * @property {MetricsTree_Indexes_Minute5} minute5
  * @property {MetricsTree_Indexes_Minute10} minute10
  * @property {MetricsTree_Indexes_Minute30} minute30
  * @property {MetricsTree_Indexes_Hour1} hour1
@@ -4416,213 +4400,199 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2pk33
- * @property {MetricPattern28<P2PK33AddressIndex>} identity
+ * @property {MetricPattern26<P2PK33AddressIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2pk65
- * @property {MetricPattern29<P2PK65AddressIndex>} identity
+ * @property {MetricPattern27<P2PK65AddressIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2pkh
- * @property {MetricPattern30<P2PKHAddressIndex>} identity
+ * @property {MetricPattern28<P2PKHAddressIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2sh
- * @property {MetricPattern31<P2SHAddressIndex>} identity
+ * @property {MetricPattern29<P2SHAddressIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2tr
- * @property {MetricPattern32<P2TRAddressIndex>} identity
+ * @property {MetricPattern30<P2TRAddressIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2wpkh
- * @property {MetricPattern33<P2WPKHAddressIndex>} identity
+ * @property {MetricPattern31<P2WPKHAddressIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2wsh
- * @property {MetricPattern34<P2WSHAddressIndex>} identity
+ * @property {MetricPattern32<P2WSHAddressIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2a
- * @property {MetricPattern26<P2AAddressIndex>} identity
+ * @property {MetricPattern24<P2AAddressIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2ms
- * @property {MetricPattern27<P2MSOutputIndex>} identity
+ * @property {MetricPattern25<P2MSOutputIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_Empty
- * @property {MetricPattern24<EmptyOutputIndex>} identity
+ * @property {MetricPattern22<EmptyOutputIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_Unknown
- * @property {MetricPattern35<UnknownOutputIndex>} identity
+ * @property {MetricPattern33<UnknownOutputIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_Opreturn
- * @property {MetricPattern25<OpReturnIndex>} identity
+ * @property {MetricPattern23<OpReturnIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Height
- * @property {MetricPattern20<Height>} identity
- * @property {MetricPattern20<Minute1>} minute1
- * @property {MetricPattern20<Minute5>} minute5
- * @property {MetricPattern20<Minute10>} minute10
- * @property {MetricPattern20<Minute30>} minute30
- * @property {MetricPattern20<Hour1>} hour1
- * @property {MetricPattern20<Hour4>} hour4
- * @property {MetricPattern20<Hour12>} hour12
- * @property {MetricPattern20<Day1>} day1
- * @property {MetricPattern20<Day3>} day3
- * @property {MetricPattern20<DifficultyEpoch>} difficultyepoch
- * @property {MetricPattern20<HalvingEpoch>} halvingepoch
- * @property {MetricPattern20<Week1>} week1
- * @property {MetricPattern20<Month1>} month1
- * @property {MetricPattern20<Month3>} month3
- * @property {MetricPattern20<Month6>} month6
- * @property {MetricPattern20<Year1>} year1
- * @property {MetricPattern20<Year10>} year10
- * @property {MetricPattern20<StoredU64>} txindexCount
+ * @property {MetricPattern18<Height>} identity
+ * @property {MetricPattern18<Minute10>} minute10
+ * @property {MetricPattern18<Minute30>} minute30
+ * @property {MetricPattern18<Hour1>} hour1
+ * @property {MetricPattern18<Hour4>} hour4
+ * @property {MetricPattern18<Hour12>} hour12
+ * @property {MetricPattern18<Day1>} day1
+ * @property {MetricPattern18<Day3>} day3
+ * @property {MetricPattern18<DifficultyEpoch>} difficultyepoch
+ * @property {MetricPattern18<HalvingEpoch>} halvingepoch
+ * @property {MetricPattern18<Week1>} week1
+ * @property {MetricPattern18<Month1>} month1
+ * @property {MetricPattern18<Month3>} month3
+ * @property {MetricPattern18<Month6>} month6
+ * @property {MetricPattern18<Year1>} year1
+ * @property {MetricPattern18<Year10>} year10
+ * @property {MetricPattern18<StoredU64>} txindexCount
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Difficultyepoch
- * @property {MetricPattern19<DifficultyEpoch>} identity
- * @property {MetricPattern19<Height>} firstHeight
- * @property {MetricPattern19<StoredU64>} heightCount
+ * @property {MetricPattern17<DifficultyEpoch>} identity
+ * @property {MetricPattern17<Height>} firstHeight
+ * @property {MetricPattern17<StoredU64>} heightCount
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Halvingepoch
- * @property {MetricPattern18<HalvingEpoch>} identity
- * @property {MetricPattern18<Height>} firstHeight
- */
-
-/**
- * @typedef {Object} MetricsTree_Indexes_Minute1
- * @property {MetricPattern3<Minute1>} identity
- * @property {MetricPattern3<Height>} firstHeight
- */
-
-/**
- * @typedef {Object} MetricsTree_Indexes_Minute5
- * @property {MetricPattern4<Minute5>} identity
- * @property {MetricPattern4<Height>} firstHeight
+ * @property {MetricPattern16<HalvingEpoch>} identity
+ * @property {MetricPattern16<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Minute10
- * @property {MetricPattern5<Minute10>} identity
- * @property {MetricPattern5<Height>} firstHeight
+ * @property {MetricPattern3<Minute10>} identity
+ * @property {MetricPattern3<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Minute30
- * @property {MetricPattern6<Minute30>} identity
- * @property {MetricPattern6<Height>} firstHeight
+ * @property {MetricPattern4<Minute30>} identity
+ * @property {MetricPattern4<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Hour1
- * @property {MetricPattern7<Hour1>} identity
- * @property {MetricPattern7<Height>} firstHeight
+ * @property {MetricPattern5<Hour1>} identity
+ * @property {MetricPattern5<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Hour4
- * @property {MetricPattern8<Hour4>} identity
- * @property {MetricPattern8<Height>} firstHeight
+ * @property {MetricPattern6<Hour4>} identity
+ * @property {MetricPattern6<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Hour12
- * @property {MetricPattern9<Hour12>} identity
- * @property {MetricPattern9<Height>} firstHeight
+ * @property {MetricPattern7<Hour12>} identity
+ * @property {MetricPattern7<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Day1
- * @property {MetricPattern10<Day1>} identity
- * @property {MetricPattern10<Date>} date
- * @property {MetricPattern10<Height>} firstHeight
- * @property {MetricPattern10<StoredU64>} heightCount
+ * @property {MetricPattern8<Day1>} identity
+ * @property {MetricPattern8<Date>} date
+ * @property {MetricPattern8<Height>} firstHeight
+ * @property {MetricPattern8<StoredU64>} heightCount
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Day3
- * @property {MetricPattern11<Day3>} identity
- * @property {MetricPattern11<Height>} firstHeight
+ * @property {MetricPattern9<Day3>} identity
+ * @property {MetricPattern9<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Week1
- * @property {MetricPattern12<Week1>} identity
+ * @property {MetricPattern10<Week1>} identity
+ * @property {MetricPattern10<Date>} date
+ * @property {MetricPattern10<Height>} firstHeight
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Indexes_Month1
+ * @property {MetricPattern11<Month1>} identity
+ * @property {MetricPattern11<Date>} date
+ * @property {MetricPattern11<Height>} firstHeight
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Indexes_Month3
+ * @property {MetricPattern12<Month3>} identity
  * @property {MetricPattern12<Date>} date
  * @property {MetricPattern12<Height>} firstHeight
  */
 
 /**
- * @typedef {Object} MetricsTree_Indexes_Month1
- * @property {MetricPattern13<Month1>} identity
+ * @typedef {Object} MetricsTree_Indexes_Month6
+ * @property {MetricPattern13<Month6>} identity
  * @property {MetricPattern13<Date>} date
  * @property {MetricPattern13<Height>} firstHeight
  */
 
 /**
- * @typedef {Object} MetricsTree_Indexes_Month3
- * @property {MetricPattern14<Month3>} identity
+ * @typedef {Object} MetricsTree_Indexes_Year1
+ * @property {MetricPattern14<Year1>} identity
  * @property {MetricPattern14<Date>} date
  * @property {MetricPattern14<Height>} firstHeight
  */
 
 /**
- * @typedef {Object} MetricsTree_Indexes_Month6
- * @property {MetricPattern15<Month6>} identity
+ * @typedef {Object} MetricsTree_Indexes_Year10
+ * @property {MetricPattern15<Year10>} identity
  * @property {MetricPattern15<Date>} date
  * @property {MetricPattern15<Height>} firstHeight
  */
 
 /**
- * @typedef {Object} MetricsTree_Indexes_Year1
- * @property {MetricPattern16<Year1>} identity
- * @property {MetricPattern16<Date>} date
- * @property {MetricPattern16<Height>} firstHeight
- */
-
-/**
- * @typedef {Object} MetricsTree_Indexes_Year10
- * @property {MetricPattern17<Year10>} identity
- * @property {MetricPattern17<Date>} date
- * @property {MetricPattern17<Height>} firstHeight
- */
-
-/**
  * @typedef {Object} MetricsTree_Indexes_Txindex
- * @property {MetricPattern21<TxIndex>} identity
- * @property {MetricPattern21<StoredU64>} inputCount
- * @property {MetricPattern21<StoredU64>} outputCount
+ * @property {MetricPattern19<TxIndex>} identity
+ * @property {MetricPattern19<StoredU64>} inputCount
+ * @property {MetricPattern19<StoredU64>} outputCount
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Txinindex
- * @property {MetricPattern22<TxInIndex>} identity
+ * @property {MetricPattern20<TxInIndex>} identity
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Txoutindex
- * @property {MetricPattern23<TxOutIndex>} identity
+ * @property {MetricPattern21<TxOutIndex>} identity
  */
 
 /**
@@ -4671,7 +4641,7 @@ function createRatioPattern2(client, acc) {
  * @property {SdSmaPattern} _1dReturns1wSd
  * @property {SdSmaPattern} _1dReturns1mSd
  * @property {SdSmaPattern} _1dReturns1ySd
- * @property {MetricPattern20<StoredF32>} downsideReturns
+ * @property {MetricPattern18<StoredF32>} downsideReturns
  * @property {SdSmaPattern} downside1wSd
  * @property {SdSmaPattern} downside1mSd
  * @property {SdSmaPattern} downside1ySd
@@ -4763,7 +4733,7 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Market_Dca
- * @property {MetricPattern20<Sats>} dcaSatsPerDay
+ * @property {MetricPattern18<Sats>} dcaSatsPerDay
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} periodStack
  * @property {MetricsTree_Market_Dca_PeriodAveragePrice} periodAveragePrice
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodReturns
@@ -4992,7 +4962,7 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Pools
- * @property {MetricPattern20<PoolSlug>} heightToPool
+ * @property {MetricPattern18<PoolSlug>} heightToPool
  * @property {MetricsTree_Pools_Vecs} vecs
  */
 
@@ -5200,7 +5170,7 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution
- * @property {MetricPattern20<SupplyState>} supplyState
+ * @property {MetricPattern18<SupplyState>} supplyState
  * @property {MetricsTree_Distribution_AnyAddressIndexes} anyAddressIndexes
  * @property {MetricsTree_Distribution_AddressesData} addressesData
  * @property {MetricsTree_Distribution_UtxoCohorts} utxoCohorts
@@ -5211,26 +5181,26 @@ function createRatioPattern2(client, acc) {
  * @property {MetricsTree_Distribution_TotalAddrCount} totalAddrCount
  * @property {MetricsTree_Distribution_NewAddrCount} newAddrCount
  * @property {MetricsTree_Distribution_GrowthRate} growthRate
- * @property {MetricPattern36<FundedAddressIndex>} fundedaddressindex
- * @property {MetricPattern37<EmptyAddressIndex>} emptyaddressindex
+ * @property {MetricPattern34<FundedAddressIndex>} fundedaddressindex
+ * @property {MetricPattern35<EmptyAddressIndex>} emptyaddressindex
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_AnyAddressIndexes
- * @property {MetricPattern26<AnyAddressIndex>} p2a
- * @property {MetricPattern28<AnyAddressIndex>} p2pk33
- * @property {MetricPattern29<AnyAddressIndex>} p2pk65
- * @property {MetricPattern30<AnyAddressIndex>} p2pkh
- * @property {MetricPattern31<AnyAddressIndex>} p2sh
- * @property {MetricPattern32<AnyAddressIndex>} p2tr
- * @property {MetricPattern33<AnyAddressIndex>} p2wpkh
- * @property {MetricPattern34<AnyAddressIndex>} p2wsh
+ * @property {MetricPattern24<AnyAddressIndex>} p2a
+ * @property {MetricPattern26<AnyAddressIndex>} p2pk33
+ * @property {MetricPattern27<AnyAddressIndex>} p2pk65
+ * @property {MetricPattern28<AnyAddressIndex>} p2pkh
+ * @property {MetricPattern29<AnyAddressIndex>} p2sh
+ * @property {MetricPattern30<AnyAddressIndex>} p2tr
+ * @property {MetricPattern31<AnyAddressIndex>} p2wpkh
+ * @property {MetricPattern32<AnyAddressIndex>} p2wsh
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_AddressesData
- * @property {MetricPattern36<FundedAddressData>} funded
- * @property {MetricPattern37<EmptyAddressData>} empty
+ * @property {MetricPattern34<FundedAddressData>} funded
+ * @property {MetricPattern35<EmptyAddressData>} empty
  */
 
 /**
@@ -5601,8 +5571,6 @@ class BrkClient extends BrkClientBase {
   VERSION = "v0.1.9";
 
   INDEXES = /** @type {const} */ ([
-    "minute1",
-    "minute5",
     "minute10",
     "minute30",
     "hour1",
@@ -6542,7 +6510,7 @@ class BrkClient extends BrkClientBase {
   _buildTree(basePath) {
     return {
       blocks: {
-        blockhash: createMetricPattern20(this, 'blockhash'),
+        blockhash: createMetricPattern18(this, 'blockhash'),
         difficulty: {
           raw: createMetricPattern1(this, 'difficulty'),
           asHash: createMetricPattern1(this, 'difficulty_as_hash'),
@@ -6553,12 +6521,12 @@ class BrkClient extends BrkClientBase {
         },
         time: {
           timestamp: createMetricPattern1(this, 'timestamp'),
-          date: createMetricPattern20(this, 'date'),
-          timestampMonotonic: createMetricPattern20(this, 'timestamp_monotonic'),
+          date: createMetricPattern18(this, 'date'),
+          timestampMonotonic: createMetricPattern18(this, 'timestamp_monotonic'),
         },
-        totalSize: createMetricPattern20(this, 'total_size'),
+        totalSize: createMetricPattern18(this, 'total_size'),
         weight: {
-          base: createMetricPattern20(this, 'block_weight'),
+          base: createMetricPattern18(this, 'block_weight'),
           cumulative: createMetricPattern1(this, 'block_weight_cumulative'),
           sum: create_1y24h30d7dPattern(this, 'block_weight_sum'),
           average: create_1y24h30d7dPattern(this, 'block_weight_average'),
@@ -6574,37 +6542,37 @@ class BrkClient extends BrkClientBase {
           blockCountTarget: createMetricPattern1(this, 'block_count_target'),
           blockCount: createCumulativeHeightSumPattern(this, 'block_count'),
           blockCountSum: create_1y24h30d7dPattern(this, 'block_count_sum'),
-          height1hAgo: createMetricPattern20(this, 'height_1h_ago'),
-          height24hAgo: createMetricPattern20(this, 'height_24h_ago'),
-          height3dAgo: createMetricPattern20(this, 'height_3d_ago'),
-          height1wAgo: createMetricPattern20(this, 'height_1w_ago'),
-          height8dAgo: createMetricPattern20(this, 'height_8d_ago'),
-          height9dAgo: createMetricPattern20(this, 'height_9d_ago'),
-          height12dAgo: createMetricPattern20(this, 'height_12d_ago'),
-          height13dAgo: createMetricPattern20(this, 'height_13d_ago'),
-          height2wAgo: createMetricPattern20(this, 'height_2w_ago'),
-          height21dAgo: createMetricPattern20(this, 'height_21d_ago'),
-          height26dAgo: createMetricPattern20(this, 'height_26d_ago'),
-          height1mAgo: createMetricPattern20(this, 'height_1m_ago'),
-          height34dAgo: createMetricPattern20(this, 'height_34d_ago'),
-          height55dAgo: createMetricPattern20(this, 'height_55d_ago'),
-          height2mAgo: createMetricPattern20(this, 'height_2m_ago'),
-          height89dAgo: createMetricPattern20(this, 'height_89d_ago'),
-          height111dAgo: createMetricPattern20(this, 'height_111d_ago'),
-          height144dAgo: createMetricPattern20(this, 'height_144d_ago'),
-          height3mAgo: createMetricPattern20(this, 'height_3m_ago'),
-          height6mAgo: createMetricPattern20(this, 'height_6m_ago'),
-          height200dAgo: createMetricPattern20(this, 'height_200d_ago'),
-          height350dAgo: createMetricPattern20(this, 'height_350d_ago'),
-          height1yAgo: createMetricPattern20(this, 'height_1y_ago'),
-          height2yAgo: createMetricPattern20(this, 'height_2y_ago'),
-          height200wAgo: createMetricPattern20(this, 'height_200w_ago'),
-          height3yAgo: createMetricPattern20(this, 'height_3y_ago'),
-          height4yAgo: createMetricPattern20(this, 'height_4y_ago'),
-          height5yAgo: createMetricPattern20(this, 'height_5y_ago'),
-          height6yAgo: createMetricPattern20(this, 'height_6y_ago'),
-          height8yAgo: createMetricPattern20(this, 'height_8y_ago'),
-          height10yAgo: createMetricPattern20(this, 'height_10y_ago'),
+          height1hAgo: createMetricPattern18(this, 'height_1h_ago'),
+          height24hAgo: createMetricPattern18(this, 'height_24h_ago'),
+          height3dAgo: createMetricPattern18(this, 'height_3d_ago'),
+          height1wAgo: createMetricPattern18(this, 'height_1w_ago'),
+          height8dAgo: createMetricPattern18(this, 'height_8d_ago'),
+          height9dAgo: createMetricPattern18(this, 'height_9d_ago'),
+          height12dAgo: createMetricPattern18(this, 'height_12d_ago'),
+          height13dAgo: createMetricPattern18(this, 'height_13d_ago'),
+          height2wAgo: createMetricPattern18(this, 'height_2w_ago'),
+          height21dAgo: createMetricPattern18(this, 'height_21d_ago'),
+          height26dAgo: createMetricPattern18(this, 'height_26d_ago'),
+          height1mAgo: createMetricPattern18(this, 'height_1m_ago'),
+          height34dAgo: createMetricPattern18(this, 'height_34d_ago'),
+          height55dAgo: createMetricPattern18(this, 'height_55d_ago'),
+          height2mAgo: createMetricPattern18(this, 'height_2m_ago'),
+          height89dAgo: createMetricPattern18(this, 'height_89d_ago'),
+          height111dAgo: createMetricPattern18(this, 'height_111d_ago'),
+          height144dAgo: createMetricPattern18(this, 'height_144d_ago'),
+          height3mAgo: createMetricPattern18(this, 'height_3m_ago'),
+          height6mAgo: createMetricPattern18(this, 'height_6m_ago'),
+          height200dAgo: createMetricPattern18(this, 'height_200d_ago'),
+          height350dAgo: createMetricPattern18(this, 'height_350d_ago'),
+          height1yAgo: createMetricPattern18(this, 'height_1y_ago'),
+          height2yAgo: createMetricPattern18(this, 'height_2y_ago'),
+          height200wAgo: createMetricPattern18(this, 'height_200w_ago'),
+          height3yAgo: createMetricPattern18(this, 'height_3y_ago'),
+          height4yAgo: createMetricPattern18(this, 'height_4y_ago'),
+          height5yAgo: createMetricPattern18(this, 'height_5y_ago'),
+          height6yAgo: createMetricPattern18(this, 'height_6y_ago'),
+          height8yAgo: createMetricPattern18(this, 'height_8y_ago'),
+          height10yAgo: createMetricPattern18(this, 'height_10y_ago'),
         },
         interval: createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(this, 'block_interval'),
         halving: {
@@ -6628,27 +6596,27 @@ class BrkClient extends BrkClientBase {
         fullness: createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(this, 'block_fullness'),
       },
       transactions: {
-        firstTxindex: createMetricPattern20(this, 'first_txindex'),
-        height: createMetricPattern21(this, 'height'),
-        txid: createMetricPattern21(this, 'txid'),
-        txversion: createMetricPattern21(this, 'txversion'),
-        rawlocktime: createMetricPattern21(this, 'rawlocktime'),
-        baseSize: createMetricPattern21(this, 'base_size'),
-        totalSize: createMetricPattern21(this, 'total_size'),
-        isExplicitlyRbf: createMetricPattern21(this, 'is_explicitly_rbf'),
-        firstTxinindex: createMetricPattern21(this, 'first_txinindex'),
-        firstTxoutindex: createMetricPattern21(this, 'first_txoutindex'),
+        firstTxindex: createMetricPattern18(this, 'first_txindex'),
+        height: createMetricPattern19(this, 'height'),
+        txid: createMetricPattern19(this, 'txid'),
+        txversion: createMetricPattern19(this, 'txversion'),
+        rawlocktime: createMetricPattern19(this, 'rawlocktime'),
+        baseSize: createMetricPattern19(this, 'base_size'),
+        totalSize: createMetricPattern19(this, 'total_size'),
+        isExplicitlyRbf: createMetricPattern19(this, 'is_explicitly_rbf'),
+        firstTxinindex: createMetricPattern19(this, 'first_txinindex'),
+        firstTxoutindex: createMetricPattern19(this, 'first_txoutindex'),
         count: {
           txCount: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'tx_count'),
-          isCoinbase: createMetricPattern21(this, 'is_coinbase'),
+          isCoinbase: createMetricPattern19(this, 'is_coinbase'),
         },
         size: {
           vsize: create_6bBlockTxindexPattern(this, 'tx_vsize'),
           weight: create_6bBlockTxindexPattern(this, 'tx_weight'),
         },
         fees: {
-          inputValue: createMetricPattern21(this, 'input_value'),
-          outputValue: createMetricPattern21(this, 'output_value'),
+          inputValue: createMetricPattern19(this, 'input_value'),
+          outputValue: createMetricPattern19(this, 'output_value'),
           fee: create_6bBlockTxindexPattern(this, 'fee'),
           feeRate: create_6bBlockTxindexPattern(this, 'fee_rate'),
         },
@@ -6667,25 +6635,25 @@ class BrkClient extends BrkClientBase {
         },
       },
       inputs: {
-        firstTxinindex: createMetricPattern20(this, 'first_txinindex'),
-        outpoint: createMetricPattern22(this, 'outpoint'),
-        txindex: createMetricPattern22(this, 'txindex'),
-        outputtype: createMetricPattern22(this, 'outputtype'),
-        typeindex: createMetricPattern22(this, 'typeindex'),
+        firstTxinindex: createMetricPattern18(this, 'first_txinindex'),
+        outpoint: createMetricPattern20(this, 'outpoint'),
+        txindex: createMetricPattern20(this, 'txindex'),
+        outputtype: createMetricPattern20(this, 'outputtype'),
+        typeindex: createMetricPattern20(this, 'typeindex'),
         spent: {
-          txoutindex: createMetricPattern22(this, 'txoutindex'),
-          value: createMetricPattern22(this, 'value'),
+          txoutindex: createMetricPattern20(this, 'txoutindex'),
+          value: createMetricPattern20(this, 'value'),
         },
         count: createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(this, 'input_count'),
       },
       outputs: {
-        firstTxoutindex: createMetricPattern20(this, 'first_txoutindex'),
-        value: createMetricPattern23(this, 'value'),
-        outputtype: createMetricPattern23(this, 'outputtype'),
-        typeindex: createMetricPattern23(this, 'typeindex'),
-        txindex: createMetricPattern23(this, 'txindex'),
+        firstTxoutindex: createMetricPattern18(this, 'first_txoutindex'),
+        value: createMetricPattern21(this, 'value'),
+        outputtype: createMetricPattern21(this, 'outputtype'),
+        typeindex: createMetricPattern21(this, 'typeindex'),
+        txindex: createMetricPattern21(this, 'txindex'),
         spent: {
-          txinindex: createMetricPattern23(this, 'txinindex'),
+          txinindex: createMetricPattern21(this, 'txinindex'),
         },
         count: {
           totalCount: createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(this, 'output_count'),
@@ -6693,32 +6661,32 @@ class BrkClient extends BrkClientBase {
         },
       },
       addresses: {
-        firstP2pk65addressindex: createMetricPattern20(this, 'first_p2pk65addressindex'),
-        firstP2pk33addressindex: createMetricPattern20(this, 'first_p2pk33addressindex'),
-        firstP2pkhaddressindex: createMetricPattern20(this, 'first_p2pkhaddressindex'),
-        firstP2shaddressindex: createMetricPattern20(this, 'first_p2shaddressindex'),
-        firstP2wpkhaddressindex: createMetricPattern20(this, 'first_p2wpkhaddressindex'),
-        firstP2wshaddressindex: createMetricPattern20(this, 'first_p2wshaddressindex'),
-        firstP2traddressindex: createMetricPattern20(this, 'first_p2traddressindex'),
-        firstP2aaddressindex: createMetricPattern20(this, 'first_p2aaddressindex'),
-        p2pk65bytes: createMetricPattern29(this, 'p2pk65bytes'),
-        p2pk33bytes: createMetricPattern28(this, 'p2pk33bytes'),
-        p2pkhbytes: createMetricPattern30(this, 'p2pkhbytes'),
-        p2shbytes: createMetricPattern31(this, 'p2shbytes'),
-        p2wpkhbytes: createMetricPattern33(this, 'p2wpkhbytes'),
-        p2wshbytes: createMetricPattern34(this, 'p2wshbytes'),
-        p2trbytes: createMetricPattern32(this, 'p2trbytes'),
-        p2abytes: createMetricPattern26(this, 'p2abytes'),
+        firstP2pk65addressindex: createMetricPattern18(this, 'first_p2pk65addressindex'),
+        firstP2pk33addressindex: createMetricPattern18(this, 'first_p2pk33addressindex'),
+        firstP2pkhaddressindex: createMetricPattern18(this, 'first_p2pkhaddressindex'),
+        firstP2shaddressindex: createMetricPattern18(this, 'first_p2shaddressindex'),
+        firstP2wpkhaddressindex: createMetricPattern18(this, 'first_p2wpkhaddressindex'),
+        firstP2wshaddressindex: createMetricPattern18(this, 'first_p2wshaddressindex'),
+        firstP2traddressindex: createMetricPattern18(this, 'first_p2traddressindex'),
+        firstP2aaddressindex: createMetricPattern18(this, 'first_p2aaddressindex'),
+        p2pk65bytes: createMetricPattern27(this, 'p2pk65bytes'),
+        p2pk33bytes: createMetricPattern26(this, 'p2pk33bytes'),
+        p2pkhbytes: createMetricPattern28(this, 'p2pkhbytes'),
+        p2shbytes: createMetricPattern29(this, 'p2shbytes'),
+        p2wpkhbytes: createMetricPattern31(this, 'p2wpkhbytes'),
+        p2wshbytes: createMetricPattern32(this, 'p2wshbytes'),
+        p2trbytes: createMetricPattern30(this, 'p2trbytes'),
+        p2abytes: createMetricPattern24(this, 'p2abytes'),
       },
       scripts: {
-        firstEmptyoutputindex: createMetricPattern20(this, 'first_emptyoutputindex'),
-        firstOpreturnindex: createMetricPattern20(this, 'first_opreturnindex'),
-        firstP2msoutputindex: createMetricPattern20(this, 'first_p2msoutputindex'),
-        firstUnknownoutputindex: createMetricPattern20(this, 'first_unknownoutputindex'),
-        emptyToTxindex: createMetricPattern24(this, 'txindex'),
-        opreturnToTxindex: createMetricPattern25(this, 'txindex'),
-        p2msToTxindex: createMetricPattern27(this, 'txindex'),
-        unknownToTxindex: createMetricPattern35(this, 'txindex'),
+        firstEmptyoutputindex: createMetricPattern18(this, 'first_emptyoutputindex'),
+        firstOpreturnindex: createMetricPattern18(this, 'first_opreturnindex'),
+        firstP2msoutputindex: createMetricPattern18(this, 'first_p2msoutputindex'),
+        firstUnknownoutputindex: createMetricPattern18(this, 'first_unknownoutputindex'),
+        emptyToTxindex: createMetricPattern22(this, 'txindex'),
+        opreturnToTxindex: createMetricPattern23(this, 'txindex'),
+        p2msToTxindex: createMetricPattern25(this, 'txindex'),
+        unknownToTxindex: createMetricPattern33(this, 'txindex'),
         count: {
           p2a: createCumulativeHeightSumPattern(this, 'p2a_count'),
           p2ms: createCumulativeHeightSumPattern(this, 'p2ms_count'),
@@ -6781,8 +6749,8 @@ class BrkClient extends BrkClientBase {
         },
       },
       positions: {
-        blockPosition: createMetricPattern20(this, 'position'),
-        txPosition: createMetricPattern21(this, 'position'),
+        blockPosition: createMetricPattern18(this, 'position'),
+        txPosition: createMetricPattern19(this, 'position'),
       },
       cointime: {
         activity: {
@@ -6825,8 +6793,8 @@ class BrkClient extends BrkClientBase {
           cointimeAdjTxUsdVelocity: createMetricPattern1(this, 'cointime_adj_tx_usd_velocity'),
         },
         reserveRisk: {
-          vocdd365dMedian: createMetricPattern20(this, 'vocdd_365d_median'),
-          hodlBank: createMetricPattern20(this, 'hodl_bank'),
+          vocdd365dMedian: createMetricPattern18(this, 'vocdd_365d_median'),
+          hodlBank: createMetricPattern18(this, 'hodl_bank'),
           reserveRisk: createMetricPattern1(this, 'reserve_risk'),
         },
       },
@@ -6853,150 +6821,140 @@ class BrkClient extends BrkClientBase {
       indexes: {
         address: {
           p2pk33: {
-            identity: createMetricPattern28(this, 'p2pk33addressindex'),
+            identity: createMetricPattern26(this, 'p2pk33addressindex'),
           },
           p2pk65: {
-            identity: createMetricPattern29(this, 'p2pk65addressindex'),
+            identity: createMetricPattern27(this, 'p2pk65addressindex'),
           },
           p2pkh: {
-            identity: createMetricPattern30(this, 'p2pkhaddressindex'),
+            identity: createMetricPattern28(this, 'p2pkhaddressindex'),
           },
           p2sh: {
-            identity: createMetricPattern31(this, 'p2shaddressindex'),
+            identity: createMetricPattern29(this, 'p2shaddressindex'),
           },
           p2tr: {
-            identity: createMetricPattern32(this, 'p2traddressindex'),
+            identity: createMetricPattern30(this, 'p2traddressindex'),
           },
           p2wpkh: {
-            identity: createMetricPattern33(this, 'p2wpkhaddressindex'),
+            identity: createMetricPattern31(this, 'p2wpkhaddressindex'),
           },
           p2wsh: {
-            identity: createMetricPattern34(this, 'p2wshaddressindex'),
+            identity: createMetricPattern32(this, 'p2wshaddressindex'),
           },
           p2a: {
-            identity: createMetricPattern26(this, 'p2aaddressindex'),
+            identity: createMetricPattern24(this, 'p2aaddressindex'),
           },
           p2ms: {
-            identity: createMetricPattern27(this, 'p2msoutputindex'),
+            identity: createMetricPattern25(this, 'p2msoutputindex'),
           },
           empty: {
-            identity: createMetricPattern24(this, 'emptyoutputindex'),
+            identity: createMetricPattern22(this, 'emptyoutputindex'),
           },
           unknown: {
-            identity: createMetricPattern35(this, 'unknownoutputindex'),
+            identity: createMetricPattern33(this, 'unknownoutputindex'),
           },
           opreturn: {
-            identity: createMetricPattern25(this, 'opreturnindex'),
+            identity: createMetricPattern23(this, 'opreturnindex'),
           },
         },
         height: {
-          identity: createMetricPattern20(this, 'height'),
-          minute1: createMetricPattern20(this, 'minute1'),
-          minute5: createMetricPattern20(this, 'minute5'),
-          minute10: createMetricPattern20(this, 'minute10'),
-          minute30: createMetricPattern20(this, 'minute30'),
-          hour1: createMetricPattern20(this, 'hour1'),
-          hour4: createMetricPattern20(this, 'hour4'),
-          hour12: createMetricPattern20(this, 'hour12'),
-          day1: createMetricPattern20(this, 'day1'),
-          day3: createMetricPattern20(this, 'day3'),
-          difficultyepoch: createMetricPattern20(this, 'difficultyepoch'),
-          halvingepoch: createMetricPattern20(this, 'halvingepoch'),
-          week1: createMetricPattern20(this, 'week1'),
-          month1: createMetricPattern20(this, 'month1'),
-          month3: createMetricPattern20(this, 'month3'),
-          month6: createMetricPattern20(this, 'month6'),
-          year1: createMetricPattern20(this, 'year1'),
-          year10: createMetricPattern20(this, 'year10'),
-          txindexCount: createMetricPattern20(this, 'txindex_count'),
+          identity: createMetricPattern18(this, 'height'),
+          minute10: createMetricPattern18(this, 'minute10'),
+          minute30: createMetricPattern18(this, 'minute30'),
+          hour1: createMetricPattern18(this, 'hour1'),
+          hour4: createMetricPattern18(this, 'hour4'),
+          hour12: createMetricPattern18(this, 'hour12'),
+          day1: createMetricPattern18(this, 'day1'),
+          day3: createMetricPattern18(this, 'day3'),
+          difficultyepoch: createMetricPattern18(this, 'difficultyepoch'),
+          halvingepoch: createMetricPattern18(this, 'halvingepoch'),
+          week1: createMetricPattern18(this, 'week1'),
+          month1: createMetricPattern18(this, 'month1'),
+          month3: createMetricPattern18(this, 'month3'),
+          month6: createMetricPattern18(this, 'month6'),
+          year1: createMetricPattern18(this, 'year1'),
+          year10: createMetricPattern18(this, 'year10'),
+          txindexCount: createMetricPattern18(this, 'txindex_count'),
         },
         difficultyepoch: {
-          identity: createMetricPattern19(this, 'difficultyepoch'),
-          firstHeight: createMetricPattern19(this, 'first_height'),
-          heightCount: createMetricPattern19(this, 'height_count'),
+          identity: createMetricPattern17(this, 'difficultyepoch'),
+          firstHeight: createMetricPattern17(this, 'first_height'),
+          heightCount: createMetricPattern17(this, 'height_count'),
         },
         halvingepoch: {
-          identity: createMetricPattern18(this, 'halvingepoch'),
-          firstHeight: createMetricPattern18(this, 'first_height'),
-        },
-        minute1: {
-          identity: createMetricPattern3(this, 'minute1'),
-          firstHeight: createMetricPattern3(this, 'minute1_first_height'),
-        },
-        minute5: {
-          identity: createMetricPattern4(this, 'minute5'),
-          firstHeight: createMetricPattern4(this, 'minute5_first_height'),
+          identity: createMetricPattern16(this, 'halvingepoch'),
+          firstHeight: createMetricPattern16(this, 'first_height'),
         },
         minute10: {
-          identity: createMetricPattern5(this, 'minute10'),
-          firstHeight: createMetricPattern5(this, 'minute10_first_height'),
+          identity: createMetricPattern3(this, 'minute10'),
+          firstHeight: createMetricPattern3(this, 'minute10_first_height'),
         },
         minute30: {
-          identity: createMetricPattern6(this, 'minute30'),
-          firstHeight: createMetricPattern6(this, 'minute30_first_height'),
+          identity: createMetricPattern4(this, 'minute30'),
+          firstHeight: createMetricPattern4(this, 'minute30_first_height'),
         },
         hour1: {
-          identity: createMetricPattern7(this, 'hour1'),
-          firstHeight: createMetricPattern7(this, 'hour1_first_height'),
+          identity: createMetricPattern5(this, 'hour1'),
+          firstHeight: createMetricPattern5(this, 'hour1_first_height'),
         },
         hour4: {
-          identity: createMetricPattern8(this, 'hour4'),
-          firstHeight: createMetricPattern8(this, 'hour4_first_height'),
+          identity: createMetricPattern6(this, 'hour4'),
+          firstHeight: createMetricPattern6(this, 'hour4_first_height'),
         },
         hour12: {
-          identity: createMetricPattern9(this, 'hour12'),
-          firstHeight: createMetricPattern9(this, 'hour12_first_height'),
+          identity: createMetricPattern7(this, 'hour12'),
+          firstHeight: createMetricPattern7(this, 'hour12_first_height'),
         },
         day1: {
-          identity: createMetricPattern10(this, 'day1'),
-          date: createMetricPattern10(this, 'date'),
-          firstHeight: createMetricPattern10(this, 'first_height'),
-          heightCount: createMetricPattern10(this, 'height_count'),
+          identity: createMetricPattern8(this, 'day1'),
+          date: createMetricPattern8(this, 'date'),
+          firstHeight: createMetricPattern8(this, 'first_height'),
+          heightCount: createMetricPattern8(this, 'height_count'),
         },
         day3: {
-          identity: createMetricPattern11(this, 'day3'),
-          firstHeight: createMetricPattern11(this, 'day3_first_height'),
+          identity: createMetricPattern9(this, 'day3'),
+          firstHeight: createMetricPattern9(this, 'day3_first_height'),
         },
         week1: {
-          identity: createMetricPattern12(this, 'week1'),
-          date: createMetricPattern12(this, 'date'),
-          firstHeight: createMetricPattern12(this, 'week1_first_height'),
+          identity: createMetricPattern10(this, 'week1'),
+          date: createMetricPattern10(this, 'date'),
+          firstHeight: createMetricPattern10(this, 'week1_first_height'),
         },
         month1: {
-          identity: createMetricPattern13(this, 'month1'),
-          date: createMetricPattern13(this, 'date'),
-          firstHeight: createMetricPattern13(this, 'month1_first_height'),
+          identity: createMetricPattern11(this, 'month1'),
+          date: createMetricPattern11(this, 'date'),
+          firstHeight: createMetricPattern11(this, 'month1_first_height'),
         },
         month3: {
-          identity: createMetricPattern14(this, 'month3'),
-          date: createMetricPattern14(this, 'date'),
-          firstHeight: createMetricPattern14(this, 'month3_first_height'),
+          identity: createMetricPattern12(this, 'month3'),
+          date: createMetricPattern12(this, 'date'),
+          firstHeight: createMetricPattern12(this, 'month3_first_height'),
         },
         month6: {
-          identity: createMetricPattern15(this, 'month6'),
-          date: createMetricPattern15(this, 'date'),
-          firstHeight: createMetricPattern15(this, 'month6_first_height'),
+          identity: createMetricPattern13(this, 'month6'),
+          date: createMetricPattern13(this, 'date'),
+          firstHeight: createMetricPattern13(this, 'month6_first_height'),
         },
         year1: {
-          identity: createMetricPattern16(this, 'year1'),
-          date: createMetricPattern16(this, 'date'),
-          firstHeight: createMetricPattern16(this, 'year1_first_height'),
+          identity: createMetricPattern14(this, 'year1'),
+          date: createMetricPattern14(this, 'date'),
+          firstHeight: createMetricPattern14(this, 'year1_first_height'),
         },
         year10: {
-          identity: createMetricPattern17(this, 'year10'),
-          date: createMetricPattern17(this, 'date'),
-          firstHeight: createMetricPattern17(this, 'year10_first_height'),
+          identity: createMetricPattern15(this, 'year10'),
+          date: createMetricPattern15(this, 'date'),
+          firstHeight: createMetricPattern15(this, 'year10_first_height'),
         },
         txindex: {
-          identity: createMetricPattern21(this, 'txindex'),
-          inputCount: createMetricPattern21(this, 'input_count'),
-          outputCount: createMetricPattern21(this, 'output_count'),
+          identity: createMetricPattern19(this, 'txindex'),
+          inputCount: createMetricPattern19(this, 'input_count'),
+          outputCount: createMetricPattern19(this, 'output_count'),
         },
         txinindex: {
-          identity: createMetricPattern22(this, 'txinindex'),
+          identity: createMetricPattern20(this, 'txinindex'),
         },
         txoutindex: {
-          identity: createMetricPattern23(this, 'txoutindex'),
+          identity: createMetricPattern21(this, 'txoutindex'),
         },
       },
       market: {
@@ -7043,7 +7001,7 @@ class BrkClient extends BrkClientBase {
           _1dReturns1wSd: createSdSmaPattern(this, '1d_returns_1w_sd'),
           _1dReturns1mSd: createSdSmaPattern(this, '1d_returns_1m_sd'),
           _1dReturns1ySd: createSdSmaPattern(this, '1d_returns_1y_sd'),
-          downsideReturns: createMetricPattern20(this, 'downside_returns'),
+          downsideReturns: createMetricPattern18(this, 'downside_returns'),
           downside1wSd: createSdSmaPattern(this, 'downside_1w_sd'),
           downside1mSd: createSdSmaPattern(this, 'downside_1m_sd'),
           downside1ySd: createSdSmaPattern(this, 'downside_1y_sd'),
@@ -7110,7 +7068,7 @@ class BrkClient extends BrkClientBase {
           price350dSmaX2: createSatsUsdPattern(this, 'price_350d_sma_x2'),
         },
         dca: {
-          dcaSatsPerDay: createMetricPattern20(this, 'dca_sats_per_day'),
+          dcaSatsPerDay: createMetricPattern18(this, 'dca_sats_per_day'),
           periodStack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'dca_stack'),
           periodAveragePrice: {
             _1w: createSatsUsdPattern(this, '1w_dca_average_price'),
@@ -7291,7 +7249,7 @@ class BrkClient extends BrkClientBase {
         },
       },
       pools: {
-        heightToPool: createMetricPattern20(this, 'pool'),
+        heightToPool: createMetricPattern18(this, 'pool'),
         vecs: {
           unknown: createBlocksCoinbaseDaysDominanceFeeSubsidyPattern(this, 'unknown'),
           blockfills: createBlocksCoinbaseDaysDominanceFeeSubsidyPattern(this, 'blockfills'),
@@ -7480,20 +7438,20 @@ class BrkClient extends BrkClientBase {
         },
       },
       distribution: {
-        supplyState: createMetricPattern20(this, 'supply_state'),
+        supplyState: createMetricPattern18(this, 'supply_state'),
         anyAddressIndexes: {
-          p2a: createMetricPattern26(this, 'anyaddressindex'),
-          p2pk33: createMetricPattern28(this, 'anyaddressindex'),
-          p2pk65: createMetricPattern29(this, 'anyaddressindex'),
-          p2pkh: createMetricPattern30(this, 'anyaddressindex'),
-          p2sh: createMetricPattern31(this, 'anyaddressindex'),
-          p2tr: createMetricPattern32(this, 'anyaddressindex'),
-          p2wpkh: createMetricPattern33(this, 'anyaddressindex'),
-          p2wsh: createMetricPattern34(this, 'anyaddressindex'),
+          p2a: createMetricPattern24(this, 'anyaddressindex'),
+          p2pk33: createMetricPattern26(this, 'anyaddressindex'),
+          p2pk65: createMetricPattern27(this, 'anyaddressindex'),
+          p2pkh: createMetricPattern28(this, 'anyaddressindex'),
+          p2sh: createMetricPattern29(this, 'anyaddressindex'),
+          p2tr: createMetricPattern30(this, 'anyaddressindex'),
+          p2wpkh: createMetricPattern31(this, 'anyaddressindex'),
+          p2wsh: createMetricPattern32(this, 'anyaddressindex'),
         },
         addressesData: {
-          funded: createMetricPattern36(this, 'fundedaddressdata'),
-          empty: createMetricPattern37(this, 'emptyaddressdata'),
+          funded: createMetricPattern34(this, 'fundedaddressdata'),
+          empty: createMetricPattern35(this, 'emptyaddressdata'),
         },
         utxoCohorts: {
           all: {
@@ -7776,8 +7734,8 @@ class BrkClient extends BrkClientBase {
           p2tr: createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(this, 'p2tr_growth_rate'),
           p2a: createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(this, 'p2a_growth_rate'),
         },
-        fundedaddressindex: createMetricPattern36(this, 'fundedaddressindex'),
-        emptyaddressindex: createMetricPattern37(this, 'emptyaddressindex'),
+        fundedaddressindex: createMetricPattern34(this, 'fundedaddressindex'),
+        emptyaddressindex: createMetricPattern35(this, 'emptyaddressindex'),
       },
       supply: {
         circulating: createBtcSatsUsdPattern(this, 'circulating_supply'),

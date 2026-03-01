@@ -72,7 +72,7 @@ pub(super) fn compute(
         .map(|((r, mn), mx)| {
             let range = mx - mn;
             if range == 0.0 {
-                50.0
+                f32::NAN
             } else {
                 (r - mn) / range * 100.0
             }

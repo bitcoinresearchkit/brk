@@ -118,7 +118,7 @@ const ALL_GROUPS = [
   {
     label: "Time",
     items: [
-      "1mn", "5mn", "10mn", "30mn",
+      "10mn", "30mn",
       "1h", "4h", "12h",
       "1d", "3d", "1w",
       "1m", "3m", "6m",

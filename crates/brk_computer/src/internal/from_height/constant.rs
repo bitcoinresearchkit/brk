@@ -1,7 +1,7 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4, Minute1, Minute10,
-    Minute30, Minute5, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4,
+    Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -18,8 +18,6 @@ where
     T: VecValue + Formattable + Serialize + JsonSchema,
 {
     pub height: LazyVecFrom1<Height, T, Height, Height>,
-    pub minute1: LazyVecFrom1<Minute1, T, Minute1, Minute1>,
-    pub minute5: LazyVecFrom1<Minute5, T, Minute5, Minute5>,
     pub minute10: LazyVecFrom1<Minute10, T, Minute10, Minute10>,
     pub minute30: LazyVecFrom1<Minute30, T, Minute30, Minute30>,
     pub hour1: LazyVecFrom1<Hour1, T, Hour1, Hour1>,
@@ -42,8 +40,6 @@ impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
     pub(crate) fn new<F>(name: &str, version: Version, indexes: &indexes::Vecs) -> Self
     where
         F: UnaryTransform<Height, T>
-            + UnaryTransform<Minute1, T>
-            + UnaryTransform<Minute5, T>
             + UnaryTransform<Minute10, T>
             + UnaryTransform<Minute30, T>
             + UnaryTransform<Hour1, T>
@@ -76,8 +72,6 @@ impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
                 version,
                 indexes.height.identity.read_only_boxed_clone(),
             ),
-            minute1: period!(minute1, Minute1),
-            minute5: period!(minute5, Minute5),
             minute10: period!(minute10, Minute10),
             minute30: period!(minute30, Minute30),
             hour1: period!(hour1, Hour1),

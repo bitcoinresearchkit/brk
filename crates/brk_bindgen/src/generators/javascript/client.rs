@@ -55,7 +55,7 @@ const _MS_PER_DAY = 86400000;
 const _MS_PER_WEEK = 7 * _MS_PER_DAY;
 const _EPOCH_MS = 1230768000000;
 const _DATE_INDEXES = new Set([
-  'minute1', 'minute5', 'minute10', 'minute30',
+  'minute10', 'minute30',
   'hour1', 'hour4', 'hour12',
   'day1', 'day3', 'week1',
   'month1', 'month3', 'month6',
@@ -73,8 +73,6 @@ const _addMonths = (months) => new Date(2009, months, 1);
  */
 function indexToDate(index, i) {{
   switch (index) {{
-    case 'minute1': return new Date(_EPOCH_MS + i * 60000);
-    case 'minute5': return new Date(_EPOCH_MS + i * 300000);
     case 'minute10': return new Date(_EPOCH_MS + i * 600000);
     case 'minute30': return new Date(_EPOCH_MS + i * 1800000);
     case 'hour1': return new Date(_EPOCH_MS + i * 3600000);
@@ -102,8 +100,6 @@ function indexToDate(index, i) {{
 function dateToIndex(index, d) {{
   const ms = d.getTime();
   switch (index) {{
-    case 'minute1': return Math.floor((ms - _EPOCH_MS) / 60000);
-    case 'minute5': return Math.floor((ms - _EPOCH_MS) / 300000);
     case 'minute10': return Math.floor((ms - _EPOCH_MS) / 600000);
     case 'minute30': return Math.floor((ms - _EPOCH_MS) / 1800000);
     case 'hour1': return Math.floor((ms - _EPOCH_MS) / 3600000);

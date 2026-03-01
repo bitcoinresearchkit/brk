@@ -7,7 +7,7 @@ use brk_error::Result;
 
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute1, Minute5,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12,
     Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
@@ -18,7 +18,7 @@ use vecdb::{
 };
 
 use crate::{
-    ComputeIndexes, indexes, indexes_from,
+    ComputeIndexes, indexes, indexes_apply, indexes_from,
     internal::{ComputedVecValue, Indexes, NumericValue},
 };
 
@@ -27,8 +27,6 @@ use crate::{
 pub struct EagerIndexes<T, M: StorageMode = Rw>(
     #[allow(clippy::type_complexity)]
     pub  Indexes<
-        <M as StorageMode>::Stored<EagerVec<PcoVec<Minute1, T>>>,
-        <M as StorageMode>::Stored<EagerVec<PcoVec<Minute5, T>>>,
         <M as StorageMode>::Stored<EagerVec<PcoVec<Minute10, T>>>,
         <M as StorageMode>::Stored<EagerVec<PcoVec<Minute30, T>>>,
         <M as StorageMode>::Stored<EagerVec<PcoVec<Hour1, T>>>,
@@ -86,23 +84,7 @@ where
             };
         }
 
-        period!(minute1);
-        period!(minute5);
-        period!(minute10);
-        period!(minute30);
-        period!(hour1);
-        period!(hour4);
-        period!(hour12);
-        period!(day1);
-        period!(day3);
-        period!(week1);
-        period!(month1);
-        period!(month3);
-        period!(month6);
-        period!(year1);
-        period!(year10);
-        period!(halvingepoch);
-        period!(difficultyepoch);
+        indexes_apply!(period);
 
         Ok(())
     }
@@ -131,23 +113,7 @@ where
             };
         }
 
-        period!(minute1);
-        period!(minute5);
-        period!(minute10);
-        period!(minute30);
-        period!(hour1);
-        period!(hour4);
-        period!(hour12);
-        period!(day1);
-        period!(day3);
-        period!(week1);
-        period!(month1);
-        period!(month3);
-        period!(month6);
-        period!(year1);
-        period!(year10);
-        period!(halvingepoch);
-        period!(difficultyepoch);
+        indexes_apply!(period);
 
         Ok(())
     }
@@ -176,23 +142,7 @@ where
             };
         }
 
-        period!(minute1);
-        period!(minute5);
-        period!(minute10);
-        period!(minute30);
-        period!(hour1);
-        period!(hour4);
-        period!(hour12);
-        period!(day1);
-        period!(day3);
-        period!(week1);
-        period!(month1);
-        period!(month3);
-        period!(month6);
-        period!(year1);
-        period!(year10);
-        period!(halvingepoch);
-        period!(difficultyepoch);
+        indexes_apply!(period);
 
         Ok(())
     }

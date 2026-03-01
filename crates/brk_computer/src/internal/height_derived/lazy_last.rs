@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute1, Minute5,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12,
     Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
@@ -60,8 +60,6 @@ where
 pub struct LazyHeightDerivedLast<T, S1T = T>(
     #[allow(clippy::type_complexity)]
     pub  Indexes<
-        LazyTransformLast<Minute1, Option<T>, Option<S1T>>,
-        LazyTransformLast<Minute5, Option<T>, Option<S1T>>,
         LazyTransformLast<Minute10, Option<T>, Option<S1T>>,
         LazyTransformLast<Minute30, Option<T>, Option<S1T>>,
         LazyTransformLast<Hour1, Option<T>, Option<S1T>>,

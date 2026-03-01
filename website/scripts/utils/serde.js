@@ -21,7 +21,7 @@ export const serdeBool = {
 
 export const INDEX_LABEL = /** @type {const} */ ({
   height: "blk",
-  minute1: "1mn", minute5: "5mn", minute10: "10mn", minute30: "30mn",
+  minute10: "10mn", minute30: "30mn",
   hour1: "1h", hour4: "4h", hour12: "12h",
   day1: "1d", day3: "3d", week1: "1w",
   month1: "1m", month3: "3m", month6: "6m",

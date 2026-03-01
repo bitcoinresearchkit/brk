@@ -2,7 +2,7 @@ use derive_more::{Deref, DerefMut};
 
 use crate::{
     Day1, Day3, Year10, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height,
-    Hour1, Hour4, Hour12, Minute1, Minute5, Minute10, Minute30, Month1,
+    Hour1, Hour4, Hour12, Minute10, Minute30, Month1,
     OpReturnIndex, OutputType, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex,
     P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex,
     P2WSHAddressIndex, Month3, Month6, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
@@ -74,8 +74,6 @@ pub struct ComputeIndexes {
     #[deref]
     #[deref_mut]
     indexes: Indexes,
-    pub minute1: Minute1,
-    pub minute5: Minute5,
     pub minute10: Minute10,
     pub minute30: Minute30,
     pub hour1: Hour1,
@@ -97,8 +95,6 @@ impl ComputeIndexes {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         indexes: Indexes,
-        minute1: Minute1,
-        minute5: Minute5,
         minute10: Minute10,
         minute30: Minute30,
         hour1: Hour1,
@@ -117,8 +113,6 @@ impl ComputeIndexes {
     ) -> Self {
         Self {
             indexes,
-            minute1,
-            minute5,
             minute10,
             minute30,
             hour1,

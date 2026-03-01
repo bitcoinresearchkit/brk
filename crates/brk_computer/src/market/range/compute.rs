@@ -102,18 +102,18 @@ impl Vecs {
             exit,
         )?;
 
-        // Choppiness index: 100 * log10(tr_2w_sum / (price_2w_max - price_2w_min)) / log10(14)
-        let log10n = 14.0f32.log10();
-        self.price_2w_choppiness_index.height.compute_transform3(
+        self.price_2w_choppiness_index.height.compute_transform4(
             starting_indexes.height,
             &self.price_true_range_2w_sum.height,
             &self.price_2w_max.usd.height,
             &self.price_2w_min.usd.height,
-            |(h, tr_sum, max, min, ..)| {
+            &blocks.count.height_2w_ago,
+            |(h, tr_sum, max, min, window_start, ..)| {
                 let range = *max - *min;
-                let ci = if range > 0.0 {
+                let n = (h.to_usize() - window_start.to_usize() + 1) as f32;
+                let ci = if range > 0.0 && n > 1.0 {
                     StoredF32::from(
-                        100.0 * (*tr_sum / range as f32).log10() / log10n,
+                        100.0 * (*tr_sum / range as f32).log10() / n.log10(),
                     )
                 } else {
                     StoredF32::NAN

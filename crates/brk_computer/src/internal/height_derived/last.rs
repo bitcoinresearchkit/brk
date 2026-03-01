@@ -3,7 +3,7 @@
 use brk_traversable::Traversable;
 use brk_types::{
     Day1, Day3, DifficultyEpoch, FromCoarserIndex, HalvingEpoch, Height, Hour1, Hour4, Hour12,
-    Minute1, Minute5, Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -21,8 +21,6 @@ use crate::{
 pub struct ComputedHeightDerivedLast<T>(
     #[allow(clippy::type_complexity)]
     pub  Indexes<
-        LazyAggVec<Minute1, Option<T>, Height, Height, T>,
-        LazyAggVec<Minute5, Option<T>, Height, Height, T>,
         LazyAggVec<Minute10, Option<T>, Height, Height, T>,
         LazyAggVec<Minute30, Option<T>, Height, Height, T>,
         LazyAggVec<Hour1, Option<T>, Height, Height, T>,
