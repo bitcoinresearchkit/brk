@@ -13,11 +13,11 @@ use vecdb::{
 
 use crate::indexes;
 
-use crate::internal::{ComputedHeightDerivedLast, ComputedVecValue, NumericValue};
+use crate::internal::{ComputedHeightDerived, ComputedVecValue, NumericValue};
 
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct ComputedFromHeightLast<T, M: StorageMode = Rw>
+pub struct ComputedFromHeight<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -25,12 +25,12 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub rest: Box<ComputedHeightDerivedLast<T>>,
+    pub rest: Box<ComputedHeightDerived<T>>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> ComputedFromHeightLast<T>
+impl<T> ComputedFromHeight<T>
 where
     T: NumericValue + JsonSchema,
 {
@@ -44,7 +44,7 @@ where
 
         let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, v)?;
 
-        let rest = ComputedHeightDerivedLast::forced_import(
+        let rest = ComputedHeightDerived::forced_import(
             name,
             height.read_only_boxed_clone(),
             v,

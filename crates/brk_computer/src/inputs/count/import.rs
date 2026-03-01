@@ -3,11 +3,15 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedFromHeightFull};
+use crate::{indexes, internal::ComputedFromHeightAggregated};
 
 impl Vecs {
-    pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
-        Ok(Self(ComputedFromHeightFull::forced_import(
+    pub(crate) fn forced_import(
+        db: &Database,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        Ok(Self(ComputedFromHeightAggregated::forced_import(
             db,
             "input_count",
             version,

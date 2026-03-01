@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightDistribution, ComputedHeightDerivedCumulativeFull},
+    internal::{ComputedFromHeightDistribution, ComputedHeightDerivedFull},
 };
 
 impl Vecs {
@@ -14,7 +14,7 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let weight = ComputedHeightDerivedCumulativeFull::forced_import(
+        let weight = ComputedHeightDerivedFull::forced_import(
             db,
             "block_weight",
             version,

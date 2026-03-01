@@ -1,4 +1,6 @@
 mod block_count_target;
+mod cents_halve;
+mod cents_identity;
 mod cents_plus;
 mod cents_signed_to_dollars;
 mod cents_subtract_to_cents_signed;
@@ -41,6 +43,8 @@ mod volatility_sqrt365;
 mod volatility_sqrt7;
 
 pub use block_count_target::*;
+pub use cents_halve::*;
+pub use cents_identity::*;
 pub use cents_plus::*;
 pub use cents_signed_to_dollars::*;
 pub use cents_subtract_to_cents_signed::*;

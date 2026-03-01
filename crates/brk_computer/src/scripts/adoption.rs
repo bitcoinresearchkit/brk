@@ -3,14 +3,14 @@ use brk_traversable::Traversable;
 use brk_types::{StoredF32, Version};
 use vecdb::{Database, Exit, Rw, StorageMode};
 
-use crate::{ComputeIndexes, indexes, internal::{ComputedFromHeightLast, RatioU64F32}, outputs};
+use crate::{ComputeIndexes, indexes, internal::{ComputedFromHeight, RatioU64F32}, outputs};
 
 use super::count::Vecs as CountVecs;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub taproot: ComputedFromHeightLast<StoredF32, M>,
-    pub segwit: ComputedFromHeightLast<StoredF32, M>,
+    pub taproot: ComputedFromHeight<StoredF32, M>,
+    pub segwit: ComputedFromHeight<StoredF32, M>,
 }
 
 impl Vecs {
@@ -20,13 +20,13 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            taproot: ComputedFromHeightLast::forced_import(
+            taproot: ComputedFromHeight::forced_import(
                 db,
                 "taproot_adoption",
                 version,
                 indexes,
             )?,
-            segwit: ComputedFromHeightLast::forced_import(db, "segwit_adoption", version, indexes)?,
+            segwit: ComputedFromHeight::forced_import(db, "segwit_adoption", version, indexes)?,
         })
     }
 

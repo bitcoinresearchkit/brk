@@ -3,7 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::Cents;
 use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
-use crate::{ComputeIndexes, internal::FiatFromHeightLast};
+use crate::{ComputeIndexes, internal::FiatFromHeight};
 
 use crate::distribution::metrics::ImportConfig;
 
@@ -11,13 +11,13 @@ use crate::distribution::metrics::ImportConfig;
 #[derive(Traversable)]
 pub struct UnrealizedPeakRegret<M: StorageMode = Rw> {
     /// Unrealized peak regret: sum of (peak_price - reference_price) x supply
-    pub peak_regret: FiatFromHeightLast<Cents, M>,
+    pub peak_regret: FiatFromHeight<Cents, M>,
 }
 
 impl UnrealizedPeakRegret {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            peak_regret: FiatFromHeightLast::forced_import(
+            peak_regret: FiatFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("unrealized_peak_regret"),
                 cfg.version,

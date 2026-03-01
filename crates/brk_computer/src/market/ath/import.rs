@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ComputedFromHeightLast, LazyHeightDerivedLast,
+        ComputedFromHeight, LazyHeightDerived,
         Price, StoredU16ToYears,
     },
 };
@@ -19,7 +19,7 @@ impl Vecs {
     ) -> Result<Self> {
         let price_ath = Price::forced_import(db, "price_ath", version, indexes)?;
 
-        let max_days_between_price_aths = ComputedFromHeightLast::forced_import(
+        let max_days_between_price_aths = ComputedFromHeight::forced_import(
             db,
             "max_days_between_price_aths",
             version,
@@ -27,23 +27,23 @@ impl Vecs {
         )?;
 
         let max_years_between_price_aths =
-            LazyHeightDerivedLast::from_computed::<StoredU16ToYears>(
+            LazyHeightDerived::from_computed::<StoredU16ToYears>(
                 "max_years_between_price_aths",
                 version,
                 &max_days_between_price_aths,
             );
 
         let days_since_price_ath =
-            ComputedFromHeightLast::forced_import(db, "days_since_price_ath", version, indexes)?;
+            ComputedFromHeight::forced_import(db, "days_since_price_ath", version, indexes)?;
 
-        let years_since_price_ath = LazyHeightDerivedLast::from_computed::<StoredU16ToYears>(
+        let years_since_price_ath = LazyHeightDerived::from_computed::<StoredU16ToYears>(
             "years_since_price_ath",
             version,
             &days_since_price_ath,
         );
 
         let price_drawdown =
-            ComputedFromHeightLast::forced_import(db, "price_drawdown", version, indexes)?;
+            ComputedFromHeight::forced_import(db, "price_drawdown", version, indexes)?;
 
         Ok(Self {
             price_ath,

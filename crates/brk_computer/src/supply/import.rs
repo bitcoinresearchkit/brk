@@ -9,7 +9,7 @@ use super::Vecs;
 use crate::{
     distribution, indexes,
     internal::{
-        ComputedFromHeightLast, DollarsIdentity, LazyFromHeightLast, LazyValueFromHeightLast,
+        CentsIdentity, ComputedFromHeight, DollarsIdentity, LazyFromHeight, LazyValueFromHeight,
         SatsIdentity, SatsToBitcoin,
     },
 };
@@ -30,9 +30,10 @@ impl Vecs {
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
         // Circulating supply - lazy refs to distribution
-        let circulating = LazyValueFromHeightLast::from_block_source::<
+        let circulating = LazyValueFromHeight::from_block_source::<
             SatsIdentity,
             SatsToBitcoin,
+            CentsIdentity,
             DollarsIdentity,
         >("circulating_supply", &supply_metrics.total, version);
 
@@ -41,33 +42,33 @@ impl Vecs {
 
         // Inflation rate
         let inflation =
-            ComputedFromHeightLast::forced_import(&db, "inflation_rate", version, indexes)?;
+            ComputedFromHeight::forced_import(&db, "inflation_rate", version, indexes)?;
 
         // Velocity
         let velocity = super::velocity::Vecs::forced_import(&db, version, indexes)?;
 
         // Market cap - lazy identity from distribution supply in USD
-        let market_cap = LazyFromHeightLast::from_lazy::<DollarsIdentity, Cents>(
+        let market_cap = LazyFromHeight::from_lazy::<DollarsIdentity, Cents>(
             "market_cap",
             version,
             &supply_metrics.total.usd,
         );
 
         // Growth rates
-        let market_cap_growth_rate = ComputedFromHeightLast::forced_import(
+        let market_cap_growth_rate = ComputedFromHeight::forced_import(
             &db,
             "market_cap_growth_rate",
             version + Version::ONE,
             indexes,
         )?;
-        let realized_cap_growth_rate = ComputedFromHeightLast::forced_import(
+        let realized_cap_growth_rate = ComputedFromHeight::forced_import(
             &db,
             "realized_cap_growth_rate",
             version + Version::ONE,
             indexes,
         )?;
         let cap_growth_rate_diff =
-            ComputedFromHeightLast::forced_import(&db, "cap_growth_rate_diff", version, indexes)?;
+            ComputedFromHeight::forced_import(&db, "cap_growth_rate_diff", version, indexes)?;
 
         let this = Self {
             db,

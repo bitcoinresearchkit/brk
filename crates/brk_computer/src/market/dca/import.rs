@@ -6,8 +6,8 @@ use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     indexes,
     internal::{
-        ComputedFromHeightLast, Price,
-        ValueFromHeightLast,
+        ComputedFromHeight, Price,
+        ValueFromHeight,
     },
 };
 
@@ -19,7 +19,7 @@ impl Vecs {
     ) -> Result<Self> {
         // DCA by period - stack (KISS)
         let period_stack = ByDcaPeriod::try_new(|name, _days| {
-            ValueFromHeightLast::forced_import(
+            ValueFromHeight::forced_import(
                 db,
                 &format!("{name}_dca_stack"),
                 version,
@@ -38,7 +38,7 @@ impl Vecs {
         })?;
 
         let period_returns = ByDcaPeriod::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_dca_returns"),
                 version,
@@ -48,12 +48,12 @@ impl Vecs {
 
         // DCA by period - CAGR
         let period_cagr = ByDcaCagr::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(db, &format!("{name}_dca_cagr"), version, indexes)
+            ComputedFromHeight::forced_import(db, &format!("{name}_dca_cagr"), version, indexes)
         })?;
 
         // DCA by period - profitability
         let period_days_in_profit = ByDcaPeriod::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_dca_days_in_profit"),
                 version + Version::ONE,
@@ -62,7 +62,7 @@ impl Vecs {
         })?;
 
         let period_days_in_loss = ByDcaPeriod::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_dca_days_in_loss"),
                 version + Version::ONE,
@@ -71,7 +71,7 @@ impl Vecs {
         })?;
 
         let period_min_return = ByDcaPeriod::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_dca_min_return"),
                 version,
@@ -80,7 +80,7 @@ impl Vecs {
         })?;
 
         let period_max_return = ByDcaPeriod::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_dca_max_return"),
                 version,
@@ -90,7 +90,7 @@ impl Vecs {
 
         // Lump sum by period - stack (KISS)
         let period_lump_sum_stack = ByDcaPeriod::try_new(|name, _days| {
-            ValueFromHeightLast::forced_import(
+            ValueFromHeight::forced_import(
                 db,
                 &format!("{name}_lump_sum_stack"),
                 version,
@@ -100,7 +100,7 @@ impl Vecs {
 
         // Lump sum by period - returns
         let period_lump_sum_returns = ByDcaPeriod::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_lump_sum_returns"),
                 version,
@@ -110,7 +110,7 @@ impl Vecs {
 
         // Lump sum by period - profitability
         let period_lump_sum_days_in_profit = ByDcaPeriod::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_lump_sum_days_in_profit"),
                 version + Version::ONE,
@@ -119,7 +119,7 @@ impl Vecs {
         })?;
 
         let period_lump_sum_days_in_loss = ByDcaPeriod::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_lump_sum_days_in_loss"),
                 version + Version::ONE,
@@ -128,7 +128,7 @@ impl Vecs {
         })?;
 
         let period_lump_sum_min_return = ByDcaPeriod::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_lump_sum_min_return"),
                 version,
@@ -137,7 +137,7 @@ impl Vecs {
         })?;
 
         let period_lump_sum_max_return = ByDcaPeriod::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_lump_sum_max_return"),
                 version,
@@ -147,7 +147,7 @@ impl Vecs {
 
         // DCA by year class - stack (KISS)
         let class_stack = ByDcaClass::try_new(|name, _year, _day1| {
-            ValueFromHeightLast::forced_import(
+            ValueFromHeight::forced_import(
                 db,
                 &format!("{name}_stack"),
                 version,
@@ -161,7 +161,7 @@ impl Vecs {
         })?;
 
         let class_returns = ByDcaClass::try_new(|name, _year, _day1| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_returns"),
                 version,
@@ -171,7 +171,7 @@ impl Vecs {
 
         // DCA by year class - profitability
         let class_days_in_profit = ByDcaClass::try_new(|name, _year, _day1| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_days_in_profit"),
                 version,
@@ -180,7 +180,7 @@ impl Vecs {
         })?;
 
         let class_days_in_loss = ByDcaClass::try_new(|name, _year, _day1| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_days_in_loss"),
                 version,
@@ -189,11 +189,11 @@ impl Vecs {
         })?;
 
         let class_min_return = ByDcaClass::try_new(|name, _year, _day1| {
-            ComputedFromHeightLast::forced_import(db, &format!("{name}_min_return"), version, indexes)
+            ComputedFromHeight::forced_import(db, &format!("{name}_min_return"), version, indexes)
         })?;
 
         let class_max_return = ByDcaClass::try_new(|name, _year, _day1| {
-            ComputedFromHeightLast::forced_import(db, &format!("{name}_max_return"), version, indexes)
+            ComputedFromHeight::forced_import(db, &format!("{name}_max_return"), version, indexes)
         })?;
 
         Ok(Self {

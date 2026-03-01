@@ -12,10 +12,10 @@ use crate::{
     ComputeIndexes, blocks,
     distribution::state::RealizedState,
     internal::{
-        CentsPlus, CentsUnsignedToDollars, ComputedFromHeightCumulative, ComputedFromHeightLast,
-        ComputedFromHeightRatio, NegCentsUnsignedToDollars, ValueFromHeightCumulative, LazyFromHeightLast,
+        CentsPlus, CentsUnsignedToDollars, ComputedFromHeightCumulative, ComputedFromHeight,
+        ComputedFromHeightRatio, NegCentsUnsignedToDollars, ValueFromHeightCumulative, LazyFromHeight,
         PercentageCentsF32, PercentageCentsSignedCentsF32, PercentageCentsSignedDollarsF32, Price, RatioCents64,
-        StoredF32Identity, ValueFromHeightLast,
+        StoredF32Identity, ValueFromHeight,
     },
     prices,
 };
@@ -26,113 +26,113 @@ use crate::distribution::metrics::ImportConfig;
 #[derive(Traversable)]
 pub struct RealizedBase<M: StorageMode = Rw> {
     // === Realized Cap ===
-    pub realized_cap_cents: ComputedFromHeightLast<Cents, M>,
-    pub realized_cap: LazyFromHeightLast<Dollars, Cents>,
-    pub realized_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub realized_cap_cents: ComputedFromHeight<Cents, M>,
+    pub realized_cap: LazyFromHeight<Dollars, Cents>,
+    pub realized_price: Price<ComputedFromHeight<Cents, M>>,
     pub realized_price_extra: ComputedFromHeightRatio<M>,
-    pub realized_cap_30d_delta: ComputedFromHeightLast<CentsSigned, M>,
+    pub realized_cap_30d_delta: ComputedFromHeight<CentsSigned, M>,
 
     // === Investor Price ===
-    pub investor_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub investor_price: Price<ComputedFromHeight<Cents, M>>,
     pub investor_price_extra: ComputedFromHeightRatio<M>,
 
     // === Floor/Ceiling Price Bands ===
-    pub lower_price_band: Price<ComputedFromHeightLast<Cents, M>>,
-    pub upper_price_band: Price<ComputedFromHeightLast<Cents, M>>,
+    pub lower_price_band: Price<ComputedFromHeight<Cents, M>>,
+    pub upper_price_band: Price<ComputedFromHeight<Cents, M>>,
 
     // === Raw values for aggregation ===
     pub cap_raw: M::Stored<BytesVec<Height, CentsSats>>,
     pub investor_cap_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 
     // === MVRV ===
-    pub mvrv: LazyFromHeightLast<StoredF32>,
+    pub mvrv: LazyFromHeight<StoredF32>,
 
     // === Realized Profit/Loss ===
     pub realized_profit: ComputedFromHeightCumulative<Cents, M>,
-    pub realized_profit_7d_ema: ComputedFromHeightLast<Cents, M>,
+    pub realized_profit_7d_ema: ComputedFromHeight<Cents, M>,
     pub realized_loss: ComputedFromHeightCumulative<Cents, M>,
-    pub realized_loss_7d_ema: ComputedFromHeightLast<Cents, M>,
-    pub neg_realized_loss: LazyFromHeightLast<Dollars, Cents>,
+    pub realized_loss_7d_ema: ComputedFromHeight<Cents, M>,
+    pub neg_realized_loss: LazyFromHeight<Dollars, Cents>,
     pub net_realized_pnl: ComputedFromHeightCumulative<CentsSigned, M>,
-    pub net_realized_pnl_7d_ema: ComputedFromHeightLast<CentsSigned, M>,
-    pub realized_value: ComputedFromHeightLast<Cents, M>,
+    pub net_realized_pnl_7d_ema: ComputedFromHeight<CentsSigned, M>,
+    pub realized_value: ComputedFromHeight<Cents, M>,
 
     // === Realized vs Realized Cap Ratios ===
-    pub realized_profit_rel_to_realized_cap: ComputedFromHeightLast<StoredF32, M>,
-    pub realized_loss_rel_to_realized_cap: ComputedFromHeightLast<StoredF32, M>,
-    pub net_realized_pnl_rel_to_realized_cap: ComputedFromHeightLast<StoredF32, M>,
+    pub realized_profit_rel_to_realized_cap: ComputedFromHeight<StoredF32, M>,
+    pub realized_loss_rel_to_realized_cap: ComputedFromHeight<StoredF32, M>,
+    pub net_realized_pnl_rel_to_realized_cap: ComputedFromHeight<StoredF32, M>,
 
     // === Total Realized PnL ===
-    pub total_realized_pnl: LazyFromHeightLast<Dollars, Cents>,
+    pub total_realized_pnl: LazyFromHeight<Dollars, Cents>,
 
     // === Value Created/Destroyed Splits (stored) ===
-    pub profit_value_created: ComputedFromHeightLast<Cents, M>,
-    pub profit_value_destroyed: ComputedFromHeightLast<Cents, M>,
-    pub loss_value_created: ComputedFromHeightLast<Cents, M>,
-    pub loss_value_destroyed: ComputedFromHeightLast<Cents, M>,
+    pub profit_value_created: ComputedFromHeight<Cents, M>,
+    pub profit_value_destroyed: ComputedFromHeight<Cents, M>,
+    pub loss_value_created: ComputedFromHeight<Cents, M>,
+    pub loss_value_destroyed: ComputedFromHeight<Cents, M>,
 
     // === Value Created/Destroyed Totals ===
-    pub value_created: ComputedFromHeightLast<Cents, M>,
-    pub value_destroyed: ComputedFromHeightLast<Cents, M>,
+    pub value_created: ComputedFromHeight<Cents, M>,
+    pub value_destroyed: ComputedFromHeight<Cents, M>,
 
     // === Capitulation/Profit Flow (lazy aliases) ===
-    pub capitulation_flow: LazyFromHeightLast<Dollars, Cents>,
-    pub profit_flow: LazyFromHeightLast<Dollars, Cents>,
+    pub capitulation_flow: LazyFromHeight<Dollars, Cents>,
+    pub profit_flow: LazyFromHeight<Dollars, Cents>,
 
     // === Value Created/Destroyed Rolling Sums ===
-    pub value_created_24h: ComputedFromHeightLast<Cents, M>,
-    pub value_created_7d: ComputedFromHeightLast<Cents, M>,
-    pub value_created_30d: ComputedFromHeightLast<Cents, M>,
-    pub value_created_1y: ComputedFromHeightLast<Cents, M>,
-    pub value_destroyed_24h: ComputedFromHeightLast<Cents, M>,
-    pub value_destroyed_7d: ComputedFromHeightLast<Cents, M>,
-    pub value_destroyed_30d: ComputedFromHeightLast<Cents, M>,
-    pub value_destroyed_1y: ComputedFromHeightLast<Cents, M>,
+    pub value_created_24h: ComputedFromHeight<Cents, M>,
+    pub value_created_7d: ComputedFromHeight<Cents, M>,
+    pub value_created_30d: ComputedFromHeight<Cents, M>,
+    pub value_created_1y: ComputedFromHeight<Cents, M>,
+    pub value_destroyed_24h: ComputedFromHeight<Cents, M>,
+    pub value_destroyed_7d: ComputedFromHeight<Cents, M>,
+    pub value_destroyed_30d: ComputedFromHeight<Cents, M>,
+    pub value_destroyed_1y: ComputedFromHeight<Cents, M>,
 
     // === SOPR (rolling window ratios) ===
-    pub sopr: LazyFromHeightLast<StoredF64>,
-    pub sopr_24h: ComputedFromHeightLast<StoredF64, M>,
-    pub sopr_7d: ComputedFromHeightLast<StoredF64, M>,
-    pub sopr_30d: ComputedFromHeightLast<StoredF64, M>,
-    pub sopr_1y: ComputedFromHeightLast<StoredF64, M>,
-    pub sopr_24h_7d_ema: ComputedFromHeightLast<StoredF64, M>,
-    pub sopr_7d_ema: LazyFromHeightLast<StoredF64>,
-    pub sopr_24h_30d_ema: ComputedFromHeightLast<StoredF64, M>,
-    pub sopr_30d_ema: LazyFromHeightLast<StoredF64>,
+    pub sopr: LazyFromHeight<StoredF64>,
+    pub sopr_24h: ComputedFromHeight<StoredF64, M>,
+    pub sopr_7d: ComputedFromHeight<StoredF64, M>,
+    pub sopr_30d: ComputedFromHeight<StoredF64, M>,
+    pub sopr_1y: ComputedFromHeight<StoredF64, M>,
+    pub sopr_24h_7d_ema: ComputedFromHeight<StoredF64, M>,
+    pub sopr_7d_ema: LazyFromHeight<StoredF64>,
+    pub sopr_24h_30d_ema: ComputedFromHeight<StoredF64, M>,
+    pub sopr_30d_ema: LazyFromHeight<StoredF64>,
 
     // === Sell Side Risk Rolling Sum Intermediates ===
-    pub realized_value_24h: ComputedFromHeightLast<Cents, M>,
-    pub realized_value_7d: ComputedFromHeightLast<Cents, M>,
-    pub realized_value_30d: ComputedFromHeightLast<Cents, M>,
-    pub realized_value_1y: ComputedFromHeightLast<Cents, M>,
+    pub realized_value_24h: ComputedFromHeight<Cents, M>,
+    pub realized_value_7d: ComputedFromHeight<Cents, M>,
+    pub realized_value_30d: ComputedFromHeight<Cents, M>,
+    pub realized_value_1y: ComputedFromHeight<Cents, M>,
 
     // === Sell Side Risk (rolling window ratios) ===
-    pub sell_side_risk_ratio: LazyFromHeightLast<StoredF32>,
-    pub sell_side_risk_ratio_24h: ComputedFromHeightLast<StoredF32, M>,
-    pub sell_side_risk_ratio_7d: ComputedFromHeightLast<StoredF32, M>,
-    pub sell_side_risk_ratio_30d: ComputedFromHeightLast<StoredF32, M>,
-    pub sell_side_risk_ratio_1y: ComputedFromHeightLast<StoredF32, M>,
-    pub sell_side_risk_ratio_24h_7d_ema: ComputedFromHeightLast<StoredF32, M>,
-    pub sell_side_risk_ratio_7d_ema: LazyFromHeightLast<StoredF32>,
-    pub sell_side_risk_ratio_24h_30d_ema: ComputedFromHeightLast<StoredF32, M>,
-    pub sell_side_risk_ratio_30d_ema: LazyFromHeightLast<StoredF32>,
+    pub sell_side_risk_ratio: LazyFromHeight<StoredF32>,
+    pub sell_side_risk_ratio_24h: ComputedFromHeight<StoredF32, M>,
+    pub sell_side_risk_ratio_7d: ComputedFromHeight<StoredF32, M>,
+    pub sell_side_risk_ratio_30d: ComputedFromHeight<StoredF32, M>,
+    pub sell_side_risk_ratio_1y: ComputedFromHeight<StoredF32, M>,
+    pub sell_side_risk_ratio_24h_7d_ema: ComputedFromHeight<StoredF32, M>,
+    pub sell_side_risk_ratio_7d_ema: LazyFromHeight<StoredF32>,
+    pub sell_side_risk_ratio_24h_30d_ema: ComputedFromHeight<StoredF32, M>,
+    pub sell_side_risk_ratio_30d_ema: LazyFromHeight<StoredF32>,
 
     // === Net Realized PnL Deltas ===
-    pub net_realized_pnl_cumulative_30d_delta: ComputedFromHeightLast<CentsSigned, M>,
+    pub net_realized_pnl_cumulative_30d_delta: ComputedFromHeight<CentsSigned, M>,
     pub net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap:
-        ComputedFromHeightLast<StoredF32, M>,
+        ComputedFromHeight<StoredF32, M>,
     pub net_realized_pnl_cumulative_30d_delta_rel_to_market_cap:
-        ComputedFromHeightLast<StoredF32, M>,
+        ComputedFromHeight<StoredF32, M>,
 
     // === Peak Regret ===
     pub peak_regret: ComputedFromHeightCumulative<Cents, M>,
-    pub peak_regret_rel_to_realized_cap: ComputedFromHeightLast<StoredF32, M>,
+    pub peak_regret_rel_to_realized_cap: ComputedFromHeight<StoredF32, M>,
 
     // === Sent in Profit/Loss ===
     pub sent_in_profit: ValueFromHeightCumulative<M>,
-    pub sent_in_profit_14d_ema: ValueFromHeightLast<M>,
+    pub sent_in_profit_14d_ema: ValueFromHeight<M>,
     pub sent_in_loss: ValueFromHeightCumulative<M>,
-    pub sent_in_loss_14d_ema: ValueFromHeightLast<M>,
+    pub sent_in_loss_14d_ema: ValueFromHeight<M>,
 }
 
 impl RealizedBase {
@@ -142,14 +142,14 @@ impl RealizedBase {
         let v2 = Version::new(2);
         let v3 = Version::new(3);
             // Import combined types using forced_import which handles height + derived
-        let realized_cap_cents = ComputedFromHeightLast::forced_import(
+        let realized_cap_cents = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_cap_cents"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let realized_cap = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
+        let realized_cap = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("realized_cap"),
             cfg.version,
             realized_cap_cents.height.read_only_boxed_clone(),
@@ -163,7 +163,7 @@ impl RealizedBase {
             cfg.indexes,
         )?;
 
-        let realized_profit_7d_ema = ComputedFromHeightLast::forced_import(
+        let realized_profit_7d_ema = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_profit_7d_ema"),
             cfg.version,
@@ -177,14 +177,14 @@ impl RealizedBase {
             cfg.indexes,
         )?;
 
-        let realized_loss_7d_ema = ComputedFromHeightLast::forced_import(
+        let realized_loss_7d_ema = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_loss_7d_ema"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let neg_realized_loss = LazyFromHeightLast::from_height_source::<NegCentsUnsignedToDollars>(
+        let neg_realized_loss = LazyFromHeight::from_height_source::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_realized_loss"),
             cfg.version + v1,
             realized_loss.height.read_only_boxed_clone(),
@@ -198,7 +198,7 @@ impl RealizedBase {
             cfg.indexes,
         )?;
 
-        let net_realized_pnl_7d_ema = ComputedFromHeightLast::forced_import(
+        let net_realized_pnl_7d_ema = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("net_realized_pnl_7d_ema"),
             cfg.version,
@@ -212,35 +212,35 @@ impl RealizedBase {
             cfg.indexes,
         )?;
 
-        let realized_value = ComputedFromHeightLast::forced_import(
+        let realized_value = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_value"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let total_realized_pnl = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
+        let total_realized_pnl = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("total_realized_pnl"),
             cfg.version + v1,
             realized_value.height.read_only_boxed_clone(),
             &realized_value,
         );
 
-        let realized_profit_rel_to_realized_cap = ComputedFromHeightLast::forced_import(
+        let realized_profit_rel_to_realized_cap = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_profit_rel_to_realized_cap"),
             cfg.version + v1,
             cfg.indexes,
         )?;
 
-        let realized_loss_rel_to_realized_cap = ComputedFromHeightLast::forced_import(
+        let realized_loss_rel_to_realized_cap = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_loss_rel_to_realized_cap"),
             cfg.version + v1,
             cfg.indexes,
         )?;
 
-        let net_realized_pnl_rel_to_realized_cap = ComputedFromHeightLast::forced_import(
+        let net_realized_pnl_rel_to_realized_cap = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("net_realized_pnl_rel_to_realized_cap"),
             cfg.version + v1,
@@ -286,51 +286,51 @@ impl RealizedBase {
         let investor_cap_raw =
             BytesVec::forced_import(cfg.db, &cfg.name("investor_cap_raw"), cfg.version)?;
 
-        let profit_value_created = ComputedFromHeightLast::forced_import(
+        let profit_value_created = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("profit_value_created"),
             cfg.version,
             cfg.indexes,
         )?;
-        let profit_value_destroyed = ComputedFromHeightLast::forced_import(
+        let profit_value_destroyed = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("profit_value_destroyed"),
             cfg.version,
             cfg.indexes,
         )?;
-        let loss_value_created = ComputedFromHeightLast::forced_import(
+        let loss_value_created = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("loss_value_created"),
             cfg.version,
             cfg.indexes,
         )?;
-        let loss_value_destroyed = ComputedFromHeightLast::forced_import(
+        let loss_value_destroyed = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("loss_value_destroyed"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let value_created = ComputedFromHeightLast::forced_import(
+        let value_created = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("value_created"),
             cfg.version,
             cfg.indexes,
         )?;
-        let value_destroyed = ComputedFromHeightLast::forced_import(
+        let value_destroyed = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("value_destroyed"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let capitulation_flow = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
+        let capitulation_flow = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("capitulation_flow"),
             cfg.version,
             loss_value_destroyed.height.read_only_boxed_clone(),
             &loss_value_destroyed,
         );
-        let profit_flow = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
+        let profit_flow = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("profit_flow"),
             cfg.version,
             profit_value_destroyed.height.read_only_boxed_clone(),
@@ -344,7 +344,7 @@ impl RealizedBase {
             cfg.indexes,
         )?;
 
-        let mvrv = LazyFromHeightLast::from_computed::<StoredF32Identity>(
+        let mvrv = LazyFromHeight::from_computed::<StoredF32Identity>(
             &cfg.name("mvrv"),
             cfg.version,
             realized_price_extra.ratio.height.read_only_boxed_clone(),
@@ -354,7 +354,7 @@ impl RealizedBase {
         // === Rolling sum intermediates ===
         macro_rules! import_rolling {
             ($name:expr) => {
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name($name),
                     cfg.version + v1,
@@ -382,7 +382,7 @@ impl RealizedBase {
         let sopr_7d = import_rolling!("sopr_7d");
         let sopr_30d = import_rolling!("sopr_30d");
         let sopr_1y = import_rolling!("sopr_1y");
-        let sopr = LazyFromHeightLast::from_computed::<Ident>(
+        let sopr = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("sopr"),
             cfg.version + v1,
             sopr_24h.height.read_only_boxed_clone(),
@@ -393,7 +393,7 @@ impl RealizedBase {
         let sell_side_risk_ratio_7d = import_rolling!("sell_side_risk_ratio_7d");
         let sell_side_risk_ratio_30d = import_rolling!("sell_side_risk_ratio_30d");
         let sell_side_risk_ratio_1y = import_rolling!("sell_side_risk_ratio_1y");
-        let sell_side_risk_ratio = LazyFromHeightLast::from_computed::<Ident>(
+        let sell_side_risk_ratio = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("sell_side_risk_ratio"),
             cfg.version + v1,
             sell_side_risk_ratio_24h.height.read_only_boxed_clone(),
@@ -402,14 +402,14 @@ impl RealizedBase {
 
         // === EMA imports + identity aliases ===
         let sopr_24h_7d_ema = import_rolling!("sopr_24h_7d_ema");
-        let sopr_7d_ema = LazyFromHeightLast::from_computed::<Ident>(
+        let sopr_7d_ema = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("sopr_7d_ema"),
             cfg.version + v1,
             sopr_24h_7d_ema.height.read_only_boxed_clone(),
             &sopr_24h_7d_ema,
         );
         let sopr_24h_30d_ema = import_rolling!("sopr_24h_30d_ema");
-        let sopr_30d_ema = LazyFromHeightLast::from_computed::<Ident>(
+        let sopr_30d_ema = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("sopr_30d_ema"),
             cfg.version + v1,
             sopr_24h_30d_ema.height.read_only_boxed_clone(),
@@ -417,7 +417,7 @@ impl RealizedBase {
         );
 
         let sell_side_risk_ratio_24h_7d_ema = import_rolling!("sell_side_risk_ratio_24h_7d_ema");
-        let sell_side_risk_ratio_7d_ema = LazyFromHeightLast::from_computed::<Ident>(
+        let sell_side_risk_ratio_7d_ema = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("sell_side_risk_ratio_7d_ema"),
             cfg.version + v1,
             sell_side_risk_ratio_24h_7d_ema
@@ -426,7 +426,7 @@ impl RealizedBase {
             &sell_side_risk_ratio_24h_7d_ema,
         );
         let sell_side_risk_ratio_24h_30d_ema = import_rolling!("sell_side_risk_ratio_24h_30d_ema");
-        let sell_side_risk_ratio_30d_ema = LazyFromHeightLast::from_computed::<Ident>(
+        let sell_side_risk_ratio_30d_ema = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("sell_side_risk_ratio_30d_ema"),
             cfg.version + v1,
             sell_side_risk_ratio_24h_30d_ema
@@ -435,7 +435,7 @@ impl RealizedBase {
             &sell_side_risk_ratio_24h_30d_ema,
         );
 
-        let peak_regret_rel_to_realized_cap = ComputedFromHeightLast::forced_import(
+        let peak_regret_rel_to_realized_cap = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("peak_regret_rel_to_realized_cap"),
             cfg.version + v1,
@@ -447,7 +447,7 @@ impl RealizedBase {
             realized_cap,
             realized_price,
             realized_price_extra,
-            realized_cap_30d_delta: ComputedFromHeightLast::forced_import(
+            realized_cap_30d_delta: ComputedFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("realized_cap_30d_delta"),
                 cfg.version,
@@ -510,21 +510,21 @@ impl RealizedBase {
             sell_side_risk_ratio_7d_ema,
             sell_side_risk_ratio_24h_30d_ema,
             sell_side_risk_ratio_30d_ema,
-            net_realized_pnl_cumulative_30d_delta: ComputedFromHeightLast::forced_import(
+            net_realized_pnl_cumulative_30d_delta: ComputedFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("net_realized_pnl_cumulative_30d_delta"),
                 cfg.version + v3,
                 cfg.indexes,
             )?,
             net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap:
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name("net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap"),
                     cfg.version + v3,
                     cfg.indexes,
                 )?,
             net_realized_pnl_cumulative_30d_delta_rel_to_market_cap:
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name("net_realized_pnl_cumulative_30d_delta_rel_to_market_cap"),
                     cfg.version + v3,
@@ -538,7 +538,7 @@ impl RealizedBase {
                 cfg.version,
                 cfg.indexes,
             )?,
-            sent_in_profit_14d_ema: ValueFromHeightLast::forced_import(
+            sent_in_profit_14d_ema: ValueFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("sent_in_profit_14d_ema"),
                 cfg.version,
@@ -550,7 +550,7 @@ impl RealizedBase {
                 cfg.version,
                 cfg.indexes,
             )?,
-            sent_in_loss_14d_ema: ValueFromHeightLast::forced_import(
+            sent_in_loss_14d_ema: ValueFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("sent_in_loss_14d_ema"),
                 cfg.version,

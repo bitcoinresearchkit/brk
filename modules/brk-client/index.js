@@ -2647,23 +2647,23 @@ function createRatioPattern3(client, acc) {
 
 /**
  * @typedef {Object} GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern
- * @property {MetricPattern1<Dollars>} greedIndex
- * @property {MetricPattern1<Dollars>} investedCapitalInLoss
+ * @property {CentsUsdPattern} greedIndex
+ * @property {CentsUsdPattern} investedCapitalInLoss
  * @property {MetricPattern18<CentsSats>} investedCapitalInLossRaw
- * @property {MetricPattern1<Dollars>} investedCapitalInProfit
+ * @property {CentsUsdPattern} investedCapitalInProfit
  * @property {MetricPattern18<CentsSats>} investedCapitalInProfitRaw
  * @property {MetricPattern18<CentsSquaredSats>} investorCapInLossRaw
  * @property {MetricPattern18<CentsSquaredSats>} investorCapInProfitRaw
  * @property {MetricPattern1<Dollars>} negUnrealizedLoss
- * @property {MetricPattern1<Dollars>} netSentiment
- * @property {MetricPattern1<Dollars>} netUnrealizedPnl
- * @property {MetricPattern1<Dollars>} painIndex
- * @property {MetricPattern1<Dollars>} peakRegret
+ * @property {CentsUsdPattern} netSentiment
+ * @property {CentsUsdPattern} netUnrealizedPnl
+ * @property {CentsUsdPattern} painIndex
+ * @property {CentsUsdPattern} peakRegret
  * @property {BtcCentsSatsUsdPattern} supplyInLoss
  * @property {BtcCentsSatsUsdPattern} supplyInProfit
- * @property {MetricPattern1<Dollars>} totalUnrealizedPnl
- * @property {MetricPattern1<Dollars>} unrealizedLoss
- * @property {MetricPattern1<Dollars>} unrealizedProfit
+ * @property {CentsUsdPattern} totalUnrealizedPnl
+ * @property {CentsUsdPattern} unrealizedLoss
+ * @property {CentsUsdPattern} unrealizedProfit
  */
 
 /**
@@ -2674,44 +2674,44 @@ function createRatioPattern3(client, acc) {
  */
 function createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(client, acc) {
   return {
-    greedIndex: createMetricPattern1(client, _m(acc, 'greed_index')),
-    investedCapitalInLoss: createMetricPattern1(client, _m(acc, 'invested_capital_in_loss')),
+    greedIndex: createCentsUsdPattern(client, _m(acc, 'greed_index')),
+    investedCapitalInLoss: createCentsUsdPattern(client, _m(acc, 'invested_capital_in_loss')),
     investedCapitalInLossRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_loss_raw')),
-    investedCapitalInProfit: createMetricPattern1(client, _m(acc, 'invested_capital_in_profit')),
+    investedCapitalInProfit: createCentsUsdPattern(client, _m(acc, 'invested_capital_in_profit')),
     investedCapitalInProfitRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_profit_raw')),
     investorCapInLossRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_loss_raw')),
     investorCapInProfitRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_profit_raw')),
     negUnrealizedLoss: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss')),
-    netSentiment: createMetricPattern1(client, _m(acc, 'net_sentiment')),
-    netUnrealizedPnl: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl')),
-    painIndex: createMetricPattern1(client, _m(acc, 'pain_index')),
-    peakRegret: createMetricPattern1(client, _m(acc, 'unrealized_peak_regret')),
+    netSentiment: createCentsUsdPattern(client, _m(acc, 'net_sentiment')),
+    netUnrealizedPnl: createCentsUsdPattern(client, _m(acc, 'net_unrealized_pnl')),
+    painIndex: createCentsUsdPattern(client, _m(acc, 'pain_index')),
+    peakRegret: createCentsUsdPattern(client, _m(acc, 'unrealized_peak_regret')),
     supplyInLoss: createBtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_loss')),
     supplyInProfit: createBtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_profit')),
-    totalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'total_unrealized_pnl')),
-    unrealizedLoss: createMetricPattern1(client, _m(acc, 'unrealized_loss')),
-    unrealizedProfit: createMetricPattern1(client, _m(acc, 'unrealized_profit')),
+    totalUnrealizedPnl: createCentsUsdPattern(client, _m(acc, 'total_unrealized_pnl')),
+    unrealizedLoss: createCentsUsdPattern(client, _m(acc, 'unrealized_loss')),
+    unrealizedProfit: createCentsUsdPattern(client, _m(acc, 'unrealized_profit')),
   };
 }
 
 /**
  * @typedef {Object} GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern
- * @property {MetricPattern1<Dollars>} greedIndex
- * @property {MetricPattern1<Dollars>} investedCapitalInLoss
+ * @property {CentsUsdPattern} greedIndex
+ * @property {CentsUsdPattern} investedCapitalInLoss
  * @property {MetricPattern18<CentsSats>} investedCapitalInLossRaw
- * @property {MetricPattern1<Dollars>} investedCapitalInProfit
+ * @property {CentsUsdPattern} investedCapitalInProfit
  * @property {MetricPattern18<CentsSats>} investedCapitalInProfitRaw
  * @property {MetricPattern18<CentsSquaredSats>} investorCapInLossRaw
  * @property {MetricPattern18<CentsSquaredSats>} investorCapInProfitRaw
  * @property {MetricPattern1<Dollars>} negUnrealizedLoss
- * @property {MetricPattern1<Dollars>} netSentiment
- * @property {MetricPattern1<Dollars>} netUnrealizedPnl
- * @property {MetricPattern1<Dollars>} painIndex
+ * @property {CentsUsdPattern} netSentiment
+ * @property {CentsUsdPattern} netUnrealizedPnl
+ * @property {CentsUsdPattern} painIndex
  * @property {BtcCentsSatsUsdPattern} supplyInLoss
  * @property {BtcCentsSatsUsdPattern} supplyInProfit
- * @property {MetricPattern1<Dollars>} totalUnrealizedPnl
- * @property {MetricPattern1<Dollars>} unrealizedLoss
- * @property {MetricPattern1<Dollars>} unrealizedProfit
+ * @property {CentsUsdPattern} totalUnrealizedPnl
+ * @property {CentsUsdPattern} unrealizedLoss
+ * @property {CentsUsdPattern} unrealizedProfit
  */
 
 /**
@@ -2722,22 +2722,22 @@ function createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(c
  */
 function createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(client, acc) {
   return {
-    greedIndex: createMetricPattern1(client, _m(acc, 'greed_index')),
-    investedCapitalInLoss: createMetricPattern1(client, _m(acc, 'invested_capital_in_loss')),
+    greedIndex: createCentsUsdPattern(client, _m(acc, 'greed_index')),
+    investedCapitalInLoss: createCentsUsdPattern(client, _m(acc, 'invested_capital_in_loss')),
     investedCapitalInLossRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_loss_raw')),
-    investedCapitalInProfit: createMetricPattern1(client, _m(acc, 'invested_capital_in_profit')),
+    investedCapitalInProfit: createCentsUsdPattern(client, _m(acc, 'invested_capital_in_profit')),
     investedCapitalInProfitRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_profit_raw')),
     investorCapInLossRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_loss_raw')),
     investorCapInProfitRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_profit_raw')),
     negUnrealizedLoss: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss')),
-    netSentiment: createMetricPattern1(client, _m(acc, 'net_sentiment')),
-    netUnrealizedPnl: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl')),
-    painIndex: createMetricPattern1(client, _m(acc, 'pain_index')),
+    netSentiment: createCentsUsdPattern(client, _m(acc, 'net_sentiment')),
+    netUnrealizedPnl: createCentsUsdPattern(client, _m(acc, 'net_unrealized_pnl')),
+    painIndex: createCentsUsdPattern(client, _m(acc, 'pain_index')),
     supplyInLoss: createBtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_loss')),
     supplyInProfit: createBtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_profit')),
-    totalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'total_unrealized_pnl')),
-    unrealizedLoss: createMetricPattern1(client, _m(acc, 'unrealized_loss')),
-    unrealizedProfit: createMetricPattern1(client, _m(acc, 'unrealized_profit')),
+    totalUnrealizedPnl: createCentsUsdPattern(client, _m(acc, 'total_unrealized_pnl')),
+    unrealizedLoss: createCentsUsdPattern(client, _m(acc, 'unrealized_loss')),
+    unrealizedProfit: createCentsUsdPattern(client, _m(acc, 'unrealized_profit')),
   };
 }
 
@@ -3654,7 +3654,7 @@ function create_1y24h30d7dPattern(client, acc) {
 /**
  * @typedef {Object} _30dHalvedTotalPattern
  * @property {BtcCentsSatsUsdPattern} _30dChange
- * @property {BtcSatsUsdPattern} halved
+ * @property {BtcCentsSatsUsdPattern} halved
  * @property {BtcCentsSatsUsdPattern} total
  */
 
@@ -3667,7 +3667,7 @@ function create_1y24h30d7dPattern(client, acc) {
 function create_30dHalvedTotalPattern(client, acc) {
   return {
     _30dChange: createBtcCentsSatsUsdPattern(client, _m(acc, '_30d_change')),
-    halved: createBtcSatsUsdPattern(client, _m(acc, 'supply_halved')),
+    halved: createBtcCentsSatsUsdPattern(client, _m(acc, 'supply_halved')),
     total: createBtcCentsSatsUsdPattern(client, _m(acc, 'supply')),
   };
 }
@@ -3690,27 +3690,6 @@ function createBaseCumulativeSumPattern(client, acc) {
     base: createBtcCentsSatsUsdPattern(client, acc),
     cumulative: createBtcCentsSatsUsdPattern(client, _m(acc, 'cumulative')),
     sum: create_1y24h30d7dPattern2(client, _m(acc, 'sum')),
-  };
-}
-
-/**
- * @typedef {Object} BtcSatsUsdPattern
- * @property {MetricPattern1<Bitcoin>} btc
- * @property {MetricPattern1<Sats>} sats
- * @property {MetricPattern1<Dollars>} usd
- */
-
-/**
- * Create a BtcSatsUsdPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {BtcSatsUsdPattern}
- */
-function createBtcSatsUsdPattern(client, acc) {
-  return {
-    btc: createMetricPattern1(client, _m(acc, 'btc')),
-    sats: createMetricPattern1(client, acc),
-    usd: createMetricPattern1(client, _m(acc, 'usd')),
   };
 }
 
@@ -3858,6 +3837,25 @@ function createBaseCumulativePattern(client, acc) {
   return {
     base: createBtcCentsSatsUsdPattern(client, acc),
     cumulative: createBtcCentsSatsUsdPattern(client, _m(acc, 'cumulative')),
+  };
+}
+
+/**
+ * @typedef {Object} CentsUsdPattern
+ * @property {MetricPattern1<Cents>} cents
+ * @property {MetricPattern1<Dollars>} usd
+ */
+
+/**
+ * Create a CentsUsdPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CentsUsdPattern}
+ */
+function createCentsUsdPattern(client, acc) {
+  return {
+    cents: createMetricPattern1(client, _m(acc, 'cents')),
+    usd: createMetricPattern1(client, _m(acc, 'usd')),
   };
 }
 
@@ -4264,7 +4262,7 @@ function createRatioPattern2(client, acc) {
  * @property {MetricPattern1<StoredF32>} subsidyDominance7d
  * @property {MetricPattern1<StoredF32>} subsidyDominance30d
  * @property {MetricPattern1<StoredF32>} subsidyDominance1y
- * @property {MetricPattern1<Dollars>} subsidyUsd1ySma
+ * @property {CentsUsdPattern} subsidyUsd1ySma
  */
 
 /**
@@ -4330,11 +4328,11 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Cointime_Cap
- * @property {MetricPattern1<Dollars>} thermoCap
- * @property {MetricPattern1<Dollars>} investorCap
- * @property {MetricPattern1<Dollars>} vaultedCap
- * @property {MetricPattern1<Dollars>} activeCap
- * @property {MetricPattern1<Dollars>} cointimeCap
+ * @property {CentsUsdPattern} thermoCap
+ * @property {CentsUsdPattern} investorCap
+ * @property {CentsUsdPattern} vaultedCap
+ * @property {CentsUsdPattern} activeCap
+ * @property {CentsUsdPattern} cointimeCap
  */
 
 /**
@@ -5568,7 +5566,7 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Supply
- * @property {BtcSatsUsdPattern} circulating
+ * @property {BtcCentsSatsUsdPattern} circulating
  * @property {MetricsTree_Supply_Burned} burned
  * @property {MetricPattern1<StoredF32>} inflation
  * @property {MetricsTree_Supply_Velocity} velocity
@@ -6753,7 +6751,7 @@ class BrkClient extends BrkClientBase {
           subsidyDominance7d: createMetricPattern1(this, 'subsidy_dominance_7d'),
           subsidyDominance30d: createMetricPattern1(this, 'subsidy_dominance_30d'),
           subsidyDominance1y: createMetricPattern1(this, 'subsidy_dominance_1y'),
-          subsidyUsd1ySma: createMetricPattern1(this, 'subsidy_usd_1y_sma'),
+          subsidyUsd1ySma: createCentsUsdPattern(this, 'subsidy_usd_1y_sma'),
         },
         hashrate: {
           hashRate: createMetricPattern1(this, 'hash_rate'),
@@ -6798,11 +6796,11 @@ class BrkClient extends BrkClientBase {
           vocdd: createCumulativeHeightSumPattern(this, 'vocdd'),
         },
         cap: {
-          thermoCap: createMetricPattern1(this, 'thermo_cap'),
-          investorCap: createMetricPattern1(this, 'investor_cap'),
-          vaultedCap: createMetricPattern1(this, 'vaulted_cap'),
-          activeCap: createMetricPattern1(this, 'active_cap'),
-          cointimeCap: createMetricPattern1(this, 'cointime_cap'),
+          thermoCap: createCentsUsdPattern(this, 'thermo_cap'),
+          investorCap: createCentsUsdPattern(this, 'investor_cap'),
+          vaultedCap: createCentsUsdPattern(this, 'vaulted_cap'),
+          activeCap: createCentsUsdPattern(this, 'active_cap'),
+          cointimeCap: createCentsUsdPattern(this, 'cointime_cap'),
         },
         pricing: {
           vaultedPrice: createCentsSatsUsdPattern(this, 'vaulted_price'),
@@ -7765,7 +7763,7 @@ class BrkClient extends BrkClientBase {
         emptyaddressindex: createMetricPattern35(this, 'emptyaddressindex'),
       },
       supply: {
-        circulating: createBtcSatsUsdPattern(this, 'circulating_supply'),
+        circulating: createBtcCentsSatsUsdPattern(this, 'circulating_supply'),
         burned: {
           opreturn: createBaseCumulativeSumPattern(this, 'opreturn_supply'),
           unspendable: createBaseCumulativeSumPattern(this, 'unspendable_supply'),

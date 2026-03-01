@@ -3,8 +3,8 @@ use brk_types::{Cents, Dollars, OHLCCents, OHLCDollars, OHLCSats, Sats};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{
-    ComputedFromHeightLast, ComputedHeightDerivedLast, EagerIndexes, LazyEagerIndexes,
-    LazyFromHeightLast,
+    ComputedFromHeight, ComputedHeightDerived, EagerIndexes, LazyEagerIndexes,
+    LazyFromHeight,
 };
 
 use super::ohlcs::{LazyOhlcVecs, OhlcVecs};
@@ -28,9 +28,9 @@ pub struct SplitIndexesByUnit<M: StorageMode = Rw> {
 
 #[derive(Clone, Traversable)]
 pub struct SplitCloseByUnit {
-    pub cents: ComputedHeightDerivedLast<Cents>,
-    pub usd: ComputedHeightDerivedLast<Dollars>,
-    pub sats: ComputedHeightDerivedLast<Sats>,
+    pub cents: ComputedHeightDerived<Cents>,
+    pub usd: ComputedHeightDerived<Dollars>,
+    pub sats: ComputedHeightDerived<Sats>,
 }
 
 // ── OhlcByUnit ──────────────────────────────────────────────────────
@@ -46,7 +46,7 @@ pub struct OhlcByUnit<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct PriceByUnit<M: StorageMode = Rw> {
-    pub cents: ComputedFromHeightLast<Cents, M>,
-    pub usd: LazyFromHeightLast<Dollars, Cents>,
-    pub sats: LazyFromHeightLast<Sats, Cents>,
+    pub cents: ComputedFromHeight<Cents, M>,
+    pub usd: LazyFromHeight<Dollars, Cents>,
+    pub sats: LazyFromHeight<Sats, Cents>,
 }

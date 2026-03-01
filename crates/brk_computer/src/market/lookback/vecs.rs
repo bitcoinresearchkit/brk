@@ -3,11 +3,11 @@ use brk_types::Cents;
 use vecdb::{Rw, StorageMode};
 
 use super::ByLookbackPeriod;
-use crate::internal::{ComputedFromHeightLast, Price};
+use crate::internal::{ComputedFromHeight, Price};
 
 /// Price lookback metrics
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub price_ago: ByLookbackPeriod<Price<ComputedFromHeightLast<Cents, M>>>,
+    pub price_ago: ByLookbackPeriod<Price<ComputedFromHeight<Cents, M>>>,
 }

@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 use crate::{
     ComputeIndexes,
     distribution::state::CohortState,
-    internal::{ComputedFromHeightLast, Price},
+    internal::{ComputedFromHeight, Price},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -15,10 +15,10 @@ use crate::distribution::metrics::ImportConfig;
 #[derive(Traversable)]
 pub struct CostBasisBase<M: StorageMode = Rw> {
     /// Minimum cost basis for any UTXO at this height
-    pub min: Price<ComputedFromHeightLast<Cents, M>>,
+    pub min: Price<ComputedFromHeight<Cents, M>>,
 
     /// Maximum cost basis for any UTXO at this height
-    pub max: Price<ComputedFromHeightLast<Cents, M>>,
+    pub max: Price<ComputedFromHeight<Cents, M>>,
 }
 
 impl CostBasisBase {

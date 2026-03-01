@@ -3,7 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Sats, StoredF64};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeightLast, PercentageSatsF64};
+use crate::internal::{ComputedFromHeight, PercentageSatsF64};
 
 use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
 
@@ -11,11 +11,11 @@ use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
 #[derive(Traversable)]
 pub struct RelativeToAll<M: StorageMode = Rw> {
     pub supply_rel_to_circulating_supply:
-        ComputedFromHeightLast<StoredF64, M>,
+        ComputedFromHeight<StoredF64, M>,
     pub supply_in_profit_rel_to_circulating_supply:
-        ComputedFromHeightLast<StoredF64, M>,
+        ComputedFromHeight<StoredF64, M>,
     pub supply_in_loss_rel_to_circulating_supply:
-        ComputedFromHeightLast<StoredF64, M>,
+        ComputedFromHeight<StoredF64, M>,
 }
 
 impl RelativeToAll {
@@ -24,21 +24,21 @@ impl RelativeToAll {
     ) -> Result<Self> {
         Ok(Self {
             supply_rel_to_circulating_supply:
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name("supply_rel_to_circulating_supply"),
                     cfg.version + brk_types::Version::ONE,
                     cfg.indexes,
                 )?,
             supply_in_profit_rel_to_circulating_supply:
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name("supply_in_profit_rel_to_circulating_supply"),
                     cfg.version + brk_types::Version::ONE,
                     cfg.indexes,
                 )?,
             supply_in_loss_rel_to_circulating_supply:
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name("supply_in_loss_rel_to_circulating_supply"),
                     cfg.version + brk_types::Version::ONE,

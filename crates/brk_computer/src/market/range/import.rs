@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::{ComputedFromHeightLast, Price}};
+use crate::{indexes, internal::{ComputedFromHeight, Price}};
 
 impl Vecs {
     pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
@@ -18,13 +18,13 @@ impl Vecs {
             price_1m_max: Price::forced_import(db, "price_1m_max", version + v1, indexes)?,
             price_1y_min: Price::forced_import(db, "price_1y_min", version + v1, indexes)?,
             price_1y_max: Price::forced_import(db, "price_1y_max", version + v1, indexes)?,
-            price_true_range: ComputedFromHeightLast::forced_import(
+            price_true_range: ComputedFromHeight::forced_import(
                 db, "price_true_range", version + v1, indexes,
             )?,
-            price_true_range_2w_sum: ComputedFromHeightLast::forced_import(
+            price_true_range_2w_sum: ComputedFromHeight::forced_import(
                 db, "price_true_range_2w_sum", version + v1, indexes,
             )?,
-            price_2w_choppiness_index: ComputedFromHeightLast::forced_import(
+            price_2w_choppiness_index: ComputedFromHeight::forced_import(
                 db, "price_2w_choppiness_index", version + v1, indexes,
             )?,
         })

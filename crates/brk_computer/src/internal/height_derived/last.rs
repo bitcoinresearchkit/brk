@@ -1,4 +1,4 @@
-//! ComputedHeightDerivedLast — sparse time periods + dense epochs (last value).
+//! ComputedHeightDerived — sparse time periods + dense epochs (last value).
 
 use brk_traversable::Traversable;
 use brk_types::{
@@ -18,7 +18,7 @@ use crate::{
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct ComputedHeightDerivedLast<T>(
+pub struct ComputedHeightDerived<T>(
     #[allow(clippy::type_complexity)]
     pub  Indexes<
         LazyAggVec<Minute10, Option<T>, Height, Height, T>,
@@ -42,7 +42,7 @@ where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 
 /// Already read-only (no StorageMode); cloning is sufficient.
-impl<T> ReadOnlyClone for ComputedHeightDerivedLast<T>
+impl<T> ReadOnlyClone for ComputedHeightDerived<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -54,7 +54,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> ComputedHeightDerivedLast<T>
+impl<T> ComputedHeightDerived<T>
 where
     T: NumericValue + JsonSchema,
 {

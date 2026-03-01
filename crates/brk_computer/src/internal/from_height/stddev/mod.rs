@@ -9,13 +9,13 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, 
 
 use crate::{ComputeIndexes, blocks, indexes};
 
-use crate::internal::ComputedFromHeightLast;
+use crate::internal::ComputedFromHeight;
 
 #[derive(Traversable)]
 pub struct ComputedFromHeightStdDev<M: StorageMode = Rw> {
     days: usize,
-    pub sma: ComputedFromHeightLast<StoredF32, M>,
-    pub sd: ComputedFromHeightLast<StoredF32, M>,
+    pub sma: ComputedFromHeight<StoredF32, M>,
+    pub sd: ComputedFromHeight<StoredF32, M>,
 }
 
 impl ComputedFromHeightStdDev {
@@ -28,13 +28,13 @@ impl ComputedFromHeightStdDev {
     ) -> Result<Self> {
         let version = parent_version + Version::TWO;
 
-        let sma = ComputedFromHeightLast::forced_import(
+        let sma = ComputedFromHeight::forced_import(
             db,
             &format!("{name}_sma"),
             version,
             indexes,
         )?;
-        let sd = ComputedFromHeightLast::forced_import(
+        let sd = ComputedFromHeight::forced_import(
             db,
             &format!("{name}_sd"),
             version,
@@ -84,7 +84,7 @@ impl ComputedFromHeightStdDev {
 }
 
 fn compute_sd(
-    sd: &mut ComputedFromHeightLast<StoredF32>,
+    sd: &mut ComputedFromHeight<StoredF32>,
     blocks: &blocks::Vecs,
     starting_indexes: &ComputeIndexes,
     exit: &Exit,

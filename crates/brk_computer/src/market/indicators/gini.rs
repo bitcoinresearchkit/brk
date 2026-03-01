@@ -2,10 +2,10 @@ use brk_error::Result;
 use brk_types::{Day1, Sats, StoredF32, StoredU64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableOptionVec, VecIndex, WritableVec};
 
-use crate::{ComputeIndexes, distribution, internal::ComputedFromHeightLast};
+use crate::{ComputeIndexes, distribution, internal::ComputedFromHeight};
 
 pub(super) fn compute(
-    gini: &mut ComputedFromHeightLast<StoredF32>,
+    gini: &mut ComputedFromHeight<StoredF32>,
     distribution: &distribution::Vecs,
     h2d: &[Day1],
     total_heights: usize,

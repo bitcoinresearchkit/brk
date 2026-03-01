@@ -1,8 +1,8 @@
 //! ComputedFromHeightCumulativeSum - stored height + LazyAggVec + cumulative (from height) + RollingWindows (sum).
 //!
-//! Like ComputedFromHeightCumulativeFull but with rolling sum only (no distribution).
+//! Like ComputedFromHeightFull but with rolling sum only (no distribution).
 //! Used for count metrics where distribution stats aren't meaningful.
-//! Cumulative gets its own ComputedFromHeightLast so it has LazyAggVec index views too.
+//! Cumulative gets its own ComputedFromHeight so it has LazyAggVec index views too.
 
 use std::ops::SubAssign;
 
@@ -14,7 +14,7 @@ use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ComputedFromHeightLast, NumericValue, RollingWindows, WindowStarts},
+    internal::{ComputedFromHeight, NumericValue, RollingWindows, WindowStarts},
 };
 
 #[derive(Traversable)]
@@ -23,7 +23,7 @@ where
     T: NumericValue + JsonSchema,
 {
     pub height: M::Stored<EagerVec<PcoVec<Height, T>>>,
-    pub cumulative: ComputedFromHeightLast<T, M>,
+    pub cumulative: ComputedFromHeight<T, M>,
     pub sum: RollingWindows<T, M>,
 }
 
@@ -43,7 +43,7 @@ where
 
         let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, v)?;
         let cumulative =
-            ComputedFromHeightLast::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
+            ComputedFromHeight::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
         let rolling = RollingWindows::forced_import(db, name, v, indexes)?;
 
         Ok(Self {

@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::ValueFromHeightLast};
+use crate::{indexes, internal::ValueFromHeight};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -12,13 +12,13 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            vaulted_supply: ValueFromHeightLast::forced_import(
+            vaulted_supply: ValueFromHeight::forced_import(
                 db,
                 "vaulted_supply",
                 version,
                 indexes,
             )?,
-            active_supply: ValueFromHeightLast::forced_import(
+            active_supply: ValueFromHeight::forced_import(
                 db,
                 "active_supply",
                 version,

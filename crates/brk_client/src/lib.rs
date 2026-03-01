@@ -2015,90 +2015,90 @@ impl RatioPattern3 {
 
 /// Pattern struct for repeated tree structure.
 pub struct GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern {
-    pub greed_index: MetricPattern1<Dollars>,
-    pub invested_capital_in_loss: MetricPattern1<Dollars>,
+    pub greed_index: CentsUsdPattern,
+    pub invested_capital_in_loss: CentsUsdPattern,
     pub invested_capital_in_loss_raw: MetricPattern18<CentsSats>,
-    pub invested_capital_in_profit: MetricPattern1<Dollars>,
+    pub invested_capital_in_profit: CentsUsdPattern,
     pub invested_capital_in_profit_raw: MetricPattern18<CentsSats>,
     pub investor_cap_in_loss_raw: MetricPattern18<CentsSquaredSats>,
     pub investor_cap_in_profit_raw: MetricPattern18<CentsSquaredSats>,
     pub neg_unrealized_loss: MetricPattern1<Dollars>,
-    pub net_sentiment: MetricPattern1<Dollars>,
-    pub net_unrealized_pnl: MetricPattern1<Dollars>,
-    pub pain_index: MetricPattern1<Dollars>,
-    pub peak_regret: MetricPattern1<Dollars>,
+    pub net_sentiment: CentsUsdPattern,
+    pub net_unrealized_pnl: CentsUsdPattern,
+    pub pain_index: CentsUsdPattern,
+    pub peak_regret: CentsUsdPattern,
     pub supply_in_loss: BtcCentsSatsUsdPattern,
     pub supply_in_profit: BtcCentsSatsUsdPattern,
-    pub total_unrealized_pnl: MetricPattern1<Dollars>,
-    pub unrealized_loss: MetricPattern1<Dollars>,
-    pub unrealized_profit: MetricPattern1<Dollars>,
+    pub total_unrealized_pnl: CentsUsdPattern,
+    pub unrealized_loss: CentsUsdPattern,
+    pub unrealized_profit: CentsUsdPattern,
 }
 
 impl GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            greed_index: MetricPattern1::new(client.clone(), _m(&acc, "greed_index")),
-            invested_capital_in_loss: MetricPattern1::new(client.clone(), _m(&acc, "invested_capital_in_loss")),
+            greed_index: CentsUsdPattern::new(client.clone(), _m(&acc, "greed_index")),
+            invested_capital_in_loss: CentsUsdPattern::new(client.clone(), _m(&acc, "invested_capital_in_loss")),
             invested_capital_in_loss_raw: MetricPattern18::new(client.clone(), _m(&acc, "invested_capital_in_loss_raw")),
-            invested_capital_in_profit: MetricPattern1::new(client.clone(), _m(&acc, "invested_capital_in_profit")),
+            invested_capital_in_profit: CentsUsdPattern::new(client.clone(), _m(&acc, "invested_capital_in_profit")),
             invested_capital_in_profit_raw: MetricPattern18::new(client.clone(), _m(&acc, "invested_capital_in_profit_raw")),
             investor_cap_in_loss_raw: MetricPattern18::new(client.clone(), _m(&acc, "investor_cap_in_loss_raw")),
             investor_cap_in_profit_raw: MetricPattern18::new(client.clone(), _m(&acc, "investor_cap_in_profit_raw")),
             neg_unrealized_loss: MetricPattern1::new(client.clone(), _m(&acc, "neg_unrealized_loss")),
-            net_sentiment: MetricPattern1::new(client.clone(), _m(&acc, "net_sentiment")),
-            net_unrealized_pnl: MetricPattern1::new(client.clone(), _m(&acc, "net_unrealized_pnl")),
-            pain_index: MetricPattern1::new(client.clone(), _m(&acc, "pain_index")),
-            peak_regret: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_peak_regret")),
+            net_sentiment: CentsUsdPattern::new(client.clone(), _m(&acc, "net_sentiment")),
+            net_unrealized_pnl: CentsUsdPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl")),
+            pain_index: CentsUsdPattern::new(client.clone(), _m(&acc, "pain_index")),
+            peak_regret: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_peak_regret")),
             supply_in_loss: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_in_loss")),
             supply_in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_in_profit")),
-            total_unrealized_pnl: MetricPattern1::new(client.clone(), _m(&acc, "total_unrealized_pnl")),
-            unrealized_loss: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_loss")),
-            unrealized_profit: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_profit")),
+            total_unrealized_pnl: CentsUsdPattern::new(client.clone(), _m(&acc, "total_unrealized_pnl")),
+            unrealized_loss: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_loss")),
+            unrealized_profit: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_profit")),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
 pub struct GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern {
-    pub greed_index: MetricPattern1<Dollars>,
-    pub invested_capital_in_loss: MetricPattern1<Dollars>,
+    pub greed_index: CentsUsdPattern,
+    pub invested_capital_in_loss: CentsUsdPattern,
     pub invested_capital_in_loss_raw: MetricPattern18<CentsSats>,
-    pub invested_capital_in_profit: MetricPattern1<Dollars>,
+    pub invested_capital_in_profit: CentsUsdPattern,
     pub invested_capital_in_profit_raw: MetricPattern18<CentsSats>,
     pub investor_cap_in_loss_raw: MetricPattern18<CentsSquaredSats>,
     pub investor_cap_in_profit_raw: MetricPattern18<CentsSquaredSats>,
     pub neg_unrealized_loss: MetricPattern1<Dollars>,
-    pub net_sentiment: MetricPattern1<Dollars>,
-    pub net_unrealized_pnl: MetricPattern1<Dollars>,
-    pub pain_index: MetricPattern1<Dollars>,
+    pub net_sentiment: CentsUsdPattern,
+    pub net_unrealized_pnl: CentsUsdPattern,
+    pub pain_index: CentsUsdPattern,
     pub supply_in_loss: BtcCentsSatsUsdPattern,
     pub supply_in_profit: BtcCentsSatsUsdPattern,
-    pub total_unrealized_pnl: MetricPattern1<Dollars>,
-    pub unrealized_loss: MetricPattern1<Dollars>,
-    pub unrealized_profit: MetricPattern1<Dollars>,
+    pub total_unrealized_pnl: CentsUsdPattern,
+    pub unrealized_loss: CentsUsdPattern,
+    pub unrealized_profit: CentsUsdPattern,
 }
 
 impl GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            greed_index: MetricPattern1::new(client.clone(), _m(&acc, "greed_index")),
-            invested_capital_in_loss: MetricPattern1::new(client.clone(), _m(&acc, "invested_capital_in_loss")),
+            greed_index: CentsUsdPattern::new(client.clone(), _m(&acc, "greed_index")),
+            invested_capital_in_loss: CentsUsdPattern::new(client.clone(), _m(&acc, "invested_capital_in_loss")),
             invested_capital_in_loss_raw: MetricPattern18::new(client.clone(), _m(&acc, "invested_capital_in_loss_raw")),
-            invested_capital_in_profit: MetricPattern1::new(client.clone(), _m(&acc, "invested_capital_in_profit")),
+            invested_capital_in_profit: CentsUsdPattern::new(client.clone(), _m(&acc, "invested_capital_in_profit")),
             invested_capital_in_profit_raw: MetricPattern18::new(client.clone(), _m(&acc, "invested_capital_in_profit_raw")),
             investor_cap_in_loss_raw: MetricPattern18::new(client.clone(), _m(&acc, "investor_cap_in_loss_raw")),
             investor_cap_in_profit_raw: MetricPattern18::new(client.clone(), _m(&acc, "investor_cap_in_profit_raw")),
             neg_unrealized_loss: MetricPattern1::new(client.clone(), _m(&acc, "neg_unrealized_loss")),
-            net_sentiment: MetricPattern1::new(client.clone(), _m(&acc, "net_sentiment")),
-            net_unrealized_pnl: MetricPattern1::new(client.clone(), _m(&acc, "net_unrealized_pnl")),
-            pain_index: MetricPattern1::new(client.clone(), _m(&acc, "pain_index")),
+            net_sentiment: CentsUsdPattern::new(client.clone(), _m(&acc, "net_sentiment")),
+            net_unrealized_pnl: CentsUsdPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl")),
+            pain_index: CentsUsdPattern::new(client.clone(), _m(&acc, "pain_index")),
             supply_in_loss: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_in_loss")),
             supply_in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_in_profit")),
-            total_unrealized_pnl: MetricPattern1::new(client.clone(), _m(&acc, "total_unrealized_pnl")),
-            unrealized_loss: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_loss")),
-            unrealized_profit: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_profit")),
+            total_unrealized_pnl: CentsUsdPattern::new(client.clone(), _m(&acc, "total_unrealized_pnl")),
+            unrealized_loss: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_loss")),
+            unrealized_profit: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_profit")),
         }
     }
 }
@@ -2922,7 +2922,7 @@ impl<T: DeserializeOwned> _1y24h30d7dPattern<T> {
 /// Pattern struct for repeated tree structure.
 pub struct _30dHalvedTotalPattern {
     pub _30d_change: BtcCentsSatsUsdPattern,
-    pub halved: BtcSatsUsdPattern,
+    pub halved: BtcCentsSatsUsdPattern,
     pub total: BtcCentsSatsUsdPattern,
 }
 
@@ -2931,7 +2931,7 @@ impl _30dHalvedTotalPattern {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             _30d_change: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "_30d_change")),
-            halved: BtcSatsUsdPattern::new(client.clone(), _m(&acc, "supply_halved")),
+            halved: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_halved")),
             total: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply")),
         }
     }
@@ -2951,24 +2951,6 @@ impl BaseCumulativeSumPattern {
             base: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
             cumulative: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "cumulative")),
             sum: _1y24h30d7dPattern2::new(client.clone(), _m(&acc, "sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct BtcSatsUsdPattern {
-    pub btc: MetricPattern1<Bitcoin>,
-    pub sats: MetricPattern1<Sats>,
-    pub usd: MetricPattern1<Dollars>,
-}
-
-impl BtcSatsUsdPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            btc: MetricPattern1::new(client.clone(), _m(&acc, "btc")),
-            sats: MetricPattern1::new(client.clone(), acc.clone()),
-            usd: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
         }
     }
 }
@@ -3091,6 +3073,22 @@ impl BaseCumulativePattern {
         Self {
             base: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
             cumulative: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "cumulative")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CentsUsdPattern {
+    pub cents: MetricPattern1<Cents>,
+    pub usd: MetricPattern1<Dollars>,
+}
+
+impl CentsUsdPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
+            usd: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
         }
     }
 }
@@ -3846,7 +3844,7 @@ pub struct MetricsTree_Mining_Rewards {
     pub subsidy_dominance_7d: MetricPattern1<StoredF32>,
     pub subsidy_dominance_30d: MetricPattern1<StoredF32>,
     pub subsidy_dominance_1y: MetricPattern1<StoredF32>,
-    pub subsidy_usd_1y_sma: MetricPattern1<Dollars>,
+    pub subsidy_usd_1y_sma: CentsUsdPattern,
 }
 
 impl MetricsTree_Mining_Rewards {
@@ -3866,7 +3864,7 @@ impl MetricsTree_Mining_Rewards {
             subsidy_dominance_7d: MetricPattern1::new(client.clone(), "subsidy_dominance_7d".to_string()),
             subsidy_dominance_30d: MetricPattern1::new(client.clone(), "subsidy_dominance_30d".to_string()),
             subsidy_dominance_1y: MetricPattern1::new(client.clone(), "subsidy_dominance_1y".to_string()),
-            subsidy_usd_1y_sma: MetricPattern1::new(client.clone(), "subsidy_usd_1y_sma".to_string()),
+            subsidy_usd_1y_sma: CentsUsdPattern::new(client.clone(), "subsidy_usd_1y_sma".to_string()),
         }
     }
 }
@@ -4013,21 +4011,21 @@ impl MetricsTree_Cointime_Value {
 
 /// Metrics tree node.
 pub struct MetricsTree_Cointime_Cap {
-    pub thermo_cap: MetricPattern1<Dollars>,
-    pub investor_cap: MetricPattern1<Dollars>,
-    pub vaulted_cap: MetricPattern1<Dollars>,
-    pub active_cap: MetricPattern1<Dollars>,
-    pub cointime_cap: MetricPattern1<Dollars>,
+    pub thermo_cap: CentsUsdPattern,
+    pub investor_cap: CentsUsdPattern,
+    pub vaulted_cap: CentsUsdPattern,
+    pub active_cap: CentsUsdPattern,
+    pub cointime_cap: CentsUsdPattern,
 }
 
 impl MetricsTree_Cointime_Cap {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            thermo_cap: MetricPattern1::new(client.clone(), "thermo_cap".to_string()),
-            investor_cap: MetricPattern1::new(client.clone(), "investor_cap".to_string()),
-            vaulted_cap: MetricPattern1::new(client.clone(), "vaulted_cap".to_string()),
-            active_cap: MetricPattern1::new(client.clone(), "active_cap".to_string()),
-            cointime_cap: MetricPattern1::new(client.clone(), "cointime_cap".to_string()),
+            thermo_cap: CentsUsdPattern::new(client.clone(), "thermo_cap".to_string()),
+            investor_cap: CentsUsdPattern::new(client.clone(), "investor_cap".to_string()),
+            vaulted_cap: CentsUsdPattern::new(client.clone(), "vaulted_cap".to_string()),
+            active_cap: CentsUsdPattern::new(client.clone(), "active_cap".to_string()),
+            cointime_cap: CentsUsdPattern::new(client.clone(), "cointime_cap".to_string()),
         }
     }
 }
@@ -6771,7 +6769,7 @@ impl MetricsTree_Distribution_GrowthRate {
 
 /// Metrics tree node.
 pub struct MetricsTree_Supply {
-    pub circulating: BtcSatsUsdPattern,
+    pub circulating: BtcCentsSatsUsdPattern,
     pub burned: MetricsTree_Supply_Burned,
     pub inflation: MetricPattern1<StoredF32>,
     pub velocity: MetricsTree_Supply_Velocity,
@@ -6784,7 +6782,7 @@ pub struct MetricsTree_Supply {
 impl MetricsTree_Supply {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            circulating: BtcSatsUsdPattern::new(client.clone(), "circulating_supply".to_string()),
+            circulating: BtcCentsSatsUsdPattern::new(client.clone(), "circulating_supply".to_string()),
             burned: MetricsTree_Supply_Burned::new(client.clone(), format!("{base_path}_burned")),
             inflation: MetricPattern1::new(client.clone(), "inflation_rate".to_string()),
             velocity: MetricsTree_Supply_Velocity::new(client.clone(), format!("{base_path}_velocity")),

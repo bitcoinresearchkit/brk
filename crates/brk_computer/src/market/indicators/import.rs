@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::{ByIndicatorTimeframe, MacdChain, RsiChain, Vecs};
 use crate::{
     indexes,
-    internal::ComputedFromHeightLast,
+    internal::ComputedFromHeight,
 };
 
 const VERSION: Version = Version::ONE;
@@ -19,7 +19,7 @@ impl RsiChain {
     ) -> Result<Self> {
         macro_rules! import {
             ($name:expr) => {
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     db,
                     &format!("rsi_{}_{}", $name, tf),
                     version,
@@ -31,7 +31,7 @@ impl RsiChain {
         let average_gain = import!("avg_gain");
         let average_loss = import!("avg_loss");
 
-        let rsi = ComputedFromHeightLast::forced_import(
+        let rsi = ComputedFromHeight::forced_import(
             db,
             &format!("rsi_{tf}"),
             version,
@@ -60,20 +60,20 @@ impl MacdChain {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let line = ComputedFromHeightLast::forced_import(
+        let line = ComputedFromHeight::forced_import(
             db,
             &format!("macd_line_{tf}"),
             version,
             indexes,
         )?;
-        let signal = ComputedFromHeightLast::forced_import(
+        let signal = ComputedFromHeight::forced_import(
             db,
             &format!("macd_signal_{tf}"),
             version,
             indexes,
         )?;
 
-        let histogram = ComputedFromHeightLast::forced_import(
+        let histogram = ComputedFromHeight::forced_import(
             db,
             &format!("macd_histogram_{tf}"),
             version,
@@ -96,19 +96,19 @@ impl Vecs {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let nvt = ComputedFromHeightLast::forced_import(db, "nvt", v, indexes)?;
+        let nvt = ComputedFromHeight::forced_import(db, "nvt", v, indexes)?;
 
         let rsi = ByIndicatorTimeframe::try_new(|tf| RsiChain::forced_import(db, tf, v, indexes))?;
         let macd = ByIndicatorTimeframe::try_new(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
 
-        let stoch_k = ComputedFromHeightLast::forced_import(db, "stoch_k", v, indexes)?;
-        let stoch_d = ComputedFromHeightLast::forced_import(db, "stoch_d", v, indexes)?;
-        let gini = ComputedFromHeightLast::forced_import(db, "gini", v, indexes)?;
+        let stoch_k = ComputedFromHeight::forced_import(db, "stoch_k", v, indexes)?;
+        let stoch_d = ComputedFromHeight::forced_import(db, "stoch_d", v, indexes)?;
+        let gini = ComputedFromHeight::forced_import(db, "gini", v, indexes)?;
 
-        let pi_cycle = ComputedFromHeightLast::forced_import(db, "pi_cycle", v, indexes)?;
+        let pi_cycle = ComputedFromHeight::forced_import(db, "pi_cycle", v, indexes)?;
 
         Ok(Self {
-            puell_multiple: ComputedFromHeightLast::forced_import(db, "puell_multiple", v, indexes)?,
+            puell_multiple: ComputedFromHeight::forced_import(db, "puell_multiple", v, indexes)?,
             nvt,
             rsi,
             stoch_k,

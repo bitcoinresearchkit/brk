@@ -10,7 +10,7 @@ use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        CentsUnsignedToDollars, ComputedFromHeightLast, LazyFromHeightLast, SatsToBitcoin,
+        CentsUnsignedToDollars, ComputedFromHeight, LazyFromHeight, SatsToBitcoin,
     },
 };
 
@@ -19,10 +19,10 @@ pub use rolling_sum::*;
 
 #[derive(Traversable)]
 pub struct ByUnit<M: StorageMode = Rw> {
-    pub sats: ComputedFromHeightLast<Sats, M>,
-    pub btc: LazyFromHeightLast<Bitcoin, Sats>,
-    pub cents: ComputedFromHeightLast<Cents, M>,
-    pub usd: LazyFromHeightLast<Dollars, Cents>,
+    pub sats: ComputedFromHeight<Sats, M>,
+    pub btc: LazyFromHeight<Bitcoin, Sats>,
+    pub cents: ComputedFromHeight<Cents, M>,
+    pub usd: LazyFromHeight<Dollars, Cents>,
 }
 
 impl ByUnit {
@@ -32,23 +32,23 @@ impl ByUnit {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let sats = ComputedFromHeightLast::forced_import(db, name, version, indexes)?;
+        let sats = ComputedFromHeight::forced_import(db, name, version, indexes)?;
 
-        let btc = LazyFromHeightLast::from_computed::<SatsToBitcoin>(
+        let btc = LazyFromHeight::from_computed::<SatsToBitcoin>(
             &format!("{name}_btc"),
             version,
             sats.height.read_only_boxed_clone(),
             &sats,
         );
 
-        let cents = ComputedFromHeightLast::forced_import(
+        let cents = ComputedFromHeight::forced_import(
             db,
             &format!("{name}_cents"),
             version,
             indexes,
         )?;
 
-        let usd = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
+        let usd = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             &format!("{name}_usd"),
             version,
             cents.height.read_only_boxed_clone(),

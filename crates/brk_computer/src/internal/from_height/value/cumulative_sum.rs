@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[derive(Traversable)]
-pub struct ValueFromHeightSumCumulative<M: StorageMode = Rw> {
+pub struct ValueFromHeightCumulativeSum<M: StorageMode = Rw> {
     pub base: ByUnit<M>,
     pub cumulative: ByUnit<M>,
     pub sum: RollingSumByUnit<M>,
@@ -18,7 +18,7 @@ pub struct ValueFromHeightSumCumulative<M: StorageMode = Rw> {
 
 const VERSION: Version = Version::TWO;
 
-impl ValueFromHeightSumCumulative {
+impl ValueFromHeightCumulativeSum {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,

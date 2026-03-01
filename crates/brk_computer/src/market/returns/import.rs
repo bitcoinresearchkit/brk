@@ -6,7 +6,7 @@ use super::super::lookback::ByLookbackPeriod;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::ComputedFromHeightLast,
+    internal::ComputedFromHeight,
     internal::ComputedFromHeightStdDev,
     market::dca::ByDcaCagr,
 };
@@ -20,7 +20,7 @@ impl Vecs {
         let v1 = Version::ONE;
 
         let price_returns = ByLookbackPeriod::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(
+            ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_price_returns"),
                 version,
@@ -30,7 +30,7 @@ impl Vecs {
 
         // CAGR (computed, 2y+ only)
         let cagr = ByDcaCagr::try_new(|name, _days| {
-            ComputedFromHeightLast::forced_import(db, &format!("{name}_cagr"), version, indexes)
+            ComputedFromHeight::forced_import(db, &format!("{name}_cagr"), version, indexes)
         })?;
 
         let _1d_returns_1w_sd = ComputedFromHeightStdDev::forced_import(

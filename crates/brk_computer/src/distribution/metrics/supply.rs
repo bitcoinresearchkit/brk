@@ -7,8 +7,8 @@ use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::internal::{
-    HalveDollars, HalveSats, HalveSatsToBitcoin,
-    LazyValueFromHeightLast, ValueFromHeightChange, ValueFromHeightLast,
+    HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin,
+    LazyValueFromHeight, ValueFromHeightChange, ValueFromHeight,
 };
 
 use super::ImportConfig;
@@ -16,8 +16,8 @@ use super::ImportConfig;
 /// Supply metrics for a cohort.
 #[derive(Traversable)]
 pub struct SupplyMetrics<M: StorageMode = Rw> {
-    pub total: ValueFromHeightLast<M>,
-    pub halved: LazyValueFromHeightLast,
+    pub total: ValueFromHeight<M>,
+    pub halved: LazyValueFromHeight,
     /// 30-day change in supply (net position change) - sats, btc, usd
     pub _30d_change: ValueFromHeightChange<M>,
 }
@@ -25,16 +25,17 @@ pub struct SupplyMetrics<M: StorageMode = Rw> {
 impl SupplyMetrics {
     /// Import supply metrics from database.
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let supply = ValueFromHeightLast::forced_import(
+        let supply = ValueFromHeight::forced_import(
             cfg.db,
             &cfg.name("supply"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let supply_halved = LazyValueFromHeightLast::from_block_source::<
+        let supply_halved = LazyValueFromHeight::from_block_source::<
             HalveSats,
             HalveSatsToBitcoin,
+            HalveCents,
             HalveDollars,
         >(&cfg.name("supply_halved"), &supply, cfg.version);
 

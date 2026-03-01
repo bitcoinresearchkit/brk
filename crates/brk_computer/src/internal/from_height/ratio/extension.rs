@@ -9,24 +9,24 @@ use crate::{
 };
 use brk_types::get_percentile;
 
-use super::super::ComputedFromHeightLast;
+use super::super::ComputedFromHeight;
 
 #[derive(Traversable)]
 pub struct ComputedFromHeightRatioExtension<M: StorageMode = Rw> {
-    pub ratio_1w_sma: ComputedFromHeightLast<StoredF32, M>,
-    pub ratio_1m_sma: ComputedFromHeightLast<StoredF32, M>,
-    pub ratio_pct99: ComputedFromHeightLast<StoredF32, M>,
-    pub ratio_pct98: ComputedFromHeightLast<StoredF32, M>,
-    pub ratio_pct95: ComputedFromHeightLast<StoredF32, M>,
-    pub ratio_pct5: ComputedFromHeightLast<StoredF32, M>,
-    pub ratio_pct2: ComputedFromHeightLast<StoredF32, M>,
-    pub ratio_pct1: ComputedFromHeightLast<StoredF32, M>,
-    pub ratio_pct99_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub ratio_pct98_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub ratio_pct95_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub ratio_pct5_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub ratio_pct2_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub ratio_pct1_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub ratio_1w_sma: ComputedFromHeight<StoredF32, M>,
+    pub ratio_1m_sma: ComputedFromHeight<StoredF32, M>,
+    pub ratio_pct99: ComputedFromHeight<StoredF32, M>,
+    pub ratio_pct98: ComputedFromHeight<StoredF32, M>,
+    pub ratio_pct95: ComputedFromHeight<StoredF32, M>,
+    pub ratio_pct5: ComputedFromHeight<StoredF32, M>,
+    pub ratio_pct2: ComputedFromHeight<StoredF32, M>,
+    pub ratio_pct1: ComputedFromHeight<StoredF32, M>,
+    pub ratio_pct99_price: Price<ComputedFromHeight<Cents, M>>,
+    pub ratio_pct98_price: Price<ComputedFromHeight<Cents, M>>,
+    pub ratio_pct95_price: Price<ComputedFromHeight<Cents, M>>,
+    pub ratio_pct5_price: Price<ComputedFromHeight<Cents, M>>,
+    pub ratio_pct2_price: Price<ComputedFromHeight<Cents, M>>,
+    pub ratio_pct1_price: Price<ComputedFromHeight<Cents, M>>,
 
     pub ratio_sd: ComputedFromHeightStdDevExtended<M>,
     pub ratio_4y_sd: ComputedFromHeightStdDevExtended<M>,
@@ -47,7 +47,7 @@ impl ComputedFromHeightRatioExtension {
 
         macro_rules! import {
             ($suffix:expr) => {
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     db,
                     &format!("{name}_{}", $suffix),
                     v,

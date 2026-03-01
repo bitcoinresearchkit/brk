@@ -1,4 +1,4 @@
-//! RollingWindows - newtype on Windows with ComputedFromHeightLast per window duration.
+//! RollingWindows - newtype on Windows with ComputedFromHeight per window duration.
 //!
 //! Each of the 4 windows (24h, 7d, 30d, 1y) contains a height-level stored vec
 //! plus all 17 LazyAggVec index views.
@@ -15,7 +15,7 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ComputedFromHeightLast, ComputedVecValue, NumericValue, Windows},
+    internal::{ComputedFromHeight, ComputedVecValue, NumericValue, Windows},
 };
 
 /// Rolling window start heights — references to the 4 height-ago vecs.
@@ -35,7 +35,7 @@ impl<'a> WindowStarts<'a> {
 /// 4 rolling window vecs (24h, 7d, 30d, 1y), each with height data + all 17 index views.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct RollingWindows<T, M: StorageMode = Rw>(pub Windows<ComputedFromHeightLast<T, M>>)
+pub struct RollingWindows<T, M: StorageMode = Rw>(pub Windows<ComputedFromHeight<T, M>>)
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 
@@ -53,10 +53,10 @@ where
     ) -> Result<Self> {
         let v = version + VERSION;
         Ok(Self(Windows {
-            _24h: ComputedFromHeightLast::forced_import(db, &format!("{name}_24h"), v, indexes)?,
-            _7d: ComputedFromHeightLast::forced_import(db, &format!("{name}_7d"), v, indexes)?,
-            _30d: ComputedFromHeightLast::forced_import(db, &format!("{name}_30d"), v, indexes)?,
-            _1y: ComputedFromHeightLast::forced_import(db, &format!("{name}_1y"), v, indexes)?,
+            _24h: ComputedFromHeight::forced_import(db, &format!("{name}_24h"), v, indexes)?,
+            _7d: ComputedFromHeight::forced_import(db, &format!("{name}_7d"), v, indexes)?,
+            _30d: ComputedFromHeight::forced_import(db, &format!("{name}_30d"), v, indexes)?,
+            _1y: ComputedFromHeight::forced_import(db, &format!("{name}_1y"), v, indexes)?,
         }))
     }
 

@@ -1,4 +1,4 @@
-//! LazyHeightDerivedLast — unary transform of height-derived last values.
+//! LazyHeightDerived — unary transform of height-derived last values.
 
 use std::marker::PhantomData;
 
@@ -16,7 +16,7 @@ use vecdb::{
 use crate::{
     indexes, indexes_from,
     internal::{
-        ComputedFromHeightLast, ComputedHeightDerivedLast, ComputedVecValue, Indexes, NumericValue,
+        ComputedFromHeight, ComputedHeightDerived, ComputedVecValue, Indexes, NumericValue,
     },
 };
 
@@ -57,7 +57,7 @@ where
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct LazyHeightDerivedLast<T, S1T = T>(
+pub struct LazyHeightDerived<T, S1T = T>(
     #[allow(clippy::type_complexity)]
     pub  Indexes<
         LazyTransformLast<Minute10, Option<T>, Option<S1T>>,
@@ -83,7 +83,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<T, S1T> LazyHeightDerivedLast<T, S1T>
+impl<T, S1T> LazyHeightDerived<T, S1T>
 where
     T: VecValue + PartialOrd + JsonSchema + 'static,
     S1T: VecValue + PartialOrd + JsonSchema,
@@ -91,7 +91,7 @@ where
     pub(crate) fn from_computed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        source: &ComputedFromHeightLast<S1T>,
+        source: &ComputedFromHeight<S1T>,
     ) -> Self
     where
         S1T: NumericValue,
@@ -109,14 +109,14 @@ where
         S1T: NumericValue,
     {
         let derived =
-            ComputedHeightDerivedLast::forced_import(name, height_source, version, indexes);
+            ComputedHeightDerived::forced_import(name, height_source, version, indexes);
         Self::from_derived_computed::<F>(name, version, &derived)
     }
 
     pub(crate) fn from_derived_computed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        source: &ComputedHeightDerivedLast<S1T>,
+        source: &ComputedHeightDerived<S1T>,
     ) -> Self
     where
         S1T: NumericValue,
@@ -145,7 +145,7 @@ where
     pub(crate) fn from_lazy<F, S2T>(
         name: &str,
         version: Version,
-        source: &LazyHeightDerivedLast<S1T, S2T>,
+        source: &LazyHeightDerived<S1T, S2T>,
     ) -> Self
     where
         F: UnaryTransform<S1T, T>,

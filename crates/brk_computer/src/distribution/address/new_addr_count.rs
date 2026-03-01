@@ -6,16 +6,16 @@ use brk_traversable::Traversable;
 use brk_types::{Height, StoredU64, Version};
 use vecdb::{Database, Exit, Rw, StorageMode};
 
-use crate::{indexes, internal::{ComputedFromHeightCumulativeFull, WindowStarts}};
+use crate::{indexes, internal::{ComputedFromHeightFull, WindowStarts}};
 
 use super::TotalAddrCountVecs;
 
 /// New address count per block (global + per-type)
 #[derive(Traversable)]
 pub struct NewAddrCountVecs<M: StorageMode = Rw> {
-    pub all: ComputedFromHeightCumulativeFull<StoredU64, M>,
+    pub all: ComputedFromHeightFull<StoredU64, M>,
     #[traversable(flatten)]
-    pub by_addresstype: ByAddressType<ComputedFromHeightCumulativeFull<StoredU64, M>>,
+    pub by_addresstype: ByAddressType<ComputedFromHeightFull<StoredU64, M>>,
 }
 
 impl NewAddrCountVecs {
@@ -24,16 +24,16 @@ impl NewAddrCountVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let all = ComputedFromHeightCumulativeFull::forced_import(
+        let all = ComputedFromHeightFull::forced_import(
             db,
             "new_addr_count",
             version,
             indexes,
         )?;
 
-        let by_addresstype: ByAddressType<ComputedFromHeightCumulativeFull<StoredU64>> =
+        let by_addresstype: ByAddressType<ComputedFromHeightFull<StoredU64>> =
             ByAddressType::new_with_name(|name| {
-                ComputedFromHeightCumulativeFull::forced_import(
+                ComputedFromHeightFull::forced_import(
                     db,
                     &format!("{name}_new_addr_count"),
                     version,

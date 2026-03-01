@@ -11,8 +11,8 @@ use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode, PAGE_SIZE};
 use crate::{
     indexes,
     internal::{
-        CentsUnsignedToDollars, CentsUnsignedToSats, ComputedFromHeightLast,
-        ComputedHeightDerivedLast, EagerIndexes, LazyEagerIndexes, LazyFromHeightLast,
+        CentsUnsignedToDollars, CentsUnsignedToSats, ComputedFromHeight,
+        ComputedHeightDerived, EagerIndexes, LazyEagerIndexes, LazyFromHeight,
         OhlcCentsToDollars, OhlcCentsToSats,
     },
 };
@@ -65,13 +65,13 @@ impl Vecs {
         // ── Cents (eager, stored) ───────────────────────────────────
 
         let price_cents =
-            ComputedFromHeightLast::forced_import(db, "price_cents", version, indexes)?;
+            ComputedFromHeight::forced_import(db, "price_cents", version, indexes)?;
 
         let open_cents = EagerIndexes::forced_import(db, "price_open_cents", version)?;
         let high_cents = EagerIndexes::forced_import(db, "price_high_cents", version)?;
         let low_cents = EagerIndexes::forced_import(db, "price_low_cents", version)?;
 
-        let close_cents = ComputedHeightDerivedLast::forced_import(
+        let close_cents = ComputedHeightDerived::forced_import(
             "price_close_cents",
             price_cents.height.read_only_boxed_clone(),
             version,
@@ -82,7 +82,7 @@ impl Vecs {
 
         // ── USD (lazy from cents) ───────────────────────────────────
 
-        let price_usd = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
+        let price_usd = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             "price",
             version,
             price_cents.height.read_only_boxed_clone(),
@@ -105,7 +105,7 @@ impl Vecs {
             &low_cents,
         );
 
-        let close_usd = ComputedHeightDerivedLast::forced_import(
+        let close_usd = ComputedHeightDerived::forced_import(
             "price_close",
             price_usd.height.read_only_boxed_clone(),
             version,
@@ -120,7 +120,7 @@ impl Vecs {
 
         // ── Sats (lazy from cents, high↔low swapped) ───────────────
 
-        let price_sats = LazyFromHeightLast::from_computed::<CentsUnsignedToSats>(
+        let price_sats = LazyFromHeight::from_computed::<CentsUnsignedToSats>(
             "price_sats",
             version,
             price_cents.height.read_only_boxed_clone(),
@@ -144,7 +144,7 @@ impl Vecs {
             &high_cents,
         );
 
-        let close_sats = ComputedHeightDerivedLast::forced_import(
+        let close_sats = ComputedHeightDerived::forced_import(
             "price_close_sats",
             price_sats.height.read_only_boxed_clone(),
             version,

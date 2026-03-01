@@ -9,14 +9,14 @@ use vecdb::{
     WritableVec,
 };
 
-use crate::{ComputeIndexes, blocks, indexes, internal::ComputedFromHeightLast};
+use crate::{ComputeIndexes, blocks, indexes, internal::ComputedFromHeight};
 
 /// Address count with 30d change metric for a single type.
 #[derive(Traversable)]
 pub struct AddrCountVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub count: ComputedFromHeightLast<StoredU64, M>,
-    pub _30d_change: ComputedFromHeightLast<StoredF64, M>,
+    pub count: ComputedFromHeight<StoredU64, M>,
+    pub _30d_change: ComputedFromHeight<StoredF64, M>,
 }
 
 impl AddrCountVecs {
@@ -27,8 +27,8 @@ impl AddrCountVecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            count: ComputedFromHeightLast::forced_import(db, name, version, indexes)?,
-            _30d_change: ComputedFromHeightLast::forced_import(
+            count: ComputedFromHeight::forced_import(db, name, version, indexes)?,
+            _30d_change: ComputedFromHeight::forced_import(
                 db,
                 &format!("{name}_30d_change"),
                 version,

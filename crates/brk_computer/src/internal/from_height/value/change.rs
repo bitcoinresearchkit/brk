@@ -8,7 +8,7 @@ use vecdb::{Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        CentsSignedToDollars, ComputedFromHeightLast, LazyFromHeightLast, SatsSignedToBitcoin,
+        CentsSignedToDollars, ComputedFromHeight, LazyFromHeight, SatsSignedToBitcoin,
     },
 };
 
@@ -17,10 +17,10 @@ const VERSION: Version = Version::ZERO;
 /// Change values indexed by height - sats (stored), btc (lazy), cents (stored), usd (lazy).
 #[derive(Traversable)]
 pub struct ValueFromHeightChange<M: StorageMode = Rw> {
-    pub sats: ComputedFromHeightLast<SatsSigned, M>,
-    pub btc: LazyFromHeightLast<Bitcoin, SatsSigned>,
-    pub cents: ComputedFromHeightLast<CentsSigned, M>,
-    pub usd: LazyFromHeightLast<Dollars, CentsSigned>,
+    pub sats: ComputedFromHeight<SatsSigned, M>,
+    pub btc: LazyFromHeight<Bitcoin, SatsSigned>,
+    pub cents: ComputedFromHeight<CentsSigned, M>,
+    pub usd: LazyFromHeight<Dollars, CentsSigned>,
 }
 
 impl ValueFromHeightChange {
@@ -32,23 +32,23 @@ impl ValueFromHeightChange {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let sats = ComputedFromHeightLast::forced_import(db, name, v, indexes)?;
+        let sats = ComputedFromHeight::forced_import(db, name, v, indexes)?;
 
-        let btc = LazyFromHeightLast::from_computed::<SatsSignedToBitcoin>(
+        let btc = LazyFromHeight::from_computed::<SatsSignedToBitcoin>(
             &format!("{name}_btc"),
             v,
             sats.height.read_only_boxed_clone(),
             &sats,
         );
 
-        let cents = ComputedFromHeightLast::forced_import(
+        let cents = ComputedFromHeight::forced_import(
             db,
             &format!("{name}_cents"),
             v,
             indexes,
         )?;
 
-        let usd = LazyFromHeightLast::from_computed::<CentsSignedToDollars>(
+        let usd = LazyFromHeight::from_computed::<CentsSignedToDollars>(
             &format!("{name}_usd"),
             v,
             cents.height.read_only_boxed_clone(),

@@ -1,7 +1,7 @@
 //! Value type for Height + Rolling pattern.
 //!
-//! Combines ValueFromHeight (sats/btc/usd per height, no period views) with
-//! ValueFromHeightLastWindows (rolling sums across 4 windows).
+//! Combines Value (sats/btc/usd per height, no period views) with
+//! ValueFromHeightWindows (rolling sums across 4 windows).
 
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -11,23 +11,23 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ValueFromHeightLastWindows, ValueFromHeight, WindowStarts},
+    internal::{ValueFromHeightWindows, Value, WindowStarts},
     prices,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct ValueFromHeightLastRolling<M: StorageMode = Rw> {
+pub struct ValueFromHeightRolling<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub value: ValueFromHeight<M>,
+    pub value: Value<Height, M>,
     #[traversable(flatten)]
-    pub rolling: ValueFromHeightLastWindows<M>,
+    pub rolling: ValueFromHeightWindows<M>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl ValueFromHeightLastRolling {
+impl ValueFromHeightRolling {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -36,8 +36,8 @@ impl ValueFromHeightLastRolling {
     ) -> Result<Self> {
         let v = version + VERSION;
         Ok(Self {
-            value: ValueFromHeight::forced_import(db, name, v)?,
-            rolling: ValueFromHeightLastWindows::forced_import(db, name, v, indexes)?,
+            value: Value::forced_import(db, name, v)?,
+            rolling: ValueFromHeightWindows::forced_import(db, name, v, indexes)?,
         })
     }
 

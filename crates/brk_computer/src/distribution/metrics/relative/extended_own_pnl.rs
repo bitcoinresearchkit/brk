@@ -4,7 +4,7 @@ use brk_types::{Dollars, Height, StoredF32};
 use vecdb::{Exit, Rw, StorageMode};
 
 use crate::internal::{
-    ComputedFromHeightLast, NegPercentageDollarsF32, PercentageDollarsF32,
+    ComputedFromHeight, NegPercentageDollarsF32, PercentageDollarsF32,
 };
 
 use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
@@ -13,13 +13,13 @@ use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
 #[derive(Traversable)]
 pub struct RelativeExtendedOwnPnl<M: StorageMode = Rw> {
     pub unrealized_profit_rel_to_own_total_unrealized_pnl:
-        ComputedFromHeightLast<StoredF32, M>,
+        ComputedFromHeight<StoredF32, M>,
     pub unrealized_loss_rel_to_own_total_unrealized_pnl:
-        ComputedFromHeightLast<StoredF32, M>,
+        ComputedFromHeight<StoredF32, M>,
     pub neg_unrealized_loss_rel_to_own_total_unrealized_pnl:
-        ComputedFromHeightLast<StoredF32, M>,
+        ComputedFromHeight<StoredF32, M>,
     pub net_unrealized_pnl_rel_to_own_total_unrealized_pnl:
-        ComputedFromHeightLast<StoredF32, M>,
+        ComputedFromHeight<StoredF32, M>,
 }
 
 impl RelativeExtendedOwnPnl {
@@ -31,28 +31,28 @@ impl RelativeExtendedOwnPnl {
 
         Ok(Self {
             unrealized_profit_rel_to_own_total_unrealized_pnl:
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name("unrealized_profit_rel_to_own_total_unrealized_pnl"),
                     cfg.version + v1,
                     cfg.indexes,
                 )?,
             unrealized_loss_rel_to_own_total_unrealized_pnl:
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name("unrealized_loss_rel_to_own_total_unrealized_pnl"),
                     cfg.version + v1,
                     cfg.indexes,
                 )?,
             neg_unrealized_loss_rel_to_own_total_unrealized_pnl:
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
                     cfg.version + v1,
                     cfg.indexes,
                 )?,
             net_unrealized_pnl_rel_to_own_total_unrealized_pnl:
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name("net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
                     cfg.version + v2,

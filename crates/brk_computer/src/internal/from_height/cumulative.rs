@@ -2,7 +2,7 @@
 //!
 //! Like ComputedFromHeightCumulativeSum but without RollingWindows.
 //! Used for distribution metrics where rolling is optional per cohort.
-//! Cumulative gets its own ComputedFromHeightLast so it has LazyAggVec index views.
+//! Cumulative gets its own ComputedFromHeight so it has LazyAggVec index views.
 
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -12,7 +12,7 @@ use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ComputedFromHeightLast, NumericValue},
+    internal::{ComputedFromHeight, NumericValue},
 };
 
 #[derive(Traversable)]
@@ -21,7 +21,7 @@ where
     T: NumericValue + JsonSchema,
 {
     pub height: M::Stored<EagerVec<PcoVec<Height, T>>>,
-    pub cumulative: ComputedFromHeightLast<T, M>,
+    pub cumulative: ComputedFromHeight<T, M>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -40,7 +40,7 @@ where
 
         let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, v)?;
         let cumulative =
-            ComputedFromHeightLast::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
+            ComputedFromHeight::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
 
         Ok(Self { height, cumulative })
     }

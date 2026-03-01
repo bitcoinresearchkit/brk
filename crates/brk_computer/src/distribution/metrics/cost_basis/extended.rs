@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, Rw, StorageMode, WritableVec};
 use crate::{
     distribution::state::CohortState,
     internal::{
-        ComputedFromHeightLast, PERCENTILES_LEN, PercentilesVecs, compute_spot_percentile_rank,
+        ComputedFromHeight, PERCENTILES_LEN, PercentilesVecs, compute_spot_percentile_rank,
     },
 };
 
@@ -22,10 +22,10 @@ pub struct CostBasisExtended<M: StorageMode = Rw> {
     pub invested_capital: PercentilesVecs<M>,
 
     /// What percentile of cost basis is below spot (sat-weighted)
-    pub spot_cost_basis_percentile: ComputedFromHeightLast<StoredF32, M>,
+    pub spot_cost_basis_percentile: ComputedFromHeight<StoredF32, M>,
 
     /// What percentile of invested capital is below spot (USD-weighted)
-    pub spot_invested_capital_percentile: ComputedFromHeightLast<StoredF32, M>,
+    pub spot_invested_capital_percentile: ComputedFromHeight<StoredF32, M>,
 }
 
 impl CostBasisExtended {
@@ -43,13 +43,13 @@ impl CostBasisExtended {
                 cfg.version,
                 cfg.indexes,
             )?,
-            spot_cost_basis_percentile: ComputedFromHeightLast::forced_import(
+            spot_cost_basis_percentile: ComputedFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("spot_cost_basis_percentile"),
                 cfg.version,
                 cfg.indexes,
             )?,
-            spot_invested_capital_percentile: ComputedFromHeightLast::forced_import(
+            spot_invested_capital_percentile: ComputedFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("spot_invested_capital_percentile"),
                 cfg.version,

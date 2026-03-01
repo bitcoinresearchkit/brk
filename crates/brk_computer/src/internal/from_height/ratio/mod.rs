@@ -13,11 +13,11 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{ComputeIndexes, indexes};
 
-use super::ComputedFromHeightLast;
+use super::ComputedFromHeight;
 
 #[derive(Traversable)]
 pub struct ComputedFromHeightRatio<M: StorageMode = Rw> {
-    pub ratio: ComputedFromHeightLast<StoredF32, M>,
+    pub ratio: ComputedFromHeight<StoredF32, M>,
 }
 
 const VERSION: Version = Version::TWO;
@@ -32,7 +32,7 @@ impl ComputedFromHeightRatio {
         let v = version + VERSION;
 
         Ok(Self {
-            ratio: ComputedFromHeightLast::forced_import(db, &format!("{name}_ratio"), v, indexes)?,
+            ratio: ComputedFromHeight::forced_import(db, &format!("{name}_ratio"), v, indexes)?,
         })
     }
 

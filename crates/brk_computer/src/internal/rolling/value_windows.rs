@@ -1,4 +1,4 @@
-//! ValueFromHeightLastWindows - window-first ordering.
+//! ValueFromHeightWindows - window-first ordering.
 //!
 //! Access pattern: `coinbase_sum._24h.sats.height`
 //! Each window (24h, 7d, 30d, 1y) contains sats (stored) + btc (lazy) + usd (stored).
@@ -14,21 +14,21 @@ use brk_types::{Cents, Sats};
 
 use crate::{
     indexes,
-    internal::{ValueFromHeightLast, WindowStarts, Windows},
+    internal::{ValueFromHeight, WindowStarts, Windows},
 };
 
 const VERSION: Version = Version::ZERO;
 
 /// Value rolling windows — window-first, currency-last.
 ///
-/// Each window contains `ValueFromHeightLast` (sats + btc lazy + usd).
+/// Each window contains `ValueFromHeight` (sats + btc lazy + usd).
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct ValueFromHeightLastWindows<M: StorageMode = Rw>(
-    pub Windows<ValueFromHeightLast<M>>,
+pub struct ValueFromHeightWindows<M: StorageMode = Rw>(
+    pub Windows<ValueFromHeight<M>>,
 );
 
-impl ValueFromHeightLastWindows {
+impl ValueFromHeightWindows {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -37,25 +37,25 @@ impl ValueFromHeightLastWindows {
     ) -> Result<Self> {
         let v = version + VERSION;
         Ok(Self(Windows {
-            _24h: ValueFromHeightLast::forced_import(
+            _24h: ValueFromHeight::forced_import(
                 db,
                 &format!("{name}_24h"),
                 v,
                 indexes,
             )?,
-            _7d: ValueFromHeightLast::forced_import(
+            _7d: ValueFromHeight::forced_import(
                 db,
                 &format!("{name}_7d"),
                 v,
                 indexes,
             )?,
-            _30d: ValueFromHeightLast::forced_import(
+            _30d: ValueFromHeight::forced_import(
                 db,
                 &format!("{name}_30d"),
                 v,
                 indexes,
             )?,
-            _1y: ValueFromHeightLast::forced_import(
+            _1y: ValueFromHeight::forced_import(
                 db,
                 &format!("{name}_1y"),
                 v,

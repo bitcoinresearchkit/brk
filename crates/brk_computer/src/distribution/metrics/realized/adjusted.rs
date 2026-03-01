@@ -5,7 +5,7 @@ use vecdb::{Exit, Ident, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{ComputedFromHeightLast, LazyFromHeightLast, RatioCents64},
+    internal::{ComputedFromHeight, LazyFromHeight, RatioCents64},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -14,29 +14,29 @@ use crate::distribution::metrics::ImportConfig;
 #[derive(Traversable)]
 pub struct RealizedAdjusted<M: StorageMode = Rw> {
     // === Adjusted Value (computed: cohort - up_to_1h) ===
-    pub adjusted_value_created: ComputedFromHeightLast<Cents, M>,
-    pub adjusted_value_destroyed: ComputedFromHeightLast<Cents, M>,
+    pub adjusted_value_created: ComputedFromHeight<Cents, M>,
+    pub adjusted_value_destroyed: ComputedFromHeight<Cents, M>,
 
     // === Adjusted Value Created/Destroyed Rolling Sums ===
-    pub adjusted_value_created_24h: ComputedFromHeightLast<Cents, M>,
-    pub adjusted_value_created_7d: ComputedFromHeightLast<Cents, M>,
-    pub adjusted_value_created_30d: ComputedFromHeightLast<Cents, M>,
-    pub adjusted_value_created_1y: ComputedFromHeightLast<Cents, M>,
-    pub adjusted_value_destroyed_24h: ComputedFromHeightLast<Cents, M>,
-    pub adjusted_value_destroyed_7d: ComputedFromHeightLast<Cents, M>,
-    pub adjusted_value_destroyed_30d: ComputedFromHeightLast<Cents, M>,
-    pub adjusted_value_destroyed_1y: ComputedFromHeightLast<Cents, M>,
+    pub adjusted_value_created_24h: ComputedFromHeight<Cents, M>,
+    pub adjusted_value_created_7d: ComputedFromHeight<Cents, M>,
+    pub adjusted_value_created_30d: ComputedFromHeight<Cents, M>,
+    pub adjusted_value_created_1y: ComputedFromHeight<Cents, M>,
+    pub adjusted_value_destroyed_24h: ComputedFromHeight<Cents, M>,
+    pub adjusted_value_destroyed_7d: ComputedFromHeight<Cents, M>,
+    pub adjusted_value_destroyed_30d: ComputedFromHeight<Cents, M>,
+    pub adjusted_value_destroyed_1y: ComputedFromHeight<Cents, M>,
 
     // === Adjusted SOPR (rolling window ratios) ===
-    pub adjusted_sopr: LazyFromHeightLast<StoredF64>,
-    pub adjusted_sopr_24h: ComputedFromHeightLast<StoredF64, M>,
-    pub adjusted_sopr_7d: ComputedFromHeightLast<StoredF64, M>,
-    pub adjusted_sopr_30d: ComputedFromHeightLast<StoredF64, M>,
-    pub adjusted_sopr_1y: ComputedFromHeightLast<StoredF64, M>,
-    pub adjusted_sopr_24h_7d_ema: ComputedFromHeightLast<StoredF64, M>,
-    pub adjusted_sopr_7d_ema: LazyFromHeightLast<StoredF64>,
-    pub adjusted_sopr_24h_30d_ema: ComputedFromHeightLast<StoredF64, M>,
-    pub adjusted_sopr_30d_ema: LazyFromHeightLast<StoredF64>,
+    pub adjusted_sopr: LazyFromHeight<StoredF64>,
+    pub adjusted_sopr_24h: ComputedFromHeight<StoredF64, M>,
+    pub adjusted_sopr_7d: ComputedFromHeight<StoredF64, M>,
+    pub adjusted_sopr_30d: ComputedFromHeight<StoredF64, M>,
+    pub adjusted_sopr_1y: ComputedFromHeight<StoredF64, M>,
+    pub adjusted_sopr_24h_7d_ema: ComputedFromHeight<StoredF64, M>,
+    pub adjusted_sopr_7d_ema: LazyFromHeight<StoredF64>,
+    pub adjusted_sopr_24h_30d_ema: ComputedFromHeight<StoredF64, M>,
+    pub adjusted_sopr_30d_ema: LazyFromHeight<StoredF64>,
 }
 
 impl RealizedAdjusted {
@@ -45,7 +45,7 @@ impl RealizedAdjusted {
 
         macro_rules! import_rolling {
             ($name:expr) => {
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name($name),
                     cfg.version + v1,
@@ -54,13 +54,13 @@ impl RealizedAdjusted {
             };
         }
 
-        let adjusted_value_created = ComputedFromHeightLast::forced_import(
+        let adjusted_value_created = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("adjusted_value_created"),
             cfg.version,
             cfg.indexes,
         )?;
-        let adjusted_value_destroyed = ComputedFromHeightLast::forced_import(
+        let adjusted_value_destroyed = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("adjusted_value_destroyed"),
             cfg.version,
@@ -76,31 +76,31 @@ impl RealizedAdjusted {
         let adjusted_value_destroyed_30d = import_rolling!("adjusted_value_destroyed_30d");
         let adjusted_value_destroyed_1y = import_rolling!("adjusted_value_destroyed_1y");
 
-        let adjusted_sopr_24h = ComputedFromHeightLast::forced_import(
+        let adjusted_sopr_24h = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("adjusted_sopr_24h"),
             cfg.version + v1,
             cfg.indexes,
         )?;
-        let adjusted_sopr_7d = ComputedFromHeightLast::forced_import(
+        let adjusted_sopr_7d = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("adjusted_sopr_7d"),
             cfg.version + v1,
             cfg.indexes,
         )?;
-        let adjusted_sopr_30d = ComputedFromHeightLast::forced_import(
+        let adjusted_sopr_30d = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("adjusted_sopr_30d"),
             cfg.version + v1,
             cfg.indexes,
         )?;
-        let adjusted_sopr_1y = ComputedFromHeightLast::forced_import(
+        let adjusted_sopr_1y = ComputedFromHeight::forced_import(
             cfg.db,
             &cfg.name("adjusted_sopr_1y"),
             cfg.version + v1,
             cfg.indexes,
         )?;
-        let adjusted_sopr = LazyFromHeightLast::from_computed::<Ident>(
+        let adjusted_sopr = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("adjusted_sopr"),
             cfg.version + v1,
             adjusted_sopr_24h.height.read_only_boxed_clone(),
@@ -108,14 +108,14 @@ impl RealizedAdjusted {
         );
 
         let adjusted_sopr_24h_7d_ema = import_rolling!("adjusted_sopr_24h_7d_ema");
-        let adjusted_sopr_7d_ema = LazyFromHeightLast::from_computed::<Ident>(
+        let adjusted_sopr_7d_ema = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("adjusted_sopr_7d_ema"),
             cfg.version + v1,
             adjusted_sopr_24h_7d_ema.height.read_only_boxed_clone(),
             &adjusted_sopr_24h_7d_ema,
         );
         let adjusted_sopr_24h_30d_ema = import_rolling!("adjusted_sopr_24h_30d_ema");
-        let adjusted_sopr_30d_ema = LazyFromHeightLast::from_computed::<Ident>(
+        let adjusted_sopr_30d_ema = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("adjusted_sopr_30d_ema"),
             cfg.version + v1,
             adjusted_sopr_24h_30d_ema.height.read_only_boxed_clone(),

@@ -8,7 +8,7 @@ use vecdb::{
 
 use crate::{ComputeIndexes, blocks, indexes};
 
-use crate::internal::{ComputedFromHeightLast, Price};
+use crate::internal::{ComputedFromHeight, Price};
 
 use super::ComputedFromHeightStdDev;
 
@@ -17,34 +17,34 @@ pub struct ComputedFromHeightStdDevExtended<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub base: ComputedFromHeightStdDev<M>,
 
-    pub zscore: ComputedFromHeightLast<StoredF32, M>,
+    pub zscore: ComputedFromHeight<StoredF32, M>,
 
-    pub p0_5sd: ComputedFromHeightLast<StoredF32, M>,
-    pub p1sd: ComputedFromHeightLast<StoredF32, M>,
-    pub p1_5sd: ComputedFromHeightLast<StoredF32, M>,
-    pub p2sd: ComputedFromHeightLast<StoredF32, M>,
-    pub p2_5sd: ComputedFromHeightLast<StoredF32, M>,
-    pub p3sd: ComputedFromHeightLast<StoredF32, M>,
-    pub m0_5sd: ComputedFromHeightLast<StoredF32, M>,
-    pub m1sd: ComputedFromHeightLast<StoredF32, M>,
-    pub m1_5sd: ComputedFromHeightLast<StoredF32, M>,
-    pub m2sd: ComputedFromHeightLast<StoredF32, M>,
-    pub m2_5sd: ComputedFromHeightLast<StoredF32, M>,
-    pub m3sd: ComputedFromHeightLast<StoredF32, M>,
+    pub p0_5sd: ComputedFromHeight<StoredF32, M>,
+    pub p1sd: ComputedFromHeight<StoredF32, M>,
+    pub p1_5sd: ComputedFromHeight<StoredF32, M>,
+    pub p2sd: ComputedFromHeight<StoredF32, M>,
+    pub p2_5sd: ComputedFromHeight<StoredF32, M>,
+    pub p3sd: ComputedFromHeight<StoredF32, M>,
+    pub m0_5sd: ComputedFromHeight<StoredF32, M>,
+    pub m1sd: ComputedFromHeight<StoredF32, M>,
+    pub m1_5sd: ComputedFromHeight<StoredF32, M>,
+    pub m2sd: ComputedFromHeight<StoredF32, M>,
+    pub m2_5sd: ComputedFromHeight<StoredF32, M>,
+    pub m3sd: ComputedFromHeight<StoredF32, M>,
 
-    pub _0sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub p0_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub p1sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub p1_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub p2sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub p2_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub p3sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub m0_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub m1sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub m1_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub m2sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub m2_5sd_price: Price<ComputedFromHeightLast<Cents, M>>,
-    pub m3sd_price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub _0sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub p0_5sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub p1sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub p1_5sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub p2sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub p2_5sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub p3sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub m0_5sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub m1sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub m1_5sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub m2sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub m2_5sd_price: Price<ComputedFromHeight<Cents, M>>,
+    pub m3sd_price: Price<ComputedFromHeight<Cents, M>>,
 }
 
 impl ComputedFromHeightStdDevExtended {
@@ -59,7 +59,7 @@ impl ComputedFromHeightStdDevExtended {
 
         macro_rules! import {
             ($suffix:expr) => {
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     db,
                     &format!("{name}_{}", $suffix),
                     version,

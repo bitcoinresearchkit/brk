@@ -5,14 +5,28 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightFull, ComputedFromHeightLast},
+    internal::{ComputedFromHeightAggregated, ComputedFromHeight},
 };
 
 impl Vecs {
-    pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
         Ok(Self {
-            total_count: ComputedFromHeightFull::forced_import(db, "output_count", version, indexes)?,
-            utxo_count: ComputedFromHeightLast::forced_import(db, "exact_utxo_count", version, indexes)?,
+            total_count: ComputedFromHeightAggregated::forced_import(
+                db,
+                "output_count",
+                version,
+                indexes,
+            )?,
+            utxo_count: ComputedFromHeight::forced_import(
+                db,
+                "exact_utxo_count",
+                version,
+                indexes,
+            )?,
         })
     }
 }

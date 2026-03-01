@@ -4,7 +4,7 @@ use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod};
 use crate::internal::{
-    ComputedFromHeightLast, Price, ValueFromHeightLast,
+    ComputedFromHeight, Price, ValueFromHeight,
 };
 
 /// Dollar-cost averaging metrics by time period and year class
@@ -15,35 +15,35 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub dca_sats_per_day: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
 
     // DCA by period - KISS types
-    pub period_stack: ByDcaPeriod<ValueFromHeightLast<M>>,
-    pub period_average_price: ByDcaPeriod<Price<ComputedFromHeightLast<Cents, M>>>,
-    pub period_returns: ByDcaPeriod<ComputedFromHeightLast<StoredF32, M>>,
-    pub period_cagr: ByDcaCagr<ComputedFromHeightLast<StoredF32, M>>,
+    pub period_stack: ByDcaPeriod<ValueFromHeight<M>>,
+    pub period_average_price: ByDcaPeriod<Price<ComputedFromHeight<Cents, M>>>,
+    pub period_returns: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
+    pub period_cagr: ByDcaCagr<ComputedFromHeight<StoredF32, M>>,
 
     // DCA by period - profitability
-    pub period_days_in_profit: ByDcaPeriod<ComputedFromHeightLast<StoredU32, M>>,
-    pub period_days_in_loss: ByDcaPeriod<ComputedFromHeightLast<StoredU32, M>>,
-    pub period_min_return: ByDcaPeriod<ComputedFromHeightLast<StoredF32, M>>,
-    pub period_max_return: ByDcaPeriod<ComputedFromHeightLast<StoredF32, M>>,
+    pub period_days_in_profit: ByDcaPeriod<ComputedFromHeight<StoredU32, M>>,
+    pub period_days_in_loss: ByDcaPeriod<ComputedFromHeight<StoredU32, M>>,
+    pub period_min_return: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
+    pub period_max_return: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
 
     // Lump sum by period (for comparison with DCA) - KISS types
-    pub period_lump_sum_stack: ByDcaPeriod<ValueFromHeightLast<M>>,
-    pub period_lump_sum_returns: ByDcaPeriod<ComputedFromHeightLast<StoredF32, M>>,
+    pub period_lump_sum_stack: ByDcaPeriod<ValueFromHeight<M>>,
+    pub period_lump_sum_returns: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
 
     // Lump sum by period - profitability
-    pub period_lump_sum_days_in_profit: ByDcaPeriod<ComputedFromHeightLast<StoredU32, M>>,
-    pub period_lump_sum_days_in_loss: ByDcaPeriod<ComputedFromHeightLast<StoredU32, M>>,
-    pub period_lump_sum_min_return: ByDcaPeriod<ComputedFromHeightLast<StoredF32, M>>,
-    pub period_lump_sum_max_return: ByDcaPeriod<ComputedFromHeightLast<StoredF32, M>>,
+    pub period_lump_sum_days_in_profit: ByDcaPeriod<ComputedFromHeight<StoredU32, M>>,
+    pub period_lump_sum_days_in_loss: ByDcaPeriod<ComputedFromHeight<StoredU32, M>>,
+    pub period_lump_sum_min_return: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
+    pub period_lump_sum_max_return: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
 
     // DCA by year class - KISS types
-    pub class_stack: ByDcaClass<ValueFromHeightLast<M>>,
-    pub class_average_price: ByDcaClass<Price<ComputedFromHeightLast<Cents, M>>>,
-    pub class_returns: ByDcaClass<ComputedFromHeightLast<StoredF32, M>>,
+    pub class_stack: ByDcaClass<ValueFromHeight<M>>,
+    pub class_average_price: ByDcaClass<Price<ComputedFromHeight<Cents, M>>>,
+    pub class_returns: ByDcaClass<ComputedFromHeight<StoredF32, M>>,
 
     // DCA by year class - profitability
-    pub class_days_in_profit: ByDcaClass<ComputedFromHeightLast<StoredU32, M>>,
-    pub class_days_in_loss: ByDcaClass<ComputedFromHeightLast<StoredU32, M>>,
-    pub class_min_return: ByDcaClass<ComputedFromHeightLast<StoredF32, M>>,
-    pub class_max_return: ByDcaClass<ComputedFromHeightLast<StoredF32, M>>,
+    pub class_days_in_profit: ByDcaClass<ComputedFromHeight<StoredU32, M>>,
+    pub class_days_in_loss: ByDcaClass<ComputedFromHeight<StoredU32, M>>,
+    pub class_min_return: ByDcaClass<ComputedFromHeight<StoredF32, M>>,
+    pub class_max_return: ByDcaClass<ComputedFromHeight<StoredF32, M>>,
 }

@@ -15,7 +15,7 @@ use vecdb::{
 
 use crate::{
     ComputeIndexes, indexes_apply, indexes_from,
-    internal::{ComputedHeightDerivedLast, EagerIndexes, Indexes},
+    internal::{ComputedHeightDerived, EagerIndexes, Indexes},
 };
 
 // ── EagerOhlcIndexes ─────────────────────────────────────────────────
@@ -71,7 +71,7 @@ impl OhlcVecs<OHLCCents> {
         open: &EagerIndexes<Cents>,
         high: &EagerIndexes<Cents>,
         low: &EagerIndexes<Cents>,
-        close: &ComputedHeightDerivedLast<Cents>,
+        close: &ComputedHeightDerived<Cents>,
         exit: &Exit,
     ) -> Result<()> {
         macro_rules! period {

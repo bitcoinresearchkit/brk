@@ -5,7 +5,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{ComputedFromHeightLast, ComputedFromHeightRatioExtension, RatioCents64},
+    internal::{ComputedFromHeight, ComputedFromHeightRatioExtension, RatioCents64},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -15,23 +15,23 @@ use super::RealizedBase;
 /// Extended realized metrics (only for extended cohorts: all, sth, lth, age_range).
 #[derive(Traversable)]
 pub struct RealizedExtended<M: StorageMode = Rw> {
-    pub realized_cap_rel_to_own_market_cap: ComputedFromHeightLast<StoredF32, M>,
+    pub realized_cap_rel_to_own_market_cap: ComputedFromHeight<StoredF32, M>,
 
     // === Realized Profit/Loss Rolling Sums ===
-    pub realized_profit_24h: ComputedFromHeightLast<Cents, M>,
-    pub realized_profit_7d: ComputedFromHeightLast<Cents, M>,
-    pub realized_profit_30d: ComputedFromHeightLast<Cents, M>,
-    pub realized_profit_1y: ComputedFromHeightLast<Cents, M>,
-    pub realized_loss_24h: ComputedFromHeightLast<Cents, M>,
-    pub realized_loss_7d: ComputedFromHeightLast<Cents, M>,
-    pub realized_loss_30d: ComputedFromHeightLast<Cents, M>,
-    pub realized_loss_1y: ComputedFromHeightLast<Cents, M>,
+    pub realized_profit_24h: ComputedFromHeight<Cents, M>,
+    pub realized_profit_7d: ComputedFromHeight<Cents, M>,
+    pub realized_profit_30d: ComputedFromHeight<Cents, M>,
+    pub realized_profit_1y: ComputedFromHeight<Cents, M>,
+    pub realized_loss_24h: ComputedFromHeight<Cents, M>,
+    pub realized_loss_7d: ComputedFromHeight<Cents, M>,
+    pub realized_loss_30d: ComputedFromHeight<Cents, M>,
+    pub realized_loss_1y: ComputedFromHeight<Cents, M>,
 
     // === Realized Profit to Loss Ratio (from rolling sums) ===
-    pub realized_profit_to_loss_ratio_24h: ComputedFromHeightLast<StoredF64, M>,
-    pub realized_profit_to_loss_ratio_7d: ComputedFromHeightLast<StoredF64, M>,
-    pub realized_profit_to_loss_ratio_30d: ComputedFromHeightLast<StoredF64, M>,
-    pub realized_profit_to_loss_ratio_1y: ComputedFromHeightLast<StoredF64, M>,
+    pub realized_profit_to_loss_ratio_24h: ComputedFromHeight<StoredF64, M>,
+    pub realized_profit_to_loss_ratio_7d: ComputedFromHeight<StoredF64, M>,
+    pub realized_profit_to_loss_ratio_30d: ComputedFromHeight<StoredF64, M>,
+    pub realized_profit_to_loss_ratio_1y: ComputedFromHeight<StoredF64, M>,
 
     // === Extended ratio metrics for realized/investor price ===
     pub realized_price_ratio_ext: ComputedFromHeightRatioExtension<M>,
@@ -44,7 +44,7 @@ impl RealizedExtended {
 
         macro_rules! import_rolling {
             ($name:expr) => {
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name($name),
                     cfg.version + v1,
@@ -54,7 +54,7 @@ impl RealizedExtended {
         }
 
         Ok(RealizedExtended {
-            realized_cap_rel_to_own_market_cap: ComputedFromHeightLast::forced_import(
+            realized_cap_rel_to_own_market_cap: ComputedFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("realized_cap_rel_to_own_market_cap"),
                 cfg.version,

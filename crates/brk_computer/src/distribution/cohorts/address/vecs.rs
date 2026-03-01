@@ -11,7 +11,7 @@ use crate::{
     ComputeIndexes, blocks,
     distribution::state::AddressCohortState,
     indexes,
-    internal::ComputedFromHeightLast,
+    internal::ComputedFromHeight,
     prices,
 };
 
@@ -35,8 +35,8 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub metrics: BasicCohortMetrics<M>,
 
-    pub addr_count: ComputedFromHeightLast<StoredU64, M>,
-    pub addr_count_30d_change: ComputedFromHeightLast<StoredF64, M>,
+    pub addr_count: ComputedFromHeight<StoredU64, M>,
+    pub addr_count_30d_change: ComputedFromHeight<StoredF64, M>,
 }
 
 impl AddressCohortVecs {
@@ -67,13 +67,13 @@ impl AddressCohortVecs {
 
             metrics: BasicCohortMetrics::forced_import(&cfg)?,
 
-            addr_count: ComputedFromHeightLast::forced_import(
+            addr_count: ComputedFromHeight::forced_import(
                 db,
                 &cfg.name("addr_count"),
                 version + VERSION,
                 indexes,
             )?,
-            addr_count_30d_change: ComputedFromHeightLast::forced_import(
+            addr_count_30d_change: ComputedFromHeight::forced_import(
                 db,
                 &cfg.name("addr_count_30d_change"),
                 version + VERSION,

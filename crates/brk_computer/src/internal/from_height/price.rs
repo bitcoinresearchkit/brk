@@ -10,7 +10,7 @@ use brk_types::{Cents, Dollars, SatsFract, Version};
 use schemars::JsonSchema;
 use vecdb::{Database, ReadableCloneableVec, UnaryTransform};
 
-use super::{ComputedFromHeightLast, LazyFromHeightLast};
+use super::{ComputedFromHeight, LazyFromHeight};
 use crate::{
     indexes,
     internal::{CentsUnsignedToDollars, ComputedVecValue, DollarsToSatsFract, NumericValue},
@@ -20,11 +20,11 @@ use crate::{
 #[derive(Clone, Traversable)]
 pub struct Price<C> {
     pub cents: C,
-    pub usd: LazyFromHeightLast<Dollars, Cents>,
-    pub sats: LazyFromHeightLast<SatsFract, Dollars>,
+    pub usd: LazyFromHeight<Dollars, Cents>,
+    pub sats: LazyFromHeight<SatsFract, Dollars>,
 }
 
-impl Price<ComputedFromHeightLast<Cents>> {
+impl Price<ComputedFromHeight<Cents>> {
     /// Import from database: stored cents, lazy USD + sats.
     pub(crate) fn forced_import(
         db: &Database,
@@ -33,14 +33,14 @@ impl Price<ComputedFromHeightLast<Cents>> {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let cents =
-            ComputedFromHeightLast::forced_import(db, &format!("{name}_cents"), version, indexes)?;
-        let usd = LazyFromHeightLast::from_computed::<CentsUnsignedToDollars>(
+            ComputedFromHeight::forced_import(db, &format!("{name}_cents"), version, indexes)?;
+        let usd = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             &format!("{name}_usd"),
             version,
             cents.height.read_only_boxed_clone(),
             &cents,
         );
-        let sats = LazyFromHeightLast::from_lazy::<DollarsToSatsFract, Cents>(
+        let sats = LazyFromHeight::from_lazy::<DollarsToSatsFract, Cents>(
             &format!("{name}_sats"),
             version,
             &usd,
@@ -49,7 +49,7 @@ impl Price<ComputedFromHeightLast<Cents>> {
     }
 }
 
-impl<ST> Price<LazyFromHeightLast<Cents, ST>>
+impl<ST> Price<LazyFromHeight<Cents, ST>>
 where
     ST: ComputedVecValue + NumericValue + JsonSchema + 'static,
 {
@@ -57,20 +57,20 @@ where
     pub(crate) fn from_cents_source<F: UnaryTransform<ST, Cents>>(
         name: &str,
         version: Version,
-        source: &ComputedFromHeightLast<ST>,
+        source: &ComputedFromHeight<ST>,
     ) -> Self {
-        let cents = LazyFromHeightLast::from_computed::<F>(
+        let cents = LazyFromHeight::from_computed::<F>(
             &format!("{name}_cents"),
             version,
             source.height.read_only_boxed_clone(),
             source,
         );
-        let usd = LazyFromHeightLast::from_lazy::<CentsUnsignedToDollars, ST>(
+        let usd = LazyFromHeight::from_lazy::<CentsUnsignedToDollars, ST>(
             &format!("{name}_usd"),
             version,
             &cents,
         );
-        let sats = LazyFromHeightLast::from_lazy::<DollarsToSatsFract, Cents>(
+        let sats = LazyFromHeight::from_lazy::<DollarsToSatsFract, Cents>(
             &format!("{name}_sats"),
             version,
             &usd,

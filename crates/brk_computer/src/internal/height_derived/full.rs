@@ -1,7 +1,7 @@
-//! ComputedHeightDerivedCumulativeFull - LazyAggVec index views + cumulative (from height) + RollingFull.
+//! ComputedHeightDerivedFull - LazyAggVec index views + cumulative (from height) + RollingFull.
 //!
 //! For metrics derived from indexer sources (no stored height vec).
-//! Cumulative gets its own ComputedFromHeightLast so it has LazyAggVec index views too.
+//! Cumulative gets its own ComputedFromHeight so it has LazyAggVec index views too.
 
 use std::ops::SubAssign;
 
@@ -13,22 +13,22 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ComputedFromHeightLast, NumericValue, RollingFull, WindowStarts},
+    internal::{ComputedFromHeight, NumericValue, RollingFull, WindowStarts},
 };
 
 #[derive(Traversable)]
-pub struct ComputedHeightDerivedCumulativeFull<T, M: StorageMode = Rw>
+pub struct ComputedHeightDerivedFull<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    pub cumulative: ComputedFromHeightLast<T, M>,
+    pub cumulative: ComputedFromHeight<T, M>,
     #[traversable(flatten)]
     pub rolling: RollingFull<T, M>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> ComputedHeightDerivedCumulativeFull<T>
+impl<T> ComputedHeightDerivedFull<T>
 where
     T: NumericValue + JsonSchema,
 {
@@ -41,7 +41,7 @@ where
         let v = version + VERSION;
 
         let cumulative =
-            ComputedFromHeightLast::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
+            ComputedFromHeight::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
         let rolling = RollingFull::forced_import(db, name, v, indexes)?;
 
         Ok(Self {

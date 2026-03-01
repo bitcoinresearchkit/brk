@@ -4,7 +4,7 @@ use brk_types::{Cents, Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeightLast, Price};
+use crate::internal::{ComputedFromHeight, Price};
 use crate::{ComputeIndexes, blocks, indexes, prices};
 
 use super::ComputedFromHeightRatioExtended;
@@ -15,7 +15,7 @@ pub struct ComputedFromHeightPriceWithRatioExtended<M: StorageMode = Rw> {
     #[deref_mut]
     #[traversable(flatten)]
     pub inner: ComputedFromHeightRatioExtended<M>,
-    pub price: Price<ComputedFromHeightLast<Cents, M>>,
+    pub price: Price<ComputedFromHeight<Cents, M>>,
 }
 
 impl ComputedFromHeightPriceWithRatioExtended {

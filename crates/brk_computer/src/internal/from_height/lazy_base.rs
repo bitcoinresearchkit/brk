@@ -8,11 +8,11 @@ use vecdb::{LazyVecFrom1, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform
 
 use crate::{
     indexes,
-    internal::{ComputedFromHeightLast, ComputedVecValue, LazyHeightDerivedLast, NumericValue},
+    internal::{ComputedFromHeight, ComputedVecValue, LazyHeightDerived, NumericValue},
 };
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyFromHeightLast<T, S1T = T>
+pub struct LazyFromHeight<T, S1T = T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue,
@@ -21,12 +21,12 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub rest: Box<LazyHeightDerivedLast<T, S1T>>,
+    pub rest: Box<LazyHeightDerived<T, S1T>>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl<T, S1T> LazyFromHeightLast<T, S1T>
+impl<T, S1T> LazyFromHeight<T, S1T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
@@ -35,7 +35,7 @@ where
         name: &str,
         version: Version,
         height_source: ReadableBoxedVec<Height, S1T>,
-        source: &ComputedFromHeightLast<S1T>,
+        source: &ComputedFromHeight<S1T>,
     ) -> Self
     where
         S1T: NumericValue,
@@ -43,7 +43,7 @@ where
         let v = version + VERSION;
         Self {
             height: LazyVecFrom1::transformed::<F>(name, v, height_source),
-            rest: Box::new(LazyHeightDerivedLast::from_computed::<F>(name, v, source)),
+            rest: Box::new(LazyHeightDerived::from_computed::<F>(name, v, source)),
         }
     }
 
@@ -59,7 +59,7 @@ where
         let v = version + VERSION;
         Self {
             height: LazyVecFrom1::transformed::<F>(name, v, height_source.clone()),
-            rest: Box::new(LazyHeightDerivedLast::from_height_source::<F>(
+            rest: Box::new(LazyHeightDerived::from_height_source::<F>(
                 name,
                 v,
                 height_source,
@@ -68,11 +68,11 @@ where
         }
     }
 
-    /// Create by unary-transforming a LazyFromHeightLast source (chaining lazy vecs).
+    /// Create by unary-transforming a LazyFromHeight source (chaining lazy vecs).
     pub(crate) fn from_lazy<F, S2T>(
         name: &str,
         version: Version,
-        source: &LazyFromHeightLast<S1T, S2T>,
+        source: &LazyFromHeight<S1T, S2T>,
     ) -> Self
     where
         F: UnaryTransform<S1T, T>,
@@ -81,7 +81,7 @@ where
         let v = version + VERSION;
         Self {
             height: LazyVecFrom1::transformed::<F>(name, v, source.height.read_only_boxed_clone()),
-            rest: Box::new(LazyHeightDerivedLast::from_lazy::<F, S2T>(
+            rest: Box::new(LazyHeightDerived::from_lazy::<F, S2T>(
                 name,
                 v,
                 &source.rest,

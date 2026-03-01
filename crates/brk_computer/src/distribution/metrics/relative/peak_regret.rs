@@ -4,7 +4,7 @@ use brk_types::{Dollars, Height, StoredF32};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
-    ComputedFromHeightLast, PercentageDollarsF32,
+    ComputedFromHeight, PercentageDollarsF32,
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -13,7 +13,7 @@ use crate::distribution::metrics::ImportConfig;
 #[derive(Traversable)]
 pub struct RelativePeakRegret<M: StorageMode = Rw> {
     pub unrealized_peak_regret_rel_to_market_cap:
-        ComputedFromHeightLast<StoredF32, M>,
+        ComputedFromHeight<StoredF32, M>,
 }
 
 impl RelativePeakRegret {
@@ -22,7 +22,7 @@ impl RelativePeakRegret {
     ) -> Result<Self> {
         Ok(Self {
             unrealized_peak_regret_rel_to_market_cap:
-                ComputedFromHeightLast::forced_import(
+                ComputedFromHeight::forced_import(
                     cfg.db,
                     &cfg.name("unrealized_peak_regret_rel_to_market_cap"),
                     cfg.version,

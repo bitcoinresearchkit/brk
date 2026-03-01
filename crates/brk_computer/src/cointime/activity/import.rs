@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightCumulativeSum, ComputedFromHeightLast},
+    internal::{ComputedFromHeightCumulativeSum, ComputedFromHeight},
 };
 
 impl Vecs {
@@ -23,9 +23,9 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            liveliness: ComputedFromHeightLast::forced_import(db, "liveliness", version, indexes)?,
-            vaultedness: ComputedFromHeightLast::forced_import(db, "vaultedness", version, indexes)?,
-            activity_to_vaultedness_ratio: ComputedFromHeightLast::forced_import(
+            liveliness: ComputedFromHeight::forced_import(db, "liveliness", version, indexes)?,
+            vaultedness: ComputedFromHeight::forced_import(db, "vaultedness", version, indexes)?,
+            activity_to_vaultedness_ratio: ComputedFromHeight::forced_import(
                 db,
                 "activity_to_vaultedness_ratio",
                 version,

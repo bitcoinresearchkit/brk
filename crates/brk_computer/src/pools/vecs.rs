@@ -7,8 +7,8 @@ use crate::{
     blocks,
     indexes::{self, ComputeIndexes},
     internal::{
-        ComputedFromHeightCumulativeSum, ComputedFromHeightLast, MaskSats, PercentageU32F32,
-        ValueFromHeightSumCumulative,
+        ComputedFromHeightCumulativeSum, ComputedFromHeight, MaskSats, PercentageU32F32,
+        ValueFromHeightCumulativeSum,
     },
     mining, prices,
 };
@@ -18,21 +18,21 @@ pub struct Vecs<M: StorageMode = Rw> {
     slug: PoolSlug,
 
     pub blocks_mined: ComputedFromHeightCumulativeSum<StoredU32, M>,
-    pub blocks_mined_24h_sum: ComputedFromHeightLast<StoredU32, M>,
-    pub blocks_mined_1w_sum: ComputedFromHeightLast<StoredU32, M>,
-    pub blocks_mined_1m_sum: ComputedFromHeightLast<StoredU32, M>,
-    pub blocks_mined_1y_sum: ComputedFromHeightLast<StoredU32, M>,
-    pub subsidy: ValueFromHeightSumCumulative<M>,
-    pub fee: ValueFromHeightSumCumulative<M>,
-    pub coinbase: ValueFromHeightSumCumulative<M>,
-    pub dominance: ComputedFromHeightLast<StoredF32, M>,
+    pub blocks_mined_24h_sum: ComputedFromHeight<StoredU32, M>,
+    pub blocks_mined_1w_sum: ComputedFromHeight<StoredU32, M>,
+    pub blocks_mined_1m_sum: ComputedFromHeight<StoredU32, M>,
+    pub blocks_mined_1y_sum: ComputedFromHeight<StoredU32, M>,
+    pub subsidy: ValueFromHeightCumulativeSum<M>,
+    pub fee: ValueFromHeightCumulativeSum<M>,
+    pub coinbase: ValueFromHeightCumulativeSum<M>,
+    pub dominance: ComputedFromHeight<StoredF32, M>,
 
-    pub dominance_24h: ComputedFromHeightLast<StoredF32, M>,
-    pub dominance_1w: ComputedFromHeightLast<StoredF32, M>,
-    pub dominance_1m: ComputedFromHeightLast<StoredF32, M>,
-    pub dominance_1y: ComputedFromHeightLast<StoredF32, M>,
-    pub blocks_since_block: ComputedFromHeightLast<StoredU32, M>,
-    pub days_since_block: ComputedFromHeightLast<StoredU16, M>,
+    pub dominance_24h: ComputedFromHeight<StoredF32, M>,
+    pub dominance_1w: ComputedFromHeight<StoredF32, M>,
+    pub dominance_1m: ComputedFromHeight<StoredF32, M>,
+    pub dominance_1y: ComputedFromHeight<StoredF32, M>,
+    pub blocks_since_block: ComputedFromHeight<StoredU32, M>,
+    pub days_since_block: ComputedFromHeight<StoredU16, M>,
 }
 
 impl Vecs {
@@ -52,25 +52,25 @@ impl Vecs {
             indexes,
         )?;
 
-        let blocks_mined_24h_sum = ComputedFromHeightLast::forced_import(
+        let blocks_mined_24h_sum = ComputedFromHeight::forced_import(
             db,
             &suffix("blocks_mined_24h_sum"),
             version,
             indexes,
         )?;
-        let blocks_mined_1w_sum = ComputedFromHeightLast::forced_import(
+        let blocks_mined_1w_sum = ComputedFromHeight::forced_import(
             db,
             &suffix("blocks_mined_1w_sum"),
             version,
             indexes,
         )?;
-        let blocks_mined_1m_sum = ComputedFromHeightLast::forced_import(
+        let blocks_mined_1m_sum = ComputedFromHeight::forced_import(
             db,
             &suffix("blocks_mined_1m_sum"),
             version,
             indexes,
         )?;
-        let blocks_mined_1y_sum = ComputedFromHeightLast::forced_import(
+        let blocks_mined_1y_sum = ComputedFromHeight::forced_import(
             db,
             &suffix("blocks_mined_1y_sum"),
             version,
@@ -78,24 +78,24 @@ impl Vecs {
         )?;
 
         let subsidy =
-            ValueFromHeightSumCumulative::forced_import(db, &suffix("subsidy"), version, indexes)?;
+            ValueFromHeightCumulativeSum::forced_import(db, &suffix("subsidy"), version, indexes)?;
 
         let fee =
-            ValueFromHeightSumCumulative::forced_import(db, &suffix("fee"), version, indexes)?;
+            ValueFromHeightCumulativeSum::forced_import(db, &suffix("fee"), version, indexes)?;
 
         let coinbase =
-            ValueFromHeightSumCumulative::forced_import(db, &suffix("coinbase"), version, indexes)?;
+            ValueFromHeightCumulativeSum::forced_import(db, &suffix("coinbase"), version, indexes)?;
 
         let dominance =
-            ComputedFromHeightLast::forced_import(db, &suffix("dominance"), version, indexes)?;
+            ComputedFromHeight::forced_import(db, &suffix("dominance"), version, indexes)?;
         let dominance_24h =
-            ComputedFromHeightLast::forced_import(db, &suffix("dominance_24h"), version, indexes)?;
+            ComputedFromHeight::forced_import(db, &suffix("dominance_24h"), version, indexes)?;
         let dominance_1w =
-            ComputedFromHeightLast::forced_import(db, &suffix("dominance_1w"), version, indexes)?;
+            ComputedFromHeight::forced_import(db, &suffix("dominance_1w"), version, indexes)?;
         let dominance_1m =
-            ComputedFromHeightLast::forced_import(db, &suffix("dominance_1m"), version, indexes)?;
+            ComputedFromHeight::forced_import(db, &suffix("dominance_1m"), version, indexes)?;
         let dominance_1y =
-            ComputedFromHeightLast::forced_import(db, &suffix("dominance_1y"), version, indexes)?;
+            ComputedFromHeight::forced_import(db, &suffix("dominance_1y"), version, indexes)?;
 
         Ok(Self {
             dominance,
@@ -112,13 +112,13 @@ impl Vecs {
             coinbase,
             subsidy,
             fee,
-            blocks_since_block: ComputedFromHeightLast::forced_import(
+            blocks_since_block: ComputedFromHeight::forced_import(
                 db,
                 &suffix("blocks_since_block"),
                 version,
                 indexes,
             )?,
-            days_since_block: ComputedFromHeightLast::forced_import(
+            days_since_block: ComputedFromHeight::forced_import(
                 db,
                 &suffix("days_since_block"),
                 version,

@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, AnyVec, EagerVec, Exit, ImportableVec, PcoVec, Rw, Sto
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{ComputedFromHeightCumulativeSum, ValueFromHeightCumulative, ValueFromHeightLast},
+    internal::{ComputedFromHeightCumulativeSum, ValueFromHeightCumulative, ValueFromHeight},
 };
 
 use super::ImportConfig;
@@ -18,7 +18,7 @@ pub struct ActivityMetrics<M: StorageMode = Rw> {
     pub sent: ValueFromHeightCumulative<M>,
 
     /// 14-day EMA of sent supply (sats, btc, usd)
-    pub sent_14d_ema: ValueFromHeightLast<M>,
+    pub sent_14d_ema: ValueFromHeight<M>,
 
     /// Satoshi-blocks destroyed (supply * blocks_old when spent)
     pub satblocks_destroyed: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
@@ -44,7 +44,7 @@ impl ActivityMetrics {
                 cfg.indexes,
             )?,
 
-            sent_14d_ema: ValueFromHeightLast::forced_import(
+            sent_14d_ema: ValueFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("sent_14d_ema"),
                 cfg.version,

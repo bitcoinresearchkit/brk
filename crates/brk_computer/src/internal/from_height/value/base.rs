@@ -11,7 +11,7 @@ use crate::{
 
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct ValueFromHeightLast<M: StorageMode = Rw> {
+pub struct ValueFromHeight<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     pub base: ByUnit<M>,
@@ -19,7 +19,7 @@ pub struct ValueFromHeightLast<M: StorageMode = Rw> {
 
 const VERSION: Version = Version::TWO;
 
-impl ValueFromHeightLast {
+impl ValueFromHeight {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,

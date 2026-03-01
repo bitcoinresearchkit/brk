@@ -5,7 +5,7 @@ use vecdb::{AnyVec, EagerVec, Exit, ReadableOptionVec, ReadableVec, PcoVec, PcoV
 use super::{ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     ComputeIndexes, blocks, indexes,
-    internal::{ComputedFromHeightLast, PercentageDiffCents},
+    internal::{ComputedFromHeight, PercentageDiffCents},
     market::lookback,
     prices,
 };
@@ -300,11 +300,11 @@ fn sats_from_dca(price: Dollars) -> Sats {
 
 #[allow(clippy::too_many_arguments)]
 fn compute_period_rolling(
-    days_in_profit: &mut ByDcaPeriod<ComputedFromHeightLast<StoredU32>>,
-    days_in_loss: &mut ByDcaPeriod<ComputedFromHeightLast<StoredU32>>,
-    min_return: &mut ByDcaPeriod<ComputedFromHeightLast<StoredF32>>,
-    max_return: &mut ByDcaPeriod<ComputedFromHeightLast<StoredF32>>,
-    returns: &ByDcaPeriod<ComputedFromHeightLast<StoredF32>>,
+    days_in_profit: &mut ByDcaPeriod<ComputedFromHeight<StoredU32>>,
+    days_in_loss: &mut ByDcaPeriod<ComputedFromHeight<StoredU32>>,
+    min_return: &mut ByDcaPeriod<ComputedFromHeight<StoredF32>>,
+    max_return: &mut ByDcaPeriod<ComputedFromHeight<StoredF32>>,
+    returns: &ByDcaPeriod<ComputedFromHeight<StoredF32>>,
     blocks: &blocks::Vecs,
     h2d: &EagerVec<PcoVec<Height, Day1>>,
     starting_indexes: &ComputeIndexes,
@@ -355,11 +355,11 @@ fn compute_period_rolling(
 
 #[allow(clippy::too_many_arguments)]
 fn compute_class_cumulative(
-    days_in_profit: &mut ByDcaClass<ComputedFromHeightLast<StoredU32>>,
-    days_in_loss: &mut ByDcaClass<ComputedFromHeightLast<StoredU32>>,
-    min_return: &mut ByDcaClass<ComputedFromHeightLast<StoredF32>>,
-    max_return: &mut ByDcaClass<ComputedFromHeightLast<StoredF32>>,
-    returns: &ByDcaClass<ComputedFromHeightLast<StoredF32>>,
+    days_in_profit: &mut ByDcaClass<ComputedFromHeight<StoredU32>>,
+    days_in_loss: &mut ByDcaClass<ComputedFromHeight<StoredU32>>,
+    min_return: &mut ByDcaClass<ComputedFromHeight<StoredF32>>,
+    max_return: &mut ByDcaClass<ComputedFromHeight<StoredF32>>,
+    returns: &ByDcaClass<ComputedFromHeight<StoredF32>>,
     h2d: &EagerVec<PcoVec<Height, Day1>>,
     starting_indexes: &ComputeIndexes,
     exit: &Exit,

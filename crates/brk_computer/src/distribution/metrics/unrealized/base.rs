@@ -10,8 +10,8 @@ use crate::{
     ComputeIndexes,
     distribution::state::UnrealizedState,
     internal::{
-        CentsSubtractToCentsSigned, FiatFromHeightLast, LazyFromHeightLast, NegCentsUnsignedToDollars,
-        ValueFromHeightLast,
+        CentsSubtractToCentsSigned, FiatFromHeight, LazyFromHeight, NegCentsUnsignedToDollars,
+        ValueFromHeight,
     },
     prices,
 };
@@ -24,16 +24,16 @@ use crate::distribution::metrics::ImportConfig;
 #[derive(Traversable)]
 pub struct UnrealizedBase<M: StorageMode = Rw> {
     // === Supply in Profit/Loss ===
-    pub supply_in_profit: ValueFromHeightLast<M>,
-    pub supply_in_loss: ValueFromHeightLast<M>,
+    pub supply_in_profit: ValueFromHeight<M>,
+    pub supply_in_loss: ValueFromHeight<M>,
 
     // === Unrealized Profit/Loss ===
-    pub unrealized_profit: FiatFromHeightLast<Cents, M>,
-    pub unrealized_loss: FiatFromHeightLast<Cents, M>,
+    pub unrealized_profit: FiatFromHeight<Cents, M>,
+    pub unrealized_loss: FiatFromHeight<Cents, M>,
 
     // === Invested Capital in Profit/Loss ===
-    pub invested_capital_in_profit: FiatFromHeightLast<Cents, M>,
-    pub invested_capital_in_loss: FiatFromHeightLast<Cents, M>,
+    pub invested_capital_in_profit: FiatFromHeight<Cents, M>,
+    pub invested_capital_in_loss: FiatFromHeight<Cents, M>,
 
     // === Raw values for precise aggregation (used to compute pain/greed indices) ===
     pub invested_capital_in_profit_raw: M::Stored<BytesVec<Height, CentsSats>>,
@@ -42,53 +42,53 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
     pub investor_cap_in_loss_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 
     // === Pain/Greed Indices ===
-    pub pain_index: FiatFromHeightLast<Cents, M>,
-    pub greed_index: FiatFromHeightLast<Cents, M>,
-    pub net_sentiment: FiatFromHeightLast<CentsSigned, M>,
+    pub pain_index: FiatFromHeight<Cents, M>,
+    pub greed_index: FiatFromHeight<Cents, M>,
+    pub net_sentiment: FiatFromHeight<CentsSigned, M>,
 
     // === Negated ===
-    pub neg_unrealized_loss: LazyFromHeightLast<Dollars, Cents>,
+    pub neg_unrealized_loss: LazyFromHeight<Dollars, Cents>,
 
     // === Net and Total ===
-    pub net_unrealized_pnl: FiatFromHeightLast<CentsSigned, M>,
-    pub total_unrealized_pnl: FiatFromHeightLast<Cents, M>,
+    pub net_unrealized_pnl: FiatFromHeight<CentsSigned, M>,
+    pub total_unrealized_pnl: FiatFromHeight<Cents, M>,
 }
 
 impl UnrealizedBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let supply_in_profit = ValueFromHeightLast::forced_import(
+        let supply_in_profit = ValueFromHeight::forced_import(
             cfg.db,
             &cfg.name("supply_in_profit"),
             cfg.version,
             cfg.indexes,
         )?;
-        let supply_in_loss = ValueFromHeightLast::forced_import(
+        let supply_in_loss = ValueFromHeight::forced_import(
             cfg.db,
             &cfg.name("supply_in_loss"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let unrealized_profit = FiatFromHeightLast::forced_import(
+        let unrealized_profit = FiatFromHeight::forced_import(
             cfg.db,
             &cfg.name("unrealized_profit"),
             cfg.version,
             cfg.indexes,
         )?;
-        let unrealized_loss = FiatFromHeightLast::forced_import(
+        let unrealized_loss = FiatFromHeight::forced_import(
             cfg.db,
             &cfg.name("unrealized_loss"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let invested_capital_in_profit = FiatFromHeightLast::forced_import(
+        let invested_capital_in_profit = FiatFromHeight::forced_import(
             cfg.db,
             &cfg.name("invested_capital_in_profit"),
             cfg.version,
             cfg.indexes,
         )?;
-        let invested_capital_in_loss = FiatFromHeightLast::forced_import(
+        let invested_capital_in_loss = FiatFromHeight::forced_import(
             cfg.db,
             &cfg.name("invested_capital_in_loss"),
             cfg.version,
@@ -116,39 +116,39 @@ impl UnrealizedBase {
             cfg.version,
         )?;
 
-        let pain_index = FiatFromHeightLast::forced_import(
+        let pain_index = FiatFromHeight::forced_import(
             cfg.db,
             &cfg.name("pain_index"),
             cfg.version,
             cfg.indexes,
         )?;
-        let greed_index = FiatFromHeightLast::forced_import(
+        let greed_index = FiatFromHeight::forced_import(
             cfg.db,
             &cfg.name("greed_index"),
             cfg.version,
             cfg.indexes,
         )?;
-        let net_sentiment = FiatFromHeightLast::forced_import(
+        let net_sentiment = FiatFromHeight::forced_import(
             cfg.db,
             &cfg.name("net_sentiment"),
             cfg.version + Version::ONE,
             cfg.indexes,
         )?;
 
-        let neg_unrealized_loss = LazyFromHeightLast::from_computed::<NegCentsUnsignedToDollars>(
+        let neg_unrealized_loss = LazyFromHeight::from_computed::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_unrealized_loss"),
             cfg.version,
             unrealized_loss.cents.height.read_only_boxed_clone(),
             &unrealized_loss.cents,
         );
 
-        let net_unrealized_pnl = FiatFromHeightLast::forced_import(
+        let net_unrealized_pnl = FiatFromHeight::forced_import(
             cfg.db,
             &cfg.name("net_unrealized_pnl"),
             cfg.version,
             cfg.indexes,
         )?;
-        let total_unrealized_pnl = FiatFromHeightLast::forced_import(
+        let total_unrealized_pnl = FiatFromHeight::forced_import(
             cfg.db,
             &cfg.name("total_unrealized_pnl"),
             cfg.version,

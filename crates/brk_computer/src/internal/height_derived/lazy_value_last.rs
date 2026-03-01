@@ -4,48 +4,56 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Sats, Version};
 use vecdb::UnaryTransform;
 
-use crate::internal::{LazyHeightDerivedLast, ValueFromHeightLast};
+use crate::internal::{LazyHeightDerived, ValueFromHeight};
 
 const VERSION: Version = Version::ZERO;
 
 #[derive(Clone, Traversable)]
-pub struct LazyValueHeightDerivedLast {
-    pub sats: LazyHeightDerivedLast<Sats, Sats>,
-    pub btc: LazyHeightDerivedLast<Bitcoin, Sats>,
-    pub usd: LazyHeightDerivedLast<Dollars, Dollars>,
+pub struct LazyValueHeightDerived {
+    pub sats: LazyHeightDerived<Sats, Sats>,
+    pub btc: LazyHeightDerived<Bitcoin, Sats>,
+    pub cents: LazyHeightDerived<Cents, Cents>,
+    pub usd: LazyHeightDerived<Dollars, Dollars>,
 }
 
-impl LazyValueHeightDerivedLast {
-    pub(crate) fn from_block_source<SatsTransform, BitcoinTransform, DollarsTransform>(
+impl LazyValueHeightDerived {
+    pub(crate) fn from_block_source<SatsTransform, BitcoinTransform, CentsTransform, DollarsTransform>(
         name: &str,
-        source: &ValueFromHeightLast,
+        source: &ValueFromHeight,
         version: Version,
     ) -> Self
     where
         SatsTransform: UnaryTransform<Sats, Sats>,
         BitcoinTransform: UnaryTransform<Sats, Bitcoin>,
+        CentsTransform: UnaryTransform<Cents, Cents>,
         DollarsTransform: UnaryTransform<Dollars, Dollars>,
     {
         let v = version + VERSION;
 
-        let sats = LazyHeightDerivedLast::from_derived_computed::<SatsTransform>(
+        let sats = LazyHeightDerived::from_derived_computed::<SatsTransform>(
             name,
             v,
             &source.sats.rest,
         );
 
-        let btc = LazyHeightDerivedLast::from_derived_computed::<BitcoinTransform>(
+        let btc = LazyHeightDerived::from_derived_computed::<BitcoinTransform>(
             &format!("{name}_btc"),
             v,
             &source.sats.rest,
         );
 
-        let usd = LazyHeightDerivedLast::from_lazy::<DollarsTransform, Cents>(
+        let cents = LazyHeightDerived::from_derived_computed::<CentsTransform>(
+            &format!("{name}_cents"),
+            v,
+            &source.cents.rest,
+        );
+
+        let usd = LazyHeightDerived::from_lazy::<DollarsTransform, Cents>(
             &format!("{name}_usd"),
             v,
             &source.usd.rest,
         );
 
-        Self { sats, btc, usd }
+        Self { sats, btc, cents, usd }
     }
 }
