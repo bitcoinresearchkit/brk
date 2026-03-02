@@ -5,11 +5,10 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{
-        ComputedFromHeight, LazyHeightDerived,
-        Price, StoredU16ToYears,
-    },
+    internal::{ComputedFromHeight, DaysToYears, LazyHeightDerived, Price},
 };
+
+const VERSION: Version = Version::ONE;
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -17,33 +16,31 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let price_ath = Price::forced_import(db, "price_ath", version, indexes)?;
+        let v = version + VERSION;
 
-        let max_days_between_price_aths = ComputedFromHeight::forced_import(
-            db,
-            "max_days_between_price_aths",
-            version,
-            indexes,
-        )?;
+        let price_ath = Price::forced_import(db, "price_ath", v, indexes)?;
+
+        let max_days_between_price_aths =
+            ComputedFromHeight::forced_import(db, "max_days_between_price_aths", v, indexes)?;
 
         let max_years_between_price_aths =
-            LazyHeightDerived::from_computed::<StoredU16ToYears>(
+            LazyHeightDerived::from_computed::<DaysToYears>(
                 "max_years_between_price_aths",
-                version,
+                v,
                 &max_days_between_price_aths,
             );
 
         let days_since_price_ath =
-            ComputedFromHeight::forced_import(db, "days_since_price_ath", version, indexes)?;
+            ComputedFromHeight::forced_import(db, "days_since_price_ath", v, indexes)?;
 
-        let years_since_price_ath = LazyHeightDerived::from_computed::<StoredU16ToYears>(
+        let years_since_price_ath = LazyHeightDerived::from_computed::<DaysToYears>(
             "years_since_price_ath",
-            version,
+            v,
             &days_since_price_ath,
         );
 
         let price_drawdown =
-            ComputedFromHeight::forced_import(db, "price_drawdown", version, indexes)?;
+            ComputedFromHeight::forced_import(db, "price_drawdown", v, indexes)?;
 
         Ok(Self {
             price_ath,

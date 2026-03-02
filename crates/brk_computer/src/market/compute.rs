@@ -18,8 +18,7 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        // ATH metrics (independent)
-        self.ath.compute(prices, indexes, starting_indexes, exit)?;
+        self.ath.compute(prices, blocks, starting_indexes, exit)?;
 
         // Lookback metrics (independent)
         self.lookback
@@ -46,7 +45,6 @@ impl Vecs {
             .compute(indexes, prices, blocks, &self.lookback, starting_indexes, exit)?;
 
         self.indicators.compute(
-            indexes,
             &mining.rewards,
             &self.returns,
             &self.range,

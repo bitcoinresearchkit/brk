@@ -3,7 +3,9 @@ use std::thread;
 use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Cents, Date, Day1, Height, OutputType, Sats, StoredU64, TxIndex, TypeIndex};
+use brk_types::{
+    Cents, Date, Day1, Height, OutputType, Sats, StoredU64, Timestamp, TxIndex, TypeIndex,
+};
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use tracing::{debug, info};
@@ -20,7 +22,7 @@ use crate::{
         compute::write::{process_address_updates, write},
         state::{BlockState, Transacted},
     },
-    indexes, inputs, outputs, prices, transactions,
+    indexes, inputs, outputs, transactions,
 };
 
 use super::{
@@ -30,8 +32,8 @@ use super::{
         vecs::Vecs,
     },
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
-    BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, IndexToTxIndexBuf, TxInReaders,
-    TxOutReaders, VecsReaders,
+    BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, IndexToTxIndexBuf, PriceRangeMax,
+    TxInReaders, TxOutReaders, VecsReaders,
 };
 
 /// Process all blocks from starting_height to last_height.
@@ -44,52 +46,45 @@ pub(crate) fn process_blocks(
     outputs: &outputs::Vecs,
     transactions: &transactions::Vecs,
     blocks: &blocks::Vecs,
-    prices: &prices::Vecs,
     starting_height: Height,
     last_height: Height,
     chain_state: &mut Vec<BlockState>,
     txindex_to_height: &mut RangeMap<TxIndex, Height>,
+    cached_prices: &[Cents],
+    cached_timestamps: &[Timestamp],
+    cached_price_range_max: &PriceRangeMax,
     exit: &Exit,
 ) -> Result<()> {
-    // Create computation context with pre-computed vectors for thread-safe access
-    debug!("creating ComputeContext");
-    let ctx = ComputeContext::new(starting_height, last_height, blocks, prices);
-    debug!("ComputeContext created");
+    let ctx = ComputeContext {
+        starting_height,
+        last_height,
+        height_to_timestamp: cached_timestamps,
+        height_to_price: cached_prices,
+        price_range_max: cached_price_range_max,
+    };
 
     if ctx.starting_height > ctx.last_height {
         return Ok(());
     }
 
-    // References to vectors using correct field paths
-    // From indexer.vecs:
     let height_to_first_txindex = &indexer.vecs.transactions.first_txindex;
     let height_to_first_txoutindex = &indexer.vecs.outputs.first_txoutindex;
     let height_to_first_txinindex = &indexer.vecs.inputs.first_txinindex;
-
-    // From transactions and inputs/outputs (via .height or .height.sum_cumulative.sum patterns):
     let height_to_tx_count = &transactions.count.tx_count.height;
     let height_to_output_count = &outputs.count.total_count.full.sum_cumulative.sum.0;
     let height_to_input_count = &inputs.count.full.sum_cumulative.sum.0;
-    // From blocks:
-    let height_to_timestamp = &blocks.time.timestamp_monotonic;
     let height_to_date = &blocks.time.date;
     let day1_to_first_height = &indexes.day1.first_height;
     let day1_to_height_count = &indexes.day1.height_count;
     let txindex_to_output_count = &indexes.txindex.output_count;
     let txindex_to_input_count = &indexes.txindex.input_count;
 
-    // From price - use cents for computation:
-    let height_to_price = &prices.price.cents.height;
+    let height_to_price_vec = cached_prices;
+    let height_to_timestamp_vec = cached_timestamps;
 
-    // Access pre-computed vectors from context for thread-safe access
-    let height_to_price_vec = &ctx.height_to_price;
-    let height_to_timestamp_vec = &ctx.height_to_timestamp;
-
-    // Range for pre-collecting height-indexed vecs
     let start_usize = starting_height.to_usize();
     let end_usize = last_height.to_usize() + 1;
 
-    // Pre-collect height-indexed vecs for the block range (bulk read before hot loop)
     let height_to_first_txindex_vec: Vec<TxIndex> =
         height_to_first_txindex.collect_range_at(start_usize, end_usize);
     let height_to_first_txoutindex_vec: Vec<_> =
@@ -102,10 +97,8 @@ pub(crate) fn process_blocks(
         height_to_output_count.collect_range_at(start_usize, end_usize);
     let height_to_input_count_vec: Vec<_> =
         height_to_input_count.collect_range_at(start_usize, end_usize);
-    let height_to_timestamp_collected: Vec<_> =
-        height_to_timestamp.collect_range_at(start_usize, end_usize);
-    let height_to_price_collected: Vec<_> =
-        height_to_price.collect_range_at(start_usize, end_usize);
+    let height_to_timestamp_collected = &cached_timestamps[start_usize..end_usize];
+    let height_to_price_collected = &cached_prices[start_usize..end_usize];
 
     debug!("creating VecsReaders");
     let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
@@ -115,7 +108,10 @@ pub(crate) fn process_blocks(
     let target_len = indexer.vecs.transactions.first_txindex.len();
     let current_len = txindex_to_height.len();
     if current_len < target_len {
-        debug!("extending txindex_to_height RangeMap from {} to {}", current_len, target_len);
+        debug!(
+            "extending txindex_to_height RangeMap from {} to {}",
+            current_len, target_len
+        );
         let new_entries: Vec<TxIndex> = indexer
             .vecs
             .transactions
@@ -125,10 +121,16 @@ pub(crate) fn process_blocks(
             txindex_to_height.push(first_txindex);
         }
     } else if current_len > target_len {
-        debug!("truncating txindex_to_height RangeMap from {} to {}", current_len, target_len);
+        debug!(
+            "truncating txindex_to_height RangeMap from {} to {}",
+            current_len, target_len
+        );
         txindex_to_height.truncate(target_len);
     }
-    debug!("txindex_to_height RangeMap ready ({} entries)", txindex_to_height.len());
+    debug!(
+        "txindex_to_height RangeMap ready ({} entries)",
+        txindex_to_height.len()
+    );
 
     // Create reusable iterators and buffers for per-block reads
     let mut txout_iters = TxOutReaders::new(indexer);
@@ -395,7 +397,7 @@ pub(crate) fn process_blocks(
                     &mut vecs.address_cohorts,
                     &mut lookup,
                     block_price,
-                    &ctx.price_range_max,
+                    ctx.price_range_max,
                     &mut addr_counts,
                     &mut empty_addr_counts,
                     &mut activity_counts,
@@ -412,7 +414,7 @@ pub(crate) fn process_blocks(
             vecs.utxo_cohorts
                 .receive(transacted, height, timestamp, block_price);
             vecs.utxo_cohorts
-                .send(height_to_sent, chain_state, &ctx.price_range_max);
+                .send(height_to_sent, chain_state, ctx.price_range_max);
         });
 
         // Push to height-indexed vectors
@@ -468,7 +470,7 @@ pub(crate) fn process_blocks(
                 height,
                 timestamp,
                 block_price,
-                &ctx.price_range_max,
+                ctx.price_range_max,
             )?;
         }
 

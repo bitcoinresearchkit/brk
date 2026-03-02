@@ -1,10 +1,10 @@
 use brk_error::Result;
-use brk_types::{Day1, Dollars, StoredF32};
-use vecdb::{Exit, ReadableVec};
+use brk_types::{Dollars, StoredF32};
+use vecdb::Exit;
 
 use super::{super::range, Vecs};
 use crate::{
-    ComputeIndexes, blocks, distribution, indexes,
+    ComputeIndexes, blocks, distribution,
     internal::Ratio32,
     mining, prices, transactions,
 };
@@ -23,7 +23,6 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
         rewards: &mining::RewardsVecs,
         returns: &super::super::returns::Vecs,
         range: &range::Vecs,
@@ -106,14 +105,10 @@ impl Vecs {
             )?;
         }
 
-        // Gini (daily, expanded to Height)
-        let h2d: Vec<Day1> = indexes.height.day1.collect();
-        let total_heights = h2d.len();
+        // Gini (per height)
         super::gini::compute(
             &mut self.gini,
             distribution,
-            &h2d,
-            total_heights,
             starting_indexes,
             exit,
         )?;

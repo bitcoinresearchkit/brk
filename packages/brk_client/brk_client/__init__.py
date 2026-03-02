@@ -413,9 +413,9 @@ class DataRangeFormat(TypedDict):
     Data range with output format for API query parameters
 
     Attributes:
-        start: Inclusive starting index, if negative counts from end
-        end: Exclusive ending index, if negative counts from end
-        limit: Maximum number of values to return (ignored if `end` is set)
+        start: Inclusive starting index, if negative counts from end. Aliases: `from`, `f`, `s`
+        end: Exclusive ending index, if negative counts from end. Aliases: `to`, `t`, `e`
+        limit: Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
         format: Format of the output
     """
     start: Optional[int]
@@ -638,9 +638,9 @@ class MetricSelection(TypedDict):
     Attributes:
         metrics: Requested metrics
         index: Index to query
-        start: Inclusive starting index, if negative counts from end
-        end: Exclusive ending index, if negative counts from end
-        limit: Maximum number of values to return (ignored if `end` is set)
+        start: Inclusive starting index, if negative counts from end. Aliases: `from`, `f`, `s`
+        end: Exclusive ending index, if negative counts from end. Aliases: `to`, `t`, `e`
+        limit: Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
         format: Format of the output
     """
     metrics: Metrics
@@ -655,9 +655,9 @@ class MetricSelectionLegacy(TypedDict):
     Legacy metric selection parameters (deprecated)
 
     Attributes:
-        start: Inclusive starting index, if negative counts from end
-        end: Exclusive ending index, if negative counts from end
-        limit: Maximum number of values to return (ignored if `end` is set)
+        start: Inclusive starting index, if negative counts from end. Aliases: `from`, `f`, `s`
+        end: Exclusive ending index, if negative counts from end. Aliases: `to`, `t`, `e`
+        limit: Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
         format: Format of the output
     """
     index: Index

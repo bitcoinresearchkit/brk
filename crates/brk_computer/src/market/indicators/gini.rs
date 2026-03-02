@@ -1,14 +1,12 @@
 use brk_error::Result;
-use brk_types::{Day1, StoredF32, Version};
-use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableOptionVec, VecIndex, WritableVec};
+use brk_types::{Sats, StoredF32, StoredU64, Version};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use crate::{ComputeIndexes, distribution, internal::ComputedFromHeight};
 
 pub(super) fn compute(
     gini: &mut ComputedFromHeight<StoredF32>,
     distribution: &distribution::Vecs,
-    h2d: &[Day1],
-    total_heights: usize,
     starting_indexes: &ComputeIndexes,
     exit: &Exit,
 ) -> Result<()> {
@@ -16,11 +14,11 @@ pub(super) fn compute(
 
     let supply_vecs: Vec<&_> = amount_range
         .iter()
-        .map(|c| &c.metrics.supply.total.sats.day1)
+        .map(|c| &c.metrics.supply.total.sats.height)
         .collect();
     let count_vecs: Vec<&_> = amount_range
         .iter()
-        .map(|c| &c.metrics.outputs.utxo_count.day1)
+        .map(|c| &c.metrics.outputs.utxo_count.height)
         .collect();
 
     if supply_vecs.is_empty() || supply_vecs.len() != count_vecs.len() {
@@ -39,49 +37,40 @@ pub(super) fn compute(
     gini.height
         .truncate_if_needed_at(gini.height.len().min(starting_indexes.height.to_usize()))?;
 
-    let start_height = gini.height.len();
-    if start_height >= total_heights {
-        return Ok(());
-    }
-
-    let num_days = supply_vecs
+    let total_heights = supply_vecs
         .iter()
         .map(|v| v.len())
         .min()
         .unwrap_or(0)
         .min(count_vecs.iter().map(|v| v.len()).min().unwrap_or(0));
 
-    // Only compute gini for new days (each day is independent)
-    let start_day = if start_height > 0 {
-        h2d[start_height].to_usize()
-    } else {
-        0
-    };
-
-    let mut gini_new: Vec<f32> = Vec::with_capacity(num_days.saturating_sub(start_day));
-    let mut buckets: Vec<(u64, u64)> = Vec::with_capacity(supply_vecs.len());
-    for di in start_day..num_days {
-        buckets.clear();
-        let day = Day1::from(di);
-        for (sv, cv) in supply_vecs.iter().zip(count_vecs.iter()) {
-            let supply: u64 = sv.collect_one_flat(day).unwrap_or_default().into();
-            let count: u64 = cv.collect_one_flat(day).unwrap_or_default().into();
-            buckets.push((count, supply));
-        }
-        gini_new.push(gini_from_lorenz(&buckets));
+    let start_height = gini.height.len();
+    if start_height >= total_heights {
+        return Ok(());
     }
 
-    // Expand to Height
-    (start_height..total_heights).for_each(|h| {
-        let di = h2d[h].to_usize();
-        let offset = di.saturating_sub(start_day);
-        let val = if offset < gini_new.len() {
-            StoredF32::from(gini_new[offset])
-        } else {
-            StoredF32::NAN
-        };
-        gini.height.push(val);
-    });
+    // Batch-collect all cohort data for the range [start_height, total_heights)
+    let n_cohorts = supply_vecs.len();
+    let supply_data: Vec<Vec<Sats>> = supply_vecs
+        .iter()
+        .map(|v| v.collect_range_at(start_height, total_heights))
+        .collect();
+    let count_data: Vec<Vec<StoredU64>> = count_vecs
+        .iter()
+        .map(|v| v.collect_range_at(start_height, total_heights))
+        .collect();
+
+    let mut buckets: Vec<(u64, u64)> = Vec::with_capacity(n_cohorts);
+    for offset in 0..total_heights - start_height {
+        buckets.clear();
+        for c in 0..n_cohorts {
+            let supply: u64 = supply_data[c][offset].into();
+            let count: u64 = count_data[c][offset].into();
+            buckets.push((count, supply));
+        }
+        gini.height
+            .push(StoredF32::from(gini_from_lorenz(&buckets)));
+    }
 
     {
         let _lock = exit.lock();

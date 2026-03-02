@@ -239,9 +239,9 @@
  * Data range with output format for API query parameters
  *
  * @typedef {Object} DataRangeFormat
- * @property {?number=} start - Inclusive starting index, if negative counts from end
- * @property {?number=} end - Exclusive ending index, if negative counts from end
- * @property {(Limit|null)=} limit - Maximum number of values to return (ignored if `end` is set)
+ * @property {?number=} start - Inclusive starting index, if negative counts from end. Aliases: `from`, `f`, `s`
+ * @property {?number=} end - Exclusive ending index, if negative counts from end. Aliases: `to`, `t`, `e`
+ * @property {(Limit|null)=} limit - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
  * @property {Format=} format - Format of the output
  */
 /**
@@ -461,9 +461,9 @@
  * @typedef {Object} MetricSelection
  * @property {Metrics} metrics - Requested metrics
  * @property {Index} index - Index to query
- * @property {?number=} start - Inclusive starting index, if negative counts from end
- * @property {?number=} end - Exclusive ending index, if negative counts from end
- * @property {(Limit|null)=} limit - Maximum number of values to return (ignored if `end` is set)
+ * @property {?number=} start - Inclusive starting index, if negative counts from end. Aliases: `from`, `f`, `s`
+ * @property {?number=} end - Exclusive ending index, if negative counts from end. Aliases: `to`, `t`, `e`
+ * @property {(Limit|null)=} limit - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
  * @property {Format=} format - Format of the output
  */
 /**
@@ -472,9 +472,9 @@
  * @typedef {Object} MetricSelectionLegacy
  * @property {Index} index
  * @property {Metrics} ids
- * @property {?number=} start - Inclusive starting index, if negative counts from end
- * @property {?number=} end - Exclusive ending index, if negative counts from end
- * @property {(Limit|null)=} limit - Maximum number of values to return (ignored if `end` is set)
+ * @property {?number=} start - Inclusive starting index, if negative counts from end. Aliases: `from`, `f`, `s`
+ * @property {?number=} end - Exclusive ending index, if negative counts from end. Aliases: `to`, `t`, `e`
+ * @property {(Limit|null)=} limit - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
  * @property {Format=} format - Format of the output
  */
 /**
@@ -7994,9 +7994,9 @@ class BrkClient extends BrkClientBase {
    *
    * @param {Metric} metric - Metric name
    * @param {Index} index - Aggregation index
-   * @param {number=} [start] - Inclusive starting index, if negative counts from end
-   * @param {number=} [end] - Exclusive ending index, if negative counts from end
-   * @param {string=} [limit] - Maximum number of values to return (ignored if `end` is set)
+   * @param {number=} [start] - Inclusive starting index, if negative counts from end. Aliases: `from`, `f`, `s`
+   * @param {number=} [end] - Exclusive ending index, if negative counts from end. Aliases: `to`, `t`, `e`
+   * @param {string=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
    * @param {Format=} [format] - Format of the output
    * @returns {Promise<AnyMetricData | string>}
    */
@@ -8035,9 +8035,9 @@ class BrkClient extends BrkClientBase {
    *
    * @param {Metrics} [metrics] - Requested metrics
    * @param {Index} [index] - Index to query
-   * @param {number=} [start] - Inclusive starting index, if negative counts from end
-   * @param {number=} [end] - Exclusive ending index, if negative counts from end
-   * @param {string=} [limit] - Maximum number of values to return (ignored if `end` is set)
+   * @param {number=} [start] - Inclusive starting index, if negative counts from end. Aliases: `from`, `f`, `s`
+   * @param {number=} [end] - Exclusive ending index, if negative counts from end. Aliases: `to`, `t`, `e`
+   * @param {string=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
    * @param {Format=} [format] - Format of the output
    * @returns {Promise<AnyMetricData[] | string>}
    */

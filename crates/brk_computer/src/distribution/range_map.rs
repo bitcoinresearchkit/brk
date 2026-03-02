@@ -34,16 +34,6 @@ impl<I: Default + Copy, V: Default + Copy> Default for RangeMap<I, V> {
 }
 
 impl<I: Ord + Copy + Default, V: From<usize> + Copy + Default> RangeMap<I, V> {
-    /// Create with pre-allocated capacity.
-    pub(crate) fn with_capacity(capacity: usize) -> Self {
-        Self {
-            first_indexes: Vec::with_capacity(capacity),
-            cache: [(I::default(), I::default(), V::default(), 0); CACHE_SIZE],
-            cache_len: 0,
-            _phantom: PhantomData,
-        }
-    }
-
     /// Number of ranges stored.
     pub(crate) fn len(&self) -> usize {
         self.first_indexes.len()

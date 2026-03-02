@@ -4,8 +4,8 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, Height,
-    SupplyState, TxIndex, Version,
+    Cents, Day1, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex,
+    Height, SupplyState, Timestamp, TxIndex, Version,
 };
 use tracing::{debug, info};
 use vecdb::{
@@ -16,7 +16,10 @@ use vecdb::{
 use crate::{
     ComputeIndexes, blocks,
     distribution::{
-        compute::{StartMode, determine_start_mode, process_blocks, recover_state, reset_state},
+        compute::{
+            PriceRangeMax, StartMode, determine_start_mode, process_blocks, recover_state,
+            reset_state,
+        },
         state::BlockState,
     },
     indexes, inputs, outputs, prices, transactions,
@@ -69,6 +72,16 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// In-memory txindex→height reverse lookup. Kept across compute() calls.
     #[traversable(skip)]
     txindex_to_height: RangeMap<TxIndex, Height>,
+
+    /// Cached height→price mapping. Incrementally extended, O(new_blocks) on resume.
+    #[traversable(skip)]
+    cached_prices: Vec<Cents>,
+    /// Cached height→timestamp mapping. Incrementally extended, O(new_blocks) on resume.
+    #[traversable(skip)]
+    cached_timestamps: Vec<Timestamp>,
+    /// Cached sparse table for O(1) range-max price queries. Incrementally extended.
+    #[traversable(skip)]
+    cached_price_range_max: PriceRangeMax,
 }
 
 const SAVED_STAMPED_CHANGES: u16 = 10;
@@ -159,6 +172,10 @@ impl Vecs {
             chain_state: Vec::new(),
             txindex_to_height: RangeMap::default(),
 
+            cached_prices: Vec::new(),
+            cached_timestamps: Vec::new(),
+            cached_price_range_max: PriceRangeMax::default(),
+
             db,
             states_path,
         };
@@ -194,6 +211,32 @@ impl Vecs {
         starting_indexes: &mut ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
+        let cache_target_len = prices
+            .price
+            .cents
+            .height
+            .len()
+            .min(blocks.time.timestamp_monotonic.len());
+        let cache_current_len = self.cached_prices.len();
+        if cache_target_len < cache_current_len {
+            self.cached_prices.truncate(cache_target_len);
+            self.cached_timestamps.truncate(cache_target_len);
+            self.cached_price_range_max.truncate(cache_target_len);
+        } else if cache_target_len > cache_current_len {
+            let new_prices = prices
+                .price
+                .cents
+                .height
+                .collect_range_at(cache_current_len, cache_target_len);
+            let new_timestamps = blocks
+                .time
+                .timestamp_monotonic
+                .collect_range_at(cache_current_len, cache_target_len);
+            self.cached_prices.extend(new_prices);
+            self.cached_timestamps.extend(new_timestamps);
+        }
+        self.cached_price_range_max.extend(&self.cached_prices);
+
         // 1. Find minimum height we have data for across stateful vecs
         let current_height = Height::from(self.supply_state.len());
         let min_stateful = self.min_stateful_height_len();
@@ -268,15 +311,9 @@ impl Vecs {
             debug!("reusing in-memory chain_state ({} entries)", chain_state.len());
             recovered_height
         } else {
-            // Rollback or first run after restart: rebuild from supply_state
             debug!("rebuilding chain_state from stored values");
-            let height_to_timestamp = &blocks.time.timestamp_monotonic;
-            let height_to_price = &prices.price.cents.height;
 
             let end = usize::from(recovered_height);
-            let timestamp_data: Vec<_> = height_to_timestamp.collect_range_at(0, end);
-            let price_data: Vec<_> = height_to_price.collect_range_at(0, end);
-
             debug!("building supply_state vec for {} heights", recovered_height);
             let supply_state_data: Vec<_> = self.supply_state.collect_range_at(0, end);
             chain_state = supply_state_data
@@ -284,8 +321,8 @@ impl Vecs {
                 .enumerate()
                 .map(|(h, supply)| BlockState {
                     supply,
-                    price: price_data[h],
-                    timestamp: timestamp_data[h],
+                    price: self.cached_prices[h],
+                    timestamp: self.cached_timestamps[h],
                 })
                 .collect();
             debug!("chain_state rebuilt");
@@ -329,6 +366,12 @@ impl Vecs {
         // 4. Process blocks
         if starting_height <= last_height {
             debug!("calling process_blocks");
+
+            let cached_prices = std::mem::take(&mut self.cached_prices);
+            let cached_timestamps = std::mem::take(&mut self.cached_timestamps);
+            let cached_price_range_max =
+                std::mem::take(&mut self.cached_price_range_max);
+
             process_blocks(
                 self,
                 indexer,
@@ -337,13 +380,19 @@ impl Vecs {
                 outputs,
                 transactions,
                 blocks,
-                prices,
                 starting_height,
                 last_height,
                 &mut chain_state,
                 &mut txindex_to_height,
+                &cached_prices,
+                &cached_timestamps,
+                &cached_price_range_max,
                 exit,
             )?;
+
+            self.cached_prices = cached_prices;
+            self.cached_timestamps = cached_timestamps;
+            self.cached_price_range_max = cached_price_range_max;
         }
 
         // Put chain_state and txindex_to_height back

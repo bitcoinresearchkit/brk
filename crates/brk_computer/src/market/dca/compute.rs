@@ -4,10 +4,7 @@ use vecdb::{AnyVec, Exit, ReadableOptionVec, ReadableVec, VecIndex};
 
 use super::Vecs;
 use crate::{
-    ComputeIndexes, blocks, indexes,
-    internal::{ComputedFromHeight, PercentageDiffCents},
-    market::lookback,
-    prices,
+    ComputeIndexes, blocks, indexes, internal::PercentageDiffCents, market::lookback, prices,
 };
 
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
@@ -25,9 +22,7 @@ impl Vecs {
         let h2d = &indexes.height.day1;
         let close = &prices.split.close.usd.day1;
 
-        let first_price_di = Day1::try_from(Date::new(2010, 7, 12))
-            .unwrap()
-            .to_usize();
+        let first_price_di = Day1::try_from(Date::new(2010, 7, 12)).unwrap().to_usize();
 
         // Compute per-height DCA sats contribution once (reused by all periods).
         // Value = sats_from_dca(close_price) on day-boundary blocks, Sats::ZERO otherwise.
@@ -42,7 +37,10 @@ impl Vecs {
                     if same_day {
                         (h, Sats::ZERO)
                     } else {
-                        let s = close.collect_one_flat(di).map(sats_from_dca).unwrap_or(Sats::ZERO);
+                        let s = close
+                            .collect_one_flat(di)
+                            .map(sats_from_dca)
+                            .unwrap_or(Sats::ZERO);
                         (h, s)
                     }
                 },
@@ -68,7 +66,10 @@ impl Vecs {
             .zip_mut_with_days(&self.period_stack)
         {
             let days = days as usize;
-            let stack_data = stack.sats.height.collect_range_at(sh, stack.sats.height.len());
+            let stack_data = stack
+                .sats
+                .height
+                .collect_range_at(sh, stack.sats.height.len());
             average_price.cents.height.compute_transform(
                 starting_indexes.height,
                 h2d,
@@ -76,9 +77,7 @@ impl Vecs {
                     let di_usize = di.to_usize();
                     let stack_sats = stack_data[h.to_usize() - sh];
                     let avg = if di_usize > first_price_di {
-                        let num_days = days
-                            .min(di_usize + 1)
-                            .min(di_usize + 1 - first_price_di);
+                        let num_days = days.min(di_usize + 1).min(di_usize + 1 - first_price_di);
                         Cents::from(DCA_AMOUNT * num_days / Bitcoin::from(stack_sats))
                     } else {
                         Cents::ZERO
@@ -123,7 +122,10 @@ impl Vecs {
             self.period_lump_sum_stack.zip_mut_with_days(&lookback_dca)
         {
             let total_invested = DCA_AMOUNT * days as usize;
-            let lookback_data = lookback_price.cents.height.collect_range_at(sh, lookback_price.cents.height.len());
+            let lookback_data = lookback_price
+                .cents
+                .height
+                .collect_range_at(sh, lookback_price.cents.height.len());
             stack.sats.height.compute_transform(
                 starting_indexes.height,
                 h2d,
@@ -193,7 +195,10 @@ impl Vecs {
                         } else {
                             Sats::ZERO
                         };
-                        let s = close.collect_one_flat(di).map(sats_from_dca).unwrap_or(Sats::ZERO);
+                        let s = close
+                            .collect_one_flat(di)
+                            .map(sats_from_dca)
+                            .unwrap_or(Sats::ZERO);
                         prev + s
                     };
                     prev_value = result;
@@ -212,7 +217,10 @@ impl Vecs {
             .zip(start_days)
         {
             let from_usize = from.to_usize();
-            let stack_data = stack.sats.height.collect_range_at(sh, stack.sats.height.len());
+            let stack_data = stack
+                .sats
+                .height
+                .collect_range_at(sh, stack.sats.height.len());
             average_price.cents.height.compute_transform(
                 starting_indexes.height,
                 h2d,

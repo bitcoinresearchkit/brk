@@ -37,6 +37,10 @@ Get a metric by name and index:
     GET /api/metric/{metric}/{index}
     GET /api/metric/{metric}/{index}?start=-30
 
+Example — last 30 days of Bitcoin closing price:
+
+    GET /api/metric/close/1d?start=-30
+
 Fetch multiple metrics at once:
 
     GET /api/metrics/bulk?index={index}&metrics={metric1},{metric2}
