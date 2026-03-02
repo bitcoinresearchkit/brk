@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::StoredF32;
+use brk_types::Timestamp;
 use vecdb::Exit;
 
 use super::Vecs;
 use crate::transactions::{count, fees};
-use crate::{ComputeIndexes, blocks, indexes, inputs, outputs, prices};
+use crate::{ComputeIndexes, blocks, indexes, inputs, internal::PerSec, outputs, prices};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -67,54 +67,22 @@ impl Vecs {
         self.annualized_volume
             .compute(prices, starting_indexes.height, exit)?;
 
-        // tx_per_sec: per-block tx count / block interval
-        self.tx_per_sec.height.compute_transform2(
+        self.tx_per_sec.height.compute_binary::<_, Timestamp, PerSec>(
             starting_indexes.height,
             &count_vecs.tx_count.height,
             &blocks.interval.height,
-            |(h, tx_count, interval, ..)| {
-                let interval_f64 = f64::from(*interval);
-                let per_sec = if interval_f64 > 0.0 {
-                    StoredF32::from(*tx_count as f64 / interval_f64)
-                } else {
-                    StoredF32::NAN
-                };
-                (h, per_sec)
-            },
             exit,
         )?;
-
-        // inputs_per_sec: per-block input count / block interval
-        self.inputs_per_sec.height.compute_transform2(
+        self.inputs_per_sec.height.compute_binary::<_, Timestamp, PerSec>(
             starting_indexes.height,
             &inputs_count.full.sum_cumulative.sum.0,
             &blocks.interval.height,
-            |(h, input_count, interval, ..)| {
-                let interval_f64 = f64::from(*interval);
-                let per_sec = if interval_f64 > 0.0 {
-                    StoredF32::from(*input_count as f64 / interval_f64)
-                } else {
-                    StoredF32::NAN
-                };
-                (h, per_sec)
-            },
             exit,
         )?;
-
-        // outputs_per_sec: per-block output count / block interval
-        self.outputs_per_sec.height.compute_transform2(
+        self.outputs_per_sec.height.compute_binary::<_, Timestamp, PerSec>(
             starting_indexes.height,
             &outputs_count.total_count.full.sum_cumulative.sum.0,
             &blocks.interval.height,
-            |(h, output_count, interval, ..)| {
-                let interval_f64 = f64::from(*interval);
-                let per_sec = if interval_f64 > 0.0 {
-                    StoredF32::from(*output_count as f64 / interval_f64)
-                } else {
-                    StoredF32::NAN
-                };
-                (h, per_sec)
-            },
             exit,
         )?;
 

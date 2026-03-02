@@ -15,7 +15,7 @@ use crate::{
         CentsPlus, CentsUnsignedToDollars, ComputedFromHeightCumulative, ComputedFromHeight,
         ComputedFromHeightRatio, NegCentsUnsignedToDollars, ValueFromHeightCumulative, LazyFromHeight,
         PercentageCentsF32, PercentageCentsSignedCentsF32, PercentageCentsSignedDollarsF32, Price, RatioCents64,
-        StoredF32Identity, ValueFromHeight,
+        Identity, ValueFromHeight,
     },
     prices,
 };
@@ -344,7 +344,7 @@ impl RealizedBase {
             cfg.indexes,
         )?;
 
-        let mvrv = LazyFromHeight::from_computed::<StoredF32Identity>(
+        let mvrv = LazyFromHeight::from_computed::<Identity<StoredF32>>(
             &cfg.name("mvrv"),
             cfg.version,
             realized_price_extra.ratio.height.read_only_boxed_clone(),

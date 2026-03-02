@@ -56,25 +56,27 @@ impl SortedBlocks {
 
     /// Remove one occurrence of value. O(sqrt(n)).
     fn remove(&mut self, value: f64) -> bool {
-        for (bi, block) in self.blocks.iter_mut().enumerate() {
-            if block.is_empty() {
-                continue;
-            }
-            // If value > block max, it's not in this block
-            if *block.last().unwrap() < value {
-                continue;
-            }
-            let pos = block.partition_point(|a| *a < value);
-            if pos < block.len() && block[pos] == value {
-                block.remove(pos);
-                self.total_len -= 1;
-                if block.is_empty() {
-                    self.blocks.remove(bi);
-                }
-                return true;
-            }
-            // Value not found (would be in this block range but isn't)
+        if self.blocks.is_empty() {
             return false;
+        }
+
+        // Binary search for first block whose max >= value
+        let bi = self
+            .blocks
+            .partition_point(|b| b.last().is_some_and(|&last| last < value));
+        if bi >= self.blocks.len() {
+            return false;
+        }
+
+        let block = &mut self.blocks[bi];
+        let pos = block.partition_point(|a| *a < value);
+        if pos < block.len() && block[pos] == value {
+            block.remove(pos);
+            self.total_len -= 1;
+            if block.is_empty() {
+                self.blocks.remove(bi);
+            }
+            return true;
         }
         false
     }

@@ -4,9 +4,8 @@ use brk_types::{Dollars, Height, Sats, StoredF32, StoredF64, Version};
 use vecdb::{Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
-    ComputedFromHeight, LazyFromHeight,
+    ComputedFromHeight, Identity, LazyFromHeight,
     NegPercentageDollarsF32, PercentageDollarsF32, PercentageSatsF64,
-    StoredF32Identity,
 };
 
 use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
@@ -41,7 +40,7 @@ impl RelativeBase {
             cfg.db, &cfg.name("net_unrealized_pnl_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
         )?;
 
-        let nupl = LazyFromHeight::from_computed::<StoredF32Identity>(
+        let nupl = LazyFromHeight::from_computed::<Identity<StoredF32>>(
             &cfg.name("nupl"),
             cfg.version + v2,
             net_unrealized_pnl_rel_to_market_cap.height.read_only_boxed_clone(),

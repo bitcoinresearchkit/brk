@@ -2,15 +2,14 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Version};
+use brk_types::{Cents, Dollars, Sats, Version};
 use vecdb::{Database, PAGE_SIZE};
 
 use super::Vecs;
 use crate::{
     distribution, indexes,
     internal::{
-        CentsIdentity, ComputedFromHeight, DollarsIdentity, LazyFromHeight, LazyValueFromHeight,
-        SatsIdentity, SatsToBitcoin,
+        ComputedFromHeight, Identity, LazyFromHeight, LazyValueFromHeight, SatsToBitcoin,
     },
 };
 
@@ -31,10 +30,10 @@ impl Vecs {
 
         // Circulating supply - lazy refs to distribution
         let circulating = LazyValueFromHeight::from_block_source::<
-            SatsIdentity,
+            Identity<Sats>,
             SatsToBitcoin,
-            CentsIdentity,
-            DollarsIdentity,
+            Identity<Cents>,
+            Identity<Dollars>,
         >("circulating_supply", &supply_metrics.total, version);
 
         // Burned/unspendable supply - computed from scripts
@@ -48,7 +47,7 @@ impl Vecs {
         let velocity = super::velocity::Vecs::forced_import(&db, version, indexes)?;
 
         // Market cap - lazy identity from distribution supply in USD
-        let market_cap = LazyFromHeight::from_lazy::<DollarsIdentity, Cents>(
+        let market_cap = LazyFromHeight::from_lazy::<Identity<Dollars>, Cents>(
             "market_cap",
             version,
             &supply_metrics.total.usd,

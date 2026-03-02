@@ -15,61 +15,15 @@ impl Vecs {
     ) -> Result<()> {
         let price = &prices.price.cents.height;
 
-        self.price_1w_min.cents.height.compute_rolling_min_from_starts(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            price,
-            exit,
-        )?;
-
-        self.price_1w_max.cents.height.compute_rolling_max_from_starts(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            price,
-            exit,
-        )?;
-
-        self.price_2w_min.cents.height.compute_rolling_min_from_starts(
-            starting_indexes.height,
-            &blocks.count.height_2w_ago,
-            price,
-            exit,
-        )?;
-
-        self.price_2w_max.cents.height.compute_rolling_max_from_starts(
-            starting_indexes.height,
-            &blocks.count.height_2w_ago,
-            price,
-            exit,
-        )?;
-
-        self.price_1m_min.cents.height.compute_rolling_min_from_starts(
-            starting_indexes.height,
-            &blocks.count.height_1m_ago,
-            price,
-            exit,
-        )?;
-
-        self.price_1m_max.cents.height.compute_rolling_max_from_starts(
-            starting_indexes.height,
-            &blocks.count.height_1m_ago,
-            price,
-            exit,
-        )?;
-
-        self.price_1y_min.cents.height.compute_rolling_min_from_starts(
-            starting_indexes.height,
-            &blocks.count.height_1y_ago,
-            price,
-            exit,
-        )?;
-
-        self.price_1y_max.cents.height.compute_rolling_max_from_starts(
-            starting_indexes.height,
-            &blocks.count.height_1y_ago,
-            price,
-            exit,
-        )?;
+        for (min_vec, max_vec, starts) in [
+            (&mut self.price_1w_min.cents.height, &mut self.price_1w_max.cents.height, &blocks.count.height_1w_ago),
+            (&mut self.price_2w_min.cents.height, &mut self.price_2w_max.cents.height, &blocks.count.height_2w_ago),
+            (&mut self.price_1m_min.cents.height, &mut self.price_1m_max.cents.height, &blocks.count.height_1m_ago),
+            (&mut self.price_1y_min.cents.height, &mut self.price_1y_max.cents.height, &blocks.count.height_1y_ago),
+        ] {
+            min_vec.compute_rolling_min_from_starts(starting_indexes.height, starts, price, exit)?;
+            max_vec.compute_rolling_max_from_starts(starting_indexes.height, starts, price, exit)?;
+        }
 
         // True range at block level: |price[h] - price[h-1]|
         let mut prev_price = None;

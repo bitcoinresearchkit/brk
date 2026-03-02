@@ -160,35 +160,15 @@ impl ComputedFromHeightStdDevExtended {
             .height
             .collect_range_at(start, self.base.sd.height.len());
 
-        for (offset, _ratio) in source_data.into_iter().enumerate() {
-            let index = start + offset;
-            let average = sma_data[offset];
-            let sd = sd_data[offset];
-
-            self.p0_5sd
-                .height
-                .truncate_push_at(index, average + StoredF32::from(0.5 * *sd))?;
-            self.p1sd.height.truncate_push_at(index, average + sd)?;
-            self.p1_5sd
-                .height
-                .truncate_push_at(index, average + StoredF32::from(1.5 * *sd))?;
-            self.p2sd.height.truncate_push_at(index, average + 2 * sd)?;
-            self.p2_5sd
-                .height
-                .truncate_push_at(index, average + StoredF32::from(2.5 * *sd))?;
-            self.p3sd.height.truncate_push_at(index, average + 3 * sd)?;
-            self.m0_5sd
-                .height
-                .truncate_push_at(index, average - StoredF32::from(0.5 * *sd))?;
-            self.m1sd.height.truncate_push_at(index, average - sd)?;
-            self.m1_5sd
-                .height
-                .truncate_push_at(index, average - StoredF32::from(1.5 * *sd))?;
-            self.m2sd.height.truncate_push_at(index, average - 2 * sd)?;
-            self.m2_5sd
-                .height
-                .truncate_push_at(index, average - StoredF32::from(2.5 * *sd))?;
-            self.m3sd.height.truncate_push_at(index, average - 3 * sd)?;
+        const MULTIPLIERS: [f32; 12] = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, -0.5, -1.0, -1.5, -2.0, -2.5, -3.0];
+        let band_vecs: Vec<_> = self.mut_band_height_vecs().collect();
+        for (vec, mult) in band_vecs.into_iter().zip(MULTIPLIERS) {
+            for (offset, _) in source_data.iter().enumerate() {
+                let index = start + offset;
+                let average = sma_data[offset];
+                let sd = sd_data[offset];
+                vec.truncate_push_at(index, average + StoredF32::from(mult * *sd))?;
+            }
         }
 
         {

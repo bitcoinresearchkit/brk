@@ -193,31 +193,13 @@ impl Vecs {
     where
         F: FnOnce(&mut Self) -> &mut EagerVec<PcoVec<Height, Height>>,
     {
-        let field = get_field(self);
-        let resume_from = field.len().min(starting_indexes.height.to_usize());
-        let mut prev = if resume_from > 0 {
-            field.collect_one_at(resume_from - 1).unwrap()
-        } else {
-            Height::ZERO
-        };
-        let mut cursor = Cursor::new(&time.timestamp_monotonic);
-        cursor.advance(prev.to_usize());
-        let mut prev_ts = cursor.next().unwrap();
-        Ok(field.compute_transform(
-            starting_indexes.height,
-            &time.timestamp_monotonic,
-            |(h, t, ..)| {
-                while t.difference_in_days_between(prev_ts) >= days {
-                    prev.increment();
-                    prev_ts = cursor.next().unwrap();
-                    if prev > h {
-                        unreachable!()
-                    }
-                }
-                (h, prev)
-            },
+        self.compute_rolling_start_inner(
+            time,
+            starting_indexes,
             exit,
-        )?)
+            get_field,
+            |t, prev_ts| t.difference_in_days_between(prev_ts) >= days,
+        )
     }
 
     fn compute_rolling_start_hours<F>(
@@ -230,6 +212,27 @@ impl Vecs {
     ) -> Result<()>
     where
         F: FnOnce(&mut Self) -> &mut EagerVec<PcoVec<Height, Height>>,
+    {
+        self.compute_rolling_start_inner(
+            time,
+            starting_indexes,
+            exit,
+            get_field,
+            |t, prev_ts| t.difference_in_hours_between(prev_ts) >= hours,
+        )
+    }
+
+    fn compute_rolling_start_inner<F, D>(
+        &mut self,
+        time: &time::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+        get_field: F,
+        expired: D,
+    ) -> Result<()>
+    where
+        F: FnOnce(&mut Self) -> &mut EagerVec<PcoVec<Height, Height>>,
+        D: Fn(Timestamp, Timestamp) -> bool,
     {
         let field = get_field(self);
         let resume_from = field.len().min(starting_indexes.height.to_usize());
@@ -245,7 +248,7 @@ impl Vecs {
             starting_indexes.height,
             &time.timestamp_monotonic,
             |(h, t, ..)| {
-                while t.difference_in_hours_between(prev_ts) >= hours {
+                while expired(t, prev_ts) {
                     prev.increment();
                     prev_ts = cursor.next().unwrap();
                     if prev > h {
