@@ -6,9 +6,9 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
 
-use super::{RelativeBase, RelativeExtendedOwnPnl, RelativePeakRegret};
+use super::{RelativeBase, RelativeExtendedOwnPnl};
 
-/// Relative metrics for the "all" cohort (base + own_pnl + peak_regret, NO rel_to_all).
+/// Relative metrics for the "all" cohort (base + own_pnl, NO rel_to_all).
 #[derive(Deref, DerefMut, Traversable)]
 pub struct RelativeForAll<M: StorageMode = Rw> {
     #[deref]
@@ -17,8 +17,6 @@ pub struct RelativeForAll<M: StorageMode = Rw> {
     pub base: RelativeBase<M>,
     #[traversable(flatten)]
     pub extended_own_pnl: RelativeExtendedOwnPnl<M>,
-    #[traversable(flatten)]
-    pub peak_regret: RelativePeakRegret<M>,
 }
 
 impl RelativeForAll {
@@ -26,7 +24,6 @@ impl RelativeForAll {
         Ok(Self {
             base: RelativeBase::forced_import(cfg)?,
             extended_own_pnl: RelativeExtendedOwnPnl::forced_import(cfg)?,
-            peak_regret: RelativePeakRegret::forced_import(cfg)?,
         })
     }
 
@@ -38,7 +35,6 @@ impl RelativeForAll {
         realized: &RealizedBase,
         supply_total_sats: &impl ReadableVec<Height, Sats>,
         market_cap: &impl ReadableVec<Height, Dollars>,
-        peak_regret_val: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
         self.base.compute(
@@ -50,8 +46,6 @@ impl RelativeForAll {
             exit,
         )?;
         self.extended_own_pnl.compute(max_from, unrealized, exit)?;
-        self.peak_regret
-            .compute(max_from, peak_regret_val, market_cap, exit)?;
         Ok(())
     }
 }

@@ -238,13 +238,6 @@
  * @property {Color} color
  * @property {PatternBasicWithMarketCap} tree
  *
- * MinAge cohort - has peakRegret in unrealized (minAge.*)
- * @typedef {Object} CohortMinAge
- * @property {string} name
- * @property {string} title
- * @property {Color} color
- * @property {MinAgePattern} tree
- *
  * Basic cohort WITHOUT RelToMarketCap (epoch.*, amountRange.*, year.*, type.*)
  * @typedef {Object} CohortBasicWithoutMarketCap
  * @property {string} name
@@ -307,12 +300,6 @@
  * @property {string} name
  * @property {string} title
  * @property {readonly CohortBasicWithMarketCap[]} list
- * @property {CohortAll} all
- *
- * @typedef {Object} CohortGroupMinAge
- * @property {string} name
- * @property {string} title
- * @property {readonly CohortMinAge[]} list
  * @property {CohortAll} all
  *
  * @typedef {Object} CohortGroupBasicWithoutMarketCap

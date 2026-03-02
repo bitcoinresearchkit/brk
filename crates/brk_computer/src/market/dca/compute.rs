@@ -32,6 +32,9 @@ impl Vecs {
                 starting_indexes.height,
                 h2d,
                 |(h, di, _)| {
+                    if last_di.is_none() && h.to_usize() > 0 {
+                        last_di = Some(h2d.collect_one_at(h.to_usize() - 1).unwrap());
+                    }
                     let same_day = last_di.is_some_and(|prev| prev == di);
                     last_di = Some(di);
                     if same_day {

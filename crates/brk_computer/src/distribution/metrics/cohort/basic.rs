@@ -51,8 +51,8 @@ impl CohortMetricsBase for BasicCohortMetrics {
     ) -> Result<()> {
         state.apply_pending();
         self.cost_basis.truncate_push_minmax(height, state)?;
-        let (height_unrealized_state, _) = state.compute_unrealized_states(height_price, None);
-        self.unrealized.truncate_push(height, &height_unrealized_state)?;
+        let unrealized_state = state.compute_unrealized_state(height_price);
+        self.unrealized.truncate_push(height, &unrealized_state)?;
         Ok(())
     }
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

@@ -280,12 +280,4 @@ impl CachedUnrealizedState {
         state
     }
 
-    /// Compute final UnrealizedState directly (not cached).
-    /// Used for date_state which doesn't use the cache.
-    pub(crate) fn compute_full_standalone(
-        current_price: CentsCompact,
-        map: &CostBasisMap,
-    ) -> UnrealizedState {
-        Self::compute_raw(current_price, map).to_output()
-    }
 }

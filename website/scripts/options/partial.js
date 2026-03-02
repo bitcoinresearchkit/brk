@@ -7,7 +7,6 @@ import {
   createCohortFolderWithAdjusted,
   createCohortFolderLongTerm,
   createCohortFolderAgeRange,
-  createCohortFolderMinAge,
   createCohortFolderBasicWithMarketCap,
   createCohortFolderBasicWithoutMarketCap,
   createCohortFolderWithoutRelative,
@@ -16,7 +15,6 @@ import {
   createGroupedCohortFolderWithAdjusted,
   createGroupedCohortFolderWithNupl,
   createGroupedCohortFolderAgeRange,
-  createGroupedCohortFolderMinAge,
   createGroupedCohortFolderBasicWithMarketCap,
   createGroupedCohortFolderBasicWithoutMarketCap,
   createGroupedCohortFolderAddress,
@@ -112,13 +110,13 @@ export function createPartialOptions() {
                 {
                   name: "Older Than",
                   tree: [
-                    createGroupedCohortFolderMinAge({
+                    createGroupedCohortFolderBasicWithMarketCap({
                       name: "Compare",
                       title: "Min Age",
                       list: fromDate,
                       all: cohortAll,
                     }),
-                    ...fromDate.map(createCohortFolderMinAge),
+                    ...fromDate.map(createCohortFolderBasicWithMarketCap),
                   ],
                 },
                 // Range

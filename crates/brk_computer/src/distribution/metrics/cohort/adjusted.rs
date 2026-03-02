@@ -9,11 +9,10 @@ use crate::{ComputeIndexes, blocks, distribution::state::CohortState, prices};
 
 use crate::distribution::metrics::{
     ActivityMetrics, CohortMetricsBase, CostBasisBase, ImportConfig, OutputsMetrics, RealizedBase,
-    RealizedWithAdjusted, RelativeWithPeakRegret, SupplyMetrics, UnrealizedBase,
-    UnrealizedWithPeakRegret,
+    RealizedWithAdjusted, RelativeWithRelToAll, SupplyMetrics, UnrealizedBase,
 };
 
-/// Cohort metrics with adjusted realized + peak regret (no extended).
+/// Cohort metrics with adjusted realized (no extended).
 /// Used by: max_age cohorts.
 #[derive(Traversable)]
 pub struct AdjustedCohortMetrics<M: StorageMode = Rw> {
@@ -24,8 +23,8 @@ pub struct AdjustedCohortMetrics<M: StorageMode = Rw> {
     pub activity: Box<ActivityMetrics<M>>,
     pub realized: Box<RealizedWithAdjusted<M>>,
     pub cost_basis: Box<CostBasisBase<M>>,
-    pub unrealized: Box<UnrealizedWithPeakRegret<M>>,
-    pub relative: Box<RelativeWithPeakRegret<M>>,
+    pub unrealized: Box<UnrealizedBase<M>>,
+    pub relative: Box<RelativeWithRelToAll<M>>,
 }
 
 impl CohortMetricsBase for AdjustedCohortMetrics {
@@ -53,8 +52,8 @@ impl CohortMetricsBase for AdjustedCohortMetrics {
     ) -> Result<()> {
         state.apply_pending();
         self.cost_basis.truncate_push_minmax(height, state)?;
-        let (height_unrealized_state, _) = state.compute_unrealized_states(height_price, None);
-        self.unrealized.base.truncate_push(height, &height_unrealized_state)?;
+        let unrealized_state = state.compute_unrealized_state(height_price);
+        self.unrealized.truncate_push(height, &unrealized_state)?;
         Ok(())
     }
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
@@ -64,8 +63,7 @@ impl CohortMetricsBase for AdjustedCohortMetrics {
         vecs.extend(self.activity.par_iter_mut().collect::<Vec<_>>());
         vecs.extend(self.realized.collect_vecs_mut());
         vecs.extend(self.cost_basis.collect_vecs_mut());
-        vecs.extend(self.unrealized.base.collect_vecs_mut());
-        vecs.extend(self.unrealized.peak_regret_ext.collect_vecs_mut());
+        vecs.extend(self.unrealized.collect_vecs_mut());
         vecs
     }
 }
@@ -75,10 +73,10 @@ impl AdjustedCohortMetrics {
         cfg: &ImportConfig,
     ) -> Result<Self> {
         let supply = SupplyMetrics::forced_import(cfg)?;
-        let unrealized = UnrealizedWithPeakRegret::forced_import(cfg)?;
+        let unrealized = UnrealizedBase::forced_import(cfg)?;
         let realized = RealizedWithAdjusted::forced_import(cfg)?;
 
-        let relative = RelativeWithPeakRegret::forced_import(cfg)?;
+        let relative = RelativeWithRelToAll::forced_import(cfg)?;
 
         Ok(Self {
             filter: cfg.filter.clone(),
@@ -117,12 +115,11 @@ impl AdjustedCohortMetrics {
 
         self.relative.compute(
             starting_indexes.height,
-            &self.unrealized.base,
+            &self.unrealized,
             &self.realized.base,
             &self.supply.total.sats.height,
             height_to_market_cap,
             all_supply_sats,
-            &self.unrealized.peak_regret_ext.peak_regret.usd.height,
             exit,
         )?;
 

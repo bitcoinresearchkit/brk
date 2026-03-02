@@ -1,21 +1,21 @@
 use std::{cmp::Reverse, collections::BinaryHeap, fs, path::Path};
 
 use brk_cohort::{
-    AGE_BOUNDARIES, ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount,
+    ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount,
     ByMaxAge, ByMinAge, BySpendableType, ByYear, CohortContext, Filter, Filtered, TERM_NAMES, Term,
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Cents, CentsCompact, CostBasisDistribution, Date, Day1, Dollars, Height, ONE_HOUR_IN_SEC, Sats,
-    StoredF32, Timestamp, Version,
+    Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Height, Sats,
+    StoredF32, Version,
 };
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, VecIndex, WritableVec};
 
 use crate::{
     ComputeIndexes, blocks,
-    distribution::{DynCohortVecs, compute::PriceRangeMax, state::BlockState},
+    distribution::DynCohortVecs,
     indexes,
     internal::{PERCENTILES, PERCENTILES_LEN, compute_spot_percentile_rank},
     prices,
@@ -23,7 +23,7 @@ use crate::{
 
 use crate::distribution::metrics::{
     AdjustedCohortMetrics, AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase,
-    ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig, PeakRegretCohortMetrics,
+    ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig,
     SupplyMetrics,
 };
 
@@ -39,13 +39,13 @@ const COST_BASIS_PRICE_DIGITS: i32 = 5;
 /// All UTXO cohorts organized by filter type.
 ///
 /// Each group uses a concrete metrics type matching its required features:
-/// - age_range: extended realized + extended cost basis + peak regret
+/// - age_range: extended realized + extended cost basis
 /// - epoch/year/amount/type: basic metrics with relative
-/// - all: extended + adjusted + peak regret (no rel_to_all)
-/// - sth: extended + adjusted + peak regret
-/// - lth: extended + peak regret
-/// - max_age: adjusted + peak regret
-/// - min_age: peak regret
+/// - all: extended + adjusted (no rel_to_all)
+/// - sth: extended + adjusted
+/// - lth: extended
+/// - max_age: adjusted
+/// - min_age: basic
 #[derive(Traversable)]
 pub struct UTXOCohorts<M: StorageMode = Rw> {
     pub all: UTXOCohortVecs<AllCohortMetrics<M>>,
@@ -53,7 +53,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     pub lth: UTXOCohortVecs<ExtendedCohortMetrics<M>>,
     pub age_range: ByAgeRange<UTXOCohortVecs<ExtendedCohortMetrics<M>>>,
     pub max_age: ByMaxAge<UTXOCohortVecs<AdjustedCohortMetrics<M>>>,
-    pub min_age: ByMinAge<UTXOCohortVecs<PeakRegretCohortMetrics<M>>>,
+    pub min_age: ByMinAge<UTXOCohortVecs<BasicCohortMetrics<M>>>,
     pub ge_amount: ByGreatEqualAmount<UTXOCohortVecs<BasicCohortMetrics<M>>>,
     pub amount_range: ByAmountRange<UTXOCohortVecs<BasicCohortMetrics<M>>>,
     pub lt_amount: ByLowerThanAmount<UTXOCohortVecs<BasicCohortMetrics<M>>>,
@@ -189,7 +189,7 @@ impl UTXOCohorts<Rw> {
             })?
         };
 
-        // min_age: PeakRegretCohortMetrics
+        // min_age: BasicCohortMetrics
         let min_age = {
             ByMinAge::try_new(&|f: Filter, name: &'static str| -> Result<_> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
@@ -202,7 +202,7 @@ impl UTXOCohorts<Rw> {
                 };
                 Ok(UTXOCohortVecs::new(
                     None,
-                    PeakRegretCohortMetrics::forced_import(&cfg)?,
+                    BasicCohortMetrics::forced_import(&cfg)?,
                 ))
             })?
         };
@@ -307,7 +307,7 @@ impl UTXOCohorts<Rw> {
         let age_range = &self.age_range;
         let amount_range = &self.amount_range;
 
-        // all: aggregate of all age_range (base + peak_regret)
+        // all: aggregate of all age_range
         // Note: realized.extended rolling sums are computed from base in compute_rest_part2.
         // Note: cost_basis.extended percentiles are computed in truncate_push_aggregate_percentiles.
         {
@@ -318,19 +318,9 @@ impl UTXOCohorts<Rw> {
             self.all
                 .metrics
                 .compute_base_from_others(starting_indexes, &sources_dyn, exit)?;
-
-            let pr_sources: Vec<_> = age_range
-                .iter()
-                .map(|v| &v.metrics.unrealized.peak_regret_ext)
-                .collect();
-            self.all
-                .metrics
-                .unrealized
-                .peak_regret_ext
-                .compute_from_stateful(starting_indexes, &pr_sources, exit)?;
         }
 
-        // sth: aggregate of matching age_range (base + peak_regret)
+        // sth: aggregate of matching age_range
         {
             let sth_filter = self.sth.metrics.filter().clone();
             let matching: Vec<_> = age_range
@@ -345,19 +335,9 @@ impl UTXOCohorts<Rw> {
             self.sth
                 .metrics
                 .compute_base_from_others(starting_indexes, &sources_dyn, exit)?;
-
-            let pr_sources: Vec<_> = matching
-                .iter()
-                .map(|v| &v.metrics.unrealized.peak_regret_ext)
-                .collect();
-            self.sth
-                .metrics
-                .unrealized
-                .peak_regret_ext
-                .compute_from_stateful(starting_indexes, &pr_sources, exit)?;
         }
 
-        // lth: aggregate of matching age_range (base + peak_regret)
+        // lth: aggregate of matching age_range
         {
             let lth_filter = self.lth.metrics.filter().clone();
             let matching: Vec<_> = age_range
@@ -372,19 +352,9 @@ impl UTXOCohorts<Rw> {
             self.lth
                 .metrics
                 .compute_base_from_others(starting_indexes, &sources_dyn, exit)?;
-
-            let pr_sources: Vec<_> = matching
-                .iter()
-                .map(|v| &v.metrics.unrealized.peak_regret_ext)
-                .collect();
-            self.lth
-                .metrics
-                .unrealized
-                .peak_regret_ext
-                .compute_from_stateful(starting_indexes, &pr_sources, exit)?;
         }
 
-        // min_age: base + peak_regret from matching age_range
+        // min_age: base from matching age_range
         self.min_age
             .iter_mut()
             .collect::<Vec<_>>()
@@ -402,15 +372,6 @@ impl UTXOCohorts<Rw> {
                     .collect();
                 vecs.metrics
                     .compute_base_from_others(starting_indexes, &sources_dyn, exit)?;
-
-                let pr_sources: Vec<_> = matching
-                    .iter()
-                    .map(|v| &v.metrics.unrealized.peak_regret_ext)
-                    .collect();
-                vecs.metrics
-                    .unrealized
-                    .peak_regret_ext
-                    .compute_from_stateful(starting_indexes, &pr_sources, exit)?;
 
                 Ok(())
             })?;
@@ -433,15 +394,6 @@ impl UTXOCohorts<Rw> {
                     .collect();
                 vecs.metrics
                     .compute_base_from_others(starting_indexes, &sources_dyn, exit)?;
-
-                let pr_sources: Vec<_> = matching
-                    .iter()
-                    .map(|v| &v.metrics.unrealized.peak_regret_ext)
-                    .collect();
-                vecs.metrics
-                    .unrealized
-                    .peak_regret_ext
-                    .compute_from_stateful(starting_indexes, &pr_sources, exit)?;
 
                 Ok(())
             })?;
@@ -829,7 +781,7 @@ impl UTXOCohorts<Rw> {
         &mut self,
         height: Height,
         spot: Cents,
-        day1_opt: Option<Day1>,
+        date_opt: Option<Date>,
         states_path: &Path,
     ) -> Result<()> {
         // Collect (filter, entries, total_sats, total_usd) from age_range cohorts.
@@ -940,7 +892,7 @@ impl UTXOCohorts<Rw> {
             let mut sats_at_price: u64 = 0;
             let mut usd_at_price: u128 = 0;
 
-            let collect_merged = day1_opt.is_some();
+            let collect_merged = date_opt.is_some();
             let max_unique_prices = if collect_merged {
                 relevant.iter().map(|e| e.len()).max().unwrap_or(0)
             } else {
@@ -1027,10 +979,9 @@ impl UTXOCohorts<Rw> {
                 .truncate_push(height, rank)?;
 
             // Write daily cost basis snapshot
-            if let Some(day1) = day1_opt
+            if let Some(date) = date_opt
                 && let Some(cohort_name) = target.cohort_name
             {
-                let date = Date::from(day1);
                 let dir = states_path.join(format!("utxo_{cohort_name}_cost_basis/by_date"));
                 fs::create_dir_all(&dir)?;
                 let path = dir.join(date.to_string());
@@ -1070,100 +1021,4 @@ impl UTXOCohorts<Rw> {
         Ok(())
     }
 
-    /// Compute and push peak regret for all age_range cohorts.
-    pub(crate) fn compute_and_push_peak_regret(
-        &mut self,
-        chain_state: &[BlockState],
-        current_height: Height,
-        current_timestamp: Timestamp,
-        spot: Cents,
-        price_range_max: &PriceRangeMax,
-    ) -> Result<()> {
-        const FIRST_PRICE_HEIGHT: usize = 68_195;
-
-        let start_height = FIRST_PRICE_HEIGHT;
-        let end_height = current_height.to_usize() + 1;
-
-        if end_height <= start_height {
-            for cohort in self.age_range.iter_mut() {
-                cohort
-                    .metrics
-                    .unrealized
-                    .peak_regret_ext
-                    .peak_regret
-                    .cents
-                    .height
-                    .truncate_push(current_height, Cents::ZERO)?;
-            }
-            return Ok(());
-        }
-
-        let spot_u128 = spot.as_u128();
-        let current_ts = *current_timestamp;
-
-        let splits: [usize; 20] = std::array::from_fn(|k| {
-            let boundary_seconds = (AGE_BOUNDARIES[k] as u32) * ONE_HOUR_IN_SEC;
-            let threshold_ts = current_ts.saturating_sub(boundary_seconds);
-            chain_state[..end_height].partition_point(|b| *b.timestamp <= threshold_ts)
-        });
-
-        let ranges: [(usize, usize); 21] = std::array::from_fn(|i| {
-            if i == 0 {
-                (splits[0], end_height)
-            } else if i < 20 {
-                (splits[i], splits[i - 1])
-            } else {
-                (start_height, splits[19])
-            }
-        });
-
-        let regrets: [Cents; 21] = ranges
-            .into_par_iter()
-            .map(|(range_start, range_end)| {
-                let effective_start = range_start.max(start_height);
-                if effective_start >= range_end {
-                    return Cents::ZERO;
-                }
-
-                let mut regret: u128 = 0;
-                for (i, block) in chain_state[effective_start..range_end].iter().enumerate() {
-                    let supply = block.supply.value;
-
-                    if supply.is_zero() {
-                        continue;
-                    }
-
-                    let cost_basis = block.price;
-                    let receive_height = Height::from(effective_start + i);
-                    let peak = price_range_max.max_between(receive_height, current_height);
-                    let peak_u128 = peak.as_u128();
-                    let cost_u128 = cost_basis.as_u128();
-                    let supply_u128 = supply.as_u128();
-
-                    regret += if spot_u128 >= cost_u128 {
-                        (peak_u128 - spot_u128) * supply_u128
-                    } else {
-                        (peak_u128 - cost_u128) * supply_u128
-                    };
-                }
-
-                Cents::new((regret / Sats::ONE_BTC_U128) as u64)
-            })
-            .collect::<Vec<_>>()
-            .try_into()
-            .unwrap();
-
-        for (cohort, regret) in self.age_range.iter_mut().zip(regrets) {
-            cohort
-                .metrics
-                .unrealized
-                .peak_regret_ext
-                .peak_regret
-                .cents
-                .height
-                .truncate_push(current_height, regret)?;
-        }
-
-        Ok(())
-    }
 }

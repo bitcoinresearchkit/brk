@@ -17,14 +17,15 @@ impl UTXOCohorts<Rw> {
     ///
     /// `price_range_max` is used to compute the peak price during each UTXO's holding period
     /// for accurate peak regret calculation.
+    /// Returns the minimum receive_height that was modified, if any.
     pub(crate) fn send(
         &mut self,
         height_to_sent: FxHashMap<Height, Transacted>,
         chain_state: &mut [BlockState],
         price_range_max: &PriceRangeMax,
-    ) {
+    ) -> Option<Height> {
         if chain_state.is_empty() {
-            return;
+            return None;
         }
 
         let last_block = chain_state.last().unwrap();
@@ -32,8 +33,12 @@ impl UTXOCohorts<Rw> {
         let current_price = last_block.price;
         let chain_len = chain_state.len();
         let send_height = Height::from(chain_len - 1);
+        let mut min_receive_height: Option<Height> = None;
 
         for (receive_height, sent) in height_to_sent {
+            min_receive_height = Some(
+                min_receive_height.map_or(receive_height, |cur| cur.min(receive_height)),
+            );
             // Update chain_state to reflect spent supply
             chain_state[receive_height.to_usize()].supply -= &sent.spendable_supply;
 
@@ -108,5 +113,7 @@ impl UTXOCohorts<Rw> {
                     );
                 });
         }
+
+        min_receive_height
     }
 }

@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_types::{EmptyAddressData, FundedAddressData, Height};
 use rayon::prelude::*;
 use tracing::info;
-use vecdb::{AnyStoredVec, WritableVec, Stamp};
+use vecdb::{AnyStoredVec, AnyVec, VecIndex, WritableVec, Stamp};
 
 use crate::distribution::{
     Vecs,
@@ -54,6 +54,7 @@ pub(crate) fn write(
     vecs: &mut Vecs,
     height: Height,
     chain_state: &[BlockState],
+    min_supply_modified: Option<Height>,
     with_changes: bool,
 ) -> Result<()> {
     info!("Writing to disk...");
@@ -62,9 +63,13 @@ pub(crate) fn write(
 
     let stamp = Stamp::from(height);
 
-    // Prepare chain_state before parallel write
-    vecs.supply_state.truncate_if_needed(Height::ZERO)?;
-    for block_state in chain_state {
+    // Incremental supply_state write: only rewrite from the earliest modified height
+    let supply_state_len = vecs.supply_state.len();
+    let truncate_to = min_supply_modified
+        .map_or(supply_state_len, |h| h.to_usize().min(supply_state_len));
+    vecs.supply_state
+        .truncate_if_needed(Height::from(truncate_to))?;
+    for block_state in &chain_state[truncate_to..] {
         vecs.supply_state.push(block_state.supply.clone());
     }
 

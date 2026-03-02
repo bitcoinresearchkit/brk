@@ -255,13 +255,9 @@ impl CohortState {
         self.cost_basis_data.compute_percentiles()
     }
 
-    pub(crate) fn compute_unrealized_states(
-        &mut self,
-        height_price: Cents,
-        date_price: Option<Cents>,
-    ) -> (UnrealizedState, Option<UnrealizedState>) {
+    pub(crate) fn compute_unrealized_state(&mut self, height_price: Cents) -> UnrealizedState {
         self.cost_basis_data
-            .compute_unrealized_states(height_price, date_price)
+            .compute_unrealized_state(height_price)
     }
 
     pub(crate) fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {

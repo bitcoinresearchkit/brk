@@ -7,11 +7,11 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
 
 use super::{
-    RelativeBase, RelativeExtendedOwnMarketCap, RelativeExtendedOwnPnl, RelativePeakRegret,
+    RelativeBase, RelativeExtendedOwnMarketCap, RelativeExtendedOwnPnl,
     RelativeToAll,
 };
 
-/// Full extended relative metrics (base + rel_to_all + own_market_cap + own_pnl + peak_regret).
+/// Full extended relative metrics (base + rel_to_all + own_market_cap + own_pnl).
 /// Used by: sth, lth, age_range cohorts.
 #[derive(Deref, DerefMut, Traversable)]
 pub struct RelativeWithExtended<M: StorageMode = Rw> {
@@ -25,8 +25,6 @@ pub struct RelativeWithExtended<M: StorageMode = Rw> {
     pub extended_own_market_cap: RelativeExtendedOwnMarketCap<M>,
     #[traversable(flatten)]
     pub extended_own_pnl: RelativeExtendedOwnPnl<M>,
-    #[traversable(flatten)]
-    pub peak_regret: RelativePeakRegret<M>,
 }
 
 impl RelativeWithExtended {
@@ -36,7 +34,6 @@ impl RelativeWithExtended {
             rel_to_all: RelativeToAll::forced_import(cfg)?,
             extended_own_market_cap: RelativeExtendedOwnMarketCap::forced_import(cfg)?,
             extended_own_pnl: RelativeExtendedOwnPnl::forced_import(cfg)?,
-            peak_regret: RelativePeakRegret::forced_import(cfg)?,
         })
     }
 
@@ -50,7 +47,6 @@ impl RelativeWithExtended {
         market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         own_market_cap: &impl ReadableVec<Height, Dollars>,
-        peak_regret_val: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
         self.base.compute(
@@ -71,8 +67,6 @@ impl RelativeWithExtended {
         self.extended_own_market_cap
             .compute(max_from, unrealized, own_market_cap, exit)?;
         self.extended_own_pnl.compute(max_from, unrealized, exit)?;
-        self.peak_regret
-            .compute(max_from, peak_regret_val, market_cap, exit)?;
         Ok(())
     }
 }

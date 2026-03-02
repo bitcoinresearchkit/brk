@@ -379,7 +379,6 @@ impl Vecs {
                 inputs,
                 outputs,
                 transactions,
-                blocks,
                 starting_height,
                 last_height,
                 &mut chain_state,

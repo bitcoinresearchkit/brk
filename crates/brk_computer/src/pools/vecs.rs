@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, PoolSlug, StoredF32, StoredU16, StoredU32};
-use vecdb::{BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, Version};
+use vecdb::{AnyVec, BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, VecIndex, Version};
 
 use crate::{
     blocks,
@@ -277,7 +277,19 @@ impl Vecs {
         )?;
 
         {
-            let mut prev = StoredU32::ZERO;
+            let resume_from = self
+                .blocks_since_block
+                .height
+                .len()
+                .min(starting_indexes.height.to_usize());
+            let mut prev = if resume_from > 0 {
+                self.blocks_since_block
+                    .height
+                    .collect_one_at(resume_from - 1)
+                    .unwrap()
+            } else {
+                StoredU32::ZERO
+            };
             self.blocks_since_block.height.compute_transform(
                 starting_indexes.height,
                 &self.blocks_mined.height,

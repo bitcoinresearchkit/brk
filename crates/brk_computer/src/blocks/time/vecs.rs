@@ -22,7 +22,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 /// Time-based periods (minute10–year10) are lazy: `idx.to_timestamp()` is a pure
 /// function of the index, so no storage or decompression is needed.
 /// Epoch-based periods (halvingepoch, difficultyepoch) are eager: their timestamps
-/// come from block data via `compute_indirect`.
+/// come from block data via `compute_indirect_sequential`.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct TimestampIndexes<M: StorageMode = Rw>(
@@ -56,13 +56,13 @@ impl TimestampIndexes {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.halvingepoch.compute_indirect(
+        self.halvingepoch.compute_indirect_sequential(
             starting_indexes.halvingepoch,
             &indexes.halvingepoch.first_height,
             &indexer.vecs.blocks.timestamp,
             exit,
         )?;
-        self.difficultyepoch.compute_indirect(
+        self.difficultyepoch.compute_indirect_sequential(
             starting_indexes.difficultyepoch,
             &indexes.difficultyepoch.first_height,
             &indexer.vecs.blocks.timestamp,

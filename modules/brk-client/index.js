@@ -2395,7 +2395,6 @@ function create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern(client
  * @property {MetricPattern1<StoredF32>} unrealizedLossRelToMarketCap
  * @property {MetricPattern1<StoredF32>} unrealizedLossRelToOwnMarketCap
  * @property {MetricPattern1<StoredF32>} unrealizedLossRelToOwnTotalUnrealizedPnl
- * @property {MetricPattern1<StoredF32>} unrealizedPeakRegretRelToMarketCap
  * @property {MetricPattern1<StoredF32>} unrealizedProfitRelToMarketCap
  * @property {MetricPattern1<StoredF32>} unrealizedProfitRelToOwnMarketCap
  * @property {MetricPattern1<StoredF32>} unrealizedProfitRelToOwnTotalUnrealizedPnl
@@ -2426,7 +2425,6 @@ function createInvestedNegNetNuplSupplyUnrealizedPattern2(client, acc) {
     unrealizedLossRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_market_cap')),
     unrealizedLossRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_own_market_cap')),
     unrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_own_total_unrealized_pnl')),
-    unrealizedPeakRegretRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_peak_regret_rel_to_market_cap')),
     unrealizedProfitRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_market_cap')),
     unrealizedProfitRelToOwnMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_own_market_cap')),
     unrealizedProfitRelToOwnTotalUnrealizedPnl: createMetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_own_total_unrealized_pnl')),
@@ -2646,55 +2644,6 @@ function createRatioPattern3(client, acc) {
 }
 
 /**
- * @typedef {Object} GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern
- * @property {CentsUsdPattern} greedIndex
- * @property {CentsUsdPattern} investedCapitalInLoss
- * @property {MetricPattern18<CentsSats>} investedCapitalInLossRaw
- * @property {CentsUsdPattern} investedCapitalInProfit
- * @property {MetricPattern18<CentsSats>} investedCapitalInProfitRaw
- * @property {MetricPattern18<CentsSquaredSats>} investorCapInLossRaw
- * @property {MetricPattern18<CentsSquaredSats>} investorCapInProfitRaw
- * @property {MetricPattern1<Dollars>} negUnrealizedLoss
- * @property {CentsUsdPattern} netSentiment
- * @property {CentsUsdPattern} netUnrealizedPnl
- * @property {CentsUsdPattern} painIndex
- * @property {CentsUsdPattern} peakRegret
- * @property {BtcCentsSatsUsdPattern} supplyInLoss
- * @property {BtcCentsSatsUsdPattern} supplyInProfit
- * @property {CentsUsdPattern} totalUnrealizedPnl
- * @property {CentsUsdPattern} unrealizedLoss
- * @property {CentsUsdPattern} unrealizedProfit
- */
-
-/**
- * Create a GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern}
- */
-function createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(client, acc) {
-  return {
-    greedIndex: createCentsUsdPattern(client, _m(acc, 'greed_index')),
-    investedCapitalInLoss: createCentsUsdPattern(client, _m(acc, 'invested_capital_in_loss')),
-    investedCapitalInLossRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_loss_raw')),
-    investedCapitalInProfit: createCentsUsdPattern(client, _m(acc, 'invested_capital_in_profit')),
-    investedCapitalInProfitRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_profit_raw')),
-    investorCapInLossRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_loss_raw')),
-    investorCapInProfitRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_profit_raw')),
-    negUnrealizedLoss: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss')),
-    netSentiment: createCentsUsdPattern(client, _m(acc, 'net_sentiment')),
-    netUnrealizedPnl: createCentsUsdPattern(client, _m(acc, 'net_unrealized_pnl')),
-    painIndex: createCentsUsdPattern(client, _m(acc, 'pain_index')),
-    peakRegret: createCentsUsdPattern(client, _m(acc, 'unrealized_peak_regret')),
-    supplyInLoss: createBtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_loss')),
-    supplyInProfit: createBtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_profit')),
-    totalUnrealizedPnl: createCentsUsdPattern(client, _m(acc, 'total_unrealized_pnl')),
-    unrealizedLoss: createCentsUsdPattern(client, _m(acc, 'unrealized_loss')),
-    unrealizedProfit: createCentsUsdPattern(client, _m(acc, 'unrealized_profit')),
-  };
-}
-
-/**
  * @typedef {Object} GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern
  * @property {CentsUsdPattern} greedIndex
  * @property {CentsUsdPattern} investedCapitalInLoss
@@ -2783,47 +2732,6 @@ function createBlocksCoinbaseDaysDominanceFeeSubsidyPattern(client, acc) {
     dominance24h: createMetricPattern1(client, _m(acc, 'dominance_24h')),
     fee: createBaseCumulativeSumPattern(client, _m(acc, 'fee')),
     subsidy: createBaseCumulativeSumPattern(client, _m(acc, 'subsidy')),
-  };
-}
-
-/**
- * @typedef {Object} InvestedNegNetNuplSupplyUnrealizedPattern4
- * @property {MetricPattern1<StoredF32>} investedCapitalInLossPct
- * @property {MetricPattern1<StoredF32>} investedCapitalInProfitPct
- * @property {MetricPattern1<StoredF32>} negUnrealizedLossRelToMarketCap
- * @property {MetricPattern1<StoredF32>} netUnrealizedPnlRelToMarketCap
- * @property {MetricPattern1<StoredF32>} nupl
- * @property {MetricPattern1<StoredF64>} supplyInLossRelToCirculatingSupply
- * @property {MetricPattern1<StoredF64>} supplyInLossRelToOwnSupply
- * @property {MetricPattern1<StoredF64>} supplyInProfitRelToCirculatingSupply
- * @property {MetricPattern1<StoredF64>} supplyInProfitRelToOwnSupply
- * @property {MetricPattern1<StoredF64>} supplyRelToCirculatingSupply
- * @property {MetricPattern1<StoredF32>} unrealizedLossRelToMarketCap
- * @property {MetricPattern1<StoredF32>} unrealizedPeakRegretRelToMarketCap
- * @property {MetricPattern1<StoredF32>} unrealizedProfitRelToMarketCap
- */
-
-/**
- * Create a InvestedNegNetNuplSupplyUnrealizedPattern4 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {InvestedNegNetNuplSupplyUnrealizedPattern4}
- */
-function createInvestedNegNetNuplSupplyUnrealizedPattern4(client, acc) {
-  return {
-    investedCapitalInLossPct: createMetricPattern1(client, _m(acc, 'invested_capital_in_loss_pct')),
-    investedCapitalInProfitPct: createMetricPattern1(client, _m(acc, 'invested_capital_in_profit_pct')),
-    negUnrealizedLossRelToMarketCap: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss_rel_to_market_cap')),
-    netUnrealizedPnlRelToMarketCap: createMetricPattern1(client, _m(acc, 'net_unrealized_pnl_rel_to_market_cap')),
-    nupl: createMetricPattern1(client, _m(acc, 'nupl')),
-    supplyInLossRelToCirculatingSupply: createMetricPattern1(client, _m(acc, 'supply_in_loss_rel_to_circulating_supply')),
-    supplyInLossRelToOwnSupply: createMetricPattern1(client, _m(acc, 'supply_in_loss_rel_to_own_supply')),
-    supplyInProfitRelToCirculatingSupply: createMetricPattern1(client, _m(acc, 'supply_in_profit_rel_to_circulating_supply')),
-    supplyInProfitRelToOwnSupply: createMetricPattern1(client, _m(acc, 'supply_in_profit_rel_to_own_supply')),
-    supplyRelToCirculatingSupply: createMetricPattern1(client, _m(acc, 'supply_rel_to_circulating_supply')),
-    unrealizedLossRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_market_cap')),
-    unrealizedPeakRegretRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_peak_regret_rel_to_market_cap')),
-    unrealizedProfitRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_market_cap')),
   };
 }
 
@@ -3321,7 +3229,7 @@ function create_10y2y3y4y5y6y8yPattern(client, acc) {
  * @property {CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2} realized
  * @property {InvestedNegNetNuplSupplyUnrealizedPattern2} relative
  * @property {_30dHalvedTotalPattern} supply
- * @property {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} unrealized
+ * @property {GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} unrealized
  */
 
 /**
@@ -3338,7 +3246,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client
     realized: createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2(client, acc),
     relative: createInvestedNegNetNuplSupplyUnrealizedPattern2(client, acc),
     supply: create_30dHalvedTotalPattern(client, acc),
-    unrealized: createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(client, acc),
+    unrealized: createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(client, acc),
   };
 }
 
@@ -3348,9 +3256,9 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client
  * @property {MaxMinPattern} costBasis
  * @property {UtxoPattern} outputs
  * @property {AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2} realized
- * @property {InvestedNegNetNuplSupplyUnrealizedPattern4} relative
+ * @property {InvestedNegNetNuplSupplyUnrealizedPattern} relative
  * @property {_30dHalvedTotalPattern} supply
- * @property {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} unrealized
+ * @property {GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} unrealized
  */
 
 /**
@@ -3365,9 +3273,9 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4(clien
     costBasis: createMaxMinPattern(client, acc),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
     realized: createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2(client, acc),
-    relative: createInvestedNegNetNuplSupplyUnrealizedPattern4(client, acc),
+    relative: createInvestedNegNetNuplSupplyUnrealizedPattern(client, acc),
     supply: create_30dHalvedTotalPattern(client, acc),
-    unrealized: createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(client, acc),
+    unrealized: createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(client, acc),
   };
 }
 
@@ -3397,35 +3305,6 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(clien
     relative: createInvestedNegNetNuplSupplyUnrealizedPattern(client, acc),
     supply: create_30dHalvedTotalPattern(client, acc),
     unrealized: createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5
- * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
- * @property {MaxMinPattern} costBasis
- * @property {UtxoPattern} outputs
- * @property {CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} realized
- * @property {InvestedNegNetNuplSupplyUnrealizedPattern4} relative
- * @property {_30dHalvedTotalPattern} supply
- * @property {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} unrealized
- */
-
-/**
- * Create a ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5}
- */
-function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(client, acc) {
-  return {
-    activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
-    costBasis: createMaxMinPattern(client, acc),
-    outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
-    realized: createCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(client, acc),
-    relative: createInvestedNegNetNuplSupplyUnrealizedPattern4(client, acc),
-    supply: create_30dHalvedTotalPattern(client, acc),
-    unrealized: createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(client, acc),
   };
 }
 
@@ -4609,9 +4488,9 @@ function createRatioPattern2(client, acc) {
  * @typedef {Object} MetricsTree_Market_Ath
  * @property {CentsSatsUsdPattern} priceAth
  * @property {MetricPattern1<StoredF32>} priceDrawdown
- * @property {MetricPattern1<StoredU16>} daysSincePriceAth
+ * @property {MetricPattern1<StoredF32>} daysSincePriceAth
  * @property {MetricPattern2<StoredF32>} yearsSincePriceAth
- * @property {MetricPattern1<StoredU16>} maxDaysBetweenPriceAths
+ * @property {MetricPattern1<StoredF32>} maxDaysBetweenPriceAths
  * @property {MetricPattern2<StoredF32>} maxYearsBetweenPriceAths
  */
 
@@ -5170,7 +5049,7 @@ function createRatioPattern2(client, acc) {
  * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
  * @property {AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} realized
  * @property {InvestedMaxMinPercentilesSpotPattern} costBasis
- * @property {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} unrealized
+ * @property {GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} unrealized
  * @property {MetricsTree_Distribution_UtxoCohorts_All_Relative} relative
  */
 
@@ -5189,7 +5068,6 @@ function createRatioPattern2(client, acc) {
  * @property {MetricPattern1<StoredF32>} unrealizedLossRelToOwnTotalUnrealizedPnl
  * @property {MetricPattern1<StoredF32>} negUnrealizedLossRelToOwnTotalUnrealizedPnl
  * @property {MetricPattern1<StoredF32>} netUnrealizedPnlRelToOwnTotalUnrealizedPnl
- * @property {MetricPattern1<StoredF32>} unrealizedPeakRegretRelToMarketCap
  */
 
 /**
@@ -5199,7 +5077,7 @@ function createRatioPattern2(client, acc) {
  * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
  * @property {AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} realized
  * @property {InvestedMaxMinPercentilesSpotPattern} costBasis
- * @property {GreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern} unrealized
+ * @property {GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} unrealized
  * @property {InvestedNegNetNuplSupplyUnrealizedPattern2} relative
  */
 
@@ -5252,24 +5130,24 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _1d
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _1w
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _1m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _2m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _3m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _4m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _5m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _6m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _1y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _2y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _3y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _4y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _5y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _6y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _7y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _8y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _10y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5} _12y
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _1d
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _1w
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _1m
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _2m
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _3m
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _4m
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _5m
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _6m
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _1y
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _2y
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _3y
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _4y
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _5y
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _6y
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _7y
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _8y
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _10y
+ * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _12y
  */
 
 /**
@@ -7371,7 +7249,7 @@ class BrkClient extends BrkClientBase {
             activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(this, ''),
             realized: createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(this, ''),
             costBasis: createInvestedMaxMinPercentilesSpotPattern(this, ''),
-            unrealized: createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(this, ''),
+            unrealized: createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(this, ''),
             relative: {
               supplyInProfitRelToOwnSupply: createMetricPattern1(this, 'supply_in_profit_rel_to_own_supply'),
               supplyInLossRelToOwnSupply: createMetricPattern1(this, 'supply_in_loss_rel_to_own_supply'),
@@ -7386,7 +7264,6 @@ class BrkClient extends BrkClientBase {
               unrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(this, 'unrealized_loss_rel_to_own_total_unrealized_pnl'),
               negUnrealizedLossRelToOwnTotalUnrealizedPnl: createMetricPattern1(this, 'neg_unrealized_loss_rel_to_own_total_unrealized_pnl'),
               netUnrealizedPnlRelToOwnTotalUnrealizedPnl: createMetricPattern1(this, 'net_unrealized_pnl_rel_to_own_total_unrealized_pnl'),
-              unrealizedPeakRegretRelToMarketCap: createMetricPattern1(this, 'unrealized_peak_regret_rel_to_market_cap'),
             },
           },
           sth: {
@@ -7395,7 +7272,7 @@ class BrkClient extends BrkClientBase {
             activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(this, 'sth'),
             realized: createAdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern(this, 'sth'),
             costBasis: createInvestedMaxMinPercentilesSpotPattern(this, 'sth'),
-            unrealized: createGreedInvestedInvestorNegNetPainPeakSupplyTotalUnrealizedPattern(this, 'sth'),
+            unrealized: createGreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern(this, 'sth'),
             relative: createInvestedNegNetNuplSupplyUnrealizedPattern2(this, 'sth'),
           },
           lth: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'lth'),
@@ -7443,24 +7320,24 @@ class BrkClient extends BrkClientBase {
             _15y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4(this, 'utxos_under_15y_old'),
           },
           minAge: {
-            _1d: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_1d_old'),
-            _1w: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_1w_old'),
-            _1m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_1m_old'),
-            _2m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_2m_old'),
-            _3m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_3m_old'),
-            _4m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_4m_old'),
-            _5m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_5m_old'),
-            _6m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_6m_old'),
-            _1y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_1y_old'),
-            _2y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_2y_old'),
-            _3y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_3y_old'),
-            _4y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_4y_old'),
-            _5y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_5y_old'),
-            _6y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_6y_old'),
-            _7y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_7y_old'),
-            _8y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_8y_old'),
-            _10y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_10y_old'),
-            _12y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern5(this, 'utxos_over_12y_old'),
+            _1d: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_1d_old'),
+            _1w: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_1w_old'),
+            _1m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_1m_old'),
+            _2m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_2m_old'),
+            _3m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_3m_old'),
+            _4m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_4m_old'),
+            _5m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_5m_old'),
+            _6m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_6m_old'),
+            _1y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_1y_old'),
+            _2y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_2y_old'),
+            _3y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_3y_old'),
+            _4y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_4y_old'),
+            _5y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_5y_old'),
+            _6y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_6y_old'),
+            _7y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_7y_old'),
+            _8y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_8y_old'),
+            _10y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_10y_old'),
+            _12y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_12y_old'),
           },
           geAmount: {
             _1sat: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'utxos_over_1sat'),

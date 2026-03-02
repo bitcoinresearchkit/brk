@@ -75,7 +75,7 @@ where
     ) -> Result<()> {
         macro_rules! period {
             ($field:ident) => {
-                self.0.$field.compute_indirect(
+                self.0.$field.compute_indirect_sequential(
                     starting_indexes.$field,
                     &indexes.$field.first_height,
                     height_source,

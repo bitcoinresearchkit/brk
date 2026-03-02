@@ -257,33 +257,21 @@ impl CostBasisData {
         self.cached_percentiles
     }
 
-    pub(crate) fn compute_unrealized_states(
-        &mut self,
-        height_price: Cents,
-        date_price: Option<Cents>,
-    ) -> (UnrealizedState, Option<UnrealizedState>) {
+    pub(crate) fn compute_unrealized_state(&mut self, height_price: Cents) -> UnrealizedState {
         if self.is_empty() {
-            return (
-                UnrealizedState::ZERO,
-                date_price.map(|_| UnrealizedState::ZERO),
-            );
+            return UnrealizedState::ZERO;
         }
 
         let map = &self.state.as_ref().unwrap().base.map;
 
-        let date_state =
-            date_price.map(|p| CachedUnrealizedState::compute_full_standalone(p.into(), map));
-
-        let height_state = if let Some(cache) = self.cache.as_mut() {
+        if let Some(cache) = self.cache.as_mut() {
             cache.get_at_price(height_price, map)
         } else {
             let cache = CachedUnrealizedState::compute_fresh(height_price, map);
             let state = cache.current_state();
             self.cache = Some(cache);
             state
-        };
-
-        (height_state, date_state)
+        }
     }
 
     pub(crate) fn clean(&mut self) -> Result<()> {

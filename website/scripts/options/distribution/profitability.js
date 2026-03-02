@@ -402,46 +402,6 @@ function nuplSeries(rel) {
 }
 
 /**
- * Peak regret (USD only)
- * @param {{ unrealized: UnrealizedFullPattern }} tree
- * @param {Color} color
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-function peakRegretAbsolute(tree, color) {
-  return [
-    line({
-      metric: tree.unrealized.peakRegret,
-      name: "Peak Regret",
-      color,
-      unit: Unit.usd,
-    }),
-  ];
-}
-
-/**
- * Peak regret with % of Market Cap
- * @param {{ unrealized: UnrealizedFullPattern, relative: RelativeWithPeakRegret }} tree
- * @param {Color} color
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-function peakRegretWithMarketCap(tree, color) {
-  return [
-    line({
-      metric: tree.unrealized.peakRegret,
-      name: "Peak Regret",
-      color,
-      unit: Unit.usd,
-    }),
-    baseline({
-      metric: tree.relative.unrealizedPeakRegretRelToMarketCap,
-      name: "Rel. to Market Cap",
-      color,
-      unit: Unit.pctMcap,
-    }),
-  ];
-}
-
-/**
  * Sentiment series
  * @param {{ unrealized: UnrealizedPattern }} tree
  * @returns {AnyFetchedSeriesBlueprint[]}
@@ -1103,7 +1063,7 @@ export function createProfitabilitySectionBasicWithInvestedCapitalPct({
 }
 
 /**
- * Section for ageRange cohorts (Own M.Cap + Own P&L + peak regret)
+ * Section for ageRange cohorts (Own M.Cap + Own P&L)
  * @param {{ cohort: CohortAgeRange, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
@@ -1111,7 +1071,7 @@ export function createProfitabilitySectionWithInvestedCapitalPct({
   cohort,
   title,
 }) {
-  const { tree, color } = cohort;
+  const { tree } = cohort;
   const m = getUnrealizedMetrics(tree);
   return {
     name: "Profitability",
@@ -1128,11 +1088,6 @@ export function createProfitabilitySectionWithInvestedCapitalPct({
             name: "Net P&L",
             title: title("Net Unrealized P&L"),
             bottom: netUnrealizedWithOwnMarketCap(m.net, tree.relative),
-          },
-          {
-            name: "Peak Regret",
-            title: title("Unrealized Peak Regret"),
-            bottom: peakRegretAbsolute(tree, color),
           },
         ],
       },
@@ -1197,7 +1152,7 @@ export function createProfitabilitySectionWithNupl({ cohort, title }) {
  * @returns {PartialOptionsGroup}
  */
 export function createProfitabilitySectionLongTerm({ cohort, title }) {
-  const { tree, color } = cohort;
+  const { tree } = cohort;
   const m = getUnrealizedMetrics(tree);
   return {
     name: "Profitability",
@@ -1220,11 +1175,6 @@ export function createProfitabilitySectionLongTerm({ cohort, title }) {
             title: title("NUPL"),
             bottom: nuplSeries(tree.relative),
           },
-          {
-            name: "Peak Regret",
-            title: title("Unrealized Peak Regret"),
-            bottom: peakRegretWithMarketCap(tree, color),
-          },
         ],
       },
       realizedSubfolderWithExtras(tree, title),
@@ -1245,7 +1195,7 @@ export function createProfitabilitySectionLongTerm({ cohort, title }) {
  * @returns {PartialOptionsGroup}
  */
 export function createProfitabilitySectionFull({ cohort, title }) {
-  const { tree, color } = cohort;
+  const { tree } = cohort;
   const m = getUnrealizedMetrics(tree);
   return {
     name: "Profitability",
@@ -1268,11 +1218,6 @@ export function createProfitabilitySectionFull({ cohort, title }) {
             title: title("NUPL"),
             bottom: nuplSeries(tree.relative),
           },
-          {
-            name: "Peak Regret",
-            title: title("Unrealized Peak Regret"),
-            bottom: peakRegretWithMarketCap(tree, color),
-          },
         ],
       },
       realizedSubfolderWithExtras(tree, title),
@@ -1293,7 +1238,7 @@ export function createProfitabilitySectionFull({ cohort, title }) {
  * @returns {PartialOptionsGroup}
  */
 export function createProfitabilitySectionAll({ cohort, title }) {
-  const { tree, color } = cohort;
+  const { tree } = cohort;
   const m = getUnrealizedMetrics(tree);
   return {
     name: "Profitability",
@@ -1316,62 +1261,9 @@ export function createProfitabilitySectionAll({ cohort, title }) {
             title: title("NUPL"),
             bottom: nuplSeries(tree.relative),
           },
-          {
-            name: "Peak Regret",
-            title: title("Unrealized Peak Regret"),
-            bottom: peakRegretWithMarketCap(tree, color),
-          },
         ],
       },
       realizedSubfolderWithExtras(tree, title),
-      volumeSubfolder(tree, title),
-      {
-        name: "Invested Capital",
-        title: title("Invested Capital In Profit & Loss"),
-        bottom: investedCapitalWithPct(tree),
-      },
-      sentimentChart(tree, title),
-    ],
-  };
-}
-
-/**
- * Section with Peak Regret + NUPL (minAge cohorts)
- * @param {{ cohort: CohortMinAge, title: (metric: string) => string }} args
- * @returns {PartialOptionsGroup}
- */
-export function createProfitabilitySectionWithPeakRegret({ cohort, title }) {
-  const { tree, color } = cohort;
-  const m = getUnrealizedMetrics(tree);
-  return {
-    name: "Profitability",
-    tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          {
-            name: "P&L",
-            title: title("Unrealized P&L"),
-            bottom: unrealizedWithMarketCap(m, tree.relative),
-          },
-          {
-            name: "Net P&L",
-            title: title("Net Unrealized P&L"),
-            bottom: netUnrealizedWithMarketCap(m.net, tree.relative),
-          },
-          {
-            name: "NUPL",
-            title: title("NUPL"),
-            bottom: nuplSeries(tree.relative),
-          },
-          {
-            name: "Peak Regret",
-            title: title("Unrealized Peak Regret"),
-            bottom: peakRegretWithMarketCap(tree, color),
-          },
-        ],
-      },
-      realizedSubfolder(tree, title),
       volumeSubfolder(tree, title),
       {
         name: "Invested Capital",
@@ -1437,7 +1329,7 @@ function groupedPnlCharts(list, all, title) {
 
 /**
  * Grouped P&L with % of Market Cap
- * @param {readonly (CohortFull | CohortBasicWithMarketCap | CohortMinAge | CohortLongTerm)[]} list
+ * @param {readonly (CohortFull | CohortBasicWithMarketCap | CohortLongTerm)[]} list
  * @param {CohortAll} all
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
@@ -1769,7 +1661,7 @@ function groupedInvestedCapitalAbsolute(list, all, title) {
 
 /**
  * Grouped invested capital with %
- * @param {readonly (CohortBasicWithoutMarketCap | CohortAgeRange | CohortFull | CohortBasicWithMarketCap | CohortLongTerm | CohortMinAge)[]} list
+ * @param {readonly (CohortBasicWithoutMarketCap | CohortAgeRange | CohortFull | CohortBasicWithMarketCap | CohortLongTerm)[]} list
  * @param {CohortAll} all
  * @param {(metric: string) => string} title
  * @returns {PartialOptionsTree}
@@ -2278,18 +2170,6 @@ export function createGroupedProfitabilitySectionWithInvestedCapitalPct({
         name: "Unrealized",
         tree: [
           ...groupedPnlChartsWithOwnMarketCap(list, all, title),
-          {
-            name: "Peak Regret",
-            title: title("Unrealized Peak Regret"),
-            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              line({
-                metric: tree.unrealized.peakRegret,
-                name,
-                color,
-                unit: Unit.usd,
-              }),
-            ),
-          },
         ],
       },
       groupedRealizedSubfolderWithExtras(list, all, title),
@@ -2374,28 +2254,6 @@ export function createGroupedProfitabilitySectionLongTerm({
               }),
             ),
           },
-          {
-            name: "Peak Regret",
-            title: title("Unrealized Peak Regret"),
-            bottom: [
-              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                line({
-                  metric: tree.unrealized.peakRegret,
-                  name,
-                  color,
-                  unit: Unit.usd,
-                }),
-              ),
-              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                baseline({
-                  metric: tree.relative.unrealizedPeakRegretRelToMarketCap,
-                  name,
-                  color,
-                  unit: Unit.pctMcap,
-                }),
-              ),
-            ],
-          },
         ],
       },
       groupedRealizedSubfolderWithExtras(list, all, title),
@@ -2409,66 +2267,3 @@ export function createGroupedProfitabilitySectionLongTerm({
   };
 }
 
-/**
- * Grouped section with Peak Regret + NUPL (minAge cohorts)
- * @param {{ list: readonly CohortMinAge[], all: CohortAll, title: (metric: string) => string }} args
- * @returns {PartialOptionsGroup}
- */
-export function createGroupedProfitabilitySectionWithPeakRegret({
-  list,
-  all,
-  title,
-}) {
-  return {
-    name: "Profitability",
-    tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          ...groupedPnlChartsWithMarketCap(list, all, title),
-          {
-            name: "NUPL",
-            title: title("NUPL"),
-            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              baseline({
-                metric: tree.relative.nupl,
-                name,
-                color,
-                unit: Unit.ratio,
-              }),
-            ),
-          },
-          {
-            name: "Peak Regret",
-            title: title("Unrealized Peak Regret"),
-            bottom: [
-              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                line({
-                  metric: tree.unrealized.peakRegret,
-                  name,
-                  color,
-                  unit: Unit.usd,
-                }),
-              ),
-              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                baseline({
-                  metric: tree.relative.unrealizedPeakRegretRelToMarketCap,
-                  name,
-                  color,
-                  unit: Unit.pctMcap,
-                }),
-              ),
-            ],
-          },
-        ],
-      },
-      groupedRealizedSubfolder(list, all, title),
-      { name: "Volume", tree: groupedSentInPnl(list, all, title) },
-      {
-        name: "Invested Capital",
-        tree: groupedInvestedCapital(list, all, title),
-      },
-      groupedSentiment(list, all, title),
-    ],
-  };
-}

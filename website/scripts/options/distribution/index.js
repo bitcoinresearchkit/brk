@@ -48,13 +48,11 @@ import {
   createProfitabilitySectionAll,
   createProfitabilitySectionFull,
   createProfitabilitySectionWithNupl,
-  createProfitabilitySectionWithPeakRegret,
   createProfitabilitySectionWithInvestedCapitalPct,
   createProfitabilitySectionBasicWithInvestedCapitalPct,
   createProfitabilitySectionLongTerm,
   createGroupedProfitabilitySection,
   createGroupedProfitabilitySectionWithNupl,
-  createGroupedProfitabilitySectionWithPeakRegret,
   createGroupedProfitabilitySectionWithInvestedCapitalPct,
   createGroupedProfitabilitySectionBasicWithInvestedCapitalPct,
   createGroupedProfitabilitySectionLongTerm,
@@ -127,7 +125,7 @@ export function createCohortFolderWithAdjusted(cohort) {
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
       createCostBasisSection({ cohort, title }),
-      createProfitabilitySectionWithPeakRegret({ cohort, title }),
+      createProfitabilitySectionWithNupl({ cohort, title }),
       createActivitySectionWithAdjusted({ cohort, title }),
     ],
   };
@@ -188,26 +186,6 @@ export function createCohortFolderAgeRange(cohort) {
       createPricesSectionFull({ cohort, title }),
       createCostBasisSectionWithPercentiles({ cohort, title }),
       createProfitabilitySectionWithInvestedCapitalPct({ cohort, title }),
-      createActivitySection({ cohort, title }),
-    ],
-  };
-}
-
-/**
- * MinAge folder: has peakRegret in unrealized
- * @param {CohortMinAge} cohort
- * @returns {PartialOptionsGroup}
- */
-export function createCohortFolderMinAge(cohort) {
-  const title = formatCohortTitle(cohort.name);
-  return {
-    name: cohort.name || "all",
-    tree: [
-      createHoldingsSectionWithRelative({ cohort, title }),
-      createValuationSection({ cohort, title }),
-      createPricesSectionBasic({ cohort, title }),
-      createCostBasisSection({ cohort, title }),
-      createProfitabilitySectionWithPeakRegret({ cohort, title }),
       createActivitySection({ cohort, title }),
     ],
   };
@@ -359,7 +337,7 @@ export function createGroupedCohortFolderWithAdjusted({
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedCostBasisSection({ list, all, title }),
-      createGroupedProfitabilitySectionWithPeakRegret({ list, all, title }),
+      createGroupedProfitabilitySectionWithNupl({ list, all, title }),
       createGroupedActivitySectionWithAdjusted({ list, all, title }),
     ],
   };
@@ -436,30 +414,6 @@ export function createGroupedCohortFolderAgeRange({
         all,
         title,
       }),
-      createGroupedActivitySection({ list, all, title }),
-    ],
-  };
-}
-
-/**
- * @param {CohortGroupMinAge} args
- * @returns {PartialOptionsGroup}
- */
-export function createGroupedCohortFolderMinAge({
-  name,
-  title: groupTitle,
-  list,
-  all,
-}) {
-  const title = formatCohortTitle(groupTitle);
-  return {
-    name: name || "all",
-    tree: [
-      createGroupedHoldingsSectionWithRelative({ list, all, title }),
-      createGroupedValuationSection({ list, all, title }),
-      createGroupedPricesSection({ list, all, title }),
-      createGroupedCostBasisSection({ list, all, title }),
-      createGroupedProfitabilitySectionWithPeakRegret({ list, all, title }),
       createGroupedActivitySection({ list, all, title }),
     ],
   };

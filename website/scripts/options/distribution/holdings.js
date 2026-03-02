@@ -308,7 +308,7 @@ function createSingleAddrCount30dChangeSeries(cohort) {
 
 /**
  * Create supply series with % of Circulating (for cohorts with relative data)
- * @param {CohortFull | CohortWithAdjusted | CohortBasicWithMarketCap | CohortMinAge} cohort
+ * @param {CohortFull | CohortWithAdjusted | CohortBasicWithMarketCap} cohort
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function createSingleSupplySeriesWithRelative(cohort) {
@@ -406,7 +406,7 @@ export function createHoldingsSectionWithOwnSupply({ cohort, title }) {
 }
 
 /**
- * @param {{ cohort: CohortFull | CohortWithAdjusted | CohortBasicWithMarketCap | CohortMinAge, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortFull | CohortWithAdjusted | CohortBasicWithMarketCap, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createHoldingsSectionWithRelative({ cohort, title }) {
@@ -869,7 +869,7 @@ export function createGroupedHoldingsSectionWithOwnSupply({
 }
 
 /**
- * @param {{ list: readonly (CohortFull | CohortWithAdjusted | CohortBasicWithMarketCap | CohortMinAge)[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly (CohortFull | CohortWithAdjusted | CohortBasicWithMarketCap)[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
