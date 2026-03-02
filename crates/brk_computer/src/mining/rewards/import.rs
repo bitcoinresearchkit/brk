@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ComputedFromHeight, FiatFromHeight, ValueFromHeightFull,
+        ComputedFromHeight, FiatFromHeight, RollingWindows, ValueFromHeightFull,
         ValueFromHeightCumulativeSum,
     },
 };
@@ -33,27 +33,9 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            fee_dominance_24h: ComputedFromHeight::forced_import(
+            fee_dominance_rolling: RollingWindows::forced_import(
                 db,
-                "fee_dominance_24h",
-                version,
-                indexes,
-            )?,
-            fee_dominance_7d: ComputedFromHeight::forced_import(
-                db,
-                "fee_dominance_7d",
-                version,
-                indexes,
-            )?,
-            fee_dominance_30d: ComputedFromHeight::forced_import(
-                db,
-                "fee_dominance_30d",
-                version,
-                indexes,
-            )?,
-            fee_dominance_1y: ComputedFromHeight::forced_import(
-                db,
-                "fee_dominance_1y",
+                "fee_dominance",
                 version,
                 indexes,
             )?,
@@ -63,27 +45,9 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            subsidy_dominance_24h: ComputedFromHeight::forced_import(
+            subsidy_dominance_rolling: RollingWindows::forced_import(
                 db,
-                "subsidy_dominance_24h",
-                version,
-                indexes,
-            )?,
-            subsidy_dominance_7d: ComputedFromHeight::forced_import(
-                db,
-                "subsidy_dominance_7d",
-                version,
-                indexes,
-            )?,
-            subsidy_dominance_30d: ComputedFromHeight::forced_import(
-                db,
-                "subsidy_dominance_30d",
-                version,
-                indexes,
-            )?,
-            subsidy_dominance_1y: ComputedFromHeight::forced_import(
-                db,
-                "subsidy_dominance_1y",
+                "subsidy_dominance",
                 version,
                 indexes,
             )?,

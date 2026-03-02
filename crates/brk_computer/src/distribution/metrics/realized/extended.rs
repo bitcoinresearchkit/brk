@@ -5,7 +5,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{ComputedFromHeight, ComputedFromHeightRatioExtension, RatioCents64},
+    internal::{ComputedFromHeight, ComputedFromHeightRatioExtension, RatioCents64, RollingWindows},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -18,20 +18,11 @@ pub struct RealizedExtended<M: StorageMode = Rw> {
     pub realized_cap_rel_to_own_market_cap: ComputedFromHeight<StoredF32, M>,
 
     // === Realized Profit/Loss Rolling Sums ===
-    pub realized_profit_24h: ComputedFromHeight<Cents, M>,
-    pub realized_profit_7d: ComputedFromHeight<Cents, M>,
-    pub realized_profit_30d: ComputedFromHeight<Cents, M>,
-    pub realized_profit_1y: ComputedFromHeight<Cents, M>,
-    pub realized_loss_24h: ComputedFromHeight<Cents, M>,
-    pub realized_loss_7d: ComputedFromHeight<Cents, M>,
-    pub realized_loss_30d: ComputedFromHeight<Cents, M>,
-    pub realized_loss_1y: ComputedFromHeight<Cents, M>,
+    pub realized_profit_sum: RollingWindows<Cents, M>,
+    pub realized_loss_sum: RollingWindows<Cents, M>,
 
     // === Realized Profit to Loss Ratio (from rolling sums) ===
-    pub realized_profit_to_loss_ratio_24h: ComputedFromHeight<StoredF64, M>,
-    pub realized_profit_to_loss_ratio_7d: ComputedFromHeight<StoredF64, M>,
-    pub realized_profit_to_loss_ratio_30d: ComputedFromHeight<StoredF64, M>,
-    pub realized_profit_to_loss_ratio_1y: ComputedFromHeight<StoredF64, M>,
+    pub realized_profit_to_loss_ratio: RollingWindows<StoredF64, M>,
 
     // === Extended ratio metrics for realized/investor price ===
     pub realized_price_ratio_ext: ComputedFromHeightRatioExtension<M>,
@@ -42,17 +33,6 @@ impl RealizedExtended {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
 
-        macro_rules! import_rolling {
-            ($name:expr) => {
-                ComputedFromHeight::forced_import(
-                    cfg.db,
-                    &cfg.name($name),
-                    cfg.version + v1,
-                    cfg.indexes,
-                )?
-            };
-        }
-
         Ok(RealizedExtended {
             realized_cap_rel_to_own_market_cap: ComputedFromHeight::forced_import(
                 cfg.db,
@@ -60,18 +40,15 @@ impl RealizedExtended {
                 cfg.version,
                 cfg.indexes,
             )?,
-            realized_profit_24h: import_rolling!("realized_profit_24h"),
-            realized_profit_7d: import_rolling!("realized_profit_7d"),
-            realized_profit_30d: import_rolling!("realized_profit_30d"),
-            realized_profit_1y: import_rolling!("realized_profit_1y"),
-            realized_loss_24h: import_rolling!("realized_loss_24h"),
-            realized_loss_7d: import_rolling!("realized_loss_7d"),
-            realized_loss_30d: import_rolling!("realized_loss_30d"),
-            realized_loss_1y: import_rolling!("realized_loss_1y"),
-            realized_profit_to_loss_ratio_24h: import_rolling!("realized_profit_to_loss_ratio_24h"),
-            realized_profit_to_loss_ratio_7d: import_rolling!("realized_profit_to_loss_ratio_7d"),
-            realized_profit_to_loss_ratio_30d: import_rolling!("realized_profit_to_loss_ratio_30d"),
-            realized_profit_to_loss_ratio_1y: import_rolling!("realized_profit_to_loss_ratio_1y"),
+            realized_profit_sum: RollingWindows::forced_import(
+                cfg.db, &cfg.name("realized_profit"), cfg.version + v1, cfg.indexes,
+            )?,
+            realized_loss_sum: RollingWindows::forced_import(
+                cfg.db, &cfg.name("realized_loss"), cfg.version + v1, cfg.indexes,
+            )?,
+            realized_profit_to_loss_ratio: RollingWindows::forced_import(
+                cfg.db, &cfg.name("realized_profit_to_loss_ratio"), cfg.version + v1, cfg.indexes,
+            )?,
             realized_price_ratio_ext: ComputedFromHeightRatioExtension::forced_import(
                 cfg.db,
                 &cfg.name("realized_price"),
@@ -97,53 +74,12 @@ impl RealizedExtended {
         exit: &Exit,
     ) -> Result<()> {
         // Realized profit/loss rolling sums
-        self.realized_profit_24h.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.count.height_24h_ago,
-            &base.realized_profit.height,
-            exit,
+        let window_starts = blocks.count.window_starts();
+        self.realized_profit_sum.compute_rolling_sum(
+            starting_indexes.height, &window_starts, &base.realized_profit.height, exit,
         )?;
-        self.realized_profit_7d.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &base.realized_profit.height,
-            exit,
-        )?;
-        self.realized_profit_30d.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.count.height_1m_ago,
-            &base.realized_profit.height,
-            exit,
-        )?;
-        self.realized_profit_1y.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.count.height_1y_ago,
-            &base.realized_profit.height,
-            exit,
-        )?;
-        self.realized_loss_24h.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.count.height_24h_ago,
-            &base.realized_loss.height,
-            exit,
-        )?;
-        self.realized_loss_7d.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &base.realized_loss.height,
-            exit,
-        )?;
-        self.realized_loss_30d.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.count.height_1m_ago,
-            &base.realized_loss.height,
-            exit,
-        )?;
-        self.realized_loss_1y.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.count.height_1y_ago,
-            &base.realized_loss.height,
-            exit,
+        self.realized_loss_sum.compute_rolling_sum(
+            starting_indexes.height, &window_starts, &base.realized_loss.height, exit,
         )?;
 
         // Realized cap relative to own market cap
@@ -157,34 +93,14 @@ impl RealizedExtended {
             )?;
 
         // Realized profit to loss ratios
-        self.realized_profit_to_loss_ratio_24h
-            .compute_binary::<Cents, Cents, RatioCents64>(
-                starting_indexes.height,
-                &self.realized_profit_24h.height,
-                &self.realized_loss_24h.height,
-                exit,
+        for ((ratio, profit), loss) in self.realized_profit_to_loss_ratio.as_mut_array().into_iter()
+            .zip(self.realized_profit_sum.as_array())
+            .zip(self.realized_loss_sum.as_array())
+        {
+            ratio.compute_binary::<Cents, Cents, RatioCents64>(
+                starting_indexes.height, &profit.height, &loss.height, exit,
             )?;
-        self.realized_profit_to_loss_ratio_7d
-            .compute_binary::<Cents, Cents, RatioCents64>(
-                starting_indexes.height,
-                &self.realized_profit_7d.height,
-                &self.realized_loss_7d.height,
-                exit,
-            )?;
-        self.realized_profit_to_loss_ratio_30d
-            .compute_binary::<Cents, Cents, RatioCents64>(
-                starting_indexes.height,
-                &self.realized_profit_30d.height,
-                &self.realized_loss_30d.height,
-                exit,
-            )?;
-        self.realized_profit_to_loss_ratio_1y
-            .compute_binary::<Cents, Cents, RatioCents64>(
-                starting_indexes.height,
-                &self.realized_profit_1y.height,
-                &self.realized_loss_1y.height,
-                exit,
-            )?;
+        }
 
         // Extended ratio metrics
         self.realized_price_ratio_ext.compute_rest(

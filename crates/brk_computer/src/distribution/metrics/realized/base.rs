@@ -15,7 +15,7 @@ use crate::{
         CentsPlus, CentsUnsignedToDollars, ComputedFromHeightCumulative, ComputedFromHeight,
         ComputedFromHeightRatio, NegCentsUnsignedToDollars, ValueFromHeightCumulative, LazyFromHeight,
         PercentageCentsF32, PercentageCentsSignedCentsF32, PercentageCentsSignedDollarsF32, Price, RatioCents64,
-        Identity, ValueFromHeight,
+        RollingWindows, Identity, ValueFromHeight,
     },
     prices,
 };
@@ -80,38 +80,19 @@ pub struct RealizedBase<M: StorageMode = Rw> {
     pub profit_flow: LazyFromHeight<Dollars, Cents>,
 
     // === Value Created/Destroyed Rolling Sums ===
-    pub value_created_24h: ComputedFromHeight<Cents, M>,
-    pub value_created_7d: ComputedFromHeight<Cents, M>,
-    pub value_created_30d: ComputedFromHeight<Cents, M>,
-    pub value_created_1y: ComputedFromHeight<Cents, M>,
-    pub value_destroyed_24h: ComputedFromHeight<Cents, M>,
-    pub value_destroyed_7d: ComputedFromHeight<Cents, M>,
-    pub value_destroyed_30d: ComputedFromHeight<Cents, M>,
-    pub value_destroyed_1y: ComputedFromHeight<Cents, M>,
+    pub value_created_sum: RollingWindows<Cents, M>,
+    pub value_destroyed_sum: RollingWindows<Cents, M>,
 
     // === SOPR (rolling window ratios) ===
-    pub sopr: LazyFromHeight<StoredF64>,
-    pub sopr_24h: ComputedFromHeight<StoredF64, M>,
-    pub sopr_7d: ComputedFromHeight<StoredF64, M>,
-    pub sopr_30d: ComputedFromHeight<StoredF64, M>,
-    pub sopr_1y: ComputedFromHeight<StoredF64, M>,
+    pub sopr: RollingWindows<StoredF64, M>,
     pub sopr_24h_7d_ema: ComputedFromHeight<StoredF64, M>,
     pub sopr_7d_ema: LazyFromHeight<StoredF64>,
     pub sopr_24h_30d_ema: ComputedFromHeight<StoredF64, M>,
     pub sopr_30d_ema: LazyFromHeight<StoredF64>,
 
-    // === Sell Side Risk Rolling Sum Intermediates ===
-    pub realized_value_24h: ComputedFromHeight<Cents, M>,
-    pub realized_value_7d: ComputedFromHeight<Cents, M>,
-    pub realized_value_30d: ComputedFromHeight<Cents, M>,
-    pub realized_value_1y: ComputedFromHeight<Cents, M>,
-
-    // === Sell Side Risk (rolling window ratios) ===
-    pub sell_side_risk_ratio: LazyFromHeight<StoredF32>,
-    pub sell_side_risk_ratio_24h: ComputedFromHeight<StoredF32, M>,
-    pub sell_side_risk_ratio_7d: ComputedFromHeight<StoredF32, M>,
-    pub sell_side_risk_ratio_30d: ComputedFromHeight<StoredF32, M>,
-    pub sell_side_risk_ratio_1y: ComputedFromHeight<StoredF32, M>,
+    // === Sell Side Risk ===
+    pub realized_value_sum: RollingWindows<Cents, M>,
+    pub sell_side_risk_ratio: RollingWindows<StoredF32, M>,
     pub sell_side_risk_ratio_24h_7d_ema: ComputedFromHeight<StoredF32, M>,
     pub sell_side_risk_ratio_7d_ema: LazyFromHeight<StoredF32>,
     pub sell_side_risk_ratio_24h_30d_ema: ComputedFromHeight<StoredF32, M>,
@@ -351,8 +332,25 @@ impl RealizedBase {
             &realized_price_extra.ratio,
         );
 
-        // === Rolling sum intermediates ===
-        macro_rules! import_rolling {
+        // === Rolling windows ===
+        let value_created_sum = RollingWindows::forced_import(
+            cfg.db, &cfg.name("value_created"), cfg.version + v1, cfg.indexes,
+        )?;
+        let value_destroyed_sum = RollingWindows::forced_import(
+            cfg.db, &cfg.name("value_destroyed"), cfg.version + v1, cfg.indexes,
+        )?;
+        let realized_value_sum = RollingWindows::forced_import(
+            cfg.db, &cfg.name("realized_value"), cfg.version + v1, cfg.indexes,
+        )?;
+        let sopr = RollingWindows::forced_import(
+            cfg.db, &cfg.name("sopr"), cfg.version + v1, cfg.indexes,
+        )?;
+        let sell_side_risk_ratio = RollingWindows::forced_import(
+            cfg.db, &cfg.name("sell_side_risk_ratio"), cfg.version + v1, cfg.indexes,
+        )?;
+
+        // === EMA imports + identity aliases ===
+        macro_rules! import_computed {
             ($name:expr) => {
                 ComputedFromHeight::forced_import(
                     cfg.db,
@@ -363,52 +361,14 @@ impl RealizedBase {
             };
         }
 
-        let value_created_24h = import_rolling!("value_created_24h");
-        let value_created_7d = import_rolling!("value_created_7d");
-        let value_created_30d = import_rolling!("value_created_30d");
-        let value_created_1y = import_rolling!("value_created_1y");
-        let value_destroyed_24h = import_rolling!("value_destroyed_24h");
-        let value_destroyed_7d = import_rolling!("value_destroyed_7d");
-        let value_destroyed_30d = import_rolling!("value_destroyed_30d");
-        let value_destroyed_1y = import_rolling!("value_destroyed_1y");
-
-        let realized_value_24h = import_rolling!("realized_value_24h");
-        let realized_value_7d = import_rolling!("realized_value_7d");
-        let realized_value_30d = import_rolling!("realized_value_30d");
-        let realized_value_1y = import_rolling!("realized_value_1y");
-
-        // === Rolling window stored ratios ===
-        let sopr_24h = import_rolling!("sopr_24h");
-        let sopr_7d = import_rolling!("sopr_7d");
-        let sopr_30d = import_rolling!("sopr_30d");
-        let sopr_1y = import_rolling!("sopr_1y");
-        let sopr = LazyFromHeight::from_computed::<Ident>(
-            &cfg.name("sopr"),
-            cfg.version + v1,
-            sopr_24h.height.read_only_boxed_clone(),
-            &sopr_24h,
-        );
-
-        let sell_side_risk_ratio_24h = import_rolling!("sell_side_risk_ratio_24h");
-        let sell_side_risk_ratio_7d = import_rolling!("sell_side_risk_ratio_7d");
-        let sell_side_risk_ratio_30d = import_rolling!("sell_side_risk_ratio_30d");
-        let sell_side_risk_ratio_1y = import_rolling!("sell_side_risk_ratio_1y");
-        let sell_side_risk_ratio = LazyFromHeight::from_computed::<Ident>(
-            &cfg.name("sell_side_risk_ratio"),
-            cfg.version + v1,
-            sell_side_risk_ratio_24h.height.read_only_boxed_clone(),
-            &sell_side_risk_ratio_24h,
-        );
-
-        // === EMA imports + identity aliases ===
-        let sopr_24h_7d_ema = import_rolling!("sopr_24h_7d_ema");
+        let sopr_24h_7d_ema = import_computed!("sopr_24h_7d_ema");
         let sopr_7d_ema = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("sopr_7d_ema"),
             cfg.version + v1,
             sopr_24h_7d_ema.height.read_only_boxed_clone(),
             &sopr_24h_7d_ema,
         );
-        let sopr_24h_30d_ema = import_rolling!("sopr_24h_30d_ema");
+        let sopr_24h_30d_ema = import_computed!("sopr_24h_30d_ema");
         let sopr_30d_ema = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("sopr_30d_ema"),
             cfg.version + v1,
@@ -416,7 +376,7 @@ impl RealizedBase {
             &sopr_24h_30d_ema,
         );
 
-        let sell_side_risk_ratio_24h_7d_ema = import_rolling!("sell_side_risk_ratio_24h_7d_ema");
+        let sell_side_risk_ratio_24h_7d_ema = import_computed!("sell_side_risk_ratio_24h_7d_ema");
         let sell_side_risk_ratio_7d_ema = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("sell_side_risk_ratio_7d_ema"),
             cfg.version + v1,
@@ -425,7 +385,7 @@ impl RealizedBase {
                 .read_only_boxed_clone(),
             &sell_side_risk_ratio_24h_7d_ema,
         );
-        let sell_side_risk_ratio_24h_30d_ema = import_rolling!("sell_side_risk_ratio_24h_30d_ema");
+        let sell_side_risk_ratio_24h_30d_ema = import_computed!("sell_side_risk_ratio_24h_30d_ema");
         let sell_side_risk_ratio_30d_ema = LazyFromHeight::from_computed::<Ident>(
             &cfg.name("sell_side_risk_ratio_30d_ema"),
             cfg.version + v1,
@@ -480,32 +440,15 @@ impl RealizedBase {
             value_destroyed,
             capitulation_flow,
             profit_flow,
-            value_created_24h,
-            value_created_7d,
-            value_created_30d,
-            value_created_1y,
-            value_destroyed_24h,
-            value_destroyed_7d,
-            value_destroyed_30d,
-            value_destroyed_1y,
+            value_created_sum,
+            value_destroyed_sum,
             sopr,
-            sopr_24h,
-            sopr_7d,
-            sopr_30d,
-            sopr_1y,
             sopr_24h_7d_ema,
             sopr_7d_ema,
             sopr_24h_30d_ema,
             sopr_30d_ema,
-            realized_value_24h,
-            realized_value_7d,
-            realized_value_30d,
-            realized_value_1y,
+            realized_value_sum,
             sell_side_risk_ratio,
-            sell_side_risk_ratio_24h,
-            sell_side_risk_ratio_7d,
-            sell_side_risk_ratio_30d,
-            sell_side_risk_ratio_1y,
             sell_side_risk_ratio_24h_7d_ema,
             sell_side_risk_ratio_7d_ema,
             sell_side_risk_ratio_24h_30d_ema,
@@ -927,135 +870,35 @@ impl RealizedBase {
             )?;
 
         // === Rolling sum intermediates ===
-        macro_rules! rolling_sum {
-            ($target:expr, $window:expr, $source:expr) => {
-                $target.height.compute_rolling_sum(
-                    starting_indexes.height,
-                    $window,
-                    $source,
-                    exit,
-                )?
-            };
-        }
-
-        rolling_sum!(
-            self.value_created_24h,
-            &blocks.count.height_24h_ago,
-            &self.value_created.height
-        );
-        rolling_sum!(
-            self.value_created_7d,
-            &blocks.count.height_1w_ago,
-            &self.value_created.height
-        );
-        rolling_sum!(
-            self.value_created_30d,
-            &blocks.count.height_1m_ago,
-            &self.value_created.height
-        );
-        rolling_sum!(
-            self.value_created_1y,
-            &blocks.count.height_1y_ago,
-            &self.value_created.height
-        );
-        rolling_sum!(
-            self.value_destroyed_24h,
-            &blocks.count.height_24h_ago,
-            &self.value_destroyed.height
-        );
-        rolling_sum!(
-            self.value_destroyed_7d,
-            &blocks.count.height_1w_ago,
-            &self.value_destroyed.height
-        );
-        rolling_sum!(
-            self.value_destroyed_30d,
-            &blocks.count.height_1m_ago,
-            &self.value_destroyed.height
-        );
-        rolling_sum!(
-            self.value_destroyed_1y,
-            &blocks.count.height_1y_ago,
-            &self.value_destroyed.height
-        );
-
-        // Realized value rolling sums
-        rolling_sum!(
-            self.realized_value_24h,
-            &blocks.count.height_24h_ago,
-            &self.realized_value.height
-        );
-        rolling_sum!(
-            self.realized_value_7d,
-            &blocks.count.height_1w_ago,
-            &self.realized_value.height
-        );
-        rolling_sum!(
-            self.realized_value_30d,
-            &blocks.count.height_1m_ago,
-            &self.realized_value.height
-        );
-        rolling_sum!(
-            self.realized_value_1y,
-            &blocks.count.height_1y_ago,
-            &self.realized_value.height
-        );
+        let window_starts = blocks.count.window_starts();
+        self.value_created_sum.compute_rolling_sum(
+            starting_indexes.height, &window_starts, &self.value_created.height, exit,
+        )?;
+        self.value_destroyed_sum.compute_rolling_sum(
+            starting_indexes.height, &window_starts, &self.value_destroyed.height, exit,
+        )?;
+        self.realized_value_sum.compute_rolling_sum(
+            starting_indexes.height, &window_starts, &self.realized_value.height, exit,
+        )?;
 
         // Compute SOPR from rolling sums
-        self.sopr_24h.compute_binary::<Cents, Cents, RatioCents64>(
-            starting_indexes.height,
-            &self.value_created_24h.height,
-            &self.value_destroyed_24h.height,
-            exit,
-        )?;
-        self.sopr_7d.compute_binary::<Cents, Cents, RatioCents64>(
-            starting_indexes.height,
-            &self.value_created_7d.height,
-            &self.value_destroyed_7d.height,
-            exit,
-        )?;
-        self.sopr_30d.compute_binary::<Cents, Cents, RatioCents64>(
-            starting_indexes.height,
-            &self.value_created_30d.height,
-            &self.value_destroyed_30d.height,
-            exit,
-        )?;
-        self.sopr_1y.compute_binary::<Cents, Cents, RatioCents64>(
-            starting_indexes.height,
-            &self.value_created_1y.height,
-            &self.value_destroyed_1y.height,
-            exit,
-        )?;
+        for ((sopr, vc), vd) in self.sopr.as_mut_array().into_iter()
+            .zip(self.value_created_sum.as_array())
+            .zip(self.value_destroyed_sum.as_array())
+        {
+            sopr.compute_binary::<Cents, Cents, RatioCents64>(
+                starting_indexes.height, &vc.height, &vd.height, exit,
+            )?;
+        }
 
         // Compute sell-side risk ratios
-        self.sell_side_risk_ratio_24h
-            .compute_binary::<Cents, Cents, PercentageCentsF32>(
-                starting_indexes.height,
-                &self.realized_value_24h.height,
-                &self.realized_cap_cents.height,
-                exit,
+        for (ssrr, rv) in self.sell_side_risk_ratio.as_mut_array().into_iter()
+            .zip(self.realized_value_sum.as_array())
+        {
+            ssrr.compute_binary::<Cents, Cents, PercentageCentsF32>(
+                starting_indexes.height, &rv.height, &self.realized_cap_cents.height, exit,
             )?;
-        self.sell_side_risk_ratio_7d
-            .compute_binary::<Cents, Cents, PercentageCentsF32>(
-                starting_indexes.height,
-                &self.realized_value_7d.height,
-                &self.realized_cap_cents.height,
-                exit,
-            )?;
-        self.sell_side_risk_ratio_30d
-            .compute_binary::<Cents, Cents, PercentageCentsF32>(
-                starting_indexes.height,
-                &self.realized_value_30d.height,
-                &self.realized_cap_cents.height,
-                exit,
-            )?;
-        self.sell_side_risk_ratio_1y
-            .compute_binary::<Cents, Cents, PercentageCentsF32>(
-                starting_indexes.height,
-                &self.realized_value_1y.height,
-                &self.realized_cap_cents.height,
-                exit,
-            )?;
+        }
 
         // 7d EMAs
         self.realized_profit_7d_ema.height.compute_rolling_ema(
@@ -1095,27 +938,27 @@ impl RealizedBase {
             exit,
         )?;
 
-        // SOPR EMAs
+        // SOPR EMAs (based on 24h window)
         self.sopr_24h_7d_ema.height.compute_rolling_ema(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
-            &self.sopr.height,
+            &self.sopr._24h.height,
             exit,
         )?;
         self.sopr_24h_30d_ema.height.compute_rolling_ema(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
-            &self.sopr.height,
+            &self.sopr._24h.height,
             exit,
         )?;
 
-        // Sell side risk EMAs
+        // Sell side risk EMAs (based on 24h window)
         self.sell_side_risk_ratio_24h_7d_ema
             .height
             .compute_rolling_ema(
                 starting_indexes.height,
                 &blocks.count.height_1w_ago,
-                &self.sell_side_risk_ratio.height,
+                &self.sell_side_risk_ratio._24h.height,
                 exit,
             )?;
         self.sell_side_risk_ratio_24h_30d_ema
@@ -1123,7 +966,7 @@ impl RealizedBase {
             .compute_rolling_ema(
                 starting_indexes.height,
                 &blocks.count.height_1m_ago,
-                &self.sell_side_risk_ratio.height,
+                &self.sell_side_risk_ratio._24h.height,
                 exit,
             )?;
 

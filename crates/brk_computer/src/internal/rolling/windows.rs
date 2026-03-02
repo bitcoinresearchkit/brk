@@ -18,19 +18,8 @@ use crate::{
     internal::{ComputedFromHeight, ComputedVecValue, NumericValue, Windows},
 };
 
-/// Rolling window start heights — references to the 4 height-ago vecs.
-pub struct WindowStarts<'a> {
-    pub _24h: &'a EagerVec<PcoVec<Height, Height>>,
-    pub _7d: &'a EagerVec<PcoVec<Height, Height>>,
-    pub _30d: &'a EagerVec<PcoVec<Height, Height>>,
-    pub _1y: &'a EagerVec<PcoVec<Height, Height>>,
-}
-
-impl<'a> WindowStarts<'a> {
-    pub fn as_array(&self) -> [&'a EagerVec<PcoVec<Height, Height>>; 4] {
-        [self._24h, self._7d, self._30d, self._1y]
-    }
-}
+/// Rolling window start heights — the 4 height-ago vecs (24h, 7d, 30d, 1y).
+pub type WindowStarts<'a> = Windows<&'a EagerVec<PcoVec<Height, Height>>>;
 
 /// 4 rolling window vecs (24h, 7d, 30d, 1y), each with height data + all 17 index views.
 #[derive(Deref, DerefMut, Traversable)]
@@ -52,12 +41,9 @@ where
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let v = version + VERSION;
-        Ok(Self(Windows {
-            _24h: ComputedFromHeight::forced_import(db, &format!("{name}_24h"), v, indexes)?,
-            _7d: ComputedFromHeight::forced_import(db, &format!("{name}_7d"), v, indexes)?,
-            _30d: ComputedFromHeight::forced_import(db, &format!("{name}_30d"), v, indexes)?,
-            _1y: ComputedFromHeight::forced_import(db, &format!("{name}_1y"), v, indexes)?,
-        }))
+        Ok(Self(Windows::try_from_fn(|suffix| {
+            ComputedFromHeight::forced_import(db, &format!("{name}_{suffix}"), v, indexes)
+        })?))
     }
 
     pub(crate) fn compute_rolling_sum(
@@ -71,7 +57,7 @@ where
         T: Default + SubAssign,
     {
         for (w, starts) in self.0.as_mut_array().into_iter().zip(windows.as_array()) {
-            w.height.compute_rolling_sum(max_from, starts, source, exit)?;
+            w.height.compute_rolling_sum(max_from, *starts, source, exit)?;
         }
         Ok(())
     }

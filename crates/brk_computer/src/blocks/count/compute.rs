@@ -3,7 +3,7 @@ use brk_indexer::Indexer;
 use brk_types::{Height, StoredU32, Timestamp};
 use vecdb::{AnyVec, Cursor, EagerVec, Exit, PcoVec, ReadableVec, VecIndex};
 
-use crate::ComputeIndexes;
+use crate::{internal::WindowStarts, ComputeIndexes};
 
 use super::{super::time, Vecs};
 
@@ -160,7 +160,7 @@ impl Vecs {
         })?;
 
         // Compute rolling window block counts (both block_count's own rolling + separate block_count_sum)
-        let ws = crate::internal::WindowStarts {
+        let ws = WindowStarts {
             _24h: &self.height_24h_ago,
             _7d: &self.height_1w_ago,
             _30d: &self.height_1m_ago,

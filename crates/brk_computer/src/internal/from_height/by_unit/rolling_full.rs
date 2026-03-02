@@ -92,12 +92,9 @@ impl RollingFullByUnit {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let v = version + VERSION;
-        Ok(Self(Windows {
-            _24h: RollingFullSlot::forced_import(db, &format!("{name}_24h"), v, indexes)?,
-            _7d: RollingFullSlot::forced_import(db, &format!("{name}_7d"), v, indexes)?,
-            _30d: RollingFullSlot::forced_import(db, &format!("{name}_30d"), v, indexes)?,
-            _1y: RollingFullSlot::forced_import(db, &format!("{name}_1y"), v, indexes)?,
-        }))
+        Ok(Self(Windows::try_from_fn(|suffix| {
+            RollingFullSlot::forced_import(db, &format!("{name}_{suffix}"), v, indexes)
+        })?))
     }
 
     pub(crate) fn compute(
@@ -109,7 +106,7 @@ impl RollingFullByUnit {
         exit: &Exit,
     ) -> Result<()> {
         for (slot, starts) in self.0.as_mut_array().into_iter().zip(windows.as_array()) {
-            slot.compute(max_from, starts, sats_source, cents_source, exit)?;
+            slot.compute(max_from, *starts, sats_source, cents_source, exit)?;
         }
         Ok(())
     }

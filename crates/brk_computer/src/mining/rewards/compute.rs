@@ -130,30 +130,20 @@ impl Vecs {
         )?;
 
         // Rolling fee dominance = sum(fees) / sum(coinbase) * 100
-        self.fee_dominance_24h.height.compute_percentage(
-            starting_indexes.height,
-            &self.fees.rolling._24h.sum.sats.height,
-            &self.coinbase.rolling._24h.sum.sats.height,
-            exit,
-        )?;
-        self.fee_dominance_7d.height.compute_percentage(
-            starting_indexes.height,
-            &self.fees.rolling._7d.sum.sats.height,
-            &self.coinbase.rolling._7d.sum.sats.height,
-            exit,
-        )?;
-        self.fee_dominance_30d.height.compute_percentage(
-            starting_indexes.height,
-            &self.fees.rolling._30d.sum.sats.height,
-            &self.coinbase.rolling._30d.sum.sats.height,
-            exit,
-        )?;
-        self.fee_dominance_1y.height.compute_percentage(
-            starting_indexes.height,
-            &self.fees.rolling._1y.sum.sats.height,
-            &self.coinbase.rolling._1y.sum.sats.height,
-            exit,
-        )?;
+        for ((fee_dom, fees_w), coinbase_w) in self
+            .fee_dominance_rolling
+            .as_mut_array()
+            .into_iter()
+            .zip(self.fees.rolling.as_array())
+            .zip(self.coinbase.rolling.as_array())
+        {
+            fee_dom.height.compute_percentage(
+                starting_indexes.height,
+                &fees_w.sum.sats.height,
+                &coinbase_w.sum.sats.height,
+                exit,
+            )?;
+        }
 
         // All-time cumulative subsidy dominance
         self.subsidy_dominance.height.compute_percentage(
@@ -165,30 +155,19 @@ impl Vecs {
 
         // Rolling subsidy dominance = 100 - fee_dominance
         let hundred = StoredF32::from(100u8);
-        self.subsidy_dominance_24h.height.compute_transform(
-            starting_indexes.height,
-            &self.fee_dominance_24h.height,
-            |(height, fee_dom, _)| (height, hundred - fee_dom),
-            exit,
-        )?;
-        self.subsidy_dominance_7d.height.compute_transform(
-            starting_indexes.height,
-            &self.fee_dominance_7d.height,
-            |(height, fee_dom, _)| (height, hundred - fee_dom),
-            exit,
-        )?;
-        self.subsidy_dominance_30d.height.compute_transform(
-            starting_indexes.height,
-            &self.fee_dominance_30d.height,
-            |(height, fee_dom, _)| (height, hundred - fee_dom),
-            exit,
-        )?;
-        self.subsidy_dominance_1y.height.compute_transform(
-            starting_indexes.height,
-            &self.fee_dominance_1y.height,
-            |(height, fee_dom, _)| (height, hundred - fee_dom),
-            exit,
-        )?;
+        for (sub_dom, fee_dom) in self
+            .subsidy_dominance_rolling
+            .as_mut_array()
+            .into_iter()
+            .zip(self.fee_dominance_rolling.as_array())
+        {
+            sub_dom.height.compute_transform(
+                starting_indexes.height,
+                &fee_dom.height,
+                |(height, fee_dom, _)| (height, hundred - fee_dom),
+                exit,
+            )?;
+        }
 
         self.subsidy_usd_1y_sma.cents.height.compute_rolling_average(
             starting_indexes.height,

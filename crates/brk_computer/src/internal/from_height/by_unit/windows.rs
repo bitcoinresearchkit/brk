@@ -14,11 +14,8 @@ impl Windows<ByUnit> {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        Ok(Self {
-            _24h: ByUnit::forced_import(db, &format!("{name}_24h"), version, indexes)?,
-            _7d: ByUnit::forced_import(db, &format!("{name}_7d"), version, indexes)?,
-            _30d: ByUnit::forced_import(db, &format!("{name}_30d"), version, indexes)?,
-            _1y: ByUnit::forced_import(db, &format!("{name}_1y"), version, indexes)?,
+        Windows::try_from_fn(|suffix| {
+            ByUnit::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })
     }
 }

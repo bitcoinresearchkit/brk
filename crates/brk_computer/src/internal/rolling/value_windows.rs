@@ -36,32 +36,9 @@ impl ValueFromHeightWindows {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let v = version + VERSION;
-        Ok(Self(Windows {
-            _24h: ValueFromHeight::forced_import(
-                db,
-                &format!("{name}_24h"),
-                v,
-                indexes,
-            )?,
-            _7d: ValueFromHeight::forced_import(
-                db,
-                &format!("{name}_7d"),
-                v,
-                indexes,
-            )?,
-            _30d: ValueFromHeight::forced_import(
-                db,
-                &format!("{name}_30d"),
-                v,
-                indexes,
-            )?,
-            _1y: ValueFromHeight::forced_import(
-                db,
-                &format!("{name}_1y"),
-                v,
-                indexes,
-            )?,
-        }))
+        Ok(Self(Windows::try_from_fn(|suffix| {
+            ValueFromHeight::forced_import(db, &format!("{name}_{suffix}"), v, indexes)
+        })?))
     }
 
     pub(crate) fn compute_rolling_sum(
@@ -73,7 +50,7 @@ impl ValueFromHeightWindows {
         exit: &Exit,
     ) -> Result<()> {
         for (w, starts) in self.0.as_mut_array().into_iter().zip(windows.as_array()) {
-            w.compute_rolling_sum(max_from, starts, sats_source, cents_source, exit)?;
+            w.compute_rolling_sum(max_from, *starts, sats_source, cents_source, exit)?;
         }
         Ok(())
     }

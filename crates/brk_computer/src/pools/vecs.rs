@@ -8,7 +8,7 @@ use crate::{
     indexes::{self, ComputeIndexes},
     internal::{
         ComputedFromHeightCumulativeSum, ComputedFromHeight, MaskSats, PercentageU32F32,
-        ValueFromHeightCumulativeSum,
+        RollingWindows, ValueFromHeightCumulativeSum,
     },
     mining, prices,
 };
@@ -18,19 +18,12 @@ pub struct Vecs<M: StorageMode = Rw> {
     slug: PoolSlug,
 
     pub blocks_mined: ComputedFromHeightCumulativeSum<StoredU32, M>,
-    pub blocks_mined_24h_sum: ComputedFromHeight<StoredU32, M>,
-    pub blocks_mined_1w_sum: ComputedFromHeight<StoredU32, M>,
-    pub blocks_mined_1m_sum: ComputedFromHeight<StoredU32, M>,
-    pub blocks_mined_1y_sum: ComputedFromHeight<StoredU32, M>,
+    pub blocks_mined_sum: RollingWindows<StoredU32, M>,
     pub subsidy: ValueFromHeightCumulativeSum<M>,
     pub fee: ValueFromHeightCumulativeSum<M>,
     pub coinbase: ValueFromHeightCumulativeSum<M>,
     pub dominance: ComputedFromHeight<StoredF32, M>,
-
-    pub dominance_24h: ComputedFromHeight<StoredF32, M>,
-    pub dominance_1w: ComputedFromHeight<StoredF32, M>,
-    pub dominance_1m: ComputedFromHeight<StoredF32, M>,
-    pub dominance_1y: ComputedFromHeight<StoredF32, M>,
+    pub dominance_rolling: RollingWindows<StoredF32, M>,
     pub blocks_since_block: ComputedFromHeight<StoredU32, M>,
     pub days_since_block: ComputedFromHeight<StoredU16, M>,
 }
@@ -52,30 +45,8 @@ impl Vecs {
             indexes,
         )?;
 
-        let blocks_mined_24h_sum = ComputedFromHeight::forced_import(
-            db,
-            &suffix("blocks_mined_24h_sum"),
-            version,
-            indexes,
-        )?;
-        let blocks_mined_1w_sum = ComputedFromHeight::forced_import(
-            db,
-            &suffix("blocks_mined_1w_sum"),
-            version,
-            indexes,
-        )?;
-        let blocks_mined_1m_sum = ComputedFromHeight::forced_import(
-            db,
-            &suffix("blocks_mined_1m_sum"),
-            version,
-            indexes,
-        )?;
-        let blocks_mined_1y_sum = ComputedFromHeight::forced_import(
-            db,
-            &suffix("blocks_mined_1y_sum"),
-            version,
-            indexes,
-        )?;
+        let blocks_mined_sum =
+            RollingWindows::forced_import(db, &suffix("blocks_mined_sum"), version, indexes)?;
 
         let subsidy =
             ValueFromHeightCumulativeSum::forced_import(db, &suffix("subsidy"), version, indexes)?;
@@ -88,27 +59,15 @@ impl Vecs {
 
         let dominance =
             ComputedFromHeight::forced_import(db, &suffix("dominance"), version, indexes)?;
-        let dominance_24h =
-            ComputedFromHeight::forced_import(db, &suffix("dominance_24h"), version, indexes)?;
-        let dominance_1w =
-            ComputedFromHeight::forced_import(db, &suffix("dominance_1w"), version, indexes)?;
-        let dominance_1m =
-            ComputedFromHeight::forced_import(db, &suffix("dominance_1m"), version, indexes)?;
-        let dominance_1y =
-            ComputedFromHeight::forced_import(db, &suffix("dominance_1y"), version, indexes)?;
+        let dominance_rolling =
+            RollingWindows::forced_import(db, &suffix("dominance"), version, indexes)?;
 
         Ok(Self {
             dominance,
-            dominance_24h,
-            dominance_1w,
-            dominance_1m,
-            dominance_1y,
+            dominance_rolling,
             slug,
             blocks_mined,
-            blocks_mined_24h_sum,
-            blocks_mined_1w_sum,
-            blocks_mined_1m_sum,
-            blocks_mined_1y_sum,
+            blocks_mined_sum,
             coinbase,
             subsidy,
             fee,
@@ -159,31 +118,9 @@ impl Vecs {
                 Ok(())
             })?;
 
-        // Compute rolling window blocks mined using the start heights from blocks.count
-        self.blocks_mined_24h_sum.height.compute_rolling_sum(
+        self.blocks_mined_sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_24h_ago,
-            &self.blocks_mined.height,
-            exit,
-        )?;
-
-        self.blocks_mined_1w_sum.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &self.blocks_mined.height,
-            exit,
-        )?;
-
-        self.blocks_mined_1m_sum.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.count.height_1m_ago,
-            &self.blocks_mined.height,
-            exit,
-        )?;
-
-        self.blocks_mined_1y_sum.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.count.height_1y_ago,
+            &window_starts,
             &self.blocks_mined.height,
             exit,
         )?;
@@ -196,37 +133,20 @@ impl Vecs {
                 exit,
             )?;
 
-        self.dominance_24h
-            .compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
+        for ((dom, mined), total) in self
+            .dominance_rolling
+            .as_mut_array()
+            .into_iter()
+            .zip(self.blocks_mined_sum.as_array())
+            .zip(blocks.count.block_count_sum.as_array())
+        {
+            dom.compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
                 starting_indexes.height,
-                &self.blocks_mined_24h_sum.height,
-                &blocks.count.block_count_sum._24h.height,
+                &mined.height,
+                &total.height,
                 exit,
             )?;
-
-        self.dominance_1w
-            .compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
-                starting_indexes.height,
-                &self.blocks_mined_1w_sum.height,
-                &blocks.count.block_count_sum._7d.height,
-                exit,
-            )?;
-
-        self.dominance_1m
-            .compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
-                starting_indexes.height,
-                &self.blocks_mined_1m_sum.height,
-                &blocks.count.block_count_sum._30d.height,
-                exit,
-            )?;
-
-        self.dominance_1y
-            .compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
-                starting_indexes.height,
-                &self.blocks_mined_1y_sum.height,
-                &blocks.count.block_count_sum._1y.height,
-                exit,
-            )?;
+        }
 
         self.subsidy.compute(
             starting_indexes.height,
