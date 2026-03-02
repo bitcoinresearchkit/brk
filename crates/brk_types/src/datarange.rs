@@ -6,17 +6,17 @@ use crate::{de_unquote_i64, de_unquote_limit, Limit};
 /// Range parameters for slicing data
 #[derive(Default, Debug, Deserialize, JsonSchema)]
 pub struct DataRange {
-    /// Inclusive starting index, if negative counts from end
+    /// Inclusive starting index, if negative counts from end. Aliases: `from`, `f`, `s`
     #[serde(default, alias = "s", alias = "from", alias = "f", deserialize_with = "de_unquote_i64")]
     #[schemars(example = 0, example = -1, example = -10, example = -1000)]
     start: Option<i64>,
 
-    /// Exclusive ending index, if negative counts from end
+    /// Exclusive ending index, if negative counts from end. Aliases: `to`, `t`, `e`
     #[serde(default, alias = "e", alias = "to", alias = "t", deserialize_with = "de_unquote_i64")]
     #[schemars(example = 1000)]
     end: Option<i64>,
 
-    /// Maximum number of values to return (ignored if `end` is set)
+    /// Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
     #[serde(default, alias = "l", alias = "count", alias = "c", deserialize_with = "de_unquote_limit")]
     limit: Option<Limit>,
 }

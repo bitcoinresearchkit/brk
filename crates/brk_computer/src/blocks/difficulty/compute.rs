@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{StoredF32, StoredU32};
+use brk_types::{StoredF64, StoredU32};
 use vecdb::Exit;
 
 use super::super::TARGET_BLOCKS_PER_DAY_F32;
@@ -22,7 +22,7 @@ impl Vecs {
         self.as_hash.height.compute_transform(
             starting_indexes.height,
             &indexer.vecs.blocks.difficulty,
-            |(i, v, ..)| (i, StoredF32::from(*v * multiplier)),
+            |(i, v, ..)| (i, StoredF64::from(*v * multiplier)),
             exit,
         )?;
 

@@ -9,6 +9,16 @@ use crate::{
     mining, prices, transactions,
 };
 
+fn tf_multiplier(tf: &str) -> usize {
+    match tf {
+        "1d" => 1,
+        "1w" => 7,
+        "1m" => 30,
+        "1y" => 365,
+        _ => unreachable!(),
+    }
+}
+
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
@@ -60,18 +70,22 @@ impl Vecs {
             )?;
         }
 
-        // Pre-collect Height→Day1 mapping
-        let h2d: Vec<Day1> = indexes.height.day1.collect();
-        let total_heights = h2d.len();
-
         // RSI per timeframe
         for (tf, rsi_chain) in self.rsi.iter_mut() {
+            let m = tf_multiplier(tf);
+            let returns_source = match tf {
+                "1d" => &returns.price_returns._24h.height,
+                "1w" => &returns.price_returns._1w.height,
+                "1m" => &returns.price_returns._1m.height,
+                "1y" => &returns.price_returns._1y.height,
+                _ => unreachable!(),
+            };
             super::rsi::compute(
                 rsi_chain,
-                tf,
-                returns,
-                &h2d,
-                total_heights,
+                blocks,
+                returns_source,
+                14 * m,
+                3 * m,
                 starting_indexes,
                 exit,
             )?;
@@ -79,18 +93,22 @@ impl Vecs {
 
         // MACD per timeframe
         for (tf, macd_chain) in self.macd.iter_mut() {
+            let m = tf_multiplier(tf);
             super::macd::compute(
                 macd_chain,
-                tf,
+                blocks,
                 prices,
-                &h2d,
-                total_heights,
+                12 * m,
+                26 * m,
+                9 * m,
                 starting_indexes,
                 exit,
             )?;
         }
 
-        // Gini (daily only, expanded to Height)
+        // Gini (daily, expanded to Height)
+        let h2d: Vec<Day1> = indexes.height.day1.collect();
+        let total_heights = h2d.len();
         super::gini::compute(
             &mut self.gini,
             distribution,

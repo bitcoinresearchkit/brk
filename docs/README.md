@@ -43,7 +43,7 @@ curl https://bitview.space/api/mempool/price
 
 Query metrics and blockchain data in JSON or CSV.
 
-[Documentation](https://bitview.space/api) · [JavaScript](https://www.npmjs.com/package/brk-client) · [Python](https://pypi.org/project/brk-client) · [Rust](https://crates.io/crates/brk_client) · [LLM-friendly schema](https://bitview.space/api#tag/server/GET/api.json)
+[Documentation](https://bitview.space/api) · [JavaScript](https://www.npmjs.com/package/brk-client) · [Python](https://pypi.org/project/brk-client) · [Rust](https://crates.io/crates/brk_client) · [llms.txt](https://bitview.space/llms.txt) · [LLM-friendly schema](https://bitview.space/api.json)
 
 ### Self-host
 

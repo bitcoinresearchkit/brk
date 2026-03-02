@@ -72,14 +72,23 @@ impl Vecs {
         self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 55, |s| {
             &mut s.height_55d_ago
         })?;
-        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 2 * 30, |s| {
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 60, |s| {
             &mut s.height_2m_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 63, |s| {
+            &mut s.height_9w_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 84, |s| {
+            &mut s.height_12w_ago
         })?;
         self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 89, |s| {
             &mut s.height_89d_ago
         })?;
-        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 3 * 30, |s| {
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 90, |s| {
             &mut s.height_3m_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 98, |s| {
+            &mut s.height_14w_ago
         })?;
         self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 111, |s| {
             &mut s.height_111d_ago
@@ -87,82 +96,69 @@ impl Vecs {
         self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 144, |s| {
             &mut s.height_144d_ago
         })?;
-        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 6 * 30, |s| {
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 180, |s| {
             &mut s.height_6m_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 182, |s| {
+            &mut s.height_26w_ago
         })?;
         self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 200, |s| {
             &mut s.height_200d_ago
         })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 270, |s| {
+            &mut s.height_9m_ago
+        })?;
         self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 350, |s| {
             &mut s.height_350d_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 360, |s| {
+            &mut s.height_12m_ago
         })?;
         self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 365, |s| {
             &mut s.height_1y_ago
         })?;
-        self.compute_rolling_start(
-            &monotonic_data,
-            time,
-            starting_indexes,
-            exit,
-            2 * 365,
-            |s| &mut s.height_2y_ago,
-        )?;
-        self.compute_rolling_start(
-            &monotonic_data,
-            time,
-            starting_indexes,
-            exit,
-            200 * 7,
-            |s| &mut s.height_200w_ago,
-        )?;
-        self.compute_rolling_start(
-            &monotonic_data,
-            time,
-            starting_indexes,
-            exit,
-            3 * 365,
-            |s| &mut s.height_3y_ago,
-        )?;
-        self.compute_rolling_start(
-            &monotonic_data,
-            time,
-            starting_indexes,
-            exit,
-            4 * 365,
-            |s| &mut s.height_4y_ago,
-        )?;
-        self.compute_rolling_start(
-            &monotonic_data,
-            time,
-            starting_indexes,
-            exit,
-            5 * 365,
-            |s| &mut s.height_5y_ago,
-        )?;
-        self.compute_rolling_start(
-            &monotonic_data,
-            time,
-            starting_indexes,
-            exit,
-            6 * 365,
-            |s| &mut s.height_6y_ago,
-        )?;
-        self.compute_rolling_start(
-            &monotonic_data,
-            time,
-            starting_indexes,
-            exit,
-            8 * 365,
-            |s| &mut s.height_8y_ago,
-        )?;
-        self.compute_rolling_start(
-            &monotonic_data,
-            time,
-            starting_indexes,
-            exit,
-            10 * 365,
-            |s| &mut s.height_10y_ago,
-        )?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 420, |s| {
+            &mut s.height_14m_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 730, |s| {
+            &mut s.height_2y_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 780, |s| {
+            &mut s.height_26m_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 1095, |s| {
+            &mut s.height_3y_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 1400, |s| {
+            &mut s.height_200w_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 1460, |s| {
+            &mut s.height_4y_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 1825, |s| {
+            &mut s.height_5y_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 2190, |s| {
+            &mut s.height_6y_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 2920, |s| {
+            &mut s.height_8y_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 3285, |s| {
+            &mut s.height_9y_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 3650, |s| {
+            &mut s.height_10y_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 4380, |s| {
+            &mut s.height_12y_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 5110, |s| {
+            &mut s.height_14y_ago
+        })?;
+        self.compute_rolling_start(&monotonic_data, time, starting_indexes, exit, 9490, |s| {
+            &mut s.height_26y_ago
+        })?;
 
         // Compute rolling window block counts (both block_count's own rolling + separate block_count_sum)
         let ws = crate::internal::WindowStarts {

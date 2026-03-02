@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{Day1, Sats, StoredF32, StoredU64, Version};
+use brk_types::{Day1, StoredF32, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableOptionVec, VecIndex, WritableVec};
 
 use crate::{ComputeIndexes, distribution, internal::ComputedFromHeight};
@@ -44,35 +44,39 @@ pub(super) fn compute(
         return Ok(());
     }
 
-    // Pre-collect all daily data
-    let supply_data: Vec<Vec<Sats>> = supply_vecs
+    let num_days = supply_vecs
         .iter()
-        .map(|v| v.collect_or_default())
-        .collect();
-    let count_data: Vec<Vec<StoredU64>> = count_vecs
-        .iter()
-        .map(|v| v.collect_or_default())
-        .collect();
-    let num_days = supply_data.first().map_or(0, |v| v.len());
+        .map(|v| v.len())
+        .min()
+        .unwrap_or(0)
+        .min(count_vecs.iter().map(|v| v.len()).min().unwrap_or(0));
 
-    // Compute gini per day in-memory
-    let mut gini_daily = Vec::with_capacity(num_days);
-    let mut buckets: Vec<(u64, u64)> = Vec::with_capacity(supply_data.len());
-    for di in 0..num_days {
+    // Only compute gini for new days (each day is independent)
+    let start_day = if start_height > 0 {
+        h2d[start_height].to_usize()
+    } else {
+        0
+    };
+
+    let mut gini_new: Vec<f32> = Vec::with_capacity(num_days.saturating_sub(start_day));
+    let mut buckets: Vec<(u64, u64)> = Vec::with_capacity(supply_vecs.len());
+    for di in start_day..num_days {
         buckets.clear();
-        buckets.extend(supply_data.iter().zip(count_data.iter()).map(|(s, c)| {
-            let count: u64 = c[di].into();
-            let supply: u64 = s[di].into();
-            (count, supply)
-        }));
-        gini_daily.push(gini_from_lorenz(&buckets));
+        let day = Day1::from(di);
+        for (sv, cv) in supply_vecs.iter().zip(count_vecs.iter()) {
+            let supply: u64 = sv.collect_one_flat(day).unwrap_or_default().into();
+            let count: u64 = cv.collect_one_flat(day).unwrap_or_default().into();
+            buckets.push((count, supply));
+        }
+        gini_new.push(gini_from_lorenz(&buckets));
     }
 
     // Expand to Height
     (start_height..total_heights).for_each(|h| {
         let di = h2d[h].to_usize();
-        let val = if di < gini_daily.len() {
-            StoredF32::from(gini_daily[di])
+        let offset = di.saturating_sub(start_day);
+        let val = if offset < gini_new.len() {
+            StoredF32::from(gini_new[offset])
         } else {
             StoredF32::NAN
         };
@@ -92,7 +96,7 @@ fn gini_from_lorenz(buckets: &[(u64, u64)]) -> f32 {
     let total_supply: u64 = buckets.iter().map(|(_, s)| s).sum();
 
     if total_count == 0 || total_supply == 0 {
-        return 0.0;
+        return f32::NAN;
     }
 
     let (mut cumulative_count, mut cumulative_supply, mut area) = (0u64, 0u64, 0.0f64);

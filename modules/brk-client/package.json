@@ -7,7 +7,7 @@
     "test:basic": "node tests/basic.js",
     "test:tree": "node tests/tree.js"
   },
-  "description": "BRK JavaScript client",
+  "description": "Bitcoin on-chain analytics client — thousands of metrics, block explorer, and address index",
   "engines": {
     "node": ">=18"
   },
@@ -23,7 +23,13 @@
     "brk",
     "bitcoin",
     "blockchain",
-    "research"
+    "research",
+    "on-chain",
+    "analytics",
+    "metrics",
+    "api",
+    "data",
+    "cryptocurrency"
   ],
   "license": "MIT",
   "main": "index.js",

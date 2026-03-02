@@ -30,7 +30,7 @@ where
         if fract != 0.0 {
             let left = sorted.get(index as usize).unwrap().clone();
             let right = sorted.get(index.ceil() as usize).unwrap().clone();
-            left / 2 + right / 2
+            (left + right) / 2
         } else {
             sorted.get(index as usize).unwrap().clone()
         }

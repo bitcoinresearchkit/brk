@@ -3,10 +3,7 @@ use brk_types::StoredF32;
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{
-    blocks, ComputeIndexes, prices,
-    traits::{ComputeRollingMaxFromStarts, ComputeRollingMinFromStarts},
-};
+use crate::{blocks, ComputeIndexes, prices};
 
 impl Vecs {
     pub(crate) fn compute(

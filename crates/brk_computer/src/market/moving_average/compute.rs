@@ -1,16 +1,14 @@
 use brk_error::Result;
-use brk_types::Cents;
-use vecdb::{Exit, ReadableOptionVec, VecIndex};
+use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, indexes, prices};
+use crate::{ComputeIndexes, blocks, prices};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -41,9 +39,6 @@ impl Vecs {
             })?;
         }
 
-        let h2d = &indexes.height.day1;
-        let closes: Vec<Cents> = prices.split.close.cents.day1.collect_or_default();
-
         for (ema, period) in [
             (&mut self.price_1w_ema, 7),
             (&mut self.price_8d_ema, 8),
@@ -62,37 +57,13 @@ impl Vecs {
             (&mut self.price_200w_ema, 200 * 7),
             (&mut self.price_4y_ema, 4 * 365),
         ] {
-            let k = 2.0f64 / (period as f64 + 1.0);
-
-            // Compute date-level EMA, then expand to height level
-            let date_ema = compute_date_ema(&closes, k);
-
+            let window_starts = blocks.count.start_vec(period);
             ema.compute_all(blocks, prices, starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    h2d,
-                    |(h, date, ..)| (h, Cents::from(date_ema[date.to_usize()])),
-                    exit,
-                )?;
+                v.compute_rolling_ema(starting_indexes.height, window_starts, close, exit)?;
                 Ok(())
             })?;
         }
 
         Ok(())
     }
-}
-
-fn compute_date_ema(closes: &[Cents], k: f64) -> Vec<f64> {
-    let mut date_ema: Vec<f64> = Vec::with_capacity(closes.len());
-    let mut ema_val = 0.0f64;
-    for (d, close) in closes.iter().enumerate() {
-        let close = f64::from(*close);
-        if d == 0 {
-            ema_val = close;
-        } else {
-            ema_val = close * k + ema_val * (1.0 - k);
-        }
-        date_ema.push(ema_val);
-    }
-    date_ema
 }

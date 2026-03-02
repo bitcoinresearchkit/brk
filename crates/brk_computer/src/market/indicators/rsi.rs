@@ -1,126 +1,115 @@
 use brk_error::Result;
-use brk_types::{Day1, StoredF32};
-use vecdb::{AnyStoredVec, AnyVec, Exit, VecIndex, WritableVec};
+use brk_types::{Height, StoredF32};
+use vecdb::{Exit, ReadableVec};
 
-use super::{
-    RsiChain,
-    smoothing::{compute_rma, compute_rolling_max, compute_rolling_min, compute_sma},
-    timeframe::{collect_returns, date_to_period},
-};
-use crate::{ComputeIndexes, market::returns::Vecs as ReturnsVecs};
+use super::RsiChain;
+use crate::{ComputeIndexes, blocks};
 
-#[allow(clippy::too_many_arguments)]
 pub(super) fn compute(
     chain: &mut RsiChain,
-    tf: &str,
-    returns: &ReturnsVecs,
-    h2d: &[Day1],
-    total_heights: usize,
+    blocks: &blocks::Vecs,
+    returns_source: &impl ReadableVec<Height, StoredF32>,
+    rma_days: usize,
+    stoch_sma_days: usize,
     starting_indexes: &ComputeIndexes,
     exit: &Exit,
 ) -> Result<()> {
-    let source_version = returns.price_returns._24h.height.version();
+    let ws_rma = blocks.count.start_vec(rma_days);
+    let ws_sma = blocks.count.start_vec(stoch_sma_days);
 
-    let vecs = [
-        &mut chain.gains.height,
-        &mut chain.losses.height,
-        &mut chain.average_gain.height,
-        &mut chain.average_loss.height,
-        &mut chain.rsi.height,
-        &mut chain.rsi_min.height,
-        &mut chain.rsi_max.height,
-        &mut chain.stoch_rsi.height,
-        &mut chain.stoch_rsi_k.height,
-        &mut chain.stoch_rsi_d.height,
-    ];
+    // Gains = max(return, 0)
+    chain.gains.height.compute_transform(
+        starting_indexes.height,
+        returns_source,
+        |(h, r, ..)| (h, StoredF32::from((*r).max(0.0))),
+        exit,
+    )?;
 
-    for v in vecs {
-        v.validate_computed_version_or_reset(source_version)?;
-        v.truncate_if_needed_at(v.len().min(starting_indexes.height.to_usize()))?;
-    }
+    // Losses = max(-return, 0)
+    chain.losses.height.compute_transform(
+        starting_indexes.height,
+        returns_source,
+        |(h, r, ..)| (h, StoredF32::from((-*r).max(0.0))),
+        exit,
+    )?;
 
-    let start_height = chain.gains.height.len();
-    if start_height >= total_heights {
-        return Ok(());
-    }
+    // Average gain = RMA of gains
+    chain.average_gain.height.compute_rolling_rma(
+        starting_indexes.height,
+        ws_rma,
+        &chain.gains.height,
+        exit,
+    )?;
 
-    // Collect returns at the appropriate timeframe level
-    let period_returns = collect_returns(tf, returns);
+    // Average loss = RMA of losses
+    chain.average_loss.height.compute_rolling_rma(
+        starting_indexes.height,
+        ws_rma,
+        &chain.losses.height,
+        exit,
+    )?;
 
-    // Compute in-memory
-    let gains: Vec<f32> = period_returns.iter().map(|r| r.max(0.0)).collect();
-    let losses: Vec<f32> = period_returns.iter().map(|r| (-r).max(0.0)).collect();
-    let avg_gain = compute_rma(&gains, 14);
-    let avg_loss = compute_rma(&losses, 14);
+    // RSI = 100 * avg_gain / (avg_gain + avg_loss)
+    chain.rsi.height.compute_transform2(
+        starting_indexes.height,
+        &chain.average_gain.height,
+        &chain.average_loss.height,
+        |(h, g, l, ..)| {
+            let sum = *g + *l;
+            let rsi = if sum == 0.0 { 50.0 } else { 100.0 * *g / sum };
+            (h, StoredF32::from(rsi))
+        },
+        exit,
+    )?;
 
-    let rsi: Vec<f32> = avg_gain
-        .iter()
-        .zip(avg_loss.iter())
-        .map(|(g, l)| {
-            let sum = g + l;
-            if sum == 0.0 { 50.0 } else { 100.0 * g / sum }
-        })
-        .collect();
+    // Rolling min/max of RSI over rma_days window
+    chain.rsi_min.height.compute_rolling_min_from_starts(
+        starting_indexes.height,
+        ws_rma,
+        &chain.rsi.height,
+        exit,
+    )?;
 
-    let rsi_min = compute_rolling_min(&rsi, 14);
-    let rsi_max = compute_rolling_max(&rsi, 14);
+    chain.rsi_max.height.compute_rolling_max_from_starts(
+        starting_indexes.height,
+        ws_rma,
+        &chain.rsi.height,
+        exit,
+    )?;
 
-    let stoch_rsi: Vec<f32> = rsi
-        .iter()
-        .zip(rsi_min.iter())
-        .zip(rsi_max.iter())
-        .map(|((r, mn), mx)| {
-            let range = mx - mn;
-            if range == 0.0 {
-                f32::NAN
+    // StochRSI = (rsi - rsi_min) / (rsi_max - rsi_min) * 100
+    chain.stoch_rsi.height.compute_transform3(
+        starting_indexes.height,
+        &chain.rsi.height,
+        &chain.rsi_min.height,
+        &chain.rsi_max.height,
+        |(h, r, mn, mx, ..)| {
+            let range = *mx - *mn;
+            let stoch = if range == 0.0 {
+                StoredF32::NAN
             } else {
-                (r - mn) / range * 100.0
-            }
-        })
-        .collect();
+                StoredF32::from((*r - *mn) / range * 100.0)
+            };
+            (h, stoch)
+        },
+        exit,
+    )?;
 
-    let stoch_rsi_k = compute_sma(&stoch_rsi, 3);
-    let stoch_rsi_d = compute_sma(&stoch_rsi_k, 3);
+    // StochRSI K = SMA of StochRSI
+    chain.stoch_rsi_k.height.compute_rolling_average(
+        starting_indexes.height,
+        ws_sma,
+        &chain.stoch_rsi.height,
+        exit,
+    )?;
 
-    // Expand to Height
-    macro_rules! expand {
-        ($target:expr, $buffer:expr) => {
-            for h in start_height..total_heights {
-                let pi = date_to_period(tf, h2d[h]);
-                let val = if pi < $buffer.len() {
-                    StoredF32::from($buffer[pi])
-                } else {
-                    StoredF32::NAN
-                };
-                $target.push(val);
-            }
-        };
-    }
-
-    expand!(chain.gains.height, gains);
-    expand!(chain.losses.height, losses);
-    expand!(chain.average_gain.height, avg_gain);
-    expand!(chain.average_loss.height, avg_loss);
-    expand!(chain.rsi.height, rsi);
-    expand!(chain.rsi_min.height, rsi_min);
-    expand!(chain.rsi_max.height, rsi_max);
-    expand!(chain.stoch_rsi.height, stoch_rsi);
-    expand!(chain.stoch_rsi_k.height, stoch_rsi_k);
-    expand!(chain.stoch_rsi_d.height, stoch_rsi_d);
-
-    {
-        let _lock = exit.lock();
-        chain.gains.height.write()?;
-        chain.losses.height.write()?;
-        chain.average_gain.height.write()?;
-        chain.average_loss.height.write()?;
-        chain.rsi.height.write()?;
-        chain.rsi_min.height.write()?;
-        chain.rsi_max.height.write()?;
-        chain.stoch_rsi.height.write()?;
-        chain.stoch_rsi_k.height.write()?;
-        chain.stoch_rsi_d.height.write()?;
-    }
+    // StochRSI D = SMA of K
+    chain.stoch_rsi_d.height.compute_rolling_average(
+        starting_indexes.height,
+        ws_sma,
+        &chain.stoch_rsi_k.height,
+        exit,
+    )?;
 
     Ok(())
 }

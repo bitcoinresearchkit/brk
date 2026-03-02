@@ -40,7 +40,7 @@ impl ApiJson {
 /// 16. Remove required arrays from schemas
 /// 17. Remove redundant "type": "object" when properties exist
 /// 18. Flatten single-element type arrays
-/// 19. Replace large enums (>20 values) with string type
+/// 19. Replace large enums (>40 values) with string type
 fn compact_json(json: &str) -> String {
     let mut spec: Value = serde_json::from_str(json).expect("Invalid OpenAPI JSON");
 
@@ -175,9 +175,9 @@ fn compact_value(value: &mut Value) {
                 obj.remove("type");
             }
 
-            // Step 19: Replace large enums (>20 values) with just string type
+            // Step 19: Replace large enums (>40 values) with just string type
             if let Some(Value::Array(enum_values)) = obj.get("enum")
-                && enum_values.len() > 20
+                && enum_values.len() > 40
             {
                 obj.remove("enum");
             }

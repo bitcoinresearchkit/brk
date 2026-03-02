@@ -29,7 +29,7 @@ pub fn create_openapi() -> OpenApi {
 - **Metrics**: Thousands of time-series metrics across multiple indexes (date, block height, etc.)
 - **[Mempool.space](https://mempool.space/docs/api/rest) compatible** (WIP): Most non-metrics endpoints follow the mempool.space API format
 - **Multiple formats**: JSON and CSV output
-- **LLM-optimized**: Compact OpenAPI spec at [`/api.json`](/api.json) for AI tools (full spec at [`/openapi.json`](/openapi.json))
+- **LLM-optimized**: [`/llms.txt`](/llms.txt) for discovery, [`/api.json`](/api.json) compact OpenAPI spec for tool use (full spec at [`/openapi.json`](/openapi.json))
 
 ### Client Libraries
 

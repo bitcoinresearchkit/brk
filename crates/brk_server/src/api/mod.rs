@@ -94,6 +94,10 @@ impl ApiRoutes for ApiRouter<AppState> {
                 )
             }))
             .route(
+                "/.well-known/openapi.json",
+                get(|| async { Redirect::permanent("/openapi.json") }),
+            )
+            .route(
                 "/api/{*path}",
                 get(|| async { Redirect::permanent("/api") }),
             )

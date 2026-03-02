@@ -1,11 +1,11 @@
 [project]
 name = "brk-client"
 version = "0.1.9"
-description = "Python client for the Bitcoin Research Kit"
+description = "Bitcoin on-chain analytics client — thousands of metrics, block explorer, and address index"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
-keywords = ["bitcoin", "blockchain", "analytics", "on-chain"]
+keywords = ["bitcoin", "blockchain", "analytics", "on-chain", "metrics", "api", "data", "cryptocurrency", "brk"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",

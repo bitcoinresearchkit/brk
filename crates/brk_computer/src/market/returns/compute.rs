@@ -1,14 +1,13 @@
 use brk_error::Result;
 use brk_types::{Dollars, StoredF32};
-use vecdb::{Exit, ReadableOptionVec};
+use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, indexes, internal::PercentageDiffDollars, market::lookback, prices};
+use crate::{ComputeIndexes, blocks, internal::PercentageDiffDollars, market::lookback, prices};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
         lookback: &lookback::Vecs,
@@ -29,27 +28,16 @@ impl Vecs {
             )?;
         }
 
-        // CAGR computed from returns (2y+ periods only)
-        let h2d = &indexes.height.day1;
+        // CAGR computed from returns at height level (2y+ periods only)
         let price_returns_dca = self.price_returns.as_dca_period();
         for (cagr, returns, days) in self.cagr.zip_mut_with_period(&price_returns_dca) {
             let years = days as f32 / 365.0;
-            let mut cached_di = None;
-            let mut cached_val = StoredF32::from(0.0);
             cagr.height.compute_transform(
                 starting_indexes.height,
-                h2d,
-                |(h, di, _)| {
-                    if cached_di != Some(di) {
-                        cached_di = Some(di);
-                        cached_val = StoredF32::from(
-                            returns.day1
-                                .collect_one_flat(di)
-                                .map(|r| ((*r / 100.0 + 1.0).powf(1.0 / years) - 1.0) * 100.0)
-                                .unwrap_or(0.0)
-                        );
-                    }
-                    (h, cached_val)
+                &returns.height,
+                |(h, r, ..)| {
+                    let v = ((*r / 100.0 + 1.0).powf(1.0 / years) - 1.0) * 100.0;
+                    (h, StoredF32::from(v))
                 },
                 exit,
             )?;

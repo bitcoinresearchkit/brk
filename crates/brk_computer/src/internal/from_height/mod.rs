@@ -1,5 +1,6 @@
 mod aggregated;
 mod base;
+mod bps;
 mod by_unit;
 mod constant;
 mod cumulative;
@@ -16,6 +17,7 @@ mod value;
 
 pub use aggregated::*;
 pub use base::*;
+pub use bps::*;
 pub use by_unit::*;
 pub use constant::*;
 pub use cumulative::*;

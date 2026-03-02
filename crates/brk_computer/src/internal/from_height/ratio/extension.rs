@@ -7,7 +7,6 @@ use crate::{
     ComputeIndexes, blocks, indexes,
     internal::{ComputedFromHeightStdDevExtended, Price},
 };
-use brk_types::get_percentile;
 
 use super::super::ComputedFromHeight;
 
@@ -34,7 +33,7 @@ pub struct ComputedFromHeightRatioExtension<M: StorageMode = Rw> {
     pub ratio_1y_sd: ComputedFromHeightStdDevExtended<M>,
 }
 
-const VERSION: Version = Version::TWO;
+const VERSION: Version = Version::new(3);
 
 impl ComputedFromHeightRatioExtension {
     pub(crate) fn forced_import(
@@ -119,7 +118,8 @@ impl ComputedFromHeightRatioExtension {
             exit,
         )?;
 
-        // Percentiles: insert into sorted array on day boundaries
+        // Percentiles via order-statistic Fenwick tree with coordinate compression.
+        // O(n log n) total vs O(n²) for the naive sorted-insert approach.
         let ratio_version = ratio_source.version();
         self.mut_ratio_vecs()
             .try_for_each(|v| -> Result<()> {
@@ -135,68 +135,85 @@ impl ComputedFromHeightRatioExtension {
             .min(starting_indexes.height);
 
         let start = starting_height.to_usize();
-        let day_start = &blocks.count.height_24h_ago;
+        let ratio_len = ratio_source.len();
 
-        // Collect sorted history up to starting point (one per day boundary)
-        let mut sorted = {
-            let ratio_data = ratio_source.collect_range_at(0, start);
-            let day_start_hist = day_start.collect_range_at(0, start);
-            let mut sorted: Vec<StoredF32> = Vec::new();
-            let mut last_day_start = Height::from(0_usize);
-            for (h, ratio) in ratio_data.into_iter().enumerate() {
-                let cur_day_start = day_start_hist[h];
-                if h == 0 || cur_day_start != last_day_start {
-                    sorted.push(ratio);
-                    last_day_start = cur_day_start;
+        if ratio_len > start {
+            let all_ratios = ratio_source.collect_range_at(0, ratio_len);
+
+            // Coordinate compression: unique sorted values → integer ranks
+            let coords = {
+                let mut c = all_ratios.clone();
+                c.sort_unstable();
+                c.dedup();
+                c
+            };
+            let m = coords.len();
+
+            // Build Fenwick tree (BIT) from elements [0, start) in O(m)
+            let mut bit = vec![0u32; m + 1]; // 1-indexed
+            for &v in &all_ratios[..start] {
+                bit[coords.binary_search(&v).unwrap() + 1] += 1;
+            }
+            for i in 1..=m {
+                let j = i + (i & i.wrapping_neg());
+                if j <= m {
+                    bit[j] += bit[i];
                 }
             }
-            sorted.sort_unstable();
-            sorted
-        };
 
-        let pct1_vec = &mut self.ratio_pct1.height;
-        let pct2_vec = &mut self.ratio_pct2.height;
-        let pct5_vec = &mut self.ratio_pct5.height;
-        let pct95_vec = &mut self.ratio_pct95.height;
-        let pct98_vec = &mut self.ratio_pct98.height;
-        let pct99_vec = &mut self.ratio_pct99.height;
+            // Highest power of 2 <= m (for binary-lifting kth query)
+            let log2 = {
+                let mut b = 1usize;
+                while b <= m {
+                    b <<= 1;
+                }
+                b >> 1
+            };
 
-        let ratio_len = ratio_source.len();
-        let ratio_data = ratio_source.collect_range_at(start, ratio_len);
-        let mut last_day_start = if start > 0 {
-            day_start
-                .collect_one_at(start - 1)
-                .unwrap_or(Height::from(0_usize))
-        } else {
-            Height::from(0_usize)
-        };
+            // Find rank of k-th smallest element (k is 1-indexed) in O(log m)
+            let kth = |bit: &[u32], mut k: u32| -> usize {
+                let mut pos = 0;
+                let mut b = log2;
+                while b > 0 {
+                    let next = pos + b;
+                    if next <= m && bit[next] < k {
+                        k -= bit[next];
+                        pos = next;
+                    }
+                    b >>= 1;
+                }
+                pos
+            };
 
-        let day_start_data = day_start.collect_range_at(start, ratio_len);
+            let mut pct_vecs: [&mut EagerVec<PcoVec<Height, StoredF32>>; 6] = [
+                &mut self.ratio_pct1.height,
+                &mut self.ratio_pct2.height,
+                &mut self.ratio_pct5.height,
+                &mut self.ratio_pct95.height,
+                &mut self.ratio_pct98.height,
+                &mut self.ratio_pct99.height,
+            ];
+            const PCTS: [f64; 6] = [0.01, 0.02, 0.05, 0.95, 0.98, 0.99];
 
-        for (offset, ratio) in ratio_data.into_iter().enumerate() {
-            let index = start + offset;
+            let mut count = start;
+            for (offset, &ratio) in all_ratios[start..].iter().enumerate() {
+                count += 1;
 
-            let cur_day_start = day_start_data[offset];
-            if index == 0 || cur_day_start != last_day_start {
-                let pos = sorted.binary_search(&ratio).unwrap_or_else(|p| p);
-                sorted.insert(pos, ratio);
-                last_day_start = cur_day_start;
-            }
+                // Insert into Fenwick tree: O(log m)
+                let mut i = coords.binary_search(&ratio).unwrap() + 1;
+                while i <= m {
+                    bit[i] += 1;
+                    i += i & i.wrapping_neg();
+                }
 
-            if sorted.is_empty() {
-                pct1_vec.truncate_push_at(index, StoredF32::NAN)?;
-                pct2_vec.truncate_push_at(index, StoredF32::NAN)?;
-                pct5_vec.truncate_push_at(index, StoredF32::NAN)?;
-                pct95_vec.truncate_push_at(index, StoredF32::NAN)?;
-                pct98_vec.truncate_push_at(index, StoredF32::NAN)?;
-                pct99_vec.truncate_push_at(index, StoredF32::NAN)?;
-            } else {
-                pct1_vec.truncate_push_at(index, get_percentile(&sorted, 0.01))?;
-                pct2_vec.truncate_push_at(index, get_percentile(&sorted, 0.02))?;
-                pct5_vec.truncate_push_at(index, get_percentile(&sorted, 0.05))?;
-                pct95_vec.truncate_push_at(index, get_percentile(&sorted, 0.95))?;
-                pct98_vec.truncate_push_at(index, get_percentile(&sorted, 0.98))?;
-                pct99_vec.truncate_push_at(index, get_percentile(&sorted, 0.99))?;
+                // Nearest-rank percentile: one kth query each
+                let idx = start + offset;
+                let cf = count as f64;
+                for (vec, &pct) in pct_vecs.iter_mut().zip(PCTS.iter()) {
+                    let k = (cf * pct).ceil().max(1.0) as u32;
+                    let val = coords[kth(&bit, k)];
+                    vec.truncate_push_at(idx, val)?;
+                }
             }
         }
 

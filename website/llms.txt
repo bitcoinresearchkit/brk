@@ -1,0 +1,72 @@
+# Bitcoin Research Kit (BRK)
+
+> Open-source Bitcoin on-chain analytics API. Thousands of metrics, block explorer, address index — all computed from a Bitcoin Core node, including the price.
+
+Base URL: https://bitview.space
+
+## API
+
+Free, no auth required. JSON and CSV output. Mempool.space compatible for block/tx/address endpoints.
+
+- [Interactive docs](https://bitview.space/api)
+- [OpenAPI spec (compact, LLM-optimized)](https://bitview.space/api.json)
+- [OpenAPI spec (full)](https://bitview.space/openapi.json)
+
+## Discover
+
+Search for metrics by keyword:
+
+    GET /api/metrics/search/{query}
+
+Browse all available metrics:
+
+    GET /api/metrics/list
+
+List available indexes (date, height, etc.):
+
+    GET /api/metrics/indexes
+
+Browse the full metric catalog as a tree:
+
+    GET /api/metrics
+
+## Query
+
+Get a metric by name and index:
+
+    GET /api/metric/{metric}/{index}
+    GET /api/metric/{metric}/{index}?start=-30
+
+Fetch multiple metrics at once:
+
+    GET /api/metrics/bulk?index={index}&metrics={metric1},{metric2}
+
+See the `MetricData` schema and query parameters (`start`, `end`, `limit`) in the [OpenAPI spec](https://bitview.space/api.json).
+
+## Block Explorer
+
+    GET /api/block-height/{height}
+    GET /api/block/{hash}
+    GET /api/tx/{txid}
+    GET /api/address/{address}
+
+## Mempool
+
+    GET /api/mempool/price
+    GET /api/mempool/info
+    GET /api/v1/fees/recommended
+
+## Client Libraries
+
+- JavaScript: https://www.npmjs.com/package/brk-client
+- Python: https://pypi.org/project/brk-client/
+- Rust: https://crates.io/crates/brk_client
+
+## Metric Categories
+
+Market, supply, mining, network activity, UTXO age bands, cointime economics, holder cohorts, cost basis distributions, and more. Use the discovery endpoints above to explore.
+
+## Source
+
+- GitHub: https://github.com/bitcoinresearchkit/brk
+- License: MIT

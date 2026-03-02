@@ -1,11 +1,9 @@
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Sats, StoredF32, StoredU32};
+use brk_types::{Cents, Height, Sats, StoredF32};
 use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod};
-use crate::internal::{
-    ComputedFromHeight, Price, ValueFromHeight,
-};
+use crate::internal::{ComputedFromHeight, Price, ValueFromHeight};
 
 /// Dollar-cost averaging metrics by time period and year class
 #[derive(Traversable)]
@@ -14,36 +12,18 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// Computed once, reused by all period rolling sums.
     pub dca_sats_per_day: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
 
-    // DCA by period - KISS types
+    // DCA by period
     pub period_stack: ByDcaPeriod<ValueFromHeight<M>>,
     pub period_average_price: ByDcaPeriod<Price<ComputedFromHeight<Cents, M>>>,
     pub period_returns: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
     pub period_cagr: ByDcaCagr<ComputedFromHeight<StoredF32, M>>,
 
-    // DCA by period - profitability
-    pub period_days_in_profit: ByDcaPeriod<ComputedFromHeight<StoredU32, M>>,
-    pub period_days_in_loss: ByDcaPeriod<ComputedFromHeight<StoredU32, M>>,
-    pub period_min_return: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
-    pub period_max_return: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
-
-    // Lump sum by period (for comparison with DCA) - KISS types
+    // Lump sum by period (for comparison with DCA)
     pub period_lump_sum_stack: ByDcaPeriod<ValueFromHeight<M>>,
     pub period_lump_sum_returns: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
 
-    // Lump sum by period - profitability
-    pub period_lump_sum_days_in_profit: ByDcaPeriod<ComputedFromHeight<StoredU32, M>>,
-    pub period_lump_sum_days_in_loss: ByDcaPeriod<ComputedFromHeight<StoredU32, M>>,
-    pub period_lump_sum_min_return: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
-    pub period_lump_sum_max_return: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
-
-    // DCA by year class - KISS types
+    // DCA by year class
     pub class_stack: ByDcaClass<ValueFromHeight<M>>,
     pub class_average_price: ByDcaClass<Price<ComputedFromHeight<Cents, M>>>,
     pub class_returns: ByDcaClass<ComputedFromHeight<StoredF32, M>>,
-
-    // DCA by year class - profitability
-    pub class_days_in_profit: ByDcaClass<ComputedFromHeight<StoredU32, M>>,
-    pub class_days_in_loss: ByDcaClass<ComputedFromHeight<StoredU32, M>>,
-    pub class_min_return: ByDcaClass<ComputedFromHeight<StoredF32, M>>,
-    pub class_max_return: ByDcaClass<ComputedFromHeight<StoredF32, M>>,
 }

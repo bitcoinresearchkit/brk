@@ -12,7 +12,7 @@ const CACHE_SIZE: usize = 8;
 ///
 /// Includes an LRU cache of recently accessed ranges to avoid binary search
 /// when there's locality in access patterns.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RangeMap<I, V> {
     /// Sorted vec of first_index values. Position in vec = value.
     first_indexes: Vec<I>,
@@ -42,6 +42,17 @@ impl<I: Ord + Copy + Default, V: From<usize> + Copy + Default> RangeMap<I, V> {
             cache_len: 0,
             _phantom: PhantomData,
         }
+    }
+
+    /// Number of ranges stored.
+    pub(crate) fn len(&self) -> usize {
+        self.first_indexes.len()
+    }
+
+    /// Truncate to `new_len` ranges and clear the cache.
+    pub(crate) fn truncate(&mut self, new_len: usize) {
+        self.first_indexes.truncate(new_len);
+        self.cache_len = 0;
     }
 
     /// Push a new first_index. Value is implicitly the current length.

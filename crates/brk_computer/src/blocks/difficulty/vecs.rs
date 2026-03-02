@@ -8,7 +8,7 @@ use crate::internal::{ComputedFromHeight, ComputedHeightDerived};
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub raw: ComputedHeightDerived<StoredF64>,
-    pub as_hash: ComputedFromHeight<StoredF32, M>,
+    pub as_hash: ComputedFromHeight<StoredF64, M>,
     pub adjustment: ComputedFromHeight<StoredF32, M>,
     pub epoch: ComputedFromHeight<DifficultyEpoch, M>,
     pub blocks_before_next_adjustment: ComputedFromHeight<StoredU32, M>,

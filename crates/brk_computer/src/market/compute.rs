@@ -19,7 +19,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         // ATH metrics (independent)
-        self.ath.compute(prices, starting_indexes, exit)?;
+        self.ath.compute(prices, indexes, starting_indexes, exit)?;
 
         // Lookback metrics (independent)
         self.lookback
@@ -27,7 +27,7 @@ impl Vecs {
 
         // Returns metrics (depends on lookback)
         self.returns
-            .compute(indexes, prices, blocks, &self.lookback, starting_indexes, exit)?;
+            .compute(prices, blocks, &self.lookback, starting_indexes, exit)?;
 
         // Volatility (depends on returns)
         self.volatility
@@ -39,7 +39,7 @@ impl Vecs {
 
         // Moving average metrics (independent)
         self.moving_average
-            .compute(blocks, prices, indexes, starting_indexes, exit)?;
+            .compute(blocks, prices, starting_indexes, exit)?;
 
         // DCA metrics (depends on lookback for lump sum comparison)
         self.dca

@@ -9,9 +9,9 @@ use crate::internal::ComputedFromHeight;
 pub struct Vecs<M: StorageMode = Rw> {
     pub hash_rate: ComputedFromHeight<StoredF64, M>,
     pub hash_rate_1w_sma: ComputedFromHeight<StoredF64, M>,
-    pub hash_rate_1m_sma: ComputedFromHeight<StoredF32, M>,
-    pub hash_rate_2m_sma: ComputedFromHeight<StoredF32, M>,
-    pub hash_rate_1y_sma: ComputedFromHeight<StoredF32, M>,
+    pub hash_rate_1m_sma: ComputedFromHeight<StoredF64, M>,
+    pub hash_rate_2m_sma: ComputedFromHeight<StoredF64, M>,
+    pub hash_rate_1y_sma: ComputedFromHeight<StoredF64, M>,
     pub hash_rate_ath: ComputedFromHeight<StoredF64, M>,
     pub hash_rate_drawdown: ComputedFromHeight<StoredF32, M>,
     pub hash_price_ths: ComputedFromHeight<StoredF32, M>,

@@ -1,14 +1,15 @@
 use brk_error::Result;
-use brk_types::StoredU16;
+use brk_types::{Day1, StoredU16};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, prices, traits::ComputeDrawdown};
+use crate::{ComputeIndexes, indexes, prices, traits::ComputeDrawdown};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         prices: &prices::Vecs,
+        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -18,27 +19,29 @@ impl Vecs {
             exit,
         )?;
 
-        let mut prev = None;
-        self.days_since_price_ath.height.compute_transform2(
+        let mut ath_day: Option<Day1> = None;
+        self.days_since_price_ath.height.compute_transform3(
             starting_indexes.height,
             &self.price_ath.cents.height,
             &prices.price.cents.height,
-            |(i, ath, price, slf)| {
-                if prev.is_none() {
-                    let i = i.to_usize();
-                    prev.replace(if i > 0 {
-                        slf.collect_one_at(i - 1).unwrap()
+            &indexes.height.day1,
+            |(i, ath, price, day, slf)| {
+                if ath_day.is_none() {
+                    let idx = i.to_usize();
+                    ath_day = Some(if idx > 0 {
+                        let prev_days_since = slf.collect_one_at(idx - 1).unwrap();
+                        Day1::from(day.to_usize().saturating_sub(usize::from(prev_days_since)))
                     } else {
-                        StoredU16::default()
+                        day
                     });
                 }
-                let days = if price == ath {
-                    StoredU16::default()
+                if price == ath {
+                    ath_day = Some(day);
+                    (i, StoredU16::default())
                 } else {
-                    prev.unwrap() + StoredU16::new(1)
-                };
-                prev.replace(days);
-                (i, days)
+                    let days_since = (day.to_usize() - ath_day.unwrap().to_usize()) as u16;
+                    (i, StoredU16::from(days_since))
+                }
             },
             exit,
         )?;

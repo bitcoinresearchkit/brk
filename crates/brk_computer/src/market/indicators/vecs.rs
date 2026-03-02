@@ -51,6 +51,8 @@ pub struct RsiChain<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct MacdChain<M: StorageMode = Rw> {
+    pub ema_fast: ComputedFromHeight<StoredF32, M>,
+    pub ema_slow: ComputedFromHeight<StoredF32, M>,
     pub line: ComputedFromHeight<StoredF32, M>,
     pub signal: ComputedFromHeight<StoredF32, M>,
     pub histogram: ComputedFromHeight<StoredF32, M>,

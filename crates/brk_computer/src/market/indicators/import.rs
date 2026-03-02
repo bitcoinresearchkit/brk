@@ -81,6 +81,18 @@ impl MacdChain {
         )?;
 
         Ok(Self {
+            ema_fast: ComputedFromHeight::forced_import(
+                db,
+                &format!("macd_ema_fast_{tf}"),
+                version,
+                indexes,
+            )?,
+            ema_slow: ComputedFromHeight::forced_import(
+                db,
+                &format!("macd_ema_slow_{tf}"),
+                version,
+                indexes,
+            )?,
             line,
             signal,
             histogram,

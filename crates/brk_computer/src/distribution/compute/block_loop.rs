@@ -48,6 +48,7 @@ pub(crate) fn process_blocks(
     starting_height: Height,
     last_height: Height,
     chain_state: &mut Vec<BlockState>,
+    txindex_to_height: &mut RangeMap<TxIndex, Height>,
     exit: &Exit,
 ) -> Result<()> {
     // Create computation context with pre-computed vectors for thread-safe access
@@ -110,26 +111,28 @@ pub(crate) fn process_blocks(
     let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
     debug!("VecsReaders created");
 
-    // Build txindex -> height lookup map for efficient prev_height computation
-    debug!("building txindex_to_height RangeMap");
-    let mut txindex_to_height: RangeMap<TxIndex, Height> = {
-        let first_txindex_len = indexer.vecs.transactions.first_txindex.len();
-        let all_first_txindexes: Vec<TxIndex> = indexer
+    // Extend txindex_to_height RangeMap with new entries (incremental, O(new_blocks))
+    let target_len = indexer.vecs.transactions.first_txindex.len();
+    let current_len = txindex_to_height.len();
+    if current_len < target_len {
+        debug!("extending txindex_to_height RangeMap from {} to {}", current_len, target_len);
+        let new_entries: Vec<TxIndex> = indexer
             .vecs
             .transactions
             .first_txindex
-            .collect_range_at(0, first_txindex_len);
-        let mut map = RangeMap::with_capacity(first_txindex_len);
-        for first_txindex in all_first_txindexes {
-            map.push(first_txindex);
+            .collect_range_at(current_len, target_len);
+        for first_txindex in new_entries {
+            txindex_to_height.push(first_txindex);
         }
-        map
-    };
-    debug!("txindex_to_height RangeMap built");
+    } else if current_len > target_len {
+        debug!("truncating txindex_to_height RangeMap from {} to {}", current_len, target_len);
+        txindex_to_height.truncate(target_len);
+    }
+    debug!("txindex_to_height RangeMap ready ({} entries)", txindex_to_height.len());
 
     // Create reusable iterators and buffers for per-block reads
     let mut txout_iters = TxOutReaders::new(indexer);
-    let mut txin_iters = TxInReaders::new(indexer, inputs, &mut txindex_to_height);
+    let mut txin_iters = TxInReaders::new(indexer, inputs, txindex_to_height);
     let mut txout_to_txindex_buf = IndexToTxIndexBuf::new();
     let mut txin_to_txindex_buf = IndexToTxIndexBuf::new();
 

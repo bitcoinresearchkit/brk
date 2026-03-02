@@ -1,3 +1,7 @@
+mod bp16_to_float;
+mod bp32_to_float;
+mod bps16_to_float;
+mod bps32_to_float;
 mod block_count_target;
 mod cents_halve;
 mod cents_identity;
@@ -42,6 +46,10 @@ mod volatility_sqrt30;
 mod volatility_sqrt365;
 mod volatility_sqrt7;
 
+pub use bp16_to_float::*;
+pub use bp32_to_float::*;
+pub use bps16_to_float::*;
+pub use bps32_to_float::*;
 pub use block_count_target::*;
 pub use cents_halve::*;
 pub use cents_identity::*;

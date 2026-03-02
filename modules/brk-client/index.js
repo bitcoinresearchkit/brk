@@ -2867,6 +2867,45 @@ function create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, acc) {
 }
 
 /**
+ * @typedef {Object} _10y1m1w1y2y3m3y4y5y6m6y8yPattern2
+ * @property {MetricPattern1<StoredF32>} _10y
+ * @property {MetricPattern1<StoredF32>} _1m
+ * @property {MetricPattern1<StoredF32>} _1w
+ * @property {MetricPattern1<StoredF32>} _1y
+ * @property {MetricPattern1<StoredF32>} _2y
+ * @property {MetricPattern1<StoredF32>} _3m
+ * @property {MetricPattern1<StoredF32>} _3y
+ * @property {MetricPattern1<StoredF32>} _4y
+ * @property {MetricPattern1<StoredF32>} _5y
+ * @property {MetricPattern1<StoredF32>} _6m
+ * @property {MetricPattern1<StoredF32>} _6y
+ * @property {MetricPattern1<StoredF32>} _8y
+ */
+
+/**
+ * Create a _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2}
+ */
+function create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, acc) {
+  return {
+    _10y: createMetricPattern1(client, _p('10y', acc)),
+    _1m: createMetricPattern1(client, _p('1m', acc)),
+    _1w: createMetricPattern1(client, _p('1w', acc)),
+    _1y: createMetricPattern1(client, _p('1y', acc)),
+    _2y: createMetricPattern1(client, _p('2y', acc)),
+    _3m: createMetricPattern1(client, _p('3m', acc)),
+    _3y: createMetricPattern1(client, _p('3y', acc)),
+    _4y: createMetricPattern1(client, _p('4y', acc)),
+    _5y: createMetricPattern1(client, _p('5y', acc)),
+    _6m: createMetricPattern1(client, _p('6m', acc)),
+    _6y: createMetricPattern1(client, _p('6y', acc)),
+    _8y: createMetricPattern1(client, _p('8y', acc)),
+  };
+}
+
+/**
  * @typedef {Object} InvestedNegNetNuplSupplyUnrealizedPattern
  * @property {MetricPattern1<StoredF32>} investedCapitalInLossPct
  * @property {MetricPattern1<StoredF32>} investedCapitalInProfitPct
@@ -2902,88 +2941,6 @@ function createInvestedNegNetNuplSupplyUnrealizedPattern(client, acc) {
     supplyRelToCirculatingSupply: createMetricPattern1(client, _m(acc, 'supply_rel_to_circulating_supply')),
     unrealizedLossRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_market_cap')),
     unrealizedProfitRelToMarketCap: createMetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_market_cap')),
-  };
-}
-
-/**
- * @template T
- * @typedef {Object} _10y1m1w1y2y3m3y4y5y6m6y8yPattern2
- * @property {MetricPattern1<T>} _10y
- * @property {MetricPattern1<T>} _1m
- * @property {MetricPattern1<T>} _1w
- * @property {MetricPattern1<T>} _1y
- * @property {MetricPattern1<T>} _2y
- * @property {MetricPattern1<T>} _3m
- * @property {MetricPattern1<T>} _3y
- * @property {MetricPattern1<T>} _4y
- * @property {MetricPattern1<T>} _5y
- * @property {MetricPattern1<T>} _6m
- * @property {MetricPattern1<T>} _6y
- * @property {MetricPattern1<T>} _8y
- */
-
-/**
- * Create a _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<T>}
- */
-function create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, acc) {
-  return {
-    _10y: createMetricPattern1(client, _p('10y', acc)),
-    _1m: createMetricPattern1(client, _p('1m', acc)),
-    _1w: createMetricPattern1(client, _p('1w', acc)),
-    _1y: createMetricPattern1(client, _p('1y', acc)),
-    _2y: createMetricPattern1(client, _p('2y', acc)),
-    _3m: createMetricPattern1(client, _p('3m', acc)),
-    _3y: createMetricPattern1(client, _p('3y', acc)),
-    _4y: createMetricPattern1(client, _p('4y', acc)),
-    _5y: createMetricPattern1(client, _p('5y', acc)),
-    _6m: createMetricPattern1(client, _p('6m', acc)),
-    _6y: createMetricPattern1(client, _p('6y', acc)),
-    _8y: createMetricPattern1(client, _p('8y', acc)),
-  };
-}
-
-/**
- * @template T
- * @typedef {Object} _201520162017201820192020202120222023202420252026Pattern2
- * @property {MetricPattern1<T>} _2015
- * @property {MetricPattern1<T>} _2016
- * @property {MetricPattern1<T>} _2017
- * @property {MetricPattern1<T>} _2018
- * @property {MetricPattern1<T>} _2019
- * @property {MetricPattern1<T>} _2020
- * @property {MetricPattern1<T>} _2021
- * @property {MetricPattern1<T>} _2022
- * @property {MetricPattern1<T>} _2023
- * @property {MetricPattern1<T>} _2024
- * @property {MetricPattern1<T>} _2025
- * @property {MetricPattern1<T>} _2026
- */
-
-/**
- * Create a _201520162017201820192020202120222023202420252026Pattern2 pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_201520162017201820192020202120222023202420252026Pattern2<T>}
- */
-function create_201520162017201820192020202120222023202420252026Pattern2(client, acc) {
-  return {
-    _2015: createMetricPattern1(client, _m(acc, '2015_returns')),
-    _2016: createMetricPattern1(client, _m(acc, '2016_returns')),
-    _2017: createMetricPattern1(client, _m(acc, '2017_returns')),
-    _2018: createMetricPattern1(client, _m(acc, '2018_returns')),
-    _2019: createMetricPattern1(client, _m(acc, '2019_returns')),
-    _2020: createMetricPattern1(client, _m(acc, '2020_returns')),
-    _2021: createMetricPattern1(client, _m(acc, '2021_returns')),
-    _2022: createMetricPattern1(client, _m(acc, '2022_returns')),
-    _2023: createMetricPattern1(client, _m(acc, '2023_returns')),
-    _2024: createMetricPattern1(client, _m(acc, '2024_returns')),
-    _2025: createMetricPattern1(client, _m(acc, '2025_returns')),
-    _2026: createMetricPattern1(client, _m(acc, '2026_returns')),
   };
 }
 
@@ -3581,6 +3538,31 @@ function createInvestedMaxMinPercentilesSpotPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} EmaHistogramLineSignalPattern
+ * @property {MetricPattern1<StoredF32>} emaFast
+ * @property {MetricPattern1<StoredF32>} emaSlow
+ * @property {MetricPattern1<StoredF32>} histogram
+ * @property {MetricPattern1<StoredF32>} line
+ * @property {MetricPattern1<StoredF32>} signal
+ */
+
+/**
+ * Create a EmaHistogramLineSignalPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {EmaHistogramLineSignalPattern}
+ */
+function createEmaHistogramLineSignalPattern(client, acc) {
+  return {
+    emaFast: createMetricPattern1(client, _m(acc, 'ema_fast_1y')),
+    emaSlow: createMetricPattern1(client, _m(acc, 'ema_slow_1y')),
+    histogram: createMetricPattern1(client, _m(acc, 'histogram_1y')),
+    line: createMetricPattern1(client, _m(acc, 'line_1y')),
+    signal: createMetricPattern1(client, _m(acc, 'signal_1y')),
+  };
+}
+
+/**
  * @typedef {Object} _1y24h30d7dPattern2
  * @property {BtcCentsSatsUsdPattern} _1y
  * @property {BtcCentsSatsUsdPattern} _24h
@@ -3732,27 +3714,6 @@ function createCentsSatsUsdPattern(client, acc) {
     cents: createMetricPattern1(client, _m(acc, 'cents')),
     sats: createMetricPattern1(client, _m(acc, 'sats')),
     usd: createMetricPattern1(client, _m(acc, 'usd')),
-  };
-}
-
-/**
- * @typedef {Object} HistogramLineSignalPattern
- * @property {MetricPattern1<StoredF32>} histogram
- * @property {MetricPattern1<StoredF32>} line
- * @property {MetricPattern1<StoredF32>} signal
- */
-
-/**
- * Create a HistogramLineSignalPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {HistogramLineSignalPattern}
- */
-function createHistogramLineSignalPattern(client, acc) {
-  return {
-    histogram: createMetricPattern1(client, _m(acc, 'histogram_1y')),
-    line: createMetricPattern1(client, _m(acc, 'line_1y')),
-    signal: createMetricPattern1(client, _m(acc, 'signal_1y')),
   };
 }
 
@@ -3994,7 +3955,7 @@ function createRatioPattern2(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Blocks_Difficulty
  * @property {MetricPattern1<StoredF64>} raw
- * @property {MetricPattern1<StoredF32>} asHash
+ * @property {MetricPattern1<StoredF64>} asHash
  * @property {MetricPattern1<StoredF32>} adjustment
  * @property {MetricPattern1<DifficultyEpoch>} epoch
  * @property {MetricPattern1<StoredU32>} blocksBeforeNextAdjustment
@@ -4043,22 +4004,34 @@ function createRatioPattern2(client, acc) {
  * @property {MetricPattern18<Height>} height34dAgo
  * @property {MetricPattern18<Height>} height55dAgo
  * @property {MetricPattern18<Height>} height2mAgo
+ * @property {MetricPattern18<Height>} height9wAgo
+ * @property {MetricPattern18<Height>} height12wAgo
  * @property {MetricPattern18<Height>} height89dAgo
+ * @property {MetricPattern18<Height>} height3mAgo
+ * @property {MetricPattern18<Height>} height14wAgo
  * @property {MetricPattern18<Height>} height111dAgo
  * @property {MetricPattern18<Height>} height144dAgo
- * @property {MetricPattern18<Height>} height3mAgo
  * @property {MetricPattern18<Height>} height6mAgo
+ * @property {MetricPattern18<Height>} height26wAgo
  * @property {MetricPattern18<Height>} height200dAgo
+ * @property {MetricPattern18<Height>} height9mAgo
  * @property {MetricPattern18<Height>} height350dAgo
+ * @property {MetricPattern18<Height>} height12mAgo
  * @property {MetricPattern18<Height>} height1yAgo
+ * @property {MetricPattern18<Height>} height14mAgo
  * @property {MetricPattern18<Height>} height2yAgo
- * @property {MetricPattern18<Height>} height200wAgo
+ * @property {MetricPattern18<Height>} height26mAgo
  * @property {MetricPattern18<Height>} height3yAgo
+ * @property {MetricPattern18<Height>} height200wAgo
  * @property {MetricPattern18<Height>} height4yAgo
  * @property {MetricPattern18<Height>} height5yAgo
  * @property {MetricPattern18<Height>} height6yAgo
  * @property {MetricPattern18<Height>} height8yAgo
+ * @property {MetricPattern18<Height>} height9yAgo
  * @property {MetricPattern18<Height>} height10yAgo
+ * @property {MetricPattern18<Height>} height12yAgo
+ * @property {MetricPattern18<Height>} height14yAgo
+ * @property {MetricPattern18<Height>} height26yAgo
  */
 
 /**
@@ -4269,9 +4242,9 @@ function createRatioPattern2(client, acc) {
  * @typedef {Object} MetricsTree_Mining_Hashrate
  * @property {MetricPattern1<StoredF64>} hashRate
  * @property {MetricPattern1<StoredF64>} hashRate1wSma
- * @property {MetricPattern1<StoredF32>} hashRate1mSma
- * @property {MetricPattern1<StoredF32>} hashRate2mSma
- * @property {MetricPattern1<StoredF32>} hashRate1ySma
+ * @property {MetricPattern1<StoredF64>} hashRate1mSma
+ * @property {MetricPattern1<StoredF64>} hashRate2mSma
+ * @property {MetricPattern1<StoredF64>} hashRate1ySma
  * @property {MetricPattern1<StoredF64>} hashRateAth
  * @property {MetricPattern1<StoredF32>} hashRateDrawdown
  * @property {MetricPattern1<StoredF32>} hashPriceThs
@@ -4761,25 +4734,13 @@ function createRatioPattern2(client, acc) {
  * @property {MetricPattern18<Sats>} dcaSatsPerDay
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} periodStack
  * @property {MetricsTree_Market_Dca_PeriodAveragePrice} periodAveragePrice
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodReturns
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} periodReturns
  * @property {_10y2y3y4y5y6y8yPattern} periodCagr
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>} periodDaysInProfit
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>} periodDaysInLoss
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodMinReturn
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodMaxReturn
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} periodLumpSumStack
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodLumpSumReturns
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>} periodLumpSumDaysInProfit
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredU32>} periodLumpSumDaysInLoss
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodLumpSumMinReturn
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2<StoredF32>} periodLumpSumMaxReturn
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} periodLumpSumReturns
  * @property {MetricsTree_Market_Dca_ClassStack} classStack
  * @property {MetricsTree_Market_Dca_ClassAveragePrice} classAveragePrice
- * @property {_201520162017201820192020202120222023202420252026Pattern2<StoredF32>} classReturns
- * @property {MetricsTree_Market_Dca_ClassDaysInProfit} classDaysInProfit
- * @property {MetricsTree_Market_Dca_ClassDaysInLoss} classDaysInLoss
- * @property {MetricsTree_Market_Dca_ClassMinReturn} classMinReturn
- * @property {MetricsTree_Market_Dca_ClassMaxReturn} classMaxReturn
+ * @property {MetricsTree_Market_Dca_ClassReturns} classReturns
  */
 
 /**
@@ -4831,55 +4792,7 @@ function createRatioPattern2(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Market_Dca_ClassDaysInProfit
- * @property {MetricPattern1<StoredU32>} _2015
- * @property {MetricPattern1<StoredU32>} _2016
- * @property {MetricPattern1<StoredU32>} _2017
- * @property {MetricPattern1<StoredU32>} _2018
- * @property {MetricPattern1<StoredU32>} _2019
- * @property {MetricPattern1<StoredU32>} _2020
- * @property {MetricPattern1<StoredU32>} _2021
- * @property {MetricPattern1<StoredU32>} _2022
- * @property {MetricPattern1<StoredU32>} _2023
- * @property {MetricPattern1<StoredU32>} _2024
- * @property {MetricPattern1<StoredU32>} _2025
- * @property {MetricPattern1<StoredU32>} _2026
- */
-
-/**
- * @typedef {Object} MetricsTree_Market_Dca_ClassDaysInLoss
- * @property {MetricPattern1<StoredU32>} _2015
- * @property {MetricPattern1<StoredU32>} _2016
- * @property {MetricPattern1<StoredU32>} _2017
- * @property {MetricPattern1<StoredU32>} _2018
- * @property {MetricPattern1<StoredU32>} _2019
- * @property {MetricPattern1<StoredU32>} _2020
- * @property {MetricPattern1<StoredU32>} _2021
- * @property {MetricPattern1<StoredU32>} _2022
- * @property {MetricPattern1<StoredU32>} _2023
- * @property {MetricPattern1<StoredU32>} _2024
- * @property {MetricPattern1<StoredU32>} _2025
- * @property {MetricPattern1<StoredU32>} _2026
- */
-
-/**
- * @typedef {Object} MetricsTree_Market_Dca_ClassMinReturn
- * @property {MetricPattern1<StoredF32>} _2015
- * @property {MetricPattern1<StoredF32>} _2016
- * @property {MetricPattern1<StoredF32>} _2017
- * @property {MetricPattern1<StoredF32>} _2018
- * @property {MetricPattern1<StoredF32>} _2019
- * @property {MetricPattern1<StoredF32>} _2020
- * @property {MetricPattern1<StoredF32>} _2021
- * @property {MetricPattern1<StoredF32>} _2022
- * @property {MetricPattern1<StoredF32>} _2023
- * @property {MetricPattern1<StoredF32>} _2024
- * @property {MetricPattern1<StoredF32>} _2025
- * @property {MetricPattern1<StoredF32>} _2026
- */
-
-/**
- * @typedef {Object} MetricsTree_Market_Dca_ClassMaxReturn
+ * @typedef {Object} MetricsTree_Market_Dca_ClassReturns
  * @property {MetricPattern1<StoredF32>} _2015
  * @property {MetricPattern1<StoredF32>} _2016
  * @property {MetricPattern1<StoredF32>} _2017
@@ -4961,11 +4874,13 @@ function createRatioPattern2(client, acc) {
  * @property {MetricsTree_Market_Indicators_Macd_1d} _1d
  * @property {MetricsTree_Market_Indicators_Macd_1w} _1w
  * @property {MetricsTree_Market_Indicators_Macd_1m} _1m
- * @property {HistogramLineSignalPattern} _1y
+ * @property {EmaHistogramLineSignalPattern} _1y
  */
 
 /**
  * @typedef {Object} MetricsTree_Market_Indicators_Macd_1d
+ * @property {MetricPattern1<StoredF32>} emaFast
+ * @property {MetricPattern1<StoredF32>} emaSlow
  * @property {MetricPattern1<StoredF32>} line
  * @property {MetricPattern1<StoredF32>} signal
  * @property {MetricPattern1<StoredF32>} histogram
@@ -4973,6 +4888,8 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Market_Indicators_Macd_1w
+ * @property {MetricPattern1<StoredF32>} emaFast
+ * @property {MetricPattern1<StoredF32>} emaSlow
  * @property {MetricPattern1<StoredF32>} line
  * @property {MetricPattern1<StoredF32>} signal
  * @property {MetricPattern1<StoredF32>} histogram
@@ -4980,6 +4897,8 @@ function createRatioPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Market_Indicators_Macd_1m
+ * @property {MetricPattern1<StoredF32>} emaFast
+ * @property {MetricPattern1<StoredF32>} emaSlow
  * @property {MetricPattern1<StoredF32>} line
  * @property {MetricPattern1<StoredF32>} signal
  * @property {MetricPattern1<StoredF32>} histogram
@@ -6582,22 +6501,34 @@ class BrkClient extends BrkClientBase {
           height34dAgo: createMetricPattern18(this, 'height_34d_ago'),
           height55dAgo: createMetricPattern18(this, 'height_55d_ago'),
           height2mAgo: createMetricPattern18(this, 'height_2m_ago'),
+          height9wAgo: createMetricPattern18(this, 'height_9w_ago'),
+          height12wAgo: createMetricPattern18(this, 'height_12w_ago'),
           height89dAgo: createMetricPattern18(this, 'height_89d_ago'),
+          height3mAgo: createMetricPattern18(this, 'height_3m_ago'),
+          height14wAgo: createMetricPattern18(this, 'height_14w_ago'),
           height111dAgo: createMetricPattern18(this, 'height_111d_ago'),
           height144dAgo: createMetricPattern18(this, 'height_144d_ago'),
-          height3mAgo: createMetricPattern18(this, 'height_3m_ago'),
           height6mAgo: createMetricPattern18(this, 'height_6m_ago'),
+          height26wAgo: createMetricPattern18(this, 'height_26w_ago'),
           height200dAgo: createMetricPattern18(this, 'height_200d_ago'),
+          height9mAgo: createMetricPattern18(this, 'height_9m_ago'),
           height350dAgo: createMetricPattern18(this, 'height_350d_ago'),
+          height12mAgo: createMetricPattern18(this, 'height_12m_ago'),
           height1yAgo: createMetricPattern18(this, 'height_1y_ago'),
+          height14mAgo: createMetricPattern18(this, 'height_14m_ago'),
           height2yAgo: createMetricPattern18(this, 'height_2y_ago'),
-          height200wAgo: createMetricPattern18(this, 'height_200w_ago'),
+          height26mAgo: createMetricPattern18(this, 'height_26m_ago'),
           height3yAgo: createMetricPattern18(this, 'height_3y_ago'),
+          height200wAgo: createMetricPattern18(this, 'height_200w_ago'),
           height4yAgo: createMetricPattern18(this, 'height_4y_ago'),
           height5yAgo: createMetricPattern18(this, 'height_5y_ago'),
           height6yAgo: createMetricPattern18(this, 'height_6y_ago'),
           height8yAgo: createMetricPattern18(this, 'height_8y_ago'),
+          height9yAgo: createMetricPattern18(this, 'height_9y_ago'),
           height10yAgo: createMetricPattern18(this, 'height_10y_ago'),
+          height12yAgo: createMetricPattern18(this, 'height_12y_ago'),
+          height14yAgo: createMetricPattern18(this, 'height_14y_ago'),
+          height26yAgo: createMetricPattern18(this, 'height_26y_ago'),
         },
         interval: createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(this, 'block_interval'),
         halving: {
@@ -7111,16 +7042,8 @@ class BrkClient extends BrkClientBase {
           },
           periodReturns: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_returns'),
           periodCagr: create_10y2y3y4y5y6y8yPattern(this, 'dca_cagr'),
-          periodDaysInProfit: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_days_in_profit'),
-          periodDaysInLoss: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_days_in_loss'),
-          periodMinReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_min_return'),
-          periodMaxReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_max_return'),
           periodLumpSumStack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'lump_sum_stack'),
           periodLumpSumReturns: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_returns'),
-          periodLumpSumDaysInProfit: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_days_in_profit'),
-          periodLumpSumDaysInLoss: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_days_in_loss'),
-          periodLumpSumMinReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_min_return'),
-          periodLumpSumMaxReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_max_return'),
           classStack: {
             _2015: createBtcCentsSatsUsdPattern(this, 'dca_class_2015_stack'),
             _2016: createBtcCentsSatsUsdPattern(this, 'dca_class_2016_stack'),
@@ -7149,62 +7072,19 @@ class BrkClient extends BrkClientBase {
             _2025: createCentsSatsUsdPattern(this, 'dca_class_2025_average_price'),
             _2026: createCentsSatsUsdPattern(this, 'dca_class_2026_average_price'),
           },
-          classReturns: create_201520162017201820192020202120222023202420252026Pattern2(this, 'dca_class'),
-          classDaysInProfit: {
-            _2015: createMetricPattern1(this, 'dca_class_2015_days_in_profit'),
-            _2016: createMetricPattern1(this, 'dca_class_2016_days_in_profit'),
-            _2017: createMetricPattern1(this, 'dca_class_2017_days_in_profit'),
-            _2018: createMetricPattern1(this, 'dca_class_2018_days_in_profit'),
-            _2019: createMetricPattern1(this, 'dca_class_2019_days_in_profit'),
-            _2020: createMetricPattern1(this, 'dca_class_2020_days_in_profit'),
-            _2021: createMetricPattern1(this, 'dca_class_2021_days_in_profit'),
-            _2022: createMetricPattern1(this, 'dca_class_2022_days_in_profit'),
-            _2023: createMetricPattern1(this, 'dca_class_2023_days_in_profit'),
-            _2024: createMetricPattern1(this, 'dca_class_2024_days_in_profit'),
-            _2025: createMetricPattern1(this, 'dca_class_2025_days_in_profit'),
-            _2026: createMetricPattern1(this, 'dca_class_2026_days_in_profit'),
-          },
-          classDaysInLoss: {
-            _2015: createMetricPattern1(this, 'dca_class_2015_days_in_loss'),
-            _2016: createMetricPattern1(this, 'dca_class_2016_days_in_loss'),
-            _2017: createMetricPattern1(this, 'dca_class_2017_days_in_loss'),
-            _2018: createMetricPattern1(this, 'dca_class_2018_days_in_loss'),
-            _2019: createMetricPattern1(this, 'dca_class_2019_days_in_loss'),
-            _2020: createMetricPattern1(this, 'dca_class_2020_days_in_loss'),
-            _2021: createMetricPattern1(this, 'dca_class_2021_days_in_loss'),
-            _2022: createMetricPattern1(this, 'dca_class_2022_days_in_loss'),
-            _2023: createMetricPattern1(this, 'dca_class_2023_days_in_loss'),
-            _2024: createMetricPattern1(this, 'dca_class_2024_days_in_loss'),
-            _2025: createMetricPattern1(this, 'dca_class_2025_days_in_loss'),
-            _2026: createMetricPattern1(this, 'dca_class_2026_days_in_loss'),
-          },
-          classMinReturn: {
-            _2015: createMetricPattern1(this, 'dca_class_2015_min_return'),
-            _2016: createMetricPattern1(this, 'dca_class_2016_min_return'),
-            _2017: createMetricPattern1(this, 'dca_class_2017_min_return'),
-            _2018: createMetricPattern1(this, 'dca_class_2018_min_return'),
-            _2019: createMetricPattern1(this, 'dca_class_2019_min_return'),
-            _2020: createMetricPattern1(this, 'dca_class_2020_min_return'),
-            _2021: createMetricPattern1(this, 'dca_class_2021_min_return'),
-            _2022: createMetricPattern1(this, 'dca_class_2022_min_return'),
-            _2023: createMetricPattern1(this, 'dca_class_2023_min_return'),
-            _2024: createMetricPattern1(this, 'dca_class_2024_min_return'),
-            _2025: createMetricPattern1(this, 'dca_class_2025_min_return'),
-            _2026: createMetricPattern1(this, 'dca_class_2026_min_return'),
-          },
-          classMaxReturn: {
-            _2015: createMetricPattern1(this, 'dca_class_2015_max_return'),
-            _2016: createMetricPattern1(this, 'dca_class_2016_max_return'),
-            _2017: createMetricPattern1(this, 'dca_class_2017_max_return'),
-            _2018: createMetricPattern1(this, 'dca_class_2018_max_return'),
-            _2019: createMetricPattern1(this, 'dca_class_2019_max_return'),
-            _2020: createMetricPattern1(this, 'dca_class_2020_max_return'),
-            _2021: createMetricPattern1(this, 'dca_class_2021_max_return'),
-            _2022: createMetricPattern1(this, 'dca_class_2022_max_return'),
-            _2023: createMetricPattern1(this, 'dca_class_2023_max_return'),
-            _2024: createMetricPattern1(this, 'dca_class_2024_max_return'),
-            _2025: createMetricPattern1(this, 'dca_class_2025_max_return'),
-            _2026: createMetricPattern1(this, 'dca_class_2026_max_return'),
+          classReturns: {
+            _2015: createMetricPattern1(this, 'dca_class_2015_returns'),
+            _2016: createMetricPattern1(this, 'dca_class_2016_returns'),
+            _2017: createMetricPattern1(this, 'dca_class_2017_returns'),
+            _2018: createMetricPattern1(this, 'dca_class_2018_returns'),
+            _2019: createMetricPattern1(this, 'dca_class_2019_returns'),
+            _2020: createMetricPattern1(this, 'dca_class_2020_returns'),
+            _2021: createMetricPattern1(this, 'dca_class_2021_returns'),
+            _2022: createMetricPattern1(this, 'dca_class_2022_returns'),
+            _2023: createMetricPattern1(this, 'dca_class_2023_returns'),
+            _2024: createMetricPattern1(this, 'dca_class_2024_returns'),
+            _2025: createMetricPattern1(this, 'dca_class_2025_returns'),
+            _2026: createMetricPattern1(this, 'dca_class_2026_returns'),
           },
         },
         indicators: {
@@ -7254,21 +7134,27 @@ class BrkClient extends BrkClientBase {
           piCycle: createMetricPattern1(this, 'pi_cycle'),
           macd: {
             _1d: {
+              emaFast: createMetricPattern1(this, 'macd_ema_fast_1d'),
+              emaSlow: createMetricPattern1(this, 'macd_ema_slow_1d'),
               line: createMetricPattern1(this, 'macd_line_1d'),
               signal: createMetricPattern1(this, 'macd_signal_1d'),
               histogram: createMetricPattern1(this, 'macd_histogram_1d'),
             },
             _1w: {
+              emaFast: createMetricPattern1(this, 'macd_ema_fast_1w'),
+              emaSlow: createMetricPattern1(this, 'macd_ema_slow_1w'),
               line: createMetricPattern1(this, 'macd_line_1w'),
               signal: createMetricPattern1(this, 'macd_signal_1w'),
               histogram: createMetricPattern1(this, 'macd_histogram_1w'),
             },
             _1m: {
+              emaFast: createMetricPattern1(this, 'macd_ema_fast_1m'),
+              emaSlow: createMetricPattern1(this, 'macd_ema_slow_1m'),
               line: createMetricPattern1(this, 'macd_line_1m'),
               signal: createMetricPattern1(this, 'macd_signal_1m'),
               histogram: createMetricPattern1(this, 'macd_histogram_1m'),
             },
-            _1y: createHistogramLineSignalPattern(this, 'macd'),
+            _1y: createEmaHistogramLineSignalPattern(this, 'macd'),
           },
           gini: createMetricPattern1(this, 'gini'),
         },

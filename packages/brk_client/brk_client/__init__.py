@@ -2688,6 +2688,24 @@ class _10y1m1w1y2y3m3y4y5y6m6y8yPattern3:
         self._6y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _p('6y', acc))
         self._8y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _p('8y', acc))
 
+class _10y1m1w1y2y3m3y4y5y6m6y8yPattern2:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self._10y: MetricPattern1[StoredF32] = MetricPattern1(client, _p('10y', acc))
+        self._1m: MetricPattern1[StoredF32] = MetricPattern1(client, _p('1m', acc))
+        self._1w: MetricPattern1[StoredF32] = MetricPattern1(client, _p('1w', acc))
+        self._1y: MetricPattern1[StoredF32] = MetricPattern1(client, _p('1y', acc))
+        self._2y: MetricPattern1[StoredF32] = MetricPattern1(client, _p('2y', acc))
+        self._3m: MetricPattern1[StoredF32] = MetricPattern1(client, _p('3m', acc))
+        self._3y: MetricPattern1[StoredF32] = MetricPattern1(client, _p('3y', acc))
+        self._4y: MetricPattern1[StoredF32] = MetricPattern1(client, _p('4y', acc))
+        self._5y: MetricPattern1[StoredF32] = MetricPattern1(client, _p('5y', acc))
+        self._6m: MetricPattern1[StoredF32] = MetricPattern1(client, _p('6m', acc))
+        self._6y: MetricPattern1[StoredF32] = MetricPattern1(client, _p('6y', acc))
+        self._8y: MetricPattern1[StoredF32] = MetricPattern1(client, _p('8y', acc))
+
 class InvestedNegNetNuplSupplyUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2705,42 +2723,6 @@ class InvestedNegNetNuplSupplyUnrealizedPattern:
         self.supply_rel_to_circulating_supply: MetricPattern1[StoredF64] = MetricPattern1(client, _m(acc, 'supply_rel_to_circulating_supply'))
         self.unrealized_loss_rel_to_market_cap: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'unrealized_loss_rel_to_market_cap'))
         self.unrealized_profit_rel_to_market_cap: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'unrealized_profit_rel_to_market_cap'))
-
-class _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(Generic[T]):
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self._10y: MetricPattern1[T] = MetricPattern1(client, _p('10y', acc))
-        self._1m: MetricPattern1[T] = MetricPattern1(client, _p('1m', acc))
-        self._1w: MetricPattern1[T] = MetricPattern1(client, _p('1w', acc))
-        self._1y: MetricPattern1[T] = MetricPattern1(client, _p('1y', acc))
-        self._2y: MetricPattern1[T] = MetricPattern1(client, _p('2y', acc))
-        self._3m: MetricPattern1[T] = MetricPattern1(client, _p('3m', acc))
-        self._3y: MetricPattern1[T] = MetricPattern1(client, _p('3y', acc))
-        self._4y: MetricPattern1[T] = MetricPattern1(client, _p('4y', acc))
-        self._5y: MetricPattern1[T] = MetricPattern1(client, _p('5y', acc))
-        self._6m: MetricPattern1[T] = MetricPattern1(client, _p('6m', acc))
-        self._6y: MetricPattern1[T] = MetricPattern1(client, _p('6y', acc))
-        self._8y: MetricPattern1[T] = MetricPattern1(client, _p('8y', acc))
-
-class _201520162017201820192020202120222023202420252026Pattern2(Generic[T]):
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self._2015: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2015_returns'))
-        self._2016: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2016_returns'))
-        self._2017: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2017_returns'))
-        self._2018: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2018_returns'))
-        self._2019: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2019_returns'))
-        self._2020: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2020_returns'))
-        self._2021: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2021_returns'))
-        self._2022: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2022_returns'))
-        self._2023: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2023_returns'))
-        self._2024: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2024_returns'))
-        self._2025: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2025_returns'))
-        self._2026: MetricPattern1[T] = MetricPattern1(client, _m(acc, '2026_returns'))
 
 class AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern:
     """Pattern struct for repeated tree structure."""
@@ -3008,6 +2990,17 @@ class InvestedMaxMinPercentilesSpotPattern:
         self.spot_cost_basis_percentile: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'spot_cost_basis_percentile'))
         self.spot_invested_capital_percentile: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'spot_invested_capital_percentile'))
 
+class EmaHistogramLineSignalPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.ema_fast: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'ema_fast_1y'))
+        self.ema_slow: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'ema_slow_1y'))
+        self.histogram: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'histogram_1y'))
+        self.line: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'line_1y'))
+        self.signal: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'signal_1y'))
+
 class _1y24h30d7dPattern2:
     """Pattern struct for repeated tree structure."""
     
@@ -3073,15 +3066,6 @@ class CentsSatsUsdPattern:
         self.cents: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'cents'))
         self.sats: MetricPattern1[SatsFract] = MetricPattern1(client, _m(acc, 'sats'))
         self.usd: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'usd'))
-
-class HistogramLineSignalPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.histogram: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'histogram_1y'))
-        self.line: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'line_1y'))
-        self.signal: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'signal_1y'))
 
 class _6bBlockTxindexPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
@@ -3171,7 +3155,7 @@ class MetricsTree_Blocks_Difficulty:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.raw: MetricPattern1[StoredF64] = MetricPattern1(client, 'difficulty')
-        self.as_hash: MetricPattern1[StoredF32] = MetricPattern1(client, 'difficulty_as_hash')
+        self.as_hash: MetricPattern1[StoredF64] = MetricPattern1(client, 'difficulty_as_hash')
         self.adjustment: MetricPattern1[StoredF32] = MetricPattern1(client, 'difficulty_adjustment')
         self.epoch: MetricPattern1[DifficultyEpoch] = MetricPattern1(client, 'difficulty_epoch')
         self.blocks_before_next_adjustment: MetricPattern1[StoredU32] = MetricPattern1(client, 'blocks_before_next_difficulty_adjustment')
@@ -3223,22 +3207,34 @@ class MetricsTree_Blocks_Count:
         self.height_34d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_34d_ago')
         self.height_55d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_55d_ago')
         self.height_2m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_2m_ago')
+        self.height_9w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_9w_ago')
+        self.height_12w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_12w_ago')
         self.height_89d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_89d_ago')
+        self.height_3m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_3m_ago')
+        self.height_14w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_14w_ago')
         self.height_111d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_111d_ago')
         self.height_144d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_144d_ago')
-        self.height_3m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_3m_ago')
         self.height_6m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_6m_ago')
+        self.height_26w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_26w_ago')
         self.height_200d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_200d_ago')
+        self.height_9m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_9m_ago')
         self.height_350d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_350d_ago')
+        self.height_12m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_12m_ago')
         self.height_1y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_1y_ago')
+        self.height_14m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_14m_ago')
         self.height_2y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_2y_ago')
-        self.height_200w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_200w_ago')
+        self.height_26m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_26m_ago')
         self.height_3y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_3y_ago')
+        self.height_200w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_200w_ago')
         self.height_4y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_4y_ago')
         self.height_5y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_5y_ago')
         self.height_6y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_6y_ago')
         self.height_8y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_8y_ago')
+        self.height_9y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_9y_ago')
         self.height_10y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_10y_ago')
+        self.height_12y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_12y_ago')
+        self.height_14y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_14y_ago')
+        self.height_26y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_26y_ago')
 
 class MetricsTree_Blocks_Halving:
     """Metrics tree node."""
@@ -3479,9 +3475,9 @@ class MetricsTree_Mining_Hashrate:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.hash_rate: MetricPattern1[StoredF64] = MetricPattern1(client, 'hash_rate')
         self.hash_rate_1w_sma: MetricPattern1[StoredF64] = MetricPattern1(client, 'hash_rate_1w_sma')
-        self.hash_rate_1m_sma: MetricPattern1[StoredF32] = MetricPattern1(client, 'hash_rate_1m_sma')
-        self.hash_rate_2m_sma: MetricPattern1[StoredF32] = MetricPattern1(client, 'hash_rate_2m_sma')
-        self.hash_rate_1y_sma: MetricPattern1[StoredF32] = MetricPattern1(client, 'hash_rate_1y_sma')
+        self.hash_rate_1m_sma: MetricPattern1[StoredF64] = MetricPattern1(client, 'hash_rate_1m_sma')
+        self.hash_rate_2m_sma: MetricPattern1[StoredF64] = MetricPattern1(client, 'hash_rate_2m_sma')
+        self.hash_rate_1y_sma: MetricPattern1[StoredF64] = MetricPattern1(client, 'hash_rate_1y_sma')
         self.hash_rate_ath: MetricPattern1[StoredF64] = MetricPattern1(client, 'hash_rate_ath')
         self.hash_rate_drawdown: MetricPattern1[StoredF32] = MetricPattern1(client, 'hash_rate_drawdown')
         self.hash_price_ths: MetricPattern1[StoredF32] = MetricPattern1(client, 'hash_price_ths')
@@ -4061,73 +4057,22 @@ class MetricsTree_Market_Dca_ClassAveragePrice:
         self._2025: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_class_2025_average_price')
         self._2026: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_class_2026_average_price')
 
-class MetricsTree_Market_Dca_ClassDaysInProfit:
+class MetricsTree_Market_Dca_ClassReturns:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._2015: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2015_days_in_profit')
-        self._2016: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2016_days_in_profit')
-        self._2017: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2017_days_in_profit')
-        self._2018: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2018_days_in_profit')
-        self._2019: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2019_days_in_profit')
-        self._2020: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2020_days_in_profit')
-        self._2021: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2021_days_in_profit')
-        self._2022: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2022_days_in_profit')
-        self._2023: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2023_days_in_profit')
-        self._2024: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2024_days_in_profit')
-        self._2025: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2025_days_in_profit')
-        self._2026: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2026_days_in_profit')
-
-class MetricsTree_Market_Dca_ClassDaysInLoss:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._2015: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2015_days_in_loss')
-        self._2016: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2016_days_in_loss')
-        self._2017: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2017_days_in_loss')
-        self._2018: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2018_days_in_loss')
-        self._2019: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2019_days_in_loss')
-        self._2020: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2020_days_in_loss')
-        self._2021: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2021_days_in_loss')
-        self._2022: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2022_days_in_loss')
-        self._2023: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2023_days_in_loss')
-        self._2024: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2024_days_in_loss')
-        self._2025: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2025_days_in_loss')
-        self._2026: MetricPattern1[StoredU32] = MetricPattern1(client, 'dca_class_2026_days_in_loss')
-
-class MetricsTree_Market_Dca_ClassMinReturn:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._2015: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2015_min_return')
-        self._2016: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2016_min_return')
-        self._2017: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2017_min_return')
-        self._2018: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2018_min_return')
-        self._2019: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2019_min_return')
-        self._2020: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2020_min_return')
-        self._2021: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2021_min_return')
-        self._2022: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2022_min_return')
-        self._2023: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2023_min_return')
-        self._2024: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2024_min_return')
-        self._2025: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2025_min_return')
-        self._2026: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2026_min_return')
-
-class MetricsTree_Market_Dca_ClassMaxReturn:
-    """Metrics tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._2015: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2015_max_return')
-        self._2016: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2016_max_return')
-        self._2017: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2017_max_return')
-        self._2018: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2018_max_return')
-        self._2019: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2019_max_return')
-        self._2020: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2020_max_return')
-        self._2021: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2021_max_return')
-        self._2022: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2022_max_return')
-        self._2023: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2023_max_return')
-        self._2024: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2024_max_return')
-        self._2025: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2025_max_return')
-        self._2026: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2026_max_return')
+        self._2015: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2015_returns')
+        self._2016: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2016_returns')
+        self._2017: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2017_returns')
+        self._2018: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2018_returns')
+        self._2019: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2019_returns')
+        self._2020: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2020_returns')
+        self._2021: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2021_returns')
+        self._2022: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2022_returns')
+        self._2023: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2023_returns')
+        self._2024: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2024_returns')
+        self._2025: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2025_returns')
+        self._2026: MetricPattern1[StoredF32] = MetricPattern1(client, 'dca_class_2026_returns')
 
 class MetricsTree_Market_Dca:
     """Metrics tree node."""
@@ -4136,25 +4081,13 @@ class MetricsTree_Market_Dca:
         self.dca_sats_per_day: MetricPattern18[Sats] = MetricPattern18(client, 'dca_sats_per_day')
         self.period_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'dca_stack')
         self.period_average_price: MetricsTree_Market_Dca_PeriodAveragePrice = MetricsTree_Market_Dca_PeriodAveragePrice(client)
-        self.period_returns: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_returns')
+        self.period_returns: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_returns')
         self.period_cagr: _10y2y3y4y5y6y8yPattern = _10y2y3y4y5y6y8yPattern(client, 'dca_cagr')
-        self.period_days_in_profit: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredU32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_days_in_profit')
-        self.period_days_in_loss: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredU32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_days_in_loss')
-        self.period_min_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_min_return')
-        self.period_max_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_max_return')
         self.period_lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'lump_sum_stack')
-        self.period_lump_sum_returns: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_returns')
-        self.period_lump_sum_days_in_profit: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredU32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_days_in_profit')
-        self.period_lump_sum_days_in_loss: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredU32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_days_in_loss')
-        self.period_lump_sum_min_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_min_return')
-        self.period_lump_sum_max_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2[StoredF32] = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_max_return')
+        self.period_lump_sum_returns: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_returns')
         self.class_stack: MetricsTree_Market_Dca_ClassStack = MetricsTree_Market_Dca_ClassStack(client)
         self.class_average_price: MetricsTree_Market_Dca_ClassAveragePrice = MetricsTree_Market_Dca_ClassAveragePrice(client)
-        self.class_returns: _201520162017201820192020202120222023202420252026Pattern2[StoredF32] = _201520162017201820192020202120222023202420252026Pattern2(client, 'dca_class')
-        self.class_days_in_profit: MetricsTree_Market_Dca_ClassDaysInProfit = MetricsTree_Market_Dca_ClassDaysInProfit(client)
-        self.class_days_in_loss: MetricsTree_Market_Dca_ClassDaysInLoss = MetricsTree_Market_Dca_ClassDaysInLoss(client)
-        self.class_min_return: MetricsTree_Market_Dca_ClassMinReturn = MetricsTree_Market_Dca_ClassMinReturn(client)
-        self.class_max_return: MetricsTree_Market_Dca_ClassMaxReturn = MetricsTree_Market_Dca_ClassMaxReturn(client)
+        self.class_returns: MetricsTree_Market_Dca_ClassReturns = MetricsTree_Market_Dca_ClassReturns(client)
 
 class MetricsTree_Market_Indicators_Rsi_1d:
     """Metrics tree node."""
@@ -4214,6 +4147,8 @@ class MetricsTree_Market_Indicators_Macd_1d:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.ema_fast: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_ema_fast_1d')
+        self.ema_slow: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_ema_slow_1d')
         self.line: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_line_1d')
         self.signal: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_signal_1d')
         self.histogram: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_histogram_1d')
@@ -4222,6 +4157,8 @@ class MetricsTree_Market_Indicators_Macd_1w:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.ema_fast: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_ema_fast_1w')
+        self.ema_slow: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_ema_slow_1w')
         self.line: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_line_1w')
         self.signal: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_signal_1w')
         self.histogram: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_histogram_1w')
@@ -4230,6 +4167,8 @@ class MetricsTree_Market_Indicators_Macd_1m:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.ema_fast: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_ema_fast_1m')
+        self.ema_slow: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_ema_slow_1m')
         self.line: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_line_1m')
         self.signal: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_signal_1m')
         self.histogram: MetricPattern1[StoredF32] = MetricPattern1(client, 'macd_histogram_1m')
@@ -4241,7 +4180,7 @@ class MetricsTree_Market_Indicators_Macd:
         self._1d: MetricsTree_Market_Indicators_Macd_1d = MetricsTree_Market_Indicators_Macd_1d(client)
         self._1w: MetricsTree_Market_Indicators_Macd_1w = MetricsTree_Market_Indicators_Macd_1w(client)
         self._1m: MetricsTree_Market_Indicators_Macd_1m = MetricsTree_Market_Indicators_Macd_1m(client)
-        self._1y: HistogramLineSignalPattern = HistogramLineSignalPattern(client, 'macd')
+        self._1y: EmaHistogramLineSignalPattern = EmaHistogramLineSignalPattern(client, 'macd')
 
 class MetricsTree_Market_Indicators:
     """Metrics tree node."""

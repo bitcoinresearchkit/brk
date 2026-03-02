@@ -5,7 +5,7 @@ use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
     Day1, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, Height,
-    SupplyState, Version,
+    SupplyState, TxIndex, Version,
 };
 use tracing::{debug, info};
 use vecdb::{
@@ -23,7 +23,7 @@ use crate::{
 };
 
 use super::{
-    AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, UTXOCohorts,
+    AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, RangeMap, UTXOCohorts,
     address::{
         AddrCountsVecs, AddressActivityVecs, GrowthRateVecs, NewAddrCountVecs, TotalAddrCountVecs,
     },
@@ -61,6 +61,14 @@ pub struct Vecs<M: StorageMode = Rw> {
         LazyVecFrom1<FundedAddressIndex, FundedAddressIndex, FundedAddressIndex, FundedAddressData>,
     pub emptyaddressindex:
         LazyVecFrom1<EmptyAddressIndex, EmptyAddressIndex, EmptyAddressIndex, EmptyAddressData>,
+
+    /// In-memory block state for UTXO processing. Persisted via supply_state.
+    /// Kept across compute() calls to avoid O(n) rebuild on resume.
+    #[traversable(skip)]
+    chain_state: Vec<BlockState>,
+    /// In-memory txindex→height reverse lookup. Kept across compute() calls.
+    #[traversable(skip)]
+    txindex_to_height: RangeMap<TxIndex, Height>,
 }
 
 const SAVED_STAMPED_CHANGES: u16 = 10;
@@ -148,6 +156,9 @@ impl Vecs {
             fundedaddressindex,
             emptyaddressindex,
 
+            chain_state: Vec::new(),
+            txindex_to_height: RangeMap::default(),
+
             db,
             states_path,
         };
@@ -230,8 +241,12 @@ impl Vecs {
 
         debug!("recovered_height={}", recovered_height);
 
-        // Fresh start: reset all state
-        let (starting_height, mut chain_state) = if recovered_height.is_zero() {
+        // Take chain_state and txindex_to_height out of self to avoid borrow conflicts
+        let mut chain_state = std::mem::take(&mut self.chain_state);
+        let mut txindex_to_height = std::mem::take(&mut self.txindex_to_height);
+
+        // Recover or reuse chain_state
+        let starting_height = if recovered_height.is_zero() {
             self.supply_state.reset()?;
             self.addr_count.reset_height()?;
             self.empty_addr_count.reset_height()?;
@@ -243,11 +258,18 @@ impl Vecs {
                 &mut self.address_cohorts,
             )?;
 
+            chain_state.clear();
+            txindex_to_height.truncate(0);
+
             info!("State recovery: fresh start");
-            (Height::ZERO, vec![])
+            Height::ZERO
+        } else if chain_state.len() == usize::from(recovered_height) {
+            // Normal resume: chain_state already matches, reuse as-is
+            debug!("reusing in-memory chain_state ({} entries)", chain_state.len());
+            recovered_height
         } else {
-            // Recover chain_state from stored values
-            debug!("recovering chain_state from stored values");
+            // Rollback or first run after restart: rebuild from supply_state
+            debug!("rebuilding chain_state from stored values");
             let height_to_timestamp = &blocks.time.timestamp_monotonic;
             let height_to_price = &prices.price.cents.height;
 
@@ -257,7 +279,7 @@ impl Vecs {
 
             debug!("building supply_state vec for {} heights", recovered_height);
             let supply_state_data: Vec<_> = self.supply_state.collect_range_at(0, end);
-            let chain_state = supply_state_data
+            chain_state = supply_state_data
                 .into_iter()
                 .enumerate()
                 .map(|(h, supply)| BlockState {
@@ -266,9 +288,12 @@ impl Vecs {
                     timestamp: timestamp_data[h],
                 })
                 .collect();
-            debug!("chain_state vec built");
+            debug!("chain_state rebuilt");
 
-            (recovered_height, chain_state)
+            // Truncate RangeMap to match (entries are immutable, safe to keep)
+            txindex_to_height.truncate(end);
+
+            recovered_height
         };
 
         // Update starting_indexes if we need to recompute from an earlier point
@@ -316,9 +341,14 @@ impl Vecs {
                 starting_height,
                 last_height,
                 &mut chain_state,
+                &mut txindex_to_height,
                 exit,
             )?;
         }
+
+        // Put chain_state and txindex_to_height back
+        self.chain_state = chain_state;
+        self.txindex_to_height = txindex_to_height;
 
         // 5. Compute aggregates (overlapping cohorts from separate cohorts)
         aggregates::compute_overlapping(
