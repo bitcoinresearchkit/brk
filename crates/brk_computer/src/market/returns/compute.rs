@@ -1,9 +1,9 @@
 use brk_error::Result;
-use brk_types::{Dollars, StoredF32};
+use brk_types::{BasisPointsSigned32, Dollars, StoredF32};
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, internal::PercentageDiffDollars, market::lookback, prices};
+use crate::{ComputeIndexes, blocks, internal::RatioDiffDollarsBps32, market::lookback, prices};
 
 impl Vecs {
     pub(crate) fn compute(
@@ -16,11 +16,11 @@ impl Vecs {
     ) -> Result<()> {
         // Compute price returns at height level
         for ((returns, _), (lookback_price, _)) in self
-            .price_returns
+            .price_return
             .iter_mut_with_days()
-            .zip(lookback.price_ago.iter_with_days())
+            .zip(lookback.price_lookback.iter_with_days())
         {
-            returns.compute_binary::<Dollars, Dollars, PercentageDiffDollars>(
+            returns.compute_binary::<Dollars, Dollars, RatioDiffDollarsBps32>(
                 starting_indexes.height,
                 &prices.price.usd.height,
                 &lookback_price.usd.height,
@@ -29,44 +29,48 @@ impl Vecs {
         }
 
         // CAGR computed from returns at height level (2y+ periods only)
-        let price_returns_dca = self.price_returns.as_dca_period();
-        for (cagr, returns, days) in self.cagr.zip_mut_with_period(&price_returns_dca) {
-            let years = days as f32 / 365.0;
-            cagr.height.compute_transform(
+        let price_return_dca = self.price_return.as_dca_period();
+        for (cagr, returns, days) in self.price_cagr.zip_mut_with_period(&price_return_dca) {
+            let years = days as f64 / 365.0;
+            cagr.bps.height.compute_transform(
                 starting_indexes.height,
-                &returns.height,
+                &returns.bps.height,
                 |(h, r, ..)| {
-                    let v = ((*r / 100.0 + 1.0).powf(1.0 / years) - 1.0) * 100.0;
-                    (h, StoredF32::from(v))
+                    let ratio = f64::from(r);
+                    let v = (ratio + 1.0).powf(1.0 / years) - 1.0;
+                    (h, BasisPointsSigned32::from(v))
                 },
                 exit,
             )?;
         }
 
-        let _24h_price_returns_height = &self.price_returns._24h.height;
+        let _24h_price_return_height = &self.price_return._24h.bps.height;
 
-        self._1d_returns_1w_sd
-            .compute_all(blocks, starting_indexes, exit, _24h_price_returns_height)?;
-        self._1d_returns_1m_sd
-            .compute_all(blocks, starting_indexes, exit, _24h_price_returns_height)?;
-        self._1d_returns_1y_sd
-            .compute_all(blocks, starting_indexes, exit, _24h_price_returns_height)?;
+        self.price_return_24h_sd_1w
+            .compute_all(blocks, starting_indexes, exit, _24h_price_return_height)?;
+        self.price_return_24h_sd_1m
+            .compute_all(blocks, starting_indexes, exit, _24h_price_return_height)?;
+        self.price_return_24h_sd_1y
+            .compute_all(blocks, starting_indexes, exit, _24h_price_return_height)?;
 
         // Downside returns: min(return, 0)
-        self.downside_returns.compute_transform(
+        self.price_downside_24h.compute_transform(
             starting_indexes.height,
-            _24h_price_returns_height,
-            |(i, ret, ..)| (i, StoredF32::from((*ret).min(0.0))),
+            _24h_price_return_height,
+            |(i, ret, ..)| {
+                let v = f64::from(ret).min(0.0);
+                (i, StoredF32::from(v as f32))
+            },
             exit,
         )?;
 
         // Downside deviation (SD of downside returns)
-        self.downside_1w_sd
-            .compute_all(blocks, starting_indexes, exit, &self.downside_returns)?;
-        self.downside_1m_sd
-            .compute_all(blocks, starting_indexes, exit, &self.downside_returns)?;
-        self.downside_1y_sd
-            .compute_all(blocks, starting_indexes, exit, &self.downside_returns)?;
+        self.price_downside_24h_sd_1w
+            .compute_all(blocks, starting_indexes, exit, &self.price_downside_24h)?;
+        self.price_downside_24h_sd_1m
+            .compute_all(blocks, starting_indexes, exit, &self.price_downside_24h)?;
+        self.price_downside_24h_sd_1y
+            .compute_all(blocks, starting_indexes, exit, &self.price_downside_24h)?;
 
         Ok(())
     }

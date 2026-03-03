@@ -1,9 +1,9 @@
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Sats, StoredF32};
+use brk_types::{BasisPointsSigned32, Cents, Height, Sats};
 use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod};
-use crate::internal::{ComputedFromHeight, Price, ValueFromHeight};
+use crate::internal::{ComputedFromHeight, PercentFromHeight, Price, ValueFromHeight};
 
 /// Dollar-cost averaging metrics by time period and year class
 #[derive(Traversable)]
@@ -14,16 +14,16 @@ pub struct Vecs<M: StorageMode = Rw> {
 
     // DCA by period
     pub period_stack: ByDcaPeriod<ValueFromHeight<M>>,
-    pub period_average_price: ByDcaPeriod<Price<ComputedFromHeight<Cents, M>>>,
-    pub period_returns: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
-    pub period_cagr: ByDcaCagr<ComputedFromHeight<StoredF32, M>>,
+    pub period_cost_basis: ByDcaPeriod<Price<ComputedFromHeight<Cents, M>>>,
+    pub period_return: ByDcaPeriod<PercentFromHeight<BasisPointsSigned32, M>>,
+    pub period_cagr: ByDcaCagr<PercentFromHeight<BasisPointsSigned32, M>>,
 
     // Lump sum by period (for comparison with DCA)
     pub period_lump_sum_stack: ByDcaPeriod<ValueFromHeight<M>>,
-    pub period_lump_sum_returns: ByDcaPeriod<ComputedFromHeight<StoredF32, M>>,
+    pub period_lump_sum_return: ByDcaPeriod<PercentFromHeight<BasisPointsSigned32, M>>,
 
     // DCA by year class
     pub class_stack: ByDcaClass<ValueFromHeight<M>>,
-    pub class_average_price: ByDcaClass<Price<ComputedFromHeight<Cents, M>>>,
-    pub class_returns: ByDcaClass<ComputedFromHeight<StoredF32, M>>,
+    pub class_cost_basis: ByDcaClass<Price<ComputedFromHeight<Cents, M>>>,
+    pub class_return: ByDcaClass<PercentFromHeight<BasisPointsSigned32, M>>,
 }

@@ -5,4 +5,4 @@ mod macd;
 mod rsi;
 mod vecs;
 
-pub use vecs::{ByIndicatorTimeframe, MacdChain, RsiChain, Vecs};
+pub use vecs::{MacdChain, RsiChain, Vecs};

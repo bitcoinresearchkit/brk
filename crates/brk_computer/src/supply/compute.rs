@@ -1,5 +1,4 @@
 use brk_error::Result;
-use brk_types::StoredF32;
 use vecdb::Exit;
 
 use super::Vecs;
@@ -22,9 +21,9 @@ impl Vecs {
         self.burned
             .compute(scripts, mining, &blocks.count, prices, starting_indexes, exit)?;
 
-        // 2. Compute inflation rate at height level: (supply[h] - supply[1y_ago]) / supply[1y_ago] * 100
+        // 2. Compute inflation rate: (supply[h] / supply[1y_ago]) - 1
         let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.total.sats;
-        self.inflation.height.compute_rolling_percentage_change(
+        self.inflation_rate.bps.height.compute_rolling_ratio_change(
             starting_indexes.height,
             &blocks.count.height_1y_ago,
             &circulating_supply.height,
@@ -35,10 +34,11 @@ impl Vecs {
         self.velocity
             .compute(blocks, transactions, distribution, starting_indexes, exit)?;
 
-        // 4. Compute cap growth rates at height level using 1y lookback
+        // 4. Compute cap growth rates using 1y lookback
         self.market_cap_growth_rate
+            .bps
             .height
-            .compute_rolling_percentage_change(
+            .compute_rolling_ratio_change(
                 starting_indexes.height,
                 &blocks.count.height_1y_ago,
                 &self.market_cap.height,
@@ -46,20 +46,20 @@ impl Vecs {
             )?;
 
         self.realized_cap_growth_rate
+            .bps
             .height
-            .compute_rolling_percentage_change(
+            .compute_rolling_ratio_change(
                 starting_indexes.height,
                 &blocks.count.height_1y_ago,
                 &distribution.utxo_cohorts.all.metrics.realized.realized_cap.height,
                 exit,
             )?;
 
-        // 5. Compute cap growth rate diff: market_cap_growth_rate - realized_cap_growth_rate
-        self.cap_growth_rate_diff.height.compute_transform2(
+        // 5. Compute cap growth rate diff: market - realized
+        self.market_minus_realized_cap_growth_rate.height.compute_subtract(
             starting_indexes.height,
-            &self.market_cap_growth_rate.height,
-            &self.realized_cap_growth_rate.height,
-            |(h, a, b, ..)| (h, StoredF32::from(*a - *b)),
+            &self.market_cap_growth_rate.bps.height,
+            &self.realized_cap_growth_rate.bps.height,
             exit,
         )?;
 

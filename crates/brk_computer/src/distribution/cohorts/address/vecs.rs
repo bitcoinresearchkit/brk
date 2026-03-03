@@ -36,7 +36,7 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
     pub metrics: BasicCohortMetrics<M>,
 
     pub addr_count: ComputedFromHeight<StoredU64, M>,
-    pub addr_count_30d_change: ComputedFromHeight<StoredF64, M>,
+    pub addr_count_change_1m: ComputedFromHeight<StoredF64, M>,
 }
 
 impl AddressCohortVecs {
@@ -73,9 +73,9 @@ impl AddressCohortVecs {
                 version + VERSION,
                 indexes,
             )?,
-            addr_count_30d_change: ComputedFromHeight::forced_import(
+            addr_count_change_1m: ComputedFromHeight::forced_import(
                 db,
-                &cfg.name("addr_count_30d_change"),
+                &cfg.name("addr_count_change_1m"),
                 version + VERSION,
                 indexes,
             )?,

@@ -7,10 +7,10 @@ use crate::{indexes, internal::Price};
 
 impl Vecs {
     pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
-        let price_ago = ByLookbackPeriod::try_new(|name, _days| {
-            Price::forced_import(db, &format!("price_{name}_ago"), version, indexes)
+        let price_lookback = ByLookbackPeriod::try_new(|name, _days| {
+            Price::forced_import(db, &format!("price_lookback_{name}"), version, indexes)
         })?;
 
-        Ok(Self { price_ago })
+        Ok(Self { price_lookback })
     }
 }

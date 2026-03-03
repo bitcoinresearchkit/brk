@@ -51,7 +51,7 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
 
     // === Net and Total ===
     pub net_unrealized_pnl: FiatFromHeight<CentsSigned, M>,
-    pub total_unrealized_pnl: FiatFromHeight<Cents, M>,
+    pub gross_pnl: FiatFromHeight<Cents, M>,
 }
 
 impl UnrealizedBase {
@@ -148,9 +148,9 @@ impl UnrealizedBase {
             cfg.version,
             cfg.indexes,
         )?;
-        let total_unrealized_pnl = FiatFromHeight::forced_import(
+        let gross_pnl = FiatFromHeight::forced_import(
             cfg.db,
-            &cfg.name("total_unrealized_pnl"),
+            &cfg.name("gross_pnl"),
             cfg.version,
             cfg.indexes,
         )?;
@@ -171,7 +171,7 @@ impl UnrealizedBase {
             net_sentiment,
             neg_unrealized_loss,
             net_unrealized_pnl,
-            total_unrealized_pnl,
+            gross_pnl,
         })
     }
 
@@ -444,7 +444,7 @@ impl UnrealizedBase {
                 &self.unrealized_loss.cents.height,
                 exit,
             )?;
-        self.total_unrealized_pnl.cents.height.compute_add(
+        self.gross_pnl.cents.height.compute_add(
             starting_indexes.height,
             &self.unrealized_profit.cents.height,
             &self.unrealized_loss.cents.height,

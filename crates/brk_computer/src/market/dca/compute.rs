@@ -1,10 +1,10 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, Cents, Date, Day1, Dollars, Sats, StoredF32};
+use brk_types::{BasisPointsSigned32, Bitcoin, Cents, Date, Day1, Dollars, Sats};
 use vecdb::{AnyVec, Exit, ReadableOptionVec, ReadableVec, VecIndex};
 
 use super::Vecs;
 use crate::{
-    ComputeIndexes, blocks, indexes, internal::PercentageDiffCents, market::lookback, prices,
+    ComputeIndexes, blocks, indexes, internal::RatioDiffCentsBps32, market::lookback, prices,
 };
 
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
@@ -65,7 +65,7 @@ impl Vecs {
         // DCA by period - average price (derived from stack)
         let sh = starting_indexes.height.to_usize();
         for (average_price, stack, days) in self
-            .period_average_price
+            .period_cost_basis
             .zip_mut_with_days(&self.period_stack)
         {
             let days = days as usize;
@@ -93,11 +93,11 @@ impl Vecs {
 
         // DCA by period - returns (compute from average price)
         for (returns, (average_price, _)) in self
-            .period_returns
+            .period_return
             .iter_mut()
-            .zip(self.period_average_price.iter_with_days())
+            .zip(self.period_cost_basis.iter_with_days())
         {
-            returns.compute_binary::<Cents, Cents, PercentageDiffCents>(
+            returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
                 starting_indexes.height,
                 &prices.price.cents.height,
                 &average_price.cents.height,
@@ -106,21 +106,22 @@ impl Vecs {
         }
 
         // DCA by period - CAGR (computed from returns at height level)
-        for (cagr, returns, days) in self.period_cagr.zip_mut_with_period(&self.period_returns) {
-            let years = days as f32 / 365.0;
-            cagr.height.compute_transform(
+        for (cagr, returns, days) in self.period_cagr.zip_mut_with_period(&self.period_return) {
+            let years = days as f64 / 365.0;
+            cagr.bps.height.compute_transform(
                 starting_indexes.height,
-                &returns.height,
+                &returns.bps.height,
                 |(h, r, ..)| {
-                    let v = ((*r / 100.0 + 1.0).powf(1.0 / years) - 1.0) * 100.0;
-                    (h, StoredF32::from(v))
+                    let ratio = f64::from(r);
+                    let v = (ratio + 1.0).powf(1.0 / years) - 1.0;
+                    (h, BasisPointsSigned32::from(v))
                 },
                 exit,
             )?;
         }
 
         // Lump sum by period - stack
-        let lookback_dca = lookback.price_ago.as_dca_period();
+        let lookback_dca = lookback.price_lookback.as_dca_period();
         for (stack, lookback_price, days) in
             self.period_lump_sum_stack.zip_mut_with_days(&lookback_dca)
         {
@@ -146,13 +147,13 @@ impl Vecs {
         }
 
         // Lump sum by period - returns (compute from lookback price)
-        let lookback_dca2 = lookback.price_ago.as_dca_period();
+        let lookback_dca2 = lookback.price_lookback.as_dca_period();
         for (returns, (lookback_price, _)) in self
-            .period_lump_sum_returns
+            .period_lump_sum_return
             .iter_mut()
             .zip(lookback_dca2.iter_with_days())
         {
-            returns.compute_binary::<Cents, Cents, PercentageDiffCents>(
+            returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
                 starting_indexes.height,
                 &prices.price.cents.height,
                 &lookback_price.cents.height,
@@ -214,7 +215,7 @@ impl Vecs {
         // DCA by year class - average price (derived from stack)
         let start_days = super::ByDcaClass::<()>::start_days();
         for ((average_price, stack), from) in self
-            .class_average_price
+            .class_cost_basis
             .iter_mut()
             .zip(self.class_stack.iter())
             .zip(start_days)
@@ -243,11 +244,11 @@ impl Vecs {
 
         // DCA by year class - returns (compute from average price)
         for (returns, average_price) in self
-            .class_returns
+            .class_return
             .iter_mut()
-            .zip(self.class_average_price.iter())
+            .zip(self.class_cost_basis.iter())
         {
-            returns.compute_binary::<Cents, Cents, PercentageDiffCents>(
+            returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
                 starting_indexes.height,
                 &prices.price.cents.height,
                 &average_price.cents.height,

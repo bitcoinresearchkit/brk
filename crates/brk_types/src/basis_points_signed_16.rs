@@ -8,8 +8,8 @@ use vecdb::{CheckedSub, Formattable, Pco};
 use super::StoredF32;
 
 /// Signed basis points stored as i16.
-/// 1 bp = 0.01%. Range: -327.67% to +327.67%.
-/// Use for signed bounded values (NUPL, net PnL ratios, etc.).
+/// 1 bp = 0.0001. Range: -3.2767 to +3.2767.
+/// Use for signed bounded ratios (NUPL, net PnL ratios, etc.).
 #[derive(
     Debug,
     Deref,
@@ -46,16 +46,17 @@ impl BasisPointsSigned16 {
         self.0 < 0
     }
 
-    /// Convert to f32: divide by 100.
+    /// Convert to f32: divide by 10000.
     #[inline]
     pub fn to_f32(self) -> f32 {
-        self.0 as f32 / 100.0
+        self.0 as f32 / 10000.0
     }
 }
 
 impl From<usize> for BasisPointsSigned16 {
     #[inline]
     fn from(value: usize) -> Self {
+        debug_assert!(value <= i16::MAX as usize, "usize out of BasisPointsSigned16 range: {value}");
         Self(value as i16)
     }
 }
@@ -74,23 +75,23 @@ impl From<BasisPointsSigned16> for i16 {
     }
 }
 
-/// Convert from float: multiply by 100 and round.
-/// Input is in "display" form (e.g., -45.23 for -45.23%).
+/// Convert from float: multiply by 10000 and round.
+/// Input is in ratio form (e.g., -0.4523 for -45.23%).
 impl From<f64> for BasisPointsSigned16 {
     #[inline]
     fn from(value: f64) -> Self {
         debug_assert!(
-            value >= i16::MIN as f64 / 100.0 && value <= i16::MAX as f64 / 100.0,
+            value >= i16::MIN as f64 / 10000.0 && value <= i16::MAX as f64 / 10000.0,
             "f64 out of BasisPointsSigned16 range: {value}"
         );
-        Self((value * 100.0).round() as i16)
+        Self((value * 10000.0).round() as i16)
     }
 }
 
 impl From<BasisPointsSigned16> for f64 {
     #[inline]
     fn from(value: BasisPointsSigned16) -> Self {
-        value.0 as f64 / 100.0
+        value.0 as f64 / 10000.0
     }
 }
 
@@ -135,6 +136,7 @@ impl Div<usize> for BasisPointsSigned16 {
     type Output = Self;
     #[inline]
     fn div(self, rhs: usize) -> Self::Output {
+        debug_assert!(rhs <= i16::MAX as usize, "divisor out of i16 range: {rhs}");
         Self(self.0 / rhs as i16)
     }
 }

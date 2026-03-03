@@ -1,14 +1,15 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, PoolSlug, StoredF32, StoredU16, StoredU32};
+use brk_types::{BasisPoints16, Height, PoolSlug, StoredU32};
 use vecdb::{AnyVec, BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, VecIndex, Version};
 
 use crate::{
     blocks,
     indexes::{self, ComputeIndexes},
     internal::{
-        ComputedFromHeightCumulativeSum, ComputedFromHeight, MaskSats, PercentageU32F32,
-        RollingWindows, ValueFromHeightCumulativeSum,
+        Bp16ToFloat, Bp16ToPercent, ComputedFromHeightCumulativeSum, ComputedFromHeight, MaskSats,
+        PercentFromHeight, PercentRollingWindows, RatioU32Bp16, RollingWindows,
+        ValueFromHeightCumulativeSum,
     },
     mining, prices,
 };
@@ -22,10 +23,9 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub subsidy: ValueFromHeightCumulativeSum<M>,
     pub fee: ValueFromHeightCumulativeSum<M>,
     pub coinbase: ValueFromHeightCumulativeSum<M>,
-    pub dominance: ComputedFromHeight<StoredF32, M>,
-    pub dominance_rolling: RollingWindows<StoredF32, M>,
-    pub blocks_since_block: ComputedFromHeight<StoredU32, M>,
-    pub days_since_block: ComputedFromHeight<StoredU16, M>,
+    pub dominance: PercentFromHeight<BasisPoints16, M>,
+    pub dominance_rolling: PercentRollingWindows<BasisPoints16, M>,
+    pub blocks_since_last_mined: ComputedFromHeight<StoredU32, M>,
 }
 
 impl Vecs {
@@ -58,9 +58,9 @@ impl Vecs {
             ValueFromHeightCumulativeSum::forced_import(db, &suffix("coinbase"), version, indexes)?;
 
         let dominance =
-            ComputedFromHeight::forced_import(db, &suffix("dominance"), version, indexes)?;
+            PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(db, &suffix("dominance"), version, indexes)?;
         let dominance_rolling =
-            RollingWindows::forced_import(db, &suffix("dominance"), version, indexes)?;
+            PercentRollingWindows::forced_import::<Bp16ToFloat, Bp16ToPercent>(db, &suffix("dominance"), version, indexes)?;
 
         Ok(Self {
             dominance,
@@ -71,15 +71,9 @@ impl Vecs {
             coinbase,
             subsidy,
             fee,
-            blocks_since_block: ComputedFromHeight::forced_import(
+            blocks_since_last_mined: ComputedFromHeight::forced_import(
                 db,
-                &suffix("blocks_since_block"),
-                version,
-                indexes,
-            )?,
-            days_since_block: ComputedFromHeight::forced_import(
-                db,
-                &suffix("days_since_block"),
+                &suffix("blocks_since_last_mined"),
                 version,
                 indexes,
             )?,
@@ -126,7 +120,7 @@ impl Vecs {
         )?;
 
         self.dominance
-            .compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
+            .compute_binary::<StoredU32, StoredU32, RatioU32Bp16>(
                 starting_indexes.height,
                 &self.blocks_mined.cumulative.height,
                 &blocks.count.block_count.cumulative.height,
@@ -140,7 +134,7 @@ impl Vecs {
             .zip(self.blocks_mined_sum.as_array())
             .zip(blocks.count.block_count_sum.as_array())
         {
-            dom.compute_binary::<StoredU32, StoredU32, PercentageU32F32>(
+            dom.compute_binary::<StoredU32, StoredU32, RatioU32Bp16>(
                 starting_indexes.height,
                 &mined.height,
                 &total.height,
@@ -198,19 +192,19 @@ impl Vecs {
 
         {
             let resume_from = self
-                .blocks_since_block
+                .blocks_since_last_mined
                 .height
                 .len()
                 .min(starting_indexes.height.to_usize());
             let mut prev = if resume_from > 0 {
-                self.blocks_since_block
+                self.blocks_since_last_mined
                     .height
                     .collect_one_at(resume_from - 1)
                     .unwrap()
             } else {
                 StoredU32::ZERO
             };
-            self.blocks_since_block.height.compute_transform(
+            self.blocks_since_last_mined.height.compute_transform(
                 starting_indexes.height,
                 &self.blocks_mined.height,
                 |(h, mined, ..)| {
@@ -225,18 +219,6 @@ impl Vecs {
                 exit,
             )?;
         }
-
-        self.days_since_block.height.compute_transform(
-            starting_indexes.height,
-            &self.blocks_since_block.height,
-            |(h, blocks, ..)| {
-                (
-                    h,
-                    StoredU16::from(u16::try_from(*blocks).unwrap_or(u16::MAX)),
-                )
-            },
-            exit,
-        )?;
 
         Ok(())
     }

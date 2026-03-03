@@ -12,8 +12,8 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            btc: ComputedFromHeight::forced_import(db, "btc_velocity", version, indexes)?,
-            usd: ComputedFromHeight::forced_import(db, "usd_velocity", version, indexes)?,
+            btc: ComputedFromHeight::forced_import(db, "velocity_btc", version, indexes)?,
+            usd: ComputedFromHeight::forced_import(db, "velocity_usd", version, indexes)?,
         })
     }
 }

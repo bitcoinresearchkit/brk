@@ -26,8 +26,8 @@ impl Vecs {
             exit,
         )?;
 
-        // Compute difficulty adjustment percentage
-        self.adjustment.height.compute_percentage_change(
+        // Compute difficulty adjustment ratio: (current - previous) / previous
+        self.adjustment.bps.height.compute_ratio_change(
             starting_indexes.height,
             &indexer.vecs.blocks.difficulty,
             1,

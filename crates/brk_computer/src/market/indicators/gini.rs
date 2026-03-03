@@ -1,11 +1,11 @@
 use brk_error::Result;
-use brk_types::{Sats, StoredF32, StoredU64, Version};
+use brk_types::{BasisPoints16, Sats, StoredU64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
-use crate::{ComputeIndexes, distribution, internal::ComputedFromHeight};
+use crate::{ComputeIndexes, distribution, internal::PercentFromHeight};
 
 pub(super) fn compute(
-    gini: &mut ComputedFromHeight<StoredF32>,
+    gini: &mut PercentFromHeight<BasisPoints16>,
     distribution: &distribution::Vecs,
     starting_indexes: &ComputeIndexes,
     exit: &Exit,
@@ -32,10 +32,10 @@ pub(super) fn compute(
             .iter()
             .fold(Version::ZERO, |acc, v| acc + v.version());
 
-    gini.height
+    gini.bps.height
         .validate_computed_version_or_reset(source_version)?;
-    gini.height
-        .truncate_if_needed_at(gini.height.len().min(starting_indexes.height.to_usize()))?;
+    gini.bps.height
+        .truncate_if_needed_at(gini.bps.height.len().min(starting_indexes.height.to_usize()))?;
 
     let total_heights = supply_vecs
         .iter()
@@ -44,7 +44,7 @@ pub(super) fn compute(
         .unwrap_or(0)
         .min(count_vecs.iter().map(|v| v.len()).min().unwrap_or(0));
 
-    let start_height = gini.height.len();
+    let start_height = gini.bps.height.len();
     if start_height >= total_heights {
         return Ok(());
     }
@@ -68,24 +68,24 @@ pub(super) fn compute(
             let count: u64 = count_data[c][offset].into();
             buckets.push((count, supply));
         }
-        gini.height
-            .push(StoredF32::from(gini_from_lorenz(&buckets)));
+        gini.bps.height
+            .push(gini_from_lorenz(&buckets));
     }
 
     {
         let _lock = exit.lock();
-        gini.height.write()?;
+        gini.bps.height.write()?;
     }
 
     Ok(())
 }
 
-fn gini_from_lorenz(buckets: &[(u64, u64)]) -> f32 {
+fn gini_from_lorenz(buckets: &[(u64, u64)]) -> BasisPoints16 {
     let total_count: u64 = buckets.iter().map(|(c, _)| c).sum();
     let total_supply: u64 = buckets.iter().map(|(_, s)| s).sum();
 
     if total_count == 0 || total_supply == 0 {
-        return f32::NAN;
+        return BasisPoints16::ZERO;
     }
 
     let (mut cumulative_count, mut cumulative_supply, mut area) = (0u64, 0u64, 0.0f64);
@@ -99,5 +99,5 @@ fn gini_from_lorenz(buckets: &[(u64, u64)]) -> f32 {
         area += (p1 - p0) * (w0 + w1) / 2.0;
     }
 
-    (1.0 - 2.0 * area) as f32
+    BasisPoints16::from(1.0 - 2.0 * area)
 }

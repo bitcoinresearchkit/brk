@@ -1,20 +1,20 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{StoredF32, Version};
+use brk_types::{Height, StoredF32, Version};
 use schemars::JsonSchema;
-use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode, UnaryTransform};
+use vecdb::{BinaryTransform, Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, UnaryTransform, VecValue};
 
 use crate::indexes;
 
 use super::{ComputedFromHeight, LazyFromHeight};
 use crate::internal::NumericValue;
 
-/// Basis-point storage with lazy float view.
+/// Basis-point storage with lazy ratio float view (÷10000).
 ///
 /// Stores integer basis points on disk (Pco-compressed),
-/// exposes a lazy StoredF32 view (bps / 100).
+/// exposes a lazy StoredF32 ratio (e.g., 25000 bps → 2.5).
 #[derive(Traversable)]
-pub struct BpsFromHeight<B, M: StorageMode = Rw>
+pub struct Float32FromHeight<B, M: StorageMode = Rw>
 where
     B: NumericValue + JsonSchema,
 {
@@ -22,7 +22,7 @@ where
     pub float: LazyFromHeight<StoredF32, B>,
 }
 
-impl<B> BpsFromHeight<B>
+impl<B> Float32FromHeight<B>
 where
     B: NumericValue + JsonSchema,
 {
@@ -42,5 +42,20 @@ where
         );
 
         Ok(Self { bps, float })
+    }
+
+    pub(crate) fn compute_binary<S1T, S2T, F>(
+        &mut self,
+        max_from: Height,
+        source1: &impl ReadableVec<Height, S1T>,
+        source2: &impl ReadableVec<Height, S2T>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        S1T: VecValue,
+        S2T: VecValue,
+        F: BinaryTransform<S1T, S2T, B>,
+    {
+        self.bps.compute_binary::<S1T, S2T, F>(max_from, source1, source2, exit)
     }
 }

@@ -14,7 +14,7 @@ impl Vecs {
         value: &value::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.vocdd_365d_median.compute_rolling_median_from_starts(
+        self.vocdd_median_1y.compute_rolling_median_from_starts(
             starting_indexes.height,
             &blocks.count.height_1y_ago,
             &value.vocdd.height,
@@ -24,7 +24,7 @@ impl Vecs {
         self.hodl_bank.compute_cumulative_transformed_binary(
             starting_indexes.height,
             &prices.price.usd.height,
-            &self.vocdd_365d_median,
+            &self.vocdd_median_1y,
             |price, median| StoredF64::from(f64::from(price) - f64::from(median)),
             exit,
         )?;

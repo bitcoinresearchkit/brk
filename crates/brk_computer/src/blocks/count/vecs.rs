@@ -59,12 +59,12 @@ pub struct Vecs<M: StorageMode = Rw> {
 }
 
 impl Vecs {
-    /// Get the standard 4 rolling window start heights (24h, 7d, 30d, 1y).
+    /// Get the standard 4 rolling window start heights (24h, 1w, 1m, 1y).
     pub fn window_starts(&self) -> WindowStarts<'_> {
         WindowStarts {
             _24h: &self.height_24h_ago,
-            _7d: &self.height_1w_ago,
-            _30d: &self.height_1m_ago,
+            _1w: &self.height_1w_ago,
+            _1m: &self.height_1m_ago,
             _1y: &self.height_1y_ago,
         }
     }

@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{CheckedSub, HalvingEpoch, Sats, StoredF32};
+use brk_types::{BasisPoints16, CheckedSub, HalvingEpoch, Sats};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, indexes, prices, transactions};
+use crate::{ComputeIndexes, blocks, indexes, internal::RatioSatsBp16, prices, transactions};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -122,14 +122,14 @@ impl Vecs {
         )?;
 
         // All-time cumulative fee dominance
-        self.fee_dominance.height.compute_percentage(
+        self.fee_dominance.compute_binary::<Sats, Sats, RatioSatsBp16>(
             starting_indexes.height,
             &self.fees.cumulative.sats.height,
             &self.coinbase.cumulative.sats.height,
             exit,
         )?;
 
-        // Rolling fee dominance = sum(fees) / sum(coinbase) * 100
+        // Rolling fee dominance = sum(fees) / sum(coinbase)
         for ((fee_dom, fees_w), coinbase_w) in self
             .fee_dominance_rolling
             .as_mut_array()
@@ -137,7 +137,7 @@ impl Vecs {
             .zip(self.fees.rolling.as_array())
             .zip(self.coinbase.rolling.as_array())
         {
-            fee_dom.height.compute_percentage(
+            fee_dom.compute_binary::<Sats, Sats, RatioSatsBp16>(
                 starting_indexes.height,
                 &fees_w.sum.sats.height,
                 &coinbase_w.sum.sats.height,
@@ -146,30 +146,29 @@ impl Vecs {
         }
 
         // All-time cumulative subsidy dominance
-        self.subsidy_dominance.height.compute_percentage(
+        self.subsidy_dominance.compute_binary::<Sats, Sats, RatioSatsBp16>(
             starting_indexes.height,
             &self.subsidy.cumulative.sats.height,
             &self.coinbase.cumulative.sats.height,
             exit,
         )?;
 
-        // Rolling subsidy dominance = 100 - fee_dominance
-        let hundred = StoredF32::from(100u8);
+        // Rolling subsidy dominance = 1 - fee_dominance
         for (sub_dom, fee_dom) in self
             .subsidy_dominance_rolling
             .as_mut_array()
             .into_iter()
             .zip(self.fee_dominance_rolling.as_array())
         {
-            sub_dom.height.compute_transform(
+            sub_dom.bps.height.compute_transform(
                 starting_indexes.height,
-                &fee_dom.height,
-                |(height, fee_dom, _)| (height, hundred - fee_dom),
+                &fee_dom.bps.height,
+                |(height, fee, _)| (height, BasisPoints16::ONE - fee),
                 exit,
             )?;
         }
 
-        self.subsidy_usd_1y_sma.cents.height.compute_rolling_average(
+        self.subsidy_sma_1y.cents.height.compute_rolling_average(
             starting_indexes.height,
             &count_vecs.height_1y_ago,
             &self.subsidy.base.cents.height,

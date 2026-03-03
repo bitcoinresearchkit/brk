@@ -35,28 +35,28 @@ impl Vecs {
             exit,
         )?;
 
-        self.hash_rate_1w_sma.height.compute_rolling_average(
+        self.hash_rate_sma_1w.height.compute_rolling_average(
             starting_indexes.height,
             &count_vecs.height_1w_ago,
             &self.hash_rate.height,
             exit,
         )?;
 
-        self.hash_rate_1m_sma.height.compute_rolling_average(
+        self.hash_rate_sma_1m.height.compute_rolling_average(
             starting_indexes.height,
             &count_vecs.height_1m_ago,
             &self.hash_rate.height,
             exit,
         )?;
 
-        self.hash_rate_2m_sma.height.compute_rolling_average(
+        self.hash_rate_sma_2m.height.compute_rolling_average(
             starting_indexes.height,
             &count_vecs.height_2m_ago,
             &self.hash_rate.height,
             exit,
         )?;
 
-        self.hash_rate_1y_sma.height.compute_rolling_average(
+        self.hash_rate_sma_1y.height.compute_rolling_average(
             starting_indexes.height,
             &count_vecs.height_1y_ago,
             &self.hash_rate.height,
@@ -69,7 +69,7 @@ impl Vecs {
             exit,
         )?;
 
-        self.hash_rate_drawdown.height.compute_drawdown(
+        self.hash_rate_drawdown.compute_drawdown(
             starting_indexes.height,
             &self.hash_rate.height,
             &self.hash_rate_ath.height,

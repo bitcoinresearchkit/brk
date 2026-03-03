@@ -99,9 +99,9 @@ impl AddressCohorts {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        // 1. Compute addr_count_30d_change using rolling window
+        // 1. Compute addr_count_change_1m using rolling window
         self.par_iter_mut().try_for_each(|v| {
-            v.addr_count_30d_change.height.compute_rolling_change(
+            v.addr_count_change_1m.height.compute_rolling_change(
                 starting_indexes.height,
                 &blocks.count.height_1m_ago,
                 &v.addr_count.height,

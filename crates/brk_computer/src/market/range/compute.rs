@@ -16,10 +16,10 @@ impl Vecs {
         let price = &prices.price.cents.height;
 
         for (min_vec, max_vec, starts) in [
-            (&mut self.price_1w_min.cents.height, &mut self.price_1w_max.cents.height, &blocks.count.height_1w_ago),
-            (&mut self.price_2w_min.cents.height, &mut self.price_2w_max.cents.height, &blocks.count.height_2w_ago),
-            (&mut self.price_1m_min.cents.height, &mut self.price_1m_max.cents.height, &blocks.count.height_1m_ago),
-            (&mut self.price_1y_min.cents.height, &mut self.price_1y_max.cents.height, &blocks.count.height_1y_ago),
+            (&mut self.price_min_1w.cents.height, &mut self.price_max_1w.cents.height, &blocks.count.height_1w_ago),
+            (&mut self.price_min_2w.cents.height, &mut self.price_max_2w.cents.height, &blocks.count.height_2w_ago),
+            (&mut self.price_min_1m.cents.height, &mut self.price_max_1m.cents.height, &blocks.count.height_1m_ago),
+            (&mut self.price_min_1y.cents.height, &mut self.price_max_1y.cents.height, &blocks.count.height_1y_ago),
         ] {
             min_vec.compute_rolling_min_from_starts(starting_indexes.height, starts, price, exit)?;
             max_vec.compute_rolling_max_from_starts(starting_indexes.height, starts, price, exit)?;
@@ -47,18 +47,18 @@ impl Vecs {
         )?;
 
         // 2w rolling sum of true range
-        self.price_true_range_2w_sum.height.compute_rolling_sum(
+        self.price_true_range_sum_2w.height.compute_rolling_sum(
             starting_indexes.height,
             &blocks.count.height_2w_ago,
             &self.price_true_range.height,
             exit,
         )?;
 
-        self.price_2w_choppiness_index.height.compute_transform4(
+        self.price_choppiness_index_2w.height.compute_transform4(
             starting_indexes.height,
-            &self.price_true_range_2w_sum.height,
-            &self.price_2w_max.cents.height,
-            &self.price_2w_min.cents.height,
+            &self.price_true_range_sum_2w.height,
+            &self.price_max_2w.cents.height,
+            &self.price_min_2w.cents.height,
             &blocks.count.height_2w_ago,
             |(h, tr_sum, max, min, window_start, ..)| {
                 let range = f64::from(max) - f64::from(min);

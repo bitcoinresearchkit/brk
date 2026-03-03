@@ -51,17 +51,19 @@ impl ComputedFromHeightStdDevExtended {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
+        period: &str,
         days: usize,
         parent_version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let version = parent_version + Version::TWO;
+        let p = super::period_suffix(period);
 
         macro_rules! import {
             ($suffix:expr) => {
                 ComputedFromHeight::forced_import(
                     db,
-                    &format!("{name}_{}", $suffix),
+                    &format!("{name}_{}{p}", $suffix),
                     version,
                     indexes,
                 )?
@@ -70,12 +72,12 @@ impl ComputedFromHeightStdDevExtended {
 
         macro_rules! import_price {
             ($suffix:expr) => {
-                Price::forced_import(db, &format!("{name}_{}", $suffix), version, indexes)?
+                Price::forced_import(db, &format!("{name}_{}{p}", $suffix), version, indexes)?
             };
         }
 
         Ok(Self {
-            base: ComputedFromHeightStdDev::forced_import(db, name, days, parent_version, indexes)?,
+            base: ComputedFromHeightStdDev::forced_import(db, name, period, days, parent_version, indexes)?,
             zscore: import!("zscore"),
             p0_5sd: import!("p0_5sd"),
             p1sd: import!("p1sd"),

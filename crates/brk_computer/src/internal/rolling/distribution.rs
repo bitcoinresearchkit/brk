@@ -74,18 +74,18 @@ where
             &mut self.0.pct75._24h.height, &mut self.0.pct90._24h.height, exit,
         )?;
         compute_rolling_distribution_from_starts(
-            max_from, windows._7d, source,
-            &mut self.0.average._7d.height, &mut self.0.min._7d.height,
-            &mut self.0.max._7d.height, &mut self.0.pct10._7d.height,
-            &mut self.0.pct25._7d.height, &mut self.0.median._7d.height,
-            &mut self.0.pct75._7d.height, &mut self.0.pct90._7d.height, exit,
+            max_from, windows._1w, source,
+            &mut self.0.average._1w.height, &mut self.0.min._1w.height,
+            &mut self.0.max._1w.height, &mut self.0.pct10._1w.height,
+            &mut self.0.pct25._1w.height, &mut self.0.median._1w.height,
+            &mut self.0.pct75._1w.height, &mut self.0.pct90._1w.height, exit,
         )?;
         compute_rolling_distribution_from_starts(
-            max_from, windows._30d, source,
-            &mut self.0.average._30d.height, &mut self.0.min._30d.height,
-            &mut self.0.max._30d.height, &mut self.0.pct10._30d.height,
-            &mut self.0.pct25._30d.height, &mut self.0.median._30d.height,
-            &mut self.0.pct75._30d.height, &mut self.0.pct90._30d.height, exit,
+            max_from, windows._1m, source,
+            &mut self.0.average._1m.height, &mut self.0.min._1m.height,
+            &mut self.0.max._1m.height, &mut self.0.pct10._1m.height,
+            &mut self.0.pct25._1m.height, &mut self.0.median._1m.height,
+            &mut self.0.pct75._1m.height, &mut self.0.pct90._1m.height, exit,
         )?;
         compute_rolling_distribution_from_starts(
             max_from, windows._1y, source,

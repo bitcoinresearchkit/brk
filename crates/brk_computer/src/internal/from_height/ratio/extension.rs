@@ -12,8 +12,8 @@ use super::super::ComputedFromHeight;
 
 #[derive(Traversable)]
 pub struct ComputedFromHeightRatioExtension<M: StorageMode = Rw> {
-    pub ratio_1w_sma: ComputedFromHeight<StoredF32, M>,
-    pub ratio_1m_sma: ComputedFromHeight<StoredF32, M>,
+    pub ratio_sma_1w: ComputedFromHeight<StoredF32, M>,
+    pub ratio_sma_1m: ComputedFromHeight<StoredF32, M>,
     pub ratio_pct99: ComputedFromHeight<StoredF32, M>,
     pub ratio_pct98: ComputedFromHeight<StoredF32, M>,
     pub ratio_pct95: ComputedFromHeight<StoredF32, M>,
@@ -28,9 +28,9 @@ pub struct ComputedFromHeightRatioExtension<M: StorageMode = Rw> {
     pub ratio_pct1_price: Price<ComputedFromHeight<Cents, M>>,
 
     pub ratio_sd: ComputedFromHeightStdDevExtended<M>,
-    pub ratio_4y_sd: ComputedFromHeightStdDevExtended<M>,
-    pub ratio_2y_sd: ComputedFromHeightStdDevExtended<M>,
-    pub ratio_1y_sd: ComputedFromHeightStdDevExtended<M>,
+    pub ratio_sd_4y: ComputedFromHeightStdDevExtended<M>,
+    pub ratio_sd_2y: ComputedFromHeightStdDevExtended<M>,
+    pub ratio_sd_1y: ComputedFromHeightStdDevExtended<M>,
 
     #[traversable(skip)]
     tdigest: TDigest,
@@ -59,10 +59,11 @@ impl ComputedFromHeightRatioExtension {
         }
 
         macro_rules! import_sd {
-            ($suffix:expr, $days:expr) => {
+            ($suffix:expr, $period:expr, $days:expr) => {
                 ComputedFromHeightStdDevExtended::forced_import(
                     db,
                     &format!("{name}_{}", $suffix),
+                    $period,
                     $days,
                     v,
                     indexes,
@@ -77,12 +78,12 @@ impl ComputedFromHeightRatioExtension {
         }
 
         Ok(Self {
-            ratio_1w_sma: import!("ratio_1w_sma"),
-            ratio_1m_sma: import!("ratio_1m_sma"),
-            ratio_sd: import_sd!("ratio", usize::MAX),
-            ratio_1y_sd: import_sd!("ratio_1y", 365),
-            ratio_2y_sd: import_sd!("ratio_2y", 2 * 365),
-            ratio_4y_sd: import_sd!("ratio_4y", 4 * 365),
+            ratio_sma_1w: import!("ratio_sma_1w"),
+            ratio_sma_1m: import!("ratio_sma_1m"),
+            ratio_sd: import_sd!("ratio", "", usize::MAX),
+            ratio_sd_1y: import_sd!("ratio", "1y", 365),
+            ratio_sd_2y: import_sd!("ratio", "2y", 2 * 365),
+            ratio_sd_4y: import_sd!("ratio", "4y", 4 * 365),
             ratio_pct99: import!("ratio_pct99"),
             ratio_pct98: import!("ratio_pct98"),
             ratio_pct95: import!("ratio_pct95"),
@@ -108,14 +109,14 @@ impl ComputedFromHeightRatioExtension {
         ratio_source: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
         // SMA using lookback vecs
-        self.ratio_1w_sma.height.compute_rolling_average(
+        self.ratio_sma_1w.height.compute_rolling_average(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
             ratio_source,
             exit,
         )?;
 
-        self.ratio_1m_sma.height.compute_rolling_average(
+        self.ratio_sma_1m.height.compute_rolling_average(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             ratio_source,
@@ -183,11 +184,11 @@ impl ComputedFromHeightRatioExtension {
         // Compute stddev at height level
         self.ratio_sd
             .compute_all(blocks, starting_indexes, exit, ratio_source)?;
-        self.ratio_4y_sd
+        self.ratio_sd_4y
             .compute_all(blocks, starting_indexes, exit, ratio_source)?;
-        self.ratio_2y_sd
+        self.ratio_sd_2y
             .compute_all(blocks, starting_indexes, exit, ratio_source)?;
-        self.ratio_1y_sd
+        self.ratio_sd_1y
             .compute_all(blocks, starting_indexes, exit, ratio_source)?;
 
         Ok(())
@@ -225,11 +226,11 @@ impl ComputedFromHeightRatioExtension {
         // Stddev cents bands
         self.ratio_sd
             .compute_cents_bands(starting_indexes, metric_price, exit)?;
-        self.ratio_4y_sd
+        self.ratio_sd_4y
             .compute_cents_bands(starting_indexes, metric_price, exit)?;
-        self.ratio_2y_sd
+        self.ratio_sd_2y
             .compute_cents_bands(starting_indexes, metric_price, exit)?;
-        self.ratio_1y_sd
+        self.ratio_sd_1y
             .compute_cents_bands(starting_indexes, metric_price, exit)?;
 
         Ok(())

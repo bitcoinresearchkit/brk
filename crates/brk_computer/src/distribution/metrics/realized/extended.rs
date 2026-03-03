@@ -1,11 +1,14 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, StoredF32, StoredF64, Version};
+use brk_types::{BasisPoints16, Cents, Dollars, Height, StoredF64, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{ComputedFromHeight, ComputedFromHeightRatioExtension, RatioCents64, RollingWindows},
+    internal::{
+        Bp16ToFloat, Bp16ToPercent, ComputedFromHeightRatioExtension, PercentFromHeight,
+        RatioCents64, RatioDollarsBp16, RollingWindows,
+    },
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -15,7 +18,7 @@ use super::RealizedBase;
 /// Extended realized metrics (only for extended cohorts: all, sth, lth, age_range).
 #[derive(Traversable)]
 pub struct RealizedExtended<M: StorageMode = Rw> {
-    pub realized_cap_rel_to_own_market_cap: ComputedFromHeight<StoredF32, M>,
+    pub realized_cap_rel_to_own_market_cap: PercentFromHeight<BasisPoints16, M>,
 
     // === Realized Profit/Loss Rolling Sums ===
     pub realized_profit_sum: RollingWindows<Cents, M>,
@@ -34,7 +37,7 @@ impl RealizedExtended {
         let v1 = Version::ONE;
 
         Ok(RealizedExtended {
-            realized_cap_rel_to_own_market_cap: ComputedFromHeight::forced_import(
+            realized_cap_rel_to_own_market_cap: PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
                 cfg.db,
                 &cfg.name("realized_cap_rel_to_own_market_cap"),
                 cfg.version,
@@ -84,8 +87,7 @@ impl RealizedExtended {
 
         // Realized cap relative to own market cap
         self.realized_cap_rel_to_own_market_cap
-            .height
-            .compute_percentage(
+            .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 starting_indexes.height,
                 &base.realized_cap.height,
                 height_to_market_cap,
@@ -107,7 +109,7 @@ impl RealizedExtended {
             blocks,
             starting_indexes,
             exit,
-            &base.realized_price_extra.ratio.height,
+            &base.realized_price_ratio.ratio.height,
         )?;
         self.realized_price_ratio_ext.compute_cents_bands(
             starting_indexes,
@@ -119,7 +121,7 @@ impl RealizedExtended {
             blocks,
             starting_indexes,
             exit,
-            &base.investor_price_extra.ratio.height,
+            &base.investor_price_ratio.ratio.height,
         )?;
         self.investor_price_ratio_ext.compute_cents_bands(
             starting_indexes,

@@ -2,10 +2,10 @@ use brk_error::Result;
 use brk_types::Version;
 use vecdb::Database;
 
-use super::{ByIndicatorTimeframe, MacdChain, RsiChain, Vecs};
+use super::{MacdChain, RsiChain, Vecs};
 use crate::{
     indexes,
-    internal::ComputedFromHeight,
+    internal::{Bp16ToFloat, Bp16ToPercent, ComputedFromHeight, PercentFromHeight, Windows},
 };
 
 const VERSION: Version = Version::ONE;
@@ -28,8 +28,8 @@ impl RsiChain {
             };
         }
 
-        let average_gain = import!("avg_gain");
-        let average_loss = import!("avg_loss");
+        let average_gain = import!("average_gain");
+        let average_loss = import!("average_loss");
 
         let rsi = ComputedFromHeight::forced_import(
             db,
@@ -44,11 +44,11 @@ impl RsiChain {
             average_gain,
             average_loss,
             rsi,
-            rsi_min: import!("rsi_min"),
-            rsi_max: import!("rsi_max"),
-            stoch_rsi: import!("stoch_rsi"),
-            stoch_rsi_k: import!("stoch_rsi_k"),
-            stoch_rsi_d: import!("stoch_rsi_d"),
+            rsi_min: import!("min"),
+            rsi_max: import!("max"),
+            stoch_rsi: import!("stoch"),
+            stoch_rsi_k: import!("stoch_k"),
+            stoch_rsi_d: import!("stoch_d"),
         })
     }
 }
@@ -110,12 +110,12 @@ impl Vecs {
 
         let nvt = ComputedFromHeight::forced_import(db, "nvt", v, indexes)?;
 
-        let rsi = ByIndicatorTimeframe::try_new(|tf| RsiChain::forced_import(db, tf, v, indexes))?;
-        let macd = ByIndicatorTimeframe::try_new(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
+        let rsi = Windows::try_from_fn(|tf| RsiChain::forced_import(db, tf, v, indexes))?;
+        let macd = Windows::try_from_fn(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
 
         let stoch_k = ComputedFromHeight::forced_import(db, "stoch_k", v, indexes)?;
         let stoch_d = ComputedFromHeight::forced_import(db, "stoch_d", v, indexes)?;
-        let gini = ComputedFromHeight::forced_import(db, "gini", v, indexes)?;
+        let gini = PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(db, "gini", v, indexes)?;
 
         let pi_cycle = ComputedFromHeight::forced_import(db, "pi_cycle", v, indexes)?;
 

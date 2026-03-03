@@ -9,5 +9,5 @@ use crate::internal::{ComputedFromHeight, Price};
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub price_ago: ByLookbackPeriod<Price<ComputedFromHeight<Cents, M>>>,
+    pub price_lookback: ByLookbackPeriod<Price<ComputedFromHeight<Cents, M>>>,
 }

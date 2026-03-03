@@ -1,6 +1,6 @@
 //! RollingWindows - newtype on Windows with ComputedFromHeight per window duration.
 //!
-//! Each of the 4 windows (24h, 7d, 30d, 1y) contains a height-level stored vec
+//! Each of the 4 windows (24h, 1w, 1m, 1y) contains a height-level stored vec
 //! plus all 17 LazyAggVec index views.
 
 use std::ops::SubAssign;
@@ -18,10 +18,10 @@ use crate::{
     internal::{ComputedFromHeight, ComputedVecValue, NumericValue, Windows},
 };
 
-/// Rolling window start heights — the 4 height-ago vecs (24h, 7d, 30d, 1y).
+/// Rolling window start heights — the 4 height-ago vecs (24h, 1w, 1m, 1y).
 pub type WindowStarts<'a> = Windows<&'a EagerVec<PcoVec<Height, Height>>>;
 
-/// 4 rolling window vecs (24h, 7d, 30d, 1y), each with height data + all 17 index views.
+/// 4 rolling window vecs (24h, 1w, 1m, 1y), each with height data + all 17 index views.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct RollingWindows<T, M: StorageMode = Rw>(pub Windows<ComputedFromHeight<T, M>>)

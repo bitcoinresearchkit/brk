@@ -8,7 +8,7 @@ use vecdb::{CheckedSub, Formattable, Pco};
 use super::StoredF32;
 
 /// Signed basis points stored as i32.
-/// 1 bp = 0.01%. Range: -21,474,836.47% to +21,474,836.47%.
+/// 1 bp = 0.0001. Range: -214,748.3647 to +214,748.3647.
 /// Use for unbounded signed values (returns, growth rates, volatility, z-scores, etc.).
 #[derive(
     Debug,
@@ -46,16 +46,17 @@ impl BasisPointsSigned32 {
         self.0 < 0
     }
 
-    /// Convert to f32: divide by 100.
+    /// Convert to f32: divide by 10000.
     #[inline]
     pub fn to_f32(self) -> f32 {
-        self.0 as f32 / 100.0
+        self.0 as f32 / 10000.0
     }
 }
 
 impl From<usize> for BasisPointsSigned32 {
     #[inline]
     fn from(value: usize) -> Self {
+        debug_assert!(value <= i32::MAX as usize, "usize out of BasisPointsSigned32 range: {value}");
         Self(value as i32)
     }
 }
@@ -74,23 +75,32 @@ impl From<BasisPointsSigned32> for i32 {
     }
 }
 
-/// Convert from float: multiply by 100 and round.
-/// Input is in "display" form (e.g., -5000.23 for -5000.23%).
+/// Convert from float: multiply by 10000 and round.
+/// Input is in ratio form (e.g., 50.0 for +5000%).
 impl From<f64> for BasisPointsSigned32 {
     #[inline]
     fn from(value: f64) -> Self {
         debug_assert!(
-            value >= i32::MIN as f64 / 100.0 && value <= i32::MAX as f64 / 100.0,
+            value >= i32::MIN as f64 / 10000.0 && value <= i32::MAX as f64 / 10000.0,
             "f64 out of BasisPointsSigned32 range: {value}"
         );
-        Self((value * 100.0).round() as i32)
+        Self((value * 10000.0).round() as i32)
+    }
+}
+
+/// Convert from f32 ratio form: multiply by 10000 and round.
+/// Input is in ratio form (e.g., 0.5 for +50% → 5000 bps).
+impl From<f32> for BasisPointsSigned32 {
+    #[inline]
+    fn from(value: f32) -> Self {
+        Self((value * 10000.0).round() as i32)
     }
 }
 
 impl From<BasisPointsSigned32> for f64 {
     #[inline]
     fn from(value: BasisPointsSigned32) -> Self {
-        value.0 as f64 / 100.0
+        value.0 as f64 / 10000.0
     }
 }
 
@@ -135,6 +145,7 @@ impl Div<usize> for BasisPointsSigned32 {
     type Output = Self;
     #[inline]
     fn div(self, rhs: usize) -> Self::Output {
+        debug_assert!(rhs <= i32::MAX as usize, "divisor out of i32 range: {rhs}");
         Self(self.0 / rhs as i32)
     }
 }

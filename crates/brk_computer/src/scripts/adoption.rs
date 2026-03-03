@@ -1,16 +1,20 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{StoredF32, Version};
+use brk_types::{BasisPoints16, Version};
 use vecdb::{Database, Exit, Rw, StorageMode};
 
-use crate::{ComputeIndexes, indexes, internal::{ComputedFromHeight, RatioU64F32}, outputs};
+use crate::{
+    ComputeIndexes, indexes,
+    internal::{Bp16ToFloat, Bp16ToPercent, PercentFromHeight, RatioU64Bp16},
+    outputs,
+};
 
 use super::count::Vecs as CountVecs;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub taproot: ComputedFromHeight<StoredF32, M>,
-    pub segwit: ComputedFromHeight<StoredF32, M>,
+    pub taproot: PercentFromHeight<BasisPoints16, M>,
+    pub segwit: PercentFromHeight<BasisPoints16, M>,
 }
 
 impl Vecs {
@@ -20,13 +24,18 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            taproot: ComputedFromHeight::forced_import(
+            taproot: PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
                 db,
                 "taproot_adoption",
                 version,
                 indexes,
             )?,
-            segwit: ComputedFromHeight::forced_import(db, "segwit_adoption", version, indexes)?,
+            segwit: PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                db,
+                "segwit_adoption",
+                version,
+                indexes,
+            )?,
         })
     }
 
@@ -37,14 +46,14 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.taproot.compute_binary::<_, _, RatioU64F32>(
+        self.taproot.compute_binary::<_, _, RatioU64Bp16>(
             starting_indexes.height,
             &count.p2tr.height,
             &outputs_count.total_count.full.sum_cumulative.sum.0,
             exit,
         )?;
 
-        self.segwit.compute_binary::<_, _, RatioU64F32>(
+        self.segwit.compute_binary::<_, _, RatioU64Bp16>(
             starting_indexes.height,
             &count.segwit.height,
             &outputs_count.total_count.full.sum_cumulative.sum.0,

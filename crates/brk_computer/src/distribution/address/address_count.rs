@@ -11,12 +11,12 @@ use vecdb::{
 
 use crate::{ComputeIndexes, blocks, indexes, internal::ComputedFromHeight};
 
-/// Address count with 30d change metric for a single type.
+/// Address count with 1m change metric for a single type.
 #[derive(Traversable)]
 pub struct AddrCountVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub count: ComputedFromHeight<StoredU64, M>,
-    pub _30d_change: ComputedFromHeight<StoredF64, M>,
+    pub change_1m: ComputedFromHeight<StoredF64, M>,
 }
 
 impl AddrCountVecs {
@@ -28,9 +28,9 @@ impl AddrCountVecs {
     ) -> Result<Self> {
         Ok(Self {
             count: ComputedFromHeight::forced_import(db, name, version, indexes)?,
-            _30d_change: ComputedFromHeight::forced_import(
+            change_1m: ComputedFromHeight::forced_import(
                 db,
-                &format!("{name}_30d_change"),
+                &format!("{name}_change_1m"),
                 version,
                 indexes,
             )?,
@@ -43,7 +43,7 @@ impl AddrCountVecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self._30d_change.height.compute_rolling_change(
+        self.change_1m.height.compute_rolling_change(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             &self.count.height,
@@ -85,7 +85,7 @@ impl From<(&AddressTypeToAddrCountVecs, Height)> for AddressTypeToAddressCount {
     }
 }
 
-/// Address count per address type, with height + derived indexes + 30d change.
+/// Address count per address type, with height + derived indexes + 1m change.
 #[derive(Deref, DerefMut, Traversable)]
 pub struct AddressTypeToAddrCountVecs<M: StorageMode = Rw>(ByAddressType<AddrCountVecs<M>>);
 
@@ -290,7 +290,7 @@ impl AddrCountsVecs {
             .height
             .compute_sum_of_others(starting_indexes.height, &sources, exit)?;
 
-        self.all._30d_change.height.compute_rolling_change(
+        self.all.change_1m.height.compute_rolling_change(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             &self.all.count.height,

@@ -9,7 +9,8 @@ use super::Vecs;
 use crate::{
     distribution, indexes,
     internal::{
-        ComputedFromHeight, Identity, LazyFromHeight, LazyValueFromHeight, SatsToBitcoin,
+        Bps32ToFloat, Bps32ToPercent, ComputedFromHeight, Identity, LazyFromHeight,
+        LazyValueFromHeight, PercentFromHeight, SatsToBitcoin,
     },
 };
 
@@ -40,8 +41,8 @@ impl Vecs {
         let burned = super::burned::Vecs::forced_import(&db, version, indexes)?;
 
         // Inflation rate
-        let inflation =
-            ComputedFromHeight::forced_import(&db, "inflation_rate", version, indexes)?;
+        let inflation_rate =
+            PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(&db, "inflation_rate", version, indexes)?;
 
         // Velocity
         let velocity = super::velocity::Vecs::forced_import(&db, version, indexes)?;
@@ -54,31 +55,31 @@ impl Vecs {
         );
 
         // Growth rates
-        let market_cap_growth_rate = ComputedFromHeight::forced_import(
+        let market_cap_growth_rate = PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(
             &db,
             "market_cap_growth_rate",
             version + Version::ONE,
             indexes,
         )?;
-        let realized_cap_growth_rate = ComputedFromHeight::forced_import(
+        let realized_cap_growth_rate = PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(
             &db,
             "realized_cap_growth_rate",
             version + Version::ONE,
             indexes,
         )?;
-        let cap_growth_rate_diff =
-            ComputedFromHeight::forced_import(&db, "cap_growth_rate_diff", version, indexes)?;
+        let market_minus_realized_cap_growth_rate =
+            ComputedFromHeight::forced_import(&db, "market_minus_realized_cap_growth_rate", version, indexes)?;
 
         let this = Self {
             db,
             circulating,
             burned,
-            inflation,
+            inflation_rate,
             velocity,
             market_cap,
             market_cap_growth_rate,
             realized_cap_growth_rate,
-            cap_growth_rate_diff,
+            market_minus_realized_cap_growth_rate,
         };
 
         this.db.retain_regions(

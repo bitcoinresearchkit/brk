@@ -5,13 +5,13 @@ use vecdb::Exit;
 use super::{super::range, Vecs};
 use crate::{
     ComputeIndexes, blocks, distribution,
-    internal::Ratio32,
+    internal::{Ratio32, Windows},
     mining, prices, transactions,
 };
 
 fn tf_multiplier(tf: &str) -> usize {
     match tf {
-        "1d" => 1,
+        "24h" => 1,
         "1w" => 7,
         "1m" => 30,
         "1y" => 365,
@@ -37,7 +37,7 @@ impl Vecs {
         self.puell_multiple.height.compute_divide(
             starting_indexes.height,
             &rewards.subsidy.base.usd.height,
-            &rewards.subsidy_usd_1y_sma.usd.height,
+            &rewards.subsidy_sma_1y.usd.height,
             exit,
         )?;
 
@@ -47,8 +47,8 @@ impl Vecs {
             self.stoch_k.height.compute_transform3(
                 starting_indexes.height,
                 price,
-                &range.price_2w_min.usd.height,
-                &range.price_2w_max.usd.height,
+                &range.price_min_2w.usd.height,
+                &range.price_max_2w.usd.height,
                 |(h, close, low, high, ..)| {
                     let range = *high - *low;
                     let stoch = if range == 0.0 {
@@ -70,13 +70,15 @@ impl Vecs {
         }
 
         // RSI per timeframe
-        for (tf, rsi_chain) in self.rsi.iter_mut() {
+        for (tf, rsi_chain) in Windows::<()>::SUFFIXES.into_iter()
+            .zip(self.rsi.as_mut_array())
+        {
             let m = tf_multiplier(tf);
             let returns_source = match tf {
-                "1d" => &returns.price_returns._24h.height,
-                "1w" => &returns.price_returns._1w.height,
-                "1m" => &returns.price_returns._1m.height,
-                "1y" => &returns.price_returns._1y.height,
+                "24h" => &returns.price_return._24h.height,
+                "1w" => &returns.price_return._1w.height,
+                "1m" => &returns.price_return._1m.height,
+                "1y" => &returns.price_return._1y.height,
                 _ => unreachable!(),
             };
             super::rsi::compute(
@@ -91,7 +93,9 @@ impl Vecs {
         }
 
         // MACD per timeframe
-        for (tf, macd_chain) in self.macd.iter_mut() {
+        for (tf, macd_chain) in Windows::<()>::SUFFIXES.into_iter()
+            .zip(self.macd.as_mut_array())
+        {
             let m = tf_multiplier(tf);
             super::macd::compute(
                 macd_chain,
@@ -124,8 +128,8 @@ impl Vecs {
         // Pi Cycle: sma_111d / sma_350d_x2
         self.pi_cycle.compute_binary::<Dollars, Dollars, Ratio32>(
             starting_indexes.height,
-            &moving_average.price_111d_sma.price.usd.height,
-            &moving_average.price_350d_sma_x2.usd.height,
+            &moving_average.price_sma_111d.price.usd.height,
+            &moving_average.price_sma_350d_x2.usd.height,
             exit,
         )?;
 

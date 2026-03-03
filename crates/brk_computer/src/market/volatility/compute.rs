@@ -14,17 +14,17 @@ impl Vecs {
     ) -> Result<()> {
         // Sharpe ratios: returns / volatility
         for (out, ret, vol) in [
-            (&mut self.sharpe_1w, &returns.price_returns._1w.height, &self.price_1w_volatility.height),
-            (&mut self.sharpe_1m, &returns.price_returns._1m.height, &self.price_1m_volatility.height),
-            (&mut self.sharpe_1y, &returns.price_returns._1y.height, &self.price_1y_volatility.height),
+            (&mut self.price_sharpe_1w, &returns.price_return._1w.height, &self.price_volatility_1w.height),
+            (&mut self.price_sharpe_1m, &returns.price_return._1m.height, &self.price_volatility_1m.height),
+            (&mut self.price_sharpe_1y, &returns.price_return._1y.height, &self.price_volatility_1y.height),
         ] {
             compute_ratio(&mut out.height, starting_indexes_height, ret, vol, exit)?;
         }
 
         // Sortino ratios: returns / downside volatility
-        compute_ratio(&mut self.sortino_1w.height, starting_indexes_height, &returns.price_returns._1w.height, &returns.downside_1w_sd.sd.height, exit)?;
-        compute_ratio(&mut self.sortino_1m.height, starting_indexes_height, &returns.price_returns._1m.height, &returns.downside_1m_sd.sd.height, exit)?;
-        compute_ratio(&mut self.sortino_1y.height, starting_indexes_height, &returns.price_returns._1y.height, &returns.downside_1y_sd.sd.height, exit)?;
+        compute_ratio(&mut self.price_sortino_1w.height, starting_indexes_height, &returns.price_return._1w.height, &returns.price_downside_24h_sd_1w.sd.height, exit)?;
+        compute_ratio(&mut self.price_sortino_1m.height, starting_indexes_height, &returns.price_return._1m.height, &returns.price_downside_24h_sd_1m.sd.height, exit)?;
+        compute_ratio(&mut self.price_sortino_1y.height, starting_indexes_height, &returns.price_return._1y.height, &returns.price_downside_24h_sd_1y.sd.height, exit)?;
 
         Ok(())
     }

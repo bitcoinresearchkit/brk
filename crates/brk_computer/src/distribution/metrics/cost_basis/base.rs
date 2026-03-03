@@ -26,13 +26,13 @@ impl CostBasisBase {
         Ok(Self {
             min: Price::forced_import(
                 cfg.db,
-                &cfg.name("min_cost_basis"),
+                &cfg.name("cost_basis_min"),
                 cfg.version,
                 cfg.indexes,
             )?,
             max: Price::forced_import(
                 cfg.db,
-                &cfg.name("max_cost_basis"),
+                &cfg.name("cost_basis_max"),
                 cfg.version,
                 cfg.indexes,
             )?,

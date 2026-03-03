@@ -47,7 +47,7 @@ impl Vecs {
         )?;
 
         let mut prev = None;
-        self.max_days_between_price_aths.height.compute_transform(
+        self.max_days_between_price_ath.height.compute_transform(
             starting_indexes.height,
             &self.days_since_price_ath.height,
             |(i, days, slf)| {
@@ -66,7 +66,7 @@ impl Vecs {
             exit,
         )?;
 
-        self.price_drawdown.height.compute_drawdown(
+        self.price_drawdown.compute_drawdown(
             starting_indexes.height,
             &prices.price.cents.height,
             &self.price_ath.cents.height,

@@ -13,7 +13,7 @@ impl Vecs {
     ) -> Result<Self> {
         let v1 = version + Version::ONE;
         Ok(Self {
-            vocdd_365d_median: EagerVec::forced_import(db, "vocdd_365d_median", v1)?,
+            vocdd_median_1y: EagerVec::forced_import(db, "vocdd_median_1y", v1)?,
             hodl_bank: EagerVec::forced_import(db, "hodl_bank", v1)?,
             reserve_risk: ComputedFromHeight::forced_import(db, "reserve_risk", v1, indexes)?,
         })

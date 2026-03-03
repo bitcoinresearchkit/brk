@@ -162,8 +162,8 @@ impl Vecs {
         // Compute rolling window block counts (both block_count's own rolling + separate block_count_sum)
         let ws = WindowStarts {
             _24h: &self.height_24h_ago,
-            _7d: &self.height_1w_ago,
-            _30d: &self.height_1m_ago,
+            _1w: &self.height_1w_ago,
+            _1m: &self.height_1m_ago,
             _1y: &self.height_1y_ago,
         };
         self.block_count.sum.compute_rolling_sum(

@@ -11,6 +11,14 @@ use crate::{ComputeIndexes, blocks, indexes};
 
 use crate::internal::ComputedFromHeight;
 
+fn period_suffix(period: &str) -> String {
+    if period.is_empty() {
+        String::new()
+    } else {
+        format!("_{period}")
+    }
+}
+
 #[derive(Traversable)]
 pub struct ComputedFromHeightStdDev<M: StorageMode = Rw> {
     days: usize,
@@ -22,21 +30,23 @@ impl ComputedFromHeightStdDev {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
+        period: &str,
         days: usize,
         parent_version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let version = parent_version + Version::TWO;
+        let p = period_suffix(period);
 
         let sma = ComputedFromHeight::forced_import(
             db,
-            &format!("{name}_sma"),
+            &format!("{name}_sma{p}"),
             version,
             indexes,
         )?;
         let sd = ComputedFromHeight::forced_import(
             db,
-            &format!("{name}_sd"),
+            &format!("{name}_sd{p}"),
             version,
             indexes,
         )?;

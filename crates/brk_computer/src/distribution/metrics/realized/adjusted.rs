@@ -5,7 +5,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{ComputedFromHeight, RatioCents64, RollingEmas7d30d, RollingWindows},
+    internal::{ComputedFromHeight, RatioCents64, RollingEmas1w1m, RollingWindows},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -23,7 +23,7 @@ pub struct RealizedAdjusted<M: StorageMode = Rw> {
 
     // === Adjusted SOPR (rolling window ratios) ===
     pub adjusted_sopr: RollingWindows<StoredF64, M>,
-    pub adjusted_sopr_ema: RollingEmas7d30d<StoredF64, M>,
+    pub adjusted_sopr_ema: RollingEmas1w1m<StoredF64, M>,
 }
 
 impl RealizedAdjusted {
@@ -52,7 +52,7 @@ impl RealizedAdjusted {
         let adjusted_sopr = RollingWindows::forced_import(
             cfg.db, &cfg.name("adjusted_sopr"), cfg.version + v1, cfg.indexes,
         )?;
-        let adjusted_sopr_ema = RollingEmas7d30d::forced_import(
+        let adjusted_sopr_ema = RollingEmas1w1m::forced_import(
             cfg.db, &cfg.name("adjusted_sopr_24h"), cfg.version + v1, cfg.indexes,
         )?;
 

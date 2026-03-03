@@ -8,7 +8,7 @@ use vecdb::{CheckedSub, Formattable, Pco};
 use super::StoredF32;
 
 /// Unsigned basis points stored as u32.
-/// 1 bp = 0.01%. Range: 0–42,949,672.95%.
+/// 1 bp = 0.0001. Range: 0–429,496.7295.
 /// Use for unbounded unsigned ratios (MVRV, NVT, SOPR, etc.).
 #[derive(
     Debug,
@@ -41,16 +41,17 @@ impl BasisPoints32 {
         self.0
     }
 
-    /// Convert to f32: divide by 100.
+    /// Convert to f32: divide by 10000.
     #[inline]
     pub fn to_f32(self) -> f32 {
-        self.0 as f32 / 100.0
+        self.0 as f32 / 10000.0
     }
 }
 
 impl From<usize> for BasisPoints32 {
     #[inline]
     fn from(value: usize) -> Self {
+        debug_assert!(value <= u32::MAX as usize, "usize out of BasisPoints32 range: {value}");
         Self(value as u32)
     }
 }
@@ -69,23 +70,23 @@ impl From<BasisPoints32> for u32 {
     }
 }
 
-/// Convert from float: multiply by 100 and round.
-/// Input is in "display" form (e.g., 450.23 for 450.23%).
+/// Convert from float: multiply by 10000 and round.
+/// Input is in ratio form (e.g., 2.5 for MVRV of 2.5).
 impl From<f64> for BasisPoints32 {
     #[inline]
     fn from(value: f64) -> Self {
         debug_assert!(
-            value >= 0.0 && value <= u32::MAX as f64 / 100.0,
+            value >= 0.0 && value <= u32::MAX as f64 / 10000.0,
             "f64 out of BasisPoints32 range: {value}"
         );
-        Self((value * 100.0).round() as u32)
+        Self((value * 10000.0).round() as u32)
     }
 }
 
 impl From<BasisPoints32> for f64 {
     #[inline]
     fn from(value: BasisPoints32) -> Self {
-        value.0 as f64 / 100.0
+        value.0 as f64 / 10000.0
     }
 }
 
@@ -115,6 +116,7 @@ impl Div<usize> for BasisPoints32 {
     type Output = Self;
     #[inline]
     fn div(self, rhs: usize) -> Self::Output {
+        debug_assert!(rhs <= u32::MAX as usize, "divisor out of u32 range: {rhs}");
         Self(self.0 / rhs as u32)
     }
 }

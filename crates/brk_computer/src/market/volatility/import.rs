@@ -18,51 +18,51 @@ impl Vecs {
     ) -> Result<Self> {
         let v2 = Version::TWO;
 
-        let price_1w_volatility = LazyFromHeight::from_computed::<TimesSqrt<Days7>>(
-            "price_1w_volatility",
+        let price_volatility_1w = LazyFromHeight::from_computed::<TimesSqrt<Days7>>(
+            "price_volatility_1w",
             version + v2,
-            returns._1d_returns_1w_sd.sd.height.read_only_boxed_clone(),
-            &returns._1d_returns_1w_sd.sd,
+            returns.price_return_24h_sd_1w.sd.height.read_only_boxed_clone(),
+            &returns.price_return_24h_sd_1w.sd,
         );
 
-        let price_1m_volatility = LazyFromHeight::from_computed::<TimesSqrt<Days30>>(
-            "price_1m_volatility",
+        let price_volatility_1m = LazyFromHeight::from_computed::<TimesSqrt<Days30>>(
+            "price_volatility_1m",
             version + v2,
-            returns._1d_returns_1m_sd.sd.height.read_only_boxed_clone(),
-            &returns._1d_returns_1m_sd.sd,
+            returns.price_return_24h_sd_1m.sd.height.read_only_boxed_clone(),
+            &returns.price_return_24h_sd_1m.sd,
         );
 
-        let price_1y_volatility = LazyFromHeight::from_computed::<TimesSqrt<Days365>>(
-            "price_1y_volatility",
+        let price_volatility_1y = LazyFromHeight::from_computed::<TimesSqrt<Days365>>(
+            "price_volatility_1y",
             version + v2,
-            returns._1d_returns_1y_sd.sd.height.read_only_boxed_clone(),
-            &returns._1d_returns_1y_sd.sd,
+            returns.price_return_24h_sd_1y.sd.height.read_only_boxed_clone(),
+            &returns.price_return_24h_sd_1y.sd,
         );
 
-        let sharpe_1w =
-            ComputedFromHeight::forced_import(db, "sharpe_1w", version + v2, indexes)?;
-        let sharpe_1m =
-            ComputedFromHeight::forced_import(db, "sharpe_1m", version + v2, indexes)?;
-        let sharpe_1y =
-            ComputedFromHeight::forced_import(db, "sharpe_1y", version + v2, indexes)?;
+        let price_sharpe_1w =
+            ComputedFromHeight::forced_import(db, "price_sharpe_1w", version + v2, indexes)?;
+        let price_sharpe_1m =
+            ComputedFromHeight::forced_import(db, "price_sharpe_1m", version + v2, indexes)?;
+        let price_sharpe_1y =
+            ComputedFromHeight::forced_import(db, "price_sharpe_1y", version + v2, indexes)?;
 
-        let sortino_1w =
-            ComputedFromHeight::forced_import(db, "sortino_1w", version + v2, indexes)?;
-        let sortino_1m =
-            ComputedFromHeight::forced_import(db, "sortino_1m", version + v2, indexes)?;
-        let sortino_1y =
-            ComputedFromHeight::forced_import(db, "sortino_1y", version + v2, indexes)?;
+        let price_sortino_1w =
+            ComputedFromHeight::forced_import(db, "price_sortino_1w", version + v2, indexes)?;
+        let price_sortino_1m =
+            ComputedFromHeight::forced_import(db, "price_sortino_1m", version + v2, indexes)?;
+        let price_sortino_1y =
+            ComputedFromHeight::forced_import(db, "price_sortino_1y", version + v2, indexes)?;
 
         Ok(Self {
-            price_1w_volatility,
-            price_1m_volatility,
-            price_1y_volatility,
-            sharpe_1w,
-            sharpe_1m,
-            sharpe_1y,
-            sortino_1w,
-            sortino_1m,
-            sortino_1y,
+            price_volatility_1w,
+            price_volatility_1m,
+            price_volatility_1y,
+            price_sharpe_1w,
+            price_sharpe_1m,
+            price_sharpe_1y,
+            price_sortino_1w,
+            price_sortino_1m,
+            price_sortino_1y,
         })
     }
 }

@@ -18,8 +18,8 @@ use super::ImportConfig;
 pub struct SupplyMetrics<M: StorageMode = Rw> {
     pub total: ValueFromHeight<M>,
     pub halved: LazyValueFromHeight,
-    /// 30-day change in supply (net position change) - sats, btc, usd
-    pub _30d_change: ValueFromHeightChange<M>,
+    /// 1-month change in supply (net position change) - sats, btc, usd
+    pub change_1m: ValueFromHeightChange<M>,
 }
 
 impl SupplyMetrics {
@@ -39,9 +39,9 @@ impl SupplyMetrics {
             HalveDollars,
         >(&cfg.name("supply_halved"), &supply, cfg.version);
 
-        let _30d_change = ValueFromHeightChange::forced_import(
+        let change_1m = ValueFromHeightChange::forced_import(
             cfg.db,
-            &cfg.name("_30d_change"),
+            &cfg.name("supply_change_1m"),
             cfg.version,
             cfg.indexes,
         )?;
@@ -49,7 +49,7 @@ impl SupplyMetrics {
         Ok(Self {
             total: supply,
             halved: supply_halved,
-            _30d_change,
+            change_1m,
         })
     }
 
@@ -114,7 +114,7 @@ impl SupplyMetrics {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self._30d_change.compute_rolling(
+        self.change_1m.compute_rolling(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             &self.total.sats.height,

@@ -12,7 +12,7 @@ use super::ImportConfig;
 #[derive(Traversable)]
 pub struct OutputsMetrics<M: StorageMode = Rw> {
     pub utxo_count: ComputedFromHeight<StoredU64, M>,
-    pub utxo_count_30d_change: ComputedFromHeight<StoredF64, M>,
+    pub utxo_count_change_1m: ComputedFromHeight<StoredF64, M>,
 }
 
 impl OutputsMetrics {
@@ -25,9 +25,9 @@ impl OutputsMetrics {
                 cfg.version,
                 cfg.indexes,
             )?,
-            utxo_count_30d_change: ComputedFromHeight::forced_import(
+            utxo_count_change_1m: ComputedFromHeight::forced_import(
                 cfg.db,
-                &cfg.name("utxo_count_30d_change"),
+                &cfg.name("utxo_count_change_1m"),
                 cfg.version,
                 cfg.indexes,
             )?,
@@ -77,7 +77,7 @@ impl OutputsMetrics {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.utxo_count_30d_change.height.compute_rolling_change(
+        self.utxo_count_change_1m.height.compute_rolling_change(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             &self.utxo_count.height,

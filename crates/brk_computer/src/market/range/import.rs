@@ -10,22 +10,22 @@ impl Vecs {
         let v1 = Version::ONE;
 
         Ok(Self {
-            price_1w_min: Price::forced_import(db, "price_1w_min", version + v1, indexes)?,
-            price_1w_max: Price::forced_import(db, "price_1w_max", version + v1, indexes)?,
-            price_2w_min: Price::forced_import(db, "price_2w_min", version + v1, indexes)?,
-            price_2w_max: Price::forced_import(db, "price_2w_max", version + v1, indexes)?,
-            price_1m_min: Price::forced_import(db, "price_1m_min", version + v1, indexes)?,
-            price_1m_max: Price::forced_import(db, "price_1m_max", version + v1, indexes)?,
-            price_1y_min: Price::forced_import(db, "price_1y_min", version + v1, indexes)?,
-            price_1y_max: Price::forced_import(db, "price_1y_max", version + v1, indexes)?,
+            price_min_1w: Price::forced_import(db, "price_min_1w", version + v1, indexes)?,
+            price_max_1w: Price::forced_import(db, "price_max_1w", version + v1, indexes)?,
+            price_min_2w: Price::forced_import(db, "price_min_2w", version + v1, indexes)?,
+            price_max_2w: Price::forced_import(db, "price_max_2w", version + v1, indexes)?,
+            price_min_1m: Price::forced_import(db, "price_min_1m", version + v1, indexes)?,
+            price_max_1m: Price::forced_import(db, "price_max_1m", version + v1, indexes)?,
+            price_min_1y: Price::forced_import(db, "price_min_1y", version + v1, indexes)?,
+            price_max_1y: Price::forced_import(db, "price_max_1y", version + v1, indexes)?,
             price_true_range: ComputedFromHeight::forced_import(
                 db, "price_true_range", version + v1, indexes,
             )?,
-            price_true_range_2w_sum: ComputedFromHeight::forced_import(
-                db, "price_true_range_2w_sum", version + v1, indexes,
+            price_true_range_sum_2w: ComputedFromHeight::forced_import(
+                db, "price_true_range_sum_2w", version + v1, indexes,
             )?,
-            price_2w_choppiness_index: ComputedFromHeight::forced_import(
-                db, "price_2w_choppiness_index", version + v1, indexes,
+            price_choppiness_index_2w: ComputedFromHeight::forced_import(
+                db, "price_choppiness_index_2w", version + v1, indexes,
             )?,
         })
     }

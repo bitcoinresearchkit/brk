@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::ComputedFromHeight,
+    internal::{Bps16ToFloat, Bps16ToPercent, ComputedFromHeight, PercentFromHeight},
 };
 
 impl Vecs {
@@ -19,27 +19,27 @@ impl Vecs {
 
         Ok(Self {
             hash_rate: ComputedFromHeight::forced_import(db, "hash_rate", version + v5, indexes)?,
-            hash_rate_1w_sma: ComputedFromHeight::forced_import(
+            hash_rate_sma_1w: ComputedFromHeight::forced_import(
                 db,
-                "hash_rate_1w_sma",
+                "hash_rate_sma_1w",
                 version,
                 indexes,
             )?,
-            hash_rate_1m_sma: ComputedFromHeight::forced_import(
+            hash_rate_sma_1m: ComputedFromHeight::forced_import(
                 db,
-                "hash_rate_1m_sma",
+                "hash_rate_sma_1m",
                 version,
                 indexes,
             )?,
-            hash_rate_2m_sma: ComputedFromHeight::forced_import(
+            hash_rate_sma_2m: ComputedFromHeight::forced_import(
                 db,
-                "hash_rate_2m_sma",
+                "hash_rate_sma_2m",
                 version,
                 indexes,
             )?,
-            hash_rate_1y_sma: ComputedFromHeight::forced_import(
+            hash_rate_sma_1y: ComputedFromHeight::forced_import(
                 db,
-                "hash_rate_1y_sma",
+                "hash_rate_sma_1y",
                 version,
                 indexes,
             )?,
@@ -49,7 +49,7 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            hash_rate_drawdown: ComputedFromHeight::forced_import(
+            hash_rate_drawdown: PercentFromHeight::forced_import::<Bps16ToFloat, Bps16ToPercent>(
                 db,
                 "hash_rate_drawdown",
                 version,

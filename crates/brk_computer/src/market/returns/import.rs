@@ -6,8 +6,7 @@ use super::super::lookback::ByLookbackPeriod;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::ComputedFromHeight,
-    internal::ComputedFromHeightStdDev,
+    internal::{Bps32ToFloat, Bps32ToPercent, ComputedFromHeightStdDev, PercentFromHeight},
     market::dca::ByDcaCagr,
 };
 
@@ -19,75 +18,86 @@ impl Vecs {
     ) -> Result<Self> {
         let v1 = Version::ONE;
 
-        let price_returns = ByLookbackPeriod::try_new(|name, _days| {
-            ComputedFromHeight::forced_import(
+        let price_return = ByLookbackPeriod::try_new(|name, _days| {
+            PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(
                 db,
-                &format!("{name}_price_returns"),
+                &format!("price_return_{name}"),
                 version,
                 indexes,
             )
         })?;
 
         // CAGR (computed, 2y+ only)
-        let cagr = ByDcaCagr::try_new(|name, _days| {
-            ComputedFromHeight::forced_import(db, &format!("{name}_cagr"), version, indexes)
+        let price_cagr = ByDcaCagr::try_new(|name, _days| {
+            PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(
+                db,
+                &format!("price_cagr_{name}"),
+                version,
+                indexes,
+            )
         })?;
 
-        let _1d_returns_1w_sd = ComputedFromHeightStdDev::forced_import(
+        let price_return_24h_sd_1w = ComputedFromHeightStdDev::forced_import(
             db,
-            "1d_returns_1w_sd",
+            "price_return_24h",
+            "1w",
             7,
             version + v1,
             indexes,
         )?;
-        let _1d_returns_1m_sd = ComputedFromHeightStdDev::forced_import(
+        let price_return_24h_sd_1m = ComputedFromHeightStdDev::forced_import(
             db,
-            "1d_returns_1m_sd",
+            "price_return_24h",
+            "1m",
             30,
             version + v1,
             indexes,
         )?;
-        let _1d_returns_1y_sd = ComputedFromHeightStdDev::forced_import(
+        let price_return_24h_sd_1y = ComputedFromHeightStdDev::forced_import(
             db,
-            "1d_returns_1y_sd",
+            "price_return_24h",
+            "1y",
             365,
             version + v1,
             indexes,
         )?;
 
-        let downside_returns = EagerVec::forced_import(db, "downside_returns", version)?;
-        let downside_1w_sd = ComputedFromHeightStdDev::forced_import(
+        let price_downside_24h = EagerVec::forced_import(db, "price_downside_24h", version)?;
+        let price_downside_24h_sd_1w = ComputedFromHeightStdDev::forced_import(
             db,
-            "downside_1w_sd",
+            "price_downside_24h",
+            "1w",
             7,
             version + v1,
             indexes,
         )?;
-        let downside_1m_sd = ComputedFromHeightStdDev::forced_import(
+        let price_downside_24h_sd_1m = ComputedFromHeightStdDev::forced_import(
             db,
-            "downside_1m_sd",
+            "price_downside_24h",
+            "1m",
             30,
             version + v1,
             indexes,
         )?;
-        let downside_1y_sd = ComputedFromHeightStdDev::forced_import(
+        let price_downside_24h_sd_1y = ComputedFromHeightStdDev::forced_import(
             db,
-            "downside_1y_sd",
+            "price_downside_24h",
+            "1y",
             365,
             version + v1,
             indexes,
         )?;
 
         Ok(Self {
-            price_returns,
-            cagr,
-            _1d_returns_1w_sd,
-            _1d_returns_1m_sd,
-            _1d_returns_1y_sd,
-            downside_returns,
-            downside_1w_sd,
-            downside_1m_sd,
-            downside_1y_sd,
+            price_return,
+            price_cagr,
+            price_return_24h_sd_1w,
+            price_return_24h_sd_1m,
+            price_return_24h_sd_1y,
+            price_downside_24h,
+            price_downside_24h_sd_1w,
+            price_downside_24h_sd_1m,
+            price_downside_24h_sd_1y,
         })
     }
 }
