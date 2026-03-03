@@ -1,6 +1,7 @@
 mod compute;
 mod distribution_stats;
 mod eager_indexes;
+mod emas;
 mod from_height;
 mod from_tx;
 mod group;
@@ -21,6 +22,7 @@ mod windows;
 pub(crate) use compute::*;
 pub(crate) use distribution_stats::*;
 pub(crate) use eager_indexes::*;
+pub(crate) use emas::*;
 pub(crate) use from_height::*;
 pub(crate) use from_tx::*;
 pub(crate) use group::*;

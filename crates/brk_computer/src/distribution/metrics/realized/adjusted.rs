@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, Height, StoredF64, Version};
-use vecdb::{Exit, Ident, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
+use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, blocks,
-    internal::{ComputedFromHeight, LazyFromHeight, RatioCents64, RollingWindows},
+    internal::{ComputedFromHeight, RatioCents64, RollingEmas7d30d, RollingWindows},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -23,10 +23,7 @@ pub struct RealizedAdjusted<M: StorageMode = Rw> {
 
     // === Adjusted SOPR (rolling window ratios) ===
     pub adjusted_sopr: RollingWindows<StoredF64, M>,
-    pub adjusted_sopr_24h_7d_ema: ComputedFromHeight<StoredF64, M>,
-    pub adjusted_sopr_7d_ema: LazyFromHeight<StoredF64>,
-    pub adjusted_sopr_24h_30d_ema: ComputedFromHeight<StoredF64, M>,
-    pub adjusted_sopr_30d_ema: LazyFromHeight<StoredF64>,
+    pub adjusted_sopr_ema: RollingEmas7d30d<StoredF64, M>,
 }
 
 impl RealizedAdjusted {
@@ -55,32 +52,9 @@ impl RealizedAdjusted {
         let adjusted_sopr = RollingWindows::forced_import(
             cfg.db, &cfg.name("adjusted_sopr"), cfg.version + v1, cfg.indexes,
         )?;
-
-        macro_rules! import_computed {
-            ($name:expr) => {
-                ComputedFromHeight::forced_import(
-                    cfg.db,
-                    &cfg.name($name),
-                    cfg.version + v1,
-                    cfg.indexes,
-                )?
-            };
-        }
-
-        let adjusted_sopr_24h_7d_ema = import_computed!("adjusted_sopr_24h_7d_ema");
-        let adjusted_sopr_7d_ema = LazyFromHeight::from_computed::<Ident>(
-            &cfg.name("adjusted_sopr_7d_ema"),
-            cfg.version + v1,
-            adjusted_sopr_24h_7d_ema.height.read_only_boxed_clone(),
-            &adjusted_sopr_24h_7d_ema,
-        );
-        let adjusted_sopr_24h_30d_ema = import_computed!("adjusted_sopr_24h_30d_ema");
-        let adjusted_sopr_30d_ema = LazyFromHeight::from_computed::<Ident>(
-            &cfg.name("adjusted_sopr_30d_ema"),
-            cfg.version + v1,
-            adjusted_sopr_24h_30d_ema.height.read_only_boxed_clone(),
-            &adjusted_sopr_24h_30d_ema,
-        );
+        let adjusted_sopr_ema = RollingEmas7d30d::forced_import(
+            cfg.db, &cfg.name("adjusted_sopr_24h"), cfg.version + v1, cfg.indexes,
+        )?;
 
         Ok(RealizedAdjusted {
             adjusted_value_created,
@@ -88,10 +62,7 @@ impl RealizedAdjusted {
             adjusted_value_created_sum,
             adjusted_value_destroyed_sum,
             adjusted_sopr,
-            adjusted_sopr_24h_7d_ema,
-            adjusted_sopr_7d_ema,
-            adjusted_sopr_24h_30d_ema,
-            adjusted_sopr_30d_ema,
+            adjusted_sopr_ema,
         })
     }
 
@@ -140,22 +111,13 @@ impl RealizedAdjusted {
         }
 
         // Adjusted SOPR EMAs (based on 24h window)
-        self.adjusted_sopr_24h_7d_ema
-            .height
-            .compute_rolling_ema(
-                starting_indexes.height,
-                &blocks.count.height_1w_ago,
-                &self.adjusted_sopr._24h.height,
-                exit,
-            )?;
-        self.adjusted_sopr_24h_30d_ema
-            .height
-            .compute_rolling_ema(
-                starting_indexes.height,
-                &blocks.count.height_1m_ago,
-                &self.adjusted_sopr._24h.height,
-                exit,
-            )?;
+        self.adjusted_sopr_ema.compute_from_24h(
+            starting_indexes.height,
+            &blocks.count.height_1w_ago,
+            &blocks.count.height_1m_ago,
+            &self.adjusted_sopr._24h.height,
+            exit,
+        )?;
 
         Ok(())
     }

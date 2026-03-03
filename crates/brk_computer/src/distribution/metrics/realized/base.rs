@@ -4,7 +4,7 @@ use brk_types::{
     Bitcoin, Cents, CentsSats, CentsSigned, CentsSquaredSats, Dollars, Height, Sats, StoredF32, StoredF64, Version,
 };
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Exit, Ident, ImportableVec, ReadableCloneableVec,
+    AnyStoredVec, AnyVec, BytesVec, Exit, ImportableVec, ReadableCloneableVec,
     ReadableVec, Rw, StorageMode, WritableVec,
 };
 
@@ -15,7 +15,7 @@ use crate::{
         CentsPlus, CentsUnsignedToDollars, ComputedFromHeightCumulative, ComputedFromHeight,
         ComputedFromHeightRatio, NegCentsUnsignedToDollars, ValueFromHeightCumulative, LazyFromHeight,
         PercentageCentsF32, PercentageCentsSignedCentsF32, PercentageCentsSignedDollarsF32, Price, RatioCents64,
-        RollingWindows, Identity, ValueFromHeight,
+        RollingEmas7d30d, RollingWindows, Identity, ValueFromHeight,
     },
     prices,
 };
@@ -85,18 +85,12 @@ pub struct RealizedBase<M: StorageMode = Rw> {
 
     // === SOPR (rolling window ratios) ===
     pub sopr: RollingWindows<StoredF64, M>,
-    pub sopr_24h_7d_ema: ComputedFromHeight<StoredF64, M>,
-    pub sopr_7d_ema: LazyFromHeight<StoredF64>,
-    pub sopr_24h_30d_ema: ComputedFromHeight<StoredF64, M>,
-    pub sopr_30d_ema: LazyFromHeight<StoredF64>,
+    pub sopr_ema: RollingEmas7d30d<StoredF64, M>,
 
     // === Sell Side Risk ===
     pub realized_value_sum: RollingWindows<Cents, M>,
     pub sell_side_risk_ratio: RollingWindows<StoredF32, M>,
-    pub sell_side_risk_ratio_24h_7d_ema: ComputedFromHeight<StoredF32, M>,
-    pub sell_side_risk_ratio_7d_ema: LazyFromHeight<StoredF32>,
-    pub sell_side_risk_ratio_24h_30d_ema: ComputedFromHeight<StoredF32, M>,
-    pub sell_side_risk_ratio_30d_ema: LazyFromHeight<StoredF32>,
+    pub sell_side_risk_ratio_ema: RollingEmas7d30d<StoredF32, M>,
 
     // === Net Realized PnL Deltas ===
     pub net_realized_pnl_cumulative_30d_delta: ComputedFromHeight<CentsSigned, M>,
@@ -349,51 +343,13 @@ impl RealizedBase {
             cfg.db, &cfg.name("sell_side_risk_ratio"), cfg.version + v1, cfg.indexes,
         )?;
 
-        // === EMA imports + identity aliases ===
-        macro_rules! import_computed {
-            ($name:expr) => {
-                ComputedFromHeight::forced_import(
-                    cfg.db,
-                    &cfg.name($name),
-                    cfg.version + v1,
-                    cfg.indexes,
-                )?
-            };
-        }
-
-        let sopr_24h_7d_ema = import_computed!("sopr_24h_7d_ema");
-        let sopr_7d_ema = LazyFromHeight::from_computed::<Ident>(
-            &cfg.name("sopr_7d_ema"),
-            cfg.version + v1,
-            sopr_24h_7d_ema.height.read_only_boxed_clone(),
-            &sopr_24h_7d_ema,
-        );
-        let sopr_24h_30d_ema = import_computed!("sopr_24h_30d_ema");
-        let sopr_30d_ema = LazyFromHeight::from_computed::<Ident>(
-            &cfg.name("sopr_30d_ema"),
-            cfg.version + v1,
-            sopr_24h_30d_ema.height.read_only_boxed_clone(),
-            &sopr_24h_30d_ema,
-        );
-
-        let sell_side_risk_ratio_24h_7d_ema = import_computed!("sell_side_risk_ratio_24h_7d_ema");
-        let sell_side_risk_ratio_7d_ema = LazyFromHeight::from_computed::<Ident>(
-            &cfg.name("sell_side_risk_ratio_7d_ema"),
-            cfg.version + v1,
-            sell_side_risk_ratio_24h_7d_ema
-                .height
-                .read_only_boxed_clone(),
-            &sell_side_risk_ratio_24h_7d_ema,
-        );
-        let sell_side_risk_ratio_24h_30d_ema = import_computed!("sell_side_risk_ratio_24h_30d_ema");
-        let sell_side_risk_ratio_30d_ema = LazyFromHeight::from_computed::<Ident>(
-            &cfg.name("sell_side_risk_ratio_30d_ema"),
-            cfg.version + v1,
-            sell_side_risk_ratio_24h_30d_ema
-                .height
-                .read_only_boxed_clone(),
-            &sell_side_risk_ratio_24h_30d_ema,
-        );
+        // === EMA imports ===
+        let sopr_ema = RollingEmas7d30d::forced_import(
+            cfg.db, &cfg.name("sopr_24h"), cfg.version + v1, cfg.indexes,
+        )?;
+        let sell_side_risk_ratio_ema = RollingEmas7d30d::forced_import(
+            cfg.db, &cfg.name("sell_side_risk_ratio_24h"), cfg.version + v1, cfg.indexes,
+        )?;
 
         let peak_regret_rel_to_realized_cap = ComputedFromHeight::forced_import(
             cfg.db,
@@ -443,16 +399,10 @@ impl RealizedBase {
             value_created_sum,
             value_destroyed_sum,
             sopr,
-            sopr_24h_7d_ema,
-            sopr_7d_ema,
-            sopr_24h_30d_ema,
-            sopr_30d_ema,
+            sopr_ema,
             realized_value_sum,
             sell_side_risk_ratio,
-            sell_side_risk_ratio_24h_7d_ema,
-            sell_side_risk_ratio_7d_ema,
-            sell_side_risk_ratio_24h_30d_ema,
-            sell_side_risk_ratio_30d_ema,
+            sell_side_risk_ratio_ema,
             net_realized_pnl_cumulative_30d_delta: ComputedFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("net_realized_pnl_cumulative_30d_delta"),
@@ -939,36 +889,22 @@ impl RealizedBase {
         )?;
 
         // SOPR EMAs (based on 24h window)
-        self.sopr_24h_7d_ema.height.compute_rolling_ema(
+        self.sopr_ema.compute_from_24h(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
-            &self.sopr._24h.height,
-            exit,
-        )?;
-        self.sopr_24h_30d_ema.height.compute_rolling_ema(
-            starting_indexes.height,
             &blocks.count.height_1m_ago,
             &self.sopr._24h.height,
             exit,
         )?;
 
         // Sell side risk EMAs (based on 24h window)
-        self.sell_side_risk_ratio_24h_7d_ema
-            .height
-            .compute_rolling_ema(
-                starting_indexes.height,
-                &blocks.count.height_1w_ago,
-                &self.sell_side_risk_ratio._24h.height,
-                exit,
-            )?;
-        self.sell_side_risk_ratio_24h_30d_ema
-            .height
-            .compute_rolling_ema(
-                starting_indexes.height,
-                &blocks.count.height_1m_ago,
-                &self.sell_side_risk_ratio._24h.height,
-                exit,
-            )?;
+        self.sell_side_risk_ratio_ema.compute_from_24h(
+            starting_indexes.height,
+            &blocks.count.height_1w_ago,
+            &blocks.count.height_1m_ago,
+            &self.sell_side_risk_ratio._24h.height,
+            exit,
+        )?;
 
         // Realized profit/loss/net relative to realized cap
         self.realized_profit_rel_to_realized_cap
