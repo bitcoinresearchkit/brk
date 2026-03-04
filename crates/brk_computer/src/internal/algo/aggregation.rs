@@ -13,7 +13,7 @@ use vecdb::{
 
 use brk_types::get_percentile;
 
-use super::ComputedVecValue;
+use crate::internal::ComputedVecValue;
 
 /// Helper to validate and get starting index for a single vec
 fn validate_and_start<I: VecIndex, T: ComputedVecValue + JsonSchema>(

@@ -1,4 +1,4 @@
-//! Generic 2-slot container for 1w + 1m EMA pairs.
+//! Generic EMA window containers.
 
 use brk_traversable::Traversable;
 
@@ -28,5 +28,31 @@ impl<A> Emas1w1m<A> {
 
     pub fn as_mut_array(&mut self) -> [&mut A; 2] {
         [&mut self._1w, &mut self._1m]
+    }
+}
+
+#[derive(Clone, Traversable)]
+pub struct Emas2w<A> {
+    #[traversable(rename = "2w")]
+    pub _2w: A,
+}
+
+impl<A> Emas2w<A> {
+    pub const SUFFIXES: [&'static str; 1] = ["ema_2w"];
+
+    pub fn try_from_fn<E>(
+        mut f: impl FnMut(&str) -> std::result::Result<A, E>,
+    ) -> std::result::Result<Self, E> {
+        Ok(Self {
+            _2w: f(Self::SUFFIXES[0])?,
+        })
+    }
+
+    pub fn as_array(&self) -> [&A; 1] {
+        [&self._2w]
+    }
+
+    pub fn as_mut_array(&mut self) -> [&mut A; 1] {
+        [&mut self._2w]
     }
 }

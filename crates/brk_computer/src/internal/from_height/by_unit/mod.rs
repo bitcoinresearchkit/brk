@@ -1,6 +1,5 @@
 mod rolling_full;
 mod rolling_sum;
-mod windows;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -10,7 +9,7 @@ use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        CentsUnsignedToDollars, ComputedFromHeight, LazyFromHeight, SatsToBitcoin,
+        CentsUnsignedToDollars, ComputedFromHeight, LazyFromHeight, SatsToBitcoin, Windows,
     },
 };
 
@@ -60,6 +59,19 @@ impl ByUnit {
             btc,
             cents,
             usd,
+        })
+    }
+}
+
+impl Windows<ByUnit> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        Windows::try_from_fn(|suffix| {
+            ByUnit::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })
     }
 }

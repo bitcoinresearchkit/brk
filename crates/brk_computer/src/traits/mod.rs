@@ -5,7 +5,7 @@ use vecdb::{
     WritableVec,
 };
 
-use crate::internal::sliding_window::SlidingWindowSorted;
+use crate::internal::algo::sliding_window::SlidingWindowSorted;
 
 pub trait ComputeRollingMedianFromStarts<I: VecIndex, T> {
     fn compute_rolling_median_from_starts<A>(
