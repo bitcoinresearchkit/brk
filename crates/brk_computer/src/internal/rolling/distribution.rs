@@ -24,8 +24,6 @@ pub struct RollingDistribution<T, M: StorageMode = Rw>(pub DistributionStats<Rol
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 
-const VERSION: Version = Version::ZERO;
-
 impl<T> RollingDistribution<T>
 where
     T: NumericValue + JsonSchema,
@@ -36,9 +34,8 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
         Ok(Self(DistributionStats::try_from_fn(|suffix| {
-            RollingWindows::forced_import(db, &format!("{name}_{suffix}"), v, indexes)
+            RollingWindows::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 

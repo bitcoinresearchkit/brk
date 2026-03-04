@@ -22,7 +22,7 @@ impl Vecs {
         )?;
 
         let fullness =
-            PercentFromHeightDistribution::forced_import_bp16(db, "block_fullness", version, indexes)?;
+            PercentFromHeightDistribution::forced_import(db, "block_fullness", version, indexes)?;
 
         Ok(Self { weight, fullness })
     }

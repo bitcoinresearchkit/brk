@@ -19,8 +19,6 @@ use crate::distribution::metrics::{BasicCohortMetrics, CohortMetricsBase, Import
 
 use super::super::traits::{CohortVecs, DynCohortVecs};
 
-const VERSION: Version = Version::ZERO;
-
 /// Address cohort with metrics and optional runtime state.
 #[derive(Traversable)]
 pub struct AddressCohortVecs<M: StorageMode = Rw> {
@@ -70,13 +68,13 @@ impl AddressCohortVecs {
             addr_count: ComputedFromHeight::forced_import(
                 db,
                 &cfg.name("addr_count"),
-                version + VERSION,
+                version,
                 indexes,
             )?,
             addr_count_change_1m: ComputedFromHeight::forced_import(
                 db,
                 &cfg.name("addr_count_change_1m"),
-                version + VERSION,
+                version,
                 indexes,
             )?,
         })

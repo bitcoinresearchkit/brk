@@ -24,8 +24,6 @@ where
     pub cumulative: ComputedFromHeight<T, M>,
 }
 
-const VERSION: Version = Version::ZERO;
-
 impl<T> ComputedFromHeightCumulative<T>
 where
     T: NumericValue + JsonSchema,
@@ -36,11 +34,9 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
-
-        let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, v)?;
+        let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
         let cumulative =
-            ComputedFromHeight::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
+            ComputedFromHeight::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
 
         Ok(Self { height, cumulative })
     }

@@ -33,8 +33,8 @@ impl Vecs {
 
         self.utxo_count.height.compute_transform3(
             starting_indexes.height,
-            &*self.total_count.full.sum_cumulative.cumulative,
-            &*inputs_count.full.sum_cumulative.cumulative,
+            &self.total_count.full.cumulative,
+            &inputs_count.full.cumulative,
             &scripts_count.opreturn.cumulative.height,
             |(h, output_count, input_count, opreturn_count, ..)| {
                 let block_count = u64::from(h + 1_usize);

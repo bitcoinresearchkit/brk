@@ -17,8 +17,6 @@ use crate::{
     internal::{ValueFromHeight, WindowStarts, Windows},
 };
 
-const VERSION: Version = Version::ZERO;
-
 /// Value rolling windows — window-first, currency-last.
 ///
 /// Each window contains `ValueFromHeight` (sats + btc lazy + usd).
@@ -35,9 +33,8 @@ impl ValueFromHeightWindows {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
         Ok(Self(Windows::try_from_fn(|suffix| {
-            ValueFromHeight::forced_import(db, &format!("{name}_{suffix}"), v, indexes)
+            ValueFromHeight::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 

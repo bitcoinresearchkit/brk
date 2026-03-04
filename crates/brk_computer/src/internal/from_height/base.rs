@@ -28,8 +28,6 @@ where
     pub rest: Box<ComputedHeightDerived<T>>,
 }
 
-const VERSION: Version = Version::ZERO;
-
 impl<T> ComputedFromHeight<T>
 where
     T: NumericValue + JsonSchema,
@@ -40,14 +38,12 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
-
-        let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, v)?;
+        let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
 
         let rest = ComputedHeightDerived::forced_import(
             name,
             height.read_only_boxed_clone(),
-            v,
+            version,
             indexes,
         );
 

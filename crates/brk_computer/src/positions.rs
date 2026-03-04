@@ -1,15 +1,15 @@
-use std::path::Path;
+use std::{fs, path::Path};
 
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_reader::Reader;
+use brk_reader::{Reader, XOR_LEN, XORBytes};
 use brk_traversable::Traversable;
 use brk_types::{BlkPosition, Height, Indexes, TxIndex, Version};
+use tracing::info;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, Exit, WritableVec, ImportableVec, PAGE_SIZE, PcoVec,
-    ReadableVec, Rw, StorageMode, VecIndex,
+    AnyStoredVec, AnyVec, Database, Exit, ImportableVec, PAGE_SIZE, PcoVec, ReadableVec, Rw,
+    StorageMode, VecIndex, WritableVec,
 };
-
 
 pub const DB_NAME: &str = "positions";
 
@@ -58,6 +58,29 @@ impl Vecs {
         Ok(())
     }
 
+    fn check_xor_bytes(&mut self, reader: &Reader) -> Result<()> {
+        let xor_path = self.db.path().join("xor.dat");
+        let current = reader.xor_bytes();
+        let cached = fs::read(&xor_path)
+            .ok()
+            .and_then(|b| <[u8; XOR_LEN]>::try_from(b).ok())
+            .map(XORBytes::from);
+
+        match cached {
+            Some(c) if c == current => return Ok(()),
+            Some(_) => {
+                info!("XOR bytes changed, resetting positions...");
+                self.block_position.reset()?;
+                self.tx_position.reset()?;
+            }
+            None => {}
+        }
+
+        fs::write(&xor_path, *current)?;
+
+        Ok(())
+    }
+
     fn compute_(
         &mut self,
         indexer: &Indexer,
@@ -65,6 +88,8 @@ impl Vecs {
         parser: &Reader,
         exit: &Exit,
     ) -> Result<()> {
+        self.check_xor_bytes(parser)?;
+
         // Validate computed versions against dependencies
         let dep_version = indexer.vecs.transactions.first_txindex.version()
             + indexer.vecs.transactions.height.version();

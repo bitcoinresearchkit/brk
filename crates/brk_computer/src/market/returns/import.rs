@@ -19,7 +19,7 @@ impl Vecs {
         let v1 = Version::ONE;
 
         let price_return = ByLookbackPeriod::try_new(|name, _days| {
-            PercentFromHeight::forced_import_bps32(
+            PercentFromHeight::forced_import(
                 db,
                 &format!("price_return_{name}"),
                 version,
@@ -29,7 +29,7 @@ impl Vecs {
 
         // CAGR (computed, 2y+ only)
         let price_cagr = ByDcaCagr::try_new(|name, _days| {
-            PercentFromHeight::forced_import_bps32(
+            PercentFromHeight::forced_import(
                 db,
                 &format!("price_cagr_{name}"),
                 version,

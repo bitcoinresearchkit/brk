@@ -6,8 +6,6 @@ use vecdb::{ReadableCloneableVec, LazyVecFrom1, UnaryTransform, VecIndex};
 
 use crate::internal::ValueFromHeight;
 
-const VERSION: Version = Version::ZERO;
-
 /// Fully lazy value type at height level.
 ///
 /// All fields are lazy transforms from existing sources - no storage.
@@ -31,26 +29,24 @@ impl LazyValue<Height> {
         CentsTransform: UnaryTransform<Cents, Cents>,
         DollarsTransform: UnaryTransform<Dollars, Dollars>,
     {
-        let v = version + VERSION;
-
         let sats =
-            LazyVecFrom1::transformed::<SatsTransform>(name, v, source.sats.height.read_only_boxed_clone());
+            LazyVecFrom1::transformed::<SatsTransform>(name, version, source.sats.height.read_only_boxed_clone());
 
         let btc = LazyVecFrom1::transformed::<BitcoinTransform>(
             &format!("{name}_btc"),
-            v,
+            version,
             source.sats.height.read_only_boxed_clone(),
         );
 
         let cents = LazyVecFrom1::transformed::<CentsTransform>(
             &format!("{name}_cents"),
-            v,
+            version,
             source.cents.height.read_only_boxed_clone(),
         );
 
         let usd = LazyVecFrom1::transformed::<DollarsTransform>(
             &format!("{name}_usd"),
-            v,
+            version,
             source.usd.height.read_only_boxed_clone(),
         );
 

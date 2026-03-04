@@ -73,8 +73,6 @@ impl RollingFullSlot {
 #[traversable(transparent)]
 pub struct RollingFullByUnit<M: StorageMode = Rw>(pub Windows<RollingFullSlot<M>>);
 
-const VERSION: Version = Version::ZERO;
-
 impl RollingFullByUnit {
     pub(crate) fn forced_import(
         db: &Database,
@@ -82,9 +80,8 @@ impl RollingFullByUnit {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
         Ok(Self(Windows::try_from_fn(|suffix| {
-            RollingFullSlot::forced_import(db, &format!("{name}_{suffix}"), v, indexes)
+            RollingFullSlot::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 

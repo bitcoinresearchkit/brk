@@ -7,8 +7,6 @@ use vecdb::UnaryTransform;
 
 use crate::internal::{LazyValue, LazyValueHeightDerived, ValueFromHeight};
 
-const VERSION: Version = Version::ZERO;
-
 /// Lazy value wrapper with height + all derived last transforms from ValueFromHeight.
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -33,14 +31,12 @@ impl LazyValueFromHeight {
         CentsTransform: UnaryTransform<Cents, Cents>,
         DollarsTransform: UnaryTransform<Dollars, Dollars>,
     {
-        let v = version + VERSION;
-
         let height =
-            LazyValue::from_block_source::<SatsTransform, BitcoinTransform, CentsTransform, DollarsTransform>(name, source, v);
+            LazyValue::from_block_source::<SatsTransform, BitcoinTransform, CentsTransform, DollarsTransform>(name, source, version);
 
         let rest =
             LazyValueHeightDerived::from_block_source::<SatsTransform, BitcoinTransform, CentsTransform, DollarsTransform>(
-                name, source, v,
+                name, source, version,
             );
 
         Self { height, rest: Box::new(rest) }

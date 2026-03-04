@@ -27,7 +27,7 @@ impl GrowthRateVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let all = PercentFromHeightDistribution::forced_import_bp16(
+        let all = PercentFromHeightDistribution::forced_import(
             db,
             "growth_rate",
             version,
@@ -35,7 +35,7 @@ impl GrowthRateVecs {
         )?;
 
         let by_addresstype = ByAddressType::new_with_name(|name| {
-            PercentFromHeightDistribution::forced_import_bp16(
+            PercentFromHeightDistribution::forced_import(
                 db,
                 &format!("{name}_growth_rate"),
                 version,

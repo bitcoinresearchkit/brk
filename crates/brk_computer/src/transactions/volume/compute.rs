@@ -75,13 +75,13 @@ impl Vecs {
         )?;
         self.inputs_per_sec.height.compute_binary::<_, Timestamp, PerSec>(
             starting_indexes.height,
-            &inputs_count.full.sum_cumulative.sum.0,
+            &inputs_count.full.sum,
             &blocks.interval.height,
             exit,
         )?;
         self.outputs_per_sec.height.compute_binary::<_, Timestamp, PerSec>(
             starting_indexes.height,
-            &outputs_count.total_count.full.sum_cumulative.sum.0,
+            &outputs_count.total_count.full.sum,
             &blocks.interval.height,
             exit,
         )?;

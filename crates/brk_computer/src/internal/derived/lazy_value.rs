@@ -6,8 +6,6 @@ use vecdb::UnaryTransform;
 
 use crate::internal::{LazyHeightDerived, ValueFromHeight};
 
-const VERSION: Version = Version::ZERO;
-
 #[derive(Clone, Traversable)]
 pub struct LazyValueHeightDerived {
     pub sats: LazyHeightDerived<Sats, Sats>,
@@ -28,29 +26,27 @@ impl LazyValueHeightDerived {
         CentsTransform: UnaryTransform<Cents, Cents>,
         DollarsTransform: UnaryTransform<Dollars, Dollars>,
     {
-        let v = version + VERSION;
-
         let sats = LazyHeightDerived::from_derived_computed::<SatsTransform>(
             name,
-            v,
+            version,
             &source.sats.rest,
         );
 
         let btc = LazyHeightDerived::from_derived_computed::<BitcoinTransform>(
             &format!("{name}_btc"),
-            v,
+            version,
             &source.sats.rest,
         );
 
         let cents = LazyHeightDerived::from_derived_computed::<CentsTransform>(
             &format!("{name}_cents"),
-            v,
+            version,
             &source.cents.rest,
         );
 
         let usd = LazyHeightDerived::from_lazy::<DollarsTransform, Cents>(
             &format!("{name}_usd"),
-            v,
+            version,
             &source.usd.rest,
         );
 

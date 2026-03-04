@@ -7,7 +7,7 @@ use vecdb::{Database, PAGE_SIZE};
 
 use super::{
     ActivityVecs, AdjustedVecs, CapVecs, DB_NAME, PricingVecs, ReserveRiskVecs, SupplyVecs,
-    VERSION, ValueVecs, Vecs,
+    ValueVecs, Vecs,
 };
 use crate::indexes;
 
@@ -20,7 +20,7 @@ impl Vecs {
         let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
-        let version = parent_version + VERSION;
+        let version = parent_version;
         let v1 = version + Version::ONE;
         let activity = ActivityVecs::forced_import(&db, version, indexes)?;
         let supply = SupplyVecs::forced_import(&db, v1, indexes)?;

@@ -53,7 +53,6 @@ pub use week1::Vecs as Week1Vecs;
 pub use year1::Vecs as Year1Vecs;
 pub use year10::Vecs as Year10Vecs;
 
-const VERSION: Version = Version::ZERO;
 pub const DB_NAME: &str = "indexes";
 
 #[derive(Traversable)]
@@ -90,7 +89,7 @@ impl Vecs {
         let db = Database::open(&parent.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 10_000_000)?;
 
-        let version = parent_version + VERSION;
+        let version = parent_version;
 
         let this = Self {
             address: AddressVecs::forced_import(version, indexer),

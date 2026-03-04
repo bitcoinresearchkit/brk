@@ -1,19 +1,15 @@
-//! Base generic struct with 8 type parameters — one per distribution statistic.
-//!
-//! Foundation for all distribution-style types (average, min, max, percentiles).
-
 use brk_traversable::Traversable;
 
 #[derive(Clone, Traversable)]
-pub struct DistributionStats<A, B = A, C = A, D = A, E = A, F = A, G = A, H = A> {
+pub struct DistributionStats<A> {
     pub average: A,
-    pub min: B,
-    pub max: C,
-    pub pct10: D,
-    pub pct25: E,
-    pub median: F,
-    pub pct75: G,
-    pub pct90: H,
+    pub min: A,
+    pub max: A,
+    pub pct10: A,
+    pub pct25: A,
+    pub median: A,
+    pub pct75: A,
+    pub pct90: A,
 }
 
 impl<A> DistributionStats<A> {
@@ -58,5 +54,4 @@ impl<A> DistributionStats<A> {
             .min(f(&self.pct75))
             .min(f(&self.pct90))
     }
-
 }

@@ -58,9 +58,9 @@ impl Vecs {
             ValueFromHeightCumulativeSum::forced_import(db, &suffix("coinbase"), version, indexes)?;
 
         let dominance =
-            PercentFromHeight::forced_import_bp16(db, &suffix("dominance"), version, indexes)?;
+            PercentFromHeight::forced_import(db, &suffix("dominance"), version, indexes)?;
         let dominance_rolling =
-            PercentRollingWindows::forced_import_bp16(db, &suffix("dominance"), version, indexes)?;
+            PercentRollingWindows::forced_import(db, &suffix("dominance"), version, indexes)?;
 
         Ok(Self {
             dominance,

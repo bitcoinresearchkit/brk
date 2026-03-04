@@ -27,8 +27,6 @@ where
     pub sum: RollingWindows<T, M>,
 }
 
-const VERSION: Version = Version::ZERO;
-
 impl<T> ComputedFromHeightCumulativeSum<T>
 where
     T: NumericValue + JsonSchema,
@@ -39,12 +37,10 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
-
-        let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, v)?;
+        let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
         let cumulative =
-            ComputedFromHeight::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
-        let rolling = RollingWindows::forced_import(db, name, v, indexes)?;
+            ComputedFromHeight::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
+        let rolling = RollingWindows::forced_import(db, name, version, indexes)?;
 
         Ok(Self {
             height,

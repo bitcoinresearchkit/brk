@@ -33,7 +33,7 @@ impl RsiChain {
 
         macro_rules! percent_import {
             ($name:expr) => {
-                PercentFromHeight::forced_import_bp16(
+                PercentFromHeight::forced_import(
                     db,
                     &format!("rsi_{}_{}", $name, tf),
                     version,
@@ -45,7 +45,7 @@ impl RsiChain {
         let average_gain = import!("average_gain");
         let average_loss = import!("average_loss");
 
-        let rsi = PercentFromHeight::forced_import_bp16(
+        let rsi = PercentFromHeight::forced_import(
             db,
             &format!("rsi_{tf}"),
             version,
@@ -127,9 +127,9 @@ impl Vecs {
         let rsi = Windows::try_from_fn(|tf| RsiChain::forced_import(db, tf, v, indexes))?;
         let macd = Windows::try_from_fn(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
 
-        let stoch_k = PercentFromHeight::forced_import_bp16(db, "stoch_k", v, indexes)?;
-        let stoch_d = PercentFromHeight::forced_import_bp16(db, "stoch_d", v, indexes)?;
-        let gini = PercentFromHeight::forced_import_bp16(db, "gini", v, indexes)?;
+        let stoch_k = PercentFromHeight::forced_import(db, "stoch_k", v, indexes)?;
+        let stoch_d = PercentFromHeight::forced_import(db, "stoch_d", v, indexes)?;
+        let gini = PercentFromHeight::forced_import(db, "gini", v, indexes)?;
 
         let pi_cycle = ComputedFromHeightRatio::forced_import_raw(db, "pi_cycle", v, indexes)?;
 

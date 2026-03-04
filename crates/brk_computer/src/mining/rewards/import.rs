@@ -27,25 +27,25 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            fee_dominance: PercentFromHeight::forced_import_bp16(
+            fee_dominance: PercentFromHeight::forced_import(
                 db,
                 "fee_dominance",
                 version,
                 indexes,
             )?,
-            fee_dominance_rolling: PercentRollingWindows::forced_import_bp16(
+            fee_dominance_rolling: PercentRollingWindows::forced_import(
                 db,
                 "fee_dominance",
                 version,
                 indexes,
             )?,
-            subsidy_dominance: PercentFromHeight::forced_import_bp16(
+            subsidy_dominance: PercentFromHeight::forced_import(
                 db,
                 "subsidy_dominance",
                 version,
                 indexes,
             )?,
-            subsidy_dominance_rolling: PercentRollingWindows::forced_import_bp16(
+            subsidy_dominance_rolling: PercentRollingWindows::forced_import(
                 db,
                 "subsidy_dominance",
                 version,

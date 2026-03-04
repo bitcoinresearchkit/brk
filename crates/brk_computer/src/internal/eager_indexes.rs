@@ -47,18 +47,14 @@ pub struct EagerIndexes<T, M: StorageMode = Rw>(
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 
-const VERSION: Version = Version::ZERO;
-
 impl<T> EagerIndexes<T>
 where
     T: NumericValue + JsonSchema,
 {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
-        let v = version + VERSION;
-
         macro_rules! period {
             ($idx:ident) => {
-                ImportableVec::forced_import(db, name, v)?
+                ImportableVec::forced_import(db, name, version)?
             };
         }
 

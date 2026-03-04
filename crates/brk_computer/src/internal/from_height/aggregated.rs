@@ -26,8 +26,6 @@ where
     pub rolling: RollingFull<T, M>,
 }
 
-const VERSION: Version = Version::ZERO;
-
 impl<T> ComputedFromHeightAggregated<T>
 where
     T: NumericValue + JsonSchema,
@@ -38,10 +36,8 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
-
-        let height = Full::forced_import(db, name, v)?;
-        let rolling = RollingFull::forced_import(db, name, v, indexes)?;
+        let height = Full::forced_import(db, name, version)?;
+        let rolling = RollingFull::forced_import(db, name, version, indexes)?;
 
         Ok(Self {
             full: height,
@@ -65,7 +61,7 @@ where
         self.rolling.compute(
             max_from,
             windows,
-            self.full.sum_cumulative.sum.inner(),
+            &self.full.sum,
             exit,
         )?;
         Ok(())

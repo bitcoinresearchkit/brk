@@ -27,8 +27,6 @@ where
     pub distribution: RollingDistribution<T, M>,
 }
 
-const VERSION: Version = Version::ZERO;
-
 impl<T> RollingFull<T>
 where
     T: NumericValue + JsonSchema,
@@ -39,10 +37,9 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
         Ok(Self {
-            sum: RollingWindows::forced_import(db, &format!("{name}_sum"), v, indexes)?,
-            distribution: RollingDistribution::forced_import(db, name, v, indexes)?,
+            sum: RollingWindows::forced_import(db, &format!("{name}_sum"), version, indexes)?,
+            distribution: RollingDistribution::forced_import(db, name, version, indexes)?,
         })
     }
 

@@ -24,7 +24,7 @@ impl Vecs {
             price_true_range_sum_2w: ComputedFromHeight::forced_import(
                 db, "price_true_range_sum_2w", version + v1, indexes,
             )?,
-            price_choppiness_index_2w: PercentFromHeight::forced_import_bp16(
+            price_choppiness_index_2w: PercentFromHeight::forced_import(
                 db, "price_choppiness_index_2w", version + v1, indexes,
             )?,
         })

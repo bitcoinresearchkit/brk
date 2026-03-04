@@ -1,48 +1,37 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Height, StoredF32, Version};
-use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableCloneableVec, Rw, StorageMode, UnaryTransform};
+use brk_types::{Height, StoredF32, Version};
+use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableCloneableVec, Rw, StorageMode};
 
-use crate::{indexes, internal::{Bp16ToFloat, Bp16ToPercent, NumericValue, WindowStarts}};
+use crate::{indexes, internal::{BpsType, WindowStarts}};
 
 use super::{ComputedFromHeightDistribution, LazyFromHeight};
 
 /// Like PercentFromHeight but with rolling distribution stats on the bps data.
 #[derive(Traversable)]
-pub struct PercentFromHeightDistribution<B, M: StorageMode = Rw>
-where
-    B: NumericValue + JsonSchema,
-{
+pub struct PercentFromHeightDistribution<B: BpsType, M: StorageMode = Rw> {
     pub bps: ComputedFromHeightDistribution<B, M>,
     pub ratio: LazyFromHeight<StoredF32, B>,
     pub percent: LazyFromHeight<StoredF32, B>,
 }
 
-impl<B> PercentFromHeightDistribution<B>
-where
-    B: NumericValue + JsonSchema,
-{
-    pub(crate) fn forced_import<RatioTransform, PercentTransform>(
+impl<B: BpsType> PercentFromHeightDistribution<B> {
+    pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-    ) -> Result<Self>
-    where
-        RatioTransform: UnaryTransform<B, StoredF32>,
-        PercentTransform: UnaryTransform<B, StoredF32>,
-    {
+    ) -> Result<Self> {
         let bps = ComputedFromHeightDistribution::forced_import(db, &format!("{name}_bps"), version, indexes)?;
 
-        let ratio = LazyFromHeight::from_height_source::<RatioTransform>(
+        let ratio = LazyFromHeight::from_height_source::<B::ToRatio>(
             &format!("{name}_ratio"),
             version,
             bps.height.read_only_boxed_clone(),
             indexes,
         );
 
-        let percent = LazyFromHeight::from_height_source::<PercentTransform>(
+        let percent = LazyFromHeight::from_height_source::<B::ToPercent>(
             name,
             version,
             bps.height.read_only_boxed_clone(),
@@ -52,23 +41,6 @@ where
         Ok(Self { bps, ratio, percent })
     }
 
-}
-
-impl PercentFromHeightDistribution<BasisPoints16> {
-    pub(crate) fn forced_import_bp16(
-        db: &Database,
-        name: &str,
-        version: Version,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
-        Self::forced_import::<Bp16ToFloat, Bp16ToPercent>(db, name, version, indexes)
-    }
-}
-
-impl<B> PercentFromHeightDistribution<B>
-where
-    B: NumericValue + JsonSchema,
-{
     pub(crate) fn compute(
         &mut self,
         max_from: Height,

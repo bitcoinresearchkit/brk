@@ -52,8 +52,6 @@ where
     }
 }
 
-const VERSION: Version = Version::ZERO;
-
 impl<T> ComputedHeightDerived<T>
 where
     T: NumericValue + JsonSchema,
@@ -64,13 +62,11 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Self {
-        let v = version + VERSION;
-
         macro_rules! period {
             ($idx:ident) => {
                 LazyAggVec::sparse_from_first_index(
                     name,
-                    v,
+                    version,
                     height_source.clone(),
                     indexes.$idx.first_height.read_only_boxed_clone(),
                 )
@@ -112,7 +108,7 @@ where
             ($idx:ident) => {
                 LazyAggVec::new(
                     name,
-                    v,
+                    version,
                     height_source.clone(),
                     indexes.$idx.identity.read_only_boxed_clone(),
                     for_each_range_from_coarser,

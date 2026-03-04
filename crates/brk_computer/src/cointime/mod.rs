@@ -10,7 +10,6 @@ mod compute;
 mod import;
 
 use brk_traversable::Traversable;
-use brk_types::Version;
 use vecdb::{Database, Rw, StorageMode};
 
 pub use activity::Vecs as ActivityVecs;
@@ -22,7 +21,6 @@ pub use supply::Vecs as SupplyVecs;
 pub use value::Vecs as ValueVecs;
 
 pub const DB_NAME: &str = "cointime";
-const VERSION: Version = Version::ZERO;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

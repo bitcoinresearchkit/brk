@@ -28,8 +28,6 @@ pub struct RollingWindows<T, M: StorageMode = Rw>(pub Windows<ComputedFromHeight
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 
-const VERSION: Version = Version::ZERO;
-
 impl<T> RollingWindows<T>
 where
     T: NumericValue + JsonSchema,
@@ -40,9 +38,8 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
         Ok(Self(Windows::try_from_fn(|suffix| {
-            ComputedFromHeight::forced_import(db, &format!("{name}_{suffix}"), v, indexes)
+            ComputedFromHeight::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 

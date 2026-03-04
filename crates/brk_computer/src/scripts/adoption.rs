@@ -24,13 +24,13 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            taproot: PercentFromHeight::forced_import_bp16(
+            taproot: PercentFromHeight::forced_import(
                 db,
                 "taproot_adoption",
                 version,
                 indexes,
             )?,
-            segwit: PercentFromHeight::forced_import_bp16(
+            segwit: PercentFromHeight::forced_import(
                 db,
                 "segwit_adoption",
                 version,
@@ -49,14 +49,14 @@ impl Vecs {
         self.taproot.compute_binary::<_, _, RatioU64Bp16>(
             starting_indexes.height,
             &count.p2tr.height,
-            &outputs_count.total_count.full.sum_cumulative.sum.0,
+            &outputs_count.total_count.full.sum,
             exit,
         )?;
 
         self.segwit.compute_binary::<_, _, RatioU64Bp16>(
             starting_indexes.height,
             &count.segwit.height,
-            &outputs_count.total_count.full.sum_cumulative.sum.0,
+            &outputs_count.total_count.full.sum,
             exit,
         )?;
 

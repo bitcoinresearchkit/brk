@@ -69,7 +69,7 @@ impl<'a> ImportConfig<'a> {
         suffix: &str,
         offset: Version,
     ) -> Result<PercentFromHeight<BasisPoints16>> {
-        PercentFromHeight::forced_import_bp16(self.db, &self.name(suffix), self.version + offset, self.indexes)
+        PercentFromHeight::forced_import(self.db, &self.name(suffix), self.version + offset, self.indexes)
     }
 
     pub(crate) fn import_percent_bps16(
@@ -77,7 +77,7 @@ impl<'a> ImportConfig<'a> {
         suffix: &str,
         offset: Version,
     ) -> Result<PercentFromHeight<BasisPointsSigned16>> {
-        PercentFromHeight::forced_import_bps16(self.db, &self.name(suffix), self.version + offset, self.indexes)
+        PercentFromHeight::forced_import(self.db, &self.name(suffix), self.version + offset, self.indexes)
     }
 
     // --- Value types ---
@@ -121,7 +121,7 @@ impl<'a> ImportConfig<'a> {
     }
 
     pub(crate) fn import_percent_rolling_bp16(&self, suffix: &str, offset: Version) -> Result<PercentRollingWindows<BasisPoints16>> {
-        PercentRollingWindows::forced_import_bp16(self.db, &self.name(suffix), self.version + offset, self.indexes)
+        PercentRollingWindows::forced_import(self.db, &self.name(suffix), self.version + offset, self.indexes)
     }
 
     pub(crate) fn import_emas_1w_1m<T: NumericValue + JsonSchema>(&self, suffix: &str, offset: Version) -> Result<RollingEmas1w1m<T>> {
@@ -129,7 +129,7 @@ impl<'a> ImportConfig<'a> {
     }
 
     pub(crate) fn import_percent_emas_1w_1m_bp16(&self, suffix: &str, offset: Version) -> Result<PercentRollingEmas1w1m<BasisPoints16>> {
-        PercentRollingEmas1w1m::forced_import_bp16(self.db, &self.name(suffix), self.version + offset, self.indexes)
+        PercentRollingEmas1w1m::forced_import(self.db, &self.name(suffix), self.version + offset, self.indexes)
     }
 
     pub(crate) fn import_emas_2w(&self, suffix: &str, offset: Version) -> Result<RollingEmas2w> {

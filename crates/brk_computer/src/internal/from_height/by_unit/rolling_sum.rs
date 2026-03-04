@@ -16,8 +16,6 @@ use crate::{
 #[traversable(transparent)]
 pub struct RollingSumByUnit<M: StorageMode = Rw>(pub Windows<ByUnit<M>>);
 
-const VERSION: Version = Version::ZERO;
-
 impl RollingSumByUnit {
     pub(crate) fn forced_import(
         db: &Database,
@@ -25,8 +23,7 @@ impl RollingSumByUnit {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
-        Ok(Self(Windows::<ByUnit>::forced_import(db, &format!("{name}_sum"), v, indexes)?))
+        Ok(Self(Windows::<ByUnit>::forced_import(db, &format!("{name}_sum"), version, indexes)?))
     }
 
     pub(crate) fn compute_rolling_sum(

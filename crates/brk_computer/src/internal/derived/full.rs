@@ -26,8 +26,6 @@ where
     pub rolling: RollingFull<T, M>,
 }
 
-const VERSION: Version = Version::ZERO;
-
 impl<T> ComputedHeightDerivedFull<T>
 where
     T: NumericValue + JsonSchema,
@@ -38,11 +36,9 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
-
         let cumulative =
-            ComputedFromHeight::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
-        let rolling = RollingFull::forced_import(db, name, v, indexes)?;
+            ComputedFromHeight::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
+        let rolling = RollingFull::forced_import(db, name, version, indexes)?;
 
         Ok(Self {
             cumulative,

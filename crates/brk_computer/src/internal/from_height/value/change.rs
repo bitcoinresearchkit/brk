@@ -12,8 +12,6 @@ use crate::{
     },
 };
 
-const VERSION: Version = Version::ZERO;
-
 /// Change values indexed by height - sats (stored), btc (lazy), cents (stored), usd (lazy).
 #[derive(Traversable)]
 pub struct ValueFromHeightChange<M: StorageMode = Rw> {
@@ -30,13 +28,11 @@ impl ValueFromHeightChange {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
-
-        let sats = ComputedFromHeight::forced_import(db, name, v, indexes)?;
+        let sats = ComputedFromHeight::forced_import(db, name, version, indexes)?;
 
         let btc = LazyFromHeight::from_computed::<SatsSignedToBitcoin>(
             &format!("{name}_btc"),
-            v,
+            version,
             sats.height.read_only_boxed_clone(),
             &sats,
         );
@@ -44,13 +40,13 @@ impl ValueFromHeightChange {
         let cents = ComputedFromHeight::forced_import(
             db,
             &format!("{name}_cents"),
-            v,
+            version,
             indexes,
         )?;
 
         let usd = LazyFromHeight::from_computed::<CentsSignedToDollars>(
             &format!("{name}_usd"),
-            v,
+            version,
             cents.height.read_only_boxed_clone(),
             &cents,
         );

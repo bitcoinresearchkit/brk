@@ -52,7 +52,7 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            hash_rate_drawdown: PercentFromHeight::forced_import_bps16(
+            hash_rate_drawdown: PercentFromHeight::forced_import(
                 db,
                 "hash_rate_drawdown",
                 version,
@@ -82,7 +82,7 @@ impl Vecs {
                 version + v4,
                 indexes,
             )?,
-            hash_price_rebound: PercentFromHeight::forced_import_bps32(
+            hash_price_rebound: PercentFromHeight::forced_import(
                 db,
                 "hash_price_rebound",
                 version + v4,
@@ -112,7 +112,7 @@ impl Vecs {
                 version + v4,
                 indexes,
             )?,
-            hash_value_rebound: PercentFromHeight::forced_import_bps32(
+            hash_value_rebound: PercentFromHeight::forced_import(
                 db,
                 "hash_value_rebound",
                 version + v4,

@@ -25,8 +25,6 @@ pub struct ValueFromHeightRolling<M: StorageMode = Rw> {
     pub rolling: ValueFromHeightWindows<M>,
 }
 
-const VERSION: Version = Version::ZERO;
-
 impl ValueFromHeightRolling {
     pub(crate) fn forced_import(
         db: &Database,
@@ -34,10 +32,9 @@ impl ValueFromHeightRolling {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
         Ok(Self {
-            value: Value::forced_import(db, name, v)?,
-            rolling: ValueFromHeightWindows::forced_import(db, name, v, indexes)?,
+            value: Value::forced_import(db, name, version)?,
+            rolling: ValueFromHeightWindows::forced_import(db, name, version, indexes)?,
         })
     }
 

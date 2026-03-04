@@ -23,7 +23,7 @@ impl Vecs {
         })?;
 
         let period_return = ByDcaPeriod::try_new(|name, _days| {
-            PercentFromHeight::forced_import_bps32(
+            PercentFromHeight::forced_import(
                 db,
                 &format!("dca_return_{name}"),
                 version,
@@ -32,7 +32,7 @@ impl Vecs {
         })?;
 
         let period_cagr = ByDcaCagr::try_new(|name, _days| {
-            PercentFromHeight::forced_import_bps32(
+            PercentFromHeight::forced_import(
                 db,
                 &format!("dca_cagr_{name}"),
                 version,
@@ -45,7 +45,7 @@ impl Vecs {
         })?;
 
         let period_lump_sum_return = ByDcaPeriod::try_new(|name, _days| {
-            PercentFromHeight::forced_import_bps32(
+            PercentFromHeight::forced_import(
                 db,
                 &format!("lump_sum_return_{name}"),
                 version,
@@ -62,7 +62,7 @@ impl Vecs {
         })?;
 
         let class_return = ByDcaClass::try_new(|name, _year, _day1| {
-            PercentFromHeight::forced_import_bps32(
+            PercentFromHeight::forced_import(
                 db,
                 &format!("dca_return_{name}"),
                 version,

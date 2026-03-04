@@ -40,7 +40,7 @@ impl Vecs {
         );
 
         let price_drawdown =
-            PercentFromHeight::forced_import_bps16(db, "price_drawdown", v, indexes)?;
+            PercentFromHeight::forced_import(db, "price_drawdown", v, indexes)?;
 
         Ok(Self {
             price_ath,

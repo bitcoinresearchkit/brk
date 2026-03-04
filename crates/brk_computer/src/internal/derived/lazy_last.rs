@@ -81,8 +81,6 @@ where
     T: VecValue + PartialOrd + JsonSchema,
     S1T: VecValue;
 
-const VERSION: Version = Version::ZERO;
-
 impl<T, S1T> LazyHeightDerived<T, S1T>
 where
     T: VecValue + PartialOrd + JsonSchema + 'static,
@@ -121,13 +119,11 @@ where
     where
         S1T: NumericValue,
     {
-        let v = version + VERSION;
-
         macro_rules! period {
             ($p:ident) => {
                 LazyTransformLast::from_boxed::<MapOption<F>>(
                     name,
-                    v,
+                    version,
                     source.$p.read_only_boxed_clone(),
                 )
             };
@@ -135,7 +131,7 @@ where
 
         macro_rules! epoch {
             ($p:ident) => {
-                LazyTransformLast::from_boxed::<F>(name, v, source.$p.read_only_boxed_clone())
+                LazyTransformLast::from_boxed::<F>(name, version, source.$p.read_only_boxed_clone())
             };
         }
 
@@ -151,13 +147,11 @@ where
         F: UnaryTransform<S1T, T>,
         S2T: ComputedVecValue + JsonSchema,
     {
-        let v = version + VERSION;
-
         macro_rules! period {
             ($p:ident) => {
                 LazyTransformLast::from_boxed::<MapOption<F>>(
                     name,
-                    v,
+                    version,
                     source.$p.read_only_boxed_clone(),
                 )
             };
@@ -165,7 +159,7 @@ where
 
         macro_rules! epoch {
             ($p:ident) => {
-                LazyTransformLast::from_boxed::<F>(name, v, source.$p.read_only_boxed_clone())
+                LazyTransformLast::from_boxed::<F>(name, version, source.$p.read_only_boxed_clone())
             };
         }
 

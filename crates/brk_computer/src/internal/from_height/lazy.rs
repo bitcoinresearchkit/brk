@@ -24,8 +24,6 @@ where
     pub rest: Box<LazyHeightDerived<T, S1T>>,
 }
 
-const VERSION: Version = Version::ZERO;
-
 impl<T, S1T> LazyFromHeight<T, S1T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
@@ -40,10 +38,9 @@ where
     where
         S1T: NumericValue,
     {
-        let v = version + VERSION;
         Self {
-            height: LazyVecFrom1::transformed::<F>(name, v, height_source),
-            rest: Box::new(LazyHeightDerived::from_computed::<F>(name, v, source)),
+            height: LazyVecFrom1::transformed::<F>(name, version, height_source),
+            rest: Box::new(LazyHeightDerived::from_computed::<F>(name, version, source)),
         }
     }
 
@@ -56,12 +53,11 @@ where
     where
         S1T: NumericValue,
     {
-        let v = version + VERSION;
         Self {
-            height: LazyVecFrom1::transformed::<F>(name, v, height_source.clone()),
+            height: LazyVecFrom1::transformed::<F>(name, version, height_source.clone()),
             rest: Box::new(LazyHeightDerived::from_height_source::<F>(
                 name,
-                v,
+                version,
                 height_source,
                 indexes,
             )),
@@ -78,12 +74,11 @@ where
         F: UnaryTransform<S1T, T>,
         S2T: ComputedVecValue + JsonSchema,
     {
-        let v = version + VERSION;
         Self {
-            height: LazyVecFrom1::transformed::<F>(name, v, source.height.read_only_boxed_clone()),
+            height: LazyVecFrom1::transformed::<F>(name, version, source.height.read_only_boxed_clone()),
             rest: Box::new(LazyHeightDerived::from_lazy::<F, S2T>(
                 name,
-                v,
+                version,
                 &source.rest,
             )),
         }
