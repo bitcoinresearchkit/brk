@@ -6,9 +6,10 @@ use vecdb::{
     WritableVec,
 };
 
-use crate::{blocks, indexes};
-
-use crate::internal::{ComputedFromHeight, Price};
+use crate::{
+    blocks, indexes,
+    internal::{ComputedFromHeight, Price, PriceTimesRatioCents},
+};
 
 use super::ComputedFromHeightStdDev;
 
@@ -172,8 +173,7 @@ impl ComputedFromHeightStdDevExtended {
         const MULTIPLIERS: [f32; 12] = [
             0.5, 1.0, 1.5, 2.0, 2.5, 3.0, -0.5, -1.0, -1.5, -2.0, -2.5, -3.0,
         ];
-        let band_vecs: Vec<_> = self.mut_band_height_vecs().collect();
-        for (vec, mult) in band_vecs.into_iter().zip(MULTIPLIERS) {
+        for (vec, mult) in self.mut_band_height_vecs().zip(MULTIPLIERS) {
             for (offset, _) in source_data.iter().enumerate() {
                 let index = start + offset;
                 let average = sma_data[offset];
@@ -214,8 +214,6 @@ impl ComputedFromHeightStdDevExtended {
         metric_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        use crate::internal::PriceTimesRatioCents;
-
         macro_rules! compute_band {
             ($usd_field:ident, $band_source:expr) => {
                 self.$usd_field

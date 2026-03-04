@@ -52,6 +52,19 @@ impl ComputedFromHeightStdDev {
         exit: &Exit,
         source: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
+        if self.days == usize::MAX {
+            self.sma
+                .height
+                .compute_sma_(starting_indexes.height, source, usize::MAX, exit, None)?;
+            self.sd.height.compute_expanding_sd(
+                starting_indexes.height,
+                source,
+                &self.sma.height,
+                exit,
+            )?;
+            return Ok(());
+        }
+
         let window_starts = blocks.count.start_vec(self.days);
 
         self.sma.height.compute_rolling_average(

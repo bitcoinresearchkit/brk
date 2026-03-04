@@ -70,7 +70,7 @@ pub(crate) fn write(
     vecs.supply_state
         .truncate_if_needed(Height::from(truncate_to))?;
     for block_state in &chain_state[truncate_to..] {
-        vecs.supply_state.push(block_state.supply.clone());
+        vecs.supply_state.push(block_state.supply);
     }
 
     vecs.any_address_indexes

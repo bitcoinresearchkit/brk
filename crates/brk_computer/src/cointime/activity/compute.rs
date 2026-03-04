@@ -15,14 +15,8 @@ impl Vecs {
     ) -> Result<()> {
         let window_starts = blocks.count.window_starts();
 
-        let circulating_supply = &distribution
-            .utxo_cohorts
-            .all
-            .metrics
-            .supply
-            .total
-            .sats
-            .height;
+        let all_metrics = &distribution.utxo_cohorts.all.metrics;
+        let circulating_supply = &all_metrics.supply.total.sats.height;
 
         self.coinblocks_created
             .compute(starting_indexes.height, &window_starts, exit, |vec| {
@@ -35,12 +29,7 @@ impl Vecs {
                 Ok(())
             })?;
 
-        let coinblocks_destroyed = &distribution
-            .utxo_cohorts
-            .all
-            .metrics
-            .activity
-            .coinblocks_destroyed;
+        let coinblocks_destroyed = &all_metrics.activity.coinblocks_destroyed;
 
         self.coinblocks_stored
             .compute(starting_indexes.height, &window_starts, exit, |vec| {

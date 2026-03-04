@@ -90,8 +90,7 @@ impl Vecs {
                         (
                             height,
                             coinbase.checked_sub(fees).unwrap_or_else(|| {
-                                dbg!(height, coinbase, fees);
-                                panic!()
+                                panic!("coinbase {coinbase:?} < fees {fees:?} at {height:?}")
                             }),
                         )
                     },

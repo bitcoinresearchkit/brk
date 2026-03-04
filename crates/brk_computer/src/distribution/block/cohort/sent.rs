@@ -40,9 +40,9 @@ pub(crate) fn process_sent(
     height_to_timestamp: &[Timestamp],
     current_height: Height,
     current_timestamp: Timestamp,
+    seen_senders: &mut ByAddressType<FxHashSet<TypeIndex>>,
 ) -> Result<()> {
-    // Track unique senders per address type (simple set, no extra data needed)
-    let mut seen_senders: ByAddressType<FxHashSet<TypeIndex>> = ByAddressType::default();
+    seen_senders.values_mut().for_each(|set| set.clear());
 
     for (receive_height, by_type) in sent_data.into_iter() {
         let prev_price = height_to_price[receive_height.to_usize()];

@@ -6,7 +6,9 @@ use vecdb::{
     VecIndex, VecValue, Version,
 };
 
-use crate::internal::{ComputedVecValue, DistributionStats};
+use crate::internal::{
+    ComputedVecValue, DistributionStats, compute_aggregations, compute_aggregations_nblock_window,
+};
 
 #[derive(Traversable)]
 pub struct Distribution<I: VecIndex, T: ComputedVecValue + JsonSchema, M: StorageMode = Rw> {
@@ -50,7 +52,7 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Distribution<I, T> {
     where
         A: VecIndex + VecValue + brk_types::CheckedSub<A>,
     {
-        crate::internal::compute_aggregations(
+        compute_aggregations(
             max_from,
             source,
             first_indexes,
@@ -87,7 +89,7 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Distribution<I, T> {
     where
         A: VecIndex + VecValue + brk_types::CheckedSub<A>,
     {
-        crate::internal::compute_aggregations_nblock_window(
+        compute_aggregations_nblock_window(
             max_from,
             source,
             first_indexes,

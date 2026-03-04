@@ -19,22 +19,9 @@ impl Vecs {
         cap: &cap::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        let circulating_supply = &distribution
-            .utxo_cohorts
-            .all
-            .metrics
-            .supply
-            .total
-            .btc
-            .height;
-        let realized_price = &distribution
-            .utxo_cohorts
-            .all
-            .metrics
-            .realized
-            .realized_price
-            .cents
-            .height;
+        let all_metrics = &distribution.utxo_cohorts.all.metrics;
+        let circulating_supply = &all_metrics.supply.total.btc.height;
+        let realized_price = &all_metrics.realized.realized_price.cents.height;
 
         self.vaulted_price.cents.height.compute_transform2(
             starting_indexes.height,

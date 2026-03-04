@@ -144,11 +144,10 @@ impl Vecs {
         }
 
         // Lump sum by period - returns (compute from lookback price)
-        let lookback_dca2 = lookback.price_lookback.as_dca_period();
         for (returns, (lookback_price, _)) in self
             .period_lump_sum_return
             .iter_mut()
-            .zip(lookback_dca2.iter_with_days())
+            .zip(lookback_dca.iter_with_days())
         {
             returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
                 starting_indexes.height,

@@ -34,6 +34,8 @@ pub struct CostBasisData {
     percentiles_dirty: bool,
     cached_percentiles: Option<Percentiles>,
     rounding_digits: Option<i32>,
+    /// Monotonically increasing counter, bumped on each apply_pending with actual changes.
+    generation: u64,
 }
 
 const STATE_TO_KEEP: usize = 10;
@@ -49,6 +51,7 @@ impl CostBasisData {
             percentiles_dirty: true,
             cached_percentiles: None,
             rounding_digits: None,
+            generation: 0,
         }
     }
 
@@ -93,15 +96,9 @@ impl CostBasisData {
             && self.pending_raw.investor_cap_dec == CentsSquaredSats::ZERO
     }
 
-    pub(crate) fn iter(&self) -> impl Iterator<Item = (CentsCompact, &Sats)> {
+    pub(crate) fn map(&self) -> &CostBasisMap {
         self.assert_pending_empty();
-        self.state
-            .as_ref()
-            .unwrap()
-            .base
-            .map
-            .iter()
-            .map(|(&k, v)| (k, v))
+        &self.state.as_ref().unwrap().base.map
     }
 
     pub(crate) fn is_empty(&self) -> bool {
@@ -183,18 +180,14 @@ impl CostBasisData {
     }
 
     pub(crate) fn apply_pending(&mut self) {
-        if !self.pending.is_empty() {
-            self.percentiles_dirty = true;
+        if self.pending.is_empty() && self.pending_raw_is_zero() {
+            return;
         }
+        self.generation = self.generation.wrapping_add(1);
+        self.percentiles_dirty = true;
+        let map = &mut self.state.as_mut().unwrap().base.map;
         for (cents, (inc, dec)) in self.pending.drain() {
-            let entry = self
-                .state
-                .as_mut()
-                .unwrap()
-                .base
-                .map
-                .entry(cents)
-                .or_default();
+            let entry = map.entry(cents).or_default();
             *entry += inc;
             if *entry < dec {
                 panic!(
@@ -211,7 +204,7 @@ impl CostBasisData {
             }
             *entry -= dec;
             if *entry == Sats::ZERO {
-                self.state.as_mut().unwrap().base.map.remove(&cents);
+                map.remove(&cents);
             }
         }
 
@@ -267,7 +260,8 @@ impl CostBasisData {
         if !self.percentiles_dirty {
             return self.cached_percentiles;
         }
-        self.cached_percentiles = Percentiles::compute(self.iter().map(|(k, &v)| (k, v)));
+        self.cached_percentiles =
+            Percentiles::compute_from_map(&self.state.as_ref().unwrap().base.map);
         self.percentiles_dirty = false;
         self.cached_percentiles
     }

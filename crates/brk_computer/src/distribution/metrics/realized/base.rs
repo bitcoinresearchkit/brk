@@ -233,21 +233,24 @@ impl RealizedBase {
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.realized_cap
-            .height
-            .len()
-            .min(self.realized_profit.height.len())
-            .min(self.realized_loss.height.len())
-            .min(self.investor_price.cents.height.len())
-            .min(self.cap_raw.len())
-            .min(self.investor_cap_raw.len())
-            .min(self.profit_value_created.height.len())
-            .min(self.profit_value_destroyed.height.len())
-            .min(self.loss_value_created.height.len())
-            .min(self.loss_value_destroyed.height.len())
-            .min(self.peak_regret.height.len())
-            .min(self.sent_in_profit.base.sats.height.len())
-            .min(self.sent_in_loss.base.sats.height.len())
+        [
+            self.realized_cap.height.len(),
+            self.realized_profit.height.len(),
+            self.realized_loss.height.len(),
+            self.investor_price.cents.height.len(),
+            self.cap_raw.len(),
+            self.investor_cap_raw.len(),
+            self.profit_value_created.height.len(),
+            self.profit_value_destroyed.height.len(),
+            self.loss_value_created.height.len(),
+            self.loss_value_destroyed.height.len(),
+            self.peak_regret.height.len(),
+            self.sent_in_profit.base.sats.height.len(),
+            self.sent_in_loss.base.sats.height.len(),
+        ]
+        .into_iter()
+        .min()
+        .unwrap()
     }
 
     pub(crate) fn truncate_push(&mut self, height: Height, state: &RealizedState) -> Result<()> {
@@ -320,30 +323,19 @@ impl RealizedBase {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.realized_cap_cents.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.realized_cap_cents.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.realized_profit.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.realized_profit.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.realized_loss.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.realized_loss.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
+        macro_rules! sum_others {
+            ($($field:tt).+) => {
+                self.$($field).+.compute_sum_of_others(
+                    starting_indexes.height,
+                    &others.iter().map(|v| &v.$($field).+).collect::<Vec<_>>(),
+                    exit,
+                )?
+            };
+        }
+
+        sum_others!(realized_cap_cents.height);
+        sum_others!(realized_profit.height);
+        sum_others!(realized_loss.height);
 
         // Aggregate raw values for investor_price computation
         let investor_price_dep_version = others
@@ -404,62 +396,13 @@ impl RealizedBase {
             self.investor_price.cents.height.write()?;
         }
 
-        self.profit_value_created.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.profit_value_created.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.profit_value_destroyed.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.profit_value_destroyed.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.loss_value_created.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.loss_value_created.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.loss_value_destroyed.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.loss_value_destroyed.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.peak_regret.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.peak_regret.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.sent_in_profit.base.sats.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.sent_in_profit.base.sats.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.sent_in_loss.base.sats.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.sent_in_loss.base.sats.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
+        sum_others!(profit_value_created.height);
+        sum_others!(profit_value_destroyed.height);
+        sum_others!(loss_value_created.height);
+        sum_others!(loss_value_destroyed.height);
+        sum_others!(peak_regret.height);
+        sum_others!(sent_in_profit.base.sats.height);
+        sum_others!(sent_in_loss.base.sats.height);
 
         Ok(())
     }

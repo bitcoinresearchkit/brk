@@ -33,20 +33,16 @@ impl<B: BpsType> PercentFromHeight<B> {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let bps = ComputedFromHeight::forced_import(db, &format!("{name}_bps"), version, indexes)?;
+        let bps_clone = bps.height.read_only_boxed_clone();
 
         let ratio = LazyFromHeight::from_computed::<B::ToRatio>(
             &format!("{name}_ratio"),
             version,
-            bps.height.read_only_boxed_clone(),
+            bps_clone.clone(),
             &bps,
         );
 
-        let percent = LazyFromHeight::from_computed::<B::ToPercent>(
-            name,
-            version,
-            bps.height.read_only_boxed_clone(),
-            &bps,
-        );
+        let percent = LazyFromHeight::from_computed::<B::ToPercent>(name, version, bps_clone, &bps);
 
         Ok(Self {
             bps,

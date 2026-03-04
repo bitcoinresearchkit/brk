@@ -186,60 +186,22 @@ impl UnrealizedBase {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.supply_in_profit.sats.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.supply_in_profit.sats.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.supply_in_loss.sats.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.supply_in_loss.sats.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.unrealized_profit.cents.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.unrealized_profit.cents.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.unrealized_loss.cents.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.unrealized_loss.cents.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.invested_capital_in_profit
-            .cents
-            .height
-            .compute_sum_of_others(
-                starting_indexes.height,
-                &others
-                    .iter()
-                    .map(|v| &v.invested_capital_in_profit.cents.height)
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
-        self.invested_capital_in_loss
-            .cents
-            .height
-            .compute_sum_of_others(
-                starting_indexes.height,
-                &others
-                    .iter()
-                    .map(|v| &v.invested_capital_in_loss.cents.height)
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
+        macro_rules! sum_others {
+            ($($field:tt).+) => {
+                self.$($field).+.compute_sum_of_others(
+                    starting_indexes.height,
+                    &others.iter().map(|v| &v.$($field).+).collect::<Vec<_>>(),
+                    exit,
+                )?
+            };
+        }
+
+        sum_others!(supply_in_profit.sats.height);
+        sum_others!(supply_in_loss.sats.height);
+        sum_others!(unrealized_profit.cents.height);
+        sum_others!(unrealized_loss.cents.height);
+        sum_others!(invested_capital_in_profit.cents.height);
+        sum_others!(invested_capital_in_loss.cents.height);
 
         // Raw values for aggregation
         let start = self

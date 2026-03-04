@@ -17,22 +17,9 @@ impl Vecs {
         value: &value::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        let realized_cap_cents = &distribution
-            .utxo_cohorts
-            .all
-            .metrics
-            .realized
-            .realized_cap_cents
-            .height;
-
-        let circulating_supply = &distribution
-            .utxo_cohorts
-            .all
-            .metrics
-            .supply
-            .total
-            .btc
-            .height;
+        let all_metrics = &distribution.utxo_cohorts.all.metrics;
+        let realized_cap_cents = &all_metrics.realized.realized_cap_cents.height;
+        let circulating_supply = &all_metrics.supply.total.btc.height;
 
         self.thermo_cap.cents.height.compute_transform(
             starting_indexes.height,

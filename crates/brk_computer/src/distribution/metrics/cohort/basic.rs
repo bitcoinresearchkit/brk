@@ -157,36 +157,22 @@ impl BasicCohortMetrics {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.supply.compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| &*v.supply).collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.outputs.compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| &*v.outputs).collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.activity.compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| &*v.activity).collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.realized.compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| &*v.realized).collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.unrealized.compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| &*v.unrealized).collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.cost_basis.compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| &*v.cost_basis).collect::<Vec<_>>(),
-            exit,
-        )?;
+        macro_rules! aggregate {
+            ($field:ident) => {
+                self.$field.compute_from_stateful(
+                    starting_indexes,
+                    &others.iter().map(|v| &*v.$field).collect::<Vec<_>>(),
+                    exit,
+                )?
+            };
+        }
+
+        aggregate!(supply);
+        aggregate!(outputs);
+        aggregate!(activity);
+        aggregate!(realized);
+        aggregate!(unrealized);
+        aggregate!(cost_basis);
         Ok(())
     }
 }

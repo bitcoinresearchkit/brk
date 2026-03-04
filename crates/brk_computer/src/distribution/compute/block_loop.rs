@@ -200,8 +200,9 @@ pub(crate) fn process_blocks(
     let mut cache = AddressCache::new();
     debug!("AddressCache created, entering main loop");
 
-    // Reusable hashsets for received addresses (avoid per-block allocation)
+    // Reusable hashsets (avoid per-block allocation)
     let mut received_addresses = ByAddressType::<FxHashSet<TypeIndex>>::default();
+    let mut seen_senders = ByAddressType::<FxHashSet<TypeIndex>>::default();
 
     // Track earliest chain_state modification from sends (for incremental supply_state writes)
     let mut min_supply_modified: Option<Height> = None;
@@ -259,7 +260,7 @@ pub(crate) fn process_blocks(
             if input_count > 1 {
                 txin_iters.collect_block_inputs(first_txinindex + 1, input_count - 1, height)
             } else {
-                (Vec::new(), Vec::new(), Vec::new(), Vec::new())
+                (&[][..], &[][..], &[][..], &[][..])
             };
 
         // Process outputs and inputs in parallel with tick-tock
@@ -274,7 +275,7 @@ pub(crate) fn process_blocks(
                 // Process outputs (receive)
                 process_outputs(
                     txoutindex_to_txindex,
-                    &txoutdata_vec,
+                    txoutdata_vec,
                     &first_addressindexes,
                     &cache,
                     &vr,
@@ -288,10 +289,10 @@ pub(crate) fn process_blocks(
                 process_inputs(
                     input_count - 1,
                     &txinindex_to_txindex[1..], // Skip coinbase
-                    &input_values,
-                    &input_outputtypes,
-                    &input_typeindexes,
-                    &input_prev_heights,
+                    input_values,
+                    input_outputtypes,
+                    input_typeindexes,
+                    input_prev_heights,
                     &first_addressindexes,
                     &cache,
                     &vr,
@@ -346,7 +347,7 @@ pub(crate) fn process_blocks(
 
         // Push current block state before processing cohort updates
         chain_state.push(BlockState {
-            supply: transacted.spendable_supply.clone(),
+            supply: transacted.spendable_supply,
             price: block_price,
             timestamp,
         });
@@ -396,6 +397,7 @@ pub(crate) fn process_blocks(
                     height_to_timestamp_vec,
                     height,
                     timestamp,
+                    &mut seen_senders,
                 )
                 .unwrap();
             });
@@ -510,15 +512,21 @@ fn push_cohort_states(
     height: Height,
     height_price: Cents,
 ) -> Result<()> {
-    utxo_cohorts.par_iter_separate_mut().try_for_each(|v| {
-        v.truncate_push(height)?;
-        v.compute_then_truncate_push_unrealized_states(height, height_price)
-    })?;
-
-    address_cohorts.par_iter_separate_mut().try_for_each(|v| {
-        v.truncate_push(height)?;
-        v.compute_then_truncate_push_unrealized_states(height, height_price)
-    })?;
-
+    let (r1, r2) = rayon::join(
+        || {
+            utxo_cohorts.par_iter_separate_mut().try_for_each(|v| {
+                v.truncate_push(height)?;
+                v.compute_then_truncate_push_unrealized_states(height, height_price)
+            })
+        },
+        || {
+            address_cohorts.par_iter_separate_mut().try_for_each(|v| {
+                v.truncate_push(height)?;
+                v.compute_then_truncate_push_unrealized_states(height, height_price)
+            })
+        },
+    );
+    r1?;
+    r2?;
     Ok(())
 }

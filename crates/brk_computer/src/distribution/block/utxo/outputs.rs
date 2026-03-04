@@ -1,6 +1,7 @@
 use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_types::{FundedAddressData, Sats, TxIndex, TypeIndex};
+use rayon::prelude::*;
 use smallvec::SmallVec;
 
 use crate::distribution::{
@@ -47,7 +48,40 @@ pub(crate) fn process_outputs(
 ) -> Result<OutputsResult> {
     let output_count = txoutdata_vec.len();
 
-    // Pre-allocate result structures
+    // Phase 1: Parallel address lookups (mmap reads)
+    let items: Vec<_> = (0..output_count)
+        .into_par_iter()
+        .map(|local_idx| -> Result<_> {
+            let txoutdata = &txoutdata_vec[local_idx];
+            let value = txoutdata.value;
+            let output_type = txoutdata.outputtype;
+
+            if output_type.is_not_address() {
+                return Ok((value, output_type, None));
+            }
+
+            let typeindex = txoutdata.typeindex;
+            let txindex = txoutindex_to_txindex[local_idx];
+
+            let addr_data_opt = load_uncached_address_data(
+                output_type,
+                typeindex,
+                first_addressindexes,
+                cache,
+                vr,
+                any_address_indexes,
+                addresses_data,
+            )?;
+
+            Ok((
+                value,
+                output_type,
+                Some((typeindex, txindex, value, addr_data_opt)),
+            ))
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    // Phase 2: Sequential accumulation
     let estimated_per_type = (output_count / 8).max(8);
     let mut transacted = Transacted::default();
     let mut received_data = AddressTypeToVec::with_capacity(estimated_per_type);
@@ -58,45 +92,26 @@ pub(crate) fn process_outputs(
     let mut txindex_vecs =
         AddressTypeToTypeIndexMap::<SmallVec<[TxIndex; 4]>>::with_capacity(estimated_per_type);
 
-    // Single pass: read from pre-collected vecs and accumulate
-    for (local_idx, txoutdata) in txoutdata_vec.iter().enumerate() {
-        let txindex = txoutindex_to_txindex[local_idx];
-        let value = txoutdata.value;
-        let output_type = txoutdata.outputtype;
-
+    for (value, output_type, addr_info) in items {
         transacted.iterate(value, output_type);
 
-        if output_type.is_not_address() {
-            continue;
+        if let Some((typeindex, txindex, value, addr_data_opt)) = addr_info {
+            received_data
+                .get_mut(output_type)
+                .unwrap()
+                .push((typeindex, value));
+
+            if let Some(addr_data) = addr_data_opt {
+                address_data.insert_for_type(output_type, typeindex, addr_data);
+            }
+
+            txindex_vecs
+                .get_mut(output_type)
+                .unwrap()
+                .entry(typeindex)
+                .or_default()
+                .push(txindex);
         }
-
-        let typeindex = txoutdata.typeindex;
-
-        received_data
-            .get_mut(output_type)
-            .unwrap()
-            .push((typeindex, value));
-
-        let addr_data_opt = load_uncached_address_data(
-            output_type,
-            typeindex,
-            first_addressindexes,
-            cache,
-            vr,
-            any_address_indexes,
-            addresses_data,
-        )?;
-
-        if let Some(addr_data) = addr_data_opt {
-            address_data.insert_for_type(output_type, typeindex, addr_data);
-        }
-
-        txindex_vecs
-            .get_mut(output_type)
-            .unwrap()
-            .entry(typeindex)
-            .or_default()
-            .push(txindex);
     }
 
     Ok(OutputsResult {

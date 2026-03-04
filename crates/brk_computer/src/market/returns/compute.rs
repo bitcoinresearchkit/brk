@@ -46,24 +46,13 @@ impl Vecs {
 
         let _24h_price_return_ratio = &self.price_return._24h.ratio.height;
 
-        self.price_return_24h_sd_1w.compute_all(
-            blocks,
-            starting_indexes,
-            exit,
-            _24h_price_return_ratio,
-        )?;
-        self.price_return_24h_sd_1m.compute_all(
-            blocks,
-            starting_indexes,
-            exit,
-            _24h_price_return_ratio,
-        )?;
-        self.price_return_24h_sd_1y.compute_all(
-            blocks,
-            starting_indexes,
-            exit,
-            _24h_price_return_ratio,
-        )?;
+        for sd in [
+            &mut self.price_return_24h_sd_1w,
+            &mut self.price_return_24h_sd_1m,
+            &mut self.price_return_24h_sd_1y,
+        ] {
+            sd.compute_all(blocks, starting_indexes, exit, _24h_price_return_ratio)?;
+        }
 
         // Downside returns: min(return, 0)
         self.price_downside_24h.compute_transform(
@@ -77,24 +66,13 @@ impl Vecs {
         )?;
 
         // Downside deviation (SD of downside returns)
-        self.price_downside_24h_sd_1w.compute_all(
-            blocks,
-            starting_indexes,
-            exit,
-            &self.price_downside_24h,
-        )?;
-        self.price_downside_24h_sd_1m.compute_all(
-            blocks,
-            starting_indexes,
-            exit,
-            &self.price_downside_24h,
-        )?;
-        self.price_downside_24h_sd_1y.compute_all(
-            blocks,
-            starting_indexes,
-            exit,
-            &self.price_downside_24h,
-        )?;
+        for sd in [
+            &mut self.price_downside_24h_sd_1w,
+            &mut self.price_downside_24h_sd_1m,
+            &mut self.price_downside_24h_sd_1y,
+        ] {
+            sd.compute_all(blocks, starting_indexes, exit, &self.price_downside_24h)?;
+        }
 
         Ok(())
     }

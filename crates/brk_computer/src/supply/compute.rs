@@ -55,19 +55,20 @@ impl Vecs {
                 exit,
             )?;
 
+        let realized_cap = &distribution
+            .utxo_cohorts
+            .all
+            .metrics
+            .realized
+            .realized_cap
+            .height;
         self.realized_cap_growth_rate
             .bps
             .height
             .compute_rolling_ratio_change(
                 starting_indexes.height,
                 &blocks.count.height_1y_ago,
-                &distribution
-                    .utxo_cohorts
-                    .all
-                    .metrics
-                    .realized
-                    .realized_cap
-                    .height,
+                realized_cap,
                 exit,
             )?;
 

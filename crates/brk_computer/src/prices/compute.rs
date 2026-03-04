@@ -188,22 +188,19 @@ impl Vecs {
                 .copied()
                 .unwrap_or(TxIndex::from(total_txs));
 
+            let next_out_first = out_firsts
+                .get(idx + 1)
+                .copied()
+                .unwrap_or(TxOutIndex::from(total_outputs))
+                .to_usize();
             let out_start = if first_txindex.to_usize() + 1 < next_first_txindex.to_usize() {
                 let target = first_txindex.to_usize() + 1;
                 txout_cursor.advance(target - txout_cursor.position());
                 txout_cursor.next().unwrap().to_usize()
             } else {
-                out_firsts
-                    .get(idx + 1)
-                    .copied()
-                    .unwrap_or(TxOutIndex::from(total_outputs))
-                    .to_usize()
+                next_out_first
             };
-            let out_end = out_firsts
-                .get(idx + 1)
-                .copied()
-                .unwrap_or(TxOutIndex::from(total_outputs))
-                .to_usize();
+            let out_end = next_out_first;
 
             indexer
                 .vecs

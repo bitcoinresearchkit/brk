@@ -10,7 +10,7 @@ use vecdb::{Bytes, Formattable};
 use crate::{CheckedSub, FundedAddressData, Sats};
 
 /// Current supply state tracking UTXO count and total value
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, JsonSchema)]
 pub struct SupplyState {
     /// Number of unspent transaction outputs
     pub utxo_count: u64,

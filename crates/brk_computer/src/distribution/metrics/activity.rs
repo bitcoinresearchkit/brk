@@ -109,30 +109,19 @@ impl ActivityMetrics {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.sent.base.sats.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.sent.base.sats.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.satblocks_destroyed.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.satblocks_destroyed)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.satdays_destroyed.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.satdays_destroyed)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
+        macro_rules! sum_others {
+            ($($field:tt).+) => {
+                self.$($field).+.compute_sum_of_others(
+                    starting_indexes.height,
+                    &others.iter().map(|v| &v.$($field).+).collect::<Vec<_>>(),
+                    exit,
+                )?
+            };
+        }
+
+        sum_others!(sent.base.sats.height);
+        sum_others!(satblocks_destroyed);
+        sum_others!(satdays_destroyed);
         Ok(())
     }
 

@@ -1,4 +1,4 @@
-use brk_types::{Cents, Height, Timestamp};
+use brk_types::{CostBasisSnapshot, Cents, Height, Timestamp};
 use vecdb::Rw;
 
 use crate::distribution::state::Transacted;
@@ -23,25 +23,28 @@ impl UTXOCohorts<Rw> {
     ) {
         let supply_state = received.spendable_supply;
 
+        // Pre-compute snapshot once for the 3 cohorts sharing the same supply_state
+        let snapshot = CostBasisSnapshot::from_utxo(price, &supply_state);
+
         // New UTXOs go into up_to_1h, current epoch, and current year
         self.age_range
             .up_to_1h
             .state
             .as_mut()
             .unwrap()
-            .receive_utxo(&supply_state, price);
+            .receive_utxo_snapshot(&supply_state, &snapshot);
         self.epoch
             .mut_vec_from_height(height)
             .state
             .as_mut()
             .unwrap()
-            .receive_utxo(&supply_state, price);
+            .receive_utxo_snapshot(&supply_state, &snapshot);
         self.year
             .mut_vec_from_timestamp(timestamp)
             .state
             .as_mut()
             .unwrap()
-            .receive_utxo(&supply_state, price);
+            .receive_utxo_snapshot(&supply_state, &snapshot);
 
         // Update output type cohorts
         self.type_.iter_typed_mut().for_each(|(output_type, vecs)| {

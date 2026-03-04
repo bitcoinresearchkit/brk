@@ -19,6 +19,8 @@ pub(crate) fn process_received(
     empty_addr_count: &mut ByAddressType<u64>,
     activity_counts: &mut AddressTypeToActivityCounts,
 ) {
+    let mut aggregated: FxHashMap<TypeIndex, (Sats, u32)> = FxHashMap::default();
+
     for (output_type, vec) in received_data.unwrap().into_iter() {
         if vec.is_empty() {
             continue;
@@ -31,14 +33,13 @@ pub(crate) fn process_received(
 
         // Aggregate receives by address - each address processed exactly once
         // Track (total_value, output_count) for correct UTXO counting
-        let mut aggregated: FxHashMap<TypeIndex, (Sats, u32)> = FxHashMap::default();
         for (type_index, value) in vec {
             let entry = aggregated.entry(type_index).or_default();
             entry.0 += value;
             entry.1 += 1;
         }
 
-        for (type_index, (total_value, output_count)) in aggregated {
+        for (type_index, (total_value, output_count)) in aggregated.drain() {
             let (addr_data, status) = lookup.get_or_create_for_receive(output_type, type_index);
 
             // Track receiving activity - each address in receive aggregation

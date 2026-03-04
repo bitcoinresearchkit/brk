@@ -6,7 +6,7 @@ use vecdb::{
     VecIndex, VecValue, Version,
 };
 
-use crate::internal::ComputedVecValue;
+use crate::internal::{ComputedVecValue, compute_aggregations};
 
 use super::Distribution;
 
@@ -43,7 +43,7 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Full<I, T> {
     where
         A: VecIndex + VecValue + brk_types::CheckedSub<A>,
     {
-        crate::internal::compute_aggregations(
+        compute_aggregations(
             max_from,
             source,
             first_indexes,

@@ -62,15 +62,15 @@ pub(crate) fn process_inputs(
         .map(|local_idx| -> Result<_> {
             let txindex = txinindex_to_txindex[local_idx];
 
-            let prev_height = *txinindex_to_prev_height.get(local_idx).unwrap();
-            let value = *txinindex_to_value.get(local_idx).unwrap();
-            let input_type = *txinindex_to_outputtype.get(local_idx).unwrap();
+            let prev_height = txinindex_to_prev_height[local_idx];
+            let value = txinindex_to_value[local_idx];
+            let input_type = txinindex_to_outputtype[local_idx];
 
             if input_type.is_not_address() {
                 return Ok((prev_height, value, input_type, None));
             }
 
-            let typeindex = *txinindex_to_typeindex.get(local_idx).unwrap();
+            let typeindex = txinindex_to_typeindex[local_idx];
 
             // Look up address data
             let addr_data_opt = load_uncached_address_data(

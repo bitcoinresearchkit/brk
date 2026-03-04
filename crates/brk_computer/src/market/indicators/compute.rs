@@ -2,35 +2,26 @@ use brk_error::Result;
 use brk_types::{BasisPoints16, Dollars, Indexes};
 use vecdb::Exit;
 
-use super::{super::range, Vecs};
-use crate::{
-    blocks, distribution,
-    internal::{RatioDollarsBp32, Windows},
-    mining, prices, transactions,
+use super::{
+    super::{moving_average, range, returns},
+    Vecs, gini, macd, rsi,
 };
+use crate::{blocks, distribution, internal::RatioDollarsBp32, mining, prices, transactions};
 
-fn tf_multiplier(tf: &str) -> usize {
-    match tf {
-        "24h" => 1,
-        "1w" => 7,
-        "1m" => 30,
-        "1y" => 365,
-        _ => unreachable!(),
-    }
-}
+const TF_MULTIPLIERS: [usize; 4] = [1, 7, 30, 365];
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         rewards: &mining::RewardsVecs,
-        returns: &super::super::returns::Vecs,
+        returns: &returns::Vecs,
         range: &range::Vecs,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
         distribution: &distribution::Vecs,
         transactions: &transactions::Vecs,
-        moving_average: &super::super::moving_average::Vecs,
+        moving_average: &moving_average::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -72,22 +63,23 @@ impl Vecs {
         }
 
         // RSI per timeframe
-        for (tf, rsi_chain) in Windows::<()>::SUFFIXES
+        let return_sources = [
+            &returns.price_return._24h.ratio.height,
+            &returns.price_return._1w.ratio.height,
+            &returns.price_return._1m.ratio.height,
+            &returns.price_return._1y.ratio.height,
+        ];
+        for ((rsi_chain, ret), &m) in self
+            .rsi
+            .as_mut_array()
             .into_iter()
-            .zip(self.rsi.as_mut_array())
+            .zip(return_sources)
+            .zip(&TF_MULTIPLIERS)
         {
-            let m = tf_multiplier(tf);
-            let returns_source = match tf {
-                "24h" => &returns.price_return._24h.ratio.height,
-                "1w" => &returns.price_return._1w.ratio.height,
-                "1m" => &returns.price_return._1m.ratio.height,
-                "1y" => &returns.price_return._1y.ratio.height,
-                _ => unreachable!(),
-            };
-            super::rsi::compute(
+            rsi::compute(
                 rsi_chain,
                 blocks,
-                returns_source,
+                ret,
                 14 * m,
                 3 * m,
                 starting_indexes,
@@ -96,12 +88,8 @@ impl Vecs {
         }
 
         // MACD per timeframe
-        for (tf, macd_chain) in Windows::<()>::SUFFIXES
-            .into_iter()
-            .zip(self.macd.as_mut_array())
-        {
-            let m = tf_multiplier(tf);
-            super::macd::compute(
+        for (macd_chain, &m) in self.macd.as_mut_array().into_iter().zip(&TF_MULTIPLIERS) {
+            macd::compute(
                 macd_chain,
                 blocks,
                 prices,
@@ -114,21 +102,22 @@ impl Vecs {
         }
 
         // Gini (per height)
-        super::gini::compute(&mut self.gini, distribution, starting_indexes, exit)?;
+        gini::compute(&mut self.gini, distribution, starting_indexes, exit)?;
 
         // NVT: market_cap / tx_volume_24h
+        let market_cap = &distribution
+            .utxo_cohorts
+            .all
+            .metrics
+            .supply
+            .total
+            .usd
+            .height;
         self.nvt
             .bps
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 starting_indexes.height,
-                &distribution
-                    .utxo_cohorts
-                    .all
-                    .metrics
-                    .supply
-                    .total
-                    .usd
-                    .height,
+                market_cap,
                 &transactions.volume.sent_sum.rolling._24h.usd.height,
                 exit,
             )?;

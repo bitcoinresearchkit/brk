@@ -4,7 +4,7 @@ use vecdb::{Rw, VecIndex};
 
 use crate::distribution::{
     compute::PriceRangeMax,
-    state::{BlockState, Transacted},
+    state::{BlockState, CohortState, Transacted},
 };
 
 use super::groups::UTXOCohorts;
@@ -50,47 +50,49 @@ impl UTXOCohorts<Rw> {
             // This is the max price between receive and send heights
             let peak_price = price_range_max.max_between(receive_height, send_height);
 
-            // Update age range cohort (direct index lookup)
-            self.age_range
-                .get_mut(age)
-                .state
-                .as_mut()
-                .unwrap()
-                .send_utxo(
-                    &sent.spendable_supply,
-                    current_price,
-                    prev_price,
-                    peak_price,
-                    age,
-                );
-
-            // Update epoch cohort (direct lookup by height)
-            self.epoch
-                .mut_vec_from_height(receive_height)
-                .state
-                .as_mut()
-                .unwrap()
-                .send_utxo(
-                    &sent.spendable_supply,
-                    current_price,
-                    prev_price,
-                    peak_price,
-                    age,
-                );
-
-            // Update year cohort (direct lookup by timestamp)
-            self.year
-                .mut_vec_from_timestamp(block_state.timestamp)
-                .state
-                .as_mut()
-                .unwrap()
-                .send_utxo(
-                    &sent.spendable_supply,
-                    current_price,
-                    prev_price,
-                    peak_price,
-                    age,
-                );
+            // Pre-compute once for age_range, epoch, year (all share sent.spendable_supply)
+            if let Some(pre) = CohortState::precompute_send(
+                &sent.spendable_supply,
+                current_price,
+                prev_price,
+                peak_price,
+                age,
+            ) {
+                self.age_range
+                    .get_mut(age)
+                    .state
+                    .as_mut()
+                    .unwrap()
+                    .send_utxo_precomputed(&sent.spendable_supply, &pre);
+                self.epoch
+                    .mut_vec_from_height(receive_height)
+                    .state
+                    .as_mut()
+                    .unwrap()
+                    .send_utxo_precomputed(&sent.spendable_supply, &pre);
+                self.year
+                    .mut_vec_from_timestamp(block_state.timestamp)
+                    .state
+                    .as_mut()
+                    .unwrap()
+                    .send_utxo_precomputed(&sent.spendable_supply, &pre);
+            } else if sent.spendable_supply.utxo_count > 0 {
+                // Zero-value UTXOs: just subtract supply
+                self.age_range.get_mut(age).state.as_mut().unwrap().supply -=
+                    &sent.spendable_supply;
+                self.epoch
+                    .mut_vec_from_height(receive_height)
+                    .state
+                    .as_mut()
+                    .unwrap()
+                    .supply -= &sent.spendable_supply;
+                self.year
+                    .mut_vec_from_timestamp(block_state.timestamp)
+                    .state
+                    .as_mut()
+                    .unwrap()
+                    .supply -= &sent.spendable_supply;
+            }
 
             // Update output type cohorts
             sent.by_type

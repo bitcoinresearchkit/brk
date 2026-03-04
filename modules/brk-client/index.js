@@ -2587,10 +2587,10 @@ function createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPatter
     max: createMetricPattern18(client, _m(acc, 'max')),
     median: createMetricPattern18(client, _m(acc, 'median')),
     min: createMetricPattern18(client, _m(acc, 'min')),
-    pct10: createMetricPattern18(client, _m(acc, 'pct10')),
-    pct25: createMetricPattern18(client, _m(acc, 'pct25')),
-    pct75: createMetricPattern18(client, _m(acc, 'pct75')),
-    pct90: createMetricPattern18(client, _m(acc, 'pct90')),
+    pct10: createMetricPattern18(client, _m(acc, 'p10')),
+    pct25: createMetricPattern18(client, _m(acc, 'p25')),
+    pct75: createMetricPattern18(client, _m(acc, 'p75')),
+    pct90: createMetricPattern18(client, _m(acc, 'p90')),
     rolling: createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc),
     sum: createMetricPattern18(client, _m(acc, 'sum')),
   };
@@ -2923,10 +2923,10 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc) {
     max: createMetricPattern18(client, _m(acc, 'max')),
     median: createMetricPattern18(client, _m(acc, 'median')),
     min: createMetricPattern18(client, _m(acc, 'min')),
-    pct10: createMetricPattern18(client, _m(acc, 'pct10')),
-    pct25: createMetricPattern18(client, _m(acc, 'pct25')),
-    pct75: createMetricPattern18(client, _m(acc, 'pct75')),
-    pct90: createMetricPattern18(client, _m(acc, 'pct90')),
+    pct10: createMetricPattern18(client, _m(acc, 'p10')),
+    pct25: createMetricPattern18(client, _m(acc, 'p25')),
+    pct75: createMetricPattern18(client, _m(acc, 'p75')),
+    pct90: createMetricPattern18(client, _m(acc, 'p90')),
   };
 }
 

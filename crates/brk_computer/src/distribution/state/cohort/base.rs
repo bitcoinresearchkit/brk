@@ -1,9 +1,19 @@
-use std::path::Path;
+use std::{collections::BTreeMap, path::Path};
 
 use brk_error::Result;
-use brk_types::{Age, Cents, CentsSats, CostBasisSnapshot, Height, Sats, SupplyState};
+use brk_types::{Age, Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisSnapshot, Height, Sats, SupplyState};
 
 use super::super::cost_basis::{CostBasisData, Percentiles, RealizedState, UnrealizedState};
+
+pub struct SendPrecomputed {
+    pub sats: Sats,
+    pub prev_price: Cents,
+    pub age: Age,
+    pub current_ps: CentsSats,
+    pub prev_ps: CentsSats,
+    pub ath_ps: CentsSats,
+    pub prev_investor_cap: CentsSquaredSats,
+}
 
 pub struct CohortState {
     pub supply: SupplyState,
@@ -73,10 +83,6 @@ impl CohortState {
         self.realized.reset_single_iteration_values();
     }
 
-    pub(crate) fn increment(&mut self, supply: &SupplyState, price: Cents) {
-        self.increment_snapshot(&CostBasisSnapshot::from_utxo(price, supply));
-    }
-
     pub(crate) fn increment_snapshot(&mut self, s: &CostBasisSnapshot) {
         self.supply += &s.supply_state;
 
@@ -90,10 +96,6 @@ impl CohortState {
                 s.investor_cap,
             );
         }
-    }
-
-    pub(crate) fn decrement(&mut self, supply: &SupplyState, price: Cents) {
-        self.decrement_snapshot(&CostBasisSnapshot::from_utxo(price, supply));
     }
 
     pub(crate) fn decrement_snapshot(&mut self, s: &CostBasisSnapshot) {
@@ -112,19 +114,27 @@ impl CohortState {
     }
 
     pub(crate) fn receive_utxo(&mut self, supply: &SupplyState, price: Cents) {
+        self.receive_utxo_snapshot(supply, &CostBasisSnapshot::from_utxo(price, supply));
+    }
+
+    /// Like receive_utxo but takes a pre-computed snapshot to avoid redundant multiplication
+    /// when the same supply/price is used across multiple cohorts.
+    pub(crate) fn receive_utxo_snapshot(
+        &mut self,
+        supply: &SupplyState,
+        snapshot: &CostBasisSnapshot,
+    ) {
         self.supply += supply;
 
         if supply.value > Sats::ZERO {
-            let sats = supply.value;
+            self.realized.receive(snapshot.realized_price, supply.value);
 
-            // Compute once using typed values
-            let price_sats = CentsSats::from_price_sats(price, sats);
-            let investor_cap = price_sats.to_investor_cap(price);
-
-            self.realized.receive(price, sats);
-
-            self.cost_basis_data
-                .increment(price, sats, price_sats, investor_cap);
+            self.cost_basis_data.increment(
+                snapshot.realized_price,
+                supply.value,
+                snapshot.price_sats,
+                snapshot.investor_cap,
+            );
         }
     }
 
@@ -160,6 +170,51 @@ impl CohortState {
         }
     }
 
+    /// Pre-computed values for send_utxo when the same supply/prices are shared
+    /// across multiple cohorts (age_range, epoch, year).
+    pub(crate) fn precompute_send(
+        supply: &SupplyState,
+        current_price: Cents,
+        prev_price: Cents,
+        ath: Cents,
+        age: Age,
+    ) -> Option<SendPrecomputed> {
+        if supply.utxo_count == 0 || supply.value == Sats::ZERO {
+            return None;
+        }
+        let sats = supply.value;
+        let current_ps = CentsSats::from_price_sats(current_price, sats);
+        let prev_ps = CentsSats::from_price_sats(prev_price, sats);
+        let ath_ps = CentsSats::from_price_sats(ath, sats);
+        let prev_investor_cap = prev_ps.to_investor_cap(prev_price);
+        Some(SendPrecomputed {
+            sats,
+            prev_price,
+            age,
+            current_ps,
+            prev_ps,
+            ath_ps,
+            prev_investor_cap,
+        })
+    }
+
+    pub(crate) fn send_utxo_precomputed(
+        &mut self,
+        supply: &SupplyState,
+        pre: &SendPrecomputed,
+    ) {
+        self.supply -= supply;
+        self.sent += pre.sats;
+        self.satblocks_destroyed += pre.age.satblocks_destroyed(pre.sats);
+        self.satdays_destroyed += pre.age.satdays_destroyed(pre.sats);
+
+        self.realized
+            .send(pre.sats, pre.current_ps, pre.prev_ps, pre.ath_ps, pre.prev_investor_cap);
+
+        self.cost_basis_data
+            .decrement(pre.prev_price, pre.sats, pre.prev_ps, pre.prev_investor_cap);
+    }
+
     pub(crate) fn send_utxo(
         &mut self,
         supply: &SupplyState,
@@ -168,33 +223,10 @@ impl CohortState {
         ath: Cents,
         age: Age,
     ) {
-        if supply.utxo_count == 0 {
-            return;
-        }
-
-        self.supply -= supply;
-
-        if supply.value > Sats::ZERO {
-            self.sent += supply.value;
-            self.satblocks_destroyed += age.satblocks_destroyed(supply.value);
-            self.satdays_destroyed += age.satdays_destroyed(supply.value);
-
-            let cp = current_price;
-            let pp = prev_price;
-            let ath_price = ath;
-            let sats = supply.value;
-
-            // Compute ONCE using typed values
-            let current_ps = CentsSats::from_price_sats(cp, sats);
-            let prev_ps = CentsSats::from_price_sats(pp, sats);
-            let ath_ps = CentsSats::from_price_sats(ath_price, sats);
-            let prev_investor_cap = prev_ps.to_investor_cap(pp);
-
-            self.realized
-                .send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
-
-            self.cost_basis_data
-                .decrement(pp, sats, prev_ps, prev_investor_cap);
+        if let Some(pre) = Self::precompute_send(supply, current_price, prev_price, ath, age) {
+            self.send_utxo_precomputed(supply, &pre);
+        } else if supply.utxo_count > 0 {
+            self.supply -= supply;
         }
     }
 
@@ -263,7 +295,7 @@ impl CohortState {
         self.cost_basis_data.write(height, cleanup)
     }
 
-    pub(crate) fn cost_basis_data_iter(&self) -> impl Iterator<Item = (Cents, &Sats)> {
-        self.cost_basis_data.iter().map(|(k, v)| (k.into(), v))
+    pub(crate) fn cost_basis_map(&self) -> &BTreeMap<CentsCompact, Sats> {
+        self.cost_basis_data.map()
     }
 }

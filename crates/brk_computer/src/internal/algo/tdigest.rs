@@ -126,25 +126,26 @@ impl TDigest {
             return;
         }
 
-        let total: f64 = self.centroids.iter().map(|c| c.weight).sum();
-        let mut merged: Vec<Centroid> = Vec::with_capacity(self.centroids.len());
+        let total = self.count as f64;
         let mut cum = 0.0;
+        let mut write_idx = 0;
 
-        for c in &self.centroids {
-            if let Some(last) = merged.last_mut() {
-                let q = (cum + last.weight / 2.0) / total;
-                let limit = (4.0 * self.compression * q * (1.0 - q)).floor().max(1.0);
-                if last.weight + c.weight <= limit {
-                    let new_weight = last.weight + c.weight;
-                    last.mean = (last.mean * last.weight + c.mean * c.weight) / new_weight;
-                    last.weight = new_weight;
-                    continue;
-                }
+        for read_idx in 1..self.centroids.len() {
+            let c = self.centroids[read_idx];
+            let last = &mut self.centroids[write_idx];
+            let q = (cum + last.weight / 2.0) / total;
+            let limit = (4.0 * self.compression * q * (1.0 - q)).floor().max(1.0);
+            if last.weight + c.weight <= limit {
+                let new_weight = last.weight + c.weight;
+                last.mean = (last.mean * last.weight + c.mean * c.weight) / new_weight;
+                last.weight = new_weight;
+            } else {
                 cum += last.weight;
+                write_idx += 1;
+                self.centroids[write_idx] = c;
             }
-            merged.push(*c);
         }
-        self.centroids = merged;
+        self.centroids.truncate(write_idx + 1);
     }
 
     /// Batch quantile query in a single pass. `qs` must be sorted ascending.
@@ -167,7 +168,7 @@ impl TDigest {
             return;
         }
 
-        let total: f64 = self.centroids.iter().map(|c| c.weight).sum();
+        let total = self.count as f64;
         let mut cum = 0.0;
         let mut ci = 0;
 

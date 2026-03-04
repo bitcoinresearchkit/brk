@@ -8,7 +8,7 @@ use vecdb::{
 
 use crate::{
     blocks, indexes,
-    internal::{ComputedFromHeightStdDevExtended, Price, TDigest},
+    internal::{ComputedFromHeightStdDevExtended, Price, PriceTimesRatioBp32Cents, TDigest},
 };
 
 use super::{super::ComputedFromHeight, ComputedFromHeightRatio};
@@ -200,8 +200,6 @@ impl ComputedFromHeightRatioExtension {
         metric_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        use crate::internal::PriceTimesRatioBp32Cents;
-
         macro_rules! compute_band {
             ($usd_field:ident, $band_source:expr) => {
                 self.$usd_field

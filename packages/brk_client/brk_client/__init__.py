@@ -2548,10 +2548,10 @@ class AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern:
         self.max: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'max'))
         self.median: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'median'))
         self.min: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'min'))
-        self.pct10: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'pct10'))
-        self.pct25: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'pct25'))
-        self.pct75: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'pct75'))
-        self.pct90: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'pct90'))
+        self.pct10: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'p10'))
+        self.pct25: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'p25'))
+        self.pct75: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'p75'))
+        self.pct90: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'p90'))
         self.rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc)
         self.sum: MetricPattern18[StoredU64] = MetricPattern18(client, _m(acc, 'sum'))
 
@@ -2700,10 +2700,10 @@ class AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(Generic[T]):
         self.max: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'max'))
         self.median: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'median'))
         self.min: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'min'))
-        self.pct10: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'pct10'))
-        self.pct25: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'pct25'))
-        self.pct75: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'pct75'))
-        self.pct90: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'pct90'))
+        self.pct10: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'p10'))
+        self.pct25: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'p25'))
+        self.pct75: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'p75'))
+        self.pct90: MetricPattern18[T] = MetricPattern18(client, _m(acc, 'p90'))
 
 class _10y2y3y4y5y6y8yPattern:
     """Pattern struct for repeated tree structure."""

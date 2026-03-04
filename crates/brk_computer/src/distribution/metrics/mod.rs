@@ -187,42 +187,22 @@ pub trait CohortMetricsBase: Send + Sync {
     where
         Self: Sized,
     {
-        self.supply_mut().compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| v.supply()).collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.outputs_mut().compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| v.outputs()).collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.activity_mut().compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| v.activity()).collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.realized_base_mut().compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| v.realized_base()).collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.unrealized_base_mut().compute_from_stateful(
-            starting_indexes,
-            &others
-                .iter()
-                .map(|v| v.unrealized_base())
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.cost_basis_base_mut().compute_from_stateful(
-            starting_indexes,
-            &others
-                .iter()
-                .map(|v| v.cost_basis_base())
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
+        macro_rules! aggregate {
+            ($self_mut:ident, $accessor:ident) => {
+                self.$self_mut().compute_from_stateful(
+                    starting_indexes,
+                    &others.iter().map(|v| v.$accessor()).collect::<Vec<_>>(),
+                    exit,
+                )?
+            };
+        }
+
+        aggregate!(supply_mut, supply);
+        aggregate!(outputs_mut, outputs);
+        aggregate!(activity_mut, activity);
+        aggregate!(realized_base_mut, realized_base);
+        aggregate!(unrealized_base_mut, unrealized_base);
+        aggregate!(cost_basis_base_mut, cost_basis_base);
         Ok(())
     }
 }

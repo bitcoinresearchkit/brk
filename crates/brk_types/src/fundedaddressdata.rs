@@ -24,7 +24,7 @@ impl CostBasisSnapshot {
         let price_sats = CentsSats::from_price_sats(price, supply.value);
         Self {
             realized_price: price,
-            supply_state: supply.clone(),
+            supply_state: *supply,
             price_sats,
             investor_cap: price_sats.to_investor_cap(price),
         }

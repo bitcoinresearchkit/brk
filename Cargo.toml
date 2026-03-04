@@ -68,9 +68,9 @@ brk_website = { version = "0.1.9", path = "crates/brk_website" }
 byteview = "0.10.1"
 color-eyre = "0.6.5"
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
-fjall = "3.0.2"
+fjall = "3.0.3"
 indexmap = { version = "2.13.0", features = ["serde"] }
-jiff = { version = "0.2.21", features = ["perf-inline", "tz-system"], default-features = false }
+jiff = { version = "0.2.23", features = ["perf-inline", "tz-system"], default-features = false }
 minreq = { version = "2.14.1", features = ["https", "json-using-serde"] }
 owo-colors = "4.3.0"
 parking_lot = "0.12.5"
@@ -83,7 +83,7 @@ serde_bytes = "0.11.19"
 serde_derive = "1.0.228"
 serde_json = { version = "1.0.149", features = ["float_roundtrip", "preserve_order"] }
 smallvec = "1.15.1"
-tokio = { version = "1.49.0", features = ["rt-multi-thread"] }
+tokio = { version = "1.50.0", features = ["rt-multi-thread"] }
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 tower-http = { version = "0.6.8", features = ["catch-panic", "compression-br", "compression-gzip", "compression-zstd", "cors", "normalize-path", "timeout", "trace"] }
 tower-layer = "0.3"

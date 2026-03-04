@@ -39,9 +39,8 @@ impl SortedBlocks {
         // Find the block where value belongs: first block whose max >= value
         let block_idx = self
             .blocks
-            .iter()
-            .position(|b| *b.last().unwrap() >= value)
-            .unwrap_or(self.blocks.len() - 1);
+            .partition_point(|b| *b.last().unwrap() < value)
+            .min(self.blocks.len() - 1);
 
         let block = &mut self.blocks[block_idx];
         let pos = block.partition_point(|a| *a < value);

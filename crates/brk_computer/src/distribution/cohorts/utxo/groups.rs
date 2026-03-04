@@ -1,27 +1,16 @@
-use std::{cmp::Reverse, collections::BinaryHeap, fs, path::Path};
+use std::path::Path;
 
 use brk_cohort::{
     ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge, ByMinAge,
-    BySpendableType, ByYear, CohortContext, Filter, Filtered, TERM_NAMES, Term,
+    BySpendableType, ByYear, CohortContext, Filter, Term,
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{
-    BasisPoints16, Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Height, Indexes,
-    Sats, Version,
-};
+use brk_types::{Dollars, Height, Indexes, Version};
 use rayon::prelude::*;
-use vecdb::{
-    AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec,
-};
+use vecdb::{AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode};
 
-use crate::{
-    blocks,
-    distribution::DynCohortVecs,
-    indexes,
-    internal::{PERCENTILES, PERCENTILES_LEN, compute_spot_percentile_rank},
-    prices,
-};
+use crate::{blocks, distribution::DynCohortVecs, indexes, prices};
 
 use crate::distribution::metrics::{
     AdjustedCohortMetrics, AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase,
@@ -33,9 +22,6 @@ use super::vecs::UTXOCohortVecs;
 use crate::distribution::state::UTXOCohortState;
 
 const VERSION: Version = Version::new(0);
-
-/// Significant digits for cost basis prices (after rounding to dollars).
-const COST_BASIS_PRICE_DIGITS: i32 = 5;
 
 /// All UTXO cohorts organized by filter type.
 ///
@@ -61,6 +47,18 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     pub epoch: ByEpoch<UTXOCohortVecs<BasicCohortMetrics<M>>>,
     pub year: ByYear<UTXOCohortVecs<BasicCohortMetrics<M>>>,
     pub type_: BySpendableType<UTXOCohortVecs<BasicCohortMetrics<M>>>,
+}
+
+macro_rules! collect_separate {
+    ($self:expr, $method:ident, $trait_ref:ty) => {{
+        let mut v: Vec<$trait_ref> = Vec::with_capacity(UTXOCohorts::SEPARATE_COHORT_CAPACITY);
+        v.extend($self.age_range.$method().map(|x| x as $trait_ref));
+        v.extend($self.epoch.$method().map(|x| x as $trait_ref));
+        v.extend($self.year.$method().map(|x| x as $trait_ref));
+        v.extend($self.amount_range.$method().map(|x| x as $trait_ref));
+        v.extend($self.type_.$method().map(|x| x as $trait_ref));
+        v
+    }};
 }
 
 impl UTXOCohorts<Rw> {
@@ -236,54 +234,23 @@ impl UTXOCohorts<Rw> {
         })
     }
 
+    /// ~71 separate cohorts (21 age + 5 epoch + 18 year + 15 amount + 12 type)
+    const SEPARATE_COHORT_CAPACITY: usize = 80;
+
     pub(crate) fn par_iter_separate_mut(
         &mut self,
     ) -> impl ParallelIterator<Item = &mut dyn DynCohortVecs> {
-        let mut v: Vec<&mut dyn DynCohortVecs> = Vec::new();
-        v.extend(
-            self.age_range
-                .iter_mut()
-                .map(|x| x as &mut dyn DynCohortVecs),
-        );
-        v.extend(self.epoch.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
-        v.extend(self.year.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
-        v.extend(
-            self.amount_range
-                .iter_mut()
-                .map(|x| x as &mut dyn DynCohortVecs),
-        );
-        v.extend(self.type_.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
-        v.into_par_iter()
+        collect_separate!(self, iter_mut, &mut dyn DynCohortVecs).into_par_iter()
     }
 
     /// Immutable iterator over all separate (stateful) cohorts.
     pub(crate) fn iter_separate(&self) -> impl Iterator<Item = &dyn DynCohortVecs> {
-        let mut v: Vec<&dyn DynCohortVecs> = Vec::new();
-        v.extend(self.age_range.iter().map(|x| x as &dyn DynCohortVecs));
-        v.extend(self.epoch.iter().map(|x| x as &dyn DynCohortVecs));
-        v.extend(self.year.iter().map(|x| x as &dyn DynCohortVecs));
-        v.extend(self.amount_range.iter().map(|x| x as &dyn DynCohortVecs));
-        v.extend(self.type_.iter().map(|x| x as &dyn DynCohortVecs));
-        v.into_iter()
+        collect_separate!(self, iter, &dyn DynCohortVecs).into_iter()
     }
 
     /// Mutable iterator over all separate cohorts (non-parallel).
     pub(crate) fn iter_separate_mut(&mut self) -> impl Iterator<Item = &mut dyn DynCohortVecs> {
-        let mut v: Vec<&mut dyn DynCohortVecs> = Vec::new();
-        v.extend(
-            self.age_range
-                .iter_mut()
-                .map(|x| x as &mut dyn DynCohortVecs),
-        );
-        v.extend(self.epoch.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
-        v.extend(self.year.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
-        v.extend(
-            self.amount_range
-                .iter_mut()
-                .map(|x| x as &mut dyn DynCohortVecs),
-        );
-        v.extend(self.type_.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
-        v.into_iter()
+        collect_separate!(self, iter_mut, &mut dyn DynCohortVecs).into_iter()
     }
 
     pub(crate) fn compute_overlapping_vecs(
@@ -310,13 +277,9 @@ impl UTXOCohorts<Rw> {
         // sth: aggregate of matching age_range
         {
             let sth_filter = self.sth.metrics.filter().clone();
-            let matching: Vec<_> = age_range
+            let sources_dyn: Vec<&dyn CohortMetricsBase> = age_range
                 .iter()
                 .filter(|v| sth_filter.includes(v.metrics.filter()))
-                .collect();
-
-            let sources_dyn: Vec<&dyn CohortMetricsBase> = matching
-                .iter()
                 .map(|v| &v.metrics as &dyn CohortMetricsBase)
                 .collect();
             self.sth
@@ -327,13 +290,9 @@ impl UTXOCohorts<Rw> {
         // lth: aggregate of matching age_range
         {
             let lth_filter = self.lth.metrics.filter().clone();
-            let matching: Vec<_> = age_range
+            let sources_dyn: Vec<&dyn CohortMetricsBase> = age_range
                 .iter()
                 .filter(|v| lth_filter.includes(v.metrics.filter()))
-                .collect();
-
-            let sources_dyn: Vec<&dyn CohortMetricsBase> = matching
-                .iter()
                 .map(|v| &v.metrics as &dyn CohortMetricsBase)
                 .collect();
             self.lth
@@ -343,54 +302,36 @@ impl UTXOCohorts<Rw> {
 
         // min_age: base from matching age_range
         self.min_age
-            .iter_mut()
-            .collect::<Vec<_>>()
-            .into_par_iter()
+            .par_iter_mut()
             .try_for_each(|vecs| -> Result<()> {
                 let filter = vecs.metrics.filter().clone();
-                let matching: Vec<_> = age_range
+                let sources_dyn: Vec<&dyn CohortMetricsBase> = age_range
                     .iter()
                     .filter(|v| filter.includes(v.metrics.filter()))
-                    .collect();
-
-                let sources_dyn: Vec<&dyn CohortMetricsBase> = matching
-                    .iter()
                     .map(|v| &v.metrics as &dyn CohortMetricsBase)
                     .collect();
                 vecs.metrics
-                    .compute_base_from_others(starting_indexes, &sources_dyn, exit)?;
-
-                Ok(())
+                    .compute_base_from_others(starting_indexes, &sources_dyn, exit)
             })?;
 
         // max_age: base + peak_regret from matching age_range
         self.max_age
-            .iter_mut()
-            .collect::<Vec<_>>()
-            .into_par_iter()
+            .par_iter_mut()
             .try_for_each(|vecs| -> Result<()> {
                 let filter = vecs.metrics.filter().clone();
-                let matching: Vec<_> = age_range
+                let sources_dyn: Vec<&dyn CohortMetricsBase> = age_range
                     .iter()
                     .filter(|v| filter.includes(v.metrics.filter()))
-                    .collect();
-
-                let sources_dyn: Vec<&dyn CohortMetricsBase> = matching
-                    .iter()
                     .map(|v| &v.metrics as &dyn CohortMetricsBase)
                     .collect();
                 vecs.metrics
-                    .compute_base_from_others(starting_indexes, &sources_dyn, exit)?;
-
-                Ok(())
+                    .compute_base_from_others(starting_indexes, &sources_dyn, exit)
             })?;
 
         // ge_amount, lt_amount: base only from matching amount_range
         self.ge_amount
-            .iter_mut()
-            .chain(self.lt_amount.iter_mut())
-            .collect::<Vec<_>>()
-            .into_par_iter()
+            .par_iter_mut()
+            .chain(self.lt_amount.par_iter_mut())
             .try_for_each(|vecs| {
                 let filter = vecs.metrics.filter().clone();
                 let sources_dyn: Vec<&dyn CohortMetricsBase> = amount_range
@@ -415,7 +356,7 @@ impl UTXOCohorts<Rw> {
     ) -> Result<()> {
         // 1. Compute all metrics except net_sentiment (all cohorts via DynCohortVecs)
         {
-            let mut all: Vec<&mut dyn DynCohortVecs> = Vec::new();
+            let mut all: Vec<&mut dyn DynCohortVecs> = Vec::with_capacity(Self::SEPARATE_COHORT_CAPACITY + 3);
             all.push(&mut self.all);
             all.push(&mut self.sth);
             all.push(&mut self.lth);
@@ -708,7 +649,7 @@ impl UTXOCohorts<Rw> {
     pub(crate) fn par_iter_vecs_mut(
         &mut self,
     ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
+        let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::with_capacity(2048);
         vecs.extend(self.all.metrics.collect_all_vecs_mut());
         vecs.extend(self.sth.metrics.collect_all_vecs_mut());
         vecs.extend(self.lth.metrics.collect_all_vecs_mut());
@@ -775,229 +716,6 @@ impl UTXOCohorts<Rw> {
     pub(crate) fn reset_separate_cost_basis_data(&mut self) -> Result<()> {
         self.par_iter_separate_mut()
             .try_for_each(|v| v.reset_cost_basis_data_if_needed())
-    }
-
-    /// Compute and push percentiles for aggregate cohorts (all, sth, lth).
-    pub(crate) fn truncate_push_aggregate_percentiles(
-        &mut self,
-        height: Height,
-        spot: Cents,
-        date_opt: Option<Date>,
-        states_path: &Path,
-    ) -> Result<()> {
-        // Collect (filter, entries, total_sats, total_usd) from age_range cohorts.
-        let age_range_data: Vec<_> = self
-            .age_range
-            .iter()
-            .filter_map(|sub| {
-                let state = sub.state.as_ref()?;
-                let mut total_sats: u64 = 0;
-                let mut total_usd: u128 = 0;
-                let entries: Vec<(Cents, Sats)> = state
-                    .cost_basis_data_iter()
-                    .map(|(price, &sats)| {
-                        let sats_u64 = u64::from(sats);
-                        let price_u128 = price.as_u128();
-                        total_sats += sats_u64;
-                        total_usd += price_u128 * sats_u64 as u128;
-                        (price, sats)
-                    })
-                    .collect();
-                Some((sub.filter().clone(), entries, total_sats, total_usd))
-            })
-            .collect();
-
-        // Build list of (filter, cost_basis_extended, cohort_name) for aggregate cohorts
-        struct AggregateTarget<'a> {
-            filter: Filter,
-            extended: &'a mut crate::distribution::metrics::CostBasisExtended,
-            cohort_name: Option<&'static str>,
-        }
-
-        let mut targets = [
-            AggregateTarget {
-                filter: self.all.metrics.filter().clone(),
-                extended: &mut self.all.metrics.cost_basis.extended,
-                cohort_name: Some("all"),
-            },
-            AggregateTarget {
-                filter: self.sth.metrics.filter().clone(),
-                extended: &mut self.sth.metrics.cost_basis.extended,
-                cohort_name: Some(TERM_NAMES.short.id),
-            },
-            AggregateTarget {
-                filter: self.lth.metrics.filter().clone(),
-                extended: &mut self.lth.metrics.cost_basis.extended,
-                cohort_name: Some(TERM_NAMES.long.id),
-            },
-        ];
-
-        for target in targets.iter_mut() {
-            let filter = &target.filter;
-
-            let mut total_sats: u64 = 0;
-            let mut total_usd: u128 = 0;
-            let relevant: Vec<_> = age_range_data
-                .iter()
-                .filter(|(sub_filter, _, _, _)| filter.includes(sub_filter))
-                .map(|(_, entries, cohort_sats, cohort_usd)| {
-                    total_sats += cohort_sats;
-                    total_usd += cohort_usd;
-                    entries
-                })
-                .collect();
-
-            if total_sats == 0 {
-                let nan_prices = [Cents::ZERO; PERCENTILES_LEN];
-                target
-                    .extended
-                    .percentiles
-                    .truncate_push(height, &nan_prices)?;
-                target
-                    .extended
-                    .invested_capital
-                    .truncate_push(height, &nan_prices)?;
-                target
-                    .extended
-                    .spot_cost_basis_percentile
-                    .bps
-                    .height
-                    .truncate_push(height, BasisPoints16::ZERO)?;
-                target
-                    .extended
-                    .spot_invested_capital_percentile
-                    .bps
-                    .height
-                    .truncate_push(height, BasisPoints16::ZERO)?;
-                continue;
-            }
-
-            // K-way merge using min-heap
-            let mut heap: BinaryHeap<Reverse<(Cents, usize, usize)>> = BinaryHeap::new();
-            for (cohort_idx, entries) in relevant.iter().enumerate() {
-                if !entries.is_empty() {
-                    heap.push(Reverse((entries[0].0, cohort_idx, 0)));
-                }
-            }
-
-            let sat_targets = PERCENTILES.map(|p| total_sats * u64::from(p) / 100);
-            let usd_targets = PERCENTILES.map(|p| total_usd * u128::from(p) / 100);
-
-            let mut sat_result = [Cents::ZERO; PERCENTILES_LEN];
-            let mut usd_result = [Cents::ZERO; PERCENTILES_LEN];
-
-            let mut cumsum_sats: u64 = 0;
-            let mut cumsum_usd: u128 = 0;
-            let mut sat_idx = 0;
-            let mut usd_idx = 0;
-
-            let mut current_price: Option<Cents> = None;
-            let mut sats_at_price: u64 = 0;
-            let mut usd_at_price: u128 = 0;
-
-            let collect_merged = date_opt.is_some();
-            let max_unique_prices = if collect_merged {
-                relevant.iter().map(|e| e.len()).max().unwrap_or(0)
-            } else {
-                0
-            };
-            let mut merged: Vec<(CentsCompact, Sats)> = Vec::with_capacity(max_unique_prices);
-
-            let mut finalize_price = |price: Cents, sats: u64, usd: u128| {
-                cumsum_sats += sats;
-                cumsum_usd += usd;
-
-                if sat_idx < PERCENTILES_LEN || usd_idx < PERCENTILES_LEN {
-                    while sat_idx < PERCENTILES_LEN && cumsum_sats >= sat_targets[sat_idx] {
-                        sat_result[sat_idx] = price;
-                        sat_idx += 1;
-                    }
-                    while usd_idx < PERCENTILES_LEN && cumsum_usd >= usd_targets[usd_idx] {
-                        usd_result[usd_idx] = price;
-                        usd_idx += 1;
-                    }
-                }
-
-                if collect_merged {
-                    let rounded: CentsCompact =
-                        price.round_to_dollar(COST_BASIS_PRICE_DIGITS).into();
-                    if let Some((last_price, last_sats)) = merged.last_mut()
-                        && *last_price == rounded
-                    {
-                        *last_sats += Sats::from(sats);
-                    } else {
-                        merged.push((rounded, Sats::from(sats)));
-                    }
-                }
-            };
-
-            while let Some(Reverse((price, cohort_idx, entry_idx))) = heap.pop() {
-                let entries = relevant[cohort_idx];
-                let (_, amount) = entries[entry_idx];
-                let amount_u64 = u64::from(amount);
-                let price_u128 = price.as_u128();
-
-                if let Some(prev_price) = current_price
-                    && prev_price != price
-                {
-                    finalize_price(prev_price, sats_at_price, usd_at_price);
-                    sats_at_price = 0;
-                    usd_at_price = 0;
-                }
-
-                current_price = Some(price);
-                sats_at_price += amount_u64;
-                usd_at_price += price_u128 * amount_u64 as u128;
-
-                let next_idx = entry_idx + 1;
-                if next_idx < entries.len() {
-                    heap.push(Reverse((entries[next_idx].0, cohort_idx, next_idx)));
-                }
-            }
-
-            if let Some(price) = current_price {
-                finalize_price(price, sats_at_price, usd_at_price);
-            }
-
-            target
-                .extended
-                .percentiles
-                .truncate_push(height, &sat_result)?;
-            target
-                .extended
-                .invested_capital
-                .truncate_push(height, &usd_result)?;
-
-            let rank = compute_spot_percentile_rank(&sat_result, spot);
-            target
-                .extended
-                .spot_cost_basis_percentile
-                .bps
-                .height
-                .truncate_push(height, rank)?;
-            let rank = compute_spot_percentile_rank(&usd_result, spot);
-            target
-                .extended
-                .spot_invested_capital_percentile
-                .bps
-                .height
-                .truncate_push(height, rank)?;
-
-            // Write daily cost basis snapshot
-            if let Some(date) = date_opt
-                && let Some(cohort_name) = target.cohort_name
-            {
-                let dir = states_path.join(format!("utxo_{cohort_name}_cost_basis/by_date"));
-                fs::create_dir_all(&dir)?;
-                let path = dir.join(date.to_string());
-                fs::write(
-                    path,
-                    CostBasisDistribution::serialize_iter(merged.into_iter())?,
-                )?;
-            }
-        }
-
-        Ok(())
     }
 
     /// Validate computed versions for all cohorts.

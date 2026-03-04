@@ -68,11 +68,8 @@ where
     } else {
         0
     };
-    let partial_values: Vec<f64> = values
-        .collect_range_at(range_start, end)
-        .into_iter()
-        .map(|a| f64::from(a))
-        .collect();
+    let mut partial_values: Vec<f64> = Vec::with_capacity(end - range_start);
+    values.for_each_range_at(range_start, end, |a: A| partial_values.push(f64::from(a)));
 
     let capacity = if skip > 0 && skip < end {
         let first_start = window_starts.collect_one_at(skip).unwrap().to_usize();

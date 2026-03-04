@@ -1,5 +1,5 @@
 use brk_cohort::AGE_BOUNDARIES;
-use brk_types::{ONE_HOUR_IN_SEC, Timestamp};
+use brk_types::{CostBasisSnapshot, ONE_HOUR_IN_SEC, Timestamp};
 use vecdb::Rw;
 
 use crate::distribution::state::BlockState;
@@ -63,11 +63,13 @@ impl UTXOCohorts<Rw> {
 
             // Move supply from younger cohort to older cohort
             for block_state in &chain_state[start_idx..end_idx] {
+                let snapshot =
+                    CostBasisSnapshot::from_utxo(block_state.price, &block_state.supply);
                 if let Some(state) = age_cohorts[boundary_idx].as_mut() {
-                    state.decrement(&block_state.supply, block_state.price);
+                    state.decrement_snapshot(&snapshot);
                 }
                 if let Some(state) = age_cohorts[boundary_idx + 1].as_mut() {
-                    state.increment(&block_state.supply, block_state.price);
+                    state.increment_snapshot(&snapshot);
                 }
             }
         }
