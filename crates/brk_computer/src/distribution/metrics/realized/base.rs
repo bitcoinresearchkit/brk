@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    BasisPoints16, BasisPoints32, BasisPointsSigned16, Bitcoin, Cents, CentsSats, CentsSigned,
+    BasisPoints16, BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, CentsSats, CentsSigned,
     CentsSquaredSats, Dollars, Height, Indexes, Sats, StoredF32, StoredF64, Version,
 };
 use vecdb::{
@@ -16,9 +16,9 @@ use crate::{
         CentsPlus, CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative,
         ComputedFromHeightRatio, FiatFromHeight, Identity, LazyFromHeight,
         NegCentsUnsignedToDollars, PercentFromHeight, PercentRollingEmas1w1m,
-        PercentRollingWindows, Price, RatioCents64, RatioCentsBp16, RatioCentsSignedCentsBps16,
-        RatioCentsSignedDollarsBps16, RollingEmas1w1m, RollingEmas2w, RollingWindows,
-        ValueFromHeightCumulative,
+        PercentRollingWindows, Price, RatioCents64, RatioCentsBp16, RatioCentsBp32,
+        RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RollingEmas1w1m, RollingEmas2w,
+        RollingWindows, ValueFromHeightCumulative,
     },
     prices,
 };
@@ -55,7 +55,7 @@ pub struct RealizedBase<M: StorageMode = Rw> {
 
     pub realized_profit_rel_to_realized_cap: PercentFromHeight<BasisPoints16, M>,
     pub realized_loss_rel_to_realized_cap: PercentFromHeight<BasisPoints16, M>,
-    pub net_realized_pnl_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned16, M>,
+    pub net_realized_pnl_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
 
     pub profit_value_created: ComputedFromHeight<Cents, M>,
     pub profit_value_destroyed: ComputedFromHeight<Cents, M>,
@@ -75,15 +75,15 @@ pub struct RealizedBase<M: StorageMode = Rw> {
     pub sopr_24h_ema: RollingEmas1w1m<StoredF64, M>,
 
     pub gross_pnl_sum: RollingWindows<Cents, M>,
-    pub sell_side_risk_ratio: PercentRollingWindows<BasisPoints16, M>,
-    pub sell_side_risk_ratio_24h_ema: PercentRollingEmas1w1m<BasisPoints16, M>,
+    pub sell_side_risk_ratio: PercentRollingWindows<BasisPoints32, M>,
+    pub sell_side_risk_ratio_24h_ema: PercentRollingEmas1w1m<BasisPoints32, M>,
 
     pub net_pnl_change_1m: ComputedFromHeight<CentsSigned, M>,
-    pub net_pnl_change_1m_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned16, M>,
-    pub net_pnl_change_1m_rel_to_market_cap: PercentFromHeight<BasisPointsSigned16, M>,
+    pub net_pnl_change_1m_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
+    pub net_pnl_change_1m_rel_to_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
 
     pub peak_regret: ComputedFromHeightCumulative<Cents, M>,
-    pub peak_regret_rel_to_realized_cap: PercentFromHeight<BasisPoints16, M>,
+    pub peak_regret_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
 
     pub sent_in_profit: ValueFromHeightCumulative<M>,
     pub sent_in_profit_ema: RollingEmas2w<M>,
@@ -126,7 +126,7 @@ impl RealizedBase {
         let realized_loss_rel_to_realized_cap =
             cfg.import_percent_bp16("realized_loss_rel_to_realized_cap", v1)?;
         let net_realized_pnl_rel_to_realized_cap =
-            cfg.import_percent_bps16("net_realized_pnl_rel_to_realized_cap", v1)?;
+            cfg.import_percent_bps32("net_realized_pnl_rel_to_realized_cap", Version::new(2))?;
 
         let realized_price = cfg.import_price("realized_price", v1)?;
         let investor_price = cfg.import_price("investor_price", v0)?;
@@ -169,15 +169,15 @@ impl RealizedBase {
         let value_destroyed_sum = cfg.import_rolling("value_destroyed", v1)?;
         let gross_pnl_sum = cfg.import_rolling("gross_pnl_sum", v1)?;
         let sopr = cfg.import_rolling("sopr", v1)?;
-        let sell_side_risk_ratio = cfg.import_percent_rolling_bp16("sell_side_risk_ratio", v1)?;
+        let sell_side_risk_ratio = cfg.import_percent_rolling_bp32("sell_side_risk_ratio", Version::new(2))?;
 
         // EMAs
         let sopr_24h_ema = cfg.import_emas_1w_1m("sopr_24h", v1)?;
         let sell_side_risk_ratio_24h_ema =
-            cfg.import_percent_emas_1w_1m_bp16("sell_side_risk_ratio_24h", v1)?;
+            cfg.import_percent_emas_1w_1m_bp32("sell_side_risk_ratio_24h", Version::new(2))?;
 
         let peak_regret_rel_to_realized_cap =
-            cfg.import_percent_bp16("realized_peak_regret_rel_to_realized_cap", v1)?;
+            cfg.import_percent_bp32("realized_peak_regret_rel_to_realized_cap", Version::new(2))?;
 
         Ok(Self {
             realized_cap_cents,
@@ -220,9 +220,9 @@ impl RealizedBase {
             sell_side_risk_ratio_24h_ema,
             net_pnl_change_1m: cfg.import_computed("net_pnl_change_1m", Version::new(3))?,
             net_pnl_change_1m_rel_to_realized_cap: cfg
-                .import_percent_bps16("net_pnl_change_1m_rel_to_realized_cap", Version::new(3))?,
+                .import_percent_bps32("net_pnl_change_1m_rel_to_realized_cap", Version::new(4))?,
             net_pnl_change_1m_rel_to_market_cap: cfg
-                .import_percent_bps16("net_pnl_change_1m_rel_to_market_cap", Version::new(3))?,
+                .import_percent_bps32("net_pnl_change_1m_rel_to_market_cap", Version::new(4))?,
             peak_regret,
             peak_regret_rel_to_realized_cap,
             sent_in_profit: cfg.import_value_cumulative("sent_in_profit", v0)?,
@@ -585,7 +585,7 @@ impl RealizedBase {
             .into_iter()
             .zip(self.gross_pnl_sum.as_array())
         {
-            ssrr.compute_binary::<Cents, Cents, RatioCentsBp16>(
+            ssrr.compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
                 &rv.height,
                 &self.realized_cap_cents.height,
@@ -663,14 +663,14 @@ impl RealizedBase {
                 exit,
             )?;
         self.net_realized_pnl_rel_to_realized_cap
-            .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps16>(
+            .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
                 starting_indexes.height,
                 &self.net_realized_pnl.height,
                 &self.realized_cap_cents.height,
                 exit,
             )?;
         self.peak_regret_rel_to_realized_cap
-            .compute_binary::<Cents, Cents, RatioCentsBp16>(
+            .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
                 &self.peak_regret.height,
                 &self.realized_cap_cents.height,
@@ -686,7 +686,7 @@ impl RealizedBase {
         )?;
 
         self.net_pnl_change_1m_rel_to_realized_cap
-            .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps16>(
+            .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
                 starting_indexes.height,
                 &self.net_pnl_change_1m.height,
                 &self.realized_cap_cents.height,
@@ -694,7 +694,7 @@ impl RealizedBase {
             )?;
 
         self.net_pnl_change_1m_rel_to_market_cap
-            .compute_binary::<CentsSigned, Dollars, RatioCentsSignedDollarsBps16>(
+            .compute_binary::<CentsSigned, Dollars, RatioCentsSignedDollarsBps32>(
                 starting_indexes.height,
                 &self.net_pnl_change_1m.height,
                 height_to_market_cap,

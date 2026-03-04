@@ -8,7 +8,7 @@ use vecdb::{
 
 use crate::{
     blocks, indexes,
-    internal::{ComputedFromHeightStdDevExtended, Price, PriceTimesRatioBp32Cents, TDigest},
+    internal::{ComputedFromHeightStdDevExtended, ExpandingPercentiles, Price, PriceTimesRatioBp32Cents},
 };
 
 use super::{super::ComputedFromHeight, ComputedFromHeightRatio};
@@ -36,7 +36,7 @@ pub struct ComputedFromHeightRatioExtension<M: StorageMode = Rw> {
     pub ratio_sd_1y: ComputedFromHeightStdDevExtended<M>,
 
     #[traversable(skip)]
-    tdigest: TDigest,
+    expanding_pct: ExpandingPercentiles,
 }
 
 const VERSION: Version = Version::new(4);
@@ -99,7 +99,7 @@ impl ComputedFromHeightRatioExtension {
             ratio_pct5_price: import_price!("ratio_pct5"),
             ratio_pct2_price: import_price!("ratio_pct2"),
             ratio_pct1_price: import_price!("ratio_pct1"),
-            tdigest: TDigest::default(),
+            expanding_pct: ExpandingPercentiles::default(),
         })
     }
 
@@ -142,14 +142,12 @@ impl ComputedFromHeightRatioExtension {
         let ratio_len = ratio_source.len();
 
         if ratio_len > start {
-            let tdigest_count = self.tdigest.count() as usize;
-            if tdigest_count != start {
-                self.tdigest.reset();
+            let pct_count = self.expanding_pct.count() as usize;
+            if pct_count != start {
+                self.expanding_pct.reset();
                 if start > 0 {
                     let historical = ratio_source.collect_range_at(0, start);
-                    for &v in &historical {
-                        self.tdigest.add(*v as f64);
-                    }
+                    self.expanding_pct.add_bulk(&historical);
                 }
             }
 
@@ -164,11 +162,11 @@ impl ComputedFromHeightRatioExtension {
                 &mut self.ratio_pct99.bps.height,
             ];
             const PCTS: [f64; 6] = [0.01, 0.02, 0.05, 0.95, 0.98, 0.99];
-            let mut out = [0.0f64; 6];
+            let mut out = [0u32; 6];
 
             for (offset, &ratio) in new_ratios.iter().enumerate() {
-                self.tdigest.add(*ratio as f64);
-                self.tdigest.quantiles(&PCTS, &mut out);
+                self.expanding_pct.add(*ratio);
+                self.expanding_pct.quantiles(&PCTS, &mut out);
                 let idx = start + offset;
                 for (vec, &val) in pct_vecs.iter_mut().zip(out.iter()) {
                     vec.truncate_push_at(idx, BasisPoints32::from(val))?;

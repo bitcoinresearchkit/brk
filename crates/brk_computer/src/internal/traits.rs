@@ -1,12 +1,13 @@
 use std::ops::{Add, AddAssign, Div};
 
-use brk_types::{BasisPoints16, BasisPointsSigned16, BasisPointsSigned32, StoredF32};
+use brk_types::{BasisPoints16, BasisPoints32, BasisPointsSigned16, BasisPointsSigned32, StoredF32};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Formattable, PcoVecValue, UnaryTransform};
 
 use crate::internal::{
-    Bp16ToFloat, Bp16ToPercent, Bps16ToFloat, Bps16ToPercent, Bps32ToFloat, Bps32ToPercent,
+    Bp16ToFloat, Bp16ToPercent, Bp32ToFloat, Bp32ToPercent, Bps16ToFloat, Bps16ToPercent,
+    Bps32ToFloat, Bps32ToPercent,
 };
 
 pub trait ComputedVecValue
@@ -46,6 +47,11 @@ pub trait BpsType: NumericValue + JsonSchema {
 impl BpsType for BasisPoints16 {
     type ToRatio = Bp16ToFloat;
     type ToPercent = Bp16ToPercent;
+}
+
+impl BpsType for BasisPoints32 {
+    type ToRatio = Bp32ToFloat;
+    type ToPercent = Bp32ToPercent;
 }
 
 impl BpsType for BasisPointsSigned16 {

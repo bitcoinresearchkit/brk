@@ -112,11 +112,13 @@ where
             average_out.checked_push_at(i, T::from(window.average()))?;
             min_out.checked_push_at(i, T::from(window.min()))?;
             max_out.checked_push_at(i, T::from(window.max()))?;
-            p10_out.checked_push_at(i, T::from(window.percentile(0.10)))?;
-            p25_out.checked_push_at(i, T::from(window.percentile(0.25)))?;
-            median_out.checked_push_at(i, T::from(window.percentile(0.50)))?;
-            p75_out.checked_push_at(i, T::from(window.percentile(0.75)))?;
-            p90_out.checked_push_at(i, T::from(window.percentile(0.90)))?;
+            let [p10, p25, p50, p75, p90] =
+                window.percentiles(&[0.10, 0.25, 0.50, 0.75, 0.90]);
+            p10_out.checked_push_at(i, T::from(p10))?;
+            p25_out.checked_push_at(i, T::from(p25))?;
+            median_out.checked_push_at(i, T::from(p50))?;
+            p75_out.checked_push_at(i, T::from(p75))?;
+            p90_out.checked_push_at(i, T::from(p90))?;
         }
 
         if average_out.batch_limit_reached() {

@@ -1,12 +1,12 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Cents, Dollars, Height, Indexes, StoredF64, Version};
+use brk_types::{BasisPoints32, Cents, Dollars, Height, Indexes, StoredF64, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     blocks,
     internal::{
-        ComputedFromHeightRatioExtension, PercentFromHeight, RatioCents64, RatioDollarsBp16,
+        ComputedFromHeightRatioExtension, PercentFromHeight, RatioCents64, RatioDollarsBp32,
         RollingWindows,
     },
 };
@@ -17,7 +17,7 @@ use super::RealizedBase;
 
 #[derive(Traversable)]
 pub struct RealizedExtended<M: StorageMode = Rw> {
-    pub realized_cap_rel_to_own_market_cap: PercentFromHeight<BasisPoints16, M>,
+    pub realized_cap_rel_to_own_market_cap: PercentFromHeight<BasisPoints32, M>,
 
     pub realized_profit_sum: RollingWindows<Cents, M>,
     pub realized_loss_sum: RollingWindows<Cents, M>,
@@ -32,7 +32,7 @@ impl RealizedExtended {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(RealizedExtended {
             realized_cap_rel_to_own_market_cap: cfg
-                .import_percent_bp16("realized_cap_rel_to_own_market_cap", Version::ZERO)?,
+                .import_percent_bp32("realized_cap_rel_to_own_market_cap", Version::ONE)?,
             realized_profit_sum: cfg.import_rolling("realized_profit", Version::ONE)?,
             realized_loss_sum: cfg.import_rolling("realized_loss", Version::ONE)?,
             realized_profit_to_loss_ratio: cfg
@@ -78,7 +78,7 @@ impl RealizedExtended {
 
         // Realized cap relative to own market cap
         self.realized_cap_rel_to_own_market_cap
-            .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
+            .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 starting_indexes.height,
                 &base.realized_cap.height,
                 height_to_market_cap,

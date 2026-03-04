@@ -1,6 +1,6 @@
 use brk_cohort::Filter;
 use brk_error::Result;
-use brk_types::{BasisPoints16, BasisPointsSigned16, Cents, Height, Version};
+use brk_types::{BasisPoints16, BasisPoints32, BasisPointsSigned32, Cents, Height, Version};
 use schemars::JsonSchema;
 use vecdb::{BytesVec, BytesVecValue, Database, ImportableVec};
 
@@ -87,11 +87,11 @@ impl<'a> ImportConfig<'a> {
         )
     }
 
-    pub(crate) fn import_percent_bps16(
+    pub(crate) fn import_percent_bps32(
         &self,
         suffix: &str,
         offset: Version,
-    ) -> Result<PercentFromHeight<BasisPointsSigned16>> {
+    ) -> Result<PercentFromHeight<BasisPointsSigned32>> {
         PercentFromHeight::forced_import(
             self.db,
             &self.name(suffix),
@@ -199,11 +199,24 @@ impl<'a> ImportConfig<'a> {
         )
     }
 
-    pub(crate) fn import_percent_rolling_bp16(
+    pub(crate) fn import_percent_bp32(
         &self,
         suffix: &str,
         offset: Version,
-    ) -> Result<PercentRollingWindows<BasisPoints16>> {
+    ) -> Result<PercentFromHeight<BasisPoints32>> {
+        PercentFromHeight::forced_import(
+            self.db,
+            &self.name(suffix),
+            self.version + offset,
+            self.indexes,
+        )
+    }
+
+    pub(crate) fn import_percent_rolling_bp32(
+        &self,
+        suffix: &str,
+        offset: Version,
+    ) -> Result<PercentRollingWindows<BasisPoints32>> {
         PercentRollingWindows::forced_import(
             self.db,
             &self.name(suffix),
@@ -225,11 +238,11 @@ impl<'a> ImportConfig<'a> {
         )
     }
 
-    pub(crate) fn import_percent_emas_1w_1m_bp16(
+    pub(crate) fn import_percent_emas_1w_1m_bp32(
         &self,
         suffix: &str,
         offset: Version,
-    ) -> Result<PercentRollingEmas1w1m<BasisPoints16>> {
+    ) -> Result<PercentRollingEmas1w1m<BasisPoints32>> {
         PercentRollingEmas1w1m::forced_import(
             self.db,
             &self.name(suffix),

@@ -10,7 +10,7 @@ pub use arithmetic::{
     ReturnI8, ReturnU16,
 };
 pub use bps::{
-    Bp16ToFloat, Bp16ToPercent, Bp32ToFloat, Bps16ToFloat, Bps16ToPercent, Bps32ToFloat,
+    Bp16ToFloat, Bp16ToPercent, Bp32ToFloat, Bp32ToPercent, Bps16ToFloat, Bps16ToPercent, Bps32ToFloat,
     Bps32ToPercent,
 };
 pub use currency::{
@@ -23,8 +23,9 @@ pub use derived::{
     RatioCents64, TimesSqrt,
 };
 pub use ratio::{
-    NegRatioDollarsBps16, RatioCentsBp16, RatioCentsSignedCentsBps16, RatioCentsSignedDollarsBps16,
-    RatioDiffCentsBps32, RatioDiffDollarsBps32, RatioDiffF32Bps32, RatioDollarsBp16,
-    RatioDollarsBp32, RatioDollarsBps16, RatioSatsBp16, RatioU32Bp16, RatioU64Bp16,
+    NegRatioDollarsBps32, RatioCentsBp16, RatioCentsBp32, RatioCentsSignedCentsBps32,
+    RatioCentsSignedDollarsBps32, RatioDiffCentsBps32, RatioDiffDollarsBps32, RatioDiffF32Bps32,
+    RatioDollarsBp16, RatioDollarsBp32, RatioDollarsBps32, RatioSatsBp16, RatioU32Bp16,
+    RatioU64Bp16,
 };
 pub use specialized::{BlockCountTarget, OhlcCentsToDollars, OhlcCentsToSats};

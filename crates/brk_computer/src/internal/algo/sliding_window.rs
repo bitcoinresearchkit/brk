@@ -202,4 +202,70 @@ impl SlidingWindowSorted {
             self.sorted.kth(lo) * (1.0 - frac) + self.sorted.kth(hi) * frac
         }
     }
+
+    /// Extract multiple percentiles in a single pass through the sorted blocks.
+    /// Percentiles must be sorted ascending. Returns interpolated values.
+    pub fn percentiles<const N: usize>(&self, ps: &[f64; N]) -> [f64; N] {
+        let len = self.sorted.len();
+        if len == 0 {
+            return [0.0; N];
+        }
+        if len == 1 {
+            return [self.sorted.kth(0); N];
+        }
+
+        // Collect all unique ranks needed (lo and hi for each percentile)
+        let last = (len - 1) as f64;
+        let mut rank_set: [usize; 10] = [0; 10];
+        let mut rank_count = 0;
+        let mut lo_hi: [(usize, usize, f64); N] = [(0, 0, 0.0); N];
+
+        for (i, &p) in ps.iter().enumerate() {
+            let rank = p * last;
+            let lo = rank.floor() as usize;
+            let hi = rank.ceil() as usize;
+            let frac = rank - lo as f64;
+            lo_hi[i] = (lo, hi, frac);
+
+            // Insert unique ranks in sorted order (they're already ~sorted since ps is sorted)
+            if rank_count == 0 || rank_set[rank_count - 1] != lo {
+                rank_set[rank_count] = lo;
+                rank_count += 1;
+            }
+            if hi != lo && (rank_count == 0 || rank_set[rank_count - 1] != hi) {
+                rank_set[rank_count] = hi;
+                rank_count += 1;
+            }
+        }
+
+        // Single pass through blocks to get all values
+        let ranks = &rank_set[..rank_count];
+        let mut values = [0.0f64; 10];
+        let mut ri = 0;
+        let mut cumulative = 0;
+        for block in &self.sorted.blocks {
+            while ri < rank_count && ranks[ri] - cumulative < block.len() {
+                values[ri] = block[ranks[ri] - cumulative];
+                ri += 1;
+            }
+            cumulative += block.len();
+            if ri >= rank_count {
+                break;
+            }
+        }
+
+        // Interpolate results
+        let mut out = [0.0; N];
+        for (i, &(lo, hi, frac)) in lo_hi.iter().enumerate() {
+            if lo == hi {
+                let ri = ranks.partition_point(|&r| r < lo);
+                out[i] = values[ri];
+            } else {
+                let lo_ri = ranks.partition_point(|&r| r < lo);
+                let hi_ri = ranks.partition_point(|&r| r < hi);
+                out[i] = values[lo_ri] * (1.0 - frac) + values[hi_ri] * frac;
+            }
+        }
+        out
+    }
 }

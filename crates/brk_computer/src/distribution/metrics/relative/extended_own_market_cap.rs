@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, BasisPointsSigned16, Dollars, Height, Version};
+use brk_types::{BasisPoints16, BasisPoints32, BasisPointsSigned32, Dollars, Height, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
-    NegRatioDollarsBps16, PercentFromHeight, RatioDollarsBp16, RatioDollarsBps16,
+    NegRatioDollarsBps32, PercentFromHeight, RatioDollarsBp16, RatioDollarsBp32, RatioDollarsBps32,
 };
 
 use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
@@ -13,9 +13,9 @@ use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
 #[derive(Traversable)]
 pub struct RelativeExtendedOwnMarketCap<M: StorageMode = Rw> {
     pub unrealized_profit_rel_to_own_market_cap: PercentFromHeight<BasisPoints16, M>,
-    pub unrealized_loss_rel_to_own_market_cap: PercentFromHeight<BasisPoints16, M>,
-    pub neg_unrealized_loss_rel_to_own_market_cap: PercentFromHeight<BasisPointsSigned16, M>,
-    pub net_unrealized_pnl_rel_to_own_market_cap: PercentFromHeight<BasisPointsSigned16, M>,
+    pub unrealized_loss_rel_to_own_market_cap: PercentFromHeight<BasisPoints32, M>,
+    pub neg_unrealized_loss_rel_to_own_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
+    pub net_unrealized_pnl_rel_to_own_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
 }
 
 impl RelativeExtendedOwnMarketCap {
@@ -26,11 +26,11 @@ impl RelativeExtendedOwnMarketCap {
             unrealized_profit_rel_to_own_market_cap: cfg
                 .import_percent_bp16("unrealized_profit_rel_to_own_market_cap", v2)?,
             unrealized_loss_rel_to_own_market_cap: cfg
-                .import_percent_bp16("unrealized_loss_rel_to_own_market_cap", v2)?,
+                .import_percent_bp32("unrealized_loss_rel_to_own_market_cap", Version::new(3))?,
             neg_unrealized_loss_rel_to_own_market_cap: cfg
-                .import_percent_bps16("neg_unrealized_loss_rel_to_own_market_cap", v2)?,
+                .import_percent_bps32("neg_unrealized_loss_rel_to_own_market_cap", Version::new(3))?,
             net_unrealized_pnl_rel_to_own_market_cap: cfg
-                .import_percent_bps16("net_unrealized_pnl_rel_to_own_market_cap", v2)?,
+                .import_percent_bps32("net_unrealized_pnl_rel_to_own_market_cap", Version::new(3))?,
         })
     }
 
@@ -49,21 +49,21 @@ impl RelativeExtendedOwnMarketCap {
                 exit,
             )?;
         self.unrealized_loss_rel_to_own_market_cap
-            .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
+            .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 max_from,
                 &unrealized.unrealized_loss.usd.height,
                 own_market_cap,
                 exit,
             )?;
         self.neg_unrealized_loss_rel_to_own_market_cap
-            .compute_binary::<Dollars, Dollars, NegRatioDollarsBps16>(
+            .compute_binary::<Dollars, Dollars, NegRatioDollarsBps32>(
                 max_from,
                 &unrealized.unrealized_loss.usd.height,
                 own_market_cap,
                 exit,
             )?;
         self.net_unrealized_pnl_rel_to_own_market_cap
-            .compute_binary::<Dollars, Dollars, RatioDollarsBps16>(
+            .compute_binary::<Dollars, Dollars, RatioDollarsBps32>(
                 max_from,
                 &unrealized.net_unrealized_pnl.usd.height,
                 own_market_cap,

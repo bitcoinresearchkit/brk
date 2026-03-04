@@ -1,6 +1,6 @@
 use brk_types::{
-    BasisPoints16, BasisPoints32, BasisPointsSigned16, BasisPointsSigned32, Cents, CentsSigned,
-    Dollars, Sats, StoredF32, StoredU32, StoredU64,
+    BasisPoints16, BasisPoints32, BasisPointsSigned32, Cents, CentsSigned, Dollars, Sats, StoredF32,
+    StoredU32, StoredU64,
 };
 use vecdb::BinaryTransform;
 
@@ -43,6 +43,19 @@ impl BinaryTransform<Cents, Cents, BasisPoints16> for RatioCentsBp16 {
     }
 }
 
+pub struct RatioCentsBp32;
+
+impl BinaryTransform<Cents, Cents, BasisPoints32> for RatioCentsBp32 {
+    #[inline(always)]
+    fn apply(numerator: Cents, denominator: Cents) -> BasisPoints32 {
+        if denominator == Cents::ZERO {
+            BasisPoints32::ZERO
+        } else {
+            BasisPoints32::from(numerator.inner() as f64 / denominator.inner() as f64)
+        }
+    }
+}
+
 pub struct RatioU32Bp16;
 
 impl BinaryTransform<StoredU32, StoredU32, BasisPoints16> for RatioU32Bp16 {
@@ -70,57 +83,57 @@ impl BinaryTransform<Dollars, Dollars, BasisPoints16> for RatioDollarsBp16 {
     }
 }
 
-pub struct RatioDollarsBps16;
+pub struct RatioDollarsBps32;
 
-impl BinaryTransform<Dollars, Dollars, BasisPointsSigned16> for RatioDollarsBps16 {
+impl BinaryTransform<Dollars, Dollars, BasisPointsSigned32> for RatioDollarsBps32 {
     #[inline(always)]
-    fn apply(numerator: Dollars, denominator: Dollars) -> BasisPointsSigned16 {
+    fn apply(numerator: Dollars, denominator: Dollars) -> BasisPointsSigned32 {
         let ratio = *(numerator / denominator);
         if ratio.is_finite() {
-            BasisPointsSigned16::from(ratio)
+            BasisPointsSigned32::from(ratio)
         } else {
-            BasisPointsSigned16::ZERO
+            BasisPointsSigned32::ZERO
         }
     }
 }
 
-pub struct NegRatioDollarsBps16;
+pub struct NegRatioDollarsBps32;
 
-impl BinaryTransform<Dollars, Dollars, BasisPointsSigned16> for NegRatioDollarsBps16 {
+impl BinaryTransform<Dollars, Dollars, BasisPointsSigned32> for NegRatioDollarsBps32 {
     #[inline(always)]
-    fn apply(numerator: Dollars, denominator: Dollars) -> BasisPointsSigned16 {
+    fn apply(numerator: Dollars, denominator: Dollars) -> BasisPointsSigned32 {
         let ratio = *(numerator / denominator);
         if ratio.is_finite() {
-            BasisPointsSigned16::from(-ratio)
+            BasisPointsSigned32::from(-ratio)
         } else {
-            BasisPointsSigned16::ZERO
+            BasisPointsSigned32::ZERO
         }
     }
 }
 
-pub struct RatioCentsSignedCentsBps16;
+pub struct RatioCentsSignedCentsBps32;
 
-impl BinaryTransform<CentsSigned, Cents, BasisPointsSigned16> for RatioCentsSignedCentsBps16 {
+impl BinaryTransform<CentsSigned, Cents, BasisPointsSigned32> for RatioCentsSignedCentsBps32 {
     #[inline(always)]
-    fn apply(numerator: CentsSigned, denominator: Cents) -> BasisPointsSigned16 {
+    fn apply(numerator: CentsSigned, denominator: Cents) -> BasisPointsSigned32 {
         if denominator == Cents::ZERO {
-            BasisPointsSigned16::ZERO
+            BasisPointsSigned32::ZERO
         } else {
-            BasisPointsSigned16::from(numerator.inner() as f64 / denominator.inner() as f64)
+            BasisPointsSigned32::from(numerator.inner() as f64 / denominator.inner() as f64)
         }
     }
 }
 
-pub struct RatioCentsSignedDollarsBps16;
+pub struct RatioCentsSignedDollarsBps32;
 
-impl BinaryTransform<CentsSigned, Dollars, BasisPointsSigned16> for RatioCentsSignedDollarsBps16 {
+impl BinaryTransform<CentsSigned, Dollars, BasisPointsSigned32> for RatioCentsSignedDollarsBps32 {
     #[inline(always)]
-    fn apply(numerator: CentsSigned, denominator: Dollars) -> BasisPointsSigned16 {
+    fn apply(numerator: CentsSigned, denominator: Dollars) -> BasisPointsSigned32 {
         let d: f64 = denominator.into();
         if d > 0.0 {
-            BasisPointsSigned16::from(numerator.inner() as f64 / 100.0 / d)
+            BasisPointsSigned32::from(numerator.inner() as f64 / 100.0 / d)
         } else {
-            BasisPointsSigned16::ZERO
+            BasisPointsSigned32::ZERO
         }
     }
 }

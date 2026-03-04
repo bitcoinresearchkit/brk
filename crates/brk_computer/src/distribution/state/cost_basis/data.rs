@@ -1,5 +1,5 @@
 use std::{
-    collections::BTreeMap,
+    collections::{btree_map::Entry, BTreeMap},
     fs,
     path::{Path, PathBuf},
 };
@@ -9,7 +9,7 @@ use brk_types::{
     Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisDistribution, Height, Sats,
 };
 use rustc_hash::FxHashMap;
-use vecdb::Bytes;
+use vecdb::{Bytes, unlikely};
 
 use super::{CachedUnrealizedState, Percentiles, UnrealizedState};
 
@@ -187,24 +187,46 @@ impl CostBasisData {
         self.percentiles_dirty = true;
         let map = &mut self.state.as_mut().unwrap().base.map;
         for (cents, (inc, dec)) in self.pending.drain() {
-            let entry = map.entry(cents).or_default();
-            *entry += inc;
-            if *entry < dec {
-                panic!(
-                    "CostBasisData::apply_pending underflow!\n\
-                    Path: {:?}\n\
-                    Price: {}\n\
-                    Current + increments: {}\n\
-                    Trying to decrement by: {}",
-                    self.pathbuf,
-                    cents.to_dollars(),
-                    entry,
-                    dec
-                );
-            }
-            *entry -= dec;
-            if *entry == Sats::ZERO {
-                map.remove(&cents);
+            match map.entry(cents) {
+                Entry::Occupied(mut e) => {
+                    *e.get_mut() += inc;
+                    if unlikely(*e.get() < dec) {
+                        panic!(
+                            "CostBasisData::apply_pending underflow!\n\
+                            Path: {:?}\n\
+                            Price: {}\n\
+                            Current + increments: {}\n\
+                            Trying to decrement by: {}",
+                            self.pathbuf,
+                            cents.to_dollars(),
+                            e.get(),
+                            dec
+                        );
+                    }
+                    *e.get_mut() -= dec;
+                    if *e.get() == Sats::ZERO {
+                        e.remove();
+                    }
+                }
+                Entry::Vacant(e) => {
+                    if unlikely(inc < dec) {
+                        panic!(
+                            "CostBasisData::apply_pending underflow (new entry)!\n\
+                            Path: {:?}\n\
+                            Price: {}\n\
+                            Increment: {}\n\
+                            Trying to decrement by: {}",
+                            self.pathbuf,
+                            cents.to_dollars(),
+                            inc,
+                            dec
+                        );
+                    }
+                    let val = inc - dec;
+                    if val != Sats::ZERO {
+                        e.insert(val);
+                    }
+                }
             }
         }
 
@@ -213,7 +235,7 @@ impl CostBasisData {
         state.cap_raw += self.pending_raw.cap_inc;
 
         // Check for underflow before subtracting
-        if state.cap_raw.inner() < self.pending_raw.cap_dec.inner() {
+        if unlikely(state.cap_raw.inner() < self.pending_raw.cap_dec.inner()) {
             panic!(
                 "CostBasisData::apply_pending cap_raw underflow!\n\
                 Path: {:?}\n\
@@ -231,7 +253,7 @@ impl CostBasisData {
         if has_investor_cap {
             state.investor_cap_raw += self.pending_raw.investor_cap_inc;
 
-            if state.investor_cap_raw.inner() < self.pending_raw.investor_cap_dec.inner() {
+            if unlikely(state.investor_cap_raw.inner() < self.pending_raw.investor_cap_dec.inner()) {
                 panic!(
                     "CostBasisData::apply_pending investor_cap_raw underflow!\n\
                     Path: {:?}\n\
