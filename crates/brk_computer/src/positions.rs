@@ -7,9 +7,11 @@ use brk_traversable::Traversable;
 use brk_types::{BlkPosition, Height, Indexes, TxIndex, Version};
 use tracing::info;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, Exit, ImportableVec, PAGE_SIZE, PcoVec, ReadableVec, Rw,
-    StorageMode, VecIndex, WritableVec,
+    AnyStoredVec, AnyVec, Database, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode,
+    VecIndex, WritableVec,
 };
+
+use crate::internal::{finalize_db, open_db};
 
 pub const DB_NAME: &str = "positions";
 
@@ -23,25 +25,15 @@ pub struct Vecs<M: StorageMode = Rw> {
 
 impl Vecs {
     pub(crate) fn forced_import(parent_path: &Path, parent_version: Version) -> Result<Self> {
-        let db = Database::open(&parent_path.join(DB_NAME))?;
-        db.set_min_len(PAGE_SIZE * 1_000_000)?;
-
+        let db = open_db(parent_path, DB_NAME, 1_000_000)?;
         let version = parent_version;
 
         let this = Self {
             block_position: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
             tx_position: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
-
             db,
         };
-
-        this.db.retain_regions(
-            this.iter_any_exportable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
-        this.db.compact()?;
-
+        finalize_db(&this.db, &this)?;
         Ok(this)
     }
 

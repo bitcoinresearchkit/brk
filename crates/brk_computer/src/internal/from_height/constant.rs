@@ -1,16 +1,14 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4,
-    Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
+    Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{Formattable, ReadableCloneableVec, LazyVecFrom1, UnaryTransform, VecValue};
+use vecdb::{Formattable, LazyVecFrom1, ReadableCloneableVec, UnaryTransform, VecValue};
 
 use crate::indexes;
 
-/// Lazy constant vecs for all index levels.
-/// Uses const generic transforms to return the same value for every index.
 #[derive(Clone, Traversable)]
 #[traversable(merge)]
 pub struct ConstantVecs<T>
@@ -36,7 +34,6 @@ where
 }
 
 impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
-    /// Create constant vecs using a transform that ignores input and returns a constant.
     pub(crate) fn new<F>(name: &str, version: Version, indexes: &indexes::Vecs) -> Self
     where
         F: UnaryTransform<Height, T>
@@ -57,7 +54,7 @@ impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
             + UnaryTransform<DifficultyEpoch, T>,
     {
         macro_rules! period {
-            ($idx:ident, $I:ty) => {
+            ($idx:ident) => {
                 LazyVecFrom1::transformed::<F>(
                     name,
                     version,
@@ -67,26 +64,22 @@ impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
         }
 
         Self {
-            height: LazyVecFrom1::transformed::<F>(
-                name,
-                version,
-                indexes.height.identity.read_only_boxed_clone(),
-            ),
-            minute10: period!(minute10, Minute10),
-            minute30: period!(minute30, Minute30),
-            hour1: period!(hour1, Hour1),
-            hour4: period!(hour4, Hour4),
-            hour12: period!(hour12, Hour12),
-            day1: period!(day1, Day1),
-            day3: period!(day3, Day3),
-            week1: period!(week1, Week1),
-            month1: period!(month1, Month1),
-            month3: period!(month3, Month3),
-            month6: period!(month6, Month6),
-            year1: period!(year1, Year1),
-            year10: period!(year10, Year10),
-            halvingepoch: period!(halvingepoch, HalvingEpoch),
-            difficultyepoch: period!(difficultyepoch, DifficultyEpoch),
+            height: period!(height),
+            minute10: period!(minute10),
+            minute30: period!(minute30),
+            hour1: period!(hour1),
+            hour4: period!(hour4),
+            hour12: period!(hour12),
+            day1: period!(day1),
+            day3: period!(day3),
+            week1: period!(week1),
+            month1: period!(month1),
+            month3: period!(month3),
+            month6: period!(month6),
+            year1: period!(year1),
+            year10: period!(year10),
+            halvingepoch: period!(halvingepoch),
+            difficultyepoch: period!(difficultyepoch),
         }
     }
 }

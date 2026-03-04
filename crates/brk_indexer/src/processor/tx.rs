@@ -20,8 +20,7 @@ impl<'a> BlockProcessor<'a> {
             .par_iter()
             .enumerate()
             .map(|(index, tx)| {
-                let (btc_txid, base_size, total_size) =
-                    self.block.compute_tx_id_and_sizes(index);
+                let (btc_txid, base_size, total_size) = self.block.compute_tx_id_and_sizes(index);
                 let txid = Txid::from(btc_txid);
                 let txid_prefix = TxidPrefix::from(&txid);
 
@@ -105,8 +104,7 @@ pub(super) fn store_tx_metadata(
         md.txid.checked_push(ct.txindex, ct.txid)?;
         md.rawlocktime
             .checked_push(ct.txindex, ct.tx.lock_time.into())?;
-        md.base_size
-            .checked_push(ct.txindex, ct.base_size.into())?;
+        md.base_size.checked_push(ct.txindex, ct.base_size.into())?;
         md.total_size
             .checked_push(ct.txindex, ct.total_size.into())?;
         md.is_explicitly_rbf

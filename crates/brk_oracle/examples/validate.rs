@@ -9,7 +9,7 @@
 use std::path::PathBuf;
 
 use brk_indexer::Indexer;
-use brk_oracle::{cents_to_bin, sats_to_bin, Config, Oracle, NUM_BINS, PRICES, START_HEIGHT};
+use brk_oracle::{Config, NUM_BINS, Oracle, PRICES, START_HEIGHT, cents_to_bin, sats_to_bin};
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
@@ -127,9 +127,24 @@ fn main() {
         .collect();
 
     let mut runs = vec![
-        Run { label: "w12 @ 575k", start_height: 575_000, oracle: None, stats: Stats::new() },
-        Run { label: "w12 @ 600k", start_height: 600_000, oracle: None, stats: Stats::new() },
-        Run { label: "w12 @ 630k", start_height: 630_000, oracle: None, stats: Stats::new() },
+        Run {
+            label: "w12 @ 575k",
+            start_height: 575_000,
+            oracle: None,
+            stats: Stats::new(),
+        },
+        Run {
+            label: "w12 @ 600k",
+            start_height: 600_000,
+            oracle: None,
+            stats: Stats::new(),
+        },
+        Run {
+            label: "w12 @ 630k",
+            start_height: 630_000,
+            oracle: None,
+            stats: Stats::new(),
+        },
     ];
 
     // Build per-block filtered histograms from the indexer, feeding all oracles in one pass.
@@ -144,18 +159,43 @@ fn main() {
 
     for h in START_HEIGHT..total_heights {
         let ft = first_txindex[h];
-        let next_ft = first_txindex.get(h + 1).copied().unwrap_or(TxIndex::from(total_txs));
+        let next_ft = first_txindex
+            .get(h + 1)
+            .copied()
+            .unwrap_or(TxIndex::from(total_txs));
 
         let out_start = if ft.to_usize() + 1 < next_ft.to_usize() {
-            indexer.vecs.transactions.first_txoutindex.collect_one(ft + 1).unwrap().to_usize()
+            indexer
+                .vecs
+                .transactions
+                .first_txoutindex
+                .collect_one(ft + 1)
+                .unwrap()
+                .to_usize()
         } else {
-            out_first.get(h + 1).copied().unwrap_or(TxOutIndex::from(total_outputs)).to_usize()
+            out_first
+                .get(h + 1)
+                .copied()
+                .unwrap_or(TxOutIndex::from(total_outputs))
+                .to_usize()
         };
-        let out_end = out_first.get(h + 1).copied().unwrap_or(TxOutIndex::from(total_outputs)).to_usize();
+        let out_end = out_first
+            .get(h + 1)
+            .copied()
+            .unwrap_or(TxOutIndex::from(total_outputs))
+            .to_usize();
 
         // Build filtered histogram once for all oracles.
-        let values: Vec<Sats> = indexer.vecs.outputs.value.collect_range_at(out_start, out_end);
-        let output_types: Vec<OutputType> = indexer.vecs.outputs.outputtype.collect_range_at(out_start, out_end);
+        let values: Vec<Sats> = indexer
+            .vecs
+            .outputs
+            .value
+            .collect_range_at(out_start, out_end);
+        let output_types: Vec<OutputType> = indexer
+            .vecs
+            .outputs
+            .outputtype
+            .collect_range_at(out_start, out_end);
 
         let mut hist = [0u32; NUM_BINS];
         for (sats, output_type) in values.into_iter().zip(output_types) {
@@ -233,9 +273,21 @@ fn main() {
 
     for (run, &(label, exp_5, exp_10, exp_20)) in runs.iter().zip(expected) {
         let s = &run.stats;
-        assert_eq!(s.gt_20pct, exp_20, "{label}: expected {exp_20} blocks >20%, got {}", s.gt_20pct);
-        assert_eq!(s.gt_10pct, exp_10, "{label}: expected {exp_10} blocks >10%, got {}", s.gt_10pct);
-        assert_eq!(s.gt_5pct, exp_5, "{label}: expected {exp_5} blocks >5%, got {}", s.gt_5pct);
+        assert_eq!(
+            s.gt_20pct, exp_20,
+            "{label}: expected {exp_20} blocks >20%, got {}",
+            s.gt_20pct
+        );
+        assert_eq!(
+            s.gt_10pct, exp_10,
+            "{label}: expected {exp_10} blocks >10%, got {}",
+            s.gt_10pct
+        );
+        assert_eq!(
+            s.gt_5pct, exp_5,
+            "{label}: expected {exp_5} blocks >5%, got {}",
+            s.gt_5pct
+        );
     }
 
     println!("All assertions passed!");

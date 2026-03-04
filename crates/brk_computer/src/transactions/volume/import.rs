@@ -16,11 +16,12 @@ impl Vecs {
     ) -> Result<Self> {
         let v2 = Version::TWO;
         Ok(Self {
-            sent_sum: ValueFromHeightRolling::forced_import(
-                db, "sent_sum", version, indexes,
-            )?,
+            sent_sum: ValueFromHeightRolling::forced_import(db, "sent_sum", version, indexes)?,
             received_sum: ValueFromHeightRolling::forced_import(
-                db, "received_sum", version, indexes,
+                db,
+                "received_sum",
+                version,
+                indexes,
             )?,
             annualized_volume: ValueFromHeight::forced_import(
                 db,
@@ -28,12 +29,7 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            tx_per_sec: ComputedFromHeight::forced_import(
-                db,
-                "tx_per_sec",
-                version + v2,
-                indexes,
-            )?,
+            tx_per_sec: ComputedFromHeight::forced_import(db, "tx_per_sec", version + v2, indexes)?,
             outputs_per_sec: ComputedFromHeight::forced_import(
                 db,
                 "outputs_per_sec",

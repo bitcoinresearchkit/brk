@@ -16,13 +16,39 @@ impl Vecs {
         let price = &prices.price.cents.height;
 
         for (min_vec, max_vec, starts) in [
-            (&mut self.price_min_1w.cents.height, &mut self.price_max_1w.cents.height, &blocks.count.height_1w_ago),
-            (&mut self.price_min_2w.cents.height, &mut self.price_max_2w.cents.height, &blocks.count.height_2w_ago),
-            (&mut self.price_min_1m.cents.height, &mut self.price_max_1m.cents.height, &blocks.count.height_1m_ago),
-            (&mut self.price_min_1y.cents.height, &mut self.price_max_1y.cents.height, &blocks.count.height_1y_ago),
+            (
+                &mut self.price_min_1w.cents.height,
+                &mut self.price_max_1w.cents.height,
+                &blocks.count.height_1w_ago,
+            ),
+            (
+                &mut self.price_min_2w.cents.height,
+                &mut self.price_max_2w.cents.height,
+                &blocks.count.height_2w_ago,
+            ),
+            (
+                &mut self.price_min_1m.cents.height,
+                &mut self.price_max_1m.cents.height,
+                &blocks.count.height_1m_ago,
+            ),
+            (
+                &mut self.price_min_1y.cents.height,
+                &mut self.price_max_1y.cents.height,
+                &blocks.count.height_1y_ago,
+            ),
         ] {
-            min_vec.compute_rolling_min_from_starts(starting_indexes.height, starts, price, exit)?;
-            max_vec.compute_rolling_max_from_starts(starting_indexes.height, starts, price, exit)?;
+            min_vec.compute_rolling_min_from_starts(
+                starting_indexes.height,
+                starts,
+                price,
+                exit,
+            )?;
+            max_vec.compute_rolling_max_from_starts(
+                starting_indexes.height,
+                starts,
+                price,
+                exit,
+            )?;
         }
 
         // True range at block level: |price[h] - price[h-1]|
@@ -54,26 +80,29 @@ impl Vecs {
             exit,
         )?;
 
-        self.price_choppiness_index_2w.bps.height.compute_transform4(
-            starting_indexes.height,
-            &self.price_true_range_sum_2w.height,
-            &self.price_max_2w.cents.height,
-            &self.price_min_2w.cents.height,
-            &blocks.count.height_2w_ago,
-            |(h, tr_sum, max, min, window_start, ..)| {
-                let range = f64::from(max) - f64::from(min);
-                let n = (h.to_usize() - window_start.to_usize() + 1) as f32;
-                let ci = if range > 0.0 && n > 1.0 {
-                    BasisPoints16::from(
-                        (*tr_sum / range as f32).log10() as f64 / n.log10() as f64,
-                    )
-                } else {
-                    BasisPoints16::ZERO
-                };
-                (h, ci)
-            },
-            exit,
-        )?;
+        self.price_choppiness_index_2w
+            .bps
+            .height
+            .compute_transform4(
+                starting_indexes.height,
+                &self.price_true_range_sum_2w.height,
+                &self.price_max_2w.cents.height,
+                &self.price_min_2w.cents.height,
+                &blocks.count.height_2w_ago,
+                |(h, tr_sum, max, min, window_start, ..)| {
+                    let range = f64::from(max) - f64::from(min);
+                    let n = (h.to_usize() - window_start.to_usize() + 1) as f32;
+                    let ci = if range > 0.0 && n > 1.0 {
+                        BasisPoints16::from(
+                            (*tr_sum / range as f32).log10() as f64 / n.log10() as f64,
+                        )
+                    } else {
+                        BasisPoints16::ZERO
+                    };
+                    (h, ci)
+                },
+                exit,
+            )?;
 
         Ok(())
     }

@@ -16,7 +16,8 @@ impl Vecs {
     ) -> Result<()> {
         let window_starts = count_vecs.window_starts();
 
-        let tx_vany = |tx_vany: &mut ComputedFromHeightCumulativeSum<StoredU64>, txversion: TxVersion| {
+        let tx_vany = |tx_vany: &mut ComputedFromHeightCumulativeSum<StoredU64>,
+                       txversion: TxVersion| {
             let txversion_vec = &indexer.vecs.transactions.txversion;
             // Cursor avoids per-transaction PcoVec page decompression.
             // Txindex values are sequential, so the cursor only advances forward.

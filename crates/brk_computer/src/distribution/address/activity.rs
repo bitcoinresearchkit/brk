@@ -22,7 +22,10 @@ use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
-use crate::{indexes, internal::{ComputedFromHeightDistribution, WindowStarts}};
+use crate::{
+    indexes,
+    internal::{ComputedFromHeightDistribution, WindowStarts},
+};
 
 /// Per-block activity counts - reset each block.
 ///
@@ -137,7 +140,9 @@ impl ActivityCountVecs {
             .min(self.both.height.len())
     }
 
-    pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_height_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.reactivated.height as &mut dyn AnyStoredVec,
             &mut self.sending.height as &mut dyn AnyStoredVec,
@@ -181,9 +186,7 @@ impl ActivityCountVecs {
         self.balance_decreased
             .height
             .truncate_push(height, (counts.sending - counts.both).into())?;
-        self.both
-            .height
-            .truncate_push(height, counts.both.into())?;
+        self.both.height.truncate_push(height, counts.both.into())?;
         Ok(())
     }
 
@@ -196,8 +199,10 @@ impl ActivityCountVecs {
         self.reactivated.compute_rest(max_from, windows, exit)?;
         self.sending.compute_rest(max_from, windows, exit)?;
         self.receiving.compute_rest(max_from, windows, exit)?;
-        self.balance_increased.compute_rest(max_from, windows, exit)?;
-        self.balance_decreased.compute_rest(max_from, windows, exit)?;
+        self.balance_increased
+            .compute_rest(max_from, windows, exit)?;
+        self.balance_decreased
+            .compute_rest(max_from, windows, exit)?;
         self.both.compute_rest(max_from, windows, exit)?;
         Ok(())
     }
@@ -223,16 +228,27 @@ impl AddressTypeToActivityCountVecs {
     ) -> Result<Self> {
         Ok(Self::from(
             ByAddressType::<ActivityCountVecs>::new_with_name(|type_name| {
-                ActivityCountVecs::forced_import(db, &format!("{type_name}_{name}"), version, indexes)
+                ActivityCountVecs::forced_import(
+                    db,
+                    &format!("{type_name}_{name}"),
+                    version,
+                    indexes,
+                )
             })?,
         ))
     }
 
     pub(crate) fn min_stateful_height(&self) -> usize {
-        self.0.values().map(|v| v.min_stateful_height()).min().unwrap_or(0)
+        self.0
+            .values()
+            .map(|v| v.min_stateful_height())
+            .min()
+            .unwrap_or(0)
     }
 
-    pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_height_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
         for type_vecs in self.0.values_mut() {
             vecs.push(&mut type_vecs.reactivated.height);
@@ -274,7 +290,6 @@ impl AddressTypeToActivityCountVecs {
         }
         Ok(())
     }
-
 }
 
 /// Storage for activity metrics (global + per type).
@@ -301,10 +316,14 @@ impl AddressActivityVecs {
     }
 
     pub(crate) fn min_stateful_height(&self) -> usize {
-        self.all.min_stateful_height().min(self.by_addresstype.min_stateful_height())
+        self.all
+            .min_stateful_height()
+            .min(self.by_addresstype.min_stateful_height())
     }
 
-    pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_height_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         self.all
             .par_iter_height_mut()
             .chain(self.by_addresstype.par_iter_height_mut())
@@ -337,5 +356,4 @@ impl AddressActivityVecs {
         self.by_addresstype.truncate_push_height(height, counts)?;
         Ok(())
     }
-
 }

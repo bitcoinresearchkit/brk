@@ -156,7 +156,6 @@ pub enum Error {
     },
 }
 
-
 impl Error {
     /// Returns true if this error is due to a file lock (another process has the database open).
     /// Lock errors are transient and should not trigger data deletion.

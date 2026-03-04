@@ -4,7 +4,10 @@ use brk_types::TxidPrefix;
 use rustc_hash::FxHashMap;
 
 use super::tx_node::TxNode;
-use crate::{entry::Entry, types::{PoolIndex, TxIndex}};
+use crate::{
+    entry::Entry,
+    types::{PoolIndex, TxIndex},
+};
 
 /// Type-safe wrapper around Vec<TxNode> that only allows PoolIndex access.
 pub struct Graph(Vec<TxNode>);

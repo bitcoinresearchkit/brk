@@ -177,21 +177,46 @@ fn main() {
 
     for h in START_HEIGHT..total_heights {
         let ft = first_txindex[h];
-        let next_ft = first_txindex.get(h + 1).copied().unwrap_or(TxIndex::from(total_txs));
+        let next_ft = first_txindex
+            .get(h + 1)
+            .copied()
+            .unwrap_or(TxIndex::from(total_txs));
 
         let out_start = if ft.to_usize() + 1 < next_ft.to_usize() {
-            indexer.vecs.transactions.first_txoutindex.collect_one(ft + 1).unwrap().to_usize()
+            indexer
+                .vecs
+                .transactions
+                .first_txoutindex
+                .collect_one(ft + 1)
+                .unwrap()
+                .to_usize()
         } else {
-            out_first.get(h + 1).copied().unwrap_or(TxOutIndex::from(total_outputs)).to_usize()
+            out_first
+                .get(h + 1)
+                .copied()
+                .unwrap_or(TxOutIndex::from(total_outputs))
+                .to_usize()
         };
-        let out_end = out_first.get(h + 1).copied().unwrap_or(TxOutIndex::from(total_outputs)).to_usize();
+        let out_end = out_first
+            .get(h + 1)
+            .copied()
+            .unwrap_or(TxOutIndex::from(total_outputs))
+            .to_usize();
 
         if h < sweep_start {
             continue;
         }
 
-        let values: Vec<Sats> = indexer.vecs.outputs.value.collect_range_at(out_start, out_end);
-        let output_types: Vec<OutputType> = indexer.vecs.outputs.outputtype.collect_range_at(out_start, out_end);
+        let values: Vec<Sats> = indexer
+            .vecs
+            .outputs
+            .value
+            .collect_range_at(out_start, out_end);
+        let output_types: Vec<OutputType> = indexer
+            .vecs
+            .outputs
+            .outputtype
+            .collect_range_at(out_start, out_end);
 
         let mut full_hist = Box::new([0u32; NUM_BINS]);
         let mut round_outputs = Vec::new();
@@ -330,9 +355,7 @@ fn main() {
                             // Remove outputs matching this tolerance + mask.
                             let tol_f32 = tolerance as f32;
                             for ro in &bd.round_outputs {
-                                if mask & (1 << (ro.digit - 1)) != 0
-                                    && ro.rel_err <= tol_f32
-                                {
+                                if mask & (1 << (ro.digit - 1)) != 0 && ro.rel_err <= tol_f32 {
                                     hist[ro.bin as usize] -= 1;
                                 }
                             }
@@ -417,9 +440,7 @@ fn main() {
     // Show current config for reference.
     let current = all_results
         .iter()
-        .find(|(t, m, _)| {
-            tolerances[*t].0 == 0.001 && masks[*m].0 == 0b0_0011_0111
-        })
+        .find(|(t, m, _)| tolerances[*t].0 == 0.001 && masks[*m].0 == 0b0_0011_0111)
         .unwrap();
     let (_, _, cs) = current;
     println!(

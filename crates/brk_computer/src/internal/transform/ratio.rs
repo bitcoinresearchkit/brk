@@ -4,9 +4,6 @@ use brk_types::{
 };
 use vecdb::BinaryTransform;
 
-// === BasisPoints16 (unsigned) ratios ===
-
-/// (StoredU64, StoredU64) -> BasisPoints16 ratio (a/b × 10000)
 pub struct RatioU64Bp16;
 
 impl BinaryTransform<StoredU64, StoredU64, BasisPoints16> for RatioU64Bp16 {
@@ -20,7 +17,6 @@ impl BinaryTransform<StoredU64, StoredU64, BasisPoints16> for RatioU64Bp16 {
     }
 }
 
-/// (Sats, Sats) -> BasisPoints16 ratio (a/b × 10000)
 pub struct RatioSatsBp16;
 
 impl BinaryTransform<Sats, Sats, BasisPoints16> for RatioSatsBp16 {
@@ -34,7 +30,6 @@ impl BinaryTransform<Sats, Sats, BasisPoints16> for RatioSatsBp16 {
     }
 }
 
-/// (Cents, Cents) -> BasisPoints16 ratio (a/b × 10000)
 pub struct RatioCentsBp16;
 
 impl BinaryTransform<Cents, Cents, BasisPoints16> for RatioCentsBp16 {
@@ -48,7 +43,6 @@ impl BinaryTransform<Cents, Cents, BasisPoints16> for RatioCentsBp16 {
     }
 }
 
-/// (StoredU32, StoredU32) -> BasisPoints16 ratio (a/b × 10000)
 pub struct RatioU32Bp16;
 
 impl BinaryTransform<StoredU32, StoredU32, BasisPoints16> for RatioU32Bp16 {
@@ -62,7 +56,6 @@ impl BinaryTransform<StoredU32, StoredU32, BasisPoints16> for RatioU32Bp16 {
     }
 }
 
-/// (Dollars, Dollars) -> BasisPoints16 ratio (a/b × 10000)
 pub struct RatioDollarsBp16;
 
 impl BinaryTransform<Dollars, Dollars, BasisPoints16> for RatioDollarsBp16 {
@@ -77,9 +70,6 @@ impl BinaryTransform<Dollars, Dollars, BasisPoints16> for RatioDollarsBp16 {
     }
 }
 
-// === BasisPointsSigned16 (signed) ratios ===
-
-/// (Dollars, Dollars) -> BasisPointsSigned16 ratio (a/b × 10000)
 pub struct RatioDollarsBps16;
 
 impl BinaryTransform<Dollars, Dollars, BasisPointsSigned16> for RatioDollarsBps16 {
@@ -94,7 +84,6 @@ impl BinaryTransform<Dollars, Dollars, BasisPointsSigned16> for RatioDollarsBps1
     }
 }
 
-/// (Dollars, Dollars) -> BasisPointsSigned16 negated ratio (-(a/b) × 10000)
 pub struct NegRatioDollarsBps16;
 
 impl BinaryTransform<Dollars, Dollars, BasisPointsSigned16> for NegRatioDollarsBps16 {
@@ -109,7 +98,6 @@ impl BinaryTransform<Dollars, Dollars, BasisPointsSigned16> for NegRatioDollarsB
     }
 }
 
-/// (CentsSigned, Cents) -> BasisPointsSigned16 ratio (a/b × 10000)
 pub struct RatioCentsSignedCentsBps16;
 
 impl BinaryTransform<CentsSigned, Cents, BasisPointsSigned16> for RatioCentsSignedCentsBps16 {
@@ -123,7 +111,6 @@ impl BinaryTransform<CentsSigned, Cents, BasisPointsSigned16> for RatioCentsSign
     }
 }
 
-/// (CentsSigned, Dollars) -> BasisPointsSigned16 ratio (a/b × 10000)
 pub struct RatioCentsSignedDollarsBps16;
 
 impl BinaryTransform<CentsSigned, Dollars, BasisPointsSigned16> for RatioCentsSignedDollarsBps16 {
@@ -138,9 +125,6 @@ impl BinaryTransform<CentsSigned, Dollars, BasisPointsSigned16> for RatioCentsSi
     }
 }
 
-// === BasisPoints32 (unsigned) ratios ===
-
-/// (Dollars, Dollars) -> BasisPoints32 ratio (a / b × 10000)
 pub struct RatioDollarsBp32;
 
 impl BinaryTransform<Dollars, Dollars, BasisPoints32> for RatioDollarsBp32 {
@@ -150,9 +134,6 @@ impl BinaryTransform<Dollars, Dollars, BasisPoints32> for RatioDollarsBp32 {
     }
 }
 
-// === BasisPointsSigned32 (signed) ratio diffs ===
-
-/// (StoredF32, StoredF32) -> BasisPointsSigned32 ratio diff ((a/b - 1) × 10000)
 pub struct RatioDiffF32Bps32;
 
 impl BinaryTransform<StoredF32, StoredF32, BasisPointsSigned32> for RatioDiffF32Bps32 {
@@ -166,7 +147,6 @@ impl BinaryTransform<StoredF32, StoredF32, BasisPointsSigned32> for RatioDiffF32
     }
 }
 
-/// (Dollars, Dollars) -> BasisPointsSigned32 ratio diff ((a/b - 1) × 10000)
 pub struct RatioDiffDollarsBps32;
 
 impl BinaryTransform<Dollars, Dollars, BasisPointsSigned32> for RatioDiffDollarsBps32 {
@@ -181,7 +161,6 @@ impl BinaryTransform<Dollars, Dollars, BasisPointsSigned32> for RatioDiffDollars
     }
 }
 
-/// (Cents, Cents) -> BasisPointsSigned32 ratio diff ((a/b - 1) × 10000)
 pub struct RatioDiffCentsBps32;
 
 impl BinaryTransform<Cents, Cents, BasisPointsSigned32> for RatioDiffCentsBps32 {

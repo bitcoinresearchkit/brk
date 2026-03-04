@@ -2,8 +2,7 @@ use std::collections::BTreeMap;
 
 use brk_error::{Error, Result};
 use brk_types::{
-    Cents, CheckedSub, Close, Date, Day1, Dollars, Height, High, Low, OHLCCents, Open,
-    Timestamp,
+    Cents, CheckedSub, Close, Date, Day1, Dollars, Height, High, Low, OHLCCents, Open, Timestamp,
 };
 use serde_json::Value;
 use tracing::info;
@@ -69,8 +68,7 @@ impl BRK {
         if !self.day1_to_ohlc.contains_key(&key)
             || ((key + self.day1_to_ohlc.get(&key).unwrap().len()) <= day1)
         {
-            self.day1_to_ohlc
-                .insert(key, Self::fetch_date_prices(key)?);
+            self.day1_to_ohlc.insert(key, Self::fetch_date_prices(key)?);
         }
 
         self.day1_to_ohlc

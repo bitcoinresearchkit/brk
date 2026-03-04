@@ -64,16 +64,20 @@ impl Block {
         if let Some(raw) = self.raw_tx_bytes(index) {
             let total_size = raw.len() as u32;
             let is_segwit = raw[4] == 0x00;
-            let base_size = if is_segwit { tx.base_size() as u32 } else { total_size };
+            let base_size = if is_segwit {
+                tx.base_size() as u32
+            } else {
+                total_size
+            };
             let txid = Self::hash_raw_tx(raw, base_size);
-            debug_assert_eq!(
-                txid,
-                tx.compute_txid(),
-                "raw txid mismatch at tx {index}"
-            );
+            debug_assert_eq!(txid, tx.compute_txid(), "raw txid mismatch at tx {index}");
             (txid, base_size, total_size)
         } else {
-            (tx.compute_txid(), tx.base_size() as u32, tx.total_size() as u32)
+            (
+                tx.compute_txid(),
+                tx.base_size() as u32,
+                tx.total_size() as u32,
+            )
         }
     }
 
@@ -183,4 +187,3 @@ impl ReadBlock {
         self.block
     }
 }
-

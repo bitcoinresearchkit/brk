@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_types::{Age, CentsSats, Cents, CostBasisSnapshot, Height, Sats, SupplyState};
+use brk_types::{Age, Cents, CentsSats, CostBasisSnapshot, Height, Sats, SupplyState};
 
 use super::super::cost_basis::{CostBasisData, Percentiles, RealizedState, UnrealizedState};
 
@@ -256,8 +256,7 @@ impl CohortState {
     }
 
     pub(crate) fn compute_unrealized_state(&mut self, height_price: Cents) -> UnrealizedState {
-        self.cost_basis_data
-            .compute_unrealized_state(height_price)
+        self.cost_basis_data.compute_unrealized_state(height_price)
     }
 
     pub(crate) fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {

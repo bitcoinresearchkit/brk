@@ -6,7 +6,11 @@ use super::Vecs;
 use crate::{indexes, internal::FiatFromHeight};
 
 impl Vecs {
-    pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
         Ok(Self {
             thermo_cap: FiatFromHeight::forced_import(db, "thermo_cap", version, indexes)?,
             investor_cap: FiatFromHeight::forced_import(db, "investor_cap", version, indexes)?,

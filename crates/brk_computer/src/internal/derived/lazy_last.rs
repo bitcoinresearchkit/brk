@@ -1,59 +1,20 @@
-//! LazyHeightDerived — unary transform of height-derived last values.
-
-use std::marker::PhantomData;
-
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12,
-    Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
+    Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{
-    LazyVecFrom1, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecIndex, VecValue,
-};
+use vecdb::{ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecValue};
 
 use crate::{
-    indexes, indexes_from,
+    indexes,
     internal::{
         ComputedFromHeight, ComputedHeightDerived, ComputedVecValue, NumericValue, PerPeriod,
     },
 };
 
-#[derive(Clone, Deref, DerefMut, Traversable)]
-#[traversable(transparent)]
-pub struct LazyTransformLast<I, T, S1T = T>(pub LazyVecFrom1<I, T, I, S1T>)
-where
-    I: VecIndex,
-    T: VecValue + PartialOrd + JsonSchema,
-    S1T: VecValue;
-
-impl<I, T, S1T> LazyTransformLast<I, T, S1T>
-where
-    I: VecIndex,
-    T: VecValue + PartialOrd + JsonSchema + 'static,
-    S1T: VecValue + JsonSchema,
-{
-    fn from_boxed<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        source: ReadableBoxedVec<I, S1T>,
-    ) -> Self {
-        Self(LazyVecFrom1::transformed::<F>(name, version, source))
-    }
-}
-
-struct MapOption<F>(PhantomData<F>);
-
-impl<F, S, T> UnaryTransform<Option<S>, Option<T>> for MapOption<F>
-where
-    F: UnaryTransform<S, T>,
-{
-    #[inline(always)]
-    fn apply(value: Option<S>) -> Option<T> {
-        value.map(F::apply)
-    }
-}
+use super::{LazyTransformLast, MapOption};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
@@ -106,8 +67,7 @@ where
     where
         S1T: NumericValue,
     {
-        let derived =
-            ComputedHeightDerived::forced_import(name, height_source, version, indexes);
+        let derived = ComputedHeightDerived::forced_import(name, height_source, version, indexes);
         Self::from_derived_computed::<F>(name, version, &derived)
     }
 
@@ -135,7 +95,23 @@ where
             };
         }
 
-        Self(indexes_from!(period, epoch))
+        Self(PerPeriod {
+            minute10: period!(minute10),
+            minute30: period!(minute30),
+            hour1: period!(hour1),
+            hour4: period!(hour4),
+            hour12: period!(hour12),
+            day1: period!(day1),
+            day3: period!(day3),
+            week1: period!(week1),
+            month1: period!(month1),
+            month3: period!(month3),
+            month6: period!(month6),
+            year1: period!(year1),
+            year10: period!(year10),
+            halvingepoch: epoch!(halvingepoch),
+            difficultyepoch: epoch!(difficultyepoch),
+        })
     }
 
     pub(crate) fn from_lazy<F, S2T>(
@@ -163,6 +139,22 @@ where
             };
         }
 
-        Self(indexes_from!(period, epoch))
+        Self(PerPeriod {
+            minute10: period!(minute10),
+            minute30: period!(minute30),
+            hour1: period!(hour1),
+            hour4: period!(hour4),
+            hour12: period!(hour12),
+            day1: period!(day1),
+            day3: period!(day3),
+            week1: period!(week1),
+            month1: period!(month1),
+            month3: period!(month3),
+            month6: period!(month6),
+            year1: period!(year1),
+            year10: period!(year10),
+            halvingepoch: epoch!(halvingepoch),
+            difficultyepoch: epoch!(difficultyepoch),
+        })
     }
 }

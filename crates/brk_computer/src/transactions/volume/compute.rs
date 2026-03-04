@@ -67,24 +67,30 @@ impl Vecs {
         self.annualized_volume
             .compute(prices, starting_indexes.height, exit)?;
 
-        self.tx_per_sec.height.compute_binary::<_, Timestamp, PerSec>(
-            starting_indexes.height,
-            &count_vecs.tx_count.height,
-            &blocks.interval.height,
-            exit,
-        )?;
-        self.inputs_per_sec.height.compute_binary::<_, Timestamp, PerSec>(
-            starting_indexes.height,
-            &inputs_count.full.sum,
-            &blocks.interval.height,
-            exit,
-        )?;
-        self.outputs_per_sec.height.compute_binary::<_, Timestamp, PerSec>(
-            starting_indexes.height,
-            &outputs_count.total_count.full.sum,
-            &blocks.interval.height,
-            exit,
-        )?;
+        self.tx_per_sec
+            .height
+            .compute_binary::<_, Timestamp, PerSec>(
+                starting_indexes.height,
+                &count_vecs.tx_count.height,
+                &blocks.interval.height,
+                exit,
+            )?;
+        self.inputs_per_sec
+            .height
+            .compute_binary::<_, Timestamp, PerSec>(
+                starting_indexes.height,
+                &inputs_count.full.sum,
+                &blocks.interval.height,
+                exit,
+            )?;
+        self.outputs_per_sec
+            .height
+            .compute_binary::<_, Timestamp, PerSec>(
+                starting_indexes.height,
+                &outputs_count.total_count.full.sum,
+                &blocks.interval.height,
+                exit,
+            )?;
 
         Ok(())
     }

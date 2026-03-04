@@ -3,7 +3,7 @@ use brk_types::{Indexes, StoredF64};
 use vecdb::Exit;
 
 use super::{super::value, Vecs};
-use crate::{blocks, prices, traits::ComputeRollingMedianFromStarts};
+use crate::{blocks, internal::ComputeRollingMedianFromStarts, prices};
 
 impl Vecs {
     pub(crate) fn compute(

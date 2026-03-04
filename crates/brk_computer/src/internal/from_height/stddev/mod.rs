@@ -38,18 +38,9 @@ impl ComputedFromHeightStdDev {
         let version = parent_version + Version::TWO;
         let p = period_suffix(period);
 
-        let sma = ComputedFromHeight::forced_import(
-            db,
-            &format!("{name}_sma{p}"),
-            version,
-            indexes,
-        )?;
-        let sd = ComputedFromHeight::forced_import(
-            db,
-            &format!("{name}_sd{p}"),
-            version,
-            indexes,
-        )?;
+        let sma =
+            ComputedFromHeight::forced_import(db, &format!("{name}_sma{p}"), version, indexes)?;
+        let sd = ComputedFromHeight::forced_import(db, &format!("{name}_sd{p}"), version, indexes)?;
 
         Ok(Self { days, sma, sd })
     }

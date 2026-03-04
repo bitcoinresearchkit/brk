@@ -6,7 +6,11 @@ use super::{ByLookbackPeriod, Vecs};
 use crate::{indexes, internal::Price};
 
 impl Vecs {
-    pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
         let price_lookback = ByLookbackPeriod::try_new(|name, _days| {
             Price::forced_import(db, &format!("price_lookback_{name}"), version, indexes)
         })?;

@@ -11,8 +11,7 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let timestamp_monotonic =
-            EagerVec::forced_import(db, "timestamp_monotonic", version)?;
+        let timestamp_monotonic = EagerVec::forced_import(db, "timestamp_monotonic", version)?;
 
         Ok(Self {
             date: LazyVecFrom1::init(
@@ -28,11 +27,7 @@ impl Vecs {
 }
 
 impl TimestampIndexes {
-    fn forced_import(
-        db: &Database,
-        version: Version,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
+    fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         macro_rules! period {
             ($field:ident) => {
                 LazyVecFrom1::init(
@@ -50,6 +45,22 @@ impl TimestampIndexes {
             };
         }
 
-        Ok(Self(crate::indexes_from!(period, epoch)))
+        Ok(Self(crate::internal::PerPeriod {
+            minute10: period!(minute10),
+            minute30: period!(minute30),
+            hour1: period!(hour1),
+            hour4: period!(hour4),
+            hour12: period!(hour12),
+            day1: period!(day1),
+            day3: period!(day3),
+            week1: period!(week1),
+            month1: period!(month1),
+            month3: period!(month3),
+            month6: period!(month6),
+            year1: period!(year1),
+            year10: period!(year10),
+            halvingepoch: epoch!(halvingepoch),
+            difficultyepoch: epoch!(difficultyepoch),
+        }))
     }
 }

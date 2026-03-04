@@ -1,5 +1,3 @@
-//! Growth rate: new_addr_count / addr_count (global + per-type)
-
 use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -27,12 +25,8 @@ impl GrowthRateVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let all = PercentFromHeightDistribution::forced_import(
-            db,
-            "growth_rate",
-            version,
-            indexes,
-        )?;
+        let all =
+            PercentFromHeightDistribution::forced_import(db, "growth_rate", version, indexes)?;
 
         let by_addresstype = ByAddressType::new_with_name(|name| {
             PercentFromHeightDistribution::forced_import(
@@ -43,7 +37,10 @@ impl GrowthRateVecs {
             )
         })?;
 
-        Ok(Self { all, by_addresstype })
+        Ok(Self {
+            all,
+            by_addresstype,
+        })
     }
 
     pub(crate) fn compute(
@@ -64,24 +61,14 @@ impl GrowthRateVecs {
             )
         })?;
 
-        for ((_, growth), ((_, new), (_, addr))) in self
-            .by_addresstype
-            .iter_mut()
-            .zip(
-                new_addr_count
-                    .by_addresstype
-                    .iter()
-                    .zip(addr_count.by_addresstype.iter()),
-            )
-        {
+        for ((_, growth), ((_, new), (_, addr))) in self.by_addresstype.iter_mut().zip(
+            new_addr_count
+                .by_addresstype
+                .iter()
+                .zip(addr_count.by_addresstype.iter()),
+        ) {
             growth.compute(max_from, windows, exit, |target| {
-                compute_ratio(
-                    target,
-                    max_from,
-                    &new.height,
-                    &addr.count.height,
-                    exit,
-                )
+                compute_ratio(target, max_from, &new.height, &addr.count.height, exit)
             })?;
         }
 

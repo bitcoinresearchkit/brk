@@ -29,19 +29,45 @@ pub struct ExtendedAdjustedCohortMetrics<M: StorageMode = Rw> {
 }
 
 impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
-    fn filter(&self) -> &Filter { &self.filter }
-    fn supply(&self) -> &SupplyMetrics { &self.supply }
-    fn supply_mut(&mut self) -> &mut SupplyMetrics { &mut self.supply }
-    fn outputs(&self) -> &OutputsMetrics { &self.outputs }
-    fn outputs_mut(&mut self) -> &mut OutputsMetrics { &mut self.outputs }
-    fn activity(&self) -> &ActivityMetrics { &self.activity }
-    fn activity_mut(&mut self) -> &mut ActivityMetrics { &mut self.activity }
-    fn realized_base(&self) -> &RealizedBase { &self.realized }
-    fn realized_base_mut(&mut self) -> &mut RealizedBase { &mut self.realized }
-    fn unrealized_base(&self) -> &UnrealizedBase { &self.unrealized }
-    fn unrealized_base_mut(&mut self) -> &mut UnrealizedBase { &mut self.unrealized }
-    fn cost_basis_base(&self) -> &CostBasisBase { &self.cost_basis }
-    fn cost_basis_base_mut(&mut self) -> &mut CostBasisBase { &mut self.cost_basis }
+    fn filter(&self) -> &Filter {
+        &self.filter
+    }
+    fn supply(&self) -> &SupplyMetrics {
+        &self.supply
+    }
+    fn supply_mut(&mut self) -> &mut SupplyMetrics {
+        &mut self.supply
+    }
+    fn outputs(&self) -> &OutputsMetrics {
+        &self.outputs
+    }
+    fn outputs_mut(&mut self) -> &mut OutputsMetrics {
+        &mut self.outputs
+    }
+    fn activity(&self) -> &ActivityMetrics {
+        &self.activity
+    }
+    fn activity_mut(&mut self) -> &mut ActivityMetrics {
+        &mut self.activity
+    }
+    fn realized_base(&self) -> &RealizedBase {
+        &self.realized
+    }
+    fn realized_base_mut(&mut self) -> &mut RealizedBase {
+        &mut self.realized
+    }
+    fn unrealized_base(&self) -> &UnrealizedBase {
+        &self.unrealized
+    }
+    fn unrealized_base_mut(&mut self) -> &mut UnrealizedBase {
+        &mut self.unrealized
+    }
+    fn cost_basis_base(&self) -> &CostBasisBase {
+        &self.cost_basis
+    }
+    fn cost_basis_base_mut(&mut self) -> &mut CostBasisBase {
+        &mut self.cost_basis
+    }
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.supply.validate_computed_versions(base_version)?;
         self.activity.validate_computed_versions(base_version)?;
@@ -49,13 +75,18 @@ impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
         Ok(())
     }
     fn compute_then_truncate_push_unrealized_states(
-        &mut self, height: Height, height_price: Cents, state: &mut CohortState,
+        &mut self,
+        height: Height,
+        height_price: Cents,
+        state: &mut CohortState,
     ) -> Result<()> {
         state.apply_pending();
         self.cost_basis.truncate_push_minmax(height, state)?;
         let unrealized_state = state.compute_unrealized_state(height_price);
         self.unrealized.truncate_push(height, &unrealized_state)?;
-        self.cost_basis.extended.truncate_push_percentiles(height, state, height_price)?;
+        self.cost_basis
+            .extended
+            .truncate_push_percentiles(height, state, height_price)?;
         Ok(())
     }
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
@@ -72,9 +103,7 @@ impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
 }
 
 impl ExtendedAdjustedCohortMetrics {
-    pub(crate) fn forced_import(
-        cfg: &ImportConfig,
-    ) -> Result<Self> {
+    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let supply = SupplyMetrics::forced_import(cfg)?;
         let unrealized = UnrealizedBase::forced_import(cfg)?;
         let realized = RealizedWithExtendedAdjusted::forced_import(cfg)?;
@@ -129,5 +158,4 @@ impl ExtendedAdjustedCohortMetrics {
 
         Ok(())
     }
-
 }

@@ -1,14 +1,17 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{BasisPoints32, Cents, Height, Indexes, StoredF32, Version};
-use vecdb::{AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex, WritableVec};
+use vecdb::{
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
+    WritableVec,
+};
 
 use crate::{
     blocks, indexes,
     internal::{ComputedFromHeightStdDevExtended, Price, TDigest},
 };
 
-use super::{ComputedFromHeightRatio, super::ComputedFromHeight};
+use super::{super::ComputedFromHeight, ComputedFromHeightRatio};
 
 #[derive(Traversable)]
 pub struct ComputedFromHeightRatioExtension<M: StorageMode = Rw> {
@@ -100,7 +103,6 @@ impl ComputedFromHeightRatioExtension {
         })
     }
 
-    /// Compute extended ratio metrics from an externally-provided ratio source.
     pub(crate) fn compute_rest(
         &mut self,
         blocks: &blocks::Vecs,
@@ -124,11 +126,10 @@ impl ComputedFromHeightRatioExtension {
         )?;
 
         let ratio_version = ratio_source.version();
-        self.mut_pct_vecs()
-            .try_for_each(|v| -> Result<()> {
-                v.validate_computed_version_or_reset(ratio_version)?;
-                Ok(())
-            })?;
+        self.mut_pct_vecs().try_for_each(|v| -> Result<()> {
+            v.validate_computed_version_or_reset(ratio_version)?;
+            Ok(())
+        })?;
 
         let starting_height = self
             .mut_pct_vecs()
@@ -177,19 +178,22 @@ impl ComputedFromHeightRatioExtension {
 
         {
             let _lock = exit.lock();
-            self.mut_pct_vecs()
-                .try_for_each(|v| v.flush())?;
+            self.mut_pct_vecs().try_for_each(|v| v.flush())?;
         }
 
         // Compute stddev at height level
-        for sd in [&mut self.ratio_sd, &mut self.ratio_sd_4y, &mut self.ratio_sd_2y, &mut self.ratio_sd_1y] {
+        for sd in [
+            &mut self.ratio_sd,
+            &mut self.ratio_sd_4y,
+            &mut self.ratio_sd_2y,
+            &mut self.ratio_sd_1y,
+        ] {
             sd.compute_all(blocks, starting_indexes, exit, ratio_source)?;
         }
 
         Ok(())
     }
 
-    /// Compute cents ratio bands: cents_band = metric_price_cents * ratio_percentile
     pub(crate) fn compute_cents_bands(
         &mut self,
         starting_indexes: &Indexes,
@@ -219,7 +223,12 @@ impl ComputedFromHeightRatioExtension {
         compute_band!(ratio_pct1_price, &self.ratio_pct1.bps.height);
 
         // Stddev cents bands
-        for sd in [&mut self.ratio_sd, &mut self.ratio_sd_4y, &mut self.ratio_sd_2y, &mut self.ratio_sd_1y] {
+        for sd in [
+            &mut self.ratio_sd,
+            &mut self.ratio_sd_4y,
+            &mut self.ratio_sd_2y,
+            &mut self.ratio_sd_1y,
+        ] {
             sd.compute_cents_bands(starting_indexes, metric_price, exit)?;
         }
 

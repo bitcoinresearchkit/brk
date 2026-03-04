@@ -8,7 +8,7 @@ use std::{
 use std::fs;
 
 #[cfg(target_os = "macos")]
-use libproc::pid_rusage::{pidrusage, RUsageInfoV2};
+use libproc::pid_rusage::{RUsageInfoV2, pidrusage};
 
 pub struct IoMonitor {
     pid: u32,

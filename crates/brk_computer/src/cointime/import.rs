@@ -1,15 +1,17 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::{Database, PAGE_SIZE};
+
+use crate::{
+    indexes,
+    internal::{finalize_db, open_db},
+};
 
 use super::{
     ActivityVecs, AdjustedVecs, CapVecs, DB_NAME, PricingVecs, ReserveRiskVecs, SupplyVecs,
     ValueVecs, Vecs,
 };
-use crate::indexes;
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -17,9 +19,7 @@ impl Vecs {
         parent_version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let db = Database::open(&parent_path.join(DB_NAME))?;
-        db.set_min_len(PAGE_SIZE * 1_000_000)?;
-
+        let db = open_db(parent_path, DB_NAME, 1_000_000)?;
         let version = parent_version;
         let v1 = version + Version::ONE;
         let activity = ActivityVecs::forced_import(&db, version, indexes)?;
@@ -40,14 +40,7 @@ impl Vecs {
             adjusted,
             reserve_risk,
         };
-
-        this.db.retain_regions(
-            this.iter_any_exportable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
-        this.db.compact()?;
-
+        finalize_db(&this.db, &this)?;
         Ok(this)
     }
 }

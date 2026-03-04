@@ -1,5 +1,10 @@
 use aide::axum::{ApiRouter, routing::get_with};
-use axum::{extract::State, http::{HeaderMap, Uri}, response::Redirect, routing::get};
+use axum::{
+    extract::State,
+    http::{HeaderMap, Uri},
+    response::Redirect,
+    routing::get,
+};
 use brk_types::{Dollars, MempoolBlock, MempoolInfo, RecommendedFees, Txid};
 
 use crate::extended::TransformResponseExtended;

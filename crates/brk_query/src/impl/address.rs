@@ -175,12 +175,20 @@ impl Query {
             .into_iter()
             .map(|(txindex, vout)| {
                 let txid: Txid = txid_reader.get(txindex.to_usize());
-                let height = vecs.transactions.height.collect_one_at(txindex.to_usize()).unwrap();
+                let height = vecs
+                    .transactions
+                    .height
+                    .collect_one_at(txindex.to_usize())
+                    .unwrap();
                 let first_txoutindex = first_txoutindex_reader.get(txindex.to_usize());
                 let txoutindex = first_txoutindex + vout;
                 let value: Sats = value_reader.get(usize::from(txoutindex));
                 let block_hash = blockhash_reader.get(usize::from(height));
-                let block_time = vecs.blocks.timestamp.collect_one_at(usize::from(height)).unwrap();
+                let block_time = vecs
+                    .blocks
+                    .timestamp
+                    .collect_one_at(usize::from(height))
+                    .unwrap();
 
                 Utxo {
                     txid,

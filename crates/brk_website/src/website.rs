@@ -117,8 +117,8 @@ impl Website {
                         .get_file("index.html")
                         .expect("index.html must exist in embedded website");
 
-                    let html =
-                        std::str::from_utf8(file.contents()).expect("index.html must be valid UTF-8");
+                    let html = std::str::from_utf8(file.contents())
+                        .expect("index.html must be valid UTF-8");
 
                     let importmap = ImportMap::scan_embedded(&EMBEDDED_WEBSITE, "");
                     importmap
@@ -225,7 +225,10 @@ impl FromStr for Website {
 }
 
 impl Serialize for Website {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+    fn serialize<S: serde::Serializer>(
+        &self,
+        serializer: S,
+    ) -> std::result::Result<S::Ok, S::Error> {
         match self {
             Self::Disabled => serializer.serialize_bool(false),
             Self::Default => serializer.serialize_bool(true),
@@ -235,7 +238,9 @@ impl Serialize for Website {
 }
 
 impl<'de> Deserialize<'de> for Website {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {
+    fn deserialize<D: serde::Deserializer<'de>>(
+        deserializer: D,
+    ) -> std::result::Result<Self, D::Error> {
         use serde::de::{self, Visitor};
 
         struct WebsiteVisitor;

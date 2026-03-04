@@ -2,7 +2,9 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode, WritableVec};
+use vecdb::{
+    AnyStoredVec, AnyVec, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode, WritableVec,
+};
 
 use crate::{
     blocks,
@@ -51,7 +53,8 @@ impl ActivityMetrics {
                 cfg.version,
             )?,
 
-            coinblocks_destroyed: cfg.import_cumulative_sum("coinblocks_destroyed", Version::ZERO)?,
+            coinblocks_destroyed: cfg
+                .import_cumulative_sum("coinblocks_destroyed", Version::ZERO)?,
             coindays_destroyed: cfg.import_cumulative_sum("coindays_destroyed", Version::ZERO)?,
         })
     }
@@ -151,25 +154,27 @@ impl ActivityMetrics {
             exit,
         )?;
 
-        self.coinblocks_destroyed.compute(starting_indexes.height, &window_starts, exit, |v| {
-            v.compute_transform(
-                starting_indexes.height,
-                &self.satblocks_destroyed,
-                |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
-                exit,
-            )?;
-            Ok(())
-        })?;
+        self.coinblocks_destroyed
+            .compute(starting_indexes.height, &window_starts, exit, |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    &self.satblocks_destroyed,
+                    |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
-        self.coindays_destroyed.compute(starting_indexes.height, &window_starts, exit, |v| {
-            v.compute_transform(
-                starting_indexes.height,
-                &self.satdays_destroyed,
-                |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
-                exit,
-            )?;
-            Ok(())
-        })?;
+        self.coindays_destroyed
+            .compute(starting_indexes.height, &window_starts, exit, |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    &self.satdays_destroyed,
+                    |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
         Ok(())
     }

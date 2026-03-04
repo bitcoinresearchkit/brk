@@ -7,7 +7,7 @@ use vecdb::{Formattable, Pco};
 
 use crate::ONE_DAY_IN_SEC_F64;
 
-use super::{Day1, Year10, Month1, Month3, Month6, Timestamp, Week1, Year1};
+use super::{Day1, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10};
 
 /// Date in YYYYMMDD format stored as u32
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Pco, JsonSchema)]

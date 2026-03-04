@@ -1,7 +1,7 @@
 use std::{io::Write, ops::Deref};
 
 use schemars::JsonSchema;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 use serde_json::Value;
 use vecdb::AnySerializableVec;
 
@@ -72,9 +72,7 @@ impl<T> MetricData<T> {
         // Check first index to verify date conversion works (sub-daily returns None)
         self.index.index_to_date(self.start)?;
         let index = self.index;
-        Some(self.indexes().map(move |i| {
-            index.index_to_date(i).unwrap()
-        }))
+        Some(self.indexes().map(move |i| index.index_to_date(i).unwrap()))
     }
 
     /// Returns an iterator over timestamps for the index range.
@@ -85,9 +83,10 @@ impl<T> MetricData<T> {
             return None;
         }
         let index = self.index;
-        Some(self.indexes().map(move |i| {
-            index.index_to_timestamp(i).unwrap()
-        }))
+        Some(
+            self.indexes()
+                .map(move |i| index.index_to_timestamp(i).unwrap()),
+        )
     }
 
     /// Iterate over (index, &value) pairs.
@@ -146,13 +145,17 @@ impl<T> DateMetricData<T> {
     /// Returns an iterator over timestamps for the index range (infallible).
     /// Works for all date-based indexes including sub-daily.
     pub fn timestamps(&self) -> impl Iterator<Item = Timestamp> + '_ {
-        self.0.timestamps().expect("DateMetricData is always date-based")
+        self.0
+            .timestamps()
+            .expect("DateMetricData is always date-based")
     }
 
     /// Iterate over (timestamp, &value) pairs (infallible).
     /// Works for all date-based indexes including sub-daily.
     pub fn iter_timestamps(&self) -> impl Iterator<Item = (Timestamp, &T)> + '_ {
-        self.0.iter_timestamps().expect("DateMetricData is always date-based")
+        self.0
+            .iter_timestamps()
+            .expect("DateMetricData is always date-based")
     }
 }
 
@@ -170,10 +173,7 @@ impl<'de, T: DeserializeOwned> Deserialize<'de> for DateMetricData<T> {
     {
         let inner = MetricData::<T>::deserialize(deserializer)?;
         Self::try_new(inner).map_err(|m| {
-            serde::de::Error::custom(format!(
-                "expected date-based index, got {:?}",
-                m.index
-            ))
+            serde::de::Error::custom(format!("expected date-based index, got {:?}", m.index))
         })
     }
 }
@@ -517,7 +517,11 @@ mod tests {
         let result: Result<DateMetricData<i32>, _> = serde_json::from_str(json);
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
-        assert!(err.contains("date-based"), "error should mention date-based: {}", err);
+        assert!(
+            err.contains("date-based"),
+            "error should mention date-based: {}",
+            err
+        );
     }
 
     // timestamp_to_index tests

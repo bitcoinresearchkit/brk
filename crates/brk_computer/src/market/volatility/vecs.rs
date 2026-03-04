@@ -4,8 +4,6 @@ use vecdb::{Rw, StorageMode};
 use crate::internal::{ComputedFromHeight, LazyFromHeight};
 
 use brk_types::StoredF32;
-
-/// Price volatility metrics (derived from returns standard deviation)
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub price_volatility_1w: LazyFromHeight<StoredF32>,

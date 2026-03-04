@@ -26,7 +26,12 @@ impl Vecs {
                 indexes,
             ),
             as_hash: ComputedFromHeight::forced_import(db, "difficulty_as_hash", version, indexes)?,
-            adjustment: PercentFromHeight::forced_import(db, "difficulty_adjustment", version, indexes)?,
+            adjustment: PercentFromHeight::forced_import(
+                db,
+                "difficulty_adjustment",
+                version,
+                indexes,
+            )?,
             epoch: ComputedFromHeight::forced_import(db, "difficulty_epoch", version, indexes)?,
             blocks_before_next_adjustment: ComputedFromHeight::forced_import(
                 db,

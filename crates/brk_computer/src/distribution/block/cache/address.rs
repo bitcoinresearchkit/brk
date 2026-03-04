@@ -49,7 +49,10 @@ impl AddressCache {
 
     /// Merge address data into funded cache.
     #[inline]
-    pub(crate) fn merge_funded(&mut self, data: AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>) {
+    pub(crate) fn merge_funded(
+        &mut self,
+        data: AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
+    ) {
         self.funded.merge_mut(data);
     }
 
@@ -63,7 +66,10 @@ impl AddressCache {
     }
 
     /// Update transaction counts for addresses.
-    pub(crate) fn update_tx_counts(&mut self, txindex_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>) {
+    pub(crate) fn update_tx_counts(
+        &mut self,
+        txindex_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
+    ) {
         update_tx_counts(&mut self.funded, &mut self.empty, txindex_vecs);
     }
 
@@ -97,7 +103,9 @@ pub(crate) fn load_uncached_address_data(
     // Check if this is a new address (typeindex >= first for this height)
     let first = *first_addressindexes.get(address_type).unwrap();
     if first <= typeindex {
-        return Ok(Some(WithAddressDataSource::New(FundedAddressData::default())));
+        return Ok(Some(WithAddressDataSource::New(
+            FundedAddressData::default(),
+        )));
     }
 
     // Skip if already in cache

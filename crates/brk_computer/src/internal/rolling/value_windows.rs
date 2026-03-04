@@ -22,9 +22,7 @@ use crate::{
 /// Each window contains `ValueFromHeight` (sats + btc lazy + usd).
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct ValueFromHeightWindows<M: StorageMode = Rw>(
-    pub Windows<ValueFromHeight<M>>,
-);
+pub struct ValueFromHeightWindows<M: StorageMode = Rw>(pub Windows<ValueFromHeight<M>>);
 
 impl ValueFromHeightWindows {
     pub(crate) fn forced_import(

@@ -6,7 +6,7 @@ use brk_types::{
     P2PKHBytes, P2SHAddressIndex, P2SHBytes, P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex,
     P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, TxIndex, UnknownOutputIndex, Version,
 };
-use vecdb::{ReadableCloneableVec, LazyVecFrom1};
+use vecdb::{LazyVecFrom1, ReadableCloneableVec};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
@@ -26,12 +26,14 @@ pub struct Vecs {
 
 #[derive(Clone, Traversable)]
 pub struct P2PK33Vecs {
-    pub identity: LazyVecFrom1<P2PK33AddressIndex, P2PK33AddressIndex, P2PK33AddressIndex, P2PK33Bytes>,
+    pub identity:
+        LazyVecFrom1<P2PK33AddressIndex, P2PK33AddressIndex, P2PK33AddressIndex, P2PK33Bytes>,
 }
 
 #[derive(Clone, Traversable)]
 pub struct P2PK65Vecs {
-    pub identity: LazyVecFrom1<P2PK65AddressIndex, P2PK65AddressIndex, P2PK65AddressIndex, P2PK65Bytes>,
+    pub identity:
+        LazyVecFrom1<P2PK65AddressIndex, P2PK65AddressIndex, P2PK65AddressIndex, P2PK65Bytes>,
 }
 
 #[derive(Clone, Traversable)]
@@ -51,7 +53,8 @@ pub struct P2TRVecs {
 
 #[derive(Clone, Traversable)]
 pub struct P2WPKHVecs {
-    pub identity: LazyVecFrom1<P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHBytes>,
+    pub identity:
+        LazyVecFrom1<P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHBytes>,
 }
 
 #[derive(Clone, Traversable)]
@@ -163,7 +166,11 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "emptyoutputindex",
                     version,
-                    indexer.vecs.scripts.empty_to_txindex.read_only_boxed_clone(),
+                    indexer
+                        .vecs
+                        .scripts
+                        .empty_to_txindex
+                        .read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -171,7 +178,11 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "unknownoutputindex",
                     version,
-                    indexer.vecs.scripts.unknown_to_txindex.read_only_boxed_clone(),
+                    indexer
+                        .vecs
+                        .scripts
+                        .unknown_to_txindex
+                        .read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -179,7 +190,11 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "opreturnindex",
                     version,
-                    indexer.vecs.scripts.opreturn_to_txindex.read_only_boxed_clone(),
+                    indexer
+                        .vecs
+                        .scripts
+                        .opreturn_to_txindex
+                        .read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },

@@ -37,9 +37,11 @@ impl SortedBlocks {
         }
 
         // Find the block where value belongs: first block whose max >= value
-        let block_idx = self.blocks.iter().position(|b| {
-            *b.last().unwrap() >= value
-        }).unwrap_or(self.blocks.len() - 1);
+        let block_idx = self
+            .blocks
+            .iter()
+            .position(|b| *b.last().unwrap() >= value)
+            .unwrap_or(self.blocks.len() - 1);
 
         let block = &mut self.blocks[block_idx];
         let pos = block.partition_point(|a| *a < value);
@@ -131,7 +133,13 @@ impl SlidingWindowSorted {
     }
 
     /// Add a new value and remove all expired values up to `new_start`.
-    pub fn advance(&mut self, value: f64, new_start: usize, partial_values: &[f64], range_start: usize) {
+    pub fn advance(
+        &mut self,
+        value: f64,
+        new_start: usize,
+        partial_values: &[f64],
+        range_start: usize,
+    ) {
         self.running_sum += value;
         self.sorted.insert(value);
 
@@ -159,12 +167,20 @@ impl SlidingWindowSorted {
 
     #[inline]
     pub fn min(&self) -> f64 {
-        if self.sorted.is_empty() { 0.0 } else { self.sorted.first() }
+        if self.sorted.is_empty() {
+            0.0
+        } else {
+            self.sorted.first()
+        }
     }
 
     #[inline]
     pub fn max(&self) -> f64 {
-        if self.sorted.is_empty() { 0.0 } else { self.sorted.last() }
+        if self.sorted.is_empty() {
+            0.0
+        } else {
+            self.sorted.last()
+        }
     }
 
     /// Extract a percentile (0.0-1.0) using linear interpolation.

@@ -1,5 +1,5 @@
 use brk_traversable::Traversable;
-use brk_types::{Date, Year10, Height, Version};
+use brk_types::{Date, Height, Version, Year10};
 use vecdb::{Database, EagerVec, ImportableVec, PcoVec, Rw, StorageMode};
 
 use brk_error::Result;

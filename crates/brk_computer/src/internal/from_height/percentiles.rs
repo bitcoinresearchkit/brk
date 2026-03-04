@@ -109,7 +109,9 @@ impl PercentilesVecs {
     /// Validate computed versions or reset if mismatched.
     pub(crate) fn validate_computed_version_or_reset(&mut self, version: Version) -> Result<()> {
         for vec in self.vecs.iter_mut() {
-            vec.cents.height.validate_computed_version_or_reset(version)?;
+            vec.cents
+                .height
+                .validate_computed_version_or_reset(version)?;
         }
         Ok(())
     }
@@ -120,10 +122,7 @@ impl ReadOnlyClone for PercentilesVecs {
 
     fn read_only_clone(&self) -> Self::ReadOnly {
         PercentilesVecs {
-            vecs: self
-                .vecs
-                .each_ref()
-                .map(|v| v.read_only_clone()),
+            vecs: self.vecs.each_ref().map(|v| v.read_only_clone()),
         }
     }
 }
@@ -143,8 +142,6 @@ where
     }
 
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        self.vecs
-            .iter()
-            .flat_map(|p| p.iter_any_exportable())
+        self.vecs.iter().flat_map(|p| p.iter_any_exportable())
     }
 }

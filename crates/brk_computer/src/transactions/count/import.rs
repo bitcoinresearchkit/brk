@@ -17,16 +17,16 @@ impl Vecs {
             "is_coinbase",
             version,
             indexer.vecs.transactions.height.read_only_boxed_clone(),
-            indexer.vecs.transactions.first_txindex.read_only_boxed_clone(),
-            |index: TxIndex, _height, first_txindex| {
-                StoredBool::from(index == first_txindex)
-            },
+            indexer
+                .vecs
+                .transactions
+                .first_txindex
+                .read_only_boxed_clone(),
+            |index: TxIndex, _height, first_txindex| StoredBool::from(index == first_txindex),
         );
 
         Ok(Self {
-            tx_count: ComputedFromHeightFull::forced_import(
-                db, "tx_count", version, indexes,
-            )?,
+            tx_count: ComputedFromHeightFull::forced_import(db, "tx_count", version, indexes)?,
             is_coinbase: txindex_to_is_coinbase,
         })
     }

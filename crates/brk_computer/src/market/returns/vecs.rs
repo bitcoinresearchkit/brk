@@ -6,8 +6,6 @@ use crate::{
     internal::{ComputedFromHeightStdDev, PercentFromHeight},
     market::{dca::ByDcaCagr, lookback::ByLookbackPeriod},
 };
-
-/// Price returns, CAGR, and returns standard deviation metrics
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub price_return: ByLookbackPeriod<PercentFromHeight<BasisPointsSigned32, M>>,

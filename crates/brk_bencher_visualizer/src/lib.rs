@@ -2,7 +2,7 @@ mod chart;
 mod data;
 mod format;
 
-use data::{read_dual_runs, read_runs, Cutoffs, DualRun, Result, Run};
+use data::{Cutoffs, DualRun, Result, Run, read_dual_runs, read_runs};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -57,10 +57,24 @@ impl Visualizer {
         let io_runs = read_dual_runs(crate_path, "io.csv")?;
 
         // Combined charts (all runs)
-        self.generate_combined_charts(crate_path, crate_name, &disk_runs, &memory_runs, &progress_runs, &io_runs)?;
+        self.generate_combined_charts(
+            crate_path,
+            crate_name,
+            &disk_runs,
+            &memory_runs,
+            &progress_runs,
+            &io_runs,
+        )?;
 
         // Individual charts (one per run)
-        self.generate_individual_charts(crate_path, crate_name, &disk_runs, &memory_runs, &progress_runs, &io_runs)?;
+        self.generate_individual_charts(
+            crate_path,
+            crate_name,
+            &disk_runs,
+            &memory_runs,
+            &progress_runs,
+            &io_runs,
+        )?;
 
         Ok(())
     }
@@ -246,4 +260,3 @@ impl Visualizer {
         Ok(())
     }
 }
-

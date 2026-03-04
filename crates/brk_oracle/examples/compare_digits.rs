@@ -161,21 +161,46 @@ fn main() {
 
     for h in START_HEIGHT..total_heights {
         let ft = first_txindex[h];
-        let next_ft = first_txindex.get(h + 1).copied().unwrap_or(TxIndex::from(total_txs));
+        let next_ft = first_txindex
+            .get(h + 1)
+            .copied()
+            .unwrap_or(TxIndex::from(total_txs));
 
         let out_start = if ft.to_usize() + 1 < next_ft.to_usize() {
-            indexer.vecs.transactions.first_txoutindex.collect_one(ft + 1).unwrap().to_usize()
+            indexer
+                .vecs
+                .transactions
+                .first_txoutindex
+                .collect_one(ft + 1)
+                .unwrap()
+                .to_usize()
         } else {
-            out_first.get(h + 1).copied().unwrap_or(TxOutIndex::from(total_outputs)).to_usize()
+            out_first
+                .get(h + 1)
+                .copied()
+                .unwrap_or(TxOutIndex::from(total_outputs))
+                .to_usize()
         };
-        let out_end = out_first.get(h + 1).copied().unwrap_or(TxOutIndex::from(total_outputs)).to_usize();
+        let out_end = out_first
+            .get(h + 1)
+            .copied()
+            .unwrap_or(TxOutIndex::from(total_outputs))
+            .to_usize();
 
         if h < earliest_start {
             continue;
         }
 
-        let values: Vec<Sats> = indexer.vecs.outputs.value.collect_range_at(out_start, out_end);
-        let output_types: Vec<OutputType> = indexer.vecs.outputs.outputtype.collect_range_at(out_start, out_end);
+        let values: Vec<Sats> = indexer
+            .vecs
+            .outputs
+            .value
+            .collect_range_at(out_start, out_end);
+        let output_types: Vec<OutputType> = indexer
+            .vecs
+            .outputs
+            .outputtype
+            .collect_range_at(out_start, out_end);
 
         // Build full histogram and per-digit histograms.
         let mut full_hist = [0u32; NUM_BINS];

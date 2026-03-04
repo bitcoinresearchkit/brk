@@ -1,7 +1,9 @@
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{StoredU64, TxIndex, Txid, Version};
-use vecdb::{Database, EagerVec, ImportableVec, ReadableCloneableVec, LazyVecFrom1, PcoVec, Rw, StorageMode};
+use vecdb::{
+    Database, EagerVec, ImportableVec, LazyVecFrom1, PcoVec, ReadableCloneableVec, Rw, StorageMode,
+};
 
 use brk_error::Result;
 
@@ -13,7 +15,11 @@ pub struct Vecs<M: StorageMode = Rw> {
 }
 
 impl Vecs {
-    pub(crate) fn forced_import(db: &Database, version: Version, indexer: &Indexer) -> Result<Self> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        version: Version,
+        indexer: &Indexer,
+    ) -> Result<Self> {
         Ok(Self {
             identity: LazyVecFrom1::init(
                 "txindex",

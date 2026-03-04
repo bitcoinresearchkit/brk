@@ -1,11 +1,12 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::{Database, PAGE_SIZE};
 
-use crate::indexes;
+use crate::{
+    indexes,
+    internal::{finalize_db, open_db},
+};
 
 use super::{AdoptionVecs, CountVecs, ValueVecs, Vecs};
 
@@ -15,24 +16,20 @@ impl Vecs {
         parent_version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let db = Database::open(&parent_path.join(super::DB_NAME))?;
-        db.set_min_len(PAGE_SIZE * 50_000_000)?;
-
+        let db = open_db(parent_path, super::DB_NAME, 50_000_000)?;
         let version = parent_version;
 
         let count = CountVecs::forced_import(&db, version, indexes)?;
         let value = ValueVecs::forced_import(&db, version, indexes)?;
         let adoption = AdoptionVecs::forced_import(&db, version, indexes)?;
 
-        let this = Self { db, count, value, adoption };
-
-        this.db.retain_regions(
-            this.iter_any_exportable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
-        this.db.compact()?;
-
+        let this = Self {
+            db,
+            count,
+            value,
+            adoption,
+        };
+        finalize_db(&this.db, &this)?;
         Ok(this)
     }
 }

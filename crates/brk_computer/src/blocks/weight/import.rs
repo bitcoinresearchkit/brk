@@ -14,12 +14,8 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let weight = ComputedHeightDerivedFull::forced_import(
-            db,
-            "block_weight",
-            version,
-            indexes,
-        )?;
+        let weight =
+            ComputedHeightDerivedFull::forced_import(db, "block_weight", version, indexes)?;
 
         let fullness =
             PercentFromHeightDistribution::forced_import(db, "block_fullness", version, indexes)?;

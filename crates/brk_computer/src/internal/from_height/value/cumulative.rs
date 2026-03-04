@@ -43,14 +43,12 @@ impl ValueFromHeightCumulative {
             .height
             .compute_cumulative(max_from, &self.base.sats.height, exit)?;
 
-        self.base
-            .cents
-            .compute_binary::<Sats, Cents, SatsToCents>(
-                max_from,
-                &self.base.sats.height,
-                &prices.price.cents.height,
-                exit,
-            )?;
+        self.base.cents.compute_binary::<Sats, Cents, SatsToCents>(
+            max_from,
+            &self.base.sats.height,
+            &prices.price.cents.height,
+            exit,
+        )?;
 
         self.cumulative
             .cents

@@ -30,16 +30,16 @@ impl Query {
 
         // For each pool, get cumulative count at end and start, subtract to get range count
         for (pool_id, pool_vecs) in &computer.pools.vecs {
-            let cumulative = &pool_vecs
-                .blocks_mined
-                .cumulative.height;
+            let cumulative = &pool_vecs.blocks_mined.cumulative.height;
 
             let count_at_end: u32 = *cumulative.collect_one(current_height).unwrap_or_default();
 
             let count_at_start: u32 = if start == 0 {
                 0
             } else {
-                *cumulative.collect_one(Height::from(start - 1)).unwrap_or_default()
+                *cumulative
+                    .collect_one(Height::from(start - 1))
+                    .unwrap_or_default()
             };
 
             let block_count = count_at_end.saturating_sub(count_at_start);
@@ -98,9 +98,7 @@ impl Query {
             .get(&slug)
             .ok_or_else(|| Error::NotFound("Pool data not found".into()))?;
 
-        let cumulative = &pool_vecs
-            .blocks_mined
-            .cumulative.height;
+        let cumulative = &pool_vecs.blocks_mined.cumulative.height;
 
         // Get total blocks (all time)
         let total_all: u32 = *cumulative.collect_one(current_height).unwrap_or_default();

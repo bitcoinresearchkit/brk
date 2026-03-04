@@ -11,7 +11,7 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ValueFromHeightWindows, Value, WindowStarts},
+    internal::{Value, ValueFromHeightWindows, WindowStarts},
     prices,
 };
 

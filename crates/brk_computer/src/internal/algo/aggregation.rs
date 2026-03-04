@@ -1,21 +1,14 @@
-//! Compute functions for aggregation - take optional vecs, compute what's needed.
-//!
-//! These functions replace the Option-based compute logic in flexible builders.
-//! Each function takes optional mutable references and computes only for Some() vecs.
-
 use brk_error::Result;
 use brk_types::{CheckedSub, StoredU64};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, EagerVec, Exit, WritableVec, ReadableVec, PcoVec, VecIndex,
-    VecValue,
+    AnyStoredVec, AnyVec, EagerVec, Exit, PcoVec, ReadableVec, VecIndex, VecValue, WritableVec,
 };
 
 use brk_types::get_percentile;
 
 use crate::internal::ComputedVecValue;
 
-/// Helper to validate and get starting index for a single vec
 fn validate_and_start<I: VecIndex, T: ComputedVecValue + JsonSchema>(
     vec: &mut EagerVec<PcoVec<I, T>>,
     combined_version: vecdb::Version,
@@ -25,14 +18,6 @@ fn validate_and_start<I: VecIndex, T: ComputedVecValue + JsonSchema>(
     Ok(current_start.min(I::from(vec.len())))
 }
 
-/// Compute aggregations from a source vec into target vecs.
-///
-/// This function computes all requested aggregations in a single pass when possible,
-/// optimizing for the common case where multiple aggregations are needed.
-///
-/// The `skip_count` parameter allows skipping the first N items from ALL calculations.
-/// This is useful for excluding coinbase transactions (which have 0 fee) from
-/// fee/feerate aggregations.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn compute_aggregations<I, T, A>(
     max_from: I,
@@ -97,7 +82,9 @@ where
 
     let mut cumulative_val = cumulative.as_ref().map(|cumulative_vec| {
         index.decremented().map_or(T::from(0_usize), |idx| {
-            cumulative_vec.collect_one_at(idx.to_usize()).unwrap_or(T::from(0_usize))
+            cumulative_vec
+                .collect_one_at(idx.to_usize())
+                .unwrap_or(T::from(0_usize))
         })
     });
 
@@ -106,7 +93,11 @@ where
     let first_indexes_batch: Vec<A> = first_indexes.collect_range_at(start, fi_len);
     let count_indexes_batch: Vec<StoredU64> = count_indexes.collect_range_at(start, fi_len);
 
-    first_indexes_batch.into_iter().zip(count_indexes_batch).enumerate().try_for_each(|(j, (first_index, count_index))| -> Result<()> {
+    first_indexes_batch
+        .into_iter()
+        .zip(count_indexes_batch)
+        .enumerate()
+        .try_for_each(|(j, (first_index, count_index))| -> Result<()> {
             let idx = start + j;
             let count = u64::from(count_index) as usize;
 
@@ -116,7 +107,9 @@ where
 
             if let Some(ref mut first_vec) = first {
                 let f = if effective_count > 0 {
-                    source.collect_one_at(effective_first_index.to_usize()).unwrap()
+                    source
+                        .collect_one_at(effective_first_index.to_usize())
+                        .unwrap()
                 } else {
                     T::from(0_usize)
                 };
@@ -259,10 +252,19 @@ where
             } else if needs_aggregates {
                 // Aggregates only (sum/average/cumulative) — no Vec allocation needed
                 let efi = effective_first_index.to_usize();
-                let (sum_val, len) = source.fold_range_at(efi, efi + effective_count, (T::from(0_usize), 0_usize), |(acc, cnt), val| (acc + val, cnt + 1));
+                let (sum_val, len) = source.fold_range_at(
+                    efi,
+                    efi + effective_count,
+                    (T::from(0_usize), 0_usize),
+                    |(acc, cnt), val| (acc + val, cnt + 1),
+                );
 
                 if let Some(ref mut average_vec) = average {
-                    let avg = if len > 0 { sum_val / len } else { T::from(0_usize) };
+                    let avg = if len > 0 {
+                        sum_val / len
+                    } else {
+                        T::from(0_usize)
+                    };
                     average_vec.truncate_push_at(idx, avg)?;
                 }
 
@@ -296,10 +298,6 @@ where
     Ok(())
 }
 
-/// Compute distribution stats from a fixed n-block rolling window.
-///
-/// For each height `h`, aggregates all source items from blocks `max(0, h - n_blocks + 1)..=h`
-/// and computes average, min, max, median, and percentiles across the full window.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn compute_aggregations_nblock_window<I, T, A>(
     max_from: I,
@@ -322,11 +320,19 @@ where
     T: ComputedVecValue + JsonSchema,
     A: VecIndex + VecValue + CheckedSub<A>,
 {
-    let combined_version =
-        source.version() + first_indexes.version() + count_indexes.version();
+    let combined_version = source.version() + first_indexes.version() + count_indexes.version();
 
     let mut idx = max_from;
-    for vec in [&mut *min, &mut *max, &mut *average, &mut *median, &mut *pct10, &mut *pct25, &mut *pct75, &mut *pct90] {
+    for vec in [
+        &mut *min,
+        &mut *max,
+        &mut *average,
+        &mut *median,
+        &mut *pct10,
+        &mut *pct25,
+        &mut *pct75,
+        &mut *pct90,
+    ] {
         idx = validate_and_start(vec, combined_version, idx)?;
     }
     let index = idx;
@@ -362,7 +368,16 @@ where
             let effective_count = range_end_usize.saturating_sub(range_start_usize);
 
             if effective_count == 0 {
-                for vec in [&mut *min, &mut *max, &mut *average, &mut *median, &mut *pct10, &mut *pct25, &mut *pct75, &mut *pct90] {
+                for vec in [
+                    &mut *min,
+                    &mut *max,
+                    &mut *average,
+                    &mut *median,
+                    &mut *pct10,
+                    &mut *pct25,
+                    &mut *pct75,
+                    &mut *pct90,
+                ] {
                     vec.truncate_push_at(idx, zero)?;
                 }
             } else {

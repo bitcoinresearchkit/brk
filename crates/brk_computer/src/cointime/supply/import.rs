@@ -12,18 +12,8 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            vaulted_supply: ValueFromHeight::forced_import(
-                db,
-                "vaulted_supply",
-                version,
-                indexes,
-            )?,
-            active_supply: ValueFromHeight::forced_import(
-                db,
-                "active_supply",
-                version,
-                indexes,
-            )?,
+            vaulted_supply: ValueFromHeight::forced_import(db, "vaulted_supply", version, indexes)?,
+            active_supply: ValueFromHeight::forced_import(db, "active_supply", version, indexes)?,
         })
     }
 }

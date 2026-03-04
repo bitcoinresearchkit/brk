@@ -31,9 +31,9 @@ pub fn init(path: Option<&Path>) -> io::Result<()> {
         )
     });
 
-    let filter: Targets = directives.parse().unwrap_or_else(|_| {
-        Targets::new().with_default(tracing::Level::INFO)
-    });
+    let filter: Targets = directives
+        .parse()
+        .unwrap_or_else(|_| Targets::new().with_default(tracing::Level::INFO));
 
     let registry = tracing_subscriber::registry()
         .with(filter)

@@ -12,54 +12,52 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub block_count: ComputedFromHeightCumulativeSum<StoredU32, M>,
     pub block_count_sum: RollingWindows<StoredU32, M>,
 
-    // Window starts sorted by duration
     pub height_1h_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub height_24h_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,     // 1d
+    pub height_24h_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 1d
     pub height_3d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub height_1w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 7d
+    pub height_1w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 7d
     pub height_8d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub height_9d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub height_12d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub height_13d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub height_2w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 14d
+    pub height_2w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 14d
     pub height_21d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub height_26d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub height_1m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 30d
+    pub height_1m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 30d
     pub height_34d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub height_55d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub height_2m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 60d
-    pub height_9w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 63d
-    pub height_12w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,     // 84d
+    pub height_2m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 60d
+    pub height_9w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 63d
+    pub height_12w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 84d
     pub height_89d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub height_3m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 90d
-    pub height_14w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,     // 98d
+    pub height_3m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 90d
+    pub height_14w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 98d
     pub height_111d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub height_144d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub height_6m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 180d
-    pub height_26w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,     // 182d
+    pub height_6m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 180d
+    pub height_26w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 182d
     pub height_200d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub height_9m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 270d
+    pub height_9m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 270d
     pub height_350d_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub height_12m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,     // 360d
-    pub height_1y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 365d
-    pub height_14m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,     // 420d
-    pub height_2y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 730d
-    pub height_26m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,     // 780d
-    pub height_3y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 1095d
-    pub height_200w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,    // 1400d
-    pub height_4y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 1460d
-    pub height_5y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 1825d
-    pub height_6y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 2190d
-    pub height_8y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 2920d
-    pub height_9y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,      // 3285d
-    pub height_10y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,     // 3650d
-    pub height_12y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,     // 4380d
-    pub height_14y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,     // 5110d
-    pub height_26y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,     // 9490d
+    pub height_12m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 360d
+    pub height_1y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,  // 365d
+    pub height_14m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 420d
+    pub height_2y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,  // 730d
+    pub height_26m_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 780d
+    pub height_3y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,  // 1095d
+    pub height_200w_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 1400d
+    pub height_4y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,  // 1460d
+    pub height_5y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,  // 1825d
+    pub height_6y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,  // 2190d
+    pub height_8y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,  // 2920d
+    pub height_9y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>,  // 3285d
+    pub height_10y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 3650d
+    pub height_12y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 4380d
+    pub height_14y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 5110d
+    pub height_26y_ago: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 9490d
 }
 
 impl Vecs {
-    /// Get the standard 4 rolling window start heights (24h, 1w, 1m, 1y).
     pub fn window_starts(&self) -> WindowStarts<'_> {
         WindowStarts {
             _24h: &self.height_24h_ago,

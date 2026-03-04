@@ -122,12 +122,13 @@ impl Vecs {
         )?;
 
         // All-time cumulative fee dominance
-        self.fee_dominance.compute_binary::<Sats, Sats, RatioSatsBp16>(
-            starting_indexes.height,
-            &self.fees.cumulative.sats.height,
-            &self.coinbase.cumulative.sats.height,
-            exit,
-        )?;
+        self.fee_dominance
+            .compute_binary::<Sats, Sats, RatioSatsBp16>(
+                starting_indexes.height,
+                &self.fees.cumulative.sats.height,
+                &self.coinbase.cumulative.sats.height,
+                exit,
+            )?;
 
         // Rolling fee dominance = sum(fees) / sum(coinbase)
         for ((fee_dom, fees_w), coinbase_w) in self
@@ -146,12 +147,13 @@ impl Vecs {
         }
 
         // All-time cumulative subsidy dominance
-        self.subsidy_dominance.compute_binary::<Sats, Sats, RatioSatsBp16>(
-            starting_indexes.height,
-            &self.subsidy.cumulative.sats.height,
-            &self.coinbase.cumulative.sats.height,
-            exit,
-        )?;
+        self.subsidy_dominance
+            .compute_binary::<Sats, Sats, RatioSatsBp16>(
+                starting_indexes.height,
+                &self.subsidy.cumulative.sats.height,
+                &self.coinbase.cumulative.sats.height,
+                exit,
+            )?;
 
         // Rolling subsidy dominance = 1 - fee_dominance
         for (sub_dom, fee_dom) in self

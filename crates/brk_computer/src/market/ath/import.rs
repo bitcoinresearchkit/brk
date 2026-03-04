@@ -23,12 +23,11 @@ impl Vecs {
         let max_days_between_price_ath =
             ComputedFromHeight::forced_import(db, "max_days_between_price_ath", v, indexes)?;
 
-        let max_years_between_price_ath =
-            LazyHeightDerived::from_computed::<DaysToYears>(
-                "max_years_between_price_ath",
-                v,
-                &max_days_between_price_ath,
-            );
+        let max_years_between_price_ath = LazyHeightDerived::from_computed::<DaysToYears>(
+            "max_years_between_price_ath",
+            v,
+            &max_days_between_price_ath,
+        );
 
         let days_since_price_ath =
             ComputedFromHeight::forced_import(db, "days_since_price_ath", v, indexes)?;
@@ -39,8 +38,7 @@ impl Vecs {
             &days_since_price_ath,
         );
 
-        let price_drawdown =
-            PercentFromHeight::forced_import(db, "price_drawdown", v, indexes)?;
+        let price_drawdown = PercentFromHeight::forced_import(db, "price_drawdown", v, indexes)?;
 
         Ok(Self {
             price_ath,

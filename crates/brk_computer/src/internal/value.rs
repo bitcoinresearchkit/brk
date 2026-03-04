@@ -11,7 +11,10 @@ use vecdb::{
     StorageMode, VecIndex,
 };
 
-use crate::{internal::{CentsUnsignedToDollars, SatsToBitcoin, SatsToCents}, prices};
+use crate::{
+    internal::{CentsUnsignedToDollars, SatsToBitcoin, SatsToCents},
+    prices,
+};
 
 const VERSION: Version = Version::TWO; // Match ValueFromHeight versioning
 
@@ -24,11 +27,7 @@ pub struct Value<I: VecIndex, M: StorageMode = Rw> {
 }
 
 impl Value<Height> {
-    pub(crate) fn forced_import(
-        db: &Database,
-        name: &str,
-        version: Version,
-    ) -> Result<Self> {
+    pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         let v = version + VERSION;
 
         let sats: EagerVec<PcoVec<Height, Sats>> = EagerVec::forced_import(db, name, v)?;
@@ -45,7 +44,12 @@ impl Value<Height> {
             cents.read_only_boxed_clone(),
         );
 
-        Ok(Self { sats, btc, cents, usd })
+        Ok(Self {
+            sats,
+            btc,
+            cents,
+            usd,
+        })
     }
 
     /// Eagerly compute cents height values: sats[h] * price_cents[h] / 1e8.

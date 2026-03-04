@@ -1,15 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Date, Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4,
-    Indexes, Minute10, Minute30, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10,
+    Date, Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Indexes,
+    Minute10, Minute30, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{EagerVec, Exit, LazyVecFrom1, PcoVec, ReadableVec, Rw, StorageMode};
 
 use crate::{indexes, internal::PerPeriod};
-
-/// Timestamp and date metrics for blocks
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub date: LazyVecFrom1<Height, Date, Height, Timestamp>,
@@ -58,13 +56,21 @@ impl TimestampIndexes {
     ) -> Result<()> {
         let prev_height = starting_indexes.height.decremented().unwrap_or_default();
         self.halvingepoch.compute_indirect_sequential(
-            indexes.height.halvingepoch.collect_one(prev_height).unwrap_or_default(),
+            indexes
+                .height
+                .halvingepoch
+                .collect_one(prev_height)
+                .unwrap_or_default(),
             &indexes.halvingepoch.first_height,
             &indexer.vecs.blocks.timestamp,
             exit,
         )?;
         self.difficultyepoch.compute_indirect_sequential(
-            indexes.height.difficultyepoch.collect_one(prev_height).unwrap_or_default(),
+            indexes
+                .height
+                .difficultyepoch
+                .collect_one(prev_height)
+                .unwrap_or_default(),
             &indexes.difficultyepoch.first_height,
             &indexer.vecs.blocks.timestamp,
             exit,

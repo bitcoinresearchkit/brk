@@ -5,10 +5,7 @@ use vecdb::Database;
 use super::{MacdChain, RsiChain, Vecs};
 use crate::{
     indexes,
-    internal::{
-        ComputedFromHeight, ComputedFromHeightRatio,
-        PercentFromHeight, Windows,
-    },
+    internal::{ComputedFromHeight, ComputedFromHeightRatio, PercentFromHeight, Windows},
 };
 
 const VERSION: Version = Version::ONE;
@@ -45,12 +42,7 @@ impl RsiChain {
         let average_gain = import!("average_gain");
         let average_loss = import!("average_loss");
 
-        let rsi = PercentFromHeight::forced_import(
-            db,
-            &format!("rsi_{tf}"),
-            version,
-            indexes,
-        )?;
+        let rsi = PercentFromHeight::forced_import(db, &format!("rsi_{tf}"), version, indexes)?;
 
         Ok(Self {
             gains: import!("gains"),
@@ -74,18 +66,10 @@ impl MacdChain {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let line = ComputedFromHeight::forced_import(
-            db,
-            &format!("macd_line_{tf}"),
-            version,
-            indexes,
-        )?;
-        let signal = ComputedFromHeight::forced_import(
-            db,
-            &format!("macd_signal_{tf}"),
-            version,
-            indexes,
-        )?;
+        let line =
+            ComputedFromHeight::forced_import(db, &format!("macd_line_{tf}"), version, indexes)?;
+        let signal =
+            ComputedFromHeight::forced_import(db, &format!("macd_signal_{tf}"), version, indexes)?;
 
         let histogram = ComputedFromHeight::forced_import(
             db,
@@ -134,7 +118,12 @@ impl Vecs {
         let pi_cycle = ComputedFromHeightRatio::forced_import_raw(db, "pi_cycle", v, indexes)?;
 
         Ok(Self {
-            puell_multiple: ComputedFromHeightRatio::forced_import_raw(db, "puell_multiple", v, indexes)?,
+            puell_multiple: ComputedFromHeightRatio::forced_import_raw(
+                db,
+                "puell_multiple",
+                v,
+                indexes,
+            )?,
             nvt,
             rsi,
             stoch_k,

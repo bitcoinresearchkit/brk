@@ -1,14 +1,9 @@
-//! EagerIndexes - newtype on PerPeriod with EagerVec<PcoVec<I, T>> per field.
-//!
-//! Used for data eagerly computed and stored per period during indexing,
-//! such as timestamp (first value per period) and OHLC (first/min/max per period).
-
 use brk_error::Result;
 
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12,
-    Indexes, Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Indexes, Minute10,
+    Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -18,7 +13,7 @@ use vecdb::{
 };
 
 use crate::{
-    indexes, indexes_apply, indexes_from,
+    indexes,
     internal::{ComputedVecValue, NumericValue, PerPeriod},
 };
 
@@ -52,16 +47,31 @@ where
     T: NumericValue + JsonSchema,
 {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
-        macro_rules! period {
-            ($idx:ident) => {
+        macro_rules! per_period {
+            () => {
                 ImportableVec::forced_import(db, name, version)?
             };
         }
 
-        Ok(Self(indexes_from!(period)))
+        Ok(Self(PerPeriod {
+            minute10: per_period!(),
+            minute30: per_period!(),
+            hour1: per_period!(),
+            hour4: per_period!(),
+            hour12: per_period!(),
+            day1: per_period!(),
+            day3: per_period!(),
+            week1: per_period!(),
+            month1: per_period!(),
+            month3: per_period!(),
+            month6: per_period!(),
+            year1: per_period!(),
+            year10: per_period!(),
+            halvingepoch: per_period!(),
+            difficultyepoch: per_period!(),
+        }))
     }
 
-    /// Compute "first value per period" — for each period, looks up `source[first_height[period]]`.
     pub(crate) fn compute_first(
         &mut self,
         starting_indexes: &Indexes,
@@ -74,7 +84,11 @@ where
         macro_rules! period {
             ($field:ident) => {
                 self.0.$field.compute_indirect_sequential(
-                    indexes.height.$field.collect_one(prev_height).unwrap_or_default(),
+                    indexes
+                        .height
+                        .$field
+                        .collect_one(prev_height)
+                        .unwrap_or_default(),
                     &indexes.$field.first_height,
                     height_source,
                     exit,
@@ -82,12 +96,25 @@ where
             };
         }
 
-        indexes_apply!(period);
+        period!(minute10);
+        period!(minute30);
+        period!(hour1);
+        period!(hour4);
+        period!(hour12);
+        period!(day1);
+        period!(day3);
+        period!(week1);
+        period!(month1);
+        period!(month3);
+        period!(month6);
+        period!(year1);
+        period!(year10);
+        period!(halvingepoch);
+        period!(difficultyepoch);
 
         Ok(())
     }
 
-    /// Compute "max value per period" — for each period, finds `max(source[first_height[period]..first_height[period+1]])`.
     pub(crate) fn compute_max(
         &mut self,
         starting_indexes: &Indexes,
@@ -102,7 +129,11 @@ where
             ($field:ident) => {
                 compute_period_extremum(
                     &mut self.0.$field,
-                    indexes.height.$field.collect_one(prev_height).unwrap_or_default(),
+                    indexes
+                        .height
+                        .$field
+                        .collect_one(prev_height)
+                        .unwrap_or_default(),
                     &indexes.$field.first_height,
                     height_source,
                     src_len,
@@ -112,12 +143,25 @@ where
             };
         }
 
-        indexes_apply!(period);
+        period!(minute10);
+        period!(minute30);
+        period!(hour1);
+        period!(hour4);
+        period!(hour12);
+        period!(day1);
+        period!(day3);
+        period!(week1);
+        period!(month1);
+        period!(month3);
+        period!(month6);
+        period!(year1);
+        period!(year10);
+        period!(halvingepoch);
+        period!(difficultyepoch);
 
         Ok(())
     }
 
-    /// Compute "min value per period" — for each period, finds `min(source[first_height[period]..first_height[period+1]])`.
     pub(crate) fn compute_min(
         &mut self,
         starting_indexes: &Indexes,
@@ -132,7 +176,11 @@ where
             ($field:ident) => {
                 compute_period_extremum(
                     &mut self.0.$field,
-                    indexes.height.$field.collect_one(prev_height).unwrap_or_default(),
+                    indexes
+                        .height
+                        .$field
+                        .collect_one(prev_height)
+                        .unwrap_or_default(),
                     &indexes.$field.first_height,
                     height_source,
                     src_len,
@@ -142,16 +190,26 @@ where
             };
         }
 
-        indexes_apply!(period);
+        period!(minute10);
+        period!(minute30);
+        period!(hour1);
+        period!(hour4);
+        period!(hour12);
+        period!(day1);
+        period!(day3);
+        period!(week1);
+        period!(month1);
+        period!(month3);
+        period!(month6);
+        period!(year1);
+        period!(year10);
+        period!(halvingepoch);
+        period!(difficultyepoch);
 
         Ok(())
     }
 }
 
-/// Compute per-period extremum (max or min) of height_source values.
-///
-/// Each period's range is `[fh[i]..fh[i+1])` of height_source.
-/// Uses a cursor on height_source so each page is decompressed at most once.
 fn compute_period_extremum<I: VecIndex, T: ComputedVecValue + JsonSchema>(
     out: &mut EagerVec<PcoVec<I, T>>,
     starting_index: I,

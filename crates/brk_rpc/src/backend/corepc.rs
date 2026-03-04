@@ -194,9 +194,7 @@ impl ClientInner {
             .previous_block_hash
             .map(|s| s.parse::<bitcoin::BlockHash>())
             .transpose()
-            .map_err(|_| {
-                corepc_client::client_sync::Error::UnexpectedStructure
-            })?;
+            .map_err(|_| corepc_client::client_sync::Error::UnexpectedStructure)?;
         Ok(BlockHeaderInfo {
             height: r.height as usize,
             confirmations: r.confirmations,
@@ -224,10 +222,8 @@ impl ClientInner {
 
         match r {
             Some(r) => {
-                let script_pub_key =
-                    bitcoin::ScriptBuf::from_hex(&r.script_pub_key.hex).map_err(|_| {
-                        corepc_client::client_sync::Error::UnexpectedStructure
-                    })?;
+                let script_pub_key = bitcoin::ScriptBuf::from_hex(&r.script_pub_key.hex)
+                    .map_err(|_| corepc_client::client_sync::Error::UnexpectedStructure)?;
                 let sats = (r.value * 100_000_000.0).round() as u64;
                 Ok(Some(TxOutInfo {
                     coinbase: r.coinbase,
@@ -243,9 +239,8 @@ impl ClientInner {
         let r = self.call_with_retry(|c| c.get_raw_mempool())?;
         r.0.iter()
             .map(|s| {
-                s.parse::<bitcoin::Txid>().map_err(|_| {
-                    corepc_client::client_sync::Error::UnexpectedStructure.into()
-                })
+                s.parse::<bitcoin::Txid>()
+                    .map_err(|_| corepc_client::client_sync::Error::UnexpectedStructure.into())
             })
             .collect()
     }
@@ -254,16 +249,15 @@ impl ClientInner {
         let r = self.call_with_retry(|c| c.get_raw_mempool_verbose())?;
         r.0.into_iter()
             .map(|(txid_str, entry)| {
-                let txid = txid_str.parse::<bitcoin::Txid>().map_err(|_| {
-                    corepc_client::client_sync::Error::UnexpectedStructure
-                })?;
+                let txid = txid_str
+                    .parse::<bitcoin::Txid>()
+                    .map_err(|_| corepc_client::client_sync::Error::UnexpectedStructure)?;
                 let depends = entry
                     .depends
                     .iter()
                     .map(|s| {
-                        s.parse::<bitcoin::Txid>().map_err(|_| {
-                            corepc_client::client_sync::Error::UnexpectedStructure
-                        })
+                        s.parse::<bitcoin::Txid>()
+                            .map_err(|_| corepc_client::client_sync::Error::UnexpectedStructure)
                     })
                     .collect::<Result<Vec<_>, _>>()?;
                 Ok((

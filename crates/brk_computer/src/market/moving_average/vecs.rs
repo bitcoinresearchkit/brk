@@ -3,8 +3,6 @@ use brk_types::Cents;
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{ComputedFromHeightPriceWithRatioExtended, LazyFromHeight, Price};
-
-/// Simple and exponential moving average metrics
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub price_sma_1w: ComputedFromHeightPriceWithRatioExtended<M>,

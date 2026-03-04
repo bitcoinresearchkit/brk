@@ -36,9 +36,8 @@ impl UTXOCohorts<Rw> {
         let mut min_receive_height: Option<Height> = None;
 
         for (receive_height, sent) in height_to_sent {
-            min_receive_height = Some(
-                min_receive_height.map_or(receive_height, |cur| cur.min(receive_height)),
-            );
+            min_receive_height =
+                Some(min_receive_height.map_or(receive_height, |cur| cur.min(receive_height)));
             // Update chain_state to reflect spent supply
             chain_state[receive_height.to_usize()].supply -= &sent.spendable_supply;
 
@@ -52,19 +51,25 @@ impl UTXOCohorts<Rw> {
             let peak_price = price_range_max.max_between(receive_height, send_height);
 
             // Update age range cohort (direct index lookup)
-            self.age_range.get_mut(age).state.as_mut().unwrap().send_utxo(
-                &sent.spendable_supply,
-                current_price,
-                prev_price,
-                peak_price,
-                age,
-            );
+            self.age_range
+                .get_mut(age)
+                .state
+                .as_mut()
+                .unwrap()
+                .send_utxo(
+                    &sent.spendable_supply,
+                    current_price,
+                    prev_price,
+                    peak_price,
+                    age,
+                );
 
             // Update epoch cohort (direct lookup by height)
             self.epoch
                 .mut_vec_from_height(receive_height)
                 .state
-                .as_mut().unwrap()
+                .as_mut()
+                .unwrap()
                 .send_utxo(
                     &sent.spendable_supply,
                     current_price,
@@ -77,7 +82,8 @@ impl UTXOCohorts<Rw> {
             self.year
                 .mut_vec_from_timestamp(block_state.timestamp)
                 .state
-                .as_mut().unwrap()
+                .as_mut()
+                .unwrap()
                 .send_utxo(
                     &sent.spendable_supply,
                     current_price,
@@ -91,26 +97,24 @@ impl UTXOCohorts<Rw> {
                 .spendable
                 .iter_typed()
                 .for_each(|(output_type, supply_state)| {
-                    self.type_.get_mut(output_type).state.as_mut().unwrap().send_utxo(
-                        supply_state,
-                        current_price,
-                        prev_price,
-                        peak_price,
-                        age,
-                    )
+                    self.type_
+                        .get_mut(output_type)
+                        .state
+                        .as_mut()
+                        .unwrap()
+                        .send_utxo(supply_state, current_price, prev_price, peak_price, age)
                 });
 
             // Update amount range cohorts
             sent.by_size_group
                 .iter_typed()
                 .for_each(|(group, supply_state)| {
-                    self.amount_range.get_mut(group).state.as_mut().unwrap().send_utxo(
-                        supply_state,
-                        current_price,
-                        prev_price,
-                        peak_price,
-                        age,
-                    );
+                    self.amount_range
+                        .get_mut(group)
+                        .state
+                        .as_mut()
+                        .unwrap()
+                        .send_utxo(supply_state, current_price, prev_price, peak_price, age);
                 });
         }
 

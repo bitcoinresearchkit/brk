@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_types::{EmptyAddressData, FundedAddressData, Height};
 use rayon::prelude::*;
 use tracing::info;
-use vecdb::{AnyStoredVec, AnyVec, VecIndex, WritableVec, Stamp};
+use vecdb::{AnyStoredVec, AnyVec, Stamp, VecIndex, WritableVec};
 
 use crate::distribution::{
     Vecs,
@@ -65,8 +65,8 @@ pub(crate) fn write(
 
     // Incremental supply_state write: only rewrite from the earliest modified height
     let supply_state_len = vecs.supply_state.len();
-    let truncate_to = min_supply_modified
-        .map_or(supply_state_len, |h| h.to_usize().min(supply_state_len));
+    let truncate_to =
+        min_supply_modified.map_or(supply_state_len, |h| h.to_usize().min(supply_state_len));
     vecs.supply_state
         .truncate_if_needed(Height::from(truncate_to))?;
     for block_state in &chain_state[truncate_to..] {

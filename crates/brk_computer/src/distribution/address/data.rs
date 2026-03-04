@@ -4,9 +4,7 @@ use brk_types::{
     EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, Height,
 };
 use rayon::prelude::*;
-use vecdb::{
-    AnyStoredVec, BytesVec, Rw, Stamp, StorageMode, WritableVec,
-};
+use vecdb::{AnyStoredVec, BytesVec, Rw, Stamp, StorageMode, WritableVec};
 
 /// Storage for both funded and empty address data.
 #[derive(Traversable)]

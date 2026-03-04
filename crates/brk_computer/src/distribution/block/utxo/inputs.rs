@@ -102,7 +102,9 @@ pub(crate) fn process_inputs(
     );
     let mut sent_data = HeightToAddressTypeToVec::with_capacity(estimated_unique_heights);
     let mut address_data =
-        AddressTypeToTypeIndexMap::<WithAddressDataSource<FundedAddressData>>::with_capacity(estimated_per_type);
+        AddressTypeToTypeIndexMap::<WithAddressDataSource<FundedAddressData>>::with_capacity(
+            estimated_per_type,
+        );
     let mut txindex_vecs =
         AddressTypeToTypeIndexMap::<SmallVec<[TxIndex; 4]>>::with_capacity(estimated_per_type);
 

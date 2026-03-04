@@ -6,7 +6,6 @@ use crate::internal::ComputedFromHeightCumulativeSum;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    // Per-type output counts
     pub p2a: ComputedFromHeightCumulativeSum<StoredU64, M>,
     pub p2ms: ComputedFromHeightCumulativeSum<StoredU64, M>,
     pub p2pk33: ComputedFromHeightCumulativeSum<StoredU64, M>,
@@ -20,7 +19,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub emptyoutput: ComputedFromHeightCumulativeSum<StoredU64, M>,
     pub unknownoutput: ComputedFromHeightCumulativeSum<StoredU64, M>,
 
-    // Aggregate counts
-    /// SegWit output count (p2wpkh + p2wsh + p2tr)
     pub segwit: ComputedFromHeightCumulativeSum<StoredU64, M>,
 }

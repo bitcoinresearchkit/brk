@@ -25,7 +25,9 @@ pub async fn handler(
     State(state): State<AppState>,
 ) -> Result<Response> {
     // Phase 1: Search and resolve metadata (cheap)
-    let resolved = state.run(move |q| q.resolve(params, max_weight(&addr))).await?;
+    let resolved = state
+        .run(move |q| q.resolve(params, max_weight(&addr)))
+        .await?;
 
     let format = resolved.format();
     let etag = resolved.etag();

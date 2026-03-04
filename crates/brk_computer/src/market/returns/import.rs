@@ -19,22 +19,12 @@ impl Vecs {
         let v1 = Version::ONE;
 
         let price_return = ByLookbackPeriod::try_new(|name, _days| {
-            PercentFromHeight::forced_import(
-                db,
-                &format!("price_return_{name}"),
-                version,
-                indexes,
-            )
+            PercentFromHeight::forced_import(db, &format!("price_return_{name}"), version, indexes)
         })?;
 
         // CAGR (computed, 2y+ only)
         let price_cagr = ByDcaCagr::try_new(|name, _days| {
-            PercentFromHeight::forced_import(
-                db,
-                &format!("price_cagr_{name}"),
-                version,
-                indexes,
-            )
+            PercentFromHeight::forced_import(db, &format!("price_cagr_{name}"), version, indexes)
         })?;
 
         let price_return_24h_sd_1w = ComputedFromHeightStdDev::forced_import(

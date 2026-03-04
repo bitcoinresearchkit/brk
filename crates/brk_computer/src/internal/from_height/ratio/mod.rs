@@ -53,7 +53,6 @@ impl ComputedFromHeightRatio {
         Ok(Self { bps, ratio })
     }
 
-    /// Compute ratio = close_price / metric_price at height level (both in cents)
     pub(crate) fn compute_ratio(
         &mut self,
         starting_indexes: &Indexes,

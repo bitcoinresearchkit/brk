@@ -135,5 +135,4 @@ impl<T> ByLookbackPeriod<T> {
             _10y: &self._10y,
         }
     }
-
 }

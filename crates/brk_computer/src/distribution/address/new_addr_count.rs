@@ -1,12 +1,13 @@
-//! New address count: per-block delta of total_addr_count (global + per-type)
-
 use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, StoredU64, Version};
 use vecdb::{Database, Exit, Rw, StorageMode};
 
-use crate::{indexes, internal::{ComputedFromHeightFull, WindowStarts}};
+use crate::{
+    indexes,
+    internal::{ComputedFromHeightFull, WindowStarts},
+};
 
 use super::TotalAddrCountVecs;
 
@@ -24,12 +25,7 @@ impl NewAddrCountVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let all = ComputedFromHeightFull::forced_import(
-            db,
-            "new_addr_count",
-            version,
-            indexes,
-        )?;
+        let all = ComputedFromHeightFull::forced_import(db, "new_addr_count", version, indexes)?;
 
         let by_addresstype: ByAddressType<ComputedFromHeightFull<StoredU64>> =
             ByAddressType::new_with_name(|name| {

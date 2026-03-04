@@ -1,16 +1,17 @@
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4,
-    Minute10, Minute30, Month1, Month3, Month6, StoredU64, Week1, Year1, Year10,
+    Close, Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, High, Hour1, Hour4, Hour12, Low,
+    Minute10, Minute30, Month1, Month3, Month6, OHLCCents, OHLCDollars, OHLCSats, Open, StoredU64,
+    Week1, Year1, Year10,
 };
 use vecdb::UnaryTransform;
 
+use super::CentsUnsignedToSats;
 use crate::blocks::{
     TARGET_BLOCKS_PER_DAY, TARGET_BLOCKS_PER_DAY3, TARGET_BLOCKS_PER_DECADE,
-    TARGET_BLOCKS_PER_HALVING, TARGET_BLOCKS_PER_HOUR1, TARGET_BLOCKS_PER_HOUR12,
-    TARGET_BLOCKS_PER_HOUR4, TARGET_BLOCKS_PER_MINUTE10,
-    TARGET_BLOCKS_PER_MINUTE30, TARGET_BLOCKS_PER_MONTH,
-    TARGET_BLOCKS_PER_QUARTER, TARGET_BLOCKS_PER_SEMESTER, TARGET_BLOCKS_PER_WEEK,
-    TARGET_BLOCKS_PER_YEAR,
+    TARGET_BLOCKS_PER_HALVING, TARGET_BLOCKS_PER_HOUR1, TARGET_BLOCKS_PER_HOUR4,
+    TARGET_BLOCKS_PER_HOUR12, TARGET_BLOCKS_PER_MINUTE10, TARGET_BLOCKS_PER_MINUTE30,
+    TARGET_BLOCKS_PER_MONTH, TARGET_BLOCKS_PER_QUARTER, TARGET_BLOCKS_PER_SEMESTER,
+    TARGET_BLOCKS_PER_WEEK, TARGET_BLOCKS_PER_YEAR,
 };
 
 pub struct BlockCountTarget;
@@ -124,5 +125,28 @@ impl UnaryTransform<DifficultyEpoch, StoredU64> for BlockCountTarget {
     #[inline(always)]
     fn apply(_: DifficultyEpoch) -> StoredU64 {
         StoredU64::from(2016u64)
+    }
+}
+
+pub struct OhlcCentsToDollars;
+
+impl UnaryTransform<OHLCCents, OHLCDollars> for OhlcCentsToDollars {
+    #[inline(always)]
+    fn apply(cents: OHLCCents) -> OHLCDollars {
+        OHLCDollars::from(cents)
+    }
+}
+
+pub struct OhlcCentsToSats;
+
+impl UnaryTransform<OHLCCents, OHLCSats> for OhlcCentsToSats {
+    #[inline(always)]
+    fn apply(cents: OHLCCents) -> OHLCSats {
+        OHLCSats {
+            open: Open::new(CentsUnsignedToSats::apply(*cents.open)),
+            high: High::new(CentsUnsignedToSats::apply(*cents.low)),
+            low: Low::new(CentsUnsignedToSats::apply(*cents.high)),
+            close: Close::new(CentsUnsignedToSats::apply(*cents.close)),
+        }
     }
 }

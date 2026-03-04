@@ -43,12 +43,14 @@ impl Vecs {
         )?;
 
         // Compute blocks before next adjustment
-        self.blocks_before_next_adjustment.height.compute_transform(
-            starting_indexes.height,
-            &indexes.height.identity,
-            |(h, ..)| (h, StoredU32::from(h.left_before_next_diff_adj())),
-            exit,
-        )?;
+        self.blocks_before_next_adjustment
+            .height
+            .compute_transform(
+                starting_indexes.height,
+                &indexes.height.identity,
+                |(h, ..)| (h, StoredU32::from(h.left_before_next_diff_adj())),
+                exit,
+            )?;
 
         // Compute days before next adjustment
         self.days_before_next_adjustment.height.compute_transform(

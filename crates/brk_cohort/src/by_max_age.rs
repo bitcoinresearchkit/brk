@@ -3,9 +3,9 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use super::{
-    CohortName, Filter, TimeFilter, HOURS_10Y, HOURS_12Y, HOURS_15Y, HOURS_1M, HOURS_1W, HOURS_1Y,
-    HOURS_2M, HOURS_2Y, HOURS_3M, HOURS_3Y, HOURS_4M, HOURS_4Y, HOURS_5M, HOURS_5Y, HOURS_6M,
-    HOURS_6Y, HOURS_7Y, HOURS_8Y,
+    CohortName, Filter, HOURS_1M, HOURS_1W, HOURS_1Y, HOURS_2M, HOURS_2Y, HOURS_3M, HOURS_3Y,
+    HOURS_4M, HOURS_4Y, HOURS_5M, HOURS_5Y, HOURS_6M, HOURS_6Y, HOURS_7Y, HOURS_8Y, HOURS_10Y,
+    HOURS_12Y, HOURS_15Y, TimeFilter,
 };
 
 /// Max age thresholds in hours

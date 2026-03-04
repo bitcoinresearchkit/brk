@@ -16,11 +16,8 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = blocks.count.window_starts();
-        self.0.compute(
-            starting_indexes.height,
-            &window_starts,
-            exit,
-            |full| {
+        self.0
+            .compute(starting_indexes.height, &window_starts, exit, |full| {
                 full.compute_with_skip(
                     starting_indexes.height,
                     &indexes.txindex.input_count,
@@ -29,8 +26,7 @@ impl Vecs {
                     exit,
                     0,
                 )
-            },
-        )?;
+            })?;
 
         Ok(())
     }

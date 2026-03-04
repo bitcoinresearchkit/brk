@@ -107,7 +107,15 @@ impl PrintableIndex for Month3 {
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["quarter", "q", "quarterly", "month3", "quarterindex", "3m", "3mo"]
+        &[
+            "quarter",
+            "q",
+            "quarterly",
+            "month3",
+            "quarterindex",
+            "3m",
+            "3mo",
+        ]
     }
 }
 

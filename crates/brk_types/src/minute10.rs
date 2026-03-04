@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
-use super::{Timestamp, INDEX_EPOCH};
+use super::{INDEX_EPOCH, Timestamp};
 
 pub const MINUTE10_INTERVAL: u32 = 600;
 

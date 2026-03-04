@@ -3,8 +3,6 @@ use brk_types::{BasisPointsSigned32, DifficultyEpoch, StoredF32, StoredF64, Stor
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{ComputedFromHeight, ComputedHeightDerived, PercentFromHeight};
-
-/// Difficulty metrics: raw difficulty, derived stats, adjustment, and countdown
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub raw: ComputedHeightDerived<StoredF64>,

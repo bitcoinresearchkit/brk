@@ -4,8 +4,6 @@ use vecdb::{Rw, StorageMode};
 
 use super::ByLookbackPeriod;
 use crate::internal::{ComputedFromHeight, Price};
-
-/// Price lookback metrics
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(flatten)]

@@ -40,4 +40,3 @@ impl Pool {
         self.slug.into()
     }
 }
-

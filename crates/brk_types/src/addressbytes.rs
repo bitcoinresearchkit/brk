@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use bitcoin::{Network, PublicKey, opcodes, script::Builder, ScriptBuf};
+use bitcoin::{Network, PublicKey, ScriptBuf, opcodes, script::Builder};
 use brk_error::Error;
 
 use super::{
@@ -61,18 +61,10 @@ impl AddressBytes {
                 .push_slice(***b)
                 .push_opcode(opcodes::all::OP_EQUAL)
                 .into_script(),
-            AddressBytes::P2WPKH(b) => {
-                Builder::new().push_int(0).push_slice(***b).into_script()
-            }
-            AddressBytes::P2WSH(b) => {
-                Builder::new().push_int(0).push_slice(***b).into_script()
-            }
-            AddressBytes::P2TR(b) => {
-                Builder::new().push_int(1).push_slice(***b).into_script()
-            }
-            AddressBytes::P2A(b) => {
-                Builder::new().push_int(1).push_slice(***b).into_script()
-            }
+            AddressBytes::P2WPKH(b) => Builder::new().push_int(0).push_slice(***b).into_script(),
+            AddressBytes::P2WSH(b) => Builder::new().push_int(0).push_slice(***b).into_script(),
+            AddressBytes::P2TR(b) => Builder::new().push_int(1).push_slice(***b).into_script(),
+            AddressBytes::P2A(b) => Builder::new().push_int(1).push_slice(***b).into_script(),
         }
     }
 }
@@ -142,10 +134,9 @@ impl TryFrom<(&ScriptBuf, OutputType)> for AddressBytes {
                 let bytes = &script.as_bytes()[2..];
                 Ok(Self::P2A(P2ABytes::from(bytes)))
             }
-            OutputType::P2MS
-            | OutputType::Unknown
-            | OutputType::Empty
-            | OutputType::OpReturn => Err(Error::WrongAddressType),
+            OutputType::P2MS | OutputType::Unknown | OutputType::Empty | OutputType::OpReturn => {
+                Err(Error::WrongAddressType)
+            }
         }
     }
 }

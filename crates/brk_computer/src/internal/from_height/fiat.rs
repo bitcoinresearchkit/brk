@@ -38,12 +38,8 @@ impl<C: CentsType> FiatFromHeight<C> {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let cents = ComputedFromHeight::forced_import(
-            db,
-            &format!("{name}_cents"),
-            version,
-            indexes,
-        )?;
+        let cents =
+            ComputedFromHeight::forced_import(db, &format!("{name}_cents"), version, indexes)?;
         let usd = LazyFromHeight::from_computed::<C::ToDollars>(
             &format!("{name}_usd"),
             version,

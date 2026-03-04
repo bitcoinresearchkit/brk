@@ -69,12 +69,18 @@ impl CostBasisBase {
     ) -> Result<()> {
         self.min.cents.height.compute_min_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.min.cents.height).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.min.cents.height)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.max.cents.height.compute_max_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.max.cents.height).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.max.cents.height)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         Ok(())

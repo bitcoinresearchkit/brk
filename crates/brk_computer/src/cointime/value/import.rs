@@ -6,7 +6,11 @@ use super::Vecs;
 use crate::{indexes, internal::ComputedFromHeightCumulativeSum};
 
 impl Vecs {
-    pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
         Ok(Self {
             cointime_value_destroyed: ComputedFromHeightCumulativeSum::forced_import(
                 db,

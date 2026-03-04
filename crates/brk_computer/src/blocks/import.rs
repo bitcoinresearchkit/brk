@@ -2,15 +2,15 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::{Database, PAGE_SIZE};
 
-use crate::indexes;
+use crate::{
+    indexes,
+    internal::{finalize_db, open_db},
+};
 
 use super::{
-    CountVecs, DifficultyVecs, HalvingVecs, IntervalVecs, SizeVecs,
-    TimeVecs, Vecs, WeightVecs,
+    CountVecs, DifficultyVecs, HalvingVecs, IntervalVecs, SizeVecs, TimeVecs, Vecs, WeightVecs,
 };
 
 impl Vecs {
@@ -20,9 +20,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let db = Database::open(&parent_path.join(super::DB_NAME))?;
-        db.set_min_len(PAGE_SIZE * 50_000_000)?;
-
+        let db = open_db(parent_path, super::DB_NAME, 50_000_000)?;
         let version = parent_version;
 
         let count = CountVecs::forced_import(&db, version, indexes)?;
@@ -43,14 +41,7 @@ impl Vecs {
             difficulty,
             halving,
         };
-
-        this.db.retain_regions(
-            this.iter_any_exportable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
-        this.db.compact()?;
-
+        finalize_db(&this.db, &this)?;
         Ok(this)
     }
 }

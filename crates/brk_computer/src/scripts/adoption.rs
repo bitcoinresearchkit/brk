@@ -24,18 +24,8 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            taproot: PercentFromHeight::forced_import(
-                db,
-                "taproot_adoption",
-                version,
-                indexes,
-            )?,
-            segwit: PercentFromHeight::forced_import(
-                db,
-                "segwit_adoption",
-                version,
-                indexes,
-            )?,
+            taproot: PercentFromHeight::forced_import(db, "taproot_adoption", version, indexes)?,
+            segwit: PercentFromHeight::forced_import(db, "segwit_adoption", version, indexes)?,
         })
     }
 

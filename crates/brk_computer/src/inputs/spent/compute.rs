@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{Indexes, Sats, TxInIndex, TxIndex, TxOutIndex, Vout};
 use tracing::info;
-use vecdb::{AnyStoredVec, AnyVec, Database, Exit, WritableVec, ReadableVec, VecIndex};
+use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
 
@@ -41,7 +41,7 @@ impl Vecs {
         let first_txoutindex_reader = indexer.vecs.transactions.first_txoutindex.reader();
         let value_reader = indexer.vecs.outputs.value.reader();
         let actual_total = target - min;
-    let mut entries: Vec<Entry> = Vec::with_capacity(actual_total.min(BATCH_SIZE));
+        let mut entries: Vec<Entry> = Vec::with_capacity(actual_total.min(BATCH_SIZE));
 
         let mut batch_start = min;
         while batch_start < target {
@@ -49,16 +49,20 @@ impl Vecs {
 
             entries.clear();
             let mut j = 0usize;
-            indexer.vecs.inputs.outpoint.for_each_range_at(batch_start, batch_end, |outpoint| {
-                entries.push(Entry {
-                    txinindex: TxInIndex::from(batch_start + j),
-                    txindex: outpoint.txindex(),
-                    vout: outpoint.vout(),
-                    txoutindex: TxOutIndex::COINBASE,
-                    value: Sats::MAX,
+            indexer
+                .vecs
+                .inputs
+                .outpoint
+                .for_each_range_at(batch_start, batch_end, |outpoint| {
+                    entries.push(Entry {
+                        txinindex: TxInIndex::from(batch_start + j),
+                        txindex: outpoint.txindex(),
+                        vout: outpoint.vout(),
+                        txoutindex: TxOutIndex::COINBASE,
+                        value: Sats::MAX,
+                    });
+                    j += 1;
                 });
-                j += 1;
-            });
 
             // Coinbase entries (txindex MAX) sorted to end
             entries.sort_unstable_by_key(|e| e.txindex);
@@ -66,7 +70,8 @@ impl Vecs {
                 if entry.txindex.is_coinbase() {
                     break;
                 }
-                entry.txoutindex = first_txoutindex_reader.get(entry.txindex.to_usize()) + entry.vout;
+                entry.txoutindex =
+                    first_txoutindex_reader.get(entry.txindex.to_usize()) + entry.vout;
             }
 
             entries.sort_unstable_by_key(|e| e.txoutindex);

@@ -9,11 +9,11 @@ use brk_cohort::{
     AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, GE_AMOUNT_NAMES, LT_AMOUNT_NAMES,
     MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, YEAR_NAMES,
 };
-use brk_types::{pools, Index, PoolSlug};
+use brk_types::{Index, PoolSlug, pools};
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::{to_camel_case, VERSION};
+use crate::{VERSION, to_camel_case};
 
 /// Collected constant data for client generation.
 pub struct ClientConstants {

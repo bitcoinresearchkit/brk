@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
-use super::{CentsSquaredSats, Cents, Sats};
+use super::{Cents, CentsSquaredSats, Sats};
 
 /// Cents × Sats (u128) - price in cents multiplied by amount in sats.
 /// Uses u128 because large amounts at any price can overflow u64.

@@ -1,5 +1,3 @@
-//! ComputedFromHeight using only Last aggregation.
-
 use brk_error::Result;
 
 use brk_traversable::Traversable;
@@ -66,12 +64,8 @@ where
         S2T: VecValue,
         F: BinaryTransform<S1T, S2T, T>,
     {
-        self.height.compute_binary::<S1T, S2T, F>(
-            max_from,
-            source1,
-            source2,
-            exit,
-        )?;
+        self.height
+            .compute_binary::<S1T, S2T, F>(max_from, source1, source2, exit)?;
         Ok(())
     }
 }

@@ -25,11 +25,6 @@ use vecdb::{AnyStoredVec, Exit};
 
 use crate::{blocks, distribution::state::CohortState, prices};
 
-/// Trait defining the interface for cohort metrics containers.
-///
-/// Provides typed accessor methods for base sub-metric components, default
-/// implementations for shared operations that only use base fields, and
-/// required methods for operations that vary by extension level.
 pub trait CohortMetricsBase: Send + Sync {
     fn filter(&self) -> &Filter;
     fn supply(&self) -> &SupplyMetrics;
@@ -45,14 +40,8 @@ pub trait CohortMetricsBase: Send + Sync {
     fn cost_basis_base(&self) -> &CostBasisBase;
     fn cost_basis_base_mut(&mut self) -> &mut CostBasisBase;
 
-    // === Required methods (vary by extension level) ===
-
-    /// Validate computed versions against base version.
-    /// Extended types also validate cost_basis extended versions.
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()>;
 
-    /// Compute and push unrealized states.
-    /// Extended types also push cost_basis percentiles.
     fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
@@ -60,12 +49,8 @@ pub trait CohortMetricsBase: Send + Sync {
         state: &mut CohortState,
     ) -> Result<()>;
 
-    /// Collect all stored vecs for parallel writing.
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec>;
 
-    // === Default methods (shared across all cohort metric types, use base fields only) ===
-
-    /// Get minimum length across height-indexed vectors written in block loop.
     fn min_stateful_height_len(&self) -> usize {
         self.supply()
             .min_len()
@@ -76,7 +61,6 @@ pub trait CohortMetricsBase: Send + Sync {
             .min(self.cost_basis_base().min_stateful_height_len())
     }
 
-    /// Push state values to height-indexed vectors.
     fn truncate_push(&mut self, height: Height, state: &CohortState) -> Result<()> {
         self.supply_mut()
             .truncate_push(height, state.supply.value)?;
@@ -225,12 +209,18 @@ pub trait CohortMetricsBase: Send + Sync {
         )?;
         self.unrealized_base_mut().compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.unrealized_base()).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| v.unrealized_base())
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.cost_basis_base_mut().compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.cost_basis_base()).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| v.cost_basis_base())
+                .collect::<Vec<_>>(),
             exit,
         )?;
         Ok(())

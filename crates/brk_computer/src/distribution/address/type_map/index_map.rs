@@ -60,7 +60,12 @@ impl<T> AddressTypeToTypeIndexMap<T> {
     }
 
     /// Insert a value for a specific address type and typeindex.
-    pub(crate) fn insert_for_type(&mut self, address_type: OutputType, typeindex: TypeIndex, value: T) {
+    pub(crate) fn insert_for_type(
+        &mut self,
+        address_type: OutputType,
+        typeindex: TypeIndex,
+        value: T,
+    ) {
         self.get_mut(address_type).unwrap().insert(typeindex, value);
     }
 
@@ -76,7 +81,9 @@ impl<T> AddressTypeToTypeIndexMap<T> {
     }
 
     /// Iterate mutably over entries by address type.
-    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut FxHashMap<TypeIndex, T>)> {
+    pub(crate) fn iter_mut(
+        &mut self,
+    ) -> impl Iterator<Item = (OutputType, &mut FxHashMap<TypeIndex, T>)> {
         self.0.iter_mut()
     }
 }

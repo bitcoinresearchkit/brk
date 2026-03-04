@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::StoredF64;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeightCumulativeSum, ComputedFromHeight};
+use crate::internal::{ComputedFromHeight, ComputedFromHeightCumulativeSum};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

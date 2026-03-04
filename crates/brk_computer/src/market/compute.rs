@@ -34,16 +34,21 @@ impl Vecs {
             .compute(&self.returns, starting_indexes.height, exit)?;
 
         // Range metrics (independent)
-        self.range
-            .compute(prices, blocks, starting_indexes, exit)?;
+        self.range.compute(prices, blocks, starting_indexes, exit)?;
 
         // Moving average metrics (independent)
         self.moving_average
             .compute(blocks, prices, starting_indexes, exit)?;
 
         // DCA metrics (depends on lookback for lump sum comparison)
-        self.dca
-            .compute(indexes, prices, blocks, &self.lookback, starting_indexes, exit)?;
+        self.dca.compute(
+            indexes,
+            prices,
+            blocks,
+            &self.lookback,
+            starting_indexes,
+            exit,
+        )?;
 
         self.indicators.compute(
             &mining.rewards,

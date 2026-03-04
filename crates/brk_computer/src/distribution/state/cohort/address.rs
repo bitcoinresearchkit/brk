@@ -18,8 +18,7 @@ impl AddressCohortState {
     pub(crate) fn new(path: &Path, name: &str) -> Self {
         Self {
             addr_count: 0,
-            inner: CohortState::new(path, name)
-                .with_price_rounding(COST_BASIS_PRICE_DIGITS),
+            inner: CohortState::new(path, name).with_price_rounding(COST_BASIS_PRICE_DIGITS),
         }
     }
 
@@ -136,5 +135,4 @@ impl AddressCohortState {
 
         self.inner.decrement_snapshot(&snapshot);
     }
-
 }

@@ -22,7 +22,8 @@ impl Vecs {
             .compute(indexer, &self.time, starting_indexes, exit)?;
         self.interval
             .compute(indexer, &self.count, starting_indexes, exit)?;
-        self.size.compute(indexer, &self.count, starting_indexes, exit)?;
+        self.size
+            .compute(indexer, &self.count, starting_indexes, exit)?;
         self.weight
             .compute(indexer, &self.count, starting_indexes, exit)?;
         self.difficulty

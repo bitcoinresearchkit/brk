@@ -4,7 +4,6 @@ use vecdb::{Rw, StorageMode};
 
 use crate::internal::{ComputedFromHeight, PercentFromHeight};
 
-/// Mining-related metrics: hash rate, hash price, hash value
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub hash_rate: ComputedFromHeight<StoredF64, M>,

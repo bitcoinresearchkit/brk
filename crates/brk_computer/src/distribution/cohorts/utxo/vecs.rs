@@ -10,10 +10,6 @@ use crate::distribution::metrics::CohortMetricsBase;
 
 use super::super::traits::DynCohortVecs;
 
-/// UTXO cohort with metrics and optional runtime state.
-///
-/// Generic over the metrics type to support different cohort configurations
-/// (e.g. AllCohortMetrics, ExtendedCohortMetrics, BasicCohortMetrics, etc.)
 #[derive(Traversable)]
 pub struct UTXOCohortVecs<Metrics> {
     /// Starting height when state was imported
@@ -38,7 +34,6 @@ impl<Metrics> UTXOCohortVecs<Metrics> {
             metrics,
         }
     }
-
 }
 
 impl<Metrics: CohortMetricsBase + Traversable> Filtered for UTXOCohortVecs<Metrics> {
@@ -117,8 +112,11 @@ impl<Metrics: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<
         height_price: Cents,
     ) -> Result<()> {
         if let Some(state) = self.state.as_mut() {
-            self.metrics
-                .compute_then_truncate_push_unrealized_states(height, height_price, state)?;
+            self.metrics.compute_then_truncate_push_unrealized_states(
+                height,
+                height_price,
+                state,
+            )?;
         }
         Ok(())
     }

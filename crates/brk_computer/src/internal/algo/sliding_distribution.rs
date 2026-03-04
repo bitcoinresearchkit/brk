@@ -1,0 +1,158 @@
+use brk_error::Result;
+use vecdb::{
+    AnyStoredVec, AnyVec, EagerVec, Exit, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue,
+    WritableVec,
+};
+
+use super::sliding_window::SlidingWindowSorted;
+
+/// Compute all 8 rolling distribution stats (avg, min, max, p10, p25, median, p75, p90)
+/// in a single sorted-vec pass per window.
+#[allow(clippy::too_many_arguments)]
+pub fn compute_rolling_distribution_from_starts<I, T, A>(
+    max_from: I,
+    window_starts: &impl ReadableVec<I, I>,
+    values: &impl ReadableVec<I, A>,
+    average_out: &mut EagerVec<PcoVec<I, T>>,
+    min_out: &mut EagerVec<PcoVec<I, T>>,
+    max_out: &mut EagerVec<PcoVec<I, T>>,
+    p10_out: &mut EagerVec<PcoVec<I, T>>,
+    p25_out: &mut EagerVec<PcoVec<I, T>>,
+    median_out: &mut EagerVec<PcoVec<I, T>>,
+    p75_out: &mut EagerVec<PcoVec<I, T>>,
+    p90_out: &mut EagerVec<PcoVec<I, T>>,
+    exit: &Exit,
+) -> Result<()>
+where
+    I: VecIndex,
+    T: PcoVecValue + From<f64>,
+    A: VecValue + Copy,
+    f64: From<A>,
+{
+    let version = window_starts.version() + values.version();
+
+    for v in [
+        &mut *average_out,
+        &mut *min_out,
+        &mut *max_out,
+        &mut *p10_out,
+        &mut *p25_out,
+        &mut *median_out,
+        &mut *p75_out,
+        &mut *p90_out,
+    ] {
+        v.validate_and_truncate(version, max_from)?;
+    }
+
+    let skip = [
+        average_out.len(),
+        min_out.len(),
+        max_out.len(),
+        p10_out.len(),
+        p25_out.len(),
+        median_out.len(),
+        p75_out.len(),
+        p90_out.len(),
+    ]
+    .into_iter()
+    .min()
+    .unwrap();
+
+    let end = window_starts.len().min(values.len());
+    if skip >= end {
+        return Ok(());
+    }
+
+    let range_start = if skip > 0 {
+        window_starts.collect_one_at(skip - 1).unwrap().to_usize()
+    } else {
+        0
+    };
+    let partial_values: Vec<f64> = values
+        .collect_range_at(range_start, end)
+        .into_iter()
+        .map(|a| f64::from(a))
+        .collect();
+
+    let capacity = if skip > 0 && skip < end {
+        let first_start = window_starts.collect_one_at(skip).unwrap().to_usize();
+        (skip + 1).saturating_sub(first_start)
+    } else if !partial_values.is_empty() {
+        partial_values.len().min(1024)
+    } else {
+        0
+    };
+
+    let mut window = SlidingWindowSorted::with_capacity(capacity);
+
+    if skip > 0 {
+        window.reconstruct(&partial_values, range_start, skip);
+    }
+
+    let starts_batch = window_starts.collect_range_at(skip, end);
+
+    for (j, start) in starts_batch.into_iter().enumerate() {
+        let i = skip + j;
+        let v = partial_values[i - range_start];
+        let start_usize = start.to_usize();
+        window.advance(v, start_usize, &partial_values, range_start);
+
+        if window.is_empty() {
+            let zero = T::from(0.0);
+            for v in [
+                &mut *average_out,
+                &mut *min_out,
+                &mut *max_out,
+                &mut *p10_out,
+                &mut *p25_out,
+                &mut *median_out,
+                &mut *p75_out,
+                &mut *p90_out,
+            ] {
+                v.checked_push_at(i, zero)?;
+            }
+        } else {
+            average_out.checked_push_at(i, T::from(window.average()))?;
+            min_out.checked_push_at(i, T::from(window.min()))?;
+            max_out.checked_push_at(i, T::from(window.max()))?;
+            p10_out.checked_push_at(i, T::from(window.percentile(0.10)))?;
+            p25_out.checked_push_at(i, T::from(window.percentile(0.25)))?;
+            median_out.checked_push_at(i, T::from(window.percentile(0.50)))?;
+            p75_out.checked_push_at(i, T::from(window.percentile(0.75)))?;
+            p90_out.checked_push_at(i, T::from(window.percentile(0.90)))?;
+        }
+
+        if average_out.batch_limit_reached() {
+            let _lock = exit.lock();
+            for v in [
+                &mut *average_out,
+                &mut *min_out,
+                &mut *max_out,
+                &mut *p10_out,
+                &mut *p25_out,
+                &mut *median_out,
+                &mut *p75_out,
+                &mut *p90_out,
+            ] {
+                v.write()?;
+            }
+        }
+    }
+
+    // Final flush
+    let _lock = exit.lock();
+    for v in [
+        average_out,
+        min_out,
+        max_out,
+        p10_out,
+        p25_out,
+        median_out,
+        p75_out,
+        p90_out,
+    ] {
+        v.write()?;
+    }
+
+    Ok(())
+}

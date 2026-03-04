@@ -150,14 +150,7 @@ pub(crate) fn process_sent(
                         .state
                         .as_mut()
                         .unwrap()
-                        .send(
-                            addr_data,
-                            value,
-                            current_price,
-                            prev_price,
-                            peak_price,
-                            age,
-                        )?;
+                        .send(addr_data, value, current_price, prev_price, peak_price, age)?;
                 }
             }
         }

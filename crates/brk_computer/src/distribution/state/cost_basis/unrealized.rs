@@ -35,7 +35,6 @@ impl UnrealizedState {
         invested_capital_in_profit_raw: 0,
         invested_capital_in_loss_raw: 0,
     };
-
 }
 
 /// Internal cache state using u128 for raw cent*sat values.
@@ -279,5 +278,4 @@ impl CachedUnrealizedState {
 
         state
     }
-
 }

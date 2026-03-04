@@ -2,8 +2,8 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, CentsSats, CentsSigned, CentsSquaredSats, Height, Indexes, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Exit, ReadableCloneableVec, ReadableVec,
-    Rw, StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, BytesVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    WritableVec,
 };
 
 use crate::{
@@ -19,36 +19,28 @@ use brk_types::Dollars;
 
 use crate::distribution::metrics::ImportConfig;
 
-/// Base unrealized profit/loss metrics (always computed).
 #[derive(Traversable)]
 pub struct UnrealizedBase<M: StorageMode = Rw> {
-    // === Supply in Profit/Loss ===
     pub supply_in_profit: ValueFromHeight<M>,
     pub supply_in_loss: ValueFromHeight<M>,
 
-    // === Unrealized Profit/Loss ===
     pub unrealized_profit: FiatFromHeight<Cents, M>,
     pub unrealized_loss: FiatFromHeight<Cents, M>,
 
-    // === Invested Capital in Profit/Loss ===
     pub invested_capital_in_profit: FiatFromHeight<Cents, M>,
     pub invested_capital_in_loss: FiatFromHeight<Cents, M>,
 
-    // === Raw values for precise aggregation (used to compute pain/greed indices) ===
     pub invested_capital_in_profit_raw: M::Stored<BytesVec<Height, CentsSats>>,
     pub invested_capital_in_loss_raw: M::Stored<BytesVec<Height, CentsSats>>,
     pub investor_cap_in_profit_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
     pub investor_cap_in_loss_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 
-    // === Pain/Greed Indices ===
     pub pain_index: FiatFromHeight<Cents, M>,
     pub greed_index: FiatFromHeight<Cents, M>,
     pub net_sentiment: FiatFromHeight<CentsSigned, M>,
 
-    // === Negated ===
     pub neg_unrealized_loss: LazyFromHeight<Dollars, Cents>,
 
-    // === Net and Total ===
     pub net_unrealized_pnl: FiatFromHeight<CentsSigned, M>,
     pub gross_pnl: FiatFromHeight<Cents, M>,
 }
@@ -65,7 +57,8 @@ impl UnrealizedBase {
         let invested_capital_in_profit = cfg.import_fiat("invested_capital_in_profit", v0)?;
         let invested_capital_in_loss = cfg.import_fiat("invested_capital_in_loss", v0)?;
 
-        let invested_capital_in_profit_raw = cfg.import_bytes("invested_capital_in_profit_raw", v0)?;
+        let invested_capital_in_profit_raw =
+            cfg.import_bytes("invested_capital_in_profit_raw", v0)?;
         let invested_capital_in_loss_raw = cfg.import_bytes("invested_capital_in_loss_raw", v0)?;
         let investor_cap_in_profit_raw = cfg.import_bytes("investor_cap_in_profit_raw", v0)?;
         let investor_cap_in_loss_raw = cfg.import_bytes("investor_cap_in_loss_raw", v0)?;
@@ -193,39 +186,30 @@ impl UnrealizedBase {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.supply_in_profit
-            .sats
-            .height
-            .compute_sum_of_others(
-                starting_indexes.height,
-                &others
-                    .iter()
-                    .map(|v| &v.supply_in_profit.sats.height)
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
-        self.supply_in_loss
-            .sats
-            .height
-            .compute_sum_of_others(
-                starting_indexes.height,
-                &others
-                    .iter()
-                    .map(|v| &v.supply_in_loss.sats.height)
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
-        self.unrealized_profit
-            .cents
-            .height
-            .compute_sum_of_others(
-                starting_indexes.height,
-                &others
-                    .iter()
-                    .map(|v| &v.unrealized_profit.cents.height)
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
+        self.supply_in_profit.sats.height.compute_sum_of_others(
+            starting_indexes.height,
+            &others
+                .iter()
+                .map(|v| &v.supply_in_profit.sats.height)
+                .collect::<Vec<_>>(),
+            exit,
+        )?;
+        self.supply_in_loss.sats.height.compute_sum_of_others(
+            starting_indexes.height,
+            &others
+                .iter()
+                .map(|v| &v.supply_in_loss.sats.height)
+                .collect::<Vec<_>>(),
+            exit,
+        )?;
+        self.unrealized_profit.cents.height.compute_sum_of_others(
+            starting_indexes.height,
+            &others
+                .iter()
+                .map(|v| &v.unrealized_profit.cents.height)
+                .collect::<Vec<_>>(),
+            exit,
+        )?;
         self.unrealized_loss.cents.height.compute_sum_of_others(
             starting_indexes.height,
             &others
@@ -273,7 +257,10 @@ impl UnrealizedBase {
         // Pre-collect all cohort data to avoid per-element BytesVec reads in nested loop
         let invested_profit_ranges: Vec<Vec<CentsSats>> = others
             .iter()
-            .map(|o| o.invested_capital_in_profit_raw.collect_range_at(start, end))
+            .map(|o| {
+                o.invested_capital_in_profit_raw
+                    .collect_range_at(start, end)
+            })
             .collect();
         let invested_loss_ranges: Vec<Vec<CentsSats>> = others
             .iter()
@@ -336,10 +323,7 @@ impl UnrealizedBase {
                 }
                 let investor_price_losers = investor_cap.inner() / invested_cap.inner();
                 let spot_u128 = spot.as_u128();
-                (
-                    h,
-                    Cents::new((investor_price_losers - spot_u128) as u64),
-                )
+                (h, Cents::new((investor_price_losers - spot_u128) as u64))
             },
             exit,
         )?;
@@ -356,10 +340,7 @@ impl UnrealizedBase {
                 }
                 let investor_price_winners = investor_cap.inner() / invested_cap.inner();
                 let spot_u128 = spot.as_u128();
-                (
-                    h,
-                    Cents::new((spot_u128 - investor_price_winners) as u64),
-                )
+                (h, Cents::new((spot_u128 - investor_price_winners) as u64))
             },
             exit,
         )?;

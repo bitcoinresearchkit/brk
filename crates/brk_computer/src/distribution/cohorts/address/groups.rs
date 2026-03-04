@@ -33,13 +33,11 @@ impl AddressCohorts {
         let v = version + VERSION;
 
         // Helper to create a cohort - only amount_range cohorts have state
-        let create = |filter: Filter,
-                      name: &'static str,
-                      has_state: bool|
-         -> Result<AddressCohortVecs> {
-            let sp = if has_state { Some(states_path) } else { None };
-            AddressCohortVecs::forced_import(db, filter, name, v, indexes, sp)
-        };
+        let create =
+            |filter: Filter, name: &'static str, has_state: bool| -> Result<AddressCohortVecs> {
+                let sp = if has_state { Some(states_path) } else { None };
+                AddressCohortVecs::forced_import(db, filter, name, v, indexes, sp)
+            };
 
         let full = |f: Filter, name: &'static str| create(f, name, true);
         let none = |f: Filter, name: &'static str| create(f, name, false);
@@ -156,7 +154,9 @@ impl AddressCohorts {
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
-    pub(crate) fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_vecs_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         // Collect all vecs from all cohorts
         self.0
             .iter_mut()

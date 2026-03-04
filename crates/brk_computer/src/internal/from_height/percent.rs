@@ -1,12 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, StoredF32, Version};
-use vecdb::{BinaryTransform, Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, VecValue};
+use vecdb::{
+    BinaryTransform, Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, VecValue,
+};
 
 use crate::{
     indexes,
-    internal::BpsType,
-    traits::ComputeDrawdown,
+    internal::{BpsType, ComputeDrawdown},
 };
 
 use super::{ComputedFromHeight, LazyFromHeight};
@@ -47,7 +48,11 @@ impl<B: BpsType> PercentFromHeight<B> {
             &bps,
         );
 
-        Ok(Self { bps, ratio, percent })
+        Ok(Self {
+            bps,
+            ratio,
+            percent,
+        })
     }
 
     pub(crate) fn compute_binary<S1T, S2T, F>(
@@ -62,7 +67,8 @@ impl<B: BpsType> PercentFromHeight<B> {
         S2T: VecValue,
         F: BinaryTransform<S1T, S2T, B>,
     {
-        self.bps.compute_binary::<S1T, S2T, F>(max_from, source1, source2, exit)
+        self.bps
+            .compute_binary::<S1T, S2T, F>(max_from, source1, source2, exit)
     }
 
     pub(crate) fn compute_drawdown<C, A>(
@@ -78,6 +84,8 @@ impl<B: BpsType> PercentFromHeight<B> {
         f64: From<C> + From<A>,
         vecdb::EagerVec<vecdb::PcoVec<Height, B>>: ComputeDrawdown<Height>,
     {
-        self.bps.height.compute_drawdown(max_from, current, ath, exit)
+        self.bps
+            .height
+            .compute_drawdown(max_from, current, ath, exit)
     }
 }

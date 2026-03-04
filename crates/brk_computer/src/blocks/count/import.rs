@@ -9,7 +9,11 @@ use crate::{
 };
 
 impl Vecs {
-    pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
         Ok(Self {
             block_count_target: ConstantVecs::new::<BlockCountTarget>(
                 "block_count_target",

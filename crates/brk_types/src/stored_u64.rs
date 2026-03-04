@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use super::{
-    Day1, EmptyOutputIndex, Height, Month1, OpReturnIndex, P2AAddressIndex,
-    P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex,
-    P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex,
-    UnknownOutputIndex, Year1,
+    Day1, EmptyOutputIndex, Height, Month1, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex,
+    P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
+    P2WPKHAddressIndex, P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex, UnknownOutputIndex,
+    Year1,
 };
 
 /// Fixed-size 64-bit unsigned integer optimized for on-disk storage

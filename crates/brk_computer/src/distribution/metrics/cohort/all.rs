@@ -84,8 +84,7 @@ impl CohortMetricsBase for AllCohortMetrics {
         state.apply_pending();
         self.cost_basis.truncate_push_minmax(height, state)?;
         let unrealized_state = state.compute_unrealized_state(height_price);
-        self.unrealized
-            .truncate_push(height, &unrealized_state)?;
+        self.unrealized.truncate_push(height, &unrealized_state)?;
         self.cost_basis
             .extended
             .truncate_push_percentiles(height, state, height_price)?;

@@ -13,8 +13,7 @@ pub trait HeaderMapExtended {
 
 impl HeaderMapExtended for HeaderMap {
     fn has_etag(&self, etag: &str) -> bool {
-        self.get(header::IF_NONE_MATCH)
-            .is_some_and(|v| v == etag)
+        self.get(header::IF_NONE_MATCH).is_some_and(|v| v == etag)
     }
 
     fn insert_etag(&mut self, etag: &str) {

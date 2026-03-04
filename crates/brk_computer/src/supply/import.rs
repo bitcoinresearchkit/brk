@@ -1,18 +1,17 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_traversable::Traversable;
 use brk_types::{Cents, Dollars, Sats, Version};
-use vecdb::{Database, PAGE_SIZE};
 
-use super::Vecs;
 use crate::{
     distribution, indexes,
     internal::{
-        ComputedFromHeight, Identity, LazyFromHeight,
-        LazyValueFromHeight, PercentFromHeight, SatsToBitcoin,
+        ComputedFromHeight, Identity, LazyFromHeight, LazyValueFromHeight, PercentFromHeight,
+        SatsToBitcoin, finalize_db, open_db,
     },
 };
+
+use super::Vecs;
 
 const VERSION: Version = Version::ONE;
 
@@ -23,8 +22,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         distribution: &distribution::Vecs,
     ) -> Result<Self> {
-        let db = Database::open(&parent.join(super::DB_NAME))?;
-        db.set_min_len(PAGE_SIZE * 10_000_000)?;
+        let db = open_db(parent, super::DB_NAME, 10_000_000)?;
 
         let version = parent_version + VERSION;
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
@@ -67,8 +65,12 @@ impl Vecs {
             version + Version::ONE,
             indexes,
         )?;
-        let market_minus_realized_cap_growth_rate =
-            ComputedFromHeight::forced_import(&db, "market_minus_realized_cap_growth_rate", version, indexes)?;
+        let market_minus_realized_cap_growth_rate = ComputedFromHeight::forced_import(
+            &db,
+            "market_minus_realized_cap_growth_rate",
+            version,
+            indexes,
+        )?;
 
         let this = Self {
             db,
@@ -81,14 +83,7 @@ impl Vecs {
             realized_cap_growth_rate,
             market_minus_realized_cap_growth_rate,
         };
-
-        this.db.retain_regions(
-            this.iter_any_exportable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
-        this.db.compact()?;
-
+        finalize_db(&this.db, &this)?;
         Ok(this)
     }
 }

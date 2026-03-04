@@ -1,5 +1,3 @@
-//! ComputedHeightDerived — sparse time periods + dense epochs (last value).
-
 use brk_traversable::Traversable;
 use brk_types::{
     Day1, Day3, DifficultyEpoch, FromCoarserIndex, HalvingEpoch, Height, Hour1, Hour4, Hour12,
@@ -12,7 +10,7 @@ use vecdb::{
 };
 
 use crate::{
-    indexes, indexes_from,
+    indexes,
     internal::{ComputedVecValue, NumericValue, PerPeriod},
 };
 
@@ -41,7 +39,6 @@ pub struct ComputedHeightDerived<T>(
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 
-/// Already read-only (no StorageMode); cloning is sufficient.
 impl<T> ReadOnlyClone for ComputedHeightDerived<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
@@ -116,6 +113,22 @@ where
             };
         }
 
-        Self(indexes_from!(period, epoch))
+        Self(PerPeriod {
+            minute10: period!(minute10),
+            minute30: period!(minute30),
+            hour1: period!(hour1),
+            hour4: period!(hour4),
+            hour12: period!(hour12),
+            day1: period!(day1),
+            day3: period!(day3),
+            week1: period!(week1),
+            month1: period!(month1),
+            month3: period!(month3),
+            month6: period!(month6),
+            year1: period!(year1),
+            year10: period!(year10),
+            halvingepoch: epoch!(halvingepoch),
+            difficultyepoch: epoch!(difficultyepoch),
+        })
     }
 }

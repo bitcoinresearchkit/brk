@@ -1,7 +1,7 @@
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{Sats, TxOutIndex, Version};
-use vecdb::{ReadableCloneableVec, LazyVecFrom1};
+use vecdb::{LazyVecFrom1, ReadableCloneableVec};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {

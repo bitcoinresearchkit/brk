@@ -4,7 +4,9 @@ use strum::Display;
 
 /// Value type for cost basis distribution.
 /// Options: supply (BTC), realized (USD, price × supply), unrealized (USD, spot × supply).
-#[derive(Debug, Display, Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(
+    Debug, Display, Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema,
+)]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
 pub enum CostBasisValue {

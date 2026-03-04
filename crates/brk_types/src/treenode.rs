@@ -526,10 +526,7 @@ mod tests {
         // Two branches lifting children with same key but different metric names → conflict
         let tree = branch(vec![
             ("a", branch(vec![("data", leaf("metric_a", Index::Height))])),
-            (
-                "b",
-                branch(vec![("data", leaf("metric_b", Index::Day1))]),
-            ),
+            ("b", branch(vec![("data", leaf("metric_b", Index::Day1))])),
         ]);
         let result = tree.merge_branches();
         assert!(result.is_none(), "Should detect conflict");
@@ -543,10 +540,7 @@ mod tests {
                 "a",
                 branch(vec![("sum", leaf("metric_sum", Index::Height))]),
             ),
-            (
-                "b",
-                branch(vec![("sum", leaf("metric_sum", Index::Day1))]),
-            ),
+            ("b", branch(vec![("sum", leaf("metric_sum", Index::Day1))])),
         ]);
         let result = tree.merge_branches();
         assert!(result.is_some(), "Should merge successfully");
@@ -1172,10 +1166,7 @@ mod tests {
         // Both have same metric name → collapses to single Leaf
         let tree = branch(vec![
             // day1 with wrap="base"
-            (
-                "day1",
-                branch(vec![("base", leaf("metric", Index::Day1))]),
-            ),
+            ("day1", branch(vec![("base", leaf("metric", Index::Day1))])),
             // rest (flatten): DerivedDateLast merged to Leaf
             // Same metric name as base
             ("rest", leaf("metric", Index::Week1)),

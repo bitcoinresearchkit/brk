@@ -1,5 +1,3 @@
-//! LazyFromTxDistribution - lazy txindex source + computed distribution.
-
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
@@ -55,12 +53,7 @@ where
         f64: From<T>,
         LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>: ReadableVec<TxIndex, T>,
     {
-        self.distribution.derive_from(
-            indexer,
-            indexes,
-            starting_indexes,
-            &self.txindex,
-            exit,
-        )
+        self.distribution
+            .derive_from(indexer, indexes, starting_indexes, &self.txindex, exit)
     }
 }

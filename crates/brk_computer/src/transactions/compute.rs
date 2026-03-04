@@ -33,14 +33,8 @@ impl Vecs {
             .compute(indexer, indexes, starting_indexes, exit)?;
 
         // Fees depends on size
-        self.fees.compute(
-            indexer,
-            indexes,
-            inputs,
-            &self.size,
-            starting_indexes,
-            exit,
-        )?;
+        self.fees
+            .compute(indexer, indexes, inputs, &self.size, starting_indexes, exit)?;
 
         // Volume depends on fees, counts, and blocks (lookback vecs, interval)
         self.volume.compute(

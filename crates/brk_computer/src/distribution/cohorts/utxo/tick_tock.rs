@@ -16,7 +16,11 @@ impl UTXOCohorts<Rw> {
     /// - k = 20 boundaries to check
     /// - n = total blocks in chain_state
     /// - Linear scan for end_idx is faster than binary search since typically 0-2 blocks cross each boundary
-    pub(crate) fn tick_tock_next_block(&mut self, chain_state: &[BlockState], timestamp: Timestamp) {
+    pub(crate) fn tick_tock_next_block(
+        &mut self,
+        chain_state: &[BlockState],
+        timestamp: Timestamp,
+    ) {
         if chain_state.is_empty() {
             return;
         }

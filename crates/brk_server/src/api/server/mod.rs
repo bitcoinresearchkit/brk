@@ -1,7 +1,10 @@
 use std::{borrow::Cow, fs, path};
 
 use aide::axum::{ApiRouter, routing::get_with};
-use axum::{extract::State, http::{HeaderMap, Uri}};
+use axum::{
+    extract::State,
+    http::{HeaderMap, Uri},
+};
 use brk_types::{DiskUsage, Health, Height, SyncStatus};
 use vecdb::ReadableVec;
 

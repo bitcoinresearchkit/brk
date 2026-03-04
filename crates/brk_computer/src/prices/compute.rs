@@ -19,18 +19,24 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_prices(indexer, starting_indexes, exit)?;
-        self.split
-            .open
-            .cents
-            .compute_first(starting_indexes, &self.price.cents.height, indexes, exit)?;
-        self.split
-            .high
-            .cents
-            .compute_max(starting_indexes, &self.price.cents.height, indexes, exit)?;
-        self.split
-            .low
-            .cents
-            .compute_min(starting_indexes, &self.price.cents.height, indexes, exit)?;
+        self.split.open.cents.compute_first(
+            starting_indexes,
+            &self.price.cents.height,
+            indexes,
+            exit,
+        )?;
+        self.split.high.cents.compute_max(
+            starting_indexes,
+            &self.price.cents.height,
+            indexes,
+            exit,
+        )?;
+        self.split.low.cents.compute_min(
+            starting_indexes,
+            &self.price.cents.height,
+            indexes,
+            exit,
+        )?;
         self.ohlc.cents.compute_from_split(
             starting_indexes,
             indexes,
@@ -75,7 +81,10 @@ impl Vecs {
         self.price.cents.height.truncate_if_needed_at(truncate_to)?;
 
         if self.price.cents.height.len() < START_HEIGHT {
-            for line in brk_oracle::PRICES.lines().skip(self.price.cents.height.len()) {
+            for line in brk_oracle::PRICES
+                .lines()
+                .skip(self.price.cents.height.len())
+            {
                 if self.price.cents.height.len() >= START_HEIGHT {
                     break;
                 }
@@ -91,7 +100,12 @@ impl Vecs {
 
         let config = Config::default();
         let committed = self.price.cents.height.len();
-        let prev_cents = self.price.cents.height.collect_one_at(committed - 1).unwrap();
+        let prev_cents = self
+            .price
+            .cents
+            .height
+            .collect_one_at(committed - 1)
+            .unwrap();
         let seed_bin = cents_to_bin(prev_cents.inner() as f64);
         let warmup = config.window_size.min(committed - START_HEIGHT);
         let mut oracle = Oracle::from_checkpoint(seed_bin, config, |o| {
@@ -107,7 +121,10 @@ impl Vecs {
         let ref_bins = Self::feed_blocks(&mut oracle, indexer, committed..total_heights);
 
         for (i, ref_bin) in ref_bins.into_iter().enumerate() {
-            self.price.cents.height.push(Cents::new(bin_to_cents(ref_bin)));
+            self.price
+                .cents
+                .height
+                .push(Cents::new(bin_to_cents(ref_bin)));
 
             let progress = ((i + 1) * 100 / num_new) as u8;
             if i > 0 && progress > ((i * 100 / num_new) as u8) {
@@ -188,8 +205,16 @@ impl Vecs {
                 .unwrap_or(TxOutIndex::from(total_outputs))
                 .to_usize();
 
-            indexer.vecs.outputs.value.collect_range_into_at(out_start, out_end, &mut values);
-            indexer.vecs.outputs.outputtype.collect_range_into_at(out_start, out_end, &mut output_types);
+            indexer
+                .vecs
+                .outputs
+                .value
+                .collect_range_into_at(out_start, out_end, &mut values);
+            indexer.vecs.outputs.outputtype.collect_range_into_at(
+                out_start,
+                out_end,
+                &mut output_types,
+            );
 
             let mut hist = [0u32; NUM_BINS];
             for i in 0..values.len() {

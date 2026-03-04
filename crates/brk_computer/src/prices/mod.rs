@@ -6,20 +6,18 @@ use std::path::Path;
 
 use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode, PAGE_SIZE};
+use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
     internal::{
-        CentsUnsignedToDollars, CentsUnsignedToSats, ComputedFromHeight,
-        ComputedHeightDerived, EagerIndexes, LazyEagerIndexes, LazyFromHeight,
-        OhlcCentsToDollars, OhlcCentsToSats,
+        CentsUnsignedToDollars, CentsUnsignedToSats, ComputedFromHeight, ComputedHeightDerived,
+        EagerIndexes, LazyEagerIndexes, LazyFromHeight, OhlcCentsToDollars, OhlcCentsToSats,
+        finalize_db, open_db,
     },
 };
 
-use by_unit::{
-    OhlcByUnit, PriceByUnit, SplitByUnit, SplitCloseByUnit, SplitIndexesByUnit,
-};
+use by_unit::{OhlcByUnit, PriceByUnit, SplitByUnit, SplitCloseByUnit, SplitIndexesByUnit};
 use ohlcs::{LazyOhlcVecs, OhlcVecs};
 
 pub const DB_NAME: &str = "prices";
@@ -40,18 +38,9 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> brk_error::Result<Self> {
-        let db = Database::open(&parent.join(DB_NAME))?;
-        db.set_min_len(PAGE_SIZE * 1_000_000)?;
-
+        let db = open_db(parent, DB_NAME, 1_000_000)?;
         let this = Self::forced_import_inner(&db, version, indexes)?;
-
-        this.db.retain_regions(
-            this.iter_any_exportable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
-        this.db.compact()?;
-
+        finalize_db(&this.db, &this)?;
         Ok(this)
     }
 
@@ -62,10 +51,7 @@ impl Vecs {
     ) -> brk_error::Result<Self> {
         let version = version + Version::new(11);
 
-        // ── Cents (eager, stored) ───────────────────────────────────
-
-        let price_cents =
-            ComputedFromHeight::forced_import(db, "price_cents", version, indexes)?;
+        let price_cents = ComputedFromHeight::forced_import(db, "price_cents", version, indexes)?;
 
         let open_cents = EagerIndexes::forced_import(db, "price_open_cents", version)?;
         let high_cents = EagerIndexes::forced_import(db, "price_high_cents", version)?;
@@ -79,8 +65,6 @@ impl Vecs {
         );
 
         let ohlc_cents = OhlcVecs::forced_import(db, "price_ohlc_cents", version)?;
-
-        // ── USD (lazy from cents) ───────────────────────────────────
 
         let price_usd = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             "price",
@@ -117,8 +101,6 @@ impl Vecs {
             version,
             &ohlc_cents,
         );
-
-        // ── Sats (lazy from cents, high↔low swapped) ───────────────
 
         let price_sats = LazyFromHeight::from_computed::<CentsUnsignedToSats>(
             "price_sats",
@@ -157,8 +139,6 @@ impl Vecs {
             version,
             &ohlc_cents,
         );
-
-        // ── Assemble pivoted structure ──────────────────────────────
 
         let split = SplitByUnit {
             open: SplitIndexesByUnit {

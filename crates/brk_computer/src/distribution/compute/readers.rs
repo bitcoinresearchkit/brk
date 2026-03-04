@@ -1,9 +1,7 @@
 use brk_cohort::{ByAddressType, ByAnyAddress};
 use brk_indexer::Indexer;
-use brk_types::{
-    Height, OutPoint, OutputType, Sats, StoredU64, TxIndex, TypeIndex,
-};
-use vecdb::{Reader, ReadableVec, VecIndex};
+use brk_types::{Height, OutPoint, OutputType, Sats, StoredU64, TxIndex, TypeIndex};
+use vecdb::{ReadableVec, Reader, VecIndex};
 
 use crate::{
     distribution::{
@@ -46,9 +44,21 @@ impl<'a> TxOutReaders<'a> {
         output_count: usize,
     ) -> Vec<TxOutData> {
         let end = first_txoutindex + output_count;
-        self.indexer.vecs.outputs.value.collect_range_into_at(first_txoutindex, end, &mut self.values_buf);
-        self.indexer.vecs.outputs.outputtype.collect_range_into_at(first_txoutindex, end, &mut self.outputtypes_buf);
-        self.indexer.vecs.outputs.typeindex.collect_range_into_at(first_txoutindex, end, &mut self.typeindexes_buf);
+        self.indexer.vecs.outputs.value.collect_range_into_at(
+            first_txoutindex,
+            end,
+            &mut self.values_buf,
+        );
+        self.indexer.vecs.outputs.outputtype.collect_range_into_at(
+            first_txoutindex,
+            end,
+            &mut self.outputtypes_buf,
+        );
+        self.indexer.vecs.outputs.typeindex.collect_range_into_at(
+            first_txoutindex,
+            end,
+            &mut self.typeindexes_buf,
+        );
 
         self.values_buf
             .iter()
@@ -94,12 +104,31 @@ impl<'a> TxInReaders<'a> {
         current_height: Height,
     ) -> (Vec<Sats>, Vec<Height>, Vec<OutputType>, Vec<TypeIndex>) {
         let end = first_txinindex + input_count;
-        let values: Vec<Sats> = self.txins.spent.value.collect_range_at(first_txinindex, end);
-        self.indexer.vecs.inputs.outpoint.collect_range_into_at(first_txinindex, end, &mut self.outpoints_buf);
-        let outputtypes: Vec<OutputType> = self.indexer.vecs.inputs.outputtype.collect_range_at(first_txinindex, end);
-        let typeindexes: Vec<TypeIndex> = self.indexer.vecs.inputs.typeindex.collect_range_at(first_txinindex, end);
+        let values: Vec<Sats> = self
+            .txins
+            .spent
+            .value
+            .collect_range_at(first_txinindex, end);
+        self.indexer.vecs.inputs.outpoint.collect_range_into_at(
+            first_txinindex,
+            end,
+            &mut self.outpoints_buf,
+        );
+        let outputtypes: Vec<OutputType> = self
+            .indexer
+            .vecs
+            .inputs
+            .outputtype
+            .collect_range_at(first_txinindex, end);
+        let typeindexes: Vec<TypeIndex> = self
+            .indexer
+            .vecs
+            .inputs
+            .typeindex
+            .collect_range_at(first_txinindex, end);
 
-        let prev_heights: Vec<Height> = self.outpoints_buf
+        let prev_heights: Vec<Height> = self
+            .outpoints_buf
             .iter()
             .map(|outpoint| {
                 if outpoint.is_coinbase() {
@@ -175,7 +204,11 @@ impl IndexToTxIndexBuf {
         txindex_to_count: &impl ReadableVec<TxIndex, StoredU64>,
     ) -> &[TxIndex] {
         let first = block_first_txindex.to_usize();
-        txindex_to_count.collect_range_into_at(first, first + block_tx_count as usize, &mut self.counts);
+        txindex_to_count.collect_range_into_at(
+            first,
+            first + block_tx_count as usize,
+            &mut self.counts,
+        );
 
         let total: u64 = self.counts.iter().map(|c| u64::from(*c)).sum();
         self.result.clear();
@@ -183,7 +216,8 @@ impl IndexToTxIndexBuf {
 
         for (offset, count) in self.counts.iter().enumerate() {
             let txindex = TxIndex::from(first + offset);
-            self.result.extend(std::iter::repeat_n(txindex, u64::from(*count) as usize));
+            self.result
+                .extend(std::iter::repeat_n(txindex, u64::from(*count) as usize));
         }
 
         &self.result

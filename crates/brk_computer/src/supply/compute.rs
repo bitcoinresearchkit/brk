@@ -19,17 +19,26 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         // 1. Compute burned/unspendable supply
-        self.burned
-            .compute(scripts, mining, &blocks.count, prices, starting_indexes, exit)?;
+        self.burned.compute(
+            scripts,
+            mining,
+            &blocks.count,
+            prices,
+            starting_indexes,
+            exit,
+        )?;
 
         // 2. Compute inflation rate: (supply[h] / supply[1y_ago]) - 1
         let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.total.sats;
-        self.inflation_rate.bps.height.compute_rolling_ratio_change(
-            starting_indexes.height,
-            &blocks.count.height_1y_ago,
-            &circulating_supply.height,
-            exit,
-        )?;
+        self.inflation_rate
+            .bps
+            .height
+            .compute_rolling_ratio_change(
+                starting_indexes.height,
+                &blocks.count.height_1y_ago,
+                &circulating_supply.height,
+                exit,
+            )?;
 
         // 3. Compute velocity at height level
         self.velocity
@@ -52,17 +61,25 @@ impl Vecs {
             .compute_rolling_ratio_change(
                 starting_indexes.height,
                 &blocks.count.height_1y_ago,
-                &distribution.utxo_cohorts.all.metrics.realized.realized_cap.height,
+                &distribution
+                    .utxo_cohorts
+                    .all
+                    .metrics
+                    .realized
+                    .realized_cap
+                    .height,
                 exit,
             )?;
 
         // 5. Compute cap growth rate diff: market - realized
-        self.market_minus_realized_cap_growth_rate.height.compute_subtract(
-            starting_indexes.height,
-            &self.market_cap_growth_rate.bps.height,
-            &self.realized_cap_growth_rate.bps.height,
-            exit,
-        )?;
+        self.market_minus_realized_cap_growth_rate
+            .height
+            .compute_subtract(
+                starting_indexes.height,
+                &self.market_cap_growth_rate.bps.height,
+                &self.realized_cap_growth_rate.bps.height,
+                exit,
+            )?;
 
         let _lock = exit.lock();
         self.db.compact()?;

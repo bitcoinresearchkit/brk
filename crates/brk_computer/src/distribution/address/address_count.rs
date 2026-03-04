@@ -70,14 +70,62 @@ impl From<(&AddressTypeToAddrCountVecs, Height)> for AddressTypeToAddressCount {
     fn from((groups, starting_height): (&AddressTypeToAddrCountVecs, Height)) -> Self {
         if let Some(prev_height) = starting_height.decremented() {
             Self(ByAddressType {
-                p2pk65: groups.p2pk65.count.height.collect_one(prev_height).unwrap().into(),
-                p2pk33: groups.p2pk33.count.height.collect_one(prev_height).unwrap().into(),
-                p2pkh: groups.p2pkh.count.height.collect_one(prev_height).unwrap().into(),
-                p2sh: groups.p2sh.count.height.collect_one(prev_height).unwrap().into(),
-                p2wpkh: groups.p2wpkh.count.height.collect_one(prev_height).unwrap().into(),
-                p2wsh: groups.p2wsh.count.height.collect_one(prev_height).unwrap().into(),
-                p2tr: groups.p2tr.count.height.collect_one(prev_height).unwrap().into(),
-                p2a: groups.p2a.count.height.collect_one(prev_height).unwrap().into(),
+                p2pk65: groups
+                    .p2pk65
+                    .count
+                    .height
+                    .collect_one(prev_height)
+                    .unwrap()
+                    .into(),
+                p2pk33: groups
+                    .p2pk33
+                    .count
+                    .height
+                    .collect_one(prev_height)
+                    .unwrap()
+                    .into(),
+                p2pkh: groups
+                    .p2pkh
+                    .count
+                    .height
+                    .collect_one(prev_height)
+                    .unwrap()
+                    .into(),
+                p2sh: groups
+                    .p2sh
+                    .count
+                    .height
+                    .collect_one(prev_height)
+                    .unwrap()
+                    .into(),
+                p2wpkh: groups
+                    .p2wpkh
+                    .count
+                    .height
+                    .collect_one(prev_height)
+                    .unwrap()
+                    .into(),
+                p2wsh: groups
+                    .p2wsh
+                    .count
+                    .height
+                    .collect_one(prev_height)
+                    .unwrap()
+                    .into(),
+                p2tr: groups
+                    .p2tr
+                    .count
+                    .height
+                    .collect_one(prev_height)
+                    .unwrap()
+                    .into(),
+                p2a: groups
+                    .p2a
+                    .count
+                    .height
+                    .collect_one(prev_height)
+                    .unwrap()
+                    .into(),
             })
         } else {
             Default::default()
@@ -103,24 +151,23 @@ impl AddressTypeToAddrCountVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        Ok(Self::from(
-            ByAddressType::<AddrCountVecs>::new_with_name(|type_name| {
-                AddrCountVecs::forced_import(
-                    db,
-                    &format!("{type_name}_{name}"),
-                    version,
-                    indexes,
-                )
-            })?,
-        ))
+        Ok(Self::from(ByAddressType::<AddrCountVecs>::new_with_name(
+            |type_name| {
+                AddrCountVecs::forced_import(db, &format!("{type_name}_{name}"), version, indexes)
+            },
+        )?))
     }
 
     pub(crate) fn min_stateful_height(&self) -> usize {
         self.0.values().map(|v| v.count.height.len()).min().unwrap()
     }
 
-    pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        self.0.par_values_mut().map(|v| &mut v.count.height as &mut dyn AnyStoredVec)
+    pub(crate) fn par_iter_height_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        self.0
+            .par_values_mut()
+            .map(|v| &mut v.count.height as &mut dyn AnyStoredVec)
     }
 
     pub(crate) fn truncate_push_height(
@@ -180,10 +227,16 @@ impl AddrCountsVecs {
     }
 
     pub(crate) fn min_stateful_height(&self) -> usize {
-        self.all.count.height.len().min(self.by_addresstype.min_stateful_height())
+        self.all
+            .count
+            .height
+            .len()
+            .min(self.by_addresstype.min_stateful_height())
     }
 
-    pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_height_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         rayon::iter::once(&mut self.all.count.height as &mut dyn AnyStoredVec)
             .chain(self.by_addresstype.par_iter_height_mut())
     }

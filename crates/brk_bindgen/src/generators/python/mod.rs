@@ -38,11 +38,23 @@ pub fn generate_python_client(
     )
     .unwrap();
     writeln!(output, "from urllib.parse import urlparse").unwrap();
-    writeln!(output, "from datetime import date, datetime, timedelta, timezone").unwrap();
+    writeln!(
+        output,
+        "from datetime import date, datetime, timedelta, timezone"
+    )
+    .unwrap();
     writeln!(output, "import json\n").unwrap();
     writeln!(output, "if TYPE_CHECKING:").unwrap();
-    writeln!(output, "    import pandas as pd  # type: ignore[import-not-found]").unwrap();
-    writeln!(output, "    import polars as pl  # type: ignore[import-not-found]\n").unwrap();
+    writeln!(
+        output,
+        "    import pandas as pd  # type: ignore[import-not-found]"
+    )
+    .unwrap();
+    writeln!(
+        output,
+        "    import polars as pl  # type: ignore[import-not-found]\n"
+    )
+    .unwrap();
     writeln!(output, "T = TypeVar('T')\n").unwrap();
 
     types::generate_type_definitions(&mut output, schemas);

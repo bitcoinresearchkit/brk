@@ -17,10 +17,7 @@ impl Vecs {
         macro_rules! import {
             ($name:expr) => {
                 ComputedFromHeightPriceWithRatioExtended::forced_import(
-                    db,
-                    $name,
-                    version,
-                    indexes,
+                    db, $name, version, indexes,
                 )?
             };
         }

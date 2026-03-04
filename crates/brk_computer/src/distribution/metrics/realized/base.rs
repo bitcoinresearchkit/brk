@@ -1,56 +1,49 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    BasisPoints16, BasisPoints32, BasisPointsSigned16,
-    Bitcoin, Cents, CentsSats, CentsSigned, CentsSquaredSats, Dollars, Height, Indexes, Sats, StoredF32, StoredF64, Version,
+    BasisPoints16, BasisPoints32, BasisPointsSigned16, Bitcoin, Cents, CentsSats, CentsSigned,
+    CentsSquaredSats, Dollars, Height, Indexes, Sats, StoredF32, StoredF64, Version,
 };
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Exit, ReadableCloneableVec,
-    ReadableVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, BytesVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    WritableVec,
 };
 
 use crate::{
     blocks,
     distribution::state::RealizedState,
     internal::{
-        CentsPlus, CentsUnsignedToDollars, ComputedFromHeightCumulative, ComputedFromHeight,
-        ComputedFromHeightRatio, FiatFromHeight, NegCentsUnsignedToDollars, PercentFromHeight,
-        PercentRollingEmas1w1m, PercentRollingWindows, ValueFromHeightCumulative, LazyFromHeight,
-        Price,
-        RatioCentsBp16, RatioCentsSignedCentsBps16, RatioCentsSignedDollarsBps16, RatioCents64,
-        RollingEmas1w1m, RollingEmas2w, RollingWindows, Identity,
+        CentsPlus, CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative,
+        ComputedFromHeightRatio, FiatFromHeight, Identity, LazyFromHeight,
+        NegCentsUnsignedToDollars, PercentFromHeight, PercentRollingEmas1w1m,
+        PercentRollingWindows, Price, RatioCents64, RatioCentsBp16, RatioCentsSignedCentsBps16,
+        RatioCentsSignedDollarsBps16, RollingEmas1w1m, RollingEmas2w, RollingWindows,
+        ValueFromHeightCumulative,
     },
     prices,
 };
 
 use crate::distribution::metrics::ImportConfig;
 
-/// Base realized metrics (always computed).
 #[derive(Traversable)]
 pub struct RealizedBase<M: StorageMode = Rw> {
-    // === Realized Cap ===
     pub realized_cap_cents: ComputedFromHeight<Cents, M>,
     pub realized_cap: LazyFromHeight<Dollars, Cents>,
     pub realized_price: Price<ComputedFromHeight<Cents, M>>,
     pub realized_price_ratio: ComputedFromHeightRatio<M>,
     pub realized_cap_change_1m: ComputedFromHeight<CentsSigned, M>,
 
-    // === Investor Price ===
     pub investor_price: Price<ComputedFromHeight<Cents, M>>,
     pub investor_price_ratio: ComputedFromHeightRatio<M>,
 
-    // === Floor/Ceiling Price Bands ===
     pub lower_price_band: Price<ComputedFromHeight<Cents, M>>,
     pub upper_price_band: Price<ComputedFromHeight<Cents, M>>,
 
-    // === Raw values for aggregation ===
     pub cap_raw: M::Stored<BytesVec<Height, CentsSats>>,
     pub investor_cap_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 
-    // === MVRV ===
     pub mvrv: LazyFromHeight<StoredF32>,
 
-    // === Realized Profit/Loss ===
     pub realized_profit: ComputedFromHeightCumulative<Cents, M>,
     pub realized_profit_ema_1w: ComputedFromHeight<Cents, M>,
     pub realized_loss: ComputedFromHeightCumulative<Cents, M>,
@@ -60,50 +53,38 @@ pub struct RealizedBase<M: StorageMode = Rw> {
     pub net_realized_pnl_ema_1w: ComputedFromHeight<CentsSigned, M>,
     pub gross_pnl: FiatFromHeight<Cents, M>,
 
-    // === Realized vs Realized Cap Ratios ===
     pub realized_profit_rel_to_realized_cap: PercentFromHeight<BasisPoints16, M>,
     pub realized_loss_rel_to_realized_cap: PercentFromHeight<BasisPoints16, M>,
     pub net_realized_pnl_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned16, M>,
 
-    // === Value Created/Destroyed Splits (stored) ===
     pub profit_value_created: ComputedFromHeight<Cents, M>,
     pub profit_value_destroyed: ComputedFromHeight<Cents, M>,
     pub loss_value_created: ComputedFromHeight<Cents, M>,
     pub loss_value_destroyed: ComputedFromHeight<Cents, M>,
 
-    // === Value Created/Destroyed Totals ===
     pub value_created: ComputedFromHeight<Cents, M>,
     pub value_destroyed: ComputedFromHeight<Cents, M>,
 
-    // === Capitulation/Profit Flow (lazy aliases) ===
     pub capitulation_flow: LazyFromHeight<Dollars, Cents>,
     pub profit_flow: LazyFromHeight<Dollars, Cents>,
 
-    // === Value Created/Destroyed Rolling Sums ===
     pub value_created_sum: RollingWindows<Cents, M>,
     pub value_destroyed_sum: RollingWindows<Cents, M>,
 
-    // === SOPR (rolling window ratios) ===
     pub sopr: RollingWindows<StoredF64, M>,
     pub sopr_24h_ema: RollingEmas1w1m<StoredF64, M>,
 
-    // === Sell Side Risk ===
     pub gross_pnl_sum: RollingWindows<Cents, M>,
     pub sell_side_risk_ratio: PercentRollingWindows<BasisPoints16, M>,
     pub sell_side_risk_ratio_24h_ema: PercentRollingEmas1w1m<BasisPoints16, M>,
 
-    // === Net Realized PnL Deltas ===
     pub net_pnl_change_1m: ComputedFromHeight<CentsSigned, M>,
-    pub net_pnl_change_1m_rel_to_realized_cap:
-        PercentFromHeight<BasisPointsSigned16, M>,
-    pub net_pnl_change_1m_rel_to_market_cap:
-        PercentFromHeight<BasisPointsSigned16, M>,
+    pub net_pnl_change_1m_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned16, M>,
+    pub net_pnl_change_1m_rel_to_market_cap: PercentFromHeight<BasisPointsSigned16, M>,
 
-    // === Peak Regret ===
     pub peak_regret: ComputedFromHeightCumulative<Cents, M>,
     pub peak_regret_rel_to_realized_cap: PercentFromHeight<BasisPoints16, M>,
 
-    // === Sent in Profit/Loss ===
     pub sent_in_profit: ValueFromHeightCumulative<M>,
     pub sent_in_profit_ema: RollingEmas2w<M>,
     pub sent_in_loss: ValueFromHeightCumulative<M>,
@@ -111,15 +92,16 @@ pub struct RealizedBase<M: StorageMode = Rw> {
 }
 
 impl RealizedBase {
-    /// Import realized base metrics from database.
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v0 = Version::ZERO;
         let v1 = Version::ONE;
 
         let realized_cap_cents = cfg.import_computed("realized_cap_cents", v0)?;
         let realized_cap = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
-            &cfg.name("realized_cap"), cfg.version,
-            realized_cap_cents.height.read_only_boxed_clone(), &realized_cap_cents,
+            &cfg.name("realized_cap"),
+            cfg.version,
+            realized_cap_cents.height.read_only_boxed_clone(),
+            &realized_cap_cents,
         );
 
         let realized_profit = cfg.import_cumulative("realized_profit", v0)?;
@@ -128,8 +110,10 @@ impl RealizedBase {
         let realized_loss_ema_1w = cfg.import_computed("realized_loss_ema_1w", v0)?;
 
         let neg_realized_loss = LazyFromHeight::from_height_source::<NegCentsUnsignedToDollars>(
-            &cfg.name("neg_realized_loss"), cfg.version + Version::ONE,
-            realized_loss.height.read_only_boxed_clone(), cfg.indexes,
+            &cfg.name("neg_realized_loss"),
+            cfg.version + Version::ONE,
+            realized_loss.height.read_only_boxed_clone(),
+            cfg.indexes,
         );
 
         let net_realized_pnl = cfg.import_cumulative("net_realized_pnl", v0)?;
@@ -161,17 +145,23 @@ impl RealizedBase {
         let value_destroyed = cfg.import_computed("value_destroyed", v0)?;
 
         let capitulation_flow = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
-            &cfg.name("capitulation_flow"), cfg.version,
-            loss_value_destroyed.height.read_only_boxed_clone(), &loss_value_destroyed,
+            &cfg.name("capitulation_flow"),
+            cfg.version,
+            loss_value_destroyed.height.read_only_boxed_clone(),
+            &loss_value_destroyed,
         );
         let profit_flow = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
-            &cfg.name("profit_flow"), cfg.version,
-            profit_value_destroyed.height.read_only_boxed_clone(), &profit_value_destroyed,
+            &cfg.name("profit_flow"),
+            cfg.version,
+            profit_value_destroyed.height.read_only_boxed_clone(),
+            &profit_value_destroyed,
         );
 
         let realized_price_ratio = cfg.import_ratio("realized_price", v1)?;
         let mvrv = LazyFromHeight::from_lazy::<Identity<StoredF32>, BasisPoints32>(
-            &cfg.name("mvrv"), cfg.version, &realized_price_ratio.ratio,
+            &cfg.name("mvrv"),
+            cfg.version,
+            &realized_price_ratio.ratio,
         );
 
         // Rolling windows
@@ -183,7 +173,8 @@ impl RealizedBase {
 
         // EMAs
         let sopr_24h_ema = cfg.import_emas_1w_1m("sopr_24h", v1)?;
-        let sell_side_risk_ratio_24h_ema = cfg.import_percent_emas_1w_1m_bp16("sell_side_risk_ratio_24h", v1)?;
+        let sell_side_risk_ratio_24h_ema =
+            cfg.import_percent_emas_1w_1m_bp16("sell_side_risk_ratio_24h", v1)?;
 
         let peak_regret_rel_to_realized_cap =
             cfg.import_percent_bp16("realized_peak_regret_rel_to_realized_cap", v1)?;
@@ -228,10 +219,10 @@ impl RealizedBase {
             sell_side_risk_ratio,
             sell_side_risk_ratio_24h_ema,
             net_pnl_change_1m: cfg.import_computed("net_pnl_change_1m", Version::new(3))?,
-            net_pnl_change_1m_rel_to_realized_cap:
-                cfg.import_percent_bps16("net_pnl_change_1m_rel_to_realized_cap", Version::new(3))?,
-            net_pnl_change_1m_rel_to_market_cap:
-                cfg.import_percent_bps16("net_pnl_change_1m_rel_to_market_cap", Version::new(3))?,
+            net_pnl_change_1m_rel_to_realized_cap: cfg
+                .import_percent_bps16("net_pnl_change_1m_rel_to_realized_cap", Version::new(3))?,
+            net_pnl_change_1m_rel_to_market_cap: cfg
+                .import_percent_bps16("net_pnl_change_1m_rel_to_market_cap", Version::new(3))?,
             peak_regret,
             peak_regret_rel_to_realized_cap,
             sent_in_profit: cfg.import_value_cumulative("sent_in_profit", v0)?,
@@ -241,7 +232,6 @@ impl RealizedBase {
         })
     }
 
-    /// Get minimum length across height-indexed vectors written in block loop.
     pub(crate) fn min_stateful_height_len(&self) -> usize {
         self.realized_cap
             .height
@@ -260,7 +250,6 @@ impl RealizedBase {
             .min(self.sent_in_loss.base.sats.height.len())
     }
 
-    /// Push realized state values to height-indexed vectors.
     pub(crate) fn truncate_push(&mut self, height: Height, state: &RealizedState) -> Result<()> {
         self.realized_cap_cents
             .height
@@ -271,7 +260,8 @@ impl RealizedBase {
         self.realized_loss
             .height
             .truncate_push(height, state.loss())?;
-        self.investor_price.cents
+        self.investor_price
+            .cents
             .height
             .truncate_push(height, state.investor_price())?;
         self.cap_raw.truncate_push(height, state.cap_raw())?;
@@ -306,7 +296,6 @@ impl RealizedBase {
         Ok(())
     }
 
-    /// Returns a Vec of mutable references to all stored vecs for parallel writing.
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
             &mut self.realized_cap_cents.height as &mut dyn AnyStoredVec,
@@ -325,7 +314,6 @@ impl RealizedBase {
         ]
     }
 
-    /// Compute aggregate values from separate cohorts.
     pub(crate) fn compute_from_stateful(
         &mut self,
         starting_indexes: &Indexes,
@@ -362,7 +350,8 @@ impl RealizedBase {
             .iter()
             .map(|o| o.investor_price.cents.height.version())
             .fold(vecdb::Version::ZERO, |acc, v| acc + v);
-        self.investor_price.cents
+        self.investor_price
+            .cents
             .height
             .validate_computed_version_or_reset(investor_price_dep_version)?;
 
@@ -404,7 +393,8 @@ impl RealizedBase {
             } else {
                 Cents::new((sum_investor_cap / sum_cap.inner()) as u64)
             };
-            self.investor_price.cents
+            self.investor_price
+                .cents
                 .height
                 .truncate_push(height, investor_price)?;
         }
@@ -474,7 +464,6 @@ impl RealizedBase {
         Ok(())
     }
 
-    /// First phase of computed metrics (indexes from height).
     pub(crate) fn compute_rest_part1(
         &mut self,
         starting_indexes: &Indexes,
@@ -492,7 +481,10 @@ impl RealizedBase {
                     &self.realized_profit.height,
                     &self.realized_loss.height,
                     |(i, profit, loss, ..)| {
-                        (i, CentsSigned::new(profit.inner() as i64 - loss.inner() as i64))
+                        (
+                            i,
+                            CentsSigned::new(profit.inner() as i64 - loss.inner() as i64),
+                        )
                     },
                     exit,
                 )?;
@@ -512,7 +504,6 @@ impl RealizedBase {
         Ok(())
     }
 
-    /// Second phase of computed metrics (base-only parts: realized price, rolling sums, EMAs).
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2_base(
         &mut self,
@@ -608,34 +599,54 @@ impl RealizedBase {
                 exit,
             )?;
 
-        // === Rolling sum intermediates ===
         let window_starts = blocks.count.window_starts();
         self.value_created_sum.compute_rolling_sum(
-            starting_indexes.height, &window_starts, &self.value_created.height, exit,
+            starting_indexes.height,
+            &window_starts,
+            &self.value_created.height,
+            exit,
         )?;
         self.value_destroyed_sum.compute_rolling_sum(
-            starting_indexes.height, &window_starts, &self.value_destroyed.height, exit,
+            starting_indexes.height,
+            &window_starts,
+            &self.value_destroyed.height,
+            exit,
         )?;
         self.gross_pnl_sum.compute_rolling_sum(
-            starting_indexes.height, &window_starts, &self.gross_pnl.cents.height, exit,
+            starting_indexes.height,
+            &window_starts,
+            &self.gross_pnl.cents.height,
+            exit,
         )?;
 
         // Compute SOPR from rolling sums
-        for ((sopr, vc), vd) in self.sopr.as_mut_array().into_iter()
+        for ((sopr, vc), vd) in self
+            .sopr
+            .as_mut_array()
+            .into_iter()
             .zip(self.value_created_sum.as_array())
             .zip(self.value_destroyed_sum.as_array())
         {
             sopr.compute_binary::<Cents, Cents, RatioCents64>(
-                starting_indexes.height, &vc.height, &vd.height, exit,
+                starting_indexes.height,
+                &vc.height,
+                &vd.height,
+                exit,
             )?;
         }
 
         // Compute sell-side risk ratios
-        for (ssrr, rv) in self.sell_side_risk_ratio.as_mut_array().into_iter()
+        for (ssrr, rv) in self
+            .sell_side_risk_ratio
+            .as_mut_array()
+            .into_iter()
             .zip(self.gross_pnl_sum.as_array())
         {
             ssrr.compute_binary::<Cents, Cents, RatioCentsBp16>(
-                starting_indexes.height, &rv.height, &self.realized_cap_cents.height, exit,
+                starting_indexes.height,
+                &rv.height,
+                &self.realized_cap_cents.height,
+                exit,
             )?;
         }
 
@@ -652,14 +663,12 @@ impl RealizedBase {
             &self.realized_loss.height,
             exit,
         )?;
-        self.net_realized_pnl_ema_1w
-            .height
-            .compute_rolling_ema(
-                starting_indexes.height,
-                &blocks.count.height_1w_ago,
-                &self.net_realized_pnl.height,
-                exit,
-            )?;
+        self.net_realized_pnl_ema_1w.height.compute_rolling_ema(
+            starting_indexes.height,
+            &blocks.count.height_1w_ago,
+            &self.net_realized_pnl.height,
+            exit,
+        )?;
 
         // 14-day EMA of sent in profit/loss
         self.sent_in_profit_ema.compute(
@@ -726,14 +735,12 @@ impl RealizedBase {
             )?;
 
         // Net realized PnL cumulative 30d delta
-        self.net_pnl_change_1m
-            .height
-            .compute_rolling_change(
-                starting_indexes.height,
-                &blocks.count.height_1m_ago,
-                &self.net_realized_pnl.cumulative.height,
-                exit,
-            )?;
+        self.net_pnl_change_1m.height.compute_rolling_change(
+            starting_indexes.height,
+            &blocks.count.height_1m_ago,
+            &self.net_realized_pnl.cumulative.height,
+            exit,
+        )?;
 
         self.net_pnl_change_1m_rel_to_realized_cap
             .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps16>(

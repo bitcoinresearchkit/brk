@@ -1,6 +1,9 @@
 use axum::{Router, routing::get};
 
-use crate::{Website, handlers::{file_handler, index_handler}};
+use crate::{
+    Website,
+    handlers::{file_handler, index_handler},
+};
 
 /// Create a router for serving the website.
 ///

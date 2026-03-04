@@ -76,9 +76,7 @@ impl Server {
                 // When behind a reverse proxy (e.g. cloudflared), the direct
                 // connection comes from loopback but the request is external.
                 // Mark it as non-loopback so it gets the stricter limit.
-                if addr.ip().is_loopback()
-                    && request.headers().contains_key("CF-Connecting-IP")
-                {
+                if addr.ip().is_loopback() && request.headers().contains_key("CF-Connecting-IP") {
                     addr.set_ip(std::net::Ipv4Addr::UNSPECIFIED.into());
                 }
 

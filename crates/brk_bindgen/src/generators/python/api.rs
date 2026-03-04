@@ -2,7 +2,11 @@
 
 use std::fmt::Write;
 
-use crate::{Endpoint, Parameter, escape_python_keyword, generators::{normalize_return_type, write_description}, to_snake_case};
+use crate::{
+    Endpoint, Parameter, escape_python_keyword,
+    generators::{normalize_return_type, write_description},
+    to_snake_case,
+};
 
 use super::client::generate_class_constants;
 use super::types::js_type_to_python;
@@ -30,22 +34,58 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     writeln!(output).unwrap();
 
     // Generate metric() method for dynamic metric access
-    writeln!(output, "    def metric(self, metric: str, index: Index) -> MetricEndpointBuilder[Any]:").unwrap();
-    writeln!(output, "        \"\"\"Create a dynamic metric endpoint builder for any metric/index combination.").unwrap();
+    writeln!(
+        output,
+        "    def metric(self, metric: str, index: Index) -> MetricEndpointBuilder[Any]:"
+    )
+    .unwrap();
+    writeln!(
+        output,
+        "        \"\"\"Create a dynamic metric endpoint builder for any metric/index combination."
+    )
+    .unwrap();
     writeln!(output).unwrap();
-    writeln!(output, "        Use this for programmatic access when the metric name is determined at runtime.").unwrap();
-    writeln!(output, "        For type-safe access, use the `metrics` tree instead.").unwrap();
+    writeln!(
+        output,
+        "        Use this for programmatic access when the metric name is determined at runtime."
+    )
+    .unwrap();
+    writeln!(
+        output,
+        "        For type-safe access, use the `metrics` tree instead."
+    )
+    .unwrap();
     writeln!(output, "        \"\"\"").unwrap();
-    writeln!(output, "        return MetricEndpointBuilder(self, metric, index)").unwrap();
+    writeln!(
+        output,
+        "        return MetricEndpointBuilder(self, metric, index)"
+    )
+    .unwrap();
     writeln!(output).unwrap();
 
     // Generate helper methods
-    writeln!(output, "    def index_to_date(self, index: Index, i: int) -> Union[date, datetime]:").unwrap();
-    writeln!(output, "        \"\"\"Convert an index value to a date/datetime for date-based indexes.\"\"\"").unwrap();
+    writeln!(
+        output,
+        "    def index_to_date(self, index: Index, i: int) -> Union[date, datetime]:"
+    )
+    .unwrap();
+    writeln!(
+        output,
+        "        \"\"\"Convert an index value to a date/datetime for date-based indexes.\"\"\""
+    )
+    .unwrap();
     writeln!(output, "        return _index_to_date(index, i)").unwrap();
     writeln!(output).unwrap();
-    writeln!(output, "    def date_to_index(self, index: Index, d: Union[date, datetime]) -> int:").unwrap();
-    writeln!(output, "        \"\"\"Convert a date/datetime to an index value for date-based indexes.\"\"\"").unwrap();
+    writeln!(
+        output,
+        "    def date_to_index(self, index: Index, d: Union[date, datetime]) -> int:"
+    )
+    .unwrap();
+    writeln!(
+        output,
+        "        \"\"\"Convert a date/datetime to an index value for date-based indexes.\"\"\""
+    )
+    .unwrap();
     writeln!(output, "        return _date_to_index(index, d)").unwrap();
     writeln!(output).unwrap();
     // Generate API methods
@@ -112,7 +152,13 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             }
         }
         writeln!(output).unwrap();
-        writeln!(output, "        Endpoint: `{} {}`\"\"\"", endpoint.method.to_uppercase(), endpoint.path).unwrap();
+        writeln!(
+            output,
+            "        Endpoint: `{} {}`\"\"\"",
+            endpoint.method.to_uppercase(),
+            endpoint.path
+        )
+        .unwrap();
 
         // Build path
         let path = build_path_template(&endpoint.path, &endpoint.path_params);

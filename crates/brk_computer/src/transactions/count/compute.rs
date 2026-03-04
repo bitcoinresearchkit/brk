@@ -15,19 +15,15 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = count_vecs.window_starts();
-        self.tx_count.compute(
-            starting_indexes.height,
-            &window_starts,
-            exit,
-            |height| {
+        self.tx_count
+            .compute(starting_indexes.height, &window_starts, exit, |height| {
                 Ok(height.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.transactions.first_txindex,
                     &indexer.vecs.transactions.txid,
                     exit,
                 )?)
-            },
-        )?;
+            })?;
 
         Ok(())
     }

@@ -1,7 +1,7 @@
 use std::ops::Range;
 
-use brk_types::Age;
 use brk_traversable::Traversable;
+use brk_types::Age;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::Serialize;
 
@@ -32,9 +32,9 @@ pub const HOURS_15Y: usize = 24 * 15 * 365;
 /// Age boundaries in hours. Defines the cohort ranges:
 /// [0, 1h), [1h, 1d), [1d, 1w), [1w, 1m), ..., [15y, ∞)
 pub const AGE_BOUNDARIES: [usize; 20] = [
-    HOURS_1H, HOURS_1D, HOURS_1W, HOURS_1M, HOURS_2M, HOURS_3M, HOURS_4M,
-    HOURS_5M, HOURS_6M, HOURS_1Y, HOURS_2Y, HOURS_3Y, HOURS_4Y, HOURS_5Y,
-    HOURS_6Y, HOURS_7Y, HOURS_8Y, HOURS_10Y, HOURS_12Y, HOURS_15Y,
+    HOURS_1H, HOURS_1D, HOURS_1W, HOURS_1M, HOURS_2M, HOURS_3M, HOURS_4M, HOURS_5M, HOURS_6M,
+    HOURS_1Y, HOURS_2Y, HOURS_3Y, HOURS_4Y, HOURS_5Y, HOURS_6Y, HOURS_7Y, HOURS_8Y, HOURS_10Y,
+    HOURS_12Y, HOURS_15Y,
 ];
 
 /// Age range bounds (end = usize::MAX means unbounded)

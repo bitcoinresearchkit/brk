@@ -3,8 +3,6 @@ use brk_types::{HalvingEpoch, StoredF32, StoredU32};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::ComputedFromHeight;
-
-/// Halving epoch metrics and countdown
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub epoch: ComputedFromHeight<HalvingEpoch, M>,

@@ -56,4 +56,3 @@ pub struct BlockBuffers {
     pub already_added_addresses: ByAddressType<FxHashMap<AddressHash, TypeIndex>>,
     pub same_block_output_info: FxHashMap<OutPoint, SameBlockOutputInfo>,
 }
-

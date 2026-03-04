@@ -5,10 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{
-        ComputedFromHeight,
-        PercentFromHeight,
-    },
+    internal::{ComputedFromHeight, PercentFromHeight},
 };
 
 impl Vecs {

@@ -17,19 +17,15 @@ impl Vecs {
         let window_starts = count_vecs.window_starts();
 
         // vbytes = floor(weight / 4), stored at height level
-        self.vbytes.compute(
-            starting_indexes.height,
-            &window_starts,
-            exit,
-            |height| {
+        self.vbytes
+            .compute(starting_indexes.height, &window_starts, exit, |height| {
                 Ok(height.compute_transform(
                     starting_indexes.height,
                     &indexer.vecs.blocks.weight,
                     |(h, weight, ..)| (h, StoredU64::from(weight.to_vbytes_floor())),
                     exit,
                 )?)
-            },
-        )?;
+            })?;
 
         // size from indexer total_size
         self.size.compute(

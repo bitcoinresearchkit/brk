@@ -77,7 +77,14 @@ impl ComputedFromHeightStdDevExtended {
         }
 
         Ok(Self {
-            base: ComputedFromHeightStdDev::forced_import(db, name, period, days, parent_version, indexes)?,
+            base: ComputedFromHeightStdDev::forced_import(
+                db,
+                name,
+                period,
+                days,
+                parent_version,
+                indexes,
+            )?,
             zscore: import!("zscore"),
             p0_5sd: import!("p0_5sd"),
             p1sd: import!("p1sd"),
@@ -162,7 +169,9 @@ impl ComputedFromHeightStdDevExtended {
             .height
             .collect_range_at(start, self.base.sd.height.len());
 
-        const MULTIPLIERS: [f32; 12] = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, -0.5, -1.0, -1.5, -2.0, -2.5, -3.0];
+        const MULTIPLIERS: [f32; 12] = [
+            0.5, 1.0, 1.5, 2.0, 2.5, 3.0, -0.5, -1.0, -1.5, -2.0, -2.5, -3.0,
+        ];
         let band_vecs: Vec<_> = self.mut_band_height_vecs().collect();
         for (vec, mult) in band_vecs.into_iter().zip(MULTIPLIERS) {
             for (offset, _) in source_data.iter().enumerate() {
@@ -199,7 +208,6 @@ impl ComputedFromHeightStdDevExtended {
         Ok(())
     }
 
-    /// Compute cents price bands: cents_band = metric_price_cents * band_ratio
     pub(crate) fn compute_cents_bands(
         &mut self,
         starting_indexes: &Indexes,

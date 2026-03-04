@@ -73,11 +73,17 @@ pub fn generate_parameterized_field<S: LanguageSyntax>(
     indent: &str,
 ) {
     let field_name = syntax.field_name(&field.name);
-    let type_ann = metadata.field_type_annotation(field, pattern.is_generic, None, syntax.generic_syntax());
+    let type_ann =
+        metadata.field_type_annotation(field, pattern.is_generic, None, syntax.generic_syntax());
     let path_expr = compute_path_expr(syntax, pattern, field, "acc");
     let value = compute_field_value(syntax, field, metadata, &path_expr);
 
-    writeln!(output, "{}", syntax.field_init(indent, &field_name, &type_ann, &value)).unwrap();
+    writeln!(
+        output,
+        "{}",
+        syntax.field_init(indent, &field_name, &type_ann, &value)
+    )
+    .unwrap();
 }
 
 /// Generate a tree node field with a specific child node for pattern instance base detection.
@@ -127,7 +133,12 @@ pub fn generate_tree_node_field<S: LanguageSyntax>(
         )
     };
 
-    writeln!(output, "{}", syntax.field_init(indent, &field_name, &type_ann, &value)).unwrap();
+    writeln!(
+        output,
+        "{}",
+        syntax.field_init(indent, &field_name, &type_ann, &value)
+    )
+    .unwrap();
 }
 
 /// Generate a leaf field using the actual metric name from the TreeNode::Leaf.

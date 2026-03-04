@@ -5,21 +5,15 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, Dollars, Height, Indexes, Sats, StoredF64, StoredU64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, Database, Exit, WritableVec, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
-    blocks,
-    distribution::state::AddressCohortState,
-    indexes,
-    internal::ComputedFromHeight,
-    prices,
+    blocks, distribution::state::AddressCohortState, indexes, internal::ComputedFromHeight, prices,
 };
 
 use crate::distribution::metrics::{BasicCohortMetrics, CohortMetricsBase, ImportConfig};
 
 use super::super::traits::{CohortVecs, DynCohortVecs};
-
-/// Address cohort with metrics and optional runtime state.
 #[derive(Traversable)]
 pub struct AddressCohortVecs<M: StorageMode = Rw> {
     /// Starting height when state was imported
@@ -60,8 +54,7 @@ impl AddressCohortVecs {
         Ok(Self {
             starting_height: None,
 
-            state: states_path
-                .map(|path| Box::new(AddressCohortState::new(path, &full_name))),
+            state: states_path.map(|path| Box::new(AddressCohortState::new(path, &full_name))),
 
             metrics: BasicCohortMetrics::forced_import(&cfg)?,
 
@@ -86,7 +79,9 @@ impl AddressCohortVecs {
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
-    pub(crate) fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn par_iter_vecs_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         rayon::iter::once(&mut self.addr_count.height as &mut dyn AnyStoredVec)
             .chain(self.metrics.par_iter_mut())
     }

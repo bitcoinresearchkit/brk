@@ -7,8 +7,8 @@ use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::internal::{
-    HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin,
-    LazyValueFromHeight, ValueFromHeightChange, ValueFromHeight,
+    HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyValueFromHeight, ValueFromHeight,
+    ValueFromHeightChange,
 };
 
 use super::ImportConfig;

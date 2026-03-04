@@ -27,11 +27,13 @@ impl Query {
             .day1;
 
         Ok(iter.collect(|di, ts, h| {
-            rewards_vec.collect_one_flat(di).map(|reward| BlockRewardsEntry {
-                avg_height: h.into(),
-                timestamp: *ts,
-                avg_rewards: *reward,
-            })
+            rewards_vec
+                .collect_one_flat(di)
+                .map(|reward| BlockRewardsEntry {
+                    avg_height: h.into(),
+                    timestamp: *ts,
+                    avg_rewards: *reward,
+                })
         }))
     }
 }

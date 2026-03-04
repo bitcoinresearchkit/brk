@@ -58,22 +58,12 @@ impl Vecs {
         )?;
 
         // Skip coinbase (first tx per block) since it has fee=0
-        self.fee.derive_from_with_skip(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            1,
-        )?;
+        self.fee
+            .derive_from_with_skip(indexer, indexes, starting_indexes, exit, 1)?;
 
         // Skip coinbase (first tx per block) since it has no feerate
-        self.fee_rate.derive_from_with_skip(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            1,
-        )?;
+        self.fee_rate
+            .derive_from_with_skip(indexer, indexes, starting_indexes, exit, 1)?;
 
         Ok(())
     }

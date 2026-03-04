@@ -6,8 +6,9 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ByUnit, DistributionStats, WindowStarts, Windows},
-    traits::compute_rolling_distribution_from_starts,
+    internal::{
+        ByUnit, DistributionStats, WindowStarts, Windows, compute_rolling_distribution_from_starts,
+    },
 };
 
 /// One window slot: sum + 8 distribution stats, each a ByUnit.
@@ -43,19 +44,32 @@ impl RollingFullSlot {
         cents_source: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        self.sum.sats.height.compute_rolling_sum(max_from, starts, sats_source, exit)?;
-        self.sum.cents.height.compute_rolling_sum(max_from, starts, cents_source, exit)?;
+        self.sum
+            .sats
+            .height
+            .compute_rolling_sum(max_from, starts, sats_source, exit)?;
+        self.sum
+            .cents
+            .height
+            .compute_rolling_sum(max_from, starts, cents_source, exit)?;
 
         let d = &mut self.distribution;
 
         macro_rules! compute_unit {
             ($unit:ident, $source:expr) => {
                 compute_rolling_distribution_from_starts(
-                    max_from, starts, $source,
-                    &mut d.average.$unit.height, &mut d.min.$unit.height,
-                    &mut d.max.$unit.height, &mut d.pct10.$unit.height,
-                    &mut d.pct25.$unit.height, &mut d.median.$unit.height,
-                    &mut d.pct75.$unit.height, &mut d.pct90.$unit.height, exit,
+                    max_from,
+                    starts,
+                    $source,
+                    &mut d.average.$unit.height,
+                    &mut d.min.$unit.height,
+                    &mut d.max.$unit.height,
+                    &mut d.pct10.$unit.height,
+                    &mut d.pct25.$unit.height,
+                    &mut d.median.$unit.height,
+                    &mut d.pct75.$unit.height,
+                    &mut d.pct90.$unit.height,
+                    exit,
                 )?
             };
         }

@@ -13,7 +13,9 @@ use crate::{
 /// each storing basis points with lazy ratio and percent float views.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct PercentRollingEmas1w1m<B: BpsType, M: StorageMode = Rw>(pub Emas1w1m<PercentFromHeight<B, M>>);
+pub struct PercentRollingEmas1w1m<B: BpsType, M: StorageMode = Rw>(
+    pub Emas1w1m<PercentFromHeight<B, M>>,
+);
 
 impl<B: BpsType> PercentRollingEmas1w1m<B> {
     pub(crate) fn forced_import(
@@ -23,12 +25,7 @@ impl<B: BpsType> PercentRollingEmas1w1m<B> {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self(Emas1w1m::try_from_fn(|suffix| {
-            PercentFromHeight::forced_import(
-                db,
-                &format!("{name}_{suffix}"),
-                version,
-                indexes,
-            )
+            PercentFromHeight::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 

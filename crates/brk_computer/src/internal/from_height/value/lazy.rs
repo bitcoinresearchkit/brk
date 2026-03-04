@@ -20,7 +20,12 @@ pub struct LazyValueFromHeight {
 }
 
 impl LazyValueFromHeight {
-    pub(crate) fn from_block_source<SatsTransform, BitcoinTransform, CentsTransform, DollarsTransform>(
+    pub(crate) fn from_block_source<
+        SatsTransform,
+        BitcoinTransform,
+        CentsTransform,
+        DollarsTransform,
+    >(
         name: &str,
         source: &ValueFromHeight,
         version: Version,
@@ -31,14 +36,23 @@ impl LazyValueFromHeight {
         CentsTransform: UnaryTransform<Cents, Cents>,
         DollarsTransform: UnaryTransform<Dollars, Dollars>,
     {
-        let height =
-            LazyValue::from_block_source::<SatsTransform, BitcoinTransform, CentsTransform, DollarsTransform>(name, source, version);
+        let height = LazyValue::from_block_source::<
+            SatsTransform,
+            BitcoinTransform,
+            CentsTransform,
+            DollarsTransform,
+        >(name, source, version);
 
-        let rest =
-            LazyValueHeightDerived::from_block_source::<SatsTransform, BitcoinTransform, CentsTransform, DollarsTransform>(
-                name, source, version,
-            );
+        let rest = LazyValueHeightDerived::from_block_source::<
+            SatsTransform,
+            BitcoinTransform,
+            CentsTransform,
+            DollarsTransform,
+        >(name, source, version);
 
-        Self { height, rest: Box::new(rest) }
+        Self {
+            height,
+            rest: Box::new(rest),
+        }
     }
 }

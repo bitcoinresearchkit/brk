@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{Height, Indexes, OutputType, Sats, TxOutIndex};
-use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, WritableVec, VecIndex};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
 use crate::{blocks, prices};
@@ -17,9 +17,12 @@ impl Vecs {
     ) -> Result<()> {
         let window_starts = count_vecs.window_starts();
 
-        self.opreturn
-            .compute(starting_indexes.height, &window_starts, prices, exit, |height_vec| {
-
+        self.opreturn.compute(
+            starting_indexes.height,
+            &window_starts,
+            prices,
+            exit,
+            |height_vec| {
                 // Validate computed versions against dependencies
                 let dep_version = indexer.vecs.outputs.first_txoutindex.version()
                     + indexer.vecs.outputs.outputtype.version()
@@ -43,8 +46,12 @@ impl Vecs {
                 }
 
                 // Pre-collect height-indexed data
-                let first_txoutindexes: Vec<TxOutIndex> = indexer.vecs.outputs.first_txoutindex
-                    .collect_range_at(starting_height.to_usize(), target_height.to_usize() + 2.min(indexer.vecs.outputs.first_txoutindex.len()));
+                let first_txoutindexes: Vec<TxOutIndex> =
+                    indexer.vecs.outputs.first_txoutindex.collect_range_at(
+                        starting_height.to_usize(),
+                        target_height.to_usize()
+                            + 2.min(indexer.vecs.outputs.first_txoutindex.len()),
+                    );
 
                 // Iterate blocks
                 for h in starting_height.to_usize()..=target_height.to_usize() {
@@ -53,28 +60,35 @@ impl Vecs {
 
                     // Get output range for this block
                     let first_txoutindex = first_txoutindexes[local_idx];
-                    let next_first_txoutindex = if let Some(&next) = first_txoutindexes.get(local_idx + 1) {
-                        next
-                    } else {
-                        TxOutIndex::from(indexer.vecs.outputs.value.len())
-                    };
+                    let next_first_txoutindex =
+                        if let Some(&next) = first_txoutindexes.get(local_idx + 1) {
+                            next
+                        } else {
+                            TxOutIndex::from(indexer.vecs.outputs.value.len())
+                        };
 
                     let out_start = first_txoutindex.to_usize();
                     let out_end = next_first_txoutindex.to_usize();
 
                     // Sum opreturn values — fold over both vecs without allocation
-                    let opreturn_value = indexer.vecs.outputs.outputtype.fold_range_at(
-                        out_start, out_end,
-                        (Sats::ZERO, out_start),
-                        |(sum, vi), ot| {
-                            let new_sum = if ot == OutputType::OpReturn {
-                                sum + indexer.vecs.outputs.value.collect_one_at(vi).unwrap()
-                            } else {
-                                sum
-                            };
-                            (new_sum, vi + 1)
-                        },
-                    ).0;
+                    let opreturn_value = indexer
+                        .vecs
+                        .outputs
+                        .outputtype
+                        .fold_range_at(
+                            out_start,
+                            out_end,
+                            (Sats::ZERO, out_start),
+                            |(sum, vi), ot| {
+                                let new_sum = if ot == OutputType::OpReturn {
+                                    sum + indexer.vecs.outputs.value.collect_one_at(vi).unwrap()
+                                } else {
+                                    sum
+                                };
+                                (new_sum, vi + 1)
+                            },
+                        )
+                        .0;
 
                     height_vec.truncate_push(height, opreturn_value)?;
                 }
@@ -82,7 +96,8 @@ impl Vecs {
                 height_vec.write()?;
 
                 Ok(())
-            })?;
+            },
+        )?;
 
         Ok(())
     }

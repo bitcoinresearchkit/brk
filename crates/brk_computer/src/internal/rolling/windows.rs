@@ -54,7 +54,8 @@ where
         T: Default + SubAssign,
     {
         for (w, starts) in self.0.as_mut_array().into_iter().zip(windows.as_array()) {
-            w.height.compute_rolling_sum(max_from, *starts, source, exit)?;
+            w.height
+                .compute_rolling_sum(max_from, *starts, source, exit)?;
         }
         Ok(())
     }

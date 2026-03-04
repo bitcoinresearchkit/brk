@@ -1,15 +1,15 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{BasisPoints16, Height, Indexes, PoolSlug, StoredU32};
-use vecdb::{AnyVec, BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, VecIndex, Version};
+use vecdb::{
+    AnyVec, BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, VecIndex, Version,
+};
 
 use crate::{
-    blocks,
-    indexes,
+    blocks, indexes,
     internal::{
-        ComputedFromHeightCumulativeSum, ComputedFromHeight, MaskSats,
-        PercentFromHeight, PercentRollingWindows, RatioU32Bp16, RollingWindows,
-        ValueFromHeightCumulativeSum,
+        ComputedFromHeight, ComputedFromHeightCumulativeSum, MaskSats, PercentFromHeight,
+        PercentRollingWindows, RatioU32Bp16, RollingWindows, ValueFromHeightCumulativeSum,
     },
     mining, prices,
 };

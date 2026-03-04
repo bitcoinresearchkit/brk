@@ -67,9 +67,11 @@ impl TDigest {
         }
 
         // Single binary search: unclamped position doubles as insert point
-        let search = self
-            .centroids
-            .binary_search_by(|c| c.mean.partial_cmp(&value).unwrap_or(std::cmp::Ordering::Equal));
+        let search = self.centroids.binary_search_by(|c| {
+            c.mean
+                .partial_cmp(&value)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         let insert_pos = match search {
             Ok(i) | Err(i) => i,
         };

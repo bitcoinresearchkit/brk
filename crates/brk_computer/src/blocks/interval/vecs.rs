@@ -8,6 +8,5 @@ use crate::internal::ComputedFromHeightDistribution;
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct Vecs<M: StorageMode = Rw>(
-    #[traversable(flatten)]
-    pub ComputedFromHeightDistribution<Timestamp, M>,
+    #[traversable(flatten)] pub ComputedFromHeightDistribution<Timestamp, M>,
 );

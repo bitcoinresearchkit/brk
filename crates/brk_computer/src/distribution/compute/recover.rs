@@ -71,9 +71,15 @@ pub(crate) fn recover_state(
     }
 
     // Import UTXO cohort states - all must succeed
-    debug!("importing UTXO cohort states at height {}", consistent_height);
+    debug!(
+        "importing UTXO cohort states at height {}",
+        consistent_height
+    );
     if !utxo_cohorts.import_separate_states(consistent_height) {
-        warn!("UTXO cohort state import failed at height {}", consistent_height);
+        warn!(
+            "UTXO cohort state import failed at height {}",
+            consistent_height
+        );
         return Ok(RecoveredState {
             starting_height: Height::ZERO,
         });
@@ -81,9 +87,15 @@ pub(crate) fn recover_state(
     debug!("UTXO cohort states imported");
 
     // Import address cohort states - all must succeed
-    debug!("importing address cohort states at height {}", consistent_height);
+    debug!(
+        "importing address cohort states at height {}",
+        consistent_height
+    );
     if !address_cohorts.import_separate_states(consistent_height) {
-        warn!("Address cohort state import failed at height {}", consistent_height);
+        warn!(
+            "Address cohort state import failed at height {}",
+            consistent_height
+        );
         return Ok(RecoveredState {
             starting_height: Height::ZERO,
         });
@@ -163,16 +175,25 @@ fn rollback_states(
         return Height::ZERO;
     };
     let chain_height = Height::from(s).incremented();
-    debug!("chain_state rolled back to stamp {:?}, height {}", s, chain_height);
+    debug!(
+        "chain_state rolled back to stamp {:?}, height {}",
+        s, chain_height
+    );
     heights.insert(chain_height);
 
     let Ok(stamps) = address_indexes_rollbacks else {
-        warn!("address_indexes rollback failed: {:?}", address_indexes_rollbacks);
+        warn!(
+            "address_indexes rollback failed: {:?}",
+            address_indexes_rollbacks
+        );
         return Height::ZERO;
     };
     for (i, s) in stamps.iter().enumerate() {
         let h = Height::from(*s).incremented();
-        debug!("address_indexes[{}] rolled back to stamp {:?}, height {}", i, s, h);
+        debug!(
+            "address_indexes[{}] rolled back to stamp {:?}, height {}",
+            i, s, h
+        );
         heights.insert(h);
     }
 
@@ -182,7 +203,10 @@ fn rollback_states(
     };
     for (i, s) in stamps.iter().enumerate() {
         let h = Height::from(*s).incremented();
-        debug!("address_data[{}] rolled back to stamp {:?}, height {}", i, s, h);
+        debug!(
+            "address_data[{}] rolled back to stamp {:?}, height {}",
+            i, s, h
+        );
         heights.insert(h);
     }
 

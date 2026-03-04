@@ -3,8 +3,6 @@ use brk_types::{BasisPoints16, Cents, StoredF32};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{ComputedFromHeight, PercentFromHeight, Price};
-
-/// Price range and choppiness metrics
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub price_min_1w: Price<ComputedFromHeight<Cents, M>>,

@@ -13,7 +13,9 @@ use crate::{
 /// with lazy ratio and percent float views.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct PercentRollingWindows<B: BpsType, M: StorageMode = Rw>(pub Windows<PercentFromHeight<B, M>>);
+pub struct PercentRollingWindows<B: BpsType, M: StorageMode = Rw>(
+    pub Windows<PercentFromHeight<B, M>>,
+);
 
 impl<B: BpsType> PercentRollingWindows<B> {
     pub(crate) fn forced_import(
@@ -23,12 +25,7 @@ impl<B: BpsType> PercentRollingWindows<B> {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self(Windows::try_from_fn(|suffix| {
-            PercentFromHeight::forced_import(
-                db,
-                &format!("{name}_{suffix}"),
-                version,
-                indexes,
-            )
+            PercentFromHeight::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 }

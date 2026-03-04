@@ -52,7 +52,9 @@ pub(crate) fn process_outputs(
     let mut transacted = Transacted::default();
     let mut received_data = AddressTypeToVec::with_capacity(estimated_per_type);
     let mut address_data =
-        AddressTypeToTypeIndexMap::<WithAddressDataSource<FundedAddressData>>::with_capacity(estimated_per_type);
+        AddressTypeToTypeIndexMap::<WithAddressDataSource<FundedAddressData>>::with_capacity(
+            estimated_per_type,
+        );
     let mut txindex_vecs =
         AddressTypeToTypeIndexMap::<SmallVec<[TxIndex; 4]>>::with_capacity(estimated_per_type);
 

@@ -3,9 +3,7 @@ use brk_types::{BasisPointsSigned32, Bitcoin, Cents, Date, Day1, Dollars, Indexe
 use vecdb::{AnyVec, Exit, ReadableOptionVec, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{
-    blocks, indexes, internal::RatioDiffCentsBps32, market::lookback, prices,
-};
+use crate::{blocks, indexes, internal::RatioDiffCentsBps32, market::lookback, prices};
 
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
 
@@ -64,9 +62,8 @@ impl Vecs {
 
         // DCA by period - average price (derived from stack)
         let sh = starting_indexes.height.to_usize();
-        for (average_price, stack, days) in self
-            .period_cost_basis
-            .zip_mut_with_days(&self.period_stack)
+        for (average_price, stack, days) in
+            self.period_cost_basis.zip_mut_with_days(&self.period_stack)
         {
             let days = days as usize;
             let stack_data = stack

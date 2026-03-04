@@ -58,12 +58,8 @@ where
         f64: From<T>,
     {
         compute_full(&mut self.full)?;
-        self.rolling.compute(
-            max_from,
-            windows,
-            &self.full.sum,
-            exit,
-        )?;
+        self.rolling
+            .compute(max_from, windows, &self.full.sum, exit)?;
         Ok(())
     }
 }

@@ -5,8 +5,9 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
-    indexes, prices,
+    indexes,
     internal::{ByUnit, SatsToCents},
+    prices,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
@@ -74,14 +75,18 @@ impl ValueFromHeight {
         cents_source: &(impl ReadableVec<Height, Cents> + Sync),
         exit: &Exit,
     ) -> Result<()> {
-        self.base
-            .sats
-            .height
-            .compute_rolling_ema(starting_height, window_starts, sats_source, exit)?;
-        self.base
-            .cents
-            .height
-            .compute_rolling_ema(starting_height, window_starts, cents_source, exit)?;
+        self.base.sats.height.compute_rolling_ema(
+            starting_height,
+            window_starts,
+            sats_source,
+            exit,
+        )?;
+        self.base.cents.height.compute_rolling_ema(
+            starting_height,
+            window_starts,
+            cents_source,
+            exit,
+        )?;
         Ok(())
     }
 }

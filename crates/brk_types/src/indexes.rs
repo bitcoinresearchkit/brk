@@ -1,8 +1,7 @@
 use crate::{
-    EmptyOutputIndex, Height,
-    OpReturnIndex, OutputType, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex,
-    P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex,
-    P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
+    EmptyOutputIndex, Height, OpReturnIndex, OutputType, P2AAddressIndex, P2MSOutputIndex,
+    P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
+    P2WPKHAddressIndex, P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
     UnknownOutputIndex,
 };
 
@@ -63,4 +62,3 @@ impl Indexes {
         }
     }
 }
-

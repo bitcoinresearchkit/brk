@@ -28,10 +28,9 @@ impl BlockProcessor<'_> {
             .blockhashprefix_to_height
             .insert(blockhash_prefix, height);
 
-        self.stores.height_to_coinbase_tag.insert(
-            height,
-            self.block.coinbase_tag().into(),
-        );
+        self.stores
+            .height_to_coinbase_tag
+            .insert(height, self.block.coinbase_tag().into());
 
         self.vecs
             .blocks
@@ -52,8 +51,7 @@ impl BlockProcessor<'_> {
     /// Push block total_size and weight, reusing per-tx sizes already computed in ComputedTx.
     /// This avoids redundant tx serialization (base_size + total_size were already computed).
     pub fn push_block_size_and_weight(&mut self, txs: &[ComputedTx]) -> Result<()> {
-        let overhead =
-            bitcoin::block::Header::SIZE + bitcoin::VarInt::from(txs.len()).size();
+        let overhead = bitcoin::block::Header::SIZE + bitcoin::VarInt::from(txs.len()).size();
         let mut total_size = overhead;
         let mut weight_wu = overhead * 4;
         for ct in txs {

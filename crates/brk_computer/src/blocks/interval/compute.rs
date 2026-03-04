@@ -16,11 +16,8 @@ impl Vecs {
     ) -> Result<()> {
         let mut prev_timestamp = None;
         let window_starts = count_vecs.window_starts();
-        self.0.compute(
-            starting_indexes.height,
-            &window_starts,
-            exit,
-            |vec| {
+        self.0
+            .compute(starting_indexes.height, &window_starts, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
                     &indexer.vecs.blocks.timestamp,
@@ -39,8 +36,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         Ok(())
     }

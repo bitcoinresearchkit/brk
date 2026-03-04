@@ -3,7 +3,9 @@ use std::thread;
 use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Cents, Date, Height, OutputType, Sats, Timestamp, TxIndex, TypeIndex, ONE_DAY_IN_SEC};
+use brk_types::{
+    Cents, Date, Height, ONE_DAY_IN_SEC, OutputType, Sats, Timestamp, TxIndex, TypeIndex,
+};
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use tracing::{debug, info};
@@ -401,12 +403,11 @@ pub(crate) fn process_blocks(
             // Main thread: Update UTXO cohorts
             vecs.utxo_cohorts
                 .receive(transacted, height, timestamp, block_price);
-            if let Some(min_h) = vecs.utxo_cohorts
-                .send(height_to_sent, chain_state, ctx.price_range_max)
+            if let Some(min_h) =
+                vecs.utxo_cohorts
+                    .send(height_to_sent, chain_state, ctx.price_range_max)
             {
-                min_supply_modified = Some(
-                    min_supply_modified.map_or(min_h, |cur| cur.min(min_h)),
-                );
+                min_supply_modified = Some(min_supply_modified.map_or(min_h, |cur| cur.min(min_h)));
             }
         });
 
@@ -423,8 +424,7 @@ pub(crate) fn process_blocks(
 
         let h = height.to_usize();
         let is_last_of_day = height == last_height
-            || *cached_timestamps[h] / ONE_DAY_IN_SEC
-                != *cached_timestamps[h + 1] / ONE_DAY_IN_SEC;
+            || *cached_timestamps[h] / ONE_DAY_IN_SEC != *cached_timestamps[h + 1] / ONE_DAY_IN_SEC;
         let date_opt = is_last_of_day.then(|| Date::from(timestamp));
 
         push_cohort_states(

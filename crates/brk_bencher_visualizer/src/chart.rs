@@ -43,14 +43,18 @@ pub fn generate(config: ChartConfig, runs: &[Run]) -> Result<()> {
     let max_value = runs.iter().map(|r| r.max_value()).fold(0.0, f64::max);
 
     let (time_scaled, time_divisor, time_label) = format::time(max_time_s);
-    let (value_scaled, scale_factor, y_label) = scale_y_axis(max_value, &config.y_label, &config.y_format);
+    let (value_scaled, scale_factor, y_label) =
+        scale_y_axis(max_value, &config.y_label, &config.y_format);
     let x_labels = label_count(time_scaled);
 
     let root = SVGBackend::new(config.output_path, SIZE).into_drawing_area();
     root.fill(&BG_COLOR)?;
 
     let mut chart = ChartBuilder::on(&root)
-        .caption(&config.title, (FONT, FONT_SIZE_BIG).into_font().color(&TEXT_COLOR))
+        .caption(
+            &config.title,
+            (FONT, FONT_SIZE_BIG).into_font().color(&TEXT_COLOR),
+        )
         .margin(20)
         .margin_right(40)
         .x_label_area_size(50)
@@ -62,7 +66,14 @@ pub fn generate(config: ChartConfig, runs: &[Run]) -> Result<()> {
 
     for (idx, run) in runs.iter().enumerate() {
         let color = COLORS[idx % COLORS.len()];
-        draw_series(&mut chart, &run.data, &run.id, color, time_divisor, scale_factor)?;
+        draw_series(
+            &mut chart,
+            &run.data,
+            &run.id,
+            color,
+            time_divisor,
+            scale_factor,
+        )?;
     }
 
     configure_legend(&mut chart)?;
@@ -93,14 +104,18 @@ pub fn generate_dual(
     let max_value = runs.iter().map(|r| r.max_value()).fold(0.0, f64::max);
 
     let (time_scaled, time_divisor, time_label) = format::time(max_time_s);
-    let (value_scaled, scale_factor, y_label) = scale_y_axis(max_value, &config.y_label, &config.y_format);
+    let (value_scaled, scale_factor, y_label) =
+        scale_y_axis(max_value, &config.y_label, &config.y_format);
     let x_labels = label_count(time_scaled);
 
     let root = SVGBackend::new(config.output_path, SIZE).into_drawing_area();
     root.fill(&BG_COLOR)?;
 
     let mut chart = ChartBuilder::on(&root)
-        .caption(&config.title, (FONT, FONT_SIZE_BIG).into_font().color(&TEXT_COLOR))
+        .caption(
+            &config.title,
+            (FONT, FONT_SIZE_BIG).into_font().color(&TEXT_COLOR),
+        )
         .margin(20)
         .margin_right(40)
         .x_label_area_size(50)
@@ -164,7 +179,13 @@ type Chart<'a, 'b> = ChartContext<
     Cartesian2d<plotters::coord::types::RangedCoordf64, plotters::coord::types::RangedCoordf64>,
 >;
 
-fn configure_mesh(chart: &mut Chart, x_label: &str, y_label: &str, y_format: &YAxisFormat, x_labels: usize) -> Result<()> {
+fn configure_mesh(
+    chart: &mut Chart,
+    x_label: &str,
+    y_label: &str,
+    y_format: &YAxisFormat,
+    x_labels: usize,
+) -> Result<()> {
     let y_formatter: Box<dyn Fn(&f64) -> String> = match y_format {
         YAxisFormat::Bytes => Box::new(|y: &f64| {
             if y.fract() == 0.0 {
@@ -200,9 +221,12 @@ fn draw_series(
     time_divisor: f64,
     scale_factor: f64,
 ) -> Result<()> {
-    let points = data
-        .iter()
-        .map(|d| (d.timestamp_ms as f64 / 1000.0 / time_divisor, d.value / scale_factor));
+    let points = data.iter().map(|d| {
+        (
+            d.timestamp_ms as f64 / 1000.0 / time_divisor,
+            d.value / scale_factor,
+        )
+    });
 
     chart
         .draw_series(LineSeries::new(points, color.stroke_width(1)))?
@@ -221,7 +245,12 @@ fn draw_dashed_series(
 ) -> Result<()> {
     let points: Vec<_> = data
         .iter()
-        .map(|d| (d.timestamp_ms as f64 / 1000.0 / time_divisor, d.value / scale_factor))
+        .map(|d| {
+            (
+                d.timestamp_ms as f64 / 1000.0 / time_divisor,
+                d.value / scale_factor,
+            )
+        })
         .collect();
 
     // Draw dashed line by skipping every other segment
@@ -234,7 +263,12 @@ fn draw_dashed_series(
                 .map(|(_, w)| PathElement::new(vec![w[0], w[1]], color.stroke_width(2))),
         )?
         .label(label)
-        .legend(move |(x, y)| PathElement::new(vec![(x, y), (x + 10, y), (x + 20, y)], color.stroke_width(2)));
+        .legend(move |(x, y)| {
+            PathElement::new(
+                vec![(x, y), (x + 10, y), (x + 20, y)],
+                color.stroke_width(2),
+            )
+        });
     Ok(())
 }
 

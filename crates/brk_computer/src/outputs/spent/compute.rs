@@ -2,9 +2,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{Height, Indexes, TxInIndex, TxOutIndex};
 use tracing::info;
-use vecdb::{
-    AnyStoredVec, AnyVec, Database, Exit, WritableVec, ReadableVec, Stamp, VecIndex,
-};
+use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Stamp, VecIndex, WritableVec};
 
 use super::Vecs;
 use crate::inputs;
@@ -59,8 +57,8 @@ impl Vecs {
 
         // Only collect from min_height onward (not from 0)
         let offset = min_height.to_usize();
-        let first_txoutindex_data = first_txoutindex_vec
-            .collect_range_at(offset, target_height.to_usize() + 1);
+        let first_txoutindex_data =
+            first_txoutindex_vec.collect_range_at(offset, target_height.to_usize() + 1);
         let first_txinindex_data = indexer
             .vecs
             .inputs
@@ -91,7 +89,8 @@ impl Vecs {
                 .fill_to(batch_txoutindex, TxInIndex::UNSPENT)?;
 
             // Get txin range for this height batch
-            let txin_start = first_txinindex_data[batch_start_height.to_usize() - offset].to_usize();
+            let txin_start =
+                first_txinindex_data[batch_start_height.to_usize() - offset].to_usize();
             let txin_end = if batch_end_height >= target_height {
                 inputs.spent.txoutindex.len()
             } else {
@@ -101,12 +100,16 @@ impl Vecs {
             // Stream txins directly into pairs — avoids intermediate Vec allocation
             pairs.clear();
             let mut j = txin_start;
-            txinindex_to_txoutindex.for_each_range_at(txin_start, txin_end, |txoutindex: TxOutIndex| {
-                if !txoutindex.is_coinbase() {
-                    pairs.push((txoutindex, TxInIndex::from(j)));
-                }
-                j += 1;
-            });
+            txinindex_to_txoutindex.for_each_range_at(
+                txin_start,
+                txin_end,
+                |txoutindex: TxOutIndex| {
+                    if !txoutindex.is_coinbase() {
+                        pairs.push((txoutindex, TxInIndex::from(j)));
+                    }
+                    j += 1;
+                },
+            );
 
             pairs.sort_unstable_by_key(|(txoutindex, _)| *txoutindex);
 

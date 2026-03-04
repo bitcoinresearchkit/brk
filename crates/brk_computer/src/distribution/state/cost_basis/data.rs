@@ -6,7 +6,7 @@ use std::{
 
 use brk_error::{Error, Result};
 use brk_types::{
-    CentsCompact, CentsSats, CentsSquaredSats, Cents, CostBasisDistribution, Height, Sats,
+    Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisDistribution, Height, Sats,
 };
 use rustc_hash::FxHashMap;
 use vecdb::Bytes;
@@ -95,7 +95,13 @@ impl CostBasisData {
 
     pub(crate) fn iter(&self) -> impl Iterator<Item = (CentsCompact, &Sats)> {
         self.assert_pending_empty();
-        self.state.as_ref().unwrap().base.map.iter().map(|(&k, v)| (k, v))
+        self.state
+            .as_ref()
+            .unwrap()
+            .base
+            .map
+            .iter()
+            .map(|(&k, v)| (k, v))
     }
 
     pub(crate) fn is_empty(&self) -> bool {
@@ -105,7 +111,8 @@ impl CostBasisData {
     pub(crate) fn first_key_value(&self) -> Option<(CentsCompact, &Sats)> {
         self.assert_pending_empty();
         self.state
-            .as_ref().unwrap()
+            .as_ref()
+            .unwrap()
             .base
             .map
             .first_key_value()
@@ -115,7 +122,8 @@ impl CostBasisData {
     pub(crate) fn last_key_value(&self) -> Option<(CentsCompact, &Sats)> {
         self.assert_pending_empty();
         self.state
-            .as_ref().unwrap()
+            .as_ref()
+            .unwrap()
             .base
             .map
             .last_key_value()
@@ -179,7 +187,14 @@ impl CostBasisData {
             self.percentiles_dirty = true;
         }
         for (cents, (inc, dec)) in self.pending.drain() {
-            let entry = self.state.as_mut().unwrap().base.map.entry(cents).or_default();
+            let entry = self
+                .state
+                .as_mut()
+                .unwrap()
+                .base
+                .map
+                .entry(cents)
+                .or_default();
             *entry += inc;
             if *entry < dec {
                 panic!(
@@ -322,7 +337,10 @@ impl CostBasisData {
             }
         }
 
-        fs::write(self.path_state(height), self.state.as_ref().unwrap().serialize()?)?;
+        fs::write(
+            self.path_state(height),
+            self.state.as_ref().unwrap().serialize()?,
+        )?;
 
         Ok(())
     }

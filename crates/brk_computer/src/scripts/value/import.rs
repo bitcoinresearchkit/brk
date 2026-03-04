@@ -12,12 +12,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            opreturn: ValueFromHeightFull::forced_import(
-                db,
-                "opreturn_value",
-                version,
-                indexes,
-            )?,
+            opreturn: ValueFromHeightFull::forced_import(db, "opreturn_value", version, indexes)?,
         })
     }
 }

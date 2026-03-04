@@ -52,7 +52,10 @@ impl BasisPoints16 {
 impl From<usize> for BasisPoints16 {
     #[inline]
     fn from(value: usize) -> Self {
-        debug_assert!(value <= u16::MAX as usize, "usize out of BasisPoints16 range: {value}");
+        debug_assert!(
+            value <= u16::MAX as usize,
+            "usize out of BasisPoints16 range: {value}"
+        );
         Self(value as u16)
     }
 }
@@ -76,7 +79,10 @@ impl From<BasisPoints16> for u16 {
 impl From<f32> for BasisPoints16 {
     #[inline]
     fn from(value: f32) -> Self {
-        debug_assert!(value >= 0.0 && value <= u16::MAX as f32 / 10000.0, "f32 out of BasisPoints16 range: {value}");
+        debug_assert!(
+            value >= 0.0 && value <= u16::MAX as f32 / 10000.0,
+            "f32 out of BasisPoints16 range: {value}"
+        );
         Self((value * 10000.0).round() as u16)
     }
 }
@@ -86,7 +92,10 @@ impl From<f32> for BasisPoints16 {
 impl From<f64> for BasisPoints16 {
     #[inline]
     fn from(value: f64) -> Self {
-        debug_assert!(value >= 0.0 && value <= u16::MAX as f64 / 10000.0, "f64 out of BasisPoints16 range: {value}");
+        debug_assert!(
+            value >= 0.0 && value <= u16::MAX as f64 / 10000.0,
+            "f64 out of BasisPoints16 range: {value}"
+        );
         Self((value * 10000.0).round() as u16)
     }
 }

@@ -14,11 +14,9 @@ use vecdb::{
 };
 
 use crate::{
-    indexes, indexes_apply, indexes_from,
+    indexes,
     internal::{ComputedHeightDerived, EagerIndexes, PerPeriod},
 };
-
-// ── EagerOhlcIndexes ─────────────────────────────────────────────────
 
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -54,13 +52,29 @@ where
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         let v = version + EAGER_VERSION;
 
-        macro_rules! period {
-            ($idx:ident) => {
+        macro_rules! per_period {
+            () => {
                 ImportableVec::forced_import(db, name, v)?
             };
         }
 
-        Ok(Self(indexes_from!(period)))
+        Ok(Self(PerPeriod {
+            minute10: per_period!(),
+            minute30: per_period!(),
+            hour1: per_period!(),
+            hour4: per_period!(),
+            hour12: per_period!(),
+            day1: per_period!(),
+            day3: per_period!(),
+            week1: per_period!(),
+            month1: per_period!(),
+            month3: per_period!(),
+            month6: per_period!(),
+            year1: per_period!(),
+            year10: per_period!(),
+            halvingepoch: per_period!(),
+            difficultyepoch: per_period!(),
+        }))
     }
 }
 
@@ -141,13 +155,25 @@ impl OhlcVecs<OHLCCents> {
             };
         }
 
-        indexes_apply!(period, epoch);
+        period!(minute10);
+        period!(minute30);
+        period!(hour1);
+        period!(hour4);
+        period!(hour12);
+        period!(day1);
+        period!(day3);
+        period!(week1);
+        period!(month1);
+        period!(month3);
+        period!(month6);
+        period!(year1);
+        period!(year10);
+        epoch!(halvingepoch);
+        epoch!(difficultyepoch);
 
         Ok(())
     }
 }
-
-// ── LazyOhlcIndexes ──────────────────────────────────────────────────
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -195,6 +221,22 @@ where
             };
         }
 
-        Self(indexes_from!(period))
+        Self(PerPeriod {
+            minute10: period!(minute10),
+            minute30: period!(minute30),
+            hour1: period!(hour1),
+            hour4: period!(hour4),
+            hour12: period!(hour12),
+            day1: period!(day1),
+            day3: period!(day3),
+            week1: period!(week1),
+            month1: period!(month1),
+            month3: period!(month3),
+            month6: period!(month6),
+            year1: period!(year1),
+            year10: period!(year10),
+            halvingepoch: period!(halvingepoch),
+            difficultyepoch: period!(difficultyepoch),
+        })
     }
 }

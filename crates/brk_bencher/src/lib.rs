@@ -113,7 +113,9 @@ impl Bencher {
         self.0.stop_flag.store(true, Ordering::Relaxed);
 
         if let Some(handle) = self.0.monitor_thread.lock().take() {
-            handle.join().map_err(|_| Error::Internal("Monitor thread panicked"))??;
+            handle
+                .join()
+                .map_err(|_| Error::Internal("Monitor thread panicked"))??;
         }
 
         self.0.progression.flush()?;

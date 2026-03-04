@@ -3,13 +3,10 @@ use brk_types::{Cents, Dollars, OHLCCents, OHLCDollars, OHLCSats, Sats};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{
-    ComputedFromHeight, ComputedHeightDerived, EagerIndexes, LazyEagerIndexes,
-    LazyFromHeight,
+    ComputedFromHeight, ComputedHeightDerived, EagerIndexes, LazyEagerIndexes, LazyFromHeight,
 };
 
 use super::ohlcs::{LazyOhlcVecs, OhlcVecs};
-
-// ── SplitByUnit ─────────────────────────────────────────────────────
 
 #[derive(Traversable)]
 pub struct SplitByUnit<M: StorageMode = Rw> {
@@ -33,16 +30,12 @@ pub struct SplitCloseByUnit {
     pub sats: ComputedHeightDerived<Sats>,
 }
 
-// ── OhlcByUnit ──────────────────────────────────────────────────────
-
 #[derive(Traversable)]
 pub struct OhlcByUnit<M: StorageMode = Rw> {
     pub cents: OhlcVecs<OHLCCents, M>,
     pub usd: LazyOhlcVecs<OHLCDollars, OHLCCents>,
     pub sats: LazyOhlcVecs<OHLCSats, OHLCCents>,
 }
-
-// ── PriceByUnit ─────────────────────────────────────────────────────
 
 #[derive(Traversable)]
 pub struct PriceByUnit<M: StorageMode = Rw> {

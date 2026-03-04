@@ -1,8 +1,7 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, Year10, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4,
-    Minute10, Minute30, Month1, Month3, Month6, StoredU64, Version, Week1,
-    Year1,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
+    Month1, Month3, Month6, StoredU64, Version, Week1, Year1, Year10,
 };
 use vecdb::{Database, EagerVec, ImportableVec, PcoVec, Rw, StorageMode};
 

@@ -9,7 +9,10 @@ const LOOK_AHEAD: usize = 100;
 /// Packages are sorted by fee rate descending, then placed into blocks.
 /// When a package doesn't fit, we look ahead for smaller packages that do.
 /// Atomic packages are never split across blocks.
-pub fn partition_into_blocks(mut packages: Vec<Package>, num_blocks: usize) -> Vec<Vec<SelectedTx>> {
+pub fn partition_into_blocks(
+    mut packages: Vec<Package>,
+    num_blocks: usize,
+) -> Vec<Vec<SelectedTx>> {
     packages.sort_unstable_by(|a, b| b.fee_rate.cmp(&a.fee_rate));
 
     let mut blocks: Vec<Vec<SelectedTx>> = Vec::with_capacity(num_blocks);

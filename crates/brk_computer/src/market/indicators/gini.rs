@@ -32,10 +32,15 @@ pub(super) fn compute(
             .iter()
             .fold(Version::ZERO, |acc, v| acc + v.version());
 
-    gini.bps.height
+    gini.bps
+        .height
         .validate_computed_version_or_reset(source_version)?;
-    gini.bps.height
-        .truncate_if_needed_at(gini.bps.height.len().min(starting_indexes.height.to_usize()))?;
+    gini.bps.height.truncate_if_needed_at(
+        gini.bps
+            .height
+            .len()
+            .min(starting_indexes.height.to_usize()),
+    )?;
 
     let total_heights = supply_vecs
         .iter()
@@ -68,8 +73,7 @@ pub(super) fn compute(
             let count: u64 = count_data[c][offset].into();
             buckets.push((count, supply));
         }
-        gini.bps.height
-            .push(gini_from_lorenz(&buckets));
+        gini.bps.height.push(gini_from_lorenz(&buckets));
     }
 
     {

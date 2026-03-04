@@ -30,11 +30,7 @@ impl<T> BlockRollingDistribution<T>
 where
     T: NumericValue + JsonSchema,
 {
-    pub(crate) fn forced_import(
-        db: &Database,
-        name: &str,
-        version: Version,
-    ) -> Result<Self> {
+    pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self {
             _6b: Distribution::forced_import(db, &format!("{name}_6b"), version)?,
         })
@@ -74,14 +70,7 @@ where
         T: Copy + Ord + From<f64> + Default,
         f64: From<T>,
     {
-        self.derive_from_with_skip(
-            indexer,
-            indexes,
-            starting_indexes,
-            txindex_source,
-            exit,
-            0,
-        )
+        self.derive_from_with_skip(indexer, indexes, starting_indexes, txindex_source, exit, 0)
     }
 
     /// Derive from source, skipping first N transactions per block from per-block stats.

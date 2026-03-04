@@ -41,8 +41,11 @@ impl Vecs {
             .btc
             .height;
 
-        self.cointime_value_destroyed
-            .compute(starting_indexes.height, &window_starts, exit, |vec| {
+        self.cointime_value_destroyed.compute(
+            starting_indexes.height,
+            &window_starts,
+            exit,
+            |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.price.usd.height,
@@ -50,10 +53,14 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            })?;
+            },
+        )?;
 
-        self.cointime_value_created
-            .compute(starting_indexes.height, &window_starts, exit, |vec| {
+        self.cointime_value_created.compute(
+            starting_indexes.height,
+            &window_starts,
+            exit,
+            |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.price.usd.height,
@@ -61,10 +68,14 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            })?;
+            },
+        )?;
 
-        self.cointime_value_stored
-            .compute(starting_indexes.height, &window_starts, exit, |vec| {
+        self.cointime_value_stored.compute(
+            starting_indexes.height,
+            &window_starts,
+            exit,
+            |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.price.usd.height,
@@ -72,7 +83,8 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            })?;
+            },
+        )?;
 
         // VOCDD: Value of Coin Days Destroyed = price × (CDD / circulating_supply)
         // Supply-adjusted to account for growing supply over time

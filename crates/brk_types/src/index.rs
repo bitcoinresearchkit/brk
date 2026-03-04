@@ -8,16 +8,13 @@ use vecdb::PrintableIndex;
 use crate::PairOutputIndex;
 
 use super::{
-    Date, Day1, Day3, Year10, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
-    Height, Hour1, Hour4, Hour12, FundedAddressIndex, Minute10, Minute30,
-    Month1, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex,
-    P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
-    P2WPKHAddressIndex, P2WSHAddressIndex, Month3, Month6, Timestamp, TxInIndex, TxIndex,
-    TxOutIndex, UnknownOutputIndex, Week1, Year1,
-    timestamp::INDEX_EPOCH,
-    minute10::MINUTE10_INTERVAL,
-    minute30::MINUTE30_INTERVAL, hour1::HOUR1_INTERVAL, hour4::HOUR4_INTERVAL,
-    hour12::HOUR12_INTERVAL,
+    Date, Day1, Day3, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, FundedAddressIndex,
+    HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3, Month6,
+    OpReturnIndex, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex,
+    P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex,
+    Timestamp, TxInIndex, TxIndex, TxOutIndex, UnknownOutputIndex, Week1, Year1, Year10,
+    hour1::HOUR1_INTERVAL, hour4::HOUR4_INTERVAL, hour12::HOUR12_INTERVAL,
+    minute10::MINUTE10_INTERVAL, minute30::MINUTE30_INTERVAL, timestamp::INDEX_EPOCH,
 };
 
 /// Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
@@ -147,7 +144,6 @@ impl Index {
             .flat_map(|i| i.possible_values().iter().cloned())
             .collect::<Vec<_>>()
     }
-
 
     pub fn name(&self) -> &'static str {
         match self {

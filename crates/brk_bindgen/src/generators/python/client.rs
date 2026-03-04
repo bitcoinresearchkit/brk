@@ -654,7 +654,12 @@ def _dep(c: BrkClientBase, n: str, i: Index) -> DateMetricEndpointBuilder[Any]:
         .unwrap();
         writeln!(output, "    @property").unwrap();
         writeln!(output, "    def name(self) -> str: return self._n").unwrap();
-        writeln!(output, "    def indexes(self) -> List[str]: return list({})", idx_var).unwrap();
+        writeln!(
+            output,
+            "    def indexes(self) -> List[str]: return list({})",
+            idx_var
+        )
+        .unwrap();
         writeln!(
             output,
             "    def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in {} else None",

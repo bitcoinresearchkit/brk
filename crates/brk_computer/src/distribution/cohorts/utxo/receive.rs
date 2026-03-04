@@ -24,19 +24,32 @@ impl UTXOCohorts<Rw> {
         let supply_state = received.spendable_supply;
 
         // New UTXOs go into up_to_1h, current epoch, and current year
-        self.age_range.up_to_1h.state.as_mut().unwrap().receive_utxo(&supply_state, price);
-        self.epoch.mut_vec_from_height(height).state.as_mut().unwrap().receive_utxo(&supply_state, price);
-        self.year.mut_vec_from_timestamp(timestamp).state.as_mut().unwrap().receive_utxo(&supply_state, price);
+        self.age_range
+            .up_to_1h
+            .state
+            .as_mut()
+            .unwrap()
+            .receive_utxo(&supply_state, price);
+        self.epoch
+            .mut_vec_from_height(height)
+            .state
+            .as_mut()
+            .unwrap()
+            .receive_utxo(&supply_state, price);
+        self.year
+            .mut_vec_from_timestamp(timestamp)
+            .state
+            .as_mut()
+            .unwrap()
+            .receive_utxo(&supply_state, price);
 
         // Update output type cohorts
-        self.type_
-            .iter_typed_mut()
-            .for_each(|(output_type, vecs)| {
-                vecs.state
-                    .as_mut()
-                    .unwrap()
-                    .receive_utxo(received.by_type.get(output_type), price)
-            });
+        self.type_.iter_typed_mut().for_each(|(output_type, vecs)| {
+            vecs.state
+                .as_mut()
+                .unwrap()
+                .receive_utxo(received.by_type.get(output_type), price)
+        });
 
         // Update amount range cohorts
         received

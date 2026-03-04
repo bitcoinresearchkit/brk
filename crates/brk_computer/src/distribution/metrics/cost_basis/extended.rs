@@ -5,10 +5,7 @@ use vecdb::{AnyStoredVec, Rw, StorageMode, WritableVec};
 
 use crate::{
     distribution::state::CohortState,
-    internal::{
-        PERCENTILES_LEN, PercentFromHeight, PercentilesVecs,
-        compute_spot_percentile_rank,
-    },
+    internal::{PERCENTILES_LEN, PercentFromHeight, PercentilesVecs, compute_spot_percentile_rank},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -44,8 +41,10 @@ impl CostBasisExtended {
                 cfg.version,
                 cfg.indexes,
             )?,
-            spot_cost_basis_percentile: cfg.import_percent_bp16("spot_cost_basis_percentile", Version::ZERO)?,
-            spot_invested_capital_percentile: cfg.import_percent_bp16("spot_invested_capital_percentile", Version::ZERO)?,
+            spot_cost_basis_percentile: cfg
+                .import_percent_bp16("spot_cost_basis_percentile", Version::ZERO)?,
+            spot_invested_capital_percentile: cfg
+                .import_percent_bp16("spot_invested_capital_percentile", Version::ZERO)?,
         })
     }
 

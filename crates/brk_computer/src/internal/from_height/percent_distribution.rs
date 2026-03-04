@@ -3,7 +3,10 @@ use brk_traversable::Traversable;
 use brk_types::{Height, StoredF32, Version};
 use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableCloneableVec, Rw, StorageMode};
 
-use crate::{indexes, internal::{BpsType, WindowStarts}};
+use crate::{
+    indexes,
+    internal::{BpsType, WindowStarts},
+};
 
 use super::{ComputedFromHeightDistribution, LazyFromHeight};
 
@@ -22,7 +25,12 @@ impl<B: BpsType> PercentFromHeightDistribution<B> {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let bps = ComputedFromHeightDistribution::forced_import(db, &format!("{name}_bps"), version, indexes)?;
+        let bps = ComputedFromHeightDistribution::forced_import(
+            db,
+            &format!("{name}_bps"),
+            version,
+            indexes,
+        )?;
 
         let ratio = LazyFromHeight::from_height_source::<B::ToRatio>(
             &format!("{name}_ratio"),
@@ -38,7 +46,11 @@ impl<B: BpsType> PercentFromHeightDistribution<B> {
             indexes,
         );
 
-        Ok(Self { bps, ratio, percent })
+        Ok(Self {
+            bps,
+            ratio,
+            percent,
+        })
     }
 
     pub(crate) fn compute(

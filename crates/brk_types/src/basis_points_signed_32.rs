@@ -56,7 +56,10 @@ impl BasisPointsSigned32 {
 impl From<usize> for BasisPointsSigned32 {
     #[inline]
     fn from(value: usize) -> Self {
-        debug_assert!(value <= i32::MAX as usize, "usize out of BasisPointsSigned32 range: {value}");
+        debug_assert!(
+            value <= i32::MAX as usize,
+            "usize out of BasisPointsSigned32 range: {value}"
+        );
         Self(value as i32)
     }
 }

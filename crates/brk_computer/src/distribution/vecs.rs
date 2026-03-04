@@ -4,12 +4,12 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    Cents, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex,
-    Height, Indexes, SupplyState, Timestamp, TxIndex, Version,
+    Cents, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, Height,
+    Indexes, SupplyState, Timestamp, TxIndex, Version,
 };
 use tracing::{debug, info};
 use vecdb::{
-    AnyVec, BytesVec, Database, Exit, ImportableVec, LazyVecFrom1, PAGE_SIZE, ReadOnlyClone,
+    AnyVec, BytesVec, Database, Exit, ImportableVec, LazyVecFrom1, ReadOnlyClone,
     ReadableCloneableVec, ReadableVec, Rw, Stamp, StorageMode, WritableVec,
 };
 
@@ -22,7 +22,9 @@ use crate::{
         },
         state::BlockState,
     },
-    indexes, inputs, outputs, prices, transactions,
+    indexes, inputs,
+    internal::{finalize_db, open_db},
+    outputs, prices, transactions,
 };
 
 use super::{
@@ -34,8 +36,6 @@ use super::{
 };
 
 const VERSION: Version = Version::new(22);
-
-/// Main struct holding all computed vectors and state for stateful computation.
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
@@ -95,8 +95,7 @@ impl Vecs {
         let db_path = parent.join(super::DB_NAME);
         let states_path = db_path.join("states");
 
-        let db = Database::open(&db_path)?;
-        db.set_min_len(PAGE_SIZE * 20_000_000)?;
+        let db = open_db(parent, super::DB_NAME, 20_000_000)?;
         db.set_min_regions(50_000)?;
 
         let version = parent_version + VERSION;
@@ -139,8 +138,7 @@ impl Vecs {
         let total_addr_count = TotalAddrCountVecs::forced_import(&db, version, indexes)?;
 
         // Per-block delta of total (global + per-type)
-        let new_addr_count =
-            NewAddrCountVecs::forced_import(&db, version, indexes)?;
+        let new_addr_count = NewAddrCountVecs::forced_import(&db, version, indexes)?;
 
         // Growth rate: new / addr_count (global + per-type)
         let growth_rate = GrowthRateVecs::forced_import(&db, version, indexes)?;
@@ -180,13 +178,7 @@ impl Vecs {
             states_path,
         };
 
-        this.db.retain_regions(
-            this.iter_any_exportable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
-        this.db.compact()?;
-
+        finalize_db(&this.db, &this)?;
         Ok(this)
     }
 
@@ -308,7 +300,10 @@ impl Vecs {
             Height::ZERO
         } else if chain_state.len() == usize::from(recovered_height) {
             // Normal resume: chain_state already matches, reuse as-is
-            debug!("reusing in-memory chain_state ({} entries)", chain_state.len());
+            debug!(
+                "reusing in-memory chain_state ({} entries)",
+                chain_state.len()
+            );
             recovered_height
         } else {
             debug!("rebuilding chain_state from stored values");
@@ -359,8 +354,7 @@ impl Vecs {
 
             let cached_prices = std::mem::take(&mut self.cached_prices);
             let cached_timestamps = std::mem::take(&mut self.cached_timestamps);
-            let cached_price_range_max =
-                std::mem::take(&mut self.cached_price_range_max);
+            let cached_price_range_max = std::mem::take(&mut self.cached_price_range_max);
 
             process_blocks(
                 self,
@@ -424,8 +418,12 @@ impl Vecs {
 
         self.address_activity
             .compute_rest(starting_indexes.height, &window_starts, exit)?;
-        self.new_addr_count
-            .compute(starting_indexes.height, &window_starts, &self.total_addr_count, exit)?;
+        self.new_addr_count.compute(
+            starting_indexes.height,
+            &window_starts,
+            &self.total_addr_count,
+            exit,
+        )?;
 
         // 6e. Compute growth_rate = new_addr_count / addr_count
         self.growth_rate.compute(

@@ -151,7 +151,10 @@ mod tests {
     #[test]
     fn test_common_prefix_lth() {
         let names = vec!["lth_cost_basis_max", "lth_cost_basis_min", "lth_cost_basis"];
-        assert_eq!(find_common_prefix(&names), Some("lth_cost_basis_".to_string()));
+        assert_eq!(
+            find_common_prefix(&names),
+            Some("lth_cost_basis_".to_string())
+        );
     }
 
     #[test]

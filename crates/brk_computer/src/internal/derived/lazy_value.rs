@@ -1,5 +1,3 @@
-//! Lazy value type for Last pattern across all height-derived indexes.
-
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Sats, Version};
 use vecdb::UnaryTransform;
@@ -15,7 +13,12 @@ pub struct LazyValueHeightDerived {
 }
 
 impl LazyValueHeightDerived {
-    pub(crate) fn from_block_source<SatsTransform, BitcoinTransform, CentsTransform, DollarsTransform>(
+    pub(crate) fn from_block_source<
+        SatsTransform,
+        BitcoinTransform,
+        CentsTransform,
+        DollarsTransform,
+    >(
         name: &str,
         source: &ValueFromHeight,
         version: Version,
@@ -50,6 +53,11 @@ impl LazyValueHeightDerived {
             &source.usd.rest,
         );
 
-        Self { sats, btc, cents, usd }
+        Self {
+            sats,
+            btc,
+            cents,
+            usd,
+        }
     }
 }

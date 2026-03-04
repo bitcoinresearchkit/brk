@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use brk_types::{CentsSats, CentsSquaredSats, Cents, Sats};
+use brk_types::{Cents, CentsSats, CentsSquaredSats, Sats};
 
 /// Realized state using u128 for raw cent*sat values internally.
 /// This avoids overflow and defers division to output time for efficiency.
@@ -156,14 +156,22 @@ impl RealizedState {
 
     /// Increment using pre-computed snapshot values (for address path)
     #[inline]
-    pub(crate) fn increment_snapshot(&mut self, price_sats: CentsSats, investor_cap: CentsSquaredSats) {
+    pub(crate) fn increment_snapshot(
+        &mut self,
+        price_sats: CentsSats,
+        investor_cap: CentsSquaredSats,
+    ) {
         self.cap_raw += price_sats.as_u128();
         self.investor_cap_raw += investor_cap;
     }
 
     /// Decrement using pre-computed snapshot values (for address path)
     #[inline]
-    pub(crate) fn decrement_snapshot(&mut self, price_sats: CentsSats, investor_cap: CentsSquaredSats) {
+    pub(crate) fn decrement_snapshot(
+        &mut self,
+        price_sats: CentsSats,
+        investor_cap: CentsSquaredSats,
+    ) {
         self.cap_raw -= price_sats.as_u128();
         self.investor_cap_raw -= investor_cap;
     }

@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
-use crate::{CentsSats, CentsSquaredSats, Cents, EmptyAddressData, Sats, SupplyState};
+use crate::{Cents, CentsSats, CentsSquaredSats, EmptyAddressData, Sats, SupplyState};
 
 /// Snapshot of cost basis related state.
 /// Uses CentsSats (u64) for single-UTXO values, CentsSquaredSats (u128) for investor cap.
@@ -108,12 +108,7 @@ impl FundedAddressData {
         self.receive_outputs(amount, price, 1);
     }
 
-    pub fn receive_outputs(
-        &mut self,
-        amount: Sats,
-        price: Cents,
-        output_count: u32,
-    ) {
+    pub fn receive_outputs(&mut self, amount: Sats, price: Cents, output_count: u32) {
         self.received += amount;
         self.funded_txo_count += output_count;
         let ps = CentsSats::from_price_sats(price, amount);

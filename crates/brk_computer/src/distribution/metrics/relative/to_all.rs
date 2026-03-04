@@ -10,23 +10,20 @@ use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
 /// Relative-to-all metrics (not present for the "all" cohort itself).
 #[derive(Traversable)]
 pub struct RelativeToAll<M: StorageMode = Rw> {
-    pub supply_rel_to_circulating_supply:
-        PercentFromHeight<BasisPoints16, M>,
-    pub supply_in_profit_rel_to_circulating_supply:
-        PercentFromHeight<BasisPoints16, M>,
-    pub supply_in_loss_rel_to_circulating_supply:
-        PercentFromHeight<BasisPoints16, M>,
+    pub supply_rel_to_circulating_supply: PercentFromHeight<BasisPoints16, M>,
+    pub supply_in_profit_rel_to_circulating_supply: PercentFromHeight<BasisPoints16, M>,
+    pub supply_in_loss_rel_to_circulating_supply: PercentFromHeight<BasisPoints16, M>,
 }
 
 impl RelativeToAll {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            supply_rel_to_circulating_supply:
-                cfg.import_percent_bp16("supply_rel_to_circulating_supply", Version::ONE)?,
-            supply_in_profit_rel_to_circulating_supply:
-                cfg.import_percent_bp16("supply_in_profit_rel_to_circulating_supply", Version::ONE)?,
-            supply_in_loss_rel_to_circulating_supply:
-                cfg.import_percent_bp16("supply_in_loss_rel_to_circulating_supply", Version::ONE)?,
+            supply_rel_to_circulating_supply: cfg
+                .import_percent_bp16("supply_rel_to_circulating_supply", Version::ONE)?,
+            supply_in_profit_rel_to_circulating_supply: cfg
+                .import_percent_bp16("supply_in_profit_rel_to_circulating_supply", Version::ONE)?,
+            supply_in_loss_rel_to_circulating_supply: cfg
+                .import_percent_bp16("supply_in_loss_rel_to_circulating_supply", Version::ONE)?,
         })
     }
 
@@ -40,15 +37,24 @@ impl RelativeToAll {
     ) -> Result<()> {
         self.supply_rel_to_circulating_supply
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
-                max_from, supply_total_sats, all_supply_sats, exit,
+                max_from,
+                supply_total_sats,
+                all_supply_sats,
+                exit,
             )?;
         self.supply_in_profit_rel_to_circulating_supply
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
-                max_from, &unrealized.supply_in_profit.sats.height, all_supply_sats, exit,
+                max_from,
+                &unrealized.supply_in_profit.sats.height,
+                all_supply_sats,
+                exit,
             )?;
         self.supply_in_loss_rel_to_circulating_supply
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
-                max_from, &unrealized.supply_in_loss.sats.height, all_supply_sats, exit,
+                max_from,
+                &unrealized.supply_in_loss.sats.height,
+                all_supply_sats,
+                exit,
             )?;
         Ok(())
     }

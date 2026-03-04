@@ -11,18 +11,24 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let p2a = ComputedFromHeightCumulativeSum::forced_import(db, "p2a_count", version, indexes)?;
-        let p2ms = ComputedFromHeightCumulativeSum::forced_import(db, "p2ms_count", version, indexes)?;
+        let p2a =
+            ComputedFromHeightCumulativeSum::forced_import(db, "p2a_count", version, indexes)?;
+        let p2ms =
+            ComputedFromHeightCumulativeSum::forced_import(db, "p2ms_count", version, indexes)?;
         let p2pk33 =
             ComputedFromHeightCumulativeSum::forced_import(db, "p2pk33_count", version, indexes)?;
         let p2pk65 =
             ComputedFromHeightCumulativeSum::forced_import(db, "p2pk65_count", version, indexes)?;
-        let p2pkh = ComputedFromHeightCumulativeSum::forced_import(db, "p2pkh_count", version, indexes)?;
-        let p2sh = ComputedFromHeightCumulativeSum::forced_import(db, "p2sh_count", version, indexes)?;
-        let p2tr = ComputedFromHeightCumulativeSum::forced_import(db, "p2tr_count", version, indexes)?;
+        let p2pkh =
+            ComputedFromHeightCumulativeSum::forced_import(db, "p2pkh_count", version, indexes)?;
+        let p2sh =
+            ComputedFromHeightCumulativeSum::forced_import(db, "p2sh_count", version, indexes)?;
+        let p2tr =
+            ComputedFromHeightCumulativeSum::forced_import(db, "p2tr_count", version, indexes)?;
         let p2wpkh =
             ComputedFromHeightCumulativeSum::forced_import(db, "p2wpkh_count", version, indexes)?;
-        let p2wsh = ComputedFromHeightCumulativeSum::forced_import(db, "p2wsh_count", version, indexes)?;
+        let p2wsh =
+            ComputedFromHeightCumulativeSum::forced_import(db, "p2wsh_count", version, indexes)?;
         let segwit =
             ComputedFromHeightCumulativeSum::forced_import(db, "segwit_count", version, indexes)?;
 

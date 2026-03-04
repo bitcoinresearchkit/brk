@@ -40,12 +40,8 @@ impl ByUnit {
             &sats,
         );
 
-        let cents = ComputedFromHeight::forced_import(
-            db,
-            &format!("{name}_cents"),
-            version,
-            indexes,
-        )?;
+        let cents =
+            ComputedFromHeight::forced_import(db, &format!("{name}_cents"), version, indexes)?;
 
         let usd = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             &format!("{name}_usd"),

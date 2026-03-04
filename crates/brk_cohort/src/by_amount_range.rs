@@ -81,11 +81,7 @@ pub const AMOUNT_RANGE_BOUNDS: ByAmountRange<Range<Sats>> = ByAmountRange {
 pub const AMOUNT_RANGE_NAMES: ByAmountRange<CohortName> = ByAmountRange {
     _0sats: CohortName::new("with_0sats", "0 sats", "0 Sats"),
     _1sat_to_10sats: CohortName::new("above_1sat_under_10sats", "1-10 sats", "1-10 Sats"),
-    _10sats_to_100sats: CohortName::new(
-        "above_10sats_under_100sats",
-        "10-100 sats",
-        "10-100 Sats",
-    ),
+    _10sats_to_100sats: CohortName::new("above_10sats_under_100sats", "10-100 sats", "10-100 Sats"),
     _100sats_to_1k_sats: CohortName::new(
         "above_100sats_under_1k_sats",
         "100-1k sats",
@@ -115,11 +111,7 @@ pub const AMOUNT_RANGE_NAMES: ByAmountRange<CohortName> = ByAmountRange {
     _1btc_to_10btc: CohortName::new("above_1btc_under_10btc", "1-10 BTC", "1-10 BTC"),
     _10btc_to_100btc: CohortName::new("above_10btc_under_100btc", "10-100 BTC", "10-100 BTC"),
     _100btc_to_1k_btc: CohortName::new("above_100btc_under_1k_btc", "100-1k BTC", "100-1K BTC"),
-    _1k_btc_to_10k_btc: CohortName::new(
-        "above_1k_btc_under_10k_btc",
-        "1k-10k BTC",
-        "1K-10K BTC",
-    ),
+    _1k_btc_to_10k_btc: CohortName::new("above_1k_btc_under_10k_btc", "1k-10k BTC", "1K-10K BTC"),
     _10k_btc_to_100k_btc: CohortName::new(
         "above_10k_btc_under_100k_btc",
         "10k-100k BTC",

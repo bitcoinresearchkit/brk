@@ -3,11 +3,10 @@ use brk_types::{BasisPoints16, Cents};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{
-    FiatFromHeight, PercentFromHeight, PercentRollingWindows,
-    ValueFromHeightFull, ValueFromHeightCumulativeSum,
+    FiatFromHeight, PercentFromHeight, PercentRollingWindows, ValueFromHeightCumulativeSum,
+    ValueFromHeightFull,
 };
 
-/// Coinbase/subsidy/rewards metrics
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub coinbase: ValueFromHeightFull<M>,

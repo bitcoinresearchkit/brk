@@ -13,14 +13,7 @@ impl Query {
     fn block_status_by_height(&self, height: Height) -> Result<BlockStatus> {
         let indexer = self.indexer();
 
-        let max_height = Height::from(
-            indexer
-                .vecs
-                .blocks
-                .blockhash
-                .len()
-                .saturating_sub(1),
-        );
+        let max_height = Height::from(indexer.vecs.blocks.blockhash.len().saturating_sub(1));
 
         if height > max_height {
             return Ok(BlockStatus::not_in_best_chain());

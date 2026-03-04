@@ -1,8 +1,8 @@
 use std::{cmp::Reverse, collections::BinaryHeap, fs, path::Path};
 
 use brk_cohort::{
-    ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount,
-    ByMaxAge, ByMinAge, BySpendableType, ByYear, CohortContext, Filter, Filtered, TERM_NAMES, Term,
+    ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge, ByMinAge,
+    BySpendableType, ByYear, CohortContext, Filter, Filtered, TERM_NAMES, Term,
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -11,7 +11,9 @@ use brk_types::{
     Sats, Version,
 };
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec};
+use vecdb::{
+    AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec,
+};
 
 use crate::{
     blocks,
@@ -23,8 +25,7 @@ use crate::{
 
 use crate::distribution::metrics::{
     AdjustedCohortMetrics, AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase,
-    ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig,
-    SupplyMetrics,
+    ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig, SupplyMetrics,
 };
 
 use super::vecs::UTXOCohortVecs;
@@ -146,12 +147,7 @@ impl UTXOCohorts<Rw> {
                 version: v,
                 indexes,
             };
-            UTXOCohortVecs::new(
-                None,
-                ExtendedAdjustedCohortMetrics::forced_import(
-                    &cfg,
-                )?,
-            )
+            UTXOCohortVecs::new(None, ExtendedAdjustedCohortMetrics::forced_import(&cfg)?)
         };
 
         // lth: ExtendedCohortMetrics
@@ -165,10 +161,7 @@ impl UTXOCohorts<Rw> {
                 version: v,
                 indexes,
             };
-            UTXOCohortVecs::new(
-                None,
-                ExtendedCohortMetrics::forced_import(&cfg)?,
-            )
+            UTXOCohortVecs::new(None, ExtendedCohortMetrics::forced_import(&cfg)?)
         };
 
         // max_age: AdjustedCohortMetrics (adjusted + peak_regret)
@@ -243,9 +236,6 @@ impl UTXOCohorts<Rw> {
         })
     }
 
-    // === Iteration helpers ===
-
-    /// Parallel iterator over all separate (stateful) cohorts.
     pub(crate) fn par_iter_separate_mut(
         &mut self,
     ) -> impl ParallelIterator<Item = &mut dyn DynCohortVecs> {
@@ -296,9 +286,6 @@ impl UTXOCohorts<Rw> {
         v.into_iter()
     }
 
-    // === Computation methods ===
-
-    /// Compute overlapping cohorts from component age/amount range cohorts.
     pub(crate) fn compute_overlapping_vecs(
         &mut self,
         starting_indexes: &Indexes,
@@ -573,8 +560,22 @@ impl UTXOCohorts<Rw> {
         HM: ReadableVec<Height, Dollars> + Sync,
     {
         // Get up_to_1h value sources for adjusted computation (cloned to avoid borrow conflicts).
-        let up_to_1h_value_created = self.age_range.up_to_1h.metrics.realized.value_created.height.read_only_clone();
-        let up_to_1h_value_destroyed = self.age_range.up_to_1h.metrics.realized.value_destroyed.height.read_only_clone();
+        let up_to_1h_value_created = self
+            .age_range
+            .up_to_1h
+            .metrics
+            .realized
+            .value_created
+            .height
+            .read_only_clone();
+        let up_to_1h_value_destroyed = self
+            .age_range
+            .up_to_1h
+            .metrics
+            .realized
+            .value_destroyed
+            .height
+            .read_only_clone();
 
         // "all" cohort computed first (no all_supply_sats needed).
         self.all.metrics.compute_rest_part2(
@@ -1024,5 +1025,4 @@ impl UTXOCohorts<Rw> {
 
         Ok(())
     }
-
 }

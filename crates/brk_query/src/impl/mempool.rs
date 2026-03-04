@@ -29,7 +29,12 @@ impl Query {
         let blocks = block_stats
             .into_iter()
             .map(|stats| {
-                MempoolBlock::new(stats.tx_count, stats.total_vsize, stats.total_fee, stats.fee_range)
+                MempoolBlock::new(
+                    stats.tx_count,
+                    stats.total_vsize,
+                    stats.total_fee,
+                    stats.fee_range,
+                )
             })
             .collect();
 

@@ -3,9 +3,7 @@ use brk_types::{BasisPointsSigned32, Dollars};
 use vecdb::{Database, Rw, StorageMode};
 
 use super::{burned, velocity};
-use crate::internal::{
-    ComputedFromHeight, LazyFromHeight, LazyValueFromHeight, PercentFromHeight,
-};
+use crate::internal::{ComputedFromHeight, LazyFromHeight, LazyValueFromHeight, PercentFromHeight};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

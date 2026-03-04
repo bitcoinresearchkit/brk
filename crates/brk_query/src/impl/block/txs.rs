@@ -31,7 +31,12 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let first_txindex = indexer.vecs.transactions.first_txindex.collect_one(height).unwrap();
+        let first_txindex = indexer
+            .vecs
+            .transactions
+            .first_txindex
+            .collect_one(height)
+            .unwrap();
         let next_first_txindex = indexer
             .vecs
             .transactions
@@ -42,20 +47,12 @@ impl Query {
         let first: usize = first_txindex.into();
         let next: usize = next_first_txindex.into();
 
-        let txids: Vec<Txid> = indexer
-            .vecs
-            .transactions
-            .txid
-            .collect_range_at(first, next);
+        let txids: Vec<Txid> = indexer.vecs.transactions.txid.collect_range_at(first, next);
 
         Ok(txids)
     }
 
-    fn block_txs_by_height(
-        &self,
-        height: Height,
-        start_index: usize,
-    ) -> Result<Vec<Transaction>> {
+    fn block_txs_by_height(&self, height: Height, start_index: usize) -> Result<Vec<Transaction>> {
         let indexer = self.indexer();
 
         let max_height = self.height();
@@ -63,7 +60,12 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let first_txindex = indexer.vecs.transactions.first_txindex.collect_one(height).unwrap();
+        let first_txindex = indexer
+            .vecs
+            .transactions
+            .first_txindex
+            .collect_one(height)
+            .unwrap();
         let next_first_txindex = indexer
             .vecs
             .transactions
@@ -100,7 +102,12 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let first_txindex = indexer.vecs.transactions.first_txindex.collect_one(height).unwrap();
+        let first_txindex = indexer
+            .vecs
+            .transactions
+            .first_txindex
+            .collect_one(height)
+            .unwrap();
         let next_first_txindex = indexer
             .vecs
             .transactions

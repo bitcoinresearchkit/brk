@@ -1,4 +1,9 @@
-use std::{future::Future, path::PathBuf, sync::Arc, time::{Duration, Instant}};
+use std::{
+    future::Future,
+    path::PathBuf,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use derive_more::Deref;
 

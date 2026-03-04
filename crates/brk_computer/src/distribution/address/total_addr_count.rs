@@ -1,5 +1,3 @@
-//! Total address count: addr_count + empty_addr_count (global + per-type)
-
 use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -24,25 +22,22 @@ impl TotalAddrCountVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let all = ComputedFromHeight::forced_import(
-            db,
-            "total_addr_count",
-            version,
-            indexes,
-        )?;
+        let all = ComputedFromHeight::forced_import(db, "total_addr_count", version, indexes)?;
 
-        let by_addresstype: ByAddressType<ComputedFromHeight<StoredU64>> = ByAddressType::new_with_name(
-            |name| {
+        let by_addresstype: ByAddressType<ComputedFromHeight<StoredU64>> =
+            ByAddressType::new_with_name(|name| {
                 ComputedFromHeight::forced_import(
                     db,
                     &format!("{name}_total_addr_count"),
                     version,
                     indexes,
                 )
-            },
-        )?;
+            })?;
 
-        Ok(Self { all, by_addresstype })
+        Ok(Self {
+            all,
+            by_addresstype,
+        })
     }
 
     /// Eagerly compute total = addr_count + empty_addr_count.
@@ -60,22 +55,15 @@ impl TotalAddrCountVecs {
             exit,
         )?;
 
-        for ((_, total), ((_, addr), (_, empty))) in self
-            .by_addresstype
-            .iter_mut()
-            .zip(
-                addr_count
-                    .by_addresstype
-                    .iter()
-                    .zip(empty_addr_count.by_addresstype.iter()),
-            )
-        {
-            total.height.compute_add(
-                max_from,
-                &addr.count.height,
-                &empty.count.height,
-                exit,
-            )?;
+        for ((_, total), ((_, addr), (_, empty))) in self.by_addresstype.iter_mut().zip(
+            addr_count
+                .by_addresstype
+                .iter()
+                .zip(empty_addr_count.by_addresstype.iter()),
+        ) {
+            total
+                .height
+                .compute_add(max_from, &addr.count.height, &empty.count.height, exit)?;
         }
 
         Ok(())

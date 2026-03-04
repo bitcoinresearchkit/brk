@@ -1,5 +1,3 @@
-//! Lazy unary transform from height with Last aggregation.
-
 use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
@@ -75,7 +73,11 @@ where
         S2T: ComputedVecValue + JsonSchema,
     {
         Self {
-            height: LazyVecFrom1::transformed::<F>(name, version, source.height.read_only_boxed_clone()),
+            height: LazyVecFrom1::transformed::<F>(
+                name,
+                version,
+                source.height.read_only_boxed_clone(),
+            ),
             rest: Box::new(LazyHeightDerived::from_lazy::<F, S2T>(
                 name,
                 version,

@@ -28,9 +28,11 @@ impl CohortContext {
     /// - Context prefix: `Time`, `Amount`
     pub fn full_name(&self, filter: &Filter, name: &str) -> String {
         match filter {
-            Filter::All | Filter::Term(_) | Filter::Epoch(_) | Filter::Year(_) | Filter::Type(_) => {
-                name.to_string()
-            }
+            Filter::All
+            | Filter::Term(_)
+            | Filter::Epoch(_)
+            | Filter::Year(_)
+            | Filter::Type(_) => name.to_string(),
             Filter::Time(_) | Filter::Amount(_) => self.prefixed(name),
         }
     }

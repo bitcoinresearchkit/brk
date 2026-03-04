@@ -115,7 +115,13 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
         // Add endpoint path
         writeln!(output, "    ///").unwrap();
-        writeln!(output, "    /// Endpoint: `{} {}`", endpoint.method.to_uppercase(), endpoint.path).unwrap();
+        writeln!(
+            output,
+            "    /// Endpoint: `{} {}`",
+            endpoint.method.to_uppercase(),
+            endpoint.path
+        )
+        .unwrap();
 
         let params = build_method_params(endpoint);
         writeln!(
@@ -128,7 +134,12 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         let (path, index_arg) = build_path_template(endpoint);
 
         if endpoint.query_params.is_empty() {
-            writeln!(output, "        self.base.get_json(&format!(\"{}\"{}))", path, index_arg).unwrap();
+            writeln!(
+                output,
+                "        self.base.get_json(&format!(\"{}\"{}))",
+                path, index_arg
+            )
+            .unwrap();
         } else {
             writeln!(output, "        let mut query = Vec::new();").unwrap();
             for param in &endpoint.query_params {
@@ -149,13 +160,26 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
                 }
             }
             writeln!(output, "        let query_str = if query.is_empty() {{ String::new() }} else {{ format!(\"?{{}}\", query.join(\"&\")) }};").unwrap();
-            writeln!(output, "        let path = format!(\"{}{{}}\"{}, query_str);", path, index_arg).unwrap();
+            writeln!(
+                output,
+                "        let path = format!(\"{}{{}}\"{}, query_str);",
+                path, index_arg
+            )
+            .unwrap();
 
             if endpoint.supports_csv {
                 writeln!(output, "        if format == Some(Format::CSV) {{").unwrap();
-                writeln!(output, "            self.base.get_text(&path).map(FormatResponse::Csv)").unwrap();
+                writeln!(
+                    output,
+                    "            self.base.get_text(&path).map(FormatResponse::Csv)"
+                )
+                .unwrap();
                 writeln!(output, "        }} else {{").unwrap();
-                writeln!(output, "            self.base.get_json(&path).map(FormatResponse::Json)").unwrap();
+                writeln!(
+                    output,
+                    "            self.base.get_json(&path).map(FormatResponse::Json)"
+                )
+                .unwrap();
                 writeln!(output, "        }}").unwrap();
             } else {
                 writeln!(output, "        self.base.get_json(&path)").unwrap();
@@ -199,7 +223,10 @@ fn param_type_to_rust(param_type: &str) -> String {
 
 /// Build path template and extra format args for Index params.
 fn build_path_template(endpoint: &Endpoint) -> (String, &'static str) {
-    let has_index_param = endpoint.path_params.iter().any(|p| p.name == "index" && p.param_type == "Index");
+    let has_index_param = endpoint
+        .path_params
+        .iter()
+        .any(|p| p.name == "index" && p.param_type == "Index");
     if has_index_param {
         (endpoint.path.replace("{index}", "{}"), ", index.name()")
     } else {

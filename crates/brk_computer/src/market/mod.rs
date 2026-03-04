@@ -22,8 +22,6 @@ pub use returns::Vecs as ReturnsVecs;
 pub use volatility::Vecs as VolatilityVecs;
 
 pub const DB_NAME: &str = "market";
-
-/// Main market metrics struct composed of sub-modules
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]

@@ -171,7 +171,6 @@ impl<T> ByDcaPeriod<T> {
         ]
         .into_iter()
     }
-
 }
 
 /// Generic wrapper for DCA CAGR data (periods >= 2 years)

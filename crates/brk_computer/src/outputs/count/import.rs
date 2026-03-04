@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightAggregated, ComputedFromHeight},
+    internal::{ComputedFromHeight, ComputedFromHeightAggregated},
 };
 
 impl Vecs {

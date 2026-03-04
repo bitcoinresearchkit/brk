@@ -12,7 +12,12 @@ impl Query {
         let current_height = self.height();
 
         // Get current difficulty
-        let current_difficulty = *indexer.vecs.blocks.difficulty.collect_one(current_height).unwrap();
+        let current_difficulty = *indexer
+            .vecs
+            .blocks
+            .difficulty
+            .collect_one(current_height)
+            .unwrap();
 
         // Get current hashrate
         let current_day1 = computer
@@ -47,10 +52,7 @@ impl Query {
         let end_day1 = current_day1;
 
         // Sample at regular intervals to avoid too many data points
-        let total_days = end_day1
-            .to_usize()
-            .saturating_sub(start_day1.to_usize())
-            + 1;
+        let total_days = end_day1.to_usize().saturating_sub(start_day1.to_usize()) + 1;
         let step = (total_days / 200).max(1); // Max ~200 data points
 
         let hashrate_vec = &computer.mining.hashrate.hash_rate.day1;
@@ -60,9 +62,10 @@ impl Query {
         let mut di = start_day1.to_usize();
         while di <= end_day1.to_usize() {
             let day1 = Day1::from(di);
-            if let (Some(hr), Some(timestamp)) =
-                (hashrate_vec.collect_one_flat(day1), timestamp_vec.collect_one(day1))
-            {
+            if let (Some(hr), Some(timestamp)) = (
+                hashrate_vec.collect_one_flat(day1),
+                timestamp_vec.collect_one(day1),
+            ) {
                 hashrates.push(HashrateEntry {
                     timestamp,
                     avg_hashrate: *hr as u128,

@@ -22,12 +22,8 @@ impl Vecs {
             .compute(starting_indexes, blocks, distribution, exit)?;
 
         // Supply computes next (depends on activity)
-        self.supply.compute(
-            starting_indexes,
-            distribution,
-            &self.activity,
-            exit,
-        )?;
+        self.supply
+            .compute(starting_indexes, distribution, &self.activity, exit)?;
 
         // Adjusted velocity metrics (BTC) - can compute without price
         self.adjusted

@@ -75,9 +75,7 @@ impl Client {
     where
         H: Into<u64> + Copy,
     {
-        self.0
-            .get_block_hash(height.into())
-            .map(BlockHash::from)
+        self.0.get_block_hash(height.into()).map(BlockHash::from)
     }
 
     pub fn get_block_header<'a, H>(&self, hash: &'a H) -> Result<bitcoin::block::Header>
@@ -192,16 +190,18 @@ impl Client {
         let result = self.0.get_raw_mempool_verbose()?;
         Ok(result
             .into_iter()
-            .map(|(txid, entry): (bitcoin::Txid, backend::RawMempoolEntry)| MempoolEntryInfo {
-                txid: txid.into(),
-                vsize: entry.vsize,
-                weight: entry.weight,
-                fee: Sats::from(entry.base_fee_sats),
-                ancestor_count: entry.ancestor_count,
-                ancestor_size: entry.ancestor_size,
-                ancestor_fee: Sats::from(entry.ancestor_fee_sats),
-                depends: entry.depends.into_iter().map(Txid::from).collect(),
-            })
+            .map(
+                |(txid, entry): (bitcoin::Txid, backend::RawMempoolEntry)| MempoolEntryInfo {
+                    txid: txid.into(),
+                    vsize: entry.vsize,
+                    weight: entry.weight,
+                    fee: Sats::from(entry.base_fee_sats),
+                    ancestor_count: entry.ancestor_count,
+                    ancestor_size: entry.ancestor_size,
+                    ancestor_fee: Sats::from(entry.ancestor_fee_sats),
+                    depends: entry.depends.into_iter().map(Txid::from).collect(),
+                },
+            )
             .collect())
     }
 

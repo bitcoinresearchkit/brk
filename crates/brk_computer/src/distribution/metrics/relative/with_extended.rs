@@ -6,10 +6,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
 
-use super::{
-    RelativeBase, RelativeExtendedOwnMarketCap, RelativeExtendedOwnPnl,
-    RelativeToAll,
-};
+use super::{RelativeBase, RelativeExtendedOwnMarketCap, RelativeExtendedOwnPnl, RelativeToAll};
 
 /// Full extended relative metrics (base + rel_to_all + own_market_cap + own_pnl).
 /// Used by: sth, lth, age_range cohorts.

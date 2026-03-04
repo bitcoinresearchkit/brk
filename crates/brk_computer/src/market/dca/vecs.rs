@@ -4,8 +4,6 @@ use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod};
 use crate::internal::{ComputedFromHeight, PercentFromHeight, Price, ValueFromHeight};
-
-/// Dollar-cost averaging metrics by time period and year class
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     /// Per-height DCA sats contribution: sats_from_dca(close) on day boundaries, 0 otherwise.

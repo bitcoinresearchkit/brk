@@ -56,7 +56,10 @@ impl BasisPointsSigned16 {
 impl From<usize> for BasisPointsSigned16 {
     #[inline]
     fn from(value: usize) -> Self {
-        debug_assert!(value <= i16::MAX as usize, "usize out of BasisPointsSigned16 range: {value}");
+        debug_assert!(
+            value <= i16::MAX as usize,
+            "usize out of BasisPointsSigned16 range: {value}"
+        );
         Self(value as i16)
     }
 }

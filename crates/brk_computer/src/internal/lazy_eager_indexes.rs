@@ -1,21 +1,13 @@
-//! LazyEagerIndexes - lazy per-period transform of EagerIndexes.
-//!
-//! Used for lazy currency transforms (e.g., cents→dollars, cents→sats)
-//! of eagerly computed per-period data like OHLC.
-
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Hour1, Hour4, Hour12,
-    Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, DifficultyEpoch, HalvingEpoch, Hour1, Hour4, Hour12, Minute10, Minute30, Month1,
+    Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{LazyVecFrom1, ReadableCloneableVec, UnaryTransform};
 
-use crate::{
-    indexes_from,
-    internal::{ComputedVecValue, EagerIndexes, PerPeriod},
-};
+use crate::internal::{ComputedVecValue, EagerIndexes, PerPeriod};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
@@ -48,7 +40,6 @@ where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    /// Create lazy per-period transforms from an EagerIndexes source.
     pub(crate) fn from_eager_indexes<Transform: UnaryTransform<S, T>>(
         name: &str,
         version: Version,
@@ -64,6 +55,22 @@ where
             };
         }
 
-        Self(indexes_from!(period))
+        Self(PerPeriod {
+            minute10: period!(minute10),
+            minute30: period!(minute30),
+            hour1: period!(hour1),
+            hour4: period!(hour4),
+            hour12: period!(hour12),
+            day1: period!(day1),
+            day3: period!(day3),
+            week1: period!(week1),
+            month1: period!(month1),
+            month3: period!(month3),
+            month6: period!(month6),
+            year1: period!(year1),
+            year10: period!(year10),
+            halvingepoch: period!(halvingepoch),
+            difficultyepoch: period!(difficultyepoch),
+        })
     }
 }

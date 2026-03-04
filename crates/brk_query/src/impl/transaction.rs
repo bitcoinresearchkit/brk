@@ -55,7 +55,12 @@ impl Query {
         };
 
         // Get block info for status
-        let height = indexer.vecs.transactions.height.collect_one(txindex).unwrap();
+        let height = indexer
+            .vecs
+            .transactions
+            .height
+            .collect_one(txindex)
+            .unwrap();
         let block_hash = indexer.vecs.blocks.blockhash.read_once(height)?;
         let block_time = indexer.vecs.blocks.timestamp.collect_one(height).unwrap();
 
@@ -191,10 +196,30 @@ impl Query {
 
         // Get tx metadata using collect_one for PcoVec, read_once for BytesVec
         let txid = indexer.vecs.transactions.txid.read_once(txindex)?;
-        let height = indexer.vecs.transactions.height.collect_one(txindex).unwrap();
-        let version = indexer.vecs.transactions.txversion.collect_one(txindex).unwrap();
-        let lock_time = indexer.vecs.transactions.rawlocktime.collect_one(txindex).unwrap();
-        let total_size = indexer.vecs.transactions.total_size.collect_one(txindex).unwrap();
+        let height = indexer
+            .vecs
+            .transactions
+            .height
+            .collect_one(txindex)
+            .unwrap();
+        let version = indexer
+            .vecs
+            .transactions
+            .txversion
+            .collect_one(txindex)
+            .unwrap();
+        let lock_time = indexer
+            .vecs
+            .transactions
+            .rawlocktime
+            .collect_one(txindex)
+            .unwrap();
+        let total_size = indexer
+            .vecs
+            .transactions
+            .total_size
+            .collect_one(txindex)
+            .unwrap();
         let first_txinindex = indexer
             .vecs
             .transactions
@@ -243,7 +268,8 @@ impl Query {
                     let prev_txid = txid_reader.get(prev_txindex.to_usize());
 
                     // Calculate the txoutindex for the prevout
-                    let prev_first_txoutindex = first_txoutindex_reader.get(prev_txindex.to_usize());
+                    let prev_first_txoutindex =
+                        first_txoutindex_reader.get(prev_txindex.to_usize());
                     let prev_txoutindex = prev_first_txoutindex + prev_vout;
 
                     // Get the value of the prevout
@@ -312,7 +338,12 @@ impl Query {
         let reader = self.reader();
         let computer = self.computer();
 
-        let total_size = indexer.vecs.transactions.total_size.collect_one(txindex).unwrap();
+        let total_size = indexer
+            .vecs
+            .transactions
+            .total_size
+            .collect_one(txindex)
+            .unwrap();
         let position = computer.positions.tx_position.collect_one(txindex).unwrap();
 
         let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
@@ -344,7 +375,12 @@ impl Query {
             .collect_one(spending_txindex)
             .unwrap();
         let block_hash = indexer.vecs.blocks.blockhash.read_once(spending_height)?;
-        let block_time = indexer.vecs.blocks.timestamp.collect_one(spending_height).unwrap();
+        let block_time = indexer
+            .vecs
+            .blocks
+            .timestamp
+            .collect_one(spending_height)
+            .unwrap();
 
         Ok(TxOutspend {
             spent: true,

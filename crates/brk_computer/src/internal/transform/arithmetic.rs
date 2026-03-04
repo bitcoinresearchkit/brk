@@ -1,0 +1,89 @@
+use std::marker::PhantomData;
+
+use brk_types::{Bitcoin, Cents, Dollars, Sats, StoredF32, StoredI8, StoredU16, StoredU32};
+use vecdb::{BinaryTransform, UnaryTransform, VecValue};
+
+pub struct Identity<T>(PhantomData<T>);
+
+impl<T: VecValue> UnaryTransform<T, T> for Identity<T> {
+    #[inline(always)]
+    fn apply(v: T) -> T {
+        v
+    }
+}
+
+pub struct HalveSats;
+
+impl UnaryTransform<Sats, Sats> for HalveSats {
+    #[inline(always)]
+    fn apply(sats: Sats) -> Sats {
+        sats / 2
+    }
+}
+
+pub struct HalveSatsToBitcoin;
+
+impl UnaryTransform<Sats, Bitcoin> for HalveSatsToBitcoin {
+    #[inline(always)]
+    fn apply(sats: Sats) -> Bitcoin {
+        Bitcoin::from(sats / 2)
+    }
+}
+
+pub struct HalveCents;
+
+impl UnaryTransform<Cents, Cents> for HalveCents {
+    #[inline(always)]
+    fn apply(cents: Cents) -> Cents {
+        cents / 2u64
+    }
+}
+
+pub struct HalveDollars;
+
+impl UnaryTransform<Dollars, Dollars> for HalveDollars {
+    #[inline(always)]
+    fn apply(dollars: Dollars) -> Dollars {
+        dollars.halved()
+    }
+}
+
+pub struct MaskSats;
+
+impl BinaryTransform<StoredU32, Sats, Sats> for MaskSats {
+    #[inline(always)]
+    fn apply(mask: StoredU32, value: Sats) -> Sats {
+        if mask == StoredU32::ONE {
+            value
+        } else {
+            Sats::ZERO
+        }
+    }
+}
+
+pub struct ReturnF32Tenths<const V: u16>;
+
+impl<S, const V: u16> UnaryTransform<S, StoredF32> for ReturnF32Tenths<V> {
+    #[inline(always)]
+    fn apply(_: S) -> StoredF32 {
+        StoredF32::from(V as f32 / 10.0)
+    }
+}
+
+pub struct ReturnU16<const V: u16>;
+
+impl<S, const V: u16> UnaryTransform<S, StoredU16> for ReturnU16<V> {
+    #[inline(always)]
+    fn apply(_: S) -> StoredU16 {
+        StoredU16::new(V)
+    }
+}
+
+pub struct ReturnI8<const V: i8>;
+
+impl<S, const V: i8> UnaryTransform<S, StoredI8> for ReturnI8<V> {
+    #[inline(always)]
+    fn apply(_: S) -> StoredI8 {
+        StoredI8::new(V)
+    }
+}

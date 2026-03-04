@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, fmt::Display};
 
-pub use indexmap::IndexMap;
 pub use brk_types::{Index, MetricLeaf, MetricLeafWithSchema, TreeNode};
+pub use indexmap::IndexMap;
 
 #[cfg(feature = "derive")]
 pub use brk_traversable_derive::Traversable;

@@ -9,13 +9,9 @@ use axum::{
 use brk_website::{Website, router};
 use tokio::net::TcpListener;
 use tower_http::{
-    catch_panic::CatchPanicLayer,
-    classify::ServerErrorsFailureClass,
-    compression::CompressionLayer,
-    cors::CorsLayer,
-    normalize_path::NormalizePathLayer,
-    timeout::TimeoutLayer,
-    trace::TraceLayer,
+    catch_panic::CatchPanicLayer, classify::ServerErrorsFailureClass,
+    compression::CompressionLayer, cors::CorsLayer, normalize_path::NormalizePathLayer,
+    timeout::TimeoutLayer, trace::TraceLayer,
 };
 use tower_layer::Layer;
 use tracing::{error, info};
@@ -35,10 +31,7 @@ async fn main() -> std::io::Result<()> {
 
     website.log();
 
-    let compression_layer = CompressionLayer::new()
-        .br(true)
-        .gzip(true)
-        .zstd(true);
+    let compression_layer = CompressionLayer::new().br(true).gzip(true).zstd(true);
 
     let response_uri_layer = axum::middleware::from_fn(
         async |request: Request<Body>, next: Next| -> Response<Body> {

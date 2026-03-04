@@ -506,7 +506,11 @@ pub fn generate_static_constants(output: &mut String) {
     // VERSION, INDEXES, POOL_ID_TO_POOL_NAME
     writeln!(output, "  VERSION = \"{}\";\n", constants.version).unwrap();
     write_static_const(output, "INDEXES", &format_json(&constants.indexes));
-    write_static_const(output, "POOL_ID_TO_POOL_NAME", &format_json(&constants.pool_map));
+    write_static_const(
+        output,
+        "POOL_ID_TO_POOL_NAME",
+        &format_json(&constants.pool_map),
+    );
 
     // Cohort constants with camelCase keys
     for (name, value) in CohortConstants::all() {

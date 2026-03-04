@@ -7,9 +7,7 @@ use vecdb::{Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{
-        CentsSignedToDollars, ComputedFromHeight, LazyFromHeight, SatsSignedToBitcoin,
-    },
+    internal::{CentsSignedToDollars, ComputedFromHeight, LazyFromHeight, SatsSignedToBitcoin},
 };
 
 /// Change values indexed by height - sats (stored), btc (lazy), cents (stored), usd (lazy).
@@ -37,12 +35,8 @@ impl ValueFromHeightChange {
             &sats,
         );
 
-        let cents = ComputedFromHeight::forced_import(
-            db,
-            &format!("{name}_cents"),
-            version,
-            indexes,
-        )?;
+        let cents =
+            ComputedFromHeight::forced_import(db, &format!("{name}_cents"), version, indexes)?;
 
         let usd = LazyFromHeight::from_computed::<CentsSignedToDollars>(
             &format!("{name}_usd"),
@@ -51,7 +45,12 @@ impl ValueFromHeightChange {
             &cents,
         );
 
-        Ok(Self { sats, btc, cents, usd })
+        Ok(Self {
+            sats,
+            btc,
+            cents,
+            usd,
+        })
     }
 
     /// Compute rolling change for both sats and cents in one call.
@@ -63,12 +62,18 @@ impl ValueFromHeightChange {
         cents_source: &(impl ReadableVec<Height, Cents> + Sync),
         exit: &Exit,
     ) -> Result<()> {
-        self.sats
-            .height
-            .compute_rolling_change(starting_height, window_starts, sats_source, exit)?;
-        self.cents
-            .height
-            .compute_rolling_change(starting_height, window_starts, cents_source, exit)?;
+        self.sats.height.compute_rolling_change(
+            starting_height,
+            window_starts,
+            sats_source,
+            exit,
+        )?;
+        self.cents.height.compute_rolling_change(
+            starting_height,
+            window_starts,
+            cents_source,
+            exit,
+        )?;
         Ok(())
     }
 }

@@ -208,9 +208,10 @@ impl ReaderInner {
                         .into_iter()
                         .par_bridge()
                         .try_for_each(|(metadata, bytes, xor_i)| {
-                            if let Ok(Some(block)) =
-                                decode_block(bytes, metadata, &client, xor_i, xor_bytes, start, end, start_time, end_time)
-                                && send_block.send(block).is_err()
+                            if let Ok(Some(block)) = decode_block(
+                                bytes, metadata, &client, xor_i, xor_bytes, start, end, start_time,
+                                end_time,
+                            ) && send_block.send(block).is_err()
                             {
                                 return ControlFlow::Break(());
                             }
@@ -335,7 +336,11 @@ impl ReaderInner {
         Ok(blk_indices.get(final_idx).copied().unwrap_or(0))
     }
 
-    pub fn get_first_block_height(&self, blk_path: &PathBuf, xor_bytes: XORBytes) -> Result<Height> {
+    pub fn get_first_block_height(
+        &self,
+        blk_path: &PathBuf,
+        xor_bytes: XORBytes,
+    ) -> Result<Height> {
         let mut file = File::open(blk_path)?;
         let mut buf = [0u8; 4096];
         let n = file.read(&mut buf)?;
