@@ -5,7 +5,10 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{Bps16ToFloat, Bps16ToPercent, ComputedFromHeight, PercentFromHeight},
+    internal::{
+        ComputedFromHeight,
+        PercentFromHeight,
+    },
 };
 
 impl Vecs {
@@ -49,7 +52,7 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            hash_rate_drawdown: PercentFromHeight::forced_import::<Bps16ToFloat, Bps16ToPercent>(
+            hash_rate_drawdown: PercentFromHeight::forced_import_bps16(
                 db,
                 "hash_rate_drawdown",
                 version,
@@ -79,7 +82,7 @@ impl Vecs {
                 version + v4,
                 indexes,
             )?,
-            hash_price_rebound: ComputedFromHeight::forced_import(
+            hash_price_rebound: PercentFromHeight::forced_import_bps32(
                 db,
                 "hash_price_rebound",
                 version + v4,
@@ -109,7 +112,7 @@ impl Vecs {
                 version + v4,
                 indexes,
             )?,
-            hash_value_rebound: ComputedFromHeight::forced_import(
+            hash_value_rebound: PercentFromHeight::forced_import_bps32(
                 db,
                 "hash_value_rebound",
                 version + v4,

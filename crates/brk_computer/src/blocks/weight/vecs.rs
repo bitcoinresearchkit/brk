@@ -1,11 +1,11 @@
 use brk_traversable::Traversable;
-use brk_types::{StoredF32, Weight};
+use brk_types::{BasisPoints16, Weight};
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeightDistribution, ComputedHeightDerivedFull};
+use crate::internal::{ComputedHeightDerivedFull, PercentFromHeightDistribution};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub weight: ComputedHeightDerivedFull<Weight, M>,
-    pub fullness: ComputedFromHeightDistribution<StoredF32, M>,
+    pub fullness: PercentFromHeightDistribution<BasisPoints16, M>,
 }

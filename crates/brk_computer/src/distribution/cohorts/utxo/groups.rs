@@ -7,11 +7,11 @@ use brk_cohort::{
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Height, Sats,
-    StoredF32, Version,
+    BasisPoints16, Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Height, Sats,
+    Version,
 };
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, VecIndex, WritableVec};
+use vecdb::{AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
     ComputeIndexes, blocks,
@@ -859,13 +859,15 @@ impl UTXOCohorts<Rw> {
                 target
                     .extended
                     .spot_cost_basis_percentile
+                    .bps
                     .height
-                    .truncate_push(height, StoredF32::NAN)?;
+                    .truncate_push(height, BasisPoints16::ZERO)?;
                 target
                     .extended
                     .spot_invested_capital_percentile
+                    .bps
                     .height
-                    .truncate_push(height, StoredF32::NAN)?;
+                    .truncate_push(height, BasisPoints16::ZERO)?;
                 continue;
             }
 
@@ -969,12 +971,14 @@ impl UTXOCohorts<Rw> {
             target
                 .extended
                 .spot_cost_basis_percentile
+                .bps
                 .height
                 .truncate_push(height, rank)?;
             let rank = compute_spot_percentile_rank(&usd_result, spot);
             target
                 .extended
                 .spot_invested_capital_percentile
+                .bps
                 .height
                 .truncate_push(height, rank)?;
 

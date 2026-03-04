@@ -165,33 +165,14 @@ where
 
                 if values.is_empty() {
                     // Handle edge case where all items were skipped
-                    if let Some(ref mut max_vec) = max {
-                        max_vec.truncate_push_at(idx, T::from(0_usize))?;
+                    macro_rules! push_zero {
+                        ($($vec:ident),*) => {
+                            $(if let Some(ref mut v) = $vec {
+                                v.truncate_push_at(idx, T::from(0_usize))?;
+                            })*
+                        };
                     }
-                    if let Some(ref mut pct90_vec) = pct90 {
-                        pct90_vec.truncate_push_at(idx, T::from(0_usize))?;
-                    }
-                    if let Some(ref mut pct75_vec) = pct75 {
-                        pct75_vec.truncate_push_at(idx, T::from(0_usize))?;
-                    }
-                    if let Some(ref mut median_vec) = median {
-                        median_vec.truncate_push_at(idx, T::from(0_usize))?;
-                    }
-                    if let Some(ref mut pct25_vec) = pct25 {
-                        pct25_vec.truncate_push_at(idx, T::from(0_usize))?;
-                    }
-                    if let Some(ref mut pct10_vec) = pct10 {
-                        pct10_vec.truncate_push_at(idx, T::from(0_usize))?;
-                    }
-                    if let Some(ref mut min_vec) = min {
-                        min_vec.truncate_push_at(idx, T::from(0_usize))?;
-                    }
-                    if let Some(ref mut average_vec) = average {
-                        average_vec.truncate_push_at(idx, T::from(0_usize))?;
-                    }
-                    if let Some(ref mut sum_vec) = sum {
-                        sum_vec.truncate_push_at(idx, T::from(0_usize))?;
-                    }
+                    push_zero!(max, pct90, pct75, median, pct25, pct10, min, average, sum);
                     if let Some(ref mut cumulative_vec) = cumulative {
                         let t = cumulative_val.unwrap();
                         cumulative_vec.truncate_push_at(idx, t)?;

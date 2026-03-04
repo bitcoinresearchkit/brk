@@ -5,7 +5,10 @@ use vecdb::Database;
 use super::{MacdChain, RsiChain, Vecs};
 use crate::{
     indexes,
-    internal::{Bp16ToFloat, Bp16ToPercent, ComputedFromHeight, PercentFromHeight, Windows},
+    internal::{
+        ComputedFromHeight, ComputedFromHeightRatio,
+        PercentFromHeight, Windows,
+    },
 };
 
 const VERSION: Version = Version::ONE;
@@ -28,10 +31,21 @@ impl RsiChain {
             };
         }
 
+        macro_rules! percent_import {
+            ($name:expr) => {
+                PercentFromHeight::forced_import_bp16(
+                    db,
+                    &format!("rsi_{}_{}", $name, tf),
+                    version,
+                    indexes,
+                )?
+            };
+        }
+
         let average_gain = import!("average_gain");
         let average_loss = import!("average_loss");
 
-        let rsi = ComputedFromHeight::forced_import(
+        let rsi = PercentFromHeight::forced_import_bp16(
             db,
             &format!("rsi_{tf}"),
             version,
@@ -44,11 +58,11 @@ impl RsiChain {
             average_gain,
             average_loss,
             rsi,
-            rsi_min: import!("min"),
-            rsi_max: import!("max"),
-            stoch_rsi: import!("stoch"),
-            stoch_rsi_k: import!("stoch_k"),
-            stoch_rsi_d: import!("stoch_d"),
+            rsi_min: percent_import!("min"),
+            rsi_max: percent_import!("max"),
+            stoch_rsi: percent_import!("stoch"),
+            stoch_rsi_k: percent_import!("stoch_k"),
+            stoch_rsi_d: percent_import!("stoch_d"),
         })
     }
 }
@@ -108,19 +122,19 @@ impl Vecs {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let nvt = ComputedFromHeight::forced_import(db, "nvt", v, indexes)?;
+        let nvt = ComputedFromHeightRatio::forced_import_raw(db, "nvt", v, indexes)?;
 
         let rsi = Windows::try_from_fn(|tf| RsiChain::forced_import(db, tf, v, indexes))?;
         let macd = Windows::try_from_fn(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
 
-        let stoch_k = ComputedFromHeight::forced_import(db, "stoch_k", v, indexes)?;
-        let stoch_d = ComputedFromHeight::forced_import(db, "stoch_d", v, indexes)?;
-        let gini = PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(db, "gini", v, indexes)?;
+        let stoch_k = PercentFromHeight::forced_import_bp16(db, "stoch_k", v, indexes)?;
+        let stoch_d = PercentFromHeight::forced_import_bp16(db, "stoch_d", v, indexes)?;
+        let gini = PercentFromHeight::forced_import_bp16(db, "gini", v, indexes)?;
 
-        let pi_cycle = ComputedFromHeight::forced_import(db, "pi_cycle", v, indexes)?;
+        let pi_cycle = ComputedFromHeightRatio::forced_import_raw(db, "pi_cycle", v, indexes)?;
 
         Ok(Self {
-            puell_multiple: ComputedFromHeight::forced_import(db, "puell_multiple", v, indexes)?,
+            puell_multiple: ComputedFromHeightRatio::forced_import_raw(db, "puell_multiple", v, indexes)?,
             nvt,
             rsi,
             stoch_k,

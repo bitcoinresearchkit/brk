@@ -1,13 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{StoredF32, Version};
+use brk_types::{BasisPoints16, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{Database, Rw, StorageMode, UnaryTransform};
 
 use crate::{
     indexes,
-    internal::{NumericValue, PercentFromHeight, Windows},
+    internal::{Bp16ToFloat, Bp16ToPercent, NumericValue, PercentFromHeight, Windows},
 };
 
 const VERSION: Version = Version::ZERO;
@@ -43,5 +43,16 @@ where
                 indexes,
             )
         })?))
+    }
+}
+
+impl PercentRollingWindows<BasisPoints16> {
+    pub(crate) fn forced_import_bp16(
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        Self::forced_import::<Bp16ToFloat, Bp16ToPercent>(db, name, version, indexes)
     }
 }

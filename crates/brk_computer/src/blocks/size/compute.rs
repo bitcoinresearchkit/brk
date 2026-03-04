@@ -16,7 +16,7 @@ impl Vecs {
     ) -> Result<()> {
         let window_starts = count_vecs.window_starts();
 
-        // vbytes = ceil(weight / 4), stored at height level
+        // vbytes = floor(weight / 4), stored at height level
         self.vbytes.compute(
             starting_indexes.height,
             &window_starts,

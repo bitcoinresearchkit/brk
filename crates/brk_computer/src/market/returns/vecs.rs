@@ -3,7 +3,7 @@ use brk_types::{BasisPointsSigned32, Height, StoredF32};
 use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use crate::{
-    internal::{ComputedFromHeight, ComputedFromHeightStdDev, PercentFromHeight},
+    internal::{ComputedFromHeightStdDev, PercentFromHeight},
     market::{dca::ByDcaCagr, lookback::ByLookbackPeriod},
 };
 

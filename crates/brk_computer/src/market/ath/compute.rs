@@ -3,7 +3,7 @@ use brk_types::{StoredF32, Timestamp};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{blocks, ComputeIndexes, prices, traits::ComputeDrawdown};
+use crate::{blocks, ComputeIndexes, prices};
 
 impl Vecs {
     pub(crate) fn compute(

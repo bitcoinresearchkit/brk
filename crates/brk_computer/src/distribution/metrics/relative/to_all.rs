@@ -3,7 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::{BasisPoints16, Height, Sats};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::internal::{Bp16ToFloat, Bp16ToPercent, PercentFromHeight, RatioSatsBp16};
+use crate::internal::{PercentFromHeight, RatioSatsBp16};
 
 use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
 
@@ -24,21 +24,21 @@ impl RelativeToAll {
     ) -> Result<Self> {
         Ok(Self {
             supply_rel_to_circulating_supply:
-                PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                PercentFromHeight::forced_import_bp16(
                     cfg.db,
                     &cfg.name("supply_rel_to_circulating_supply"),
                     cfg.version + brk_types::Version::ONE,
                     cfg.indexes,
                 )?,
             supply_in_profit_rel_to_circulating_supply:
-                PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                PercentFromHeight::forced_import_bp16(
                     cfg.db,
                     &cfg.name("supply_in_profit_rel_to_circulating_supply"),
                     cfg.version + brk_types::Version::ONE,
                     cfg.indexes,
                 )?,
             supply_in_loss_rel_to_circulating_supply:
-                PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                PercentFromHeight::forced_import_bp16(
                     cfg.db,
                     &cfg.name("supply_in_loss_rel_to_circulating_supply"),
                     cfg.version + brk_types::Version::ONE,

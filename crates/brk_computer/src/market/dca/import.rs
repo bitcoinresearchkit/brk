@@ -5,7 +5,7 @@ use vecdb::{Database, ImportableVec};
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     indexes,
-    internal::{Bps32ToFloat, Bps32ToPercent, PercentFromHeight, Price, ValueFromHeight},
+    internal::{PercentFromHeight, Price, ValueFromHeight},
 };
 
 impl Vecs {
@@ -23,7 +23,7 @@ impl Vecs {
         })?;
 
         let period_return = ByDcaPeriod::try_new(|name, _days| {
-            PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(
+            PercentFromHeight::forced_import_bps32(
                 db,
                 &format!("dca_return_{name}"),
                 version,
@@ -32,7 +32,7 @@ impl Vecs {
         })?;
 
         let period_cagr = ByDcaCagr::try_new(|name, _days| {
-            PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(
+            PercentFromHeight::forced_import_bps32(
                 db,
                 &format!("dca_cagr_{name}"),
                 version,
@@ -45,7 +45,7 @@ impl Vecs {
         })?;
 
         let period_lump_sum_return = ByDcaPeriod::try_new(|name, _days| {
-            PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(
+            PercentFromHeight::forced_import_bps32(
                 db,
                 &format!("lump_sum_return_{name}"),
                 version,
@@ -62,7 +62,7 @@ impl Vecs {
         })?;
 
         let class_return = ByDcaClass::try_new(|name, _year, _day1| {
-            PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(
+            PercentFromHeight::forced_import_bps32(
                 db,
                 &format!("dca_return_{name}"),
                 version,

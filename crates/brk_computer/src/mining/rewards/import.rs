@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        Bp16ToFloat, Bp16ToPercent, FiatFromHeight, PercentFromHeight, PercentRollingWindows,
+        FiatFromHeight, PercentFromHeight, PercentRollingWindows,
         ValueFromHeightFull, ValueFromHeightCumulativeSum,
     },
 };
@@ -27,25 +27,25 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            fee_dominance: PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+            fee_dominance: PercentFromHeight::forced_import_bp16(
                 db,
                 "fee_dominance",
                 version,
                 indexes,
             )?,
-            fee_dominance_rolling: PercentRollingWindows::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+            fee_dominance_rolling: PercentRollingWindows::forced_import_bp16(
                 db,
                 "fee_dominance",
                 version,
                 indexes,
             )?,
-            subsidy_dominance: PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+            subsidy_dominance: PercentFromHeight::forced_import_bp16(
                 db,
                 "subsidy_dominance",
                 version,
                 indexes,
             )?,
-            subsidy_dominance_rolling: PercentRollingWindows::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+            subsidy_dominance_rolling: PercentRollingWindows::forced_import_bp16(
                 db,
                 "subsidy_dominance",
                 version,

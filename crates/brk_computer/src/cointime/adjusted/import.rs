@@ -5,13 +5,13 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{Bps32ToFloat, Bps32ToPercent, ComputedFromHeight, PercentFromHeight},
+    internal::{ComputedFromHeight, PercentFromHeight},
 };
 
 impl Vecs {
     pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         Ok(Self {
-            cointime_adj_inflation_rate: PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(
+            cointime_adj_inflation_rate: PercentFromHeight::forced_import_bps32(
                 db,
                 "cointime_adj_inflation_rate",
                 version,

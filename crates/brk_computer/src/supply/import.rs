@@ -9,7 +9,7 @@ use super::Vecs;
 use crate::{
     distribution, indexes,
     internal::{
-        Bps32ToFloat, Bps32ToPercent, ComputedFromHeight, Identity, LazyFromHeight,
+        ComputedFromHeight, Identity, LazyFromHeight,
         LazyValueFromHeight, PercentFromHeight, SatsToBitcoin,
     },
 };
@@ -42,7 +42,7 @@ impl Vecs {
 
         // Inflation rate
         let inflation_rate =
-            PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(&db, "inflation_rate", version, indexes)?;
+            PercentFromHeight::forced_import_bps32(&db, "inflation_rate", version, indexes)?;
 
         // Velocity
         let velocity = super::velocity::Vecs::forced_import(&db, version, indexes)?;
@@ -55,13 +55,13 @@ impl Vecs {
         );
 
         // Growth rates
-        let market_cap_growth_rate = PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(
+        let market_cap_growth_rate = PercentFromHeight::forced_import_bps32(
             &db,
             "market_cap_growth_rate",
             version + Version::ONE,
             indexes,
         )?;
-        let realized_cap_growth_rate = PercentFromHeight::forced_import::<Bps32ToFloat, Bps32ToPercent>(
+        let realized_cap_growth_rate = PercentFromHeight::forced_import_bps32(
             &db,
             "realized_cap_growth_rate",
             version + Version::ONE,

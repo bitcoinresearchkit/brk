@@ -1,13 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, StoredF32, Version};
+use brk_types::{BasisPoints16, Height, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode, UnaryTransform};
 
 use crate::{
     indexes,
-    internal::{Emas1w1m, NumericValue, PercentFromHeight},
+    internal::{Bp16ToFloat, Bp16ToPercent, Emas1w1m, NumericValue, PercentFromHeight},
 };
 
 const VERSION: Version = Version::ZERO;
@@ -45,6 +45,23 @@ where
         })?))
     }
 
+}
+
+impl PercentRollingEmas1w1m<BasisPoints16> {
+    pub(crate) fn forced_import_bp16(
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        Self::forced_import::<Bp16ToFloat, Bp16ToPercent>(db, name, version, indexes)
+    }
+}
+
+impl<B> PercentRollingEmas1w1m<B>
+where
+    B: NumericValue + JsonSchema,
+{
     pub(crate) fn compute_from_24h(
         &mut self,
         max_from: Height,

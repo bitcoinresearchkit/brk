@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{Bps16ToFloat, Bps16ToPercent, ComputedFromHeight, DaysToYears, LazyHeightDerived, PercentFromHeight, Price},
+    internal::{ComputedFromHeight, DaysToYears, LazyHeightDerived, PercentFromHeight, Price},
 };
 
 const VERSION: Version = Version::ONE;
@@ -40,7 +40,7 @@ impl Vecs {
         );
 
         let price_drawdown =
-            PercentFromHeight::forced_import::<Bps16ToFloat, Bps16ToPercent>(db, "price_drawdown", v, indexes)?;
+            PercentFromHeight::forced_import_bps16(db, "price_drawdown", v, indexes)?;
 
         Ok(Self {
             price_ath,

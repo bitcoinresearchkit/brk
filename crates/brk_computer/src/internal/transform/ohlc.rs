@@ -1,7 +1,16 @@
-use brk_types::{Close, High, Low, OHLCCents, OHLCSats, Open};
+use brk_types::{Close, High, Low, OHLCCents, OHLCDollars, OHLCSats, Open};
 use vecdb::UnaryTransform;
 
 use super::CentsUnsignedToSats;
+
+pub struct OhlcCentsToDollars;
+
+impl UnaryTransform<OHLCCents, OHLCDollars> for OhlcCentsToDollars {
+    #[inline(always)]
+    fn apply(cents: OHLCCents) -> OHLCDollars {
+        OHLCDollars::from(cents)
+    }
+}
 
 /// OHLCCents -> OHLCSats with high/low swapped (inverse price relationship).
 pub struct OhlcCentsToSats;

@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    BasisPoints16, BasisPointsSigned16,
+    BasisPoints16, BasisPoints32, BasisPointsSigned16,
     Bitcoin, Cents, CentsSats, CentsSigned, CentsSquaredSats, Dollars, Height, Sats, StoredF32, StoredF64, Version,
 };
 use vecdb::{
@@ -13,7 +13,6 @@ use crate::{
     ComputeIndexes, blocks,
     distribution::state::RealizedState,
     internal::{
-        Bp16ToFloat, Bp16ToPercent, Bps16ToFloat, Bps16ToPercent,
         CentsPlus, CentsUnsignedToDollars, ComputedFromHeightCumulative, ComputedFromHeight,
         ComputedFromHeightRatio, FiatFromHeight, NegCentsUnsignedToDollars, PercentFromHeight,
         PercentRollingEmas1w1m, PercentRollingWindows, ValueFromHeightCumulative, LazyFromHeight,
@@ -196,7 +195,7 @@ impl RealizedBase {
         )?;
 
         let realized_profit_rel_to_realized_cap =
-            PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+            PercentFromHeight::forced_import_bp16(
                 cfg.db,
                 &cfg.name("realized_profit_rel_to_realized_cap"),
                 cfg.version + v1,
@@ -204,7 +203,7 @@ impl RealizedBase {
             )?;
 
         let realized_loss_rel_to_realized_cap =
-            PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+            PercentFromHeight::forced_import_bp16(
                 cfg.db,
                 &cfg.name("realized_loss_rel_to_realized_cap"),
                 cfg.version + v1,
@@ -212,7 +211,7 @@ impl RealizedBase {
             )?;
 
         let net_realized_pnl_rel_to_realized_cap =
-            PercentFromHeight::forced_import::<Bps16ToFloat, Bps16ToPercent>(
+            PercentFromHeight::forced_import_bps16(
                 cfg.db,
                 &cfg.name("net_realized_pnl_rel_to_realized_cap"),
                 cfg.version + v1,
@@ -316,10 +315,9 @@ impl RealizedBase {
             cfg.indexes,
         )?;
 
-        let mvrv = LazyFromHeight::from_computed::<Identity<StoredF32>>(
+        let mvrv = LazyFromHeight::from_lazy::<Identity<StoredF32>, BasisPoints32>(
             &cfg.name("mvrv"),
             cfg.version,
-            realized_price_ratio.ratio.height.read_only_boxed_clone(),
             &realized_price_ratio.ratio,
         );
 
@@ -336,7 +334,7 @@ impl RealizedBase {
         let sopr = RollingWindows::forced_import(
             cfg.db, &cfg.name("sopr"), cfg.version + v1, cfg.indexes,
         )?;
-        let sell_side_risk_ratio = PercentRollingWindows::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+        let sell_side_risk_ratio = PercentRollingWindows::forced_import_bp16(
             cfg.db, &cfg.name("sell_side_risk_ratio"), cfg.version + v1, cfg.indexes,
         )?;
 
@@ -344,12 +342,12 @@ impl RealizedBase {
         let sopr_24h_ema = RollingEmas1w1m::forced_import(
             cfg.db, &cfg.name("sopr_24h"), cfg.version + v1, cfg.indexes,
         )?;
-        let sell_side_risk_ratio_24h_ema = PercentRollingEmas1w1m::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+        let sell_side_risk_ratio_24h_ema = PercentRollingEmas1w1m::forced_import_bp16(
             cfg.db, &cfg.name("sell_side_risk_ratio_24h"), cfg.version + v1, cfg.indexes,
         )?;
 
         let peak_regret_rel_to_realized_cap =
-            PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+            PercentFromHeight::forced_import_bp16(
                 cfg.db,
                 &cfg.name("realized_peak_regret_rel_to_realized_cap"),
                 cfg.version + v1,
@@ -407,14 +405,14 @@ impl RealizedBase {
                 cfg.indexes,
             )?,
             net_pnl_change_1m_rel_to_realized_cap:
-                PercentFromHeight::forced_import::<Bps16ToFloat, Bps16ToPercent>(
+                PercentFromHeight::forced_import_bps16(
                     cfg.db,
                     &cfg.name("net_pnl_change_1m_rel_to_realized_cap"),
                     cfg.version + v3,
                     cfg.indexes,
                 )?,
             net_pnl_change_1m_rel_to_market_cap:
-                PercentFromHeight::forced_import::<Bps16ToFloat, Bps16ToPercent>(
+                PercentFromHeight::forced_import_bps16(
                     cfg.db,
                     &cfg.name("net_pnl_change_1m_rel_to_market_cap"),
                     cfg.version + v3,

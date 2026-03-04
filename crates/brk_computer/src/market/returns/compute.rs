@@ -44,22 +44,22 @@ impl Vecs {
             )?;
         }
 
-        let _24h_price_return_height = &self.price_return._24h.bps.height;
+        let _24h_price_return_ratio = &self.price_return._24h.ratio.height;
 
         self.price_return_24h_sd_1w
-            .compute_all(blocks, starting_indexes, exit, _24h_price_return_height)?;
+            .compute_all(blocks, starting_indexes, exit, _24h_price_return_ratio)?;
         self.price_return_24h_sd_1m
-            .compute_all(blocks, starting_indexes, exit, _24h_price_return_height)?;
+            .compute_all(blocks, starting_indexes, exit, _24h_price_return_ratio)?;
         self.price_return_24h_sd_1y
-            .compute_all(blocks, starting_indexes, exit, _24h_price_return_height)?;
+            .compute_all(blocks, starting_indexes, exit, _24h_price_return_ratio)?;
 
         // Downside returns: min(return, 0)
         self.price_downside_24h.compute_transform(
             starting_indexes.height,
-            _24h_price_return_height,
+            _24h_price_return_ratio,
             |(i, ret, ..)| {
-                let v = f64::from(ret).min(0.0);
-                (i, StoredF32::from(v as f32))
+                let v = f32::from(ret).min(0.0);
+                (i, StoredF32::from(v))
             },
             exit,
         )?;

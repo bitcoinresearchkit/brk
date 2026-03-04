@@ -1,12 +1,17 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, StoredF32, Version};
+use brk_types::{
+    BasisPoints16, BasisPointsSigned16, BasisPointsSigned32, Height, StoredF32, Version,
+};
 use schemars::JsonSchema;
 use vecdb::{BinaryTransform, Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, UnaryTransform, VecValue};
 
 use crate::{
     indexes,
-    internal::NumericValue,
+    internal::{
+        Bp16ToFloat, Bp16ToPercent, Bps16ToFloat, Bps16ToPercent, Bps32ToFloat, Bps32ToPercent,
+        NumericValue,
+    },
     traits::ComputeDrawdown,
 };
 
@@ -44,7 +49,7 @@ where
         RatioTransform: UnaryTransform<B, StoredF32>,
         PercentTransform: UnaryTransform<B, StoredF32>,
     {
-        let bps = ComputedFromHeight::forced_import(db, name, version, indexes)?;
+        let bps = ComputedFromHeight::forced_import(db, &format!("{name}_bps"), version, indexes)?;
 
         let ratio = LazyFromHeight::from_computed::<RatioTransform>(
             &format!("{name}_ratio"),
@@ -54,7 +59,7 @@ where
         );
 
         let percent = LazyFromHeight::from_computed::<PercentTransform>(
-            &format!("{name}_percent"),
+            name,
             version,
             bps.height.read_only_boxed_clone(),
             &bps,
@@ -63,6 +68,45 @@ where
         Ok(Self { bps, ratio, percent })
     }
 
+}
+
+impl PercentFromHeight<BasisPoints16> {
+    pub(crate) fn forced_import_bp16(
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        Self::forced_import::<Bp16ToFloat, Bp16ToPercent>(db, name, version, indexes)
+    }
+}
+
+impl PercentFromHeight<BasisPointsSigned16> {
+    pub(crate) fn forced_import_bps16(
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        Self::forced_import::<Bps16ToFloat, Bps16ToPercent>(db, name, version, indexes)
+    }
+}
+
+impl PercentFromHeight<BasisPointsSigned32> {
+    pub(crate) fn forced_import_bps32(
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        Self::forced_import::<Bps32ToFloat, Bps32ToPercent>(db, name, version, indexes)
+    }
+}
+
+impl<B> PercentFromHeight<B>
+where
+    B: NumericValue + JsonSchema,
+{
     pub(crate) fn compute_binary<S1T, S2T, F>(
         &mut self,
         max_from: Height,

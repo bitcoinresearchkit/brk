@@ -7,7 +7,7 @@ use crate::{
     blocks,
     indexes::{self, ComputeIndexes},
     internal::{
-        Bp16ToFloat, Bp16ToPercent, ComputedFromHeightCumulativeSum, ComputedFromHeight, MaskSats,
+        ComputedFromHeightCumulativeSum, ComputedFromHeight, MaskSats,
         PercentFromHeight, PercentRollingWindows, RatioU32Bp16, RollingWindows,
         ValueFromHeightCumulativeSum,
     },
@@ -58,9 +58,9 @@ impl Vecs {
             ValueFromHeightCumulativeSum::forced_import(db, &suffix("coinbase"), version, indexes)?;
 
         let dominance =
-            PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(db, &suffix("dominance"), version, indexes)?;
+            PercentFromHeight::forced_import_bp16(db, &suffix("dominance"), version, indexes)?;
         let dominance_rolling =
-            PercentRollingWindows::forced_import::<Bp16ToFloat, Bp16ToPercent>(db, &suffix("dominance"), version, indexes)?;
+            PercentRollingWindows::forced_import_bp16(db, &suffix("dominance"), version, indexes)?;
 
         Ok(Self {
             dominance,

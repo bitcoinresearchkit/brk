@@ -3,12 +3,12 @@
 use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, StoredF32, StoredU64, Version};
+use brk_types::{BasisPoints16, Height, StoredU64, Version};
 use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ComputedFromHeightDistribution, WindowStarts},
+    internal::{PercentFromHeightDistribution, WindowStarts},
 };
 
 use super::{AddrCountsVecs, NewAddrCountVecs};
@@ -16,9 +16,9 @@ use super::{AddrCountsVecs, NewAddrCountVecs};
 /// Growth rate: new_addr_count / addr_count (global + per-type)
 #[derive(Traversable)]
 pub struct GrowthRateVecs<M: StorageMode = Rw> {
-    pub all: ComputedFromHeightDistribution<StoredF32, M>,
+    pub all: PercentFromHeightDistribution<BasisPoints16, M>,
     #[traversable(flatten)]
-    pub by_addresstype: ByAddressType<ComputedFromHeightDistribution<StoredF32, M>>,
+    pub by_addresstype: ByAddressType<PercentFromHeightDistribution<BasisPoints16, M>>,
 }
 
 impl GrowthRateVecs {
@@ -27,22 +27,21 @@ impl GrowthRateVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let all = ComputedFromHeightDistribution::forced_import(
+        let all = PercentFromHeightDistribution::forced_import_bp16(
             db,
             "growth_rate",
             version,
             indexes,
         )?;
 
-        let by_addresstype: ByAddressType<ComputedFromHeightDistribution<StoredF32>> =
-            ByAddressType::new_with_name(|name| {
-                ComputedFromHeightDistribution::forced_import(
-                    db,
-                    &format!("{name}_growth_rate"),
-                    version,
-                    indexes,
-                )
-            })?;
+        let by_addresstype = ByAddressType::new_with_name(|name| {
+            PercentFromHeightDistribution::forced_import_bp16(
+                db,
+                &format!("{name}_growth_rate"),
+                version,
+                indexes,
+            )
+        })?;
 
         Ok(Self { all, by_addresstype })
     }
@@ -91,7 +90,7 @@ impl GrowthRateVecs {
 }
 
 fn compute_ratio(
-    target: &mut EagerVec<PcoVec<Height, StoredF32>>,
+    target: &mut EagerVec<PcoVec<Height, BasisPoints16>>,
     max_from: Height,
     numerator: &impl ReadableVec<Height, StoredU64>,
     denominator: &impl ReadableVec<Height, StoredU64>,
@@ -105,7 +104,7 @@ fn compute_ratio(
             let n = *num as f64;
             let d = *den as f64;
             let ratio = if d == 0.0 { 0.0 } else { n / d };
-            (h, StoredF32::from(ratio))
+            (h, BasisPoints16::from(ratio))
         },
         exit,
     )?;

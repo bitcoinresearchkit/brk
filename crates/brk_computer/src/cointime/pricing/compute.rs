@@ -54,13 +54,10 @@ impl Vecs {
             &self.vaulted_price.cents.height,
         )?;
 
-        self.active_price.cents.height.compute_transform2(
+        self.active_price.cents.height.compute_multiply(
             starting_indexes.height,
             realized_price,
             &activity.liveliness.height,
-            |(i, price, liveliness, ..)| {
-                (i, Cents::from(f64::from(price) * f64::from(liveliness)))
-            },
             exit,
         )?;
 

@@ -3,7 +3,7 @@ use brk_types::{BasisPoints16, Cents};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{
-    FiatFromHeight, PercentFromHeight, PercentRollingWindows, RollingWindows,
+    FiatFromHeight, PercentFromHeight, PercentRollingWindows,
     ValueFromHeightFull, ValueFromHeightCumulativeSum,
 };
 

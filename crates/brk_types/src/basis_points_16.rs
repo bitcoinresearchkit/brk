@@ -71,7 +71,17 @@ impl From<BasisPoints16> for u16 {
     }
 }
 
-/// Convert from float: multiply by 10000 and round.
+/// Convert from f32: multiply by 10000 and round.
+/// Input is in ratio form (e.g., 0.4523 for 45.23%).
+impl From<f32> for BasisPoints16 {
+    #[inline]
+    fn from(value: f32) -> Self {
+        debug_assert!(value >= 0.0 && value <= u16::MAX as f32 / 10000.0, "f32 out of BasisPoints16 range: {value}");
+        Self((value * 10000.0).round() as u16)
+    }
+}
+
+/// Convert from f64: multiply by 10000 and round.
 /// Input is in ratio form (e.g., 0.4523 for 45.23%).
 impl From<f64> for BasisPoints16 {
     #[inline]

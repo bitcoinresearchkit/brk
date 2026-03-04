@@ -1,5 +1,5 @@
 use brk_traversable::Traversable;
-use brk_types::{BasisPointsSigned16, StoredF32, StoredF64};
+use brk_types::{BasisPointsSigned16, BasisPointsSigned32, StoredF32, StoredF64};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{ComputedFromHeight, PercentFromHeight};
@@ -18,10 +18,10 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub hash_price_ths_min: ComputedFromHeight<StoredF32, M>,
     pub hash_price_phs: ComputedFromHeight<StoredF32, M>,
     pub hash_price_phs_min: ComputedFromHeight<StoredF32, M>,
-    pub hash_price_rebound: ComputedFromHeight<StoredF32, M>,
+    pub hash_price_rebound: PercentFromHeight<BasisPointsSigned32, M>,
     pub hash_value_ths: ComputedFromHeight<StoredF32, M>,
     pub hash_value_ths_min: ComputedFromHeight<StoredF32, M>,
     pub hash_value_phs: ComputedFromHeight<StoredF32, M>,
     pub hash_value_phs_min: ComputedFromHeight<StoredF32, M>,
-    pub hash_value_rebound: ComputedFromHeight<StoredF32, M>,
+    pub hash_value_rebound: PercentFromHeight<BasisPointsSigned32, M>,
 }

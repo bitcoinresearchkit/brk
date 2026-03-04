@@ -5,8 +5,8 @@ use vecdb::{Exit, ReadableVec};
 use super::Vecs;
 use crate::{
     blocks::{self, ONE_TERA_HASH, TARGET_BLOCKS_PER_DAY_F64},
+    internal::RatioDiffF32Bps32,
     ComputeIndexes,
-    traits::ComputeDrawdown,
 };
 
 impl Vecs {
@@ -151,8 +151,7 @@ impl Vecs {
         )?;
 
         self.hash_price_rebound
-            .height
-            .compute_percentage_difference(
+            .compute_binary::<StoredF32, StoredF32, RatioDiffF32Bps32>(
                 starting_indexes.height,
                 &self.hash_price_phs.height,
                 &self.hash_price_phs_min.height,
@@ -160,8 +159,7 @@ impl Vecs {
             )?;
 
         self.hash_value_rebound
-            .height
-            .compute_percentage_difference(
+            .compute_binary::<StoredF32, StoredF32, RatioDiffF32Bps32>(
                 starting_indexes.height,
                 &self.hash_value_phs.height,
                 &self.hash_value_phs_min.height,

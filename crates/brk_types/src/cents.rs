@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco};
 
-use super::{CentsSats, Dollars, Sats};
+use super::{CentsSats, Dollars, Sats, StoredF64};
 
 /// Unsigned cents (u64) - for values that should never be negative.
 /// Used for invested capital, realized cap, etc.
@@ -223,6 +223,14 @@ impl Mul<usize> for Cents {
     #[inline]
     fn mul(self, rhs: usize) -> Self::Output {
         Self(self.0 * rhs as u64)
+    }
+}
+
+impl Mul<StoredF64> for Cents {
+    type Output = Self;
+    #[inline]
+    fn mul(self, rhs: StoredF64) -> Self::Output {
+        Self::from(f64::from(self) * f64::from(rhs))
     }
 }
 

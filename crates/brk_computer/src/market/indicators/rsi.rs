@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{Height, StoredF32};
+use brk_types::{BasisPoints16, Height, StoredF32};
 use vecdb::{Exit, ReadableVec};
 
 use super::RsiChain;
@@ -49,46 +49,46 @@ pub(super) fn compute(
         exit,
     )?;
 
-    // RSI = 100 * avg_gain / (avg_gain + avg_loss)
-    chain.rsi.height.compute_transform2(
+    // RSI = avg_gain / (avg_gain + avg_loss), stored as ratio (0–1)
+    chain.rsi.bps.height.compute_transform2(
         starting_indexes.height,
         &chain.average_gain.height,
         &chain.average_loss.height,
         |(h, g, l, ..)| {
             let sum = *g + *l;
-            let rsi = if sum == 0.0 { 50.0 } else { 100.0 * *g / sum };
-            (h, StoredF32::from(rsi))
+            let rsi = if sum == 0.0 { 0.5 } else { *g / sum };
+            (h, BasisPoints16::from(rsi as f64))
         },
         exit,
     )?;
 
     // Rolling min/max of RSI over rma_days window
-    chain.rsi_min.height.compute_rolling_min_from_starts(
+    chain.rsi_min.bps.height.compute_rolling_min_from_starts(
         starting_indexes.height,
         ws_rma,
-        &chain.rsi.height,
+        &chain.rsi.bps.height,
         exit,
     )?;
 
-    chain.rsi_max.height.compute_rolling_max_from_starts(
+    chain.rsi_max.bps.height.compute_rolling_max_from_starts(
         starting_indexes.height,
         ws_rma,
-        &chain.rsi.height,
+        &chain.rsi.bps.height,
         exit,
     )?;
 
-    // StochRSI = (rsi - rsi_min) / (rsi_max - rsi_min) * 100
-    chain.stoch_rsi.height.compute_transform3(
+    // StochRSI = (rsi - rsi_min) / (rsi_max - rsi_min), stored as ratio (0–1)
+    chain.stoch_rsi.bps.height.compute_transform3(
         starting_indexes.height,
-        &chain.rsi.height,
-        &chain.rsi_min.height,
-        &chain.rsi_max.height,
+        &chain.rsi.bps.height,
+        &chain.rsi_min.bps.height,
+        &chain.rsi_max.bps.height,
         |(h, r, mn, mx, ..)| {
-            let range = *mx - *mn;
+            let range = f64::from(*mx) - f64::from(*mn);
             let stoch = if range == 0.0 {
-                StoredF32::NAN
+                BasisPoints16::ZERO
             } else {
-                StoredF32::from((*r - *mn) / range * 100.0)
+                BasisPoints16::from((f64::from(*r) - f64::from(*mn)) / range)
             };
             (h, stoch)
         },
@@ -96,18 +96,18 @@ pub(super) fn compute(
     )?;
 
     // StochRSI K = SMA of StochRSI
-    chain.stoch_rsi_k.height.compute_rolling_average(
+    chain.stoch_rsi_k.bps.height.compute_rolling_average(
         starting_indexes.height,
         ws_sma,
-        &chain.stoch_rsi.height,
+        &chain.stoch_rsi.bps.height,
         exit,
     )?;
 
     // StochRSI D = SMA of K
-    chain.stoch_rsi_d.height.compute_rolling_average(
+    chain.stoch_rsi_d.bps.height.compute_rolling_average(
         starting_indexes.height,
         ws_sma,
-        &chain.stoch_rsi_k.height,
+        &chain.stoch_rsi_k.bps.height,
         exit,
     )?;
 

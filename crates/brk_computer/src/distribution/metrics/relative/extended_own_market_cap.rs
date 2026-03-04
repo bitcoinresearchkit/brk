@@ -4,7 +4,6 @@ use brk_types::{BasisPoints16, BasisPointsSigned16, Dollars, Height};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
-    Bp16ToFloat, Bp16ToPercent, Bps16ToFloat, Bps16ToPercent,
     NegRatioDollarsBps16, PercentFromHeight, RatioDollarsBp16, RatioDollarsBps16,
 };
 
@@ -31,28 +30,28 @@ impl RelativeExtendedOwnMarketCap {
 
         Ok(Self {
             unrealized_profit_rel_to_own_market_cap:
-                PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                PercentFromHeight::forced_import_bp16(
                     cfg.db,
                     &cfg.name("unrealized_profit_rel_to_own_market_cap"),
                     cfg.version + v2,
                     cfg.indexes,
                 )?,
             unrealized_loss_rel_to_own_market_cap:
-                PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                PercentFromHeight::forced_import_bp16(
                     cfg.db,
                     &cfg.name("unrealized_loss_rel_to_own_market_cap"),
                     cfg.version + v2,
                     cfg.indexes,
                 )?,
             neg_unrealized_loss_rel_to_own_market_cap:
-                PercentFromHeight::forced_import::<Bps16ToFloat, Bps16ToPercent>(
+                PercentFromHeight::forced_import_bps16(
                     cfg.db,
                     &cfg.name("neg_unrealized_loss_rel_to_own_market_cap"),
                     cfg.version + v2,
                     cfg.indexes,
                 )?,
             net_unrealized_pnl_rel_to_own_market_cap:
-                PercentFromHeight::forced_import::<Bps16ToFloat, Bps16ToPercent>(
+                PercentFromHeight::forced_import_bps16(
                     cfg.db,
                     &cfg.name("net_unrealized_pnl_rel_to_own_market_cap"),
                     cfg.version + v2,

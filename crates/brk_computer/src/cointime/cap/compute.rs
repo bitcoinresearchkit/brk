@@ -48,23 +48,17 @@ impl Vecs {
             exit,
         )?;
 
-        self.vaulted_cap.cents.height.compute_transform2(
+        self.vaulted_cap.cents.height.compute_multiply(
             starting_indexes.height,
             realized_cap_cents,
             &activity.vaultedness.height,
-            |(i, cap, vaultedness, ..)| {
-                (i, Cents::from(f64::from(cap) / f64::from(vaultedness)))
-            },
             exit,
         )?;
 
-        self.active_cap.cents.height.compute_transform2(
+        self.active_cap.cents.height.compute_multiply(
             starting_indexes.height,
             realized_cap_cents,
             &activity.liveliness.height,
-            |(i, cap, liveliness, ..)| {
-                (i, Cents::from(f64::from(cap) * f64::from(liveliness)))
-            },
             exit,
         )?;
 

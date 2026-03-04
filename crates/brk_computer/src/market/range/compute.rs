@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::StoredF32;
+use brk_types::{BasisPoints16, StoredF32};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
@@ -54,7 +54,7 @@ impl Vecs {
             exit,
         )?;
 
-        self.price_choppiness_index_2w.height.compute_transform4(
+        self.price_choppiness_index_2w.bps.height.compute_transform4(
             starting_indexes.height,
             &self.price_true_range_sum_2w.height,
             &self.price_max_2w.cents.height,
@@ -64,11 +64,11 @@ impl Vecs {
                 let range = f64::from(max) - f64::from(min);
                 let n = (h.to_usize() - window_start.to_usize() + 1) as f32;
                 let ci = if range > 0.0 && n > 1.0 {
-                    StoredF32::from(
-                        100.0 * (*tr_sum / range as f32).log10() / n.log10(),
+                    BasisPoints16::from(
+                        (*tr_sum / range as f32).log10() as f64 / n.log10() as f64,
                     )
                 } else {
-                    StoredF32::NAN
+                    BasisPoints16::ZERO
                 };
                 (h, ci)
             },

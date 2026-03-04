@@ -45,10 +45,10 @@ impl Weight {
         bitcoin::Weight::from(*self).to_vbytes_floor()
     }
 
-    /// Returns block fullness as a percentage (0-100+) relative to MAX_BLOCK.
+    /// Returns block fullness as a ratio (0–1+) relative to MAX_BLOCK.
     #[inline]
     pub fn fullness(&self) -> f32 {
-        (self.0 as f64 / Self::MAX_BLOCK.0 as f64 * 100.0) as f32
+        (self.0 as f64 / Self::MAX_BLOCK.0 as f64) as f32
     }
 }
 

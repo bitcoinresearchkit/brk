@@ -8,16 +8,17 @@ pub use price_extended::*;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, StoredF32, Version};
-use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
+use brk_types::{BasisPoints32, Cents, Height, StoredF32, Version};
+use vecdb::{Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
-use crate::{ComputeIndexes, indexes};
+use crate::{ComputeIndexes, indexes, internal::Bp32ToFloat};
 
-use super::ComputedFromHeight;
+use super::{ComputedFromHeight, LazyFromHeight};
 
 #[derive(Traversable)]
 pub struct ComputedFromHeightRatio<M: StorageMode = Rw> {
-    pub ratio: ComputedFromHeight<StoredF32, M>,
+    pub bps: ComputedFromHeight<BasisPoints32, M>,
+    pub ratio: LazyFromHeight<StoredF32, BasisPoints32>,
 }
 
 const VERSION: Version = Version::TWO;
@@ -29,11 +30,27 @@ impl ComputedFromHeightRatio {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
+        Self::forced_import_raw(db, &format!("{name}_ratio"), version, indexes)
+    }
+
+    pub(crate) fn forced_import_raw(
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
         let v = version + VERSION;
 
-        Ok(Self {
-            ratio: ComputedFromHeight::forced_import(db, &format!("{name}_ratio"), v, indexes)?,
-        })
+        let bps = ComputedFromHeight::forced_import(db, &format!("{name}_bps"), v, indexes)?;
+
+        let ratio = LazyFromHeight::from_computed::<Bp32ToFloat>(
+            name,
+            v,
+            bps.height.read_only_boxed_clone(),
+            &bps,
+        );
+
+        Ok(Self { bps, ratio })
     }
 
     /// Compute ratio = close_price / metric_price at height level (both in cents)
@@ -44,15 +61,15 @@ impl ComputedFromHeightRatio {
         metric_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        self.ratio.height.compute_transform2(
+        self.bps.height.compute_transform2(
             starting_indexes.height,
             close_price,
             metric_price,
             |(i, close, price, ..)| {
                 if price == Cents::ZERO {
-                    (i, StoredF32::from(1.0))
+                    (i, BasisPoints32::from(1.0))
                 } else {
-                    (i, StoredF32::from(f64::from(close) / f64::from(price)))
+                    (i, BasisPoints32::from(f64::from(close) / f64::from(price)))
                 }
             },
             exit,

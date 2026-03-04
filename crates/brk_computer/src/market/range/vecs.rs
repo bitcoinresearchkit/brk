@@ -1,8 +1,8 @@
 use brk_traversable::Traversable;
-use brk_types::{Cents, StoredF32};
+use brk_types::{BasisPoints16, Cents, StoredF32};
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeight, Price};
+use crate::internal::{ComputedFromHeight, PercentFromHeight, Price};
 
 /// Price range and choppiness metrics
 #[derive(Traversable)]
@@ -17,5 +17,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub price_max_1y: Price<ComputedFromHeight<Cents, M>>,
     pub price_true_range: ComputedFromHeight<StoredF32, M>,
     pub price_true_range_sum_2w: ComputedFromHeight<StoredF32, M>,
-    pub price_choppiness_index_2w: ComputedFromHeight<StoredF32, M>,
+    pub price_choppiness_index_2w: PercentFromHeight<BasisPoints16, M>,
 }

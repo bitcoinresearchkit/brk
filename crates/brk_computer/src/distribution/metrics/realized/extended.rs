@@ -6,7 +6,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 use crate::{
     ComputeIndexes, blocks,
     internal::{
-        Bp16ToFloat, Bp16ToPercent, ComputedFromHeightRatioExtension, PercentFromHeight,
+        ComputedFromHeightRatioExtension, PercentFromHeight,
         RatioCents64, RatioDollarsBp16, RollingWindows,
     },
 };
@@ -37,7 +37,7 @@ impl RealizedExtended {
         let v1 = Version::ONE;
 
         Ok(RealizedExtended {
-            realized_cap_rel_to_own_market_cap: PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+            realized_cap_rel_to_own_market_cap: PercentFromHeight::forced_import_bp16(
                 cfg.db,
                 &cfg.name("realized_cap_rel_to_own_market_cap"),
                 cfg.version,

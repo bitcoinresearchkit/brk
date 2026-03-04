@@ -5,7 +5,7 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{Bp16ToFloat, Bp16ToPercent, PercentFromHeight, RatioU64Bp16},
+    internal::{PercentFromHeight, RatioU64Bp16},
     outputs,
 };
 
@@ -24,13 +24,13 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            taproot: PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+            taproot: PercentFromHeight::forced_import_bp16(
                 db,
                 "taproot_adoption",
                 version,
                 indexes,
             )?,
-            segwit: PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+            segwit: PercentFromHeight::forced_import_bp16(
                 db,
                 "segwit_adoption",
                 version,

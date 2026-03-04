@@ -44,11 +44,10 @@ impl Vecs {
 
         self.coinblocks_stored
             .compute(starting_indexes.height, &window_starts, exit, |vec| {
-                vec.compute_transform2(
+                vec.compute_subtract(
                     starting_indexes.height,
                     &self.coinblocks_created.height,
                     &coinblocks_destroyed.height,
-                    |(i, created, destroyed, ..)| (i, created.checked_sub(destroyed).unwrap()),
                     exit,
                 )?;
                 Ok(())

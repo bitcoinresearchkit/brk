@@ -1,11 +1,11 @@
 use brk_error::Result;
-use brk_types::{Dollars, StoredF32};
+use brk_types::{BasisPoints16, Dollars};
 use vecdb::Exit;
 
 use super::{super::range, Vecs};
 use crate::{
     ComputeIndexes, blocks, distribution,
-    internal::{Ratio32, Windows},
+    internal::{RatioDollarsBp32, Windows},
     mining, prices, transactions,
 };
 
@@ -34,17 +34,17 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.puell_multiple.height.compute_divide(
+        self.puell_multiple.bps.compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
             starting_indexes.height,
             &rewards.subsidy.base.usd.height,
             &rewards.subsidy_sma_1y.usd.height,
             exit,
         )?;
 
-        // Stochastic Oscillator: K = (close - low_2w) / (high_2w - low_2w) * 100
+        // Stochastic Oscillator: K = (close - low_2w) / (high_2w - low_2w), stored as ratio (0–1)
         {
             let price = &prices.price.usd.height;
-            self.stoch_k.height.compute_transform3(
+            self.stoch_k.bps.height.compute_transform3(
                 starting_indexes.height,
                 price,
                 &range.price_min_2w.usd.height,
@@ -52,19 +52,19 @@ impl Vecs {
                 |(h, close, low, high, ..)| {
                     let range = *high - *low;
                     let stoch = if range == 0.0 {
-                        StoredF32::NAN
+                        BasisPoints16::ZERO
                     } else {
-                        StoredF32::from(((*close - *low) / range * 100.0) as f32)
+                        BasisPoints16::from(((*close - *low) / range) as f64)
                     };
                     (h, stoch)
                 },
                 exit,
             )?;
 
-            self.stoch_d.height.compute_rolling_average(
+            self.stoch_d.bps.height.compute_rolling_average(
                 starting_indexes.height,
                 &blocks.count.height_3d_ago,
-                &self.stoch_k.height,
+                &self.stoch_k.bps.height,
                 exit,
             )?;
         }
@@ -75,10 +75,10 @@ impl Vecs {
         {
             let m = tf_multiplier(tf);
             let returns_source = match tf {
-                "24h" => &returns.price_return._24h.height,
-                "1w" => &returns.price_return._1w.height,
-                "1m" => &returns.price_return._1m.height,
-                "1y" => &returns.price_return._1y.height,
+                "24h" => &returns.price_return._24h.ratio.height,
+                "1w" => &returns.price_return._1w.ratio.height,
+                "1m" => &returns.price_return._1m.ratio.height,
+                "1y" => &returns.price_return._1y.ratio.height,
                 _ => unreachable!(),
             };
             super::rsi::compute(
@@ -118,7 +118,7 @@ impl Vecs {
         )?;
 
         // NVT: market_cap / tx_volume_24h
-        self.nvt.compute_binary::<Dollars, Dollars, Ratio32>(
+        self.nvt.bps.compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
             starting_indexes.height,
             &distribution.utxo_cohorts.all.metrics.supply.total.usd.height,
             &transactions.volume.sent_sum.rolling._24h.usd.height,
@@ -126,7 +126,7 @@ impl Vecs {
         )?;
 
         // Pi Cycle: sma_111d / sma_350d_x2
-        self.pi_cycle.compute_binary::<Dollars, Dollars, Ratio32>(
+        self.pi_cycle.bps.compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
             starting_indexes.height,
             &moving_average.price_sma_111d.price.usd.height,
             &moving_average.price_sma_350d_x2.usd.height,

@@ -4,7 +4,7 @@ use brk_types::{BasisPoints16, BasisPointsSigned16, Dollars, Height, Sats, Store
 use vecdb::{Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
-    Bp16ToFloat, Bp16ToPercent, Bps16ToFloat, Bps16ToPercent, LazyFromHeight,
+    Bps16ToFloat, LazyFromHeight,
     NegRatioDollarsBps16, PercentFromHeight, RatioDollarsBp16, RatioDollarsBps16, RatioSatsBp16,
 };
 
@@ -37,7 +37,7 @@ impl RelativeBase {
         let v2 = Version::new(2);
 
         let net_unrealized_pnl_rel_to_market_cap =
-            PercentFromHeight::forced_import::<Bps16ToFloat, Bps16ToPercent>(
+            PercentFromHeight::forced_import_bps16(
                 cfg.db, &cfg.name("net_unrealized_pnl_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
             )?;
 
@@ -50,33 +50,33 @@ impl RelativeBase {
 
         Ok(Self {
             supply_in_profit_rel_to_own_supply:
-                PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                PercentFromHeight::forced_import_bp16(
                     cfg.db, &cfg.name("supply_in_profit_rel_to_own_supply"), cfg.version + v1, cfg.indexes,
                 )?,
             supply_in_loss_rel_to_own_supply:
-                PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                PercentFromHeight::forced_import_bp16(
                     cfg.db, &cfg.name("supply_in_loss_rel_to_own_supply"), cfg.version + v1, cfg.indexes,
                 )?,
             unrealized_profit_rel_to_market_cap:
-                PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                PercentFromHeight::forced_import_bp16(
                     cfg.db, &cfg.name("unrealized_profit_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
                 )?,
             unrealized_loss_rel_to_market_cap:
-                PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                PercentFromHeight::forced_import_bp16(
                     cfg.db, &cfg.name("unrealized_loss_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
                 )?,
             neg_unrealized_loss_rel_to_market_cap:
-                PercentFromHeight::forced_import::<Bps16ToFloat, Bps16ToPercent>(
+                PercentFromHeight::forced_import_bps16(
                     cfg.db, &cfg.name("neg_unrealized_loss_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
                 )?,
             net_unrealized_pnl_rel_to_market_cap,
             nupl,
             invested_capital_in_profit_rel_to_realized_cap:
-                PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                PercentFromHeight::forced_import_bp16(
                     cfg.db, &cfg.name("invested_capital_in_profit_rel_to_realized_cap"), cfg.version, cfg.indexes,
                 )?,
             invested_capital_in_loss_rel_to_realized_cap:
-                PercentFromHeight::forced_import::<Bp16ToFloat, Bp16ToPercent>(
+                PercentFromHeight::forced_import_bp16(
                     cfg.db, &cfg.name("invested_capital_in_loss_rel_to_realized_cap"), cfg.version, cfg.indexes,
                 )?,
         })

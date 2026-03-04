@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::StoredF32;
+use brk_types::BasisPoints16;
 use vecdb::Exit;
 
 use super::Vecs;
@@ -31,7 +31,7 @@ impl Vecs {
                 vec.compute_transform(
                     starting_indexes.height,
                     &indexer.vecs.blocks.weight,
-                    |(h, weight, ..)| (h, StoredF32::from(weight.fullness())),
+                    |(h, weight, ..)| (h, BasisPoints16::from(weight.fullness())),
                     exit,
                 )?;
                 Ok(())

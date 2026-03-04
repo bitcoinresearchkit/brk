@@ -1,12 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, StoredF32, Version};
+use brk_types::{BasisPoints16, Cents, Height, Version};
 use vecdb::{AnyStoredVec, Rw, StorageMode, WritableVec};
 
 use crate::{
     distribution::state::CohortState,
     internal::{
-        ComputedFromHeight, PERCENTILES_LEN, PercentilesVecs, compute_spot_percentile_rank,
+        PERCENTILES_LEN, PercentFromHeight, PercentilesVecs,
+        compute_spot_percentile_rank,
     },
 };
 
@@ -22,10 +23,10 @@ pub struct CostBasisExtended<M: StorageMode = Rw> {
     pub invested_capital: PercentilesVecs<M>,
 
     /// What percentile of cost basis is below spot (sat-weighted)
-    pub spot_cost_basis_percentile: ComputedFromHeight<StoredF32, M>,
+    pub spot_cost_basis_percentile: PercentFromHeight<BasisPoints16, M>,
 
     /// What percentile of invested capital is below spot (USD-weighted)
-    pub spot_invested_capital_percentile: ComputedFromHeight<StoredF32, M>,
+    pub spot_invested_capital_percentile: PercentFromHeight<BasisPoints16, M>,
 }
 
 impl CostBasisExtended {
@@ -43,13 +44,13 @@ impl CostBasisExtended {
                 cfg.version,
                 cfg.indexes,
             )?,
-            spot_cost_basis_percentile: ComputedFromHeight::forced_import(
+            spot_cost_basis_percentile: PercentFromHeight::forced_import_bp16(
                 cfg.db,
                 &cfg.name("spot_cost_basis_percentile"),
                 cfg.version,
                 cfg.indexes,
             )?,
-            spot_invested_capital_percentile: ComputedFromHeight::forced_import(
+            spot_invested_capital_percentile: PercentFromHeight::forced_import_bp16(
                 cfg.db,
                 &cfg.name("spot_invested_capital_percentile"),
                 cfg.version,
@@ -74,6 +75,7 @@ impl CostBasisExtended {
         self.percentiles.truncate_push(height, &sat_prices)?;
         let rank = compute_spot_percentile_rank(&sat_prices, spot);
         self.spot_cost_basis_percentile
+            .bps
             .height
             .truncate_push(height, rank)?;
 
@@ -85,6 +87,7 @@ impl CostBasisExtended {
         self.invested_capital.truncate_push(height, &usd_prices)?;
         let rank = compute_spot_percentile_rank(&usd_prices, spot);
         self.spot_invested_capital_percentile
+            .bps
             .height
             .truncate_push(height, rank)?;
 
@@ -105,8 +108,8 @@ impl CostBasisExtended {
                 .iter_mut()
                 .map(|v| &mut v.cents.height as &mut dyn AnyStoredVec),
         );
-        vecs.push(&mut self.spot_cost_basis_percentile.height);
-        vecs.push(&mut self.spot_invested_capital_percentile.height);
+        vecs.push(&mut self.spot_cost_basis_percentile.bps.height);
+        vecs.push(&mut self.spot_invested_capital_percentile.bps.height);
         vecs
     }
 
@@ -116,9 +119,11 @@ impl CostBasisExtended {
         self.invested_capital
             .validate_computed_version_or_reset(base_version)?;
         self.spot_cost_basis_percentile
+            .bps
             .height
             .validate_computed_version_or_reset(base_version)?;
         self.spot_invested_capital_percentile
+            .bps
             .height
             .validate_computed_version_or_reset(base_version)?;
         Ok(())

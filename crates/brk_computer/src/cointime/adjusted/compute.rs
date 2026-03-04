@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{BasisPointsSigned32, StoredF64};
+use brk_types::BasisPointsSigned32;
 use vecdb::Exit;
 
 use super::super::activity;
@@ -16,29 +16,27 @@ impl Vecs {
     ) -> Result<()> {
         self.cointime_adj_inflation_rate.bps.height.compute_transform2(
             starting_indexes.height,
-            &activity.activity_to_vaultedness_ratio.height,
+            &activity.liveliness.height,
             &supply.inflation_rate.bps.height,
-            |(h, ratio, inflation, ..)| (h, BasisPointsSigned32::from((*ratio) * f64::from(inflation))),
+            |(h, liveliness, inflation, ..)| (h, BasisPointsSigned32::from(f64::from(liveliness) * f64::from(inflation))),
             exit,
         )?;
 
         self.cointime_adj_tx_velocity_btc
             .height
-            .compute_transform2(
+            .compute_multiply(
                 starting_indexes.height,
                 &activity.activity_to_vaultedness_ratio.height,
                 &supply.velocity.btc.height,
-                |(h, ratio, vel, ..)| (h, StoredF64::from(*ratio * *vel)),
                 exit,
             )?;
 
         self.cointime_adj_tx_velocity_usd
             .height
-            .compute_transform2(
+            .compute_multiply(
                 starting_indexes.height,
                 &activity.activity_to_vaultedness_ratio.height,
                 &supply.velocity.usd.height,
-                |(h, ratio, vel, ..)| (h, StoredF64::from(*ratio * *vel)),
                 exit,
             )?;
 
