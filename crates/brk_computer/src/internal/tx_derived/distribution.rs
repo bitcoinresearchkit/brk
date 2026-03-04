@@ -7,12 +7,12 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 
 use brk_traversable::Traversable;
-use brk_types::{Height, TxIndex};
+use brk_types::{Height, Indexes, TxIndex};
 use schemars::JsonSchema;
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{
-    ComputeIndexes, indexes,
+    indexes,
     internal::{ComputedVecValue, Distribution, NumericValue},
 };
 
@@ -66,7 +66,7 @@ where
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         txindex_source: &impl ReadableVec<TxIndex, T>,
         exit: &Exit,
     ) -> Result<()>
@@ -93,7 +93,7 @@ where
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         txindex_source: &impl ReadableVec<TxIndex, T>,
         exit: &Exit,
         skip_count: usize,

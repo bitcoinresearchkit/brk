@@ -28,7 +28,6 @@ mod supply;
 mod traits;
 mod transactions;
 
-use indexes::ComputeIndexes;
 
 #[derive(Traversable)]
 pub struct Computer<M: StorageMode = Rw> {

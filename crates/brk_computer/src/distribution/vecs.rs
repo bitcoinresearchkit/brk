@@ -4,8 +4,8 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    Cents, Day1, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex,
-    Height, SupplyState, Timestamp, TxIndex, Version,
+    Cents, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex,
+    Height, Indexes, SupplyState, Timestamp, TxIndex, Version,
 };
 use tracing::{debug, info};
 use vecdb::{
@@ -14,7 +14,7 @@ use vecdb::{
 };
 
 use crate::{
-    ComputeIndexes, blocks,
+    blocks,
     distribution::{
         compute::{
             PriceRangeMax, StartMode, determine_start_mode, process_blocks, recover_state,
@@ -208,7 +208,7 @@ impl Vecs {
         transactions: &transactions::Vecs,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &mut ComputeIndexes,
+        starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let cache_target_len = prices
@@ -336,16 +336,6 @@ impl Vecs {
         // Update starting_indexes if we need to recompute from an earlier point
         if starting_height < starting_indexes.height {
             starting_indexes.height = starting_height;
-            // Also update day1 to match
-            if starting_height.is_zero() {
-                starting_indexes.day1 = Day1::from(0);
-            } else {
-                starting_indexes.day1 = indexes
-                    .height
-                    .day1
-                    .collect_one(starting_height.decremented().unwrap())
-                    .unwrap();
-            }
         }
 
         // 2b. Validate computed versions

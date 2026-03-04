@@ -1,8 +1,9 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_types::Indexes;
 use vecdb::Exit;
 
-use crate::{blocks, indexes, inputs, outputs, prices, ComputeIndexes};
+use crate::{blocks, indexes, inputs, outputs, prices};
 
 use super::Vecs;
 
@@ -16,7 +17,7 @@ impl Vecs {
         inputs: &inputs::Vecs,
         outputs: &outputs::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         // Count computes first

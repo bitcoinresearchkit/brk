@@ -1,8 +1,8 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Sats, Version};
+use brk_types::{Height, Indexes, Sats, Version};
 
-use crate::{ComputeIndexes, blocks, prices};
+use crate::{blocks, prices};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
@@ -25,12 +25,7 @@ pub struct SupplyMetrics<M: StorageMode = Rw> {
 impl SupplyMetrics {
     /// Import supply metrics from database.
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let supply = ValueFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("supply"),
-            cfg.version,
-            cfg.indexes,
-        )?;
+        let supply = cfg.import_value("supply", Version::ZERO)?;
 
         let supply_halved = LazyValueFromHeight::from_block_source::<
             HalveSats,
@@ -39,12 +34,7 @@ impl SupplyMetrics {
             HalveDollars,
         >(&cfg.name("supply_halved"), &supply, cfg.version);
 
-        let change_1m = ValueFromHeightChange::forced_import(
-            cfg.db,
-            &cfg.name("supply_change_1m"),
-            cfg.version,
-            cfg.indexes,
-        )?;
+        let change_1m = cfg.import_value_change("supply_change_1m", Version::ZERO)?;
 
         Ok(Self {
             total: supply,
@@ -92,7 +82,7 @@ impl SupplyMetrics {
     /// Compute aggregate values from separate cohorts.
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
@@ -111,7 +101,7 @@ impl SupplyMetrics {
     pub(crate) fn compute_rest_part1(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.change_1m.compute_rolling(

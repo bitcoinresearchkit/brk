@@ -1,16 +1,16 @@
 use brk_error::Result;
-use brk_types::Cents;
+use brk_types::{Cents, Indexes};
 use vecdb::Exit;
 
 use super::super::{activity, cap, supply};
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, distribution, prices};
+use crate::{blocks, distribution, prices};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
         distribution: &distribution::Vecs,

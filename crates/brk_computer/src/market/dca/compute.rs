@@ -1,10 +1,10 @@
 use brk_error::Result;
-use brk_types::{BasisPointsSigned32, Bitcoin, Cents, Date, Day1, Dollars, Sats};
+use brk_types::{BasisPointsSigned32, Bitcoin, Cents, Date, Day1, Dollars, Indexes, Sats};
 use vecdb::{AnyVec, Exit, ReadableOptionVec, ReadableVec, VecIndex};
 
 use super::Vecs;
 use crate::{
-    ComputeIndexes, blocks, indexes, internal::RatioDiffCentsBps32, market::lookback, prices,
+    blocks, indexes, internal::RatioDiffCentsBps32, market::lookback, prices,
 };
 
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
@@ -16,7 +16,7 @@ impl Vecs {
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
         lookback: &lookback::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let h2d = &indexes.height.day1;

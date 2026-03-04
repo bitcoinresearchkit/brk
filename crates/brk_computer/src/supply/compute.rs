@@ -1,8 +1,9 @@
 use brk_error::Result;
+use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, distribution, mining, prices, scripts, transactions};
+use crate::{blocks, distribution, mining, prices, scripts, transactions};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -14,7 +15,7 @@ impl Vecs {
         transactions: &transactions::Vecs,
         prices: &prices::Vecs,
         distribution: &distribution::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         // 1. Compute burned/unspendable supply

@@ -1,15 +1,15 @@
 use brk_error::Result;
-use brk_types::BasisPointsSigned32;
+use brk_types::{BasisPointsSigned32, Indexes};
 use vecdb::Exit;
 
 use super::super::activity;
 use super::Vecs;
-use crate::{ComputeIndexes, supply};
+use crate::supply;
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         supply: &supply::Vecs,
         activity: &activity::Vecs,
         exit: &Exit,

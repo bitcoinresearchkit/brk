@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Cents, Dollars, Height};
+use brk_types::{Bitcoin, Cents, Dollars, Height, Indexes};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{ComputeIndexes, blocks, prices};
+use crate::{blocks, prices};
 
 use crate::distribution::metrics::ImportConfig;
 
@@ -40,7 +40,7 @@ impl RealizedWithExtendedAdjusted {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         up_to_1h_value_created: &impl ReadableVec<Height, Cents>,

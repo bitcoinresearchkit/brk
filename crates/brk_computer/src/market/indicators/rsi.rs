@@ -1,9 +1,9 @@
 use brk_error::Result;
-use brk_types::{BasisPoints16, Height, StoredF32};
+use brk_types::{BasisPoints16, Height, Indexes, StoredF32};
 use vecdb::{Exit, ReadableVec};
 
 use super::RsiChain;
-use crate::{ComputeIndexes, blocks};
+use crate::blocks;
 
 pub(super) fn compute(
     chain: &mut RsiChain,
@@ -11,7 +11,7 @@ pub(super) fn compute(
     returns_source: &impl ReadableVec<Height, StoredF32>,
     rma_days: usize,
     stoch_sma_days: usize,
-    starting_indexes: &ComputeIndexes,
+    starting_indexes: &Indexes,
     exit: &Exit,
 ) -> Result<()> {
     let ws_rma = blocks.count.start_vec(rma_days);

@@ -1,13 +1,12 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, CentsSats, CentsSigned, CentsSquaredSats, Height, Version};
+use brk_types::{Cents, CentsSats, CentsSigned, CentsSquaredSats, Height, Indexes, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Exit, ImportableVec, ReadableCloneableVec, ReadableVec,
+    AnyStoredVec, AnyVec, BytesVec, Exit, ReadableCloneableVec, ReadableVec,
     Rw, StorageMode, WritableVec,
 };
 
 use crate::{
-    ComputeIndexes,
     distribution::state::UnrealizedState,
     internal::{
         CentsSubtractToCentsSigned, FiatFromHeight, LazyFromHeight, NegCentsUnsignedToDollars,
@@ -56,84 +55,24 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
 
 impl UnrealizedBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let supply_in_profit = ValueFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("supply_in_profit"),
-            cfg.version,
-            cfg.indexes,
-        )?;
-        let supply_in_loss = ValueFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("supply_in_loss"),
-            cfg.version,
-            cfg.indexes,
-        )?;
+        let v0 = Version::ZERO;
+        let supply_in_profit = cfg.import_value("supply_in_profit", v0)?;
+        let supply_in_loss = cfg.import_value("supply_in_loss", v0)?;
 
-        let unrealized_profit = FiatFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("unrealized_profit"),
-            cfg.version,
-            cfg.indexes,
-        )?;
-        let unrealized_loss = FiatFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("unrealized_loss"),
-            cfg.version,
-            cfg.indexes,
-        )?;
+        let unrealized_profit = cfg.import_fiat("unrealized_profit", v0)?;
+        let unrealized_loss = cfg.import_fiat("unrealized_loss", v0)?;
 
-        let invested_capital_in_profit = FiatFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("invested_capital_in_profit"),
-            cfg.version,
-            cfg.indexes,
-        )?;
-        let invested_capital_in_loss = FiatFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("invested_capital_in_loss"),
-            cfg.version,
-            cfg.indexes,
-        )?;
+        let invested_capital_in_profit = cfg.import_fiat("invested_capital_in_profit", v0)?;
+        let invested_capital_in_loss = cfg.import_fiat("invested_capital_in_loss", v0)?;
 
-        let invested_capital_in_profit_raw = BytesVec::forced_import(
-            cfg.db,
-            &cfg.name("invested_capital_in_profit_raw"),
-            cfg.version,
-        )?;
-        let invested_capital_in_loss_raw = BytesVec::forced_import(
-            cfg.db,
-            &cfg.name("invested_capital_in_loss_raw"),
-            cfg.version,
-        )?;
-        let investor_cap_in_profit_raw = BytesVec::forced_import(
-            cfg.db,
-            &cfg.name("investor_cap_in_profit_raw"),
-            cfg.version,
-        )?;
-        let investor_cap_in_loss_raw = BytesVec::forced_import(
-            cfg.db,
-            &cfg.name("investor_cap_in_loss_raw"),
-            cfg.version,
-        )?;
+        let invested_capital_in_profit_raw = cfg.import_bytes("invested_capital_in_profit_raw", v0)?;
+        let invested_capital_in_loss_raw = cfg.import_bytes("invested_capital_in_loss_raw", v0)?;
+        let investor_cap_in_profit_raw = cfg.import_bytes("investor_cap_in_profit_raw", v0)?;
+        let investor_cap_in_loss_raw = cfg.import_bytes("investor_cap_in_loss_raw", v0)?;
 
-        let pain_index = FiatFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("pain_index"),
-            cfg.version,
-            cfg.indexes,
-        )?;
-        let greed_index = FiatFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("greed_index"),
-            cfg.version,
-            cfg.indexes,
-        )?;
-        let net_sentiment = FiatFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("net_sentiment"),
-            cfg.version + Version::ONE,
-            cfg.indexes,
-        )?;
+        let pain_index = cfg.import_fiat("pain_index", v0)?;
+        let greed_index = cfg.import_fiat("greed_index", v0)?;
+        let net_sentiment = cfg.import_fiat("net_sentiment", Version::ONE)?;
 
         let neg_unrealized_loss = LazyFromHeight::from_computed::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_unrealized_loss"),
@@ -142,18 +81,8 @@ impl UnrealizedBase {
             &unrealized_loss.cents,
         );
 
-        let net_unrealized_pnl = FiatFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("net_unrealized_pnl"),
-            cfg.version,
-            cfg.indexes,
-        )?;
-        let gross_pnl = FiatFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("gross_pnl"),
-            cfg.version,
-            cfg.indexes,
-        )?;
+        let net_unrealized_pnl = cfg.import_fiat("net_unrealized_pnl", v0)?;
+        let gross_pnl = cfg.import_fiat("unrealized_gross_pnl", v0)?;
 
         Ok(Self {
             supply_in_profit,
@@ -260,7 +189,7 @@ impl UnrealizedBase {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
@@ -392,7 +321,7 @@ impl UnrealizedBase {
     pub(crate) fn compute_rest(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         // Pain index: investor_price_of_losers - spot
@@ -457,7 +386,7 @@ impl UnrealizedBase {
     /// Compute net_sentiment.height for separate cohorts (greed - pain).
     pub(crate) fn compute_net_sentiment_height(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.net_sentiment

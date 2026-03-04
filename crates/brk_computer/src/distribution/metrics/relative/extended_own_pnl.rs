@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, BasisPointsSigned16, Dollars, Height};
+use brk_types::{BasisPoints16, BasisPointsSigned16, Dollars, Height, Version};
 use vecdb::{Exit, Rw, StorageMode};
 
 use crate::internal::{
@@ -23,41 +23,19 @@ pub struct RelativeExtendedOwnPnl<M: StorageMode = Rw> {
 }
 
 impl RelativeExtendedOwnPnl {
-    pub(crate) fn forced_import(
-        cfg: &ImportConfig,
-    ) -> Result<Self> {
-        let v1 = brk_types::Version::ONE;
-        let v2 = brk_types::Version::new(2);
+    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
+        let v1 = Version::ONE;
+        let v2 = Version::new(2);
 
         Ok(Self {
             unrealized_profit_rel_to_own_gross_pnl:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db,
-                    &cfg.name("unrealized_profit_rel_to_own_gross_pnl"),
-                    cfg.version + v1,
-                    cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("unrealized_profit_rel_to_own_gross_pnl", v1)?,
             unrealized_loss_rel_to_own_gross_pnl:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db,
-                    &cfg.name("unrealized_loss_rel_to_own_gross_pnl"),
-                    cfg.version + v1,
-                    cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("unrealized_loss_rel_to_own_gross_pnl", v1)?,
             neg_unrealized_loss_rel_to_own_gross_pnl:
-                PercentFromHeight::forced_import_bps16(
-                    cfg.db,
-                    &cfg.name("neg_unrealized_loss_rel_to_own_gross_pnl"),
-                    cfg.version + v1,
-                    cfg.indexes,
-                )?,
+                cfg.import_percent_bps16("neg_unrealized_loss_rel_to_own_gross_pnl", v1)?,
             net_unrealized_pnl_rel_to_own_gross_pnl:
-                PercentFromHeight::forced_import_bps16(
-                    cfg.db,
-                    &cfg.name("net_unrealized_pnl_rel_to_own_gross_pnl"),
-                    cfg.version + v2,
-                    cfg.indexes,
-                )?,
+                cfg.import_percent_bps16("net_unrealized_pnl_rel_to_own_gross_pnl", v2)?,
         })
     }
 

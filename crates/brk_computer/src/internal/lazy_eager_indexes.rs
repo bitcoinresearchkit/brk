@@ -14,14 +14,14 @@ use vecdb::{LazyVecFrom1, ReadableCloneableVec, UnaryTransform};
 
 use crate::{
     indexes_from,
-    internal::{ComputedVecValue, EagerIndexes, Indexes},
+    internal::{ComputedVecValue, EagerIndexes, PerPeriod},
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct LazyEagerIndexes<T, S>(
     #[allow(clippy::type_complexity)]
-    pub  Indexes<
+    pub  PerPeriod<
         LazyVecFrom1<Minute10, T, Minute10, S>,
         LazyVecFrom1<Minute30, T, Minute30, S>,
         LazyVecFrom1<Hour1, T, Hour1, S>,

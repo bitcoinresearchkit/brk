@@ -53,11 +53,10 @@ impl TotalAddrCountVecs {
         empty_addr_count: &AddrCountsVecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.all.height.compute_transform2(
+        self.all.height.compute_add(
             max_from,
             &addr_count.all.count.height,
             &empty_addr_count.all.count.height,
-            |(h, a, b, ..)| (h, StoredU64::from(*a + *b)),
             exit,
         )?;
 
@@ -71,11 +70,10 @@ impl TotalAddrCountVecs {
                     .zip(empty_addr_count.by_addresstype.iter()),
             )
         {
-            total.height.compute_transform2(
+            total.height.compute_add(
                 max_from,
                 &addr.count.height,
                 &empty.count.height,
-                |(h, a, b, ..)| (h, StoredU64::from(*a + *b)),
                 exit,
             )?;
         }

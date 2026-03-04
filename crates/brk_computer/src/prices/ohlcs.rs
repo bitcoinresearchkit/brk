@@ -1,9 +1,9 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Cents, Close, Day1, Day3, DifficultyEpoch, HalvingEpoch, High, Hour1, Hour4, Hour12, Low,
-    Minute10, Minute30, Month1, Month3, Month6, OHLCCents, Open, Version, Week1,
-    Year1, Year10,
+    Cents, Close, Day1, Day3, DifficultyEpoch, HalvingEpoch, High, Hour1, Hour4, Hour12, Indexes,
+    Low, Minute10, Minute30, Month1, Month3, Month6, OHLCCents, Open, Version, Week1, Year1,
+    Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -14,8 +14,8 @@ use vecdb::{
 };
 
 use crate::{
-    ComputeIndexes, indexes_apply, indexes_from,
-    internal::{ComputedHeightDerived, EagerIndexes, Indexes},
+    indexes, indexes_apply, indexes_from,
+    internal::{ComputedHeightDerived, EagerIndexes, PerPeriod},
 };
 
 // ── EagerOhlcIndexes ─────────────────────────────────────────────────
@@ -24,7 +24,7 @@ use crate::{
 #[traversable(merge)]
 pub struct OhlcVecs<T, M: StorageMode = Rw>(
     #[allow(clippy::type_complexity)]
-    pub  Indexes<
+    pub  PerPeriod<
         <M as StorageMode>::Stored<EagerVec<BytesVec<Minute10, T>>>,
         <M as StorageMode>::Stored<EagerVec<BytesVec<Minute30, T>>>,
         <M as StorageMode>::Stored<EagerVec<BytesVec<Hour1, T>>>,
@@ -65,19 +65,27 @@ where
 }
 
 impl OhlcVecs<OHLCCents> {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_from_split(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
+        indexes: &indexes::Vecs,
         open: &EagerIndexes<Cents>,
         high: &EagerIndexes<Cents>,
         low: &EagerIndexes<Cents>,
         close: &ComputedHeightDerived<Cents>,
         exit: &Exit,
     ) -> Result<()> {
+        let prev_height = starting_indexes.height.decremented().unwrap_or_default();
+
         macro_rules! period {
             ($field:ident) => {
                 self.0.$field.compute_transform4(
-                    starting_indexes.$field,
+                    indexes
+                        .height
+                        .$field
+                        .collect_one(prev_height)
+                        .unwrap_or_default(),
                     &open.$field,
                     &high.$field,
                     &low.$field,
@@ -94,9 +102,8 @@ impl OhlcVecs<OHLCCents> {
                                 }
                             } else {
                                 // Empty period (no blocks): flat candle at previous close
-                                let prev_close = Close::new(
-                                    this.collect_last().map_or(o, |prev| *prev.close),
-                                );
+                                let prev_close =
+                                    Close::new(this.collect_last().map_or(o, |prev| *prev.close));
                                 OHLCCents::from(prev_close)
                             },
                         )
@@ -109,7 +116,11 @@ impl OhlcVecs<OHLCCents> {
         macro_rules! epoch {
             ($field:ident) => {
                 self.0.$field.compute_transform4(
-                    starting_indexes.$field,
+                    indexes
+                        .height
+                        .$field
+                        .collect_one(prev_height)
+                        .unwrap_or_default(),
                     &open.$field,
                     &high.$field,
                     &low.$field,
@@ -142,7 +153,7 @@ impl OhlcVecs<OHLCCents> {
 #[traversable(merge)]
 pub struct LazyOhlcVecs<T, S>(
     #[allow(clippy::type_complexity)]
-    pub  Indexes<
+    pub  PerPeriod<
         LazyVecFrom1<Minute10, T, Minute10, S>,
         LazyVecFrom1<Minute30, T, Minute30, S>,
         LazyVecFrom1<Hour1, T, Hour1, S>,

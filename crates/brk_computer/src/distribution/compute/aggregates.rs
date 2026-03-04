@@ -1,9 +1,9 @@
 use brk_error::Result;
-use brk_types::{Dollars, Height};
+use brk_types::{Dollars, Height, Indexes};
 use tracing::info;
 use vecdb::{Exit, ReadableVec};
 
-use crate::{ComputeIndexes, blocks, prices};
+use crate::{blocks, prices};
 
 use super::super::cohorts::{AddressCohorts, UTXOCohorts};
 
@@ -15,7 +15,7 @@ use super::super::cohorts::{AddressCohorts, UTXOCohorts};
 pub(crate) fn compute_overlapping(
     utxo_cohorts: &mut UTXOCohorts,
     address_cohorts: &mut AddressCohorts,
-    starting_indexes: &ComputeIndexes,
+    starting_indexes: &Indexes,
     exit: &Exit,
 ) -> Result<()> {
     info!("Computing overlapping cohorts...");
@@ -34,7 +34,7 @@ pub(crate) fn compute_rest_part1(
     address_cohorts: &mut AddressCohorts,
     blocks: &blocks::Vecs,
     prices: &prices::Vecs,
-    starting_indexes: &ComputeIndexes,
+    starting_indexes: &Indexes,
     exit: &Exit,
 ) -> Result<()> {
     info!("Computing rest part 1...");
@@ -53,7 +53,7 @@ pub(crate) fn compute_rest_part2<HM>(
     address_cohorts: &mut AddressCohorts,
     blocks: &blocks::Vecs,
     prices: &prices::Vecs,
-    starting_indexes: &ComputeIndexes,
+    starting_indexes: &Indexes,
     height_to_market_cap: &HM,
     exit: &Exit,
 ) -> Result<()>

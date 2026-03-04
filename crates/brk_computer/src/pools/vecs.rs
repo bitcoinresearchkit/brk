@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Height, PoolSlug, StoredU32};
+use brk_types::{BasisPoints16, Height, Indexes, PoolSlug, StoredU32};
 use vecdb::{AnyVec, BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, VecIndex, Version};
 
 use crate::{
     blocks,
-    indexes::{self, ComputeIndexes},
+    indexes,
     internal::{
         ComputedFromHeightCumulativeSum, ComputedFromHeight, MaskSats,
         PercentFromHeight, PercentRollingWindows, RatioU32Bp16, RollingWindows,
@@ -83,7 +83,7 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         height_to_pool: &impl ReadableVec<Height, PoolSlug>,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,

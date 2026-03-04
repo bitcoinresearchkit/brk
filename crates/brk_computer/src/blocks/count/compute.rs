@@ -1,9 +1,9 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Height, StoredU32, Timestamp};
+use brk_types::{Height, Indexes, StoredU32, Timestamp};
 use vecdb::{AnyVec, Cursor, EagerVec, Exit, PcoVec, ReadableVec, VecIndex};
 
-use crate::{internal::WindowStarts, ComputeIndexes};
+use crate::internal::WindowStarts;
 
 use super::{super::time, Vecs};
 
@@ -12,7 +12,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         time: &time::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         // Block count height + cumulative first (rolling computed after window starts)
@@ -185,7 +185,7 @@ impl Vecs {
     fn compute_rolling_start<F>(
         &mut self,
         time: &time::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
         days: usize,
         get_field: F,
@@ -205,7 +205,7 @@ impl Vecs {
     fn compute_rolling_start_hours<F>(
         &mut self,
         time: &time::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
         hours: usize,
         get_field: F,
@@ -225,7 +225,7 @@ impl Vecs {
     fn compute_rolling_start_inner<F, D>(
         &mut self,
         time: &time::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
         get_field: F,
         expired: D,

@@ -14,17 +14,50 @@ impl Vecs {
     ) -> Result<()> {
         // Sharpe ratios: returns / volatility
         for (out, ret, vol) in [
-            (&mut self.price_sharpe_1w, &returns.price_return._1w.ratio.height, &self.price_volatility_1w.height),
-            (&mut self.price_sharpe_1m, &returns.price_return._1m.ratio.height, &self.price_volatility_1m.height),
-            (&mut self.price_sharpe_1y, &returns.price_return._1y.ratio.height, &self.price_volatility_1y.height),
+            (
+                &mut self.price_sharpe_1w,
+                &returns.price_return._1w.ratio.height,
+                &self.price_volatility_1w.height,
+            ),
+            (
+                &mut self.price_sharpe_1m,
+                &returns.price_return._1m.ratio.height,
+                &self.price_volatility_1m.height,
+            ),
+            (
+                &mut self.price_sharpe_1y,
+                &returns.price_return._1y.ratio.height,
+                &self.price_volatility_1y.height,
+            ),
         ] {
             compute_ratio(&mut out.height, starting_indexes_height, ret, vol, exit)?;
         }
 
         // Sortino ratios: returns / downside volatility (sd * sqrt(days))
-        compute_sortino(&mut self.price_sortino_1w.height, starting_indexes_height, &returns.price_return._1w.ratio.height, &returns.price_downside_24h_sd_1w.sd.height, 7.0_f32.sqrt(), exit)?;
-        compute_sortino(&mut self.price_sortino_1m.height, starting_indexes_height, &returns.price_return._1m.ratio.height, &returns.price_downside_24h_sd_1m.sd.height, 30.0_f32.sqrt(), exit)?;
-        compute_sortino(&mut self.price_sortino_1y.height, starting_indexes_height, &returns.price_return._1y.ratio.height, &returns.price_downside_24h_sd_1y.sd.height, 365.0_f32.sqrt(), exit)?;
+        compute_sortino(
+            &mut self.price_sortino_1w.height,
+            starting_indexes_height,
+            &returns.price_return._1w.ratio.height,
+            &returns.price_downside_24h_sd_1w.sd.height,
+            7.0_f32.sqrt(),
+            exit,
+        )?;
+        compute_sortino(
+            &mut self.price_sortino_1m.height,
+            starting_indexes_height,
+            &returns.price_return._1m.ratio.height,
+            &returns.price_downside_24h_sd_1m.sd.height,
+            30.0_f32.sqrt(),
+            exit,
+        )?;
+        compute_sortino(
+            &mut self.price_sortino_1y.height,
+            starting_indexes_height,
+            &returns.price_return._1y.ratio.height,
+            &returns.price_downside_24h_sd_1y.sd.height,
+            365.0_f32.sqrt(),
+            exit,
+        )?;
 
         Ok(())
     }
@@ -63,8 +96,12 @@ fn compute_sortino(
         ret,
         sd,
         |(h, ret, sd, ..)| {
-            let downside_vol = f32::from(*sd) * sqrt_days;
-            let ratio = if downside_vol == 0.0 { 0.0 } else { f32::from(*ret) / downside_vol };
+            let downside_vol = (*sd) * sqrt_days;
+            let ratio = if downside_vol == 0.0 {
+                0.0
+            } else {
+                (*ret) / downside_vol
+            };
             (h, StoredF32::from(ratio))
         },
         exit,

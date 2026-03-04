@@ -33,7 +33,6 @@ use vecdb::{Database, Exit, PAGE_SIZE, ReadableVec, Rw, StorageMode};
 use crate::blocks;
 
 pub use address::Vecs as AddressVecs;
-pub use brk_types::ComputeIndexes;
 pub use day1::Vecs as Day1Vecs;
 pub use day3::Vecs as Day3Vecs;
 pub use difficultyepoch::Vecs as DifficultyEpochVecs;
@@ -133,7 +132,7 @@ impl Vecs {
         blocks: &mut blocks::Vecs,
         starting_indexes: Indexes,
         exit: &Exit,
-    ) -> Result<ComputeIndexes> {
+    ) -> Result<Indexes> {
         blocks
             .time
             .compute(indexer, starting_indexes.height, exit)?;
@@ -149,7 +148,7 @@ impl Vecs {
         blocks_time: &blocks::time::Vecs,
         starting_indexes: Indexes,
         exit: &Exit,
-    ) -> Result<ComputeIndexes> {
+    ) -> Result<Indexes> {
         // Transaction indexes - compute input/output counts
         self.txindex.input_count.compute_count_from_indexes(
             starting_indexes.txindex,
@@ -350,70 +349,9 @@ impl Vecs {
             exit,
         )?;
 
-        // --- Starting values from height → period mappings ---
-
-        let starting_minute10 = self
-            .height
-            .minute10
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_minute30 = self
-            .height
-            .minute30
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_hour1 = self
-            .height
-            .hour1
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_hour4 = self
-            .height
-            .hour4
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_hour12 = self
-            .height
-            .hour12
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_day3 = self
-            .height
-            .day3
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_week1 = self
-            .height
-            .week1
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_month1 = self
-            .height
-            .month1
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_month3 = self
-            .height
-            .month3
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_month6 = self
-            .height
-            .month6
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_year1 = self
-            .height
-            .year1
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-        let starting_year10 = self
-            .height
-            .year10
-            .collect_one(decremented_starting_height)
-            .unwrap_or_default();
-
         // --- Compute period-level vecs (first_height + identity) ---
+
+        let prev_height = decremented_starting_height;
 
         // Minute10
         self.minute10.first_height.compute_first_per_index(
@@ -422,7 +360,7 @@ impl Vecs {
             exit,
         )?;
         self.minute10.identity.compute_from_index(
-            starting_minute10,
+            self.height.minute10.collect_one(prev_height).unwrap_or_default(),
             &self.minute10.first_height,
             exit,
         )?;
@@ -434,7 +372,7 @@ impl Vecs {
             exit,
         )?;
         self.minute30.identity.compute_from_index(
-            starting_minute30,
+            self.height.minute30.collect_one(prev_height).unwrap_or_default(),
             &self.minute30.first_height,
             exit,
         )?;
@@ -445,9 +383,11 @@ impl Vecs {
             &self.height.hour1,
             exit,
         )?;
-        self.hour1
-            .identity
-            .compute_from_index(starting_hour1, &self.hour1.first_height, exit)?;
+        self.hour1.identity.compute_from_index(
+            self.height.hour1.collect_one(prev_height).unwrap_or_default(),
+            &self.hour1.first_height,
+            exit,
+        )?;
 
         // Hour4
         self.hour4.first_height.compute_first_per_index(
@@ -455,9 +395,11 @@ impl Vecs {
             &self.height.hour4,
             exit,
         )?;
-        self.hour4
-            .identity
-            .compute_from_index(starting_hour4, &self.hour4.first_height, exit)?;
+        self.hour4.identity.compute_from_index(
+            self.height.hour4.collect_one(prev_height).unwrap_or_default(),
+            &self.hour4.first_height,
+            exit,
+        )?;
 
         // Hour12
         self.hour12.first_height.compute_first_per_index(
@@ -466,7 +408,7 @@ impl Vecs {
             exit,
         )?;
         self.hour12.identity.compute_from_index(
-            starting_hour12,
+            self.height.hour12.collect_one(prev_height).unwrap_or_default(),
             &self.hour12.first_height,
             exit,
         )?;
@@ -477,9 +419,11 @@ impl Vecs {
             &self.height.day1,
             exit,
         )?;
-        self.day1
-            .identity
-            .compute_from_index(starting_day1, &self.day1.first_height, exit)?;
+        self.day1.identity.compute_from_index(
+            starting_day1,
+            &self.day1.first_height,
+            exit,
+        )?;
         self.day1.date.compute_transform(
             starting_day1,
             &self.day1.identity,
@@ -499,9 +443,11 @@ impl Vecs {
             &self.height.day3,
             exit,
         )?;
-        self.day3
-            .identity
-            .compute_from_index(starting_day3, &self.day3.first_height, exit)?;
+        self.day3.identity.compute_from_index(
+            self.height.day3.collect_one(prev_height).unwrap_or_default(),
+            &self.day3.first_height,
+            exit,
+        )?;
 
         let blocks_time_date = &blocks_time.date;
 
@@ -511,9 +457,12 @@ impl Vecs {
             &self.height.week1,
             exit,
         )?;
-        self.week1
-            .identity
-            .compute_from_index(starting_week1, &self.week1.first_height, exit)?;
+        let starting_week1 = self.height.week1.collect_one(prev_height).unwrap_or_default();
+        self.week1.identity.compute_from_index(
+            starting_week1,
+            &self.week1.first_height,
+            exit,
+        )?;
         self.week1.date.compute_transform(
             starting_week1,
             &self.week1.first_height,
@@ -527,6 +476,7 @@ impl Vecs {
             &self.height.month1,
             exit,
         )?;
+        let starting_month1 = self.height.month1.collect_one(prev_height).unwrap_or_default();
         self.month1.identity.compute_from_index(
             starting_month1,
             &self.month1.first_height,
@@ -545,6 +495,7 @@ impl Vecs {
             &self.height.month3,
             exit,
         )?;
+        let starting_month3 = self.height.month3.collect_one(prev_height).unwrap_or_default();
         self.month3.identity.compute_from_index(
             starting_month3,
             &self.month3.first_height,
@@ -563,6 +514,7 @@ impl Vecs {
             &self.height.month6,
             exit,
         )?;
+        let starting_month6 = self.height.month6.collect_one(prev_height).unwrap_or_default();
         self.month6.identity.compute_from_index(
             starting_month6,
             &self.month6.first_height,
@@ -581,9 +533,12 @@ impl Vecs {
             &self.height.year1,
             exit,
         )?;
-        self.year1
-            .identity
-            .compute_from_index(starting_year1, &self.year1.first_height, exit)?;
+        let starting_year1 = self.height.year1.collect_one(prev_height).unwrap_or_default();
+        self.year1.identity.compute_from_index(
+            starting_year1,
+            &self.year1.first_height,
+            exit,
+        )?;
         self.year1.date.compute_transform(
             starting_year1,
             &self.year1.first_height,
@@ -597,6 +552,7 @@ impl Vecs {
             &self.height.year10,
             exit,
         )?;
+        let starting_year10 = self.height.year10.collect_one(prev_height).unwrap_or_default();
         self.year10.identity.compute_from_index(
             starting_year10,
             &self.year10.first_height,
@@ -609,23 +565,6 @@ impl Vecs {
             exit,
         )?;
 
-        Ok(ComputeIndexes::new(
-            starting_indexes,
-            starting_minute10,
-            starting_minute30,
-            starting_hour1,
-            starting_hour4,
-            starting_hour12,
-            starting_day1,
-            starting_day3,
-            starting_week1,
-            starting_month1,
-            starting_month3,
-            starting_month6,
-            starting_year1,
-            starting_year10,
-            starting_halvingepoch,
-            starting_difficultyepoch,
-        ))
+        Ok(starting_indexes)
     }
 }

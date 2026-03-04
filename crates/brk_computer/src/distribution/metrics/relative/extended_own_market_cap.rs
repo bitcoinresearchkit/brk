@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, BasisPointsSigned16, Dollars, Height};
+use brk_types::{BasisPoints16, BasisPointsSigned16, Dollars, Height, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
@@ -23,40 +23,18 @@ pub struct RelativeExtendedOwnMarketCap<M: StorageMode = Rw> {
 }
 
 impl RelativeExtendedOwnMarketCap {
-    pub(crate) fn forced_import(
-        cfg: &ImportConfig,
-    ) -> Result<Self> {
-        let v2 = brk_types::Version::new(2);
+    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
+        let v2 = Version::new(2);
 
         Ok(Self {
             unrealized_profit_rel_to_own_market_cap:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db,
-                    &cfg.name("unrealized_profit_rel_to_own_market_cap"),
-                    cfg.version + v2,
-                    cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("unrealized_profit_rel_to_own_market_cap", v2)?,
             unrealized_loss_rel_to_own_market_cap:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db,
-                    &cfg.name("unrealized_loss_rel_to_own_market_cap"),
-                    cfg.version + v2,
-                    cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("unrealized_loss_rel_to_own_market_cap", v2)?,
             neg_unrealized_loss_rel_to_own_market_cap:
-                PercentFromHeight::forced_import_bps16(
-                    cfg.db,
-                    &cfg.name("neg_unrealized_loss_rel_to_own_market_cap"),
-                    cfg.version + v2,
-                    cfg.indexes,
-                )?,
+                cfg.import_percent_bps16("neg_unrealized_loss_rel_to_own_market_cap", v2)?,
             net_unrealized_pnl_rel_to_own_market_cap:
-                PercentFromHeight::forced_import_bps16(
-                    cfg.db,
-                    &cfg.name("net_unrealized_pnl_rel_to_own_market_cap"),
-                    cfg.version + v2,
-                    cfg.indexes,
-                )?,
+                cfg.import_percent_bps16("net_unrealized_pnl_rel_to_own_market_cap", v2)?,
         })
     }
 

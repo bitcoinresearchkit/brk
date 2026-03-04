@@ -1,5 +1,5 @@
-mod _1w_1m;
-mod _2w;
+mod emas_1w_1m;
+mod emas_2w;
 
-pub use _1w_1m::*;
-pub use _2w::*;
+pub use emas_1w_1m::*;
+pub use emas_2w::*;

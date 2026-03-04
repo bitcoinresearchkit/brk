@@ -17,6 +17,23 @@ pub struct DistributionStats<A, B = A, C = A, D = A, E = A, F = A, G = A, H = A>
 }
 
 impl<A> DistributionStats<A> {
+    pub const SUFFIXES: [&'static str; 8] = ["average", "min", "max", "p10", "p25", "median", "p75", "p90"];
+
+    pub fn try_from_fn<E>(
+        mut f: impl FnMut(&str) -> std::result::Result<A, E>,
+    ) -> std::result::Result<Self, E> {
+        Ok(Self {
+            average: f(Self::SUFFIXES[0])?,
+            min: f(Self::SUFFIXES[1])?,
+            max: f(Self::SUFFIXES[2])?,
+            pct10: f(Self::SUFFIXES[3])?,
+            pct25: f(Self::SUFFIXES[4])?,
+            median: f(Self::SUFFIXES[5])?,
+            pct75: f(Self::SUFFIXES[6])?,
+            pct90: f(Self::SUFFIXES[7])?,
+        })
+    }
+
     /// Apply a fallible operation to each of the 8 fields.
     pub fn try_for_each_mut(&mut self, mut f: impl FnMut(&mut A) -> brk_error::Result<()>) -> brk_error::Result<()> {
         f(&mut self.average)?;

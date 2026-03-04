@@ -1,17 +1,17 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{CheckedSub, Timestamp};
+use brk_types::{CheckedSub, Indexes, Timestamp};
 use vecdb::{Exit, ReadableVec};
 
 use super::Vecs;
-use crate::{blocks, ComputeIndexes};
+use crate::blocks;
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         count_vecs: &blocks::CountVecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let mut prev_timestamp = None;

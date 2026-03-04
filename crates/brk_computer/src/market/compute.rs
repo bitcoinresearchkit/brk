@@ -1,7 +1,8 @@
 use brk_error::Result;
+use brk_types::Indexes;
 use vecdb::Exit;
 
-use crate::{ComputeIndexes, blocks, distribution, indexes, mining, prices, transactions};
+use crate::{blocks, distribution, indexes, mining, prices, transactions};
 
 use super::Vecs;
 
@@ -15,7 +16,7 @@ impl Vecs {
         mining: &mining::Vecs,
         distribution: &distribution::Vecs,
         transactions: &transactions::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.ath.compute(prices, blocks, starting_indexes, exit)?;

@@ -1,13 +1,13 @@
 use brk_error::Result;
-use brk_types::{BasisPoints16, Sats, StoredU64, Version};
+use brk_types::{BasisPoints16, Indexes, Sats, StoredU64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
-use crate::{ComputeIndexes, distribution, internal::PercentFromHeight};
+use crate::{distribution, internal::PercentFromHeight};
 
 pub(super) fn compute(
     gini: &mut PercentFromHeight<BasisPoints16>,
     distribution: &distribution::Vecs,
-    starting_indexes: &ComputeIndexes,
+    starting_indexes: &Indexes,
     exit: &Exit,
 ) -> Result<()> {
     let amount_range = &distribution.utxo_cohorts.amount_range;

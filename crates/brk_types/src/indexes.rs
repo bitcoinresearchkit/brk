@@ -1,12 +1,9 @@
-use derive_more::{Deref, DerefMut};
-
 use crate::{
-    Day1, Day3, Year10, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height,
-    Hour1, Hour4, Hour12, Minute10, Minute30, Month1,
+    EmptyOutputIndex, Height,
     OpReturnIndex, OutputType, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex,
     P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex,
-    P2WSHAddressIndex, Month3, Month6, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
-    UnknownOutputIndex, Week1, Year1,
+    P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
+    UnknownOutputIndex,
 };
 
 /// Blockchain-level indexes tracking current positions for various entity types.
@@ -63,71 +60,6 @@ impl Indexes {
             OutputType::P2TR => self.p2traddressindex.copy_then_increment(),
             OutputType::P2A => self.p2aaddressindex.copy_then_increment(),
             _ => unreachable!(),
-        }
-    }
-}
-
-/// Extended indexes with time-based granularities.
-/// Used by brk_computer for time-series aggregation.
-#[derive(Debug, Clone, Deref, DerefMut)]
-pub struct ComputeIndexes {
-    #[deref]
-    #[deref_mut]
-    indexes: Indexes,
-    pub minute10: Minute10,
-    pub minute30: Minute30,
-    pub hour1: Hour1,
-    pub hour4: Hour4,
-    pub hour12: Hour12,
-    pub day1: Day1,
-    pub day3: Day3,
-    pub week1: Week1,
-    pub month1: Month1,
-    pub month3: Month3,
-    pub month6: Month6,
-    pub year1: Year1,
-    pub year10: Year10,
-    pub halvingepoch: HalvingEpoch,
-    pub difficultyepoch: DifficultyEpoch,
-}
-
-impl ComputeIndexes {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        indexes: Indexes,
-        minute10: Minute10,
-        minute30: Minute30,
-        hour1: Hour1,
-        hour4: Hour4,
-        hour12: Hour12,
-        day1: Day1,
-        day3: Day3,
-        week1: Week1,
-        month1: Month1,
-        month3: Month3,
-        month6: Month6,
-        year1: Year1,
-        year10: Year10,
-        halvingepoch: HalvingEpoch,
-        difficultyepoch: DifficultyEpoch,
-    ) -> Self {
-        Self {
-            indexes,
-            minute10,
-            minute30,
-            hour1,
-            hour4,
-            hour12,
-            day1,
-            day3,
-            week1,
-            month1,
-            month3,
-            month6,
-            year1,
-            year10,
-            halvingepoch,
-            difficultyepoch,
         }
     }
 }

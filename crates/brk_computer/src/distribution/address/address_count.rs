@@ -1,7 +1,7 @@
 use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, StoredF64, StoredU64, Version};
+use brk_types::{Height, Indexes, StoredF64, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{
@@ -9,7 +9,7 @@ use vecdb::{
     WritableVec,
 };
 
-use crate::{ComputeIndexes, blocks, indexes, internal::ComputedFromHeight};
+use crate::{blocks, indexes, internal::ComputedFromHeight};
 
 /// Address count with 1m change metric for a single type.
 #[derive(Traversable)]
@@ -40,7 +40,7 @@ impl AddrCountVecs {
     pub(crate) fn compute_rest(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.change_1m.height.compute_rolling_change(
@@ -116,32 +116,11 @@ impl AddressTypeToAddrCountVecs {
     }
 
     pub(crate) fn min_stateful_height(&self) -> usize {
-        self.p2pk65
-            .count
-            .height
-            .len()
-            .min(self.p2pk33.count.height.len())
-            .min(self.p2pkh.count.height.len())
-            .min(self.p2sh.count.height.len())
-            .min(self.p2wpkh.count.height.len())
-            .min(self.p2wsh.count.height.len())
-            .min(self.p2tr.count.height.len())
-            .min(self.p2a.count.height.len())
+        self.0.values().map(|v| v.count.height.len()).min().unwrap()
     }
 
     pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        let inner = &mut self.0;
-        [
-            &mut inner.p2pk65.count.height as &mut dyn AnyStoredVec,
-            &mut inner.p2pk33.count.height as &mut dyn AnyStoredVec,
-            &mut inner.p2pkh.count.height as &mut dyn AnyStoredVec,
-            &mut inner.p2sh.count.height as &mut dyn AnyStoredVec,
-            &mut inner.p2wpkh.count.height as &mut dyn AnyStoredVec,
-            &mut inner.p2wsh.count.height as &mut dyn AnyStoredVec,
-            &mut inner.p2tr.count.height as &mut dyn AnyStoredVec,
-            &mut inner.p2a.count.height as &mut dyn AnyStoredVec,
-        ]
-        .into_par_iter()
+        self.0.par_values_mut().map(|v| &mut v.count.height as &mut dyn AnyStoredVec)
     }
 
     pub(crate) fn truncate_push_height(
@@ -149,82 +128,34 @@ impl AddressTypeToAddrCountVecs {
         height: Height,
         addr_counts: &AddressTypeToAddressCount,
     ) -> Result<()> {
-        self.p2pk65
-            .count
-            .height
-            .truncate_push(height, addr_counts.p2pk65.into())?;
-        self.p2pk33
-            .count
-            .height
-            .truncate_push(height, addr_counts.p2pk33.into())?;
-        self.p2pkh
-            .count
-            .height
-            .truncate_push(height, addr_counts.p2pkh.into())?;
-        self.p2sh
-            .count
-            .height
-            .truncate_push(height, addr_counts.p2sh.into())?;
-        self.p2wpkh
-            .count
-            .height
-            .truncate_push(height, addr_counts.p2wpkh.into())?;
-        self.p2wsh
-            .count
-            .height
-            .truncate_push(height, addr_counts.p2wsh.into())?;
-        self.p2tr
-            .count
-            .height
-            .truncate_push(height, addr_counts.p2tr.into())?;
-        self.p2a
-            .count
-            .height
-            .truncate_push(height, addr_counts.p2a.into())?;
+        for (vecs, &count) in self.0.values_mut().zip(addr_counts.values()) {
+            vecs.count.height.truncate_push(height, count.into())?;
+        }
         Ok(())
     }
 
     pub(crate) fn reset_height(&mut self) -> Result<()> {
         use vecdb::WritableVec;
-        self.p2pk65.count.height.reset()?;
-        self.p2pk33.count.height.reset()?;
-        self.p2pkh.count.height.reset()?;
-        self.p2sh.count.height.reset()?;
-        self.p2wpkh.count.height.reset()?;
-        self.p2wsh.count.height.reset()?;
-        self.p2tr.count.height.reset()?;
-        self.p2a.count.height.reset()?;
+        for v in self.0.values_mut() {
+            v.count.height.reset()?;
+        }
         Ok(())
     }
 
     pub(crate) fn compute_rest(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.p2pk65.compute_rest(blocks, starting_indexes, exit)?;
-        self.p2pk33.compute_rest(blocks, starting_indexes, exit)?;
-        self.p2pkh.compute_rest(blocks, starting_indexes, exit)?;
-        self.p2sh.compute_rest(blocks, starting_indexes, exit)?;
-        self.p2wpkh.compute_rest(blocks, starting_indexes, exit)?;
-        self.p2wsh.compute_rest(blocks, starting_indexes, exit)?;
-        self.p2tr.compute_rest(blocks, starting_indexes, exit)?;
-        self.p2a.compute_rest(blocks, starting_indexes, exit)?;
+        for v in self.0.values_mut() {
+            v.compute_rest(blocks, starting_indexes, exit)?;
+        }
         Ok(())
     }
 
     pub(crate) fn by_height(&self) -> Vec<&EagerVec<PcoVec<Height, StoredU64>>> {
-        vec![
-            &self.p2pk65.count.height,
-            &self.p2pk33.count.height,
-            &self.p2pkh.count.height,
-            &self.p2sh.count.height,
-            &self.p2wpkh.count.height,
-            &self.p2wsh.count.height,
-            &self.p2tr.count.height,
-            &self.p2a.count.height,
-        ]
+        self.0.values().map(|v| &v.count.height).collect()
     }
 }
 
@@ -278,7 +209,7 @@ impl AddrCountsVecs {
     pub(crate) fn compute_rest(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.by_addresstype

@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, StoredF64, Version};
+use brk_types::{Cents, Height, Indexes, StoredF64, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
-    ComputeIndexes, blocks,
+    blocks,
     internal::{ComputedFromHeight, RatioCents64, RollingEmas1w1m, RollingWindows},
 };
 
@@ -28,41 +28,13 @@ pub struct RealizedAdjusted<M: StorageMode = Rw> {
 
 impl RealizedAdjusted {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let v1 = Version::ONE;
-
-        let adjusted_value_created = ComputedFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("adjusted_value_created"),
-            cfg.version,
-            cfg.indexes,
-        )?;
-        let adjusted_value_destroyed = ComputedFromHeight::forced_import(
-            cfg.db,
-            &cfg.name("adjusted_value_destroyed"),
-            cfg.version,
-            cfg.indexes,
-        )?;
-
-        let adjusted_value_created_sum = RollingWindows::forced_import(
-            cfg.db, &cfg.name("adjusted_value_created"), cfg.version + v1, cfg.indexes,
-        )?;
-        let adjusted_value_destroyed_sum = RollingWindows::forced_import(
-            cfg.db, &cfg.name("adjusted_value_destroyed"), cfg.version + v1, cfg.indexes,
-        )?;
-        let adjusted_sopr = RollingWindows::forced_import(
-            cfg.db, &cfg.name("adjusted_sopr"), cfg.version + v1, cfg.indexes,
-        )?;
-        let adjusted_sopr_ema = RollingEmas1w1m::forced_import(
-            cfg.db, &cfg.name("adjusted_sopr_24h"), cfg.version + v1, cfg.indexes,
-        )?;
-
         Ok(RealizedAdjusted {
-            adjusted_value_created,
-            adjusted_value_destroyed,
-            adjusted_value_created_sum,
-            adjusted_value_destroyed_sum,
-            adjusted_sopr,
-            adjusted_sopr_ema,
+            adjusted_value_created: cfg.import_computed("adjusted_value_created", Version::ZERO)?,
+            adjusted_value_destroyed: cfg.import_computed("adjusted_value_destroyed", Version::ZERO)?,
+            adjusted_value_created_sum: cfg.import_rolling("adjusted_value_created", Version::ONE)?,
+            adjusted_value_destroyed_sum: cfg.import_rolling("adjusted_value_destroyed", Version::ONE)?,
+            adjusted_sopr: cfg.import_rolling("adjusted_sopr", Version::ONE)?,
+            adjusted_sopr_ema: cfg.import_emas_1w_1m("adjusted_sopr_24h", Version::ONE)?,
         })
     }
 
@@ -70,7 +42,7 @@ impl RealizedAdjusted {
     pub(crate) fn compute_rest_part2_adj(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         base_value_created: &impl ReadableVec<Height, Cents>,
         base_value_destroyed: &impl ReadableVec<Height, Cents>,
         up_to_1h_value_created: &impl ReadableVec<Height, Cents>,

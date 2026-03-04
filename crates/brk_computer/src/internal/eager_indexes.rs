@@ -1,4 +1,4 @@
-//! EagerIndexes - newtype on Indexes with EagerVec<PcoVec<I, T>> per field.
+//! EagerIndexes - newtype on PerPeriod with EagerVec<PcoVec<I, T>> per field.
 //!
 //! Used for data eagerly computed and stored per period during indexing,
 //! such as timestamp (first value per period) and OHLC (first/min/max per period).
@@ -8,7 +8,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
     Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12,
-    Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Indexes, Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -18,15 +18,15 @@ use vecdb::{
 };
 
 use crate::{
-    ComputeIndexes, indexes, indexes_apply, indexes_from,
-    internal::{ComputedVecValue, Indexes, NumericValue},
+    indexes, indexes_apply, indexes_from,
+    internal::{ComputedVecValue, NumericValue, PerPeriod},
 };
 
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct EagerIndexes<T, M: StorageMode = Rw>(
     #[allow(clippy::type_complexity)]
-    pub  Indexes<
+    pub  PerPeriod<
         <M as StorageMode>::Stored<EagerVec<PcoVec<Minute10, T>>>,
         <M as StorageMode>::Stored<EagerVec<PcoVec<Minute30, T>>>,
         <M as StorageMode>::Stored<EagerVec<PcoVec<Hour1, T>>>,
@@ -68,15 +68,17 @@ where
     /// Compute "first value per period" — for each period, looks up `source[first_height[period]]`.
     pub(crate) fn compute_first(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         height_source: &impl ReadableVec<Height, T>,
         indexes: &indexes::Vecs,
         exit: &Exit,
     ) -> Result<()> {
+        let prev_height = starting_indexes.height.decremented().unwrap_or_default();
+
         macro_rules! period {
             ($field:ident) => {
                 self.0.$field.compute_indirect_sequential(
-                    starting_indexes.$field,
+                    indexes.height.$field.collect_one(prev_height).unwrap_or_default(),
                     &indexes.$field.first_height,
                     height_source,
                     exit,
@@ -92,18 +94,19 @@ where
     /// Compute "max value per period" — for each period, finds `max(source[first_height[period]..first_height[period+1]])`.
     pub(crate) fn compute_max(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         height_source: &impl ReadableVec<Height, T>,
         indexes: &indexes::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         let src_len = height_source.len();
+        let prev_height = starting_indexes.height.decremented().unwrap_or_default();
 
         macro_rules! period {
             ($field:ident) => {
                 compute_period_extremum(
                     &mut self.0.$field,
-                    starting_indexes.$field,
+                    indexes.height.$field.collect_one(prev_height).unwrap_or_default(),
                     &indexes.$field.first_height,
                     height_source,
                     src_len,
@@ -121,18 +124,19 @@ where
     /// Compute "min value per period" — for each period, finds `min(source[first_height[period]..first_height[period+1]])`.
     pub(crate) fn compute_min(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         height_source: &impl ReadableVec<Height, T>,
         indexes: &indexes::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         let src_len = height_source.len();
+        let prev_height = starting_indexes.height.decremented().unwrap_or_default();
 
         macro_rules! period {
             ($field:ident) => {
                 compute_period_extremum(
                     &mut self.0.$field,
-                    starting_indexes.$field,
+                    indexes.height.$field.collect_one(prev_height).unwrap_or_default(),
                     &indexes.$field.first_height,
                     height_source,
                     src_len,

@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints32, Cents, Height, StoredF32, Version};
+use brk_types::{BasisPoints32, Cents, Height, Indexes, StoredF32, Version};
 use vecdb::{AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex, WritableVec};
 
 use crate::{
-    ComputeIndexes, blocks, indexes,
+    blocks, indexes,
     internal::{ComputedFromHeightStdDevExtended, Price, TDigest},
 };
 
@@ -104,7 +104,7 @@ impl ComputedFromHeightRatioExtension {
     pub(crate) fn compute_rest(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
         ratio_source: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
@@ -182,14 +182,9 @@ impl ComputedFromHeightRatioExtension {
         }
 
         // Compute stddev at height level
-        self.ratio_sd
-            .compute_all(blocks, starting_indexes, exit, ratio_source)?;
-        self.ratio_sd_4y
-            .compute_all(blocks, starting_indexes, exit, ratio_source)?;
-        self.ratio_sd_2y
-            .compute_all(blocks, starting_indexes, exit, ratio_source)?;
-        self.ratio_sd_1y
-            .compute_all(blocks, starting_indexes, exit, ratio_source)?;
+        for sd in [&mut self.ratio_sd, &mut self.ratio_sd_4y, &mut self.ratio_sd_2y, &mut self.ratio_sd_1y] {
+            sd.compute_all(blocks, starting_indexes, exit, ratio_source)?;
+        }
 
         Ok(())
     }
@@ -197,7 +192,7 @@ impl ComputedFromHeightRatioExtension {
     /// Compute cents ratio bands: cents_band = metric_price_cents * ratio_percentile
     pub(crate) fn compute_cents_bands(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         metric_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
@@ -224,14 +219,9 @@ impl ComputedFromHeightRatioExtension {
         compute_band!(ratio_pct1_price, &self.ratio_pct1.bps.height);
 
         // Stddev cents bands
-        self.ratio_sd
-            .compute_cents_bands(starting_indexes, metric_price, exit)?;
-        self.ratio_sd_4y
-            .compute_cents_bands(starting_indexes, metric_price, exit)?;
-        self.ratio_sd_2y
-            .compute_cents_bands(starting_indexes, metric_price, exit)?;
-        self.ratio_sd_1y
-            .compute_cents_bands(starting_indexes, metric_price, exit)?;
+        for sd in [&mut self.ratio_sd, &mut self.ratio_sd_4y, &mut self.ratio_sd_2y, &mut self.ratio_sd_1y] {
+            sd.compute_cents_bands(starting_indexes, metric_price, exit)?;
+        }
 
         Ok(())
     }

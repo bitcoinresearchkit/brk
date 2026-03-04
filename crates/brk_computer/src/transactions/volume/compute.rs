@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::Timestamp;
+use brk_types::{Indexes, Timestamp};
 use vecdb::Exit;
 
 use super::Vecs;
 use crate::transactions::{count, fees};
-use crate::{ComputeIndexes, blocks, indexes, inputs, internal::PerSec, outputs, prices};
+use crate::{blocks, indexes, inputs, internal::PerSec, outputs, prices};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -19,7 +19,7 @@ impl Vecs {
         fees_vecs: &fees::Vecs,
         inputs_count: &inputs::CountVecs,
         outputs_count: &outputs::CountVecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = blocks.count.window_starts();

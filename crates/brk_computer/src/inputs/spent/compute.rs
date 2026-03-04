@@ -1,11 +1,10 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Sats, TxInIndex, TxIndex, TxOutIndex, Vout};
+use brk_types::{Indexes, Sats, TxInIndex, TxIndex, TxOutIndex, Vout};
 use tracing::info;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, WritableVec, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::ComputeIndexes;
 
 const BATCH_SIZE: usize = 2 * 1024 * 1024 * 1024 / size_of::<Entry>();
 
@@ -14,7 +13,7 @@ impl Vecs {
         &mut self,
         db: &Database,
         indexer: &Indexer,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         // Validate computed versions against dependencies

@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Height, Sats};
+use brk_types::{BasisPoints16, Height, Sats, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{PercentFromHeight, RatioSatsBp16};
@@ -19,31 +19,14 @@ pub struct RelativeToAll<M: StorageMode = Rw> {
 }
 
 impl RelativeToAll {
-    pub(crate) fn forced_import(
-        cfg: &ImportConfig,
-    ) -> Result<Self> {
+    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             supply_rel_to_circulating_supply:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db,
-                    &cfg.name("supply_rel_to_circulating_supply"),
-                    cfg.version + brk_types::Version::ONE,
-                    cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("supply_rel_to_circulating_supply", Version::ONE)?,
             supply_in_profit_rel_to_circulating_supply:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db,
-                    &cfg.name("supply_in_profit_rel_to_circulating_supply"),
-                    cfg.version + brk_types::Version::ONE,
-                    cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("supply_in_profit_rel_to_circulating_supply", Version::ONE)?,
             supply_in_loss_rel_to_circulating_supply:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db,
-                    &cfg.name("supply_in_loss_rel_to_circulating_supply"),
-                    cfg.version + brk_types::Version::ONE,
-                    cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("supply_in_loss_rel_to_circulating_supply", Version::ONE)?,
         })
     }
 

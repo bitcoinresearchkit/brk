@@ -7,7 +7,7 @@ use brk_traversable::Traversable;
 
 #[derive(Clone, Traversable)]
 #[traversable(merge)]
-pub struct Indexes<M10, M30, H1, H4, H12, D1, D3, W1, Mo1, Mo3, Mo6, Y1, Y10, HE, DE> {
+pub struct PerPeriod<M10, M30, H1, H4, H12, D1, D3, W1, Mo1, Mo3, Mo6, Y1, Y10, HE, DE> {
     pub minute10: M10,
     pub minute30: M30,
     pub hour1: H1,
@@ -25,7 +25,7 @@ pub struct Indexes<M10, M30, H1, H4, H12, D1, D3, W1, Mo1, Mo3, Mo6, Y1, Y10, HE
     pub difficultyepoch: DE,
 }
 
-/// Helper macro to construct an `Indexes` by applying a macro to each field.
+/// Helper macro to construct a `PerPeriod` by applying a macro to each field.
 ///
 /// Usage:
 /// ```ignore
@@ -35,7 +35,7 @@ pub struct Indexes<M10, M30, H1, H4, H12, D1, D3, W1, Mo1, Mo3, Mo6, Y1, Y10, HE
 #[macro_export]
 macro_rules! indexes_from {
     ($period:ident, $epoch:ident) => {
-        $crate::internal::Indexes {
+        $crate::internal::PerPeriod {
             minute10: $period!(minute10),
             minute30: $period!(minute30),
             hour1: $period!(hour1),

@@ -3,12 +3,12 @@ use std::path::Path;
 use brk_cohort::{CohortContext, Filter, Filtered};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, Sats, StoredF64, StoredU64, Version};
+use brk_types::{Cents, Dollars, Height, Indexes, Sats, StoredF64, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, WritableVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
-    ComputeIndexes, blocks,
+    blocks,
     distribution::state::AddressCohortState,
     indexes,
     internal::ComputedFromHeight,
@@ -53,7 +53,7 @@ impl AddressCohortVecs {
 
         let cfg = ImportConfig {
             db,
-            filter,
+            filter: &filter,
             full_name: &full_name,
             version,
             indexes,
@@ -211,7 +211,7 @@ impl DynCohortVecs for AddressCohortVecs {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
@@ -221,7 +221,7 @@ impl DynCohortVecs for AddressCohortVecs {
 
     fn compute_net_sentiment_height(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
@@ -252,7 +252,7 @@ impl DynCohortVecs for AddressCohortVecs {
 impl CohortVecs for AddressCohortVecs {
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
@@ -277,7 +277,7 @@ impl CohortVecs for AddressCohortVecs {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,

@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Height, Sats, StoredF64, Version};
+use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode, WritableVec};
 
 use crate::{
-    ComputeIndexes, blocks,
+    blocks,
     internal::{ComputedFromHeightCumulativeSum, RollingEmas2w, ValueFromHeightCumulative},
 };
 
@@ -37,45 +37,22 @@ impl ActivityMetrics {
     /// Import activity metrics from database.
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            sent: ValueFromHeightCumulative::forced_import(
-                cfg.db,
-                &cfg.name("sent"),
-                cfg.version,
-                cfg.indexes,
-            )?,
-
-            sent_ema: RollingEmas2w::forced_import(
-                cfg.db,
-                &cfg.name("sent"),
-                cfg.version,
-                cfg.indexes,
-            )?,
+            sent: cfg.import_value_cumulative("sent", Version::ZERO)?,
+            sent_ema: cfg.import_emas_2w("sent", Version::ZERO)?,
 
             satblocks_destroyed: EagerVec::forced_import(
                 cfg.db,
                 &cfg.name("satblocks_destroyed"),
                 cfg.version,
             )?,
-
             satdays_destroyed: EagerVec::forced_import(
                 cfg.db,
                 &cfg.name("satdays_destroyed"),
                 cfg.version,
             )?,
 
-            coinblocks_destroyed: ComputedFromHeightCumulativeSum::forced_import(
-                cfg.db,
-                &cfg.name("coinblocks_destroyed"),
-                cfg.version,
-                cfg.indexes,
-            )?,
-
-            coindays_destroyed: ComputedFromHeightCumulativeSum::forced_import(
-                cfg.db,
-                &cfg.name("coindays_destroyed"),
-                cfg.version,
-                cfg.indexes,
-            )?,
+            coinblocks_destroyed: cfg.import_cumulative_sum("coinblocks_destroyed", Version::ZERO)?,
+            coindays_destroyed: cfg.import_cumulative_sum("coindays_destroyed", Version::ZERO)?,
         })
     }
 
@@ -125,7 +102,7 @@ impl ActivityMetrics {
     /// Compute aggregate values from separate cohorts.
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
@@ -160,7 +137,7 @@ impl ActivityMetrics {
     pub(crate) fn compute_rest_part1(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = blocks.count.window_starts();

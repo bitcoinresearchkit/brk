@@ -1,10 +1,10 @@
 use brk_error::Result;
-use brk_types::{BasisPoints16, Dollars};
+use brk_types::{BasisPoints16, Dollars, Indexes};
 use vecdb::Exit;
 
 use super::{super::range, Vecs};
 use crate::{
-    ComputeIndexes, blocks, distribution,
+    blocks, distribution,
     internal::{RatioDollarsBp32, Windows},
     mining, prices, transactions,
 };
@@ -31,15 +31,17 @@ impl Vecs {
         distribution: &distribution::Vecs,
         transactions: &transactions::Vecs,
         moving_average: &super::super::moving_average::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.puell_multiple.bps.compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-            starting_indexes.height,
-            &rewards.subsidy.base.usd.height,
-            &rewards.subsidy_sma_1y.usd.height,
-            exit,
-        )?;
+        self.puell_multiple
+            .bps
+            .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
+                starting_indexes.height,
+                &rewards.subsidy.base.usd.height,
+                &rewards.subsidy_sma_1y.usd.height,
+                exit,
+            )?;
 
         // Stochastic Oscillator: K = (close - low_2w) / (high_2w - low_2w), stored as ratio (0–1)
         {
@@ -54,7 +56,7 @@ impl Vecs {
                     let stoch = if range == 0.0 {
                         BasisPoints16::ZERO
                     } else {
-                        BasisPoints16::from(((*close - *low) / range) as f64)
+                        BasisPoints16::from((*close - *low) / range)
                     };
                     (h, stoch)
                 },
@@ -70,7 +72,8 @@ impl Vecs {
         }
 
         // RSI per timeframe
-        for (tf, rsi_chain) in Windows::<()>::SUFFIXES.into_iter()
+        for (tf, rsi_chain) in Windows::<()>::SUFFIXES
+            .into_iter()
             .zip(self.rsi.as_mut_array())
         {
             let m = tf_multiplier(tf);
@@ -93,7 +96,8 @@ impl Vecs {
         }
 
         // MACD per timeframe
-        for (tf, macd_chain) in Windows::<()>::SUFFIXES.into_iter()
+        for (tf, macd_chain) in Windows::<()>::SUFFIXES
+            .into_iter()
             .zip(self.macd.as_mut_array())
         {
             let m = tf_multiplier(tf);
@@ -110,28 +114,34 @@ impl Vecs {
         }
 
         // Gini (per height)
-        super::gini::compute(
-            &mut self.gini,
-            distribution,
-            starting_indexes,
-            exit,
-        )?;
+        super::gini::compute(&mut self.gini, distribution, starting_indexes, exit)?;
 
         // NVT: market_cap / tx_volume_24h
-        self.nvt.bps.compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-            starting_indexes.height,
-            &distribution.utxo_cohorts.all.metrics.supply.total.usd.height,
-            &transactions.volume.sent_sum.rolling._24h.usd.height,
-            exit,
-        )?;
+        self.nvt
+            .bps
+            .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
+                starting_indexes.height,
+                &distribution
+                    .utxo_cohorts
+                    .all
+                    .metrics
+                    .supply
+                    .total
+                    .usd
+                    .height,
+                &transactions.volume.sent_sum.rolling._24h.usd.height,
+                exit,
+            )?;
 
         // Pi Cycle: sma_111d / sma_350d_x2
-        self.pi_cycle.bps.compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-            starting_indexes.height,
-            &moving_average.price_sma_111d.price.usd.height,
-            &moving_average.price_sma_350d_x2.usd.height,
-            exit,
-        )?;
+        self.pi_cycle
+            .bps
+            .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
+                starting_indexes.height,
+                &moving_average.price_sma_111d.price.usd.height,
+                &moving_average.price_sma_350d_x2.usd.height,
+                exit,
+            )?;
 
         Ok(())
     }

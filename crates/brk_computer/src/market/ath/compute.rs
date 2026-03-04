@@ -1,16 +1,16 @@
 use brk_error::Result;
-use brk_types::{StoredF32, Timestamp};
+use brk_types::{Indexes, StoredF32, Timestamp};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{blocks, ComputeIndexes, prices};
+use crate::{blocks, prices};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.price_ath.cents.height.compute_all_time_high(

@@ -3,19 +3,19 @@ use std::ops::Range;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_oracle::{Config, NUM_BINS, Oracle, START_HEIGHT, bin_to_cents, cents_to_bin};
-use brk_types::{Cents, OutputType, Sats, TxIndex, TxOutIndex};
+use brk_types::{Cents, Indexes, OutputType, Sats, TxIndex, TxOutIndex};
 use tracing::info;
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, StorageMode, VecIndex, WritableVec};
 
 use super::Vecs;
-use crate::{ComputeIndexes, indexes};
+use crate::indexes;
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.compute_prices(indexer, starting_indexes, exit)?;
@@ -33,6 +33,7 @@ impl Vecs {
             .compute_min(starting_indexes, &self.price.cents.height, indexes, exit)?;
         self.ohlc.cents.compute_from_split(
             starting_indexes,
+            indexes,
             &self.split.open.cents,
             &self.split.high.cents,
             &self.split.low.cents,
@@ -48,7 +49,7 @@ impl Vecs {
     fn compute_prices(
         &mut self,
         indexer: &Indexer,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let source_version =

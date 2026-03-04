@@ -1,9 +1,9 @@
 use brk_error::Result;
-use brk_types::{BasisPointsSigned32, Dollars, StoredF32};
+use brk_types::{BasisPointsSigned32, Dollars, Indexes, StoredF32};
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, internal::RatioDiffDollarsBps32, market::lookback, prices};
+use crate::{blocks, internal::RatioDiffDollarsBps32, market::lookback, prices};
 
 impl Vecs {
     pub(crate) fn compute(
@@ -11,7 +11,7 @@ impl Vecs {
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
         lookback: &lookback::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         // Compute price returns at height level

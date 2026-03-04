@@ -1,11 +1,11 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, Sats, Version};
+use brk_types::{Cents, Dollars, Height, Indexes, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{ComputeIndexes, blocks, distribution::state::CohortState, prices};
+use crate::{blocks, distribution::state::CohortState, prices};
 
 use crate::distribution::metrics::{
     ActivityMetrics, CohortMetricsBase, CostBasisBase, CostBasisWithExtended, ImportConfig,
@@ -98,7 +98,7 @@ impl ExtendedAdjustedCohortMetrics {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         up_to_1h_value_created: &impl ReadableVec<Height, Cents>,
         up_to_1h_value_destroyed: &impl ReadableVec<Height, Cents>,

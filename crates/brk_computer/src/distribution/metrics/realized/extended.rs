@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Cents, Dollars, Height, StoredF64, Version};
+use brk_types::{BasisPoints16, Cents, Dollars, Height, Indexes, StoredF64, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
-    ComputeIndexes, blocks,
+    blocks,
     internal::{
         ComputedFromHeightRatioExtension, PercentFromHeight,
         RatioCents64, RatioDollarsBp16, RollingWindows,
@@ -34,35 +34,16 @@ pub struct RealizedExtended<M: StorageMode = Rw> {
 
 impl RealizedExtended {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let v1 = Version::ONE;
-
         Ok(RealizedExtended {
-            realized_cap_rel_to_own_market_cap: PercentFromHeight::forced_import_bp16(
-                cfg.db,
-                &cfg.name("realized_cap_rel_to_own_market_cap"),
-                cfg.version,
-                cfg.indexes,
-            )?,
-            realized_profit_sum: RollingWindows::forced_import(
-                cfg.db, &cfg.name("realized_profit"), cfg.version + v1, cfg.indexes,
-            )?,
-            realized_loss_sum: RollingWindows::forced_import(
-                cfg.db, &cfg.name("realized_loss"), cfg.version + v1, cfg.indexes,
-            )?,
-            realized_profit_to_loss_ratio: RollingWindows::forced_import(
-                cfg.db, &cfg.name("realized_profit_to_loss_ratio"), cfg.version + v1, cfg.indexes,
-            )?,
+            realized_cap_rel_to_own_market_cap: cfg.import_percent_bp16("realized_cap_rel_to_own_market_cap", Version::ZERO)?,
+            realized_profit_sum: cfg.import_rolling("realized_profit", Version::ONE)?,
+            realized_loss_sum: cfg.import_rolling("realized_loss", Version::ONE)?,
+            realized_profit_to_loss_ratio: cfg.import_rolling("realized_profit_to_loss_ratio", Version::ONE)?,
             realized_price_ratio_ext: ComputedFromHeightRatioExtension::forced_import(
-                cfg.db,
-                &cfg.name("realized_price"),
-                cfg.version + v1,
-                cfg.indexes,
+                cfg.db, &cfg.name("realized_price"), cfg.version + Version::ONE, cfg.indexes,
             )?,
             investor_price_ratio_ext: ComputedFromHeightRatioExtension::forced_import(
-                cfg.db,
-                &cfg.name("investor_price"),
-                cfg.version,
-                cfg.indexes,
+                cfg.db, &cfg.name("investor_price"), cfg.version, cfg.indexes,
             )?,
         })
     }
@@ -72,7 +53,7 @@ impl RealizedExtended {
         &mut self,
         base: &RealizedBase,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {

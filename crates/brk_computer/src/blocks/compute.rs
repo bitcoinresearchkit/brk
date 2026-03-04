@@ -1,8 +1,9 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_types::Indexes;
 use vecdb::Exit;
 
-use crate::{ComputeIndexes, indexes};
+use crate::indexes;
 
 use super::Vecs;
 
@@ -11,7 +12,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.time

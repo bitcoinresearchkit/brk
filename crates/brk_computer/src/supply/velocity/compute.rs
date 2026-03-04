@@ -1,8 +1,9 @@
 use brk_error::Result;
+use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{blocks, ComputeIndexes, distribution, transactions};
+use crate::{blocks, distribution, transactions};
 
 impl Vecs {
     pub(crate) fn compute(
@@ -10,7 +11,7 @@ impl Vecs {
         blocks: &blocks::Vecs,
         transactions: &transactions::Vecs,
         distribution: &distribution::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         // velocity = rolling_1y_sum(volume) / circulating_supply

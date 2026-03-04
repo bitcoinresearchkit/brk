@@ -16,7 +16,7 @@ use vecdb::{
 use crate::{
     indexes, indexes_from,
     internal::{
-        ComputedFromHeight, ComputedHeightDerived, ComputedVecValue, Indexes, NumericValue,
+        ComputedFromHeight, ComputedHeightDerived, ComputedVecValue, NumericValue, PerPeriod,
     },
 };
 
@@ -59,7 +59,7 @@ where
 #[traversable(transparent)]
 pub struct LazyHeightDerived<T, S1T = T>(
     #[allow(clippy::type_complexity)]
-    pub  Indexes<
+    pub  PerPeriod<
         LazyTransformLast<Minute10, Option<T>, Option<S1T>>,
         LazyTransformLast<Minute30, Option<T>, Option<S1T>>,
         LazyTransformLast<Hour1, Option<T>, Option<S1T>>,

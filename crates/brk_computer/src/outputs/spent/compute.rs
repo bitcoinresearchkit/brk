@@ -1,13 +1,13 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Height, TxInIndex, TxOutIndex};
+use brk_types::{Height, Indexes, TxInIndex, TxOutIndex};
 use tracing::info;
 use vecdb::{
     AnyStoredVec, AnyVec, Database, Exit, WritableVec, ReadableVec, Stamp, VecIndex,
 };
 
 use super::Vecs;
-use crate::{inputs, ComputeIndexes};
+use crate::inputs;
 
 const HEIGHT_BATCH: u32 = 10_000;
 
@@ -17,7 +17,7 @@ impl Vecs {
         db: &Database,
         indexer: &Indexer,
         inputs: &inputs::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let target_height = indexer.vecs.blocks.blockhash.len();

@@ -1,10 +1,10 @@
 use brk_cohort::{Filter, Filtered};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Version};
+use brk_types::{Cents, Height, Indexes, Version};
 use vecdb::{Exit, ReadableVec};
 
-use crate::{ComputeIndexes, blocks, distribution::state::UTXOCohortState, prices};
+use crate::{blocks, distribution::state::UTXOCohortState, prices};
 
 use crate::distribution::metrics::CohortMetricsBase;
 
@@ -127,7 +127,7 @@ impl<Metrics: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
@@ -136,7 +136,7 @@ impl<Metrics: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<
 
     fn compute_net_sentiment_height(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics

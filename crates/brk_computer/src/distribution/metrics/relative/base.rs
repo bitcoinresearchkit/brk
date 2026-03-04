@@ -37,9 +37,7 @@ impl RelativeBase {
         let v2 = Version::new(2);
 
         let net_unrealized_pnl_rel_to_market_cap =
-            PercentFromHeight::forced_import_bps16(
-                cfg.db, &cfg.name("net_unrealized_pnl_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
-            )?;
+            cfg.import_percent_bps16("net_unrealized_pnl_rel_to_market_cap", v2)?;
 
         let nupl = LazyFromHeight::from_computed::<Bps16ToFloat>(
             &cfg.name("nupl"),
@@ -50,35 +48,21 @@ impl RelativeBase {
 
         Ok(Self {
             supply_in_profit_rel_to_own_supply:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db, &cfg.name("supply_in_profit_rel_to_own_supply"), cfg.version + v1, cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("supply_in_profit_rel_to_own_supply", v1)?,
             supply_in_loss_rel_to_own_supply:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db, &cfg.name("supply_in_loss_rel_to_own_supply"), cfg.version + v1, cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("supply_in_loss_rel_to_own_supply", v1)?,
             unrealized_profit_rel_to_market_cap:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db, &cfg.name("unrealized_profit_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("unrealized_profit_rel_to_market_cap", v2)?,
             unrealized_loss_rel_to_market_cap:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db, &cfg.name("unrealized_loss_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("unrealized_loss_rel_to_market_cap", v2)?,
             neg_unrealized_loss_rel_to_market_cap:
-                PercentFromHeight::forced_import_bps16(
-                    cfg.db, &cfg.name("neg_unrealized_loss_rel_to_market_cap"), cfg.version + v2, cfg.indexes,
-                )?,
+                cfg.import_percent_bps16("neg_unrealized_loss_rel_to_market_cap", v2)?,
             net_unrealized_pnl_rel_to_market_cap,
             nupl,
             invested_capital_in_profit_rel_to_realized_cap:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db, &cfg.name("invested_capital_in_profit_rel_to_realized_cap"), cfg.version, cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("invested_capital_in_profit_rel_to_realized_cap", Version::ZERO)?,
             invested_capital_in_loss_rel_to_realized_cap:
-                PercentFromHeight::forced_import_bp16(
-                    cfg.db, &cfg.name("invested_capital_in_loss_rel_to_realized_cap"), cfg.version, cfg.indexes,
-                )?,
+                cfg.import_percent_bp16("invested_capital_in_loss_rel_to_realized_cap", Version::ZERO)?,
         })
     }
 

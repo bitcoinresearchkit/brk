@@ -1,12 +1,12 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, StoredF32, Version};
+use brk_types::{Cents, Height, Indexes, StoredF32, Version};
 use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
     WritableVec,
 };
 
-use crate::{ComputeIndexes, blocks, indexes};
+use crate::{blocks, indexes};
 
 use crate::internal::{ComputedFromHeight, Price};
 
@@ -110,7 +110,7 @@ impl ComputedFromHeightStdDevExtended {
     pub(crate) fn compute_all(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
         source: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
@@ -123,7 +123,7 @@ impl ComputedFromHeightStdDevExtended {
 
     pub(crate) fn compute_bands(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
         sma_opt: Option<&impl ReadableVec<Height, StoredF32>>,
         source: &impl ReadableVec<Height, StoredF32>,
@@ -202,7 +202,7 @@ impl ComputedFromHeightStdDevExtended {
     /// Compute cents price bands: cents_band = metric_price_cents * band_ratio
     pub(crate) fn compute_cents_bands(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         metric_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {

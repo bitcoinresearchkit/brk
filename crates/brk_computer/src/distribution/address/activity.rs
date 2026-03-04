@@ -233,18 +233,8 @@ impl AddressTypeToActivityCountVecs {
     }
 
     pub(crate) fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        let inner = &mut self.0;
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
-        for type_vecs in [
-            &mut inner.p2pk65,
-            &mut inner.p2pk33,
-            &mut inner.p2pkh,
-            &mut inner.p2sh,
-            &mut inner.p2wpkh,
-            &mut inner.p2wsh,
-            &mut inner.p2tr,
-            &mut inner.p2a,
-        ] {
+        for type_vecs in self.0.values_mut() {
             vecs.push(&mut type_vecs.reactivated.height);
             vecs.push(&mut type_vecs.sending.height);
             vecs.push(&mut type_vecs.receiving.height);
@@ -256,14 +246,9 @@ impl AddressTypeToActivityCountVecs {
     }
 
     pub(crate) fn reset_height(&mut self) -> Result<()> {
-        self.p2pk65.reset_height()?;
-        self.p2pk33.reset_height()?;
-        self.p2pkh.reset_height()?;
-        self.p2sh.reset_height()?;
-        self.p2wpkh.reset_height()?;
-        self.p2wsh.reset_height()?;
-        self.p2tr.reset_height()?;
-        self.p2a.reset_height()?;
+        for v in self.0.values_mut() {
+            v.reset_height()?;
+        }
         Ok(())
     }
 
@@ -284,19 +269,9 @@ impl AddressTypeToActivityCountVecs {
         height: Height,
         counts: &AddressTypeToActivityCounts,
     ) -> Result<()> {
-        self.p2pk65
-            .truncate_push_height(height, &counts.p2pk65)?;
-        self.p2pk33
-            .truncate_push_height(height, &counts.p2pk33)?;
-        self.p2pkh
-            .truncate_push_height(height, &counts.p2pkh)?;
-        self.p2sh.truncate_push_height(height, &counts.p2sh)?;
-        self.p2wpkh
-            .truncate_push_height(height, &counts.p2wpkh)?;
-        self.p2wsh
-            .truncate_push_height(height, &counts.p2wsh)?;
-        self.p2tr.truncate_push_height(height, &counts.p2tr)?;
-        self.p2a.truncate_push_height(height, &counts.p2a)?;
+        for (vecs, c) in self.0.values_mut().zip(counts.0.values()) {
+            vecs.truncate_push_height(height, c)?;
+        }
         Ok(())
     }
 

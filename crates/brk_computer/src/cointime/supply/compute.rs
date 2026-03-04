@@ -1,14 +1,15 @@
 use brk_error::Result;
+use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::super::activity;
 use super::Vecs;
-use crate::{ComputeIndexes, distribution};
+use crate::distribution;
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         exit: &Exit,

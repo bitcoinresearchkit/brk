@@ -1,8 +1,9 @@
 use brk_error::Result;
+use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::MacdChain;
-use crate::{ComputeIndexes, blocks, prices};
+use crate::{blocks, prices};
 
 #[allow(clippy::too_many_arguments)]
 pub(super) fn compute(
@@ -12,7 +13,7 @@ pub(super) fn compute(
     fast_days: usize,
     slow_days: usize,
     signal_days: usize,
-    starting_indexes: &ComputeIndexes,
+    starting_indexes: &Indexes,
     exit: &Exit,
 ) -> Result<()> {
     let close = &prices.price.usd.height;

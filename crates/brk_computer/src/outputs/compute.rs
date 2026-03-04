@@ -1,9 +1,10 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, indexes, inputs, scripts};
+use crate::{blocks, indexes, inputs, scripts};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -14,7 +15,7 @@ impl Vecs {
         inputs: &inputs::Vecs,
         scripts: &scripts::Vecs,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.spent

@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{FeeRate, Sats};
+use brk_types::{FeeRate, Indexes, Sats};
 use vecdb::{Exit, unlikely};
 
 use super::super::size;
 use super::Vecs;
-use crate::{ComputeIndexes, indexes, inputs};
+use crate::{indexes, inputs};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -15,7 +15,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         txins: &inputs::Vecs,
         size_vecs: &size::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.input_value.compute_sum_from_indexes(

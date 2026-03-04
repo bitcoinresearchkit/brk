@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, StoredF64, StoredU64};
+use brk_types::{Height, Indexes, StoredF64, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::{ComputeIndexes, blocks, internal::ComputedFromHeight};
+use crate::{blocks, internal::ComputedFromHeight};
 
 use super::ImportConfig;
 
@@ -19,18 +19,8 @@ impl OutputsMetrics {
     /// Import output metrics from database.
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            utxo_count: ComputedFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("utxo_count"),
-                cfg.version,
-                cfg.indexes,
-            )?,
-            utxo_count_change_1m: ComputedFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("utxo_count_change_1m"),
-                cfg.version,
-                cfg.indexes,
-            )?,
+            utxo_count: cfg.import_computed("utxo_count", Version::ZERO)?,
+            utxo_count_change_1m: cfg.import_computed("utxo_count_change_1m", Version::ZERO)?,
         })
     }
 
@@ -55,7 +45,7 @@ impl OutputsMetrics {
     /// Compute aggregate values from separate cohorts.
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
@@ -74,7 +64,7 @@ impl OutputsMetrics {
     pub(crate) fn compute_rest(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.utxo_count_change_1m.height.compute_rolling_change(

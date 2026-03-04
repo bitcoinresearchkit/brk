@@ -1,12 +1,11 @@
 use brk_error::Result;
-use brk_types::{Dollars, Height, Sats, StoredF32, StoredF64};
+use brk_types::{Dollars, Height, Indexes, Sats, StoredF32, StoredF64};
 use vecdb::{Exit, ReadableVec};
 
 use super::Vecs;
 use crate::{
     blocks::{self, ONE_TERA_HASH, TARGET_BLOCKS_PER_DAY_F64},
     internal::RatioDiffF32Bps32,
-    ComputeIndexes,
 };
 
 impl Vecs {
@@ -16,7 +15,7 @@ impl Vecs {
         difficulty_vecs: &blocks::DifficultyVecs,
         coinbase_sats_24h_sum: &impl ReadableVec<Height, Sats>,
         coinbase_usd_24h_sum: &impl ReadableVec<Height, Dollars>,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.hash_rate.height.compute_transform2(

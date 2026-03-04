@@ -1,10 +1,9 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height};
+use brk_types::{Cents, Height, Indexes, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
-    ComputeIndexes,
     distribution::state::CohortState,
     internal::{ComputedFromHeight, Price},
 };
@@ -24,18 +23,8 @@ pub struct CostBasisBase<M: StorageMode = Rw> {
 impl CostBasisBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            min: Price::forced_import(
-                cfg.db,
-                &cfg.name("cost_basis_min"),
-                cfg.version,
-                cfg.indexes,
-            )?,
-            max: Price::forced_import(
-                cfg.db,
-                &cfg.name("cost_basis_max"),
-                cfg.version,
-                cfg.indexes,
-            )?,
+            min: cfg.import_price("cost_basis_min", Version::ZERO)?,
+            max: cfg.import_price("cost_basis_max", Version::ZERO)?,
         })
     }
 
@@ -74,7 +63,7 @@ impl CostBasisBase {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {

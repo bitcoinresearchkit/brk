@@ -4,13 +4,12 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_reader::Reader;
 use brk_traversable::Traversable;
-use brk_types::{BlkPosition, Height, TxIndex, Version};
+use brk_types::{BlkPosition, Height, Indexes, TxIndex, Version};
 use vecdb::{
     AnyStoredVec, AnyVec, Database, Exit, WritableVec, ImportableVec, PAGE_SIZE, PcoVec,
     ReadableVec, Rw, StorageMode, VecIndex,
 };
 
-use super::ComputeIndexes;
 
 pub const DB_NAME: &str = "positions";
 
@@ -49,7 +48,7 @@ impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         reader: &Reader,
         exit: &Exit,
     ) -> Result<()> {
@@ -62,7 +61,7 @@ impl Vecs {
     fn compute_(
         &mut self,
         indexer: &Indexer,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         parser: &Reader,
         exit: &Exit,
     ) -> Result<()> {

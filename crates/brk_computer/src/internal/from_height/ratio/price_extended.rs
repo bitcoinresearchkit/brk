@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Version};
+use brk_types::{Cents, Height, Indexes, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::internal::{ComputedFromHeight, Price};
-use crate::{ComputeIndexes, blocks, indexes, prices};
+use crate::{blocks, indexes, prices};
 
 use super::ComputedFromHeightRatioExtended;
 
@@ -37,7 +37,7 @@ impl ComputedFromHeightPriceWithRatioExtended {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
         mut compute_price: F,
     ) -> Result<()>

@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Height, OutputType, Sats, TxOutIndex};
+use brk_types::{Height, Indexes, OutputType, Sats, TxOutIndex};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, WritableVec, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, prices};
+use crate::{blocks, prices};
 
 impl Vecs {
     pub(crate) fn compute(
@@ -12,7 +12,7 @@ impl Vecs {
         indexer: &Indexer,
         count_vecs: &blocks::CountVecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = count_vecs.window_starts();

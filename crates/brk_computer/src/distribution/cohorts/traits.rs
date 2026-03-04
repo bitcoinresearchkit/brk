@@ -1,8 +1,8 @@
 use brk_error::Result;
-use brk_types::{Cents, Dollars, Height, Sats, Version};
+use brk_types::{Cents, Dollars, Height, Indexes, Sats, Version};
 use vecdb::{Exit, ReadableVec};
 
-use crate::{ComputeIndexes, blocks, prices};
+use crate::{blocks, prices};
 
 /// Dynamic dispatch trait for cohort vectors.
 ///
@@ -35,14 +35,14 @@ pub trait DynCohortVecs: Send + Sync {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()>;
 
     /// Compute net_sentiment.height for separate cohorts (greed - pain).
     fn compute_net_sentiment_height(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()>;
 
@@ -63,7 +63,7 @@ pub trait CohortVecs: DynCohortVecs {
     /// Compute aggregate cohort from component cohorts.
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()>;
@@ -73,7 +73,7 @@ pub trait CohortVecs: DynCohortVecs {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,

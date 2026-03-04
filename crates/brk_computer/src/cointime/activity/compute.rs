@@ -1,14 +1,14 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, CheckedSub, StoredF64};
+use brk_types::{Bitcoin, CheckedSub, Indexes, StoredF64};
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, distribution};
+use crate::{blocks, distribution};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         blocks: &blocks::Vecs,
         distribution: &distribution::Vecs,
         exit: &Exit,

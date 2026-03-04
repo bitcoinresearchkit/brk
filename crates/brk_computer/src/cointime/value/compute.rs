@@ -1,15 +1,15 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, Dollars, StoredF64};
+use brk_types::{Bitcoin, Dollars, Indexes, StoredF64};
 use vecdb::Exit;
 
 use super::super::activity;
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, distribution, prices};
+use crate::{blocks, distribution, prices};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
         distribution: &distribution::Vecs,

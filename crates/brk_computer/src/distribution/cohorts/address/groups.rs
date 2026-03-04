@@ -5,12 +5,12 @@ use brk_cohort::{
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Sats, Version};
+use brk_types::{Dollars, Height, Indexes, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{ComputeIndexes, blocks, distribution::DynCohortVecs, indexes, prices};
+use crate::{blocks, distribution::DynCohortVecs, indexes, prices};
 
 use crate::distribution::metrics::CohortMetricsBase;
 
@@ -83,7 +83,7 @@ impl AddressCohorts {
     /// Compute overlapping cohorts from component amount_range cohorts.
     pub(crate) fn compute_overlapping_vecs(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.for_each_aggregate(|vecs, sources| {
@@ -96,7 +96,7 @@ impl AddressCohorts {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         // 1. Compute addr_count_change_1m using rolling window
@@ -134,7 +134,7 @@ impl AddressCohorts {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         height_to_market_cap: &HM,
         all_supply_sats: &AS,
         exit: &Exit,

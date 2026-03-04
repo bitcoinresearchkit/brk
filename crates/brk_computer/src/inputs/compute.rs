@@ -1,9 +1,10 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{blocks, indexes, ComputeIndexes};
+use crate::{blocks, indexes};
 
 impl Vecs {
     pub(crate) fn compute(
@@ -11,7 +12,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.spent

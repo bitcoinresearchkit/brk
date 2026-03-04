@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_store::AnyStore;
 use brk_traversable::Traversable;
-use brk_types::{Address, AddressBytes, Height, OutputType, PoolSlug, Pools, TxOutIndex, pools};
+use brk_types::{Address, AddressBytes, Height, Indexes, OutputType, PoolSlug, Pools, TxOutIndex, pools};
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, BytesVec, Database, Exit, ImportableVec, PAGE_SIZE, ReadableVec, Rw,
@@ -15,7 +15,7 @@ mod vecs;
 
 use crate::{
     blocks,
-    indexes::{self, ComputeIndexes},
+    indexes,
     mining, prices,
 };
 
@@ -73,7 +73,7 @@ impl Vecs {
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         mining: &mining::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(
@@ -98,7 +98,7 @@ impl Vecs {
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         mining: &mining::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.compute_height_to_pool(indexer, indexes, starting_indexes, exit)?;
@@ -121,7 +121,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.height_to_pool

@@ -72,7 +72,8 @@ pub fn create_openapi() -> OpenApi {
             name: "Metrics".to_string(),
             description: Some(
                 "Access thousands of Bitcoin network metrics and time-series data. Query historical statistics \
-                across various indexes (date, week, month, block height) with JSON or CSV output."
+                across various indexes (date, week, month, block height) with JSON or CSV output.\n\n\
+                **Note:** Metric names are subject to change while the project is in active development."
                     .to_string(),
             ),
             ..Default::default()

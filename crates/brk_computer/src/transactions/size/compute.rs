@@ -1,16 +1,17 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{indexes, ComputeIndexes};
+use crate::indexes;
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.weight

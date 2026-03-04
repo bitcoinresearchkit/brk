@@ -7,14 +7,14 @@ use brk_cohort::{
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    BasisPoints16, Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Height, Sats,
-    Version,
+    BasisPoints16, Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Height, Indexes,
+    Sats, Version,
 };
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
-    ComputeIndexes, blocks,
+    blocks,
     distribution::DynCohortVecs,
     indexes,
     internal::{PERCENTILES, PERCENTILES_LEN, compute_spot_percentile_rank},
@@ -76,7 +76,7 @@ impl UTXOCohorts<Rw> {
         let all_full_name = CohortContext::Utxo.full_name(&Filter::All, "");
         let all_cfg = ImportConfig {
             db,
-            filter: Filter::All,
+            filter: &Filter::All,
             full_name: &all_full_name,
             version: v + Version::ONE,
             indexes,
@@ -91,7 +91,7 @@ impl UTXOCohorts<Rw> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
                 let cfg = ImportConfig {
                     db,
-                    filter: f,
+                    filter: &f,
                     full_name: &full_name,
                     version: v,
                     indexes,
@@ -110,7 +110,7 @@ impl UTXOCohorts<Rw> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
                 let cfg = ImportConfig {
                     db,
-                    filter: f,
+                    filter: &f,
                     full_name: &full_name,
                     version: v,
                     indexes,
@@ -141,7 +141,7 @@ impl UTXOCohorts<Rw> {
             let full_name = CohortContext::Utxo.full_name(&f, "sth");
             let cfg = ImportConfig {
                 db,
-                filter: f,
+                filter: &f,
                 full_name: &full_name,
                 version: v,
                 indexes,
@@ -160,7 +160,7 @@ impl UTXOCohorts<Rw> {
             let full_name = CohortContext::Utxo.full_name(&f, "lth");
             let cfg = ImportConfig {
                 db,
-                filter: f,
+                filter: &f,
                 full_name: &full_name,
                 version: v,
                 indexes,
@@ -177,7 +177,7 @@ impl UTXOCohorts<Rw> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
                 let cfg = ImportConfig {
                     db,
-                    filter: f,
+                    filter: &f,
                     full_name: &full_name,
                     version: v,
                     indexes,
@@ -195,7 +195,7 @@ impl UTXOCohorts<Rw> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
                 let cfg = ImportConfig {
                     db,
-                    filter: f,
+                    filter: &f,
                     full_name: &full_name,
                     version: v,
                     indexes,
@@ -213,7 +213,7 @@ impl UTXOCohorts<Rw> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
                 let cfg = ImportConfig {
                     db,
-                    filter: f,
+                    filter: &f,
                     full_name: &full_name,
                     version: v,
                     indexes,
@@ -301,7 +301,7 @@ impl UTXOCohorts<Rw> {
     /// Compute overlapping cohorts from component age/amount range cohorts.
     pub(crate) fn compute_overlapping_vecs(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let age_range = &self.age_range;
@@ -423,7 +423,7 @@ impl UTXOCohorts<Rw> {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         // 1. Compute all metrics except net_sentiment (all cohorts via DynCohortVecs)
@@ -565,7 +565,7 @@ impl UTXOCohorts<Rw> {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         height_to_market_cap: &HM,
         exit: &Exit,
     ) -> Result<()>

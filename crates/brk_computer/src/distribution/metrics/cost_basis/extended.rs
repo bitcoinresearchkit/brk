@@ -44,18 +44,8 @@ impl CostBasisExtended {
                 cfg.version,
                 cfg.indexes,
             )?,
-            spot_cost_basis_percentile: PercentFromHeight::forced_import_bp16(
-                cfg.db,
-                &cfg.name("spot_cost_basis_percentile"),
-                cfg.version,
-                cfg.indexes,
-            )?,
-            spot_invested_capital_percentile: PercentFromHeight::forced_import_bp16(
-                cfg.db,
-                &cfg.name("spot_invested_capital_percentile"),
-                cfg.version,
-                cfg.indexes,
-            )?,
+            spot_cost_basis_percentile: cfg.import_percent_bp16("spot_cost_basis_percentile", Version::ZERO)?,
+            spot_invested_capital_percentile: cfg.import_percent_bp16("spot_invested_capital_percentile", Version::ZERO)?,
         })
     }
 

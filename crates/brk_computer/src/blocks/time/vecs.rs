@@ -2,12 +2,12 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
     Date, Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour12, Hour4,
-    Minute10, Minute30, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10,
+    Indexes, Minute10, Minute30, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
-use vecdb::{EagerVec, Exit, LazyVecFrom1, PcoVec, Rw, StorageMode};
+use vecdb::{EagerVec, Exit, LazyVecFrom1, PcoVec, ReadableVec, Rw, StorageMode};
 
-use crate::{ComputeIndexes, indexes, internal::Indexes};
+use crate::{indexes, internal::PerPeriod};
 
 /// Timestamp and date metrics for blocks
 #[derive(Traversable)]
@@ -27,7 +27,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 #[traversable(transparent)]
 pub struct TimestampIndexes<M: StorageMode = Rw>(
     #[allow(clippy::type_complexity)]
-    pub  Indexes<
+    pub  PerPeriod<
         LazyVecFrom1<Minute10, Timestamp, Minute10, Height>,
         LazyVecFrom1<Minute30, Timestamp, Minute30, Height>,
         LazyVecFrom1<Hour1, Timestamp, Hour1, Height>,
@@ -53,17 +53,18 @@ impl TimestampIndexes {
         &mut self,
         indexer: &brk_indexer::Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let prev_height = starting_indexes.height.decremented().unwrap_or_default();
         self.halvingepoch.compute_indirect_sequential(
-            starting_indexes.halvingepoch,
+            indexes.height.halvingepoch.collect_one(prev_height).unwrap_or_default(),
             &indexes.halvingepoch.first_height,
             &indexer.vecs.blocks.timestamp,
             exit,
         )?;
         self.difficultyepoch.compute_indirect_sequential(
-            starting_indexes.difficultyepoch,
+            indexes.height.difficultyepoch.collect_one(prev_height).unwrap_or_default(),
             &indexes.difficultyepoch.first_height,
             &indexer.vecs.blocks.timestamp,
             exit,

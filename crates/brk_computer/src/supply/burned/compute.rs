@@ -1,9 +1,9 @@
 use brk_error::Result;
-use brk_types::{Height, Sats};
+use brk_types::{Height, Indexes, Sats};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, WritableVec, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, mining, prices, scripts};
+use crate::{blocks, mining, prices, scripts};
 
 impl Vecs {
     pub(crate) fn compute(
@@ -12,7 +12,7 @@ impl Vecs {
         mining: &mining::Vecs,
         count_vecs: &blocks::CountVecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = count_vecs.window_starts();

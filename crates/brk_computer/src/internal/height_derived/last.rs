@@ -13,14 +13,14 @@ use vecdb::{
 
 use crate::{
     indexes, indexes_from,
-    internal::{ComputedVecValue, Indexes, NumericValue},
+    internal::{ComputedVecValue, NumericValue, PerPeriod},
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct ComputedHeightDerived<T>(
     #[allow(clippy::type_complexity)]
-    pub  Indexes<
+    pub  PerPeriod<
         LazyAggVec<Minute10, Option<T>, Height, Height, T>,
         LazyAggVec<Minute30, Option<T>, Height, Height, T>,
         LazyAggVec<Hour1, Option<T>, Height, Height, T>,

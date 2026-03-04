@@ -1,9 +1,10 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, indexes, prices, transactions};
+use crate::{blocks, indexes, prices, transactions};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -14,7 +15,7 @@ impl Vecs {
         blocks: &blocks::Vecs,
         transactions: &transactions::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         // Block rewards (coinbase, subsidy, fee_dominance, etc.)

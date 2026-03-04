@@ -1,17 +1,17 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::StoredU64;
+use brk_types::{Indexes, StoredU64};
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks};
+use crate::blocks;
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         count_vecs: &blocks::CountVecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = count_vecs.window_starts();

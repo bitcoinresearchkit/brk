@@ -29,16 +29,9 @@ impl RollingFullSlot {
     ) -> Result<Self> {
         Ok(Self {
             sum: ByUnit::forced_import(db, &format!("{name}_sum"), version, indexes)?,
-            distribution: DistributionStats {
-                average: ByUnit::forced_import(db, &format!("{name}_average"), version, indexes)?,
-                min: ByUnit::forced_import(db, &format!("{name}_min"), version, indexes)?,
-                max: ByUnit::forced_import(db, &format!("{name}_max"), version, indexes)?,
-                pct10: ByUnit::forced_import(db, &format!("{name}_p10"), version, indexes)?,
-                pct25: ByUnit::forced_import(db, &format!("{name}_p25"), version, indexes)?,
-                median: ByUnit::forced_import(db, &format!("{name}_median"), version, indexes)?,
-                pct75: ByUnit::forced_import(db, &format!("{name}_p75"), version, indexes)?,
-                pct90: ByUnit::forced_import(db, &format!("{name}_p90"), version, indexes)?,
-            },
+            distribution: DistributionStats::try_from_fn(|suffix| {
+                ByUnit::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
+            })?,
         })
     }
 
@@ -55,21 +48,19 @@ impl RollingFullSlot {
 
         let d = &mut self.distribution;
 
-        compute_rolling_distribution_from_starts(
-            max_from, starts, sats_source,
-            &mut d.average.sats.height, &mut d.min.sats.height,
-            &mut d.max.sats.height, &mut d.pct10.sats.height,
-            &mut d.pct25.sats.height, &mut d.median.sats.height,
-            &mut d.pct75.sats.height, &mut d.pct90.sats.height, exit,
-        )?;
-
-        compute_rolling_distribution_from_starts(
-            max_from, starts, cents_source,
-            &mut d.average.cents.height, &mut d.min.cents.height,
-            &mut d.max.cents.height, &mut d.pct10.cents.height,
-            &mut d.pct25.cents.height, &mut d.median.cents.height,
-            &mut d.pct75.cents.height, &mut d.pct90.cents.height, exit,
-        )?;
+        macro_rules! compute_unit {
+            ($unit:ident, $source:expr) => {
+                compute_rolling_distribution_from_starts(
+                    max_from, starts, $source,
+                    &mut d.average.$unit.height, &mut d.min.$unit.height,
+                    &mut d.max.$unit.height, &mut d.pct10.$unit.height,
+                    &mut d.pct25.$unit.height, &mut d.median.$unit.height,
+                    &mut d.pct75.$unit.height, &mut d.pct90.$unit.height, exit,
+                )?
+            };
+        }
+        compute_unit!(sats, sats_source);
+        compute_unit!(cents, cents_source);
 
         Ok(())
     }

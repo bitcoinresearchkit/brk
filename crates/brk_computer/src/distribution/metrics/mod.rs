@@ -20,10 +20,10 @@ pub use unrealized::*;
 
 use brk_cohort::Filter;
 use brk_error::Result;
-use brk_types::{Cents, Height, Version};
+use brk_types::{Cents, Height, Indexes, Version};
 use vecdb::{AnyStoredVec, Exit};
 
-use crate::{ComputeIndexes, blocks, distribution::state::CohortState, prices};
+use crate::{blocks, distribution::state::CohortState, prices};
 
 /// Trait defining the interface for cohort metrics containers.
 ///
@@ -96,7 +96,7 @@ pub trait CohortMetricsBase: Send + Sync {
     /// Compute net_sentiment.height as capital-weighted average of component cohorts (same type).
     fn compute_net_sentiment_from_others(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()>
@@ -124,7 +124,7 @@ pub trait CohortMetricsBase: Send + Sync {
     /// Compute net_sentiment.height as capital-weighted average from heterogeneous sources.
     fn compute_net_sentiment_from_others_dyn(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         others: &[&dyn CohortMetricsBase],
         exit: &Exit,
     ) -> Result<()> {
@@ -151,7 +151,7 @@ pub trait CohortMetricsBase: Send + Sync {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.supply_mut()
@@ -184,7 +184,7 @@ pub trait CohortMetricsBase: Send + Sync {
     /// Compute net_sentiment.height for separate cohorts (greed - pain).
     fn compute_net_sentiment_height(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.unrealized_base_mut()
@@ -196,7 +196,7 @@ pub trait CohortMetricsBase: Send + Sync {
     /// Uses only base fields (supply, outputs, activity, realized_base, unrealized_base, cost_basis_base).
     fn compute_base_from_others(
         &mut self,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         others: &[&dyn CohortMetricsBase],
         exit: &Exit,
     ) -> Result<()>

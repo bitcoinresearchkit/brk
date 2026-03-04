@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Version};
+use brk_types::{BasisPoints16, Indexes, Version};
 use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{
-    ComputeIndexes, indexes,
+    indexes,
     internal::{PercentFromHeight, RatioU64Bp16},
     outputs,
 };
@@ -43,7 +43,7 @@ impl Vecs {
         &mut self,
         count: &CountVecs,
         outputs_count: &outputs::CountVecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.taproot.compute_binary::<_, _, RatioU64Bp16>(

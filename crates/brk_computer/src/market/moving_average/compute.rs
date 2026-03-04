@@ -1,15 +1,16 @@
 use brk_error::Result;
+use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, prices};
+use crate::{blocks, prices};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let close = &prices.price.cents.height;

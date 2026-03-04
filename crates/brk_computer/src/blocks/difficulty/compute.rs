@@ -1,18 +1,18 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{StoredF64, StoredU32};
+use brk_types::{Indexes, StoredF64, StoredU32};
 use vecdb::Exit;
 
 use super::super::TARGET_BLOCKS_PER_DAY_F32;
 use super::Vecs;
-use crate::{ComputeIndexes, indexes};
+use crate::indexes;
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         // raw is fully lazy from indexer height source — no compute needed

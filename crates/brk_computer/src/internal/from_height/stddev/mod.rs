@@ -4,10 +4,10 @@ pub use extended::*;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, StoredF32, Version};
+use brk_types::{Height, Indexes, StoredF32, Version};
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{ComputeIndexes, blocks, indexes};
+use crate::{blocks, indexes};
 
 use crate::internal::ComputedFromHeight;
 
@@ -57,7 +57,7 @@ impl ComputedFromHeightStdDev {
     pub(crate) fn compute_all(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &ComputeIndexes,
+        starting_indexes: &Indexes,
         exit: &Exit,
         source: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
