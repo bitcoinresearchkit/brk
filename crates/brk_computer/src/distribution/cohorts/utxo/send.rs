@@ -70,7 +70,7 @@ impl UTXOCohorts<Rw> {
                     .as_mut()
                     .unwrap()
                     .send_utxo_precomputed(&sent.spendable_supply, &pre);
-                self.year
+                self.class
                     .mut_vec_from_timestamp(block_state.timestamp)
                     .state
                     .as_mut()
@@ -86,7 +86,7 @@ impl UTXOCohorts<Rw> {
                     .as_mut()
                     .unwrap()
                     .supply -= &sent.spendable_supply;
-                self.year
+                self.class
                     .mut_vec_from_timestamp(block_state.timestamp)
                     .state
                     .as_mut()

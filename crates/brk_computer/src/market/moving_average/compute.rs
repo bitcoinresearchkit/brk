@@ -34,7 +34,7 @@ impl Vecs {
             (&mut self.price_sma_4y, 4 * 365),
         ] {
             let window_starts = blocks.count.start_vec(period);
-            sma.compute_all(blocks, prices, starting_indexes, exit, |v| {
+            sma.compute_all(prices, starting_indexes, exit, |v| {
                 v.compute_rolling_average(starting_indexes.height, window_starts, close, exit)?;
                 Ok(())
             })?;
@@ -59,7 +59,7 @@ impl Vecs {
             (&mut self.price_ema_4y, 4 * 365),
         ] {
             let window_starts = blocks.count.start_vec(period);
-            ema.compute_all(blocks, prices, starting_indexes, exit, |v| {
+            ema.compute_all(prices, starting_indexes, exit, |v| {
                 v.compute_rolling_ema(starting_indexes.height, window_starts, close, exit)?;
                 Ok(())
             })?;

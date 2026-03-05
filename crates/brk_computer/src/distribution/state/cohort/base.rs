@@ -185,7 +185,11 @@ impl CohortState {
         let sats = supply.value;
         let current_ps = CentsSats::from_price_sats(current_price, sats);
         let prev_ps = CentsSats::from_price_sats(prev_price, sats);
-        let ath_ps = CentsSats::from_price_sats(ath, sats);
+        let ath_ps = if ath == current_price {
+            current_ps
+        } else {
+            CentsSats::from_price_sats(ath, sats)
+        };
         let prev_investor_cap = prev_ps.to_investor_cap(prev_price);
         Some(SendPrecomputed {
             sats,
@@ -285,6 +289,10 @@ impl CohortState {
 
     pub(crate) fn compute_percentiles(&mut self) -> Option<Percentiles> {
         self.cost_basis_data.compute_percentiles()
+    }
+
+    pub(crate) fn cached_percentiles(&self) -> Option<Percentiles> {
+        self.cost_basis_data.cached_percentiles()
     }
 
     pub(crate) fn compute_unrealized_state(&mut self, height_price: Cents) -> UnrealizedState {

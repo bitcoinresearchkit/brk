@@ -2,45 +2,69 @@ use std::{cmp::Reverse, collections::BinaryHeap, fs, path::Path};
 
 use brk_cohort::{Filtered, TERM_NAMES};
 use brk_error::Result;
-use brk_types::{
-    BasisPoints16, Cents, CentsCompact, CostBasisDistribution, Date, Height, Sats,
-};
-use vecdb::WritableVec;
+use brk_types::{Cents, CentsCompact, CostBasisDistribution, Date, Height, Sats};
 
-use crate::internal::{PERCENTILES, PERCENTILES_LEN, compute_spot_percentile_rank};
+use crate::internal::{PERCENTILES, PERCENTILES_LEN};
 
 use crate::distribution::metrics::{CohortMetricsBase, CostBasisExtended};
 
 use super::groups::UTXOCohorts;
 
-/// Significant digits for cost basis prices (after rounding to dollars).
 const COST_BASIS_PRICE_DIGITS: i32 = 5;
+
+#[derive(Clone, Default)]
+pub(super) struct CachedPercentiles {
+    sat_result: [Cents; PERCENTILES_LEN],
+    usd_result: [Cents; PERCENTILES_LEN],
+}
+
+impl CachedPercentiles {
+    fn push(&self, height: Height, ext: &mut CostBasisExtended) -> Result<()> {
+        ext.push_arrays(height, &self.sat_result, &self.usd_result)
+    }
+}
+
+/// Cached percentile results for all/sth/lth.
+/// Avoids re-merging 21 BTreeMaps on every block.
+#[derive(Clone, Default)]
+pub(super) struct PercentileCache {
+    all: CachedPercentiles,
+    sth: CachedPercentiles,
+    lth: CachedPercentiles,
+    initialized: bool,
+}
 
 impl UTXOCohorts {
     /// Compute and push percentiles for aggregate cohorts (all, sth, lth).
     ///
-    /// Single K-way merge pass over all age_range cohorts computes percentiles
-    /// for all 3 targets simultaneously, since each cohort belongs to exactly
-    /// one of STH/LTH and always contributes to ALL.
-    ///
-    /// Uses BinaryHeap with direct BTreeMap iterators — O(log K) merge
-    /// with zero intermediate Vec allocation.
+    /// Full K-way merge only runs at day boundaries or when the cache is empty.
+    /// For intermediate blocks, pushes cached percentile arrays.
     pub(crate) fn truncate_push_aggregate_percentiles(
         &mut self,
         height: Height,
-        spot: Cents,
+        date_opt: Option<Date>,
+        states_path: &Path,
+    ) -> Result<()> {
+        if date_opt.is_some() || !self.percentile_cache.initialized {
+            self.merge_and_push_percentiles(height, date_opt, states_path)
+        } else {
+            self.push_cached_percentiles(height)
+        }
+    }
+
+    /// Full K-way merge: compute percentiles from scratch, update cache, push.
+    fn merge_and_push_percentiles(
+        &mut self,
+        height: Height,
         date_opt: Option<Date>,
         states_path: &Path,
     ) -> Result<()> {
         let collect_merged = date_opt.is_some();
 
-        // Phase 1: compute totals + merge.
-        // Scoped so age_range borrows release before push_target borrows self.all/sth/lth.
         let targets = {
             let sth_filter = self.sth.metrics.filter().clone();
             let mut totals = AllSthLth::<(u64, u128)>::default();
 
-            // Collect BTreeMap refs from age_range, skip empty, compute totals.
             let maps: Vec<_> = self
                 .age_range
                 .iter()
@@ -75,75 +99,120 @@ impl UTXOCohorts {
             let all_has_data = totals.all.0 > 0;
             let mut targets = totals.map(|(sats, usd)| PercTarget::new(sats, usd, cap));
 
-            // K-way merge via BinaryHeap + BTreeMap iterators (no Vec copies)
             if all_has_data {
-                let mut iters: Vec<_> = maps
-                    .iter()
-                    .map(|(map, is_sth)| (map.iter().peekable(), *is_sth))
-                    .collect();
-
-                let mut heap: BinaryHeap<Reverse<(CentsCompact, usize)>> =
-                    BinaryHeap::with_capacity(iters.len());
-                for (i, (iter, _)) in iters.iter_mut().enumerate() {
-                    if let Some(&(&price, _)) = iter.peek() {
-                        heap.push(Reverse((price, i)));
-                    }
-                }
-
-                let mut current_price: Option<CentsCompact> = None;
-                let mut early_exit = false;
-
-                while let Some(Reverse((price, ci))) = heap.pop() {
-                    let (ref mut iter, is_sth) = iters[ci];
-                    let (_, &sats) = iter.next().unwrap();
-                    let amount = u64::from(sats);
-                    let usd = Cents::from(price).as_u128() * amount as u128;
-
-                    if let Some(prev) = current_price
-                        && prev != price
-                    {
-                        targets
-                            .for_each_mut(|t| t.finalize_price(prev.into(), collect_merged));
-                        if !collect_merged && targets.all_match(|t| t.done()) {
-                            early_exit = true;
-                            break;
-                        }
-                    }
-
-                    current_price = Some(price);
-                    targets.all.accumulate(amount, usd);
-                    targets.term_mut(is_sth).accumulate(amount, usd);
-
-                    if let Some(&(&next_price, _)) = iter.peek() {
-                        heap.push(Reverse((next_price, ci)));
-                    }
-                }
-
-                if !early_exit
-                    && let Some(price) = current_price
-                {
-                    targets.for_each_mut(|t| t.finalize_price(price.into(), collect_merged));
-                }
+                merge_k_way(&maps, &mut targets, collect_merged);
             }
 
             targets
         };
 
-        // Phase 2: push results (borrows self.all/sth/lth mutably)
-        push_target(
-            height, spot, date_opt, states_path, targets.all,
-            &mut self.all.metrics.cost_basis.extended, "all",
-        )?;
-        push_target(
-            height, spot, date_opt, states_path, targets.sth,
-            &mut self.sth.metrics.cost_basis.extended, TERM_NAMES.short.id,
-        )?;
-        push_target(
-            height, spot, date_opt, states_path, targets.lth,
-            &mut self.lth.metrics.cost_basis.extended, TERM_NAMES.long.id,
-        )?;
+        // Update cache + push
+        self.percentile_cache.all = targets.all.to_cached();
+        self.percentile_cache.sth = targets.sth.to_cached();
+        self.percentile_cache.lth = targets.lth.to_cached();
+        self.percentile_cache.initialized = true;
+
+        self.percentile_cache
+            .all
+            .push(height, &mut self.all.metrics.cost_basis.extended)?;
+        self.percentile_cache
+            .sth
+            .push(height, &mut self.sth.metrics.cost_basis.extended)?;
+        self.percentile_cache
+            .lth
+            .push(height, &mut self.lth.metrics.cost_basis.extended)?;
+
+        // Serialize full distribution at day boundaries
+        if let Some(date) = date_opt {
+            write_distribution(states_path, "all", date, targets.all.merged)?;
+            write_distribution(states_path, TERM_NAMES.short.id, date, targets.sth.merged)?;
+            write_distribution(states_path, TERM_NAMES.long.id, date, targets.lth.merged)?;
+        }
 
         Ok(())
+    }
+
+    /// Fast path: push cached percentile arrays.
+    fn push_cached_percentiles(&mut self, height: Height) -> Result<()> {
+        self.percentile_cache
+            .all
+            .push(height, &mut self.all.metrics.cost_basis.extended)?;
+        self.percentile_cache
+            .sth
+            .push(height, &mut self.sth.metrics.cost_basis.extended)?;
+        self.percentile_cache
+            .lth
+            .push(height, &mut self.lth.metrics.cost_basis.extended)?;
+        Ok(())
+    }
+}
+
+fn write_distribution(
+    states_path: &Path,
+    name: &str,
+    date: Date,
+    merged: Vec<(CentsCompact, Sats)>,
+) -> Result<()> {
+    let dir = states_path.join(format!("utxo_{name}_cost_basis/by_date"));
+    fs::create_dir_all(&dir)?;
+    fs::write(
+        dir.join(date.to_string()),
+        CostBasisDistribution::serialize_iter(merged.into_iter())?,
+    )?;
+    Ok(())
+}
+
+/// K-way merge via BinaryHeap over BTreeMap iterators.
+fn merge_k_way(
+    maps: &[(&std::collections::BTreeMap<CentsCompact, Sats>, bool)],
+    targets: &mut AllSthLth<PercTarget>,
+    collect_merged: bool,
+) {
+    let mut iters: Vec<_> = maps
+        .iter()
+        .map(|(map, is_sth)| (map.iter().peekable(), *is_sth))
+        .collect();
+
+    let mut heap: BinaryHeap<Reverse<(CentsCompact, usize)>> =
+        BinaryHeap::with_capacity(iters.len());
+    for (i, (iter, _)) in iters.iter_mut().enumerate() {
+        if let Some(&(&price, _)) = iter.peek() {
+            heap.push(Reverse((price, i)));
+        }
+    }
+
+    let mut current_price: Option<CentsCompact> = None;
+    let mut early_exit = false;
+
+    while let Some(Reverse((price, ci))) = heap.pop() {
+        let (ref mut iter, is_sth) = iters[ci];
+        let (_, &sats) = iter.next().unwrap();
+        let amount = u64::from(sats);
+        let usd = Cents::from(price).as_u128() * amount as u128;
+
+        if let Some(prev) = current_price
+            && prev != price
+        {
+            targets.for_each_mut(|t| t.finalize_price(prev.into(), collect_merged));
+            if !collect_merged && targets.all_match(|t| t.done()) {
+                early_exit = true;
+                break;
+            }
+        }
+
+        current_price = Some(price);
+        targets.all.accumulate(amount, usd);
+        targets.term_mut(is_sth).accumulate(amount, usd);
+
+        if let Some(&(&next_price, _)) = iter.peek() {
+            heap.push(Reverse((next_price, ci)));
+        }
+    }
+
+    if !early_exit
+        && let Some(price) = current_price
+    {
+        targets.for_each_mut(|t| t.finalize_price(price.into(), collect_merged));
     }
 }
 
@@ -230,6 +299,13 @@ impl PercTarget {
         }
     }
 
+    fn to_cached(&self) -> CachedPercentiles {
+        CachedPercentiles {
+            sat_result: self.sat_result,
+            usd_result: self.usd_result,
+        }
+    }
+
     #[inline]
     fn accumulate(&mut self, amount: u64, usd: u128) {
         self.price_sats += amount;
@@ -274,49 +350,4 @@ impl PercTarget {
         (self.total_sats == 0 || self.sat_idx >= PERCENTILES_LEN)
             && (self.total_usd == 0 || self.usd_idx >= PERCENTILES_LEN)
     }
-}
-
-#[allow(clippy::too_many_arguments)]
-fn push_target(
-    height: Height,
-    spot: Cents,
-    date_opt: Option<Date>,
-    states_path: &Path,
-    target: PercTarget,
-    ext: &mut CostBasisExtended,
-    name: &str,
-) -> Result<()> {
-    ext.percentiles.truncate_push(height, &target.sat_result)?;
-    ext.invested_capital
-        .truncate_push(height, &target.usd_result)?;
-
-    let sat_rank = if target.total_sats > 0 {
-        compute_spot_percentile_rank(&target.sat_result, spot)
-    } else {
-        BasisPoints16::ZERO
-    };
-    ext.spot_cost_basis_percentile
-        .bps
-        .height
-        .truncate_push(height, sat_rank)?;
-
-    let usd_rank = if target.total_usd > 0 {
-        compute_spot_percentile_rank(&target.usd_result, spot)
-    } else {
-        BasisPoints16::ZERO
-    };
-    ext.spot_invested_capital_percentile
-        .bps
-        .height
-        .truncate_push(height, usd_rank)?;
-
-    if let Some(date) = date_opt {
-        let dir = states_path.join(format!("utxo_{name}_cost_basis/by_date"));
-        fs::create_dir_all(&dir)?;
-        fs::write(
-            dir.join(date.to_string()),
-            CostBasisDistribution::serialize_iter(target.merged.into_iter())?,
-        )?;
-    }
-    Ok(())
 }

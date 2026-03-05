@@ -51,7 +51,7 @@ export function createPartialOptions() {
     addressesAmountRanges,
     typeAddressable,
     typeOther,
-    year,
+    class: class_,
   } = buildCohortData();
 
   return [
@@ -263,10 +263,10 @@ export function createPartialOptions() {
                 createGroupedCohortFolderBasicWithoutMarketCap({
                   name: "Compare",
                   title: "Years",
-                  list: year,
+                  list: class_,
                   all: cohortAll,
                 }),
-                ...year.map(createCohortFolderBasicWithoutMarketCap),
+                ...class_.map(createCohortFolderBasicWithoutMarketCap),
               ],
             },
           ],

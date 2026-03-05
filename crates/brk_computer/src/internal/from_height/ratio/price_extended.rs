@@ -5,20 +5,20 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::internal::{ComputedFromHeight, Price};
-use crate::{blocks, indexes, prices};
+use crate::{indexes, prices};
 
-use super::ComputedFromHeightRatioExtended;
+use super::ComputedFromHeightRatio;
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct ComputedFromHeightPriceWithRatioExtended<M: StorageMode = Rw> {
+pub struct ComputedFromHeightPriceWithRatio<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub inner: ComputedFromHeightRatioExtended<M>,
+    pub inner: ComputedFromHeightRatio<M>,
     pub price: Price<ComputedFromHeight<Cents, M>>,
 }
 
-impl ComputedFromHeightPriceWithRatioExtended {
+impl ComputedFromHeightPriceWithRatio {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -27,15 +27,14 @@ impl ComputedFromHeightPriceWithRatioExtended {
     ) -> Result<Self> {
         let v = version + Version::TWO;
         Ok(Self {
-            inner: ComputedFromHeightRatioExtended::forced_import(db, name, version, indexes)?,
+            inner: ComputedFromHeightRatio::forced_import(db, name, version, indexes)?,
             price: Price::forced_import(db, name, v, indexes)?,
         })
     }
 
-    /// Compute price via closure (in cents), then compute ratio + extended metrics.
+    /// Compute price via closure (in cents), then compute ratio.
     pub(crate) fn compute_all<F>(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
@@ -45,13 +44,9 @@ impl ComputedFromHeightPriceWithRatioExtended {
         F: FnMut(&mut EagerVec<PcoVec<Height, Cents>>) -> Result<()>,
     {
         compute_price(&mut self.price.cents.height)?;
-        self.inner.compute_rest(
-            blocks,
-            prices,
-            starting_indexes,
-            exit,
-            &self.price.cents.height,
-        )?;
+        let close_price = &prices.price.cents.height;
+        self.inner
+            .compute_ratio(starting_indexes, close_price, &self.price.cents.height, exit)?;
         Ok(())
     }
 }

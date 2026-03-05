@@ -5,7 +5,7 @@ use brk_types::{Cents, Dollars, Height, Indexes, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{blocks, distribution::state::CohortState, prices};
+use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
     ActivityMetrics, CohortMetricsBase, CostBasisBase, ImportConfig, OutputsMetrics, RealizedBase,
@@ -71,18 +71,6 @@ impl CohortMetricsBase for AdjustedCohortMetrics {
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.supply.validate_computed_versions(base_version)?;
         self.activity.validate_computed_versions(base_version)?;
-        Ok(())
-    }
-    fn compute_then_truncate_push_unrealized_states(
-        &mut self,
-        height: Height,
-        height_price: Cents,
-        state: &mut CohortState,
-    ) -> Result<()> {
-        state.apply_pending();
-        self.cost_basis.truncate_push_minmax(height, state)?;
-        let unrealized_state = state.compute_unrealized_state(height_price);
-        self.unrealized.truncate_push(height, &unrealized_state)?;
         Ok(())
     }
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

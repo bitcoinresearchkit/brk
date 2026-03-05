@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{CentsTimesTenths, ComputedFromHeightPriceWithRatioExtended, Price},
+    internal::{CentsTimesTenths, ComputedFromHeightPriceWithRatio, Price},
 };
 
 impl Vecs {
@@ -16,7 +16,7 @@ impl Vecs {
     ) -> Result<Self> {
         macro_rules! import {
             ($name:expr) => {
-                ComputedFromHeightPriceWithRatioExtended::forced_import(
+                ComputedFromHeightPriceWithRatio::forced_import(
                     db, $name, version, indexes,
                 )?
             };

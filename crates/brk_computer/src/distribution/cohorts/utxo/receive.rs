@@ -11,7 +11,7 @@ impl UTXOCohorts<Rw> {
     /// New UTXOs are added to:
     /// - The "up_to_1h" age cohort (all new UTXOs start at 0 hours old)
     /// - The appropriate epoch cohort based on block height
-    /// - The appropriate year cohort based on block timestamp
+    /// - The appropriate class cohort based on block timestamp
     /// - The appropriate output type cohort (P2PKH, P2SH, etc.)
     /// - The appropriate amount range cohort based on value
     pub(crate) fn receive(
@@ -26,7 +26,7 @@ impl UTXOCohorts<Rw> {
         // Pre-compute snapshot once for the 3 cohorts sharing the same supply_state
         let snapshot = CostBasisSnapshot::from_utxo(price, &supply_state);
 
-        // New UTXOs go into up_to_1h, current epoch, and current year
+        // New UTXOs go into up_to_1h, current epoch, and current class
         self.age_range
             .up_to_1h
             .state
@@ -39,7 +39,7 @@ impl UTXOCohorts<Rw> {
             .as_mut()
             .unwrap()
             .receive_utxo_snapshot(&supply_state, &snapshot);
-        self.year
+        self.class
             .mut_vec_from_timestamp(timestamp)
             .state
             .as_mut()

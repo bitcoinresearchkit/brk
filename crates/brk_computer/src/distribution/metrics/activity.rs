@@ -2,9 +2,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF64, Version};
 use rayon::prelude::*;
-use vecdb::{
-    AnyStoredVec, AnyVec, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode, WritableVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     blocks,
@@ -22,16 +20,10 @@ pub struct ActivityMetrics<M: StorageMode = Rw> {
     /// 14-day EMA of sent supply (sats, btc, usd)
     pub sent_ema: RollingEmas2w<M>,
 
-    /// Satoshi-blocks destroyed (supply * blocks_old when spent)
-    pub satblocks_destroyed: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
-
-    /// Satoshi-days destroyed (supply * days_old when spent)
-    pub satdays_destroyed: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
-
-    /// Coin-blocks destroyed (in BTC rather than sats)
+    /// Coin-blocks destroyed (in BTC)
     pub coinblocks_destroyed: ComputedFromHeightCumulativeSum<StoredF64, M>,
 
-    /// Coin-days destroyed (in BTC rather than sats)
+    /// Coin-days destroyed (in BTC)
     pub coindays_destroyed: ComputedFromHeightCumulativeSum<StoredF64, M>,
 }
 
@@ -42,20 +34,9 @@ impl ActivityMetrics {
             sent: cfg.import_value_cumulative("sent", Version::ZERO)?,
             sent_ema: cfg.import_emas_2w("sent", Version::ZERO)?,
 
-            satblocks_destroyed: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("satblocks_destroyed"),
-                cfg.version,
-            )?,
-            satdays_destroyed: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("satdays_destroyed"),
-                cfg.version,
-            )?,
-
             coinblocks_destroyed: cfg
-                .import_cumulative_sum("coinblocks_destroyed", Version::ZERO)?,
-            coindays_destroyed: cfg.import_cumulative_sum("coindays_destroyed", Version::ZERO)?,
+                .import_cumulative_sum("coinblocks_destroyed", Version::ONE)?,
+            coindays_destroyed: cfg.import_cumulative_sum("coindays_destroyed", Version::ONE)?,
         })
     }
 
@@ -66,8 +47,8 @@ impl ActivityMetrics {
             .sats
             .height
             .len()
-            .min(self.satblocks_destroyed.len())
-            .min(self.satdays_destroyed.len())
+            .min(self.coinblocks_destroyed.height.len())
+            .min(self.coindays_destroyed.height.len())
     }
 
     /// Push activity state values to height-indexed vectors.
@@ -79,10 +60,14 @@ impl ActivityMetrics {
         satdays_destroyed: Sats,
     ) -> Result<()> {
         self.sent.base.sats.height.truncate_push(height, sent)?;
-        self.satblocks_destroyed
-            .truncate_push(height, satblocks_destroyed)?;
-        self.satdays_destroyed
-            .truncate_push(height, satdays_destroyed)?;
+        self.coinblocks_destroyed.height.truncate_push(
+            height,
+            StoredF64::from(Bitcoin::from(satblocks_destroyed)),
+        )?;
+        self.coindays_destroyed.height.truncate_push(
+            height,
+            StoredF64::from(Bitcoin::from(satdays_destroyed)),
+        )?;
         Ok(())
     }
 
@@ -90,8 +75,8 @@ impl ActivityMetrics {
     pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         vec![
             &mut self.sent.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.satblocks_destroyed as &mut dyn AnyStoredVec,
-            &mut self.satdays_destroyed as &mut dyn AnyStoredVec,
+            &mut self.coinblocks_destroyed.height as &mut dyn AnyStoredVec,
+            &mut self.coindays_destroyed.height as &mut dyn AnyStoredVec,
         ]
         .into_par_iter()
     }
@@ -120,8 +105,8 @@ impl ActivityMetrics {
         }
 
         sum_others!(sent.base.sats.height);
-        sum_others!(satblocks_destroyed);
-        sum_others!(satdays_destroyed);
+        sum_others!(coinblocks_destroyed.height);
+        sum_others!(coindays_destroyed.height);
         Ok(())
     }
 
@@ -144,26 +129,10 @@ impl ActivityMetrics {
         )?;
 
         self.coinblocks_destroyed
-            .compute(starting_indexes.height, &window_starts, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &self.satblocks_destroyed,
-                    |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+            .compute_rest(starting_indexes.height, &window_starts, exit)?;
 
         self.coindays_destroyed
-            .compute(starting_indexes.height, &window_starts, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &self.satdays_destroyed,
-                    |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+            .compute_rest(starting_indexes.height, &window_starts, exit)?;
 
         Ok(())
     }

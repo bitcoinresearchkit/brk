@@ -1480,60 +1480,6 @@ impl _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct BpsPriceRatioPattern {
-    pub bps: MetricPattern1<BasisPoints32>,
-    pub price: CentsSatsUsdPattern,
-    pub ratio: MetricPattern1<StoredF32>,
-    pub ratio_pct1: BpsRatioPattern,
-    pub ratio_pct1_price: CentsSatsUsdPattern,
-    pub ratio_pct2: BpsRatioPattern,
-    pub ratio_pct2_price: CentsSatsUsdPattern,
-    pub ratio_pct5: BpsRatioPattern,
-    pub ratio_pct5_price: CentsSatsUsdPattern,
-    pub ratio_pct95: BpsRatioPattern,
-    pub ratio_pct95_price: CentsSatsUsdPattern,
-    pub ratio_pct98: BpsRatioPattern,
-    pub ratio_pct98_price: CentsSatsUsdPattern,
-    pub ratio_pct99: BpsRatioPattern,
-    pub ratio_pct99_price: CentsSatsUsdPattern,
-    pub ratio_sd: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
-    pub ratio_sd_1y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
-    pub ratio_sd_2y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
-    pub ratio_sd_4y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
-    pub ratio_sma_1m: BpsRatioPattern,
-    pub ratio_sma_1w: BpsRatioPattern,
-}
-
-impl BpsPriceRatioPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            bps: MetricPattern1::new(client.clone(), _m(&acc, "ratio_bps")),
-            price: CentsSatsUsdPattern::new(client.clone(), acc.clone()),
-            ratio: MetricPattern1::new(client.clone(), _m(&acc, "ratio")),
-            ratio_pct1: BpsRatioPattern::new(client.clone(), _m(&acc, "ratio_pct1")),
-            ratio_pct1_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "ratio_pct1")),
-            ratio_pct2: BpsRatioPattern::new(client.clone(), _m(&acc, "ratio_pct2")),
-            ratio_pct2_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "ratio_pct2")),
-            ratio_pct5: BpsRatioPattern::new(client.clone(), _m(&acc, "ratio_pct5")),
-            ratio_pct5_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "ratio_pct5")),
-            ratio_pct95: BpsRatioPattern::new(client.clone(), _m(&acc, "ratio_pct95")),
-            ratio_pct95_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "ratio_pct95")),
-            ratio_pct98: BpsRatioPattern::new(client.clone(), _m(&acc, "ratio_pct98")),
-            ratio_pct98_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "ratio_pct98")),
-            ratio_pct99: BpsRatioPattern::new(client.clone(), _m(&acc, "ratio_pct99")),
-            ratio_pct99_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "ratio_pct99")),
-            ratio_sd: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), _m(&acc, "ratio")),
-            ratio_sd_1y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), _m(&acc, "ratio")),
-            ratio_sd_2y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), _m(&acc, "ratio")),
-            ratio_sd_4y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), _m(&acc, "ratio")),
-            ratio_sma_1m: BpsRatioPattern::new(client.clone(), _m(&acc, "ratio_sma_1m")),
-            ratio_sma_1w: BpsRatioPattern::new(client.clone(), _m(&acc, "ratio_sma_1w")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct BpsRatioPattern2 {
     pub bps: MetricPattern1<BasisPoints32>,
     pub ratio: MetricPattern1<StoredF32>,
@@ -1989,7 +1935,7 @@ impl AverageGainsLossesRsiStochPattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern {
-    pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
+    pub activity: CoinblocksCoindaysSentPattern,
     pub addr_count: MetricPattern1<StoredU64>,
     pub addr_count_change_1m: MetricPattern1<StoredF64>,
     pub cost_basis: MaxMinPattern,
@@ -2004,7 +1950,7 @@ impl ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
+            activity: CoinblocksCoindaysSentPattern::new(client.clone(), acc.clone()),
             addr_count: MetricPattern1::new(client.clone(), _m(&acc, "addr_count")),
             addr_count_change_1m: MetricPattern1::new(client.clone(), _m(&acc, "addr_count_change_1m")),
             cost_basis: MaxMinPattern::new(client.clone(), _m(&acc, "cost_basis")),
@@ -2166,34 +2112,6 @@ impl _1m1w1y24hBtcCentsSatsUsdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct BlocksCoinbaseDominanceFeeSubsidyPattern {
-    pub blocks_mined: CumulativeHeightSumPattern<StoredU32>,
-    pub blocks_mined_sum: _1m1w1y24hPattern<StoredU32>,
-    pub blocks_since_last_mined: MetricPattern1<StoredU32>,
-    pub coinbase: BaseCumulativeSumPattern,
-    pub dominance: BpsPercentRatioPattern,
-    pub dominance_rolling: _1m1w1y24hPattern2,
-    pub fee: BaseCumulativeSumPattern,
-    pub subsidy: BaseCumulativeSumPattern,
-}
-
-impl BlocksCoinbaseDominanceFeeSubsidyPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            blocks_mined: CumulativeHeightSumPattern::new(client.clone(), _m(&acc, "blocks_mined")),
-            blocks_mined_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "blocks_mined_sum")),
-            blocks_since_last_mined: MetricPattern1::new(client.clone(), _m(&acc, "blocks_since_last_mined")),
-            coinbase: BaseCumulativeSumPattern::new(client.clone(), _m(&acc, "coinbase")),
-            dominance: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "dominance")),
-            dominance_rolling: _1m1w1y24hPattern2::new(client.clone(), _m(&acc, "dominance")),
-            fee: BaseCumulativeSumPattern::new(client.clone(), _m(&acc, "fee")),
-            subsidy: BaseCumulativeSumPattern::new(client.clone(), _m(&acc, "subsidy")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T> {
     pub average: MetricPattern18<T>,
     pub max: MetricPattern18<T>,
@@ -2249,8 +2167,8 @@ impl _10y2y3y4y5y6y8yPattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern {
-    pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
-    pub cost_basis: InvestedMaxMinPercentilesSpotPattern,
+    pub activity: CoinblocksCoindaysSentPattern,
+    pub cost_basis: InvestedMaxMinPercentilesPattern,
     pub outputs: UtxoPattern,
     pub realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2,
     pub relative: InvestedNegNetNuplSupplyUnrealizedPattern2,
@@ -2262,8 +2180,8 @@ impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
-            cost_basis: InvestedMaxMinPercentilesSpotPattern::new(client.clone(), acc.clone()),
+            activity: CoinblocksCoindaysSentPattern::new(client.clone(), acc.clone()),
+            cost_basis: InvestedMaxMinPercentilesPattern::new(client.clone(), acc.clone()),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
             realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2::new(client.clone(), acc.clone()),
             relative: InvestedNegNetNuplSupplyUnrealizedPattern2::new(client.clone(), acc.clone()),
@@ -2275,7 +2193,7 @@ impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4 {
-    pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
+    pub activity: CoinblocksCoindaysSentPattern,
     pub cost_basis: MaxMinPattern,
     pub outputs: UtxoPattern,
     pub realized: AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2,
@@ -2288,7 +2206,7 @@ impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
+            activity: CoinblocksCoindaysSentPattern::new(client.clone(), acc.clone()),
             cost_basis: MaxMinPattern::new(client.clone(), _m(&acc, "cost_basis")),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
             realized: AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2::new(client.clone(), acc.clone()),
@@ -2301,7 +2219,7 @@ impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4 {
 
 /// Pattern struct for repeated tree structure.
 pub struct ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3 {
-    pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
+    pub activity: CoinblocksCoindaysSentPattern,
     pub cost_basis: MaxMinPattern,
     pub outputs: UtxoPattern,
     pub realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern,
@@ -2314,7 +2232,7 @@ impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), acc.clone()),
+            activity: CoinblocksCoindaysSentPattern::new(client.clone(), acc.clone()),
             cost_basis: MaxMinPattern::new(client.clone(), _m(&acc, "cost_basis")),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
             realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern::new(client.clone(), acc.clone()),
@@ -2369,54 +2287,6 @@ impl BalanceBothReactivatedReceivingSendingPattern {
             reactivated: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), _m(&acc, "reactivated")),
             receiving: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), _m(&acc, "receiving")),
             sending: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), _m(&acc, "sending")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct CoinblocksCoindaysSatblocksSatdaysSentPattern {
-    pub coinblocks_destroyed: CumulativeHeightSumPattern<StoredF64>,
-    pub coindays_destroyed: CumulativeHeightSumPattern<StoredF64>,
-    pub satblocks_destroyed: MetricPattern18<Sats>,
-    pub satdays_destroyed: MetricPattern18<Sats>,
-    pub sent: BaseCumulativePattern,
-    pub sent_ema: _2wPattern,
-}
-
-impl CoinblocksCoindaysSatblocksSatdaysSentPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            coinblocks_destroyed: CumulativeHeightSumPattern::new(client.clone(), _m(&acc, "coinblocks_destroyed")),
-            coindays_destroyed: CumulativeHeightSumPattern::new(client.clone(), _m(&acc, "coindays_destroyed")),
-            satblocks_destroyed: MetricPattern18::new(client.clone(), _m(&acc, "satblocks_destroyed")),
-            satdays_destroyed: MetricPattern18::new(client.clone(), _m(&acc, "satdays_destroyed")),
-            sent: BaseCumulativePattern::new(client.clone(), _m(&acc, "sent")),
-            sent_ema: _2wPattern::new(client.clone(), _m(&acc, "sent_ema_2w")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct InvestedMaxMinPercentilesSpotPattern {
-    pub invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
-    pub max: CentsSatsUsdPattern,
-    pub min: CentsSatsUsdPattern,
-    pub percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
-    pub spot_cost_basis_percentile: BpsPercentRatioPattern,
-    pub spot_invested_capital_percentile: BpsPercentRatioPattern,
-}
-
-impl InvestedMaxMinPercentilesSpotPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), _m(&acc, "invested_capital")),
-            max: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "cost_basis_max")),
-            min: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "cost_basis_min")),
-            percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), _m(&acc, "cost_basis")),
-            spot_cost_basis_percentile: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "spot_cost_basis_percentile")),
-            spot_invested_capital_percentile: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "spot_invested_capital_percentile")),
         }
     }
 }
@@ -2484,6 +2354,26 @@ impl _1m1w1y24hPattern5 {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct BlocksDominanceRewardsPattern {
+    pub blocks_mined: CumulativeHeightSumPattern<StoredU32>,
+    pub dominance: BpsPercentRatioPattern,
+    pub dominance_rolling: _1m1w1y24hPattern2,
+    pub rewards: BaseCumulativeSumPattern,
+}
+
+impl BlocksDominanceRewardsPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            blocks_mined: CumulativeHeightSumPattern::new(client.clone(), _m(&acc, "blocks_mined")),
+            dominance: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "dominance")),
+            dominance_rolling: _1m1w1y24hPattern2::new(client.clone(), _m(&acc, "dominance")),
+            rewards: BaseCumulativeSumPattern::new(client.clone(), _m(&acc, "rewards")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct BtcCentsSatsUsdPattern {
     pub btc: MetricPattern1<Bitcoin>,
     pub cents: MetricPattern1<Cents>,
@@ -2499,6 +2389,46 @@ impl BtcCentsSatsUsdPattern {
             cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
             sats: MetricPattern1::new(client.clone(), acc.clone()),
             usd: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CoinblocksCoindaysSentPattern {
+    pub coinblocks_destroyed: CumulativeHeightSumPattern<StoredF64>,
+    pub coindays_destroyed: CumulativeHeightSumPattern<StoredF64>,
+    pub sent: BaseCumulativePattern,
+    pub sent_ema: _2wPattern,
+}
+
+impl CoinblocksCoindaysSentPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            coinblocks_destroyed: CumulativeHeightSumPattern::new(client.clone(), _m(&acc, "coinblocks_destroyed")),
+            coindays_destroyed: CumulativeHeightSumPattern::new(client.clone(), _m(&acc, "coindays_destroyed")),
+            sent: BaseCumulativePattern::new(client.clone(), _m(&acc, "sent")),
+            sent_ema: _2wPattern::new(client.clone(), _m(&acc, "sent_ema_2w")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct InvestedMaxMinPercentilesPattern {
+    pub invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
+    pub max: CentsSatsUsdPattern,
+    pub min: CentsSatsUsdPattern,
+    pub percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
+}
+
+impl InvestedMaxMinPercentilesPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), _m(&acc, "invested_capital")),
+            max: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "cost_basis_max")),
+            min: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "cost_basis_min")),
+            percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), _m(&acc, "cost_basis")),
         }
     }
 }
@@ -2572,6 +2502,24 @@ impl BpsPercentRatioPattern {
         Self {
             bps: MetricPattern1::new(client.clone(), _m(&acc, "bps")),
             percent: MetricPattern1::new(client.clone(), acc.clone()),
+            ratio: MetricPattern1::new(client.clone(), _m(&acc, "ratio")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct BpsPriceRatioPattern {
+    pub bps: MetricPattern1<BasisPoints32>,
+    pub price: CentsSatsUsdPattern,
+    pub ratio: MetricPattern1<StoredF32>,
+}
+
+impl BpsPriceRatioPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            bps: MetricPattern1::new(client.clone(), _m(&acc, "ratio_bps")),
+            price: CentsSatsUsdPattern::new(client.clone(), acc.clone()),
             ratio: MetricPattern1::new(client.clone(), _m(&acc, "ratio")),
         }
     }
@@ -4487,10 +4435,6 @@ pub struct MetricsTree_Market_Returns {
     pub price_return_24h_sd_1w: MetricsTree_Market_Returns_PriceReturn24hSd1w,
     pub price_return_24h_sd_1m: MetricsTree_Market_Returns_PriceReturn24hSd1m,
     pub price_return_24h_sd_1y: SdSmaPattern,
-    pub price_downside_24h: MetricPattern18<StoredF32>,
-    pub price_downside_24h_sd_1w: MetricsTree_Market_Returns_PriceDownside24hSd1w,
-    pub price_downside_24h_sd_1m: MetricsTree_Market_Returns_PriceDownside24hSd1m,
-    pub price_downside_24h_sd_1y: SdSmaPattern,
 }
 
 impl MetricsTree_Market_Returns {
@@ -4501,10 +4445,6 @@ impl MetricsTree_Market_Returns {
             price_return_24h_sd_1w: MetricsTree_Market_Returns_PriceReturn24hSd1w::new(client.clone(), format!("{base_path}_price_return_24h_sd_1w")),
             price_return_24h_sd_1m: MetricsTree_Market_Returns_PriceReturn24hSd1m::new(client.clone(), format!("{base_path}_price_return_24h_sd_1m")),
             price_return_24h_sd_1y: SdSmaPattern::new(client.clone(), "price_return_24h".to_string()),
-            price_downside_24h: MetricPattern18::new(client.clone(), "price_downside_24h".to_string()),
-            price_downside_24h_sd_1w: MetricsTree_Market_Returns_PriceDownside24hSd1w::new(client.clone(), format!("{base_path}_price_downside_24h_sd_1w")),
-            price_downside_24h_sd_1m: MetricsTree_Market_Returns_PriceDownside24hSd1m::new(client.clone(), format!("{base_path}_price_downside_24h_sd_1m")),
-            price_downside_24h_sd_1y: SdSmaPattern::new(client.clone(), "price_downside_24h".to_string()),
         }
     }
 }
@@ -4577,46 +4517,10 @@ impl MetricsTree_Market_Returns_PriceReturn24hSd1m {
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Market_Returns_PriceDownside24hSd1w {
-    pub sma: MetricPattern1<StoredF32>,
-    pub sd: MetricPattern1<StoredF32>,
-}
-
-impl MetricsTree_Market_Returns_PriceDownside24hSd1w {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            sma: MetricPattern1::new(client.clone(), "price_downside_24h_sma_1w".to_string()),
-            sd: MetricPattern1::new(client.clone(), "price_downside_24h_sd_1w".to_string()),
-        }
-    }
-}
-
-/// Metrics tree node.
-pub struct MetricsTree_Market_Returns_PriceDownside24hSd1m {
-    pub sma: MetricPattern1<StoredF32>,
-    pub sd: MetricPattern1<StoredF32>,
-}
-
-impl MetricsTree_Market_Returns_PriceDownside24hSd1m {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            sma: MetricPattern1::new(client.clone(), "price_downside_24h_sma_1m".to_string()),
-            sd: MetricPattern1::new(client.clone(), "price_downside_24h_sd_1m".to_string()),
-        }
-    }
-}
-
-/// Metrics tree node.
 pub struct MetricsTree_Market_Volatility {
     pub price_volatility_1w: MetricPattern1<StoredF32>,
     pub price_volatility_1m: MetricPattern1<StoredF32>,
     pub price_volatility_1y: MetricPattern1<StoredF32>,
-    pub price_sharpe_1w: MetricPattern1<StoredF32>,
-    pub price_sharpe_1m: MetricPattern1<StoredF32>,
-    pub price_sharpe_1y: MetricPattern1<StoredF32>,
-    pub price_sortino_1w: MetricPattern1<StoredF32>,
-    pub price_sortino_1m: MetricPattern1<StoredF32>,
-    pub price_sortino_1y: MetricPattern1<StoredF32>,
 }
 
 impl MetricsTree_Market_Volatility {
@@ -4625,12 +4529,6 @@ impl MetricsTree_Market_Volatility {
             price_volatility_1w: MetricPattern1::new(client.clone(), "price_volatility_1w".to_string()),
             price_volatility_1m: MetricPattern1::new(client.clone(), "price_volatility_1m".to_string()),
             price_volatility_1y: MetricPattern1::new(client.clone(), "price_volatility_1y".to_string()),
-            price_sharpe_1w: MetricPattern1::new(client.clone(), "price_sharpe_1w".to_string()),
-            price_sharpe_1m: MetricPattern1::new(client.clone(), "price_sharpe_1m".to_string()),
-            price_sharpe_1y: MetricPattern1::new(client.clone(), "price_sharpe_1y".to_string()),
-            price_sortino_1w: MetricPattern1::new(client.clone(), "price_sortino_1w".to_string()),
-            price_sortino_1m: MetricPattern1::new(client.clone(), "price_sortino_1m".to_string()),
-            price_sortino_1y: MetricPattern1::new(client.clone(), "price_sortino_1y".to_string()),
         }
     }
 }
@@ -5158,335 +5056,335 @@ impl MetricsTree_Pools {
 
 /// Metrics tree node.
 pub struct MetricsTree_Pools_Vecs {
-    pub unknown: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub blockfills: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub ultimuspool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub terrapool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub luxor: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub onethash: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub btccom: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitfarms: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub huobipool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub wayicn: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub canoepool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub btctop: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitcoincom: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub pool175btc: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub gbminers: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub axbt: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub asicminer: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitminter: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitcoinrussia: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub btcserv: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub simplecoinus: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub btcguild: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub eligius: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub ozcoin: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub eclipsemc: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub maxbtc: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub triplemining: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub coinlab: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub pool50btc: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub ghashio: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub stminingcorp: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitparking: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub mmpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub polmine: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub kncminer: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitalo: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub f2pool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub hhtt: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub megabigpower: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub mtred: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub nmcbit: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub yourbtcnet: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub givemecoins: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub braiinspool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub antpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub multicoinco: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bcpoolio: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub cointerra: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub kanopool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub solock: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub ckpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub nicehash: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitclub: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitcoinaffiliatenetwork: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub btcc: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bwpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub exxbw: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitsolo: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitfury: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub twentyoneinc: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub digitalbtc: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub eightbaochi: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub mybtccoinpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub tbdice: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub hashpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub nexious: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bravomining: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub hotpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub okexpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bcmonster: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub onehash: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bixin: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub tatmaspool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub viabtc: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub connectbtc: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub batpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub waterhole: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub dcexploration: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub dcex: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub btpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub fiftyeightcoin: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitcoinindia: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub shawnp0wers: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub phashio: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub rigpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub haozhuzhu: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub sevenpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub miningkings: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub hashbx: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub dpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub rawpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub haominer: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub helix: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitcoinukraine: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub poolin: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub secretsuperstar: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub tigerpoolnet: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub sigmapoolcom: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub okpooltop: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub hummerpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub tangpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bytepool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub spiderpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub novablock: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub miningcity: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub binancepool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub minerium: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub lubiancom: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub okkong: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub aaopool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub emcdpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub foundryusa: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub sbicrypto: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub arkpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub purebtccom: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub marapool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub kucoinpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub entrustcharitypool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub okminer: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub titan: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub pegapool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub btcnuggets: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub cloudhashing: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub digitalxmintsy: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub telco214: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub btcpoolparty: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub multipool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub transactioncoinmining: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub btcdig: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub trickysbtcpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub btcmp: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub eobot: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub unomp: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub patels: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub gogreenlight: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitcoinindiapool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub ekanembtc: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub canoe: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub tiger: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub onem1x: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub zulupool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub secpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub ocean: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub whitepool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub wiz: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub wk057: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub futurebitapollosolo: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub carbonnegative: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub portlandhodl: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub phoenix: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub neopool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub maxipool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub bitfufupool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub gdpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub miningdutch: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub publicpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub miningsquared: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub innopolistech: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub btclab: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub parasite: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub redrockpool: BlocksCoinbaseDominanceFeeSubsidyPattern,
-    pub est3lar: BlocksCoinbaseDominanceFeeSubsidyPattern,
+    pub unknown: BlocksDominanceRewardsPattern,
+    pub blockfills: BlocksDominanceRewardsPattern,
+    pub ultimuspool: BlocksDominanceRewardsPattern,
+    pub terrapool: BlocksDominanceRewardsPattern,
+    pub luxor: BlocksDominanceRewardsPattern,
+    pub onethash: BlocksDominanceRewardsPattern,
+    pub btccom: BlocksDominanceRewardsPattern,
+    pub bitfarms: BlocksDominanceRewardsPattern,
+    pub huobipool: BlocksDominanceRewardsPattern,
+    pub wayicn: BlocksDominanceRewardsPattern,
+    pub canoepool: BlocksDominanceRewardsPattern,
+    pub btctop: BlocksDominanceRewardsPattern,
+    pub bitcoincom: BlocksDominanceRewardsPattern,
+    pub pool175btc: BlocksDominanceRewardsPattern,
+    pub gbminers: BlocksDominanceRewardsPattern,
+    pub axbt: BlocksDominanceRewardsPattern,
+    pub asicminer: BlocksDominanceRewardsPattern,
+    pub bitminter: BlocksDominanceRewardsPattern,
+    pub bitcoinrussia: BlocksDominanceRewardsPattern,
+    pub btcserv: BlocksDominanceRewardsPattern,
+    pub simplecoinus: BlocksDominanceRewardsPattern,
+    pub btcguild: BlocksDominanceRewardsPattern,
+    pub eligius: BlocksDominanceRewardsPattern,
+    pub ozcoin: BlocksDominanceRewardsPattern,
+    pub eclipsemc: BlocksDominanceRewardsPattern,
+    pub maxbtc: BlocksDominanceRewardsPattern,
+    pub triplemining: BlocksDominanceRewardsPattern,
+    pub coinlab: BlocksDominanceRewardsPattern,
+    pub pool50btc: BlocksDominanceRewardsPattern,
+    pub ghashio: BlocksDominanceRewardsPattern,
+    pub stminingcorp: BlocksDominanceRewardsPattern,
+    pub bitparking: BlocksDominanceRewardsPattern,
+    pub mmpool: BlocksDominanceRewardsPattern,
+    pub polmine: BlocksDominanceRewardsPattern,
+    pub kncminer: BlocksDominanceRewardsPattern,
+    pub bitalo: BlocksDominanceRewardsPattern,
+    pub f2pool: BlocksDominanceRewardsPattern,
+    pub hhtt: BlocksDominanceRewardsPattern,
+    pub megabigpower: BlocksDominanceRewardsPattern,
+    pub mtred: BlocksDominanceRewardsPattern,
+    pub nmcbit: BlocksDominanceRewardsPattern,
+    pub yourbtcnet: BlocksDominanceRewardsPattern,
+    pub givemecoins: BlocksDominanceRewardsPattern,
+    pub braiinspool: BlocksDominanceRewardsPattern,
+    pub antpool: BlocksDominanceRewardsPattern,
+    pub multicoinco: BlocksDominanceRewardsPattern,
+    pub bcpoolio: BlocksDominanceRewardsPattern,
+    pub cointerra: BlocksDominanceRewardsPattern,
+    pub kanopool: BlocksDominanceRewardsPattern,
+    pub solock: BlocksDominanceRewardsPattern,
+    pub ckpool: BlocksDominanceRewardsPattern,
+    pub nicehash: BlocksDominanceRewardsPattern,
+    pub bitclub: BlocksDominanceRewardsPattern,
+    pub bitcoinaffiliatenetwork: BlocksDominanceRewardsPattern,
+    pub btcc: BlocksDominanceRewardsPattern,
+    pub bwpool: BlocksDominanceRewardsPattern,
+    pub exxbw: BlocksDominanceRewardsPattern,
+    pub bitsolo: BlocksDominanceRewardsPattern,
+    pub bitfury: BlocksDominanceRewardsPattern,
+    pub twentyoneinc: BlocksDominanceRewardsPattern,
+    pub digitalbtc: BlocksDominanceRewardsPattern,
+    pub eightbaochi: BlocksDominanceRewardsPattern,
+    pub mybtccoinpool: BlocksDominanceRewardsPattern,
+    pub tbdice: BlocksDominanceRewardsPattern,
+    pub hashpool: BlocksDominanceRewardsPattern,
+    pub nexious: BlocksDominanceRewardsPattern,
+    pub bravomining: BlocksDominanceRewardsPattern,
+    pub hotpool: BlocksDominanceRewardsPattern,
+    pub okexpool: BlocksDominanceRewardsPattern,
+    pub bcmonster: BlocksDominanceRewardsPattern,
+    pub onehash: BlocksDominanceRewardsPattern,
+    pub bixin: BlocksDominanceRewardsPattern,
+    pub tatmaspool: BlocksDominanceRewardsPattern,
+    pub viabtc: BlocksDominanceRewardsPattern,
+    pub connectbtc: BlocksDominanceRewardsPattern,
+    pub batpool: BlocksDominanceRewardsPattern,
+    pub waterhole: BlocksDominanceRewardsPattern,
+    pub dcexploration: BlocksDominanceRewardsPattern,
+    pub dcex: BlocksDominanceRewardsPattern,
+    pub btpool: BlocksDominanceRewardsPattern,
+    pub fiftyeightcoin: BlocksDominanceRewardsPattern,
+    pub bitcoinindia: BlocksDominanceRewardsPattern,
+    pub shawnp0wers: BlocksDominanceRewardsPattern,
+    pub phashio: BlocksDominanceRewardsPattern,
+    pub rigpool: BlocksDominanceRewardsPattern,
+    pub haozhuzhu: BlocksDominanceRewardsPattern,
+    pub sevenpool: BlocksDominanceRewardsPattern,
+    pub miningkings: BlocksDominanceRewardsPattern,
+    pub hashbx: BlocksDominanceRewardsPattern,
+    pub dpool: BlocksDominanceRewardsPattern,
+    pub rawpool: BlocksDominanceRewardsPattern,
+    pub haominer: BlocksDominanceRewardsPattern,
+    pub helix: BlocksDominanceRewardsPattern,
+    pub bitcoinukraine: BlocksDominanceRewardsPattern,
+    pub poolin: BlocksDominanceRewardsPattern,
+    pub secretsuperstar: BlocksDominanceRewardsPattern,
+    pub tigerpoolnet: BlocksDominanceRewardsPattern,
+    pub sigmapoolcom: BlocksDominanceRewardsPattern,
+    pub okpooltop: BlocksDominanceRewardsPattern,
+    pub hummerpool: BlocksDominanceRewardsPattern,
+    pub tangpool: BlocksDominanceRewardsPattern,
+    pub bytepool: BlocksDominanceRewardsPattern,
+    pub spiderpool: BlocksDominanceRewardsPattern,
+    pub novablock: BlocksDominanceRewardsPattern,
+    pub miningcity: BlocksDominanceRewardsPattern,
+    pub binancepool: BlocksDominanceRewardsPattern,
+    pub minerium: BlocksDominanceRewardsPattern,
+    pub lubiancom: BlocksDominanceRewardsPattern,
+    pub okkong: BlocksDominanceRewardsPattern,
+    pub aaopool: BlocksDominanceRewardsPattern,
+    pub emcdpool: BlocksDominanceRewardsPattern,
+    pub foundryusa: BlocksDominanceRewardsPattern,
+    pub sbicrypto: BlocksDominanceRewardsPattern,
+    pub arkpool: BlocksDominanceRewardsPattern,
+    pub purebtccom: BlocksDominanceRewardsPattern,
+    pub marapool: BlocksDominanceRewardsPattern,
+    pub kucoinpool: BlocksDominanceRewardsPattern,
+    pub entrustcharitypool: BlocksDominanceRewardsPattern,
+    pub okminer: BlocksDominanceRewardsPattern,
+    pub titan: BlocksDominanceRewardsPattern,
+    pub pegapool: BlocksDominanceRewardsPattern,
+    pub btcnuggets: BlocksDominanceRewardsPattern,
+    pub cloudhashing: BlocksDominanceRewardsPattern,
+    pub digitalxmintsy: BlocksDominanceRewardsPattern,
+    pub telco214: BlocksDominanceRewardsPattern,
+    pub btcpoolparty: BlocksDominanceRewardsPattern,
+    pub multipool: BlocksDominanceRewardsPattern,
+    pub transactioncoinmining: BlocksDominanceRewardsPattern,
+    pub btcdig: BlocksDominanceRewardsPattern,
+    pub trickysbtcpool: BlocksDominanceRewardsPattern,
+    pub btcmp: BlocksDominanceRewardsPattern,
+    pub eobot: BlocksDominanceRewardsPattern,
+    pub unomp: BlocksDominanceRewardsPattern,
+    pub patels: BlocksDominanceRewardsPattern,
+    pub gogreenlight: BlocksDominanceRewardsPattern,
+    pub bitcoinindiapool: BlocksDominanceRewardsPattern,
+    pub ekanembtc: BlocksDominanceRewardsPattern,
+    pub canoe: BlocksDominanceRewardsPattern,
+    pub tiger: BlocksDominanceRewardsPattern,
+    pub onem1x: BlocksDominanceRewardsPattern,
+    pub zulupool: BlocksDominanceRewardsPattern,
+    pub secpool: BlocksDominanceRewardsPattern,
+    pub ocean: BlocksDominanceRewardsPattern,
+    pub whitepool: BlocksDominanceRewardsPattern,
+    pub wiz: BlocksDominanceRewardsPattern,
+    pub wk057: BlocksDominanceRewardsPattern,
+    pub futurebitapollosolo: BlocksDominanceRewardsPattern,
+    pub carbonnegative: BlocksDominanceRewardsPattern,
+    pub portlandhodl: BlocksDominanceRewardsPattern,
+    pub phoenix: BlocksDominanceRewardsPattern,
+    pub neopool: BlocksDominanceRewardsPattern,
+    pub maxipool: BlocksDominanceRewardsPattern,
+    pub bitfufupool: BlocksDominanceRewardsPattern,
+    pub gdpool: BlocksDominanceRewardsPattern,
+    pub miningdutch: BlocksDominanceRewardsPattern,
+    pub publicpool: BlocksDominanceRewardsPattern,
+    pub miningsquared: BlocksDominanceRewardsPattern,
+    pub innopolistech: BlocksDominanceRewardsPattern,
+    pub btclab: BlocksDominanceRewardsPattern,
+    pub parasite: BlocksDominanceRewardsPattern,
+    pub redrockpool: BlocksDominanceRewardsPattern,
+    pub est3lar: BlocksDominanceRewardsPattern,
 }
 
 impl MetricsTree_Pools_Vecs {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            unknown: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "unknown".to_string()),
-            blockfills: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "blockfills".to_string()),
-            ultimuspool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "ultimuspool".to_string()),
-            terrapool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "terrapool".to_string()),
-            luxor: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "luxor".to_string()),
-            onethash: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "onethash".to_string()),
-            btccom: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "btccom".to_string()),
-            bitfarms: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitfarms".to_string()),
-            huobipool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "huobipool".to_string()),
-            wayicn: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "wayicn".to_string()),
-            canoepool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "canoepool".to_string()),
-            btctop: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "btctop".to_string()),
-            bitcoincom: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitcoincom".to_string()),
-            pool175btc: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "pool175btc".to_string()),
-            gbminers: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "gbminers".to_string()),
-            axbt: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "axbt".to_string()),
-            asicminer: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "asicminer".to_string()),
-            bitminter: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitminter".to_string()),
-            bitcoinrussia: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitcoinrussia".to_string()),
-            btcserv: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "btcserv".to_string()),
-            simplecoinus: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "simplecoinus".to_string()),
-            btcguild: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "btcguild".to_string()),
-            eligius: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "eligius".to_string()),
-            ozcoin: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "ozcoin".to_string()),
-            eclipsemc: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "eclipsemc".to_string()),
-            maxbtc: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "maxbtc".to_string()),
-            triplemining: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "triplemining".to_string()),
-            coinlab: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "coinlab".to_string()),
-            pool50btc: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "pool50btc".to_string()),
-            ghashio: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "ghashio".to_string()),
-            stminingcorp: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "stminingcorp".to_string()),
-            bitparking: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitparking".to_string()),
-            mmpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "mmpool".to_string()),
-            polmine: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "polmine".to_string()),
-            kncminer: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "kncminer".to_string()),
-            bitalo: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitalo".to_string()),
-            f2pool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "f2pool".to_string()),
-            hhtt: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "hhtt".to_string()),
-            megabigpower: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "megabigpower".to_string()),
-            mtred: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "mtred".to_string()),
-            nmcbit: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "nmcbit".to_string()),
-            yourbtcnet: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "yourbtcnet".to_string()),
-            givemecoins: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "givemecoins".to_string()),
-            braiinspool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "braiinspool".to_string()),
-            antpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "antpool".to_string()),
-            multicoinco: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "multicoinco".to_string()),
-            bcpoolio: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bcpoolio".to_string()),
-            cointerra: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "cointerra".to_string()),
-            kanopool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "kanopool".to_string()),
-            solock: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "solock".to_string()),
-            ckpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "ckpool".to_string()),
-            nicehash: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "nicehash".to_string()),
-            bitclub: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitclub".to_string()),
-            bitcoinaffiliatenetwork: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitcoinaffiliatenetwork".to_string()),
-            btcc: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "btcc".to_string()),
-            bwpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bwpool".to_string()),
-            exxbw: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "exxbw".to_string()),
-            bitsolo: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitsolo".to_string()),
-            bitfury: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitfury".to_string()),
-            twentyoneinc: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "twentyoneinc".to_string()),
-            digitalbtc: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "digitalbtc".to_string()),
-            eightbaochi: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "eightbaochi".to_string()),
-            mybtccoinpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "mybtccoinpool".to_string()),
-            tbdice: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "tbdice".to_string()),
-            hashpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "hashpool".to_string()),
-            nexious: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "nexious".to_string()),
-            bravomining: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bravomining".to_string()),
-            hotpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "hotpool".to_string()),
-            okexpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "okexpool".to_string()),
-            bcmonster: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bcmonster".to_string()),
-            onehash: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "onehash".to_string()),
-            bixin: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bixin".to_string()),
-            tatmaspool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "tatmaspool".to_string()),
-            viabtc: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "viabtc".to_string()),
-            connectbtc: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "connectbtc".to_string()),
-            batpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "batpool".to_string()),
-            waterhole: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "waterhole".to_string()),
-            dcexploration: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "dcexploration".to_string()),
-            dcex: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "dcex".to_string()),
-            btpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "btpool".to_string()),
-            fiftyeightcoin: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "fiftyeightcoin".to_string()),
-            bitcoinindia: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitcoinindia".to_string()),
-            shawnp0wers: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "shawnp0wers".to_string()),
-            phashio: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "phashio".to_string()),
-            rigpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "rigpool".to_string()),
-            haozhuzhu: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "haozhuzhu".to_string()),
-            sevenpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "sevenpool".to_string()),
-            miningkings: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "miningkings".to_string()),
-            hashbx: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "hashbx".to_string()),
-            dpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "dpool".to_string()),
-            rawpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "rawpool".to_string()),
-            haominer: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "haominer".to_string()),
-            helix: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "helix".to_string()),
-            bitcoinukraine: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitcoinukraine".to_string()),
-            poolin: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "poolin".to_string()),
-            secretsuperstar: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "secretsuperstar".to_string()),
-            tigerpoolnet: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "tigerpoolnet".to_string()),
-            sigmapoolcom: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "sigmapoolcom".to_string()),
-            okpooltop: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "okpooltop".to_string()),
-            hummerpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "hummerpool".to_string()),
-            tangpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "tangpool".to_string()),
-            bytepool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bytepool".to_string()),
-            spiderpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "spiderpool".to_string()),
-            novablock: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "novablock".to_string()),
-            miningcity: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "miningcity".to_string()),
-            binancepool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "binancepool".to_string()),
-            minerium: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "minerium".to_string()),
-            lubiancom: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "lubiancom".to_string()),
-            okkong: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "okkong".to_string()),
-            aaopool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "aaopool".to_string()),
-            emcdpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "emcdpool".to_string()),
-            foundryusa: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "foundryusa".to_string()),
-            sbicrypto: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "sbicrypto".to_string()),
-            arkpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "arkpool".to_string()),
-            purebtccom: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "purebtccom".to_string()),
-            marapool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "marapool".to_string()),
-            kucoinpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "kucoinpool".to_string()),
-            entrustcharitypool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "entrustcharitypool".to_string()),
-            okminer: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "okminer".to_string()),
-            titan: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "titan".to_string()),
-            pegapool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "pegapool".to_string()),
-            btcnuggets: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "btcnuggets".to_string()),
-            cloudhashing: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "cloudhashing".to_string()),
-            digitalxmintsy: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "digitalxmintsy".to_string()),
-            telco214: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "telco214".to_string()),
-            btcpoolparty: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "btcpoolparty".to_string()),
-            multipool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "multipool".to_string()),
-            transactioncoinmining: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "transactioncoinmining".to_string()),
-            btcdig: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "btcdig".to_string()),
-            trickysbtcpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "trickysbtcpool".to_string()),
-            btcmp: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "btcmp".to_string()),
-            eobot: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "eobot".to_string()),
-            unomp: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "unomp".to_string()),
-            patels: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "patels".to_string()),
-            gogreenlight: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "gogreenlight".to_string()),
-            bitcoinindiapool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitcoinindiapool".to_string()),
-            ekanembtc: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "ekanembtc".to_string()),
-            canoe: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "canoe".to_string()),
-            tiger: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "tiger".to_string()),
-            onem1x: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "onem1x".to_string()),
-            zulupool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "zulupool".to_string()),
-            secpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "secpool".to_string()),
-            ocean: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "ocean".to_string()),
-            whitepool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "whitepool".to_string()),
-            wiz: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "wiz".to_string()),
-            wk057: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "wk057".to_string()),
-            futurebitapollosolo: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "futurebitapollosolo".to_string()),
-            carbonnegative: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "carbonnegative".to_string()),
-            portlandhodl: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "portlandhodl".to_string()),
-            phoenix: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "phoenix".to_string()),
-            neopool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "neopool".to_string()),
-            maxipool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "maxipool".to_string()),
-            bitfufupool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "bitfufupool".to_string()),
-            gdpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "gdpool".to_string()),
-            miningdutch: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "miningdutch".to_string()),
-            publicpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "publicpool".to_string()),
-            miningsquared: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "miningsquared".to_string()),
-            innopolistech: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "innopolistech".to_string()),
-            btclab: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "btclab".to_string()),
-            parasite: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "parasite".to_string()),
-            redrockpool: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "redrockpool".to_string()),
-            est3lar: BlocksCoinbaseDominanceFeeSubsidyPattern::new(client.clone(), "est3lar".to_string()),
+            unknown: BlocksDominanceRewardsPattern::new(client.clone(), "unknown".to_string()),
+            blockfills: BlocksDominanceRewardsPattern::new(client.clone(), "blockfills".to_string()),
+            ultimuspool: BlocksDominanceRewardsPattern::new(client.clone(), "ultimuspool".to_string()),
+            terrapool: BlocksDominanceRewardsPattern::new(client.clone(), "terrapool".to_string()),
+            luxor: BlocksDominanceRewardsPattern::new(client.clone(), "luxor".to_string()),
+            onethash: BlocksDominanceRewardsPattern::new(client.clone(), "onethash".to_string()),
+            btccom: BlocksDominanceRewardsPattern::new(client.clone(), "btccom".to_string()),
+            bitfarms: BlocksDominanceRewardsPattern::new(client.clone(), "bitfarms".to_string()),
+            huobipool: BlocksDominanceRewardsPattern::new(client.clone(), "huobipool".to_string()),
+            wayicn: BlocksDominanceRewardsPattern::new(client.clone(), "wayicn".to_string()),
+            canoepool: BlocksDominanceRewardsPattern::new(client.clone(), "canoepool".to_string()),
+            btctop: BlocksDominanceRewardsPattern::new(client.clone(), "btctop".to_string()),
+            bitcoincom: BlocksDominanceRewardsPattern::new(client.clone(), "bitcoincom".to_string()),
+            pool175btc: BlocksDominanceRewardsPattern::new(client.clone(), "pool175btc".to_string()),
+            gbminers: BlocksDominanceRewardsPattern::new(client.clone(), "gbminers".to_string()),
+            axbt: BlocksDominanceRewardsPattern::new(client.clone(), "axbt".to_string()),
+            asicminer: BlocksDominanceRewardsPattern::new(client.clone(), "asicminer".to_string()),
+            bitminter: BlocksDominanceRewardsPattern::new(client.clone(), "bitminter".to_string()),
+            bitcoinrussia: BlocksDominanceRewardsPattern::new(client.clone(), "bitcoinrussia".to_string()),
+            btcserv: BlocksDominanceRewardsPattern::new(client.clone(), "btcserv".to_string()),
+            simplecoinus: BlocksDominanceRewardsPattern::new(client.clone(), "simplecoinus".to_string()),
+            btcguild: BlocksDominanceRewardsPattern::new(client.clone(), "btcguild".to_string()),
+            eligius: BlocksDominanceRewardsPattern::new(client.clone(), "eligius".to_string()),
+            ozcoin: BlocksDominanceRewardsPattern::new(client.clone(), "ozcoin".to_string()),
+            eclipsemc: BlocksDominanceRewardsPattern::new(client.clone(), "eclipsemc".to_string()),
+            maxbtc: BlocksDominanceRewardsPattern::new(client.clone(), "maxbtc".to_string()),
+            triplemining: BlocksDominanceRewardsPattern::new(client.clone(), "triplemining".to_string()),
+            coinlab: BlocksDominanceRewardsPattern::new(client.clone(), "coinlab".to_string()),
+            pool50btc: BlocksDominanceRewardsPattern::new(client.clone(), "pool50btc".to_string()),
+            ghashio: BlocksDominanceRewardsPattern::new(client.clone(), "ghashio".to_string()),
+            stminingcorp: BlocksDominanceRewardsPattern::new(client.clone(), "stminingcorp".to_string()),
+            bitparking: BlocksDominanceRewardsPattern::new(client.clone(), "bitparking".to_string()),
+            mmpool: BlocksDominanceRewardsPattern::new(client.clone(), "mmpool".to_string()),
+            polmine: BlocksDominanceRewardsPattern::new(client.clone(), "polmine".to_string()),
+            kncminer: BlocksDominanceRewardsPattern::new(client.clone(), "kncminer".to_string()),
+            bitalo: BlocksDominanceRewardsPattern::new(client.clone(), "bitalo".to_string()),
+            f2pool: BlocksDominanceRewardsPattern::new(client.clone(), "f2pool".to_string()),
+            hhtt: BlocksDominanceRewardsPattern::new(client.clone(), "hhtt".to_string()),
+            megabigpower: BlocksDominanceRewardsPattern::new(client.clone(), "megabigpower".to_string()),
+            mtred: BlocksDominanceRewardsPattern::new(client.clone(), "mtred".to_string()),
+            nmcbit: BlocksDominanceRewardsPattern::new(client.clone(), "nmcbit".to_string()),
+            yourbtcnet: BlocksDominanceRewardsPattern::new(client.clone(), "yourbtcnet".to_string()),
+            givemecoins: BlocksDominanceRewardsPattern::new(client.clone(), "givemecoins".to_string()),
+            braiinspool: BlocksDominanceRewardsPattern::new(client.clone(), "braiinspool".to_string()),
+            antpool: BlocksDominanceRewardsPattern::new(client.clone(), "antpool".to_string()),
+            multicoinco: BlocksDominanceRewardsPattern::new(client.clone(), "multicoinco".to_string()),
+            bcpoolio: BlocksDominanceRewardsPattern::new(client.clone(), "bcpoolio".to_string()),
+            cointerra: BlocksDominanceRewardsPattern::new(client.clone(), "cointerra".to_string()),
+            kanopool: BlocksDominanceRewardsPattern::new(client.clone(), "kanopool".to_string()),
+            solock: BlocksDominanceRewardsPattern::new(client.clone(), "solock".to_string()),
+            ckpool: BlocksDominanceRewardsPattern::new(client.clone(), "ckpool".to_string()),
+            nicehash: BlocksDominanceRewardsPattern::new(client.clone(), "nicehash".to_string()),
+            bitclub: BlocksDominanceRewardsPattern::new(client.clone(), "bitclub".to_string()),
+            bitcoinaffiliatenetwork: BlocksDominanceRewardsPattern::new(client.clone(), "bitcoinaffiliatenetwork".to_string()),
+            btcc: BlocksDominanceRewardsPattern::new(client.clone(), "btcc".to_string()),
+            bwpool: BlocksDominanceRewardsPattern::new(client.clone(), "bwpool".to_string()),
+            exxbw: BlocksDominanceRewardsPattern::new(client.clone(), "exxbw".to_string()),
+            bitsolo: BlocksDominanceRewardsPattern::new(client.clone(), "bitsolo".to_string()),
+            bitfury: BlocksDominanceRewardsPattern::new(client.clone(), "bitfury".to_string()),
+            twentyoneinc: BlocksDominanceRewardsPattern::new(client.clone(), "twentyoneinc".to_string()),
+            digitalbtc: BlocksDominanceRewardsPattern::new(client.clone(), "digitalbtc".to_string()),
+            eightbaochi: BlocksDominanceRewardsPattern::new(client.clone(), "eightbaochi".to_string()),
+            mybtccoinpool: BlocksDominanceRewardsPattern::new(client.clone(), "mybtccoinpool".to_string()),
+            tbdice: BlocksDominanceRewardsPattern::new(client.clone(), "tbdice".to_string()),
+            hashpool: BlocksDominanceRewardsPattern::new(client.clone(), "hashpool".to_string()),
+            nexious: BlocksDominanceRewardsPattern::new(client.clone(), "nexious".to_string()),
+            bravomining: BlocksDominanceRewardsPattern::new(client.clone(), "bravomining".to_string()),
+            hotpool: BlocksDominanceRewardsPattern::new(client.clone(), "hotpool".to_string()),
+            okexpool: BlocksDominanceRewardsPattern::new(client.clone(), "okexpool".to_string()),
+            bcmonster: BlocksDominanceRewardsPattern::new(client.clone(), "bcmonster".to_string()),
+            onehash: BlocksDominanceRewardsPattern::new(client.clone(), "onehash".to_string()),
+            bixin: BlocksDominanceRewardsPattern::new(client.clone(), "bixin".to_string()),
+            tatmaspool: BlocksDominanceRewardsPattern::new(client.clone(), "tatmaspool".to_string()),
+            viabtc: BlocksDominanceRewardsPattern::new(client.clone(), "viabtc".to_string()),
+            connectbtc: BlocksDominanceRewardsPattern::new(client.clone(), "connectbtc".to_string()),
+            batpool: BlocksDominanceRewardsPattern::new(client.clone(), "batpool".to_string()),
+            waterhole: BlocksDominanceRewardsPattern::new(client.clone(), "waterhole".to_string()),
+            dcexploration: BlocksDominanceRewardsPattern::new(client.clone(), "dcexploration".to_string()),
+            dcex: BlocksDominanceRewardsPattern::new(client.clone(), "dcex".to_string()),
+            btpool: BlocksDominanceRewardsPattern::new(client.clone(), "btpool".to_string()),
+            fiftyeightcoin: BlocksDominanceRewardsPattern::new(client.clone(), "fiftyeightcoin".to_string()),
+            bitcoinindia: BlocksDominanceRewardsPattern::new(client.clone(), "bitcoinindia".to_string()),
+            shawnp0wers: BlocksDominanceRewardsPattern::new(client.clone(), "shawnp0wers".to_string()),
+            phashio: BlocksDominanceRewardsPattern::new(client.clone(), "phashio".to_string()),
+            rigpool: BlocksDominanceRewardsPattern::new(client.clone(), "rigpool".to_string()),
+            haozhuzhu: BlocksDominanceRewardsPattern::new(client.clone(), "haozhuzhu".to_string()),
+            sevenpool: BlocksDominanceRewardsPattern::new(client.clone(), "sevenpool".to_string()),
+            miningkings: BlocksDominanceRewardsPattern::new(client.clone(), "miningkings".to_string()),
+            hashbx: BlocksDominanceRewardsPattern::new(client.clone(), "hashbx".to_string()),
+            dpool: BlocksDominanceRewardsPattern::new(client.clone(), "dpool".to_string()),
+            rawpool: BlocksDominanceRewardsPattern::new(client.clone(), "rawpool".to_string()),
+            haominer: BlocksDominanceRewardsPattern::new(client.clone(), "haominer".to_string()),
+            helix: BlocksDominanceRewardsPattern::new(client.clone(), "helix".to_string()),
+            bitcoinukraine: BlocksDominanceRewardsPattern::new(client.clone(), "bitcoinukraine".to_string()),
+            poolin: BlocksDominanceRewardsPattern::new(client.clone(), "poolin".to_string()),
+            secretsuperstar: BlocksDominanceRewardsPattern::new(client.clone(), "secretsuperstar".to_string()),
+            tigerpoolnet: BlocksDominanceRewardsPattern::new(client.clone(), "tigerpoolnet".to_string()),
+            sigmapoolcom: BlocksDominanceRewardsPattern::new(client.clone(), "sigmapoolcom".to_string()),
+            okpooltop: BlocksDominanceRewardsPattern::new(client.clone(), "okpooltop".to_string()),
+            hummerpool: BlocksDominanceRewardsPattern::new(client.clone(), "hummerpool".to_string()),
+            tangpool: BlocksDominanceRewardsPattern::new(client.clone(), "tangpool".to_string()),
+            bytepool: BlocksDominanceRewardsPattern::new(client.clone(), "bytepool".to_string()),
+            spiderpool: BlocksDominanceRewardsPattern::new(client.clone(), "spiderpool".to_string()),
+            novablock: BlocksDominanceRewardsPattern::new(client.clone(), "novablock".to_string()),
+            miningcity: BlocksDominanceRewardsPattern::new(client.clone(), "miningcity".to_string()),
+            binancepool: BlocksDominanceRewardsPattern::new(client.clone(), "binancepool".to_string()),
+            minerium: BlocksDominanceRewardsPattern::new(client.clone(), "minerium".to_string()),
+            lubiancom: BlocksDominanceRewardsPattern::new(client.clone(), "lubiancom".to_string()),
+            okkong: BlocksDominanceRewardsPattern::new(client.clone(), "okkong".to_string()),
+            aaopool: BlocksDominanceRewardsPattern::new(client.clone(), "aaopool".to_string()),
+            emcdpool: BlocksDominanceRewardsPattern::new(client.clone(), "emcdpool".to_string()),
+            foundryusa: BlocksDominanceRewardsPattern::new(client.clone(), "foundryusa".to_string()),
+            sbicrypto: BlocksDominanceRewardsPattern::new(client.clone(), "sbicrypto".to_string()),
+            arkpool: BlocksDominanceRewardsPattern::new(client.clone(), "arkpool".to_string()),
+            purebtccom: BlocksDominanceRewardsPattern::new(client.clone(), "purebtccom".to_string()),
+            marapool: BlocksDominanceRewardsPattern::new(client.clone(), "marapool".to_string()),
+            kucoinpool: BlocksDominanceRewardsPattern::new(client.clone(), "kucoinpool".to_string()),
+            entrustcharitypool: BlocksDominanceRewardsPattern::new(client.clone(), "entrustcharitypool".to_string()),
+            okminer: BlocksDominanceRewardsPattern::new(client.clone(), "okminer".to_string()),
+            titan: BlocksDominanceRewardsPattern::new(client.clone(), "titan".to_string()),
+            pegapool: BlocksDominanceRewardsPattern::new(client.clone(), "pegapool".to_string()),
+            btcnuggets: BlocksDominanceRewardsPattern::new(client.clone(), "btcnuggets".to_string()),
+            cloudhashing: BlocksDominanceRewardsPattern::new(client.clone(), "cloudhashing".to_string()),
+            digitalxmintsy: BlocksDominanceRewardsPattern::new(client.clone(), "digitalxmintsy".to_string()),
+            telco214: BlocksDominanceRewardsPattern::new(client.clone(), "telco214".to_string()),
+            btcpoolparty: BlocksDominanceRewardsPattern::new(client.clone(), "btcpoolparty".to_string()),
+            multipool: BlocksDominanceRewardsPattern::new(client.clone(), "multipool".to_string()),
+            transactioncoinmining: BlocksDominanceRewardsPattern::new(client.clone(), "transactioncoinmining".to_string()),
+            btcdig: BlocksDominanceRewardsPattern::new(client.clone(), "btcdig".to_string()),
+            trickysbtcpool: BlocksDominanceRewardsPattern::new(client.clone(), "trickysbtcpool".to_string()),
+            btcmp: BlocksDominanceRewardsPattern::new(client.clone(), "btcmp".to_string()),
+            eobot: BlocksDominanceRewardsPattern::new(client.clone(), "eobot".to_string()),
+            unomp: BlocksDominanceRewardsPattern::new(client.clone(), "unomp".to_string()),
+            patels: BlocksDominanceRewardsPattern::new(client.clone(), "patels".to_string()),
+            gogreenlight: BlocksDominanceRewardsPattern::new(client.clone(), "gogreenlight".to_string()),
+            bitcoinindiapool: BlocksDominanceRewardsPattern::new(client.clone(), "bitcoinindiapool".to_string()),
+            ekanembtc: BlocksDominanceRewardsPattern::new(client.clone(), "ekanembtc".to_string()),
+            canoe: BlocksDominanceRewardsPattern::new(client.clone(), "canoe".to_string()),
+            tiger: BlocksDominanceRewardsPattern::new(client.clone(), "tiger".to_string()),
+            onem1x: BlocksDominanceRewardsPattern::new(client.clone(), "onem1x".to_string()),
+            zulupool: BlocksDominanceRewardsPattern::new(client.clone(), "zulupool".to_string()),
+            secpool: BlocksDominanceRewardsPattern::new(client.clone(), "secpool".to_string()),
+            ocean: BlocksDominanceRewardsPattern::new(client.clone(), "ocean".to_string()),
+            whitepool: BlocksDominanceRewardsPattern::new(client.clone(), "whitepool".to_string()),
+            wiz: BlocksDominanceRewardsPattern::new(client.clone(), "wiz".to_string()),
+            wk057: BlocksDominanceRewardsPattern::new(client.clone(), "wk057".to_string()),
+            futurebitapollosolo: BlocksDominanceRewardsPattern::new(client.clone(), "futurebitapollosolo".to_string()),
+            carbonnegative: BlocksDominanceRewardsPattern::new(client.clone(), "carbonnegative".to_string()),
+            portlandhodl: BlocksDominanceRewardsPattern::new(client.clone(), "portlandhodl".to_string()),
+            phoenix: BlocksDominanceRewardsPattern::new(client.clone(), "phoenix".to_string()),
+            neopool: BlocksDominanceRewardsPattern::new(client.clone(), "neopool".to_string()),
+            maxipool: BlocksDominanceRewardsPattern::new(client.clone(), "maxipool".to_string()),
+            bitfufupool: BlocksDominanceRewardsPattern::new(client.clone(), "bitfufupool".to_string()),
+            gdpool: BlocksDominanceRewardsPattern::new(client.clone(), "gdpool".to_string()),
+            miningdutch: BlocksDominanceRewardsPattern::new(client.clone(), "miningdutch".to_string()),
+            publicpool: BlocksDominanceRewardsPattern::new(client.clone(), "publicpool".to_string()),
+            miningsquared: BlocksDominanceRewardsPattern::new(client.clone(), "miningsquared".to_string()),
+            innopolistech: BlocksDominanceRewardsPattern::new(client.clone(), "innopolistech".to_string()),
+            btclab: BlocksDominanceRewardsPattern::new(client.clone(), "btclab".to_string()),
+            parasite: BlocksDominanceRewardsPattern::new(client.clone(), "parasite".to_string()),
+            redrockpool: BlocksDominanceRewardsPattern::new(client.clone(), "redrockpool".to_string()),
+            est3lar: BlocksDominanceRewardsPattern::new(client.clone(), "est3lar".to_string()),
         }
     }
 }
@@ -5669,7 +5567,7 @@ pub struct MetricsTree_Distribution_UtxoCohorts {
     pub amount_range: MetricsTree_Distribution_UtxoCohorts_AmountRange,
     pub lt_amount: MetricsTree_Distribution_UtxoCohorts_LtAmount,
     pub epoch: MetricsTree_Distribution_UtxoCohorts_Epoch,
-    pub year: MetricsTree_Distribution_UtxoCohorts_Year,
+    pub class: MetricsTree_Distribution_UtxoCohorts_Class,
     pub type_: MetricsTree_Distribution_UtxoCohorts_Type,
 }
 
@@ -5686,7 +5584,7 @@ impl MetricsTree_Distribution_UtxoCohorts {
             amount_range: MetricsTree_Distribution_UtxoCohorts_AmountRange::new(client.clone(), format!("{base_path}_amount_range")),
             lt_amount: MetricsTree_Distribution_UtxoCohorts_LtAmount::new(client.clone(), format!("{base_path}_lt_amount")),
             epoch: MetricsTree_Distribution_UtxoCohorts_Epoch::new(client.clone(), format!("{base_path}_epoch")),
-            year: MetricsTree_Distribution_UtxoCohorts_Year::new(client.clone(), format!("{base_path}_year")),
+            class: MetricsTree_Distribution_UtxoCohorts_Class::new(client.clone(), format!("{base_path}_class")),
             type_: MetricsTree_Distribution_UtxoCohorts_Type::new(client.clone(), format!("{base_path}_type_")),
         }
     }
@@ -5696,9 +5594,9 @@ impl MetricsTree_Distribution_UtxoCohorts {
 pub struct MetricsTree_Distribution_UtxoCohorts_All {
     pub supply: ChangeHalvedTotalPattern,
     pub outputs: UtxoPattern,
-    pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
+    pub activity: CoinblocksCoindaysSentPattern,
     pub realized: AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern,
-    pub cost_basis: InvestedMaxMinPercentilesSpotPattern,
+    pub cost_basis: InvestedMaxMinPercentilesPattern,
     pub unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern,
     pub relative: MetricsTree_Distribution_UtxoCohorts_All_Relative,
 }
@@ -5708,9 +5606,9 @@ impl MetricsTree_Distribution_UtxoCohorts_All {
         Self {
             supply: ChangeHalvedTotalPattern::new(client.clone(), "supply".to_string()),
             outputs: UtxoPattern::new(client.clone(), "utxo_count".to_string()),
-            activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), "".to_string()),
+            activity: CoinblocksCoindaysSentPattern::new(client.clone(), "".to_string()),
             realized: AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern::new(client.clone(), "".to_string()),
-            cost_basis: InvestedMaxMinPercentilesSpotPattern::new(client.clone(), "".to_string()),
+            cost_basis: InvestedMaxMinPercentilesPattern::new(client.clone(), "".to_string()),
             unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern::new(client.clone(), "".to_string()),
             relative: MetricsTree_Distribution_UtxoCohorts_All_Relative::new(client.clone(), format!("{base_path}_relative")),
         }
@@ -5758,9 +5656,9 @@ impl MetricsTree_Distribution_UtxoCohorts_All_Relative {
 pub struct MetricsTree_Distribution_UtxoCohorts_Sth {
     pub supply: ChangeHalvedTotalPattern,
     pub outputs: UtxoPattern,
-    pub activity: CoinblocksCoindaysSatblocksSatdaysSentPattern,
+    pub activity: CoinblocksCoindaysSentPattern,
     pub realized: AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern,
-    pub cost_basis: InvestedMaxMinPercentilesSpotPattern,
+    pub cost_basis: InvestedMaxMinPercentilesPattern,
     pub unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern,
     pub relative: InvestedNegNetNuplSupplyUnrealizedPattern2,
 }
@@ -5770,9 +5668,9 @@ impl MetricsTree_Distribution_UtxoCohorts_Sth {
         Self {
             supply: ChangeHalvedTotalPattern::new(client.clone(), "sth_supply".to_string()),
             outputs: UtxoPattern::new(client.clone(), "sth_utxo_count".to_string()),
-            activity: CoinblocksCoindaysSatblocksSatdaysSentPattern::new(client.clone(), "sth".to_string()),
+            activity: CoinblocksCoindaysSentPattern::new(client.clone(), "sth".to_string()),
             realized: AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern::new(client.clone(), "sth".to_string()),
-            cost_basis: InvestedMaxMinPercentilesSpotPattern::new(client.clone(), "sth".to_string()),
+            cost_basis: InvestedMaxMinPercentilesPattern::new(client.clone(), "sth".to_string()),
             unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern::new(client.clone(), "sth".to_string()),
             relative: InvestedNegNetNuplSupplyUnrealizedPattern2::new(client.clone(), "sth".to_string()),
         }
@@ -6063,7 +5961,7 @@ impl MetricsTree_Distribution_UtxoCohorts_Epoch {
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Distribution_UtxoCohorts_Year {
+pub struct MetricsTree_Distribution_UtxoCohorts_Class {
     pub _2009: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3,
     pub _2010: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3,
     pub _2011: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3,
@@ -6084,27 +5982,27 @@ pub struct MetricsTree_Distribution_UtxoCohorts_Year {
     pub _2026: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3,
 }
 
-impl MetricsTree_Distribution_UtxoCohorts_Year {
+impl MetricsTree_Distribution_UtxoCohorts_Class {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _2009: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2009".to_string()),
-            _2010: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2010".to_string()),
-            _2011: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2011".to_string()),
-            _2012: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2012".to_string()),
-            _2013: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2013".to_string()),
-            _2014: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2014".to_string()),
-            _2015: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2015".to_string()),
-            _2016: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2016".to_string()),
-            _2017: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2017".to_string()),
-            _2018: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2018".to_string()),
-            _2019: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2019".to_string()),
-            _2020: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2020".to_string()),
-            _2021: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2021".to_string()),
-            _2022: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2022".to_string()),
-            _2023: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2023".to_string()),
-            _2024: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2024".to_string()),
-            _2025: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2025".to_string()),
-            _2026: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "year_2026".to_string()),
+            _2009: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2009".to_string()),
+            _2010: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2010".to_string()),
+            _2011: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2011".to_string()),
+            _2012: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2012".to_string()),
+            _2013: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2013".to_string()),
+            _2014: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2014".to_string()),
+            _2015: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2015".to_string()),
+            _2016: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2016".to_string()),
+            _2017: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2017".to_string()),
+            _2018: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2018".to_string()),
+            _2019: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2019".to_string()),
+            _2020: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2020".to_string()),
+            _2021: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2021".to_string()),
+            _2022: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2022".to_string()),
+            _2023: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2023".to_string()),
+            _2024: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2024".to_string()),
+            _2025: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2025".to_string()),
+            _2026: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3::new(client.clone(), "class_2026".to_string()),
         }
     }
 }

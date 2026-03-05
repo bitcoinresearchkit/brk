@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{BasisPointsSigned32, Dollars, Indexes, StoredF32};
+use brk_types::{BasisPointsSigned32, Dollars, Indexes};
 use vecdb::Exit;
 
 use super::Vecs;
@@ -52,26 +52,6 @@ impl Vecs {
             &mut self.price_return_24h_sd_1y,
         ] {
             sd.compute_all(blocks, starting_indexes, exit, _24h_price_return_ratio)?;
-        }
-
-        // Downside returns: min(return, 0)
-        self.price_downside_24h.compute_transform(
-            starting_indexes.height,
-            _24h_price_return_ratio,
-            |(i, ret, ..)| {
-                let v = f32::from(ret).min(0.0);
-                (i, StoredF32::from(v))
-            },
-            exit,
-        )?;
-
-        // Downside deviation (SD of downside returns)
-        for sd in [
-            &mut self.price_downside_24h_sd_1w,
-            &mut self.price_downside_24h_sd_1m,
-            &mut self.price_downside_24h_sd_1y,
-        ] {
-            sd.compute_all(blocks, starting_indexes, exit, &self.price_downside_24h)?;
         }
 
         Ok(())

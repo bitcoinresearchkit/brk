@@ -28,6 +28,7 @@ pub trait DynCohortVecs: Send + Sync {
         &mut self,
         height: Height,
         height_price: Cents,
+        is_day_boundary: bool,
     ) -> Result<()>;
 
     /// First phase of post-processing computations.
@@ -35,13 +36,6 @@ pub trait DynCohortVecs: Send + Sync {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()>;
-
-    /// Compute net_sentiment.height for separate cohorts (greed - pain).
-    fn compute_net_sentiment_height(
-        &mut self,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()>;

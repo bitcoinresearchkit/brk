@@ -2,6 +2,7 @@ use std::ops::{Add, AddAssign};
 
 use brk_cohort::{ByAmountRange, GroupedByType};
 use brk_types::{OutputType, Sats, SupplyState};
+use vecdb::unlikely;
 
 #[derive(Default, Debug)]
 pub struct Transacted {
@@ -20,7 +21,7 @@ impl Transacted {
 
         *self.by_type.get_mut(_type) += &supply;
 
-        if _type.is_unspendable() {
+        if unlikely(_type.is_unspendable()) {
             return;
         }
 

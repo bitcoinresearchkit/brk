@@ -2125,63 +2125,6 @@ function create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern(client
 }
 
 /**
- * @typedef {Object} BpsPriceRatioPattern
- * @property {MetricPattern1<BasisPoints32>} bps
- * @property {CentsSatsUsdPattern} price
- * @property {MetricPattern1<StoredF32>} ratio
- * @property {BpsRatioPattern} ratioPct1
- * @property {CentsSatsUsdPattern} ratioPct1Price
- * @property {BpsRatioPattern} ratioPct2
- * @property {CentsSatsUsdPattern} ratioPct2Price
- * @property {BpsRatioPattern} ratioPct5
- * @property {CentsSatsUsdPattern} ratioPct5Price
- * @property {BpsRatioPattern} ratioPct95
- * @property {CentsSatsUsdPattern} ratioPct95Price
- * @property {BpsRatioPattern} ratioPct98
- * @property {CentsSatsUsdPattern} ratioPct98Price
- * @property {BpsRatioPattern} ratioPct99
- * @property {CentsSatsUsdPattern} ratioPct99Price
- * @property {_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern} ratioSd
- * @property {_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern} ratioSd1y
- * @property {_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern} ratioSd2y
- * @property {_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern} ratioSd4y
- * @property {BpsRatioPattern} ratioSma1m
- * @property {BpsRatioPattern} ratioSma1w
- */
-
-/**
- * Create a BpsPriceRatioPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {BpsPriceRatioPattern}
- */
-function createBpsPriceRatioPattern(client, acc) {
-  return {
-    bps: createMetricPattern1(client, _m(acc, 'ratio_bps')),
-    price: createCentsSatsUsdPattern(client, acc),
-    ratio: createMetricPattern1(client, _m(acc, 'ratio')),
-    ratioPct1: createBpsRatioPattern(client, _m(acc, 'ratio_pct1')),
-    ratioPct1Price: createCentsSatsUsdPattern(client, _m(acc, 'ratio_pct1')),
-    ratioPct2: createBpsRatioPattern(client, _m(acc, 'ratio_pct2')),
-    ratioPct2Price: createCentsSatsUsdPattern(client, _m(acc, 'ratio_pct2')),
-    ratioPct5: createBpsRatioPattern(client, _m(acc, 'ratio_pct5')),
-    ratioPct5Price: createCentsSatsUsdPattern(client, _m(acc, 'ratio_pct5')),
-    ratioPct95: createBpsRatioPattern(client, _m(acc, 'ratio_pct95')),
-    ratioPct95Price: createCentsSatsUsdPattern(client, _m(acc, 'ratio_pct95')),
-    ratioPct98: createBpsRatioPattern(client, _m(acc, 'ratio_pct98')),
-    ratioPct98Price: createCentsSatsUsdPattern(client, _m(acc, 'ratio_pct98')),
-    ratioPct99: createBpsRatioPattern(client, _m(acc, 'ratio_pct99')),
-    ratioPct99Price: createCentsSatsUsdPattern(client, _m(acc, 'ratio_pct99')),
-    ratioSd: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern(client, _m(acc, 'ratio')),
-    ratioSd1y: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern(client, _m(acc, 'ratio')),
-    ratioSd2y: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern(client, _m(acc, 'ratio')),
-    ratioSd4y: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern(client, _m(acc, 'ratio')),
-    ratioSma1m: createBpsRatioPattern(client, _m(acc, 'ratio_sma_1m')),
-    ratioSma1w: createBpsRatioPattern(client, _m(acc, 'ratio_sma_1w')),
-  };
-}
-
-/**
  * @typedef {Object} BpsRatioPattern2
  * @property {MetricPattern1<BasisPoints32>} bps
  * @property {MetricPattern1<StoredF32>} ratio
@@ -2670,7 +2613,7 @@ function createAverageGainsLossesRsiStochPattern(client, acc) {
 
 /**
  * @typedef {Object} ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern
- * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
+ * @property {CoinblocksCoindaysSentPattern} activity
  * @property {MetricPattern1<StoredU64>} addrCount
  * @property {MetricPattern1<StoredF64>} addrCountChange1m
  * @property {MaxMinPattern} costBasis
@@ -2689,7 +2632,7 @@ function createAverageGainsLossesRsiStochPattern(client, acc) {
  */
 function createActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, acc) {
   return {
-    activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
+    activity: createCoinblocksCoindaysSentPattern(client, acc),
     addrCount: createMetricPattern1(client, _m(acc, 'addr_count')),
     addrCountChange1m: createMetricPattern1(client, _m(acc, 'addr_count_change_1m')),
     costBasis: createMaxMinPattern(client, _m(acc, 'cost_basis')),
@@ -2867,37 +2810,6 @@ function create_1m1w1y24hBtcCentsSatsUsdPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} BlocksCoinbaseDominanceFeeSubsidyPattern
- * @property {CumulativeHeightSumPattern<StoredU32>} blocksMined
- * @property {_1m1w1y24hPattern<StoredU32>} blocksMinedSum
- * @property {MetricPattern1<StoredU32>} blocksSinceLastMined
- * @property {BaseCumulativeSumPattern} coinbase
- * @property {BpsPercentRatioPattern} dominance
- * @property {_1m1w1y24hPattern2} dominanceRolling
- * @property {BaseCumulativeSumPattern} fee
- * @property {BaseCumulativeSumPattern} subsidy
- */
-
-/**
- * Create a BlocksCoinbaseDominanceFeeSubsidyPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {BlocksCoinbaseDominanceFeeSubsidyPattern}
- */
-function createBlocksCoinbaseDominanceFeeSubsidyPattern(client, acc) {
-  return {
-    blocksMined: createCumulativeHeightSumPattern(client, _m(acc, 'blocks_mined')),
-    blocksMinedSum: create_1m1w1y24hPattern(client, _m(acc, 'blocks_mined_sum')),
-    blocksSinceLastMined: createMetricPattern1(client, _m(acc, 'blocks_since_last_mined')),
-    coinbase: createBaseCumulativeSumPattern(client, _m(acc, 'coinbase')),
-    dominance: createBpsPercentRatioPattern(client, _m(acc, 'dominance')),
-    dominanceRolling: create_1m1w1y24hPattern2(client, _m(acc, 'dominance')),
-    fee: createBaseCumulativeSumPattern(client, _m(acc, 'fee')),
-    subsidy: createBaseCumulativeSumPattern(client, _m(acc, 'subsidy')),
-  };
-}
-
-/**
  * @template T
  * @typedef {Object} AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern
  * @property {MetricPattern18<T>} average
@@ -2961,8 +2873,8 @@ function create_10y2y3y4y5y6y8yPattern(client, acc) {
 
 /**
  * @typedef {Object} ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern
- * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
- * @property {InvestedMaxMinPercentilesSpotPattern} costBasis
+ * @property {CoinblocksCoindaysSentPattern} activity
+ * @property {InvestedMaxMinPercentilesPattern} costBasis
  * @property {UtxoPattern} outputs
  * @property {CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2} realized
  * @property {InvestedNegNetNuplSupplyUnrealizedPattern2} relative
@@ -2978,8 +2890,8 @@ function create_10y2y3y4y5y6y8yPattern(client, acc) {
  */
 function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, acc) {
   return {
-    activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
-    costBasis: createInvestedMaxMinPercentilesSpotPattern(client, acc),
+    activity: createCoinblocksCoindaysSentPattern(client, acc),
+    costBasis: createInvestedMaxMinPercentilesPattern(client, acc),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
     realized: createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2(client, acc),
     relative: createInvestedNegNetNuplSupplyUnrealizedPattern2(client, acc),
@@ -2990,7 +2902,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client
 
 /**
  * @typedef {Object} ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4
- * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
+ * @property {CoinblocksCoindaysSentPattern} activity
  * @property {MaxMinPattern} costBasis
  * @property {UtxoPattern} outputs
  * @property {AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2} realized
@@ -3007,7 +2919,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client
  */
 function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4(client, acc) {
   return {
-    activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
+    activity: createCoinblocksCoindaysSentPattern(client, acc),
     costBasis: createMaxMinPattern(client, _m(acc, 'cost_basis')),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
     realized: createAdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2(client, acc),
@@ -3019,7 +2931,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4(clien
 
 /**
  * @typedef {Object} ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3
- * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
+ * @property {CoinblocksCoindaysSentPattern} activity
  * @property {MaxMinPattern} costBasis
  * @property {UtxoPattern} outputs
  * @property {CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern} realized
@@ -3036,7 +2948,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4(clien
  */
 function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(client, acc) {
   return {
-    activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc),
+    activity: createCoinblocksCoindaysSentPattern(client, acc),
     costBasis: createMaxMinPattern(client, _m(acc, 'cost_basis')),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
     realized: createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(client, acc),
@@ -3097,60 +3009,6 @@ function createBalanceBothReactivatedReceivingSendingPattern(client, acc) {
     reactivated: createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, 'reactivated')),
     receiving: createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, 'receiving')),
     sending: createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, 'sending')),
-  };
-}
-
-/**
- * @typedef {Object} CoinblocksCoindaysSatblocksSatdaysSentPattern
- * @property {CumulativeHeightSumPattern<StoredF64>} coinblocksDestroyed
- * @property {CumulativeHeightSumPattern<StoredF64>} coindaysDestroyed
- * @property {MetricPattern18<Sats>} satblocksDestroyed
- * @property {MetricPattern18<Sats>} satdaysDestroyed
- * @property {BaseCumulativePattern} sent
- * @property {_2wPattern} sentEma
- */
-
-/**
- * Create a CoinblocksCoindaysSatblocksSatdaysSentPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CoinblocksCoindaysSatblocksSatdaysSentPattern}
- */
-function createCoinblocksCoindaysSatblocksSatdaysSentPattern(client, acc) {
-  return {
-    coinblocksDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coinblocks_destroyed')),
-    coindaysDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coindays_destroyed')),
-    satblocksDestroyed: createMetricPattern18(client, _m(acc, 'satblocks_destroyed')),
-    satdaysDestroyed: createMetricPattern18(client, _m(acc, 'satdays_destroyed')),
-    sent: createBaseCumulativePattern(client, _m(acc, 'sent')),
-    sentEma: create_2wPattern(client, _m(acc, 'sent_ema_2w')),
-  };
-}
-
-/**
- * @typedef {Object} InvestedMaxMinPercentilesSpotPattern
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} investedCapital
- * @property {CentsSatsUsdPattern} max
- * @property {CentsSatsUsdPattern} min
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} percentiles
- * @property {BpsPercentRatioPattern} spotCostBasisPercentile
- * @property {BpsPercentRatioPattern} spotInvestedCapitalPercentile
- */
-
-/**
- * Create a InvestedMaxMinPercentilesSpotPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {InvestedMaxMinPercentilesSpotPattern}
- */
-function createInvestedMaxMinPercentilesSpotPattern(client, acc) {
-  return {
-    investedCapital: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, _m(acc, 'invested_capital')),
-    max: createCentsSatsUsdPattern(client, _m(acc, 'cost_basis_max')),
-    min: createCentsSatsUsdPattern(client, _m(acc, 'cost_basis_min')),
-    percentiles: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, _m(acc, 'cost_basis')),
-    spotCostBasisPercentile: createBpsPercentRatioPattern(client, _m(acc, 'spot_cost_basis_percentile')),
-    spotInvestedCapitalPercentile: createBpsPercentRatioPattern(client, _m(acc, 'spot_invested_capital_percentile')),
   };
 }
 
@@ -3226,6 +3084,29 @@ function create_1m1w1y24hPattern5(client, acc) {
 }
 
 /**
+ * @typedef {Object} BlocksDominanceRewardsPattern
+ * @property {CumulativeHeightSumPattern<StoredU32>} blocksMined
+ * @property {BpsPercentRatioPattern} dominance
+ * @property {_1m1w1y24hPattern2} dominanceRolling
+ * @property {BaseCumulativeSumPattern} rewards
+ */
+
+/**
+ * Create a BlocksDominanceRewardsPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {BlocksDominanceRewardsPattern}
+ */
+function createBlocksDominanceRewardsPattern(client, acc) {
+  return {
+    blocksMined: createCumulativeHeightSumPattern(client, _m(acc, 'blocks_mined')),
+    dominance: createBpsPercentRatioPattern(client, _m(acc, 'dominance')),
+    dominanceRolling: create_1m1w1y24hPattern2(client, _m(acc, 'dominance')),
+    rewards: createBaseCumulativeSumPattern(client, _m(acc, 'rewards')),
+  };
+}
+
+/**
  * @typedef {Object} BtcCentsSatsUsdPattern
  * @property {MetricPattern1<Bitcoin>} btc
  * @property {MetricPattern1<Cents>} cents
@@ -3245,6 +3126,52 @@ function createBtcCentsSatsUsdPattern(client, acc) {
     cents: createMetricPattern1(client, _m(acc, 'cents')),
     sats: createMetricPattern1(client, acc),
     usd: createMetricPattern1(client, _m(acc, 'usd')),
+  };
+}
+
+/**
+ * @typedef {Object} CoinblocksCoindaysSentPattern
+ * @property {CumulativeHeightSumPattern<StoredF64>} coinblocksDestroyed
+ * @property {CumulativeHeightSumPattern<StoredF64>} coindaysDestroyed
+ * @property {BaseCumulativePattern} sent
+ * @property {_2wPattern} sentEma
+ */
+
+/**
+ * Create a CoinblocksCoindaysSentPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CoinblocksCoindaysSentPattern}
+ */
+function createCoinblocksCoindaysSentPattern(client, acc) {
+  return {
+    coinblocksDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coinblocks_destroyed')),
+    coindaysDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coindays_destroyed')),
+    sent: createBaseCumulativePattern(client, _m(acc, 'sent')),
+    sentEma: create_2wPattern(client, _m(acc, 'sent_ema_2w')),
+  };
+}
+
+/**
+ * @typedef {Object} InvestedMaxMinPercentilesPattern
+ * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} investedCapital
+ * @property {CentsSatsUsdPattern} max
+ * @property {CentsSatsUsdPattern} min
+ * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} percentiles
+ */
+
+/**
+ * Create a InvestedMaxMinPercentilesPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {InvestedMaxMinPercentilesPattern}
+ */
+function createInvestedMaxMinPercentilesPattern(client, acc) {
+  return {
+    investedCapital: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, _m(acc, 'invested_capital')),
+    max: createCentsSatsUsdPattern(client, _m(acc, 'cost_basis_max')),
+    min: createCentsSatsUsdPattern(client, _m(acc, 'cost_basis_min')),
+    percentiles: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, _m(acc, 'cost_basis')),
   };
 }
 
@@ -3332,6 +3259,27 @@ function createBpsPercentRatioPattern(client, acc) {
   return {
     bps: createMetricPattern1(client, _m(acc, 'bps')),
     percent: createMetricPattern1(client, acc),
+    ratio: createMetricPattern1(client, _m(acc, 'ratio')),
+  };
+}
+
+/**
+ * @typedef {Object} BpsPriceRatioPattern
+ * @property {MetricPattern1<BasisPoints32>} bps
+ * @property {CentsSatsUsdPattern} price
+ * @property {MetricPattern1<StoredF32>} ratio
+ */
+
+/**
+ * Create a BpsPriceRatioPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {BpsPriceRatioPattern}
+ */
+function createBpsPriceRatioPattern(client, acc) {
+  return {
+    bps: createMetricPattern1(client, _m(acc, 'ratio_bps')),
+    price: createCentsSatsUsdPattern(client, acc),
     ratio: createMetricPattern1(client, _m(acc, 'ratio')),
   };
 }
@@ -4372,10 +4320,6 @@ function create_2wPattern(client, acc) {
  * @property {MetricsTree_Market_Returns_PriceReturn24hSd1w} priceReturn24hSd1w
  * @property {MetricsTree_Market_Returns_PriceReturn24hSd1m} priceReturn24hSd1m
  * @property {SdSmaPattern} priceReturn24hSd1y
- * @property {MetricPattern18<StoredF32>} priceDownside24h
- * @property {MetricsTree_Market_Returns_PriceDownside24hSd1w} priceDownside24hSd1w
- * @property {MetricsTree_Market_Returns_PriceDownside24hSd1m} priceDownside24hSd1m
- * @property {SdSmaPattern} priceDownside24hSd1y
  */
 
 /**
@@ -4408,28 +4352,10 @@ function create_2wPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Market_Returns_PriceDownside24hSd1w
- * @property {MetricPattern1<StoredF32>} sma
- * @property {MetricPattern1<StoredF32>} sd
- */
-
-/**
- * @typedef {Object} MetricsTree_Market_Returns_PriceDownside24hSd1m
- * @property {MetricPattern1<StoredF32>} sma
- * @property {MetricPattern1<StoredF32>} sd
- */
-
-/**
  * @typedef {Object} MetricsTree_Market_Volatility
  * @property {MetricPattern1<StoredF32>} priceVolatility1w
  * @property {MetricPattern1<StoredF32>} priceVolatility1m
  * @property {MetricPattern1<StoredF32>} priceVolatility1y
- * @property {MetricPattern1<StoredF32>} priceSharpe1w
- * @property {MetricPattern1<StoredF32>} priceSharpe1m
- * @property {MetricPattern1<StoredF32>} priceSharpe1y
- * @property {MetricPattern1<StoredF32>} priceSortino1w
- * @property {MetricPattern1<StoredF32>} priceSortino1m
- * @property {MetricPattern1<StoredF32>} priceSortino1y
  */
 
 /**
@@ -4669,168 +4595,168 @@ function create_2wPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Pools_Vecs
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} unknown
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} blockfills
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} ultimuspool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} terrapool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} luxor
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} onethash
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} btccom
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitfarms
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} huobipool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} wayicn
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} canoepool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} btctop
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitcoincom
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} pool175btc
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} gbminers
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} axbt
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} asicminer
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitminter
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitcoinrussia
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} btcserv
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} simplecoinus
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} btcguild
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} eligius
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} ozcoin
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} eclipsemc
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} maxbtc
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} triplemining
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} coinlab
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} pool50btc
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} ghashio
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} stminingcorp
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitparking
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} mmpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} polmine
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} kncminer
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitalo
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} f2pool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} hhtt
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} megabigpower
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} mtred
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} nmcbit
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} yourbtcnet
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} givemecoins
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} braiinspool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} antpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} multicoinco
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bcpoolio
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} cointerra
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} kanopool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} solock
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} ckpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} nicehash
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitclub
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitcoinaffiliatenetwork
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} btcc
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bwpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} exxbw
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitsolo
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitfury
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} twentyoneinc
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} digitalbtc
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} eightbaochi
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} mybtccoinpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} tbdice
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} hashpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} nexious
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bravomining
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} hotpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} okexpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bcmonster
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} onehash
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bixin
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} tatmaspool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} viabtc
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} connectbtc
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} batpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} waterhole
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} dcexploration
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} dcex
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} btpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} fiftyeightcoin
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitcoinindia
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} shawnp0wers
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} phashio
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} rigpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} haozhuzhu
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} sevenpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} miningkings
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} hashbx
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} dpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} rawpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} haominer
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} helix
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitcoinukraine
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} poolin
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} secretsuperstar
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} tigerpoolnet
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} sigmapoolcom
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} okpooltop
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} hummerpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} tangpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bytepool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} spiderpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} novablock
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} miningcity
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} binancepool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} minerium
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} lubiancom
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} okkong
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} aaopool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} emcdpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} foundryusa
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} sbicrypto
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} arkpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} purebtccom
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} marapool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} kucoinpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} entrustcharitypool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} okminer
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} titan
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} pegapool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} btcnuggets
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} cloudhashing
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} digitalxmintsy
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} telco214
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} btcpoolparty
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} multipool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} transactioncoinmining
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} btcdig
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} trickysbtcpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} btcmp
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} eobot
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} unomp
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} patels
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} gogreenlight
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitcoinindiapool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} ekanembtc
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} canoe
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} tiger
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} onem1x
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} zulupool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} secpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} ocean
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} whitepool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} wiz
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} wk057
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} futurebitapollosolo
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} carbonnegative
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} portlandhodl
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} phoenix
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} neopool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} maxipool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} bitfufupool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} gdpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} miningdutch
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} publicpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} miningsquared
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} innopolistech
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} btclab
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} parasite
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} redrockpool
- * @property {BlocksCoinbaseDominanceFeeSubsidyPattern} est3lar
+ * @property {BlocksDominanceRewardsPattern} unknown
+ * @property {BlocksDominanceRewardsPattern} blockfills
+ * @property {BlocksDominanceRewardsPattern} ultimuspool
+ * @property {BlocksDominanceRewardsPattern} terrapool
+ * @property {BlocksDominanceRewardsPattern} luxor
+ * @property {BlocksDominanceRewardsPattern} onethash
+ * @property {BlocksDominanceRewardsPattern} btccom
+ * @property {BlocksDominanceRewardsPattern} bitfarms
+ * @property {BlocksDominanceRewardsPattern} huobipool
+ * @property {BlocksDominanceRewardsPattern} wayicn
+ * @property {BlocksDominanceRewardsPattern} canoepool
+ * @property {BlocksDominanceRewardsPattern} btctop
+ * @property {BlocksDominanceRewardsPattern} bitcoincom
+ * @property {BlocksDominanceRewardsPattern} pool175btc
+ * @property {BlocksDominanceRewardsPattern} gbminers
+ * @property {BlocksDominanceRewardsPattern} axbt
+ * @property {BlocksDominanceRewardsPattern} asicminer
+ * @property {BlocksDominanceRewardsPattern} bitminter
+ * @property {BlocksDominanceRewardsPattern} bitcoinrussia
+ * @property {BlocksDominanceRewardsPattern} btcserv
+ * @property {BlocksDominanceRewardsPattern} simplecoinus
+ * @property {BlocksDominanceRewardsPattern} btcguild
+ * @property {BlocksDominanceRewardsPattern} eligius
+ * @property {BlocksDominanceRewardsPattern} ozcoin
+ * @property {BlocksDominanceRewardsPattern} eclipsemc
+ * @property {BlocksDominanceRewardsPattern} maxbtc
+ * @property {BlocksDominanceRewardsPattern} triplemining
+ * @property {BlocksDominanceRewardsPattern} coinlab
+ * @property {BlocksDominanceRewardsPattern} pool50btc
+ * @property {BlocksDominanceRewardsPattern} ghashio
+ * @property {BlocksDominanceRewardsPattern} stminingcorp
+ * @property {BlocksDominanceRewardsPattern} bitparking
+ * @property {BlocksDominanceRewardsPattern} mmpool
+ * @property {BlocksDominanceRewardsPattern} polmine
+ * @property {BlocksDominanceRewardsPattern} kncminer
+ * @property {BlocksDominanceRewardsPattern} bitalo
+ * @property {BlocksDominanceRewardsPattern} f2pool
+ * @property {BlocksDominanceRewardsPattern} hhtt
+ * @property {BlocksDominanceRewardsPattern} megabigpower
+ * @property {BlocksDominanceRewardsPattern} mtred
+ * @property {BlocksDominanceRewardsPattern} nmcbit
+ * @property {BlocksDominanceRewardsPattern} yourbtcnet
+ * @property {BlocksDominanceRewardsPattern} givemecoins
+ * @property {BlocksDominanceRewardsPattern} braiinspool
+ * @property {BlocksDominanceRewardsPattern} antpool
+ * @property {BlocksDominanceRewardsPattern} multicoinco
+ * @property {BlocksDominanceRewardsPattern} bcpoolio
+ * @property {BlocksDominanceRewardsPattern} cointerra
+ * @property {BlocksDominanceRewardsPattern} kanopool
+ * @property {BlocksDominanceRewardsPattern} solock
+ * @property {BlocksDominanceRewardsPattern} ckpool
+ * @property {BlocksDominanceRewardsPattern} nicehash
+ * @property {BlocksDominanceRewardsPattern} bitclub
+ * @property {BlocksDominanceRewardsPattern} bitcoinaffiliatenetwork
+ * @property {BlocksDominanceRewardsPattern} btcc
+ * @property {BlocksDominanceRewardsPattern} bwpool
+ * @property {BlocksDominanceRewardsPattern} exxbw
+ * @property {BlocksDominanceRewardsPattern} bitsolo
+ * @property {BlocksDominanceRewardsPattern} bitfury
+ * @property {BlocksDominanceRewardsPattern} twentyoneinc
+ * @property {BlocksDominanceRewardsPattern} digitalbtc
+ * @property {BlocksDominanceRewardsPattern} eightbaochi
+ * @property {BlocksDominanceRewardsPattern} mybtccoinpool
+ * @property {BlocksDominanceRewardsPattern} tbdice
+ * @property {BlocksDominanceRewardsPattern} hashpool
+ * @property {BlocksDominanceRewardsPattern} nexious
+ * @property {BlocksDominanceRewardsPattern} bravomining
+ * @property {BlocksDominanceRewardsPattern} hotpool
+ * @property {BlocksDominanceRewardsPattern} okexpool
+ * @property {BlocksDominanceRewardsPattern} bcmonster
+ * @property {BlocksDominanceRewardsPattern} onehash
+ * @property {BlocksDominanceRewardsPattern} bixin
+ * @property {BlocksDominanceRewardsPattern} tatmaspool
+ * @property {BlocksDominanceRewardsPattern} viabtc
+ * @property {BlocksDominanceRewardsPattern} connectbtc
+ * @property {BlocksDominanceRewardsPattern} batpool
+ * @property {BlocksDominanceRewardsPattern} waterhole
+ * @property {BlocksDominanceRewardsPattern} dcexploration
+ * @property {BlocksDominanceRewardsPattern} dcex
+ * @property {BlocksDominanceRewardsPattern} btpool
+ * @property {BlocksDominanceRewardsPattern} fiftyeightcoin
+ * @property {BlocksDominanceRewardsPattern} bitcoinindia
+ * @property {BlocksDominanceRewardsPattern} shawnp0wers
+ * @property {BlocksDominanceRewardsPattern} phashio
+ * @property {BlocksDominanceRewardsPattern} rigpool
+ * @property {BlocksDominanceRewardsPattern} haozhuzhu
+ * @property {BlocksDominanceRewardsPattern} sevenpool
+ * @property {BlocksDominanceRewardsPattern} miningkings
+ * @property {BlocksDominanceRewardsPattern} hashbx
+ * @property {BlocksDominanceRewardsPattern} dpool
+ * @property {BlocksDominanceRewardsPattern} rawpool
+ * @property {BlocksDominanceRewardsPattern} haominer
+ * @property {BlocksDominanceRewardsPattern} helix
+ * @property {BlocksDominanceRewardsPattern} bitcoinukraine
+ * @property {BlocksDominanceRewardsPattern} poolin
+ * @property {BlocksDominanceRewardsPattern} secretsuperstar
+ * @property {BlocksDominanceRewardsPattern} tigerpoolnet
+ * @property {BlocksDominanceRewardsPattern} sigmapoolcom
+ * @property {BlocksDominanceRewardsPattern} okpooltop
+ * @property {BlocksDominanceRewardsPattern} hummerpool
+ * @property {BlocksDominanceRewardsPattern} tangpool
+ * @property {BlocksDominanceRewardsPattern} bytepool
+ * @property {BlocksDominanceRewardsPattern} spiderpool
+ * @property {BlocksDominanceRewardsPattern} novablock
+ * @property {BlocksDominanceRewardsPattern} miningcity
+ * @property {BlocksDominanceRewardsPattern} binancepool
+ * @property {BlocksDominanceRewardsPattern} minerium
+ * @property {BlocksDominanceRewardsPattern} lubiancom
+ * @property {BlocksDominanceRewardsPattern} okkong
+ * @property {BlocksDominanceRewardsPattern} aaopool
+ * @property {BlocksDominanceRewardsPattern} emcdpool
+ * @property {BlocksDominanceRewardsPattern} foundryusa
+ * @property {BlocksDominanceRewardsPattern} sbicrypto
+ * @property {BlocksDominanceRewardsPattern} arkpool
+ * @property {BlocksDominanceRewardsPattern} purebtccom
+ * @property {BlocksDominanceRewardsPattern} marapool
+ * @property {BlocksDominanceRewardsPattern} kucoinpool
+ * @property {BlocksDominanceRewardsPattern} entrustcharitypool
+ * @property {BlocksDominanceRewardsPattern} okminer
+ * @property {BlocksDominanceRewardsPattern} titan
+ * @property {BlocksDominanceRewardsPattern} pegapool
+ * @property {BlocksDominanceRewardsPattern} btcnuggets
+ * @property {BlocksDominanceRewardsPattern} cloudhashing
+ * @property {BlocksDominanceRewardsPattern} digitalxmintsy
+ * @property {BlocksDominanceRewardsPattern} telco214
+ * @property {BlocksDominanceRewardsPattern} btcpoolparty
+ * @property {BlocksDominanceRewardsPattern} multipool
+ * @property {BlocksDominanceRewardsPattern} transactioncoinmining
+ * @property {BlocksDominanceRewardsPattern} btcdig
+ * @property {BlocksDominanceRewardsPattern} trickysbtcpool
+ * @property {BlocksDominanceRewardsPattern} btcmp
+ * @property {BlocksDominanceRewardsPattern} eobot
+ * @property {BlocksDominanceRewardsPattern} unomp
+ * @property {BlocksDominanceRewardsPattern} patels
+ * @property {BlocksDominanceRewardsPattern} gogreenlight
+ * @property {BlocksDominanceRewardsPattern} bitcoinindiapool
+ * @property {BlocksDominanceRewardsPattern} ekanembtc
+ * @property {BlocksDominanceRewardsPattern} canoe
+ * @property {BlocksDominanceRewardsPattern} tiger
+ * @property {BlocksDominanceRewardsPattern} onem1x
+ * @property {BlocksDominanceRewardsPattern} zulupool
+ * @property {BlocksDominanceRewardsPattern} secpool
+ * @property {BlocksDominanceRewardsPattern} ocean
+ * @property {BlocksDominanceRewardsPattern} whitepool
+ * @property {BlocksDominanceRewardsPattern} wiz
+ * @property {BlocksDominanceRewardsPattern} wk057
+ * @property {BlocksDominanceRewardsPattern} futurebitapollosolo
+ * @property {BlocksDominanceRewardsPattern} carbonnegative
+ * @property {BlocksDominanceRewardsPattern} portlandhodl
+ * @property {BlocksDominanceRewardsPattern} phoenix
+ * @property {BlocksDominanceRewardsPattern} neopool
+ * @property {BlocksDominanceRewardsPattern} maxipool
+ * @property {BlocksDominanceRewardsPattern} bitfufupool
+ * @property {BlocksDominanceRewardsPattern} gdpool
+ * @property {BlocksDominanceRewardsPattern} miningdutch
+ * @property {BlocksDominanceRewardsPattern} publicpool
+ * @property {BlocksDominanceRewardsPattern} miningsquared
+ * @property {BlocksDominanceRewardsPattern} innopolistech
+ * @property {BlocksDominanceRewardsPattern} btclab
+ * @property {BlocksDominanceRewardsPattern} parasite
+ * @property {BlocksDominanceRewardsPattern} redrockpool
+ * @property {BlocksDominanceRewardsPattern} est3lar
  */
 
 /**
@@ -4916,7 +4842,7 @@ function create_2wPattern(client, acc) {
  * @property {MetricsTree_Distribution_UtxoCohorts_AmountRange} amountRange
  * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount} ltAmount
  * @property {MetricsTree_Distribution_UtxoCohorts_Epoch} epoch
- * @property {MetricsTree_Distribution_UtxoCohorts_Year} year
+ * @property {MetricsTree_Distribution_UtxoCohorts_Class} class
  * @property {MetricsTree_Distribution_UtxoCohorts_Type} type
  */
 
@@ -4924,9 +4850,9 @@ function create_2wPattern(client, acc) {
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_All
  * @property {ChangeHalvedTotalPattern} supply
  * @property {UtxoPattern} outputs
- * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
+ * @property {CoinblocksCoindaysSentPattern} activity
  * @property {AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern} realized
- * @property {InvestedMaxMinPercentilesSpotPattern} costBasis
+ * @property {InvestedMaxMinPercentilesPattern} costBasis
  * @property {GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern} unrealized
  * @property {MetricsTree_Distribution_UtxoCohorts_All_Relative} relative
  */
@@ -4952,9 +4878,9 @@ function create_2wPattern(client, acc) {
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Sth
  * @property {ChangeHalvedTotalPattern} supply
  * @property {UtxoPattern} outputs
- * @property {CoinblocksCoindaysSatblocksSatdaysSentPattern} activity
+ * @property {CoinblocksCoindaysSentPattern} activity
  * @property {AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern} realized
- * @property {InvestedMaxMinPercentilesSpotPattern} costBasis
+ * @property {InvestedMaxMinPercentilesPattern} costBasis
  * @property {GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern} unrealized
  * @property {InvestedNegNetNuplSupplyUnrealizedPattern2} relative
  */
@@ -5091,7 +5017,7 @@ function create_2wPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Year
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Class
  * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _2009
  * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _2010
  * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} _2011
@@ -5513,96 +5439,96 @@ class BrkClient extends BrkClientBase {
     }
   });
 
-  YEAR_NAMES = /** @type {const} */ ({
+  CLASS_NAMES = /** @type {const} */ ({
     "_2009": {
-      "id": "year_2009",
+      "id": "class_2009",
       "short": "2009",
-      "long": "Year 2009"
+      "long": "Class 2009"
     },
     "_2010": {
-      "id": "year_2010",
+      "id": "class_2010",
       "short": "2010",
-      "long": "Year 2010"
+      "long": "Class 2010"
     },
     "_2011": {
-      "id": "year_2011",
+      "id": "class_2011",
       "short": "2011",
-      "long": "Year 2011"
+      "long": "Class 2011"
     },
     "_2012": {
-      "id": "year_2012",
+      "id": "class_2012",
       "short": "2012",
-      "long": "Year 2012"
+      "long": "Class 2012"
     },
     "_2013": {
-      "id": "year_2013",
+      "id": "class_2013",
       "short": "2013",
-      "long": "Year 2013"
+      "long": "Class 2013"
     },
     "_2014": {
-      "id": "year_2014",
+      "id": "class_2014",
       "short": "2014",
-      "long": "Year 2014"
+      "long": "Class 2014"
     },
     "_2015": {
-      "id": "year_2015",
+      "id": "class_2015",
       "short": "2015",
-      "long": "Year 2015"
+      "long": "Class 2015"
     },
     "_2016": {
-      "id": "year_2016",
+      "id": "class_2016",
       "short": "2016",
-      "long": "Year 2016"
+      "long": "Class 2016"
     },
     "_2017": {
-      "id": "year_2017",
+      "id": "class_2017",
       "short": "2017",
-      "long": "Year 2017"
+      "long": "Class 2017"
     },
     "_2018": {
-      "id": "year_2018",
+      "id": "class_2018",
       "short": "2018",
-      "long": "Year 2018"
+      "long": "Class 2018"
     },
     "_2019": {
-      "id": "year_2019",
+      "id": "class_2019",
       "short": "2019",
-      "long": "Year 2019"
+      "long": "Class 2019"
     },
     "_2020": {
-      "id": "year_2020",
+      "id": "class_2020",
       "short": "2020",
-      "long": "Year 2020"
+      "long": "Class 2020"
     },
     "_2021": {
-      "id": "year_2021",
+      "id": "class_2021",
       "short": "2021",
-      "long": "Year 2021"
+      "long": "Class 2021"
     },
     "_2022": {
-      "id": "year_2022",
+      "id": "class_2022",
       "short": "2022",
-      "long": "Year 2022"
+      "long": "Class 2022"
     },
     "_2023": {
-      "id": "year_2023",
+      "id": "class_2023",
       "short": "2023",
-      "long": "Year 2023"
+      "long": "Class 2023"
     },
     "_2024": {
-      "id": "year_2024",
+      "id": "class_2024",
       "short": "2024",
-      "long": "Year 2024"
+      "long": "Class 2024"
     },
     "_2025": {
-      "id": "year_2025",
+      "id": "class_2025",
       "short": "2025",
-      "long": "Year 2025"
+      "long": "Class 2025"
     },
     "_2026": {
-      "id": "year_2026",
+      "id": "class_2026",
       "short": "2026",
-      "long": "Year 2026"
+      "long": "Class 2026"
     }
   });
 
@@ -6713,27 +6639,11 @@ class BrkClient extends BrkClientBase {
             sd: createMetricPattern1(this, 'price_return_24h_sd_1m'),
           },
           priceReturn24hSd1y: createSdSmaPattern(this, 'price_return_24h'),
-          priceDownside24h: createMetricPattern18(this, 'price_downside_24h'),
-          priceDownside24hSd1w: {
-            sma: createMetricPattern1(this, 'price_downside_24h_sma_1w'),
-            sd: createMetricPattern1(this, 'price_downside_24h_sd_1w'),
-          },
-          priceDownside24hSd1m: {
-            sma: createMetricPattern1(this, 'price_downside_24h_sma_1m'),
-            sd: createMetricPattern1(this, 'price_downside_24h_sd_1m'),
-          },
-          priceDownside24hSd1y: createSdSmaPattern(this, 'price_downside_24h'),
         },
         volatility: {
           priceVolatility1w: createMetricPattern1(this, 'price_volatility_1w'),
           priceVolatility1m: createMetricPattern1(this, 'price_volatility_1m'),
           priceVolatility1y: createMetricPattern1(this, 'price_volatility_1y'),
-          priceSharpe1w: createMetricPattern1(this, 'price_sharpe_1w'),
-          priceSharpe1m: createMetricPattern1(this, 'price_sharpe_1m'),
-          priceSharpe1y: createMetricPattern1(this, 'price_sharpe_1y'),
-          priceSortino1w: createMetricPattern1(this, 'price_sortino_1w'),
-          priceSortino1m: createMetricPattern1(this, 'price_sortino_1m'),
-          priceSortino1y: createMetricPattern1(this, 'price_sortino_1y'),
         },
         range: {
           priceMin1w: createCentsSatsUsdPattern(this, 'price_min_1w'),
@@ -6924,168 +6834,168 @@ class BrkClient extends BrkClientBase {
       pools: {
         heightToPool: createMetricPattern18(this, 'pool'),
         vecs: {
-          unknown: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'unknown'),
-          blockfills: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'blockfills'),
-          ultimuspool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'ultimuspool'),
-          terrapool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'terrapool'),
-          luxor: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'luxor'),
-          onethash: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'onethash'),
-          btccom: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'btccom'),
-          bitfarms: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitfarms'),
-          huobipool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'huobipool'),
-          wayicn: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'wayicn'),
-          canoepool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'canoepool'),
-          btctop: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'btctop'),
-          bitcoincom: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitcoincom'),
-          pool175btc: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'pool175btc'),
-          gbminers: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'gbminers'),
-          axbt: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'axbt'),
-          asicminer: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'asicminer'),
-          bitminter: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitminter'),
-          bitcoinrussia: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitcoinrussia'),
-          btcserv: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'btcserv'),
-          simplecoinus: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'simplecoinus'),
-          btcguild: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'btcguild'),
-          eligius: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'eligius'),
-          ozcoin: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'ozcoin'),
-          eclipsemc: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'eclipsemc'),
-          maxbtc: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'maxbtc'),
-          triplemining: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'triplemining'),
-          coinlab: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'coinlab'),
-          pool50btc: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'pool50btc'),
-          ghashio: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'ghashio'),
-          stminingcorp: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'stminingcorp'),
-          bitparking: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitparking'),
-          mmpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'mmpool'),
-          polmine: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'polmine'),
-          kncminer: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'kncminer'),
-          bitalo: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitalo'),
-          f2pool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'f2pool'),
-          hhtt: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'hhtt'),
-          megabigpower: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'megabigpower'),
-          mtred: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'mtred'),
-          nmcbit: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'nmcbit'),
-          yourbtcnet: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'yourbtcnet'),
-          givemecoins: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'givemecoins'),
-          braiinspool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'braiinspool'),
-          antpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'antpool'),
-          multicoinco: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'multicoinco'),
-          bcpoolio: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bcpoolio'),
-          cointerra: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'cointerra'),
-          kanopool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'kanopool'),
-          solock: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'solock'),
-          ckpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'ckpool'),
-          nicehash: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'nicehash'),
-          bitclub: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitclub'),
-          bitcoinaffiliatenetwork: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitcoinaffiliatenetwork'),
-          btcc: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'btcc'),
-          bwpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bwpool'),
-          exxbw: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'exxbw'),
-          bitsolo: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitsolo'),
-          bitfury: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitfury'),
-          twentyoneinc: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'twentyoneinc'),
-          digitalbtc: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'digitalbtc'),
-          eightbaochi: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'eightbaochi'),
-          mybtccoinpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'mybtccoinpool'),
-          tbdice: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'tbdice'),
-          hashpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'hashpool'),
-          nexious: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'nexious'),
-          bravomining: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bravomining'),
-          hotpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'hotpool'),
-          okexpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'okexpool'),
-          bcmonster: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bcmonster'),
-          onehash: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'onehash'),
-          bixin: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bixin'),
-          tatmaspool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'tatmaspool'),
-          viabtc: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'viabtc'),
-          connectbtc: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'connectbtc'),
-          batpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'batpool'),
-          waterhole: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'waterhole'),
-          dcexploration: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'dcexploration'),
-          dcex: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'dcex'),
-          btpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'btpool'),
-          fiftyeightcoin: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'fiftyeightcoin'),
-          bitcoinindia: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitcoinindia'),
-          shawnp0wers: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'shawnp0wers'),
-          phashio: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'phashio'),
-          rigpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'rigpool'),
-          haozhuzhu: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'haozhuzhu'),
-          sevenpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'sevenpool'),
-          miningkings: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'miningkings'),
-          hashbx: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'hashbx'),
-          dpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'dpool'),
-          rawpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'rawpool'),
-          haominer: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'haominer'),
-          helix: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'helix'),
-          bitcoinukraine: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitcoinukraine'),
-          poolin: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'poolin'),
-          secretsuperstar: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'secretsuperstar'),
-          tigerpoolnet: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'tigerpoolnet'),
-          sigmapoolcom: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'sigmapoolcom'),
-          okpooltop: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'okpooltop'),
-          hummerpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'hummerpool'),
-          tangpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'tangpool'),
-          bytepool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bytepool'),
-          spiderpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'spiderpool'),
-          novablock: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'novablock'),
-          miningcity: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'miningcity'),
-          binancepool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'binancepool'),
-          minerium: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'minerium'),
-          lubiancom: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'lubiancom'),
-          okkong: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'okkong'),
-          aaopool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'aaopool'),
-          emcdpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'emcdpool'),
-          foundryusa: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'foundryusa'),
-          sbicrypto: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'sbicrypto'),
-          arkpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'arkpool'),
-          purebtccom: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'purebtccom'),
-          marapool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'marapool'),
-          kucoinpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'kucoinpool'),
-          entrustcharitypool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'entrustcharitypool'),
-          okminer: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'okminer'),
-          titan: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'titan'),
-          pegapool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'pegapool'),
-          btcnuggets: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'btcnuggets'),
-          cloudhashing: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'cloudhashing'),
-          digitalxmintsy: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'digitalxmintsy'),
-          telco214: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'telco214'),
-          btcpoolparty: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'btcpoolparty'),
-          multipool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'multipool'),
-          transactioncoinmining: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'transactioncoinmining'),
-          btcdig: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'btcdig'),
-          trickysbtcpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'trickysbtcpool'),
-          btcmp: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'btcmp'),
-          eobot: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'eobot'),
-          unomp: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'unomp'),
-          patels: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'patels'),
-          gogreenlight: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'gogreenlight'),
-          bitcoinindiapool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitcoinindiapool'),
-          ekanembtc: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'ekanembtc'),
-          canoe: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'canoe'),
-          tiger: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'tiger'),
-          onem1x: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'onem1x'),
-          zulupool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'zulupool'),
-          secpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'secpool'),
-          ocean: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'ocean'),
-          whitepool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'whitepool'),
-          wiz: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'wiz'),
-          wk057: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'wk057'),
-          futurebitapollosolo: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'futurebitapollosolo'),
-          carbonnegative: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'carbonnegative'),
-          portlandhodl: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'portlandhodl'),
-          phoenix: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'phoenix'),
-          neopool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'neopool'),
-          maxipool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'maxipool'),
-          bitfufupool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'bitfufupool'),
-          gdpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'gdpool'),
-          miningdutch: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'miningdutch'),
-          publicpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'publicpool'),
-          miningsquared: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'miningsquared'),
-          innopolistech: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'innopolistech'),
-          btclab: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'btclab'),
-          parasite: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'parasite'),
-          redrockpool: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'redrockpool'),
-          est3lar: createBlocksCoinbaseDominanceFeeSubsidyPattern(this, 'est3lar'),
+          unknown: createBlocksDominanceRewardsPattern(this, 'unknown'),
+          blockfills: createBlocksDominanceRewardsPattern(this, 'blockfills'),
+          ultimuspool: createBlocksDominanceRewardsPattern(this, 'ultimuspool'),
+          terrapool: createBlocksDominanceRewardsPattern(this, 'terrapool'),
+          luxor: createBlocksDominanceRewardsPattern(this, 'luxor'),
+          onethash: createBlocksDominanceRewardsPattern(this, 'onethash'),
+          btccom: createBlocksDominanceRewardsPattern(this, 'btccom'),
+          bitfarms: createBlocksDominanceRewardsPattern(this, 'bitfarms'),
+          huobipool: createBlocksDominanceRewardsPattern(this, 'huobipool'),
+          wayicn: createBlocksDominanceRewardsPattern(this, 'wayicn'),
+          canoepool: createBlocksDominanceRewardsPattern(this, 'canoepool'),
+          btctop: createBlocksDominanceRewardsPattern(this, 'btctop'),
+          bitcoincom: createBlocksDominanceRewardsPattern(this, 'bitcoincom'),
+          pool175btc: createBlocksDominanceRewardsPattern(this, 'pool175btc'),
+          gbminers: createBlocksDominanceRewardsPattern(this, 'gbminers'),
+          axbt: createBlocksDominanceRewardsPattern(this, 'axbt'),
+          asicminer: createBlocksDominanceRewardsPattern(this, 'asicminer'),
+          bitminter: createBlocksDominanceRewardsPattern(this, 'bitminter'),
+          bitcoinrussia: createBlocksDominanceRewardsPattern(this, 'bitcoinrussia'),
+          btcserv: createBlocksDominanceRewardsPattern(this, 'btcserv'),
+          simplecoinus: createBlocksDominanceRewardsPattern(this, 'simplecoinus'),
+          btcguild: createBlocksDominanceRewardsPattern(this, 'btcguild'),
+          eligius: createBlocksDominanceRewardsPattern(this, 'eligius'),
+          ozcoin: createBlocksDominanceRewardsPattern(this, 'ozcoin'),
+          eclipsemc: createBlocksDominanceRewardsPattern(this, 'eclipsemc'),
+          maxbtc: createBlocksDominanceRewardsPattern(this, 'maxbtc'),
+          triplemining: createBlocksDominanceRewardsPattern(this, 'triplemining'),
+          coinlab: createBlocksDominanceRewardsPattern(this, 'coinlab'),
+          pool50btc: createBlocksDominanceRewardsPattern(this, 'pool50btc'),
+          ghashio: createBlocksDominanceRewardsPattern(this, 'ghashio'),
+          stminingcorp: createBlocksDominanceRewardsPattern(this, 'stminingcorp'),
+          bitparking: createBlocksDominanceRewardsPattern(this, 'bitparking'),
+          mmpool: createBlocksDominanceRewardsPattern(this, 'mmpool'),
+          polmine: createBlocksDominanceRewardsPattern(this, 'polmine'),
+          kncminer: createBlocksDominanceRewardsPattern(this, 'kncminer'),
+          bitalo: createBlocksDominanceRewardsPattern(this, 'bitalo'),
+          f2pool: createBlocksDominanceRewardsPattern(this, 'f2pool'),
+          hhtt: createBlocksDominanceRewardsPattern(this, 'hhtt'),
+          megabigpower: createBlocksDominanceRewardsPattern(this, 'megabigpower'),
+          mtred: createBlocksDominanceRewardsPattern(this, 'mtred'),
+          nmcbit: createBlocksDominanceRewardsPattern(this, 'nmcbit'),
+          yourbtcnet: createBlocksDominanceRewardsPattern(this, 'yourbtcnet'),
+          givemecoins: createBlocksDominanceRewardsPattern(this, 'givemecoins'),
+          braiinspool: createBlocksDominanceRewardsPattern(this, 'braiinspool'),
+          antpool: createBlocksDominanceRewardsPattern(this, 'antpool'),
+          multicoinco: createBlocksDominanceRewardsPattern(this, 'multicoinco'),
+          bcpoolio: createBlocksDominanceRewardsPattern(this, 'bcpoolio'),
+          cointerra: createBlocksDominanceRewardsPattern(this, 'cointerra'),
+          kanopool: createBlocksDominanceRewardsPattern(this, 'kanopool'),
+          solock: createBlocksDominanceRewardsPattern(this, 'solock'),
+          ckpool: createBlocksDominanceRewardsPattern(this, 'ckpool'),
+          nicehash: createBlocksDominanceRewardsPattern(this, 'nicehash'),
+          bitclub: createBlocksDominanceRewardsPattern(this, 'bitclub'),
+          bitcoinaffiliatenetwork: createBlocksDominanceRewardsPattern(this, 'bitcoinaffiliatenetwork'),
+          btcc: createBlocksDominanceRewardsPattern(this, 'btcc'),
+          bwpool: createBlocksDominanceRewardsPattern(this, 'bwpool'),
+          exxbw: createBlocksDominanceRewardsPattern(this, 'exxbw'),
+          bitsolo: createBlocksDominanceRewardsPattern(this, 'bitsolo'),
+          bitfury: createBlocksDominanceRewardsPattern(this, 'bitfury'),
+          twentyoneinc: createBlocksDominanceRewardsPattern(this, 'twentyoneinc'),
+          digitalbtc: createBlocksDominanceRewardsPattern(this, 'digitalbtc'),
+          eightbaochi: createBlocksDominanceRewardsPattern(this, 'eightbaochi'),
+          mybtccoinpool: createBlocksDominanceRewardsPattern(this, 'mybtccoinpool'),
+          tbdice: createBlocksDominanceRewardsPattern(this, 'tbdice'),
+          hashpool: createBlocksDominanceRewardsPattern(this, 'hashpool'),
+          nexious: createBlocksDominanceRewardsPattern(this, 'nexious'),
+          bravomining: createBlocksDominanceRewardsPattern(this, 'bravomining'),
+          hotpool: createBlocksDominanceRewardsPattern(this, 'hotpool'),
+          okexpool: createBlocksDominanceRewardsPattern(this, 'okexpool'),
+          bcmonster: createBlocksDominanceRewardsPattern(this, 'bcmonster'),
+          onehash: createBlocksDominanceRewardsPattern(this, 'onehash'),
+          bixin: createBlocksDominanceRewardsPattern(this, 'bixin'),
+          tatmaspool: createBlocksDominanceRewardsPattern(this, 'tatmaspool'),
+          viabtc: createBlocksDominanceRewardsPattern(this, 'viabtc'),
+          connectbtc: createBlocksDominanceRewardsPattern(this, 'connectbtc'),
+          batpool: createBlocksDominanceRewardsPattern(this, 'batpool'),
+          waterhole: createBlocksDominanceRewardsPattern(this, 'waterhole'),
+          dcexploration: createBlocksDominanceRewardsPattern(this, 'dcexploration'),
+          dcex: createBlocksDominanceRewardsPattern(this, 'dcex'),
+          btpool: createBlocksDominanceRewardsPattern(this, 'btpool'),
+          fiftyeightcoin: createBlocksDominanceRewardsPattern(this, 'fiftyeightcoin'),
+          bitcoinindia: createBlocksDominanceRewardsPattern(this, 'bitcoinindia'),
+          shawnp0wers: createBlocksDominanceRewardsPattern(this, 'shawnp0wers'),
+          phashio: createBlocksDominanceRewardsPattern(this, 'phashio'),
+          rigpool: createBlocksDominanceRewardsPattern(this, 'rigpool'),
+          haozhuzhu: createBlocksDominanceRewardsPattern(this, 'haozhuzhu'),
+          sevenpool: createBlocksDominanceRewardsPattern(this, 'sevenpool'),
+          miningkings: createBlocksDominanceRewardsPattern(this, 'miningkings'),
+          hashbx: createBlocksDominanceRewardsPattern(this, 'hashbx'),
+          dpool: createBlocksDominanceRewardsPattern(this, 'dpool'),
+          rawpool: createBlocksDominanceRewardsPattern(this, 'rawpool'),
+          haominer: createBlocksDominanceRewardsPattern(this, 'haominer'),
+          helix: createBlocksDominanceRewardsPattern(this, 'helix'),
+          bitcoinukraine: createBlocksDominanceRewardsPattern(this, 'bitcoinukraine'),
+          poolin: createBlocksDominanceRewardsPattern(this, 'poolin'),
+          secretsuperstar: createBlocksDominanceRewardsPattern(this, 'secretsuperstar'),
+          tigerpoolnet: createBlocksDominanceRewardsPattern(this, 'tigerpoolnet'),
+          sigmapoolcom: createBlocksDominanceRewardsPattern(this, 'sigmapoolcom'),
+          okpooltop: createBlocksDominanceRewardsPattern(this, 'okpooltop'),
+          hummerpool: createBlocksDominanceRewardsPattern(this, 'hummerpool'),
+          tangpool: createBlocksDominanceRewardsPattern(this, 'tangpool'),
+          bytepool: createBlocksDominanceRewardsPattern(this, 'bytepool'),
+          spiderpool: createBlocksDominanceRewardsPattern(this, 'spiderpool'),
+          novablock: createBlocksDominanceRewardsPattern(this, 'novablock'),
+          miningcity: createBlocksDominanceRewardsPattern(this, 'miningcity'),
+          binancepool: createBlocksDominanceRewardsPattern(this, 'binancepool'),
+          minerium: createBlocksDominanceRewardsPattern(this, 'minerium'),
+          lubiancom: createBlocksDominanceRewardsPattern(this, 'lubiancom'),
+          okkong: createBlocksDominanceRewardsPattern(this, 'okkong'),
+          aaopool: createBlocksDominanceRewardsPattern(this, 'aaopool'),
+          emcdpool: createBlocksDominanceRewardsPattern(this, 'emcdpool'),
+          foundryusa: createBlocksDominanceRewardsPattern(this, 'foundryusa'),
+          sbicrypto: createBlocksDominanceRewardsPattern(this, 'sbicrypto'),
+          arkpool: createBlocksDominanceRewardsPattern(this, 'arkpool'),
+          purebtccom: createBlocksDominanceRewardsPattern(this, 'purebtccom'),
+          marapool: createBlocksDominanceRewardsPattern(this, 'marapool'),
+          kucoinpool: createBlocksDominanceRewardsPattern(this, 'kucoinpool'),
+          entrustcharitypool: createBlocksDominanceRewardsPattern(this, 'entrustcharitypool'),
+          okminer: createBlocksDominanceRewardsPattern(this, 'okminer'),
+          titan: createBlocksDominanceRewardsPattern(this, 'titan'),
+          pegapool: createBlocksDominanceRewardsPattern(this, 'pegapool'),
+          btcnuggets: createBlocksDominanceRewardsPattern(this, 'btcnuggets'),
+          cloudhashing: createBlocksDominanceRewardsPattern(this, 'cloudhashing'),
+          digitalxmintsy: createBlocksDominanceRewardsPattern(this, 'digitalxmintsy'),
+          telco214: createBlocksDominanceRewardsPattern(this, 'telco214'),
+          btcpoolparty: createBlocksDominanceRewardsPattern(this, 'btcpoolparty'),
+          multipool: createBlocksDominanceRewardsPattern(this, 'multipool'),
+          transactioncoinmining: createBlocksDominanceRewardsPattern(this, 'transactioncoinmining'),
+          btcdig: createBlocksDominanceRewardsPattern(this, 'btcdig'),
+          trickysbtcpool: createBlocksDominanceRewardsPattern(this, 'trickysbtcpool'),
+          btcmp: createBlocksDominanceRewardsPattern(this, 'btcmp'),
+          eobot: createBlocksDominanceRewardsPattern(this, 'eobot'),
+          unomp: createBlocksDominanceRewardsPattern(this, 'unomp'),
+          patels: createBlocksDominanceRewardsPattern(this, 'patels'),
+          gogreenlight: createBlocksDominanceRewardsPattern(this, 'gogreenlight'),
+          bitcoinindiapool: createBlocksDominanceRewardsPattern(this, 'bitcoinindiapool'),
+          ekanembtc: createBlocksDominanceRewardsPattern(this, 'ekanembtc'),
+          canoe: createBlocksDominanceRewardsPattern(this, 'canoe'),
+          tiger: createBlocksDominanceRewardsPattern(this, 'tiger'),
+          onem1x: createBlocksDominanceRewardsPattern(this, 'onem1x'),
+          zulupool: createBlocksDominanceRewardsPattern(this, 'zulupool'),
+          secpool: createBlocksDominanceRewardsPattern(this, 'secpool'),
+          ocean: createBlocksDominanceRewardsPattern(this, 'ocean'),
+          whitepool: createBlocksDominanceRewardsPattern(this, 'whitepool'),
+          wiz: createBlocksDominanceRewardsPattern(this, 'wiz'),
+          wk057: createBlocksDominanceRewardsPattern(this, 'wk057'),
+          futurebitapollosolo: createBlocksDominanceRewardsPattern(this, 'futurebitapollosolo'),
+          carbonnegative: createBlocksDominanceRewardsPattern(this, 'carbonnegative'),
+          portlandhodl: createBlocksDominanceRewardsPattern(this, 'portlandhodl'),
+          phoenix: createBlocksDominanceRewardsPattern(this, 'phoenix'),
+          neopool: createBlocksDominanceRewardsPattern(this, 'neopool'),
+          maxipool: createBlocksDominanceRewardsPattern(this, 'maxipool'),
+          bitfufupool: createBlocksDominanceRewardsPattern(this, 'bitfufupool'),
+          gdpool: createBlocksDominanceRewardsPattern(this, 'gdpool'),
+          miningdutch: createBlocksDominanceRewardsPattern(this, 'miningdutch'),
+          publicpool: createBlocksDominanceRewardsPattern(this, 'publicpool'),
+          miningsquared: createBlocksDominanceRewardsPattern(this, 'miningsquared'),
+          innopolistech: createBlocksDominanceRewardsPattern(this, 'innopolistech'),
+          btclab: createBlocksDominanceRewardsPattern(this, 'btclab'),
+          parasite: createBlocksDominanceRewardsPattern(this, 'parasite'),
+          redrockpool: createBlocksDominanceRewardsPattern(this, 'redrockpool'),
+          est3lar: createBlocksDominanceRewardsPattern(this, 'est3lar'),
         },
       },
       prices: {
@@ -7130,9 +7040,9 @@ class BrkClient extends BrkClientBase {
           all: {
             supply: createChangeHalvedTotalPattern(this, 'supply'),
             outputs: createUtxoPattern(this, 'utxo_count'),
-            activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(this, ''),
+            activity: createCoinblocksCoindaysSentPattern(this, ''),
             realized: createAdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(this, ''),
-            costBasis: createInvestedMaxMinPercentilesSpotPattern(this, ''),
+            costBasis: createInvestedMaxMinPercentilesPattern(this, ''),
             unrealized: createGreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(this, ''),
             relative: {
               supplyInProfitRelToOwnSupply: createBpsPercentRatioPattern(this, 'supply_in_profit_rel_to_own_supply'),
@@ -7153,9 +7063,9 @@ class BrkClient extends BrkClientBase {
           sth: {
             supply: createChangeHalvedTotalPattern(this, 'sth_supply'),
             outputs: createUtxoPattern(this, 'sth_utxo_count'),
-            activity: createCoinblocksCoindaysSatblocksSatdaysSentPattern(this, 'sth'),
+            activity: createCoinblocksCoindaysSentPattern(this, 'sth'),
             realized: createAdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(this, 'sth'),
-            costBasis: createInvestedMaxMinPercentilesSpotPattern(this, 'sth'),
+            costBasis: createInvestedMaxMinPercentilesPattern(this, 'sth'),
             unrealized: createGreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(this, 'sth'),
             relative: createInvestedNegNetNuplSupplyUnrealizedPattern2(this, 'sth'),
           },
@@ -7277,25 +7187,25 @@ class BrkClient extends BrkClientBase {
             _3: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'epoch_3'),
             _4: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'epoch_4'),
           },
-          year: {
-            _2009: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2009'),
-            _2010: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2010'),
-            _2011: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2011'),
-            _2012: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2012'),
-            _2013: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2013'),
-            _2014: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2014'),
-            _2015: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2015'),
-            _2016: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2016'),
-            _2017: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2017'),
-            _2018: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2018'),
-            _2019: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2019'),
-            _2020: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2020'),
-            _2021: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2021'),
-            _2022: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2022'),
-            _2023: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2023'),
-            _2024: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2024'),
-            _2025: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2025'),
-            _2026: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'year_2026'),
+          class: {
+            _2009: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2009'),
+            _2010: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2010'),
+            _2011: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2011'),
+            _2012: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2012'),
+            _2013: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2013'),
+            _2014: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2014'),
+            _2015: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2015'),
+            _2016: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2016'),
+            _2017: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2017'),
+            _2018: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2018'),
+            _2019: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2019'),
+            _2020: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2020'),
+            _2021: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2021'),
+            _2022: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2022'),
+            _2023: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2023'),
+            _2024: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2024'),
+            _2025: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2025'),
+            _2026: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'class_2026'),
           },
           type: {
             p2pk65: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3(this, 'p2pk65'),

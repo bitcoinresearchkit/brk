@@ -83,7 +83,7 @@ impl CostBasisData {
     }
 
     fn assert_pending_empty(&self) {
-        assert!(
+        debug_assert!(
             self.pending.is_empty() && self.pending_raw_is_zero(),
             "CostBasisData: pending not empty, call apply_pending first"
         );
@@ -180,7 +180,7 @@ impl CostBasisData {
     }
 
     pub(crate) fn apply_pending(&mut self) {
-        if self.pending.is_empty() && self.pending_raw_is_zero() {
+        if self.pending.is_empty() {
             return;
         }
         self.generation = self.generation.wrapping_add(1);
@@ -275,6 +275,10 @@ impl CostBasisData {
         self.cache = None;
         self.percentiles_dirty = true;
         self.cached_percentiles = None;
+    }
+
+    pub(crate) fn cached_percentiles(&self) -> Option<Percentiles> {
+        self.cached_percentiles
     }
 
     pub(crate) fn compute_percentiles(&mut self) -> Option<Percentiles> {

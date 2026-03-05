@@ -24,14 +24,14 @@ impl CohortContext {
     /// Build full name for a filter, adding prefix only for Time/Amount filters.
     ///
     /// Prefix rules:
-    /// - No prefix: `All`, `Term`, `Epoch`, `Year`, `Type`
+    /// - No prefix: `All`, `Term`, `Epoch`, `Class`, `Type`
     /// - Context prefix: `Time`, `Amount`
     pub fn full_name(&self, filter: &Filter, name: &str) -> String {
         match filter {
             Filter::All
             | Filter::Term(_)
             | Filter::Epoch(_)
-            | Filter::Year(_)
+            | Filter::Class(_)
             | Filter::Type(_) => name.to_string(),
             Filter::Time(_) | Filter::Amount(_) => self.prefixed(name),
         }

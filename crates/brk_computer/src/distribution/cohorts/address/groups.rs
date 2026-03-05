@@ -111,13 +111,8 @@ impl AddressCohorts {
         self.par_iter_mut()
             .try_for_each(|v| v.compute_rest_part1(blocks, prices, starting_indexes, exit))?;
 
-        // 2. Compute net_sentiment.height for separate cohorts (greed - pain)
-        self.par_iter_separate_mut().try_for_each(|v| {
-            v.metrics
-                .compute_net_sentiment_height(starting_indexes, exit)
-        })?;
-
-        // 3. Compute net_sentiment.height for aggregate cohorts (weighted average)
+        // 3. Compute net_sentiment.height for aggregate cohorts (weighted average).
+        // Separate cohorts already computed net_sentiment in step 2 (inside compute_rest_part1).
         self.for_each_aggregate(|vecs, sources| {
             let metrics: Vec<_> = sources.iter().map(|v| &v.metrics).collect();
             vecs.metrics

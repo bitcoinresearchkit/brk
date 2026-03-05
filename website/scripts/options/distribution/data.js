@@ -37,7 +37,7 @@ export function buildCohortData() {
     LT_AMOUNT_NAMES,
     AMOUNT_RANGE_NAMES,
     SPENDABLE_TYPE_NAMES,
-    YEAR_NAMES,
+    CLASS_NAMES,
   } = brk;
 
   // Base cohort representing "all"
@@ -224,11 +224,11 @@ export function buildCohortData() {
       };
     });
 
-  // Year cohorts
-  const year = entries(utxoCohorts.year)
+  // Class cohorts
+  const class_ = entries(utxoCohorts.class)
     .reverse()
     .map(([key, tree], i, arr) => {
-      const names = YEAR_NAMES[key];
+      const names = CLASS_NAMES[key];
       return {
         name: names.short,
         title: names.long,
@@ -253,6 +253,6 @@ export function buildCohortData() {
     addressesAmountRanges,
     typeAddressable,
     typeOther,
-    year,
+    class: class_,
   };
 }

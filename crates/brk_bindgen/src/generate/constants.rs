@@ -7,7 +7,7 @@ use std::collections::BTreeMap;
 
 use brk_cohort::{
     AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, GE_AMOUNT_NAMES, LT_AMOUNT_NAMES,
-    MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, YEAR_NAMES,
+    MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, CLASS_NAMES,
 };
 use brk_types::{Index, PoolSlug, pools};
 use serde::Serialize;
@@ -55,7 +55,7 @@ impl CohortConstants {
         vec![
             ("TERM_NAMES", to_value(&TERM_NAMES)),
             ("EPOCH_NAMES", to_value(&EPOCH_NAMES)),
-            ("YEAR_NAMES", to_value(&YEAR_NAMES)),
+            ("CLASS_NAMES", to_value(&CLASS_NAMES)),
             ("SPENDABLE_TYPE_NAMES", to_value(&SPENDABLE_TYPE_NAMES)),
             ("AGE_RANGE_NAMES", to_value(&AGE_RANGE_NAMES)),
             ("MAX_AGE_NAMES", to_value(&MAX_AGE_NAMES)),

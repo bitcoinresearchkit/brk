@@ -83,11 +83,8 @@ impl From<BasisPointsSigned32> for i32 {
 impl From<f64> for BasisPointsSigned32 {
     #[inline]
     fn from(value: f64) -> Self {
-        debug_assert!(
-            value >= i32::MIN as f64 / 10000.0 && value <= i32::MAX as f64 / 10000.0,
-            "f64 out of BasisPointsSigned32 range: {value}"
-        );
-        Self((value * 10000.0).round() as i32)
+        let scaled = (value * 10000.0).round().clamp(i32::MIN as f64, i32::MAX as f64);
+        Self(scaled as i32)
     }
 }
 

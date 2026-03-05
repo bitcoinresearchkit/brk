@@ -66,16 +66,17 @@ impl Vecs {
             self.period_cost_basis.zip_mut_with_days(&self.period_stack)
         {
             let days = days as usize;
+            let start = average_price.cents.height.len();
             let stack_data = stack
                 .sats
                 .height
-                .collect_range_at(sh, stack.sats.height.len());
+                .collect_range_at(start, stack.sats.height.len());
             average_price.cents.height.compute_transform(
                 starting_indexes.height,
                 h2d,
                 |(h, di, _)| {
                     let di_usize = di.to_usize();
-                    let stack_sats = stack_data[h.to_usize() - sh];
+                    let stack_sats = stack_data[h.to_usize() - start];
                     let avg = if di_usize > first_price_di {
                         let num_days = days.min(di_usize + 1).min(di_usize + 1 - first_price_di);
                         Cents::from(DCA_AMOUNT * num_days / Bitcoin::from(stack_sats))
@@ -123,15 +124,16 @@ impl Vecs {
             self.period_lump_sum_stack.zip_mut_with_days(&lookback_dca)
         {
             let total_invested = DCA_AMOUNT * days as usize;
+            let ls_start = stack.sats.height.len();
             let lookback_data = lookback_price
                 .cents
                 .height
-                .collect_range_at(sh, lookback_price.cents.height.len());
+                .collect_range_at(ls_start, lookback_price.cents.height.len());
             stack.sats.height.compute_transform(
                 starting_indexes.height,
                 h2d,
                 |(h, _di, _)| {
-                    let lp = lookback_data[h.to_usize() - sh];
+                    let lp = lookback_data[h.to_usize() - ls_start];
                     let sats = if lp == Cents::ZERO {
                         Sats::ZERO
                     } else {
@@ -217,10 +219,11 @@ impl Vecs {
             .zip(start_days)
         {
             let from_usize = from.to_usize();
+            let cls_start = average_price.cents.height.len();
             let stack_data = stack
                 .sats
                 .height
-                .collect_range_at(sh, stack.sats.height.len());
+                .collect_range_at(cls_start, stack.sats.height.len());
             average_price.cents.height.compute_transform(
                 starting_indexes.height,
                 h2d,
@@ -229,7 +232,7 @@ impl Vecs {
                     if di_usize < from_usize {
                         return (h, Cents::ZERO);
                     }
-                    let stack_sats = stack_data[h.to_usize() - sh];
+                    let stack_sats = stack_data[h.to_usize() - cls_start];
                     let num_days = di_usize + 1 - from_usize;
                     let avg = Cents::from(DCA_AMOUNT * num_days / Bitcoin::from(stack_sats));
                     (h, avg)

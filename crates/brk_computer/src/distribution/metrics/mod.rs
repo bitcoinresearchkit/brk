@@ -42,12 +42,32 @@ pub trait CohortMetricsBase: Send + Sync {
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()>;
 
+    /// Apply pending, push min/max cost basis, compute and push unrealized state.
+    fn compute_and_push_unrealized_base(
+        &mut self,
+        height: Height,
+        height_price: Cents,
+        state: &mut CohortState,
+    ) -> Result<()> {
+        state.apply_pending();
+        self.cost_basis_base_mut()
+            .truncate_push_minmax(height, state)?;
+        let unrealized_state = state.compute_unrealized_state(height_price);
+        self.unrealized_base_mut()
+            .truncate_push(height, &unrealized_state)?;
+        Ok(())
+    }
+
+    /// Compute and push unrealized states. Extended types override to also push percentiles.
     fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
         height_price: Cents,
         state: &mut CohortState,
-    ) -> Result<()>;
+        _is_day_boundary: bool,
+    ) -> Result<()> {
+        self.compute_and_push_unrealized_base(height, height_price, state)
+    }
 
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec>;
 

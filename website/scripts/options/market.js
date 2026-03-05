@@ -538,16 +538,6 @@ export function createMarketSection() {
               ...priceLines({ unit: Unit.index, numbers: [61.8, 38.2] }),
             ],
           },
-          volatilityChart("Sharpe Ratio", "Sharpe Ratio", Unit.ratio, {
-            _1w: volatility.sharpe1w,
-            _1m: volatility.sharpe1m,
-            _1y: volatility.sharpe1y,
-          }),
-          volatilityChart("Sortino Ratio", "Sortino Ratio", Unit.ratio, {
-            _1w: volatility.sortino1w,
-            _1m: volatility.sortino1m,
-            _1y: volatility.sortino1y,
-          }),
         ],
       },
 

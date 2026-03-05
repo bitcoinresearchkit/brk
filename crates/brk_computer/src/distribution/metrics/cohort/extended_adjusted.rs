@@ -79,14 +79,12 @@ impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
         height: Height,
         height_price: Cents,
         state: &mut CohortState,
+        is_day_boundary: bool,
     ) -> Result<()> {
-        state.apply_pending();
-        self.cost_basis.truncate_push_minmax(height, state)?;
-        let unrealized_state = state.compute_unrealized_state(height_price);
-        self.unrealized.truncate_push(height, &unrealized_state)?;
+        self.compute_and_push_unrealized_base(height, height_price, state)?;
         self.cost_basis
             .extended
-            .truncate_push_percentiles(height, state, height_price)?;
+            .truncate_push_percentiles(height, state, is_day_boundary)?;
         Ok(())
     }
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

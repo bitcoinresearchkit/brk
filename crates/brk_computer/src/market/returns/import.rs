@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{Database, EagerVec, ImportableVec};
+use vecdb::Database;
 
 use super::super::lookback::ByLookbackPeriod;
 use super::Vecs;
@@ -52,42 +52,12 @@ impl Vecs {
             indexes,
         )?;
 
-        let price_downside_24h = EagerVec::forced_import(db, "price_downside_24h", version)?;
-        let price_downside_24h_sd_1w = ComputedFromHeightStdDev::forced_import(
-            db,
-            "price_downside_24h",
-            "1w",
-            7,
-            version + v1,
-            indexes,
-        )?;
-        let price_downside_24h_sd_1m = ComputedFromHeightStdDev::forced_import(
-            db,
-            "price_downside_24h",
-            "1m",
-            30,
-            version + v1,
-            indexes,
-        )?;
-        let price_downside_24h_sd_1y = ComputedFromHeightStdDev::forced_import(
-            db,
-            "price_downside_24h",
-            "1y",
-            365,
-            version + v1,
-            indexes,
-        )?;
-
         Ok(Self {
             price_return,
             price_cagr,
             price_return_24h_sd_1w,
             price_return_24h_sd_1m,
             price_return_24h_sd_1y,
-            price_downside_24h,
-            price_downside_24h_sd_1w,
-            price_downside_24h_sd_1m,
-            price_downside_24h_sd_1y,
         })
     }
 }

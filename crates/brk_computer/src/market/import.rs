@@ -25,7 +25,7 @@ impl Vecs {
         let ath = AthVecs::forced_import(&db, version, indexes)?;
         let lookback = LookbackVecs::forced_import(&db, version, indexes)?;
         let returns = ReturnsVecs::forced_import(&db, version, indexes)?;
-        let volatility = VolatilityVecs::forced_import(&db, version, indexes, &returns)?;
+        let volatility = VolatilityVecs::forced_import(version, &returns)?;
         let range = RangeVecs::forced_import(&db, version, indexes)?;
         let moving_average = MovingAverageVecs::forced_import(&db, version, indexes)?;
         let dca = DcaVecs::forced_import(&db, version, indexes)?;

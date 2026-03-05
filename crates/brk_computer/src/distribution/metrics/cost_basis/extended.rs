@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Cents, Height, Version};
-use vecdb::{AnyStoredVec, Rw, StorageMode, WritableVec};
+use brk_types::{Cents, Height, Version};
+use vecdb::{AnyStoredVec, Rw, StorageMode};
 
 use crate::{
     distribution::state::CohortState,
-    internal::{PERCENTILES_LEN, PercentFromHeight, PercentilesVecs, compute_spot_percentile_rank},
+    internal::{PERCENTILES_LEN, PercentilesVecs},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -18,12 +18,6 @@ pub struct CostBasisExtended<M: StorageMode = Rw> {
 
     /// Invested capital percentiles (USD-weighted)
     pub invested_capital: PercentilesVecs<M>,
-
-    /// What percentile of cost basis is below spot (sat-weighted)
-    pub spot_cost_basis_percentile: PercentFromHeight<BasisPoints16, M>,
-
-    /// What percentile of invested capital is below spot (USD-weighted)
-    pub spot_invested_capital_percentile: PercentFromHeight<BasisPoints16, M>,
 }
 
 impl CostBasisExtended {
@@ -41,10 +35,6 @@ impl CostBasisExtended {
                 cfg.version,
                 cfg.indexes,
             )?,
-            spot_cost_basis_percentile: cfg
-                .import_percent_bp16("spot_cost_basis_percentile", Version::ZERO)?,
-            spot_invested_capital_percentile: cfg
-                .import_percent_bp16("spot_invested_capital_percentile", Version::ZERO)?,
         })
     }
 
@@ -52,34 +42,36 @@ impl CostBasisExtended {
         &mut self,
         height: Height,
         state: &mut CohortState,
-        spot: Cents,
+        is_day_boundary: bool,
     ) -> Result<()> {
-        let computed = state.compute_percentiles();
+        let computed = if is_day_boundary {
+            state.compute_percentiles()
+        } else {
+            state.cached_percentiles()
+        };
 
         let sat_prices = computed
             .as_ref()
             .map(|p| p.sat_weighted)
             .unwrap_or([Cents::ZERO; PERCENTILES_LEN]);
-
-        self.percentiles.truncate_push(height, &sat_prices)?;
-        let rank = compute_spot_percentile_rank(&sat_prices, spot);
-        self.spot_cost_basis_percentile
-            .bps
-            .height
-            .truncate_push(height, rank)?;
-
         let usd_prices = computed
             .as_ref()
             .map(|p| p.usd_weighted)
             .unwrap_or([Cents::ZERO; PERCENTILES_LEN]);
 
-        self.invested_capital.truncate_push(height, &usd_prices)?;
-        let rank = compute_spot_percentile_rank(&usd_prices, spot);
-        self.spot_invested_capital_percentile
-            .bps
-            .height
-            .truncate_push(height, rank)?;
+        self.push_arrays(height, &sat_prices, &usd_prices)
+    }
 
+    /// Push pre-computed percentile arrays.
+    /// Shared by both individual cohort and aggregate (K-way merge) paths.
+    pub(crate) fn push_arrays(
+        &mut self,
+        height: Height,
+        sat_prices: &[Cents; PERCENTILES_LEN],
+        usd_prices: &[Cents; PERCENTILES_LEN],
+    ) -> Result<()> {
+        self.percentiles.truncate_push(height, sat_prices)?;
+        self.invested_capital.truncate_push(height, usd_prices)?;
         Ok(())
     }
 
@@ -97,8 +89,6 @@ impl CostBasisExtended {
                 .iter_mut()
                 .map(|v| &mut v.cents.height as &mut dyn AnyStoredVec),
         );
-        vecs.push(&mut self.spot_cost_basis_percentile.bps.height);
-        vecs.push(&mut self.spot_invested_capital_percentile.bps.height);
         vecs
     }
 
@@ -106,14 +96,6 @@ impl CostBasisExtended {
         self.percentiles
             .validate_computed_version_or_reset(base_version)?;
         self.invested_capital
-            .validate_computed_version_or_reset(base_version)?;
-        self.spot_cost_basis_percentile
-            .bps
-            .height
-            .validate_computed_version_or_reset(base_version)?;
-        self.spot_invested_capital_percentile
-            .bps
-            .height
             .validate_computed_version_or_reset(base_version)?;
         Ok(())
     }

@@ -29,10 +29,6 @@ impl Vecs {
         self.returns
             .compute(prices, blocks, &self.lookback, starting_indexes, exit)?;
 
-        // Volatility (depends on returns)
-        self.volatility
-            .compute(&self.returns, starting_indexes.height, exit)?;
-
         // Range metrics (independent)
         self.range.compute(prices, blocks, starting_indexes, exit)?;
 

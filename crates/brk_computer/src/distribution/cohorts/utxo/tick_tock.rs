@@ -1,6 +1,6 @@
 use brk_cohort::AGE_BOUNDARIES;
 use brk_types::{CostBasisSnapshot, ONE_HOUR_IN_SEC, Timestamp};
-use vecdb::Rw;
+use vecdb::{Rw, unlikely};
 
 use crate::distribution::state::BlockState;
 
@@ -12,10 +12,9 @@ impl UTXOCohorts<Rw> {
     /// UTXOs age with each block. When they cross hour boundaries,
     /// they move between age-based cohorts (e.g., from "0-1h" to "1h-1d").
     ///
-    /// Complexity: O(k * log n) where:
-    /// - k = 20 boundaries to check
-    /// - n = total blocks in chain_state
-    /// - Linear scan for end_idx is faster than binary search since typically 0-2 blocks cross each boundary
+    /// Uses cached positions per boundary to avoid binary search.
+    /// Since timestamps are monotonic, positions only advance forward.
+    /// Complexity: O(k * c) where k = 20 boundaries, c = ~1 (forward scan steps).
     pub(crate) fn tick_tock_next_block(
         &mut self,
         chain_state: &[BlockState],
@@ -38,6 +37,7 @@ impl UTXOCohorts<Rw> {
         // Cohort 0 covers [0, 1) hours
         // Cohort 20 covers [15*365*24, infinity) hours
         let mut age_cohorts: Vec<_> = self.age_range.iter_mut().map(|v| &mut v.state).collect();
+        let cached = &mut self.tick_tock_cached_positions;
 
         // For each boundary (in hours), find blocks that just crossed it
         for (boundary_idx, &boundary_hours) in AGE_BOUNDARIES.iter().enumerate() {
@@ -54,8 +54,24 @@ impl UTXOCohorts<Rw> {
                 continue;
             }
 
-            // Binary search to find start, then linear scan for end (typically 0-2 blocks)
-            let start_idx = chain_state.partition_point(|b| *b.timestamp <= lower_timestamp);
+            // Find start_idx: use cached position + forward scan (O(1) typical).
+            // On first call after restart, cached is 0 so fall back to binary search.
+            let start_idx = if unlikely(cached[boundary_idx] == 0 && chain_state.len() > 1) {
+                let idx = chain_state.partition_point(|b| *b.timestamp <= lower_timestamp);
+                cached[boundary_idx] = idx;
+                idx
+            } else {
+                let mut idx = cached[boundary_idx];
+                while idx < chain_state.len()
+                    && *chain_state[idx].timestamp <= lower_timestamp
+                {
+                    idx += 1;
+                }
+                cached[boundary_idx] = idx;
+                idx
+            };
+
+            // Linear scan for end (typically 0-2 blocks past start)
             let end_idx = chain_state[start_idx..]
                 .iter()
                 .position(|b| *b.timestamp > upper_timestamp)

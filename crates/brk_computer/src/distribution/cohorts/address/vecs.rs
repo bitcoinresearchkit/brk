@@ -189,12 +189,14 @@ impl DynCohortVecs for AddressCohortVecs {
         &mut self,
         height: Height,
         height_price: Cents,
+        is_day_boundary: bool,
     ) -> Result<()> {
         if let Some(state) = self.state.as_mut() {
             self.metrics.compute_then_truncate_push_unrealized_states(
                 height,
                 height_price,
                 &mut state.inner,
+                is_day_boundary,
             )?;
         }
         Ok(())
@@ -209,16 +211,13 @@ impl DynCohortVecs for AddressCohortVecs {
     ) -> Result<()> {
         self.metrics
             .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
+        // Separate cohorts (with state) compute net_sentiment = greed - pain directly.
+        // Aggregate cohorts get it via weighted average in groups.rs.
+        if self.state.is_some() {
+            self.metrics
+                .compute_net_sentiment_height(starting_indexes, exit)?;
+        }
         Ok(())
-    }
-
-    fn compute_net_sentiment_height(
-        &mut self,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.metrics
-            .compute_net_sentiment_height(starting_indexes, exit)
     }
 
     fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {

@@ -9,7 +9,7 @@ pub enum Filter {
     Time(TimeFilter),
     Amount(AmountFilter),
     Epoch(HalvingEpoch),
-    Year(Year),
+    Class(Year),
     Type(OutputType),
 }
 

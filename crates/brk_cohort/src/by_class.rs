@@ -5,8 +5,8 @@ use serde::Serialize;
 
 use super::{CohortName, Filter};
 
-/// Year values
-pub const YEAR_VALUES: ByYear<Year> = ByYear {
+/// Class values
+pub const CLASS_VALUES: ByClass<Year> = ByClass {
     _2009: Year::new(2009),
     _2010: Year::new(2010),
     _2011: Year::new(2011),
@@ -27,52 +27,52 @@ pub const YEAR_VALUES: ByYear<Year> = ByYear {
     _2026: Year::new(2026),
 };
 
-/// Year filters
-pub const YEAR_FILTERS: ByYear<Filter> = ByYear {
-    _2009: Filter::Year(YEAR_VALUES._2009),
-    _2010: Filter::Year(YEAR_VALUES._2010),
-    _2011: Filter::Year(YEAR_VALUES._2011),
-    _2012: Filter::Year(YEAR_VALUES._2012),
-    _2013: Filter::Year(YEAR_VALUES._2013),
-    _2014: Filter::Year(YEAR_VALUES._2014),
-    _2015: Filter::Year(YEAR_VALUES._2015),
-    _2016: Filter::Year(YEAR_VALUES._2016),
-    _2017: Filter::Year(YEAR_VALUES._2017),
-    _2018: Filter::Year(YEAR_VALUES._2018),
-    _2019: Filter::Year(YEAR_VALUES._2019),
-    _2020: Filter::Year(YEAR_VALUES._2020),
-    _2021: Filter::Year(YEAR_VALUES._2021),
-    _2022: Filter::Year(YEAR_VALUES._2022),
-    _2023: Filter::Year(YEAR_VALUES._2023),
-    _2024: Filter::Year(YEAR_VALUES._2024),
-    _2025: Filter::Year(YEAR_VALUES._2025),
-    _2026: Filter::Year(YEAR_VALUES._2026),
+/// Class filters
+pub const CLASS_FILTERS: ByClass<Filter> = ByClass {
+    _2009: Filter::Class(CLASS_VALUES._2009),
+    _2010: Filter::Class(CLASS_VALUES._2010),
+    _2011: Filter::Class(CLASS_VALUES._2011),
+    _2012: Filter::Class(CLASS_VALUES._2012),
+    _2013: Filter::Class(CLASS_VALUES._2013),
+    _2014: Filter::Class(CLASS_VALUES._2014),
+    _2015: Filter::Class(CLASS_VALUES._2015),
+    _2016: Filter::Class(CLASS_VALUES._2016),
+    _2017: Filter::Class(CLASS_VALUES._2017),
+    _2018: Filter::Class(CLASS_VALUES._2018),
+    _2019: Filter::Class(CLASS_VALUES._2019),
+    _2020: Filter::Class(CLASS_VALUES._2020),
+    _2021: Filter::Class(CLASS_VALUES._2021),
+    _2022: Filter::Class(CLASS_VALUES._2022),
+    _2023: Filter::Class(CLASS_VALUES._2023),
+    _2024: Filter::Class(CLASS_VALUES._2024),
+    _2025: Filter::Class(CLASS_VALUES._2025),
+    _2026: Filter::Class(CLASS_VALUES._2026),
 };
 
-/// Year names
-pub const YEAR_NAMES: ByYear<CohortName> = ByYear {
-    _2009: CohortName::new("year_2009", "2009", "Year 2009"),
-    _2010: CohortName::new("year_2010", "2010", "Year 2010"),
-    _2011: CohortName::new("year_2011", "2011", "Year 2011"),
-    _2012: CohortName::new("year_2012", "2012", "Year 2012"),
-    _2013: CohortName::new("year_2013", "2013", "Year 2013"),
-    _2014: CohortName::new("year_2014", "2014", "Year 2014"),
-    _2015: CohortName::new("year_2015", "2015", "Year 2015"),
-    _2016: CohortName::new("year_2016", "2016", "Year 2016"),
-    _2017: CohortName::new("year_2017", "2017", "Year 2017"),
-    _2018: CohortName::new("year_2018", "2018", "Year 2018"),
-    _2019: CohortName::new("year_2019", "2019", "Year 2019"),
-    _2020: CohortName::new("year_2020", "2020", "Year 2020"),
-    _2021: CohortName::new("year_2021", "2021", "Year 2021"),
-    _2022: CohortName::new("year_2022", "2022", "Year 2022"),
-    _2023: CohortName::new("year_2023", "2023", "Year 2023"),
-    _2024: CohortName::new("year_2024", "2024", "Year 2024"),
-    _2025: CohortName::new("year_2025", "2025", "Year 2025"),
-    _2026: CohortName::new("year_2026", "2026", "Year 2026"),
+/// Class names
+pub const CLASS_NAMES: ByClass<CohortName> = ByClass {
+    _2009: CohortName::new("class_2009", "2009", "Class 2009"),
+    _2010: CohortName::new("class_2010", "2010", "Class 2010"),
+    _2011: CohortName::new("class_2011", "2011", "Class 2011"),
+    _2012: CohortName::new("class_2012", "2012", "Class 2012"),
+    _2013: CohortName::new("class_2013", "2013", "Class 2013"),
+    _2014: CohortName::new("class_2014", "2014", "Class 2014"),
+    _2015: CohortName::new("class_2015", "2015", "Class 2015"),
+    _2016: CohortName::new("class_2016", "2016", "Class 2016"),
+    _2017: CohortName::new("class_2017", "2017", "Class 2017"),
+    _2018: CohortName::new("class_2018", "2018", "Class 2018"),
+    _2019: CohortName::new("class_2019", "2019", "Class 2019"),
+    _2020: CohortName::new("class_2020", "2020", "Class 2020"),
+    _2021: CohortName::new("class_2021", "2021", "Class 2021"),
+    _2022: CohortName::new("class_2022", "2022", "Class 2022"),
+    _2023: CohortName::new("class_2023", "2023", "Class 2023"),
+    _2024: CohortName::new("class_2024", "2024", "Class 2024"),
+    _2025: CohortName::new("class_2025", "2025", "Class 2025"),
+    _2026: CohortName::new("class_2026", "2026", "Class 2026"),
 };
 
 #[derive(Default, Clone, Traversable, Serialize)]
-pub struct ByYear<T> {
+pub struct ByClass<T> {
     pub _2009: T,
     pub _2010: T,
     pub _2011: T,
@@ -93,19 +93,19 @@ pub struct ByYear<T> {
     pub _2026: T,
 }
 
-impl ByYear<CohortName> {
+impl ByClass<CohortName> {
     pub const fn names() -> &'static Self {
-        &YEAR_NAMES
+        &CLASS_NAMES
     }
 }
 
-impl<T> ByYear<T> {
+impl<T> ByClass<T> {
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(Filter, &'static str) -> T,
     {
-        let f = YEAR_FILTERS;
-        let n = YEAR_NAMES;
+        let f = CLASS_FILTERS;
+        let n = CLASS_NAMES;
         Self {
             _2009: create(f._2009, n._2009.id),
             _2010: create(f._2010, n._2010.id),
@@ -132,8 +132,8 @@ impl<T> ByYear<T> {
     where
         F: FnMut(Filter, &'static str) -> Result<T, E>,
     {
-        let f = YEAR_FILTERS;
-        let n = YEAR_NAMES;
+        let f = CLASS_FILTERS;
+        let n = CLASS_NAMES;
         Ok(Self {
             _2009: create(f._2009, n._2009.id)?,
             _2010: create(f._2010, n._2010.id)?,

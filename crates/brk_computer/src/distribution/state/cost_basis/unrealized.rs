@@ -61,17 +61,22 @@ struct CachedStateRaw {
 impl CachedStateRaw {
     /// Convert raw values to final output by dividing by ONE_BTC.
     fn to_output(&self) -> UnrealizedState {
+        #[inline(always)]
+        fn div_btc(raw: u128) -> Cents {
+            if raw == 0 {
+                Cents::ZERO
+            } else {
+                Cents::new((raw / Sats::ONE_BTC_U128) as u64)
+            }
+        }
+
         UnrealizedState {
             supply_in_profit: self.supply_in_profit,
             supply_in_loss: self.supply_in_loss,
-            unrealized_profit: Cents::new((self.unrealized_profit / Sats::ONE_BTC_U128) as u64),
-            unrealized_loss: Cents::new((self.unrealized_loss / Sats::ONE_BTC_U128) as u64),
-            invested_capital_in_profit: Cents::new(
-                (self.invested_capital_in_profit / Sats::ONE_BTC_U128) as u64,
-            ),
-            invested_capital_in_loss: Cents::new(
-                (self.invested_capital_in_loss / Sats::ONE_BTC_U128) as u64,
-            ),
+            unrealized_profit: div_btc(self.unrealized_profit),
+            unrealized_loss: div_btc(self.unrealized_loss),
+            invested_capital_in_profit: div_btc(self.invested_capital_in_profit),
+            invested_capital_in_loss: div_btc(self.invested_capital_in_loss),
             investor_cap_in_profit_raw: self.investor_cap_in_profit,
             investor_cap_in_loss_raw: self.investor_cap_in_loss,
             invested_capital_in_profit_raw: self.invested_capital_in_profit,

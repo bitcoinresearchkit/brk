@@ -54,12 +54,18 @@ impl Age {
     /// Calculate satblocks destroyed for given supply
     #[inline]
     pub fn satblocks_destroyed(&self, supply: Sats) -> Sats {
+        if self.blocks == 0 {
+            return Sats::ZERO;
+        }
         Sats::from(u64::from(supply) * self.blocks as u64)
     }
 
     /// Calculate satdays destroyed for given supply
     #[inline]
     pub fn satdays_destroyed(&self, supply: Sats) -> Sats {
+        if self.blocks == 0 {
+            return Sats::ZERO;
+        }
         Sats::from((u64::from(supply) as f64 * self.days).floor() as u64)
     }
 }

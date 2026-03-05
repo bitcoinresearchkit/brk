@@ -35,6 +35,9 @@ impl RealizedState {
     /// Get realized cap as CentsUnsigned (divides by ONE_BTC).
     #[inline]
     pub(crate) fn cap(&self) -> Cents {
+        if self.cap_raw == 0 {
+            return Cents::ZERO;
+        }
         Cents::new((self.cap_raw / Sats::ONE_BTC_U128) as u64)
     }
 
@@ -76,18 +79,27 @@ impl RealizedState {
     /// Get realized profit as CentsUnsigned.
     #[inline]
     pub(crate) fn profit(&self) -> Cents {
+        if self.profit_raw == 0 {
+            return Cents::ZERO;
+        }
         Cents::new((self.profit_raw / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Get realized loss as CentsUnsigned.
     #[inline]
     pub(crate) fn loss(&self) -> Cents {
+        if self.loss_raw == 0 {
+            return Cents::ZERO;
+        }
         Cents::new((self.loss_raw / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Get profit value created as CentsUnsigned (sell_price × sats for profit cases).
     #[inline]
     pub(crate) fn profit_value_created(&self) -> Cents {
+        if self.profit_value_created_raw == 0 {
+            return Cents::ZERO;
+        }
         Cents::new((self.profit_value_created_raw / Sats::ONE_BTC_U128) as u64)
     }
 
@@ -95,12 +107,18 @@ impl RealizedState {
     /// This is also known as profit_flow.
     #[inline]
     pub(crate) fn profit_value_destroyed(&self) -> Cents {
+        if self.profit_value_destroyed_raw == 0 {
+            return Cents::ZERO;
+        }
         Cents::new((self.profit_value_destroyed_raw / Sats::ONE_BTC_U128) as u64)
     }
 
     /// Get loss value created as CentsUnsigned (sell_price × sats for loss cases).
     #[inline]
     pub(crate) fn loss_value_created(&self) -> Cents {
+        if self.loss_value_created_raw == 0 {
+            return Cents::ZERO;
+        }
         Cents::new((self.loss_value_created_raw / Sats::ONE_BTC_U128) as u64)
     }
 
@@ -108,6 +126,9 @@ impl RealizedState {
     /// This is also known as capitulation_flow.
     #[inline]
     pub(crate) fn loss_value_destroyed(&self) -> Cents {
+        if self.loss_value_destroyed_raw == 0 {
+            return Cents::ZERO;
+        }
         Cents::new((self.loss_value_destroyed_raw / Sats::ONE_BTC_U128) as u64)
     }
 
@@ -116,6 +137,9 @@ impl RealizedState {
     /// by selling at peak instead of when actually sold.
     #[inline]
     pub(crate) fn peak_regret(&self) -> Cents {
+        if self.peak_regret_raw == 0 {
+            return Cents::ZERO;
+        }
         Cents::new((self.peak_regret_raw / Sats::ONE_BTC_U128) as u64)
     }
 

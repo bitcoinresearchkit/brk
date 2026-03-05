@@ -30,19 +30,6 @@ impl BinaryTransform<Sats, Sats, BasisPoints16> for RatioSatsBp16 {
     }
 }
 
-pub struct RatioCentsBp16;
-
-impl BinaryTransform<Cents, Cents, BasisPoints16> for RatioCentsBp16 {
-    #[inline(always)]
-    fn apply(numerator: Cents, denominator: Cents) -> BasisPoints16 {
-        if denominator == Cents::ZERO {
-            BasisPoints16::ZERO
-        } else {
-            BasisPoints16::from(numerator.inner() as f64 / denominator.inner() as f64)
-        }
-    }
-}
-
 pub struct RatioCentsBp32;
 
 impl BinaryTransform<Cents, Cents, BasisPoints32> for RatioCentsBp32 {
@@ -143,7 +130,12 @@ pub struct RatioDollarsBp32;
 impl BinaryTransform<Dollars, Dollars, BasisPoints32> for RatioDollarsBp32 {
     #[inline(always)]
     fn apply(numerator: Dollars, denominator: Dollars) -> BasisPoints32 {
-        BasisPoints32::from(f64::from(numerator) / f64::from(denominator))
+        let ratio = f64::from(numerator) / f64::from(denominator);
+        if ratio.is_finite() {
+            BasisPoints32::from(ratio)
+        } else {
+            BasisPoints32::ZERO
+        }
     }
 }
 
