@@ -954,7 +954,8 @@ pub struct AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitReal
     pub investor_cap_raw: MetricPattern18<CentsSquaredSats>,
     pub investor_price: CentsSatsUsdPattern,
     pub investor_price_ratio: BpsRatioPattern,
-    pub investor_price_ratio_ext: RatioPattern,
+    pub investor_price_ratio_percentiles: RatioPattern,
+    pub investor_price_ratio_std_dev: RatioPattern2,
     pub loss_value_created: MetricPattern1<Cents>,
     pub loss_value_destroyed: MetricPattern1<Cents>,
     pub lower_price_band: CentsSatsUsdPattern,
@@ -981,7 +982,8 @@ pub struct AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitReal
     pub realized_loss_sum: _1m1w1y24hPattern<Cents>,
     pub realized_price: CentsSatsUsdPattern,
     pub realized_price_ratio: BpsRatioPattern,
-    pub realized_price_ratio_ext: RatioPattern,
+    pub realized_price_ratio_percentiles: RatioPattern,
+    pub realized_price_ratio_std_dev: RatioPattern2,
     pub realized_profit: CumulativeHeightPattern<Cents>,
     pub realized_profit_ema_1w: MetricPattern1<Cents>,
     pub realized_profit_rel_to_realized_cap: BpsPercentRatioPattern,
@@ -1019,7 +1021,8 @@ impl AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSe
             investor_cap_raw: MetricPattern18::new(client.clone(), _m(&acc, "investor_cap_raw")),
             investor_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "investor_price")),
             investor_price_ratio: BpsRatioPattern::new(client.clone(), _m(&acc, "investor_price_ratio")),
-            investor_price_ratio_ext: RatioPattern::new(client.clone(), _m(&acc, "investor_price_ratio")),
+            investor_price_ratio_percentiles: RatioPattern::new(client.clone(), _m(&acc, "investor_price_ratio")),
+            investor_price_ratio_std_dev: RatioPattern2::new(client.clone(), _m(&acc, "investor_price_ratio")),
             loss_value_created: MetricPattern1::new(client.clone(), _m(&acc, "loss_value_created")),
             loss_value_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "loss_value_destroyed")),
             lower_price_band: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "lower_price_band")),
@@ -1046,7 +1049,130 @@ impl AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSe
             realized_loss_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "realized_loss")),
             realized_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "realized_price")),
             realized_price_ratio: BpsRatioPattern::new(client.clone(), _m(&acc, "realized_price_ratio")),
-            realized_price_ratio_ext: RatioPattern::new(client.clone(), _m(&acc, "realized_price_ratio")),
+            realized_price_ratio_percentiles: RatioPattern::new(client.clone(), _m(&acc, "realized_price_ratio")),
+            realized_price_ratio_std_dev: RatioPattern2::new(client.clone(), _m(&acc, "realized_price_ratio")),
+            realized_profit: CumulativeHeightPattern::new(client.clone(), _m(&acc, "realized_profit")),
+            realized_profit_ema_1w: MetricPattern1::new(client.clone(), _m(&acc, "realized_profit_ema_1w")),
+            realized_profit_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_profit_rel_to_realized_cap")),
+            realized_profit_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "realized_profit")),
+            realized_profit_to_loss_ratio: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "realized_profit_to_loss_ratio")),
+            sell_side_risk_ratio: _1m1w1y24hPattern2::new(client.clone(), _m(&acc, "sell_side_risk_ratio")),
+            sell_side_risk_ratio_24h_ema: _1m1wPattern::new(client.clone(), _m(&acc, "sell_side_risk_ratio_24h_ema")),
+            sent_in_loss: BaseCumulativePattern::new(client.clone(), _m(&acc, "sent_in_loss")),
+            sent_in_loss_ema: _2wPattern::new(client.clone(), _m(&acc, "sent_in_loss_ema_2w")),
+            sent_in_profit: BaseCumulativePattern::new(client.clone(), _m(&acc, "sent_in_profit")),
+            sent_in_profit_ema: _2wPattern::new(client.clone(), _m(&acc, "sent_in_profit_ema_2w")),
+            sopr: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "sopr")),
+            sopr_24h_ema: _1m1wPattern2::new(client.clone(), _m(&acc, "sopr_24h_ema")),
+            upper_price_band: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "upper_price_band")),
+            value_created: MetricPattern1::new(client.clone(), _m(&acc, "value_created")),
+            value_created_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "value_created")),
+            value_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "value_destroyed")),
+            value_destroyed_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "value_destroyed")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2 {
+    pub cap_raw: MetricPattern18<CentsSats>,
+    pub capitulation_flow: MetricPattern1<Dollars>,
+    pub gross_pnl: CentsUsdPattern,
+    pub gross_pnl_sum: _1m1w1y24hPattern<Cents>,
+    pub investor_cap_raw: MetricPattern18<CentsSquaredSats>,
+    pub investor_price: CentsSatsUsdPattern,
+    pub investor_price_ratio: BpsRatioPattern,
+    pub investor_price_ratio_percentiles: RatioPattern,
+    pub investor_price_ratio_std_dev: RatioPattern2,
+    pub loss_value_created: MetricPattern1<Cents>,
+    pub loss_value_destroyed: MetricPattern1<Cents>,
+    pub lower_price_band: CentsSatsUsdPattern,
+    pub mvrv: MetricPattern1<StoredF32>,
+    pub neg_realized_loss: MetricPattern1<Dollars>,
+    pub net_pnl_change_1m: MetricPattern1<CentsSigned>,
+    pub net_pnl_change_1m_rel_to_market_cap: BpsPercentRatioPattern,
+    pub net_pnl_change_1m_rel_to_realized_cap: BpsPercentRatioPattern,
+    pub net_realized_pnl: CumulativeHeightPattern<CentsSigned>,
+    pub net_realized_pnl_ema_1w: MetricPattern1<CentsSigned>,
+    pub net_realized_pnl_rel_to_realized_cap: BpsPercentRatioPattern,
+    pub peak_regret: CumulativeHeightPattern<Cents>,
+    pub peak_regret_rel_to_realized_cap: BpsPercentRatioPattern,
+    pub profit_flow: MetricPattern1<Dollars>,
+    pub profit_value_created: MetricPattern1<Cents>,
+    pub profit_value_destroyed: MetricPattern1<Cents>,
+    pub realized_cap: MetricPattern1<Dollars>,
+    pub realized_cap_cents: MetricPattern1<Cents>,
+    pub realized_cap_change_1m: MetricPattern1<CentsSigned>,
+    pub realized_cap_rel_to_own_market_cap: BpsPercentRatioPattern,
+    pub realized_loss: CumulativeHeightPattern<Cents>,
+    pub realized_loss_ema_1w: MetricPattern1<Cents>,
+    pub realized_loss_rel_to_realized_cap: BpsPercentRatioPattern,
+    pub realized_loss_sum: _1m1w1y24hPattern<Cents>,
+    pub realized_price: CentsSatsUsdPattern,
+    pub realized_price_ratio: BpsRatioPattern,
+    pub realized_price_ratio_percentiles: RatioPattern,
+    pub realized_price_ratio_std_dev: RatioPattern2,
+    pub realized_profit: CumulativeHeightPattern<Cents>,
+    pub realized_profit_ema_1w: MetricPattern1<Cents>,
+    pub realized_profit_rel_to_realized_cap: BpsPercentRatioPattern,
+    pub realized_profit_sum: _1m1w1y24hPattern<Cents>,
+    pub realized_profit_to_loss_ratio: _1m1w1y24hPattern<StoredF64>,
+    pub sell_side_risk_ratio: _1m1w1y24hPattern2,
+    pub sell_side_risk_ratio_24h_ema: _1m1wPattern,
+    pub sent_in_loss: BaseCumulativePattern,
+    pub sent_in_loss_ema: _2wPattern,
+    pub sent_in_profit: BaseCumulativePattern,
+    pub sent_in_profit_ema: _2wPattern,
+    pub sopr: _1m1w1y24hPattern<StoredF64>,
+    pub sopr_24h_ema: _1m1wPattern2,
+    pub upper_price_band: CentsSatsUsdPattern,
+    pub value_created: MetricPattern1<Cents>,
+    pub value_created_sum: _1m1w1y24hPattern<Cents>,
+    pub value_destroyed: MetricPattern1<Cents>,
+    pub value_destroyed_sum: _1m1w1y24hPattern<Cents>,
+}
+
+impl CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            cap_raw: MetricPattern18::new(client.clone(), _m(&acc, "cap_raw")),
+            capitulation_flow: MetricPattern1::new(client.clone(), _m(&acc, "capitulation_flow")),
+            gross_pnl: CentsUsdPattern::new(client.clone(), _m(&acc, "realized_gross_pnl")),
+            gross_pnl_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "gross_pnl_sum")),
+            investor_cap_raw: MetricPattern18::new(client.clone(), _m(&acc, "investor_cap_raw")),
+            investor_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "investor_price")),
+            investor_price_ratio: BpsRatioPattern::new(client.clone(), _m(&acc, "investor_price_ratio")),
+            investor_price_ratio_percentiles: RatioPattern::new(client.clone(), _m(&acc, "investor_price_ratio")),
+            investor_price_ratio_std_dev: RatioPattern2::new(client.clone(), _m(&acc, "investor_price_ratio")),
+            loss_value_created: MetricPattern1::new(client.clone(), _m(&acc, "loss_value_created")),
+            loss_value_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "loss_value_destroyed")),
+            lower_price_band: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "lower_price_band")),
+            mvrv: MetricPattern1::new(client.clone(), _m(&acc, "mvrv")),
+            neg_realized_loss: MetricPattern1::new(client.clone(), _m(&acc, "neg_realized_loss")),
+            net_pnl_change_1m: MetricPattern1::new(client.clone(), _m(&acc, "net_pnl_change_1m")),
+            net_pnl_change_1m_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_pnl_change_1m_rel_to_market_cap")),
+            net_pnl_change_1m_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_pnl_change_1m_rel_to_realized_cap")),
+            net_realized_pnl: CumulativeHeightPattern::new(client.clone(), _m(&acc, "net_realized_pnl")),
+            net_realized_pnl_ema_1w: MetricPattern1::new(client.clone(), _m(&acc, "net_realized_pnl_ema_1w")),
+            net_realized_pnl_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_realized_pnl_rel_to_realized_cap")),
+            peak_regret: CumulativeHeightPattern::new(client.clone(), _m(&acc, "realized_peak_regret")),
+            peak_regret_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_peak_regret_rel_to_realized_cap")),
+            profit_flow: MetricPattern1::new(client.clone(), _m(&acc, "profit_flow")),
+            profit_value_created: MetricPattern1::new(client.clone(), _m(&acc, "profit_value_created")),
+            profit_value_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "profit_value_destroyed")),
+            realized_cap: MetricPattern1::new(client.clone(), _m(&acc, "realized_cap")),
+            realized_cap_cents: MetricPattern1::new(client.clone(), _m(&acc, "realized_cap_cents")),
+            realized_cap_change_1m: MetricPattern1::new(client.clone(), _m(&acc, "realized_cap_change_1m")),
+            realized_cap_rel_to_own_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_cap_rel_to_own_market_cap")),
+            realized_loss: CumulativeHeightPattern::new(client.clone(), _m(&acc, "realized_loss")),
+            realized_loss_ema_1w: MetricPattern1::new(client.clone(), _m(&acc, "realized_loss_ema_1w")),
+            realized_loss_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_loss_rel_to_realized_cap")),
+            realized_loss_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "realized_loss")),
+            realized_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "realized_price")),
+            realized_price_ratio: BpsRatioPattern::new(client.clone(), _m(&acc, "realized_price_ratio")),
+            realized_price_ratio_percentiles: RatioPattern::new(client.clone(), _m(&acc, "realized_price_ratio")),
+            realized_price_ratio_std_dev: RatioPattern2::new(client.clone(), _m(&acc, "realized_price_ratio")),
             realized_profit: CumulativeHeightPattern::new(client.clone(), _m(&acc, "realized_profit")),
             realized_profit_ema_1w: MetricPattern1::new(client.clone(), _m(&acc, "realized_profit_ema_1w")),
             realized_profit_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_profit_rel_to_realized_cap")),
@@ -1170,124 +1296,6 @@ impl AdjustedCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSe
             realized_profit: CumulativeHeightPattern::new(client.clone(), _m(&acc, "realized_profit")),
             realized_profit_ema_1w: MetricPattern1::new(client.clone(), _m(&acc, "realized_profit_ema_1w")),
             realized_profit_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_profit_rel_to_realized_cap")),
-            sell_side_risk_ratio: _1m1w1y24hPattern2::new(client.clone(), _m(&acc, "sell_side_risk_ratio")),
-            sell_side_risk_ratio_24h_ema: _1m1wPattern::new(client.clone(), _m(&acc, "sell_side_risk_ratio_24h_ema")),
-            sent_in_loss: BaseCumulativePattern::new(client.clone(), _m(&acc, "sent_in_loss")),
-            sent_in_loss_ema: _2wPattern::new(client.clone(), _m(&acc, "sent_in_loss_ema_2w")),
-            sent_in_profit: BaseCumulativePattern::new(client.clone(), _m(&acc, "sent_in_profit")),
-            sent_in_profit_ema: _2wPattern::new(client.clone(), _m(&acc, "sent_in_profit_ema_2w")),
-            sopr: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "sopr")),
-            sopr_24h_ema: _1m1wPattern2::new(client.clone(), _m(&acc, "sopr_24h_ema")),
-            upper_price_band: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "upper_price_band")),
-            value_created: MetricPattern1::new(client.clone(), _m(&acc, "value_created")),
-            value_created_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "value_created")),
-            value_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "value_destroyed")),
-            value_destroyed_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "value_destroyed")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2 {
-    pub cap_raw: MetricPattern18<CentsSats>,
-    pub capitulation_flow: MetricPattern1<Dollars>,
-    pub gross_pnl: CentsUsdPattern,
-    pub gross_pnl_sum: _1m1w1y24hPattern<Cents>,
-    pub investor_cap_raw: MetricPattern18<CentsSquaredSats>,
-    pub investor_price: CentsSatsUsdPattern,
-    pub investor_price_ratio: BpsRatioPattern,
-    pub investor_price_ratio_ext: RatioPattern,
-    pub loss_value_created: MetricPattern1<Cents>,
-    pub loss_value_destroyed: MetricPattern1<Cents>,
-    pub lower_price_band: CentsSatsUsdPattern,
-    pub mvrv: MetricPattern1<StoredF32>,
-    pub neg_realized_loss: MetricPattern1<Dollars>,
-    pub net_pnl_change_1m: MetricPattern1<CentsSigned>,
-    pub net_pnl_change_1m_rel_to_market_cap: BpsPercentRatioPattern,
-    pub net_pnl_change_1m_rel_to_realized_cap: BpsPercentRatioPattern,
-    pub net_realized_pnl: CumulativeHeightPattern<CentsSigned>,
-    pub net_realized_pnl_ema_1w: MetricPattern1<CentsSigned>,
-    pub net_realized_pnl_rel_to_realized_cap: BpsPercentRatioPattern,
-    pub peak_regret: CumulativeHeightPattern<Cents>,
-    pub peak_regret_rel_to_realized_cap: BpsPercentRatioPattern,
-    pub profit_flow: MetricPattern1<Dollars>,
-    pub profit_value_created: MetricPattern1<Cents>,
-    pub profit_value_destroyed: MetricPattern1<Cents>,
-    pub realized_cap: MetricPattern1<Dollars>,
-    pub realized_cap_cents: MetricPattern1<Cents>,
-    pub realized_cap_change_1m: MetricPattern1<CentsSigned>,
-    pub realized_cap_rel_to_own_market_cap: BpsPercentRatioPattern,
-    pub realized_loss: CumulativeHeightPattern<Cents>,
-    pub realized_loss_ema_1w: MetricPattern1<Cents>,
-    pub realized_loss_rel_to_realized_cap: BpsPercentRatioPattern,
-    pub realized_loss_sum: _1m1w1y24hPattern<Cents>,
-    pub realized_price: CentsSatsUsdPattern,
-    pub realized_price_ratio: BpsRatioPattern,
-    pub realized_price_ratio_ext: RatioPattern,
-    pub realized_profit: CumulativeHeightPattern<Cents>,
-    pub realized_profit_ema_1w: MetricPattern1<Cents>,
-    pub realized_profit_rel_to_realized_cap: BpsPercentRatioPattern,
-    pub realized_profit_sum: _1m1w1y24hPattern<Cents>,
-    pub realized_profit_to_loss_ratio: _1m1w1y24hPattern<StoredF64>,
-    pub sell_side_risk_ratio: _1m1w1y24hPattern2,
-    pub sell_side_risk_ratio_24h_ema: _1m1wPattern,
-    pub sent_in_loss: BaseCumulativePattern,
-    pub sent_in_loss_ema: _2wPattern,
-    pub sent_in_profit: BaseCumulativePattern,
-    pub sent_in_profit_ema: _2wPattern,
-    pub sopr: _1m1w1y24hPattern<StoredF64>,
-    pub sopr_24h_ema: _1m1wPattern2,
-    pub upper_price_band: CentsSatsUsdPattern,
-    pub value_created: MetricPattern1<Cents>,
-    pub value_created_sum: _1m1w1y24hPattern<Cents>,
-    pub value_destroyed: MetricPattern1<Cents>,
-    pub value_destroyed_sum: _1m1w1y24hPattern<Cents>,
-}
-
-impl CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            cap_raw: MetricPattern18::new(client.clone(), _m(&acc, "cap_raw")),
-            capitulation_flow: MetricPattern1::new(client.clone(), _m(&acc, "capitulation_flow")),
-            gross_pnl: CentsUsdPattern::new(client.clone(), _m(&acc, "realized_gross_pnl")),
-            gross_pnl_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "gross_pnl_sum")),
-            investor_cap_raw: MetricPattern18::new(client.clone(), _m(&acc, "investor_cap_raw")),
-            investor_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "investor_price")),
-            investor_price_ratio: BpsRatioPattern::new(client.clone(), _m(&acc, "investor_price_ratio")),
-            investor_price_ratio_ext: RatioPattern::new(client.clone(), _m(&acc, "investor_price_ratio")),
-            loss_value_created: MetricPattern1::new(client.clone(), _m(&acc, "loss_value_created")),
-            loss_value_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "loss_value_destroyed")),
-            lower_price_band: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "lower_price_band")),
-            mvrv: MetricPattern1::new(client.clone(), _m(&acc, "mvrv")),
-            neg_realized_loss: MetricPattern1::new(client.clone(), _m(&acc, "neg_realized_loss")),
-            net_pnl_change_1m: MetricPattern1::new(client.clone(), _m(&acc, "net_pnl_change_1m")),
-            net_pnl_change_1m_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_pnl_change_1m_rel_to_market_cap")),
-            net_pnl_change_1m_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_pnl_change_1m_rel_to_realized_cap")),
-            net_realized_pnl: CumulativeHeightPattern::new(client.clone(), _m(&acc, "net_realized_pnl")),
-            net_realized_pnl_ema_1w: MetricPattern1::new(client.clone(), _m(&acc, "net_realized_pnl_ema_1w")),
-            net_realized_pnl_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_realized_pnl_rel_to_realized_cap")),
-            peak_regret: CumulativeHeightPattern::new(client.clone(), _m(&acc, "realized_peak_regret")),
-            peak_regret_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_peak_regret_rel_to_realized_cap")),
-            profit_flow: MetricPattern1::new(client.clone(), _m(&acc, "profit_flow")),
-            profit_value_created: MetricPattern1::new(client.clone(), _m(&acc, "profit_value_created")),
-            profit_value_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "profit_value_destroyed")),
-            realized_cap: MetricPattern1::new(client.clone(), _m(&acc, "realized_cap")),
-            realized_cap_cents: MetricPattern1::new(client.clone(), _m(&acc, "realized_cap_cents")),
-            realized_cap_change_1m: MetricPattern1::new(client.clone(), _m(&acc, "realized_cap_change_1m")),
-            realized_cap_rel_to_own_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_cap_rel_to_own_market_cap")),
-            realized_loss: CumulativeHeightPattern::new(client.clone(), _m(&acc, "realized_loss")),
-            realized_loss_ema_1w: MetricPattern1::new(client.clone(), _m(&acc, "realized_loss_ema_1w")),
-            realized_loss_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_loss_rel_to_realized_cap")),
-            realized_loss_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "realized_loss")),
-            realized_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "realized_price")),
-            realized_price_ratio: BpsRatioPattern::new(client.clone(), _m(&acc, "realized_price_ratio")),
-            realized_price_ratio_ext: RatioPattern::new(client.clone(), _m(&acc, "realized_price_ratio")),
-            realized_profit: CumulativeHeightPattern::new(client.clone(), _m(&acc, "realized_profit")),
-            realized_profit_ema_1w: MetricPattern1::new(client.clone(), _m(&acc, "realized_profit_ema_1w")),
-            realized_profit_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_profit_rel_to_realized_cap")),
-            realized_profit_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "realized_profit")),
-            realized_profit_to_loss_ratio: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "realized_profit_to_loss_ratio")),
             sell_side_risk_ratio: _1m1w1y24hPattern2::new(client.clone(), _m(&acc, "sell_side_risk_ratio")),
             sell_side_risk_ratio_24h_ema: _1m1wPattern::new(client.clone(), _m(&acc, "sell_side_risk_ratio_24h_ema")),
             sent_in_loss: BaseCumulativePattern::new(client.clone(), _m(&acc, "sent_in_loss")),
@@ -1480,58 +1488,6 @@ impl _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct BpsRatioPattern2 {
-    pub bps: MetricPattern1<BasisPoints32>,
-    pub ratio: MetricPattern1<StoredF32>,
-    pub ratio_pct1: BpsRatioPattern,
-    pub ratio_pct1_price: CentsSatsUsdPattern,
-    pub ratio_pct2: BpsRatioPattern,
-    pub ratio_pct2_price: CentsSatsUsdPattern,
-    pub ratio_pct5: BpsRatioPattern,
-    pub ratio_pct5_price: CentsSatsUsdPattern,
-    pub ratio_pct95: BpsRatioPattern,
-    pub ratio_pct95_price: CentsSatsUsdPattern,
-    pub ratio_pct98: BpsRatioPattern,
-    pub ratio_pct98_price: CentsSatsUsdPattern,
-    pub ratio_pct99: BpsRatioPattern,
-    pub ratio_pct99_price: CentsSatsUsdPattern,
-    pub ratio_sd: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
-    pub ratio_sd_1y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
-    pub ratio_sd_2y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
-    pub ratio_sd_4y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
-    pub ratio_sma_1m: BpsRatioPattern,
-    pub ratio_sma_1w: BpsRatioPattern,
-}
-
-impl BpsRatioPattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            bps: MetricPattern1::new(client.clone(), _m(&acc, "bps")),
-            ratio: MetricPattern1::new(client.clone(), acc.clone()),
-            ratio_pct1: BpsRatioPattern::new(client.clone(), _m(&acc, "pct1")),
-            ratio_pct1_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct1")),
-            ratio_pct2: BpsRatioPattern::new(client.clone(), _m(&acc, "pct2")),
-            ratio_pct2_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct2")),
-            ratio_pct5: BpsRatioPattern::new(client.clone(), _m(&acc, "pct5")),
-            ratio_pct5_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct5")),
-            ratio_pct95: BpsRatioPattern::new(client.clone(), _m(&acc, "pct95")),
-            ratio_pct95_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct95")),
-            ratio_pct98: BpsRatioPattern::new(client.clone(), _m(&acc, "pct98")),
-            ratio_pct98_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct98")),
-            ratio_pct99: BpsRatioPattern::new(client.clone(), _m(&acc, "pct99")),
-            ratio_pct99_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct99")),
-            ratio_sd: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
-            ratio_sd_1y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
-            ratio_sd_2y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
-            ratio_sd_4y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
-            ratio_sma_1m: BpsRatioPattern::new(client.clone(), _m(&acc, "sma_1m")),
-            ratio_sma_1w: BpsRatioPattern::new(client.clone(), _m(&acc, "sma_1w")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct InvestedNegNetNuplSupplyUnrealizedPattern2 {
     pub invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern,
     pub invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern,
@@ -1634,7 +1590,9 @@ impl Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct RatioPattern {
+pub struct BpsRatioPattern2 {
+    pub bps: MetricPattern1<BasisPoints32>,
+    pub ratio: MetricPattern1<StoredF32>,
     pub ratio_pct1: BpsRatioPattern,
     pub ratio_pct1_price: CentsSatsUsdPattern,
     pub ratio_pct2: BpsRatioPattern,
@@ -1647,18 +1605,16 @@ pub struct RatioPattern {
     pub ratio_pct98_price: CentsSatsUsdPattern,
     pub ratio_pct99: BpsRatioPattern,
     pub ratio_pct99_price: CentsSatsUsdPattern,
-    pub ratio_sd: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
-    pub ratio_sd_1y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
-    pub ratio_sd_2y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
-    pub ratio_sd_4y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
     pub ratio_sma_1m: BpsRatioPattern,
     pub ratio_sma_1w: BpsRatioPattern,
 }
 
-impl RatioPattern {
+impl BpsRatioPattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
+            bps: MetricPattern1::new(client.clone(), _m(&acc, "bps")),
+            ratio: MetricPattern1::new(client.clone(), acc.clone()),
             ratio_pct1: BpsRatioPattern::new(client.clone(), _m(&acc, "pct1")),
             ratio_pct1_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct1")),
             ratio_pct2: BpsRatioPattern::new(client.clone(), _m(&acc, "pct2")),
@@ -1671,10 +1627,6 @@ impl RatioPattern {
             ratio_pct98_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct98")),
             ratio_pct99: BpsRatioPattern::new(client.clone(), _m(&acc, "pct99")),
             ratio_pct99_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct99")),
-            ratio_sd: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
-            ratio_sd_1y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
-            ratio_sd_2y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
-            ratio_sd_4y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
             ratio_sma_1m: BpsRatioPattern::new(client.clone(), _m(&acc, "sma_1m")),
             ratio_sma_1w: BpsRatioPattern::new(client.clone(), _m(&acc, "sma_1w")),
         }
@@ -1721,6 +1673,46 @@ impl GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern {
             supply_in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_in_profit")),
             unrealized_loss: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_loss")),
             unrealized_profit: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_profit")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct RatioPattern {
+    pub ratio_pct1: BpsRatioPattern,
+    pub ratio_pct1_price: CentsSatsUsdPattern,
+    pub ratio_pct2: BpsRatioPattern,
+    pub ratio_pct2_price: CentsSatsUsdPattern,
+    pub ratio_pct5: BpsRatioPattern,
+    pub ratio_pct5_price: CentsSatsUsdPattern,
+    pub ratio_pct95: BpsRatioPattern,
+    pub ratio_pct95_price: CentsSatsUsdPattern,
+    pub ratio_pct98: BpsRatioPattern,
+    pub ratio_pct98_price: CentsSatsUsdPattern,
+    pub ratio_pct99: BpsRatioPattern,
+    pub ratio_pct99_price: CentsSatsUsdPattern,
+    pub ratio_sma_1m: BpsRatioPattern,
+    pub ratio_sma_1w: BpsRatioPattern,
+}
+
+impl RatioPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            ratio_pct1: BpsRatioPattern::new(client.clone(), _m(&acc, "pct1")),
+            ratio_pct1_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct1")),
+            ratio_pct2: BpsRatioPattern::new(client.clone(), _m(&acc, "pct2")),
+            ratio_pct2_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct2")),
+            ratio_pct5: BpsRatioPattern::new(client.clone(), _m(&acc, "pct5")),
+            ratio_pct5_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct5")),
+            ratio_pct95: BpsRatioPattern::new(client.clone(), _m(&acc, "pct95")),
+            ratio_pct95_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct95")),
+            ratio_pct98: BpsRatioPattern::new(client.clone(), _m(&acc, "pct98")),
+            ratio_pct98_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct98")),
+            ratio_pct99: BpsRatioPattern::new(client.clone(), _m(&acc, "pct99")),
+            ratio_pct99_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct99")),
+            ratio_sma_1m: BpsRatioPattern::new(client.clone(), _m(&acc, "sma_1m")),
+            ratio_sma_1w: BpsRatioPattern::new(client.clone(), _m(&acc, "sma_1w")),
         }
     }
 }
@@ -2429,6 +2421,26 @@ impl InvestedMaxMinPercentilesPattern {
             max: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "cost_basis_max")),
             min: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "cost_basis_min")),
             percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), _m(&acc, "cost_basis")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct RatioPattern2 {
+    pub ratio_sd: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
+    pub ratio_sd_1y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
+    pub ratio_sd_2y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
+    pub ratio_sd_4y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern,
+}
+
+impl RatioPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            ratio_sd: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
+            ratio_sd_1y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
+            ratio_sd_2y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
+            ratio_sd_4y: _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern::new(client.clone(), acc.clone()),
         }
     }
 }

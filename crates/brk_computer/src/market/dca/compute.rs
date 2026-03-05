@@ -61,12 +61,12 @@ impl Vecs {
         }
 
         // DCA by period - average price (derived from stack)
-        let sh = starting_indexes.height.to_usize();
+        let starting_height = starting_indexes.height.to_usize();
         for (average_price, stack, days) in
             self.period_cost_basis.zip_mut_with_days(&self.period_stack)
         {
             let days = days as usize;
-            let start = average_price.cents.height.len().min(starting_indexes.height.to_usize());
+            let start = average_price.cents.height.len().min(starting_height);
             let stack_data = stack
                 .sats
                 .height
@@ -124,7 +124,7 @@ impl Vecs {
             self.period_lump_sum_stack.zip_mut_with_days(&lookback_dca)
         {
             let total_invested = DCA_AMOUNT * days as usize;
-            let ls_start = stack.sats.height.len().min(starting_indexes.height.to_usize());
+            let ls_start = stack.sats.height.len().min(starting_height);
             let lookback_data = lookback_price
                 .cents
                 .height
@@ -163,8 +163,8 @@ impl Vecs {
         let start_days = super::ByDcaClass::<()>::start_days();
         for (stack, day1) in self.class_stack.iter_mut().zip(start_days) {
             let mut last_di: Option<Day1> = None;
-            let mut prev_value = if sh > 0 {
-                stack.sats.height.collect_one_at(sh - 1).unwrap_or_default()
+            let mut prev_value = if starting_height > 0 {
+                stack.sats.height.collect_one_at(starting_height - 1).unwrap_or_default()
             } else {
                 Sats::ZERO
             };
@@ -219,7 +219,7 @@ impl Vecs {
             .zip(start_days)
         {
             let from_usize = from.to_usize();
-            let cls_start = average_price.cents.height.len().min(starting_indexes.height.to_usize());
+            let cls_start = average_price.cents.height.len().min(starting_height);
             let stack_data = stack
                 .sats
                 .height

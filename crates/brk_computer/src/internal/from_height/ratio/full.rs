@@ -6,19 +6,19 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, indexes, prices};
 
-use super::{ComputedFromHeightRatio, ComputedFromHeightRatioPercentiles};
+use super::{ComputedFromHeightRatioExtended, ComputedFromHeightRatioStdDevBands};
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct ComputedFromHeightRatioExtended<M: StorageMode = Rw> {
+pub struct ComputedFromHeightRatioFull<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub base: ComputedFromHeightRatio<M>,
+    pub base: ComputedFromHeightRatioExtended<M>,
     #[traversable(flatten)]
-    pub percentiles: ComputedFromHeightRatioPercentiles<M>,
+    pub std_dev: ComputedFromHeightRatioStdDevBands<M>,
 }
 
-impl ComputedFromHeightRatioExtended {
+impl ComputedFromHeightRatioFull {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -26,14 +26,14 @@ impl ComputedFromHeightRatioExtended {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            base: ComputedFromHeightRatio::forced_import(db, name, version, indexes)?,
-            percentiles: ComputedFromHeightRatioPercentiles::forced_import(
+            base: ComputedFromHeightRatioExtended::forced_import(db, name, version, indexes)?,
+            std_dev: ComputedFromHeightRatioStdDevBands::forced_import(
                 db, name, version, indexes,
             )?,
         })
     }
 
-    /// Compute ratio and all percentile metrics from an externally-provided metric price (in cents).
+    /// Compute ratio, percentiles, and all stddev bands from an externally-provided metric price (in cents).
     pub(crate) fn compute_rest(
         &mut self,
         blocks: &blocks::Vecs,
@@ -42,11 +42,10 @@ impl ComputedFromHeightRatioExtended {
         exit: &Exit,
         metric_price: &impl ReadableVec<Height, Cents>,
     ) -> Result<()> {
-        let close_price = &prices.price.cents.height;
         self.base
-            .compute_ratio(starting_indexes, close_price, metric_price, exit)?;
-        self.percentiles
-            .compute(blocks, starting_indexes, exit, &self.base.ratio.height, metric_price)?;
+            .compute_rest(blocks, prices, starting_indexes, exit, metric_price)?;
+        self.std_dev
+            .compute(blocks, starting_indexes, exit, &self.base.base.ratio.height, metric_price)?;
         Ok(())
     }
 }

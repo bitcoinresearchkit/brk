@@ -8,13 +8,13 @@ use vecdb::{
 
 use crate::{
     blocks, indexes,
-    internal::{ComputedFromHeightStdDevExtended, ExpandingPercentiles, Price, PriceTimesRatioBp32Cents},
+    internal::{ExpandingPercentiles, Price, PriceTimesRatioBp32Cents},
 };
 
 use super::{super::ComputedFromHeight, ComputedFromHeightRatio};
 
 #[derive(Traversable)]
-pub struct ComputedFromHeightRatioExtension<M: StorageMode = Rw> {
+pub struct ComputedFromHeightRatioPercentiles<M: StorageMode = Rw> {
     pub ratio_sma_1w: ComputedFromHeightRatio<M>,
     pub ratio_sma_1m: ComputedFromHeightRatio<M>,
     pub ratio_pct99: ComputedFromHeightRatio<M>,
@@ -30,18 +30,13 @@ pub struct ComputedFromHeightRatioExtension<M: StorageMode = Rw> {
     pub ratio_pct2_price: Price<ComputedFromHeight<Cents, M>>,
     pub ratio_pct1_price: Price<ComputedFromHeight<Cents, M>>,
 
-    pub ratio_sd: ComputedFromHeightStdDevExtended<M>,
-    pub ratio_sd_4y: ComputedFromHeightStdDevExtended<M>,
-    pub ratio_sd_2y: ComputedFromHeightStdDevExtended<M>,
-    pub ratio_sd_1y: ComputedFromHeightStdDevExtended<M>,
-
     #[traversable(skip)]
     expanding_pct: ExpandingPercentiles,
 }
 
 const VERSION: Version = Version::new(4);
 
-impl ComputedFromHeightRatioExtension {
+impl ComputedFromHeightRatioPercentiles {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -61,19 +56,6 @@ impl ComputedFromHeightRatioExtension {
             };
         }
 
-        macro_rules! import_sd {
-            ($suffix:expr, $period:expr, $days:expr) => {
-                ComputedFromHeightStdDevExtended::forced_import(
-                    db,
-                    &format!("{name}_{}", $suffix),
-                    $period,
-                    $days,
-                    v,
-                    indexes,
-                )?
-            };
-        }
-
         macro_rules! import_price {
             ($suffix:expr) => {
                 Price::forced_import(db, &format!("{name}_{}", $suffix), v, indexes)?
@@ -83,10 +65,6 @@ impl ComputedFromHeightRatioExtension {
         Ok(Self {
             ratio_sma_1w: import_ratio!("ratio_sma_1w"),
             ratio_sma_1m: import_ratio!("ratio_sma_1m"),
-            ratio_sd: import_sd!("ratio", "", usize::MAX),
-            ratio_sd_1y: import_sd!("ratio", "1y", 365),
-            ratio_sd_2y: import_sd!("ratio", "2y", 2 * 365),
-            ratio_sd_4y: import_sd!("ratio", "4y", 4 * 365),
             ratio_pct99: import_ratio!("ratio_pct99"),
             ratio_pct98: import_ratio!("ratio_pct98"),
             ratio_pct95: import_ratio!("ratio_pct95"),
@@ -103,14 +81,14 @@ impl ComputedFromHeightRatioExtension {
         })
     }
 
-    pub(crate) fn compute_rest(
+    pub(crate) fn compute(
         &mut self,
         blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         ratio_source: &impl ReadableVec<Height, StoredF32>,
+        metric_price: &impl ReadableVec<Height, Cents>,
     ) -> Result<()> {
-        // SMA using lookback vecs
         self.ratio_sma_1w.bps.height.compute_rolling_average(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
@@ -151,7 +129,6 @@ impl ComputedFromHeightRatioExtension {
                 }
             }
 
-            // Process new blocks [start, ratio_len)
             let new_ratios = ratio_source.collect_range_at(start, ratio_len);
             let mut pct_vecs: [&mut EagerVec<PcoVec<Height, BasisPoints32>>; 6] = [
                 &mut self.ratio_pct1.bps.height,
@@ -179,25 +156,7 @@ impl ComputedFromHeightRatioExtension {
             self.mut_pct_vecs().try_for_each(|v| v.flush())?;
         }
 
-        // Compute stddev at height level
-        for sd in [
-            &mut self.ratio_sd,
-            &mut self.ratio_sd_4y,
-            &mut self.ratio_sd_2y,
-            &mut self.ratio_sd_1y,
-        ] {
-            sd.compute_all(blocks, starting_indexes, exit, ratio_source)?;
-        }
-
-        Ok(())
-    }
-
-    pub(crate) fn compute_cents_bands(
-        &mut self,
-        starting_indexes: &Indexes,
-        metric_price: &impl ReadableVec<Height, Cents>,
-        exit: &Exit,
-    ) -> Result<()> {
+        // Cents bands
         macro_rules! compute_band {
             ($usd_field:ident, $band_source:expr) => {
                 self.$usd_field
@@ -217,16 +176,6 @@ impl ComputedFromHeightRatioExtension {
         compute_band!(ratio_pct5_price, &self.ratio_pct5.bps.height);
         compute_band!(ratio_pct2_price, &self.ratio_pct2.bps.height);
         compute_band!(ratio_pct1_price, &self.ratio_pct1.bps.height);
-
-        // Stddev cents bands
-        for sd in [
-            &mut self.ratio_sd,
-            &mut self.ratio_sd_4y,
-            &mut self.ratio_sd_2y,
-            &mut self.ratio_sd_1y,
-        ] {
-            sd.compute_cents_bands(starting_indexes, metric_price, exit)?;
-        }
 
         Ok(())
     }
