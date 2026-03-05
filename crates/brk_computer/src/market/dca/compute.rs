@@ -66,7 +66,7 @@ impl Vecs {
             self.period_cost_basis.zip_mut_with_days(&self.period_stack)
         {
             let days = days as usize;
-            let start = average_price.cents.height.len();
+            let start = average_price.cents.height.len().min(starting_indexes.height.to_usize());
             let stack_data = stack
                 .sats
                 .height
@@ -124,7 +124,7 @@ impl Vecs {
             self.period_lump_sum_stack.zip_mut_with_days(&lookback_dca)
         {
             let total_invested = DCA_AMOUNT * days as usize;
-            let ls_start = stack.sats.height.len();
+            let ls_start = stack.sats.height.len().min(starting_indexes.height.to_usize());
             let lookback_data = lookback_price
                 .cents
                 .height
@@ -219,7 +219,7 @@ impl Vecs {
             .zip(start_days)
         {
             let from_usize = from.to_usize();
-            let cls_start = average_price.cents.height.len();
+            let cls_start = average_price.cents.height.len().min(starting_indexes.height.to_usize());
             let stack_data = stack
                 .sats
                 .height
