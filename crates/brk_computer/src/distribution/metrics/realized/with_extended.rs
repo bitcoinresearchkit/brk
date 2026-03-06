@@ -47,9 +47,10 @@ impl RealizedWithExtended {
             exit,
         )?;
 
-        self.extended.compute_rest_part2_ext(
+        self.extended.compute_rest_part2(
             &self.base,
             blocks,
+            prices,
             starting_indexes,
             height_to_market_cap,
             exit,

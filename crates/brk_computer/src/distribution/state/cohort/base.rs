@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, path::Path};
 use brk_error::Result;
 use brk_types::{Age, Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisSnapshot, Height, Sats, SupplyState};
 
-use super::super::cost_basis::{CostBasisData, Percentiles, RealizedState, UnrealizedState};
+use super::super::cost_basis::{CostBasisData, Percentiles, RealizedOps, UnrealizedState};
 
 pub struct SendPrecomputed {
     pub sats: Sats,
@@ -15,20 +15,54 @@ pub struct SendPrecomputed {
     pub prev_investor_cap: CentsSquaredSats,
 }
 
-pub struct CohortState {
+impl SendPrecomputed {
+    /// Pre-compute values for send_utxo when the same supply/prices are shared
+    /// across multiple cohorts (age_range, epoch, class).
+    pub(crate) fn new(
+        supply: &SupplyState,
+        current_price: Cents,
+        prev_price: Cents,
+        ath: Cents,
+        age: Age,
+    ) -> Option<Self> {
+        if supply.utxo_count == 0 || supply.value == Sats::ZERO {
+            return None;
+        }
+        let sats = supply.value;
+        let current_ps = CentsSats::from_price_sats(current_price, sats);
+        let prev_ps = CentsSats::from_price_sats(prev_price, sats);
+        let ath_ps = if ath == current_price {
+            current_ps
+        } else {
+            CentsSats::from_price_sats(ath, sats)
+        };
+        let prev_investor_cap = prev_ps.to_investor_cap(prev_price);
+        Some(Self {
+            sats,
+            prev_price,
+            age,
+            current_ps,
+            prev_ps,
+            ath_ps,
+            prev_investor_cap,
+        })
+    }
+}
+
+pub struct CohortState<R: RealizedOps> {
     pub supply: SupplyState,
-    pub realized: RealizedState,
+    pub realized: R,
     pub sent: Sats,
     pub satblocks_destroyed: Sats,
     pub satdays_destroyed: Sats,
     cost_basis_data: CostBasisData,
 }
 
-impl CohortState {
+impl<R: RealizedOps> CohortState<R> {
     pub(crate) fn new(path: &Path, name: &str) -> Self {
         Self {
             supply: SupplyState::default(),
-            realized: RealizedState::default(),
+            realized: R::default(),
             sent: Sats::ZERO,
             satblocks_destroyed: Sats::ZERO,
             satdays_destroyed: Sats::ZERO,
@@ -47,7 +81,6 @@ impl CohortState {
     }
 
     /// Restore realized cap from cost_basis_data after import.
-    /// Uses the exact persisted values instead of recomputing from the map.
     pub(crate) fn restore_realized_cap(&mut self) {
         self.realized.set_cap_raw(self.cost_basis_data.cap_raw());
         self.realized
@@ -170,38 +203,6 @@ impl CohortState {
         }
     }
 
-    /// Pre-computed values for send_utxo when the same supply/prices are shared
-    /// across multiple cohorts (age_range, epoch, year).
-    pub(crate) fn precompute_send(
-        supply: &SupplyState,
-        current_price: Cents,
-        prev_price: Cents,
-        ath: Cents,
-        age: Age,
-    ) -> Option<SendPrecomputed> {
-        if supply.utxo_count == 0 || supply.value == Sats::ZERO {
-            return None;
-        }
-        let sats = supply.value;
-        let current_ps = CentsSats::from_price_sats(current_price, sats);
-        let prev_ps = CentsSats::from_price_sats(prev_price, sats);
-        let ath_ps = if ath == current_price {
-            current_ps
-        } else {
-            CentsSats::from_price_sats(ath, sats)
-        };
-        let prev_investor_cap = prev_ps.to_investor_cap(prev_price);
-        Some(SendPrecomputed {
-            sats,
-            prev_price,
-            age,
-            current_ps,
-            prev_ps,
-            ath_ps,
-            prev_investor_cap,
-        })
-    }
-
     pub(crate) fn send_utxo_precomputed(
         &mut self,
         supply: &SupplyState,
@@ -227,7 +228,7 @@ impl CohortState {
         ath: Cents,
         age: Age,
     ) {
-        if let Some(pre) = Self::precompute_send(supply, current_price, prev_price, ath, age) {
+        if let Some(pre) = SendPrecomputed::new(supply, current_price, prev_price, ath, age) {
             self.send_utxo_precomputed(supply, &pre);
         } else if supply.utxo_count > 0 {
             self.supply -= supply;

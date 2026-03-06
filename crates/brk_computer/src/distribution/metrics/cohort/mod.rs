@@ -1,4 +1,3 @@
-mod adjusted;
 mod all;
 mod basic;
 mod complete;
@@ -7,7 +6,6 @@ mod extended;
 mod extended_adjusted;
 mod minimal;
 
-pub use adjusted::*;
 pub use all::*;
 pub use basic::*;
 pub use complete::*;

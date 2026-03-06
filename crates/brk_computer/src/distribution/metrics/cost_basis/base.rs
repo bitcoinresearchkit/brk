@@ -4,7 +4,7 @@ use brk_types::{Cents, Height, Indexes, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
-    distribution::state::CohortState,
+    distribution::state::{CohortState, RealizedState},
     internal::{ComputedFromHeight, Price},
 };
 
@@ -35,7 +35,7 @@ impl CostBasisBase {
     pub(crate) fn truncate_push_minmax(
         &mut self,
         height: Height,
-        state: &CohortState,
+        state: &CohortState<RealizedState>,
     ) -> Result<()> {
         self.min.cents.height.truncate_push(
             height,

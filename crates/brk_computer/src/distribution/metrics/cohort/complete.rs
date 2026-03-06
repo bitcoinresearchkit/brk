@@ -78,10 +78,10 @@ impl CompleteCohortMetrics {
     }
 
     /// Aggregate Complete-tier metrics from Source cohort refs.
-    pub(crate) fn compute_from_sources(
+    pub(crate) fn compute_from_sources<T: CohortMetricsBase>(
         &mut self,
         starting_indexes: &Indexes,
-        others: &[&dyn CohortMetricsBase],
+        others: &[&T],
         exit: &Exit,
     ) -> Result<()> {
         // Supply, outputs, activity: use their existing compute_from_stateful

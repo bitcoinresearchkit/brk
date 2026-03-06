@@ -6,52 +6,83 @@ use vecdb::{Exit, ReadableVec};
 
 use crate::{blocks, distribution::state::UTXOCohortState, prices};
 
-use crate::distribution::metrics::{CohortMetricsBase, CompleteCohortMetrics, CoreCohortMetrics, MinimalCohortMetrics};
+use crate::distribution::metrics::{
+    CohortMetricsBase, CompleteCohortMetrics, CoreCohortMetrics, MinimalCohortMetrics,
+};
+use crate::distribution::state::{CoreRealizedState, RealizedOps, RealizedState};
 
 use super::super::traits::DynCohortVecs;
 
 #[derive(Traversable)]
-pub struct UTXOCohortVecs<Metrics> {
-    /// Starting height when state was imported
+pub struct UTXOCohortVecs<Metrics, R: RealizedOps> {
     #[traversable(skip)]
     state_starting_height: Option<Height>,
 
-    /// Runtime state for block-by-block processing (separate cohorts only)
     #[traversable(skip)]
-    pub state: Option<Box<UTXOCohortState>>,
+    pub state: Option<Box<UTXOCohortState<R>>>,
 
-    /// Metric vectors
     #[traversable(flatten)]
     pub metrics: Metrics,
 }
 
-impl<Metrics> UTXOCohortVecs<Metrics> {
-    /// Create a new UTXOCohortVecs with state and metrics.
-    pub(crate) fn new(state: Option<Box<UTXOCohortState>>, metrics: Metrics) -> Self {
+// --- Shared state helpers (identical across all DynCohortVecs impls) ---
+
+impl<Metrics, R: RealizedOps> UTXOCohortVecs<Metrics, R> {
+    pub(crate) fn new(state: Option<Box<UTXOCohortState<R>>>, metrics: Metrics) -> Self {
         Self {
             state_starting_height: None,
             state,
             metrics,
         }
     }
+
+    fn reset_state_impl(&mut self) {
+        self.state_starting_height = Some(Height::ZERO);
+        if let Some(state) = self.state.as_mut() {
+            state.reset();
+        }
+    }
+
+    fn write_state_impl(&mut self, height: Height, cleanup: bool) -> Result<()> {
+        if let Some(state) = self.state.as_mut() {
+            state.write(height, cleanup)?;
+        }
+        Ok(())
+    }
+
+    fn reset_cost_basis_impl(&mut self) -> Result<()> {
+        if let Some(state) = self.state.as_mut() {
+            state.reset_cost_basis_data_if_needed()?;
+        }
+        Ok(())
+    }
+
+    fn reset_iteration_impl(&mut self) {
+        if let Some(state) = self.state.as_mut() {
+            state.reset_single_iteration_values();
+        }
+    }
 }
 
-impl<Metrics: CohortMetricsBase + Traversable> Filtered for UTXOCohortVecs<Metrics> {
+// --- Blanket impl for CohortMetricsBase types (always use full RealizedState) ---
+
+impl<Metrics: CohortMetricsBase + Traversable> Filtered
+    for UTXOCohortVecs<Metrics, RealizedState>
+{
     fn filter(&self) -> &Filter {
         self.metrics.filter()
     }
 }
 
-impl<Metrics: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<Metrics> {
+impl<Metrics: CohortMetricsBase + Traversable> DynCohortVecs
+    for UTXOCohortVecs<Metrics, RealizedState>
+{
     fn min_stateful_height_len(&self) -> usize {
         self.metrics.min_stateful_height_len()
     }
 
     fn reset_state_starting_height(&mut self) {
-        self.state_starting_height = Some(Height::ZERO);
-        if let Some(state) = self.state.as_mut() {
-            state.reset();
-        }
+        self.reset_state_impl();
     }
 
     fn import_state(&mut self, starting_height: Height) -> Result<Height> {
@@ -132,8 +163,6 @@ impl<Metrics: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<
     ) -> Result<()> {
         self.metrics
             .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
-        // Separate cohorts (with state) compute net_sentiment = greed - pain directly.
-        // Aggregate cohorts get it via weighted average in groups.rs.
         if self.state.is_some() {
             self.metrics
                 .compute_net_sentiment_height(starting_indexes, exit)?;
@@ -142,79 +171,78 @@ impl<Metrics: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<
     }
 
     fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
-        if let Some(state) = self.state.as_mut() {
-            state.write(height, cleanup)?;
-        }
-        Ok(())
+        self.write_state_impl(height, cleanup)
     }
 
     fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
-        if let Some(state) = self.state.as_mut() {
-            state.reset_cost_basis_data_if_needed()?;
-        }
-        Ok(())
+        self.reset_cost_basis_impl()
     }
 
     fn reset_single_iteration_values(&mut self) {
-        if let Some(state) = self.state.as_mut() {
-            state.reset_single_iteration_values();
-        }
+        self.reset_iteration_impl();
     }
 }
 
-impl Filtered for UTXOCohortVecs<MinimalCohortMetrics> {
+// --- Shared import_state for non-blanket impls (direct field access) ---
+
+macro_rules! impl_import_state {
+    () => {
+        fn import_state(&mut self, starting_height: Height) -> Result<Height> {
+            if let Some(state) = self.state.as_mut() {
+                if let Some(mut prev_height) = starting_height.decremented() {
+                    prev_height = state.import_at_or_before(prev_height)?;
+
+                    state.supply.value = self
+                        .metrics
+                        .supply
+                        .total
+                        .sats
+                        .height
+                        .collect_one(prev_height)
+                        .unwrap();
+                    state.supply.utxo_count = *self
+                        .metrics
+                        .outputs
+                        .utxo_count
+                        .height
+                        .collect_one(prev_height)
+                        .unwrap();
+
+                    state.restore_realized_cap();
+
+                    let result = prev_height.incremented();
+                    self.state_starting_height = Some(result);
+                    Ok(result)
+                } else {
+                    self.state_starting_height = Some(Height::ZERO);
+                    Ok(Height::ZERO)
+                }
+            } else {
+                self.state_starting_height = Some(starting_height);
+                Ok(starting_height)
+            }
+        }
+    };
+}
+
+// --- MinimalCohortMetrics: uses CoreRealizedState ---
+
+impl Filtered for UTXOCohortVecs<MinimalCohortMetrics, CoreRealizedState> {
     fn filter(&self) -> &Filter {
         &self.metrics.filter
     }
 }
 
-impl DynCohortVecs for UTXOCohortVecs<MinimalCohortMetrics> {
+impl DynCohortVecs for UTXOCohortVecs<MinimalCohortMetrics, CoreRealizedState> {
     fn min_stateful_height_len(&self) -> usize {
         self.metrics.min_stateful_height_len()
     }
 
     fn reset_state_starting_height(&mut self) {
-        self.state_starting_height = Some(Height::ZERO);
-        if let Some(state) = self.state.as_mut() {
-            state.reset();
-        }
+        self.reset_state_impl();
     }
 
-    fn import_state(&mut self, starting_height: Height) -> Result<Height> {
-        if let Some(state) = self.state.as_mut() {
-            if let Some(mut prev_height) = starting_height.decremented() {
-                prev_height = state.import_at_or_before(prev_height)?;
-
-                state.supply.value = self
-                    .metrics
-                    .supply
-                    .total
-                    .sats
-                    .height
-                    .collect_one(prev_height)
-                    .unwrap();
-                state.supply.utxo_count = *self
-                    .metrics
-                    .outputs
-                    .utxo_count
-                    .height
-                    .collect_one(prev_height)
-                    .unwrap();
-
-                state.restore_realized_cap();
-
-                let result = prev_height.incremented();
-                self.state_starting_height = Some(result);
-                Ok(result)
-            } else {
-                self.state_starting_height = Some(Height::ZERO);
-                Ok(Height::ZERO)
-            }
-        } else {
-            self.state_starting_height = Some(starting_height);
-            Ok(starting_height)
-        }
-    }
+    impl_import_state!();
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.metrics.validate_computed_versions(base_version)
@@ -268,79 +296,36 @@ impl DynCohortVecs for UTXOCohortVecs<MinimalCohortMetrics> {
     }
 
     fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
-        if let Some(state) = self.state.as_mut() {
-            state.write(height, cleanup)?;
-        }
-        Ok(())
+        self.write_state_impl(height, cleanup)
     }
 
     fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
-        if let Some(state) = self.state.as_mut() {
-            state.reset_cost_basis_data_if_needed()?;
-        }
-        Ok(())
+        self.reset_cost_basis_impl()
     }
 
     fn reset_single_iteration_values(&mut self) {
-        if let Some(state) = self.state.as_mut() {
-            state.reset_single_iteration_values();
-        }
+        self.reset_iteration_impl();
     }
 }
 
-impl Filtered for UTXOCohortVecs<CoreCohortMetrics> {
+// --- CoreCohortMetrics: uses CoreRealizedState ---
+
+impl Filtered for UTXOCohortVecs<CoreCohortMetrics, CoreRealizedState> {
     fn filter(&self) -> &Filter {
         &self.metrics.filter
     }
 }
 
-impl DynCohortVecs for UTXOCohortVecs<CoreCohortMetrics> {
+impl DynCohortVecs for UTXOCohortVecs<CoreCohortMetrics, CoreRealizedState> {
     fn min_stateful_height_len(&self) -> usize {
         self.metrics.min_stateful_height_len()
     }
 
     fn reset_state_starting_height(&mut self) {
-        self.state_starting_height = Some(Height::ZERO);
-        if let Some(state) = self.state.as_mut() {
-            state.reset();
-        }
+        self.reset_state_impl();
     }
 
-    fn import_state(&mut self, starting_height: Height) -> Result<Height> {
-        if let Some(state) = self.state.as_mut() {
-            if let Some(mut prev_height) = starting_height.decremented() {
-                prev_height = state.import_at_or_before(prev_height)?;
-
-                state.supply.value = self
-                    .metrics
-                    .supply
-                    .total
-                    .sats
-                    .height
-                    .collect_one(prev_height)
-                    .unwrap();
-                state.supply.utxo_count = *self
-                    .metrics
-                    .outputs
-                    .utxo_count
-                    .height
-                    .collect_one(prev_height)
-                    .unwrap();
-
-                state.restore_realized_cap();
-
-                let result = prev_height.incremented();
-                self.state_starting_height = Some(result);
-                Ok(result)
-            } else {
-                self.state_starting_height = Some(Height::ZERO);
-                Ok(Height::ZERO)
-            }
-        } else {
-            self.state_starting_height = Some(starting_height);
-            Ok(starting_height)
-        }
-    }
+    impl_import_state!();
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.metrics.validate_computed_versions(base_version)
@@ -395,79 +380,36 @@ impl DynCohortVecs for UTXOCohortVecs<CoreCohortMetrics> {
     }
 
     fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
-        if let Some(state) = self.state.as_mut() {
-            state.write(height, cleanup)?;
-        }
-        Ok(())
+        self.write_state_impl(height, cleanup)
     }
 
     fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
-        if let Some(state) = self.state.as_mut() {
-            state.reset_cost_basis_data_if_needed()?;
-        }
-        Ok(())
+        self.reset_cost_basis_impl()
     }
 
     fn reset_single_iteration_values(&mut self) {
-        if let Some(state) = self.state.as_mut() {
-            state.reset_single_iteration_values();
-        }
+        self.reset_iteration_impl();
     }
 }
 
-impl Filtered for UTXOCohortVecs<CompleteCohortMetrics> {
+// --- CompleteCohortMetrics: uses full RealizedState ---
+
+impl Filtered for UTXOCohortVecs<CompleteCohortMetrics, RealizedState> {
     fn filter(&self) -> &Filter {
         &self.metrics.filter
     }
 }
 
-impl DynCohortVecs for UTXOCohortVecs<CompleteCohortMetrics> {
+impl DynCohortVecs for UTXOCohortVecs<CompleteCohortMetrics, RealizedState> {
     fn min_stateful_height_len(&self) -> usize {
         self.metrics.min_stateful_height_len()
     }
 
     fn reset_state_starting_height(&mut self) {
-        self.state_starting_height = Some(Height::ZERO);
-        if let Some(state) = self.state.as_mut() {
-            state.reset();
-        }
+        self.reset_state_impl();
     }
 
-    fn import_state(&mut self, starting_height: Height) -> Result<Height> {
-        if let Some(state) = self.state.as_mut() {
-            if let Some(mut prev_height) = starting_height.decremented() {
-                prev_height = state.import_at_or_before(prev_height)?;
-
-                state.supply.value = self
-                    .metrics
-                    .supply
-                    .total
-                    .sats
-                    .height
-                    .collect_one(prev_height)
-                    .unwrap();
-                state.supply.utxo_count = *self
-                    .metrics
-                    .outputs
-                    .utxo_count
-                    .height
-                    .collect_one(prev_height)
-                    .unwrap();
-
-                state.restore_realized_cap();
-
-                let result = prev_height.incremented();
-                self.state_starting_height = Some(result);
-                Ok(result)
-            } else {
-                self.state_starting_height = Some(Height::ZERO);
-                Ok(Height::ZERO)
-            }
-        } else {
-            self.state_starting_height = Some(starting_height);
-            Ok(starting_height)
-        }
-    }
+    impl_import_state!();
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.metrics.validate_computed_versions(base_version)
@@ -530,22 +472,14 @@ impl DynCohortVecs for UTXOCohortVecs<CompleteCohortMetrics> {
     }
 
     fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
-        if let Some(state) = self.state.as_mut() {
-            state.write(height, cleanup)?;
-        }
-        Ok(())
+        self.write_state_impl(height, cleanup)
     }
 
     fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
-        if let Some(state) = self.state.as_mut() {
-            state.reset_cost_basis_data_if_needed()?;
-        }
-        Ok(())
+        self.reset_cost_basis_impl()
     }
 
     fn reset_single_iteration_values(&mut self) {
-        if let Some(state) = self.state.as_mut() {
-            state.reset_single_iteration_values();
-        }
+        self.reset_iteration_impl();
     }
 }

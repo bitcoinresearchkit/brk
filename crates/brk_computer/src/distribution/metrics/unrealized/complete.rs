@@ -112,20 +112,10 @@ impl UnrealizedComplete {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        macro_rules! sum_others {
-            ($($field:tt).+) => {
-                self.$($field).+.compute_sum_of_others(
-                    starting_indexes.height,
-                    &others.iter().map(|v| &v.$($field).+).collect::<Vec<_>>(),
-                    exit,
-                )?
-            };
-        }
-
-        sum_others!(supply_in_profit.sats.height);
-        sum_others!(supply_in_loss.sats.height);
-        sum_others!(unrealized_profit.cents.height);
-        sum_others!(unrealized_loss.cents.height);
+        sum_others!(self, starting_indexes, others, exit; supply_in_profit.sats.height);
+        sum_others!(self, starting_indexes, others, exit; supply_in_loss.sats.height);
+        sum_others!(self, starting_indexes, others, exit; unrealized_profit.cents.height);
+        sum_others!(self, starting_indexes, others, exit; unrealized_loss.cents.height);
 
         Ok(())
     }

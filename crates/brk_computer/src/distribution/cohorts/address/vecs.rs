@@ -8,7 +8,11 @@ use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
-    blocks, distribution::state::AddressCohortState, indexes, internal::ComputedFromHeight, prices,
+    blocks,
+    distribution::state::{AddressCohortState, CoreRealizedState},
+    indexes,
+    internal::ComputedFromHeight,
+    prices,
 };
 
 use crate::distribution::metrics::{CoreCohortMetrics, ImportConfig};
@@ -19,7 +23,7 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
     starting_height: Option<Height>,
 
     #[traversable(skip)]
-    pub state: Option<Box<AddressCohortState>>,
+    pub state: Option<Box<AddressCohortState<CoreRealizedState>>>,
 
     #[traversable(flatten)]
     pub metrics: CoreCohortMetrics<M>,

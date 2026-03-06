@@ -27,62 +27,7 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     pub relative: Box<RelativeWithRelToAll<M>>,
 }
 
-impl CohortMetricsBase for BasicCohortMetrics {
-    fn filter(&self) -> &Filter {
-        &self.filter
-    }
-    fn supply(&self) -> &SupplyMetrics {
-        &self.supply
-    }
-    fn supply_mut(&mut self) -> &mut SupplyMetrics {
-        &mut self.supply
-    }
-    fn outputs(&self) -> &OutputsMetrics {
-        &self.outputs
-    }
-    fn outputs_mut(&mut self) -> &mut OutputsMetrics {
-        &mut self.outputs
-    }
-    fn activity(&self) -> &ActivityMetrics {
-        &self.activity
-    }
-    fn activity_mut(&mut self) -> &mut ActivityMetrics {
-        &mut self.activity
-    }
-    fn realized_base(&self) -> &RealizedBase {
-        &self.realized
-    }
-    fn realized_base_mut(&mut self) -> &mut RealizedBase {
-        &mut self.realized
-    }
-    fn unrealized_base(&self) -> &UnrealizedBase {
-        &self.unrealized
-    }
-    fn unrealized_base_mut(&mut self) -> &mut UnrealizedBase {
-        &mut self.unrealized
-    }
-    fn cost_basis_base(&self) -> &CostBasisBase {
-        &self.cost_basis
-    }
-    fn cost_basis_base_mut(&mut self) -> &mut CostBasisBase {
-        &mut self.cost_basis
-    }
-    fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
-        self.supply.validate_computed_versions(base_version)?;
-        self.activity.validate_computed_versions(base_version)?;
-        Ok(())
-    }
-    fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
-        vecs.extend(self.supply.par_iter_mut().collect::<Vec<_>>());
-        vecs.extend(self.outputs.par_iter_mut().collect::<Vec<_>>());
-        vecs.extend(self.activity.par_iter_mut().collect::<Vec<_>>());
-        vecs.extend(self.realized.collect_vecs_mut());
-        vecs.extend(self.cost_basis.collect_vecs_mut());
-        vecs.extend(self.unrealized.collect_vecs_mut());
-        vecs
-    }
-}
+impl_cohort_metrics_base!(BasicCohortMetrics, base_cost_basis);
 
 impl BasicCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
@@ -102,10 +47,6 @@ impl BasicCohortMetrics {
             unrealized: Box::new(unrealized),
             relative: Box::new(relative),
         })
-    }
-
-    pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        self.collect_all_vecs_mut().into_par_iter()
     }
 
     pub(crate) fn compute_rest_part2(
@@ -139,28 +80,4 @@ impl BasicCohortMetrics {
         Ok(())
     }
 
-    pub(crate) fn compute_from_stateful(
-        &mut self,
-        starting_indexes: &Indexes,
-        others: &[&Self],
-        exit: &Exit,
-    ) -> Result<()> {
-        macro_rules! aggregate {
-            ($field:ident) => {
-                self.$field.compute_from_stateful(
-                    starting_indexes,
-                    &others.iter().map(|v| &*v.$field).collect::<Vec<_>>(),
-                    exit,
-                )?
-            };
-        }
-
-        aggregate!(supply);
-        aggregate!(outputs);
-        aggregate!(activity);
-        aggregate!(realized);
-        aggregate!(unrealized);
-        aggregate!(cost_basis);
-        Ok(())
-    }
 }

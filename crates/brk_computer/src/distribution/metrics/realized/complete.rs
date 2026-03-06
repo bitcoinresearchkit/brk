@@ -179,22 +179,12 @@ impl RealizedComplete {
         self.core
             .compute_from_stateful(starting_indexes, &core_refs, exit)?;
 
-        macro_rules! sum_others {
-            ($($field:tt).+) => {
-                self.$($field).+.compute_sum_of_others(
-                    starting_indexes.height,
-                    &others.iter().map(|v| &v.$($field).+).collect::<Vec<_>>(),
-                    exit,
-                )?
-            };
-        }
-
-        sum_others!(profit_value_created.height);
-        sum_others!(profit_value_destroyed.height);
-        sum_others!(loss_value_created.height);
-        sum_others!(loss_value_destroyed.height);
-        sum_others!(sent_in_profit.base.sats.height);
-        sum_others!(sent_in_loss.base.sats.height);
+        sum_others!(self, starting_indexes, others, exit; profit_value_created.height);
+        sum_others!(self, starting_indexes, others, exit; profit_value_destroyed.height);
+        sum_others!(self, starting_indexes, others, exit; loss_value_created.height);
+        sum_others!(self, starting_indexes, others, exit; loss_value_destroyed.height);
+        sum_others!(self, starting_indexes, others, exit; sent_in_profit.base.sats.height);
+        sum_others!(self, starting_indexes, others, exit; sent_in_loss.base.sats.height);
 
         Ok(())
     }

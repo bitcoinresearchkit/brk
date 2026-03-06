@@ -4,7 +4,7 @@ use vecdb::{Rw, VecIndex};
 
 use crate::distribution::{
     compute::PriceRangeMax,
-    state::{BlockState, CohortState, Transacted},
+    state::{BlockState, SendPrecomputed, Transacted},
 };
 
 use super::groups::UTXOCohorts;
@@ -51,7 +51,7 @@ impl UTXOCohorts<Rw> {
             let peak_price = price_range_max.max_between(receive_height, send_height);
 
             // Pre-compute once for age_range, epoch, year (all share sent.spendable_supply)
-            if let Some(pre) = CohortState::precompute_send(
+            if let Some(pre) = SendPrecomputed::new(
                 &sent.spendable_supply,
                 current_price,
                 prev_price,

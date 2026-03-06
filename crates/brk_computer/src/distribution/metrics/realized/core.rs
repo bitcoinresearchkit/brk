@@ -10,7 +10,7 @@ use vecdb::{
 
 use crate::{
     blocks,
-    distribution::state::RealizedState,
+    distribution::state::RealizedOps,
     internal::{
         CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative,
         ComputedFromHeightRatio, FiatFromHeight, Identity, LazyFromHeight,
@@ -122,7 +122,7 @@ impl CoreRealized {
             .min(self.realized_loss.height.len())
     }
 
-    pub(crate) fn truncate_push(&mut self, height: Height, state: &RealizedState) -> Result<()> {
+    pub(crate) fn truncate_push(&mut self, height: Height, state: &impl RealizedOps) -> Result<()> {
         self.realized_cap_cents
             .height
             .truncate_push(height, state.cap())?;
@@ -149,19 +149,9 @@ impl CoreRealized {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        macro_rules! sum_others {
-            ($($field:tt).+) => {
-                self.$($field).+.compute_sum_of_others(
-                    starting_indexes.height,
-                    &others.iter().map(|v| &v.$($field).+).collect::<Vec<_>>(),
-                    exit,
-                )?
-            };
-        }
-
-        sum_others!(realized_cap_cents.height);
-        sum_others!(realized_profit.height);
-        sum_others!(realized_loss.height);
+        sum_others!(self, starting_indexes, others, exit; realized_cap_cents.height);
+        sum_others!(self, starting_indexes, others, exit; realized_profit.height);
+        sum_others!(self, starting_indexes, others, exit; realized_loss.height);
 
         Ok(())
     }

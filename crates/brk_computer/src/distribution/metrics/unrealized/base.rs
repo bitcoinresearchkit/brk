@@ -150,18 +150,8 @@ impl UnrealizedBase {
             .compute_from_stateful(starting_indexes, &complete_refs, exit)?;
 
         // Source-only: invested_capital
-        macro_rules! sum_others {
-            ($($field:tt).+) => {
-                self.$($field).+.compute_sum_of_others(
-                    starting_indexes.height,
-                    &others.iter().map(|v| &v.$($field).+).collect::<Vec<_>>(),
-                    exit,
-                )?
-            };
-        }
-
-        sum_others!(invested_capital_in_profit.cents.height);
-        sum_others!(invested_capital_in_loss.cents.height);
+        sum_others!(self, starting_indexes, others, exit; invested_capital_in_profit.cents.height);
+        sum_others!(self, starting_indexes, others, exit; invested_capital_in_loss.cents.height);
 
         // Source-only: raw BytesVec aggregation
         let start = self

@@ -38,12 +38,13 @@ impl Vecs {
 
         // Find min_height via binary search (first_txoutindex is monotonically non-decreasing)
         let first_txoutindex_vec = &indexer.vecs.outputs.first_txoutindex;
-        let total_heights = target_height.to_usize() + 1;
         let min_height = if min_txoutindex == 0 {
             Height::ZERO
+        } else if min_txoutindex >= starting_indexes.txoutindex.to_usize() {
+            starting_indexes.height
         } else {
             let mut lo = 0usize;
-            let mut hi = total_heights;
+            let mut hi = starting_indexes.height.to_usize() + 1;
             while lo < hi {
                 let mid = lo + (hi - lo) / 2;
                 if first_txoutindex_vec.collect_one_at(mid).unwrap().to_usize() <= min_txoutindex {

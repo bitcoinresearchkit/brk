@@ -1,4 +1,146 @@
+/// Aggregate a field by summing the same field across `others`.
+macro_rules! sum_others {
+    ($self_:ident, $si:ident, $others:ident, $exit:ident; $($field:tt).+) => {
+        $self_.$($field).+.compute_sum_of_others(
+            $si.height,
+            &$others.iter().map(|v| &v.$($field).+).collect::<Vec<_>>(),
+            $exit,
+        )?
+    };
+}
+
 mod activity;
+
+/// DRY macro for `CohortMetricsBase` impl on cohort metric types.
+///
+/// All types share the same 13 accessor methods and common `collect_all_vecs_mut` shape.
+/// Two variants handle the cost basis difference:
+///
+/// - `base_cost_basis`: `CostBasisBase` only (no percentiles, no cost_basis version check)
+/// - `extended_cost_basis`: `CostBasisWithExtended` (percentiles + cost_basis version check)
+/// - `deref_extended_cost_basis`: Deref wrapper delegating to `self.inner` (avoids DerefMut borrow conflicts)
+macro_rules! impl_cohort_metrics_base {
+    ($type:ident, base_cost_basis) => {
+        impl CohortMetricsBase for $type {
+            impl_cohort_metrics_base!(@accessors);
+
+            fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+                self.supply.validate_computed_versions(base_version)?;
+                self.activity.validate_computed_versions(base_version)?;
+                Ok(())
+            }
+
+            fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+                let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
+                vecs.extend(self.supply.par_iter_mut().collect::<Vec<_>>());
+                vecs.extend(self.outputs.par_iter_mut().collect::<Vec<_>>());
+                vecs.extend(self.activity.par_iter_mut().collect::<Vec<_>>());
+                vecs.extend(self.realized.collect_vecs_mut());
+                vecs.extend(self.cost_basis.collect_vecs_mut());
+                vecs.extend(self.unrealized.collect_vecs_mut());
+                vecs
+            }
+        }
+    };
+
+    ($type:ident, extended_cost_basis) => {
+        impl CohortMetricsBase for $type {
+            impl_cohort_metrics_base!(@accessors);
+
+            fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+                self.supply.validate_computed_versions(base_version)?;
+                self.activity.validate_computed_versions(base_version)?;
+                self.cost_basis.validate_computed_versions(base_version)?;
+                Ok(())
+            }
+
+            fn compute_then_truncate_push_unrealized_states(
+                &mut self,
+                height: Height,
+                height_price: Cents,
+                state: &mut CohortState<RealizedState>,
+                is_day_boundary: bool,
+            ) -> Result<()> {
+                self.compute_and_push_unrealized_base(height, height_price, state)?;
+                self.cost_basis
+                    .extended
+                    .truncate_push_percentiles(height, state, is_day_boundary)?;
+                Ok(())
+            }
+
+            fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+                let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
+                vecs.extend(self.supply.par_iter_mut().collect::<Vec<_>>());
+                vecs.extend(self.outputs.par_iter_mut().collect::<Vec<_>>());
+                vecs.extend(self.activity.par_iter_mut().collect::<Vec<_>>());
+                vecs.extend(self.realized.collect_vecs_mut());
+                vecs.extend(self.cost_basis.base.collect_vecs_mut());
+                vecs.extend(self.cost_basis.extended.collect_vecs_mut());
+                vecs.extend(self.unrealized.collect_vecs_mut());
+                vecs
+            }
+        }
+    };
+
+    ($type:ident, deref_extended_cost_basis) => {
+        impl CohortMetricsBase for $type {
+            impl_cohort_metrics_base!(@deref_accessors);
+
+            fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+                self.inner.validate_computed_versions(base_version)
+            }
+
+            fn compute_then_truncate_push_unrealized_states(
+                &mut self,
+                height: Height,
+                height_price: Cents,
+                state: &mut CohortState<RealizedState>,
+                is_day_boundary: bool,
+            ) -> Result<()> {
+                self.inner.compute_then_truncate_push_unrealized_states(
+                    height, height_price, state, is_day_boundary,
+                )
+            }
+
+            fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+                self.inner.collect_all_vecs_mut()
+            }
+        }
+    };
+
+    (@accessors) => {
+        fn filter(&self) -> &Filter { &self.filter }
+        fn supply(&self) -> &SupplyMetrics { &self.supply }
+        fn supply_mut(&mut self) -> &mut SupplyMetrics { &mut self.supply }
+        fn outputs(&self) -> &OutputsMetrics { &self.outputs }
+        fn outputs_mut(&mut self) -> &mut OutputsMetrics { &mut self.outputs }
+        fn activity(&self) -> &ActivityMetrics { &self.activity }
+        fn activity_mut(&mut self) -> &mut ActivityMetrics { &mut self.activity }
+        fn realized_base(&self) -> &RealizedBase { &self.realized }
+        fn realized_base_mut(&mut self) -> &mut RealizedBase { &mut self.realized }
+        fn unrealized_base(&self) -> &UnrealizedBase { &self.unrealized }
+        fn unrealized_base_mut(&mut self) -> &mut UnrealizedBase { &mut self.unrealized }
+        fn cost_basis_base(&self) -> &CostBasisBase { &self.cost_basis }
+        fn cost_basis_base_mut(&mut self) -> &mut CostBasisBase { &mut self.cost_basis }
+    };
+
+    (@deref_accessors) => {
+        fn filter(&self) -> &Filter { self.inner.filter() }
+        fn supply(&self) -> &SupplyMetrics { self.inner.supply() }
+        fn supply_mut(&mut self) -> &mut SupplyMetrics { self.inner.supply_mut() }
+        fn outputs(&self) -> &OutputsMetrics { self.inner.outputs() }
+        fn outputs_mut(&mut self) -> &mut OutputsMetrics { self.inner.outputs_mut() }
+        fn activity(&self) -> &ActivityMetrics { self.inner.activity() }
+        fn activity_mut(&mut self) -> &mut ActivityMetrics { self.inner.activity_mut() }
+        fn realized_base(&self) -> &RealizedBase { self.inner.realized_base() }
+        fn realized_base_mut(&mut self) -> &mut RealizedBase { self.inner.realized_base_mut() }
+        fn unrealized_base(&self) -> &UnrealizedBase { self.inner.unrealized_base() }
+        fn unrealized_base_mut(&mut self) -> &mut UnrealizedBase { self.inner.unrealized_base_mut() }
+        fn cost_basis_base(&self) -> &CostBasisBase { self.inner.cost_basis_base() }
+        fn cost_basis_base_mut(&mut self) -> &mut CostBasisBase { self.inner.cost_basis_base_mut() }
+    };
+}
+
 mod cohort;
 mod config;
 mod cost_basis;
@@ -23,7 +165,7 @@ use brk_error::Result;
 use brk_types::{Cents, Height, Indexes, Version};
 use vecdb::{AnyStoredVec, Exit};
 
-use crate::{blocks, distribution::state::CohortState, prices};
+use crate::{blocks, distribution::state::{CohortState, RealizedState}, prices};
 
 pub trait CohortMetricsBase: Send + Sync {
     fn filter(&self) -> &Filter;
@@ -47,7 +189,7 @@ pub trait CohortMetricsBase: Send + Sync {
         &mut self,
         height: Height,
         height_price: Cents,
-        state: &mut CohortState,
+        state: &mut CohortState<RealizedState>,
     ) -> Result<()> {
         state.apply_pending();
         self.cost_basis_base_mut()
@@ -63,7 +205,7 @@ pub trait CohortMetricsBase: Send + Sync {
         &mut self,
         height: Height,
         height_price: Cents,
-        state: &mut CohortState,
+        state: &mut CohortState<RealizedState>,
         _is_day_boundary: bool,
     ) -> Result<()> {
         self.compute_and_push_unrealized_base(height, height_price, state)
@@ -81,7 +223,7 @@ pub trait CohortMetricsBase: Send + Sync {
             .min(self.cost_basis_base().min_stateful_height_len())
     }
 
-    fn truncate_push(&mut self, height: Height, state: &CohortState) -> Result<()> {
+    fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState>) -> Result<()> {
         self.supply_mut()
             .truncate_push(height, state.supply.value)?;
         self.outputs_mut()
@@ -97,39 +239,11 @@ pub trait CohortMetricsBase: Send + Sync {
         Ok(())
     }
 
-    /// Compute net_sentiment.height as capital-weighted average of component cohorts (same type).
-    fn compute_net_sentiment_from_others(
+    /// Compute net_sentiment.height as capital-weighted average of component cohorts.
+    fn compute_net_sentiment_from_others<T: CohortMetricsBase>(
         &mut self,
         starting_indexes: &Indexes,
-        others: &[&Self],
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        Self: Sized,
-    {
-        let weights: Vec<_> = others
-            .iter()
-            .map(|o| &o.realized_base().realized_cap.height)
-            .collect();
-        let values: Vec<_> = others
-            .iter()
-            .map(|o| &o.unrealized_base().net_sentiment.cents.height)
-            .collect();
-
-        self.unrealized_base_mut()
-            .net_sentiment
-            .cents
-            .height
-            .compute_weighted_average_of_others(starting_indexes.height, &weights, &values, exit)?;
-
-        Ok(())
-    }
-
-    /// Compute net_sentiment.height as capital-weighted average from heterogeneous sources.
-    fn compute_net_sentiment_from_others_dyn(
-        &mut self,
-        starting_indexes: &Indexes,
-        others: &[&dyn CohortMetricsBase],
+        others: &[&T],
         exit: &Exit,
     ) -> Result<()> {
         let weights: Vec<_> = others
@@ -196,17 +310,13 @@ pub trait CohortMetricsBase: Send + Sync {
         Ok(())
     }
 
-    /// Compute aggregate base metrics from heterogeneous source cohorts.
-    /// Uses only base fields (supply, outputs, activity, realized_base, unrealized_base, cost_basis_base).
-    fn compute_base_from_others(
+    /// Compute aggregate base metrics from source cohorts.
+    fn compute_base_from_others<T: CohortMetricsBase>(
         &mut self,
         starting_indexes: &Indexes,
-        others: &[&dyn CohortMetricsBase],
+        others: &[&T],
         exit: &Exit,
-    ) -> Result<()>
-    where
-        Self: Sized,
-    {
+    ) -> Result<()> {
         macro_rules! aggregate {
             ($self_mut:ident, $accessor:ident) => {
                 self.$self_mut().compute_from_stateful(

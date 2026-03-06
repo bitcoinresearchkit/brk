@@ -81,18 +81,8 @@ impl ActivityMetrics {
         self.core
             .compute_from_stateful(starting_indexes, &core_refs, exit)?;
 
-        macro_rules! sum_others {
-            ($($field:tt).+) => {
-                self.$($field).+.compute_sum_of_others(
-                    starting_indexes.height,
-                    &others.iter().map(|v| &v.$($field).+).collect::<Vec<_>>(),
-                    exit,
-                )?
-            };
-        }
-
-        sum_others!(coinblocks_destroyed.height);
-        sum_others!(coindays_destroyed.height);
+        sum_others!(self, starting_indexes, others, exit; coinblocks_destroyed.height);
+        sum_others!(self, starting_indexes, others, exit; coindays_destroyed.height);
         Ok(())
     }
 

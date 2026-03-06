@@ -4,7 +4,7 @@ use brk_types::{Cents, Height, Version};
 use vecdb::{AnyStoredVec, Rw, StorageMode};
 
 use crate::{
-    distribution::state::CohortState,
+    distribution::state::{CohortState, RealizedState},
     internal::{PERCENTILES_LEN, PercentilesVecs},
 };
 
@@ -41,7 +41,7 @@ impl CostBasisExtended {
     pub(crate) fn truncate_push_percentiles(
         &mut self,
         height: Height,
-        state: &mut CohortState,
+        state: &mut CohortState<RealizedState>,
         is_day_boundary: bool,
     ) -> Result<()> {
         let computed = if is_day_boundary {

@@ -612,10 +612,7 @@ fn gen_read_only_clone(input: &DeriveInput) -> proc_macro2::TokenStream {
         return gen_read_only_clone_for_m(name, generics, data, mode_param);
     }
 
-    // Collect generic type params that have NO trait bounds.
-    // Container types (ByDcaClass<T>, Price<U>) have unbounded params.
-    // Leaf types (LazyPercentiles<I: VecIndex, T: ComputedVecValue, ...>) have bounded params.
-    // Only generate ReadOnlyClone for container-like types (all params unbounded).
+    // Collect all generic type params.
     let type_params: Vec<&syn::TypeParam> = generics
         .params
         .iter()
@@ -629,31 +626,43 @@ fn gen_read_only_clone(input: &DeriveInput) -> proc_macro2::TokenStream {
         return quote! {};
     }
 
-    // If any type param has bounds (inline or in where clause), skip —
-    // this is a leaf/computation type, not a container.
-    if type_params.iter().any(|tp| !tp.bounds.is_empty()) {
+    // Determine which type params have bounds (inline or via where clause).
+    // Bounded params are "leaf" params — kept as-is in the ReadOnly target.
+    // Unbounded params are "container" params — mapped through ReadOnlyClone.
+    let where_bounded: Vec<&syn::Ident> = if let Some(where_clause) = &generics.where_clause {
+        where_clause
+            .predicates
+            .iter()
+            .filter_map(|pred| {
+                if let syn::WherePredicate::Type(pt) = pred
+                    && let Type::Path(tp) = &pt.bounded_ty
+                    && let Some(seg) = tp.path.segments.first()
+                {
+                    type_params
+                        .iter()
+                        .find(|p| p.ident == seg.ident)
+                        .map(|p| &p.ident)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+
+    let container_params: Vec<&syn::Ident> = type_params
+        .iter()
+        .filter(|tp| tp.bounds.is_empty() && !where_bounded.contains(&&tp.ident))
+        .map(|tp| &tp.ident)
+        .collect();
+
+    // If no container params, this is a pure leaf type — skip.
+    if container_params.is_empty() {
         return quote! {};
     }
-    // Also check where clause for bounds on any type param.
-    if let Some(where_clause) = &generics.where_clause {
-        let param_names: Vec<&syn::Ident> = type_params.iter().map(|tp| &tp.ident).collect();
-        let has_where_bounds = where_clause.predicates.iter().any(|pred| {
-            if let syn::WherePredicate::Type(pt) = pred
-                && let Type::Path(tp) = &pt.bounded_ty
-                && let Some(seg) = tp.path.segments.first()
-            {
-                return param_names.iter().any(|p| seg.ident == **p);
-            }
-            false
-        });
-        if has_where_bounds {
-            return quote! {};
-        }
-    }
 
-    let param_idents: Vec<&syn::Ident> = type_params.iter().map(|tp| &tp.ident).collect();
-
-    gen_read_only_clone_for_generics(name, generics, data, &param_idents)
+    gen_read_only_clone_for_generics(name, generics, data, &container_params)
 }
 
 /// Generate `ReadOnlyClone` for types with `M: StorageMode`.
@@ -789,33 +798,40 @@ fn is_field_skipped(field: &syn::Field) -> bool {
 
 /// Generate `ReadOnlyClone` for types with generic type params but no `M: StorageMode`.
 ///
-/// Each generic type param T gets a `ReadOnlyClone` bound.
-/// `type ReadOnly = Self<T::ReadOnly, ...>` for each type param.
-/// Fields containing any type param use `.read_only_clone()`, others use `.clone()`.
+/// `container_params` are unbounded type params that get `ReadOnlyClone` bounds and are
+/// mapped to `T::ReadOnly` in the target type.
+/// Bounded type params (leaf params) are kept as-is — they don't change across storage modes.
+/// Fields containing container params use `.read_only_clone()`, others use `.clone()`.
 fn gen_read_only_clone_for_generics(
     name: &syn::Ident,
     generics: &syn::Generics,
     data: &syn::DataStruct,
-    type_params: &[&syn::Ident],
+    container_params: &[&syn::Ident],
 ) -> proc_macro2::TokenStream {
-    // Check if any field actually references a type param (otherwise skip).
-    let has_generic_field = match &data.fields {
-        Fields::Named(named) => named
-            .named
-            .iter()
-            .any(|f| type_params.iter().any(|tp| type_contains_ident(&f.ty, tp))),
-        Fields::Unnamed(unnamed) => unnamed
-            .unnamed
-            .iter()
-            .any(|f| type_params.iter().any(|tp| type_contains_ident(&f.ty, tp))),
+    // Check if any non-skipped field references a container param (otherwise skip).
+    let has_container_field = match &data.fields {
+        Fields::Named(named) => named.named.iter().any(|f| {
+            !is_field_skipped(f)
+                && container_params
+                    .iter()
+                    .any(|tp| type_contains_ident(&f.ty, tp))
+        }),
+        Fields::Unnamed(unnamed) => unnamed.unnamed.iter().any(|f| {
+            !is_field_skipped(f)
+                && container_params
+                    .iter()
+                    .any(|tp| type_contains_ident(&f.ty, tp))
+        }),
         Fields::Unit => false,
     };
 
-    if !has_generic_field {
+    if !has_container_field {
         return quote! {};
     }
 
-    // Impl generics: add ReadOnlyClone bound to type params.
+    let is_container = |ident: &syn::Ident| container_params.iter().any(|cp| *cp == ident);
+
+    // Impl generics: add ReadOnlyClone bound to container params, keep bounds for leaf params.
     let impl_params: Vec<proc_macro2::TokenStream> = generics
         .params
         .iter()
@@ -823,10 +839,12 @@ fn gen_read_only_clone_for_generics(
             syn::GenericParam::Type(tp) => {
                 let ident = &tp.ident;
                 let bounds = &tp.bounds;
-                if bounds.is_empty() {
+                if is_container(ident) {
                     quote! { #ident: vecdb::ReadOnlyClone }
+                } else if bounds.is_empty() {
+                    quote! { #ident }
                 } else {
-                    quote! { #ident: #bounds + vecdb::ReadOnlyClone }
+                    quote! { #ident: #bounds }
                 }
             }
             syn::GenericParam::Lifetime(lt) => quote! { #lt },
@@ -858,14 +876,18 @@ fn gen_read_only_clone_for_generics(
         })
         .collect();
 
-    // ReadOnly type args: replace each type param T with <T as ReadOnlyClone>::ReadOnly.
+    // ReadOnly type args: map container params to ReadOnly, keep leaf params as-is.
     let ro_ty_args: Vec<proc_macro2::TokenStream> = generics
         .params
         .iter()
         .map(|p| match p {
             syn::GenericParam::Type(tp) => {
                 let id = &tp.ident;
-                quote! { <#id as vecdb::ReadOnlyClone>::ReadOnly }
+                if is_container(id) {
+                    quote! { <#id as vecdb::ReadOnlyClone>::ReadOnly }
+                } else {
+                    quote! { #id }
+                }
             }
             syn::GenericParam::Lifetime(lt) => {
                 let lt = &lt.lifetime;
@@ -880,9 +902,9 @@ fn gen_read_only_clone_for_generics(
 
     let where_clause = &generics.where_clause;
 
-    // Field-level: if field type contains any type param → read_only_clone, else → clone.
-    let field_contains_any_param =
-        |ty: &Type| type_params.iter().any(|tp| type_contains_ident(ty, tp));
+    // Field-level: if field type contains any container param → read_only_clone, else → clone.
+    let field_contains_container_param =
+        |ty: &Type| container_params.iter().any(|tp| type_contains_ident(ty, tp));
 
     let body = match &data.fields {
         Fields::Named(named) => {
@@ -893,7 +915,7 @@ fn gen_read_only_clone_for_generics(
                     let field_name = f.ident.as_ref().unwrap();
                     if is_field_skipped(f) {
                         quote! { #field_name: Default::default() }
-                    } else if field_contains_any_param(&f.ty) {
+                    } else if field_contains_container_param(&f.ty) {
                         if is_box_type(&f.ty) {
                             quote! { #field_name: Box::new(vecdb::ReadOnlyClone::read_only_clone(&*self.#field_name)) }
                         } else {
@@ -915,7 +937,7 @@ fn gen_read_only_clone_for_generics(
                     let idx = syn::Index::from(i);
                     if is_field_skipped(f) {
                         quote! { Default::default() }
-                    } else if field_contains_any_param(&f.ty) {
+                    } else if field_contains_container_param(&f.ty) {
                         if is_box_type(&f.ty) {
                             quote! { Box::new(vecdb::ReadOnlyClone::read_only_clone(&*self.#idx)) }
                         } else {
