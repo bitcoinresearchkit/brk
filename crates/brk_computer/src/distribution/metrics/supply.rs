@@ -24,7 +24,7 @@ pub struct SupplyMetrics<M: StorageMode = Rw> {
 impl SupplyMetrics {
     /// Import supply metrics from database.
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let supply = cfg.import_value("supply", Version::ZERO)?;
+        let supply = cfg.import("supply", Version::ZERO)?;
 
         let supply_halved = LazyValueFromHeight::from_block_source::<
             HalveSats,
@@ -33,7 +33,7 @@ impl SupplyMetrics {
             HalveDollars,
         >(&cfg.name("supply_halved"), &supply, cfg.version);
 
-        let change_1m = cfg.import_value_change("supply_change_1m", Version::ZERO)?;
+        let change_1m = cfg.import("supply_change_1m", Version::ZERO)?;
 
         Ok(Self {
             total: supply,

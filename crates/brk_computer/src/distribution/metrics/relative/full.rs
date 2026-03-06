@@ -32,11 +32,11 @@ impl RelativeFull {
 
         Ok(Self {
             base,
-            invested_capital_in_profit_rel_to_realized_cap: cfg.import_percent_bp16(
+            invested_capital_in_profit_rel_to_realized_cap: cfg.import(
                 "invested_capital_in_profit_rel_to_realized_cap",
                 Version::ZERO,
             )?,
-            invested_capital_in_loss_rel_to_realized_cap: cfg.import_percent_bp16(
+            invested_capital_in_loss_rel_to_realized_cap: cfg.import(
                 "invested_capital_in_loss_rel_to_realized_cap",
                 Version::ZERO,
             )?,

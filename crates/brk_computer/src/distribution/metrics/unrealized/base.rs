@@ -37,11 +37,11 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
 impl UnrealizedBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v0 = Version::ZERO;
-        let supply_in_profit = cfg.import_value("supply_in_profit", v0)?;
-        let supply_in_loss = cfg.import_value("supply_in_loss", v0)?;
+        let supply_in_profit = cfg.import("supply_in_profit", v0)?;
+        let supply_in_loss = cfg.import("supply_in_loss", v0)?;
 
-        let unrealized_profit = cfg.import_fiat("unrealized_profit", v0)?;
-        let unrealized_loss = cfg.import_fiat("unrealized_loss", v0)?;
+        let unrealized_profit = cfg.import("unrealized_profit", v0)?;
+        let unrealized_loss: FiatFromHeight<Cents> = cfg.import("unrealized_loss", v0)?;
 
         let neg_unrealized_loss = LazyFromHeight::from_computed::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_unrealized_loss"),
@@ -50,9 +50,9 @@ impl UnrealizedBase {
             &unrealized_loss.cents,
         );
 
-        let gross_pnl = cfg.import_fiat("unrealized_gross_pnl", v0)?;
+        let gross_pnl = cfg.import("unrealized_gross_pnl", v0)?;
 
-        let net_unrealized_pnl = cfg.import_fiat("net_unrealized_pnl", v0)?;
+        let net_unrealized_pnl = cfg.import("net_unrealized_pnl", v0)?;
 
         Ok(Self {
             supply_in_profit,

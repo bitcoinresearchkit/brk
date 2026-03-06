@@ -5,9 +5,9 @@ mod extended;
 mod extended_adjusted;
 mod minimal;
 
-pub use all::*;
-pub use basic::*;
-pub use core::*;
-pub use extended::*;
-pub use extended_adjusted::*;
-pub use minimal::*;
+pub use all::AllCohortMetrics;
+pub use basic::BasicCohortMetrics;
+pub use core::CoreCohortMetrics;
+pub use extended::ExtendedCohortMetrics;
+pub use extended_adjusted::ExtendedAdjustedCohortMetrics;
+pub use minimal::MinimalCohortMetrics;

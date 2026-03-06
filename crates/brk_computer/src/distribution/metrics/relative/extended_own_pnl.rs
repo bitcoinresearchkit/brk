@@ -24,13 +24,13 @@ impl RelativeExtendedOwnPnl {
 
         Ok(Self {
             unrealized_profit_rel_to_own_gross_pnl: cfg
-                .import_percent_bp16("unrealized_profit_rel_to_own_gross_pnl", v1)?,
+                .import("unrealized_profit_rel_to_own_gross_pnl", v1)?,
             unrealized_loss_rel_to_own_gross_pnl: cfg
-                .import_percent_bp16("unrealized_loss_rel_to_own_gross_pnl", v1)?,
+                .import("unrealized_loss_rel_to_own_gross_pnl", v1)?,
             neg_unrealized_loss_rel_to_own_gross_pnl: cfg
-                .import_percent_bps32("neg_unrealized_loss_rel_to_own_gross_pnl", Version::new(2))?,
+                .import("neg_unrealized_loss_rel_to_own_gross_pnl", Version::new(2))?,
             net_unrealized_pnl_rel_to_own_gross_pnl: cfg
-                .import_percent_bps32("net_unrealized_pnl_rel_to_own_gross_pnl", Version::new(3))?,
+                .import("net_unrealized_pnl_rel_to_own_gross_pnl", Version::new(3))?,
         })
     }
 

@@ -47,18 +47,18 @@ impl UnrealizedFull {
 
         let base = UnrealizedBase::forced_import(cfg)?;
 
-        let invested_capital_in_profit = cfg.import_fiat("invested_capital_in_profit", v0)?;
-        let invested_capital_in_loss = cfg.import_fiat("invested_capital_in_loss", v0)?;
+        let invested_capital_in_profit = cfg.import("invested_capital_in_profit", v0)?;
+        let invested_capital_in_loss = cfg.import("invested_capital_in_loss", v0)?;
 
         let invested_capital_in_profit_raw =
-            cfg.import_bytes("invested_capital_in_profit_raw", v0)?;
-        let invested_capital_in_loss_raw = cfg.import_bytes("invested_capital_in_loss_raw", v0)?;
-        let investor_cap_in_profit_raw = cfg.import_bytes("investor_cap_in_profit_raw", v0)?;
-        let investor_cap_in_loss_raw = cfg.import_bytes("investor_cap_in_loss_raw", v0)?;
+            cfg.import("invested_capital_in_profit_raw", v0)?;
+        let invested_capital_in_loss_raw = cfg.import("invested_capital_in_loss_raw", v0)?;
+        let investor_cap_in_profit_raw = cfg.import("investor_cap_in_profit_raw", v0)?;
+        let investor_cap_in_loss_raw = cfg.import("investor_cap_in_loss_raw", v0)?;
 
-        let pain_index = cfg.import_fiat("pain_index", v0)?;
-        let greed_index = cfg.import_fiat("greed_index", v0)?;
-        let net_sentiment = cfg.import_fiat("net_sentiment", Version::ONE)?;
+        let pain_index = cfg.import("pain_index", v0)?;
+        let greed_index = cfg.import("greed_index", v0)?;
+        let net_sentiment = cfg.import("net_sentiment", Version::ONE)?;
 
         Ok(Self {
             base,

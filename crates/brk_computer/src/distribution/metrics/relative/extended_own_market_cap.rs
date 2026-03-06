@@ -24,13 +24,13 @@ impl RelativeExtendedOwnMarketCap {
 
         Ok(Self {
             unrealized_profit_rel_to_own_market_cap: cfg
-                .import_percent_bp16("unrealized_profit_rel_to_own_market_cap", v2)?,
+                .import("unrealized_profit_rel_to_own_market_cap", v2)?,
             unrealized_loss_rel_to_own_market_cap: cfg
-                .import_percent_bp32("unrealized_loss_rel_to_own_market_cap", Version::new(3))?,
+                .import("unrealized_loss_rel_to_own_market_cap", Version::new(3))?,
             neg_unrealized_loss_rel_to_own_market_cap: cfg
-                .import_percent_bps32("neg_unrealized_loss_rel_to_own_market_cap", Version::new(3))?,
+                .import("neg_unrealized_loss_rel_to_own_market_cap", Version::new(3))?,
             net_unrealized_pnl_rel_to_own_market_cap: cfg
-                .import_percent_bps32("net_unrealized_pnl_rel_to_own_market_cap", Version::new(3))?,
+                .import("net_unrealized_pnl_rel_to_own_market_cap", Version::new(3))?,
         })
     }
 

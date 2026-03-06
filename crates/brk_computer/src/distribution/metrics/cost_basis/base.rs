@@ -23,8 +23,8 @@ pub struct CostBasisBase<M: StorageMode = Rw> {
 impl CostBasisBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            min: cfg.import_price("cost_basis_min", Version::ZERO)?,
-            max: cfg.import_price("cost_basis_max", Version::ZERO)?,
+            min: cfg.import("cost_basis_min", Version::ZERO)?,
+            max: cfg.import("cost_basis_max", Version::ZERO)?,
         })
     }
 

@@ -18,8 +18,8 @@ impl OutputsMetrics {
     /// Import output metrics from database.
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            utxo_count: cfg.import_computed("utxo_count", Version::ZERO)?,
-            utxo_count_change_1m: cfg.import_computed("utxo_count_change_1m", Version::ZERO)?,
+            utxo_count: cfg.import("utxo_count", Version::ZERO)?,
+            utxo_count_change_1m: cfg.import("utxo_count_change_1m", Version::ZERO)?,
         })
     }
 

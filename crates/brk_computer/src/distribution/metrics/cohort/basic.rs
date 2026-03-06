@@ -1,13 +1,13 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Indexes, Sats};
-use vecdb::{Exit, ReadableVec, Rw, StorageMode};
+use brk_types::{Dollars, Height, Indexes, Sats, Version};
+use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ActivityFull, CostBasisBase, ImportConfig, OutputsMetrics, RealizedBase,
+    ActivityFull, CohortMetricsBase, CostBasisBase, ImportConfig, OutputsMetrics, RealizedBase,
     RelativeWithRelToAll, SupplyMetrics, UnrealizedFull,
 };
 
@@ -26,7 +26,26 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     pub relative: Box<RelativeWithRelToAll<M>>,
 }
 
-impl_cohort_metrics_base!(BasicCohortMetrics, base_cost_basis);
+impl CohortMetricsBase for BasicCohortMetrics {
+    impl_cohort_metrics_base!(@accessors);
+
+    fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+        self.supply.validate_computed_versions(base_version)?;
+        self.activity.validate_computed_versions(base_version)?;
+        Ok(())
+    }
+
+    fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
+        vecs.extend(self.supply.collect_vecs_mut());
+        vecs.extend(self.outputs.collect_vecs_mut());
+        vecs.extend(self.activity.collect_vecs_mut());
+        vecs.extend(self.realized.collect_vecs_mut());
+        vecs.extend(self.cost_basis.collect_vecs_mut());
+        vecs.extend(self.unrealized.collect_vecs_mut());
+        vecs
+    }
+}
 
 impl BasicCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {

@@ -52,8 +52,8 @@ pub struct MinimalCohortMetrics<M: StorageMode = Rw> {
 impl MinimalUnrealized {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            supply_in_profit: cfg.import_value("supply_in_profit", Version::ZERO)?,
-            supply_in_loss: cfg.import_value("supply_in_loss", Version::ZERO)?,
+            supply_in_profit: cfg.import("supply_in_profit", Version::ZERO)?,
+            supply_in_loss: cfg.import("supply_in_loss", Version::ZERO)?,
         })
     }
 
@@ -117,9 +117,9 @@ impl MinimalRelative {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             supply_in_profit_rel_to_own_supply: cfg
-                .import_percent_bp16("supply_in_profit_rel_to_own_supply", Version::ONE)?,
+                .import("supply_in_profit_rel_to_own_supply", Version::ONE)?,
             supply_in_loss_rel_to_own_supply: cfg
-                .import_percent_bp16("supply_in_loss_rel_to_own_supply", Version::ONE)?,
+                .import("supply_in_loss_rel_to_own_supply", Version::ONE)?,
         })
     }
 

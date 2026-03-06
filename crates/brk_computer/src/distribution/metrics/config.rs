@@ -1,6 +1,8 @@
 use brk_cohort::Filter;
 use brk_error::Result;
-use brk_types::{BasisPoints16, BasisPoints32, BasisPointsSigned32, Cents, Height, Version};
+use brk_types::{
+    BasisPoints16, BasisPoints32, BasisPointsSigned32, Cents, Height, Version,
+};
 use schemars::JsonSchema;
 use vecdb::{BytesVec, BytesVecValue, Database, ImportableVec};
 
@@ -14,6 +16,80 @@ use crate::{
         ValueFromHeightCumulative,
     },
 };
+
+/// Trait for types importable via `ImportConfig::import`.
+pub(crate) trait ConfigImport: Sized {
+    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self>;
+}
+
+/// Implement `ConfigImport` for types whose `forced_import` takes `(db, name, version, indexes)`.
+macro_rules! impl_config_import {
+    ($($type:ty),+ $(,)?) => {
+        $(
+            impl ConfigImport for $type {
+                fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
+                    Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
+                }
+            }
+        )+
+    };
+}
+
+// Non-generic types
+impl_config_import!(
+    ValueFromHeight,
+    ValueFromHeightCumulative,
+    ValueFromHeightChange,
+    ComputedFromHeightRatio,
+    RollingEmas2w,
+    PercentFromHeight<BasisPoints16>,
+    PercentFromHeight<BasisPoints32>,
+    PercentFromHeight<BasisPointsSigned32>,
+    PercentRollingWindows<BasisPoints32>,
+    PercentRollingEmas1w1m<BasisPoints32>,
+    Price<ComputedFromHeight<Cents>>,
+);
+
+// Generic types (macro_rules can't parse generic bounds, so written out)
+impl<T: NumericValue + JsonSchema> ConfigImport for ComputedFromHeight<T> {
+    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
+        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
+    }
+}
+impl<T: NumericValue + JsonSchema> ConfigImport for ComputedFromHeightCumulative<T> {
+    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
+        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
+    }
+}
+impl<T: NumericValue + JsonSchema> ConfigImport for ComputedFromHeightCumulativeSum<T> {
+    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
+        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
+    }
+}
+impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindows<T> {
+    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
+        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
+    }
+}
+impl<T: NumericValue + JsonSchema> ConfigImport for RollingEmas1w1m<T> {
+    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
+        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
+    }
+}
+impl<C: CentsType> ConfigImport for FiatFromHeight<C> {
+    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
+        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
+    }
+}
+impl<T: BytesVecValue> ConfigImport for BytesVec<Height, T> {
+    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
+        Ok(Self::forced_import(
+            cfg.db,
+            &cfg.name(suffix),
+            cfg.version + offset,
+        )?)
+    }
+}
 
 #[derive(Clone, Copy)]
 pub struct ImportConfig<'a> {
@@ -35,228 +111,11 @@ impl<'a> ImportConfig<'a> {
         }
     }
 
-    pub(crate) fn import_computed<T: NumericValue + JsonSchema>(
+    pub(crate) fn import<T: ConfigImport>(
         &self,
         suffix: &str,
         offset: Version,
-    ) -> Result<ComputedFromHeight<T>> {
-        ComputedFromHeight::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_cumulative<T: NumericValue + JsonSchema>(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<ComputedFromHeightCumulative<T>> {
-        ComputedFromHeightCumulative::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_cumulative_sum<T: NumericValue + JsonSchema>(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<ComputedFromHeightCumulativeSum<T>> {
-        ComputedFromHeightCumulativeSum::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_percent_bp16(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<PercentFromHeight<BasisPoints16>> {
-        PercentFromHeight::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_percent_bps32(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<PercentFromHeight<BasisPointsSigned32>> {
-        PercentFromHeight::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_fiat<C: CentsType>(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<FiatFromHeight<C>> {
-        FiatFromHeight::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_value(&self, suffix: &str, offset: Version) -> Result<ValueFromHeight> {
-        ValueFromHeight::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_value_cumulative(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<ValueFromHeightCumulative> {
-        ValueFromHeightCumulative::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_value_change(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<ValueFromHeightChange> {
-        ValueFromHeightChange::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_price(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<Price<ComputedFromHeight<Cents>>> {
-        Price::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_ratio(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<ComputedFromHeightRatio> {
-        ComputedFromHeightRatio::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_bytes<T: BytesVecValue>(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<BytesVec<Height, T>> {
-        Ok(BytesVec::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-        )?)
-    }
-
-    pub(crate) fn import_rolling<T: NumericValue + JsonSchema>(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<RollingWindows<T>> {
-        RollingWindows::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_percent_bp32(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<PercentFromHeight<BasisPoints32>> {
-        PercentFromHeight::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_percent_rolling_bp32(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<PercentRollingWindows<BasisPoints32>> {
-        PercentRollingWindows::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_emas_1w_1m<T: NumericValue + JsonSchema>(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<RollingEmas1w1m<T>> {
-        RollingEmas1w1m::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_percent_emas_1w_1m_bp32(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<PercentRollingEmas1w1m<BasisPoints32>> {
-        PercentRollingEmas1w1m::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
-    }
-
-    pub(crate) fn import_emas_2w(&self, suffix: &str, offset: Version) -> Result<RollingEmas2w> {
-        RollingEmas2w::forced_import(
-            self.db,
-            &self.name(suffix),
-            self.version + offset,
-            self.indexes,
-        )
+    ) -> Result<T> {
+        T::config_import(self, suffix, offset)
     }
 }

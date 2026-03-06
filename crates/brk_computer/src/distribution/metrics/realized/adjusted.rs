@@ -25,15 +25,15 @@ pub struct RealizedAdjusted<M: StorageMode = Rw> {
 impl RealizedAdjusted {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(RealizedAdjusted {
-            adjusted_value_created: cfg.import_computed("adjusted_value_created", Version::ZERO)?,
+            adjusted_value_created: cfg.import("adjusted_value_created", Version::ZERO)?,
             adjusted_value_destroyed: cfg
-                .import_computed("adjusted_value_destroyed", Version::ZERO)?,
+                .import("adjusted_value_destroyed", Version::ZERO)?,
             adjusted_value_created_sum: cfg
-                .import_rolling("adjusted_value_created", Version::ONE)?,
+                .import("adjusted_value_created", Version::ONE)?,
             adjusted_value_destroyed_sum: cfg
-                .import_rolling("adjusted_value_destroyed", Version::ONE)?,
-            adjusted_sopr: cfg.import_rolling("adjusted_sopr", Version::ONE)?,
-            adjusted_sopr_ema: cfg.import_emas_1w_1m("adjusted_sopr_24h", Version::ONE)?,
+                .import("adjusted_value_destroyed", Version::ONE)?,
+            adjusted_sopr: cfg.import("adjusted_sopr", Version::ONE)?,
+            adjusted_sopr_ema: cfg.import("adjusted_sopr_24h", Version::ONE)?,
         })
     }
 

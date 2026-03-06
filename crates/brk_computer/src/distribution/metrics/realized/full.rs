@@ -82,10 +82,12 @@ impl RealizedFull {
 
         let core = RealizedBase::forced_import(cfg)?;
 
-        let profit_value_created = cfg.import_computed("profit_value_created", v0)?;
-        let profit_value_destroyed = cfg.import_computed("profit_value_destroyed", v0)?;
-        let loss_value_created = cfg.import_computed("loss_value_created", v0)?;
-        let loss_value_destroyed = cfg.import_computed("loss_value_destroyed", v0)?;
+        let profit_value_created = cfg.import("profit_value_created", v0)?;
+        let profit_value_destroyed: ComputedFromHeight<Cents> =
+            cfg.import("profit_value_destroyed", v0)?;
+        let loss_value_created = cfg.import("loss_value_created", v0)?;
+        let loss_value_destroyed: ComputedFromHeight<Cents> =
+            cfg.import("loss_value_destroyed", v0)?;
 
         let capitulation_flow = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("capitulation_flow"),
@@ -100,24 +102,24 @@ impl RealizedFull {
             &profit_value_destroyed,
         );
 
-        let gross_pnl_sum = cfg.import_rolling("gross_pnl_sum", Version::ONE)?;
+        let gross_pnl_sum = cfg.import("gross_pnl_sum", Version::ONE)?;
 
-        let investor_price = cfg.import_price("investor_price", v0)?;
-        let investor_price_ratio = cfg.import_ratio("investor_price", v0)?;
-        let lower_price_band = cfg.import_price("lower_price_band", v0)?;
-        let upper_price_band = cfg.import_price("upper_price_band", v0)?;
+        let investor_price = cfg.import("investor_price", v0)?;
+        let investor_price_ratio = cfg.import("investor_price", v0)?;
+        let lower_price_band = cfg.import("lower_price_band", v0)?;
+        let upper_price_band = cfg.import("upper_price_band", v0)?;
 
-        let cap_raw = cfg.import_bytes("cap_raw", v0)?;
-        let investor_cap_raw = cfg.import_bytes("investor_cap_raw", v0)?;
+        let cap_raw = cfg.import("cap_raw", v0)?;
+        let investor_cap_raw = cfg.import("investor_cap_raw", v0)?;
 
         let sell_side_risk_ratio =
-            cfg.import_percent_rolling_bp32("sell_side_risk_ratio", Version::new(2))?;
+            cfg.import("sell_side_risk_ratio", Version::new(2))?;
         let sell_side_risk_ratio_24h_ema =
-            cfg.import_percent_emas_1w_1m_bp32("sell_side_risk_ratio_24h", Version::new(2))?;
+            cfg.import("sell_side_risk_ratio_24h", Version::new(2))?;
 
-        let peak_regret = cfg.import_cumulative("realized_peak_regret", Version::new(2))?;
+        let peak_regret = cfg.import("realized_peak_regret", Version::new(2))?;
         let peak_regret_rel_to_realized_cap =
-            cfg.import_percent_bp32("realized_peak_regret_rel_to_realized_cap", Version::new(2))?;
+            cfg.import("realized_peak_regret_rel_to_realized_cap", Version::new(2))?;
 
         let realized_price_name = cfg.name("realized_price");
         let realized_price_version = cfg.version + v1;
@@ -133,11 +135,11 @@ impl RealizedFull {
             capitulation_flow,
             profit_flow,
             gross_pnl_sum,
-            net_pnl_change_1m: cfg.import_computed("net_pnl_change_1m", Version::new(3))?,
+            net_pnl_change_1m: cfg.import("net_pnl_change_1m", Version::new(3))?,
             net_pnl_change_1m_rel_to_realized_cap: cfg
-                .import_percent_bps32("net_pnl_change_1m_rel_to_realized_cap", Version::new(4))?,
+                .import("net_pnl_change_1m_rel_to_realized_cap", Version::new(4))?,
             net_pnl_change_1m_rel_to_market_cap: cfg
-                .import_percent_bps32("net_pnl_change_1m_rel_to_market_cap", Version::new(4))?,
+                .import("net_pnl_change_1m_rel_to_market_cap", Version::new(4))?,
             investor_price,
             investor_price_ratio,
             lower_price_band,
@@ -149,11 +151,11 @@ impl RealizedFull {
             peak_regret,
             peak_regret_rel_to_realized_cap,
             realized_cap_rel_to_own_market_cap: cfg
-                .import_percent_bp32("realized_cap_rel_to_own_market_cap", v1)?,
-            realized_profit_sum: cfg.import_rolling("realized_profit", v1)?,
-            realized_loss_sum: cfg.import_rolling("realized_loss", v1)?,
+                .import("realized_cap_rel_to_own_market_cap", v1)?,
+            realized_profit_sum: cfg.import("realized_profit", v1)?,
+            realized_loss_sum: cfg.import("realized_loss", v1)?,
             realized_profit_to_loss_ratio: cfg
-                .import_rolling("realized_profit_to_loss_ratio", v1)?,
+                .import("realized_profit_to_loss_ratio", v1)?,
             realized_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands::forced_import(
                 cfg.db,
                 &realized_price_name,

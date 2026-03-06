@@ -1,5 +1,5 @@
 mod base;
 mod full;
 
-pub use base::*;
-pub use full::*;
+pub use base::ActivityBase;
+pub use full::ActivityFull;

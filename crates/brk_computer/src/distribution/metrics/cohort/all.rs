@@ -59,8 +59,8 @@ impl AllCohortMetrics {
             unrealized: Box::new(unrealized),
             adjusted: Box::new(adjusted),
             relative: Box::new(relative),
-            dormancy: cfg.import_computed("dormancy", Version::ONE)?,
-            velocity: cfg.import_computed("velocity", Version::ONE)?,
+            dormancy: cfg.import("dormancy", Version::ONE)?,
+            velocity: cfg.import("velocity", Version::ONE)?,
         })
     }
 

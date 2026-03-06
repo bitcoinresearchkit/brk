@@ -26,8 +26,8 @@ impl ActivityFull {
         Ok(Self {
             base: ActivityBase::forced_import(cfg)?,
             coinblocks_destroyed: cfg
-                .import_cumulative_sum("coinblocks_destroyed", Version::ONE)?,
-            coindays_destroyed: cfg.import_cumulative_sum("coindays_destroyed", Version::ONE)?,
+                .import("coinblocks_destroyed", Version::ONE)?,
+            coindays_destroyed: cfg.import("coindays_destroyed", Version::ONE)?,
         })
     }
 

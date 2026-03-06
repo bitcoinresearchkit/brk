@@ -16,8 +16,8 @@ pub struct ActivityBase<M: StorageMode = Rw> {
 impl ActivityBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            sent: cfg.import_value_cumulative("sent", Version::ZERO)?,
-            sent_ema: cfg.import_emas_2w("sent", Version::ZERO)?,
+            sent: cfg.import("sent", Version::ZERO)?,
+            sent_ema: cfg.import("sent", Version::ZERO)?,
         })
     }
 

@@ -19,11 +19,11 @@ impl RelativeToAll {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             supply_rel_to_circulating_supply: cfg
-                .import_percent_bp16("supply_rel_to_circulating_supply", Version::ONE)?,
+                .import("supply_rel_to_circulating_supply", Version::ONE)?,
             supply_in_profit_rel_to_circulating_supply: cfg
-                .import_percent_bp16("supply_in_profit_rel_to_circulating_supply", Version::ONE)?,
+                .import("supply_in_profit_rel_to_circulating_supply", Version::ONE)?,
             supply_in_loss_rel_to_circulating_supply: cfg
-                .import_percent_bp16("supply_in_loss_rel_to_circulating_supply", Version::ONE)?,
+                .import("supply_in_loss_rel_to_circulating_supply", Version::ONE)?,
         })
     }
 

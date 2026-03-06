@@ -13,36 +13,14 @@ mod activity;
 
 /// DRY macro for `CohortMetricsBase` impl on cohort metric types.
 ///
-/// All types share the same 13 accessor methods and common `collect_all_vecs_mut` shape.
-/// Two variants handle the cost basis difference:
+/// Two variants handle extended cost basis types that need direct field access
+/// (bypassing Deref to call methods on concrete `RealizedFull`):
 ///
-/// - `base_cost_basis`: `CostBasisBase` only (no percentiles, no cost_basis version check)
 /// - `extended_cost_basis`: `CostBasisWithExtended` (percentiles + cost_basis version check)
 /// - `deref_extended_cost_basis`: Deref wrapper delegating to `self.inner` (avoids DerefMut borrow conflicts)
+///
+/// The `@accessors` helper is also used directly by `BasicCohortMetrics`.
 macro_rules! impl_cohort_metrics_base {
-    ($type:ident, base_cost_basis) => {
-        impl $crate::distribution::metrics::CohortMetricsBase for $type {
-            impl_cohort_metrics_base!(@accessors);
-
-            fn validate_computed_versions(&mut self, base_version: brk_types::Version) -> brk_error::Result<()> {
-                self.supply.validate_computed_versions(base_version)?;
-                self.activity.validate_computed_versions(base_version)?;
-                Ok(())
-            }
-
-            fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn vecdb::AnyStoredVec> {
-                let mut vecs: Vec<&mut dyn vecdb::AnyStoredVec> = Vec::new();
-                vecs.extend(self.supply.collect_vecs_mut());
-                vecs.extend(self.outputs.collect_vecs_mut());
-                vecs.extend(self.activity.collect_vecs_mut());
-                vecs.extend(self.realized.collect_vecs_mut());
-                vecs.extend(self.cost_basis.collect_vecs_mut());
-                vecs.extend(self.unrealized.collect_vecs_mut());
-                vecs
-            }
-        }
-    };
-
     ($type:ident, extended_cost_basis) => {
         impl $crate::distribution::metrics::CohortMetricsBase for $type {
             impl_cohort_metrics_base!(@accessors);
@@ -280,15 +258,20 @@ mod relative;
 mod supply;
 mod unrealized;
 
-pub use activity::*;
-pub use cohort::*;
-pub use config::*;
-pub use cost_basis::*;
-pub use outputs::*;
-pub use realized::*;
-pub use relative::*;
-pub use supply::*;
-pub use unrealized::*;
+pub use activity::{ActivityBase, ActivityFull};
+pub use cohort::{
+    AllCohortMetrics, BasicCohortMetrics, CoreCohortMetrics, ExtendedAdjustedCohortMetrics,
+    ExtendedCohortMetrics, MinimalCohortMetrics,
+};
+pub use config::ImportConfig;
+pub use cost_basis::{CostBasisBase, CostBasisExtended, CostBasisWithExtended};
+pub use outputs::OutputsMetrics;
+pub use realized::{RealizedAdjusted, RealizedBase, RealizedFull, RealizedMinimal};
+pub use relative::{
+    RelativeBaseWithRelToAll, RelativeForAll, RelativeWithExtended, RelativeWithRelToAll,
+};
+pub use supply::SupplyMetrics;
+pub use unrealized::{UnrealizedBase, UnrealizedFull};
 
 use brk_cohort::Filter;
 use brk_error::Result;

@@ -30,8 +30,8 @@ impl RelativeBase {
         let v1 = Version::ONE;
         let v2 = Version::new(2);
 
-        let net_unrealized_pnl_rel_to_market_cap =
-            cfg.import_percent_bps32("net_unrealized_pnl_rel_to_market_cap", Version::new(3))?;
+        let net_unrealized_pnl_rel_to_market_cap: PercentFromHeight<BasisPointsSigned32> =
+            cfg.import("net_unrealized_pnl_rel_to_market_cap", Version::new(3))?;
 
         let nupl = LazyFromHeight::from_computed::<Bps32ToFloat>(
             &cfg.name("nupl"),
@@ -45,16 +45,16 @@ impl RelativeBase {
 
         Ok(Self {
             supply_in_profit_rel_to_own_supply: cfg
-                .import_percent_bp16("supply_in_profit_rel_to_own_supply", v1)?,
+                .import("supply_in_profit_rel_to_own_supply", v1)?,
             supply_in_loss_rel_to_own_supply: cfg
-                .import_percent_bp16("supply_in_loss_rel_to_own_supply", v1)?,
+                .import("supply_in_loss_rel_to_own_supply", v1)?,
             unrealized_profit_rel_to_market_cap: cfg
-                .import_percent_bp16("unrealized_profit_rel_to_market_cap", v2)?,
+                .import("unrealized_profit_rel_to_market_cap", v2)?,
             unrealized_loss_rel_to_market_cap: cfg
-                .import_percent_bp16("unrealized_loss_rel_to_market_cap", v2)?,
+                .import("unrealized_loss_rel_to_market_cap", v2)?,
             net_unrealized_pnl_rel_to_market_cap,
             neg_unrealized_loss_rel_to_market_cap: cfg
-                .import_percent_bps32("neg_unrealized_loss_rel_to_market_cap", Version::new(3))?,
+                .import("neg_unrealized_loss_rel_to_market_cap", Version::new(3))?,
             nupl,
         })
     }

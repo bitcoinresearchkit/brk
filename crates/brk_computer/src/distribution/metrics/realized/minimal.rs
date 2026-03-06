@@ -29,7 +29,8 @@ pub struct RealizedMinimal<M: StorageMode = Rw> {
 
 impl RealizedMinimal {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let realized_cap_cents = cfg.import_computed("realized_cap_cents", Version::ZERO)?;
+        let realized_cap_cents: ComputedFromHeight<Cents> =
+            cfg.import("realized_cap_cents", Version::ZERO)?;
         let realized_cap = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("realized_cap"),
             cfg.version,
@@ -37,11 +38,12 @@ impl RealizedMinimal {
             &realized_cap_cents,
         );
 
-        let realized_profit = cfg.import_cumulative("realized_profit", Version::ZERO)?;
-        let realized_loss = cfg.import_cumulative("realized_loss", Version::ZERO)?;
+        let realized_profit = cfg.import("realized_profit", Version::ZERO)?;
+        let realized_loss = cfg.import("realized_loss", Version::ZERO)?;
 
-        let realized_price = cfg.import_price("realized_price", Version::ONE)?;
-        let realized_price_ratio = cfg.import_ratio("realized_price", Version::ONE)?;
+        let realized_price = cfg.import("realized_price", Version::ONE)?;
+        let realized_price_ratio: ComputedFromHeightRatio =
+            cfg.import("realized_price", Version::ONE)?;
         let mvrv = LazyFromHeight::from_lazy::<Identity<StoredF32>, BasisPoints32>(
             &cfg.name("mvrv"),
             cfg.version,
