@@ -8,7 +8,7 @@ use crate::{
     internal::{BpsType, WindowStarts},
 };
 
-use super::{ComputedFromHeightDistribution, LazyFromHeight};
+use crate::internal::{ComputedFromHeightDistribution, LazyFromHeight};
 
 /// Like PercentFromHeight but with rolling distribution stats on the bps data.
 #[derive(Traversable)]

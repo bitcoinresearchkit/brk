@@ -6,8 +6,8 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 use crate::{
     blocks,
     internal::{
-        ComputedFromHeightRatioFull, PercentFromHeight, RatioCents64, RatioDollarsBp32,
-        RollingWindows,
+        ComputedFromHeightRatioPercentiles, ComputedFromHeightRatioStdDevBands,
+        PercentFromHeight, RatioCents64, RatioDollarsBp32, RollingWindows,
     },
     prices,
 };
@@ -25,12 +25,19 @@ pub struct RealizedExtended<M: StorageMode = Rw> {
 
     pub realized_profit_to_loss_ratio: RollingWindows<StoredF64, M>,
 
-    pub realized_price_ratio: ComputedFromHeightRatioFull<M>,
-    pub investor_price_ratio: ComputedFromHeightRatioFull<M>,
+    pub realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
+    pub realized_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands<M>,
+    pub investor_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
+    pub investor_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands<M>,
 }
 
 impl RealizedExtended {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
+        let realized_price_name = cfg.name("realized_price");
+        let realized_price_version = cfg.version + Version::ONE;
+        let investor_price_name = cfg.name("investor_price");
+        let investor_price_version = cfg.version;
+
         Ok(RealizedExtended {
             realized_cap_rel_to_own_market_cap: cfg
                 .import_percent_bp32("realized_cap_rel_to_own_market_cap", Version::ONE)?,
@@ -38,16 +45,28 @@ impl RealizedExtended {
             realized_loss_sum: cfg.import_rolling("realized_loss", Version::ONE)?,
             realized_profit_to_loss_ratio: cfg
                 .import_rolling("realized_profit_to_loss_ratio", Version::ONE)?,
-            realized_price_ratio: ComputedFromHeightRatioFull::forced_import(
+            realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles::forced_import(
                 cfg.db,
-                &cfg.name("realized_price"),
-                cfg.version + Version::ONE,
+                &realized_price_name,
+                realized_price_version,
                 cfg.indexes,
             )?,
-            investor_price_ratio: ComputedFromHeightRatioFull::forced_import(
+            realized_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands::forced_import(
                 cfg.db,
-                &cfg.name("investor_price"),
-                cfg.version,
+                &realized_price_name,
+                realized_price_version,
+                cfg.indexes,
+            )?,
+            investor_price_ratio_percentiles: ComputedFromHeightRatioPercentiles::forced_import(
+                cfg.db,
+                &investor_price_name,
+                investor_price_version,
+                cfg.indexes,
+            )?,
+            investor_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands::forced_import(
+                cfg.db,
+                &investor_price_name,
+                investor_price_version,
                 cfg.indexes,
             )?,
         })
@@ -102,22 +121,38 @@ impl RealizedExtended {
             )?;
         }
 
-        // Realized price: ratio + percentiles + stddev bands
-        self.realized_price_ratio.compute_rest(
+        // Realized price: percentiles + stddev bands
+        let realized_price = &base.realized_price.cents.height;
+        self.realized_price_ratio_percentiles.compute(
             blocks,
-            prices,
             starting_indexes,
             exit,
-            &base.realized_price.cents.height,
+            &base.realized_price_ratio.ratio.height,
+            realized_price,
+        )?;
+        self.realized_price_ratio_std_dev.compute(
+            blocks,
+            starting_indexes,
+            exit,
+            &base.realized_price_ratio.ratio.height,
+            realized_price,
         )?;
 
-        // Investor price: ratio + percentiles + stddev bands
-        self.investor_price_ratio.compute_rest(
+        // Investor price: percentiles + stddev bands
+        let investor_price = &base.investor_price.cents.height;
+        self.investor_price_ratio_percentiles.compute(
             blocks,
-            prices,
             starting_indexes,
             exit,
-            &base.investor_price.cents.height,
+            &base.investor_price_ratio.ratio.height,
+            investor_price,
+        )?;
+        self.investor_price_ratio_std_dev.compute(
+            blocks,
+            starting_indexes,
+            exit,
+            &base.investor_price_ratio.ratio.height,
+            investor_price,
         )?;
 
         Ok(())

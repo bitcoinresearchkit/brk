@@ -10,7 +10,7 @@ use crate::{
     internal::{BpsType, ComputeDrawdown},
 };
 
-use super::{ComputedFromHeight, LazyFromHeight};
+use crate::internal::{ComputedFromHeight, LazyFromHeight};
 
 /// Basis-point storage with both ratio and percentage float views.
 ///
