@@ -7,7 +7,7 @@ use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ActivityCore, RealizedCore, ImportConfig, OutputsMetrics,
+    ActivityCore, CohortMetricsBase, RealizedCore, ImportConfig, OutputsMetrics,
     RelativeCompleteWithRelToAll, SupplyMetrics, UnrealizedComplete,
 };
 
@@ -61,35 +61,36 @@ impl CoreCohortMetrics {
         vecs
     }
 
-    pub(crate) fn compute_from_sources(
+    /// Aggregate Core-tier fields from CohortMetricsBase sources (e.g. age_range → max_age/min_age).
+    pub(crate) fn compute_from_base_sources<T: CohortMetricsBase>(
         &mut self,
         starting_indexes: &Indexes,
-        others: &[&CoreCohortMetrics],
+        others: &[&T],
         exit: &Exit,
     ) -> Result<()> {
         self.supply.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.supply.as_ref()).collect::<Vec<_>>(),
+            &others.iter().map(|v| v.supply()).collect::<Vec<_>>(),
             exit,
         )?;
         self.outputs.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.outputs.as_ref()).collect::<Vec<_>>(),
+            &others.iter().map(|v| v.outputs()).collect::<Vec<_>>(),
             exit,
         )?;
         self.activity.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.activity.as_ref()).collect::<Vec<_>>(),
+            &others.iter().map(|v| &v.activity().core).collect::<Vec<_>>(),
             exit,
         )?;
         self.realized.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.realized.as_ref()).collect::<Vec<_>>(),
+            &others.iter().map(|v| &v.realized_full().core).collect::<Vec<_>>(),
             exit,
         )?;
         self.unrealized.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.unrealized.as_ref()).collect::<Vec<_>>(),
+            &others.iter().map(|v| &v.unrealized_full().complete).collect::<Vec<_>>(),
             exit,
         )?;
 

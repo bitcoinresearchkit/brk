@@ -3,19 +3,19 @@ use std::path::Path;
 use brk_cohort::{CohortContext, Filter, Filtered};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, Indexes, Sats, StoredF64, StoredU64, Version};
+use brk_types::{Cents, Height, Indexes, StoredF64, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
     blocks,
-    distribution::state::{AddressCohortState, CoreRealizedState},
+    distribution::state::{AddressCohortState, MinimalRealizedState},
     indexes,
     internal::ComputedFromHeight,
     prices,
 };
 
-use crate::distribution::metrics::{CoreCohortMetrics, ImportConfig};
+use crate::distribution::metrics::{ImportConfig, MinimalCohortMetrics};
 
 use super::super::traits::{CohortVecs, DynCohortVecs};
 #[derive(Traversable)]
@@ -23,10 +23,10 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
     starting_height: Option<Height>,
 
     #[traversable(skip)]
-    pub state: Option<Box<AddressCohortState<CoreRealizedState>>>,
+    pub state: Option<Box<AddressCohortState<MinimalRealizedState>>>,
 
     #[traversable(flatten)]
-    pub metrics: CoreCohortMetrics<M>,
+    pub metrics: MinimalCohortMetrics<M>,
 
     pub addr_count: ComputedFromHeight<StoredU64, M>,
     pub addr_count_change_1m: ComputedFromHeight<StoredF64, M>,
@@ -56,7 +56,7 @@ impl AddressCohortVecs {
 
             state: states_path.map(|path| Box::new(AddressCohortState::new(path, &full_name))),
 
-            metrics: CoreCohortMetrics::forced_import(&cfg)?,
+            metrics: MinimalCohortMetrics::forced_import(&cfg)?,
 
             addr_count: ComputedFromHeight::forced_import(
                 db,
@@ -261,21 +261,11 @@ impl CohortVecs for AddressCohortVecs {
 
     fn compute_rest_part2(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
-        height_to_market_cap: &impl ReadableVec<Height, Dollars>,
-        all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
-        self.metrics.compute_rest_part2(
-            blocks,
-            prices,
-            starting_indexes,
-            height_to_market_cap,
-            all_supply_sats,
-            exit,
-        )?;
-        Ok(())
+        self.metrics
+            .compute_rest_part2(prices, starting_indexes, exit)
     }
 }

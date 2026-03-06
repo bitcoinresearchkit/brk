@@ -5,10 +5,10 @@ use brk_cohort::{
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Indexes, Sats, Version};
+use brk_types::{Height, Indexes, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, Exit, Rw, StorageMode};
 
 use crate::{blocks, distribution::DynCohortVecs, indexes, prices};
 
@@ -111,29 +111,15 @@ impl AddressCohorts {
     }
 
     /// Second phase of post-processing: compute relative metrics.
-    pub(crate) fn compute_rest_part2<HM, AS>(
+    pub(crate) fn compute_rest_part2(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
-        height_to_market_cap: &HM,
-        all_supply_sats: &AS,
         exit: &Exit,
-    ) -> Result<()>
-    where
-        HM: ReadableVec<Height, Dollars> + Sync,
-        AS: ReadableVec<Height, Sats> + Sync,
-    {
-        self.0.par_iter_mut().try_for_each(|v| {
-            v.compute_rest_part2(
-                blocks,
-                prices,
-                starting_indexes,
-                height_to_market_cap,
-                all_supply_sats,
-                exit,
-            )
-        })
+    ) -> Result<()> {
+        self.0
+            .par_iter_mut()
+            .try_for_each(|v| v.compute_rest_part2(prices, starting_indexes, exit))
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.

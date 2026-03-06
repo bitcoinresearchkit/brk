@@ -14,7 +14,7 @@ pub use bps::{
     Bps32ToPercent,
 };
 pub use currency::{
-    CentsPlus, CentsSignedToDollars, CentsSubtractToCentsSigned, CentsTimesTenths,
+    CentsSignedToDollars, CentsSubtractToCentsSigned, CentsTimesTenths,
     CentsUnsignedToDollars, CentsUnsignedToSats, DollarsToSatsFract, NegCentsUnsignedToDollars,
     SatsSignedToBitcoin, SatsToBitcoin, SatsToCents,
 };

@@ -13,14 +13,14 @@ use vecdb::{AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, Storag
 use crate::{blocks, distribution::DynCohortVecs, indexes, prices};
 
 use crate::distribution::metrics::{
-    AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase, CompleteCohortMetrics,
+    AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase,
     CoreCohortMetrics, ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig,
     MinimalCohortMetrics, SupplyMetrics,
 };
 
 use super::{percentiles::PercentileCache, vecs::UTXOCohortVecs};
 
-use crate::distribution::state::{CoreRealizedState, RealizedState, UTXOCohortState};
+use crate::distribution::state::{CoreRealizedState, MinimalRealizedState, RealizedState, UTXOCohortState};
 
 const VERSION: Version = Version::new(0);
 
@@ -40,14 +40,14 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     pub sth: UTXOCohortVecs<ExtendedAdjustedCohortMetrics<M>, RealizedState>,
     pub lth: UTXOCohortVecs<ExtendedCohortMetrics<M>, RealizedState>,
     pub age_range: ByAgeRange<UTXOCohortVecs<BasicCohortMetrics<M>, RealizedState>>,
-    pub max_age: ByMaxAge<UTXOCohortVecs<CompleteCohortMetrics<M>, RealizedState>>,
-    pub min_age: ByMinAge<UTXOCohortVecs<CompleteCohortMetrics<M>, RealizedState>>,
-    pub ge_amount: ByGreatEqualAmount<UTXOCohortVecs<CoreCohortMetrics<M>, CoreRealizedState>>,
-    pub amount_range: ByAmountRange<UTXOCohortVecs<CoreCohortMetrics<M>, CoreRealizedState>>,
-    pub lt_amount: ByLowerThanAmount<UTXOCohortVecs<CoreCohortMetrics<M>, CoreRealizedState>>,
+    pub max_age: ByMaxAge<UTXOCohortVecs<CoreCohortMetrics<M>, CoreRealizedState>>,
+    pub min_age: ByMinAge<UTXOCohortVecs<CoreCohortMetrics<M>, CoreRealizedState>>,
+    pub ge_amount: ByGreatEqualAmount<UTXOCohortVecs<MinimalCohortMetrics<M>, MinimalRealizedState>>,
+    pub amount_range: ByAmountRange<UTXOCohortVecs<MinimalCohortMetrics<M>, MinimalRealizedState>>,
+    pub lt_amount: ByLowerThanAmount<UTXOCohortVecs<MinimalCohortMetrics<M>, MinimalRealizedState>>,
     pub epoch: ByEpoch<UTXOCohortVecs<CoreCohortMetrics<M>, CoreRealizedState>>,
     pub class: ByClass<UTXOCohortVecs<CoreCohortMetrics<M>, CoreRealizedState>>,
-    pub type_: BySpendableType<UTXOCohortVecs<MinimalCohortMetrics<M>, CoreRealizedState>>,
+    pub type_: BySpendableType<UTXOCohortVecs<MinimalCohortMetrics<M>, MinimalRealizedState>>,
     #[traversable(skip)]
     pub(super) percentile_cache: PercentileCache,
     /// Cached partition_point positions for tick_tock boundary searches.
@@ -121,12 +121,12 @@ impl UTXOCohorts<Rw> {
                 ))
             };
 
-        let amount_range = ByAmountRange::try_new(&core_separate)?;
         let epoch = ByEpoch::try_new(&core_separate)?;
         let class = ByClass::try_new(&core_separate)?;
 
-        let type_ = BySpendableType::try_new(
-            &|f: Filter, name: &'static str| -> Result<UTXOCohortVecs<MinimalCohortMetrics, CoreRealizedState>> {
+        // Helper for separate cohorts with MinimalCohortMetrics + MinimalRealizedState
+        let minimal_separate =
+            |f: Filter, name: &'static str| -> Result<UTXOCohortVecs<MinimalCohortMetrics, MinimalRealizedState>> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
                 let cfg = ImportConfig {
                     db,
@@ -140,8 +140,10 @@ impl UTXOCohorts<Rw> {
                     state,
                     MinimalCohortMetrics::forced_import(&cfg)?,
                 ))
-            },
-        )?;
+            };
+
+        let amount_range = ByAmountRange::try_new(&minimal_separate)?;
+        let type_ = BySpendableType::try_new(&minimal_separate)?;
 
         // Phase 3: Import "all" cohort with pre-imported supply.
         let all = UTXOCohortVecs::new(
@@ -179,43 +181,7 @@ impl UTXOCohorts<Rw> {
             UTXOCohortVecs::new(None, ExtendedCohortMetrics::forced_import(&cfg)?)
         };
 
-        // max_age: CompleteCohortMetrics (no state, aggregates from age_range)
-        let max_age = {
-            ByMaxAge::try_new(&|f: Filter, name: &'static str| -> Result<UTXOCohortVecs<CompleteCohortMetrics, RealizedState>> {
-                let full_name = CohortContext::Utxo.full_name(&f, name);
-                let cfg = ImportConfig {
-                    db,
-                    filter: &f,
-                    full_name: &full_name,
-                    version: v,
-                    indexes,
-                };
-                Ok(UTXOCohortVecs::new(
-                    None,
-                    CompleteCohortMetrics::forced_import(&cfg)?,
-                ))
-            })?
-        };
-
-        // min_age: CompleteCohortMetrics
-        let min_age = {
-            ByMinAge::try_new(&|f: Filter, name: &'static str| -> Result<UTXOCohortVecs<CompleteCohortMetrics, RealizedState>> {
-                let full_name = CohortContext::Utxo.full_name(&f, name);
-                let cfg = ImportConfig {
-                    db,
-                    filter: &f,
-                    full_name: &full_name,
-                    version: v,
-                    indexes,
-                };
-                Ok(UTXOCohortVecs::new(
-                    None,
-                    CompleteCohortMetrics::forced_import(&cfg)?,
-                ))
-            })?
-        };
-
-        // ge_amount, lt_amount: CoreCohortMetrics (no state)
+        // CoreCohortMetrics without state (no state, for aggregate cohorts)
         let core_no_state =
             |f: Filter, name: &'static str| -> Result<UTXOCohortVecs<CoreCohortMetrics, CoreRealizedState>> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
@@ -232,8 +198,31 @@ impl UTXOCohorts<Rw> {
                 ))
             };
 
-        let lt_amount = ByLowerThanAmount::try_new(&core_no_state)?;
-        let ge_amount = ByGreatEqualAmount::try_new(&core_no_state)?;
+        // max_age: CoreCohortMetrics (no state, aggregates from age_range)
+        let max_age = ByMaxAge::try_new(&core_no_state)?;
+
+        // min_age: CoreCohortMetrics (no state, aggregates from age_range)
+        let min_age = ByMinAge::try_new(&core_no_state)?;
+
+        // MinimalCohortMetrics without state (for aggregate amount cohorts)
+        let minimal_no_state =
+            |f: Filter, name: &'static str| -> Result<UTXOCohortVecs<MinimalCohortMetrics, MinimalRealizedState>> {
+                let full_name = CohortContext::Utxo.full_name(&f, name);
+                let cfg = ImportConfig {
+                    db,
+                    filter: &f,
+                    full_name: &full_name,
+                    version: v,
+                    indexes,
+                };
+                Ok(UTXOCohortVecs::new(
+                    None,
+                    MinimalCohortMetrics::forced_import(&cfg)?,
+                ))
+            };
+
+        let lt_amount = ByLowerThanAmount::try_new(&minimal_no_state)?;
+        let ge_amount = ByGreatEqualAmount::try_new(&minimal_no_state)?;
 
         Ok(Self {
             all,
@@ -314,18 +303,18 @@ impl UTXOCohorts<Rw> {
             Box::new(|| {
                 min_age.par_iter_mut().try_for_each(|vecs| {
                     let sources = filter_sources_from(ar.iter(), Some(&vecs.metrics.filter));
-                    vecs.metrics.compute_from_sources(si, &sources, exit)
+                    vecs.metrics.compute_from_base_sources(si, &sources, exit)
                 })
             }),
             Box::new(|| {
                 max_age.par_iter_mut().try_for_each(|vecs| {
                     let sources = filter_sources_from(ar.iter(), Some(&vecs.metrics.filter));
-                    vecs.metrics.compute_from_sources(si, &sources, exit)
+                    vecs.metrics.compute_from_base_sources(si, &sources, exit)
                 })
             }),
             Box::new(|| {
                 ge_amount.par_iter_mut().chain(lt_amount.par_iter_mut()).try_for_each(|vecs| {
-                    let sources = filter_core_sources_from(amr.iter(), Some(&vecs.metrics.filter));
+                    let sources = filter_minimal_sources_from(amr.iter(), Some(&vecs.metrics.filter));
                     vecs.metrics.compute_from_sources(si, &sources, exit)
                 })
             }),
@@ -384,8 +373,8 @@ impl UTXOCohorts<Rw> {
 
         // 2. Compute net_sentiment.height for aggregate cohorts (weighted average).
         // Separate cohorts already computed net_sentiment in step 1 (inside compute_rest_part1).
-        // Note: min_age, max_age, epoch, class are Complete tier — no net_sentiment.
-        // Note: ge_amount, lt_amount, amount_range are Core tier — no net_sentiment.
+        // Note: min_age, max_age, epoch, class are Core tier — no net_sentiment.
+        // Note: ge_amount, lt_amount, amount_range are Minimal tier — no net_sentiment.
         {
             let Self {
                 all, sth, lth, age_range,
@@ -481,11 +470,11 @@ impl UTXOCohorts<Rw> {
             Box::new(|| age_range.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(blocks, prices, starting_indexes, height_to_market_cap, ss, exit))),
             Box::new(|| max_age.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(blocks, prices, starting_indexes, height_to_market_cap, ss, exit))),
             Box::new(|| min_age.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(blocks, prices, starting_indexes, height_to_market_cap, ss, exit))),
-            Box::new(|| ge_amount.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(blocks, prices, starting_indexes, height_to_market_cap, ss, exit))),
+            Box::new(|| ge_amount.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(prices, starting_indexes, exit))),
             Box::new(|| epoch.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(blocks, prices, starting_indexes, height_to_market_cap, ss, exit))),
             Box::new(|| class.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(blocks, prices, starting_indexes, height_to_market_cap, ss, exit))),
-            Box::new(|| amount_range.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(blocks, prices, starting_indexes, height_to_market_cap, ss, exit))),
-            Box::new(|| lt_amount.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(blocks, prices, starting_indexes, height_to_market_cap, ss, exit))),
+            Box::new(|| amount_range.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(prices, starting_indexes, exit))),
+            Box::new(|| lt_amount.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(prices, starting_indexes, exit))),
             Box::new(|| type_.par_iter_mut().try_for_each(|v| v.metrics.compute_rest_part2(prices, starting_indexes, exit))),
         ];
 
@@ -612,11 +601,11 @@ fn filter_sources_from<'a, M: CohortMetricsBase + 'a>(
     }
 }
 
-/// Filter CoreCohortMetrics source cohorts by an optional filter.
-fn filter_core_sources_from<'a>(
-    sources: impl Iterator<Item = &'a UTXOCohortVecs<CoreCohortMetrics, CoreRealizedState>>,
+/// Filter MinimalCohortMetrics source cohorts by an optional filter.
+fn filter_minimal_sources_from<'a>(
+    sources: impl Iterator<Item = &'a UTXOCohortVecs<MinimalCohortMetrics, MinimalRealizedState>>,
     filter: Option<&Filter>,
-) -> Vec<&'a CoreCohortMetrics> {
+) -> Vec<&'a MinimalCohortMetrics> {
     match filter {
         Some(f) => sources
             .filter(|v| f.includes(&v.metrics.filter))

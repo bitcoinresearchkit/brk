@@ -70,14 +70,7 @@ where
         exit,
     )?;
 
-    address_cohorts.compute_rest_part2(
-        blocks,
-        prices,
-        starting_indexes,
-        height_to_market_cap,
-        &utxo_cohorts.all.metrics.supply.total.sats.height,
-        exit,
-    )?;
+    address_cohorts.compute_rest_part2(prices, starting_indexes, exit)?;
 
     Ok(())
 }

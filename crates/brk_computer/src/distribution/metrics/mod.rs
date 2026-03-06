@@ -76,6 +76,8 @@ macro_rules! impl_cohort_metrics_base {
                 vecs.extend(self.realized.collect_vecs_mut());
                 vecs.extend(self.cost_basis.collect_vecs_mut());
                 vecs.extend(self.unrealized.collect_vecs_mut());
+                vecs.push(&mut self.dormancy.height);
+                vecs.push(&mut self.velocity.height);
                 vecs
             }
         }

@@ -69,15 +69,6 @@ impl UnaryTransform<Cents, Sats> for CentsUnsignedToSats {
     }
 }
 
-pub struct CentsPlus;
-
-impl BinaryTransform<Cents, Cents, Cents> for CentsPlus {
-    #[inline(always)]
-    fn apply(lhs: Cents, rhs: Cents) -> Cents {
-        lhs + rhs
-    }
-}
-
 pub struct CentsSubtractToCentsSigned;
 
 impl BinaryTransform<Cents, Cents, CentsSigned> for CentsSubtractToCentsSigned {

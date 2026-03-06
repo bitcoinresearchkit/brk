@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
     BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Dollars, Height, Indexes,
-    Sats, StoredF32, Version,
+    Sats, StoredF32, StoredF64, Version,
 };
 use vecdb::{
     AnyStoredVec, AnyVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
@@ -14,8 +14,8 @@ use crate::{
     internal::{
         CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative,
         ComputedFromHeightRatio, FiatFromHeight, Identity, LazyFromHeight,
-        NegCentsUnsignedToDollars, PercentFromHeight, Price, RatioCentsBp32,
-        RatioCentsSignedCentsBps32,
+        NegCentsUnsignedToDollars, PercentFromHeight, Price, RatioCents64, RatioCentsBp32,
+        RatioCentsSignedCentsBps32, RollingEmas1w1m, RollingWindows,
     },
     prices,
 };
@@ -46,6 +46,13 @@ pub struct RealizedCore<M: StorageMode = Rw> {
     pub realized_profit_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
     pub realized_loss_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
     pub net_realized_pnl_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
+
+    pub value_created: ComputedFromHeight<Cents, M>,
+    pub value_destroyed: ComputedFromHeight<Cents, M>,
+    pub value_created_sum: RollingWindows<Cents, M>,
+    pub value_destroyed_sum: RollingWindows<Cents, M>,
+    pub sopr: RollingWindows<StoredF64, M>,
+    pub sopr_24h_ema: RollingEmas1w1m<StoredF64, M>,
 }
 
 impl RealizedCore {
@@ -93,6 +100,13 @@ impl RealizedCore {
             &realized_price_ratio.ratio,
         );
 
+        let value_created = cfg.import_computed("value_created", v0)?;
+        let value_destroyed = cfg.import_computed("value_destroyed", v0)?;
+        let value_created_sum = cfg.import_rolling("value_created", v1)?;
+        let value_destroyed_sum = cfg.import_rolling("value_destroyed", v1)?;
+        let sopr = cfg.import_rolling("sopr", v1)?;
+        let sopr_24h_ema = cfg.import_emas_1w_1m("sopr_24h", v1)?;
+
         Ok(Self {
             realized_cap_cents,
             realized_cap,
@@ -111,6 +125,12 @@ impl RealizedCore {
             realized_profit_rel_to_realized_cap,
             realized_loss_rel_to_realized_cap,
             net_realized_pnl_rel_to_realized_cap,
+            value_created,
+            value_destroyed,
+            value_created_sum,
+            value_destroyed_sum,
+            sopr,
+            sopr_24h_ema,
         })
     }
 
@@ -120,6 +140,8 @@ impl RealizedCore {
             .len()
             .min(self.realized_profit.height.len())
             .min(self.realized_loss.height.len())
+            .min(self.value_created.height.len())
+            .min(self.value_destroyed.height.len())
     }
 
     pub(crate) fn truncate_push(&mut self, height: Height, state: &impl RealizedOps) -> Result<()> {
@@ -132,6 +154,12 @@ impl RealizedCore {
         self.realized_loss
             .height
             .truncate_push(height, state.loss())?;
+        self.value_created
+            .height
+            .truncate_push(height, state.value_created())?;
+        self.value_destroyed
+            .height
+            .truncate_push(height, state.value_destroyed())?;
         Ok(())
     }
 
@@ -140,6 +168,8 @@ impl RealizedCore {
             &mut self.realized_cap_cents.height as &mut dyn AnyStoredVec,
             &mut self.realized_profit.height,
             &mut self.realized_loss.height,
+            &mut self.value_created.height,
+            &mut self.value_destroyed.height,
         ]
     }
 
@@ -152,6 +182,8 @@ impl RealizedCore {
         sum_others!(self, starting_indexes, others, exit; realized_cap_cents.height);
         sum_others!(self, starting_indexes, others, exit; realized_profit.height);
         sum_others!(self, starting_indexes, others, exit; realized_loss.height);
+        sum_others!(self, starting_indexes, others, exit; value_created.height);
+        sum_others!(self, starting_indexes, others, exit; value_destroyed.height);
 
         Ok(())
     }
@@ -271,6 +303,44 @@ impl RealizedCore {
                 &self.realized_cap_cents.height,
                 exit,
             )?;
+
+        // SOPR: rolling sums of stateful value_created/destroyed, then ratio, then EMAs
+        let window_starts = blocks.count.window_starts();
+        self.value_created_sum.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.value_created.height,
+            exit,
+        )?;
+        self.value_destroyed_sum.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.value_destroyed.height,
+            exit,
+        )?;
+
+        for ((sopr, vc), vd) in self
+            .sopr
+            .as_mut_array()
+            .into_iter()
+            .zip(self.value_created_sum.as_array())
+            .zip(self.value_destroyed_sum.as_array())
+        {
+            sopr.compute_binary::<Cents, Cents, RatioCents64>(
+                starting_indexes.height,
+                &vc.height,
+                &vd.height,
+                exit,
+            )?;
+        }
+
+        self.sopr_24h_ema.compute_from_24h(
+            starting_indexes.height,
+            &blocks.count.height_1w_ago,
+            &blocks.count.height_1m_ago,
+            &self.sopr._24h.height,
+            exit,
+        )?;
 
         Ok(())
     }

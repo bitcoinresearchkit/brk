@@ -1,10 +1,12 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, Indexes};
+use brk_types::{Bitcoin, Cents, Dollars, Height, Indexes, StoredF32, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
+
+use crate::internal::ComputedFromHeight;
 
 use crate::distribution::metrics::{
     ActivityMetrics, CostBasisWithExtended, ImportConfig, OutputsMetrics, RealizedAdjusted,
@@ -26,6 +28,8 @@ pub struct AllCohortMetrics<M: StorageMode = Rw> {
     pub unrealized: Box<UnrealizedFull<M>>,
     pub adjusted: Box<RealizedAdjusted<M>>,
     pub relative: Box<RelativeForAll<M>>,
+    pub dormancy: ComputedFromHeight<StoredF32, M>,
+    pub velocity: ComputedFromHeight<StoredF32, M>,
 }
 
 impl_cohort_metrics_base!(AllCohortMetrics, extended_cost_basis);
@@ -55,6 +59,8 @@ impl AllCohortMetrics {
             unrealized: Box::new(unrealized),
             adjusted: Box::new(adjusted),
             relative: Box::new(relative),
+            dormancy: cfg.import_computed("dormancy", Version::ONE)?,
+            velocity: cfg.import_computed("velocity", Version::ONE)?,
         })
     }
 
@@ -94,6 +100,36 @@ impl AllCohortMetrics {
             &self.realized.base,
             &self.supply.total.sats.height,
             height_to_market_cap,
+            exit,
+        )?;
+
+        self.dormancy.height.compute_transform2(
+            starting_indexes.height,
+            &self.activity.coindays_destroyed.height,
+            &self.activity.sent.base.sats.height,
+            |(i, cdd, sent_sats, ..)| {
+                let sent_btc = f64::from(Bitcoin::from(sent_sats));
+                if sent_btc == 0.0 {
+                    (i, StoredF32::from(0.0f32))
+                } else {
+                    (i, StoredF32::from((f64::from(cdd) / sent_btc) as f32))
+                }
+            },
+            exit,
+        )?;
+
+        self.velocity.height.compute_transform2(
+            starting_indexes.height,
+            &self.activity.sent.base.sats.height,
+            &self.supply.total.sats.height,
+            |(i, sent_sats, supply_sats, ..)| {
+                let supply = supply_sats.as_u128() as f64;
+                if supply == 0.0 {
+                    (i, StoredF32::from(0.0f32))
+                } else {
+                    (i, StoredF32::from((sent_sats.as_u128() as f64 / supply) as f32))
+                }
+            },
             exit,
         )?;
 
