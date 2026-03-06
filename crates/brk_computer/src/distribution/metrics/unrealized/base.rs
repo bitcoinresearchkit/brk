@@ -1,32 +1,32 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, CentsSats, CentsSigned, CentsSquaredSats, Height, Indexes, Version};
-use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
-    WritableVec,
-};
+use derive_more::{Deref, DerefMut};
+use vecdb::{AnyStoredVec, AnyVec, BytesVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
     distribution::state::UnrealizedState,
-    internal::{
-        CentsSubtractToCentsSigned, FiatFromHeight, LazyFromHeight, NegCentsUnsignedToDollars,
-        ValueFromHeight,
-    },
+    internal::{CentsSubtractToCentsSigned, FiatFromHeight},
     prices,
 };
 
-use brk_types::Dollars;
-
 use crate::distribution::metrics::ImportConfig;
 
-#[derive(Traversable)]
+use super::UnrealizedComplete;
+
+/// Full unrealized metrics (Source/Extended tier).
+///
+/// Contains all Complete-tier fields (via Deref to UnrealizedComplete) plus:
+/// - Source-only: invested_capital, raw BytesVecs, unrealized_gross_pnl
+/// - Extended-only: pain_index, greed_index, net_sentiment
+#[derive(Deref, DerefMut, Traversable)]
 pub struct UnrealizedBase<M: StorageMode = Rw> {
-    pub supply_in_profit: ValueFromHeight<M>,
-    pub supply_in_loss: ValueFromHeight<M>,
+    #[deref]
+    #[deref_mut]
+    #[traversable(flatten)]
+    pub complete: UnrealizedComplete<M>,
 
-    pub unrealized_profit: FiatFromHeight<Cents, M>,
-    pub unrealized_loss: FiatFromHeight<Cents, M>,
-
+    // --- Source-only fields ---
     pub invested_capital_in_profit: FiatFromHeight<Cents, M>,
     pub invested_capital_in_loss: FiatFromHeight<Cents, M>,
 
@@ -35,24 +35,19 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
     pub investor_cap_in_profit_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
     pub investor_cap_in_loss_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 
+    pub gross_pnl: FiatFromHeight<Cents, M>,
+
+    // --- Extended-only fields ---
     pub pain_index: FiatFromHeight<Cents, M>,
     pub greed_index: FiatFromHeight<Cents, M>,
     pub net_sentiment: FiatFromHeight<CentsSigned, M>,
-
-    pub neg_unrealized_loss: LazyFromHeight<Dollars, Cents>,
-
-    pub net_unrealized_pnl: FiatFromHeight<CentsSigned, M>,
-    pub gross_pnl: FiatFromHeight<Cents, M>,
 }
 
 impl UnrealizedBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v0 = Version::ZERO;
-        let supply_in_profit = cfg.import_value("supply_in_profit", v0)?;
-        let supply_in_loss = cfg.import_value("supply_in_loss", v0)?;
 
-        let unrealized_profit = cfg.import_fiat("unrealized_profit", v0)?;
-        let unrealized_loss = cfg.import_fiat("unrealized_loss", v0)?;
+        let complete = UnrealizedComplete::forced_import(cfg)?;
 
         let invested_capital_in_profit = cfg.import_fiat("invested_capital_in_profit", v0)?;
         let invested_capital_in_loss = cfg.import_fiat("invested_capital_in_loss", v0)?;
@@ -67,21 +62,10 @@ impl UnrealizedBase {
         let greed_index = cfg.import_fiat("greed_index", v0)?;
         let net_sentiment = cfg.import_fiat("net_sentiment", Version::ONE)?;
 
-        let neg_unrealized_loss = LazyFromHeight::from_computed::<NegCentsUnsignedToDollars>(
-            &cfg.name("neg_unrealized_loss"),
-            cfg.version,
-            unrealized_loss.cents.height.read_only_boxed_clone(),
-            &unrealized_loss.cents,
-        );
-
-        let net_unrealized_pnl = cfg.import_fiat("net_unrealized_pnl", v0)?;
         let gross_pnl = cfg.import_fiat("unrealized_gross_pnl", v0)?;
 
         Ok(Self {
-            supply_in_profit,
-            supply_in_loss,
-            unrealized_profit,
-            unrealized_loss,
+            complete,
             invested_capital_in_profit,
             invested_capital_in_loss,
             invested_capital_in_profit_raw,
@@ -91,20 +75,13 @@ impl UnrealizedBase {
             pain_index,
             greed_index,
             net_sentiment,
-            neg_unrealized_loss,
-            net_unrealized_pnl,
             gross_pnl,
         })
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.supply_in_profit
-            .sats
-            .height
-            .len()
-            .min(self.supply_in_loss.sats.height.len())
-            .min(self.unrealized_profit.cents.height.len())
-            .min(self.unrealized_loss.cents.height.len())
+        self.complete
+            .min_stateful_height_len()
             .min(self.invested_capital_in_profit.cents.height.len())
             .min(self.invested_capital_in_loss.cents.height.len())
             .min(self.invested_capital_in_profit_raw.len())
@@ -118,22 +95,8 @@ impl UnrealizedBase {
         height: Height,
         height_state: &UnrealizedState,
     ) -> Result<()> {
-        self.supply_in_profit
-            .sats
-            .height
-            .truncate_push(height, height_state.supply_in_profit)?;
-        self.supply_in_loss
-            .sats
-            .height
-            .truncate_push(height, height_state.supply_in_loss)?;
-        self.unrealized_profit
-            .cents
-            .height
-            .truncate_push(height, height_state.unrealized_profit)?;
-        self.unrealized_loss
-            .cents
-            .height
-            .truncate_push(height, height_state.unrealized_loss)?;
+        self.complete.truncate_push(height, height_state)?;
+
         self.invested_capital_in_profit
             .cents
             .height
@@ -164,20 +127,14 @@ impl UnrealizedBase {
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        vec![
-            &mut self.supply_in_profit.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_profit.base.cents.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.base.cents.height as &mut dyn AnyStoredVec,
-            &mut self.unrealized_profit.cents.height,
-            &mut self.unrealized_loss.cents.height,
-            &mut self.invested_capital_in_profit.cents.height,
-            &mut self.invested_capital_in_loss.cents.height,
-            &mut self.invested_capital_in_profit_raw as &mut dyn AnyStoredVec,
-            &mut self.invested_capital_in_loss_raw as &mut dyn AnyStoredVec,
-            &mut self.investor_cap_in_profit_raw as &mut dyn AnyStoredVec,
-            &mut self.investor_cap_in_loss_raw as &mut dyn AnyStoredVec,
-        ]
+        let mut vecs = self.complete.collect_vecs_mut();
+        vecs.push(&mut self.invested_capital_in_profit.cents.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.invested_capital_in_loss.cents.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.invested_capital_in_profit_raw as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.invested_capital_in_loss_raw as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.investor_cap_in_profit_raw as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.investor_cap_in_loss_raw as &mut dyn AnyStoredVec);
+        vecs
     }
 
     pub(crate) fn compute_from_stateful(
@@ -186,6 +143,13 @@ impl UnrealizedBase {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
+        // Delegate Complete-tier aggregation
+        let complete_refs: Vec<&UnrealizedComplete> =
+            others.iter().map(|o| &o.complete).collect();
+        self.complete
+            .compute_from_stateful(starting_indexes, &complete_refs, exit)?;
+
+        // Source-only: invested_capital
         macro_rules! sum_others {
             ($($field:tt).+) => {
                 self.$($field).+.compute_sum_of_others(
@@ -196,14 +160,10 @@ impl UnrealizedBase {
             };
         }
 
-        sum_others!(supply_in_profit.sats.height);
-        sum_others!(supply_in_loss.sats.height);
-        sum_others!(unrealized_profit.cents.height);
-        sum_others!(unrealized_loss.cents.height);
         sum_others!(invested_capital_in_profit.cents.height);
         sum_others!(invested_capital_in_loss.cents.height);
 
-        // Raw values for aggregation
+        // Source-only: raw BytesVec aggregation
         let start = self
             .invested_capital_in_profit_raw
             .len()
@@ -273,7 +233,10 @@ impl UnrealizedBase {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        // Pain index: investor_price_of_losers - spot
+        // Complete-tier: net_unrealized_pnl
+        self.complete.compute_rest(starting_indexes, exit)?;
+
+        // Extended-only: Pain index (investor_price_of_losers - spot)
         self.pain_index.cents.height.compute_transform3(
             starting_indexes.height,
             &self.investor_cap_in_loss_raw,
@@ -290,7 +253,7 @@ impl UnrealizedBase {
             exit,
         )?;
 
-        // Greed index: spot - investor_price_of_winners
+        // Extended-only: Greed index (spot - investor_price_of_winners)
         self.greed_index.cents.height.compute_transform3(
             starting_indexes.height,
             &self.investor_cap_in_profit_raw,
@@ -307,19 +270,11 @@ impl UnrealizedBase {
             exit,
         )?;
 
-        self.net_unrealized_pnl
-            .cents
-            .height
-            .compute_binary::<Cents, Cents, CentsSubtractToCentsSigned>(
-                starting_indexes.height,
-                &self.unrealized_profit.cents.height,
-                &self.unrealized_loss.cents.height,
-                exit,
-            )?;
+        // Source-only: unrealized gross pnl
         self.gross_pnl.cents.height.compute_add(
             starting_indexes.height,
-            &self.unrealized_profit.cents.height,
-            &self.unrealized_loss.cents.height,
+            &self.complete.unrealized_profit.cents.height,
+            &self.complete.unrealized_loss.cents.height,
             exit,
         )?;
 

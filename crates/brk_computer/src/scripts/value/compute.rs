@@ -53,6 +53,9 @@ impl Vecs {
                             + 2.min(indexer.vecs.outputs.first_txoutindex.len()),
                     );
 
+                let mut outputtypes_buf: Vec<OutputType> = Vec::new();
+                let mut values_buf: Vec<Sats> = Vec::new();
+
                 // Iterate blocks
                 for h in starting_height.to_usize()..=target_height.to_usize() {
                     let height = Height::from(h);
@@ -70,25 +73,24 @@ impl Vecs {
                     let out_start = first_txoutindex.to_usize();
                     let out_end = next_first_txoutindex.to_usize();
 
-                    // Sum opreturn values — fold over both vecs without allocation
-                    let opreturn_value = indexer
+                    // Pre-collect both vecs into reusable buffers
+                    indexer
                         .vecs
                         .outputs
                         .outputtype
-                        .fold_range_at(
-                            out_start,
-                            out_end,
-                            (Sats::ZERO, out_start),
-                            |(sum, vi), ot| {
-                                let new_sum = if ot == OutputType::OpReturn {
-                                    sum + indexer.vecs.outputs.value.collect_one_at(vi).unwrap()
-                                } else {
-                                    sum
-                                };
-                                (new_sum, vi + 1)
-                            },
-                        )
-                        .0;
+                        .collect_range_into_at(out_start, out_end, &mut outputtypes_buf);
+                    indexer
+                        .vecs
+                        .outputs
+                        .value
+                        .collect_range_into_at(out_start, out_end, &mut values_buf);
+
+                    let mut opreturn_value = Sats::ZERO;
+                    for (ot, val) in outputtypes_buf.iter().zip(values_buf.iter()) {
+                        if *ot == OutputType::OpReturn {
+                            opreturn_value += *val;
+                        }
+                    }
 
                     height_vec.truncate_push(height, opreturn_value)?;
                 }

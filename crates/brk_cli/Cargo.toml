@@ -26,7 +26,7 @@ owo-colors = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
-toml = "1.0.3"
+toml = "1.0.4"
 vecdb = { workspace = true }
 
 [[bin]]

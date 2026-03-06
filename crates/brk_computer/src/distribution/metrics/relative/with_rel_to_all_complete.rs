@@ -4,26 +4,26 @@ use brk_types::{Dollars, Height, Sats};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
+use crate::distribution::metrics::{ImportConfig, UnrealizedComplete};
 
-use super::{RelativeBase, RelativeToAll};
+use super::{RelativeComplete, RelativeToAll};
 
-/// Relative metrics with rel_to_all (no extended, no peak_regret).
-/// Used by: epoch, year, type, amount, address cohorts.
+/// Complete relative metrics with rel_to_all.
+/// Used by CompleteCohortMetrics (epoch, class, min_age, max_age).
 #[derive(Deref, DerefMut, Traversable)]
-pub struct RelativeWithRelToAll<M: StorageMode = Rw> {
+pub struct RelativeCompleteWithRelToAll<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub base: RelativeBase<M>,
+    pub base: RelativeComplete<M>,
     #[traversable(flatten)]
     pub rel_to_all: RelativeToAll<M>,
 }
 
-impl RelativeWithRelToAll {
+impl RelativeCompleteWithRelToAll {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            base: RelativeBase::forced_import(cfg)?,
+            base: RelativeComplete::forced_import(cfg)?,
             rel_to_all: RelativeToAll::forced_import(cfg)?,
         })
     }
@@ -32,8 +32,7 @@ impl RelativeWithRelToAll {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        unrealized: &UnrealizedBase,
-        realized: &RealizedBase,
+        unrealized: &UnrealizedComplete,
         supply_total_sats: &impl ReadableVec<Height, Sats>,
         market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
@@ -42,7 +41,6 @@ impl RelativeWithRelToAll {
         self.base.compute(
             max_from,
             unrealized,
-            realized,
             supply_total_sats,
             market_cap,
             exit,

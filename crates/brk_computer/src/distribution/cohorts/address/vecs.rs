@@ -11,28 +11,24 @@ use crate::{
     blocks, distribution::state::AddressCohortState, indexes, internal::ComputedFromHeight, prices,
 };
 
-use crate::distribution::metrics::{BasicCohortMetrics, CohortMetricsBase, ImportConfig};
+use crate::distribution::metrics::{CoreCohortMetrics, ImportConfig};
 
 use super::super::traits::{CohortVecs, DynCohortVecs};
 #[derive(Traversable)]
 pub struct AddressCohortVecs<M: StorageMode = Rw> {
-    /// Starting height when state was imported
     starting_height: Option<Height>,
 
-    /// Runtime state for block-by-block processing
     #[traversable(skip)]
     pub state: Option<Box<AddressCohortState>>,
 
-    /// Metric vectors
     #[traversable(flatten)]
-    pub metrics: BasicCohortMetrics<M>,
+    pub metrics: CoreCohortMetrics<M>,
 
     pub addr_count: ComputedFromHeight<StoredU64, M>,
     pub addr_count_change_1m: ComputedFromHeight<StoredF64, M>,
 }
 
 impl AddressCohortVecs {
-    /// Import address cohort from database.
     pub(crate) fn forced_import(
         db: &Database,
         filter: Filter,
@@ -56,7 +52,7 @@ impl AddressCohortVecs {
 
             state: states_path.map(|path| Box::new(AddressCohortState::new(path, &full_name))),
 
-            metrics: BasicCohortMetrics::forced_import(&cfg)?,
+            metrics: CoreCohortMetrics::forced_import(&cfg)?,
 
             addr_count: ComputedFromHeight::forced_import(
                 db,
@@ -73,20 +69,19 @@ impl AddressCohortVecs {
         })
     }
 
-    /// Reset starting height to zero.
     pub(crate) fn reset_starting_height(&mut self) {
         self.starting_height = Some(Height::ZERO);
     }
 
-    /// Returns a parallel iterator over all vecs for parallel writing.
     pub(crate) fn par_iter_vecs_mut(
         &mut self,
     ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        rayon::iter::once(&mut self.addr_count.height as &mut dyn AnyStoredVec)
-            .chain(self.metrics.par_iter_mut())
+        let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
+        vecs.push(&mut self.addr_count.height as &mut dyn AnyStoredVec);
+        vecs.extend(self.metrics.collect_all_vecs_mut());
+        vecs.into_par_iter()
     }
 
-    /// Commit state to disk (separate from vec writes for parallelization).
     pub(crate) fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
         if let Some(state) = self.state.as_mut() {
             state.inner.write(height, cleanup)?;
@@ -117,15 +112,10 @@ impl DynCohortVecs for AddressCohortVecs {
     }
 
     fn import_state(&mut self, starting_height: Height) -> Result<Height> {
-        // Import state from runtime state if present
         if let Some(state) = self.state.as_mut() {
-            // State files are saved AT height H, so to resume at H+1 we need to import at H
-            // Decrement first, then increment result to match expected starting_height
             if let Some(mut prev_height) = starting_height.decremented() {
-                // Import cost_basis_data state file (may adjust prev_height to actual file found)
                 prev_height = state.inner.import_at_or_before(prev_height)?;
 
-                // Restore supply state from height-indexed vectors
                 state.inner.supply.value = self
                     .metrics
                     .supply
@@ -143,14 +133,12 @@ impl DynCohortVecs for AddressCohortVecs {
                     .unwrap();
                 state.addr_count = *self.addr_count.height.collect_one(prev_height).unwrap();
 
-                // Restore realized cap from persisted exact values
                 state.inner.restore_realized_cap();
 
                 let result = prev_height.incremented();
                 self.starting_height = Some(result);
                 Ok(result)
             } else {
-                // starting_height is 0, nothing to import
                 self.starting_height = Some(Height::ZERO);
                 Ok(Height::ZERO)
             }
@@ -174,12 +162,22 @@ impl DynCohortVecs for AddressCohortVecs {
             return Ok(());
         }
 
-        // Push addr_count from state
         if let Some(state) = self.state.as_ref() {
             self.addr_count
                 .height
                 .truncate_push(height, state.addr_count.into())?;
-            self.metrics.truncate_push(height, &state.inner)?;
+            self.metrics
+                .supply
+                .truncate_push(height, state.inner.supply.value)?;
+            self.metrics
+                .outputs
+                .truncate_push(height, state.inner.supply.utxo_count)?;
+            self.metrics
+                .activity
+                .truncate_push(height, state.inner.sent)?;
+            self.metrics
+                .realized
+                .truncate_push(height, &state.inner.realized)?;
         }
 
         Ok(())
@@ -189,15 +187,14 @@ impl DynCohortVecs for AddressCohortVecs {
         &mut self,
         height: Height,
         height_price: Cents,
-        is_day_boundary: bool,
+        _is_day_boundary: bool,
     ) -> Result<()> {
         if let Some(state) = self.state.as_mut() {
-            self.metrics.compute_then_truncate_push_unrealized_states(
-                height,
-                height_price,
-                &mut state.inner,
-                is_day_boundary,
-            )?;
+            state.inner.apply_pending();
+            let unrealized_state = state.inner.compute_unrealized_state(height_price);
+            self.metrics
+                .unrealized
+                .truncate_push(height, &unrealized_state)?;
         }
         Ok(())
     }
@@ -210,14 +207,7 @@ impl DynCohortVecs for AddressCohortVecs {
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
-            .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
-        // Separate cohorts (with state) compute net_sentiment = greed - pain directly.
-        // Aggregate cohorts get it via weighted average in groups.rs.
-        if self.state.is_some() {
-            self.metrics
-                .compute_net_sentiment_height(starting_indexes, exit)?;
-        }
-        Ok(())
+            .compute_rest_part1(blocks, prices, starting_indexes, exit)
     }
 
     fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
@@ -257,7 +247,7 @@ impl CohortVecs for AddressCohortVecs {
                 .as_slice(),
             exit,
         )?;
-        self.metrics.compute_from_stateful(
+        self.metrics.compute_from_sources(
             starting_indexes,
             &others.iter().map(|v| &v.metrics).collect::<Vec<_>>(),
             exit,

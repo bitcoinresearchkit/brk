@@ -56,7 +56,8 @@ impl RelativeWithExtended {
         )?;
         self.rel_to_all.compute(
             max_from,
-            unrealized,
+            &unrealized.supply_in_profit.sats.height,
+            &unrealized.supply_in_loss.sats.height,
             supply_total_sats,
             all_supply_sats,
             exit,

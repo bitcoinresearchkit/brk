@@ -12,8 +12,6 @@ use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, distribution::DynCohortVecs, indexes, prices};
 
-use crate::distribution::metrics::CohortMetricsBase;
-
 use super::{super::traits::CohortVecs, vecs::AddressCohortVecs};
 
 const VERSION: Version = Version::new(0);
@@ -97,7 +95,6 @@ impl AddressCohorts {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        // 1. Compute addr_count_change_1m using rolling window
         self.par_iter_mut().try_for_each(|v| {
             v.addr_count_change_1m.height.compute_rolling_change(
                 starting_indexes.height,
@@ -107,17 +104,8 @@ impl AddressCohorts {
             )
         })?;
 
-        // 2. Compute all metrics except net_sentiment
         self.par_iter_mut()
             .try_for_each(|v| v.compute_rest_part1(blocks, prices, starting_indexes, exit))?;
-
-        // 3. Compute net_sentiment.height for aggregate cohorts (weighted average).
-        // Separate cohorts already computed net_sentiment in step 2 (inside compute_rest_part1).
-        self.for_each_aggregate(|vecs, sources| {
-            let metrics: Vec<_> = sources.iter().map(|v| &v.metrics).collect();
-            vecs.metrics
-                .compute_net_sentiment_from_others(starting_indexes, &metrics, exit)
-        })?;
 
         Ok(())
     }

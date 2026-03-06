@@ -5,7 +5,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{PercentFromHeight, RatioSatsBp16};
 
-use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
+use crate::distribution::metrics::ImportConfig;
 
 /// Relative-to-all metrics (not present for the "all" cohort itself).
 #[derive(Traversable)]
@@ -30,7 +30,8 @@ impl RelativeToAll {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        unrealized: &UnrealizedBase,
+        supply_in_profit_sats: &impl ReadableVec<Height, Sats>,
+        supply_in_loss_sats: &impl ReadableVec<Height, Sats>,
         supply_total_sats: &impl ReadableVec<Height, Sats>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
@@ -45,14 +46,14 @@ impl RelativeToAll {
         self.supply_in_profit_rel_to_circulating_supply
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
                 max_from,
-                &unrealized.supply_in_profit.sats.height,
+                supply_in_profit_sats,
                 all_supply_sats,
                 exit,
             )?;
         self.supply_in_loss_rel_to_circulating_supply
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
                 max_from,
-                &unrealized.supply_in_loss.sats.height,
+                supply_in_loss_sats,
                 all_supply_sats,
                 exit,
             )?;
