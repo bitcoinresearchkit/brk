@@ -1,7 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Indexes, StoredF64, StoredU64, Version};
-use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{blocks, internal::ComputedFromHeight};
@@ -37,9 +36,8 @@ impl OutputsMetrics {
         Ok(())
     }
 
-    /// Returns a parallel iterator over all vecs for parallel writing.
-    pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        vec![&mut self.utxo_count.height as &mut dyn AnyStoredVec].into_par_iter()
+    pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        vec![&mut self.utxo_count.height as &mut dyn AnyStoredVec]
     }
 
     /// Compute aggregate values from separate cohorts.

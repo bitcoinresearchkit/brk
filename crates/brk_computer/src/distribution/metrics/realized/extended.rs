@@ -14,7 +14,7 @@ use crate::{
 
 use crate::distribution::metrics::ImportConfig;
 
-use super::RealizedBase;
+use super::RealizedFull;
 
 #[derive(Traversable)]
 pub struct RealizedExtended<M: StorageMode = Rw> {
@@ -53,10 +53,9 @@ impl RealizedExtended {
         })
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2(
         &mut self,
-        base: &RealizedBase,
+        base: &RealizedFull,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,

@@ -26,7 +26,7 @@ use super::RealizedComplete;
 /// - Source-only: peak_regret, peak_regret_rel_to_realized_cap
 /// - Extended-only: investor_price, price bands, cap_raw, sell_side_risk_ratio
 #[derive(Deref, DerefMut, Traversable)]
-pub struct RealizedBase<M: StorageMode = Rw> {
+pub struct RealizedFull<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
@@ -50,7 +50,7 @@ pub struct RealizedBase<M: StorageMode = Rw> {
     pub peak_regret_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
 }
 
-impl RealizedBase {
+impl RealizedFull {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v0 = Version::ZERO;
 
@@ -219,8 +219,7 @@ impl RealizedBase {
         Ok(())
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn compute_rest_part2_base(
+    pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,

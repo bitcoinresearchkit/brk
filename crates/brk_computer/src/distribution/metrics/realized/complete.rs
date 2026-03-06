@@ -21,14 +21,14 @@ use crate::{
 
 use crate::distribution::metrics::ImportConfig;
 
-use super::CoreRealized;
+use super::RealizedCore;
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct RealizedComplete<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub core: CoreRealized<M>,
+    pub core: RealizedCore<M>,
 
     pub profit_value_created: ComputedFromHeight<Cents, M>,
     pub profit_value_destroyed: ComputedFromHeight<Cents, M>,
@@ -63,7 +63,7 @@ impl RealizedComplete {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v0 = Version::ZERO;
 
-        let core = CoreRealized::forced_import(cfg)?;
+        let core = RealizedCore::forced_import(cfg)?;
 
         let profit_value_created = cfg.import_computed("profit_value_created", v0)?;
         let profit_value_destroyed = cfg.import_computed("profit_value_destroyed", v0)?;
@@ -175,7 +175,7 @@ impl RealizedComplete {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        let core_refs: Vec<&CoreRealized> = others.iter().map(|o| &o.core).collect();
+        let core_refs: Vec<&RealizedCore> = others.iter().map(|o| &o.core).collect();
         self.core
             .compute_from_stateful(starting_indexes, &core_refs, exit)?;
 
@@ -199,7 +199,6 @@ impl RealizedComplete {
         Ok(())
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,

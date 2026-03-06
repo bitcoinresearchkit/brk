@@ -2,13 +2,12 @@ use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, Indexes, Sats, Version};
-use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    CoreActivity, CoreRealized, ImportConfig, OutputsMetrics,
+    ActivityCore, RealizedCore, ImportConfig, OutputsMetrics,
     RelativeCompleteWithRelToAll, SupplyMetrics, UnrealizedComplete,
 };
 
@@ -18,8 +17,8 @@ pub struct CoreCohortMetrics<M: StorageMode = Rw> {
     pub filter: Filter,
     pub supply: Box<SupplyMetrics<M>>,
     pub outputs: Box<OutputsMetrics<M>>,
-    pub activity: Box<CoreActivity<M>>,
-    pub realized: Box<CoreRealized<M>>,
+    pub activity: Box<ActivityCore<M>>,
+    pub realized: Box<RealizedCore<M>>,
     pub unrealized: Box<UnrealizedComplete<M>>,
     pub relative: Box<RelativeCompleteWithRelToAll<M>>,
 }
@@ -30,8 +29,8 @@ impl CoreCohortMetrics {
             filter: cfg.filter.clone(),
             supply: Box::new(SupplyMetrics::forced_import(cfg)?),
             outputs: Box::new(OutputsMetrics::forced_import(cfg)?),
-            activity: Box::new(CoreActivity::forced_import(cfg)?),
-            realized: Box::new(CoreRealized::forced_import(cfg)?),
+            activity: Box::new(ActivityCore::forced_import(cfg)?),
+            realized: Box::new(RealizedCore::forced_import(cfg)?),
             unrealized: Box::new(UnrealizedComplete::forced_import(cfg)?),
             relative: Box::new(RelativeCompleteWithRelToAll::forced_import(cfg)?),
         })
@@ -54,9 +53,9 @@ impl CoreCohortMetrics {
 
     pub(crate) fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
-        vecs.extend(self.supply.par_iter_mut().collect::<Vec<_>>());
-        vecs.extend(self.outputs.par_iter_mut().collect::<Vec<_>>());
-        vecs.extend(self.activity.par_iter_mut().collect::<Vec<_>>());
+        vecs.extend(self.supply.collect_vecs_mut());
+        vecs.extend(self.outputs.collect_vecs_mut());
+        vecs.extend(self.activity.collect_vecs_mut());
         vecs.extend(self.realized.collect_vecs_mut());
         vecs.extend(self.unrealized.collect_vecs_mut());
         vecs

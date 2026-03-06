@@ -2,7 +2,6 @@ use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, Indexes, Sats, Version};
-use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
@@ -68,9 +67,9 @@ impl CompleteCohortMetrics {
 
     pub(crate) fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
-        vecs.extend(self.supply.par_iter_mut().collect::<Vec<_>>());
-        vecs.extend(self.outputs.par_iter_mut().collect::<Vec<_>>());
-        vecs.extend(self.activity.par_iter_mut().collect::<Vec<_>>());
+        vecs.extend(self.supply.collect_vecs_mut());
+        vecs.extend(self.outputs.collect_vecs_mut());
+        vecs.extend(self.activity.collect_vecs_mut());
         vecs.extend(self.realized.collect_vecs_mut());
         vecs.extend(self.cost_basis.collect_vecs_mut());
         vecs.extend(self.unrealized.collect_vecs_mut());
@@ -101,10 +100,10 @@ impl CompleteCohortMetrics {
             exit,
         )?;
 
-        // Realized: aggregate only Complete-tier fields from Source's RealizedBase
+        // Realized: aggregate only Complete-tier fields from Source's RealizedFull
         let realized_complete_refs: Vec<&RealizedComplete> = others
             .iter()
-            .map(|v| &v.realized_base().complete)
+            .map(|v| &v.realized_full().complete)
             .collect();
         self.realized
             .compute_from_stateful(starting_indexes, &realized_complete_refs, exit)?;
@@ -112,7 +111,7 @@ impl CompleteCohortMetrics {
         // Unrealized: aggregate only Complete-tier fields
         let unrealized_complete_refs: Vec<&UnrealizedComplete> = others
             .iter()
-            .map(|v| &v.unrealized_base().complete)
+            .map(|v| &v.unrealized_full().complete)
             .collect();
         self.unrealized
             .compute_from_stateful(starting_indexes, &unrealized_complete_refs, exit)?;

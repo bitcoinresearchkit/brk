@@ -8,7 +8,7 @@ use crate::{blocks, prices};
 
 use crate::distribution::metrics::ImportConfig;
 
-use super::{RealizedBase, RealizedExtended};
+use super::{RealizedFull, RealizedExtended};
 
 /// Realized metrics with guaranteed extended (no Option).
 #[derive(Deref, DerefMut, Traversable)]
@@ -16,19 +16,18 @@ pub struct RealizedWithExtended<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub base: RealizedBase<M>,
+    pub base: RealizedFull<M>,
     #[traversable(flatten)]
     pub extended: RealizedExtended<M>,
 }
 
 impl RealizedWithExtended {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let base = RealizedBase::forced_import(cfg)?;
+        let base = RealizedFull::forced_import(cfg)?;
         let extended = RealizedExtended::forced_import(cfg)?;
         Ok(Self { base, extended })
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,
@@ -38,7 +37,7 @@ impl RealizedWithExtended {
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.base.compute_rest_part2_base(
+        self.base.compute_rest_part2(
             blocks,
             prices,
             starting_indexes,

@@ -2,21 +2,20 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
-use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::internal::ComputedFromHeightCumulativeSum;
 
 use crate::{blocks, distribution::metrics::ImportConfig, prices};
 
-use super::CoreActivity;
+use super::ActivityCore;
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct ActivityMetrics<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub core: CoreActivity<M>,
+    pub core: ActivityCore<M>,
 
     pub coinblocks_destroyed: ComputedFromHeightCumulativeSum<StoredF64, M>,
     pub coindays_destroyed: ComputedFromHeightCumulativeSum<StoredF64, M>,
@@ -25,7 +24,7 @@ pub struct ActivityMetrics<M: StorageMode = Rw> {
 impl ActivityMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            core: CoreActivity::forced_import(cfg)?,
+            core: ActivityCore::forced_import(cfg)?,
             coinblocks_destroyed: cfg
                 .import_cumulative_sum("coinblocks_destroyed", Version::ONE)?,
             coindays_destroyed: cfg.import_cumulative_sum("coindays_destroyed", Version::ONE)?,
@@ -58,13 +57,12 @@ impl ActivityMetrics {
         Ok(())
     }
 
-    pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
             &mut self.core.sent.base.sats.height as &mut dyn AnyStoredVec,
             &mut self.coinblocks_destroyed.height as &mut dyn AnyStoredVec,
             &mut self.coindays_destroyed.height as &mut dyn AnyStoredVec,
         ]
-        .into_par_iter()
     }
 
     pub(crate) fn validate_computed_versions(&mut self, _base_version: Version) -> Result<()> {
@@ -77,7 +75,7 @@ impl ActivityMetrics {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        let core_refs: Vec<&CoreActivity> = others.iter().map(|o| &o.core).collect();
+        let core_refs: Vec<&ActivityCore> = others.iter().map(|o| &o.core).collect();
         self.core
             .compute_from_stateful(starting_indexes, &core_refs, exit)?;
 

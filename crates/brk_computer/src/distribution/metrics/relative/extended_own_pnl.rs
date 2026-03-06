@@ -7,7 +7,7 @@ use crate::internal::{
     NegRatioDollarsBps32, PercentFromHeight, RatioDollarsBp16, RatioDollarsBps32,
 };
 
-use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
+use crate::distribution::metrics::{ImportConfig, UnrealizedFull};
 
 /// Extended relative metrics for own total unrealized PnL (extended only).
 #[derive(Traversable)]
@@ -37,7 +37,7 @@ impl RelativeExtendedOwnPnl {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        unrealized: &UnrealizedBase,
+        unrealized: &UnrealizedFull,
         exit: &Exit,
     ) -> Result<()> {
         self.unrealized_profit_rel_to_own_gross_pnl

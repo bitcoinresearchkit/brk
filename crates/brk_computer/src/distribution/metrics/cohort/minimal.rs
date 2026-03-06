@@ -5,7 +5,6 @@ use brk_types::{
     BasisPoints16, BasisPoints32, Bitcoin, Cents, Dollars, Height, Indexes, Sats, StoredF32,
     Version,
 };
-use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{blocks, prices};
@@ -251,8 +250,8 @@ impl MinimalCohortMetrics {
 
     pub(crate) fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
-        vecs.extend(self.supply.par_iter_mut().collect::<Vec<_>>());
-        vecs.extend(self.outputs.par_iter_mut().collect::<Vec<_>>());
+        vecs.extend(self.supply.collect_vecs_mut());
+        vecs.extend(self.outputs.collect_vecs_mut());
         vecs.extend(self.realized.collect_vecs_mut());
         vecs.extend(self.unrealized.collect_vecs_mut());
         vecs

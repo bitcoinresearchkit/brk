@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
-use vecdb::{Rw, StorageMode};
+use vecdb::{AnyStoredVec, Rw, StorageMode};
 
 use crate::distribution::metrics::ImportConfig;
 
@@ -25,6 +25,12 @@ impl CostBasisWithExtended {
             base: CostBasisBase::forced_import(cfg)?,
             extended: CostBasisExtended::forced_import(cfg)?,
         })
+    }
+
+    pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        let mut vecs = self.base.collect_vecs_mut();
+        vecs.extend(self.extended.collect_vecs_mut());
+        vecs
     }
 
     pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {

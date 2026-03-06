@@ -1,16 +1,14 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, Indexes, Sats, Version};
-use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
+use brk_types::{Dollars, Height, Indexes, Sats};
+use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{blocks, distribution::state::{CohortState, RealizedState}, prices};
+use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ActivityMetrics, CohortMetricsBase, CostBasisBase, CostBasisWithExtended, ImportConfig,
-    OutputsMetrics, RealizedBase, RealizedWithExtended, RelativeWithExtended, SupplyMetrics,
-    UnrealizedBase,
+    ActivityMetrics, CostBasisWithExtended, ImportConfig, OutputsMetrics,
+    RealizedWithExtended, RelativeWithExtended, SupplyMetrics, UnrealizedFull,
 };
 
 /// Cohort metrics with extended realized + extended cost basis (no adjusted).
@@ -24,7 +22,7 @@ pub struct ExtendedCohortMetrics<M: StorageMode = Rw> {
     pub activity: Box<ActivityMetrics<M>>,
     pub realized: Box<RealizedWithExtended<M>>,
     pub cost_basis: Box<CostBasisWithExtended<M>>,
-    pub unrealized: Box<UnrealizedBase<M>>,
+    pub unrealized: Box<UnrealizedFull<M>>,
     pub relative: Box<RelativeWithExtended<M>>,
 }
 
@@ -33,7 +31,7 @@ impl_cohort_metrics_base!(ExtendedCohortMetrics, extended_cost_basis);
 impl ExtendedCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let supply = SupplyMetrics::forced_import(cfg)?;
-        let unrealized = UnrealizedBase::forced_import(cfg)?;
+        let unrealized = UnrealizedFull::forced_import(cfg)?;
         let realized = RealizedWithExtended::forced_import(cfg)?;
 
         let relative = RelativeWithExtended::forced_import(cfg)?;

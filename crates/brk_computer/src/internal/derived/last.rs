@@ -84,7 +84,7 @@ where
         ) {
             let mapping_len = mapping.len();
             let source_len = source.len();
-            let mut cursor = Cursor::from_dyn(&**source);
+            let mut cursor = Cursor::new(&**source);
             for i in from..to {
                 if i >= mapping_len {
                     break;

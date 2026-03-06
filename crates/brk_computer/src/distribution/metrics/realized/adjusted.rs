@@ -37,7 +37,6 @@ impl RealizedAdjusted {
         })
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,

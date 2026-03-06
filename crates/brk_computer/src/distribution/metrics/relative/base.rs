@@ -6,7 +6,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{NegRatioDollarsBps32, PercentFromHeight, RatioDollarsBp16};
 
-use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
+use crate::distribution::metrics::{ImportConfig, RealizedFull, UnrealizedFull};
 
 use super::RelativeComplete;
 
@@ -50,8 +50,8 @@ impl RelativeBase {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        unrealized: &UnrealizedBase,
-        realized: &RealizedBase,
+        unrealized: &UnrealizedFull,
+        realized: &RealizedFull,
         supply_total_sats: &impl ReadableVec<Height, Sats>,
         market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,

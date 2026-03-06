@@ -23,7 +23,7 @@ use crate::{
 use crate::distribution::metrics::ImportConfig;
 
 #[derive(Traversable)]
-pub struct CoreRealized<M: StorageMode = Rw> {
+pub struct RealizedCore<M: StorageMode = Rw> {
     pub realized_cap_cents: ComputedFromHeight<Cents, M>,
     pub realized_profit: ComputedFromHeightCumulative<Cents, M>,
     pub realized_loss: ComputedFromHeightCumulative<Cents, M>,
@@ -48,7 +48,7 @@ pub struct CoreRealized<M: StorageMode = Rw> {
     pub net_realized_pnl_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
 }
 
-impl CoreRealized {
+impl RealizedCore {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v0 = Version::ZERO;
         let v1 = Version::ONE;

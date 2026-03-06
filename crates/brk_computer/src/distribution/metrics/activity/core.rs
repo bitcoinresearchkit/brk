@@ -1,7 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Indexes, Sats, Version};
-use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::internal::{RollingEmas2w, ValueFromHeightCumulative};
@@ -9,12 +8,12 @@ use crate::internal::{RollingEmas2w, ValueFromHeightCumulative};
 use crate::{blocks, distribution::metrics::ImportConfig, prices};
 
 #[derive(Traversable)]
-pub struct CoreActivity<M: StorageMode = Rw> {
+pub struct ActivityCore<M: StorageMode = Rw> {
     pub sent: ValueFromHeightCumulative<M>,
     pub sent_ema: RollingEmas2w<M>,
 }
 
-impl CoreActivity {
+impl ActivityCore {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             sent: cfg.import_value_cumulative("sent", Version::ZERO)?,
@@ -31,8 +30,8 @@ impl CoreActivity {
         Ok(())
     }
 
-    pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        vec![&mut self.sent.base.sats.height as &mut dyn AnyStoredVec].into_par_iter()
+    pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        vec![&mut self.sent.base.sats.height as &mut dyn AnyStoredVec]
     }
 
     pub(crate) fn validate_computed_versions(&mut self, _base_version: Version) -> Result<()> {

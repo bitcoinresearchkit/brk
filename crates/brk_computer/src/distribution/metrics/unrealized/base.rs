@@ -20,7 +20,7 @@ use super::UnrealizedComplete;
 /// - Source-only: invested_capital, raw BytesVecs, unrealized_gross_pnl
 /// - Extended-only: pain_index, greed_index, net_sentiment
 #[derive(Deref, DerefMut, Traversable)]
-pub struct UnrealizedBase<M: StorageMode = Rw> {
+pub struct UnrealizedFull<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
@@ -43,7 +43,7 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
     pub net_sentiment: FiatFromHeight<CentsSigned, M>,
 }
 
-impl UnrealizedBase {
+impl UnrealizedFull {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v0 = Version::ZERO;
 

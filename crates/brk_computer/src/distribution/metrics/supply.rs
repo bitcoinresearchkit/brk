@@ -3,7 +3,6 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Indexes, Sats, Version};
 
 use crate::{blocks, prices};
-use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::internal::{
@@ -54,13 +53,11 @@ impl SupplyMetrics {
         Ok(())
     }
 
-    /// Returns a parallel iterator over all vecs for parallel writing.
-    pub(crate) fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+    pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
             &mut self.total.base.sats.height as &mut dyn AnyStoredVec,
             &mut self.total.base.cents.height as &mut dyn AnyStoredVec,
         ]
-        .into_par_iter()
     }
 
     /// Eagerly compute USD height values from sats × price.

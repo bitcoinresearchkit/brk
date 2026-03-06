@@ -1,15 +1,14 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Indexes, Sats, Version};
-use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
+use brk_types::{Dollars, Height, Indexes, Sats};
+use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ActivityMetrics, CohortMetricsBase, CostBasisBase, ImportConfig, OutputsMetrics, RealizedBase,
-    RelativeWithRelToAll, SupplyMetrics, UnrealizedBase,
+    ActivityMetrics, CostBasisBase, ImportConfig, OutputsMetrics, RealizedFull,
+    RelativeWithRelToAll, SupplyMetrics, UnrealizedFull,
 };
 
 /// Basic cohort metrics: no extensions, with relative (rel_to_all).
@@ -21,9 +20,9 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     pub supply: Box<SupplyMetrics<M>>,
     pub outputs: Box<OutputsMetrics<M>>,
     pub activity: Box<ActivityMetrics<M>>,
-    pub realized: Box<RealizedBase<M>>,
+    pub realized: Box<RealizedFull<M>>,
     pub cost_basis: Box<CostBasisBase<M>>,
-    pub unrealized: Box<UnrealizedBase<M>>,
+    pub unrealized: Box<UnrealizedFull<M>>,
     pub relative: Box<RelativeWithRelToAll<M>>,
 }
 
@@ -32,8 +31,8 @@ impl_cohort_metrics_base!(BasicCohortMetrics, base_cost_basis);
 impl BasicCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let supply = SupplyMetrics::forced_import(cfg)?;
-        let unrealized = UnrealizedBase::forced_import(cfg)?;
-        let realized = RealizedBase::forced_import(cfg)?;
+        let unrealized = UnrealizedFull::forced_import(cfg)?;
+        let realized = RealizedFull::forced_import(cfg)?;
 
         let relative = RelativeWithRelToAll::forced_import(cfg)?;
 
@@ -58,7 +57,7 @@ impl BasicCohortMetrics {
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
-        self.realized.compute_rest_part2_base(
+        self.realized.compute_rest_part2(
             blocks,
             prices,
             starting_indexes,
