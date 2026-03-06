@@ -2,11 +2,13 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, Dollars, Height, Indexes, Sats};
 use derive_more::{Deref, DerefMut};
-use vecdb::{Exit, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
 
-use crate::distribution::metrics::{ImportConfig, RealizedAdjusted};
+use crate::distribution::metrics::{
+    CohortMetricsBase, CostBasisWithExtended, ImportConfig, RealizedAdjusted, RealizedFull,
+};
 
 use super::ExtendedCohortMetrics;
 
@@ -23,7 +25,16 @@ pub struct ExtendedAdjustedCohortMetrics<M: StorageMode = Rw> {
     pub adjusted: Box<RealizedAdjusted<M>>,
 }
 
-impl_cohort_metrics_base!(ExtendedAdjustedCohortMetrics, deref_extended_cost_basis);
+impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
+    type RealizedVecs = RealizedFull;
+    type CostBasisVecs = CostBasisWithExtended;
+
+    impl_cohort_accessors!();
+
+    fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        self.inner.collect_all_vecs_mut()
+    }
+}
 
 impl ExtendedAdjustedCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {

@@ -2,6 +2,7 @@ use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Dollars, Height, Indexes, Sats, StoredF32, Version};
+use vecdb::AnyStoredVec;
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
@@ -9,7 +10,7 @@ use crate::{blocks, prices};
 use crate::internal::ComputedFromHeight;
 
 use crate::distribution::metrics::{
-    ActivityFull, CostBasisWithExtended, ImportConfig, OutputsMetrics,
+    ActivityFull, CohortMetricsBase, CostBasisWithExtended, ImportConfig, OutputsMetrics,
     RealizedFull, RelativeWithExtended, SupplyMetrics, UnrealizedFull,
 };
 
@@ -30,7 +31,25 @@ pub struct ExtendedCohortMetrics<M: StorageMode = Rw> {
     pub velocity: ComputedFromHeight<StoredF32, M>,
 }
 
-impl_cohort_metrics_base!(ExtendedCohortMetrics, extended_cost_basis);
+impl CohortMetricsBase for ExtendedCohortMetrics {
+    type RealizedVecs = RealizedFull;
+    type CostBasisVecs = CostBasisWithExtended;
+
+    impl_cohort_accessors!();
+
+    fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
+        vecs.extend(self.supply.collect_vecs_mut());
+        vecs.extend(self.outputs.collect_vecs_mut());
+        vecs.extend(self.activity.collect_vecs_mut());
+        vecs.extend(self.realized.collect_vecs_mut());
+        vecs.extend(self.cost_basis.collect_vecs_mut());
+        vecs.extend(self.unrealized.collect_vecs_mut());
+        vecs.push(&mut self.dormancy.height);
+        vecs.push(&mut self.velocity.height);
+        vecs
+    }
+}
 
 impl ExtendedCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {

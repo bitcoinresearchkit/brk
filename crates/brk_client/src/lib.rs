@@ -949,7 +949,6 @@ pub struct CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSell
     pub investor_price: CentsSatsUsdPattern,
     pub investor_price_ratio: BpsRatioPattern,
     pub investor_price_ratio_percentiles: RatioPattern,
-    pub investor_price_ratio_std_dev: RatioPattern2,
     pub loss_value_created: MetricPattern1<Cents>,
     pub loss_value_destroyed: MetricPattern1<Cents>,
     pub lower_price_band: CentsSatsUsdPattern,

@@ -1,6 +1,5 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Rw, StorageMode};
 
@@ -31,9 +30,5 @@ impl CostBasisWithExtended {
         let mut vecs = self.base.collect_vecs_mut();
         vecs.extend(self.extended.collect_vecs_mut());
         vecs
-    }
-
-    pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
-        self.extended.validate_computed_versions(base_version)
     }
 }

@@ -72,7 +72,6 @@ pub struct RealizedFull<M: StorageMode = Rw> {
 
     pub realized_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands<M>,
     pub investor_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
-    pub investor_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands<M>,
 }
 
 impl RealizedFull {
@@ -163,12 +162,6 @@ impl RealizedFull {
                 cfg.indexes,
             )?,
             investor_price_ratio_percentiles: ComputedFromHeightRatioPercentiles::forced_import(
-                cfg.db,
-                &investor_price_name,
-                investor_price_version,
-                cfg.indexes,
-            )?,
-            investor_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands::forced_import(
                 cfg.db,
                 &investor_price_name,
                 investor_price_version,
@@ -426,16 +419,9 @@ impl RealizedFull {
             &self.core.minimal.realized_price.cents.height,
         )?;
 
-        // Investor price: percentiles + stddev bands
+        // Investor price: percentiles
         let investor_price = &self.investor_price.cents.height;
         self.investor_price_ratio_percentiles.compute(
-            blocks,
-            starting_indexes,
-            exit,
-            &self.investor_price_ratio.ratio.height,
-            investor_price,
-        )?;
-        self.investor_price_ratio_std_dev.compute(
             blocks,
             starting_indexes,
             exit,

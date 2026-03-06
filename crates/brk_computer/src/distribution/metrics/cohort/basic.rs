@@ -1,7 +1,7 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Indexes, Sats, Version};
+use brk_types::{Dollars, Height, Indexes, Sats};
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
@@ -27,13 +27,10 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
 }
 
 impl CohortMetricsBase for BasicCohortMetrics {
-    impl_cohort_metrics_base!(@accessors);
+    type RealizedVecs = RealizedBase;
+    type CostBasisVecs = CostBasisBase;
 
-    fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
-        self.supply.validate_computed_versions(base_version)?;
-        self.activity.validate_computed_versions(base_version)?;
-        Ok(())
-    }
+    impl_cohort_accessors!();
 
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
