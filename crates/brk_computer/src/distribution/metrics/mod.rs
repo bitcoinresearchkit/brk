@@ -164,11 +164,34 @@ pub use unrealized::*;
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_types::{Cents, Height, Indexes, Version};
-use vecdb::{AnyStoredVec, Exit};
+use vecdb::{AnyStoredVec, Exit, StorageMode};
 
-use crate::{blocks, distribution::state::{CohortState, RealizedState}, prices};
+use crate::{blocks, distribution::state::{CohortState, CoreRealizedState, MinimalRealizedState, RealizedOps, RealizedState}, prices};
 
-pub trait CohortMetricsBase: Send + Sync {
+pub trait CohortMetricsState {
+    type Realized: RealizedOps;
+}
+
+impl<M: StorageMode> CohortMetricsState for MinimalCohortMetrics<M> {
+    type Realized = MinimalRealizedState;
+}
+impl<M: StorageMode> CohortMetricsState for CoreCohortMetrics<M> {
+    type Realized = CoreRealizedState;
+}
+impl<M: StorageMode> CohortMetricsState for BasicCohortMetrics<M> {
+    type Realized = RealizedState;
+}
+impl<M: StorageMode> CohortMetricsState for ExtendedCohortMetrics<M> {
+    type Realized = RealizedState;
+}
+impl<M: StorageMode> CohortMetricsState for ExtendedAdjustedCohortMetrics<M> {
+    type Realized = RealizedState;
+}
+impl<M: StorageMode> CohortMetricsState for AllCohortMetrics<M> {
+    type Realized = RealizedState;
+}
+
+pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send + Sync {
     fn filter(&self) -> &Filter;
     fn supply(&self) -> &SupplyMetrics;
     fn supply_mut(&mut self) -> &mut SupplyMetrics;

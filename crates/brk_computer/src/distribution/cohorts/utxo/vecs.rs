@@ -7,28 +7,27 @@ use vecdb::{Exit, ReadableVec};
 use crate::{blocks, distribution::state::UTXOCohortState, prices};
 
 use crate::distribution::metrics::{
-    CohortMetricsBase, CoreCohortMetrics, MinimalCohortMetrics,
+    CohortMetricsBase, CohortMetricsState, CoreCohortMetrics, MinimalCohortMetrics,
 };
-use crate::distribution::state::{CoreRealizedState, MinimalRealizedState, RealizedOps, RealizedState};
 
 use super::super::traits::DynCohortVecs;
 
 #[derive(Traversable)]
-pub struct UTXOCohortVecs<Metrics, R: RealizedOps> {
+pub struct UTXOCohortVecs<M: CohortMetricsState> {
     #[traversable(skip)]
     state_starting_height: Option<Height>,
 
     #[traversable(skip)]
-    pub state: Option<Box<UTXOCohortState<R>>>,
+    pub state: Option<Box<UTXOCohortState<M::Realized>>>,
 
     #[traversable(flatten)]
-    pub metrics: Metrics,
+    pub metrics: M,
 }
 
 // --- Shared state helpers (identical across all DynCohortVecs impls) ---
 
-impl<Metrics, R: RealizedOps> UTXOCohortVecs<Metrics, R> {
-    pub(crate) fn new(state: Option<Box<UTXOCohortState<R>>>, metrics: Metrics) -> Self {
+impl<M: CohortMetricsState> UTXOCohortVecs<M> {
+    pub(crate) fn new(state: Option<Box<UTXOCohortState<M::Realized>>>, metrics: M) -> Self {
         Self {
             state_starting_height: None,
             state,
@@ -66,17 +65,13 @@ impl<Metrics, R: RealizedOps> UTXOCohortVecs<Metrics, R> {
 
 // --- Blanket impl for CohortMetricsBase types (always use full RealizedState) ---
 
-impl<Metrics: CohortMetricsBase + Traversable> Filtered
-    for UTXOCohortVecs<Metrics, RealizedState>
-{
+impl<M: CohortMetricsBase + Traversable> Filtered for UTXOCohortVecs<M> {
     fn filter(&self) -> &Filter {
         self.metrics.filter()
     }
 }
 
-impl<Metrics: CohortMetricsBase + Traversable> DynCohortVecs
-    for UTXOCohortVecs<Metrics, RealizedState>
-{
+impl<M: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<M> {
     fn min_stateful_height_len(&self) -> usize {
         self.metrics.min_stateful_height_len()
     }
@@ -227,13 +222,13 @@ macro_rules! impl_import_state {
 
 // --- MinimalCohortMetrics: uses MinimalRealizedState ---
 
-impl Filtered for UTXOCohortVecs<MinimalCohortMetrics, MinimalRealizedState> {
+impl Filtered for UTXOCohortVecs<MinimalCohortMetrics> {
     fn filter(&self) -> &Filter {
         &self.metrics.filter
     }
 }
 
-impl DynCohortVecs for UTXOCohortVecs<MinimalCohortMetrics, MinimalRealizedState> {
+impl DynCohortVecs for UTXOCohortVecs<MinimalCohortMetrics> {
     fn min_stateful_height_len(&self) -> usize {
         self.metrics.min_stateful_height_len()
     }
@@ -311,13 +306,13 @@ impl DynCohortVecs for UTXOCohortVecs<MinimalCohortMetrics, MinimalRealizedState
 
 // --- CoreCohortMetrics: uses CoreRealizedState ---
 
-impl Filtered for UTXOCohortVecs<CoreCohortMetrics, CoreRealizedState> {
+impl Filtered for UTXOCohortVecs<CoreCohortMetrics> {
     fn filter(&self) -> &Filter {
         &self.metrics.filter
     }
 }
 
-impl DynCohortVecs for UTXOCohortVecs<CoreCohortMetrics, CoreRealizedState> {
+impl DynCohortVecs for UTXOCohortVecs<CoreCohortMetrics> {
     fn min_stateful_height_len(&self) -> usize {
         self.metrics.min_stateful_height_len()
     }
@@ -392,4 +387,3 @@ impl DynCohortVecs for UTXOCohortVecs<CoreCohortMetrics, CoreRealizedState> {
         self.reset_iteration_impl();
     }
 }
-

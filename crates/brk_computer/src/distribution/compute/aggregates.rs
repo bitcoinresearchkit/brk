@@ -20,8 +20,12 @@ pub(crate) fn compute_overlapping(
 ) -> Result<()> {
     info!("Computing overlapping cohorts...");
 
-    utxo_cohorts.compute_overlapping_vecs(starting_indexes, exit)?;
-    address_cohorts.compute_overlapping_vecs(starting_indexes, exit)?;
+    let (r1, r2) = rayon::join(
+        || utxo_cohorts.compute_overlapping_vecs(starting_indexes, exit),
+        || address_cohorts.compute_overlapping_vecs(starting_indexes, exit),
+    );
+    r1?;
+    r2?;
 
     Ok(())
 }
@@ -39,8 +43,12 @@ pub(crate) fn compute_rest_part1(
 ) -> Result<()> {
     info!("Computing rest part 1...");
 
-    utxo_cohorts.compute_rest_part1(blocks, prices, starting_indexes, exit)?;
-    address_cohorts.compute_rest_part1(blocks, prices, starting_indexes, exit)?;
+    let (r1, r2) = rayon::join(
+        || utxo_cohorts.compute_rest_part1(blocks, prices, starting_indexes, exit),
+        || address_cohorts.compute_rest_part1(blocks, prices, starting_indexes, exit),
+    );
+    r1?;
+    r2?;
 
     Ok(())
 }
