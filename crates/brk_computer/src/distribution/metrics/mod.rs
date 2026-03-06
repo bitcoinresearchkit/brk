@@ -68,6 +68,104 @@ macro_rules! impl_cohort_metrics_base {
                 Ok(())
             }
 
+            fn min_stateful_height_len(&self) -> usize {
+                self.supply.min_len()
+                    .min(self.outputs.min_len())
+                    .min(self.activity.min_len())
+                    .min(self.realized.min_stateful_height_len())
+                    .min(self.unrealized_full().min_stateful_height_len())
+                    .min(self.cost_basis_base().min_stateful_height_len())
+            }
+
+            fn truncate_push(
+                &mut self,
+                height: brk_types::Height,
+                state: &$crate::distribution::state::CohortState<$crate::distribution::state::RealizedState>,
+            ) -> brk_error::Result<()> {
+                self.supply_mut()
+                    .truncate_push(height, state.supply.value)?;
+                self.outputs_mut()
+                    .truncate_push(height, state.supply.utxo_count)?;
+                self.activity_mut().truncate_push(
+                    height,
+                    state.sent,
+                    state.satblocks_destroyed,
+                    state.satdays_destroyed,
+                )?;
+                self.realized.truncate_push(height, &state.realized)?;
+                Ok(())
+            }
+
+            fn compute_base_from_others<T: $crate::distribution::metrics::CohortMetricsBase>(
+                &mut self,
+                starting_indexes: &brk_types::Indexes,
+                others: &[&T],
+                exit: &vecdb::Exit,
+            ) -> brk_error::Result<()> {
+                self.supply_mut().compute_from_stateful(
+                    starting_indexes,
+                    &others.iter().map(|v| v.supply()).collect::<Vec<_>>(),
+                    exit,
+                )?;
+                self.outputs_mut().compute_from_stateful(
+                    starting_indexes,
+                    &others.iter().map(|v| v.outputs()).collect::<Vec<_>>(),
+                    exit,
+                )?;
+                self.activity_mut().compute_from_stateful(
+                    starting_indexes,
+                    &others.iter().map(|v| v.activity()).collect::<Vec<_>>(),
+                    exit,
+                )?;
+                self.realized.compute_from_stateful(
+                    starting_indexes,
+                    &others.iter().map(|v| v.realized_base()).collect::<Vec<_>>(),
+                    exit,
+                )?;
+                self.unrealized_full_mut().compute_from_stateful(
+                    starting_indexes,
+                    &others.iter().map(|v| v.unrealized_full()).collect::<Vec<_>>(),
+                    exit,
+                )?;
+                self.cost_basis_base_mut().compute_from_stateful(
+                    starting_indexes,
+                    &others.iter().map(|v| v.cost_basis_base()).collect::<Vec<_>>(),
+                    exit,
+                )?;
+                Ok(())
+            }
+
+            fn compute_rest_part1(
+                &mut self,
+                blocks: &$crate::blocks::Vecs,
+                prices: &$crate::prices::Vecs,
+                starting_indexes: &brk_types::Indexes,
+                exit: &vecdb::Exit,
+            ) -> brk_error::Result<()> {
+                self.supply_mut()
+                    .compute(prices, starting_indexes.height, exit)?;
+                self.supply_mut()
+                    .compute_rest_part1(blocks, starting_indexes, exit)?;
+                self.outputs_mut()
+                    .compute_rest(blocks, starting_indexes, exit)?;
+                self.activity_mut()
+                    .sent
+                    .compute(prices, starting_indexes.height, exit)?;
+                self.activity_mut()
+                    .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
+
+                self.realized.sent_in_profit
+                    .compute(prices, starting_indexes.height, exit)?;
+                self.realized.sent_in_loss
+                    .compute(prices, starting_indexes.height, exit)?;
+                self.realized.compute_rest_part1(starting_indexes, exit)?;
+
+                self.unrealized_full_mut()
+                    .compute_rest(prices, starting_indexes, exit)?;
+
+                Ok(())
+            }
+
             fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn vecdb::AnyStoredVec> {
                 let mut vecs: Vec<&mut dyn vecdb::AnyStoredVec> = Vec::new();
                 vecs.extend(self.supply.collect_vecs_mut());
@@ -103,6 +201,37 @@ macro_rules! impl_cohort_metrics_base {
                 )
             }
 
+            fn min_stateful_height_len(&self) -> usize {
+                self.inner.min_stateful_height_len()
+            }
+
+            fn truncate_push(
+                &mut self,
+                height: brk_types::Height,
+                state: &$crate::distribution::state::CohortState<$crate::distribution::state::RealizedState>,
+            ) -> brk_error::Result<()> {
+                self.inner.truncate_push(height, state)
+            }
+
+            fn compute_rest_part1(
+                &mut self,
+                blocks: &$crate::blocks::Vecs,
+                prices: &$crate::prices::Vecs,
+                starting_indexes: &brk_types::Indexes,
+                exit: &vecdb::Exit,
+            ) -> brk_error::Result<()> {
+                self.inner.compute_rest_part1(blocks, prices, starting_indexes, exit)
+            }
+
+            fn compute_base_from_others<T: $crate::distribution::metrics::CohortMetricsBase>(
+                &mut self,
+                starting_indexes: &brk_types::Indexes,
+                others: &[&T],
+                exit: &vecdb::Exit,
+            ) -> brk_error::Result<()> {
+                self.inner.compute_base_from_others(starting_indexes, others, exit)
+            }
+
             fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn vecdb::AnyStoredVec> {
                 self.inner.collect_all_vecs_mut()
             }
@@ -115,10 +244,10 @@ macro_rules! impl_cohort_metrics_base {
         fn supply_mut(&mut self) -> &mut $crate::distribution::metrics::SupplyMetrics { &mut self.supply }
         fn outputs(&self) -> &$crate::distribution::metrics::OutputsMetrics { &self.outputs }
         fn outputs_mut(&mut self) -> &mut $crate::distribution::metrics::OutputsMetrics { &mut self.outputs }
-        fn activity(&self) -> &$crate::distribution::metrics::ActivityMetrics { &self.activity }
-        fn activity_mut(&mut self) -> &mut $crate::distribution::metrics::ActivityMetrics { &mut self.activity }
-        fn realized_full(&self) -> &$crate::distribution::metrics::RealizedFull { &self.realized }
-        fn realized_full_mut(&mut self) -> &mut $crate::distribution::metrics::RealizedFull { &mut self.realized }
+        fn activity(&self) -> &$crate::distribution::metrics::ActivityFull { &self.activity }
+        fn activity_mut(&mut self) -> &mut $crate::distribution::metrics::ActivityFull { &mut self.activity }
+        fn realized_base(&self) -> &$crate::distribution::metrics::RealizedBase { &self.realized }
+        fn realized_base_mut(&mut self) -> &mut $crate::distribution::metrics::RealizedBase { &mut self.realized }
         fn unrealized_full(&self) -> &$crate::distribution::metrics::UnrealizedFull { &self.unrealized }
         fn unrealized_full_mut(&mut self) -> &mut $crate::distribution::metrics::UnrealizedFull { &mut self.unrealized }
         fn cost_basis_base(&self) -> &$crate::distribution::metrics::CostBasisBase { &self.cost_basis }
@@ -131,10 +260,10 @@ macro_rules! impl_cohort_metrics_base {
         fn supply_mut(&mut self) -> &mut $crate::distribution::metrics::SupplyMetrics { self.inner.supply_mut() }
         fn outputs(&self) -> &$crate::distribution::metrics::OutputsMetrics { self.inner.outputs() }
         fn outputs_mut(&mut self) -> &mut $crate::distribution::metrics::OutputsMetrics { self.inner.outputs_mut() }
-        fn activity(&self) -> &$crate::distribution::metrics::ActivityMetrics { self.inner.activity() }
-        fn activity_mut(&mut self) -> &mut $crate::distribution::metrics::ActivityMetrics { self.inner.activity_mut() }
-        fn realized_full(&self) -> &$crate::distribution::metrics::RealizedFull { self.inner.realized_full() }
-        fn realized_full_mut(&mut self) -> &mut $crate::distribution::metrics::RealizedFull { self.inner.realized_full_mut() }
+        fn activity(&self) -> &$crate::distribution::metrics::ActivityFull { self.inner.activity() }
+        fn activity_mut(&mut self) -> &mut $crate::distribution::metrics::ActivityFull { self.inner.activity_mut() }
+        fn realized_base(&self) -> &$crate::distribution::metrics::RealizedBase { self.inner.realized_base() }
+        fn realized_base_mut(&mut self) -> &mut $crate::distribution::metrics::RealizedBase { self.inner.realized_base_mut() }
         fn unrealized_full(&self) -> &$crate::distribution::metrics::UnrealizedFull { self.inner.unrealized_full() }
         fn unrealized_full_mut(&mut self) -> &mut $crate::distribution::metrics::UnrealizedFull { self.inner.unrealized_full_mut() }
         fn cost_basis_base(&self) -> &$crate::distribution::metrics::CostBasisBase { self.inner.cost_basis_base() }
@@ -197,10 +326,10 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
     fn supply_mut(&mut self) -> &mut SupplyMetrics;
     fn outputs(&self) -> &OutputsMetrics;
     fn outputs_mut(&mut self) -> &mut OutputsMetrics;
-    fn activity(&self) -> &ActivityMetrics;
-    fn activity_mut(&mut self) -> &mut ActivityMetrics;
-    fn realized_full(&self) -> &RealizedFull;
-    fn realized_full_mut(&mut self) -> &mut RealizedFull;
+    fn activity(&self) -> &ActivityFull;
+    fn activity_mut(&mut self) -> &mut ActivityFull;
+    fn realized_base(&self) -> &RealizedBase;
+    fn realized_base_mut(&mut self) -> &mut RealizedBase;
     fn unrealized_full(&self) -> &UnrealizedFull;
     fn unrealized_full_mut(&mut self) -> &mut UnrealizedFull;
     fn cost_basis_base(&self) -> &CostBasisBase;
@@ -242,7 +371,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
             .min_len()
             .min(self.outputs().min_len())
             .min(self.activity().min_len())
-            .min(self.realized_full().min_stateful_height_len())
+            .min(self.realized_base().min_stateful_height_len())
             .min(self.unrealized_full().min_stateful_height_len())
             .min(self.cost_basis_base().min_stateful_height_len())
     }
@@ -258,7 +387,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
             state.satblocks_destroyed,
             state.satdays_destroyed,
         )?;
-        self.realized_full_mut()
+        self.realized_base_mut()
             .truncate_push(height, &state.realized)?;
         Ok(())
     }
@@ -272,7 +401,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
     ) -> Result<()> {
         let weights: Vec<_> = others
             .iter()
-            .map(|o| &o.realized_full().realized_cap.height)
+            .map(|o| &o.realized_base().realized_cap.height)
             .collect();
         let values: Vec<_> = others
             .iter()
@@ -308,13 +437,13 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
         self.activity_mut()
             .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
 
-        self.realized_full_mut()
+        self.realized_base_mut()
             .sent_in_profit
             .compute(prices, starting_indexes.height, exit)?;
-        self.realized_full_mut()
+        self.realized_base_mut()
             .sent_in_loss
             .compute(prices, starting_indexes.height, exit)?;
-        self.realized_full_mut()
+        self.realized_base_mut()
             .compute_rest_part1(starting_indexes, exit)?;
 
         self.unrealized_full_mut()
@@ -354,7 +483,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
         aggregate!(supply_mut, supply);
         aggregate!(outputs_mut, outputs);
         aggregate!(activity_mut, activity);
-        aggregate!(realized_full_mut, realized_full);
+        aggregate!(realized_base_mut, realized_base);
         aggregate!(unrealized_full_mut, unrealized_full);
         aggregate!(cost_basis_base_mut, cost_basis_base);
         Ok(())

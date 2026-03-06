@@ -13,6 +13,12 @@ pub trait RealizedOps: Default + Clone + Send + Sync + 'static {
     fn value_destroyed(&self) -> Cents {
         Cents::ZERO
     }
+    fn sent_in_profit(&self) -> Sats {
+        Sats::ZERO
+    }
+    fn sent_in_loss(&self) -> Sats {
+        Sats::ZERO
+    }
     fn set_cap_raw(&mut self, cap_raw: CentsSats);
     fn set_investor_cap_raw(&mut self, investor_cap_raw: CentsSquaredSats);
     fn reset_single_iteration_values(&mut self);
@@ -121,13 +127,15 @@ impl RealizedOps for MinimalRealizedState {
     }
 }
 
-/// Core realized state: cap, profit, loss + value_created/destroyed for SOPR.
+/// Core realized state: cap, profit, loss + value_created/destroyed for SOPR + sent tracking.
 /// Used by CoreCohortMetrics cohorts (epoch, class, max_age, min_age — ~59 separate cohorts).
 #[derive(Debug, Default, Clone)]
 pub struct CoreRealizedState {
     minimal: MinimalRealizedState,
     value_created_raw: u128,
     value_destroyed_raw: u128,
+    sent_in_profit: Sats,
+    sent_in_loss: Sats,
 }
 
 impl RealizedOps for CoreRealizedState {
@@ -163,6 +171,16 @@ impl RealizedOps for CoreRealizedState {
     }
 
     #[inline]
+    fn sent_in_profit(&self) -> Sats {
+        self.sent_in_profit
+    }
+
+    #[inline]
+    fn sent_in_loss(&self) -> Sats {
+        self.sent_in_loss
+    }
+
+    #[inline]
     fn set_cap_raw(&mut self, cap_raw: CentsSats) {
         self.minimal.set_cap_raw(cap_raw);
     }
@@ -175,6 +193,8 @@ impl RealizedOps for CoreRealizedState {
         self.minimal.reset_single_iteration_values();
         self.value_created_raw = 0;
         self.value_destroyed_raw = 0;
+        self.sent_in_profit = Sats::ZERO;
+        self.sent_in_loss = Sats::ZERO;
     }
 
     #[inline]
@@ -205,6 +225,14 @@ impl RealizedOps for CoreRealizedState {
             .send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
         self.value_created_raw += current_ps.as_u128();
         self.value_destroyed_raw += prev_ps.as_u128();
+        match current_ps.cmp(&prev_ps) {
+            Ordering::Greater | Ordering::Equal => {
+                self.sent_in_profit += sats;
+            }
+            Ordering::Less => {
+                self.sent_in_loss += sats;
+            }
+        }
     }
 }
 
@@ -232,10 +260,6 @@ pub struct RealizedState {
     loss_value_destroyed_raw: u128,
     /// Raw realized peak regret: Σ((peak - sell_price) × sats)
     peak_regret_raw: u128,
-    /// Sats sent in profit
-    sent_in_profit: Sats,
-    /// Sats sent in loss
-    sent_in_loss: Sats,
 }
 
 impl RealizedOps for RealizedState {
@@ -273,6 +297,16 @@ impl RealizedOps for RealizedState {
     }
 
     #[inline]
+    fn sent_in_profit(&self) -> Sats {
+        self.core.sent_in_profit()
+    }
+
+    #[inline]
+    fn sent_in_loss(&self) -> Sats {
+        self.core.sent_in_loss()
+    }
+
+    #[inline]
     fn set_cap_raw(&mut self, cap_raw: CentsSats) {
         self.core.set_cap_raw(cap_raw);
     }
@@ -290,8 +324,6 @@ impl RealizedOps for RealizedState {
         self.loss_value_created_raw = 0;
         self.loss_value_destroyed_raw = 0;
         self.peak_regret_raw = 0;
-        self.sent_in_profit = Sats::ZERO;
-        self.sent_in_loss = Sats::ZERO;
     }
 
     #[inline]
@@ -323,7 +355,7 @@ impl RealizedOps for RealizedState {
         ath_ps: CentsSats,
         prev_investor_cap: CentsSquaredSats,
     ) {
-        // Delegate cap/profit/loss + value_created/destroyed to core
+        // Delegate cap/profit/loss + value_created/destroyed + sent tracking to core
         self.core
             .send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
 
@@ -331,20 +363,13 @@ impl RealizedOps for RealizedState {
         let current = current_ps.as_u128();
         let prev = prev_ps.as_u128();
         match current_ps.cmp(&prev_ps) {
-            Ordering::Greater => {
+            Ordering::Greater | Ordering::Equal => {
                 self.profit_value_created_raw += current;
                 self.profit_value_destroyed_raw += prev;
-                self.sent_in_profit += sats;
             }
             Ordering::Less => {
                 self.loss_value_created_raw += current;
                 self.loss_value_destroyed_raw += prev;
-                self.sent_in_loss += sats;
-            }
-            Ordering::Equal => {
-                self.profit_value_created_raw += current;
-                self.profit_value_destroyed_raw += prev;
-                self.sent_in_profit += sats;
             }
         }
 
@@ -420,17 +445,5 @@ impl RealizedState {
             return Cents::ZERO;
         }
         Cents::new((self.peak_regret_raw / Sats::ONE_BTC_U128) as u64)
-    }
-
-    /// Get sats sent in profit.
-    #[inline]
-    pub(crate) fn sent_in_profit(&self) -> Sats {
-        self.sent_in_profit
-    }
-
-    /// Get sats sent in loss.
-    #[inline]
-    pub(crate) fn sent_in_loss(&self) -> Sats {
-        self.sent_in_loss
     }
 }

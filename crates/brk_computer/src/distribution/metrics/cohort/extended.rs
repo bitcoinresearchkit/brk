@@ -9,8 +9,8 @@ use crate::{blocks, prices};
 use crate::internal::ComputedFromHeight;
 
 use crate::distribution::metrics::{
-    ActivityMetrics, CostBasisWithExtended, ImportConfig, OutputsMetrics,
-    RealizedWithExtended, RelativeWithExtended, SupplyMetrics, UnrealizedFull,
+    ActivityFull, CostBasisWithExtended, ImportConfig, OutputsMetrics,
+    RealizedFull, RelativeWithExtended, SupplyMetrics, UnrealizedFull,
 };
 
 /// Cohort metrics with extended realized + extended cost basis (no adjusted).
@@ -21,8 +21,8 @@ pub struct ExtendedCohortMetrics<M: StorageMode = Rw> {
     pub filter: Filter,
     pub supply: Box<SupplyMetrics<M>>,
     pub outputs: Box<OutputsMetrics<M>>,
-    pub activity: Box<ActivityMetrics<M>>,
-    pub realized: Box<RealizedWithExtended<M>>,
+    pub activity: Box<ActivityFull<M>>,
+    pub realized: Box<RealizedFull<M>>,
     pub cost_basis: Box<CostBasisWithExtended<M>>,
     pub unrealized: Box<UnrealizedFull<M>>,
     pub relative: Box<RelativeWithExtended<M>>,
@@ -36,7 +36,7 @@ impl ExtendedCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let supply = SupplyMetrics::forced_import(cfg)?;
         let unrealized = UnrealizedFull::forced_import(cfg)?;
-        let realized = RealizedWithExtended::forced_import(cfg)?;
+        let realized = RealizedFull::forced_import(cfg)?;
 
         let relative = RelativeWithExtended::forced_import(cfg)?;
 
@@ -44,7 +44,7 @@ impl ExtendedCohortMetrics {
             filter: cfg.filter.clone(),
             supply: Box::new(supply),
             outputs: Box::new(OutputsMetrics::forced_import(cfg)?),
-            activity: Box::new(ActivityMetrics::forced_import(cfg)?),
+            activity: Box::new(ActivityFull::forced_import(cfg)?),
             realized: Box::new(realized),
             cost_basis: Box::new(CostBasisWithExtended::forced_import(cfg)?),
             unrealized: Box::new(unrealized),
@@ -75,7 +75,7 @@ impl ExtendedCohortMetrics {
         self.relative.compute(
             starting_indexes.height,
             &self.unrealized,
-            &self.realized.base,
+            &self.realized,
             &self.supply.total.sats.height,
             height_to_market_cap,
             all_supply_sats,

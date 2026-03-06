@@ -1,5 +1,5 @@
 mod base;
-mod core;
+mod full;
 
 pub use base::*;
-pub use core::*;
+pub use full::*;

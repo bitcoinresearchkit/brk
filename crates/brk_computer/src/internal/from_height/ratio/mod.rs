@@ -1,11 +1,9 @@
 mod extended;
-mod full;
 mod percentiles;
 mod price_extended;
 mod std_dev_bands;
 
 pub use extended::*;
-pub use full::*;
 pub use percentiles::*;
 pub use price_extended::*;
 pub use std_dev_bands::*;
