@@ -5,7 +5,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{PercentFromHeight, RatioDollarsBp16, RatioDollarsBp32, RatioDollarsBps32};
 
-use crate::distribution::metrics::{ImportConfig, UnrealizedFull};
+use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
 
 /// Extended relative metrics for own market cap (extended && rel_to_all).
 #[derive(Traversable)]
@@ -32,7 +32,7 @@ impl RelativeExtendedOwnMarketCap {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        unrealized: &UnrealizedFull,
+        unrealized: &UnrealizedBase,
         own_market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {

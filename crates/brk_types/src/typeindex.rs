@@ -148,7 +148,8 @@ impl std::fmt::Display for TypeIndex {
 impl Formattable for TypeIndex {
     #[inline(always)]
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
-        use std::fmt::Write;
-        write!(f, "{}", self)
+        let mut buf = itoa::Buffer::new();
+        f.push_str(buf.format(self.0));
+        Ok(())
     }
 }

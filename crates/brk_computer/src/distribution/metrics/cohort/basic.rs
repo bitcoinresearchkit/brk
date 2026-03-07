@@ -8,7 +8,7 @@ use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
     ActivityFull, CohortMetricsBase, CostBasisBase, ImportConfig, OutputsMetrics, RealizedBase,
-    RelativeWithRelToAll, SupplyMetrics, UnrealizedFull,
+    RelativeWithRelToAll, SupplyMetrics, UnrealizedBase,
 };
 
 /// Basic cohort metrics: no extensions, with relative (rel_to_all).
@@ -22,12 +22,13 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     pub activity: Box<ActivityFull<M>>,
     pub realized: Box<RealizedBase<M>>,
     pub cost_basis: Box<CostBasisBase<M>>,
-    pub unrealized: Box<UnrealizedFull<M>>,
+    pub unrealized: Box<UnrealizedBase<M>>,
     pub relative: Box<RelativeWithRelToAll<M>>,
 }
 
 impl CohortMetricsBase for BasicCohortMetrics {
     type RealizedVecs = RealizedBase;
+    type UnrealizedVecs = UnrealizedBase;
     type CostBasisVecs = CostBasisBase;
 
     impl_cohort_accessors!();
@@ -47,7 +48,7 @@ impl CohortMetricsBase for BasicCohortMetrics {
 impl BasicCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let supply = SupplyMetrics::forced_import(cfg)?;
-        let unrealized = UnrealizedFull::forced_import(cfg)?;
+        let unrealized = UnrealizedBase::forced_import(cfg)?;
         let realized = RealizedBase::forced_import(cfg)?;
 
         let relative = RelativeWithRelToAll::forced_import(cfg)?;

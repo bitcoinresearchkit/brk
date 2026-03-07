@@ -2052,6 +2052,47 @@ function createRatioPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} GrossInvestedInvestorNegNetSupplyUnrealizedPattern
+ * @property {CentsUsdPattern} grossPnl
+ * @property {CentsUsdPattern} investedCapitalInLoss
+ * @property {MetricPattern18<CentsSats>} investedCapitalInLossRaw
+ * @property {CentsUsdPattern} investedCapitalInProfit
+ * @property {MetricPattern18<CentsSats>} investedCapitalInProfitRaw
+ * @property {MetricPattern18<CentsSquaredSats>} investorCapInLossRaw
+ * @property {MetricPattern18<CentsSquaredSats>} investorCapInProfitRaw
+ * @property {MetricPattern1<Dollars>} negUnrealizedLoss
+ * @property {CentsUsdPattern} netUnrealizedPnl
+ * @property {BtcCentsSatsUsdPattern} supplyInLoss
+ * @property {BtcCentsSatsUsdPattern} supplyInProfit
+ * @property {CentsUsdPattern} unrealizedLoss
+ * @property {CentsUsdPattern} unrealizedProfit
+ */
+
+/**
+ * Create a GrossInvestedInvestorNegNetSupplyUnrealizedPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {GrossInvestedInvestorNegNetSupplyUnrealizedPattern}
+ */
+function createGrossInvestedInvestorNegNetSupplyUnrealizedPattern(client, acc) {
+  return {
+    grossPnl: createCentsUsdPattern(client, _m(acc, 'unrealized_gross_pnl')),
+    investedCapitalInLoss: createCentsUsdPattern(client, _m(acc, 'invested_capital_in_loss')),
+    investedCapitalInLossRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_loss_raw')),
+    investedCapitalInProfit: createCentsUsdPattern(client, _m(acc, 'invested_capital_in_profit')),
+    investedCapitalInProfitRaw: createMetricPattern18(client, _m(acc, 'invested_capital_in_profit_raw')),
+    investorCapInLossRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_loss_raw')),
+    investorCapInProfitRaw: createMetricPattern18(client, _m(acc, 'investor_cap_in_profit_raw')),
+    negUnrealizedLoss: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss')),
+    netUnrealizedPnl: createCentsUsdPattern(client, _m(acc, 'net_unrealized_pnl')),
+    supplyInLoss: createBtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_loss')),
+    supplyInProfit: createBtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_profit')),
+    unrealizedLoss: createCentsUsdPattern(client, _m(acc, 'unrealized_loss')),
+    unrealizedProfit: createCentsUsdPattern(client, _m(acc, 'unrealized_profit')),
+  };
+}
+
+/**
  * @typedef {Object} _10y1m1w1y2y3m3y4y5y6m6y8yPattern2
  * @property {BpsPercentRatioPattern} _10y
  * @property {BpsPercentRatioPattern} _1m
@@ -2314,15 +2355,15 @@ function createAverageGainsLossesRsiStochPattern(client, acc) {
 
 /**
  * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern
- * @property {ChangeCountPattern} all
- * @property {ChangeCountPattern} p2a
- * @property {ChangeCountPattern} p2pk33
- * @property {ChangeCountPattern} p2pk65
- * @property {ChangeCountPattern} p2pkh
- * @property {ChangeCountPattern} p2sh
- * @property {ChangeCountPattern} p2tr
- * @property {ChangeCountPattern} p2wpkh
- * @property {ChangeCountPattern} p2wsh
+ * @property {MetricPattern1<StoredU64>} all
+ * @property {MetricPattern1<StoredU64>} p2a
+ * @property {MetricPattern1<StoredU64>} p2pk33
+ * @property {MetricPattern1<StoredU64>} p2pk65
+ * @property {MetricPattern1<StoredU64>} p2pkh
+ * @property {MetricPattern1<StoredU64>} p2sh
+ * @property {MetricPattern1<StoredU64>} p2tr
+ * @property {MetricPattern1<StoredU64>} p2wpkh
+ * @property {MetricPattern1<StoredU64>} p2wsh
  */
 
 /**
@@ -2333,15 +2374,15 @@ function createAverageGainsLossesRsiStochPattern(client, acc) {
  */
 function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern(client, acc) {
   return {
-    all: createChangeCountPattern(client, acc),
-    p2a: createChangeCountPattern(client, _p('p2a', acc)),
-    p2pk33: createChangeCountPattern(client, _p('p2pk33', acc)),
-    p2pk65: createChangeCountPattern(client, _p('p2pk65', acc)),
-    p2pkh: createChangeCountPattern(client, _p('p2pkh', acc)),
-    p2sh: createChangeCountPattern(client, _p('p2sh', acc)),
-    p2tr: createChangeCountPattern(client, _p('p2tr', acc)),
-    p2wpkh: createChangeCountPattern(client, _p('p2wpkh', acc)),
-    p2wsh: createChangeCountPattern(client, _p('p2wsh', acc)),
+    all: createMetricPattern1(client, acc),
+    p2a: createMetricPattern1(client, _p('p2a', acc)),
+    p2pk33: createMetricPattern1(client, _p('p2pk33', acc)),
+    p2pk65: createMetricPattern1(client, _p('p2pk65', acc)),
+    p2pkh: createMetricPattern1(client, _p('p2pkh', acc)),
+    p2sh: createMetricPattern1(client, _p('p2sh', acc)),
+    p2tr: createMetricPattern1(client, _p('p2tr', acc)),
+    p2wpkh: createMetricPattern1(client, _p('p2wpkh', acc)),
+    p2wsh: createMetricPattern1(client, _p('p2wsh', acc)),
   };
 }
 
@@ -2375,39 +2416,6 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern2(client, acc) {
     pct75: createBtcCentsSatsUsdPattern(client, _m(acc, 'p75')),
     pct90: createBtcCentsSatsUsdPattern(client, _m(acc, 'p90')),
     sum: createBtcCentsSatsUsdPattern(client, _m(acc, 'sum')),
-  };
-}
-
-/**
- * @typedef {Object} AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern
- * @property {_1m1w1y24hPattern<BasisPoints16>} average
- * @property {MetricPattern18<BasisPoints16>} height
- * @property {_1m1w1y24hPattern<BasisPoints16>} max
- * @property {_1m1w1y24hPattern<BasisPoints16>} median
- * @property {_1m1w1y24hPattern<BasisPoints16>} min
- * @property {_1m1w1y24hPattern<BasisPoints16>} pct10
- * @property {_1m1w1y24hPattern<BasisPoints16>} pct25
- * @property {_1m1w1y24hPattern<BasisPoints16>} pct75
- * @property {_1m1w1y24hPattern<BasisPoints16>} pct90
- */
-
-/**
- * Create a AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern}
- */
-function createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc) {
-  return {
-    average: create_1m1w1y24hPattern(client, _m(acc, 'average')),
-    height: createMetricPattern18(client, acc),
-    max: create_1m1w1y24hPattern(client, _m(acc, 'max')),
-    median: create_1m1w1y24hPattern(client, _m(acc, 'median')),
-    min: create_1m1w1y24hPattern(client, _m(acc, 'min')),
-    pct10: create_1m1w1y24hPattern(client, _m(acc, 'p10')),
-    pct25: create_1m1w1y24hPattern(client, _m(acc, 'p25')),
-    pct75: create_1m1w1y24hPattern(client, _m(acc, 'p75')),
-    pct90: create_1m1w1y24hPattern(client, _m(acc, 'p90')),
   };
 }
 
@@ -2576,7 +2584,7 @@ function create_10y2y3y4y5y6y8yPattern(client, acc) {
  * @property {MvrvNegNetRealizedSentSoprValuePattern} realized
  * @property {InvestedNetNuplSupplyUnrealizedPattern} relative
  * @property {ChangeHalvedTotalPattern} supply
- * @property {GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern} unrealized
+ * @property {GrossInvestedInvestorNegNetSupplyUnrealizedPattern} unrealized
  */
 
 /**
@@ -2593,7 +2601,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client
     realized: createMvrvNegNetRealizedSentSoprValuePattern(client, acc),
     relative: createInvestedNetNuplSupplyUnrealizedPattern(client, acc),
     supply: createChangeHalvedTotalPattern(client, _m(acc, 'supply')),
-    unrealized: createGreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(client, acc),
+    unrealized: createGrossInvestedInvestorNegNetSupplyUnrealizedPattern(client, acc),
   };
 }
 
@@ -3040,27 +3048,6 @@ function createBaseCumulativeSumPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} BpsPercentRatioPattern3
- * @property {AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern} bps
- * @property {MetricPattern1<StoredF32>} percent
- * @property {MetricPattern1<StoredF32>} ratio
- */
-
-/**
- * Create a BpsPercentRatioPattern3 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {BpsPercentRatioPattern3}
- */
-function createBpsPercentRatioPattern3(client, acc) {
-  return {
-    bps: createAverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, 'bps')),
-    percent: createMetricPattern1(client, acc),
-    ratio: createMetricPattern1(client, _m(acc, 'ratio')),
-  };
-}
-
-/**
  * @typedef {Object} BpsPercentRatioPattern
  * @property {MetricPattern1<BasisPoints16>} bps
  * @property {MetricPattern1<StoredF32>} percent
@@ -3326,21 +3313,21 @@ function createCentsUsdPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} ChangeCountPattern
- * @property {MetricPattern1<StoredF64>} change1m
- * @property {MetricPattern1<StoredU64>} count
+ * @typedef {Object} ChangeRatePattern
+ * @property {_1m1w1y24hPattern<StoredU64>} change
+ * @property {_1m1w1y24hPattern2} rate
  */
 
 /**
- * Create a ChangeCountPattern pattern node
+ * Create a ChangeRatePattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {ChangeCountPattern}
+ * @returns {ChangeRatePattern}
  */
-function createChangeCountPattern(client, acc) {
+function createChangeRatePattern(client, acc) {
   return {
-    change1m: createMetricPattern1(client, _m(acc, 'change_1m')),
-    count: createMetricPattern1(client, acc),
+    change: create_1m1w1y24hPattern(client, _m(acc, 'change')),
+    rate: create_1m1w1y24hPattern2(client, _m(acc, 'rate')),
   };
 }
 
@@ -4721,9 +4708,9 @@ function create_2wPattern(client, acc) {
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern} addrCount
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern} emptyAddrCount
  * @property {MetricsTree_Distribution_AddressActivity} addressActivity
- * @property {MetricsTree_Distribution_TotalAddrCount} totalAddrCount
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern} totalAddrCount
  * @property {MetricsTree_Distribution_NewAddrCount} newAddrCount
- * @property {MetricsTree_Distribution_GrowthRate} growthRate
+ * @property {MetricsTree_Distribution_Delta} delta
  * @property {MetricPattern34<FundedAddressIndex>} fundedaddressindex
  * @property {MetricPattern35<EmptyAddressIndex>} emptyaddressindex
  */
@@ -5075,19 +5062,6 @@ function create_2wPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Distribution_TotalAddrCount
- * @property {MetricPattern1<StoredU64>} all
- * @property {MetricPattern1<StoredU64>} p2pk65
- * @property {MetricPattern1<StoredU64>} p2pk33
- * @property {MetricPattern1<StoredU64>} p2pkh
- * @property {MetricPattern1<StoredU64>} p2sh
- * @property {MetricPattern1<StoredU64>} p2wpkh
- * @property {MetricPattern1<StoredU64>} p2wsh
- * @property {MetricPattern1<StoredU64>} p2tr
- * @property {MetricPattern1<StoredU64>} p2a
- */
-
-/**
  * @typedef {Object} MetricsTree_Distribution_NewAddrCount
  * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} all
  * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2pk65
@@ -5101,16 +5075,16 @@ function create_2wPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Distribution_GrowthRate
- * @property {BpsPercentRatioPattern3} all
- * @property {BpsPercentRatioPattern3} p2pk65
- * @property {BpsPercentRatioPattern3} p2pk33
- * @property {BpsPercentRatioPattern3} p2pkh
- * @property {BpsPercentRatioPattern3} p2sh
- * @property {BpsPercentRatioPattern3} p2wpkh
- * @property {BpsPercentRatioPattern3} p2wsh
- * @property {BpsPercentRatioPattern3} p2tr
- * @property {BpsPercentRatioPattern3} p2a
+ * @typedef {Object} MetricsTree_Distribution_Delta
+ * @property {ChangeRatePattern} all
+ * @property {ChangeRatePattern} p2pk65
+ * @property {ChangeRatePattern} p2pk33
+ * @property {ChangeRatePattern} p2pkh
+ * @property {ChangeRatePattern} p2sh
+ * @property {ChangeRatePattern} p2wpkh
+ * @property {ChangeRatePattern} p2wsh
+ * @property {ChangeRatePattern} p2tr
+ * @property {ChangeRatePattern} p2a
  */
 
 /**
@@ -7270,17 +7244,7 @@ class BrkClient extends BrkClientBase {
           p2tr: createBothReactivatedReceivingSendingPattern(this, 'p2tr_address_activity'),
           p2a: createBothReactivatedReceivingSendingPattern(this, 'p2a_address_activity'),
         },
-        totalAddrCount: {
-          all: createMetricPattern1(this, 'total_addr_count'),
-          p2pk65: createMetricPattern1(this, 'p2pk65_total_addr_count'),
-          p2pk33: createMetricPattern1(this, 'p2pk33_total_addr_count'),
-          p2pkh: createMetricPattern1(this, 'p2pkh_total_addr_count'),
-          p2sh: createMetricPattern1(this, 'p2sh_total_addr_count'),
-          p2wpkh: createMetricPattern1(this, 'p2wpkh_total_addr_count'),
-          p2wsh: createMetricPattern1(this, 'p2wsh_total_addr_count'),
-          p2tr: createMetricPattern1(this, 'p2tr_total_addr_count'),
-          p2a: createMetricPattern1(this, 'p2a_total_addr_count'),
-        },
+        totalAddrCount: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern(this, 'total_addr_count'),
         newAddrCount: {
           all: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'new_addr_count'),
           p2pk65: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2pk65_new_addr_count'),
@@ -7292,16 +7256,16 @@ class BrkClient extends BrkClientBase {
           p2tr: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2tr_new_addr_count'),
           p2a: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2a_new_addr_count'),
         },
-        growthRate: {
-          all: createBpsPercentRatioPattern3(this, 'growth_rate'),
-          p2pk65: createBpsPercentRatioPattern3(this, 'p2pk65_growth_rate'),
-          p2pk33: createBpsPercentRatioPattern3(this, 'p2pk33_growth_rate'),
-          p2pkh: createBpsPercentRatioPattern3(this, 'p2pkh_growth_rate'),
-          p2sh: createBpsPercentRatioPattern3(this, 'p2sh_growth_rate'),
-          p2wpkh: createBpsPercentRatioPattern3(this, 'p2wpkh_growth_rate'),
-          p2wsh: createBpsPercentRatioPattern3(this, 'p2wsh_growth_rate'),
-          p2tr: createBpsPercentRatioPattern3(this, 'p2tr_growth_rate'),
-          p2a: createBpsPercentRatioPattern3(this, 'p2a_growth_rate'),
+        delta: {
+          all: createChangeRatePattern(this, 'addr_count'),
+          p2pk65: createChangeRatePattern(this, 'p2pk65_addr_count'),
+          p2pk33: createChangeRatePattern(this, 'p2pk33_addr_count'),
+          p2pkh: createChangeRatePattern(this, 'p2pkh_addr_count'),
+          p2sh: createChangeRatePattern(this, 'p2sh_addr_count'),
+          p2wpkh: createChangeRatePattern(this, 'p2wpkh_addr_count'),
+          p2wsh: createChangeRatePattern(this, 'p2wsh_addr_count'),
+          p2tr: createChangeRatePattern(this, 'p2tr_addr_count'),
+          p2a: createChangeRatePattern(this, 'p2a_addr_count'),
         },
         fundedaddressindex: createMetricPattern34(this, 'fundedaddressindex'),
         emptyaddressindex: createMetricPattern35(this, 'emptyaddressindex'),

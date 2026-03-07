@@ -4,7 +4,7 @@ use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::internal::ComputedFromHeightCumulativeSum;
+use crate::internal::{ComputedFromHeightCumulative, ComputedFromHeightCumulativeSum};
 
 use crate::{blocks, distribution::metrics::ImportConfig, prices};
 
@@ -17,7 +17,7 @@ pub struct ActivityFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub base: ActivityBase<M>,
 
-    pub coinblocks_destroyed: ComputedFromHeightCumulativeSum<StoredF64, M>,
+    pub coinblocks_destroyed: ComputedFromHeightCumulative<StoredF64, M>,
     pub coindays_destroyed: ComputedFromHeightCumulativeSum<StoredF64, M>,
 }
 
@@ -94,11 +94,10 @@ impl ActivityFull {
         self.base
             .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
 
-        let window_starts = blocks.count.window_starts();
-
         self.coinblocks_destroyed
-            .compute_rest(starting_indexes.height, &window_starts, exit)?;
+            .compute_rest(starting_indexes.height, exit)?;
 
+        let window_starts = blocks.count.window_starts();
         self.coindays_destroyed
             .compute_rest(starting_indexes.height, &window_starts, exit)?;
 

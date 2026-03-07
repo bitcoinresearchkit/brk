@@ -5,7 +5,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{PercentFromHeight, RatioSatsBp16};
 
-use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
+use crate::distribution::metrics::{ImportConfig, UnrealizedCore};
 
 /// Relative metrics for the Complete tier.
 #[derive(Traversable)]
@@ -29,7 +29,7 @@ impl RelativeBase {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        unrealized: &UnrealizedBase,
+        unrealized: &UnrealizedCore,
         supply_total_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {

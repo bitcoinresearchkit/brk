@@ -33,6 +33,7 @@ pub struct ExtendedCohortMetrics<M: StorageMode = Rw> {
 
 impl CohortMetricsBase for ExtendedCohortMetrics {
     type RealizedVecs = RealizedFull;
+    type UnrealizedVecs = UnrealizedFull;
     type CostBasisVecs = CostBasisWithExtended;
 
     impl_cohort_accessors!();

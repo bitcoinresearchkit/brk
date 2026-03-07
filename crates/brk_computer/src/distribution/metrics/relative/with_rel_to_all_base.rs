@@ -4,7 +4,7 @@ use brk_types::{Height, Sats};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::distribution::metrics::{ImportConfig, UnrealizedBase};
+use crate::distribution::metrics::{ImportConfig, UnrealizedCore};
 
 use super::{RelativeBase, RelativeToAll};
 
@@ -31,7 +31,7 @@ impl RelativeBaseWithRelToAll {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        unrealized: &UnrealizedBase,
+        unrealized: &UnrealizedCore,
         supply_total_sats: &impl ReadableVec<Height, Sats>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,

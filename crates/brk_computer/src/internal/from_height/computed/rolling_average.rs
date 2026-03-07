@@ -37,7 +37,7 @@ where
     ) -> Result<Self> {
         let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
         let average =
-            RollingWindows::forced_import(db, &format!("{name}_average"), version, indexes)?;
+            RollingWindows::forced_import(db, &format!("{name}_average"), version + Version::ONE, indexes)?;
 
         Ok(Self { height, average })
     }

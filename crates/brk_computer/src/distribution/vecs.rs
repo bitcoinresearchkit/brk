@@ -30,7 +30,7 @@ use crate::{
 use super::{
     AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, RangeMap, UTXOCohorts,
     address::{
-        AddrCountsVecs, AddressActivityVecs, GrowthRateVecs, NewAddrCountVecs, TotalAddrCountVecs,
+        AddrCountsVecs, AddressActivityVecs, DeltaVecs, NewAddrCountVecs, TotalAddrCountVecs,
     },
     compute::aggregates,
 };
@@ -57,8 +57,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub total_addr_count: TotalAddrCountVecs<M>,
     /// New addresses per block (delta of total) - stored height + cumulative + rolling, global + per-type
     pub new_addr_count: NewAddrCountVecs<M>,
-    /// Growth rate (new / addr_count) - stored ratio with distribution stats, global + per-type
-    pub growth_rate: GrowthRateVecs<M>,
+    /// Windowed change + growth rate for addr_count, global + per-type
+    pub delta: DeltaVecs<M>,
 
     pub fundedaddressindex:
         LazyVecFrom1<FundedAddressIndex, FundedAddressIndex, FundedAddressIndex, FundedAddressData>,
@@ -141,7 +141,7 @@ impl Vecs {
         let new_addr_count = NewAddrCountVecs::forced_import(&db, version, indexes)?;
 
         // Growth rate: new / addr_count (global + per-type)
-        let growth_rate = GrowthRateVecs::forced_import(&db, version, indexes)?;
+        let delta = DeltaVecs::forced_import(&db, version, indexes)?;
 
         let this = Self {
             supply_state: BytesVec::forced_import_with(
@@ -154,7 +154,7 @@ impl Vecs {
             address_activity,
             total_addr_count,
             new_addr_count,
-            growth_rate,
+            delta,
 
             utxo_cohorts,
             address_cohorts,
@@ -400,11 +400,11 @@ impl Vecs {
             exit,
         )?;
 
-        // 6b. Compute address count day1 vecs (by addresstype + all)
+        // 6b. Compute address count sum (by addresstype → all)
         self.addr_count
-            .compute_rest(blocks, starting_indexes, exit)?;
+            .compute_rest(starting_indexes, exit)?;
         self.empty_addr_count
-            .compute_rest(blocks, starting_indexes, exit)?;
+            .compute_rest(starting_indexes, exit)?;
 
         // 6c. Compute total_addr_count = addr_count + empty_addr_count
         self.total_addr_count.compute(
@@ -425,11 +425,9 @@ impl Vecs {
             exit,
         )?;
 
-        // 6e. Compute growth_rate = new_addr_count / addr_count
-        self.growth_rate.compute(
+        self.delta.compute(
             starting_indexes.height,
             &window_starts,
-            &self.new_addr_count,
             &self.addr_count,
             exit,
         )?;

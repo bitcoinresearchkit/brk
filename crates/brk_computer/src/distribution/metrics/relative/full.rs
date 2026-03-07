@@ -10,7 +10,7 @@ use crate::internal::{
     Bps32ToFloat, LazyFromHeight, PercentFromHeight, RatioDollarsBp16, RatioDollarsBps32,
 };
 
-use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedFull};
+use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
 
 use super::RelativeBase;
 
@@ -73,7 +73,7 @@ impl RelativeFull {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        unrealized: &UnrealizedFull,
+        unrealized: &UnrealizedBase,
         realized: &RealizedBase,
         supply_total_sats: &impl ReadableVec<Height, Sats>,
         market_cap: &impl ReadableVec<Height, Dollars>,
@@ -81,7 +81,7 @@ impl RelativeFull {
     ) -> Result<()> {
         self.base.compute(
             max_from,
-            &unrealized.base,
+            &unrealized.core,
             supply_total_sats,
             exit,
         )?;

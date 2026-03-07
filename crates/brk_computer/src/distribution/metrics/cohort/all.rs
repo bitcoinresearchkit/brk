@@ -35,6 +35,7 @@ pub struct AllCohortMetrics<M: StorageMode = Rw> {
 
 impl CohortMetricsBase for AllCohortMetrics {
     type RealizedVecs = RealizedFull;
+    type UnrealizedVecs = UnrealizedFull;
     type CostBasisVecs = CostBasisWithExtended;
 
     impl_cohort_accessors!();

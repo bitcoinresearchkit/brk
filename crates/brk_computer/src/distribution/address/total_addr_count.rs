@@ -50,8 +50,8 @@ impl TotalAddrCountVecs {
     ) -> Result<()> {
         self.all.height.compute_add(
             max_from,
-            &addr_count.all.count.height,
-            &empty_addr_count.all.count.height,
+            &addr_count.all.height,
+            &empty_addr_count.all.height,
             exit,
         )?;
 
@@ -63,7 +63,7 @@ impl TotalAddrCountVecs {
         ) {
             total
                 .height
-                .compute_add(max_from, &addr.count.height, &empty.count.height, exit)?;
+                .compute_add(max_from, &addr.height, &empty.height, exit)?;
         }
 
         Ok(())

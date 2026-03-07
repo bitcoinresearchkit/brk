@@ -27,8 +27,8 @@ macro_rules! impl_cohort_accessors {
         fn activity_mut(&mut self) -> &mut $crate::distribution::metrics::ActivityFull { &mut self.activity }
         fn realized(&self) -> &Self::RealizedVecs { &self.realized }
         fn realized_mut(&mut self) -> &mut Self::RealizedVecs { &mut self.realized }
-        fn unrealized_full(&self) -> &$crate::distribution::metrics::UnrealizedFull { &self.unrealized }
-        fn unrealized_full_mut(&mut self) -> &mut $crate::distribution::metrics::UnrealizedFull { &mut self.unrealized }
+        fn unrealized(&self) -> &Self::UnrealizedVecs { &self.unrealized }
+        fn unrealized_mut(&mut self) -> &mut Self::UnrealizedVecs { &mut self.unrealized }
         fn cost_basis(&self) -> &Self::CostBasisVecs { &self.cost_basis }
         fn cost_basis_mut(&mut self) -> &mut Self::CostBasisVecs { &mut self.cost_basis }
     };
@@ -58,7 +58,7 @@ pub use relative::{
     RelativeBaseWithRelToAll, RelativeForAll, RelativeWithExtended, RelativeWithRelToAll,
 };
 pub use supply::SupplyMetrics;
-pub use unrealized::{UnrealizedBase, UnrealizedFull};
+pub use unrealized::{UnrealizedBase, UnrealizedCore, UnrealizedFull, UnrealizedLike};
 
 use brk_cohort::Filter;
 use brk_error::Result;
@@ -92,6 +92,7 @@ impl<M: StorageMode> CohortMetricsState for AllCohortMetrics<M> {
 
 pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send + Sync {
     type RealizedVecs: RealizedLike;
+    type UnrealizedVecs: UnrealizedLike;
     type CostBasisVecs: CostBasisLike;
 
     fn filter(&self) -> &Filter;
@@ -103,14 +104,18 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
     fn activity_mut(&mut self) -> &mut ActivityFull;
     fn realized(&self) -> &Self::RealizedVecs;
     fn realized_mut(&mut self) -> &mut Self::RealizedVecs;
-    fn unrealized_full(&self) -> &UnrealizedFull;
-    fn unrealized_full_mut(&mut self) -> &mut UnrealizedFull;
+    fn unrealized(&self) -> &Self::UnrealizedVecs;
+    fn unrealized_mut(&mut self) -> &mut Self::UnrealizedVecs;
     fn cost_basis(&self) -> &Self::CostBasisVecs;
     fn cost_basis_mut(&mut self) -> &mut Self::CostBasisVecs;
 
     /// Convenience: access realized as `&RealizedBase` (via `RealizedLike::as_base`).
     fn realized_base(&self) -> &RealizedBase { self.realized().as_base() }
     fn realized_base_mut(&mut self) -> &mut RealizedBase { self.realized_mut().as_base_mut() }
+
+    /// Convenience: access unrealized as `&UnrealizedBase` (via `UnrealizedLike::as_base`).
+    fn unrealized_base(&self) -> &UnrealizedBase { self.unrealized().as_base() }
+    fn unrealized_base_mut(&mut self) -> &mut UnrealizedBase { self.unrealized_mut().as_base_mut() }
 
     /// Convenience: access cost basis as `&CostBasisBase` (via `CostBasisLike::as_base`).
     fn cost_basis_base(&self) -> &CostBasisBase { self.cost_basis().as_base() }
@@ -134,7 +139,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
         self.cost_basis_base_mut()
             .truncate_push_minmax(height, state)?;
         let unrealized_state = state.compute_unrealized_state(height_price);
-        self.unrealized_full_mut()
+        self.unrealized_mut()
             .truncate_push(height, &unrealized_state)?;
         Ok(())
     }
@@ -160,7 +165,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
             .min(self.outputs().min_len())
             .min(self.activity().min_len())
             .min(self.realized().min_stateful_height_len())
-            .min(self.unrealized_full().min_stateful_height_len())
+            .min(self.unrealized().min_stateful_height_len())
             .min(self.cost_basis_base().min_stateful_height_len())
     }
 
@@ -177,31 +182,6 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
         )?;
         self.realized_mut()
             .truncate_push(height, &state.realized)?;
-        Ok(())
-    }
-
-    /// Compute net_sentiment.height as capital-weighted average of component cohorts.
-    fn compute_net_sentiment_from_others<T: CohortMetricsBase>(
-        &mut self,
-        starting_indexes: &Indexes,
-        others: &[&T],
-        exit: &Exit,
-    ) -> Result<()> {
-        let weights: Vec<_> = others
-            .iter()
-            .map(|o| &o.realized_base().realized_cap.height)
-            .collect();
-        let values: Vec<_> = others
-            .iter()
-            .map(|o| &o.unrealized_full().net_sentiment.cents.height)
-            .collect();
-
-        self.unrealized_full_mut()
-            .net_sentiment
-            .cents
-            .height
-            .compute_weighted_average_of_others(starting_indexes.height, &weights, &values, exit)?;
-
         Ok(())
     }
 
@@ -234,19 +214,18 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
         self.realized_mut()
             .compute_rest_part1(starting_indexes, exit)?;
 
-        self.unrealized_full_mut()
+        self.unrealized_mut()
             .compute_rest(prices, starting_indexes, exit)?;
 
         Ok(())
     }
 
-    /// Compute net_sentiment.height for separate cohorts (greed - pain).
     fn compute_net_sentiment_height(
         &mut self,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.unrealized_full_mut()
+        self.unrealized_mut()
             .compute_net_sentiment_height(starting_indexes, exit)?;
         Ok(())
     }
@@ -278,9 +257,9 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
             &others.iter().map(|v| v.realized_base()).collect::<Vec<_>>(),
             exit,
         )?;
-        self.unrealized_full_mut().compute_from_stateful(
+        self.unrealized_base_mut().compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.unrealized_full()).collect::<Vec<_>>(),
+            &others.iter().map(|v| v.unrealized_base()).collect::<Vec<_>>(),
             exit,
         )?;
         self.cost_basis_base_mut().compute_from_stateful(

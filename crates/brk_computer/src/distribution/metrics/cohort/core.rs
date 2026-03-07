@@ -8,7 +8,7 @@ use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
     ActivityBase, CohortMetricsBase, RealizedBase, ImportConfig, OutputsMetrics,
-    RelativeBaseWithRelToAll, SupplyMetrics, UnrealizedBase,
+    RelativeBaseWithRelToAll, SupplyMetrics, UnrealizedCore,
 };
 
 #[derive(Traversable)]
@@ -19,7 +19,7 @@ pub struct CoreCohortMetrics<M: StorageMode = Rw> {
     pub outputs: Box<OutputsMetrics<M>>,
     pub activity: Box<ActivityBase<M>>,
     pub realized: Box<RealizedBase<M>>,
-    pub unrealized: Box<UnrealizedBase<M>>,
+    pub unrealized: Box<UnrealizedCore<M>>,
     pub relative: Box<RelativeBaseWithRelToAll<M>>,
 }
 
@@ -31,7 +31,7 @@ impl CoreCohortMetrics {
             outputs: Box::new(OutputsMetrics::forced_import(cfg)?),
             activity: Box::new(ActivityBase::forced_import(cfg)?),
             realized: Box::new(RealizedBase::forced_import(cfg)?),
-            unrealized: Box::new(UnrealizedBase::forced_import(cfg)?),
+            unrealized: Box::new(UnrealizedCore::forced_import(cfg)?),
             relative: Box::new(RelativeBaseWithRelToAll::forced_import(cfg)?),
         })
     }
@@ -90,7 +90,7 @@ impl CoreCohortMetrics {
         )?;
         self.unrealized.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| &v.unrealized_full().base).collect::<Vec<_>>(),
+            &others.iter().map(|v| &v.unrealized_base().core).collect::<Vec<_>>(),
             exit,
         )?;
 

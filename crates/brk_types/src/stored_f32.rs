@@ -274,7 +274,8 @@ impl std::fmt::Display for StoredF32 {
 impl Formattable for StoredF32 {
     #[inline(always)]
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
-        use std::fmt::Write;
-        write!(f, "{}", self)
+        let mut buf = ryu::Buffer::new();
+        f.push_str(buf.format(self.0));
+        Ok(())
     }
 }

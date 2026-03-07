@@ -378,46 +378,6 @@ impl UTXOCohorts<Rw> {
                 .try_for_each(|v| v.compute_rest_part1(blocks, prices, starting_indexes, exit))?;
         }
 
-        // 2. Compute net_sentiment.height for aggregate cohorts (weighted average).
-        // Separate cohorts already computed net_sentiment in step 1 (inside compute_rest_part1).
-        // Note: min_age, max_age, epoch, class are Core tier — no net_sentiment.
-        // Note: ge_amount, lt_amount, amount_range are Minimal tier — no net_sentiment.
-        {
-            let Self {
-                all,
-                sth,
-                lth,
-                age_range,
-                ..
-            } = self;
-
-            let ar = &*age_range;
-            let si = starting_indexes;
-
-            let tasks: Vec<Box<dyn FnOnce() -> Result<()> + Send + '_>> = vec![
-                Box::new(|| {
-                    let sources = filter_sources_from(ar.iter(), None);
-                    all.metrics
-                        .compute_net_sentiment_from_others(si, &sources, exit)
-                }),
-                Box::new(|| {
-                    let sources = filter_sources_from(ar.iter(), Some(sth.metrics.filter()));
-                    sth.metrics
-                        .compute_net_sentiment_from_others(si, &sources, exit)
-                }),
-                Box::new(|| {
-                    let sources = filter_sources_from(ar.iter(), Some(lth.metrics.filter()));
-                    lth.metrics
-                        .compute_net_sentiment_from_others(si, &sources, exit)
-                }),
-            ];
-
-            tasks
-                .into_par_iter()
-                .map(|f| f())
-                .collect::<Result<Vec<_>>>()?;
-        }
-
         Ok(())
     }
 
