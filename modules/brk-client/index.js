@@ -2493,6 +2493,37 @@ function create_1m1w1y24hBtcCentsSatsUsdPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} CoinblocksCoindaysSentPattern2
+ * @property {MetricPattern1<StoredF64>} coinblocksDestroyed
+ * @property {MetricPattern1<StoredF64>} coinblocksDestroyedCumulative
+ * @property {MetricPattern1<StoredF64>} coindaysDestroyed
+ * @property {MetricPattern1<StoredF64>} coindaysDestroyedCumulative
+ * @property {_1m1w1y24hPattern<StoredF64>} coindaysDestroyedSum
+ * @property {MetricPattern1<Sats>} sent
+ * @property {_24hPattern<Sats>} sentSum
+ * @property {_1m1w1yPattern<Sats>} sentSumExtended
+ */
+
+/**
+ * Create a CoinblocksCoindaysSentPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CoinblocksCoindaysSentPattern2}
+ */
+function createCoinblocksCoindaysSentPattern2(client, acc) {
+  return {
+    coinblocksDestroyed: createMetricPattern1(client, _m(acc, 'coinblocks_destroyed')),
+    coinblocksDestroyedCumulative: createMetricPattern1(client, _m(acc, 'coinblocks_destroyed_cumulative')),
+    coindaysDestroyed: createMetricPattern1(client, _m(acc, 'coindays_destroyed')),
+    coindaysDestroyedCumulative: createMetricPattern1(client, _m(acc, 'coindays_destroyed_cumulative')),
+    coindaysDestroyedSum: create_1m1w1y24hPattern(client, _m(acc, 'coindays_destroyed')),
+    sent: createMetricPattern1(client, _m(acc, 'sent')),
+    sentSum: create_24hPattern(client, _m(acc, 'sent_24h')),
+    sentSumExtended: create_1m1w1yPattern(client, _m(acc, 'sent')),
+  };
+}
+
+/**
  * @template T
  * @typedef {Object} AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern
  * @property {MetricPattern18<T>} average
@@ -2746,31 +2777,6 @@ function createBaseBtcCentsSatsUsdPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} CoinblocksCoindaysSentPattern
- * @property {CumulativeHeightPattern<StoredF64>} coinblocksDestroyed
- * @property {CumulativeHeightSumPattern<StoredF64>} coindaysDestroyed
- * @property {MetricPattern1<Sats>} sent
- * @property {_24hPattern<Sats>} sentSum
- * @property {_1m1w1yPattern<Sats>} sentSumExtended
- */
-
-/**
- * Create a CoinblocksCoindaysSentPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CoinblocksCoindaysSentPattern}
- */
-function createCoinblocksCoindaysSentPattern(client, acc) {
-  return {
-    coinblocksDestroyed: createCumulativeHeightPattern(client, _m(acc, 'coinblocks_destroyed')),
-    coindaysDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coindays_destroyed')),
-    sent: createMetricPattern1(client, _m(acc, 'sent')),
-    sentSum: create_24hPattern(client, _m(acc, 'sent_24h')),
-    sentSumExtended: create_1m1w1yPattern(client, _m(acc, 'sent')),
-  };
-}
-
-/**
  * @typedef {Object} EmaHistogramLineSignalPattern
  * @property {MetricPattern1<StoredF32>} emaFast
  * @property {MetricPattern1<StoredF32>} emaSlow
@@ -2934,6 +2940,29 @@ function createBtcCentsSatsUsdPattern(client, acc) {
     cents: createMetricPattern1(client, _m(acc, 'cents')),
     sats: createMetricPattern1(client, acc),
     usd: createMetricPattern1(client, _m(acc, 'usd')),
+  };
+}
+
+/**
+ * @typedef {Object} CoinblocksCoindaysSentPattern
+ * @property {MetricPattern1<StoredF64>} coinblocksDestroyed
+ * @property {MetricPattern1<StoredF64>} coindaysDestroyed
+ * @property {MetricPattern1<Sats>} sent
+ * @property {_24hPattern<Sats>} sentSum
+ */
+
+/**
+ * Create a CoinblocksCoindaysSentPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CoinblocksCoindaysSentPattern}
+ */
+function createCoinblocksCoindaysSentPattern(client, acc) {
+  return {
+    coinblocksDestroyed: createMetricPattern1(client, _m(acc, 'coinblocks_destroyed')),
+    coindaysDestroyed: createMetricPattern1(client, _m(acc, 'coindays_destroyed')),
+    sent: createMetricPattern1(client, _m(acc, 'sent')),
+    sentSum: create_24hPattern(client, _m(acc, 'sent_24h')),
   };
 }
 
@@ -4762,7 +4791,7 @@ function create_24hPattern(client, acc) {
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_All
  * @property {ChangeHalvedTotalPattern} supply
  * @property {UtxoPattern} outputs
- * @property {CoinblocksCoindaysSentPattern} activity
+ * @property {CoinblocksCoindaysSentPattern2} activity
  * @property {CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern} realized
  * @property {InvestedMaxMinPercentilesPattern} costBasis
  * @property {GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern} unrealized
@@ -4799,7 +4828,7 @@ function create_24hPattern(client, acc) {
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Sth
  * @property {ChangeHalvedTotalPattern} supply
  * @property {UtxoPattern} outputs
- * @property {CoinblocksCoindaysSentPattern} activity
+ * @property {CoinblocksCoindaysSentPattern2} activity
  * @property {CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern} realized
  * @property {InvestedMaxMinPercentilesPattern} costBasis
  * @property {GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern} unrealized
@@ -4818,7 +4847,7 @@ function create_24hPattern(client, acc) {
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Lth
  * @property {ChangeHalvedTotalPattern} supply
  * @property {UtxoPattern} outputs
- * @property {CoinblocksCoindaysSentPattern} activity
+ * @property {CoinblocksCoindaysSentPattern2} activity
  * @property {CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern} realized
  * @property {InvestedMaxMinPercentilesPattern} costBasis
  * @property {GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern} unrealized
@@ -6982,7 +7011,7 @@ class BrkClient extends BrkClientBase {
           all: {
             supply: createChangeHalvedTotalPattern(this, 'supply'),
             outputs: createUtxoPattern(this, 'utxo_count'),
-            activity: createCoinblocksCoindaysSentPattern(this, ''),
+            activity: createCoinblocksCoindaysSentPattern2(this, ''),
             realized: createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(this, ''),
             costBasis: createInvestedMaxMinPercentilesPattern(this, ''),
             unrealized: createGreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(this, ''),
@@ -7011,7 +7040,7 @@ class BrkClient extends BrkClientBase {
           sth: {
             supply: createChangeHalvedTotalPattern(this, 'sth_supply'),
             outputs: createUtxoPattern(this, 'sth_utxo_count'),
-            activity: createCoinblocksCoindaysSentPattern(this, 'sth'),
+            activity: createCoinblocksCoindaysSentPattern2(this, 'sth'),
             realized: createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(this, 'sth'),
             costBasis: createInvestedMaxMinPercentilesPattern(this, 'sth'),
             unrealized: createGreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(this, 'sth'),
@@ -7028,7 +7057,7 @@ class BrkClient extends BrkClientBase {
           lth: {
             supply: createChangeHalvedTotalPattern(this, 'lth_supply'),
             outputs: createUtxoPattern(this, 'lth_utxo_count'),
-            activity: createCoinblocksCoindaysSentPattern(this, 'lth'),
+            activity: createCoinblocksCoindaysSentPattern2(this, 'lth'),
             realized: createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(this, 'lth'),
             costBasis: createInvestedMaxMinPercentilesPattern(this, 'lth'),
             unrealized: createGreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(this, 'lth'),

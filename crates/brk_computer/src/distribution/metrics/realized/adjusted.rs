@@ -5,7 +5,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     blocks,
-    internal::{ComputedFromHeight, RatioCents64, RollingEmas1w1m, RollingWindows},
+    internal::{ComputedFromHeight, RatioCents64, RollingWindows},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -19,7 +19,6 @@ pub struct RealizedAdjusted<M: StorageMode = Rw> {
     pub adjusted_value_destroyed_sum: RollingWindows<Cents, M>,
 
     pub adjusted_sopr: RollingWindows<StoredF64, M>,
-    pub adjusted_sopr_ema: RollingEmas1w1m<StoredF64, M>,
 }
 
 impl RealizedAdjusted {
@@ -30,7 +29,6 @@ impl RealizedAdjusted {
             adjusted_value_created_sum: cfg.import("adjusted_value_created", Version::ONE)?,
             adjusted_value_destroyed_sum: cfg.import("adjusted_value_destroyed", Version::ONE)?,
             adjusted_sopr: cfg.import("adjusted_sopr", Version::ONE)?,
-            adjusted_sopr_ema: cfg.import("adjusted_sopr_24h", Version::ONE)?,
         })
     }
 
@@ -89,15 +87,6 @@ impl RealizedAdjusted {
                 exit,
             )?;
         }
-
-        // Adjusted SOPR EMAs (based on 24h window)
-        self.adjusted_sopr_ema.compute_from_24h(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &blocks.count.height_1m_ago,
-            &self.adjusted_sopr._24h.height,
-            exit,
-        )?;
 
         Ok(())
     }

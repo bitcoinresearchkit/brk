@@ -66,27 +66,4 @@ impl ValueFromHeight {
             .compute_rolling_sum(max_from, window_starts, cents_source, exit)?;
         Ok(())
     }
-
-    pub(crate) fn compute_ema(
-        &mut self,
-        starting_height: Height,
-        window_starts: &impl ReadableVec<Height, Height>,
-        sats_source: &impl ReadableVec<Height, Sats>,
-        cents_source: &(impl ReadableVec<Height, Cents> + Sync),
-        exit: &Exit,
-    ) -> Result<()> {
-        self.base.sats.height.compute_rolling_ema(
-            starting_height,
-            window_starts,
-            sats_source,
-            exit,
-        )?;
-        self.base.cents.height.compute_rolling_ema(
-            starting_height,
-            window_starts,
-            cents_source,
-            exit,
-        )?;
-        Ok(())
-    }
 }

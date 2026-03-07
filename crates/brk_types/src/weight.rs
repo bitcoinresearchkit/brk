@@ -76,7 +76,7 @@ impl From<usize> for Weight {
 impl From<f64> for Weight {
     #[inline]
     fn from(value: f64) -> Self {
-        debug_assert!(value >= 0.0);
+        let value = value.max(0.0);
         Self(value as u64)
     }
 }

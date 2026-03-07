@@ -1,12 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF64, Version};
+use brk_types::{Indexes, Sats, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
+use vecdb::{Exit, Rw, StorageMode};
 
-use crate::internal::{
-    ComputedFromHeightCumulative, ComputedFromHeightCumulativeSum, RollingWindowsFrom1w,
-};
+use crate::internal::{ComputedFromHeight, RollingWindows, RollingWindowsFrom1w};
 
 use crate::{blocks, distribution::metrics::ImportConfig};
 
@@ -17,10 +15,11 @@ pub struct ActivityFull<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub base: ActivityBase<M>,
+    pub inner: ActivityBase<M>,
 
-    pub coinblocks_destroyed: ComputedFromHeightCumulative<StoredF64, M>,
-    pub coindays_destroyed: ComputedFromHeightCumulativeSum<StoredF64, M>,
+    pub coinblocks_destroyed_cumulative: ComputedFromHeight<StoredF64, M>,
+    pub coindays_destroyed_cumulative: ComputedFromHeight<StoredF64, M>,
+    pub coindays_destroyed_sum: RollingWindows<StoredF64, M>,
 
     pub sent_sum_extended: RollingWindowsFrom1w<Sats, M>,
 }
@@ -29,65 +28,23 @@ impl ActivityFull {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
         Ok(Self {
-            base: ActivityBase::forced_import(cfg)?,
-            coinblocks_destroyed: cfg
-                .import("coinblocks_destroyed", v1)?,
-            coindays_destroyed: cfg.import("coindays_destroyed", v1)?,
+            inner: ActivityBase::forced_import(cfg)?,
+            coinblocks_destroyed_cumulative: cfg
+                .import("coinblocks_destroyed_cumulative", v1)?,
+            coindays_destroyed_cumulative: cfg.import("coindays_destroyed_cumulative", v1)?,
+            coindays_destroyed_sum: cfg.import("coindays_destroyed", v1)?,
             sent_sum_extended: cfg.import("sent", v1)?,
         })
-    }
-
-    pub(crate) fn min_len(&self) -> usize {
-        self.base
-            .min_len()
-            .min(self.coinblocks_destroyed.height.len())
-            .min(self.coindays_destroyed.height.len())
-    }
-
-    pub(crate) fn truncate_push(
-        &mut self,
-        height: Height,
-        sent: Sats,
-        satblocks_destroyed: Sats,
-        satdays_destroyed: Sats,
-    ) -> Result<()> {
-        self.base.truncate_push(height, sent)?;
-        self.coinblocks_destroyed.height.truncate_push(
-            height,
-            StoredF64::from(Bitcoin::from(satblocks_destroyed)),
-        )?;
-        self.coindays_destroyed.height.truncate_push(
-            height,
-            StoredF64::from(Bitcoin::from(satdays_destroyed)),
-        )?;
-        Ok(())
-    }
-
-    pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        vec![
-            &mut self.base.sent.height as &mut dyn AnyStoredVec,
-            &mut self.coinblocks_destroyed.height as &mut dyn AnyStoredVec,
-            &mut self.coindays_destroyed.height as &mut dyn AnyStoredVec,
-        ]
-    }
-
-    pub(crate) fn validate_computed_versions(&mut self, _base_version: Version) -> Result<()> {
-        Ok(())
     }
 
     pub(crate) fn compute_from_stateful(
         &mut self,
         starting_indexes: &Indexes,
-        others: &[&Self],
+        others: &[&ActivityBase],
         exit: &Exit,
     ) -> Result<()> {
-        let core_refs: Vec<&ActivityBase> = others.iter().map(|o| &o.base).collect();
-        self.base
-            .compute_from_stateful(starting_indexes, &core_refs, exit)?;
-
-        sum_others!(self, starting_indexes, others, exit; coinblocks_destroyed.height);
-        sum_others!(self, starting_indexes, others, exit; coindays_destroyed.height);
-        Ok(())
+        self.inner
+            .compute_from_stateful(starting_indexes, others, exit)
     }
 
     pub(crate) fn compute_rest_part1(
@@ -96,20 +53,37 @@ impl ActivityFull {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.base
+        self.inner
             .compute_rest_part1(blocks, starting_indexes, exit)?;
 
-        self.coinblocks_destroyed
-            .compute_rest(starting_indexes.height, exit)?;
+        self.coinblocks_destroyed_cumulative
+            .height
+            .compute_cumulative(
+                starting_indexes.height,
+                &self.inner.coinblocks_destroyed.height,
+                exit,
+            )?;
+
+        self.coindays_destroyed_cumulative
+            .height
+            .compute_cumulative(
+                starting_indexes.height,
+                &self.inner.coindays_destroyed.height,
+                exit,
+            )?;
 
         let window_starts = blocks.count.window_starts();
-        self.coindays_destroyed
-            .compute_rest(starting_indexes.height, &window_starts, exit)?;
+        self.coindays_destroyed_sum.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.inner.coindays_destroyed.height,
+            exit,
+        )?;
 
         self.sent_sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.base.sent.height,
+            &self.inner.core.sent.height,
             exit,
         )?;
 

@@ -2495,6 +2495,20 @@ class _1m1w1y24hBtcCentsSatsUsdPattern:
         self.sats: MetricPattern18[Sats] = MetricPattern18(client, acc)
         self.usd: MetricPattern18[Dollars] = MetricPattern18(client, _m(acc, 'usd'))
 
+class CoinblocksCoindaysSentPattern2:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.coinblocks_destroyed: MetricPattern1[StoredF64] = MetricPattern1(client, _m(acc, 'coinblocks_destroyed'))
+        self.coinblocks_destroyed_cumulative: MetricPattern1[StoredF64] = MetricPattern1(client, _m(acc, 'coinblocks_destroyed_cumulative'))
+        self.coindays_destroyed: MetricPattern1[StoredF64] = MetricPattern1(client, _m(acc, 'coindays_destroyed'))
+        self.coindays_destroyed_cumulative: MetricPattern1[StoredF64] = MetricPattern1(client, _m(acc, 'coindays_destroyed_cumulative'))
+        self.coindays_destroyed_sum: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, _m(acc, 'coindays_destroyed'))
+        self.sent: MetricPattern1[Sats] = MetricPattern1(client, _m(acc, 'sent'))
+        self.sent_sum: _24hPattern[Sats] = _24hPattern(client, _m(acc, 'sent_24h'))
+        self.sent_sum_extended: _1m1w1yPattern[Sats] = _1m1w1yPattern(client, _m(acc, 'sent'))
+
 class AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
@@ -2607,17 +2621,6 @@ class BaseBtcCentsSatsUsdPattern:
         self.sats: MetricPattern1[Sats] = MetricPattern1(client, _m(acc, 'rewards_cumulative'))
         self.usd: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'rewards_cumulative_usd'))
 
-class CoinblocksCoindaysSentPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.coinblocks_destroyed: CumulativeHeightPattern[StoredF64] = CumulativeHeightPattern(client, _m(acc, 'coinblocks_destroyed'))
-        self.coindays_destroyed: CumulativeHeightSumPattern[StoredF64] = CumulativeHeightSumPattern(client, _m(acc, 'coindays_destroyed'))
-        self.sent: MetricPattern1[Sats] = MetricPattern1(client, _m(acc, 'sent'))
-        self.sent_sum: _24hPattern[Sats] = _24hPattern(client, _m(acc, 'sent_24h'))
-        self.sent_sum_extended: _1m1w1yPattern[Sats] = _1m1w1yPattern(client, _m(acc, 'sent'))
-
 class EmaHistogramLineSignalPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2689,6 +2692,16 @@ class BtcCentsSatsUsdPattern:
         self.cents: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'cents'))
         self.sats: MetricPattern1[Sats] = MetricPattern1(client, acc)
         self.usd: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'usd'))
+
+class CoinblocksCoindaysSentPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.coinblocks_destroyed: MetricPattern1[StoredF64] = MetricPattern1(client, _m(acc, 'coinblocks_destroyed'))
+        self.coindays_destroyed: MetricPattern1[StoredF64] = MetricPattern1(client, _m(acc, 'coindays_destroyed'))
+        self.sent: MetricPattern1[Sats] = MetricPattern1(client, _m(acc, 'sent'))
+        self.sent_sum: _24hPattern[Sats] = _24hPattern(client, _m(acc, 'sent_24h'))
 
 class InvestedMaxMinPercentilesPattern:
     """Pattern struct for repeated tree structure."""
@@ -4270,7 +4283,7 @@ class MetricsTree_Distribution_UtxoCohorts_All:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.supply: ChangeHalvedTotalPattern = ChangeHalvedTotalPattern(client, 'supply')
         self.outputs: UtxoPattern = UtxoPattern(client, 'utxo_count')
-        self.activity: CoinblocksCoindaysSentPattern = CoinblocksCoindaysSentPattern(client, '')
+        self.activity: CoinblocksCoindaysSentPattern2 = CoinblocksCoindaysSentPattern2(client, '')
         self.realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern = CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(client, '')
         self.cost_basis: InvestedMaxMinPercentilesPattern = InvestedMaxMinPercentilesPattern(client, '')
         self.unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern = GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(client, '')
@@ -4285,7 +4298,7 @@ class MetricsTree_Distribution_UtxoCohorts_Sth:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.supply: ChangeHalvedTotalPattern = ChangeHalvedTotalPattern(client, 'sth_supply')
         self.outputs: UtxoPattern = UtxoPattern(client, 'sth_utxo_count')
-        self.activity: CoinblocksCoindaysSentPattern = CoinblocksCoindaysSentPattern(client, 'sth')
+        self.activity: CoinblocksCoindaysSentPattern2 = CoinblocksCoindaysSentPattern2(client, 'sth')
         self.realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern = CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(client, 'sth')
         self.cost_basis: InvestedMaxMinPercentilesPattern = InvestedMaxMinPercentilesPattern(client, 'sth')
         self.unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern = GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(client, 'sth')
@@ -4305,7 +4318,7 @@ class MetricsTree_Distribution_UtxoCohorts_Lth:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.supply: ChangeHalvedTotalPattern = ChangeHalvedTotalPattern(client, 'lth_supply')
         self.outputs: UtxoPattern = UtxoPattern(client, 'lth_utxo_count')
-        self.activity: CoinblocksCoindaysSentPattern = CoinblocksCoindaysSentPattern(client, 'lth')
+        self.activity: CoinblocksCoindaysSentPattern2 = CoinblocksCoindaysSentPattern2(client, 'lth')
         self.realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern = CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(client, 'lth')
         self.cost_basis: InvestedMaxMinPercentilesPattern = InvestedMaxMinPercentilesPattern(client, 'lth')
         self.unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern = GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(client, 'lth')

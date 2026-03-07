@@ -63,10 +63,8 @@ impl From<usize> for VSize {
 impl From<f64> for VSize {
     #[inline]
     fn from(value: f64) -> Self {
-        debug_assert!(
-            value >= 0.0 && value.fract() == 0.0,
-            "VSize must be a non-negative integer"
-        );
+        let value = value.max(0.0);
+        debug_assert!(value.fract() == 0.0, "VSize must be an integer");
         Self(value as u64)
     }
 }

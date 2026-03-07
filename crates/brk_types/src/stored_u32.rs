@@ -135,7 +135,8 @@ impl Mul<usize> for StoredU32 {
 impl From<f64> for StoredU32 {
     #[inline]
     fn from(value: f64) -> Self {
-        debug_assert!(value >= 0.0 && value <= u32::MAX as f64);
+        let value = value.max(0.0);
+        debug_assert!(value <= u32::MAX as f64);
         Self(value as u32)
     }
 }

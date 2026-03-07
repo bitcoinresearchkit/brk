@@ -7,8 +7,8 @@ use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    CohortMetricsBase, CostBasisWithExtended, ImportConfig, RealizedAdjusted, RealizedFull,
-    UnrealizedFull,
+    ActivityFull, CohortMetricsBase, CostBasisWithExtended, ImportConfig, RealizedAdjusted,
+    RealizedFull, UnrealizedFull,
 };
 
 use super::ExtendedCohortMetrics;
@@ -27,6 +27,7 @@ pub struct ExtendedAdjustedCohortMetrics<M: StorageMode = Rw> {
 }
 
 impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
+    type ActivityVecs = ActivityFull;
     type RealizedVecs = RealizedFull;
     type UnrealizedVecs = UnrealizedFull;
     type CostBasisVecs = CostBasisWithExtended;

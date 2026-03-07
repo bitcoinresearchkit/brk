@@ -9,7 +9,7 @@ use crate::{blocks, prices};
 use crate::internal::ValueFromHeight;
 
 use crate::distribution::{
-    metrics::{ActivityBase, ImportConfig, OutputsMetrics, RealizedMinimal, SupplyMetrics},
+    metrics::{ActivityCore, ImportConfig, OutputsMetrics, RealizedMinimal, SupplyMetrics},
     state::UnrealizedState,
 };
 
@@ -31,7 +31,7 @@ pub struct MinimalCohortMetrics<M: StorageMode = Rw> {
     pub filter: Filter,
     pub supply: Box<SupplyMetrics<M>>,
     pub outputs: Box<OutputsMetrics<M>>,
-    pub activity: Box<ActivityBase<M>>,
+    pub activity: Box<ActivityCore<M>>,
     pub realized: Box<RealizedMinimal<M>>,
     pub unrealized: Box<MinimalUnrealized<M>>,
 }
@@ -106,7 +106,7 @@ impl MinimalCohortMetrics {
             filter: cfg.filter.clone(),
             supply: Box::new(SupplyMetrics::forced_import(cfg)?),
             outputs: Box::new(OutputsMetrics::forced_import(cfg)?),
-            activity: Box::new(ActivityBase::forced_import(cfg)?),
+            activity: Box::new(ActivityCore::forced_import(cfg)?),
             realized: Box::new(RealizedMinimal::forced_import(cfg)?),
             unrealized: Box::new(MinimalUnrealized::forced_import(cfg)?),
         })

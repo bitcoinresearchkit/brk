@@ -1798,6 +1798,34 @@ impl _1m1w1y24hBtcCentsSatsUsdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct CoinblocksCoindaysSentPattern2 {
+    pub coinblocks_destroyed: MetricPattern1<StoredF64>,
+    pub coinblocks_destroyed_cumulative: MetricPattern1<StoredF64>,
+    pub coindays_destroyed: MetricPattern1<StoredF64>,
+    pub coindays_destroyed_cumulative: MetricPattern1<StoredF64>,
+    pub coindays_destroyed_sum: _1m1w1y24hPattern<StoredF64>,
+    pub sent: MetricPattern1<Sats>,
+    pub sent_sum: _24hPattern<Sats>,
+    pub sent_sum_extended: _1m1w1yPattern<Sats>,
+}
+
+impl CoinblocksCoindaysSentPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            coinblocks_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "coinblocks_destroyed")),
+            coinblocks_destroyed_cumulative: MetricPattern1::new(client.clone(), _m(&acc, "coinblocks_destroyed_cumulative")),
+            coindays_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "coindays_destroyed")),
+            coindays_destroyed_cumulative: MetricPattern1::new(client.clone(), _m(&acc, "coindays_destroyed_cumulative")),
+            coindays_destroyed_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "coindays_destroyed")),
+            sent: MetricPattern1::new(client.clone(), _m(&acc, "sent")),
+            sent_sum: _24hPattern::new(client.clone(), _m(&acc, "sent_24h")),
+            sent_sum_extended: _1m1w1yPattern::new(client.clone(), _m(&acc, "sent")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T> {
     pub average: MetricPattern18<T>,
     pub max: MetricPattern18<T>,
@@ -2022,28 +2050,6 @@ impl BaseBtcCentsSatsUsdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CoinblocksCoindaysSentPattern {
-    pub coinblocks_destroyed: CumulativeHeightPattern<StoredF64>,
-    pub coindays_destroyed: CumulativeHeightSumPattern<StoredF64>,
-    pub sent: MetricPattern1<Sats>,
-    pub sent_sum: _24hPattern<Sats>,
-    pub sent_sum_extended: _1m1w1yPattern<Sats>,
-}
-
-impl CoinblocksCoindaysSentPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            coinblocks_destroyed: CumulativeHeightPattern::new(client.clone(), _m(&acc, "coinblocks_destroyed")),
-            coindays_destroyed: CumulativeHeightSumPattern::new(client.clone(), _m(&acc, "coindays_destroyed")),
-            sent: MetricPattern1::new(client.clone(), _m(&acc, "sent")),
-            sent_sum: _24hPattern::new(client.clone(), _m(&acc, "sent_24h")),
-            sent_sum_extended: _1m1w1yPattern::new(client.clone(), _m(&acc, "sent")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct EmaHistogramLineSignalPattern {
     pub ema_fast: MetricPattern1<StoredF32>,
     pub ema_slow: MetricPattern1<StoredF32>,
@@ -2183,6 +2189,26 @@ impl BtcCentsSatsUsdPattern {
             cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
             sats: MetricPattern1::new(client.clone(), acc.clone()),
             usd: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CoinblocksCoindaysSentPattern {
+    pub coinblocks_destroyed: MetricPattern1<StoredF64>,
+    pub coindays_destroyed: MetricPattern1<StoredF64>,
+    pub sent: MetricPattern1<Sats>,
+    pub sent_sum: _24hPattern<Sats>,
+}
+
+impl CoinblocksCoindaysSentPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            coinblocks_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "coinblocks_destroyed")),
+            coindays_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "coindays_destroyed")),
+            sent: MetricPattern1::new(client.clone(), _m(&acc, "sent")),
+            sent_sum: _24hPattern::new(client.clone(), _m(&acc, "sent_24h")),
         }
     }
 }
@@ -5507,7 +5533,7 @@ impl MetricsTree_Distribution_UtxoCohorts {
 pub struct MetricsTree_Distribution_UtxoCohorts_All {
     pub supply: ChangeHalvedTotalPattern,
     pub outputs: UtxoPattern,
-    pub activity: CoinblocksCoindaysSentPattern,
+    pub activity: CoinblocksCoindaysSentPattern2,
     pub realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern,
     pub cost_basis: InvestedMaxMinPercentilesPattern,
     pub unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern,
@@ -5522,7 +5548,7 @@ impl MetricsTree_Distribution_UtxoCohorts_All {
         Self {
             supply: ChangeHalvedTotalPattern::new(client.clone(), "supply".to_string()),
             outputs: UtxoPattern::new(client.clone(), "utxo_count".to_string()),
-            activity: CoinblocksCoindaysSentPattern::new(client.clone(), "".to_string()),
+            activity: CoinblocksCoindaysSentPattern2::new(client.clone(), "".to_string()),
             realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern::new(client.clone(), "".to_string()),
             cost_basis: InvestedMaxMinPercentilesPattern::new(client.clone(), "".to_string()),
             unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern::new(client.clone(), "".to_string()),
@@ -5590,7 +5616,7 @@ impl MetricsTree_Distribution_UtxoCohorts_All_Relative {
 pub struct MetricsTree_Distribution_UtxoCohorts_Sth {
     pub supply: ChangeHalvedTotalPattern,
     pub outputs: UtxoPattern,
-    pub activity: CoinblocksCoindaysSentPattern,
+    pub activity: CoinblocksCoindaysSentPattern2,
     pub realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern,
     pub cost_basis: InvestedMaxMinPercentilesPattern,
     pub unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern,
@@ -5610,7 +5636,7 @@ impl MetricsTree_Distribution_UtxoCohorts_Sth {
         Self {
             supply: ChangeHalvedTotalPattern::new(client.clone(), "sth_supply".to_string()),
             outputs: UtxoPattern::new(client.clone(), "sth_utxo_count".to_string()),
-            activity: CoinblocksCoindaysSentPattern::new(client.clone(), "sth".to_string()),
+            activity: CoinblocksCoindaysSentPattern2::new(client.clone(), "sth".to_string()),
             realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern::new(client.clone(), "sth".to_string()),
             cost_basis: InvestedMaxMinPercentilesPattern::new(client.clone(), "sth".to_string()),
             unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern::new(client.clone(), "sth".to_string()),
@@ -5631,7 +5657,7 @@ impl MetricsTree_Distribution_UtxoCohorts_Sth {
 pub struct MetricsTree_Distribution_UtxoCohorts_Lth {
     pub supply: ChangeHalvedTotalPattern,
     pub outputs: UtxoPattern,
-    pub activity: CoinblocksCoindaysSentPattern,
+    pub activity: CoinblocksCoindaysSentPattern2,
     pub realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern,
     pub cost_basis: InvestedMaxMinPercentilesPattern,
     pub unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern,
@@ -5645,7 +5671,7 @@ impl MetricsTree_Distribution_UtxoCohorts_Lth {
         Self {
             supply: ChangeHalvedTotalPattern::new(client.clone(), "lth_supply".to_string()),
             outputs: UtxoPattern::new(client.clone(), "lth_utxo_count".to_string()),
-            activity: CoinblocksCoindaysSentPattern::new(client.clone(), "lth".to_string()),
+            activity: CoinblocksCoindaysSentPattern2::new(client.clone(), "lth".to_string()),
             realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern::new(client.clone(), "lth".to_string()),
             cost_basis: InvestedMaxMinPercentilesPattern::new(client.clone(), "lth".to_string()),
             unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern::new(client.clone(), "lth".to_string()),

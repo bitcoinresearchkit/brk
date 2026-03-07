@@ -7,7 +7,7 @@ use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ActivityBase, CohortMetricsBase, RealizedCore, ImportConfig, OutputsMetrics,
+    ActivityCore, CohortMetricsBase, RealizedCore, ImportConfig, OutputsMetrics,
     RelativeToAll, SupplyMetrics, UnrealizedCore,
 };
 
@@ -17,7 +17,7 @@ pub struct CoreCohortMetrics<M: StorageMode = Rw> {
     pub filter: Filter,
     pub supply: Box<SupplyMetrics<M>>,
     pub outputs: Box<OutputsMetrics<M>>,
-    pub activity: Box<ActivityBase<M>>,
+    pub activity: Box<ActivityCore<M>>,
     pub realized: Box<RealizedCore<M>>,
     pub unrealized: Box<UnrealizedCore<M>>,
     pub relative: Box<RelativeToAll<M>>,
@@ -29,7 +29,7 @@ impl CoreCohortMetrics {
             filter: cfg.filter.clone(),
             supply: Box::new(SupplyMetrics::forced_import(cfg)?),
             outputs: Box::new(OutputsMetrics::forced_import(cfg)?),
-            activity: Box::new(ActivityBase::forced_import(cfg)?),
+            activity: Box::new(ActivityCore::forced_import(cfg)?),
             realized: Box::new(RealizedCore::forced_import(cfg)?),
             unrealized: Box::new(UnrealizedCore::forced_import(cfg)?),
             relative: Box::new(RelativeToAll::forced_import(cfg)?),
@@ -80,7 +80,7 @@ impl CoreCohortMetrics {
         )?;
         self.activity.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| &v.activity().base).collect::<Vec<_>>(),
+            &others.iter().map(|v| &v.activity_base().core).collect::<Vec<_>>(),
             exit,
         )?;
         self.realized.compute_from_stateful(

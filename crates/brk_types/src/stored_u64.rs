@@ -108,7 +108,7 @@ impl SubAssign for StoredU64 {
 impl From<f64> for StoredU64 {
     #[inline]
     fn from(value: f64) -> Self {
-        debug_assert!(value >= 0.0);
+        let value = value.max(0.0);
         Self(value as u64)
     }
 }

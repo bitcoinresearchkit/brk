@@ -17,9 +17,9 @@ use crate::{
         CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative, FiatFromHeight,
         ComputedFromHeightRatio, ComputedFromHeightRatioPercentiles,
         ComputedFromHeightRatioStdDevBands, LazyFromHeight, PercentFromHeight,
-        PercentRollingEmas1w1m, PercentRollingWindows, Price, RatioCents64, RatioCentsBp32,
+        PercentRollingWindows, Price, RatioCents64, RatioCentsBp32,
         RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDollarsBp32,
-        RollingEmas1w1m, RollingWindows, RollingWindowsFrom1w,
+        RollingWindows, RollingWindowsFrom1w,
     },
     prices,
 };
@@ -65,7 +65,6 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     pub investor_cap_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 
     pub sell_side_risk_ratio: PercentRollingWindows<BasisPoints32, M>,
-    pub sell_side_risk_ratio_24h_ema: PercentRollingEmas1w1m<BasisPoints32, M>,
 
     pub peak_regret: ComputedFromHeightCumulative<Cents, M>,
     pub peak_regret_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
@@ -75,12 +74,6 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     pub realized_profit_sum: RollingWindows<Cents, M>,
     pub realized_loss_sum: RollingWindows<Cents, M>,
     pub realized_profit_to_loss_ratio: RollingWindows<StoredF64, M>,
-
-    pub realized_profit_ema_1w: ComputedFromHeight<Cents, M>,
-    pub realized_loss_ema_1w: ComputedFromHeight<Cents, M>,
-    pub net_realized_pnl_ema_1w: ComputedFromHeight<CentsSigned, M>,
-
-    pub sopr_24h_ema: RollingEmas1w1m<StoredF64, M>,
 
     pub value_created_sum_extended: RollingWindowsFrom1w<Cents, M>,
     pub value_destroyed_sum_extended: RollingWindowsFrom1w<Cents, M>,
@@ -135,8 +128,6 @@ impl RealizedFull {
 
         let sell_side_risk_ratio =
             cfg.import("sell_side_risk_ratio", Version::new(2))?;
-        let sell_side_risk_ratio_24h_ema =
-            cfg.import("sell_side_risk_ratio_24h", Version::new(2))?;
 
         let peak_regret = cfg.import("realized_peak_regret", Version::new(2))?;
         let peak_regret_rel_to_realized_cap =
@@ -154,10 +145,6 @@ impl RealizedFull {
         let net_realized_pnl_rel_to_realized_cap =
             cfg.import("net_realized_pnl_rel_to_realized_cap", Version::new(2))?;
 
-        let realized_profit_ema_1w = cfg.import("realized_profit_ema_1w", v0)?;
-        let realized_loss_ema_1w = cfg.import("realized_loss_ema_1w", v0)?;
-        let net_realized_pnl_ema_1w = cfg.import("net_realized_pnl_ema_1w", v0)?;
-        let sopr_24h_ema = cfg.import("sopr_24h", v1)?;
         let value_created_sum_extended = cfg.import("value_created", v1)?;
         let value_destroyed_sum_extended = cfg.import("value_destroyed", v1)?;
         let sopr_extended = cfg.import("sopr", v1)?;
@@ -187,7 +174,6 @@ impl RealizedFull {
             cap_raw,
             investor_cap_raw,
             sell_side_risk_ratio,
-            sell_side_risk_ratio_24h_ema,
             peak_regret,
             peak_regret_rel_to_realized_cap,
             realized_cap_rel_to_own_market_cap: cfg
@@ -196,10 +182,6 @@ impl RealizedFull {
             realized_loss_sum: cfg.import("realized_loss", v1)?,
             realized_profit_to_loss_ratio: cfg
                 .import("realized_profit_to_loss_ratio", v1)?,
-            realized_profit_ema_1w,
-            realized_loss_ema_1w,
-            net_realized_pnl_ema_1w,
-            sopr_24h_ema,
             value_created_sum_extended,
             value_destroyed_sum_extended,
             sopr_extended,
@@ -372,33 +354,6 @@ impl RealizedFull {
                 exit,
             )?;
 
-        // EMAs
-        self.realized_profit_ema_1w.height.compute_rolling_ema(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &self.base.core.minimal.realized_profit.height,
-            exit,
-        )?;
-        self.realized_loss_ema_1w.height.compute_rolling_ema(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &self.base.core.minimal.realized_loss.height,
-            exit,
-        )?;
-        self.net_realized_pnl_ema_1w.height.compute_rolling_ema(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &self.base.core.net_realized_pnl.height,
-            exit,
-        )?;
-        self.sopr_24h_ema.compute_from_24h(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &blocks.count.height_1m_ago,
-            &self.base.core.sopr._24h.height,
-            exit,
-        )?;
-
         // Sent in profit/loss rolling sums
         let window_starts = blocks.count.window_starts();
         self.sent_in_profit_sum.compute_rolling_sum(
@@ -515,14 +470,6 @@ impl RealizedFull {
                 exit,
             )?;
         }
-
-        self.sell_side_risk_ratio_24h_ema.compute_from_24h(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &blocks.count.height_1m_ago,
-            &self.sell_side_risk_ratio._24h.bps.height,
-            exit,
-        )?;
 
         // Extended: realized profit/loss rolling sums
         let window_starts = blocks.count.window_starts();

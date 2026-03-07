@@ -23,8 +23,8 @@ macro_rules! impl_cohort_accessors {
         fn supply_mut(&mut self) -> &mut $crate::distribution::metrics::SupplyMetrics { &mut self.supply }
         fn outputs(&self) -> &$crate::distribution::metrics::OutputsMetrics { &self.outputs }
         fn outputs_mut(&mut self) -> &mut $crate::distribution::metrics::OutputsMetrics { &mut self.outputs }
-        fn activity(&self) -> &$crate::distribution::metrics::ActivityFull { &self.activity }
-        fn activity_mut(&mut self) -> &mut $crate::distribution::metrics::ActivityFull { &mut self.activity }
+        fn activity(&self) -> &Self::ActivityVecs { &self.activity }
+        fn activity_mut(&mut self) -> &mut Self::ActivityVecs { &mut self.activity }
         fn realized(&self) -> &Self::RealizedVecs { &self.realized }
         fn realized_mut(&mut self) -> &mut Self::RealizedVecs { &mut self.realized }
         fn unrealized(&self) -> &Self::UnrealizedVecs { &self.unrealized }
@@ -43,7 +43,7 @@ mod relative;
 mod supply;
 mod unrealized;
 
-pub use activity::{ActivityBase, ActivityFull};
+pub use activity::{ActivityBase, ActivityCore, ActivityFull, ActivityLike};
 pub use cohort::{
     AllCohortMetrics, BasicCohortMetrics, CoreCohortMetrics, ExtendedAdjustedCohortMetrics,
     ExtendedCohortMetrics, MinimalCohortMetrics,
@@ -91,6 +91,7 @@ impl<M: StorageMode> CohortMetricsState for AllCohortMetrics<M> {
 }
 
 pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send + Sync {
+    type ActivityVecs: ActivityLike;
     type RealizedVecs: RealizedLike;
     type UnrealizedVecs: UnrealizedLike;
     type CostBasisVecs: CostBasisLike;
@@ -100,14 +101,18 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
     fn supply_mut(&mut self) -> &mut SupplyMetrics;
     fn outputs(&self) -> &OutputsMetrics;
     fn outputs_mut(&mut self) -> &mut OutputsMetrics;
-    fn activity(&self) -> &ActivityFull;
-    fn activity_mut(&mut self) -> &mut ActivityFull;
+    fn activity(&self) -> &Self::ActivityVecs;
+    fn activity_mut(&mut self) -> &mut Self::ActivityVecs;
     fn realized(&self) -> &Self::RealizedVecs;
     fn realized_mut(&mut self) -> &mut Self::RealizedVecs;
     fn unrealized(&self) -> &Self::UnrealizedVecs;
     fn unrealized_mut(&mut self) -> &mut Self::UnrealizedVecs;
     fn cost_basis(&self) -> &Self::CostBasisVecs;
     fn cost_basis_mut(&mut self) -> &mut Self::CostBasisVecs;
+
+    /// Convenience: access activity as `&ActivityBase` (via `ActivityLike::as_base`).
+    fn activity_base(&self) -> &ActivityBase { self.activity().as_base() }
+    fn activity_base_mut(&mut self) -> &mut ActivityBase { self.activity_mut().as_base_mut() }
 
     /// Convenience: access realized as `&RealizedBase` (via `RealizedLike::as_base`).
     fn realized_base(&self) -> &RealizedBase { self.realized().as_base() }
@@ -240,7 +245,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
         )?;
         self.activity_mut().compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.activity()).collect::<Vec<_>>(),
+            &others.iter().map(|v| v.activity_base()).collect::<Vec<_>>(),
             exit,
         )?;
         self.realized_mut().compute_from_stateful(

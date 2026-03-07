@@ -11,8 +11,8 @@ use crate::{
     internal::{
         CentsType, ComputedFromHeight, ComputedFromHeightCumulative,
         ComputedFromHeightCumulativeSum, ComputedFromHeightRatio, FiatFromHeight, NumericValue,
-        PercentFromHeight, PercentRollingEmas1w1m, PercentRollingWindows, Price, RollingEmas1w1m,
-        RollingEmas2w, RollingWindow24h, RollingWindows, RollingWindowsFrom1w,
+        PercentFromHeight, PercentRollingWindows, Price,
+        RollingWindow24h, RollingWindows, RollingWindowsFrom1w,
         ValueFromHeight, ValueFromHeightChange, ValueFromHeightCumulative,
     },
 };
@@ -41,12 +41,10 @@ impl_config_import!(
     ValueFromHeightCumulative,
     ValueFromHeightChange,
     ComputedFromHeightRatio,
-    RollingEmas2w,
     PercentFromHeight<BasisPoints16>,
     PercentFromHeight<BasisPoints32>,
     PercentFromHeight<BasisPointsSigned32>,
     PercentRollingWindows<BasisPoints32>,
-    PercentRollingEmas1w1m<BasisPoints32>,
     Price<ComputedFromHeight<Cents>>,
 );
 
@@ -77,11 +75,6 @@ impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindow24h<T> {
     }
 }
 impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindowsFrom1w<T> {
-    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
-        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
-    }
-}
-impl<T: NumericValue + JsonSchema> ConfigImport for RollingEmas1w1m<T> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }

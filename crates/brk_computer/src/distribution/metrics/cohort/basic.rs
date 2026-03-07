@@ -7,7 +7,7 @@ use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ActivityFull, CohortMetricsBase, CostBasisBase, ImportConfig, OutputsMetrics, RealizedBase,
+    ActivityBase, CohortMetricsBase, CostBasisBase, ImportConfig, OutputsMetrics, RealizedBase,
     RelativeToAll, SupplyMetrics, UnrealizedBase,
 };
 
@@ -19,7 +19,7 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     pub filter: Filter,
     pub supply: Box<SupplyMetrics<M>>,
     pub outputs: Box<OutputsMetrics<M>>,
-    pub activity: Box<ActivityFull<M>>,
+    pub activity: Box<ActivityBase<M>>,
     pub realized: Box<RealizedBase<M>>,
     pub cost_basis: Box<CostBasisBase<M>>,
     pub unrealized: Box<UnrealizedBase<M>>,
@@ -27,6 +27,7 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
 }
 
 impl CohortMetricsBase for BasicCohortMetrics {
+    type ActivityVecs = ActivityBase;
     type RealizedVecs = RealizedBase;
     type UnrealizedVecs = UnrealizedBase;
     type CostBasisVecs = CostBasisBase;
@@ -57,7 +58,7 @@ impl BasicCohortMetrics {
             filter: cfg.filter.clone(),
             supply: Box::new(supply),
             outputs: Box::new(OutputsMetrics::forced_import(cfg)?),
-            activity: Box::new(ActivityFull::forced_import(cfg)?),
+            activity: Box::new(ActivityBase::forced_import(cfg)?),
             realized: Box::new(realized),
             cost_basis: Box::new(CostBasisBase::forced_import(cfg)?),
             unrealized: Box::new(unrealized),
