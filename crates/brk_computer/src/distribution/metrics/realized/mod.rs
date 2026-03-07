@@ -1,10 +1,12 @@
 mod adjusted;
 mod base;
+mod core;
 mod full;
 mod minimal;
 
 pub use adjusted::RealizedAdjusted;
 pub use base::RealizedBase;
+pub use self::core::RealizedCore;
 pub use full::RealizedFull;
 pub use minimal::RealizedMinimal;
 
@@ -49,8 +51,8 @@ impl RealizedLike for RealizedBase {
 }
 
 impl RealizedLike for RealizedFull {
-    fn as_base(&self) -> &RealizedBase { &self.core }
-    fn as_base_mut(&mut self) -> &mut RealizedBase { &mut self.core }
+    fn as_base(&self) -> &RealizedBase { &self.base }
+    fn as_base_mut(&mut self) -> &mut RealizedBase { &mut self.base }
     fn min_stateful_height_len(&self) -> usize { self.min_stateful_height_len() }
     fn truncate_push(&mut self, height: Height, state: &RealizedState) -> Result<()> {
         self.truncate_push(height, state)

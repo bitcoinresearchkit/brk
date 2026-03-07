@@ -52,7 +52,7 @@ pub use config::ImportConfig;
 pub use cost_basis::{CostBasisBase, CostBasisExtended, CostBasisLike, CostBasisWithExtended};
 pub use outputs::OutputsMetrics;
 pub use realized::{
-    RealizedAdjusted, RealizedBase, RealizedFull, RealizedLike, RealizedMinimal,
+    RealizedAdjusted, RealizedBase, RealizedCore, RealizedFull, RealizedLike, RealizedMinimal,
 };
 pub use relative::{
     RelativeBaseWithRelToAll, RelativeForAll, RelativeWithExtended,
@@ -205,12 +205,6 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
         self.activity_mut()
             .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
 
-        self.realized_base_mut()
-            .sent_in_profit
-            .compute(prices, starting_indexes.height, exit)?;
-        self.realized_base_mut()
-            .sent_in_loss
-            .compute(prices, starting_indexes.height, exit)?;
         self.realized_mut()
             .compute_rest_part1(starting_indexes, exit)?;
 

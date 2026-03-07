@@ -984,10 +984,10 @@ pub struct CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSell
     pub realized_profit_to_loss_ratio: _1m1w1y24hPattern<StoredF64>,
     pub sell_side_risk_ratio: _1m1w1y24hPattern2,
     pub sell_side_risk_ratio_24h_ema: _1m1wPattern2,
-    pub sent_in_loss: BaseCumulativePattern,
-    pub sent_in_loss_ema: _2wPattern,
-    pub sent_in_profit: BaseCumulativePattern,
-    pub sent_in_profit_ema: _2wPattern,
+    pub sent_in_loss: MetricPattern1<Sats>,
+    pub sent_in_loss_sum: _1m1w1y24hPattern<Sats>,
+    pub sent_in_profit: MetricPattern1<Sats>,
+    pub sent_in_profit_sum: _1m1w1y24hPattern<Sats>,
     pub sopr: _24hPattern<StoredF64>,
     pub sopr_24h_ema: _1m1wPattern,
     pub sopr_extended: _1m1w1yPattern<StoredF64>,
@@ -1047,10 +1047,10 @@ impl CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSo
             realized_profit_to_loss_ratio: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "realized_profit_to_loss_ratio")),
             sell_side_risk_ratio: _1m1w1y24hPattern2::new(client.clone(), _m(&acc, "sell_side_risk_ratio")),
             sell_side_risk_ratio_24h_ema: _1m1wPattern2::new(client.clone(), _m(&acc, "sell_side_risk_ratio_24h_ema")),
-            sent_in_loss: BaseCumulativePattern::new(client.clone(), _m(&acc, "sent_in_loss")),
-            sent_in_loss_ema: _2wPattern::new(client.clone(), _m(&acc, "sent_in_loss_ema_2w")),
-            sent_in_profit: BaseCumulativePattern::new(client.clone(), _m(&acc, "sent_in_profit")),
-            sent_in_profit_ema: _2wPattern::new(client.clone(), _m(&acc, "sent_in_profit_ema_2w")),
+            sent_in_loss: MetricPattern1::new(client.clone(), _m(&acc, "sent_in_loss")),
+            sent_in_loss_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "sent_in_loss")),
+            sent_in_profit: MetricPattern1::new(client.clone(), _m(&acc, "sent_in_profit")),
+            sent_in_profit_sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "sent_in_profit")),
             sopr: _24hPattern::new(client.clone(), _m(&acc, "sopr_24h")),
             sopr_24h_ema: _1m1wPattern::new(client.clone(), _m(&acc, "sopr_24h_ema")),
             sopr_extended: _1m1w1yPattern::new(client.clone(), _m(&acc, "sopr")),
@@ -1195,8 +1195,8 @@ pub struct MvrvNegNetRealizedSentSoprValuePattern {
     pub realized_price: CentsSatsUsdPattern,
     pub realized_price_ratio: BpsRatioPattern,
     pub realized_profit: CumulativeHeightPattern<Cents>,
-    pub sent_in_loss: BaseCumulativePattern,
-    pub sent_in_profit: BaseCumulativePattern,
+    pub sent_in_loss: MetricPattern1<Sats>,
+    pub sent_in_profit: MetricPattern1<Sats>,
     pub sopr: _24hPattern<StoredF64>,
     pub value_created: MetricPattern1<Cents>,
     pub value_created_sum: _24hPattern<Cents>,
@@ -1218,8 +1218,8 @@ impl MvrvNegNetRealizedSentSoprValuePattern {
             realized_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "realized_price")),
             realized_price_ratio: BpsRatioPattern::new(client.clone(), _m(&acc, "realized_price_ratio")),
             realized_profit: CumulativeHeightPattern::new(client.clone(), _m(&acc, "realized_profit")),
-            sent_in_loss: BaseCumulativePattern::new(client.clone(), _m(&acc, "sent_in_loss")),
-            sent_in_profit: BaseCumulativePattern::new(client.clone(), _m(&acc, "sent_in_profit")),
+            sent_in_loss: MetricPattern1::new(client.clone(), _m(&acc, "sent_in_loss")),
+            sent_in_profit: MetricPattern1::new(client.clone(), _m(&acc, "sent_in_profit")),
             sopr: _24hPattern::new(client.clone(), _m(&acc, "sopr_24h")),
             value_created: MetricPattern1::new(client.clone(), _m(&acc, "value_created")),
             value_created_sum: _24hPattern::new(client.clone(), _m(&acc, "value_created_24h")),
@@ -1313,6 +1313,48 @@ impl GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern {
             supply_in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_in_profit")),
             unrealized_loss: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_loss")),
             unrealized_profit: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_profit")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct MvrvNegNetRealizedSoprValuePattern {
+    pub mvrv: MetricPattern1<StoredF32>,
+    pub neg_realized_loss: MetricPattern1<Dollars>,
+    pub net_realized_pnl: CumulativeHeightPattern<CentsSigned>,
+    pub realized_cap: MetricPattern1<Dollars>,
+    pub realized_cap_cents: MetricPattern1<Cents>,
+    pub realized_cap_change_1m: MetricPattern1<CentsSigned>,
+    pub realized_loss: CumulativeHeightPattern<Cents>,
+    pub realized_price: CentsSatsUsdPattern,
+    pub realized_price_ratio: BpsRatioPattern,
+    pub realized_profit: CumulativeHeightPattern<Cents>,
+    pub sopr: _24hPattern<StoredF64>,
+    pub value_created: MetricPattern1<Cents>,
+    pub value_created_sum: _24hPattern<Cents>,
+    pub value_destroyed: MetricPattern1<Cents>,
+    pub value_destroyed_sum: _24hPattern<Cents>,
+}
+
+impl MvrvNegNetRealizedSoprValuePattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            mvrv: MetricPattern1::new(client.clone(), _m(&acc, "mvrv")),
+            neg_realized_loss: MetricPattern1::new(client.clone(), _m(&acc, "neg_realized_loss")),
+            net_realized_pnl: CumulativeHeightPattern::new(client.clone(), _m(&acc, "net_realized_pnl")),
+            realized_cap: MetricPattern1::new(client.clone(), _m(&acc, "realized_cap")),
+            realized_cap_cents: MetricPattern1::new(client.clone(), _m(&acc, "realized_cap_cents")),
+            realized_cap_change_1m: MetricPattern1::new(client.clone(), _m(&acc, "realized_cap_change_1m")),
+            realized_loss: CumulativeHeightPattern::new(client.clone(), _m(&acc, "realized_loss")),
+            realized_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "realized_price")),
+            realized_price_ratio: BpsRatioPattern::new(client.clone(), _m(&acc, "realized_price_ratio")),
+            realized_profit: CumulativeHeightPattern::new(client.clone(), _m(&acc, "realized_profit")),
+            sopr: _24hPattern::new(client.clone(), _m(&acc, "sopr_24h")),
+            value_created: MetricPattern1::new(client.clone(), _m(&acc, "value_created")),
+            value_created_sum: _24hPattern::new(client.clone(), _m(&acc, "value_created_24h")),
+            value_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "value_destroyed")),
+            value_destroyed_sum: _24hPattern::new(client.clone(), _m(&acc, "value_destroyed_24h")),
         }
     }
 }
@@ -1891,7 +1933,7 @@ impl MvrvRealizedPattern {
 pub struct ActivityOutputsRealizedRelativeSupplyUnrealizedPattern {
     pub activity: SentPattern,
     pub outputs: UtxoPattern,
-    pub realized: MvrvNegNetRealizedSentSoprValuePattern,
+    pub realized: MvrvNegNetRealizedSoprValuePattern,
     pub relative: SupplyPattern2,
     pub supply: ChangeHalvedTotalPattern,
     pub unrealized: NegNetSupplyUnrealizedPattern,
@@ -1903,7 +1945,7 @@ impl ActivityOutputsRealizedRelativeSupplyUnrealizedPattern {
         Self {
             activity: SentPattern::new(client.clone(), _m(&acc, "sent")),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: MvrvNegNetRealizedSentSoprValuePattern::new(client.clone(), acc.clone()),
+            realized: MvrvNegNetRealizedSoprValuePattern::new(client.clone(), acc.clone()),
             relative: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
             supply: ChangeHalvedTotalPattern::new(client.clone(), _m(&acc, "supply")),
             unrealized: NegNetSupplyUnrealizedPattern::new(client.clone(), acc.clone()),

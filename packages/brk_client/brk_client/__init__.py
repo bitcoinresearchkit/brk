@@ -2114,10 +2114,10 @@ class CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentS
         self.realized_profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, _m(acc, 'realized_profit_to_loss_ratio'))
         self.sell_side_risk_ratio: _1m1w1y24hPattern2 = _1m1w1y24hPattern2(client, _m(acc, 'sell_side_risk_ratio'))
         self.sell_side_risk_ratio_24h_ema: _1m1wPattern2 = _1m1wPattern2(client, _m(acc, 'sell_side_risk_ratio_24h_ema'))
-        self.sent_in_loss: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent_in_loss'))
-        self.sent_in_loss_ema: _2wPattern = _2wPattern(client, _m(acc, 'sent_in_loss_ema_2w'))
-        self.sent_in_profit: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent_in_profit'))
-        self.sent_in_profit_ema: _2wPattern = _2wPattern(client, _m(acc, 'sent_in_profit_ema_2w'))
+        self.sent_in_loss: MetricPattern1[Sats] = MetricPattern1(client, _m(acc, 'sent_in_loss'))
+        self.sent_in_loss_sum: _1m1w1y24hPattern[Sats] = _1m1w1y24hPattern(client, _m(acc, 'sent_in_loss'))
+        self.sent_in_profit: MetricPattern1[Sats] = MetricPattern1(client, _m(acc, 'sent_in_profit'))
+        self.sent_in_profit_sum: _1m1w1y24hPattern[Sats] = _1m1w1y24hPattern(client, _m(acc, 'sent_in_profit'))
         self.sopr: _24hPattern[StoredF64] = _24hPattern(client, _m(acc, 'sopr_24h'))
         self.sopr_24h_ema: _1m1wPattern = _1m1wPattern(client, _m(acc, 'sopr_24h_ema'))
         self.sopr_extended: _1m1w1yPattern[StoredF64] = _1m1w1yPattern(client, _m(acc, 'sopr'))
@@ -2203,8 +2203,8 @@ class MvrvNegNetRealizedSentSoprValuePattern:
         self.realized_price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'realized_price'))
         self.realized_price_ratio: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'realized_price_ratio'))
         self.realized_profit: CumulativeHeightPattern[Cents] = CumulativeHeightPattern(client, _m(acc, 'realized_profit'))
-        self.sent_in_loss: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent_in_loss'))
-        self.sent_in_profit: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent_in_profit'))
+        self.sent_in_loss: MetricPattern1[Sats] = MetricPattern1(client, _m(acc, 'sent_in_loss'))
+        self.sent_in_profit: MetricPattern1[Sats] = MetricPattern1(client, _m(acc, 'sent_in_profit'))
         self.sopr: _24hPattern[StoredF64] = _24hPattern(client, _m(acc, 'sopr_24h'))
         self.value_created: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'value_created'))
         self.value_created_sum: _24hPattern[Cents] = _24hPattern(client, _m(acc, 'value_created_24h'))
@@ -2254,6 +2254,27 @@ class GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern:
         self.supply_in_profit: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_profit'))
         self.unrealized_loss: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'unrealized_loss'))
         self.unrealized_profit: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'unrealized_profit'))
+
+class MvrvNegNetRealizedSoprValuePattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.mvrv: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'mvrv'))
+        self.neg_realized_loss: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'neg_realized_loss'))
+        self.net_realized_pnl: CumulativeHeightPattern[CentsSigned] = CumulativeHeightPattern(client, _m(acc, 'net_realized_pnl'))
+        self.realized_cap: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'realized_cap'))
+        self.realized_cap_cents: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'realized_cap_cents'))
+        self.realized_cap_change_1m: MetricPattern1[CentsSigned] = MetricPattern1(client, _m(acc, 'realized_cap_change_1m'))
+        self.realized_loss: CumulativeHeightPattern[Cents] = CumulativeHeightPattern(client, _m(acc, 'realized_loss'))
+        self.realized_price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'realized_price'))
+        self.realized_price_ratio: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'realized_price_ratio'))
+        self.realized_profit: CumulativeHeightPattern[Cents] = CumulativeHeightPattern(client, _m(acc, 'realized_profit'))
+        self.sopr: _24hPattern[StoredF64] = _24hPattern(client, _m(acc, 'sopr_24h'))
+        self.value_created: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'value_created'))
+        self.value_created_sum: _24hPattern[Cents] = _24hPattern(client, _m(acc, 'value_created_24h'))
+        self.value_destroyed: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'value_destroyed'))
+        self.value_destroyed_sum: _24hPattern[Cents] = _24hPattern(client, _m(acc, 'value_destroyed_24h'))
 
 class NetNuplSupplyUnrealizedPattern2:
     """Pattern struct for repeated tree structure."""
@@ -2547,7 +2568,7 @@ class ActivityOutputsRealizedRelativeSupplyUnrealizedPattern:
         """Create pattern node with accumulated metric name."""
         self.activity: SentPattern = SentPattern(client, _m(acc, 'sent'))
         self.outputs: UtxoPattern = UtxoPattern(client, _m(acc, 'utxo_count'))
-        self.realized: MvrvNegNetRealizedSentSoprValuePattern = MvrvNegNetRealizedSentSoprValuePattern(client, acc)
+        self.realized: MvrvNegNetRealizedSoprValuePattern = MvrvNegNetRealizedSoprValuePattern(client, acc)
         self.relative: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
         self.supply: ChangeHalvedTotalPattern = ChangeHalvedTotalPattern(client, _m(acc, 'supply'))
         self.unrealized: NegNetSupplyUnrealizedPattern = NegNetSupplyUnrealizedPattern(client, acc)

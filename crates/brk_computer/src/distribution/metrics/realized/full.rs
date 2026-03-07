@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
     BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, CentsSats, CentsSigned, CentsSquaredSats,
-    Dollars, Height, Indexes, StoredF64, Version,
+    Dollars, Height, Indexes, Sats, StoredF64, Version,
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{
@@ -19,7 +19,7 @@ use crate::{
         ComputedFromHeightRatioStdDevBands, LazyFromHeight, PercentFromHeight,
         PercentRollingEmas1w1m, PercentRollingWindows, Price, RatioCents64, RatioCentsBp32,
         RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDollarsBp32,
-        RollingEmas1w1m, RollingEmas2w, RollingWindows, RollingWindowsFrom1w,
+        RollingEmas1w1m, RollingWindows, RollingWindowsFrom1w,
     },
     prices,
 };
@@ -33,7 +33,7 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub core: RealizedBase<M>,
+    pub base: RealizedBase<M>,
 
     pub gross_pnl: FiatFromHeight<Cents, M>,
 
@@ -86,8 +86,8 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     pub value_destroyed_sum_extended: RollingWindowsFrom1w<Cents, M>,
     pub sopr_extended: RollingWindowsFrom1w<StoredF64, M>,
 
-    pub sent_in_profit_ema: RollingEmas2w<M>,
-    pub sent_in_loss_ema: RollingEmas2w<M>,
+    pub sent_in_profit_sum: RollingWindows<Sats, M>,
+    pub sent_in_loss_sum: RollingWindows<Sats, M>,
 
     pub realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
     pub realized_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands<M>,
@@ -99,7 +99,7 @@ impl RealizedFull {
         let v0 = Version::ZERO;
         let v1 = Version::ONE;
 
-        let core = RealizedBase::forced_import(cfg)?;
+        let base = RealizedBase::forced_import(cfg)?;
 
         let gross_pnl = cfg.import("realized_gross_pnl", v0)?;
 
@@ -161,11 +161,9 @@ impl RealizedFull {
         let value_created_sum_extended = cfg.import("value_created", v1)?;
         let value_destroyed_sum_extended = cfg.import("value_destroyed", v1)?;
         let sopr_extended = cfg.import("sopr", v1)?;
-        let sent_in_profit_ema = cfg.import("sent_in_profit", v0)?;
-        let sent_in_loss_ema = cfg.import("sent_in_loss", v0)?;
 
         Ok(Self {
-            core,
+            base,
             gross_pnl,
             realized_profit_rel_to_realized_cap,
             realized_loss_rel_to_realized_cap,
@@ -205,8 +203,8 @@ impl RealizedFull {
             value_created_sum_extended,
             value_destroyed_sum_extended,
             sopr_extended,
-            sent_in_profit_ema,
-            sent_in_loss_ema,
+            sent_in_profit_sum: cfg.import("sent_in_profit", v1)?,
+            sent_in_loss_sum: cfg.import("sent_in_loss", v1)?,
             realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles::forced_import(
                 cfg.db,
                 &realized_price_name,
@@ -229,7 +227,7 @@ impl RealizedFull {
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.core
+        self.base
             .min_stateful_height_len()
             .min(self.profit_value_created.height.len())
             .min(self.profit_value_destroyed.height.len())
@@ -242,7 +240,7 @@ impl RealizedFull {
     }
 
     pub(crate) fn truncate_push(&mut self, height: Height, state: &RealizedState) -> Result<()> {
-        self.core.truncate_push(height, state)?;
+        self.base.truncate_push(height, state)?;
         self.profit_value_created
             .height
             .truncate_push(height, state.profit_value_created())?;
@@ -270,7 +268,7 @@ impl RealizedFull {
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs = self.core.collect_vecs_mut();
+        let mut vecs = self.base.collect_vecs_mut();
         vecs.push(&mut self.profit_value_created.height as &mut dyn AnyStoredVec);
         vecs.push(&mut self.profit_value_destroyed.height);
         vecs.push(&mut self.loss_value_created.height);
@@ -282,15 +280,13 @@ impl RealizedFull {
         vecs
     }
 
-    /// Aggregate Core-level fields from source cohorts.
-    /// investor_price, cap_raw, investor_cap_raw come from the stateful scan, not aggregated.
     pub(crate) fn compute_from_stateful(
         &mut self,
         starting_indexes: &Indexes,
         others: &[&RealizedBase],
         exit: &Exit,
     ) -> Result<()> {
-        self.core
+        self.base
             .compute_from_stateful(starting_indexes, others, exit)?;
 
         Ok(())
@@ -301,7 +297,7 @@ impl RealizedFull {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.core.compute_rest_part1(starting_indexes, exit)?;
+        self.base.compute_rest_part1(starting_indexes, exit)?;
         self.peak_regret
             .compute_rest(starting_indexes.height, exit)?;
         Ok(())
@@ -316,7 +312,7 @@ impl RealizedFull {
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.core.compute_rest_part2(
+        self.base.core.compute_rest_part2(
             blocks,
             prices,
             starting_indexes,
@@ -329,13 +325,13 @@ impl RealizedFull {
         self.value_created_sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.core.value_created.height,
+            &self.base.core.value_created.height,
             exit,
         )?;
         self.value_destroyed_sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.core.value_destroyed.height,
+            &self.base.core.value_destroyed.height,
             exit,
         )?;
         for ((sopr, vc), vd) in self
@@ -357,22 +353,22 @@ impl RealizedFull {
         self.realized_profit_rel_to_realized_cap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.core.minimal.realized_profit.height,
-                &self.core.minimal.realized_cap_cents.height,
+                &self.base.core.minimal.realized_profit.height,
+                &self.base.core.minimal.realized_cap_cents.height,
                 exit,
             )?;
         self.realized_loss_rel_to_realized_cap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.core.minimal.realized_loss.height,
-                &self.core.minimal.realized_cap_cents.height,
+                &self.base.core.minimal.realized_loss.height,
+                &self.base.core.minimal.realized_cap_cents.height,
                 exit,
             )?;
         self.net_realized_pnl_rel_to_realized_cap
             .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
                 starting_indexes.height,
-                &self.core.net_realized_pnl.height,
-                &self.core.minimal.realized_cap_cents.height,
+                &self.base.core.net_realized_pnl.height,
+                &self.base.core.minimal.realized_cap_cents.height,
                 exit,
             )?;
 
@@ -380,48 +376,49 @@ impl RealizedFull {
         self.realized_profit_ema_1w.height.compute_rolling_ema(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
-            &self.core.minimal.realized_profit.height,
+            &self.base.core.minimal.realized_profit.height,
             exit,
         )?;
         self.realized_loss_ema_1w.height.compute_rolling_ema(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
-            &self.core.minimal.realized_loss.height,
+            &self.base.core.minimal.realized_loss.height,
             exit,
         )?;
         self.net_realized_pnl_ema_1w.height.compute_rolling_ema(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
-            &self.core.net_realized_pnl.height,
+            &self.base.core.net_realized_pnl.height,
             exit,
         )?;
         self.sopr_24h_ema.compute_from_24h(
             starting_indexes.height,
             &blocks.count.height_1w_ago,
             &blocks.count.height_1m_ago,
-            &self.core.sopr._24h.height,
+            &self.base.core.sopr._24h.height,
             exit,
         )?;
-        self.sent_in_profit_ema.compute(
+
+        // Sent in profit/loss rolling sums
+        let window_starts = blocks.count.window_starts();
+        self.sent_in_profit_sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_2w_ago,
-            &self.core.sent_in_profit.base.sats.height,
-            &self.core.sent_in_profit.base.cents.height,
+            &window_starts,
+            &self.base.sent_in_profit.height,
             exit,
         )?;
-        self.sent_in_loss_ema.compute(
+        self.sent_in_loss_sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_2w_ago,
-            &self.core.sent_in_loss.base.sats.height,
-            &self.core.sent_in_loss.base.cents.height,
+            &window_starts,
+            &self.base.sent_in_loss.height,
             exit,
         )?;
 
         // Gross PnL
         self.gross_pnl.cents.height.compute_add(
             starting_indexes.height,
-            &self.core.minimal.realized_profit.height,
-            &self.core.minimal.realized_loss.height,
+            &self.base.core.minimal.realized_profit.height,
+            &self.base.core.minimal.realized_loss.height,
             exit,
         )?;
 
@@ -437,14 +434,14 @@ impl RealizedFull {
         self.net_pnl_change_1m.height.compute_rolling_change(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
-            &self.core.net_realized_pnl.cumulative.height,
+            &self.base.core.net_realized_pnl.cumulative.height,
             exit,
         )?;
         self.net_pnl_change_1m_rel_to_realized_cap
             .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
                 starting_indexes.height,
                 &self.net_pnl_change_1m.height,
-                &self.core.minimal.realized_cap_cents.height,
+                &self.base.core.minimal.realized_cap_cents.height,
                 exit,
             )?;
         self.net_pnl_change_1m_rel_to_market_cap
@@ -460,7 +457,7 @@ impl RealizedFull {
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
                 &self.peak_regret.height,
-                &self.core.minimal.realized_cap_cents.height,
+                &self.base.core.minimal.realized_cap_cents.height,
                 exit,
             )?;
 
@@ -472,10 +469,9 @@ impl RealizedFull {
             exit,
         )?;
 
-        // Use explicit field paths for split borrows
         self.lower_price_band.cents.height.compute_transform2(
             starting_indexes.height,
-            &self.core.minimal.realized_price.cents.height,
+            &self.base.core.minimal.realized_price.cents.height,
             &self.investor_price.cents.height,
             |(i, rp, ip, ..)| {
                 let rp = rp.as_u128();
@@ -492,7 +488,7 @@ impl RealizedFull {
         self.upper_price_band.cents.height.compute_transform2(
             starting_indexes.height,
             &self.investor_price.cents.height,
-            &self.core.minimal.realized_price.cents.height,
+            &self.base.core.minimal.realized_price.cents.height,
             |(i, ip, rp, ..)| {
                 let ip = ip.as_u128();
                 let rp = rp.as_u128();
@@ -515,7 +511,7 @@ impl RealizedFull {
             ssrr.compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
                 &rv.height,
-                &self.core.minimal.realized_cap_cents.height,
+                &self.base.core.minimal.realized_cap_cents.height,
                 exit,
             )?;
         }
@@ -533,13 +529,13 @@ impl RealizedFull {
         self.realized_profit_sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.core.minimal.realized_profit.height,
+            &self.base.core.minimal.realized_profit.height,
             exit,
         )?;
         self.realized_loss_sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.core.minimal.realized_loss.height,
+            &self.base.core.minimal.realized_loss.height,
             exit,
         )?;
 
@@ -547,7 +543,7 @@ impl RealizedFull {
         self.realized_cap_rel_to_own_market_cap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 starting_indexes.height,
-                &self.core.minimal.realized_cap.height,
+                &self.base.core.minimal.realized_cap.height,
                 height_to_market_cap,
                 exit,
             )?;
@@ -572,16 +568,16 @@ impl RealizedFull {
             blocks,
             starting_indexes,
             exit,
-            &self.core.minimal.realized_price_ratio.ratio.height,
-            &self.core.minimal.realized_price.cents.height,
+            &self.base.core.minimal.realized_price_ratio.ratio.height,
+            &self.base.core.minimal.realized_price.cents.height,
         )?;
 
         self.realized_price_ratio_std_dev.compute(
             blocks,
             starting_indexes,
             exit,
-            &self.core.minimal.realized_price_ratio.ratio.height,
-            &self.core.minimal.realized_price.cents.height,
+            &self.base.core.minimal.realized_price_ratio.ratio.height,
+            &self.base.core.minimal.realized_price.cents.height,
         )?;
 
         // Investor price: percentiles
