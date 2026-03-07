@@ -3,24 +3,20 @@ use brk_traversable::Traversable;
 use brk_types::{
     BasisPoints16, BasisPointsSigned32, Dollars, Height, Sats, StoredF32, Version,
 };
-use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
     Bps32ToFloat, LazyFromHeight, PercentFromHeight, RatioDollarsBp16, RatioDollarsBps32,
+    RatioSatsBp16,
 };
 
 use crate::distribution::metrics::{ImportConfig, UnrealizedCore};
 
-use super::RelativeBase;
-
-/// Full relative metrics (Source/Extended tier).
-#[derive(Deref, DerefMut, Traversable)]
+/// Full relative metrics (sth/lth/all tier).
+#[derive(Traversable)]
 pub struct RelativeFull<M: StorageMode = Rw> {
-    #[deref]
-    #[deref_mut]
-    #[traversable(flatten)]
-    pub base: RelativeBase<M>,
+    pub supply_in_profit_rel_to_own_supply: PercentFromHeight<BasisPoints16, M>,
+    pub supply_in_loss_rel_to_own_supply: PercentFromHeight<BasisPoints16, M>,
 
     pub unrealized_profit_rel_to_market_cap: PercentFromHeight<BasisPoints16, M>,
     pub unrealized_loss_rel_to_market_cap: PercentFromHeight<BasisPoints16, M>,
@@ -30,8 +26,7 @@ pub struct RelativeFull<M: StorageMode = Rw> {
 
 impl RelativeFull {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let base = RelativeBase::forced_import(cfg)?;
-
+        let v1 = Version::ONE;
         let v2 = Version::new(2);
         let v3 = Version::new(3);
 
@@ -49,7 +44,10 @@ impl RelativeFull {
         );
 
         Ok(Self {
-            base,
+            supply_in_profit_rel_to_own_supply: cfg
+                .import("supply_in_profit_rel_to_own_supply", v1)?,
+            supply_in_loss_rel_to_own_supply: cfg
+                .import("supply_in_loss_rel_to_own_supply", v1)?,
             unrealized_profit_rel_to_market_cap: cfg
                 .import("unrealized_profit_rel_to_market_cap", v2)?,
             unrealized_loss_rel_to_market_cap: cfg
@@ -67,12 +65,20 @@ impl RelativeFull {
         market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.base.compute(
-            max_from,
-            unrealized,
-            supply_total_sats,
-            exit,
-        )?;
+        self.supply_in_profit_rel_to_own_supply
+            .compute_binary::<Sats, Sats, RatioSatsBp16>(
+                max_from,
+                &unrealized.supply_in_profit.sats.height,
+                supply_total_sats,
+                exit,
+            )?;
+        self.supply_in_loss_rel_to_own_supply
+            .compute_binary::<Sats, Sats, RatioSatsBp16>(
+                max_from,
+                &unrealized.supply_in_loss.sats.height,
+                supply_total_sats,
+                exit,
+            )?;
 
         self.unrealized_profit_rel_to_market_cap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(

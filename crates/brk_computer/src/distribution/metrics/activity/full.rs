@@ -4,9 +4,11 @@ use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::internal::{ComputedFromHeightCumulative, ComputedFromHeightCumulativeSum};
+use crate::internal::{
+    ComputedFromHeightCumulative, ComputedFromHeightCumulativeSum, RollingWindowsFrom1w,
+};
 
-use crate::{blocks, distribution::metrics::ImportConfig, prices};
+use crate::{blocks, distribution::metrics::ImportConfig};
 
 use super::ActivityBase;
 
@@ -19,15 +21,19 @@ pub struct ActivityFull<M: StorageMode = Rw> {
 
     pub coinblocks_destroyed: ComputedFromHeightCumulative<StoredF64, M>,
     pub coindays_destroyed: ComputedFromHeightCumulativeSum<StoredF64, M>,
+
+    pub sent_sum_extended: RollingWindowsFrom1w<Sats, M>,
 }
 
 impl ActivityFull {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
+        let v1 = Version::ONE;
         Ok(Self {
             base: ActivityBase::forced_import(cfg)?,
             coinblocks_destroyed: cfg
-                .import("coinblocks_destroyed", Version::ONE)?,
-            coindays_destroyed: cfg.import("coindays_destroyed", Version::ONE)?,
+                .import("coinblocks_destroyed", v1)?,
+            coindays_destroyed: cfg.import("coindays_destroyed", v1)?,
+            sent_sum_extended: cfg.import("sent", v1)?,
         })
     }
 
@@ -59,7 +65,7 @@ impl ActivityFull {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
-            &mut self.base.sent.base.sats.height as &mut dyn AnyStoredVec,
+            &mut self.base.sent.height as &mut dyn AnyStoredVec,
             &mut self.coinblocks_destroyed.height as &mut dyn AnyStoredVec,
             &mut self.coindays_destroyed.height as &mut dyn AnyStoredVec,
         ]
@@ -87,12 +93,11 @@ impl ActivityFull {
     pub(crate) fn compute_rest_part1(
         &mut self,
         blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.base
-            .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
+            .compute_rest_part1(blocks, starting_indexes, exit)?;
 
         self.coinblocks_destroyed
             .compute_rest(starting_indexes.height, exit)?;
@@ -100,6 +105,13 @@ impl ActivityFull {
         let window_starts = blocks.count.window_starts();
         self.coindays_destroyed
             .compute_rest(starting_indexes.height, &window_starts, exit)?;
+
+        self.sent_sum_extended.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.base.sent.height,
+            exit,
+        )?;
 
         Ok(())
     }

@@ -2746,6 +2746,31 @@ function createBaseBtcCentsSatsUsdPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} CoinblocksCoindaysSentPattern
+ * @property {CumulativeHeightPattern<StoredF64>} coinblocksDestroyed
+ * @property {CumulativeHeightSumPattern<StoredF64>} coindaysDestroyed
+ * @property {MetricPattern1<Sats>} sent
+ * @property {_24hPattern<Sats>} sentSum
+ * @property {_1m1w1yPattern<Sats>} sentSumExtended
+ */
+
+/**
+ * Create a CoinblocksCoindaysSentPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CoinblocksCoindaysSentPattern}
+ */
+function createCoinblocksCoindaysSentPattern(client, acc) {
+  return {
+    coinblocksDestroyed: createCumulativeHeightPattern(client, _m(acc, 'coinblocks_destroyed')),
+    coindaysDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coindays_destroyed')),
+    sent: createMetricPattern1(client, _m(acc, 'sent')),
+    sentSum: create_24hPattern(client, _m(acc, 'sent_24h')),
+    sentSumExtended: create_1m1w1yPattern(client, _m(acc, 'sent')),
+  };
+}
+
+/**
  * @typedef {Object} EmaHistogramLineSignalPattern
  * @property {MetricPattern1<StoredF32>} emaFast
  * @property {MetricPattern1<StoredF32>} emaSlow
@@ -2767,31 +2792,6 @@ function createEmaHistogramLineSignalPattern(client, acc) {
     histogram: createMetricPattern1(client, _m(acc, 'histogram_24h')),
     line: createMetricPattern1(client, _m(acc, 'line_24h')),
     signal: createMetricPattern1(client, _m(acc, 'signal_24h')),
-  };
-}
-
-/**
- * @typedef {Object} SupplyPattern2
- * @property {BpsPercentRatioPattern} supplyInLossRelToCirculatingSupply
- * @property {BpsPercentRatioPattern} supplyInLossRelToOwnSupply
- * @property {BpsPercentRatioPattern} supplyInProfitRelToCirculatingSupply
- * @property {BpsPercentRatioPattern} supplyInProfitRelToOwnSupply
- * @property {BpsPercentRatioPattern} supplyRelToCirculatingSupply
- */
-
-/**
- * Create a SupplyPattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {SupplyPattern2}
- */
-function createSupplyPattern2(client, acc) {
-  return {
-    supplyInLossRelToCirculatingSupply: createBpsPercentRatioPattern(client, _m(acc, 'in_loss_rel_to_circulating_supply')),
-    supplyInLossRelToOwnSupply: createBpsPercentRatioPattern(client, _m(acc, 'in_loss_rel_to_own_supply')),
-    supplyInProfitRelToCirculatingSupply: createBpsPercentRatioPattern(client, _m(acc, 'in_profit_rel_to_circulating_supply')),
-    supplyInProfitRelToOwnSupply: createBpsPercentRatioPattern(client, _m(acc, 'in_profit_rel_to_own_supply')),
-    supplyRelToCirculatingSupply: createBpsPercentRatioPattern(client, _m(acc, 'rel_to_circulating_supply')),
   };
 }
 
@@ -2934,29 +2934,6 @@ function createBtcCentsSatsUsdPattern(client, acc) {
     cents: createMetricPattern1(client, _m(acc, 'cents')),
     sats: createMetricPattern1(client, acc),
     usd: createMetricPattern1(client, _m(acc, 'usd')),
-  };
-}
-
-/**
- * @typedef {Object} CoinblocksCoindaysSentPattern
- * @property {CumulativeHeightPattern<StoredF64>} coinblocksDestroyed
- * @property {CumulativeHeightSumPattern<StoredF64>} coindaysDestroyed
- * @property {BaseCumulativePattern} sent
- * @property {_2wPattern} sentEma
- */
-
-/**
- * Create a CoinblocksCoindaysSentPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CoinblocksCoindaysSentPattern}
- */
-function createCoinblocksCoindaysSentPattern(client, acc) {
-  return {
-    coinblocksDestroyed: createCumulativeHeightPattern(client, _m(acc, 'coinblocks_destroyed')),
-    coindaysDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coindays_destroyed')),
-    sent: createBaseCumulativePattern(client, _m(acc, 'sent')),
-    sentEma: create_2wPattern(client, _m(acc, 'sent_ema_2w')),
   };
 }
 
@@ -3154,6 +3131,27 @@ function createChangeHalvedTotalPattern(client, acc) {
     change1m: createBtcCentsSatsUsdPattern(client, _m(acc, 'change_1m')),
     halved: createBtcCentsSatsUsdPattern(client, _m(acc, 'halved')),
     total: createBtcCentsSatsUsdPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} SupplyPattern2
+ * @property {BpsPercentRatioPattern} supplyInLossRelToCirculatingSupply
+ * @property {BpsPercentRatioPattern} supplyInProfitRelToCirculatingSupply
+ * @property {BpsPercentRatioPattern} supplyRelToCirculatingSupply
+ */
+
+/**
+ * Create a SupplyPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {SupplyPattern2}
+ */
+function createSupplyPattern2(client, acc) {
+  return {
+    supplyInLossRelToCirculatingSupply: createBpsPercentRatioPattern(client, _m(acc, 'in_loss_rel_to_circulating_supply')),
+    supplyInProfitRelToCirculatingSupply: createBpsPercentRatioPattern(client, _m(acc, 'in_profit_rel_to_circulating_supply')),
+    supplyRelToCirculatingSupply: createBpsPercentRatioPattern(client, _m(acc, 'rel_to_circulating_supply')),
   };
 }
 
@@ -3399,8 +3397,8 @@ function createSdSmaPattern(client, acc) {
 
 /**
  * @typedef {Object} SentPattern
- * @property {BaseCumulativePattern} sent
- * @property {_2wPattern} sentEma
+ * @property {MetricPattern1<Sats>} sent
+ * @property {_24hPattern<Sats>} sentSum
  */
 
 /**
@@ -3411,8 +3409,8 @@ function createSdSmaPattern(client, acc) {
  */
 function createSentPattern(client, acc) {
   return {
-    sent: createBaseCumulativePattern(client, acc),
-    sentEma: create_2wPattern(client, _m(acc, 'ema_2w')),
+    sent: createMetricPattern1(client, acc),
+    sentSum: create_24hPattern(client, _m(acc, '24h')),
   };
 }
 
@@ -3472,23 +3470,6 @@ function createCumulativeHeightPattern(client, acc) {
   return {
     cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
     height: createMetricPattern18(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} _2wPattern
- * @property {BtcCentsSatsUsdPattern} _2w
- */
-
-/**
- * Create a _2wPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_2wPattern}
- */
-function create_2wPattern(client, acc) {
-  return {
-    _2w: createBtcCentsSatsUsdPattern(client, acc),
   };
 }
 
@@ -4803,12 +4784,12 @@ function create_24hPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_All_Relative
+ * @property {BpsPercentRatioPattern} supplyInProfitRelToOwnSupply
+ * @property {BpsPercentRatioPattern} supplyInLossRelToOwnSupply
  * @property {BpsPercentRatioPattern} unrealizedProfitRelToMarketCap
  * @property {BpsPercentRatioPattern} unrealizedLossRelToMarketCap
  * @property {BpsPercentRatioPattern} netUnrealizedPnlRelToMarketCap
  * @property {MetricPattern1<StoredF32>} nupl
- * @property {BpsPercentRatioPattern} supplyInProfitRelToOwnSupply
- * @property {BpsPercentRatioPattern} supplyInLossRelToOwnSupply
  * @property {BpsPercentRatioPattern} unrealizedProfitRelToOwnGrossPnl
  * @property {BpsPercentRatioPattern} unrealizedLossRelToOwnGrossPnl
  * @property {BpsPercentRatioPattern} netUnrealizedPnlRelToOwnGrossPnl
@@ -7014,12 +6995,12 @@ class BrkClient extends BrkClientBase {
               adjustedSoprEma: create_1m1wPattern(this, 'adjusted_sopr_24h_ema'),
             },
             relative: {
+              supplyInProfitRelToOwnSupply: createBpsPercentRatioPattern(this, 'supply_in_profit_rel_to_own_supply'),
+              supplyInLossRelToOwnSupply: createBpsPercentRatioPattern(this, 'supply_in_loss_rel_to_own_supply'),
               unrealizedProfitRelToMarketCap: createBpsPercentRatioPattern(this, 'unrealized_profit_rel_to_market_cap'),
               unrealizedLossRelToMarketCap: createBpsPercentRatioPattern(this, 'unrealized_loss_rel_to_market_cap'),
               netUnrealizedPnlRelToMarketCap: createBpsPercentRatioPattern(this, 'net_unrealized_pnl_rel_to_market_cap'),
               nupl: createMetricPattern1(this, 'nupl'),
-              supplyInProfitRelToOwnSupply: createBpsPercentRatioPattern(this, 'supply_in_profit_rel_to_own_supply'),
-              supplyInLossRelToOwnSupply: createBpsPercentRatioPattern(this, 'supply_in_loss_rel_to_own_supply'),
               unrealizedProfitRelToOwnGrossPnl: createBpsPercentRatioPattern(this, 'unrealized_profit_rel_to_own_gross_pnl'),
               unrealizedLossRelToOwnGrossPnl: createBpsPercentRatioPattern(this, 'unrealized_loss_rel_to_own_gross_pnl'),
               netUnrealizedPnlRelToOwnGrossPnl: createBpsPercentRatioPattern(this, 'net_unrealized_pnl_rel_to_own_gross_pnl'),

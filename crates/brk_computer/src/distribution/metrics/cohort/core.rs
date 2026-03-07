@@ -8,7 +8,7 @@ use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
     ActivityBase, CohortMetricsBase, RealizedCore, ImportConfig, OutputsMetrics,
-    RelativeBaseWithRelToAll, SupplyMetrics, UnrealizedCore,
+    RelativeToAll, SupplyMetrics, UnrealizedCore,
 };
 
 #[derive(Traversable)]
@@ -20,7 +20,7 @@ pub struct CoreCohortMetrics<M: StorageMode = Rw> {
     pub activity: Box<ActivityBase<M>>,
     pub realized: Box<RealizedCore<M>>,
     pub unrealized: Box<UnrealizedCore<M>>,
-    pub relative: Box<RelativeBaseWithRelToAll<M>>,
+    pub relative: Box<RelativeToAll<M>>,
 }
 
 impl CoreCohortMetrics {
@@ -32,7 +32,7 @@ impl CoreCohortMetrics {
             activity: Box::new(ActivityBase::forced_import(cfg)?),
             realized: Box::new(RealizedCore::forced_import(cfg)?),
             unrealized: Box::new(UnrealizedCore::forced_import(cfg)?),
-            relative: Box::new(RelativeBaseWithRelToAll::forced_import(cfg)?),
+            relative: Box::new(RelativeToAll::forced_import(cfg)?),
         })
     }
 
@@ -112,7 +112,7 @@ impl CoreCohortMetrics {
             .compute_rest(blocks, starting_indexes, exit)?;
 
         self.activity
-            .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
+            .compute_rest_part1(blocks, starting_indexes, exit)?;
 
         self.realized
             .compute_rest_part1(starting_indexes, exit)?;
@@ -140,7 +140,8 @@ impl CoreCohortMetrics {
 
         self.relative.compute(
             starting_indexes.height,
-            &self.unrealized,
+            &self.unrealized.supply_in_profit.sats.height,
+            &self.unrealized.supply_in_loss.sats.height,
             &self.supply.total.sats.height,
             all_supply_sats,
             exit,

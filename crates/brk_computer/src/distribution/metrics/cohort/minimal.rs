@@ -191,7 +191,7 @@ impl MinimalCohortMetrics {
         self.outputs
             .compute_rest(blocks, starting_indexes, exit)?;
         self.activity
-            .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
+            .compute_rest_part1(blocks, starting_indexes, exit)?;
         self.realized
             .compute_rest_part1(starting_indexes, exit)?;
         self.unrealized

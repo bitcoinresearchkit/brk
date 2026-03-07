@@ -55,7 +55,7 @@ pub use realized::{
     RealizedAdjusted, RealizedBase, RealizedCore, RealizedFull, RealizedLike, RealizedMinimal,
 };
 pub use relative::{
-    RelativeBaseWithRelToAll, RelativeForAll, RelativeWithExtended,
+    RelativeForAll, RelativeToAll, RelativeWithExtended,
 };
 pub use supply::SupplyMetrics;
 pub use unrealized::{UnrealizedBase, UnrealizedCore, UnrealizedFull, UnrealizedLike};
@@ -200,10 +200,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
         self.outputs_mut()
             .compute_rest(blocks, starting_indexes, exit)?;
         self.activity_mut()
-            .sent
-            .compute(prices, starting_indexes.height, exit)?;
-        self.activity_mut()
-            .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
+            .compute_rest_part1(blocks, starting_indexes, exit)?;
 
         self.realized_mut()
             .compute_rest_part1(starting_indexes, exit)?;

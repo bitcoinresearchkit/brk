@@ -105,7 +105,7 @@ impl ExtendedCohortMetrics {
         self.dormancy.height.compute_transform2(
             starting_indexes.height,
             &self.activity.coindays_destroyed.height,
-            &self.activity.sent.base.sats.height,
+            &self.activity.sent.height,
             |(i, cdd, sent_sats, ..)| {
                 let sent_btc = f64::from(Bitcoin::from(sent_sats));
                 if sent_btc == 0.0 {
@@ -119,7 +119,7 @@ impl ExtendedCohortMetrics {
 
         self.velocity.height.compute_transform2(
             starting_indexes.height,
-            &self.activity.sent.base.sats.height,
+            &self.activity.sent.height,
             &self.supply.total.sats.height,
             |(i, sent_sats, supply_sats, ..)| {
                 let supply = supply_sats.as_u128() as f64;
